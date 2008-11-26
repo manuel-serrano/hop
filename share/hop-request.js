@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Nov 17 18:43:54 2008 (serrano)                */
+/*    Last change :  Tue Nov 25 16:22:36 2008 (serrano)                */
 /*    Copyright   :  2004-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -128,7 +128,6 @@ function hop_default_failure( xhr ) {
       node_style_set( div, "text-align", "center" );
       node_style_set( div, "border", "5px dashed #f87d0f" );
       node_style_set( div, "z-index", "10000" );
-      node_style_set( div, "opacity", "0.95" );
       node_style_set( div, "background", "#fff" );
       node_style_set( div, "padding", "4px" );
       node_style_set( div, "padding-bottom", "8px" );
@@ -329,7 +328,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 			   fail( xhr );
 			   expr = false;
 			}
-			
+
 			return success( expr, xhr );
 		     } else if( (ctype === "text/html") ||
 				(ctype === "application/xhtml+xml") ) {

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Mon Nov 17 18:44:35 2008 (serrano)                */
+/*    Last change :  Tue Nov 25 16:10:59 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -39,20 +39,28 @@ function hop_error_html( fun, exc, msg ) {
       }
    }
 
-   el.innerHTML = "<table style='width: 100%; font-family: arial;'>"
-      + "<tr><td style='width: 64px; height: 64px; vertical-align: top; padding-top: 20px; padding-left: 10px; padding-right: 10px'><img src='" + hop_client_error + "' alt='Error'></td><td><table style='font-size: 90%'><colgroup><col width='0*'></col></colgroup>"
-      + "<tr><td colspan='2' style=\"text-align: left; width='100%'; border-bottom: 1px solid #777; font-size: x-large; font-weight: bold; color: red; font\">Internal Client Side Error<td></tr>"
-      + (emsg ? "<tr><th style='text-align: left; vertical-align: top'>error:</th><td style='text-align: left'><tt>" + emsg + "</tt></td></tr>" : "")
-      + "<tr><th style='text-align: left; vertical-align: top'>function:</th><td style='text-align: left'>" + fun + "</td></tr>"
-      + ((exc && "line" in exc ) ? "<tr><th style='text-align: left; vertical-align: top'>line:</th><td style='text-align: left'><tt>" + exc.line + "</tt></td></tr>" : "")
-      + "<tr><td colspan='2' style='text-align: left; vertical-align: top'><pre style='border-top: 1px solid #777; overflow: auto; padding-top: 1em; text-align: left'>" + msg + "</pre></td></tr>"
-      + "</table></td></tr></table>";
-
    node_style_set( el, "overflow", "hidden" );
-   node_style_set( el, "padding", "2px" );
+   node_style_set( el, "padding", "0" );
    node_style_set( el, "border", "1px solid #ccc" );
    node_style_set( el, "-moz-border-radius", "0.5em" );
    node_style_set( el, "height", "100%" );
+   node_style_set( el, "width", "100%" );
+   node_style_set( el, "margin", "0" );
+
+   el.innerHTML =
+      ("<table style='width: 100%; font-family: arial;'>"
+       + "<colgroup><col width='64px'><col></colgroup>"
+       + "<tr><td style='height: 64px; vertical-align: top; padding-top: 20px; padding-left: 10px; padding-right: 10px'><img src='" + hop_client_error + "' alt='Error'></td><td>"
+       + "<table style='width: 100%; font-size: 90%'><colgroup><col width='0*'></colgroup>"
+       + "  <tr><td colspan='2' style='text-align: left; width: 100%; border-bottom: 1px solid #777; font-size: x-large; font-weight: bold; color: red'>Internal Client Side Error</td></tr>"
+       + (emsg ? ("<tr><th style='text-align: left; vertical-align: top'>error:</th><td style='text-align: left'>" + emsg + "</td></tr>") : "")
+       + "  <tr><th style='text-align: left; vertical-align: top'>function:</th><td style='text-align: left'><tt>" + fun + "</tt></td></tr>"
+       + ((exc && "line" in exc ) ? "<tr><th style='text-align: left; vertical-align: top'>line:</th><td style='text-align: left'><tt>" + exc.line + "</tt></td></tr>" : "")
+       + "  <tr><td colspan='2' style='text-align: left; vertical-align: top; border-top: 1px solid #777'>"
+       + "   <div style='width: " + Math.round( (hop_current_window_width() * 0.75) - 100) + "px; overflow: auto; padding-top: 1em;'><pre style=' text-align: left; background: #ffe; border: 1px dotted #ccc;'>" + msg + "</pre></div>"
+       + "  </td></tr>"
+       + "</table>"
+       + "</td></tr></table>");
 
    return el;
 }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 10 06:46:43 2007                          */
-;*    Last change :  Tue Nov 25 08:40:27 2008 (serrano)                */
+;*    Last change :  Wed Nov 26 07:33:02 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with charset.                              */
@@ -18,187 +18,185 @@
 	   (charset-converter!::procedure ::symbol ::symbol)))
 
 ;*---------------------------------------------------------------------*/
+;*    charset-alias ...                                                */
+;*---------------------------------------------------------------------*/
+(define (charset-alias charset)
+   (case charset
+      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1
+		   ISO-8869-1
+		   WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
+       'ISO-8859-1)
+      (else
+       charset)))
+
+;*---------------------------------------------------------------------*/
 ;*    charset-convert ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    Convert a string from charset1 to charset2                       */
 ;*---------------------------------------------------------------------*/
 (define (charset-convert str charset1 charset2)
-   (if (eq? charset1 charset2)
-       str
-       (case charset1
-	  ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1
-		       WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
-	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1
-			   WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
-	       str)
-	      ((UTF-8)
-	       (iso-latin->utf8 str))
-	      ((UCS-2)
-	       (utf8-string->ucs2-string (iso-latin->utf8 str)))
-	      ((US-ASCII)
-	       (iso-8859-1->us-ascii str))
-	      (else
-	       str)))
-	  ((UTF-8)
-	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1
-			   WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
-	       (utf8->iso-latin str))
-	      ((UCS-2)
-	       (utf8-string->ucs2-string str))
-	      ((US-ASCII)
-	       (iso-8859-1->us-ascii! (utf8->iso-latin str)))
-	      (else
-	       str)))
-	  ((UCS-2)
-	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1
-			   WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
-	       (utf8->iso-latin! (ucs2-string->utf8-string str)))
-	      ((UTF-8)
-	       (ucs2-string->utf8-string str))
-	      ((US-ASCII)
-	       (iso-8859-1->us-ascii!
-		(utf8->iso-latin!
-		 (ucs2-string->utf8-string str))))
-	      (else
-	       str)))
-	  ((US-ASCII)
-	   (charset-convert (us-ascii->iso-latin str) 'ISO-LATIN-1 charset2))
-	  (else
-	   str))))
+   (let ((cset1 (charset-alias charset1))
+	 (cset2 (charset-alias charset2)))
+      (if (eq? cset1 cset2)
+	  str
+	  (case cset1
+	     ((ISO-8859-1)
+	      (case cset2
+		 ((UTF-8)
+		  (iso-latin->utf8 str))
+		 ((UCS-2)
+		  (utf8-string->ucs2-string (iso-latin->utf8 str)))
+		 ((US-ASCII)
+		  (iso-8859-1->us-ascii str))
+		 (else
+		  str)))
+	     ((UTF-8)
+	      (case cset2
+		 ((ISO-8859-1)
+		  (utf8->iso-latin str))
+		 ((UCS-2)
+		  (utf8-string->ucs2-string str))
+		 ((US-ASCII)
+		  (iso-8859-1->us-ascii! (utf8->iso-latin str)))
+		 (else
+		  str)))
+	     ((UCS-2)
+	      (case cset2
+		 ((ISO-8859-1)
+		  (utf8->iso-latin! (ucs2-string->utf8-string str)))
+		 ((UTF-8)
+		  (ucs2-string->utf8-string str))
+		 ((US-ASCII)
+		  (iso-8859-1->us-ascii!
+		   (utf8->iso-latin!
+		    (ucs2-string->utf8-string str))))
+		 (else
+		  str)))
+	     ((US-ASCII)
+	      (charset-convert (us-ascii->iso-latin str) 'ISO-LATIN-1 cset2))
+	     (else
+	      str)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    charset-converter ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (charset-converter charset1 charset2)
-   (if (eq? charset1 charset2)
-       (lambda (x) x)
-       (case charset1
-	  ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1
-		       WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
-	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1
-			   WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
-	       (lambda (x) x))
-	      ((UTF-8)
-	       iso-latin->utf8)
-	      ((UCS-2)
-	       (lambda (str)
-		  (utf8-string->ucs2-string (iso-latin->utf8 str))))
-	      ((US-ASCII)
-	       iso-8859-1->us-ascii)
-	      (else
-	       (lambda (x) x))))
-	  ((UTF-8)
-	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1
-			   WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
-	       utf8->iso-latin)
-	      ((UCS-2)
-	       (lambda (str)
-		  (utf8-string->ucs2-string str)))
-	      ((US-ASCII)
-	       (lambda (s)
-		  (iso-8859-1->us-ascii! (utf8->iso-latin s))))
-	      (else
-	       (lambda (x) x))))
-	  ((UCS-2)
-	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1
-			   WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
-	       (lambda (str)
-		  (utf8->iso-latin! (ucs2-string->utf8-string str))))
-	      ((UTF-8)
-	       ucs2-string->utf8-string)
-	      ((US-ASCII)
-	       (lambda (str)
-		  (iso-8859-1->us-ascii!
-		   (utf8->iso-latin! (ucs2-string->utf8-string str)))))
-	      (else
-	       (lambda (x) x))))
-	  ((US-ASCII)
-	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1
-			   WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
-	       (lambda (x) x))
-	      ((UTF-8)
-	       iso-latin->utf8)
-	      ((UCS-2)
-	       (lambda (str)
-		  (utf8-string->ucs2-string (iso-latin->utf8 str))))
-	      (else
-	       (lambda (x) x))))	  
-	  (else
-	   (lambda (x) x)))))
+   (let ((cset1 (charset-alias charset1))
+	 (cset2 (charset-alias charset2)))
+      (if (eq? cset1 cset2)
+	  (lambda (x) x)
+	  (case cset1
+	     ((ISO-8859-1)
+	      (case cset2
+		 ((UTF-8)
+		  iso-latin->utf8)
+		 ((UCS-2)
+		  (lambda (str)
+		     (utf8-string->ucs2-string (iso-latin->utf8 str))))
+		 ((US-ASCII)
+		  iso-8859-1->us-ascii)
+		 (else
+		  (lambda (x) x))))
+	     ((UTF-8)
+	      (case cset2
+		 ((ISO-8859-1)
+		  utf8->iso-latin)
+		 ((UCS-2)
+		  (lambda (str)
+		     (utf8-string->ucs2-string str)))
+		 ((US-ASCII)
+		  (lambda (s)
+		     (iso-8859-1->us-ascii! (utf8->iso-latin s))))
+		 (else
+		  (lambda (x) x))))
+	     ((UCS-2)
+	      (case cset2
+		 ((ISO-8859-1)
+		  (lambda (str)
+		     (utf8->iso-latin! (ucs2-string->utf8-string str))))
+		 ((UTF-8)
+		  ucs2-string->utf8-string)
+		 ((US-ASCII)
+		  (lambda (str)
+		     (iso-8859-1->us-ascii!
+		      (utf8->iso-latin! (ucs2-string->utf8-string str)))))
+		 (else
+		  (lambda (x) x))))
+	     ((US-ASCII)
+	      (case cset2
+		 ((ISO-8859-1)
+		  (lambda (x) x))
+		 ((UTF-8)
+		  iso-latin->utf8)
+		 ((UCS-2)
+		  (lambda (str)
+		     (utf8-string->ucs2-string (iso-latin->utf8 str))))
+		 (else
+		  (lambda (x) x))))	  
+	     (else
+	      (lambda (x) x))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    charset-converter! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (charset-converter! charset1 charset2)
-   (if (eq? charset1 charset2)
-       (lambda (x) x)
-       (case charset1
-	  ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1
-		       WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
-	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1
-			   WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
-	       (lambda (x) x))
-	      ((UTF-8)
-	       iso-latin->utf8!)
-	      ((UCS-2)
-	       (lambda (str)
-		  (utf8-string->ucs2-string (iso-latin->utf8 str))))
-	      ((US-ASCII)
-	       iso-8859-1->us-ascii!)
-	      (else
-	       (lambda (x) x))))
-	  ((UTF-8)
-	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1
-			   WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
-	       utf8->iso-latin!)
-	      ((UCS-2)
-	       (lambda (str)
-		  (utf8-string->ucs2-string str)))
-	      ((US-ASCII)
-	       (lambda (s)
-		  (iso-8859-1->us-ascii! (utf8->iso-latin! s))))
-	      (else
-	       (lambda (x) x))))
-	  ((UCS-2)
-	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1
-			   WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
-	       (lambda (str)
-		  (utf8->iso-latin! (ucs2-string->utf8-string str))))
-	      ((UTF-8)
-	       ucs2-string->utf8-string)
-	      ((US-ASCII)
-	       (lambda (str)
-		  (iso-8859-1->us-ascii!
-		   (utf8->iso-latin! (ucs2-string->utf8-string str)))))
-	      (else
-	       (lambda (x) x))))
-	  ((US-ASCII)
-	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1
-			   WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
-	       iso-8859-1->us-ascii!)
-	      ((UTF-8)
-	       (lambda (str)
-		  (iso-latin->utf8! (iso-8859-1->us-ascii! str))))
-	      ((UCS-2)
-	       (lambda (str)
-		  (utf8-string->ucs2-string
-		   (iso-latin->utf8!
-		    (iso-8859-1->us-ascii! str)))))
-	      (else
-	       (lambda (x) x))))	  
-	  (else
-	   (lambda (x) x)))))
+   (let ((cset1 (charset-alias charset1))
+	 (cset2 (charset-alias charset2)))
+      (if (eq? cset1 cset2)
+	  (lambda (x) x)
+	  (case cset1
+	     ((ISO-8859-1)
+	      (case cset2
+		 ((UTF-8)
+		  iso-latin->utf8!)
+		 ((UCS-2)
+		  (lambda (str)
+		     (utf8-string->ucs2-string (iso-latin->utf8 str))))
+		 ((US-ASCII)
+		  iso-8859-1->us-ascii!)
+		 (else
+		  (lambda (x) x))))
+	     ((UTF-8)
+	      (case cset2
+		 ((ISO-8859-1)
+		  utf8->iso-latin!)
+		 ((UCS-2)
+		  (lambda (str)
+		     (utf8-string->ucs2-string str)))
+		 ((US-ASCII)
+		  (lambda (s)
+		     (iso-8859-1->us-ascii! (utf8->iso-latin! s))))
+		 (else
+		  (lambda (x) x))))
+	     ((UCS-2)
+	      (case cset2
+		 ((ISO-8859-1)
+		  (lambda (str)
+		     (utf8->iso-latin! (ucs2-string->utf8-string str))))
+		 ((UTF-8)
+		  ucs2-string->utf8-string)
+		 ((US-ASCII)
+		  (lambda (str)
+		     (iso-8859-1->us-ascii!
+		      (utf8->iso-latin! (ucs2-string->utf8-string str)))))
+		 (else
+		  (lambda (x) x))))
+	     ((US-ASCII)
+	      (case cset2
+		 ((ISO-8859-1)
+		  iso-8859-1->us-ascii!)
+		 ((UTF-8)
+		  (lambda (str)
+		     (iso-latin->utf8! (iso-8859-1->us-ascii! str))))
+		 ((UCS-2)
+		  (lambda (str)
+		     (utf8-string->ucs2-string
+		      (iso-latin->utf8!
+		       (iso-8859-1->us-ascii! str)))))
+		 (else
+		  (lambda (x) x))))	  
+	     (else
+	      (lambda (x) x))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    count-crlf ...                                                   */

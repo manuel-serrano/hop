@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:29:19 2008                          */
-;*    Last change :  Fri Nov 21 19:42:17 2008 (serrano)                */
+;*    Last change :  Wed Nov 26 16:18:03 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    QUEUE scheduler                                                  */
@@ -25,11 +25,13 @@
 
    (export  (class queue-scheduler::scheduler
 	       (mutex::mutex read-only (default (make-mutex)))
+	       (condv::condvar read-only (default (make-condition-variable)))
 	       (nfree::int (default 0))
 	       (head::pair-nil (default '()))
+	       (qlength::int (default 0))
+	       (max-qlength::int (default 50))
 	       (tail::pair-nil (default '()))
-	       (free::pair-nil (default '()))
-	       (flist::pair-nil (default '())))))
+	       (free::pair-nil (default '())))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-init! ::queue-scheduler ...                            */
@@ -46,8 +48,8 @@
 ;*    scheduler-stat ::queue-scheduler ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-stat scd::queue-scheduler)
-   (with-access::queue-scheduler scd (size nfree head)
-      (format " (~a/~a, queue=~a)" (-fx size nfree) size (length head))))
+   (with-access::queue-scheduler scd (size nfree head qlength)
+      (format " (~a/~a, queue=~a)" (-fx size nfree) size qlength)))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-load ::queue-scheduler ...                             */
@@ -250,21 +252,14 @@
 ;*    This function assumes that the scheduler mutex is acquired.      */
 ;*    -------------------------------------------------------------    */
 ;*    !!! WARNING !!! WARNING !!! WARNING !!! WARNING !!! WARNING !!!  */
-;*    -------------------------------------------------------------    */
-;*    It is import that put-thread! and get-thread! avoiding           */
-;*    CONSing because this could raise a collection which could        */
-;*    introduce latency and prevent the scheduler from re-allocating   */
-;*    the same thread. This is the purpose of the FLIST variable.      */
 ;*---------------------------------------------------------------------*/
 (define (get-thread! scd::queue-scheduler)
    ;; this function assumes that scheduler mutex is already locked
-   (with-access::queue-scheduler scd (free nfree flist )
+   (with-access::queue-scheduler scd (free nfree)
       (when (pair? free)
 	 (let ((t (car free))
 	       (fl free))
 	    (set! free (cdr free))
-	    (set-cdr! fl flist)
-	    (set! flist fl)
 	    (set! nfree (-fx nfree 1))
 	    t))))
 
@@ -273,12 +268,8 @@
 ;*---------------------------------------------------------------------*/
 (define (put-thread! scd thread)
    ;; this function assumes that scheduler mutex is already locked
-   (with-access::queue-scheduler scd (free nfree flist)
-      (let ((nfree flist))
-	 (set! flist (cdr flist))
-	 (set-car! nfree thread)
-	 (set-cdr! nfree free)
-	 (set! free nfree))
+   (with-access::queue-scheduler scd (free nfree)
+      (set! free (cons thread free))
       (set! nfree (+fx nfree 1))))
 
 ;*---------------------------------------------------------------------*/
@@ -286,35 +277,37 @@
 ;*---------------------------------------------------------------------*/
 (define (queue-thread-body scd t)
    (with-access::queue-scheduler scd (mutex)
-      (let loop ()
+
+      (define (purge-scheduler-task!)
+	 (let loop ()
+	    (mutex-lock! mutex)
+	    (let ((oproc (queue-pop! scd)))
+	       (mutex-unlock! mutex)
+	       (when oproc
+		  (oproc scd t)
+		  (loop)))))
+	 
+      (define (run)
 	 (with-handler
 	    (lambda (e)
 	       (scheduler-error-handler e t))
 	    (let ((tmutex (hopthread-mutex t))
 		  (tcondv (hopthread-condv t)))
-	       (define (loop)
+	       (let loop ()
+		  ;; purge all the pending task
+		  (purge-scheduler-task!)
+		  ;; go into the free list
+		  (mutex-lock! mutex)
+		  (put-thread! scd t)
+		  (mutex-unlock! mutex)
+		  ;; wait to be awaken
 		  (condition-variable-wait! tcondv tmutex)
-		  (let liip ((proc (hopthread-proc t)))
-		     ;; execute the user task
-		     (proc scd t)
-		     ;; check if there is a new task
-		     (begin
-			(mutex-lock! mutex)
-			(let ((nproc (queue-pop! scd)))
-			   (if nproc
-			       ;; there is a waiting task, execute it
-			       (begin
-				  (mutex-unlock! mutex)
-				  (liip nproc))
-			       ;; nothing to do, go to sleep waiting for a task
-			       (begin
-				  (put-thread! scd t)
-				  (mutex-unlock! mutex)
-				  (loop)))))))
-	       (with-lock tmutex loop)))
-	 (mutex-lock! mutex)
-	 (put-thread! scd t)
-	 (mutex-unlock! mutex)
+		  ;; execute the user task
+		  ((hopthread-proc t) scd t)
+		  (loop)))))
+      
+      (let loop ()
+	 (with-lock (hopthread-mutex t) run)
 	 (loop))))
    
 ;*---------------------------------------------------------------------*/
@@ -343,7 +336,9 @@
 ;*---------------------------------------------------------------------*/
 (define (queue-push! scd::queue-scheduler entry)
    ;; this function assumes that scheduler mutex is already locked
-   (with-access::queue-scheduler scd (head tail)
+   (with-access::queue-scheduler scd (head tail qlength max-qlength condv)
+      (set! qlength (+fx qlength 1))
+      (when (=fx qlength max-qlength) (condition-variable-signal! condv))
       (if (null? head)
 	  (begin
 	     (set! head (cons entry '()))
@@ -357,11 +352,13 @@
 ;*---------------------------------------------------------------------*/
 (define (queue-pop! scd::queue-scheduler)
    ;; this function assumes that scheduler mutex is already locked
-   (with-access::queue-scheduler scd (head tail)
+   (with-access::queue-scheduler scd (head tail qlength max-qlength condv)
+      (when (=fx qlength max-qlength) (condition-variable-signal! condv))
       (when (pair? head)
 	 (let ((task (car head)))
-	    (when (eq? head tail) (set! tail '()))
+	    (set! qlength (-fx qlength 1))
 	    (set! head (cdr head))
+	    (when (null? head) (set! tail '()))
 	    task))))
 
 ;*---------------------------------------------------------------------*/

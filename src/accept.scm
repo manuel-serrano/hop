@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Fri Nov 21 11:08:16 2008 (serrano)                */
+;*    Last change :  Wed Nov 26 16:18:15 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -108,6 +108,11 @@
    (let* ((acclen (min 50 (/fx (hop-max-threads) 2)))
 	  (socks (make-vector acclen))) 
       (let loop ((id 1))
+	 (with-access::queue-scheduler scd (mutex condv qlength max-qlength)
+	    (mutex-lock! mutex)
+	    (when (>fx qlength max-qlength)
+	       (condition-variable-wait! condv mutex))
+	    (mutex-unlock! mutex))
 	 (let* ((in-buffers (allocate-vector acclen (make-string 512)))
 		(out-buffers (allocate-vector acclen (make-string 1024)))
 		(n (socket-accept-many serv socks
