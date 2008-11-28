@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 10 06:46:43 2007                          */
-;*    Last change :  Wed Nov 26 07:33:02 2008 (serrano)                */
+;*    Last change :  Fri Nov 28 14:25:32 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with charset.                              */
@@ -18,14 +18,24 @@
 	   (charset-converter!::procedure ::symbol ::symbol)))
 
 ;*---------------------------------------------------------------------*/
+;*    compatibility kit                                                */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   ((or bigloo3.1a bigloo3.1b)
+    (define (utf8->cp1252 x) (utf8->iso-latin x))
+    (define (utf8->cp1252! x) (utf8->iso-latin! x))
+    (define (cp1252->utf8 x) (iso-latin->utf8 x))
+    (define (cp1252->utf8! x) (iso-latin->utf8! x))))
+
+;*---------------------------------------------------------------------*/
 ;*    charset-alias ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (charset-alias charset)
    (case charset
-      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1
-		   ISO-8869-1
-		   WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
+      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1 ISO-8869-1)
        'ISO-8859-1)
+      ((WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
+       'CP1252)
       (else
        charset)))
 
@@ -50,10 +60,22 @@
 		  (iso-8859-1->us-ascii str))
 		 (else
 		  str)))
+	     ((CP1252)
+	      (case cset2
+		 ((UTF-8)
+		  (cp1252->utf8 str))
+		 ((UCS-2)
+		  (utf8-string->ucs2-string (cp1252->utf8 str)))
+		 ((US-ASCII)
+		  (iso-8859-1->us-ascii str))
+		 (else
+		  str)))
 	     ((UTF-8)
 	      (case cset2
 		 ((ISO-8859-1)
 		  (utf8->iso-latin str))
+		 ((CP1252)
+		  (utf8->cp1252 str))
 		 ((UCS-2)
 		  (utf8-string->ucs2-string str))
 		 ((US-ASCII)
@@ -64,6 +86,8 @@
 	      (case cset2
 		 ((ISO-8859-1)
 		  (utf8->iso-latin! (ucs2-string->utf8-string str)))
+		 ((CP1252)
+		  (utf8->cp1252! (ucs2-string->utf8-string str)))
 		 ((UTF-8)
 		  (ucs2-string->utf8-string str))
 		 ((US-ASCII)
@@ -97,10 +121,23 @@
 		  iso-8859-1->us-ascii)
 		 (else
 		  (lambda (x) x))))
+	     ((CP1252)
+	      (case cset2
+		 ((UTF-8)
+		  cp1252->utf8)
+		 ((UCS-2)
+		  (lambda (str)
+		     (utf8-string->ucs2-string (cp1252->utf8 str))))
+		 ((US-ASCII)
+		  iso-8859-1->us-ascii)
+		 (else
+		  (lambda (x) x))))
 	     ((UTF-8)
 	      (case cset2
 		 ((ISO-8859-1)
 		  utf8->iso-latin)
+		 ((CP1252)
+		  utf8->cp1252)
 		 ((UCS-2)
 		  (lambda (str)
 		     (utf8-string->ucs2-string str)))
@@ -114,6 +151,9 @@
 		 ((ISO-8859-1)
 		  (lambda (str)
 		     (utf8->iso-latin! (ucs2-string->utf8-string str))))
+		 ((CP1252)
+		  (lambda (str)
+		     (utf8->cp1252! (ucs2-string->utf8-string str))))
 		 ((UTF-8)
 		  ucs2-string->utf8-string)
 		 ((US-ASCII)
@@ -124,7 +164,7 @@
 		  (lambda (x) x))))
 	     ((US-ASCII)
 	      (case cset2
-		 ((ISO-8859-1)
+		 ((ISO-8859-1 CP1252)
 		  (lambda (x) x))
 		 ((UTF-8)
 		  iso-latin->utf8)
@@ -156,10 +196,23 @@
 		  iso-8859-1->us-ascii!)
 		 (else
 		  (lambda (x) x))))
+	     ((CP1252)
+	      (case cset2
+		 ((UTF-8)
+		  cp1252->utf8!)
+		 ((UCS-2)
+		  (lambda (str)
+		     (utf8-string->ucs2-string (cp1252->utf8 str))))
+		 ((US-ASCII)
+		  iso-8859-1->us-ascii!)
+		 (else
+		  (lambda (x) x))))
 	     ((UTF-8)
 	      (case cset2
 		 ((ISO-8859-1)
 		  utf8->iso-latin!)
+		 ((CP1252)
+		  utf8->cp1252!)
 		 ((UCS-2)
 		  (lambda (str)
 		     (utf8-string->ucs2-string str)))
@@ -173,6 +226,9 @@
 		 ((ISO-8859-1)
 		  (lambda (str)
 		     (utf8->iso-latin! (ucs2-string->utf8-string str))))
+		 ((CP1252)
+		  (lambda (str)
+		     (utf8->cp1252! (ucs2-string->utf8-string str))))
 		 ((UTF-8)
 		  ucs2-string->utf8-string)
 		 ((US-ASCII)
@@ -183,7 +239,7 @@
 		  (lambda (x) x))))
 	     ((US-ASCII)
 	      (case cset2
-		 ((ISO-8859-1)
+		 ((ISO-8859-1 CP1252)
 		  iso-8859-1->us-ascii!)
 		 ((UTF-8)
 		  (lambda (str)

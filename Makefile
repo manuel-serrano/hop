@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Nov 25 08:04:40 2008 (serrano)                */
+#*    Last change :  Fri Nov 28 11:12:35 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -112,21 +112,26 @@ install-quick: hop-dirs install-init
 	(cd etc && $(MAKE) install)
 
 install-init: hop-dirs
-	cp $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init && \
+	$(INSTALL) $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init;
-	cp $(BUILDLIBDIR)/scheme2js.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/scheme2js.init && \
+	$(INSTALL) $(BUILDLIBDIR)/scheme2js.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/scheme2js.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/scheme2js.init;
-	cp $(BUILDLIBDIR)/hopscheme.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init && \
+	$(INSTALL) $(BUILDLIBDIR)/hopscheme.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init;
 
 hop-dirs:
 	mkdir -p $(DESTDIR)$(HOPBINDIR)
 	mkdir -p $(DESTDIR)$(HOPLIBDIR)
-	mkdir -p $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR)
-	mkdir -p $(DESTDIR)$(HOPWEBLETSDIR)
-	mkdir -p $(DESTDIR)$(HOPCONTRIBSDIR)
 	mkdir -p $(DESTDIR)$(HOPETCDIR)
+	mkdir -p $(DESTDIR)$(HOPLIBDIR)/hop \
+         && chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/hop
+	mkdir -p $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \
+         && chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)
+	mkdir -p $(DESTDIR)$(HOPWEBLETSDIR) \
+	 && chmod $(BMASK) $(DESTDIR)$(HOPWEBLETSDIR)
+	mkdir -p $(DESTDIR)$(HOPCONTRIBSDIR) \
+	 && chmod $(BMASK) $(DESTDIR)$(HOPCONTRIBSDIR) 
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */

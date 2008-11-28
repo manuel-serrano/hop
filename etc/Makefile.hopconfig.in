@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Thu Oct 23 09:43:09 2008 (serrano)                */
+#*    Last change :  Fri Nov 28 10:40:12 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -36,6 +36,7 @@ FLASHCC		= @FLASHCC@
 GZIP		= @GZIP@
 
 BMASK		= 755
+INSTALL		= @INSTALL@
 
 #*---------------------------------------------------------------------*/
 #*    Compilation flags                                                */

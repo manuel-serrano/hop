@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Wed Nov 19 13:16:33 2008 (serrano)                */
+#*    Last change :  Fri Nov 28 11:08:22 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -180,12 +180,13 @@ install: install-$(BACKEND)
 
 install-native:
 	mkdir -p $(DESTDIR)$(HOPBINDIR)
-	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)/hop-$(HOPRELEASE)
+	$(INSTALL) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)/hop-$(HOPRELEASE)
+	chmod $(BMASK) $(DESTDIR)$(HOPBINDIR)/hop-$(HOPRELEASE)
 	(cd $(DESTDIR)$(HOPBINDIR) && $(RM) hop && ln hop-$(HOPRELEASE) hop)
 
 install-jvm:
 	mkdir -p $(DESTDIR)$(HOPBINDIR)
-	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC).jar $(DESTDIR)$(HOPBINDIR)
+	$(INSTALL) $(BUILDBINDIR)/$(EXEC).jar $(DESTDIR)$(HOPBINDIR)
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */

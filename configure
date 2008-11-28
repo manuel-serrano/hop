@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Nov 25 08:01:17 2008 (serrano)                */
+#*    Last change :  Fri Nov 28 11:04:08 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -26,6 +26,7 @@ fflags="-main -version 9 -cp std8 -swf"
 backend=native
 unzip=unzip
 gzip="gzip -9"
+install="install -m a+r,u+r"
 jar="jar cfm"
 
 debug=no
@@ -224,6 +225,9 @@ while : ; do
     --gzip=*)
       gzip="`echo $1 | sed 's/^[^=]*=//'`";;
 
+    --install=*)
+      install="`echo $1 | sed 's/^[^=]*=//'`";;
+
     --enable-locevent)
       locevent=true;;
 
@@ -251,13 +255,14 @@ while : ; do
       echo "   --mimetypes=file...... default mime.types file" >&2;
       echo "   --jsmimetype=type..... default 'text/javascript'" >&2;
       echo "   --cssmimetype=type.... default 'text/css'" >&2;
-      echo "   --bigloo=comp......... The Bigloo compiler" >&2;
+      echo "   --bigloo=comp......... The Bigloo compiler ($bigloo)" >&2;
       echo "   --backend=backend..... The execution platform [native,jvm,dotnet]" >&2;
       echo "   --cigloo=comp......... The Cigloo compiler" >&2;
       echo "   --afile=afile......... The Bigloo afile tool" >&2;
       echo "   --btags=btags......... The Bigloo btags tool" >&2;
       echo "   --bdepend=bdepend..... The Bigloo dependence tool" >&2;
-      echo "   --gzip................ The GNU zipper" >&2;
+      echo "   --gzip................ The GNU zipper ($gzip)" >&2;
+      echo "   --install............. The installer ($install)" >&2;
       echo "   --cc=cc............... The C compiler" >&2;
       echo "   --bcflags=args........ The compilation options" >&2;
       echo "   --bcflagsdev=args..... The devel Bigloo options" >&2;
@@ -502,6 +507,7 @@ cat $mkmf.in \
           -e "s|@FLASHCC@|$flashcc|" \
           -e "s|@UNZIP@|$unzip|" \
           -e "s|@GZIP@|$gzip|" \
+          -e "s|@INSTALL@|$install|" \
           -e "s|@JAR@|$jar|" \
           -e "s|@BCFLAGS@|$bcflags|" \
           -e "s|@BCFLAGSRTS@|$bcflagsrts|" \
@@ -700,3 +706,4 @@ echo "  default JavaScript mime type.......... $jsmimetype"
 echo "  default CSS mime type................. $cssmimetype"
 echo "  multi threading....................... $threads"
 echo "  https support......................... $ssl"
+

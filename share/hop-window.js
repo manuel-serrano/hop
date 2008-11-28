@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Wed Nov 12 09:45:00 2008 (serrano)                */
+/*    Last change :  Fri Nov 28 10:06:31 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -333,7 +333,7 @@ function hop_iwindow_drag( event, win ) {
       node_style_set( win.el_win, "background", obg );
 
       /* clip the window */
-      hop_iwindow_clip( win );
+      if( win.clip ) hop_iwindow_clip( win );
       
       /* user event */
       if( win.onmove ) hop_iwindow_invoke_listener( win.onmove, evt );
@@ -555,15 +555,8 @@ function make_hop_iwindow( id, klass, parent ) {
 /*    hop_iwindow_src_set ...                                          */
 /*---------------------------------------------------------------------*/
 function hop_iwindow_src_set( win, src, width, height ) {
-   if( hop_is_html_element( src ) ) {
-      var c = win.el_content.childNodes;
-      var i = c.length;
-
-      while( i > 0 ) {
-	 i--;
-	 win.el_content.removeChild( c[ i ] );
-      }
-      win.el_content.appendChild( src );
+   if( hop_is_html_element( src ) || sc_isPair( src ) ) {
+      dom_set_child_node( win.el_content, src );
    } else {
       var cb = function( html ) {
 	 if( html ) {
@@ -594,13 +587,12 @@ function hop_iwindow_src_set( win, src, width, height ) {
 	 }
       }
    }
-
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_iwindow_open ...                                             */
 /*---------------------------------------------------------------------*/
-function hop_iwindow_open( id, src, title, klass, width, height, x, y, bg, resizable, parent ) {
+function hop_iwindow_open( id, src, title, klass, width, height, x, y, bg, resizable, parent, clip ) {
    var win = document.getElementById( id );
    var isnew = false;
 
@@ -640,7 +632,7 @@ function hop_iwindow_open( id, src, title, klass, width, height, x, y, bg, resiz
    win.resizable = resizable;
    node_style_set( win.el_content, "display", "block" );
    
-   win.clip = true;
+   win.clip = (parent == document.body ? false : clip);
    if( win.clip ) {
       hop_iwindow_clip( win );
       win.hop_update = function() { hop_iwindow_clip( this ) };
@@ -669,6 +661,7 @@ var Kbg = sc_jsstring2keyword( "bg" );
 var Kresizable = sc_jsstring2keyword( "resizable" );
 var Kprop = sc_jsstring2keyword( "prop" );
 var Kfullscreen = sc_jsstring2keyword( "fullscreen" );
+var Kclip = sc_jsstring2keyword( "clip" );
 
 /*---------------------------------------------------------------------*/
 /*    hop_window_open ...                                              */
@@ -680,6 +673,7 @@ function hop_window_open() {
    var prop = "";
    var i = 0, l = arguments.length;
    var body = false;
+   var clip = true;
 
    function prop_to_string( val ) {
       if( (val instanceof Boolean) || (typeof val == "boolean") )
@@ -730,7 +724,7 @@ function hop_window_open() {
    function inner_window_open() {
       if( !id ) id = "hop-window" + hop_iwindow_count++;
       
-      var win = hop_iwindow_open( id, src ? src : body, title, klass, width, height, left, top, background, resizable, parent );
+      var win = hop_iwindow_open( id, src ? src : body, title, klass, width, height, left, top, background, resizable, parent, clip );
       win.close = function() { return hop_iwindow_close( win ); };
       win.iconify = function() { return hop_iwindow_iconify( win ); };
       win.maximize = function() { return hop_iwindow_maximize( win ); };
@@ -787,9 +781,13 @@ function hop_window_open() {
 					  if( k === Kprop ) {
 					     prop += arguments[ i++ ];
 					  } else {
-					     prop +=
-						"," + sc_keyword2jsstring(k) + "=" + 
-						prop_to_string(arguments[i++]);
+					     if( k === Kclip ) {
+						clip = arguments[ i++ ];
+					     } else {
+						prop +=
+						   "," + sc_keyword2jsstring(k) + "=" + 
+						   prop_to_string(arguments[i++]);
+					     }
 					  }
 				       }
 				    }
@@ -831,6 +829,28 @@ function hop_window_open() {
    } else {
       return inner_window_open();
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_tab_open ...                                                 */
+/*---------------------------------------------------------------------*/
+/*** META ((export tab-open)) */
+function hop_tab_open() {
+   var src;
+   var i = 0, l = arguments.length;
+   
+   while( i < l ) {
+      var k = arguments[ i++ ];
+
+      if( sc_isKeyword( k ) ) {
+	 if( k === Ksrc ) {
+	    src = arguments[ i++ ];
+	    if( typeof src == "function" ) src = src();
+	 }
+      }
+   }
+   
+   return window.open( src, "_blank" );
 }
 
 /*---------------------------------------------------------------------*/
@@ -914,6 +934,7 @@ function hop_window_x_set( win, x ) {
       else
 	 node_style_set( win, "left", x );
    }
+   return x;
 }
 
 /*---------------------------------------------------------------------*/
@@ -944,6 +965,8 @@ function hop_window_y_set( win, y ) {
       else
 	 node_style_set( win, "top", y );
    }
+
+   return y;
 }
 
 /*---------------------------------------------------------------------*/
@@ -1031,6 +1054,7 @@ function hop_window_title_set( win, title ) {
       try {
 	 return win.name = title;
       } catch( _ ) {
+	 return false;
       }
    } else {
       return hop_innerHTML_set( win.el_title, title );
@@ -1041,7 +1065,7 @@ function hop_window_title_set( win, title ) {
 /*    hop_window_style_get ...                                         */
 /*---------------------------------------------------------------------*/
 /*** META ((export window-style-get)) */
-function hop_window_style_set( win, prop ) {
+function hop_window_style_get( win, prop ) {
    return node_style_get( win.el_win, prop );
 }
 

@@ -11,6 +11,7 @@ to display partial documents.
 
 === Client ===
 
+  (tab-open arg ...)
   (window-open arg ...)
   (window-close [win])
   (window-raise win)
@@ -41,10 +42,20 @@ must include in their header, the following statement:
 
 == Examples ==
 
-<example>window</example>
+<example>window, tab</example>
 
 == Client Definitions ==
 <client>
+
+=== ++(tab-open src)++ ===
+<procedure> tab-open
+<arguments>
+^  arguments  ^   type    ^   description                                   ^
+| :src         |   obj     | the content material.                          |
+</arguments>
+
+This function creates a new browser tab.
+</procedure>
 
 === ++(window-open :id :src :parent :title :class ...)++ ===
 <procedure> window-open
@@ -68,6 +79,7 @@ must include in their header, the following statement:
 | :resizable  |  bool     | enables resize.                                 |
 | :titlebar   |  bool     | shows a title bar.                              |
 | :location   |  bool     | shows location information.                     |
+| :clip       |  bool     | clip inner windows.                             |
 | :prop       |  string   | a window property.                              |
 </arguments>
 
