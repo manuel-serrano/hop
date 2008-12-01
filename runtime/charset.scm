@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 10 06:46:43 2007                          */
-;*    Last change :  Fri Nov 28 14:25:32 2008 (serrano)                */
+;*    Last change :  Mon Dec  1 10:07:45 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with charset.                              */
@@ -14,6 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_charset
    (export (charset-convert ::obj ::symbol ::symbol)
+	   (charset-convert! ::obj ::symbol ::symbol)
 	   (charset-converter::procedure ::symbol ::symbol)
 	   (charset-converter!::procedure ::symbol ::symbol)))
 
@@ -97,7 +98,69 @@
 		 (else
 		  str)))
 	     ((US-ASCII)
-	      (charset-convert (us-ascii->iso-latin str) 'ISO-LATIN-1 cset2))
+	      (charset-convert! (us-ascii->iso-latin str) 'ISO-LATIN-1 cset2))
+	     (else
+	      str)))))
+
+;*---------------------------------------------------------------------*/
+;*    charset-convert! ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Convert a string from charset1 to charset2                       */
+;*---------------------------------------------------------------------*/
+(define (charset-convert! str charset1 charset2)
+   (let ((cset1 (charset-alias charset1))
+	 (cset2 (charset-alias charset2)))
+      (if (eq? cset1 cset2)
+	  str
+	  (case cset1
+	     ((ISO-8859-1)
+	      (case cset2
+		 ((UTF-8)
+		  (iso-latin->utf8! str))
+		 ((UCS-2)
+		  (utf8-string->ucs2-string (iso-latin->utf8! str)))
+		 ((US-ASCII)
+		  (iso-8859-1->us-ascii! str))
+		 (else
+		  str)))
+	     ((CP1252)
+	      (case cset2
+		 ((UTF-8)
+		  (cp1252->utf8! str))
+		 ((UCS-2)
+		  (utf8-string->ucs2-string (cp1252->utf8! str)))
+		 ((US-ASCII)
+		  (iso-8859-1->us-ascii! str))
+		 (else
+		  str)))
+	     ((UTF-8)
+	      (case cset2
+		 ((ISO-8859-1)
+		  (utf8->iso-latin! str))
+		 ((CP1252)
+		  (utf8->cp1252! str))
+		 ((UCS-2)
+		  (utf8-string->ucs2-string str))
+		 ((US-ASCII)
+		  (iso-8859-1->us-ascii! (utf8->iso-latin! str)))
+		 (else
+		  str)))
+	     ((UCS-2)
+	      (case cset2
+		 ((ISO-8859-1)
+		  (utf8->iso-latin! (ucs2-string->utf8-string str)))
+		 ((CP1252)
+		  (utf8->cp1252! (ucs2-string->utf8-string str)))
+		 ((UTF-8)
+		  (ucs2-string->utf8-string str))
+		 ((US-ASCII)
+		  (iso-8859-1->us-ascii!
+		   (utf8->iso-latin!
+		    (ucs2-string->utf8-string str))))
+		 (else
+		  str)))
+	     ((US-ASCII)
+	      (charset-convert! (us-ascii->iso-latin! str) 'ISO-LATIN-1 cset2))
 	     (else
 	      str)))))
 

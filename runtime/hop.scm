@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Oct 24 10:47:54 2008 (serrano)                */
+;*    Last change :  Sat Nov 29 19:16:10 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -216,7 +216,7 @@
 		((application/bigloo)
 		 (success (string->obj (read p))))
 		(else
-		 (if (eq? ctype (hop-json-mime-type))
+		 (if (eq? ctype (hop-json-mime-type-symbol))
 		     (success (json->hop p))  
 		     (success (read-string p)))))))
 	 ((201 204 304)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Wed Nov 12 08:39:52 2008 (serrano)                */
+;*    Last change :  Sat Nov 29 18:58:22 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -159,7 +159,7 @@
        (with-input-from-string val read))
       (else
        (let ((v (with-input-from-string (string-append "(" val ")") read)))
-	  (if (eq? type '|(list string)|)
+	  (if (or (eq? type '|(list string)|) (eq? type '|(list path)|))
 	      ;; just a hack to avoid usual error
 	      (map (lambda (s)
 		      (cond

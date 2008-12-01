@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Nov 10 14:42:36 2008 (serrano)                */
+;*    Last change :  Sat Nov 29 19:17:01 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -127,6 +127,7 @@
 	    (hop-default-mime-type-set! ::bstring)
 
 	    (hop-json-mime-type::bstring)
+	    (hop-json-mime-type-symbol::symbol)
 	    (hop-bigloo-mime-type::bstring)
 
 	    (hop-authorize-service-hook::procedure)
@@ -705,7 +706,13 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-json-mime-type
    ;;"application/json"
-   "application/x-javascript")
+   "application/x-javascript"
+   (lambda (v)
+      (hop-json-mime-type-symbol-set! (string->symbol v))
+      v))
+
+(define-parameter hop-json-mime-type-symbol
+   'application/x-javascript)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-bigloo-mime-type ...                                         */
