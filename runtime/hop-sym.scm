@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-sym.scm                     */
+;*    serrano/prgm/project/hop/1.10.x/runtime/hop-sym.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 27 09:39:08 2006                          */
-;*    Last change :  Mon Nov 27 10:53:00 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Tue Dec  2 09:18:49 2008 (serrano)                */
+;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML symbols (special characters).                               */
 ;*=====================================================================*/
@@ -21,6 +21,8 @@
 ;*    *symbol-table* ...                                               */
 ;*---------------------------------------------------------------------*/
 (define *symbol-table*
+   ;; a complete encoding can be found at:
+   ;; http://theorem.ca/~mvcorks/cgi-bin/unicode.pl.cgi?start=2190&end=21FF
    (let ((t (make-hashtable)))
       (for-each (lambda (e)
 		   (hashtable-put! t (car e) (cadr e)))
@@ -167,17 +169,26 @@
 		  ("piv" "&#982;")
 		  ;; punctuation
 		  ("bullet" "&#8226;")
+		  ("tbullet" "&#x2023;")
+		  ("Tbullet" "&#x25B6;")
 		  ("ellipsis" "&#8230;")
 		  ("weierp" "&#8472;")
 		  ("image" "&#8465;")
 		  ("real" "&#8476;")
 		  ("tm" "&#8482;")
 		  ("alef" "&#8501;")
+		  ;; arrows (U+2190 to U+21FF)
 		  ("<-" "&#8592;")
 		  ("<--" "&#8592;")
 		  ("uparrow" "&#8593;")
 		  ("->" "&#8594;")
+		  ("->>" "&#x21A0;")
+		  (">->" "&#x21A3;")
 		  ("-->" "&#8594;")
+		  ("|->" "&#x21A6;")
+		  ("`->" "&#x21AA;")
+		  ("->|" "&#x21E5;")
+		  ("...>" "&#x21E2;")
 		  ("downarrow" "&#8595;")
 		  ("<->" "&#8596;")
 		  ("<-->" "&#8596;")
@@ -187,6 +198,8 @@
 		  ("Uparrow" "&#8657;")
 		  ("=>" "&#8658;")
 		  ("==>" "&#8658;")
+		  ("|=>" "&#x21F0;")
+		  (":=>" "&#x21E8;")
 		  ("Downarrow" "&#8659;")
 		  ("<=>" "&#8660;")
 		  ("<==>" "&#8660;")
