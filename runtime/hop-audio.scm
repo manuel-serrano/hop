@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Oct 14 02:30:18 2008 (serrano)                */
+;*    Last change :  Wed Dec  3 19:23:30 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -670,13 +670,11 @@
 ;*    hop-audio-player-close ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-generic (hop-audio-player-close audio::hop-audio-player)
-   (tprint "hop-audio-player-close...")
    (with-access::hop-audio-player audio (%mutex %thread %status engine)
       (with-lock %mutex
 	 (lambda ()
 	    (set! %status 'close)
 	    (when (thread? %thread)
-	       (music-event-loop-abort! engine)
 	       (music-close engine)
 	       (set! %thread #f)
 	       (mutex-lock! debug-mutex)

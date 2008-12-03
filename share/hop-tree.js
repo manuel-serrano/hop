@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Mon Oct 13 15:29:18 2008 (serrano)                */
+/*    Last change :  Wed Dec  3 16:51:11 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -222,8 +222,6 @@ function hop_push_vlines( par, row, level ) {
 
       if( par && par.visible ) {
 	 var img = document.createElement( "img" );
-
-	 td.setAttribute( "nowrap", "nowrap" );
 
 	 img.src = ((par && !par.last) ? par.iconvline : par.iconempty);
 	 img.className = "hop-tree";
@@ -493,7 +491,6 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    /* the plus/minus icon */
    var td1 = document.createElement( "td" );
    td1.className = "hop-tree";
-   td1.setAttribute( "nowrap", "nowrap" );
    
    var join = document.createElement( "img" );
    join.className = "hop-tree-openclose";
@@ -519,7 +516,6 @@ function hop_make_tree( parent, id, visible, level, proc, title,
       }
    
       td2.className = "hop-tree";
-      td2.setAttribute( "nowrap", "nowrap" );
       td2.onclick = function( e ) {
 	 hop_tree_row_toggle_selected( e == undefined ? event : e, tree, row );
       }
@@ -530,7 +526,6 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    /* the title */
    var td3 = document.createElement( "td" );
    td3.className = "hop-tree-title";
-   td3.setAttribute( "nowrap", "nowrap" );
    td3.onclick = function( e ) {
       hop_tree_row_toggle_selected( e == undefined ? event : e, tree, row );
    }
@@ -663,7 +658,6 @@ function hop_make_tree_leaf( tree, klass, content, value, icon, iconerr ) {
    /* space */
    var td1 = document.createElement( "td" );
    td1.className = "hop-tree";
-   td1.setAttribute( "nowrap", "nowrap" );
    
    var join = document.createElement( "img" );
    join.className = "hop-tree";

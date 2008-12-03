@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Nov 25 16:22:36 2008 (serrano)                */
+/*    Last change :  Wed Dec  3 15:43:03 2008 (serrano)                */
 /*    Copyright   :  2004-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -115,14 +115,15 @@ function hop_default_failure( xhr ) {
       
    if( !div ) {
       var w = (hop_current_window_width() / 8) + "px";
-      var h = ((hop_current_window_height() / 4) + 50) + "px";
+      var ch = hop_current_window_height();
+      var t = (ch > 800 ? "50px" : "10px");
 
       div = document.createElement( "div" );
       div.id = "hop_default_failure";
       div.align = "center";
       node_style_set( div, "position", "fixed" );
-      node_style_set( div, "top",  "50px" );
-      node_style_set( div, "bottom", h );
+      node_style_set( div, "top",  t );
+      node_style_set( div, "bottom", t );
       node_style_set( div, "left", w );
       node_style_set( div, "right", w );
       node_style_set( div, "text-align", "center" );
