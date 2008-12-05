@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Wed Nov 19 09:40:02 2008 (serrano)                */
+;*    Last change :  Fri Dec  5 17:25:09 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -277,11 +277,11 @@
 ;*    request.                                                         */
 ;*---------------------------------------------------------------------*/
 (define (stage-response scd thread id req)
-   (hopthread-request-set! thread req)
+   (current-request-set! thread req)
    (hop-verb 3 (hop-color id id " RESPONSE") (format " ~a" thread) "\n")
    (with-stage-handler
       response-error-handler (scd req)
-      (let ((resp (with-time (request->response req) id "RESPONSE")))
+      (let ((resp (with-time (request->response req thread) id "RESPONSE")))
 	 (evmeaning-reset-error!)
 	 (debug-thread-info-set! thread
 				 (format "~a ~a://~a:~a~a... -> ~a"
@@ -329,7 +329,7 @@
 ;*    stage-answer ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (stage-answer scd thread id req resp)
-   (hopthread-request-set! thread req)
+   (current-request-set! thread req)
    ;; log
    (hop-verb 3 (hop-color req req " EXEC")
 	     " load=" (scheduler-load scd)

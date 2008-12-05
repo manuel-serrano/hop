@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sat Nov 29 19:16:10 2008 (serrano)                */
+;*    Last change :  Fri Dec  5 17:20:23 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -42,7 +42,7 @@
 	    (inline current-request::obj)
 	    (inline current-request-set! ::thread ::obj)
 	    (request-get::obj ::symbol)
-	    (request->response::%http-response ::http-request)
+	    (request->response::%http-response ::http-request ::obj)
 	    (with-url ::bstring ::obj #!key fail (header '()) (timeout 0))
 	    (with-hop-remote path success failure
 			     #!key
@@ -54,7 +54,7 @@
 			     (authorization #f)
 			     (anim #f))
 	    (generic with-hop-local obj proc fail)
-	    (hop-get-file::obj ::bstring)))
+	    (hop-get-file::obj ::bstring ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *current-request* ...                                            */
@@ -124,7 +124,7 @@
 ;*    background. Because of this assumption, no lock is needed in     */
 ;*    this function.                                                   */
 ;*---------------------------------------------------------------------*/
-(define (request->response req::http-request)
+(define (request->response req::http-request thread)
    (let loop ((m req)
 	      (filters (hop-filters)))
       (if (null? filters)
@@ -150,12 +150,15 @@
 		    (hop-request-hook m r))))
 	  (let ((n ((cdar filters) m)))
 	     (cond
+		((eq? n m)
+		 (loop m (cdr filters)))
 		((eq? n 'hop-resume)
 		 (loop m (hop-filters)))
 		((%http-response? n)
 		 (let ((r (hop-run-hook (hop-http-response-local-hooks) m n)))
 		    (hop-request-hook m r)))
 		((http-request? n)
+		 (current-request-set! thread n)
 		 (loop n (cdr filters)))
 		(else
 		 (loop m (cdr filters))))))))
@@ -518,7 +521,7 @@
 ;*    :inline option of HEAD, LINK, and SCRIPT markups. Since version  */
 ;*    1.9.0, it is only used in the SCRIPT markup.                     */
 ;*---------------------------------------------------------------------*/
-(define (hop-get-file path)
+(define (hop-get-file path thread)
    (let* ((reqi (current-request))
 	  (req (instantiate::http-server-request
 		  (localclientp #t)
@@ -526,7 +529,7 @@
 			    (http-request-user reqi)
 			    (anonymous-user)))
 		  (path path)))
-	  (rep (request->response req)))
+	  (rep (request->response req thread)))
       (cond
 	 ((http-response-file? rep)
 	  (with-access::http-response-file rep (file)
