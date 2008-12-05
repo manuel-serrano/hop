@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Oct 13 16:58:26 2008 (serrano)                */
+;*    Last change :  Fri Dec  5 09:43:02 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -404,9 +404,12 @@
       ;; strings with newline in them in addition to compute
       ;; the string, we have to count the number of newline
       ;; in order to increment the line-num variable strings
-      ((: (? #\#) "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
+      ((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
        (let ((str (the-substring 0 (-fx (the-length) 1))))
 	  (cset (escape-C-string str))))
+      ((: "#\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
+       (let ((str (the-substring 0 (-fx (the-length) 1))))
+	  (escape-C-string str)))
       
       ;; fixnums
       ((: (? "+") (+ digit))

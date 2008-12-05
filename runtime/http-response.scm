@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun Oct 19 18:13:32 2008 (serrano)                */
+;*    Last change :  Fri Dec  5 09:54:35 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -513,7 +513,7 @@
    (cond
       ((string? obj)
        (instantiate::http-response-string
-	  (charset (hop-locale))
+	  (charset (hop-charset))
 	  (request req)
 	  (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	  (bodyp (not (eq? (http-request-method req) 'HEAD)))

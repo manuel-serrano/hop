@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Wed Dec  3 16:51:11 2008 (serrano)                */
+/*    Last change :  Fri Dec  5 09:36:34 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -680,6 +680,8 @@ function hop_make_tree_leaf( tree, klass, content, value, icon, iconerr ) {
       
       if( (icon instanceof String) || (typeof icon == "string") ) {
 	 fimg.src = icon;
+	 fimg.width = "16";
+	 fimg.height = "16";
       } else {
 	 fimg.src = hop_tree_default_file_icon;
       }
