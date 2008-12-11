@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Dec  5 17:20:23 2008 (serrano)                */
+;*    Last change :  Sat Dec  6 07:04:36 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -150,16 +150,16 @@
 		    (hop-request-hook m r))))
 	  (let ((n ((cdar filters) m)))
 	     (cond
-		((eq? n m)
-		 (loop m (cdr filters)))
-		((eq? n 'hop-resume)
-		 (loop m (hop-filters)))
 		((%http-response? n)
 		 (let ((r (hop-run-hook (hop-http-response-local-hooks) m n)))
 		    (hop-request-hook m r)))
+		((eq? n m)
+		 (loop m (cdr filters)))
 		((http-request? n)
 		 (current-request-set! thread n)
 		 (loop n (cdr filters)))
+		((eq? n 'hop-resume)
+		 (loop m (hop-filters)))
 		(else
 		 (loop m (cdr filters))))))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Mon Oct 13 19:49:25 2008 (serrano)                */
+;*    Last change :  Mon Dec  8 09:29:08 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -377,6 +377,8 @@
 	   ((sc_consStart) (apply cons* vals))
 	   ((sc_Pair) (cons (car vals) (cadr vals)))
 	   ((sc_list) vals)
+	   ((sc_jsstring2symbol) (string->symbol (car vals)))
+	   ((sc_jsstring2keyword) (string->keyword (car vals)))
 	   (else (error 'json->hop "Unknown function" (car IDENTIFIER)))))
        ((ANGLE-OPEN ANGLE-CLO)
 	'#())

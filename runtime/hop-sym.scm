@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 27 09:39:08 2006                          */
-;*    Last change :  Tue Dec  2 09:18:49 2008 (serrano)                */
+;*    Last change :  Wed Dec 10 17:21:51 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML symbols (special characters).                               */
@@ -257,6 +257,10 @@
 		  ("hearts" "&#9829;")
 		  ("diams" "&#9830;")
 		  ("euro" "&#8464;")
+		  ;; smiley
+		  (":-)" "&9786;")
+		  (":-(" "&9785;")
+		  (":-|" "&9865;")
 		  ;; LaTeX 
 		  ("dag" "dag")
 		  ("ddag" "ddag")

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Dec  3 15:43:03 2008 (serrano)                */
+/*    Last change :  Sat Dec  6 20:02:18 2008 (serrano)                */
 /*    Copyright   :  2004-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -68,7 +68,7 @@ function hop_service_url( service, formals, args ) {
 /*---------------------------------------------------------------------*/
 function hop_service_url_varargs( service, args ) {
    var len = (arguments.length - 1);
-   
+
    if( len == 0 ) {
       return service;
    } else {
@@ -77,6 +77,27 @@ function hop_service_url_varargs( service, args ) {
 
       for( i = 0; i < len; i++ ) {
 	 url += "&a" + i + "=" + hop_bigloo_serialize( arguments[ i + 1 ] );
+      }
+
+      return url;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_service_url_keywords ...                                     */
+/*---------------------------------------------------------------------*/
+function hop_service_url_keywords( service, args ) {
+   var len = arguments.length;
+
+   if( len == 1 ) {
+      return service;
+   } else {
+      var url = service + "?hop-encoding=hop";
+      var i;
+
+      for( i = 1; i < len; i += 2 ) {
+	 url += "&" + sc_keyword2jsstring( arguments[ i  ]  )
+	    + "=" + hop_bigloo_serialize( arguments[ i + 1 ] );
       }
 
       return url;

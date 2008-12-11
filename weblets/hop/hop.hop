@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Fri Nov 28 10:36:25 2008 (serrano)                */
+;*    Last change :  Mon Dec  8 17:00:38 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -120,7 +120,9 @@
       (<TABLE> :class "weblet" 
 	 (<TR>
 	    (<TD> :class "logo"
-	       :onclick ~(tab-open :src $url)
+	       :onclick (if showtitle
+			    ~(set! document.location $url)
+			    ~(tab-open :src $url))
 	       (<IMG> :class "logo"
 		  :inline #t
 		  :title title
@@ -187,7 +189,7 @@
    (map! (lambda (a)
 	    (let* ((n (cadr (assq 'name a)))
 		   (w (cadr (assq 'weblet a)))
-		   (d (let ((c (assq 'sdescr a)))
+		   (d (let ((c (assq 'title a)))
 			 (if (pair? c)
 			     (if (>= (bigloo-debug) 1)
 				 (format "~a - ~a" (cadr c) w)
