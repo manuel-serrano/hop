@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 27 09:39:08 2006                          */
-;*    Last change :  Wed Dec 10 17:21:51 2008 (serrano)                */
+;*    Last change :  Fri Dec 12 15:04:04 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML symbols (special characters).                               */
@@ -257,6 +257,8 @@
 		  ("hearts" "&#9829;")
 		  ("diams" "&#9830;")
 		  ("euro" "&#8464;")
+		  ("phone" "&#9742;")
+		  ("envelope" "&#9993;")
 		  ;; smiley
 		  (":-)" "&9786;")
 		  (":-(" "&9785;")

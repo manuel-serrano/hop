@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/service-expd.sch          */
+;*    serrano/prgm/project/hop/1.10.x/runtime/service-expd.sch         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Wed Jun 18 08:42:25 2008 (serrano)                */
+;*    Last change :  Thu Dec 11 15:46:06 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -55,8 +55,7 @@
 			 `(lambda ,args
 			     (let ((path (make-hop-service-url ,id ,@args)))
 				(instantiate::http-response-remote
-				   (path path)
-				   (encoded-path path))))))
+				   (path path))))))
 	      (exec ,(if (pair? body)
 			 `(lambda (req)
 			     (let* ((ca (http-request-cgi-args req))
@@ -91,9 +90,9 @@
 		      (ttl ,ttl)
 		      (resource (and (string? file) (dirname file)))
 		      (source (and (string? file) (basename file))))))
-	  (unless (<fx ,ttl 0)
-	     (tprint "hop-service id=" ',id " wid=" ',wid " ttl=" ,ttl))
-	  (register-service! svc))))
+	  ,(if (pair? body)
+	       `(register-service! svc)
+	       'svc))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-define-service-expander ...                                  */
@@ -124,8 +123,6 @@
 	     ((or (symbol? (car a))
 		  (and (list? (car a)) (every? symbol? (car a))))
 	      (cond
-		 ((null? (cdr a))
-		  (error 'service "Illegal service (empty body)" x))
 		 ((not (list? (car a)))
 		  (error 'service
 			 "Variable arity services not supported yet"

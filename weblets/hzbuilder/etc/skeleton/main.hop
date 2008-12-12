@@ -88,8 +88,8 @@
 	 (start-line "HTTP/1.0 301 Moved Permanently")
 	 (header (list (cons 'location: url))))))
 
-;; the <@HZ@:CONFIGURE> user markup
-(define (<@HZ@:CONFIGURE>)
+;; the <@HZUPCASE@:CONFIGURE> user markup
+(define (<@HZUPCASE@:CONFIGURE>)
    (<DIV> :class "@HZ@-preferences"
       (<BUTTON> :title "Save configuration (needs admin privileges)"
 	 :onclick ~(preferences-save "@HZ@-configure"
@@ -109,7 +109,7 @@
 	 :css "@HZ@.hss")
       (<@HZUPCASE@:BODY> :class "@HZ@-body-preferences"
          :header "Preferences"
-	 (<@HZ@:CONFIGURE>))))
+	 (<@HZUPCASE@:CONFIGURE>))))
 
 ;; the optional dashboard entry
 (define-service (@HZ@/dashboard)
