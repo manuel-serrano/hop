@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Mon Dec  8 09:29:08 2008 (serrano)                */
+;*    Last change :  Sun Dec 14 19:54:52 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -193,8 +193,9 @@
 	  (name (if (bigloo-need-mangling? kname)
 		    (bigloo-mangle kname)
 		    kname))
+	  (hash (class-hash klass))
 	  (fields (class-all-fields klass)))
-      (format "(function() {var ~a=function(~a) {~a}; return new ~a(~a;})()"
+      (format "(function() {var ~a=function(~a) {~a}; ~a.prototype.hop_bigloo_serialize = hop_bigloo_serialize_object; ~a.prototype.hop_classname = '~a'; ~a.prototype.hop_classhash = ~a; return new ~a(~a;})()"
 	      name
 	      (list->block (map class-field-name fields))
 	      (apply string-append
@@ -202,6 +203,11 @@
 			     (let ((n (class-field-name f)))
 				(format "this.~a = ~a;" n n)))
 			  fields))
+	      name
+	      name
+	      name
+	      name
+	      hash
 	      name
 	      (list->arguments (map (lambda (f) ((class-field-accessor f) obj))
 				    fields)
@@ -402,6 +408,7 @@
       (object
        ((FUNCTION IDENTIFIER PAR-OPEN arguments PAR-CLO
 		  BRA-OPEN sets BRA-CLO SEMI-COMMA
+		  BRA-OPEN proto BRA-CLO SEMI-COMMA
 		  NEW IDENTIFIER@klass PAR-OPEN vals PAR-CLO)
 	(let ((c (find-class klass)))
 	   (if (not (class? c))
@@ -425,6 +432,10 @@
 	'())
        ((set SEMI-COMMA sets)
 	(cons set sets)))
+
+      (proto
+       ((IDENTIFIER@c DOT IDENTIFIER@p DOT IDENTIFIER@f = IDENTIFIER@fun)
+	(list c p f fun)))
 
       (set
        ((IDENTIFIER DOT IDENTIFIER = expression)

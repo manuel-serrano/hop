@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Thu Dec 11 15:46:06 2008 (serrano)                */
+;*    Last change :  Sat Dec 13 16:38:29 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -49,13 +49,15 @@
 ;*---------------------------------------------------------------------*/
 (define (expand-service id wid url timeout ttl args body)
    (let ((proc (if (symbol? wid) wid 'svc))
-	 (errid (if (symbol? wid) `',wid wid)))
-      `(let* ((,proc ,(if (pair? body)
-			 `(lambda ,args ,@body)
-			 `(lambda ,args
-			     (let ((path (make-hop-service-url ,id ,@args)))
-				(instantiate::http-response-remote
-				   (path path))))))
+	 (errid (if (symbol? wid) `',wid wid))
+	 (id (if (symbol? id) `',id `(string->symbol ,url))))
+      `(let* ((path ,url)
+	      (,proc ,(if (pair? body)
+			  `(lambda ,args ,@body)
+			  `(lambda ,args
+			      (instantiate::http-response-remote
+				 (port (hop-port))
+				 (path (make-hop-funcall-url 'hop ,id path ',args (list ,@args)))))))
 	      (exec ,(if (pair? body)
 			 `(lambda (req)
 			     (let* ((ca (http-request-cgi-args req))
@@ -75,11 +77,10 @@
 			     (error ',id
 				    "Illegal service exec (imported service)"
 				    ',args))))
-	      (path ,url)
 	      (file (the-loading-file))
 	      (svc (instantiate::hop-service
 		      (wid ,(if (symbol? wid) `',wid wid))
-		      (id ,(if (symbol? id) `',id `(string->symbol ,url)))
+		      (id ,id)
 		      (path path)
 		      (args ',args)
 		      (%exec exec)
@@ -250,7 +251,12 @@
 			(cons* (cadr opts) (car opts) args)
 			success failure))))
 	   ;; a local call
-	   (let ((nx `(with-hop-local ((hop-service-proc ,svc) ,@a) ,@opts)))
+	   (let ((nx `(with-hop-local ((hop-service-proc ,svc) ,@a)
+				      ,(when (pair? opts)
+					  (car opts))
+				      ,(when (and (pair? opts)
+						  (pair? (cdr opts)))
+					  (cadr opts)))))
 	      (e (evepairify nx x) e))))
       (else
        (error 'with-hop "Illegal form" x))))

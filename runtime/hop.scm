@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sat Dec  6 07:04:36 2008 (serrano)                */
+;*    Last change :  Sat Dec 13 17:19:56 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -374,10 +374,18 @@
 		 (http-send-request req hdl)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    fail-or-raise ...                                                */
+;*---------------------------------------------------------------------*/
+(define (fail-or-raise fail exc)
+   (if (procedure? fail)
+       (fail exc)
+       (raise exc)))
+
+;*---------------------------------------------------------------------*/
 ;*    with-hop-local ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-generic (with-hop-local obj success fail)
-   (success obj))
+   (when (procedure? success) (success obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-remote ...                        */
@@ -392,7 +400,7 @@
 ;*    with-hop-local ::xml ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::xml success fail)
-   (success obj))
+   (when (procedure? success) (success obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-authentication ...                */
@@ -407,25 +415,26 @@
 ;*    with-hop-local ::http-response-string ...                        */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-string success fail)
-   (success (http-response-string-body obj)))
+   (when (procedure? success) (success (http-response-string-body obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-js ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-js success fail)
-   (success (http-response-js-value obj)))
+   (when (procedure? success) (success (http-response-js-value obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-hop ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-hop success fail)
-   (success (http-response-hop-xml obj)))
+   (when (procedure? success) (success (http-response-hop-xml obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-procedure ...                     */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-procedure success fail)
-   (success (with-output-to-string (http-response-procedure-proc obj))))
+   (when (procedure? success)
+      (success (with-output-to-string (http-response-procedure-proc obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-file ...                          */
@@ -434,36 +443,42 @@
    (let* ((f (http-response-file-file obj))
 	  (pf (open-input-file f)))
       (if (not (input-port? pf))
-	  (fail (if (not (file-exists? f))
-		    (instantiate::&io-file-not-found-error
-		       (proc 'with-hop)
-		       (msg "File not found")
-		       (obj f))
-		    (instantiate::&io-port-error
-		       (proc 'with-hop)
-		       (msg "Cannot open file")
-		       (obj f))))
+	  (fail-or-raise
+	   fail
+	   (if (not (file-exists? f))
+	       (instantiate::&io-file-not-found-error
+		  (proc 'with-hop)
+		  (msg "File not found")
+		  (obj f))
+	       (instantiate::&io-port-error
+		  (proc 'with-hop)
+		  (msg "Cannot open file")
+		  (obj f))))
 	  (unwind-protect
-	     (success (read-string pf))
+	     (when (procedure? success) (success (read-string pf)))
 	     (close-input-port pf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-cgi ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-cgi success fail)
-   (fail (instantiate::&error
-	    (proc 'with-response)
-	    (msg "Illegal response")
-	    (obj obj))))
+   (fail-or-raise
+    fail
+    (instantiate::&error
+       (proc 'with-response)
+       (msg "Illegal response")
+       (obj obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-put ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-put success fail)
-   (fail (instantiate::&error
-	    (proc 'with-response)
-	    (msg "Illegal response")
-	    (obj obj))))
+   (fail-or-raise
+    fail
+    (instantiate::&error
+       (proc 'with-response)
+       (msg "Illegal response")
+       (obj obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-remote ...                        */
@@ -480,34 +495,41 @@
 			    (lambda (p status header clength tenc)
 			       (case status
 				  ((200)
-				   (success (read-string p)))
+				   (when (procedure? success)
+				      (success (read-string p))))
 				  ((401 407)
-				   (fail (instantiate::&error
-					    (proc 'with-hop)
-					    (msg "Access denied")
-					    (obj req))))
+				   (fail-or-raise
+				    fail
+				    (instantiate::&error
+				       (proc 'with-hop)
+				       (msg "Access denied")
+				       (obj req))))
 				  (else
-				   (fail (instantiate::&error
-					    (proc 'with-hop)
-					    (msg (format "Illegal status ~a"
-							 status))
-					    (obj (read-string )))))))))))
+				   (fail-or-raise
+				    fail
+				    (instantiate::&error
+				       (proc 'with-hop)
+				       (msg (format "Illegal status ~a"
+						    status))
+				       (obj (read-string )))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-filter ...                        */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-filter success fail)
-   (fail (instantiate::&error
-	    (proc 'with-response)
-	    (msg "Illegal response")
-	    (obj obj))))
+   (fail-or-raise
+    fail 
+    (instantiate::&error
+       (proc 'with-response)
+       (msg "Illegal response")
+       (obj obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-persistent ...                    */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local o::http-response-persistent success fail)
-   (success o))
-   
+   (when (procedure? success) (success o)))
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-get-file ...                                                 */
 ;*    -------------------------------------------------------------    */
