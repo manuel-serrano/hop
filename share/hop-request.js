@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sun Dec 14 06:36:32 2008 (serrano)                */
+/*    Last change :  Tue Dec 16 08:30:59 2008 (serrano)                */
 /*    Copyright   :  2004-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -154,6 +154,7 @@ function hop_default_failure( xhr ) {
       node_style_set( div, "padding", "4px" );
       node_style_set( div, "padding-bottom", "8px" );
       node_style_set( div, "overflow", "hidden" );
+      node_style_set( div, "background", "#F0F2F2" );
    } else {
       div.innerHTML = "";
    }
