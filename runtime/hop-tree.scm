@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Dec  5 09:54:30 2008 (serrano)                */
+;*    Last change :  Sat Dec 20 08:50:22 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -86,9 +86,7 @@
 		body))
       (instantiate::html-tree
 	 (markup 'tree)
-	 (klass (if (string? class)
-		    (string-append "hop-tree-container " class)
-		    "hop-tree-container"))
+	 (klass (if (string? class) class ""))
 	 (id (xml-make-id id 'TREE))
 	 (visible visible)
 	 (open open)
@@ -122,9 +120,7 @@
 			       body)
    (instantiate::html-tree-leaf
       (markup 'tree-leaf)
-      (klass (if (string? class)
-		 (string-append "hop-tree-leaf " class)
-		 "hop-tree-leaf"))
+      (klass (if (string? class) class ""))
       (id (xml-make-id id 'TRLEAF))
       (value value)
       (icon (tree-icon icon inline "file.png"))
@@ -152,7 +148,7 @@
 (define-method (xml-write obj::html-tree p backend)
    (let ((parent (symbol->string (gensym 'TREE-PARENT))))
       (with-access::html-tree obj (klass)
-	 (fprintf p "<div id='~a' class='~a'>" parent klass))
+	 (fprintf p "<div id='~a' class='hop-tree-container ~a'>" parent klass))
       (display " <script type='" p)
       (display (hop-javascript-mime-type) p)
       (display "'>" p)
