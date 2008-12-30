@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Nov 18 06:48:57 2008 (serrano)                */
+;*    Last change :  Tue Dec 30 10:48:28 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -86,7 +86,10 @@
 	    (hop-script-file-set! ::obj)
 
 	    (hop-get-cache-size::int)
-	    (hop-get-cache-size-set! ::int))
+	    (hop-get-cache-size-set! ::int)
+
+	    (hop-user::obj)
+	    (hop-user-set! ::obj))
 
    (eval    (export-exports)))
 
@@ -268,3 +271,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-get-cache-size
    64)
+
+;*---------------------------------------------------------------------*/
+;*    hop-user ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-user
+   "hop")

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Nov 19 13:17:07 2008 (serrano)                */
+;*    Last change :  Tue Dec 30 10:45:37 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -70,6 +70,8 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
+   ;; set the hop process owner
+   (set-hop-owner! (hop-user))
    ;; catch critical signals
    (signal-init!)
    ;; set the Hop cond-expand identification
@@ -167,6 +169,33 @@
 		(hop-load-rc (hop-script-file))))
 	 ;; start the main loop
 	 (scheduler-accept-loop (hop-scheduler) serv))))
+
+;*---------------------------------------------------------------------*/
+;*    set-hop-owner! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (set-hop-owner! user)
+   
+   (define (err)
+      (error 'hop
+	     "Hop is not allowed to be executed as `root',
+Create a dedicated Hop user and run Hop on behalf of him.\n"
+	     "If you know what you are doing and want to run Hop with the
+`root' permissions, edit the Hop configuration file and set the appropirate `hop-user' value."))
+   
+   (cond
+      ((not (=fx (getuid) 0))
+       #unspecified)
+      ((not (pair? (getpwnam "root")))
+       #unspecified)
+      ((eq? user 'root)
+       #unspecified)
+      ((string? user)
+       (let ((pw (getpwnam user)))
+	  (if (pair? pw)
+	      (setuid (caddr pw))
+	      (err))))
+      (else
+       (err))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-repl ...                                                     */
