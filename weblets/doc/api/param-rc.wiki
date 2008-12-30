@@ -61,6 +61,23 @@ The script file is loaded *after* the ++(hop-rc-file)++, just *before* the
 HOP main loop is entered.
 </parameter>
 </parameter>
+
+=== ++hop-user++ ===
+<parameter> hop-user
+<parameter> hop-user-set!
+
+<arguments>
+^  access  ^   type   ^  current value       ^  short description            ^
+|   r/w    |  string  |  ++,(hop-user)++  | The fallback user.               |
+</arguments>
+
+If started as root, HOP will drop root privileges and run as
+this ++(hop-user)++ instead.  Otherwise, HOP will run as the user
+it was started by.  If set to the symbol (not the string) ++root++,
+HOP will not drop root privileges at all (not recommended).
+
+</parameter>
+</parameter>
 </server>
 
 </doc>
