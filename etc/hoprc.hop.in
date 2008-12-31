@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 26 08:20:34 2006                          */
-;*    Last change :  Tue Dec 30 10:47:58 2008 (serrano)                */
+;*    Last change :  Wed Dec 31 07:44:54 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP runtime command file.                                        */
@@ -27,21 +27,29 @@
 ;*---------------------------------------------------------------------*/
 ;; passwords
 ;; =========
-;; When exists, load an HOP password file.
+;; When exists, load a HOP passwords file.
 ;; 
-;; A user is declared with the ADD-USER! function, whose syntax is
+;; A user is declared with the ADD-USER! function, whose syntax is:
 ;;
 ;;   (add-user! <USERNAME>
 ;;   	   :groups <list-of-symbols>
 ;;   	   :password <PASSWORD>
 ;;   	   :directories <list-of-string> | '*
 ;;   	   :services (list-of-symbols) | '*
-;;
+;; 
+;;   Use the weblet /hop/epassword to generate the password (that is, visit
+;;   the URL http://localhost:8080/hop/epassword).
+;; 
 ;;   Examples:
 ;;
 ;;   (add-user! "admin"
-;;   	   :groups '(admin exec bbdb)
+;;   	   :groups '(admin exec)
 ;;   	   :password "3a8456e439c48f324cef234a4b687cd2"
+;;   	   :directories '*
+;;   	   :services '*)
+;;   (add-user! "hop"
+;;   	   :groups '(exec)
+;;   	   :password "172a1e3424c799061beb957ba957693e"
 ;;   	   :directories '*
 ;;   	   :services '*)
 ;;   (add-user! "guest"
