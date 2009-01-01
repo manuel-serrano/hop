@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Jan  1 11:03:15 2009 (serrano)                */
+;*    Last change :  Thu Jan  1 11:33:45 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -192,8 +192,7 @@
        (let ((pw (getpwnam user)))
 	  (if (pair? pw)
 	      (setuid (caddr pw))
-	      (error 'set-hop-owner! "Cannot find HOP system user" user)
-	      (err))))
+	      (error 'set-hop-owner! "Cannot find HOP system user" user))))
       (else
        (err))))
 
