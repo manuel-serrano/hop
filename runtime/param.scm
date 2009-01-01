@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Nov 29 19:17:01 2008 (serrano)                */
-;*    Copyright   :  2004-08 Manuel Serrano                            */
+;*    Last change :  Thu Jan  1 17:33:57 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -143,7 +143,9 @@
 	    (hop-charset-set! ::symbol)
 	    
 	    (hop-charset->locale::procedure)
+	    (hop-charset->locale!::procedure)
 	    (hop-locale->charset::procedure)
+	    (hop-locale->charset!::procedure)
 
 	    (hop-locale::symbol)
 	    (hop-locale-set! ::symbol)
@@ -758,7 +760,13 @@
 (define-parameter hop-charset->locale
    (lambda (x) x))
 
+(define-parameter hop-charset->locale!
+   (lambda (x) x))
+
 (define-parameter hop-locale->charset
+   (lambda (x) x))
+
+(define-parameter hop-locale->charset!
    (lambda (x) x))
 
 ;*---------------------------------------------------------------------*/
@@ -776,8 +784,10 @@
    'UTF-8
    (lambda (v)
       (when (and (symbol? v) (symbol? *hop-locale*))
-	 (hop-locale->charset-set! (charset-converter v (hop-locale)))
-	 (hop-charset->locale-set! (charset-converter (hop-locale) v)))
+	 (hop-locale->charset-set! (charset-converter (hop-locale) v))
+	 (hop-locale->charset!-set! (charset-converter! (hop-locale) v))
+	 (hop-charset->locale-set! (charset-converter v (hop-locale)))
+	 (hop-charset->locale!-set! (charset-converter! v (hop-locale))))
       (case v
 	 ((UTF-8 utf-8) 'UTF-8)
 	 ((UCS-2 ucs-2) 'UCS-2)
@@ -801,7 +811,9 @@
    (lambda (v)
       (when (and (symbol? v) (symbol? (hop-charset)))
 	 (hop-locale->charset-set! (charset-converter v (hop-charset)))
-	 (hop-charset->locale-set! (charset-converter (hop-charset) v)))
+	 (hop-locale->charset!-set! (charset-converter! v (hop-charset)))
+	 (hop-charset->locale-set! (charset-converter (hop-charset) v))
+	 (hop-charset->locale!-set! (charset-converter! (hop-charset) v)))
       (case v
 	 ((UTF-8 utf-8) 'UTF-8)
 	 ((UCS-2 ucs-2) 'UCS-2)

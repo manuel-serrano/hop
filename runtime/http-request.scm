@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Nov 21 09:31:58 2008 (serrano)                */
-;*    Copyright   :  2004-08 Manuel Serrano                            */
+;*    Last change :  Thu Jan  1 17:28:03 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
 ;*    -------------------------------------------------------------    */
@@ -129,12 +129,14 @@
                                ((not i)
 				;; file name canonicalization is needed
 				;; for authentication
-				(file-name-canonicalize! (url-decode! path)))
+				(file-name-canonicalize!
+				 ((hop-charset->locale!) (url-decode! path))))
                                ((>fx i 0)
                                 (let ((l (string-length path)))
                                    (set! query (substring path (+fx i 1) l)))
                                 (let ((p (url-decode! (substring path 0 i))))
-                                   (file-name-canonicalize! p)))
+                                   (file-name-canonicalize!
+				    ((hop-charset->locale!) p))))
                                (else
                                 (let ((l (string-length path)))
                                    (set! query (substring path 1 l)))   
@@ -145,6 +147,7 @@
 					   'keep-alive
 					   'close))
 				   'close)))
+	       (tprint "path=" path " -> abspath=" abspath)
 	       (trace-item "abspath=" abspath
 			   " query=" query
 			   " connection=" connection)
