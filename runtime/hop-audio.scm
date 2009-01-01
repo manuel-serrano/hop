@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Dec  3 19:23:30 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Thu Jan  1 10:03:06 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
 ;*=====================================================================*/
@@ -153,6 +153,7 @@
 			      (onnext #f)
 			      (onprev #f)
 			      (onclose #f)
+			      (onplayer #f)
 			      ;; the player
 			      (player #f)
 			      ;; controls click events
@@ -195,7 +196,8 @@
 		   :onended (hop->js-callback onended)
 		   :onprogress (hop->js-callback onprogress)
 		   :onloadedmetadata (hop->js-callback onloadedmetadata)
-		   :onclose (hop->js-callback onclose))))
+		   :onclose (hop->js-callback onclose)
+		   :onplayer (hop->js-callback onplayer))))
       (<AUDIO-OBJECT> id pid init controller)))
 
 ;*---------------------------------------------------------------------*/
@@ -230,7 +232,7 @@
 ;*---------------------------------------------------------------------*/
 (define (<AUDIO-INIT> #!key id pid player src autoplay start
 		      onplay onstop onpause onload onerror onended onprogress
-		      onloadedmetadata onclose)
+		      onloadedmetadata onclose onplayer)
    (<SCRIPT>
       (format "function hop_audio_flash_init_~a() {hop_audio_flash_init( ~s, ~a, ~a, ~a );};"
 	      pid id
@@ -238,7 +240,7 @@
 	      (if autoplay "true" "false")
 	      (if player (hop->json player #f #f) "false"))
       (format "hop_window_onload_cons(
-                function() {hop_audio_init( ~s, ~s, ~a, ~a, ~a, ~a, ~a, ~a, ~a, ~a , ~a, ~a, ~a );} );"
+                function() {hop_audio_init( ~s, ~s, ~a, ~a, ~a, ~a, ~a, ~a, ~a, ~a , ~a, ~a, ~a, ~a );} );"
 	      id
 	      start
 	      (if (string? src) (string-append "'" src "'") "false")
@@ -251,7 +253,8 @@
 	      onended
 	      onprogress
 	      onloadedmetadata
-	      onclose)))
+	      onclose
+	      onplayer)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO-CONTROLS> ...                                             */
@@ -469,7 +472,7 @@
 (define (audio-onmeta %event engine player)
    
    (define (signal-meta s plist)
-      (let* ((conv (hop-locale->charset))
+      (let* ((conv (charset-converter 'UTF-8 (hop-charset)))
 	     (s (cond
 		   ((id3? s)
 		    (duplicate::id3 s
@@ -481,7 +484,7 @@
 		       (interpret #f)
 		       (comment ((hop-locale->charset) (id3-comment s)))))
 		   ((string? s)
-		    ((hop-locale->charset) s))
+		    (charset-convert s 'UTF-8 (hop-charset)))
 		   (else
 		    s)))
 	     (plist (map (lambda (f) (conv (url-decode f))) plist)))
@@ -498,7 +501,7 @@
       (hop-audio-player-%errcount-set! player 0)
       (if (string? meta)
 	  ;; this is a file name (a url)
-	  (let ((file ((hop-charset->locale) meta)))
+	  (let ((file (charset-convert meta 'UTF-8 (hop-locale))))
 	     (if (not (file-exists? file))
 		 (audio-onfile-name file playlist)
 		 (let ((id3 (mp3-id3 file)))
@@ -535,7 +538,6 @@
 	     th
 	     (lambda (_)
 		(with-access::musicstatus (music-%status engine) (err)
-		   (tprint "err=" err)
 		   (if err
 		       (hop-event-broadcast! %event (list 'abort err))
 		       (begin
@@ -569,13 +571,17 @@
 				   :onmeta onmeta))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-music-playlist-add! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (hop-music-playlist-add! engine s)
+   (music-playlist-add! engine (charset-convert s (hop-charset) 'UTF-8)))
+   
+;*---------------------------------------------------------------------*/
 ;*    music-playlist-set! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (music-playlist-set! engine a1)
    (music-playlist-clear! engine)
-   (for-each (lambda (s)
-		(music-playlist-add! engine ((hop-charset->locale) s)))
-	     a1))
+   (for-each (lambda (s) (hop-music-playlist-add! engine s)) a1))
 
 ;*---------------------------------------------------------------------*/
 ;*    debug-log ...                                                    */
@@ -641,7 +647,7 @@
 				   #unspecified)
 				  ((load)
 				   (music-playlist-clear! engine)
-				   (music-playlist-add! engine a1))
+				   (hop-music-playlist-add! engine a1))
 				  ((pause)
 				   (music-pause engine))
 				  ((play)
@@ -693,5 +699,3 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hop->json player::hop-audio-player isrep isflash)
    (format "\"~a\"" (hop-audio-player-json player)))
-
-   

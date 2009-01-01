@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Dec 30 10:45:37 2008 (serrano)                */
-;*    Copyright   :  2004-08 Manuel Serrano                            */
+;*    Last change :  Thu Jan  1 11:03:15 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -177,11 +177,10 @@
    
    (define (err)
       (error 'hop
-	     "Hop is not allowed to be executed as `root',
-Create a dedicated Hop user and run Hop on behalf of him.\n"
+	     "Hop is not allowed to be executed as `root'. Create a dedicated Hop user to run Hop on behalf of.\n"
 	     "If you know what you are doing and want to run Hop with the
-`root' permissions, edit the Hop configuration file and set the appropirate `hop-user' value."))
-   
+`root' permissions, edit the Hop configuration file and set the appropriate `hop-user' value."))
+
    (cond
       ((not (=fx (getuid) 0))
        #unspecified)
@@ -193,6 +192,7 @@ Create a dedicated Hop user and run Hop on behalf of him.\n"
        (let ((pw (getpwnam user)))
 	  (if (pair? pw)
 	      (setuid (caddr pw))
+	      (error 'set-hop-owner! "Cannot find HOP system user" user)
 	      (err))))
       (else
        (err))))

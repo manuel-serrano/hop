@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Sat Oct 25 17:32:22 2008 (serrano)                */
-/*    Copyright   :  2007-08 Manuel Serrano                            */
+/*    Last change :  Thu Jan  1 10:04:23 2009 (serrano)                */
+/*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
 /*=====================================================================*/
@@ -319,7 +319,7 @@ function hop_audio_init_obj( audio ) {
 function hop_audio_init( id, start, src, stream,
 			 onplay, onstop, onpause, onload, onerror,
 			 onended, onprogress,
-			 onloadedmetadata, onclose ) {
+			 onloadedmetadata, onclose, onplayer ) {
    var audio = document.getElementById( id );
 
    hop_audio_init_obj( audio );
@@ -339,7 +339,8 @@ function hop_audio_init( id, start, src, stream,
    audio.onmetadata = onloadedmetadata;
    audio.initialized = true;
    audio.onclose = onclose;
-   
+   audio.onplayer = onplayer;
+
    audio.hop_add_event_listener = hop_audio_add_event_listener;
    audio.toString = function() { return "[object HopAudio]"; };
 
@@ -435,7 +436,7 @@ function hop_audio_player_set( audio, player, name ) {
 				 "server",
 				 audio.server_proxy.event_listener );
    }
-   
+
    /* install the new proxy */
    if( !player ) {
       if( "client_proxy" in audio ) {
