@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Dec  5 09:43:02 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Fri Jan  2 19:23:49 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -406,7 +406,7 @@
       ;; in order to increment the line-num variable strings
       ((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
        (let ((str (the-substring 0 (-fx (the-length) 1))))
-	  (cset (escape-C-string str))))
+	  (escape-C-string str)))
       ((: "#\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
        (let ((str (the-substring 0 (-fx (the-length) 1))))
 	  (escape-C-string str)))
@@ -490,7 +490,9 @@
        (let ((exp (read/rp *text-grammar* (the-port)
 			   cycles par-open bra-open par-poses bra-poses
 			   cset)))
-	  (list 'quasiquote exp)))
+	  (if (and (pair? exp) (null? (cdr exp)))
+	      (car exp)
+	      (list 'quasiquote exp))))
       
       ;; vectors
       ("#("

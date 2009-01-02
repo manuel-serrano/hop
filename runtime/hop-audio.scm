@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Thu Jan  1 17:21:03 2009 (serrano)                */
+;*    Last change :  Fri Jan  2 19:40:06 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -470,24 +470,36 @@
 ;*    audio-onmeta ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (audio-onmeta %event engine player)
+
+   (define conv (charset-converter 'UTF-8 (hop-charset)))
+   
+   (define (convert-file file)
+      (if (or (substring-at? file "http://" 0)
+	      (substring-at? file "https://" 0))
+	  ;; MS, note 2 Jan 09: This assumes that URL are encoded using
+	  ;; the hop-locale value and not hop-charset, nor UTF-8. Of
+	  ;; course this works iff all Hop uses the same locale encoding.
+	  ;; the only fully correct solution would be to encode the encoding
+	  ;; in the URL and Hop should detect that encoding.
+	  ((hop-locale->charset) (url-decode file))
+	  (conv file)))
    
    (define (signal-meta s plist)
-      (let* ((conv (charset-converter 'UTF-8 (hop-charset)))
-	     (s (cond
-		   ((id3? s)
-		    (duplicate::id3 s
-		       (title ((hop-locale->charset) (id3-title s)))
-		       (artist ((hop-locale->charset) (id3-artist s)))
-		       (album ((hop-locale->charset) (id3-album s)))
-		       (orchestra #f)
-		       (conductor #f)
-		       (interpret #f)
-		       (comment ((hop-locale->charset) (id3-comment s)))))
-		   ((string? s)
-		    (charset-convert s 'UTF-8 (hop-charset)))
-		   (else
-		    s)))
-	     (plist (map (lambda (f) (conv (url-decode f))) plist)))
+      (let ((s (cond
+		  ((id3? s)
+		   (duplicate::id3 s
+		      (title ((hop-locale->charset) (id3-title s)))
+		      (artist ((hop-locale->charset) (id3-artist s)))
+		      (album ((hop-locale->charset) (id3-album s)))
+		      (orchestra #f)
+		      (conductor #f)
+		      (interpret #f)
+		      (comment ((hop-locale->charset) (id3-comment s)))))
+		  ((string? s)
+		   (convert-file s))
+		  (else
+		   s)))
+	    (plist (map convert-file plist)))
 	 (tprint "signal meta s=" (if (string? s) s (find-runtime-type s))
 		 " plist.length=" (length plist)
 		 " engine=" (find-runtime-type engine))

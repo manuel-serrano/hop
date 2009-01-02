@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 10 06:46:43 2007                          */
-;*    Last change :  Mon Dec  1 10:07:45 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Fri Jan  2 08:13:30 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with charset.                              */
 ;*=====================================================================*/
@@ -13,10 +13,10 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_charset
-   (export (charset-convert ::obj ::symbol ::symbol)
-	   (charset-convert! ::obj ::symbol ::symbol)
-	   (charset-converter::procedure ::symbol ::symbol)
-	   (charset-converter!::procedure ::symbol ::symbol)))
+   (export (charset-converter::procedure ::symbol ::symbol)
+	   (charset-converter!::procedure ::symbol ::symbol)
+	   (charset-convert ::obj ::symbol ::symbol)
+	   (charset-convert! ::obj ::symbol ::symbol)))
 
 ;*---------------------------------------------------------------------*/
 ;*    compatibility kit                                                */
@@ -41,133 +41,12 @@
        charset)))
 
 ;*---------------------------------------------------------------------*/
-;*    charset-convert ...                                              */
-;*    -------------------------------------------------------------    */
-;*    Convert a string from charset1 to charset2                       */
+;*    make-charset-converter ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (charset-convert str charset1 charset2)
-   (let ((cset1 (charset-alias charset1))
-	 (cset2 (charset-alias charset2)))
-      (if (eq? cset1 cset2)
-	  str
-	  (case cset1
-	     ((ISO-8859-1)
-	      (case cset2
-		 ((UTF-8)
-		  (iso-latin->utf8 str))
-		 ((UCS-2)
-		  (utf8-string->ucs2-string (iso-latin->utf8 str)))
-		 ((US-ASCII)
-		  (iso-8859-1->us-ascii str))
-		 (else
-		  str)))
-	     ((CP1252)
-	      (case cset2
-		 ((UTF-8)
-		  (cp1252->utf8 str))
-		 ((UCS-2)
-		  (utf8-string->ucs2-string (cp1252->utf8 str)))
-		 ((US-ASCII)
-		  (iso-8859-1->us-ascii str))
-		 (else
-		  str)))
-	     ((UTF-8)
-	      (case cset2
-		 ((ISO-8859-1)
-		  (utf8->iso-latin str))
-		 ((CP1252)
-		  (utf8->cp1252 str))
-		 ((UCS-2)
-		  (utf8-string->ucs2-string str))
-		 ((US-ASCII)
-		  (iso-8859-1->us-ascii! (utf8->iso-latin str)))
-		 (else
-		  str)))
-	     ((UCS-2)
-	      (case cset2
-		 ((ISO-8859-1)
-		  (utf8->iso-latin! (ucs2-string->utf8-string str)))
-		 ((CP1252)
-		  (utf8->cp1252! (ucs2-string->utf8-string str)))
-		 ((UTF-8)
-		  (ucs2-string->utf8-string str))
-		 ((US-ASCII)
-		  (iso-8859-1->us-ascii!
-		   (utf8->iso-latin!
-		    (ucs2-string->utf8-string str))))
-		 (else
-		  str)))
-	     ((US-ASCII)
-	      (charset-convert! (us-ascii->iso-latin str) 'ISO-LATIN-1 cset2))
-	     (else
-	      str)))))
-
-;*---------------------------------------------------------------------*/
-;*    charset-convert! ...                                             */
-;*    -------------------------------------------------------------    */
-;*    Convert a string from charset1 to charset2                       */
-;*---------------------------------------------------------------------*/
-(define (charset-convert! str charset1 charset2)
-   (let ((cset1 (charset-alias charset1))
-	 (cset2 (charset-alias charset2)))
-      (if (eq? cset1 cset2)
-	  str
-	  (case cset1
-	     ((ISO-8859-1)
-	      (case cset2
-		 ((UTF-8)
-		  (iso-latin->utf8! str))
-		 ((UCS-2)
-		  (utf8-string->ucs2-string (iso-latin->utf8! str)))
-		 ((US-ASCII)
-		  (iso-8859-1->us-ascii! str))
-		 (else
-		  str)))
-	     ((CP1252)
-	      (case cset2
-		 ((UTF-8)
-		  (cp1252->utf8! str))
-		 ((UCS-2)
-		  (utf8-string->ucs2-string (cp1252->utf8! str)))
-		 ((US-ASCII)
-		  (iso-8859-1->us-ascii! str))
-		 (else
-		  str)))
-	     ((UTF-8)
-	      (case cset2
-		 ((ISO-8859-1)
-		  (utf8->iso-latin! str))
-		 ((CP1252)
-		  (utf8->cp1252! str))
-		 ((UCS-2)
-		  (utf8-string->ucs2-string str))
-		 ((US-ASCII)
-		  (iso-8859-1->us-ascii! (utf8->iso-latin! str)))
-		 (else
-		  str)))
-	     ((UCS-2)
-	      (case cset2
-		 ((ISO-8859-1)
-		  (utf8->iso-latin! (ucs2-string->utf8-string str)))
-		 ((CP1252)
-		  (utf8->cp1252! (ucs2-string->utf8-string str)))
-		 ((UTF-8)
-		  (ucs2-string->utf8-string str))
-		 ((US-ASCII)
-		  (iso-8859-1->us-ascii!
-		   (utf8->iso-latin!
-		    (ucs2-string->utf8-string str))))
-		 (else
-		  str)))
-	     ((US-ASCII)
-	      (charset-convert! (us-ascii->iso-latin! str) 'ISO-LATIN-1 cset2))
-	     (else
-	      str)))))
-
-;*---------------------------------------------------------------------*/
-;*    charset-converter ...                                            */
-;*---------------------------------------------------------------------*/
-(define (charset-converter charset1 charset2)
+(define (make-charset-converter charset1::symbol charset2::symbol
+				8859->utf8::procedure utf8->8859::procedure
+				8859->us-ascii::procedure
+				1252->utf8::procedure utf8->1252::procedure)
    (let ((cset1 (charset-alias charset1))
 	 (cset2 (charset-alias charset2)))
       (if (eq? cset1 cset2)
@@ -176,37 +55,36 @@
 	     ((ISO-8859-1)
 	      (case cset2
 		 ((UTF-8)
-		  iso-latin->utf8)
+		  8859->utf8)
 		 ((UCS-2)
 		  (lambda (str)
-		     (utf8-string->ucs2-string (iso-latin->utf8 str))))
+		     (utf8-string->ucs2-string (iso-latin->utf8! str))))
 		 ((US-ASCII)
-		  iso-8859-1->us-ascii)
+		  8859->us-ascii)
 		 (else
 		  (lambda (x) x))))
 	     ((CP1252)
 	      (case cset2
 		 ((UTF-8)
-		  cp1252->utf8)
+		  1252->utf8)
 		 ((UCS-2)
 		  (lambda (str)
-		     (utf8-string->ucs2-string (cp1252->utf8 str))))
+		     (utf8-string->ucs2-string (cp1252->utf8! str))))
 		 ((US-ASCII)
-		  iso-8859-1->us-ascii)
+		  8859->us-ascii)
 		 (else
 		  (lambda (x) x))))
 	     ((UTF-8)
 	      (case cset2
 		 ((ISO-8859-1)
-		  utf8->iso-latin)
+		  utf8->8859)
 		 ((CP1252)
-		  utf8->cp1252)
+		  utf8->1252)
 		 ((UCS-2)
-		  (lambda (str)
-		     (utf8-string->ucs2-string str)))
+		  utf8-string->ucs2-string)
 		 ((US-ASCII)
 		  (lambda (s)
-		     (iso-8859-1->us-ascii! (utf8->iso-latin s))))
+		     (8859->us-ascii (utf8->iso-latin! s))))
 		 (else
 		  (lambda (x) x))))
 	     ((UCS-2)
@@ -230,92 +108,52 @@
 		 ((ISO-8859-1 CP1252)
 		  (lambda (x) x))
 		 ((UTF-8)
-		  iso-latin->utf8)
+		  8859->utf8)
 		 ((UCS-2)
 		  (lambda (str)
-		     (utf8-string->ucs2-string (iso-latin->utf8 str))))
+		     (utf8-string->ucs2-string (iso-latin->utf8! str))))
 		 (else
 		  (lambda (x) x))))	  
 	     (else
 	      (lambda (x) x))))))
 
 ;*---------------------------------------------------------------------*/
+;*    charset-converter ...                                            */
+;*---------------------------------------------------------------------*/
+(define (charset-converter charset1 charset2)
+   (make-charset-converter charset1 charset2
+			   iso-latin->utf8 utf8->iso-latin
+			   iso-8859-1->us-ascii
+			   cp1252->utf8 utf8->cp1252))
+
+;*---------------------------------------------------------------------*/
 ;*    charset-converter! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (charset-converter! charset1 charset2)
-   (let ((cset1 (charset-alias charset1))
-	 (cset2 (charset-alias charset2)))
-      (if (eq? cset1 cset2)
-	  (lambda (x) x)
-	  (case cset1
-	     ((ISO-8859-1)
-	      (case cset2
-		 ((UTF-8)
-		  iso-latin->utf8!)
-		 ((UCS-2)
-		  (lambda (str)
-		     (utf8-string->ucs2-string (iso-latin->utf8 str))))
-		 ((US-ASCII)
-		  iso-8859-1->us-ascii!)
-		 (else
-		  (lambda (x) x))))
-	     ((CP1252)
-	      (case cset2
-		 ((UTF-8)
-		  cp1252->utf8!)
-		 ((UCS-2)
-		  (lambda (str)
-		     (utf8-string->ucs2-string (cp1252->utf8 str))))
-		 ((US-ASCII)
-		  iso-8859-1->us-ascii!)
-		 (else
-		  (lambda (x) x))))
-	     ((UTF-8)
-	      (case cset2
-		 ((ISO-8859-1)
-		  utf8->iso-latin!)
-		 ((CP1252)
-		  utf8->cp1252!)
-		 ((UCS-2)
-		  (lambda (str)
-		     (utf8-string->ucs2-string str)))
-		 ((US-ASCII)
-		  (lambda (s)
-		     (iso-8859-1->us-ascii! (utf8->iso-latin! s))))
-		 (else
-		  (lambda (x) x))))
-	     ((UCS-2)
-	      (case cset2
-		 ((ISO-8859-1)
-		  (lambda (str)
-		     (utf8->iso-latin! (ucs2-string->utf8-string str))))
-		 ((CP1252)
-		  (lambda (str)
-		     (utf8->cp1252! (ucs2-string->utf8-string str))))
-		 ((UTF-8)
-		  ucs2-string->utf8-string)
-		 ((US-ASCII)
-		  (lambda (str)
-		     (iso-8859-1->us-ascii!
-		      (utf8->iso-latin! (ucs2-string->utf8-string str)))))
-		 (else
-		  (lambda (x) x))))
-	     ((US-ASCII)
-	      (case cset2
-		 ((ISO-8859-1 CP1252)
-		  iso-8859-1->us-ascii!)
-		 ((UTF-8)
-		  (lambda (str)
-		     (iso-latin->utf8! (iso-8859-1->us-ascii! str))))
-		 ((UCS-2)
-		  (lambda (str)
-		     (utf8-string->ucs2-string
-		      (iso-latin->utf8!
-		       (iso-8859-1->us-ascii! str)))))
-		 (else
-		  (lambda (x) x))))	  
-	     (else
-	      (lambda (x) x))))))
+   (make-charset-converter charset1 charset2
+			   iso-latin->utf8! utf8->iso-latin!
+			   iso-8859-1->us-ascii!
+			   cp1252->utf8! utf8->cp1252!))
+
+;*---------------------------------------------------------------------*/
+;*    charset-convert ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Convert a string from charset1 to charset2                       */
+;*---------------------------------------------------------------------*/
+(define (charset-convert str charset1 charset2)
+   (if (eq? charset1 charset2)
+       (string-copy str)
+       ((charset-converter charset1 charset2) str)))
+
+;*---------------------------------------------------------------------*/
+;*    charset-convert! ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Convert a string from charset1 to charset2                       */
+;*---------------------------------------------------------------------*/
+(define (charset-convert! str charset1 charset2)
+   (if (eq? charset1 charset2)
+       str
+       ((charset-converter! charset1 charset2) str)))
 
 ;*---------------------------------------------------------------------*/
 ;*    count-crlf ...                                                   */
