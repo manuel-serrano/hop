@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Mar  9 16:20:17 2008                          */
-/*    Last change :  Thu Oct 23 08:15:52 2008 (serrano)                */
-/*    Copyright   :  2008 Manuel Serrano                               */
+/*    Last change :  Sat Jan  3 06:32:50 2009 (serrano)                */
+/*    Copyright   :  2008-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop login panel                                                  */
 /*=====================================================================*/
@@ -62,7 +62,7 @@ function hop_make_login_panel( id, user, pass, klass  ) {
       + "   <td class='hop-login-logo'><div class='hop-login-logo' id='hop_login_logo_" + id + "'></div></td>"
       + "   <td>"
       + "    <table class='hop-login-panel'>"
-      + "     <tr><td id='hop_login_message_" + id + "'></td></tr>"
+      + "     <tr><td class='hop-login-message' id='hop_login_message_" + id + "'></td></tr>"
       + "     <tr><td>" + hop_login_prompt( id, user, pass ) + "</td></tr>"
       + "    </table>"
       + "   </td>"

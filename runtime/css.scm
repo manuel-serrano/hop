@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/css.scm                   */
+;*    serrano/prgm/project/hop/1.10.x/runtime/css.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Aug 27 08:03:02 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Sat Jan  3 06:33:29 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
 ;*=====================================================================*/
@@ -77,6 +77,7 @@
      ;; hop-login
      ("hop-login-panel" "div.hop-login-panel")
      ("hop-login" "div.hop-login-panel table.hop-login-main-table")
+     ("hop-login-message" "div.hop-login-panel td.hop-login-message")
      ("hop-login-logo" "div.hop-login-panel div.hop-login-logo")))
    
 ;*---------------------------------------------------------------------*/
