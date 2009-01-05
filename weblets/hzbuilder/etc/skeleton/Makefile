@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed Oct 29 09:00:07 2008 (serrano)                */
-#*    Copyright   :  2006-08 Manuel Serrano                            */
+#*    Last change :  Mon Jan  5 20:04:56 2009 (serrano)                */
+#*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Generic Makefile to build Hop weblets.                           */
 #*=====================================================================*/
@@ -22,10 +22,12 @@ MAXHOP=@MAXHOP@
 HOME=@HOME@
 
 SOURCES=@HZ@.hop @HZ@.hss config.hop.in
+DASHBOARDPNG=@DASHBOARDPNG@
 
 FILES=$(SOURCES) \
   etc/logo.png etc/favicon.png etc/@HZ@.wiki.in etc/weblet.info.in \
   etc/homepage/01-homepage.wiki etc/homepage/01-homepage.png \
+  $(DASHBOARDPNG) \
   Makefile
 
 HOPREPOSITORY=@REPOSITORY@
