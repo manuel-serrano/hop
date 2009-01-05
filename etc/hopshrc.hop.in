@@ -29,6 +29,6 @@
 ;; 
 ;; hopsh needs an anonymous user even with highly restricted authorizations
 (add-user! "anonymous" 
-           :services #f
+           :services '(hopsh)
 	   :directories (hop-path)
            :preferences-filename #f)
