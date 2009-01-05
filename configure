@@ -4,8 +4,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Nov 28 11:04:08 2008 (serrano)                */
-#*    Copyright   :  2004-08 Manuel Serrano                            */
+#*    Last change :  Mon Jan  5 11:06:43 2009 (serrano)                */
+#*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -574,6 +574,20 @@ cat etc/hoprc.hop.in \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@MIMETYPES@|$mimetypes|" \
     >> $hoprc
+
+# etc/hopshrc.hop
+hopshrc=etc/hopshrc.hop
+rm -f $hopshrc 2> /dev/null
+cat etc/hopshrc.hop.in \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BINDIR@|$bindir|" \
+          -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@SHAREDIR@|$sharedir|" \
+          -e "s|@ETCDIR@|$etcdir|" \
+          -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@CONTRIBSDIR@|$contribsdir|" \
+          -e "s|@MIMETYPES@|$mimetypes|" \
+    >> $hopshrc
 
 # lib/hop.init
 init=lib/hop.init

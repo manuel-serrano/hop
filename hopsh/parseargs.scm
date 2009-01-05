@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hopsh/parseargs.scm                     */
+;*    serrano/prgm/project/hop/1.10.x/hopsh/parseargs.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Sep 18 08:57:03 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Mon Jan  5 10:52:42 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -96,7 +96,7 @@
 	     (let ((path (make-file-name (hop-rc-directory) (hopsh-rc-file))))
 		(if (file-exists? path)
 		    (%hopsh-load-rc path)
-		    (%hopsh-load-rc (make-file-name (hop-etc-directory) (hop-rc-file)))))))
+		    (%hopsh-load-rc (make-file-name (hop-etc-directory) (hopsh-rc-file)))))))
       (hopsh-host-set! h)
       (hop-port-set! p)
       (for-each hopsh-eval exprs)
