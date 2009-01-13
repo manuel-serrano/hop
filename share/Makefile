@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Nov 28 11:15:18 2008 (serrano)                */
-#*    Copyright   :  2004-08 Manuel Serrano                            */
+#*    Last change :  Wed Jan  7 16:41:21 2009 (serrano)                */
+#*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -26,6 +26,7 @@ FLASHOBJS	= HopServevt.swf HopAudio.swf HopVideo.swf \
                   hop-sound.swf 
 FLASHSRC	= HopServevt.as HopAudio.as HopVideo.as
 FLASH		= $(FLASHOBJS) $(FLASHSRC)
+FLASHOPT	= player.swf swfobject.js
 
 RTS		= $(RTSCONFIG)
 
@@ -146,6 +147,11 @@ install:
 	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/flash && \
         for p in $(FLASHOBJS:%=flash/%); do \
 	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+        done
+	for p in $(FLASHOPT:%=flash/%); do \
+	  if [ -f $$p ]; then \
+            $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+          fi; \
         done
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/editor && \
 	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/editor && \

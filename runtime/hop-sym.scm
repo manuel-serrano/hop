@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 27 09:39:08 2006                          */
-;*    Last change :  Fri Dec 12 15:04:04 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Tue Jan 13 09:25:17 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML symbols (special characters).                               */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hop-sym
 
-   (export  (<SYM> ::symbol)
+   (export  (<SYM> ::obj)
 	    (hop-symbol-alist)))
 
 ;*---------------------------------------------------------------------*/
@@ -260,9 +260,18 @@
 		  ("phone" "&#9742;")
 		  ("envelope" "&#9993;")
 		  ;; smiley
-		  (":-)" "&9786;")
-		  (":-(" "&9785;")
-		  (":-|" "&9865;")
+		  (":-)" "&#9786;")
+		  (":-]" "&#9787;")
+		  (":-(" "&#9785;")
+		  (":-|" "&#9865;")
+		  ;; misc
+		  ("skull" "&#9760;")
+		  ("btelephone" "&#9742;")
+		  ("wtelephone" "&#9743;")
+		  ("wrhand" "&#9758;")
+		  ("brhand" "&#9755;")
+		  ("wlhand" "&#9756;")
+		  ("blhand" "&#9754;")
 		  ;; LaTeX 
 		  ("dag" "dag")
 		  ("ddag" "ddag")
@@ -278,7 +287,7 @@
 ;*    <SYM> ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (<SYM> sym)
-   (let ((s (symbol->string sym)))
+   (let ((s (if (symbol? sym) (symbol->string sym) sym)))
       (let ((e (hashtable-get *symbol-table* s)))
 	 (if e
 	     e

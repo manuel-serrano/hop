@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Oct 13 19:42:57 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Thu Jan  8 11:09:20 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Video support.                                               */
 ;*=====================================================================*/
@@ -39,62 +39,31 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    <VIDEO> ...                                                      */
+;*    -------------------------------------------------------------    */
+;*    The current version of the Hop player uses JW FLV player         */
+;*        http://www.longtailvideo.com/players/jw-flv-player/          */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <VIDEO> ((id #unspecified string)
 			      (src #f)
+			      (img #f)
+			      (width 640)
+			      (height 480)
+			      (bg #f)
 			      (attr)
 			      body)
-   
-   (define (expr->function expr)
-      (cond
-	 ((xml-tilde? expr)
-	  (format "function( event ) { ~a }" (xml-tilde->return expr)))
-	 ((string? expr)
-	  (format "function( event ) { ~a }" expr))
-	 (else
-	  "false")))
-   
-   (let* ((id (xml-make-id id 'video))
-	  (pid (xml-make-id 'hopvideo))
-	  (init (<VIDEO-INIT> :id id :pid pid :src src)))
-      (<VIDEO-OBJECT> id pid init)))
-
-
-;*---------------------------------------------------------------------*/
-;*    <VIDEO-OBJECT> ...                                               */
-;*---------------------------------------------------------------------*/
-(define (<VIDEO-OBJECT> id pid init)
-   (let ((swf (make-file-path (hop-share-directory) "flash" "HopVideo.swf"))
-	 (fvar (string-append "arg=hop_video_flash_init_" pid)))
-      (<DIV> :id id :class "hop-video"
-	 (<OBJECT> :id (string-append "object-" id) :class "hop-video"
-	    :width "300px" :height "300px"
-	    :title "hop-video" :classId "HopVideo.swf"
-	    (<PARAM> :name "movie" :value swf)
-	    (<PARAM> :name "src" :value swf)
-	    (<PARAM> :name "wmode" :value "transparent")
-	    (<PARAM> :name "play" :value "1")
-	    (<PARAM> :name "allowScriptAccess" :value "sameDomain")
-	    (<PARAM> :name "FlashVars" :value fvar)
-	    (<EMBED> :id (string-append "embed-" id) :class "hop-video"
-	       :width "300px" :height "300px"
-	       :src swf
-	       :type "application/x-shockwave-flash"
-	       :name id
-	       :swliveconnect #t
-	       :allowScriptAccess "sameDomain"
-	       :FlashVars fvar))
-	 init)))
-
-;*---------------------------------------------------------------------*/
-;*    <VIDEO-INIT> ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (<VIDEO-INIT> #!key id pid src)
-   (<SCRIPT>
-      (format "function hop_video_flash_init_~a() {hop_video_flash_init( ~s, ~a );};"
-	      pid id
-	      (if (string? src) (string-append "'" src "'") "false"))
-      (format "hop_window_onload_add(
-                function() {hop_video_init( ~s, ~a )})"
-	      id
-	      (if (string? src) (string-append "'" src "'") "false"))))
+   (let ((dummy (symbol->string (gensym 'video-container)))
+	 (tmp (gensym 'video_tmp)))
+      (<DIV> :id dummy
+	 (<SCRIPT> :type "text/javascript"
+	    (format "var ~a = new SWFObject('~a','~a','~a','~a','9','#FFFFFF');"
+		    tmp
+		    (make-file-path (hop-share-directory) "flash" "player.swf")
+		    (xml-make-id id 'video)
+		    width height src)
+	    (format "~a.addParam('allowfullscreen','true');" tmp)
+	    (format "~a.addParam('allowscriptaccess','always');" tmp)
+	    (if img
+		(format "~a.addParam('flashvars','file=~a&image=~a');" tmp src img)
+		(format "~a.addParam('flashvars','file=~a');" tmp src))
+	    (when bg (format "~a.addParam('screencolor','~a');" tmp bg))
+	    (format "~a.write('~a');" tmp dummy)))))

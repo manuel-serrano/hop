@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sat Dec 13 16:38:29 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Thu Jan  8 11:48:08 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
 ;*    at compile-time and runtime-time.                                */
@@ -50,14 +50,15 @@
 (define (expand-service id wid url timeout ttl args body)
    (let ((proc (if (symbol? wid) wid 'svc))
 	 (errid (if (symbol? wid) `',wid wid))
-	 (id (if (symbol? id) `',id `(string->symbol ,url))))
-      `(let* ((path ,url)
+	 (id (if (symbol? id) `',id `(string->symbol ,url)))
+	 (path (gensym 'path)))
+      `(let* ((,path ,url)
 	      (,proc ,(if (pair? body)
 			  `(lambda ,args ,@body)
 			  `(lambda ,args
 			      (instantiate::http-response-remote
 				 (port (hop-port))
-				 (path (make-hop-funcall-url 'hop ,id path ',args (list ,@args)))))))
+				 (path (make-hop-funcall-url 'hop ,id ,path ',args (list ,@args)))))))
 	      (exec ,(if (pair? body)
 			 `(lambda (req)
 			     (let* ((ca (http-request-cgi-args req))
@@ -81,11 +82,11 @@
 	      (svc (instantiate::hop-service
 		      (wid ,(if (symbol? wid) `',wid wid))
 		      (id ,id)
-		      (path path)
+		      (path ,path)
 		      (args ',args)
 		      (%exec exec)
 		      (proc ,proc)
-		      (javascript ,(jscript args 'path))
+		      (javascript ,(jscript args path))
 		      (creation (date->seconds (current-date)))
 		      (timeout ,timeout)
 		      (ttl ,ttl)
