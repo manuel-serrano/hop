@@ -21,9 +21,10 @@
    "@@DATE@@")
 (define (@HZ@-author)
    "@@AUTHOR@@")
- 
+
+(define _dir (dirname (the-loading-file)))
 (define (@HZ@-dir)
-   (dirname (the-loading-file)))
+   _dir)
 (define (@HZ@-rc-directory)
    (make-file-name (hop-rc-directory) "@HZ@"))
 

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Dec  5 09:54:35 2008 (serrano)                */
-;*    Copyright   :  2004-08 Manuel Serrano                            */
+;*    Last change :  Wed Jan 14 06:04:31 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -587,11 +587,16 @@
 				      (make-file-name (dirname path) rpath)
 				      rpath)))
 			 (raise e)))
+		  (tprint "http-send-request: "
+			  (http-server-request-authorization req))
 		  (http :in in :out out
 		     :protocol scheme :method method :http-version httpv
 		     :host host :port port :path path :header header
-		     :authorization (and (http-server-request? req)
-					 (http-server-request-authorization req))
+		     :authorization (if (and (http-server-request? req)
+					     (http-server-request-authorization req))
+					(http-server-request-authorization req)
+					(let ((auth (assq :authorization header)))
+					   (when (pair? auth) (cdr auth))))
 		     :timeout timeout
 		     :login user
 		     :body socket

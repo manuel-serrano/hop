@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 27 09:39:08 2006                          */
-;*    Last change :  Tue Jan 13 09:25:17 2009 (serrano)                */
+;*    Last change :  Wed Jan 14 05:36:53 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML symbols (special characters).                               */
@@ -257,30 +257,31 @@
 		  ("hearts" "&#9829;")
 		  ("diams" "&#9830;")
 		  ("euro" "&#8464;")
-		  ("phone" "&#9742;")
-		  ("envelope" "&#9993;")
+		  ("permille" "&#8240;")
+		  ("pertentouhsand" "&#8241;")
 		  ;; smiley
 		  (":-)" "&#9786;")
 		  (":-]" "&#9787;")
 		  (":-(" "&#9785;")
 		  (":-|" "&#9865;")
-		  ;; misc
+		  ;; figure
 		  ("skull" "&#9760;")
-		  ("btelephone" "&#9742;")
-		  ("wtelephone" "&#9743;")
+		  ("rhand" "&#9755;")
+		  ("lhand" "&#9754;")
 		  ("wrhand" "&#9758;")
-		  ("brhand" "&#9755;")
 		  ("wlhand" "&#9756;")
-		  ("blhand" "&#9754;")
+		  ("phone" "&#9742;")
+		  ("wphone" "&#9743;")
+		  ("envelope" "&#9993;")
 		  ;; LaTeX 
-		  ("dag" "dag")
-		  ("ddag" "ddag")
+		  ("dag" "&#8224;")
+		  ("ddag" "&#8225;")
 		  ("circ" "o")
 		  ("top" "&#8868;")
 		  ("bottom" "&#8869;")
 		  ("lhd" "<")
 		  ("rhd" ">")
-		  ("parallel" "||")))
+		  ("parallel" "&#8214;")))
       t))
 
 ;*---------------------------------------------------------------------*/

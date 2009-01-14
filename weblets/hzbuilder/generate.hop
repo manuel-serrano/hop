@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 24 15:46:26 2008                          */
-;*    Last change :  Mon Jan  5 20:04:38 2009 (serrano)                */
+;*    Last change :  Wed Jan 14 08:59:54 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The code generator                                               */
@@ -91,7 +91,7 @@
 		    (@DATEAMONTH@ ,(month-name (date-month now)))
 		    (@DATEDAY@ ,(date-day now))
 		    (@REPOSITORY@ ,(hzbuilder-repository))
-		    (@DASHBOARDPNG@ ,(if dashboard "etc/dashboard.png" "")))))
+		    (@DASHBOARDPNG@ ,(if dashboard "etc/dashboard.png" ""))))
 	  (res '())
 	  (dirname (make-file-name dir name))
 	  (filename (string-append (make-file-name dirname name) ".hop"))

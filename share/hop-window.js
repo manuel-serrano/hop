@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Fri Nov 28 10:06:31 2008 (serrano)                */
-/*    Copyright   :  2007-08 Manuel Serrano                            */
+/*    Last change :  Wed Jan 14 08:21:12 2009 (serrano)                */
+/*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
 /*=====================================================================*/
@@ -694,8 +694,14 @@ function hop_window_open() {
       if( typeof src == "function" ) src = src();
 
       if( (src instanceof String) || (typeof src === "string" ) ) {
-	 if( width ) prop += ",width=" + unpx( width );
-	 if( height ) prop += ",height=" + unpx( height );
+	 if( width )
+	    prop += ",width=" + unpx( width );
+	 else
+	    prop += ",width=" + hop_current_window_width();
+	 if( height )
+	    prop += ",height=" + unpx( height );
+	 else
+	    prop += ",height=" + hop_current_window_height();
 	 if( left != undefined ) prop += ",screenX=" + left + ",left=" + left;
 	 if( top != undefined  ) prop += ",screenY=" + top + ",top=" + top;
 

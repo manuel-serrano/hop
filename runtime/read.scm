@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Jan  2 19:23:49 2009 (serrano)                */
+;*    Last change :  Wed Jan 14 10:30:51 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -840,7 +840,7 @@
 		    (unwind-protect
 		       (begin
 			  (hop-load-afile (dirname path))
-			  (loading-file-set! file-name)
+			  (loading-file-set! path)
 			  (case mode
 			     ((load)
 			      (let loop ((last #unspecified))

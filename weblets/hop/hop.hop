@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon Dec  8 17:00:38 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Wed Jan 14 08:29:14 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
 ;*=====================================================================*/
@@ -17,7 +17,9 @@
    (import hophop_config)
    
    (export hop
-	   hop/dashboard))
+	   hop/panel
+	   hop/dashboard
+	   hop/dashboard-panel))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop ...                                                          */
@@ -56,28 +58,41 @@
 					       (list (cons n a)))))))
 		(append-map find-weblets-in-directory (hop-autoload-directories)))
       (values t ct)))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-panel ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (hop-panel #!key (showtitle #t) (width 48) (height 48) (icons '()))
-   (multiple-value-bind (t ct)
-      (hop-make-hashtables)
-      (list
-       (<WEBLETS> "Builtin Weblets"
-		  (hop-builtin-row :showtitle showtitle
-		     :width width :height height :icons icons))
-       (if (hop-view-by-category?)
-	   (map! (lambda (k)
-		    (let ((ws (map cdr (hashtable-get ct k))))
-		       (<WEBLETS> k (hop-additional-row ws))))
-		 (sort (hashtable-key-list ct) string<?))
-	   (let ((ws (map cdr (apply append (hashtable->list ct)))))
-	      (<WEBLETS> "Additional Weblets"
-			 (hop-additional-row ws
-					     :showtitle showtitle
-					     :width width :height height
-					     :icons icons)))))))
+(define (hop-panel #!key (showtitle #t) (width 48) (height 48) (icons '()) (open #f))
+   (let ((open (or open (if showtitle 'replace 'tab))))
+      (multiple-value-bind (t ct)
+	 (hop-make-hashtables)
+	 (list
+	  (<WEBLETS> "Builtin Weblets"
+		     (hop-builtin-row :showtitle showtitle
+			:width width :height height :icons icons :open open))
+	  (if (hop-view-by-category?)
+	      (map! (lambda (k)
+		       (let ((ws (map cdr (hashtable-get ct k))))
+			  (<WEBLETS> k (hop-additional-row ws :open open))))
+		    (sort (hashtable-key-list ct) string<?))
+	      (let ((ws (map cdr (apply append (hashtable->list ct)))))
+		 (<WEBLETS> "Additional Weblets"
+			    (hop-additional-row ws
+						:showtitle showtitle
+						:width width :height height
+						:icons icons
+						:open open))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop/panel ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-service (hop/panel showtitle size open)
+   (let ((size (or size 48)))
+      (<DIV> :class "hop-panel"
+	 (hop-panel :showtitle showtitle
+	    :width size :height size
+	    :icons `("logo.png" ,(string-append (hop-dir) "/etc/default.png"))
+	    :open (or open 'window)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop/documentation ...                                            */
@@ -115,14 +130,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLET> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (<WEBLET> base #!key url hz title showtitle width height icons)
+(define (<WEBLET> base #!key url hz title showtitle width height icons open)
    (let ((url (or url (format "/hop/~a" hz))))
       (<TABLE> :class "weblet" 
 	 (<TR>
 	    (<TD> :class "logo"
-	       :onclick (if showtitle
-			    ~(set! document.location $url)
+	       :onclick (case open
+			   ((tab)
 			    ~(tab-open :src $url))
+			   ((window)
+			    ~(window-open :src $url :title title
+				:toolbar #t :location #t directories: #t
+				:menubar #t :scrollbars #t :resizable #t
+				:titlebar #t))
+			   (else
+			    ~(set! document.location $url)))
 	       (<IMG> :class "logo"
 		  :inline #t
 		  :title title
@@ -170,22 +192,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-builtin-row ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (hop-builtin-row #!key showtitle width height icons)
+(define (hop-builtin-row #!key showtitle width height icons open)
    (cons (<WEBLET> (hop-weblets-directory)
 		   :hz "home" :url (hop-url)
 		   :showtitle showtitle
-		   :width width :height :height :icons icons)
+		   :width width :height :height :icons icons :open open)
 	 (map (lambda (x)
 		 (<WEBLET> (hop-weblets-directory)
 			   :hz x
 			   :showtitle showtitle
-			   :width width :height :height :icons icons))
+			   :width width :height :height :icons icons :open open))
 	      (hop-builtin-weblets))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-additional-rows ...                                          */
+;*    hop-additional-row ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (hop-additional-row ws #!key showtitle width height icons)
+(define (hop-additional-row ws #!key showtitle width height icons open)
    (map! (lambda (a)
 	    (let* ((n (cadr (assq 'name a)))
 		   (w (cadr (assq 'weblet a)))
@@ -197,7 +219,7 @@
 			     w))))
 	       (<WEBLET> (dirname (dirname w)) :hz n :title d
 			 :showtitle showtitle
-			 :width width :height height :icons icons)))
+			 :width width :height height :icons icons :open open)))
 	 (sort ws (lambda (a b)
 		     (let ((namea (cadr (assq 'name a)))
 			   (nameb (cadr (assq 'name b))))
