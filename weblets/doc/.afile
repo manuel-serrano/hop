@@ -1,18 +1,7 @@
 ;; automatically generated, don't edit
-;; /users/serrano/prgm/project/hop/1.9.x/weblets/doc
-;; Mon Dec  3 08:06:16 2007
+;; /users/serrano/prgm/project/hop/1.11.x/weblets/doc
+;; Thu Jan 15 18:02:47 2009
 
 (
-  (hopdoc_api "api.hop")
-  (hopdoc_config "config.hop")
-  (hopdoc "doc.hop")
-  (hopdoc_index "index.hop")
-  (hopdoc_libraries "libraries.hop")
-  (hopdoc_search "search.hop")
-  (hopdoc_services "services.hop")
-  (hopdoc_tutorials "tutorials.hop")
-  (hopdoc_weblets "weblets.hop")
-  (hopdoc_widgets "widgets.hop")
-  (hopdoc_wiki "wiki.hop")
 )
 
