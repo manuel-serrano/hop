@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Jan 14 06:04:31 2009 (serrano)                */
+;*    Last change :  Wed Jan 14 19:25:16 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -587,8 +587,6 @@
 				      (make-file-name (dirname path) rpath)
 				      rpath)))
 			 (raise e)))
-		  (tprint "http-send-request: "
-			  (http-server-request-authorization req))
 		  (http :in in :out out
 		     :protocol scheme :method method :http-version httpv
 		     :host host :port port :path path :header header
