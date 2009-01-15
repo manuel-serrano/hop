@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Jan  5 11:07:01 2009 (serrano)                */
+#*    Last change :  Thu Jan 15 10:15:22 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -44,4 +44,9 @@ uninstall:
 	$(RM) -f $(DESTDIR)$(HOPMANDIR)/hop.1
 	$(RM) -f $(DESTDIR)$(HOPMANDIR)/hopsh.1
 	$(RM) -f $(DESTDIR)$(HOPMANDIR)/hopreplay.1
+
+clean:
+	$(RM) -f hop.man hopreplay.man hopsh.man hopshrc.hop
+
+devclean: clean
 

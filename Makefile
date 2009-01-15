@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Nov 28 11:12:35 2008 (serrano)                */
+#*    Last change :  Thu Jan 15 10:15:14 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -161,6 +161,7 @@ clean:
 	(cd src; $(MAKE) clean)
 	(cd hopsh; $(MAKE) clean)
 	(cd hopreplay; $(MAKE) clean)
+	(cd etc; $(MAKE) clean)
 
 devclean:
 	(cd runtime; $(MAKE) devclean)
