@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/hz/markup.hop             */
+;*    serrano/prgm/project/hop/1.11.x/weblets/hz/markup.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Tue Apr 22 15:24:57 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Thu Jan 15 18:26:55 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ markups set                                                   */
 ;*=====================================================================*/
@@ -482,12 +482,12 @@
    (with-access::weblet w (minhop maxhop driver version install)
       (cond
 	 ((and (not (string-null? minhop))
-	       (string<? (hop-version) minhop))
+	       (< (string-natural-compare3 (hop-version) minhop) 0))
 	  (<HZ:WEBLET-ACTION-INCOMPATIBLE> id w (format "> ~a" minhop)))
 	 ((string=? driver "standard")
 	  (<HZ:WEBLET-ACTION-UNMANAGED> id w))
 	 ((and (not (string-null? maxhop))
-	       (string>? (hop-version) maxhop))
+	       (> (string-natural-compare3 (hop-version) maxhop) 0))
 	  (<HZ:WEBLET-ACTION-INCOMPATIBLE> id w (format "< ~a" maxhop)))
 	 ((=fx (string-length install) 0)
 	  (<HZ:WEBLET-ACTION-INSTALL> id w))
@@ -708,14 +708,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:WEBLET-ACTION-INCOMPATIBLE> ...                              */
 ;*---------------------------------------------------------------------*/
-(define (<HZ:WEBLET-ACTION-INCOMPATIBLE> id msg)
+(define (<HZ:WEBLET-ACTION-INCOMPATIBLE> id w msg)
    (<TR>
       (<TD>
 	 :class "icon"
-	 (<IMG> "etc/icons/warning.png"))
+	 (<IMG> :src "etc/icons/warning.png"))
       (<TD>
 	 (<SPAN>
-	    "HOP " (hop-version) " incompatible, required " msg))))
+	    "HOP " (hop-version) " incompatible, required " msg " by weblet "
+	    (weblet-name w)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    VBOX ...                                                         */
