@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Jan 15 10:15:22 2009 (serrano)                */
+#*    Last change :  Thu Jan 15 11:15:38 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -12,8 +12,8 @@
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../etc/Makefile.hopconfig
-include ../etc/Makefile.version
+-include ../etc/Makefile.hopconfig
+-include ../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */

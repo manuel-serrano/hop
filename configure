@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Jan 15 10:31:01 2009 (serrano)                */
+#*    Last change :  Thu Jan 15 11:07:08 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -56,7 +56,7 @@ cssmimetype="text/css"
 version="1.10.0"
 devel=
 
-branch="`echo $version | sed 's/[0-9][0-9]*$/x/'`
+branch="`echo $version | sed 's/[0-9][0-9]*$/x/'`"
 date=`date +"%d %B %Y"`
 
 url="http://hop.inria.fr/"
