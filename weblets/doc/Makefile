@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/weblets/doc/Makefile             */
+#*    serrano/prgm/project/hop/1.11.x/weblets/doc/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Jan 13 18:34:40 2009 (serrano)                */
+#*    Last change :  Sat Jan 17 15:51:56 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -128,6 +128,6 @@ config.hop: config.hop.in Makefile
                      -e "s|@HOST@|$(PRIVATEHOST)|" \
                      -e "s|@CATEGORY@|$(CATEGORY)|" > $@
 
-.afile: $(HOP_POP)
-	$(AFILE) -suffix hop $(HOP_POP) -o .afile
+.afile: $(SOURCES)
+	$(AFILE) -suffix hop $(SOURCES) -o .afile
 

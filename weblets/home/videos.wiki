@@ -1,9 +1,9 @@
 
-  * **HopX10**: Your House in your pocket (or Home Automation with Hop).
+  * **HopX10** (2 min): Your House in your pocket (or Home Automation with Hop).
  ,(<DIV> :style "margin-top: 1em; margin-bottom: 1em;"
     (<VIDEO> :src (make-file-name (home-dir) "videos/hopx10.flv") 
        :width 320 :height 200))
-  * **SLUG 07**: 
+  * **SLUG 07** (45 min): 
  ,(<A> :href "http://video.google.ca/videoplay?docid=6867885938648486821"
           "Programming multimedia applications with HOP"), presentation given
  at the Montreal Scheme and Lisp User Group, October 2007.

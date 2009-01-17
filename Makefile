@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/Makefile                         */
+#*    serrano/prgm/project/hop/1.11.x/Makefile                         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Jan 15 10:15:14 2009 (serrano)                */
+#*    Last change :  Thu Jan 15 18:53:03 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -153,6 +153,7 @@ clean-quick:
 	(cd src; $(MAKE) clean)
 	(cd hopsh; $(MAKE) clean)
 	(cd hopreplay; $(MAKE) clean)
+	(cd weblets; $(MAKE) clean)
 
 clean:
 	(cd runtime; $(MAKE) clean)
@@ -162,6 +163,7 @@ clean:
 	(cd hopsh; $(MAKE) clean)
 	(cd hopreplay; $(MAKE) clean)
 	(cd etc; $(MAKE) clean)
+	(cd weblets; $(MAKE) clean)
 
 devclean:
 	(cd runtime; $(MAKE) devclean)

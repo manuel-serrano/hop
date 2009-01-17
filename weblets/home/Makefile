@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/weblets/home/Makefile            */
+#*    serrano/prgm/project/hop/1.11.x/weblets/home/Makefile            */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Jan 15 10:22:40 2009 (serrano)                */
+#*    Last change :  Thu Jan 15 18:52:12 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -48,6 +48,7 @@ HOP_DEMOS	= minesweeper/minesweeper.hop \
 
                  
 build: .afile license.wiki install.wiki install-jvm.wiki release.info \
+       config.hop \
        etc/weblet.info etc/home.wiki
 
 clean:
