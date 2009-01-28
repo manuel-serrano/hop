@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/share/hop-audio.js               */
+/*    serrano/prgm/project/hop/1.11.x/share/hop-audio.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Sat Jan  3 20:01:17 2009 (serrano)                */
+/*    Last change :  Sun Jan 18 17:20:28 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -109,7 +109,7 @@ function HopAudioServerProxy( a, u ) {
 	 proxy.event_listener( evt );
       } );
    hop_add_event_listener( document, "serverclose", function( evt ) {
-	 hop_audio_onerror_callback( a.id, false );
+	 hop_audio_onerror_callback( a.id, false, "Server closed connection!" );
       } );
 
    // ... and starts the server event notification
@@ -297,7 +297,7 @@ HopAudioServerProxy.prototype.event_listener = function( e ) {
 /*    hop_audio_add_event_listener ...                                 */
 /*---------------------------------------------------------------------*/
 function hop_audio_add_event_listener( event, proc, capture ) {
-   audio[ "on" + event ] = proc;
+   this[ "on" + event ] = proc;
    return false;
 }
 
@@ -347,8 +347,11 @@ function hop_audio_init( id, start, src, stream,
    if( !("proxy" in audio) ) {
       // create a proxy only if flash initialization has not occured yet
       audio.proxy = new HopAudioProxy();
+      if( src )
+	 hop_audio_load( audio, src, stream );
    } else {
-      if( src ) hop_audio_load( audio, src, stream );
+      // there is a proxy, add to the playlist
+      hop_audio_playlist_set( audio, sc_list( src ) );
    }
 }
 
@@ -374,8 +377,10 @@ function hop_audio_flash_init( id, src, stream, player ) {
    proxy.playlist_index = 0;
 
    proxy.play = function( start ) {
-      proxy.flash_play( start );
-      hop_audio_run_hooks( audio, "play" );
+      if( audio.src ) {
+	 proxy.flash_play( start );
+	 hop_audio_run_hooks( audio, "play" );
+      }
    }
    proxy.stop = function() {
       proxy.flash_stop();
@@ -414,12 +419,13 @@ function hop_audio_flash_init( id, src, stream, player ) {
 	 return false;
       }
    }
-   if( src && audio.initialized ) {
-      hop_audio_load( audio, src, stream );
-   }
 
    if( player ) {
       hop_audio_player_set( audio, player, "server" );
+   } else {
+      if( src && audio.initialized ) {
+	 hop_audio_load( audio, src, stream );
+      }
    }
 }
 
@@ -428,6 +434,8 @@ function hop_audio_flash_init( id, src, stream, player ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export audio-player-set!)) */
 function hop_audio_player_set( audio, player, name ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
+   
    audio.player = player;
 
    /* cleanup the current proxy */
@@ -460,6 +468,7 @@ function hop_audio_player_set( audio, player, name ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export audio-player)) */
 function hop_audio_player( audio ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.player;
 }
 
@@ -495,9 +504,9 @@ function hop_audio_shutdown( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_onerror_callback ...                                   */
 /*---------------------------------------------------------------------*/
-function hop_audio_onerror_callback( id, play ) {
+function hop_audio_onerror_callback( id, play, msg ) {
    var audio = document.getElementById( id );
-   var evt = new HopAudioEvent( "error", audio, "Server closed connection..." );
+   var evt = new HopAudioEvent( "error", audio, msg );
 
    if( audio.onerror )
       audio.onerror( evt );
@@ -529,13 +538,20 @@ function hop_audio_onended_callback( id ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export audio-load)) */
 function hop_audio_load( audio, src, stream ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
+
    audio.src = src;
    audio.playlist_index = false;
    audio.paused = false;
-   audio.state = stream ? Splay : Sstop;
-   hop_audio_run_hooks( audio, "progress" );
+   
+   if( src ) {
+      audio.state = stream ? Splay : Sstop;
+      hop_audio_run_hooks( audio, "progress" );
 
-   return audio.proxy.load( src, stream );
+      return audio.proxy.load( src, stream );
+   } else {
+      audio.state = Sstop;
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -544,6 +560,7 @@ function hop_audio_load( audio, src, stream ) {
 /*** META ((export audio-state)
            (peephole (postfix ".state"))) */
 function hop_audio_state( audio ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.state;
 }
 
@@ -552,6 +569,8 @@ function hop_audio_state( audio ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export audio-playlist-set!)) */
 function hop_audio_playlist_set( audio, playlist, autorun ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
+
    audio.proxy.playlist_set( playlist, autorun );
    return;
 }
@@ -559,18 +578,18 @@ function hop_audio_playlist_set( audio, playlist, autorun ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_playlist_get ...                                       */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-playlist)
-           (peephole (postfix ".proxy.playlist_get()"))) */
+/*** META ((export audio-playlist)) */
 function hop_audio_playlist_get( audio ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.proxy.playlist_get();
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_audio_playlist_index ...                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-playlist-index)
-           (peephole (postfix ".proxy.playlist_index_get()"))) */
+/*** META ((export audio-playlist-index)) */
 function hop_audio_playlist_index( audio ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.proxy.playlist_index_get();
 }
 
@@ -579,11 +598,17 @@ function hop_audio_playlist_index( audio ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export audio-playlist-play)) */
 function hop_audio_playlist_play( audio, i ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    var pl = hop_audio_playlist_get( audio );
 
    if( (i >= 0) && (i < sc_length( pl )) ) {
       audio.proxy.playlist_play( i );
       return i;
+   } else {
+      if( (sc_length( pl ) == 0) && (i == 0) ) {
+	 /* play the src file */
+	 audio.proxy.play( true );
+      }
    }
 
    return -1;
@@ -594,6 +619,7 @@ function hop_audio_playlist_play( audio, i ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export audio-playlist-prev)) */
 function hop_audio_playlist_prev( audio ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    var pl = hop_audio_playlist_get( audio );
    var i = hop_audio_playlist_index( audio );
 
@@ -617,6 +643,7 @@ function hop_audio_playlist_prev( audio ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export audio-playlist-next)) */
 function hop_audio_playlist_next( audio ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    var pl = hop_audio_playlist_get( audio );
    var i = hop_audio_playlist_index( audio );
 
@@ -632,6 +659,8 @@ function hop_audio_playlist_next( audio ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export audio-play audio-start)) */
 function hop_audio_play( audio, start ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
+   
    audio.playlist_index = false;
    audio.paused = false;
    audio.state = start ? Splay : Sstop;
@@ -641,9 +670,10 @@ function hop_audio_play( audio, start ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_close ...                                              */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-close)
-           (peephole (postfix ".proxy.close()"))) */
+/*** META ((export audio-close)) */
 function hop_audio_close( audio ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
+   
    /* cleanup the current proxy */
    if( audio.server_proxy ) {
       hop_remove_event_listener( audio.server_proxy.url,
@@ -660,9 +690,9 @@ function hop_audio_close( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_stop ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-stop)
-           (peephole (postfix ".proxy.stop()"))) */
+/*** META ((export audio-stop)) */
 function hop_audio_stop( audio ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    audio.proxy.stop();
 }
 
@@ -671,6 +701,7 @@ function hop_audio_stop( audio ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export audio-pause)) */
 function hop_audio_pause( audio ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    audio.paused = !audio.paused;
    audio.state = audio.paused ? Spause : Splay;
    audio.proxy.pause();
@@ -682,6 +713,7 @@ function hop_audio_pause( audio ) {
 /*** META ((export audio-volume)
            (peephole (postfix ".proxy.volume_get()"))) */
 function hop_audio_volume( audio ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.proxy.volume_get();
 }
 
@@ -690,6 +722,7 @@ function hop_audio_volume( audio ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export audio-volume-set!)) */
 function hop_audio_volume_set( audio, vol ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    if( hop_audio_volume( audio ) != vol )
       return audio.proxy.volume_set( vol );
 }
@@ -699,6 +732,7 @@ function hop_audio_volume_set( audio, vol ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export audio-mute)) */
 function hop_audio_mute( audio ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    var img = document.getElementById( audio.id + "-hop-audio-button-mute" );
    
    if( audio.mute_volume ) {
@@ -719,15 +753,16 @@ function hop_audio_mute( audio ) {
 /*** META ((export audio-pan)
            (peephole (postfix ".proxy.pan_get()"))) */
 function hop_audio_pan( audio ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.proxy.pan_get();
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_audio_pan_set ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-pan-set!)
-           (peephole (hole 2 audio ".proxy.pan_set(" pan ")"))) */
+/*** META ((export audio-pan-set!)) */
 function hop_audio_pan_set( audio, pan ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.proxy.pan_set( pan );
 }
 
@@ -736,6 +771,7 @@ function hop_audio_pan_set( audio, pan ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export audio-duration)) */
 function hop_audio_duration( audio ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.proxy.duration_get();
 }
    
@@ -744,6 +780,7 @@ function hop_audio_duration( audio ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export audio-current-time)) */
 function hop_audio_current_time( audio ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.proxy.position_get();
 }
    
@@ -752,6 +789,8 @@ function hop_audio_current_time( audio ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export audio-seek)) */
 function hop_audio_seek( audio, pos ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
+   
    audio.min = Math.floor( pos / 60 );
    audio.sec = pos % 60;
    audio.ctime = pos;
@@ -765,6 +804,7 @@ function hop_audio_seek( audio, pos ) {
 /*** META ((export audio-metadata)
            (peephole (postfix ".proxy.metadata_get()"))) */
 function hop_audio_metadata( audio ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.proxy.metadata_get();
 }
 
@@ -921,6 +961,7 @@ function hop_audio_controls_metadata( audio, reset ) {
 /*    hop_audio_controls_onmetadata ...                                */
 /*---------------------------------------------------------------------*/
 function hop_audio_controls_onmetadata( evt ) {
+   var audio = evt.audio;
    var id = audio.id;
    var status = document.getElementById( id + "-controls-status-img" );
    var playbut = document.getElementById( id + "-hop-audio-button-play" );

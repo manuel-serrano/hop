@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/share/hop-tree.js                */
+/*    serrano/prgm/project/hop/1.11.x/share/hop-tree.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Sat Dec 20 18:41:10 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Wed Jan 21 15:52:03 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
 /*=====================================================================*/
@@ -256,11 +256,10 @@ function hop_tree_row_select( root, row, forcemulti ) {
 function hop_tree_row_unselect( root, row ) {
    row.className = "hop-tree-row-unselected";
    root.selection = false;
-   var i;
 
    if( root.onunselect ) root.onunselect();
       
-   for( i = 0; i < root.selections.length; i++ ) {
+   for( var i = 0; i < root.selections.length; i++ ) {
       if( root.selections[ i ] == row ) {
 	 root.selections.splice( i, 1 );
 	 break;
@@ -674,8 +673,6 @@ function hop_make_tree_leaf( tree, klass, content, value, icon, iconerr ) {
       
       if( (icon instanceof String) || (typeof icon == "string") ) {
 	 fimg.src = icon;
-	 fimg.width = "16";
-	 fimg.height = "16";
       } else {
 	 fimg.src = hop_tree_default_file_icon;
       }

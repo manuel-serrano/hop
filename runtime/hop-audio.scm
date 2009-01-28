@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/hop-audio.scm            */
+;*    serrano/prgm/project/hop/1.11.x/runtime/hop-audio.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Jan  2 19:40:06 2009 (serrano)                */
+;*    Last change :  Sun Jan 18 17:02:50 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -323,7 +323,7 @@
 	    :id (string-append id "-hop-audio-button-play")
 	    :class "hop-audio-button-play"
 	    :onclick (if (eq? onplayclick #unspecified)
-			 (format "hop_audio_play(document.getElementById(~s))"
+			 (format "hop_audio_playlist_play(document.getElementById(~s), 0)"
 				 id)
 			 onplayclick))
 	 (<BUT> :title "Pause" :src "pause.png"
@@ -445,13 +445,6 @@
 		     :min -100 :max 100 :step 1 :value 0 :caption #f
 		     :onchange (on "pan_set")))
 	    (<TH> "R")))))
-
-#;(define-expander hop-event-broadcast!
-   (lambda (x e)
-      `(begin
-	  ,(e `(tprint "HOP-EVENT-BROADCAST!..."
-		,@(map (lambda (x) (e x e)) (cdr x))) e)
-	  (hop-event-broadcast! ,@(map (lambda (x) (e x e)) (cdr x))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-onstate ...                                                */
