@@ -1,6 +1,6 @@
 (
  (#!/bin/sh )
- (major 1.10.0)
- (state rc)
- (minor 3)
+ (major 1.10.2)
+ (state )
+ (minor )
 )
