@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Jan 29 18:08:24 2009 (serrano)                */
+#*    Last change :  Thu Jan 29 18:27:08 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -271,8 +271,8 @@ distrib-sans-version:
            ./configure --backend=jvm && \
            $(MAKE) && \
 	   $(MAKE) changelog > ChangeLog && \
-	   $(RM) -rf $(HOPTMPDIR)/hop-tmp/weblets/home/talks && \
-	   $(RM) -rf $(HOPTMPDIR)/hop-tmp/weblets/home/videos && \
+	   $(RM) -rf $(HOPTMPDIR)/hop-$$distrib/weblets/home/talks && \
+	   $(RM) -rf $(HOPTMPDIR)/hop-$$distrib/weblets/home/videos && \
            /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.jar && \
            mv bin/hop.jar $(HOPDISTRIBDIR)/hop-$$distrib.jar) && \
           $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \
