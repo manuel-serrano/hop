@@ -3,8 +3,7 @@
  ,(<DIV> :style "margin-top: 1em; margin-bottom: 1em;"
     (<VIDEO> :src (make-file-name (home-dir) "videos/hopx10.flv") 
        :width 320 :height 200))
-See also the companion ,(<A> :href (string-append (home-dir)
-                                       "/talks/hopdiffuse.xhtml.gz") "slides").
+See also the companion ,(<A> :href "/talks/hopdiffuse.xhtml.gz" "slides").
   * **HopX10** (2 min): Your House in your pocket (or Home Automation with Hop),September 2009.
  ,(<DIV> :style "margin-top: 1em; margin-bottom: 1em;"
     (<VIDEO> :src (make-file-name (home-dir) "videos/hopx10.flv") 
