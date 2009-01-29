@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Jan 15 18:52:12 2009 (serrano)                */
+#*    Last change :  Thu Jan 29 17:53:24 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -28,10 +28,12 @@ HOP_POP		= presentation.wiki docs.wiki license.wiki faq.wiki \
                   download.wiki weblets.wiki install.wiki install-jvm.wiki \
                   community.wiki videos.wiki
 VIDEOS		= hopx10.flv
+TALKS		= hopdiffuse.xhtml.gz
 POPULATION	= Makefile .afile home.hss tips.hss \
                   demos etc/icons articles etc/weblet.info.in etc/home.wiki.in \
                   etc/logo.png etc/favicon.png etc/video.png \
                   $(VIDEOS:%=videos/%) \
+                  $(TALKS:%=talks/%) \
                   $(SOURCES) $(HOP_POP) config.hop.in
 
 HOP_DEMOS	= minesweeper/minesweeper.hop \
