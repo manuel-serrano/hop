@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Jan 29 18:15:13 2009 (serrano)                */
+#*    Last change :  Thu Jan 29 18:17:41 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -694,6 +694,16 @@ done
 #*---------------------------------------------------------------------*/
 #*    Summary                                                          */
 #*---------------------------------------------------------------------*/
+if [ ! -x .hoprelease ]; then
+  cat > .hoprelease <<EOF
+#!/bin/sh
+major=$version
+state=
+minor=
+EOF
+  chmod a+rx .hoprelease
+fi
+
 . ./.hoprelease
 
 echo "** Configuration summary **"
