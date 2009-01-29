@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Jan 15 10:15:14 2009 (serrano)                */
+#*    Last change :  Thu Jan 29 18:15:04 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -153,6 +153,7 @@ clean-quick:
 	(cd src; $(MAKE) clean)
 	(cd hopsh; $(MAKE) clean)
 	(cd hopreplay; $(MAKE) clean)
+	(cd weblets; $(MAKE) clean)
 
 clean:
 	(cd runtime; $(MAKE) clean)
@@ -162,6 +163,7 @@ clean:
 	(cd hopsh; $(MAKE) clean)
 	(cd hopreplay; $(MAKE) clean)
 	(cd etc; $(MAKE) clean)
+	(cd weblets; $(MAKE) clean)
 
 devclean:
 	(cd runtime; $(MAKE) devclean)
@@ -251,6 +253,8 @@ distrib-sans-version:
 	  echo "Building hop-$(HOPRELEASE).tar.gz..."; \
           $(MAKE) clone CLONEDIR=$(HOPTMPDIR)/hop-tmp && \
 	  $(MAKE) changelog > $(HOPTMPDIR)/hop-tmp/ChangeLog && \
+	  $(RM) -rf $(HOPTMPDIR)/hop-tmp/weblets/home/talks && \
+	  $(RM) -rf $(HOPTMPDIR)/hop-tmp/weblets/home/videos && \
           mv $(HOPTMPDIR)/hop-tmp $(HOPTMPDIR)/hop-$$distrib && \
           tar cvfz hop-$$distrib.tar.gz --exclude .hg -C $(HOPTMPDIR) hop-$$distrib && \
           $(RM) -rf $(HOPTMPDIR)/hop-$$distrib && \
@@ -267,6 +271,8 @@ distrib-sans-version:
            ./configure --backend=jvm && \
            $(MAKE) && \
 	   $(MAKE) changelog > ChangeLog && \
+	   $(RM) -rf $(HOPTMPDIR)/hop-tmp/weblets/home/talks && \
+	   $(RM) -rf $(HOPTMPDIR)/hop-tmp/weblets/home/videos && \
            /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.jar && \
            mv bin/hop.jar $(HOPDISTRIBDIR)/hop-$$distrib.jar) && \
           $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \
