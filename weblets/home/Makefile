@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Jan 29 18:12:21 2009 (serrano)                */
+#*    Last change :  Fri Jan 30 04:05:20 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -14,8 +14,8 @@ all: build
 #*    CONFIG ...                                                       */
 #*---------------------------------------------------------------------*/
 TITLE = home
-VERSION = $(HOPRELEASE) 
-MINHOP = $(HOPRELEASE) 
+VERSION = $(HOPRELEASE)
+MINHOP = $(HOPRELEASE)
 MAXHOP = $(HOPRELEASE)
 CATEGORY = hop
 DATE = $(HOPDATE)
@@ -91,7 +91,7 @@ etc/weblet.info: etc/weblet.info.in Makefile
                      -e "s|@TITLE@|$(TITLE)|" \
                      -e "s|@CATEGORY@|$(CATEGORY)|" > $@
 
-config.hop: config.hop.in Makefile
+config.hop: config.hop.in Makefile ../../etc/Makefile.hopconfig
 	cat $< | sed -e "s|@VERSION@|$(VERSION)|" \
                      -e "s|@HOPRELEASE@|$(HOPRELEASE)|" \
                      -e "s|@TITLE@|$(TITLE)|" \
