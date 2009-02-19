@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/test/paned.hop                  */
+;*    serrano/prgm/project/hop/1.11.x/weblets/test/paned.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
-;*    Last change :  Sat Jul  7 08:24:39 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Mon Feb 16 08:16:27 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Paneds                                                           */
 ;*=====================================================================*/
@@ -16,6 +16,9 @@
    (import weblet_test)
    (export test/paned))
 
+;*---------------------------------------------------------------------*/
+;*    <MYPAN> ...                                                      */
+;*---------------------------------------------------------------------*/
 (define (<MYPAN> . attrs)
    (let ((pan (apply
 	       <PANED>

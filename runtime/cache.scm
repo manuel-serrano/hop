@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/cache.scm                 */
+;*    serrano/prgm/project/hop/1.11.x/runtime/cache.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Sat Sep 20 18:54:37 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Wed Feb 18 10:12:16 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
 ;*=====================================================================*/
@@ -296,7 +296,8 @@
    (with-access::cache-disk c (%table %head %tail %mutex
 				      max-entries current-entries uid
 				      path max-file-size out)
-      (when (<elong (file-size upath) max-file-size)
+      (when (or (<=elong max-file-size #e0)
+		(<elong (file-size upath) max-file-size))
 	 (mutex-lock! %mutex)
 	 (let* ((name (format "~a-~a" uid (basename upath)))
 		(cpath (make-file-name path name))
@@ -330,7 +331,8 @@
    (with-access::cache-memory c (%table %head %tail %mutex
 					max-entries
 					max-file-size)
-      (when (<elong (file-size upath) max-file-size)
+      (when (or (<=elong max-file-size #e0)
+		(<elong (file-size upath) max-file-size))
 	 (let ((ce (instantiate::cache-entry
 		      (value value)
 		      (upath upath)

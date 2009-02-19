@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/wiki-syntax.scm          */
+;*    serrano/prgm/project/hop/1.11.x/runtime/wiki-syntax.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Oct 27 19:10:07 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Mon Feb 16 09:16:33 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
 ;*=====================================================================*/
@@ -61,6 +61,7 @@
 					      (<SPAN>
 						 :style "font-size: smaller"
 						 x)))))
+	       (q::procedure (default <Q>))
 	       (tt::procedure (default <TT>))
 	       (code::procedure (default <CODE>))
 	       (math::procedure (default <PRE>))
@@ -73,7 +74,9 @@
 					    (<A> :href href node))))
 	       (keyword::procedure (default (lambda (x) x)))
 	       (type::procedure (default (lambda (x) x)))
-	       (plugins::procedure (default (lambda (id) #f))))
+	       (plugins::procedure (default (lambda (id) #f)))
+	       (prehook::procedure (default (lambda () #f)))
+	       (posthook::procedure (default (lambda (l) l))))
 	    
 	    (wiki-string->hop ::bstring #!key
 			      syntax
@@ -91,6 +94,17 @@
 ;*---------------------------------------------------------------------*/
 (define *default-syntax*
    (instantiate::wiki-syntax))
+
+;*---------------------------------------------------------------------*/
+;*    *wiki-debug* ...                                                 */
+;*---------------------------------------------------------------------*/
+(define *wiki-debug* 0)
+
+;*---------------------------------------------------------------------*/
+;*    wiki-debug? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (wiki-debug?)
+   (or (>fx *wiki-debug* 0) (>fx (bigloo-debug) 4)))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-string->hop ...                                             */
@@ -122,17 +136,36 @@
 ;*    wiki-input-port->hop ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (wiki-input-port->hop iport #!key syntax (charset (hop-locale)))
-   (with-loading-file (input-port-name iport)
-      (lambda ()		      
-	 (read/rp *wiki-grammar*
-		  iport
-		  (or syntax *default-syntax*)
-		  '()
-		  '()
-		  0
-		  (if (procedure? charset)
-		      charset
-		      (charset-converter! charset (hop-charset)))))))
+   (cond
+      ((wiki-syntax? syntax)
+       (with-loading-file (input-port-name iport)
+          (lambda ()
+	     ((wiki-syntax-posthook syntax)
+	      (cons
+	       ((wiki-syntax-prehook syntax))
+	       (read/rp *wiki-grammar*
+			iport
+			syntax
+			'()
+			'()
+			0
+			(if (procedure? charset)
+			    charset
+			    (charset-converter! charset (hop-charset)))))))))
+      ((not syntax)
+       (with-loading-file (input-port-name iport)
+          (lambda ()
+	     (read/rp *wiki-grammar*
+		      iport
+		      *default-syntax*
+		      '()
+		      '()
+		      0
+		      (if (procedure? charset)
+			  charset
+			  (charset-converter! charset (hop-charset)))))))
+      (else
+       (error 'wiki-input-port->hop "Illegal syntax" syntax))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-read-error ...                                              */
@@ -149,8 +182,8 @@
 ;*    *wiki-grammar* ...                                               */
 ;*---------------------------------------------------------------------*/
 (define *wiki-grammar*
-   (regular-grammar ((punct (in "+*=/_-$#%!"))
-		     (blank (in "<>^|:~;,`'(){}[] \\\n"))
+   (regular-grammar ((punct (in "+*=/_-$#%!`'"))
+		     (blank (in "<>^|:~;,(){}[] \\\n"))
 		     (letter (out "<>+^|*=/_-$#%:~;,`'(){}[]! \\\n"))
 		     syn state result trcount charset)
 
@@ -173,6 +206,9 @@
 
       ;; state management
       (define (enter-state! st fun value)
+	 (when (wiki-debug?)
+	    (print (make-string (length state) #\space) ">>> " st " [state] "
+		   (map state-markup state)))
 	 (let ((st (instantiate::state
 		      (markup st)
 		      (syntax fun)
@@ -181,6 +217,9 @@
 	    (set! state (cons st state))))
       
       (define (enter-expr! st fun value)
+	 (when (wiki-debug?)
+	    (print (make-string (length state) #\space) ">>> " st " [expr] "
+		   (map state-markup state)))
 	 (let ((st (instantiate::expr
 		      (markup st)
 		      (syntax fun)
@@ -189,6 +228,9 @@
 	    (set! state (cons st state))))
       
       (define (enter-block! st fun value s)
+	 (when (wiki-debug?)
+	    (print (make-string (length state) #\space) ">>> " st " [block] "
+		   (map state-markup state)))
 	 (let ((st (instantiate::block
 		      (markup st)
 		      (syntax fun)
@@ -238,6 +280,10 @@
       
       ;; unwind the state until the stack is empty or the state is found
       (define (unwind-state! s . args)
+	 (when (wiki-debug?)
+	    (print (make-string (max 0 (- (length state) 1)) #\space) "<<< "
+		   (when s (state-markup s)) " "
+		   (map state-markup state)))
 	 (let loop ((st state)
 		    (el #f))
 	    (if (null? st)
@@ -313,6 +359,47 @@
 		   (add-expr! (the-html-string))
 		   (ignore)))))
 
+      (define include-grammar
+	 (regular-grammar (end name proc)
+	    ((: "</" (+ (out #\>)) ">")
+	     (if (eq? (the-symbol) end)
+		 (let* ((name (apply string-append (reverse! name)))
+			(path (if (substring-at? name ",(" 0)
+				  (let ((e (substring name 1 (string-length name))))
+				     (with-input-from-string e
+					(lambda ()
+					   (eval (read)))))
+				  (let ((dir (dirname (input-port-name (the-port)))))
+				     (find-file/path name (list "." dir))))))
+		    (cond
+		       ((and (string? path) (file-exists? path))
+			(proc path))
+		       ((string? path)
+			(warning 'wiki-parser "Can't find file" path)
+			(add-expr! ((wiki-syntax-pre syn)
+				    "File not found -- " path)))
+		       (else
+			(warning 'wiki-parser "Can't find file" path)
+			(add-expr! ((wiki-syntax-pre syn)
+				    "Cannot find file in path -- " name)))))))
+	    ((+ (or (out #\<) (: "<" (out "/"))))
+	     (set! name (cons (the-string) name))
+	     (ignore))
+	    ((+ #\<)
+	     (set! name (cons (the-string) name))
+	     (ignore))))
+
+      (define (link-val s)
+	 (if (and (>fx (string-length s) 3) (substring-at? s ",(" 0))
+	     (with-input-from-string (substring s 1 (string-length s))
+		(lambda ()
+		   (with-handler
+		      (lambda (e)
+			 (exception-notify e)
+			 "")
+		      (eval (hop-read (current-input-port))))))
+	     s))
+
       ;; continuation lines
       ((: #\\ (? #\Return) #\Newline)
        (ignore))
@@ -320,11 +407,17 @@
       ;; a blank line: end of expr
       ((bol (: (? #\Return) #\Newline))
        (let ((st (in-bottom-up-state (lambda (n _) (expr? n)))))
-	  (when st (unwind-state! st)))
+	  (cond
+	     (st
+	      (unwind-state! st))
+	     ((is-state? 'p)
+	      (pop-state!)
+	      (add-expr! "\n"))))
        (add-expr! (the-html-string))
        (ignore))
       ((bol (: (>= 2 (in " \t")) (? #\Return) #\Newline))
-       (let ((st (in-bottom-up-state (lambda (n _) (expr? n)))))
+       (let ((st (or (in-bottom-up-state (lambda (n _) (expr? n)))
+		     (is-state? 'p))))
 	  (when st (unwind-state! st)))
        (add-expr! (the-html-substring 2 (the-length)))
        (ignore))
@@ -350,7 +443,15 @@
 
       ;; paragraphs
       ((bol "~~")
-       (add-expr! ((wiki-syntax-p syn)))
+       (when (is-state? 'p) (pop-state!))
+       (enter-block! 'p
+		     (lambda expr
+			(let ((rev (reverse! expr)))
+			   (if (and (pair? rev) (equal? "\n" (car rev)))
+			       (apply (wiki-syntax-p syn) (reverse! (cdr rev)))
+			       (apply (wiki-syntax-p syn) (reverse! rev)))))
+		     #f
+		     #f)
        (ignore))
       
       ;; sections
@@ -377,14 +478,25 @@
 			  (lambda (s _)
 			     (with-access::state s (markup value)
 				(and (eq? markup 'section)
-				     (>=fx value lv))))))
-		     (mk (gensym)))
+				     (>=fx value lv)))))))
 		 (when st (unwind-state! st))
 		 (enter-state! 'section sx lv)
 		 (enter-expr! '==
 			      (lambda expr
-				 (list (<A> :name (symbol->string mk))
-				       (apply hx expr)))
+				 (let* ((s (with-output-to-string
+					      (lambda ()
+						 (let loop ((e expr))
+						    (cond
+						       ((pair? e)
+							(for-each loop e))
+						       ((xml-markup? e)
+							(loop (xml-markup-body e)))
+						       (else
+							(display e)))))))
+					(s2 (pregexp-replace* "  |\n" s " "))
+					(s3 (pregexp-replace* "^ +| +$" s2 "")))
+				    (list (<A> :name s3)
+					  (apply hx expr))))
 			      #f)
 		 (ignore)))))
       
@@ -504,30 +616,78 @@
 	      (begin
 		 (enter-expr! '__ (wiki-syntax-u syn) #f)
 		 (ignore)))))
-      ("<del>"
-       (enter-expr! '<del> (wiki-syntax-del syn) #f)
-       (ignore))
-      ("</del>"
-       (let ((s (in-state '<del>)))
-	  (when s (unwind-state! s))
-	  (ignore)))
-      
-      ("<sup>"
-       (enter-expr! '<sup> (wiki-syntax-sup syn) #f)
-       (ignore))
-      ("</sup>"
-       (let ((s (in-state '<sup>)))
-	  (when s (unwind-state! s))
-	  (ignore)))
-      
-      ("<sub>"
-       (enter-expr! '<sub> (wiki-syntax-sub syn) #f)
-       (ignore))
-      ("</sub>"
-       (let ((s (in-state '<sub>)))
-	  (when s (unwind-state! s))
-	  (ignore)))
-      
+
+      ((: "<" (out #\> #\/) (* (out #\>)) ">")
+       (let ((id (the-symbol)))
+	  (case id
+	     ((<del>)
+	      (enter-expr! '</del> (wiki-syntax-del syn) #f)
+	      (ignore))
+	     ((<sup>)
+	      (enter-expr! '</sup> (wiki-syntax-sup syn) #f)
+	      (ignore))
+	     ((<sub>)
+	      (enter-expr! '</sub> (wiki-syntax-sub syn) #f)
+	      (ignore))
+	     ((<include>)
+	      (read/rp include-grammar (the-port)
+		       '</include>
+		       '()
+		       (lambda (path)
+			  (add-expr! (wiki-file->hop path
+						     :syntax syn
+						     :charset charset))))
+	      (ignore))
+	     ((<include-pre>)
+	      (read/rp include-grammar (the-port)
+		       '</include-pre>
+		       '()
+		       (lambda (path)
+			  (with-input-from-loading-file path
+		             (lambda ()
+				(add-expr!
+				 ((wiki-syntax-pre syn)
+				  (html-string-encode (read-string))))))))
+	      (ignore))
+	     (else
+	      (let* ((id (the-symbol))
+		     (proc ((wiki-syntax-plugins syn) id)))
+		 (if (procedure? proc)
+		     (let* ((/markup (string-append
+				      "</" (the-substring 1 (the-length))))
+			    (l/markup (string-length /markup))
+			    (title (read-line (the-port)))
+			    (ltitle (string-length title)))
+			(if (substring-at? title /markup (-fx ltitle l/markup))
+			    (add-expr!
+			     (proc (the-port)
+				   (substring title 0 (-fx ltitle l/markup))
+				   #f))
+			    (enter-state! id
+					  (lambda el (proc (the-port) title el))
+					  #f)))
+		     (add-expr! (the-html-string)))
+		 (ignore))))))
+      ((: "</" (+ (out #\>)) ">")
+       (let ((id (the-symbol)))
+	  (case id
+	     ((</del> </sup> </sub>)
+	      (let ((s (in-state id)))
+		 (when s (unwind-state! s))
+		 (ignore)))
+	     (else
+	      (let* ((s (the-substring 2 (the-length)))
+		     (id (symbol-append '< (string->symbol s)))
+		     (proc ((wiki-syntax-plugins syn) id)))
+		 (if (procedure? proc)
+		     (let ((st (in-state id)))
+			(if (state? st)
+			    (unwind-state! st)
+			    (add-expr! (the-html-string))))
+		     (add-expr! (the-html-string)))
+		 (ignore))))))
+
+      ;; math
       ("%%"
        (let ((s (in-state '%%)))
 	  (if s
@@ -537,6 +697,7 @@
 	      (begin
 		 (enter-expr! '%% (wiki-syntax-math syn) #f)
 		 (ignore)))))
+      ;; tt
       ("++"
        (let ((s (in-state 'tt)))
 	  (if s
@@ -546,6 +707,7 @@
 	      (begin
 		 (enter-expr! 'tt (wiki-syntax-tt syn) #f)
 		 (ignore)))))
+      ;; code
       ("--"
        (let ((s (in-state 'code)))
 	  (if s
@@ -555,6 +717,15 @@
 	      (begin
 		 (enter-expr! 'code (wiki-syntax-tt syn) #f)
 		 (ignore)))))
+
+      ;; quotes
+      ("``"
+       (enter-expr! 'quotation (wiki-syntax-q syn) #f)
+       (ignore))
+      ("''"
+       (let ((s (in-state 'quotation)))
+	  (when s (unwind-state! s))
+	  (ignore)))
 
       ;; keywords
       ((: (in " \t") #\: (out " \t\n:") (* (out " \t\n")))
@@ -570,32 +741,6 @@
       ((: "::" (+ (out " \t\n(){}[]")))
        (add-expr! ((wiki-syntax-type syn) (the-html-string)))
        (ignore))
-
-      ;; code embedding
-      ((: "##" (+ (or (out #\#) (: #\# (out #\#)))) "##")
-       (let* ((name (the-substring 2 -2))
-	      (path (if (substring-at? name ",(" 0)
-			(let ((expr (substring name 1 (string-length name))))
-			   (with-input-from-string expr
-			      (lambda ()
-				 (eval (read)))))
-			(let ((dir (dirname (input-port-name (the-port)))))
-			   (find-file/path name (list "." dir))))))
-	  (cond
-	     ((and (string? path) (file-exists? path))
-	      (with-input-from-loading-file path
-		 (lambda ()
-		    (add-expr! ((wiki-syntax-pre syn)
-				(html-string-encode (read-string)))))))
-	     ((string? path)
-	      (warning 'wiki-parser "Can't find file" path)
-	      (add-expr! ((wiki-syntax-pre syn)
-			  "File not found -- " path)))
-	     (else
-	      (warning 'wiki-parser "Can't find file" path)
-	      (add-expr! ((wiki-syntax-pre syn)
-			  "Cannot find file in path -- " name))))
-	  (ignore)))
 
       ;; links
       ((: "[[" (+ (or (out #\]) (: #\] (out #\])))) "]]")
@@ -620,7 +765,7 @@
 		(else
 		 (values s s))))
 	  (add-expr!
-	   (if (or (not i) (=fx i -1))
+	   (if (not i)
 	       (multiple-value-bind (h n)
 		  (link-val s)
 		  (href h n))
@@ -634,27 +779,30 @@
 			    :charset charset))))))
 	  (ignore)))
 
+      ;; anchorts
+      ((: "##" (+ (or (out #\]) (: #\] (out #\])))) "##")
+       (let* ((s (the-substring 2 -2))
+	      (i (string-index s "|"))
+	      (href (wiki-syntax-href syn)))
+	  (add-expr!
+	   (if (not i)
+	       (let ((href (link-val s)))
+		  (<A> :name href href))
+	       (let ((s2 (substring s (+fx i 1) (string-length s))))
+		  (let ((href (link-val (substring s 0 i)))
+			(title (substring s (+fx i 1) (string-length s))))
+		     (<A> :name href title)))))
+	  (ignore)))
+
       ;; images
       ((: "!!" (+ (or (out #\!) (: #\! (out #\!)))) "!!")
        (let* ((s (the-substring 2 -2))
 	      (i (string-index s "|")))
-	  (define (src-val s)
-	     (cond
-		((and (>fx (string-length s) 3) (substring-at? s ",(" 0))
-		 (with-input-from-string (substring s 1 (string-length s))
-		    (lambda ()
-		       (with-handler
-			  (lambda (e)
-			     (exception-notify e)
-			     s)
-			  (eval (hop-read (current-input-port)))))))
-		(else
-		 s)))
 	  (add-expr!
 	   (if (not i)
-	       (let ((path (src-val s)))
+	       (let ((path (link-val s)))
 		  (<IMG> :src path :alt path))
-	       (let ((path (src-val (substring s 0 i)))
+	       (let ((path (link-val (substring s 0 i)))
 		     (title (substring s (+fx i 1) (string-length s))))
 		  (<IMG> :src path :alt path :title title)))))
        (ignore))
@@ -682,40 +830,6 @@
 		(add-expr! (eval expr)))))
        (ignore))
        
-      ;; special escape markups
-      ((bol (: "<" (out #\> #\/) (* (out #\>)) ">"))
-       (let* ((id (the-symbol))
-	      (proc ((wiki-syntax-plugins syn) id)))
-	  (if (procedure? proc)
-	      (let* ((/markup (string-append
-			       "</" (the-substring 1 (the-length))))
-		     (l/markup (string-length /markup))
-		     (title (read-line (the-port)))
-		     (ltitle (string-length title)))
-		 (if (substring-at? title /markup (-fx ltitle l/markup))
-		     (add-expr!
-		      (proc (the-port)
-			    (substring title 0 (-fx ltitle l/markup))
-			    #f))
-		     (enter-state! id
-				   (lambda el (proc (the-port) title el))
-				   #f)))
-	      (add-expr! (the-html-string)))
-	  (ignore)))
-
-      ;; ending markup
-      ((bol (: "</" (+ (out #\>)) ">"))
-       (let* ((s (the-substring 2 (the-length)))
-	      (id (symbol-append '< (string->symbol s)))
-	      (proc ((wiki-syntax-plugins syn) id)))
-	  (if (procedure? proc)
-	      (let ((st (in-state id)))
-		 (if (state? st)
-		     (unwind-state! st)
-		     (add-expr! (the-html-string))))
-	      (add-expr! (the-html-string)))
-	  (ignore)))
-       
       ;; single escape characters
       ((or punct blank)
        (add-expr! (the-html-string))
@@ -728,8 +842,3 @@
 		 (add-expr! (unwind-state! #f))
 		 (the-result))
 	      (wiki-read-error "Illegal character" (string c) (the-port)))))))
-
-
-   
-
-   

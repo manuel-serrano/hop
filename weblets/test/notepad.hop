@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/test/notepad.hop          */
+;*    serrano/prgm/project/hop/1.11.x/weblets/test/notepad.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
-;*    Last change :  Fri May 30 19:34:06 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Mon Feb 16 06:59:39 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Notepads                                                         */
 ;*=====================================================================*/
@@ -31,7 +31,10 @@
 	    (<TABLE> (<TR> (map <TD> (iota 10)))))
 	 (<NPTAB>
 	    (<NPTABHEAD> "Characters")
-	    (<TABLE> (<TR> (map <TD> (iota 10 65))))))
+	    (<TABLE> (<TR> (map (lambda (x)
+				   (<TD>
+				      (string (integer->char x))))
+				(iota 10 65))))))
       (<H3> "A dynamic Notepad"
 	    (<NOTEPAD>
 	       (<NPHEAD>

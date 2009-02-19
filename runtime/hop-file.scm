@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/hop-file.scm             */
+;*    serrano/prgm/project/hop/1.11.x/runtime/hop-file.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Mon Nov 17 12:16:10 2008 (serrano)                */
-;*    Copyright   :  2008 Manuel Serrano                               */
+;*    Last change :  Sun Feb  8 18:29:07 2009 (serrano)                */
+;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
 ;*=====================================================================*/
@@ -65,28 +65,37 @@
 (define (init-hop-file-services!)
    (set! *inputurl-service*
 	 (service :name "server-file/completion" (path)
-	    (url-completion (current-request) path)))
+	    (when (string? path)
+	       (let ((path ((hop-charset->locale) path)))
+		  (url-completion (current-request) path)))))
    (set! *filechooser-service*
 	 (service :name "server-file/filechooser" (args)
 	    (apply <FILECHOOSER> args)))
    (set! *files-service*
 	 (service :name "server-file/files" (id url regexp hidden)
-	    ;; is not encoded 
-	    (preference-store! 'filechooser/url url)
-	    (list (<FILECHOOSER:FILES> id url regexp (equal? hidden "false"))
-		  (<FILECHOOSER:PATH> id url))))
+	    (let ((url (if (string? url)
+			   ((hop-charset->locale) url)
+			   (pwd))))
+	       (preference-store! 'filechooser/url url)
+	       (list (<FILECHOOSER:FILES> id url regexp (equal? hidden "false"))
+		     (<FILECHOOSER:PATH> id url)))))
    (set! *addplace-service*
 	 (service :name "server-file/addplace" (id url)
-	    (when (is-directory? url)
-	       (let ((old (preference-get 'filechooser/places :default '())))
-		  (unless (member url old)
-		     (preference-store! 'filechooser/places (append! old (list url))))))
+	    (when (string? url)
+	       (let ((url ((hop-charset->locale) url)))
+		  (when (and (string? url) (is-directory? url))
+		     (let ((old (preference-get 'filechooser/places :default '())))
+			(unless (member url old)
+			   (preference-store! 'filechooser/places (append! old (list url))))))))
 	    (<FILECHOOSER:PLACES> id)))
    (set! *removeplace-service*
 	 (service :name "server-file/removeplace" (id url)
-	    (let ((old (preference-get 'filechooser/places)))
-	       (when old
-		  (preference-store! 'filechooser/places (delete! url old))))
+	    (when (string? url)
+	       (let ((old (preference-get 'filechooser/places)))
+		  (when old
+		     (preference-store!
+		      'filechooser/places
+		      (delete! ((hop-charset->locale) url) old)))))
 	    (<FILECHOOSER:PLACES> id)))
    (set! *toggle-service*
 	 (service :name "server-file/togglelocation" (id flag)
@@ -260,7 +269,7 @@
 		 (dirs (file-name->list abspath))
 		 (buts '()))
 	 (if (pair? dirs)
-	     (let ((dir (car dirs)))
+	     (let ((dir ((hop-locale->charset) (car dirs))))
 		(let ((url (make-file-name url dir)))
 		   (loop url
 			 (cdr dirs)
@@ -269,7 +278,7 @@
 		(<SPAN> :class (location-classname
 				(preference-get 'filechooser/show-location))
 		   :onclick (format "hop_filechooser_toggle_location( this, ~s )"
-				    id)
+				    id )
 		   "  ")
 		(reverse! buts))))))
 
@@ -314,14 +323,17 @@
 	    (<TD> :class "filechooser-icon filechooser-hdd" "File system")))
       (<TR> (<TD> :colspan 2 :class "filechooser-br"))
       ;; users directories
-      (map (lambda (p)
-	      (<TR>
-		 :onclick (format "hop_filechooser_select( this, event, ~s, ~s )" id p)
-		 :ondblclick (format "hop_filechooser_open( ~s, ~s )" id p)
-		 :title p
-		 (<TD> :class "filechooser-icon filechooser-folder"
-		    (basename p))))
-	   (preference-get 'filechooser/places :default '()))))
+      (filter-map (lambda (ep)
+		     (when (string? ep)
+			(let ((p ((hop-locale->charset) ep)))
+			   (<TR>
+			      :onclick (format "hop_filechooser_select( this, event, ~s, ~s )" id p)
+			      :ondblclick (format "hop_filechooser_open( ~s, ~s )"
+						  id p)
+			      :title p
+			      (<TD> :class "filechooser-icon filechooser-folder"
+				 (basename p))))))
+		  (preference-get 'filechooser/places :default '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-url-icon ...                                                 */
@@ -377,25 +389,26 @@
 			       y)))))))
 	 
       (<TABLE> :class "filechooser-files" :cellspacing 0 :cellpadding 0
-	 (<COLGROUP> (<COL> :width "0*"))
+	 (<COLGROUP> (<COL>) (<COL> :width "0*"))
 	 (<TR> (<TH> "Name") (<TH> :class "filechooser-modified" "Modified"))
-	 (map (lambda (p)
+	 (map (lambda (ep)
 		 (set! odd (not odd))
-		 (<TR> :class (if odd "odd" "even")
-		    :onkeydown (format "hop_filechooser_key( this, ~s )" id)
-		    :onclick (format "hop_filechooser_select( this, event, ~s, ~s )" id p)
-		    :ondblclick (if (is-directory? p)
-				    (format "hop_filechooser_open( ~s, ~s )"
+		 (let ((p ((hop-locale->charset) ep)))
+		    (<TR> :class (if odd "odd" "even")
+		       :onkeydown (format "hop_filechooser_key( this, ~s )" id)
+		       :onclick (format "hop_filechooser_select( this, event, ~s, ~s )" id p)
+		       :ondblclick (if (is-directory? p)
+				       (format "hop_filechooser_open( ~s, ~s )"
+					       id p)
+				       (format "hop_filechooser_ok( event, ~s )"
+					       id))
+		       :onmousedown (format "hop_filechooser_begin_drag( event, ~s, ~s )"
 					    id p)
-				    (format "hop_filechooser_ok( event, ~s )"
-					    id))
-		    :onmousedown (format "hop_filechooser_begin_drag( event, ~s, ~s )"
-					 id p)
-		    (<TD> :class (if (is-directory? p)
-				     "filechooser-icon filechooser-folder"
-				     "filechooser-icon filechooser-file")
-		       (url-decode (basename p)))
-		    (<TD> :class "filechooser-modified" (file-date p))))
+		       (<TD> :class (if (is-directory? p)
+					"filechooser-icon filechooser-folder"
+					"filechooser-icon filechooser-file")
+			  (url-decode (basename p)))
+		       (<TD> :class "filechooser-modified" (file-date ep)))))
 	      (sort (lambda (f1 f2)
 		       (cond
 			  ((is-directory? f1)

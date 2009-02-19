@@ -1,0 +1,5 @@
+An include form is introduced by the special ++include++ keyword,
+such as: <include>hop.wiki</include>.
+
+Pre-formatted texts are included using the ++include-pre++ keyword:
+<include-pre>hop.wiki</include-pre>

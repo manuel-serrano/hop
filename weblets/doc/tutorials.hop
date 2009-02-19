@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/weblets/doc/tutorials.hop        */
+;*    serrano/prgm/project/hop/1.11.x/weblets/doc/tutorials.hop        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Wed Sep 24 08:18:03 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Sun Feb  8 07:15:04 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
 ;*=====================================================================*/
@@ -124,15 +124,7 @@
    (let ((path (make-file-name (doc-tutorials-dir) file))
 	 (id "pad-tutorials"))
       (<SPAN> :class "href tutorialref" 
-	 :onclick ~(with-history
-		    (lambda ()
-		       (history-add! tutorial-history $id $path)
-		       (with-hop ($doc/tutorial $path)
-			  (lambda (h)
-			     (let ((el (dom-get-element-by-id document $id)))
-				(innerHTML-set! el h)
-				(notepad-select "doc-notepad" "doc-tutorials")
-				(window.scrollTo 0 0))))))
+	 :onclick ~(tutorialref $id $path)
 	 lbl)))
 
 ;*---------------------------------------------------------------------*/

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/read.scm                 */
+;*    serrano/prgm/project/hop/1.11.x/runtime/read.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Jan 14 10:30:51 2009 (serrano)                */
+;*    Last change :  Tue Feb 17 06:30:55 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -39,16 +39,19 @@
 	    (hop-load ::bstring #!key
 		      (env (interaction-environment))
 		      (mode 'load)
-		      (charset (hop-locale)))
+		      (charset (hop-locale))
+		      (hook #f))
 
 	    (hop-load-once ::bstring
 			   #!key
 			   (env (interaction-environment))
-			   (charset (hop-locale)))
+			   (charset (hop-locale))
+			   (hook #f))
 	    (hop-load-modified ::bstring
 			       #!key
 			       (env (interaction-environment))
-			       (charset (hop-locale)))
+			       (charset (hop-locale))
+			       (hook #f))
 	    (hop-load-once-unmark! ::bstring)
 	    
 	    (read-error msg obj port)
@@ -826,7 +829,8 @@
 		  #!key
 		  (env (interaction-environment))
 		  (mode 'load)
-		  (charset (hop-locale)))
+		  (charset (hop-locale))
+		  (hook #f))
    (let ((path (find-file/path file-name (hop-path))))
       (if (not (string? path))
 	  (raise (instantiate::&io-file-not-found-error
@@ -846,13 +850,14 @@
 			      (let loop ((last #unspecified))
 				 (let ((sexp (hop-read port charset)))
 				    (if (eof-object? sexp)
-					last
+					(if hook (hook last) last)
 					(loop (eval! sexp env))))))
 			     ((include)
 			      (let loop ((res '()))
 				 (let ((sexp (hop-read port charset)))
 				    (if (eof-object? sexp)
-					(reverse! res)
+					(let ((val (reverse! res)))
+					   (if hook (hook val) val))
 					(loop (cons (eval! sexp env) res))))))
 			     (else
 			      (error 'hop-load "Illegal mode" mode))))
@@ -882,7 +887,7 @@
 ;*    is #t and if the file has changed since the last load, it is     */
 ;*    reloaded.                                                        */
 ;*---------------------------------------------------------------------*/
-(define (%hop-load-once file env charset modifiedp)
+(define (%hop-load-once file env charset modifiedp hook)
    (with-trace 1 '%hop-load-once
       (trace-item "file=" file)
       (trace-item "env=" (if (evmodule? env) (evmodule-name env) ""))
@@ -927,7 +932,11 @@
 			    (condition-variable-signal! cv)
 			    (mutex-unlock! *load-once-mutex*)
 			    (raise e))
-			 (hop-load f :mode 'load :env env :charset charset))
+			 (hop-load f
+				   :mode 'load
+				   :env env
+				   :charset charset
+				   :hook hook))
 		      (mutex-lock! *load-once-mutex*)
 		      (hashtable-put! *load-once-table* f (cons 'loaded t))
 		      (condition-variable-signal! cv)
@@ -939,8 +948,9 @@
 (define (hop-load-once file
 		       #!key
 		       (env (interaction-environment))
-		       (charset (hop-locale)))
-   (%hop-load-once file env charset #f))
+		       (charset (hop-locale))
+		       (hook #f))
+   (%hop-load-once file env charset #f hook))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-modified ...                                            */
@@ -948,8 +958,9 @@
 (define (hop-load-modified file
 			   #!key
 			   (env (interaction-environment))
-			   (charset (hop-locale)))
-   (%hop-load-once file env charset #t))
+			   (charset (hop-locale))
+			   (hook #f))
+   (%hop-load-once file env charset #t hook))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-once-unmark! ...                                        */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/shutdown/shutdown.hop     */
+;*    .../prgm/project/hop/1.11.x/weblets/shutdown/shutdown.hop        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jun 20 15:18:27 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Mon Feb 16 10:06:22 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
 ;*=====================================================================*/
@@ -68,7 +68,7 @@
 				     (innerHTML-set!
 				      $msg
 				      (<SPAN> :class "warning"
-					 "Shuting down in..."))
+					 "Shutting down in..."))
 				     (let loop ((i 3))
 					(if (>= i 1)
 					    (let ((m (format "~as" i)))

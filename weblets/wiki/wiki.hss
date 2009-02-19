@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/weblets/wiki/wiki.hss             */
+/*    serrano/prgm/project/hop/1.11.x/weblets/wiki/wiki.hss            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Apr 16 10:53:04 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Thu Feb 19 08:05:44 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for the WIKI weblet                                          */
 /*=====================================================================*/
@@ -23,6 +23,11 @@ table.wiki {
   border: 1px solid $border-color;
   background: white;
   -moz-border-radius: 0.5em;
+}
+
+table.wiki td.wiki-logo,
+table.wiki td.wiki-logo div.version {
+  text-align: center;
 }
 
 table.wiki img#logo {
@@ -64,7 +69,7 @@ table.wiki td#logo {
   width: 48px;
 }
 
-td.document {
+td.body {
   border: 1px solid #ccc;
   padding: 5px;
   background: #fafaff;
@@ -106,8 +111,9 @@ div.version {
   font-weight: bold;
 }
 
-span.edit:hover {
+span.edit {
   cursor: default;
+  color: #00a;
 }
 
 span.edit:hover {
@@ -125,4 +131,127 @@ textarea.editor {
 
 button {
   border: 1px outset #777;
+}
+
+p {
+  text-align: justify;
+  text-indent: 0em;
+}
+
+div.toc {
+  margin-left: 10px;
+  float: right;
+  clear: both;
+  background-color: #f3fff3;
+  border: 1px dashed #bbb;
+  font-size: 80%;
+  padding: 0px 4px 0px 4px;
+}
+
+ul, ol {
+  padding-left: 2em;
+}
+
+/*---------------------------------------------------------------------*/
+/*    left buttons                                                     */
+/*---------------------------------------------------------------------*/
+div.buttons {
+  border-top: 1px solid $border-color;
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+div.buttons div.button {
+  text-align: center;
+  margin-left: 6px;
+  margin-right: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border: 1px solid #bbb;
+  background: #f0f0f0;
+  -moz-border-radius: 0.3em;
+}
+
+div.buttons div.prefs {
+  margin-top: 1em;
+}
+
+img.doc {
+  vertical-align: bottom;
+  border: none;
+  padding-right: 4px;
+}
+
+a.doc {
+  font-family: Arial,Helvetica,sans-serif;
+  font-weight: bold; 
+  font-size: 80%;
+  vertical-align: center;
+  cursor: default;
+  color: black;
+  text-decoration: none;
+}
+
+a.doc:hover {
+  color: #8381de;
+}
+
+div.hopbbdb-body {
+  margin-top: 10px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Printing                                                         */
+/*---------------------------------------------------------------------*/
+@media print {
+  
+  body.wiki {
+    font-size: 11pt;
+  }
+
+  tt {
+    font-family: Andale mono, Bistream Vera Sans mono;
+  }
+
+  div#wiki-edit {
+    display: none;
+  }
+
+  td.wiki-logo {
+    display: none;
+  }
+
+  div#wiki-title {
+    display: none;
+  }
+
+  table.wiki {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  div.foot {
+    display: none;
+  }
+
+  div.body {
+    border: 0;
+    padding: 0;
+    background: white;
+  }
+
+  div.toc {
+    display: none;
+  }
+
+  h1, h2, h3, h4, h5 {
+    font-weight: bold;
+    font-family: Andale, Bistream Vera Sans;
+  }
+
+  .hop-dashboard-button {
+    display: none;
+  }
 }

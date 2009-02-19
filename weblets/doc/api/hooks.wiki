@@ -9,14 +9,16 @@ information needed to serve the client. Then, it applies all the
 ::%http-response class. If the answer is an instance of ::http-response-remote
 it applies the //remote// hooks. Otherwise, it applies the //local// hooks.
 
-~~
-A hook is a function accepting two parameters:
+~~ A hook is a function accepting two parameters:
   - a request descriptor (an instance of ::http-request).
   - a response descriptor (an instance of ::%http-response).
 
 
 It must return a response.
 
+~~ Note: For security reason, hooks can only be installed inside the Hop
+runtime system, **before the request is answered**. That is, hooks must
+be installed from the ,(<TUTORIALREF> "RC file" "07-hoprc.wiki") file.
 
 == Synopsis ==
 

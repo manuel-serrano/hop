@@ -4,3 +4,6 @@ also specify a text to be displayed instead of the url such as:
 syntax such as: [[http://www.inria.fr|The //French// national institute for
 __research__ in **computer science** and **control**]].
 
+This is an ##anchor##. A text may refer to that [[anchor]]. As links, 
+a user defined ##anchor2|expression## may be attached to an anchor.
+

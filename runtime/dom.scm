@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/dom.scm                         */
+;*    serrano/prgm/project/hop/1.11.x/runtime/dom.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Fri Nov  2 10:12:22 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Thu Feb 19 07:17:58 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
 ;*=====================================================================*/
@@ -48,7 +48,8 @@
 	   (dom-node-text? node)
 	   (dom-node-document? node)
 	   (dom-node-document-fragment? node)
-	   (dom-node-attr? node))
+	   (dom-node-attr? node)
+	   (dom-inner-html-set! ::xml-markup ::obj))
    
    (export (class xml-document::xml-markup
 	      (%make-xml-document)
@@ -56,32 +57,39 @@
 	      (%idtable read-only (default (make-hashtable))))))
 
 ;*---------------------------------------------------------------------*/
+;*    doc-update-idtable! ...                                          */
+;*---------------------------------------------------------------------*/
+(define (doc-update-idtable! doc body)
+   (with-access::xml-document doc (%idtable)
+      
+      (define (update-xml-markup! obj)
+	 (when (xml-element? obj)
+	    (hashtable-put! %idtable (xml-element-id obj) obj))
+	 (update-body! (xml-markup-body obj)))
+
+      (define (update-body! body)
+	 (cond
+	    ((xml-markup? body)
+	     (update-xml-markup! body))
+	    ((pair? body)
+	     (for-each update-body! body))))
+
+      (update-body! body)))
+
+;*---------------------------------------------------------------------*/
 ;*    %make-xml-document ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (%make-xml-document doc::xml-document)
    (with-access::xml-document doc (body %idtable)
-      (let loop ((body body))
-	 (for-each (lambda (obj)
-		      (when (xml-markup? obj)
-			 (when (xml-element? obj)
-			    (hashtable-put! %idtable (xml-element-id obj) obj))
-			 (loop (xml-markup-body obj))))
-		   body))
+      (doc-update-idtable! doc body)
       doc))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-element-by-id ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-generic (dom-get-element-by-id obj id)
-   (cond
-      ((or (string? obj) (number? obj) (symbol? obj))
-       #f)
-      ((null? obj)
-       #f)
-      ((not obj)
-       #f)
-      (else
-       (error 'dom-get-element-by-id "Illegal xml object" obj))))
+(define-generic (dom-get-element-by-id obj id::bstring)
+   (when (pair? obj)
+      (dom-get-element-by-id* obj id)))
    
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-element-by-id ::dom-document ...                         */
@@ -102,15 +110,14 @@
 ;*    dom-get-element-by-id ::xml-delay ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (dom-get-element-by-id obj::xml-delay id)
-   (if (eq? id (xml-delay-id obj))
-       obj
-       #f))
+   (when (string=? id (xml-delay-id obj))
+      obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-element-by-id ::xml-element ...                          */
 ;*---------------------------------------------------------------------*/
 (define-method (dom-get-element-by-id obj::xml-element id)
-   (if (eq? id (xml-element-id obj))
+   (if (string=? id (xml-element-id obj))
        obj
        (dom-get-element-by-id* (xml-element-body obj) id)))
 
@@ -133,7 +140,7 @@
 	    ((xml-document? parent)
 	     parent)
 	    ((xml-element? parent)
-	     (loop (xml-element-parent obj)))
+	     (loop (xml-element-parent parent)))
 	    (else
 	     #f)))))
 
@@ -255,12 +262,13 @@
 (define (dom-append-child! node::xml-markup new)
    (with-access::xml-markup node (body)
       (let ((doc (dom-owner-document node)))
+	 (set! body (cons new (remq! new body)))
 	 (when (xml-document? doc)
 	    (with-access::xml-document doc (%idtable)
 	       (let ((id (xml-element-id new)))
 		  (hashtable-remove! %idtable id)
-		  (hashtable-put! %idtable id new)))))
-      (set! body (cons new (remq! new body)))))
+		  (doc-update-idtable! doc new)))))))
+	 
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-set-child-node! ...                                          */
@@ -268,13 +276,13 @@
 (define (dom-set-child-node! node::xml-markup new)
    (with-access::xml-markup node (body)
       (for-each (lambda (o) (dom-remove-child! node o)) body)
+      (set! body (list new))
       (let ((doc (dom-owner-document node)))
 	 (when (xml-document? doc)
 	    (with-access::xml-document doc (%idtable)
 	       (let ((id (xml-element-id new)))
 		  (hashtable-remove! %idtable id)
-		  (hashtable-put! %idtable id new)))))
-      (set! body (list new))))
+		  (doc-update-idtable! doc new)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-clone-node ...                                               */
@@ -366,7 +374,7 @@
 		      (when (xml-document? doc)
 			 (with-access::xml-document doc (%idtable)
 			    (hashtable-remove! %idtable id)
-			    (hashtable-put! %idtable id new))))
+			    (doc-update-idtable! doc new))))
 		   (let ((body (remq! new body)))
 		      (cond
 			 ((null? body)
@@ -426,24 +434,23 @@
 ;*    dom-replace-child! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (dom-replace-child! node new old)
-   (and (xml-element? node)
-	(with-access::xml-element node (parent)
-	   (and (xml-element? parent)
-		(with-access::xml-markup parent (body)
-		   (let loop ((body (remq! new body)))
-		      (cond
-			 ((null? body)
-			  (error 'dom-replace-child "old not a child" node))
-			 ((eq? (car body) old)
-			  (let ((doc (dom-owner-document node))
-				(id (xml-element-id new)))
-			     (when (xml-document? doc)
-				(with-access::xml-document doc (%idtable)
-				   (hashtable-remove! %idtable id)
-				   (hashtable-put! %idtable id new))))
-			  (set-car! body new))
-			 (else
-			  (loop (cdr body))))))))))
+   (when (xml-element? node)
+      (with-access::xml-markup node (body)
+	 (let loop ((body (remq! new body)))
+	    (cond
+	       ((null? body)
+		(error 'dom-replace-child "old not a child" node))
+	       ((eq? (car body) old)
+		(let ((doc (dom-owner-document node))
+		      (id (xml-element-id new)))
+		   (when (xml-document? doc)
+		      (with-access::xml-document doc (%idtable)
+			 (hashtable-remove! %idtable id)
+			 (when (xml-element? new)
+			    (doc-update-idtable! doc new)))))
+		(set-car! body new))
+	       (else
+		(loop (cdr body))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-elements-by-tag-name ...                                 */
@@ -549,3 +556,16 @@
 (define (dom-node-attr? node)
    #f)
 
+;*---------------------------------------------------------------------*/
+;*    dom-inner-html-set! ...                                          */
+;*---------------------------------------------------------------------*/
+(define (dom-inner-html-set! node::xml-markup body)
+   (let ((body (if (pair? body) body (list body))))
+      ;; set the new body
+      (xml-markup-body-set! node body)
+      ;; update the id hashtable
+      (let ((doc (dom-owner-document node)))
+	 (when (xml-document? doc)
+	    (doc-update-idtable! doc body)))
+      node))
+   

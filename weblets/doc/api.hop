@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/weblets/doc/api.hop              */
+;*    serrano/prgm/project/hop/1.11.x/weblets/doc/api.hop              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Wed Sep 24 08:35:02 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Sun Feb  8 07:13:16 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
 ;*=====================================================================*/
@@ -156,11 +156,7 @@
 ;*    select-api-pad ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (select-api-pad api k #!key (pad "api"))
-   ~(let ((el (document.getElementById $(string-append "pad-" pad))))
-       (with-history
-	  (lambda ()
-	     (notepad-select "doc-notepad" $(string-append "doc-" pad))
-	     (select-api-doc $doc/api $api el $k)))))
+   ~(select-api-pad $api $k $pad))
 
 ;*---------------------------------------------------------------------*/
 ;*    hash-parser ...                                                  */

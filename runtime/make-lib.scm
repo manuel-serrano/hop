@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/make-lib.scm             */
+;*    serrano/prgm/project/hop/1.11.x/runtime/make-lib.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Mon Oct 13 19:53:03 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Tue Feb 10 14:20:06 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
 ;*=====================================================================*/
@@ -113,6 +113,6 @@
 	   
 	   (class cache-entry)
 
-	   (class wiki-syntax)
+  	   (class wiki-syntax)
 
 	   (class hop-audio-player)))

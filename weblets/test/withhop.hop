@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/test/withhop.hop          */
+;*    serrano/prgm/project/hop/1.11.x/weblets/test/withhop.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Mon May  5 11:41:37 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Mon Feb 16 06:53:57 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing with-hop                                                 */
 ;*=====================================================================*/
@@ -86,7 +86,7 @@ then the test failed.")
 					 (innerHTML-set! $res h))))
 	       "execute")
 	    "  Result: " res))
-      (<H3> "4 Complexe data")
+      (<H3> "4 Complex data")
       (<DIV> :style "font-size: 90%"
 	 "This test calls a service that returns a list of XML elements.")
       (let ((res (<SPAN> :style "color: red" "???")))

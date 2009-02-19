@@ -146,6 +146,7 @@ scans nested sections at a maximum depth of ++3++.
 | h5        |   r/w     |  procedure  |   ++<H5>++             | the level 5 headings constructor.       |
 | hr        |   r/w     |  procedure  |   ++<HR>++             | the horizontal rules constructor.       |
 | p         |   r/w     |  procedure  |   ++<P>++              | the paragraphs constructor.             |
+| q         |   r/w     |  procedure  |   ++<Q>++              | the quotations constructor.             |
 | ol        |   r/w     |  procedure  |   ++<OL>++             | the ordered lists constructor.          |
 | ul        |   r/w     |  procedure  |   ++<UL>++             | the unordered lists constructor.        |
 | li        |   r/w     |  procedure  |   ++<LI>++             | the list entries constructor.           |
@@ -167,6 +168,8 @@ scans nested sections at a maximum depth of ++3++.
 | keyword   |   r/w     |  procedure  |   //identity//         | the keyword constructor.                |
 | type      |   r/w     |  procedure  |   //identity//         | the type constructor.                   |
 | plugins   |   r/w     |  procedure  |   ++(lambda (x) #f)++  | the plugins connector.                  |
+| prehook   |   r/w     |  procedure  |   ++(lambda (#f)++     |  a pre-hook.                         |
+| posthook  |   r/w     |  procedure  |   ++(lambda (expr) #f)++  |  a post-hook.                   |
 </fields>
 </class>
 
@@ -188,12 +191,12 @@ following the markup up to the end of line. The body is composed of the
 expressions that are parsed before the closing markup.
 
 
-   (instantiate::wiki-syntax
-      (plugins (lambda (id)
-		  (when (eq? id '<center>) wikiedit-center))))
+  (instantiate::wiki-syntax
+     (plugins (lambda (id)
+	         (when (eq? id '<center>) wikiedit-center))))
 
   (define (wikiedit-center port title expr)
-     (<DIV> :align "center" expr))
+     (<DIV> :style "text-align: center" expr))
 
 
 </server>

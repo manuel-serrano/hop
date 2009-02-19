@@ -1,6 +1,6 @@
-;; Dynamic web page re-writing.
+;; Dynamic web page re-writing
 (define (linux-kernel-hooking req resp)
-   (with-access::http-request req (host path localhostp)
+   (with-access::http-request req (host path)
       (when (and (string=? host "www.kernel.org")
                  (substring-at? path "/" 0))
          (instantiate::http-response-filter
@@ -20,9 +20,3 @@
     (lambda (req resp)
        (or (linux-kernel-hooking req resp)
 	   resp))))
-
-(<HTML>
-   (<BODY> "Remote hooking is now registered!")
-   (<BR>)
-   (<BR>)
-   (<A> :href "http://www.kernel.org" "http://www.kernel.org"))

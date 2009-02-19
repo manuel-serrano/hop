@@ -325,7 +325,7 @@ for HTTP ++PUT++ and ++POST++ requests.
      (let ((c (http-header-field (http-request-header req) content-type:)))
 	(if (and (string? c)
 		 (string=? c "application/x-www-form-urlencoded")
-		 (http-request-localhostp req))
+                 (http-server-request? req))
 	    (case (http-request-method req)
 	       ((PUT)
 		(instantiate::http-response-put

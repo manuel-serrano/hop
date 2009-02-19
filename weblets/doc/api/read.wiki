@@ -6,11 +6,11 @@ These functions parses file according to the HOP syntax.
 
 == Synopsis ==
 
-  (hop-read [input-port])
-  (hop-load path [:env] [:mode])
-  (hop-load-once path [:env])
-  (hop-load-modified path [:env])
-  (hop-load-unmark! path)
+  (hop-read [input-port] [:charset])
+  (hop-load path [:charset] [:env] [:mode] [:hook])
+  (hop-load-once path [:charset] [:env] [:hook])
+  (hop-load-modified path [:charset] [:env] [:hook])
+  (hop-load-once-unmark! path)
   (the-loading-file)
   (the-loading-dir)
   
@@ -21,12 +21,13 @@ These functions parses file according to the HOP syntax.
 == Server Definitions ==
 <server>
 
-=== ++(hop-read [port] [charset (hop-locale)]++ ===
+=== ++(hop-read [port] [charset (hop-locale) [hook]]++ ===
 <function> hop-read
 
 <arguments>
-^  arguments  ^   type      ^  short description          ^
-| port        | input-port  | the input port.             |
+^  arguments  ^    type      ^  short description          ^
+| port        |  input-port  | the input port.             |
+| charset     |  symbol      | the port charset.           |
 </arguments>
 
 The function ++hop-read++ reads an entire expression from an input port.
@@ -49,10 +50,12 @@ optional ++charset++ argument.
 <function> hop-load
 
 <arguments>
-^  arguments  ^   type   ^  short description           ^
-| path        |  string  | the file name to be loaded.  |
-| env         |  module  | the eval environment.        |
-| mode        |  symbol  | the load mode.               |
+^  arguments  ^   type   ^  short description                      ^
+| path        |  string  | the file name to be loaded.             |
+| charset     |  symbol  | the port charset.                       |
+| env         |  module  | the eval environment.                   |
+| mode        |  symbol  | the load mode.                          |
+| hook        |  symbol  | a optional procedure of one argument.   |
 </arguments>
 
 This function loads the file ++path++. That is, it reads and evaluates
@@ -64,6 +67,10 @@ mode evaluates all the loaded expressions and forces ++hop-load++ to
 only return the value produced by evaluated the last expression.
 The --include-- load mode returns a list of all evaluations.
 
+The parameter ++hook++, when provided, must a procedure of one argument.
+It is invoked by ++hop-load++ with the last loaded expression. It is 
+evaluated in the environment (i.e., the module) defined by the loaded file.
+
 The function ++hop-load++ is thread safe. No more than one thread
 can simultaneously reads a single file.
 </function>
@@ -74,7 +81,9 @@ can simultaneously reads a single file.
 <arguments>
 ^  arguments  ^   type   ^  short description           ^
 | path        |  string  | the file name to be loaded.  |
+| charset     |  symbol  | the port charset.            |
 | env         |  module  | the eval environment.        |
+| hook        |  symbol  | a optional procedure of one argument.   |
 </arguments>
 
 As ++hop-load++ it loads a file in the ++env++ environment. By contrast
@@ -94,7 +103,9 @@ This function is thread safe.
 <arguments>
 ^  arguments  ^   type   ^  short description           ^
 | path        |  string  | the file name to be loaded.  |
+| charset     |  symbol  | the port charset.            |
 | env         |  module  | the eval environment.        |
+| hook        |  symbol  | a optional procedure of one argument.   |
 </arguments>
 
 As ++hop-load-once++ but in addition, the file is reloaded if the file

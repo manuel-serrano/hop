@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-paned.css               */
+/*    serrano/prgm/project/hop/1.11.x/share/hop-paned.css              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:51 2005                          */
-/*    Last change :  Sun Aug 17 06:25:09 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Mon Feb 16 08:41:17 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned CSS                                                    */
 /*=====================================================================*/
@@ -90,5 +90,5 @@ div.hop-hpaned-cursor:hover {
 
 div.hop-hpaned > div.hop-pan {
   overflow: auto;
-  border: 1px solid red;
+  border: 1px solid #777;
 }

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/wiki/config.hop.in        */
+;*    serrano/prgm/project/hop/1.11.x/weblets/wiki/config.hop.in       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr  4 08:17:55 2008                          */
-;*    Last change :  Fri Apr  4 09:45:46 2008 (serrano)                */
-;*    Copyright   :  2008 Manuel Serrano                               */
+;*    Last change :  Tue Feb 10 09:50:56 2009 (serrano)                */
+;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki configuration                                               */
 ;*=====================================================================*/
@@ -19,7 +19,8 @@
 	   (wiki-editor-set! ::bstring)
 
 	   (wiki-preferences-save filename)
-	   (wiki-preferences-load filename)))
+	   (wiki-preferences-load filename)
+	   (wiki-preferences-edit)))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-version ...                                                 */

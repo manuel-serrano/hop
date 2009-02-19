@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/weblets/wiki/Makefile            */
+#*    serrano/prgm/project/hop/1.11.x/weblets/wiki/Makefile            */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Sep 29 09:45:18 2008 (serrano)                */
-#*    Copyright   :  2006-08 Manuel Serrano                            */
+#*    Last change :  Thu Feb 19 08:05:54 2009 (serrano)                */
+#*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the wiki weblet                                  */
 #*=====================================================================*/
@@ -13,7 +13,7 @@
 #*    CONFIG ...                                                       */
 #*---------------------------------------------------------------------*/
 TITLE = Wiki
-VERSION = 1.1.0
+VERSION = 1.2.0
 MINHOP = $(HOPRELEASE) 
 MAXHOP =
 CATEGORY = hop
@@ -22,8 +22,8 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-SOURCES	= wiki.hss wiki.hop config.hop.in
-POPULATION = Makefile  $(SOURCES) \
+SOURCES	= wiki.hss wiki.hop config.hop.in wiki-prefs.hss
+POPULATION = Makefile etc/prefs.png etc/doc.png etc/compile.png $(SOURCES)
 
 build: etc/weblet.info etc/wiki.wiki config.hop .afile 
 

@@ -9,6 +9,7 @@ The ::http-request class is used for representing HOP requests.
 === server ===
 
   (class http-request::%http-message ...)
+  (class http-server-request::http-request ...)
   (current-request)
 
 == Examples ==
@@ -29,7 +30,6 @@ The ::http-request class is used for representing HOP requests.
 | userinfo             |  r        |   obj       |                  | the optional user info.       |
 | id                   |  r        |  integer    |                  | an unique request identifier  |
 | proxyp               |  r        |  boolean    |                  | is it a proxy request?        |
-| localhostp           |  r/w      |  boolean    |                  | is the dest. host local?      |
 | localclientp         |  r/w      |  boolean    |                  | is the client local?          |
 | hook                 |  r/w      |  procedure  |  //identity//    | a hook to be applied          |
 | transfer-encoding    |  r/w      |  boolean    |                  | the characters encoding       |
@@ -44,6 +44,20 @@ The ::http-request class is used for representing HOP requests.
 | method               |  r        |  symbol     |                  | the connection method         |
 | timeout              |  r        |  integer    |                  | the connection timeout        |
 </fields>
+</class>
+
+=== ++(class http-server-request::http-request-message ...)++ ===
+<class> http-server-request
+<fields>
+^  fields              ^   access  ^   type      ^  default value   ^  short description            ^
+| ...                  |  ...      |   ...       |     ...          | fields from ::http-request-message   |
+| authorization        |  r/w       |  obj    |     #f   | the request authorization        |
+| server  | r/w  |  obj  |  #unspecified  | an optional associated service.  |
+</fields>
+
+The ++http-server-request++ is used to reify requests intercepted by the broker
+that are //addressed// to the broker, by opposition to requests that use
+the broker as a //proxy// server.
 </class>
 
 === ++(current-request)++ ===
