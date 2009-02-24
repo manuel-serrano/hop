@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-tabslider.js            */
+/*    serrano/prgm/project/hop/1.11.x/share/hop-tabslider.js           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio [eg@essi.fr]                       */
 /*    Creation    :  14-Sep-2005 09:24 (eg)                            */
-/*    Last change :  Wed Mar 26 08:38:33 2008 (serrano)                */
-/*    Copyright   :  2006-08 Inria                                     */
+/*    Last change :  Mon Feb 23 07:12:17 2009 (serrano)                */
+/*    Copyright   :  2006-09 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    HOP tabslider implementation                                     */
 /*=====================================================================*/
@@ -27,7 +27,7 @@ function hop_tabslider_select( item ) {
    var parent = item.parentNode;
 
    /* generate a new history entry */
-   if( parent.history && (parent.tab_select != item) ) {
+   if( parent.history && (parent.tab_selected != item) ) {
       hop_state_history_add( parent.id, "ts", item.id );
    }
 
@@ -41,7 +41,7 @@ function hop_tabslider_select( item ) {
 function hop_tabslider_select_inner( parent, item ) {
    var totalHeight = parent.offsetHeight;
    var titlesHeight = 0;
-   var selected;
+   var selected, old;
    var i;
 
    /* select the correct tab */
@@ -50,6 +50,8 @@ function hop_tabslider_select_inner( parent, item ) {
       var content = parent.childNodes[ i + 1 ];
 
       titlesHeight += title.offsetHeight;
+
+      if( title == parent.tab_selected ) old = content;
       
       if( title == item ) {
 	 selected = content;
@@ -61,11 +63,12 @@ function hop_tabslider_select_inner( parent, item ) {
 		    selected.style.display = "block";
 		    
 		    /* event handlers */
-		    if( selected.onselect ) selected.onselect();
+ 		    if( selected.onselect ) selected.onselect();
 		    if( parent.onchange ) parent.onchange( item );
 		 } );
 	 } else {
 	    selected.style.display = "block";
+	    selected.style.height = "0px";
 	    /* update the layout of the children of the new tab */
 	    hop_update( selected );
 	    
@@ -80,8 +83,37 @@ function hop_tabslider_select_inner( parent, item ) {
    }
 
    /* Set the height of the selected item */
-   selected.style.height = (totalHeight - titlesHeight) + "px";
-   parent.tab_selected = item;
+   var i = 0;
+   var height = (totalHeight - titlesHeight) - (parent.childNodes.length / 2);
+   
+   if( old ) {
+      old.style.display = "block";
+      
+      /* if item is already the selected tab, exit */
+      if( (parent.tab_selected !== item) && (parent.speed > 0) ) {
+	 parent.style.overflow = "hidden";
+	 var int = setInterval( function() {
+	       if( i < height ) {
+		  old.style.height = (height - (i + 1)) + "px";
+		  selected.style.height = (i - 1) + "px";
+		  i += parent.speed;
+	       } else {
+		  clearInterval( int );
+		  old.style.display = "none";
+		  selected.style.height = height + "px";
+		  parent.tab_selected = item;
+		  parent.style.overflow = "auto";
+	       }
+	    }, 10 );
+      } else {
+	 selected.style.height = height + "px";
+	 old.style.display = "none";
+	 parent.tab_selected = item;
+      }
+   } else {
+      selected.style.height = height + "px";
+      parent.tab_selected = item;
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -94,7 +126,7 @@ function hop_tabslider_update() {
 /*---------------------------------------------------------------------*/
 /*    hop_tabslider_init ...                                           */
 /*---------------------------------------------------------------------*/
-function hop_tabslider_init( id, ind, history, onchange ) {
+function hop_tabslider_init( id, ind, history, onchange, speed ) {
    var ts = document.getElementById( id );
    var update = function( e ) {
       ts.tab_selected = ts.childNodes[ 2 * ind ];
@@ -103,6 +135,7 @@ function hop_tabslider_init( id, ind, history, onchange ) {
 
    ts.hop_update = hop_tabslider_update;
    ts.history = (history != false);
+   ts.speed = speed;
    
    hop_window_onload_add( update );
    // force an update if the window is already loaded (e.g., if the tabslider

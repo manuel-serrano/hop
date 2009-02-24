@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/hop-tabslider.scm         */
+;*    serrano/prgm/project/hop/1.11.x/runtime/hop-tabslider.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Apr 21 12:08:32 2008 (serrano)                */
+;*    Last change :  Sun Feb 22 09:54:01 2009 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -28,7 +28,8 @@
 	       (height (default #f))
 	       (index (default 0))
 	       (onchange (default #f))
-	       (history read-only (default #t)))
+	       (history read-only (default #t))
+	       (speed read-only (default 14)))
 	    (class html-tspan::xml-element)
 	    (class html-tshead::xml-element))
 
@@ -45,6 +46,7 @@
 				  (index 0)
 				  (onchange #f)
 				  (history #unspecified)
+				  (speed 20 integer)
 				  body)
    
    ;; Verify that the body is a list of <TSPAN>
@@ -61,6 +63,7 @@
       (height height)
       (index index)
       (onchange onchange)
+      (speed speed)
       (history (if (boolean? history) history (not (eq? id #unspecified))))
       (body body)))
 
@@ -68,7 +71,7 @@
 ;*    xml-write ::html-tabslider ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-tabslider p backend)
-   (with-access::html-tabslider obj (id width height body index history onchange)
+   (with-access::html-tabslider obj (id width height body index history onchange speed)
       (fprintf p "<div class='hop-tabslider' id='~a'" id)
       (when (or width height)
 	 (fprintf p " style=\"~a~a\""
@@ -78,11 +81,12 @@
       (xml-write body p backend)
       (display "</div>" p)
       (fprintf p
-	       "<script type='~a'>hop_tabslider_init('~a', ~a, ~a, ~a)</script>"
+	       "<script type='~a'>hop_tabslider_init('~a', ~a, ~a, ~a, ~a)</script>"
 	       (hop-javascript-mime-type)
 	       id index
 	       (if history "true" "false")
-	       (hop->js-callback onchange))))
+	       (hop->js-callback onchange)
+	       speed)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TSPAN> ...                                                      */

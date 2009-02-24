@@ -41,6 +41,7 @@ using //tabsliders// must include in their header, the following statement:
 | :id          |  string            |  //random//  | element identifier.     |
 | :width       |  dimension         |              | the width.              |
 | :height      |  dimension         |              | the height.             |
+| :speed       |  integer           |    ++20++    | animation speed (0=no anim).  |            |
 | :index       |  integer           |    ++0++     | the selected tab.       |
 | :onchange    |  function          |      -       | a function to invoke on pad selection.  |
 | history      |  obj               |     _        | enables history.        |
