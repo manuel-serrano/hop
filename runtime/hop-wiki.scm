@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/hop-wiki.scm              */
+;*    serrano/prgm/project/hop/1.11.x/runtime/hop-wiki.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  6 07:37:32 2006                          */
-;*    Last change :  Tue Dec 18 09:20:41 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Tue Feb 24 12:53:47 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The wiki markup                                                  */
 ;*=====================================================================*/
@@ -20,7 +20,8 @@
 	    __hop_xml
 	    __hop_read
 	    __hop_cache
-	    __hop_wiki-syntax)
+	    __hop_wiki-syntax
+	    __hop_wiki-parser)
 
    (export  (<WIKI> . ::obj)))
 

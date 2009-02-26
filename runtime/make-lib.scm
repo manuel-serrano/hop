@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Tue Feb 10 14:20:06 2009 (serrano)                */
+;*    Last change :  Tue Feb 24 11:58:04 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -64,6 +64,7 @@
 	   __hop_cache
 	   __hop_wiki
 	   __hop_wiki-syntax
+	   __hop_wiki-parser
            __hop_wiki-toc
 
 	   (hop-event-policy-file __hop_event))

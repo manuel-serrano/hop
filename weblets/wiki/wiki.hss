@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Thu Feb 19 08:05:44 2009 (serrano)                */
+/*    Last change :  Thu Feb 26 19:16:19 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for the WIKI weblet                                          */
@@ -41,6 +41,11 @@ table.wiki td {
 table.wiki td#body {
   width: 90%;
   min-width: 45em;
+}
+
+table.wiki td.wiki-compiled {
+  padding-left: 6em;
+  padding-right: 6em;
 }
 
 div#wiki-title {

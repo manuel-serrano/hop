@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Feb 19 08:05:32 2009 (serrano)                */
+;*    Last change :  Thu Feb 26 19:11:47 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -15,6 +15,7 @@
 (module wiki
    (import wiki_config)
    (export wiki
+	   wiki/compile
 	   wiki/documentation
 	   wiki/preferences))
 
@@ -29,7 +30,22 @@
 		 (instantiate::http-response-hop
 		    (backend be)
 		    (content-type (xml-backend-mime-type be))
-		    (xml (wiki-view req path #t))))
+		    (xml (wiki-view req path #t #f))))
+	      (user-access-denied))
+	  (wiki-query req))))
+
+;*---------------------------------------------------------------------*/
+;*    wiki ...                                                         */
+;*---------------------------------------------------------------------*/
+(define-service (wiki/compile path)
+   (let ((req (current-request)))
+      (if (string? path)
+	  (if (authorized-path? req path)
+	      (let ((be (hop-get-xml-backend 'xhtml)))
+		 (instantiate::http-response-hop
+		    (backend be)
+		    (content-type (xml-backend-mime-type be))
+		    (xml (wiki-view req path #f #t))))
 	      (user-access-denied))
 	  (wiki-query req))))
 
@@ -119,29 +135,34 @@
 ;*    <WIKI:BODY> ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <WIKI:BODY> ((prefs #f)
+				  (compiled #f)
+				  (path #f)
 				  (class "wiki")
 				  body)
    (<BODY> :class class
       (<DIV> :align 'center
-	 (<TABLE> :class "wiki"
-	    (<TR>
-	       (<TD> :valign "top" :class "wiki-logo"
-		  (<DIV>
-		     (<IMG> :id "logo"
-			:inline #t
-			:src (service-resource wiki "etc/logo.png")))
-		  (<DIV> :class "version"
-		     (<DIV> "HopWiki v " (wiki-version)))
-		  (<WIKI:BUTTONS> prefs))
-	       (<TD> :id "body"
-		  (<DIV> :id "wiki-title" "Hop Wiki Pre-Viewer")
-		  body))))
+	 (if compiled
+	     (<TABLE> :class "wiki"
+		(<TR> (<TD> :id "body" :class "wiki-compiled" body)))
+	     (<TABLE> :class "wiki"
+		(<TR>
+		   (<TD> :valign "top" :class "wiki-logo"
+		      (<DIV>
+			 (<IMG> :id "logo"
+			    :inline #t
+			    :src (service-resource wiki "etc/logo.png")))
+		      (<DIV> :class "version"
+			 (<DIV> "HopWiki v " (wiki-version)))
+		      (<WIKI:BUTTONS> prefs path))
+		   (<TD> :id "body"
+		      (<DIV> :id "wiki-title" "Hop Wiki Pre-Viewer")
+		      body)))))
       (<FOOT> :inline #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WIKI:BUTTONS> ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (<WIKI:BUTTONS> prefs)
+(define (<WIKI:BUTTONS> prefs path)
    (<DIV> :class "buttons"
       (<DIV> :class "button doc"
 	 (<A> :title "Wiki Documentation"
@@ -163,7 +184,18 @@
 	       (<IMG> :class "doc"
 		  :inline #t
 		  :src (service-resource wiki "etc/prefs.png"))
-	       "Prefs")))))
+	       "Prefs")))
+      (when path
+	 (<DIV> :class "button prefs"
+	    (<A> :title "Compile"
+	       :class "doc"
+	       :href "compile"
+	       :onclick ~(set! this.href ($wiki/compile $path))
+	       :target "_blank"
+	       (<IMG> :class "doc"
+		  :inline #t
+		  :src (service-resource wiki "etc/compile.png"))
+	       "Compile")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-query ...                                                   */
@@ -191,7 +223,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    wiki-view ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (wiki-view req file prefs)
+(define (wiki-view req file prefs compiled)
    (unless (file-exists? file)
       (with-output-to-file file (lambda () (display "== Sample ==\n"))))
    (if (file-exists? file)
@@ -201,7 +233,7 @@
 			(wiki-load file #f))))
 	  (<HTML>
 	     (<HEAD> :title "Hop wiki"
-		:inline #t
+		:inline compiled
 		:favicon (service-resource wiki "etc/favicon.png")
 		:css (service-resource wiki "wiki.hss")
 		:include "hop-dashboard"
@@ -219,14 +251,17 @@
 				   (directory->path-list (dirname file)))))
 	     (<WIKI:BODY> :class "wiki"
 		:prefs prefs
-		(<DIV> :id "wiki-edit"
-		   (when (authorized-service? req 'wiki/edit)
-		      (<TABLE> :class 'edit :width "100%"
-			 (<TR> (<TD> file)
-			       (<TD> :class 'edit
-				  (if (http-server-request? req)
-				      (<EDIT:EMACS> file)
-				      (<EDIT:EDIT> file)))))))
+		:compiled compiled
+		:path file
+		(unless compiled
+		   (<DIV> :id "wiki-edit"
+		      (when (authorized-service? req 'wiki/edit)
+			 (<TABLE> :class 'edit :width "100%"
+			    (<TR> (<TD> file)
+				  (<TD> :class 'edit
+				     (if (http-server-request? req)
+					 (<EDIT:EMACS> file)
+					 (<EDIT:EDIT> file))))))))
 		(<DIV> :id "head")
 		(<DIV> :class "toc" (hop-wiki->toc body :max-depth 3 :ul <OL>))
 		(<DIV> :class "body" body)

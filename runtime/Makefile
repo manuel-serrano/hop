@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/runtime/Makefile                 */
+#*    serrano/prgm/project/hop/1.11.x/runtime/Makefile                 */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Dec  1 14:35:23 2008 (serrano)                */
+#*    Last change :  Tue Feb 24 11:58:14 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -45,7 +45,7 @@ _OBJECTS = param misc types \
            hop-audio hop-video \
            hop-svg hop-mathml \
            event color weblets prefs expanders  \
-           hop-wiki wiki-syntax wiki-toc
+           hop-wiki wiki-syntax wiki-parser wiki-toc
 
 OBJECTS = $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS = o/make-lib.o
