@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Feb 10 08:44:15 2009 (serrano)                */
+;*    Last change :  Mon Mar  2 10:15:39 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -236,6 +236,9 @@
 		      (loop (cddr a) :jscript rts dir path inl packed
 			    (cons (script (absolute-path (cadr a) dir) inl)
 				  els)))
+		     ((xml-tilde? (cadr a))
+		      (loop (cddr a) :jscript rts dir path inl packed
+			    (cons (cadr a) els)))
 		     ((list? (cadr a))
 		      (let ((js-files (map (lambda (f)
 					      (script (absolute-path f dir)
