@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Sun Mar  1 16:14:59 2009 (serrano)                */
+/*    Last change :  Mon Mar  2 08:28:47 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -28,7 +28,8 @@ function hop_vpaned_fraction_set( paned, fraction ) {
       node_style_set( paned.td1, "width", fraction );
       frac = parseInt( fraction );
    } else {
-      var w = paned.td1.clientWidth + paned.td2.clientWidth;
+//      var w = paned.td1.clientWidth + paned.td2.clientWidth;
+      var w = paned.td1.offsetWidth + paned.td2.offsetWidth;
 
       if( (fraction < 0) || (fraction > 100) ) {
 	 return false;
@@ -37,12 +38,20 @@ function hop_vpaned_fraction_set( paned, fraction ) {
       frac = fraction;
 
       if( w > 0 ) {
-	 var lw = Math.round(w*(frac/100));
-	 node_style_set( paned.td1, "width", lw + "px" );
-	 node_style_set( paned.td2, "width", (w - lw) + "px" );
+	 node_style_set( paned.td1, "width", frac + "%" );
+/* 	 var pw = paned.clientWidth;                                   */
+/* 	 var r = (w / pw);                                             */
+/* 	 var f1 = Math.round( frac * r );                              */
+/* 	 var f2 = Math.round( (100 - frac) * r );                      */
+/* 	                                                               */
+/* 	 var lw = Math.round(w*(frac/100));                            */
+/* 	 node_style_set( paned.td1, "width", lw + "px" );              */
+/* 	 node_style_set( paned.td2, "width", (w - lw) + "px" );        */
+	 
+/* 	 node_style_set( paned.td2, "width", f2 + "%" );               */
 	 // firefox 3 workaround
-	 node_style_set( paned.td1.childNodes[ 0 ], "width", lw + "px" );
-	 node_style_set( paned.td2.childNodes[ 0 ], "width", (w - lw) + "px" );
+/* 	 node_style_set( paned.td1.childNodes[ 0 ], "width", lw + "px" ); */
+/* 	 node_style_set( paned.td2.childNodes[ 0 ], "width", (w - lw) + "px" ); */
       } else {
 	 paned.td1.width = frac + "%";
       }
@@ -74,16 +83,6 @@ function hop_hpaned_dimension_set( paned, val1, height ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_hpaned_mousemove ...                                         */
-/*---------------------------------------------------------------------*/
-function hop_hpaned_mousemove( e, paned ) {
-   var height = paned.clientHeight;
-   var val1 = hop_event_mouse_y( e ) - hop_element_y( paned );
-
-   return hop_hpaned_dimension_set( paned, val1, height );
-}
-
-/*---------------------------------------------------------------------*/
 /*    hop_hpaned_fraction_set ...                                      */
 /*---------------------------------------------------------------------*/
 function hop_hpaned_fraction_set( paned, fraction ) {
@@ -98,10 +97,11 @@ function hop_hpaned_fraction_set( paned, fraction ) {
    if( (frac < 0) || (frac > 100) ) {
       return false;
    } else {
-      // MS: 16 Feb 2009, I have no idea where this 6 is coming from.
-      // I presume that it is due to a border, margin, or padding property
+      // MS: 16 Feb 2009, I have no idea why this offset (6)
+      // is needed nor where it is coming from. I presume that it is due
+      // to a border, margin, or padding property
       // of some child but I'm not able (at that time) to find which...
-      var height = paned.offsetHeight - paned.cursor.offsetHeight - 6;
+      var height = paned.clientHeight - paned.cursor.offsetHeight;
       
       if( height > 0 ) {
 	 var val1 = height * (frac / 100);
@@ -112,6 +112,16 @@ function hop_hpaned_fraction_set( paned, fraction ) {
 	 
       return fraction;
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_hpaned_mousemove ...                                         */
+/*---------------------------------------------------------------------*/
+function hop_hpaned_mousemove( e, paned ) {
+   var height = paned.clientHeight - paned.cursor.offsetHeight;
+   var val1 = hop_event_mouse_y( e ) - hop_element_y( paned );
+
+   return hop_hpaned_dimension_set( paned, val1, height );
 }
 
 /*---------------------------------------------------------------------*/

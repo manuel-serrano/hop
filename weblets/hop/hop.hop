@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/weblets/hop/hop.hop              */
+;*    serrano/prgm/project/hop/1.11.x/weblets/hop/hop.hop              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Wed Jan 14 08:29:14 2009 (serrano)                */
+;*    Last change :  Mon Mar  2 05:27:06 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -147,7 +147,7 @@
 			    ~(set! document.location $url)))
 	       (<IMG> :class "logo"
 		  :inline #t
-		  :title title
+		  :title (format "~a -- ~a" hz title)
 		  :alt title
 		  :width width
 		  :height height

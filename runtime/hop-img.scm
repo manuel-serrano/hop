@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/hop-img.scm              */
+;*    serrano/prgm/project/hop/1.11.x/runtime/hop-img.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Mon Oct 13 20:12:11 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Sun Mar  1 16:56:25 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
 ;*=====================================================================*/
@@ -156,7 +156,7 @@
        (instantiate::xml-empty-element
 	  (markup 'img)
 	  (id (xml-make-id id 'img))
-	  (attributes (cons `(alt . ,(or alt (basename src))) attributes))
+	  (attributes (cons `(alt . ,alt) attributes))
 	  (initializations (list (cons 'src src)))
 	  (body '())))
       ((string? src)
