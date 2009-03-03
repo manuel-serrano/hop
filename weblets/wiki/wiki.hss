@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Thu Feb 26 19:16:19 2009 (serrano)                */
+/*    Last change :  Mon Mar  2 14:36:40 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for the WIKI weblet                                          */
@@ -260,3 +260,14 @@ div.hopbbdb-body {
     display: none;
   }
 }
+
+/*---------------------------------------------------------------------*/
+/*    print                                                            */
+/*---------------------------------------------------------------------*/
+@media print {
+  table.wiki td.wiki-compiled {
+     padding-left: 0;
+     padding-right: 0;
+  }
+}
+  

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/src/main.scm                     */
+;*    serrano/prgm/project/hop/1.11.x/src/main.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Jan  1 11:33:45 2009 (serrano)                */
+;*    Last change :  Tue Mar  3 07:52:42 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -167,6 +167,22 @@
 	    (if (file-exists? (hop-script-file))
 		(hop-load (hop-script-file))
 		(hop-load-rc (hop-script-file))))
+	 ;; preload all the forced services
+	 (for-each (lambda (svc)
+		      (let* ((path (string-append (hop-service-base) "/" svc))
+			     (req (instantiate::http-request
+				     (localclientp #t)
+				     (path path)
+				     (abspath path)
+				     (port (hop-port))
+				     (connection 'close))))
+			 (with-handler
+			    (lambda (err)
+			       (exception-notify err)
+			       (fprintf (current-error-port)
+					"*** WARNING: Service \"~a\" cannot be pre-loaded.\n" svc))
+			    (autoload-filter req))))
+		   (hop-preload-services))
 	 ;; start the main loop
 	 (scheduler-accept-loop (hop-scheduler) serv))))
 

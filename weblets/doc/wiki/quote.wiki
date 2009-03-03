@@ -1,4 +1,4 @@
-Hop Wiki supports ``expression quotations''. By the generate
-a ``++<Q>++'' HTML expression but as all wiki syntax constructor,
+Hop Wiki supports "expression quotations"". By default, it generates
+a "++<Q>++" HTML expression but as all wiki syntax constructor,
 this can be changed by creating and using a personal wiki
 ++wiki-syntax++ object.

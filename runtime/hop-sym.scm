@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/hop-sym.scm              */
+;*    serrano/prgm/project/hop/1.11.x/runtime/hop-sym.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 27 09:39:08 2006                          */
-;*    Last change :  Wed Jan 14 05:36:53 2009 (serrano)                */
+;*    Last change :  Mon Mar  2 12:15:49 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML symbols (special characters).                               */
@@ -203,6 +203,7 @@
 		  ("Downarrow" "&#8659;")
 		  ("<=>" "&#8660;")
 		  ("<==>" "&#8660;")
+		  ("--" "&#8213;")
 		  ;; Mathematical operators 
 		  ("forall" "&#8704;")
 		  ("partial" "&#8706;")

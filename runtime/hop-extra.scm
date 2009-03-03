@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon Mar  2 10:15:39 2009 (serrano)                */
+;*    Last change :  Tue Mar  3 07:32:19 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -176,9 +176,10 @@
 	     (scm (let ((p (find-file/path (string-append f ".scm") path)))
 		     (when (string? p)
 			(set! res (cons (script p inl) res)))))
-	     (hop (let ((p (find-file/path (string-append f ".hop") path)))
-		     (when (string? p)
-			(set! res (cons (script p inl) res)))))
+	     (hop (unless scm
+		     (let ((p (find-file/path (string-append f ".hop") path)))
+			(when (string? p)
+			   (set! res (cons (script p inl) res))))))
 	     (ss (let ((p (find-file/path (string-append f ".css") path)))
 		    (when (string? p)
 		       (set! res (cons (css p inl) res)))))

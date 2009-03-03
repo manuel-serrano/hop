@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Mon Mar  2 08:28:47 2009 (serrano)                */
+/*    Last change :  Mon Mar  2 11:00:18 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -28,8 +28,9 @@ function hop_vpaned_fraction_set( paned, fraction ) {
       node_style_set( paned.td1, "width", fraction );
       frac = parseInt( fraction );
    } else {
-//      var w = paned.td1.clientWidth + paned.td2.clientWidth;
-      var w = paned.td1.offsetWidth + paned.td2.offsetWidth;
+/*       var w = paned.td1.clientWidth + paned.td2.clientWidth;        */
+/*       var w = paned.td1.offsetWidth + paned.td2.offsetWidth;        */
+      var w = paned.clientWidth;
 
       if( (fraction < 0) || (fraction > 100) ) {
 	 return false;
@@ -38,20 +39,14 @@ function hop_vpaned_fraction_set( paned, fraction ) {
       frac = fraction;
 
       if( w > 0 ) {
-	 node_style_set( paned.td1, "width", frac + "%" );
-/* 	 var pw = paned.clientWidth;                                   */
-/* 	 var r = (w / pw);                                             */
-/* 	 var f1 = Math.round( frac * r );                              */
-/* 	 var f2 = Math.round( (100 - frac) * r );                      */
-/* 	                                                               */
-/* 	 var lw = Math.round(w*(frac/100));                            */
-/* 	 node_style_set( paned.td1, "width", lw + "px" );              */
-/* 	 node_style_set( paned.td2, "width", (w - lw) + "px" );        */
+/* 	 node_style_set( paned.td1, "width", frac + "%" );             */
+	 var lw = Math.round(w*(frac/100));
+	 node_style_set( paned.td1, "width", lw + "px" );
+	 node_style_set( paned.td2, "width", (w - lw) + "px" );
 	 
-/* 	 node_style_set( paned.td2, "width", f2 + "%" );               */
 	 // firefox 3 workaround
+	 node_style_set( paned.td2.childNodes[ 0 ], "width", (w - lw) + "px" );
 /* 	 node_style_set( paned.td1.childNodes[ 0 ], "width", lw + "px" ); */
-/* 	 node_style_set( paned.td2.childNodes[ 0 ], "width", (w - lw) + "px" ); */
       } else {
 	 paned.td1.width = frac + "%";
       }

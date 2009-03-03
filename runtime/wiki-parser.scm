@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue Feb 24 11:57:57 2009 (serrano)                */
+;*    Last change :  Mon Mar  2 11:30:02 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -138,7 +138,7 @@
 (define *wiki-grammar*
    (regular-grammar ((punct (in "+*=/_-$#%!`'"))
 		     (blank (in "<>^|:~;,(){}[] \\\n"))
-		     (letter (out "<>+^|*=/_-$#%:~;,`'(){}[]! \\\n"))
+		     (letter (out "<>+^|*=/_-$#%:~;,\"`'(){}[]! \\\n"))
 		     syn state result trcount charset)
 
       ;; misc
@@ -673,13 +673,15 @@
 		 (ignore)))))
 
       ;; quotes
-      ("``"
-       (enter-expr! 'quotation (wiki-syntax-q syn) #f)
-       (ignore))
-      ("''"
+      (#\"
        (let ((s (in-state 'quotation)))
-	  (when s (unwind-state! s))
-	  (ignore)))
+	  (if s
+	      (begin
+		 (unwind-state! s)
+		 (ignore))
+	      (begin
+		 (enter-expr! 'quotation (wiki-syntax-q syn) #f)
+		 (ignore)))))
 
       ;; keywords
       ((: (in " \t") #\: (out " \t\n:") (* (out " \t\n")))

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/src/hop-param.scm                */
+;*    serrano/prgm/project/hop/1.11.x/src/hop-param.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Dec 30 10:48:28 2008 (serrano)                */
-;*    Copyright   :  2004-08 Manuel Serrano                            */
+;*    Last change :  Tue Mar  3 07:35:48 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -89,7 +89,10 @@
 	    (hop-get-cache-size-set! ::int)
 
 	    (hop-user::obj)
-	    (hop-user-set! ::obj))
+	    (hop-user-set! ::obj)
+
+	    (hop-preload-services::pair-nil)
+	    (hop-preload-services-set! ::pair-nil))
 
    (eval    (export-exports)))
 
@@ -277,3 +280,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-user
    "hop")
+
+;*---------------------------------------------------------------------*/
+;*    hop-preload-services ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-preload-services
+   '())

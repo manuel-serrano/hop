@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/src/parseargs.scm                */
+;*    serrano/prgm/project/hop/1.11.x/src/parseargs.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Nov 19 13:17:12 2008 (serrano)                */
-;*    Copyright   :  2004-08 Manuel Serrano                            */
+;*    Last change :  Tue Mar  3 07:40:04 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -81,6 +81,8 @@
 	  (hop-autoload-directories-set! (list dir)))
 	 (("--mime-type" ?file (help "Load aternate user mime-type file"))
 	  (set! mime-file file))
+	 (("--preload-service" ?svc (help "Preload service"))
+	  (hop-preload-services-set! (cons svc (hop-preload-services))))
 	 
 	 ;; Verbosity and logs
 	 (section "Verbosity & Logging")
