@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Mar  2 11:30:02 2009 (serrano)                */
+;*    Last change :  Fri Mar  6 09:03:11 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -21,6 +21,7 @@
 	    __hop_read
 	    __hop_charset
 	    __hop_img
+	    __hop_hop-mathml
 	    __hop_wiki-syntax)
    
    (static  (class state
@@ -642,15 +643,10 @@
 		 (ignore))))))
 
       ;; math
-      ("%%"
-       (let ((s (in-state '%%)))
-	  (if s
-	      (begin
-		 (unwind-state! s)
-		 (ignore))
-	      (begin
-		 (enter-expr! '%% (wiki-syntax-math syn) #f)
-		 (ignore)))))
+      ((: "$$" (+ (or (out #\$) (: #\$ (out #\$)))) "$$")
+       (add-expr! ((wiki-syntax-math syn) (the-substring 2 -2)))
+       (ignore))
+      
       ;; tt
       ("++"
        (let ((s (in-state 'tt)))
@@ -662,14 +658,25 @@
 		 (enter-expr! 'tt (wiki-syntax-tt syn) #f)
 		 (ignore)))))
       ;; code
-      ("--"
+      ("%%"
        (let ((s (in-state 'code)))
 	  (if s
 	      (begin
 		 (unwind-state! s)
 		 (ignore))
 	      (begin
-		 (enter-expr! 'code (wiki-syntax-tt syn) #f)
+		 (enter-expr! 'code (wiki-syntax-code syn) #f)
+		 (ignore)))))
+      
+      ;; strike
+      ("--"
+       (let ((s (in-state 'strike)))
+	  (if s
+	      (begin
+		 (unwind-state! s)
+		 (ignore))
+	      (begin
+		 (enter-expr! 'strike (wiki-syntax-strike syn) #f)
 		 (ignore)))))
 
       ;; quotes

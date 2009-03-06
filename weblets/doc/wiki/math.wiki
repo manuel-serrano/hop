@@ -1,0 +1,18 @@
+This shows various examples of LaTeX embedding inside Hop Wiki document:
+
+  - $$\sqrt{y} \sqrt[n]{y}$$
+  - $$\prod_n^m \lim_{n \rightarrow \infty} x = 0$$
+  - $$\overbrace{\overline{x}^{2} + 1}$$
+  - $$10^{10}\quad 2^{n+1}\quad (n+1)^2\quad \sqrt{1-x^2}\quad
+\overline{w+\bar z}\quad p^{e_1}_1\quad a_{b_{c_{d_e}}}\quad
+\root 3 \of {h''_n(\alpha x)$$
+  - $$\{a,b,c\} \qquad
+\{1,2,\ldots,n\} \qquad
+{\{\rm red,white,blue\}} \qquad
+\{\,x\mid x > 5\,\} \qquad
+\{\,x:x > 5\,\}
+}
+{
+\bigl\{\,\bigl(x,f(x)\bigr)\bigm| x\in D\,\bigr\} \qquad
+\bigl\{\,x^3\bigm| h(x)\in\{-1,0,+1\}\,\bigr\}
+}$$

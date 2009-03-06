@@ -105,7 +105,7 @@ Hop Wiki parser let you embed mathematical formulas inside documents.
 
 ~~ he more general way of embedding MathML inside Wiki document consists
 in using the ++,(<APIREF> "<MATH>" "math.wiki")++ markup. Users accustomed
-to LaTeX can also use direct embedding of formulas inside wiki documents
+to aTeX can also use direct embedding of formulas inside wiki documents
 by the means of the ++,(begin "$$")++ syntax such as:
 
 ~~

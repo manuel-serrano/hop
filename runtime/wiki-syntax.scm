@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue Feb 24 12:01:47 2009 (serrano)                */
+;*    Last change :  Fri Mar  6 08:59:42 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -20,7 +20,8 @@
 	    __hop_param
 	    __hop_read
 	    __hop_charset
-	    __hop_img)
+	    __hop_img
+	    __hop_hop-mathml)
    
    (export  (class wiki-syntax
 	       (section1::procedure (default list))
@@ -55,7 +56,11 @@
 	       (q::procedure (default <Q>))
 	       (tt::procedure (default <TT>))
 	       (code::procedure (default <CODE>))
-	       (math::procedure (default <PRE>))
+	       (strike::procedure (default (lambda l
+					      (<SPAN> :class "wiki-strike" l))))
+	       (math::procedure (default (lambda (s)
+					    (<MATH>
+					       (<MATH:TEX> s)))))
 	       (pre::procedure (default <PRE>))
 	       (table::procedure (default <TABLE>))
 	       (tr::procedure (default <TR>))

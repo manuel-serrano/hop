@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Feb 19 08:27:04 2009 (serrano)                */
+#*    Last change :  Fri Mar  6 08:13:24 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -59,7 +59,8 @@ EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
 WEBLETS_POP	= .keep
 WIKI_POP	= basic.wiki hop.wiki link.wiki lists.wiki misc.wiki \
                   paragraph.wiki plugin.wiki section.wiki syntax.wiki \
-                  tables.wiki tt.wiki image.wiki quote.wiki include.wiki 
+                  tables.wiki tt.wiki image.wiki quote.wiki include.wiki \
+                  math.wiki
 TUTORIAL_POP	= 00-hello.wiki 01-ajax.wiki 02-hss.wiki 03-proxy.wiki \
 		  04-authentication.wiki 05-rss.wiki 06-hz.wiki \
                   07-hoprc.wiki 08-history.wiki 09-resource.wiki \
