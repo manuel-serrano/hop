@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Feb 19 08:05:54 2009 (serrano)                */
+#*    Last change :  Tue Mar 10 11:28:02 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the wiki weblet                                  */
@@ -23,7 +23,9 @@ DATE = $(HOPDATE)
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
 SOURCES	= wiki.hss wiki.hop config.hop.in wiki-prefs.hss
-POPULATION = Makefile etc/prefs.png etc/doc.png etc/compile.png $(SOURCES)
+POPULATION = Makefile etc/prefs.png etc/doc.png etc/compile.png \
+             wiki.scm \
+             $(SOURCES)
 
 build: etc/weblet.info etc/wiki.wiki config.hop .afile 
 

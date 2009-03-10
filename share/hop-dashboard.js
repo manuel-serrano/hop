@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/share/hop-dashboard.js           */
+/*    serrano/prgm/project/hop/1.11.x/share/hop-dashboard.js           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Thu Nov 27 07:58:27 2008 (serrano)                */
-/*    Copyright   :  2007-08 Manuel Serrano                            */
+/*    Last change :  Tue Mar 10 08:46:49 2009 (serrano)                */
+/*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
 /*=====================================================================*/
@@ -210,7 +210,10 @@ function hop_dashboard_button_init() {
    node_style_set( but, "height", "18px" );
    node_style_set( but, "-moz-border-radius", "2px" );
    node_style_set( but, "-moz-opacity", hop_dashboard_opacity );
+   node_style_set( but, "-webkit-border-radius", "2px" );
+   node_style_set( but, "-webkit-opacity", hop_dashboard_opacity );
    node_style_set( but, "opacity", hop_dashboard_opacity );
+   node_style_set( but, "border-radius", "2px" );
 
    var icon = document.createElement( "img" );
    

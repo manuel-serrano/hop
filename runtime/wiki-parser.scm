@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Fri Mar  6 09:03:11 2009 (serrano)                */
+;*    Last change :  Tue Mar 10 16:26:29 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -33,7 +33,7 @@
 	    (class block::state
 	       (is-subblock read-only (default #f))))
 
-(export     (wiki-string->hop ::bstring #!key
+   (export  (wiki-string->hop ::bstring #!key
 			      syntax
 			      (charset (hop-locale)))
 	    (wiki-file->hop ::bstring #!key
@@ -42,7 +42,8 @@
 	    (wiki-input-port->hop ::input-port
 				  #!key
 				  syntax
-				  (charset (hop-locale)))))   
+				  (charset (hop-locale)))
+	    (wiki-name::bstring ::obj)))
    
 ;*---------------------------------------------------------------------*/
 ;*    *default-syntax* ...                                             */
@@ -59,7 +60,13 @@
 ;*    wiki-debug? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (wiki-debug?)
-   (or (>fx *wiki-debug* 0) (>fx (bigloo-debug) 4)))
+   (or (>=fx *wiki-debug* 1) (>=fx (bigloo-debug) 5)))
+
+;*---------------------------------------------------------------------*/
+;*    wiki-debug2? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (wiki-debug2?)
+   (or (>=fx *wiki-debug* 1) (>=fx (bigloo-debug) 6)))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-string->hop ...                                             */
@@ -72,6 +79,7 @@
 		  (or syntax *default-syntax*)
 		  '()
 		  '()
+		  0
 		  0
 		  (if (procedure? charset)
 		      charset
@@ -104,6 +112,7 @@
 			'()
 			'()
 			0
+			0
 			(if (procedure? charset)
 			    charset
 			    (charset-converter! charset (hop-charset)))))))))
@@ -115,6 +124,7 @@
 		      *default-syntax*
 		      '()
 		      '()
+		      0
 		      0
 		      (if (procedure? charset)
 			  charset
@@ -134,13 +144,44 @@
 	     (obj obj))))
 
 ;*---------------------------------------------------------------------*/
+;*    wiki-name ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (wiki-name expr)
+   (let* ((s (with-output-to-string
+		(lambda ()
+		   (let loop ((e expr))
+		      (cond
+			 ((pair? e)
+			  (for-each loop e))
+			 ((xml-markup? e)
+			  (loop (xml-markup-body e)))
+			 (else
+			  (display e)))))))
+	  (s2 (pregexp-replace* "  |\n" s " ")))
+      (pregexp-replace* "^ +| +$" s2 "")))
+
+;*---------------------------------------------------------------------*/
+;*    wiki-parse-ident ...                                             */
+;*---------------------------------------------------------------------*/
+(define (wiki-parse-ident str)
+   (let ((i (string-index str #\@)))
+      (cond
+	 ((not i)
+	  (values str #f))
+	 ((=fx i 0)
+	  (values #f (substring str 1 (string-length str))))
+	 (else
+	  (values (substring str 0 i)
+		  (substring str (+fx i 1) (string-length str)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    *wiki-grammar* ...                                               */
 ;*---------------------------------------------------------------------*/
 (define *wiki-grammar*
    (regular-grammar ((punct (in "+*=/_-$#%!`'"))
 		     (blank (in "<>^|:~;,(){}[] \\\n"))
 		     (letter (out "<>+^|*=/_-$#%:~;,\"`'(){}[]! \\\n"))
-		     syn state result trcount charset)
+		     syn state result trcount dbgcount charset)
 
       ;; misc
       (define (the-html-string)
@@ -162,8 +203,11 @@
       ;; state management
       (define (enter-state! st fun value)
 	 (when (wiki-debug?)
-	    (print (make-string (length state) #\space) ">>> " st " [state] "
-		   (map state-markup state)))
+	    (set! dbgcount (+fx 1 dbgcount))
+	    (fprint (current-error-port)
+		    (make-string (length state) #\space) ">>> " st
+		    "." dbgcount " [state] "
+		    (map state-markup state)))
 	 (let ((st (instantiate::state
 		      (markup st)
 		      (syntax fun)
@@ -172,9 +216,12 @@
 	    (set! state (cons st state))))
       
       (define (enter-expr! st fun value)
-	 (when (wiki-debug?)
-	    (print (make-string (length state) #\space) ">>> " st " [expr] "
-		   (map state-markup state)))
+	 (when (wiki-debug2?)
+	    (set! dbgcount (+fx 1 dbgcount))
+	    (fprint (current-error-port)
+		    (make-string (length state) #\space) ">>> " st
+		    "." dbgcount " [expr] "
+		    (map state-markup state)))
 	 (let ((st (instantiate::expr
 		      (markup st)
 		      (syntax fun)
@@ -184,8 +231,11 @@
       
       (define (enter-block! st fun value s)
 	 (when (wiki-debug?)
-	    (print (make-string (length state) #\space) ">>> " st " [block] "
-		   (map state-markup state)))
+	    (set! dbgcount (+fx 1 dbgcount))
+	    (fprint (current-error-port)
+		    (make-string (length state) #\space) ">>> " st
+		    "." dbgcount " [block] "
+		    (map state-markup state)))
 	 (let ((st (instantiate::block
 		      (markup st)
 		      (syntax fun)
@@ -235,10 +285,11 @@
       
       ;; unwind the state until the stack is empty or the state is found
       (define (unwind-state! s . args)
-	 (when (wiki-debug?)
-	    (print (make-string (max 0 (- (length state) 1)) #\space) "<<< "
-		   (when s (state-markup s)) " "
-		   (map state-markup state)))
+	 (when (and (wiki-debug?) (or (block? s) (wiki-debug2?)))
+	    (fprint (current-error-port)
+		    (make-string (max 0 (- (length state) 1)) #\space) "<<< "
+		    (when s (state-markup s)) " "
+		    (map state-markup state)))
 	 (let loop ((st state)
 		    (el #f))
 	    (if (null? st)
@@ -397,22 +448,30 @@
        (ignore))
 
       ;; paragraphs
-      ((bol "~~")
+      ((bol (: "~~" (? (: #\: (+ (out " \t\n"))))))
        (when (is-state? 'p) (pop-state!))
-       (enter-block! 'p
-		     (lambda expr
-			(let ((rev (reverse! expr)))
-			   (if (and (pair? rev) (equal? "\n" (car rev)))
-			       (apply (wiki-syntax-p syn) (reverse! (cdr rev)))
-			       (apply (wiki-syntax-p syn) (reverse! rev)))))
-		     #f
-		     #f)
+       (let ((args (if (=fx (the-length) 2)
+		       '()
+		       (multiple-value-bind (ident class)
+			  (wiki-parse-ident (the-substring 3 (the-length)))
+			  `(:class ,class :ident ,ident)))))
+	  (enter-block! 'p
+			(lambda expr
+			   (let ((rev (reverse! expr)))
+			      (if (and (pair? rev) (equal? "\n" (car rev)))
+				  (apply (wiki-syntax-p syn)
+					 (append args (reverse! (cdr rev))))
+				  (apply (wiki-syntax-p syn)
+					 (append args (reverse! rev))))))
+			#f
+			#f))
        (ignore))
       
       ;; sections
-      ((bol (>= 2 #\=))
-       (let* ((id (the-symbol))
-	      (lv (-fx (the-length) 2)))
+      ((bol (: (>= 2 #\=) (? (: #\: (+ (out " \t\n"))))))
+       (let* ((str (the-string))
+	      (i (string-index str #\:))
+	      (lv (if i (-fx i 2) (-fx (the-length) 2))))
 	  (if (> lv 4)
 	      (begin
 		 (add-expr! ((wiki-syntax-hr syn)))
@@ -423,35 +482,40 @@
 			    ((1) (wiki-syntax-h2 syn))
 			    ((0) (wiki-syntax-h1 syn))
 			    (else (wiki-syntax-h5 syn))))
+		     (hx (if i
+			     (multiple-value-bind (id cla)
+				(wiki-parse-ident (substring str
+							     (+fx i 1)
+							     (the-length)))
+				(lambda l
+				   (apply hx (cons* :ident id :class cla l))))
+			     hx))
 		     (sx (case lv
 			    ((3) (wiki-syntax-section4 syn))
 			    ((2) (wiki-syntax-section3 syn))
 			    ((1) (wiki-syntax-section2 syn))
 			    ((0) (wiki-syntax-section1 syn))
 			    (else (wiki-syntax-section5 syn))))
-		     (st (in-bottom-up-state
-			  (lambda (s _)
-			     (with-access::state s (markup value)
-				(and (eq? markup 'section)
-				     (>=fx value lv)))))))
+		     (st (or (in-bottom-up-state
+			      (lambda (s _)
+				 (with-access::state s (markup value)
+				    (and (eq? markup 'section)
+					 (>=fx value lv)))))
+			     (in-state
+			      (lambda (s n)
+				 (when (pair? n)
+				    (with-access::state (car n) (markup value)
+				       (and (eq? markup 'section)
+					    (<fx value lv)))))))))
 		 (when st (unwind-state! st))
 		 (enter-state! 'section sx lv)
 		 (enter-expr! '==
 			      (lambda expr
-				 (let* ((s (with-output-to-string
-					      (lambda ()
-						 (let loop ((e expr))
-						    (cond
-						       ((pair? e)
-							(for-each loop e))
-						       ((xml-markup? e)
-							(loop (xml-markup-body e)))
-						       (else
-							(display e)))))))
-					(s2 (pregexp-replace* "  |\n" s " "))
-					(s3 (pregexp-replace* "^ +| +$" s2 "")))
-				    (list (<A> :name s3)
-					  (apply hx expr))))
+				 (let ((name (wiki-name expr)))
+				    (when (wiki-debug?)
+				       (fprint (current-error-port) ";; " name))
+				    (list (<A> :name name)
+					  (apply hx :name name expr))))
 			      #f)
 		 (ignore)))))
       

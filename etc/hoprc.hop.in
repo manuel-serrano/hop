@@ -150,7 +150,7 @@ A good starting point is probably to copy the file
 to
 ,(<BR>)
 ,(<TT> :style "color: #ff881c"
-    (make-file-path (hop-rc-directory) "hop" ".config" (hop-rc-file)))
+    (make-file-path (hop-rc-directory) ".config" "hop" (hop-rc-file)))
 ,(<BR>)
 and customize it for your own needs.])))))
 

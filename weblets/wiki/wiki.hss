@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Mar  2 14:36:40 2009 (serrano)                */
+/*    Last change :  Tue Mar 10 16:37:30 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for the WIKI weblet                                          */
@@ -23,11 +23,14 @@ table.wiki {
   border: 1px solid $border-color;
   background: white;
   -moz-border-radius: 0.5em;
+  -webkit-border-radius: 0.5em;
+  border-radius: 0.5em;
 }
 
 table.wiki td.wiki-logo,
 table.wiki td.wiki-logo div.version {
   text-align: center;
+  font-family: arial;
 }
 
 table.wiki img#logo {
@@ -48,9 +51,10 @@ table.wiki td.wiki-compiled {
   padding-right: 6em;
 }
 
-div#wiki-title {
+div#wiki-weblet-title {
   font-size: x-large;
   font-weight: bold;
+  font-family: arial;
   border-bottom: 1px solid $border-color;
   padding-bottom: 1px;
   width: 100%;
@@ -132,6 +136,8 @@ textarea.editor {
   background: #ffe;
   width: 90%;
   -moz-border-radius: 0.5em;
+  -webkit-border-radius: 0.5em;
+  border-radius: 0.5em;
 }
 
 button {
@@ -143,18 +149,71 @@ p {
   text-indent: 0em;
 }
 
-div.toc {
-  margin-left: 10px;
-  float: right;
-  clear: both;
+ul, ol {
+  padding-left: 2em;
+}
+
+/*---------------------------------------------------------------------*/
+/*    wiki-toc                                                         */
+/*---------------------------------------------------------------------*/
+div.wiki-toc {
+  margin-left: 20px;
   background-color: #f3fff3;
-  border: 1px dashed #bbb;
-  font-size: 80%;
+  font-family: arial;
   padding: 0px 4px 0px 4px;
 }
 
-ul, ol {
-  padding-left: 2em;
+div#wiki-toc {
+  font-size: 80%;
+  float: right;
+  clear: both;
+  border: 1px dashed #bbb;
+}
+
+div.wiki-toc-popup {
+  border: 2px ridge #bbb;
+  font-size: 100%;
+  display: none;
+  position: fixed;
+  top: 100px;
+  left: 100px;
+  right: 100px;
+  overflow: none;
+  opacity: 0.95;
+}
+
+div.wiki-toc ol { 
+  line-height: 120%;
+  padding-left: 2px;
+/*   counter-reset: item;                                              */
+}
+
+div.wiki-toc ol ol { 
+  padding-left: 1em;
+}
+
+div.wiki-toc a { 
+  text-decoration: none;
+  color: #009;
+}
+
+div.wiki-toc a:hover { 
+  text-decoration: underline;
+}
+
+div.wiki-toc li { 
+  display: block;
+  font-weight: bold;
+}
+
+/* div.wiki-toc li:before {                                            */
+/*   content: counters(item, ".") " ";                                 */
+/*   counter-increment: item;                                          */
+/* }                                                                   */
+
+div.wiki-toc li li {
+  font-size: 95%;
+  font-weight: 200;
 }
 
 /*---------------------------------------------------------------------*/
@@ -175,6 +234,8 @@ div.buttons div.button {
   border: 1px solid #bbb;
   background: #f0f0f0;
   -moz-border-radius: 0.3em;
+  -webkit-border-radius: 0.3em;
+  border-radius: 0.3em;
 }
 
 div.buttons div.prefs {
@@ -205,6 +266,11 @@ div.hopbbdb-body {
   margin-top: 10px;
 }
 
+span.wiki-strike {
+  text-decoration: line-through;
+  color: #555;
+}
+
 /*---------------------------------------------------------------------*/
 /*    Printing                                                         */
 /*---------------------------------------------------------------------*/
@@ -226,7 +292,7 @@ div.hopbbdb-body {
     display: none;
   }
 
-  div#wiki-title {
+  div#wiki-weblet-title {
     display: none;
   }
 
@@ -247,7 +313,7 @@ div.hopbbdb-body {
     background: white;
   }
 
-  div.toc {
+  div.wiki-toc {
     display: none;
   }
 
@@ -259,12 +325,7 @@ div.hopbbdb-body {
   .hop-dashboard-button {
     display: none;
   }
-}
 
-/*---------------------------------------------------------------------*/
-/*    print                                                            */
-/*---------------------------------------------------------------------*/
-@media print {
   table.wiki td.wiki-compiled {
      padding-left: 0;
      padding-right: 0;

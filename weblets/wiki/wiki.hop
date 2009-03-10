@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Mar  2 10:16:54 2009 (serrano)                */
+;*    Last change :  Tue Mar 10 10:26:03 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -155,7 +155,7 @@
 			 (<DIV> "HopWiki v " (wiki-version)))
 		      (<WIKI:BUTTONS> prefs path))
 		   (<TD> :id "body"
-		      (<DIV> :id "wiki-title" "Hop Wiki Pre-Viewer")
+		      (<DIV> :id "wiki-weblet-title" "Hop Wiki Pre-Viewer")
 		      body)))))
       (<FOOT> :inline #t)))
 
@@ -236,6 +236,7 @@
 		:inline compiled
 		:favicon (service-resource wiki "etc/favicon.png")
 		:css (service-resource wiki "wiki.hss")
+		:jscript (service-resource wiki "wiki.scm")
 		:include "hop-dashboard"
 		:jscript ~(define (oncompile) $compiled)
 		:jscript (sort (lambda (s1 s2)
@@ -263,10 +264,14 @@
 				     (if (http-server-request? req)
 					 (<EDIT:EMACS> file)
 					 (<EDIT:EDIT> file))))))))
-		(<DIV> :id "head")
-		(<DIV> :class "toc" (hop-wiki->toc body :max-depth 3 :ul <OL>))
-		(<DIV> :class "body" body)
-		(<DIV> :id "foot"))))
+		(<DIV> :class "wiki-head" :id "wiki-head")
+		(<DIV> :class "wiki-toc" :id "wiki-toc"
+		   (hop-wiki->toc body :max-depth 3 :ul <OL>))
+		(<DIV> :class "wiki-toc wiki-toc-popup" :id "wiki-toc-popup"
+		   :onclick ~(wiki-hide-toc-popup this)
+		   (hop-wiki->toc body :max-depth 3 :ul <OL>))
+		(<DIV> :class "wiki-body" :id "wiki-body" body)
+		(<DIV> :class "wiki-foot" :id "wiki-foot"))))
        (http-file-not-found file)))
 
 ;*---------------------------------------------------------------------*/

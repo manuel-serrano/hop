@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/share/hop-dom.js                 */
+/*    serrano/prgm/project/hop/1.11.x/share/hop-dom.js                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Sat Dec  6 06:56:59 2008 (serrano)                */
-/*    Copyright   :  2006-08 Manuel Serrano                            */
+/*    Last change :  Tue Mar 10 12:10:41 2009 (serrano)                */
+/*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
 /*    -------------------------------------------------------------    */
@@ -1002,7 +1002,7 @@ function dom_replace_child( node, n, r ) {
 }
 /*** META ((export #t)) */
 function dom_get_element_by_id( doc, id ) {
-   if( (doc instanceof String) || (typeof doc == "string") ) {
+   if( (doc instanceof String) || (typeof doc === "string") ) {
       var res = document.getElementById( doc );
       if( res == null ) {
 	 return false;
@@ -1019,10 +1019,19 @@ function dom_get_element_by_id( doc, id ) {
 }
 /*** META ((export #t)) */
 function dom_get_elements_by_tag_name( doc, name ) {
-   if( (doc instanceof String) || (typeof doc == "string") ) {
+   if( (doc instanceof String) || (typeof doc === "string") ) {
       return sc_vector2list( document.getElementsByTagName( doc ) );
    } else {
       return sc_vector2list( doc.getElementsByTagName( name ) );
+   }
+}
+
+/*** META ((export #t)) */
+function dom_get_elements_by_name( doc, name ) {
+   if( (doc instanceof String) || (typeof doc === "string") ) {
+      return sc_vector2list( document.getElementsByName( doc ) );
+   } else {
+      return sc_vector2list( doc.getElementsByName( name ) );
    }
 }
 
@@ -1194,11 +1203,27 @@ function hop_node_eval( node, text ) {
 function node_style_get( obj, prop ) {
    if( (obj instanceof String) || (typeof obj === "string") )
       obj = document.getElementById( obj );
-   
-   if( sc_isKeyword( prop ) )
-      prop = sc_keyword2jsstring( prop );
+   else {
+      if( sc_isKeyword( prop ) )
+	 prop = sc_keyword2jsstring( prop );
+   }
    
    return obj.style[ prop ];
+}
+
+/*---------------------------------------------------------------------*/
+/*    node_computed_style_get ...                                      */
+/*---------------------------------------------------------------------*/
+/*** META ((export node-computed-style-get node-computed-style)) */
+function node_computed_style_get( obj, prop ) {
+   if( (obj instanceof String) || (typeof obj === "string") )
+      obj = document.getElementById( obj );
+   else {
+      if( sc_isKeyword( prop ) )
+	 prop = sc_keyword2jsstring( prop );
+   }
+   
+   return window.getComputedStyle( obj, null )[ prop ];
 }
 
 /*---------------------------------------------------------------------*/

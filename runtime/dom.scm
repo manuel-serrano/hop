@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Thu Feb 19 07:17:58 2009 (serrano)                */
+;*    Last change :  Tue Mar 10 14:33:29 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -49,7 +49,8 @@
 	   (dom-node-document? node)
 	   (dom-node-document-fragment? node)
 	   (dom-node-attr? node)
-	   (dom-inner-html-set! ::xml-markup ::obj))
+	   (dom-inner-html-set! ::xml-markup ::obj)
+	   (innerHTML-set! ::xml-markup obj))
    
    (export (class xml-document::xml-markup
 	      (%make-xml-document)
@@ -568,4 +569,10 @@
 	 (when (xml-document? doc)
 	    (doc-update-idtable! doc body)))
       node))
+
+;*---------------------------------------------------------------------*/
+;*    innerHTML-set! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (innerHTML-set! node body)
+   (dom-inner-html-set! node body))
    
