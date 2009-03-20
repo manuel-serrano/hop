@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/wiki-syntax.scm           */
+;*    serrano/prgm/project/hop/1.10.x/runtime/wiki-syntax.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Fri Jun 20 14:19:52 2008 (serrano)                */
+;*    Last change :  Mon Oct 27 19:10:07 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -19,7 +19,8 @@
    (import  __hop_xml
 	    __hop_param
 	    __hop_read
-	    __hop_charset)
+	    __hop_charset
+	    __hop_img)
    
    (static  (class state
 	       markup::symbol
@@ -148,9 +149,9 @@
 ;*    *wiki-grammar* ...                                               */
 ;*---------------------------------------------------------------------*/
 (define *wiki-grammar*
-   (regular-grammar ((punct (in "+*=/_-$#%"))
+   (regular-grammar ((punct (in "+*=/_-$#%!"))
 		     (blank (in "<>^|:~;,`'(){}[] \\\n"))
-		     (letter (out "<>+^|*=/_-$#%:~;,`'(){}[] \\\n"))
+		     (letter (out "<>+^|*=/_-$#%:~;,`'(){}[]! \\\n"))
 		     syn state result trcount charset)
 
       ;; misc
@@ -603,8 +604,7 @@
 	      (href (wiki-syntax-href syn)))
 	  (define (link-val s)
 	     (cond
-		((and (>fx (string-length s) 3)
-		      (substring-at? s ",(" 0))
+		((and (>fx (string-length s) 3) (substring-at? s ",(" 0))
 		 (with-input-from-string (substring s 1 (string-length s))
 		    (lambda ()
 		       (with-handler
@@ -633,6 +633,31 @@
 			    :syntax syn
 			    :charset charset))))))
 	  (ignore)))
+
+      ;; images
+      ((: "!!" (+ (or (out #\!) (: #\! (out #\!)))) "!!")
+       (let* ((s (the-substring 2 -2))
+	      (i (string-index s "|")))
+	  (define (src-val s)
+	     (cond
+		((and (>fx (string-length s) 3) (substring-at? s ",(" 0))
+		 (with-input-from-string (substring s 1 (string-length s))
+		    (lambda ()
+		       (with-handler
+			  (lambda (e)
+			     (exception-notify e)
+			     s)
+			  (eval (hop-read (current-input-port)))))))
+		(else
+		 s)))
+	  (add-expr!
+	   (if (not i)
+	       (let ((path (src-val s)))
+		  (<IMG> :src path :alt path))
+	       (let ((path (src-val (substring s 0 i)))
+		     (title (substring s (+fx i 1) (string-length s))))
+		  (<IMG> :src path :alt path :title title)))))
+       (ignore))
 
       ;; embedded hop
       (",("

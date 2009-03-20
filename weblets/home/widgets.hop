@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/home/widgets.hop          */
+;*    serrano/prgm/project/hop/1.10.x/weblets/home/widgets.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Tue Dec 18 09:59:34 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Thu Jan 15 07:30:54 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME widgets.                                                */
 ;*=====================================================================*/
@@ -27,6 +27,7 @@
       (<HEAD>
 	 :title "Hop Home page"
 	 :include "hop-notepad" "hop-window" "hop-foldlist"
+	 :jscript (make-file-path (hop-share-directory) "flash" "swfobject.js")
 	 :favicon (service-resource home "etc/gohome.png")
 	 (<LINK> :rel "alternate" :type "application/rss+xml"
 	    :title "Latest HOP weblets"

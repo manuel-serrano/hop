@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Apr 21 11:52:04 2008                          */
-/*    Last change :  Mon Sep 29 11:12:36 2008 (serrano)                */
+/*    Last change :  Wed Oct 29 20:55:13 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    PREFS client-side runtime.                                       */
@@ -36,7 +36,7 @@ function hop_prefs_editor_expr( event, inp, name, parse, type, key ) {
 	 var svc = hop_prefs_edit_svc +
 	    "?name=" + name +
 	    "&type=" + type +
-	    "&value=" + inp.value +
+	    "&value=" + encodeURIComponent( inp.value ) +
 	    "&key=" + key;
       
 	 with_hop( svc, hop_prefs_callback );

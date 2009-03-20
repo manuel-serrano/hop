@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Tue Oct 21 15:40:42 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Wed Jan 14 08:29:14 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
 ;*=====================================================================*/
@@ -13,12 +13,26 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hophop
-   (import hophop_config))
+   
+   (import hophop_config)
+   
+   (export hop
+	   hop/panel
+	   hop/dashboard
+	   hop/dashboard-panel))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define-service (hop)
+   (<HOP>
+      (hop-panel :width 48 :height 48
+	 :icons `("logo.png" ,(string-append (hop-dir) "/etc/default.png")))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-make-hashtables ...                                          */
+;*---------------------------------------------------------------------*/
+(define (hop-make-hashtables)
    (let ((t (make-hashtable 20))
 	 (ct (make-hashtable 20)))
       (hashtable-put! t "hop" #t)
@@ -43,16 +57,42 @@
 						      (cons (cons n a) o)))
 					       (list (cons n a)))))))
 		(append-map find-weblets-in-directory (hop-autoload-directories)))
-      (<HOP>
-	 (<WEBLETS> "Builtin Weblets" (hop-builtin-row))
-	 (if (hop-view-by-category?)
-	     (map! (lambda (k)
-		      (let ((ws (map cdr (hashtable-get ct k))))
-			 (<WEBLETS> k (hop-additional-row ws))))
-		   (sort (hashtable-key-list ct) string<?))
-	     (let ((ws (map cdr (apply append (hashtable->list ct)))))
-		(<WEBLETS> "Additional Weblets"
-			   (hop-additional-row ws)))))))
+      (values t ct)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-panel ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (hop-panel #!key (showtitle #t) (width 48) (height 48) (icons '()) (open #f))
+   (let ((open (or open (if showtitle 'replace 'tab))))
+      (multiple-value-bind (t ct)
+	 (hop-make-hashtables)
+	 (list
+	  (<WEBLETS> "Builtin Weblets"
+		     (hop-builtin-row :showtitle showtitle
+			:width width :height height :icons icons :open open))
+	  (if (hop-view-by-category?)
+	      (map! (lambda (k)
+		       (let ((ws (map cdr (hashtable-get ct k))))
+			  (<WEBLETS> k (hop-additional-row ws :open open))))
+		    (sort (hashtable-key-list ct) string<?))
+	      (let ((ws (map cdr (apply append (hashtable->list ct)))))
+		 (<WEBLETS> "Additional Weblets"
+			    (hop-additional-row ws
+						:showtitle showtitle
+						:width width :height height
+						:icons icons
+						:open open))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop/panel ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-service (hop/panel showtitle size open)
+   (let ((size (or size 48)))
+      (<DIV> :class "hop-panel"
+	 (hop-panel :showtitle showtitle
+	    :width size :height size
+	    :icons `("logo.png" ,(string-append (hop-dir) "/etc/default.png"))
+	    :open (or open 'window)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop/documentation ...                                            */
@@ -68,38 +108,62 @@
 ;*    <WEBLETS> ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (<WEBLETS> title tds)
-   (list (<DIV> :class "title" title)
+   (list (<DIV> :class "weblets-title" title)
 	 (<DIV> :class "weblets" tds)))
 
 ;*---------------------------------------------------------------------*/
+;*    find-logo ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (find-logo base hz icons)
+   (let loop ((icons icons))
+      (if (pair? icons)
+	  (if (char=? (string-ref (car icons) 0) (file-separator))
+	      (if (file-exists? (car icons))
+		  (car icons)
+		  (loop (cdr icons)))
+	      (let ((logo (format "~a/~a/etc/~a" base hz (car icons))))
+		 (if (file-exists? logo)
+		     logo
+		     (loop (cdr icons)))))
+	  (string-append (hop-dir) "/etc/default.png"))))
+	  
+;*---------------------------------------------------------------------*/
 ;*    <WEBLET> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (<WEBLET> base #!key url hz logo title)
-   (let ((url (or url (format "/hop/~a" hz)))
-	 (logo (if logo
-		   (format "~a/~a" base logo)
-		   (format "~a/~a/etc/logo.png" base hz))))
+(define (<WEBLET> base #!key url hz title showtitle width height icons open)
+   (let ((url (or url (format "/hop/~a" hz))))
       (<TABLE> :class "weblet" 
 	 (<TR>
 	    (<TD> :class "logo"
-	       :onclick ~(set! document.location $url)
+	       :onclick (case open
+			   ((tab)
+			    ~(tab-open :src $url))
+			   ((window)
+			    ~(window-open :src $url :title title
+				:toolbar #t :location #t directories: #t
+				:menubar #t :scrollbars #t :resizable #t
+				:titlebar #t))
+			   (else
+			    ~(set! document.location $url)))
 	       (<IMG> :class "logo"
 		  :inline #t
 		  :title title
 		  :alt title
-		  :src (if (file-exists? logo)
-			   logo
-			   (string-append (hop-dir) "/etc/default.png")))))
-	 (<TR>
-	    (<TD> :class "legend"
-	       (<SPAN> (or hz "home")))))))
+		  :width width
+		  :height height
+		  :src (find-logo base hz icons))))
+	 (when showtitle
+	    (<TR>
+	       (<TD> :class "legend"
+		  (<SPAN> (or hz "home"))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HOP> ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (<HOP> . obj)
    (<HTML>
-      (<HEAD> :css (format "~a/hop.hss" (hop-dir))
+      (<HEAD> :include "hop-dashboard" "hop-window"
+	 :css (format "~a/hop.hss" (hop-dir))
 	 :favicon (format "~a/etc/favicon.png" (hop-dir)))
       (<BODY>
 	 (<DIV> :align "center"
@@ -128,28 +192,64 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-builtin-row ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (hop-builtin-row)
-   (cons (<WEBLET> (hop-weblets-directory) :url (hop-url)
-		   :logo (make-file-path "home" "etc" "logo.png"))
+(define (hop-builtin-row #!key showtitle width height icons open)
+   (cons (<WEBLET> (hop-weblets-directory)
+		   :hz "home" :url (hop-url)
+		   :showtitle showtitle
+		   :width width :height :height :icons icons :open open)
 	 (map (lambda (x)
-		 (<WEBLET> (hop-weblets-directory) :hz x))
+		 (<WEBLET> (hop-weblets-directory)
+			   :hz x
+			   :showtitle showtitle
+			   :width width :height :height :icons icons :open open))
 	      (hop-builtin-weblets))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-additional-rows ...                                          */
+;*    hop-additional-row ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (hop-additional-row ws)
+(define (hop-additional-row ws #!key showtitle width height icons open)
    (map! (lambda (a)
 	    (let* ((n (cadr (assq 'name a)))
 		   (w (cadr (assq 'weblet a)))
-		   (d (let ((c (assq 'sdescr a)))
+		   (d (let ((c (assq 'title a)))
 			 (if (pair? c)
 			     (if (>= (bigloo-debug) 1)
 				 (format "~a - ~a" (cadr c) w)
 				 (cadr c))
 			     w))))
-	       (<WEBLET> (dirname (dirname w)) :hz n :title d)))
+	       (<WEBLET> (dirname (dirname w)) :hz n :title d
+			 :showtitle showtitle
+			 :width width :height height :icons icons :open open)))
 	 (sort ws (lambda (a b)
 		     (let ((namea (cadr (assq 'name a)))
 			   (nameb (cadr (assq 'name b))))
 			(string<? namea nameb))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop/dashboard ...                                                */
+;*---------------------------------------------------------------------*/
+(define-service (hop/dashboard)
+   ~(window-open :id "hop/dashboard"
+       :title "Hop"
+       :parent document.body
+       :width 400
+       :height 300
+       :left (/ (- (current-window-width) 400) 2)
+       :top (- (current-window-height) 370)
+       :src (<IFRAME> :src ($hop/dashboard-panel) :class "hop"
+	       :style "border: 0; width: 100%; height: 100%; padding: 0")))
+
+;*---------------------------------------------------------------------*/
+;*    hop/dashboard-panel ...                                          */
+;*---------------------------------------------------------------------*/
+(define-service (hop/dashboard-panel)
+   (<HTML>
+      (<HEAD> :css (format "~a/hop.hss" (hop-dir))
+         :include "hop-window")
+      (<BODY> :class "hop-dashboard-panel"
+         (hop-panel :width 16 :height 16
+            :showtitle #f
+            :icons `("favicon.png"
+                     "logo.png"
+                     ,(string-append (hop-dir) "/etc/default.png"))))))
+   

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/hop-svg.scm               */
+;*    serrano/prgm/project/hop/1.10.x/runtime/hop-svg.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Sat Aug 30 20:27:48 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Tue Jan 13 18:26:06 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
 ;*=====================================================================*/
@@ -152,7 +152,9 @@
 	  ((or (eq? (car o) 'xml-decl) (eq? (car o) 'instruction))
 	   #unspecified)
 	  ((eq? (car o) 'declaration)
-	   (display (cdr o)))
+	   ;; ms: 13 jan 2009
+ 	   ;; (display (cdr o))
+	   #unspecified)
 	  (else
 	  (for-each (lambda (o) (show-svg-img o prefix)) o))))
       (else
@@ -162,6 +164,12 @@
 ;*    show-svg-img-attributes                                          */
 ;*---------------------------------------------------------------------*/
 (define (show-svg-img-attributes l prefix)
+   
+   (define (kwote s)
+      (if (string? s)
+	  (string-replace! s #\' #\")
+	  s))
+   
    (for-each (lambda (a)
 		(display " ")
 		(display (car a))
@@ -169,23 +177,26 @@
 		(cond
 		   ((eq? (car a) 'id)
 		    (display prefix)
-		    (display (xml-attribute-encode (cdr a))))
+		    (display (xml-attribute-encode (kwote (cdr a)))))
 		   ((and (eq? (car a) 'xlink:href)
 			 (string? (cdr a))
 			 (char=? (string-ref (cdr a) 0) #\#))
-		       (display "#")
-		       (display prefix)
-		       (display (substring (cdr a) 1 (string-length (cdr a)))))
+		    (display "#")
+		    (display prefix)
+		    (display
+		     (kwote (substring (cdr a) 1 (string-length (cdr a))))))
 		   ((and (eq? (car a) 'style) (string? (cdr a)))
 		    (display
-		     (pregexp-replace*
-		      "url[(]#" (cdr a) (string-append "url(#" prefix))))
+		     (kwote
+		      (pregexp-replace*
+		       "url[(]#" (cdr a) (string-append "url(#" prefix)))))
 		   ((and (string? (cdr a)) (substring-at? (cdr a) "url(#" 0))
 		    (display "url(#")
 		    (display prefix)
-		    (display (substring (cdr a) 5 (string-length (cdr a)))))
+		    (display
+		     (kwote (substring (cdr a) 5 (string-length (cdr a))))))
 		   (else
-		    (display (xml-attribute-encode (cdr a)))))
+		    (display (kwote (xml-attribute-encode (cdr a))))))
 		(display "'"))
 	     l))
 

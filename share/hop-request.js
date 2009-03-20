@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Oct 13 09:50:13 2008 (serrano)                */
+/*    Last change :  Tue Dec 16 08:30:59 2008 (serrano)                */
 /*    Copyright   :  2004-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -68,7 +68,7 @@ function hop_service_url( service, formals, args ) {
 /*---------------------------------------------------------------------*/
 function hop_service_url_varargs( service, args ) {
    var len = (arguments.length - 1);
-   
+
    if( len == 0 ) {
       return service;
    } else {
@@ -84,66 +84,115 @@ function hop_service_url_varargs( service, args ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_service_url_keywords ...                                     */
+/*---------------------------------------------------------------------*/
+function hop_service_url_keywords( service, args ) {
+   var len = arguments.length;
+
+   if( len == 1 ) {
+      return service;
+   } else {
+      var url = service + "?hop-encoding=hop";
+      var i;
+
+      for( i = 1; i < len; i += 2 ) {
+	 url += "&" + sc_keyword2jsstring( arguments[ i  ]  )
+	    + "=" + hop_bigloo_serialize( arguments[ i + 1 ] );
+      }
+
+      return url;
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_default_failure ...                                          */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t)) */
-function hop_default_failure( http ) {
-   var t = http.responseText;
-   
-   if( !t ) {
-      alert( "http error " + http.status );
-      return;
-   }
-	       
+function hop_default_failure( xhr ) {
    var div = document.getElementById( "hop_default_failure" );
    var div2 = document.getElementById( "hop_default_failure_background" );
 
-   t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
-   t = t.replace( /<head[^>]*>/g, "<div style='display: none;'>" );
-   t = t.replace( /<\/head>/g, "</div>" );
-   t = t.replace( /<(meta|link)[^>]*>/g, "<span style='display: none'></span>" );
-   t = t.replace( /<html[^>]*>/g, "<div align='center' style='background: transparent; cursor: pointer' onclick='document.body.removeChild( document.getElementById( \"hop_default_failure_background\" ) ); document.body.removeChild( document.getElementById( \"hop_default_failure\" ) );' title='Click to hide this message'>" );
-   t = t.replace( /<\/html>/g, "</div>" );
-   t = t.replace( /<body[^>]*>/g, "<div align='center' style='border: 3px dashed red; overflow: auto; width: 50em; background: white; padding: 4px; font-family: sans serif; text-align: center;'>" );
-   t = t.replace( /<\/body>/g, "</div>" );
-   t = t.replace( /&quot;/g, "\"" );
-   
+   var notify_error = function( d, xhr ) {
+      if( xhr.responseError ) {
+	 d.appendChild( xhr.responseError );
+      } else {
+	 var t = xhr.responseText;
+	 if( t ) {
+	    t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
+	    t = t.replace( /<head[^>]*>/g, "<div style='display: none;'>" );
+	    t = t.replace( /<\/head>/g, "</div>" );
+	    t = t.replace( /<(meta|link)[^>]*>/g, "<span style='display: none'></span>" );
+	    t = t.replace( /<html[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
+	    t = t.replace( /<\/html>/g, "</div>" );
+	    t = t.replace( /<body[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
+	    t = t.replace( /<\/body>/g, "</div>" );
+	    t = t.replace( /&quot;/g, "\"" );
+	    d.innerHTML = t;
+	 } else {
+	    d.innerHTML = "Status: " + xhr.status + " -- " + xhr.statusText;
+	 }
+      }
+   }
+      
+   if( !div ) {
+      var w = (hop_current_window_width() / 8) + "px";
+      var ch = hop_current_window_height();
+      var t = (ch > 800 ? "50px" : "10px");
+
+      div = document.createElement( "div" );
+      div.id = "hop_default_failure";
+      div.align = "center";
+      node_style_set( div, "position", "fixed" );
+      node_style_set( div, "top",  t );
+      node_style_set( div, "bottom", t );
+      node_style_set( div, "left", w );
+      node_style_set( div, "right", w );
+      node_style_set( div, "text-align", "center" );
+      node_style_set( div, "border", "5px dashed #f87d0f" );
+      node_style_set( div, "z-index", "10000" );
+      node_style_set( div, "background", "#fff" );
+      node_style_set( div, "padding", "4px" );
+      node_style_set( div, "padding-bottom", "8px" );
+      node_style_set( div, "overflow", "hidden" );
+      node_style_set( div, "background", "#F0F2F2" );
+   } else {
+      div.innerHTML = "";
+   }
+
    if( !div2 ) {
       div2 = document.createElement( "div" );
       div2.id = "hop_default_failure_background";
+      div2.align = "center";
       node_style_set( div2, "position", "fixed" );
       node_style_set( div2, "top", "0" );
       node_style_set( div2, "bottom", "0" );
       node_style_set( div2, "left", "0" );
       node_style_set( div2, "right", "0" );
-      node_style_set( div2, "background", "#000" );
-      node_style_set( div2, "opacity", "0.5" );
+      node_style_set( div2, "background", "#333" );
+      node_style_set( div2, "opacity", "0.9" );
       node_style_set( div2, "overflow", "hidden" );
       node_style_set( div2, "text-align", "center" );
       node_style_set( div2, "z-index", "9999" );
+      node_style_set( div2, "text-align", "center" );
 
       document.body.appendChild( div2 );
    }
-   
-   if( !div ) {
-      div = document.createElement( "div" );
-      div.id = "hop_default_failure";
-      node_style_set( div, "position", "fixed" );
-      node_style_set( div, "top", "100px" );
-      node_style_set( div, "left", "0" );
-      node_style_set( div, "right", "0" );
-      node_style_set( div, "text-align", "center" );
-      node_style_set( div, "border", "0" );
-      node_style_set( div, "z-index", "10000" );
-      node_style_set( div, "opacity", "1" );
-      div.align = "center";
 
-      div.innerHTML = t;
-
-      document.body.appendChild( div );
+   if( xhr.status >= 500 ) {
+      node_style_set( div, "border", "5px dashed red" );
    } else {
-      div.innerHTML = t;
+      node_style_set( div, "border", "5px dashed #f87d0f" );
    }
+
+   notify_error( div, xhr );
+   div2.appendChild( div );
+   
+   node_style_set( div2, "display", "block" );
+   hop_add_event_listener( div2,
+			   "click",
+			   function() {
+			      node_style_set( div2, "display", "none" );
+			   } );
 }
 
 /*---------------------------------------------------------------------*/
@@ -269,8 +318,10 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
    /* unbound (at least in Firefox) when used inside a catch! Binding  */
    /* it to a local var elimintates this problem.                      */
    var hop_err = hop_error;
+   var hop_err_html = hop_error_html;
    var hop_reperror = hop_responsetext_error;
    var hop_header_ctype = hop_header_content_type;
+   var fail = (typeof failure == "function") ? failure : hop_default_failure;
    
    var err = function( exc, xhr, ctype ) {
       var txt = hop_reperror( xhr );
@@ -296,23 +347,25 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 			try {
 			   expr = eval( xhr.responseText );
 			} catch( exc ) {
-			   err( exc, xhr );
+			   xhr.responseError = hop_err_html( svc, exc, xhr.responseText );
+			   fail( xhr );
 			   expr = false;
 			}
-			
+
 			return success( expr, xhr );
-		     } else if( ctype === "text/html" ) {
+		     } else if( (ctype === "text/html") ||
+				(ctype === "application/xhtml+xml") ) {
 			var el = hop_create_element( xhr.responseText );
+
 			return success( el, xhr );
 		     } else {
 			return success( xhr.responseText, xhr );
 		     }
 		  } catch( exc ) {
-		     err( exc, xhr, ctype );
+		     xhr.responseError = hop_err_html( svc, exc, xhr.responseText );
+		     fail( xhr );
+		     return false;
 		  }
-
-	       case 202:
-		  return success( hop_unserialize( xhr.responseText ), xhr );
 
 	       case 204:
 		  return false;
@@ -331,7 +384,8 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 		  return false;
 
 	       case 407:
-		  err( "Bad authentication", xhr );
+		  xhr.responseError = hop_err_html( svc, "Bad authentication", xhr.responseText );
+		  fail( xhr );
 		  return false;
 
 	       default:
@@ -341,19 +395,15 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 			return success( xhr.responseText, xhr );
 		     }
 		  } else {
-		     if( failure ) {
-			return failure( xhr );
-		     } else {
-			return hop_default_failure( xhr );
-		     }
+		     fail( xhr );
+		     return false;
 		  }
 	    }
 	 } catch( exc ) {
-	    if( typeof failure == "function" ) {
-	       failure( xhr );
-	    } else {
-	       err( exc, xhr );
-	    }
+	    xhr.responseError = hop_err_html( svc, exc, xhr.responseText );
+
+	    fail( xhr );
+	    return false;
 	 } finally {
 	    try {
 	       if( hop_anim_vis != false ) {
@@ -361,6 +411,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 	       }
 	       hop_anim_service = false;
 	    } catch( e ) {
+	       ;
 	    }
 	 }
       }

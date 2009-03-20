@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:04:20 2006                          */
-;*    Last change :  Fri Sep 26 09:12:35 2008 (serrano)                */
+;*    Last change :  Wed Nov 12 08:31:51 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the DEFINE-PREFERENCES macro.                  */
@@ -36,18 +36,29 @@
 	 (match-case c
 	    ((?- ?type (and (? symbol?) ?param))
 	     `(begin
-		 ,(if (eq? type 'expr)
+		 ,(match-case type
+		     (expr
 		      `(write (list ',(symbol-append param '-set!)
-				    (list 'quote (,param))))
-		      `(write (list ',(symbol-append param '-set!) (,param))))
+				    (,param))))
+		     ((or quote (list . ?-))
+		      `(write (list ',(symbol-append param '-set!)
+				    (list 'quote (,param)))))
+		     (else
+		      `(write (list ',(symbol-append param '-set!) (,param)))))
 		 (newline)))
-	    ((or (? string?) (? symbol?))
+	    (else
 	     #unspecified)
 	    (((? string?) ?-)
-	     #unspecified)
-	    (else
-	     (error 'define-preferences "Illegal clause" c))))
-      
+	     #unspecified)))
+
+      (define (onload clauses)
+	 (let ((k (memq :onload clauses)))
+	    (if (and (pair? k) (pair? (cdr k)))
+		`(begin
+		    (write '(,(cadr k)))
+		    (newline))
+		#unspecified)))
+
       `(begin
 	  ;; generate the save procedure
 	  (define (,id file #!optional force-override)
@@ -55,7 +66,8 @@
 	     (define (save file)
 		(let* ((str (with-output-to-string
 			       (lambda ()
-				  ,@(map make-save-clause clauses))))
+				  ,@(map make-save-clause clauses)
+				  ,(onload clauses))))
 		       (sum (md5sum str)))
 		   (with-lock (preferences-mutex)
 		      (lambda ()
@@ -103,11 +115,29 @@
 	    (--
 	     '(<PRSEP>))
 	    (else
-	     (error 'define-preferences "Illegal clause" c))))
+	     #f)))
       
       `(define (,id #!key id)
 	  (<PREFS> :id (xml-make-id id 'preferences) :lang ,key
-	     ,@(map make-edit-clause clauses))))
+	     ,@(filter-map make-edit-clause clauses))))
+
+   ;; check clauses
+   (define (check-clauses clauses)
+      (cond
+	 ((null? clauses)
+	  #t)
+	 ((eq? (car clauses) :onload)
+	  (if (null? (cdr clauses))
+	      (error 'define-preferences "Illegal form" x)
+	      (check-clauses (cddr clauses))))
+	 ((or (string? (car clauses)) (eq? (car clauses) '--))
+	  (check-clauses (cddr clauses)))
+	 (else
+	  (match-case (car clauses)
+	     (((and (? string?) ?lbl) ?type (and (? symbol?) ?param))
+	      (check-clauses (cdr clauses)))
+	     (else
+	      (error 'define-preferences "Illegal form" x))))))
    
    (match-case x
       ((?- (and (? symbol?) ?id) . ?clauses)

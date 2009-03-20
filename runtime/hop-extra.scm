@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Oct 16 09:32:17 2008 (serrano)                */
+;*    Last change :  Wed Nov 12 10:30:41 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -226,6 +226,8 @@
 					    (cadr a))))
 			 (loop (cddr a) :css rts dir path inl packed
 			       (append! (reverse! css-files) els))))
+		     ((not (cadr a))
+		      (loop (cddr a) :css rts dir path inl packed els))
 		     (else
 		      (error '<HEAD> "Illegal :css" (cadr a)))))
 		 ((:jscript)
@@ -241,6 +243,8 @@
 					   (cadr a))))
 			 (loop (cddr a) :jscript rts dir path inl packed
 			       (append! (reverse! js-files) els))))
+		     ((not (cadr a))
+		      (loop (cddr a) :jscript rts dir path inl packed els))
 		     (else
 		      (error '<HEAD> "Illegal :jscript" (cadr a)))))
 		 ((:favicon)
@@ -251,8 +255,6 @@
 		      (error '<HEAD> "Illegal :favicon" (cadr a))))
 		 ((:include)
 		  (cond
-		     ((not (cadr a))
-		      (loop (cddr a) :include rts dir path inl packed els))
 		     ((string? (cadr a))
 		      (loop (cddr a) :include rts dir path inl packed
 			    (append (incl (cadr a) inl path) els)))
@@ -263,6 +265,8 @@
 						    (incl i inl path))
 						 (cadr a)))
 				    els)))
+		     ((not (cadr a))
+		      (loop (cddr a) :include rts dir path inl packed els))
 		     (else
 		      (error '<HEAD> "Illegal :include" (cadr a)))))
 		 ((:rts)

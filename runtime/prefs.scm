@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Wed Oct 15 15:26:11 2008 (serrano)                */
+;*    Last change :  Thu Dec 11 07:35:20 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -155,10 +155,22 @@
        (string=? val "true"))
       ((enum)
        (string->symbol val))
-      ((expr)
+      ((expr quote)
        (with-input-from-string val read))
       (else
-       (with-input-from-string (string-append "(" val ")") read))))
+       (let ((v (with-input-from-string (string-append "(" val ")") read)))
+	  (if (or (memq type '(|(list string)| |(list path)|)))
+	      ;; just a hack to avoid usual error
+	      (map (lambda (s)
+		      (cond
+			 ((string? s) s)
+			 ((symbol? s) (symbol->string s))
+			 ((integer? s) (integer->string s))
+			 ((real? s) (real->string s))
+			 ((keyword? s) (keyword->string s))
+			 (else (error 'string->value "Illegal value" val))))
+		   v)
+	      v)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    value->string ...                                                */
@@ -180,7 +192,7 @@
 	  (if (eq? val #unspecified)
 	      '||
 	      val))
-	 ((expr)
+	 ((expr quote)
 	  (let ((s (open-output-string)))
 	     (write val s)
 	     (close-output-port s)))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Oct 15 10:13:40 2008 (serrano)                */
-;*    Copyright   :  2004-08 Manuel Serrano                            */
+;*    Last change :  Thu Jan  1 11:33:45 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -31,7 +31,7 @@
 	    hop_scheduler-queue
 	    hop_scheduler-one-to-one
 	    hop_scheduler-pool
-	    hop_scheduler-cohort)
+	    hop_scheduler-accept-many)
 
    (main    main))
 
@@ -70,6 +70,8 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
+   ;; set the hop process owner
+   (set-hop-owner! (hop-user))
    ;; catch critical signals
    (signal-init!)
    ;; set the Hop cond-expand identification
@@ -118,10 +120,6 @@
 	  (case (hop-scheduling)
 	     ((nothread)
 	      (hop-scheduler-set! (instantiate::nothread-scheduler)))
-	     ((cohort)
-	      (hop-scheduler-set! (instantiate::cohort-scheduler
-				     (size (hop-max-threads))
-				     (cohort 4))))
 	     ((queue)
 	      (hop-scheduler-set! (instantiate::queue-scheduler
 				     (size (hop-max-threads)))))
@@ -130,6 +128,9 @@
 				     (size (hop-max-threads)))))
 	     ((pool)
 	      (hop-scheduler-set! (instantiate::pool-scheduler
+				     (size (hop-max-threads)))))
+	     ((accept-many)
+	      (hop-scheduler-set! (instantiate::accept-many-scheduler
 				     (size (hop-max-threads)))))
 	     (else
 	      (error 'hop "Unknown scheduling policy" (hop-scheduling)))))
@@ -168,6 +169,32 @@
 		(hop-load-rc (hop-script-file))))
 	 ;; start the main loop
 	 (scheduler-accept-loop (hop-scheduler) serv))))
+
+;*---------------------------------------------------------------------*/
+;*    set-hop-owner! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (set-hop-owner! user)
+   
+   (define (err)
+      (error 'hop
+	     "Hop is not allowed to be executed as `root'. Create a dedicated Hop user to run Hop on behalf of.\n"
+	     "If you know what you are doing and want to run Hop with the
+`root' permissions, edit the Hop configuration file and set the appropriate `hop-user' value."))
+
+   (cond
+      ((not (=fx (getuid) 0))
+       #unspecified)
+      ((not (pair? (getpwnam "root")))
+       #unspecified)
+      ((eq? user 'root)
+       #unspecified)
+      ((string? user)
+       (let ((pw (getpwnam user)))
+	  (if (pair? pw)
+	      (setuid (caddr pw))
+	      (error 'set-hop-owner! "Cannot find HOP system user" user))))
+      (else
+       (err))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-repl ...                                                     */

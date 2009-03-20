@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/weblets/doc/Makefile             */
+#*    serrano/prgm/project/hop/1.11.x/weblets/doc/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Oct 14 02:20:45 2008 (serrano)                */
-#*    Copyright   :  2006-08 Manuel Serrano                            */
+#*    Last change :  Sat Jan 17 15:51:56 2009 (serrano)                */
+#*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
 #*=====================================================================*/
@@ -54,12 +54,12 @@ EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   tooltip-1.hop tree-1.hop tree-2.hop \
                   prefs-1.hop \
                   wiki.hop wiki2.hop window.hop history-1.hop history-2.hop \
-                  cookie.hop webdav.hop svg.hop svg2.hop mathml.hop \
+                  cookie.hop webdav.hop svg.hop svg2.hop svg3.hop mathml.hop \
                   login.hop json.hop busyanim.hop musicplay.hop form.hop
 WEBLETS_POP	= .keep
 WIKI_POP	= basic.wiki hop.wiki link.wiki lists.wiki misc.wiki \
                   paragraph.wiki plugin.wiki section.wiki syntax.wiki \
-                  tables.wiki tt.wiki
+                  tables.wiki tt.wiki image.wiki
 TUTORIAL_POP	= 00-hello.wiki 01-ajax.wiki 02-hss.wiki 03-proxy.wiki \
 		  04-authentication.wiki 05-rss.wiki 06-hz.wiki \
                   07-hoprc.wiki 08-history.wiki 09-resource.wiki \
@@ -128,6 +128,6 @@ config.hop: config.hop.in Makefile
                      -e "s|@HOST@|$(PRIVATEHOST)|" \
                      -e "s|@CATEGORY@|$(CATEGORY)|" > $@
 
-.afile: $(HOP_POP)
-	$(AFILE) -suffix hop $(HOP_POP) -o .afile
+.afile: $(SOURCES)
+	$(AFILE) -suffix hop $(SOURCES) -o .afile
 

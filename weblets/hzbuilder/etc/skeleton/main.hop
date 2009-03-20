@@ -47,8 +47,8 @@
 	    (<TR>
 	       (<TD> (<IMG> :class "logo" :src "etc/logo.png")
 		     (<DIV> :class "version"
-			(<DIV> "@HZ@ v @VERSION@")
-			(<DIV> "@DATEDAY@ @DATEAMONTH@ @DATEYEAR@"))
+			(<DIV> "@HZ@ v " (@HZ@-version))
+			(<DIV> (@HZ@-date)))
 		     (<DIV> :class "buttons"
 			(<DIV> :class "button doc"
 			   (<A> :title "Documentation"
@@ -88,13 +88,13 @@
 	 (start-line "HTTP/1.0 301 Moved Permanently")
 	 (header (list (cons 'location: url))))))
 
-;; the <CONFIGURE> user markup
-(define (<CONFIGURE>)
+;; the <@HZUPCASE@:CONFIGURE> user markup
+(define (<@HZUPCASE@:CONFIGURE>)
    (<DIV> :class "@HZ@-preferences"
-      (<BUTTON> :onclick
-	 ~(preferences-save "@HZ@-configure"
-			    (make-file-name (hop-rc-directory) "@HZ@rc.hop"))
-	 :title "Save configuration (needs admin privileges)"
+      (<BUTTON> :title "Save configuration (needs admin privileges)"
+	 :onclick ~(preferences-save "@HZ@-configure"
+				     $(make-file-name (hop-rc-directory)
+						      "@HZ@rc.hop"))
 	 "Save Configuration")
       (<BR>)
       (@HZ@-preferences-edit :id "@HZ@-configure")))
@@ -109,11 +109,11 @@
 	 :css "@HZ@.hss")
       (<@HZUPCASE@:BODY> :class "@HZ@-body-preferences"
          :header "Preferences"
-	 (<CONFIGURE>))))
+	 (<@HZUPCASE@:CONFIGURE>))))
 
 ;; the optional dashboard entry
 (define-service (@HZ@/dashboard)
-   ~(window-open :id "@HZ@/dashboard")
+   ~(window-open :id "@HZ@/dashboard"
        :title (string-capitalize "@HZ@")
        :src (<IFRAME> :src (@HZ@/dashboard-panel)
 	       :style "border: 0; width: 370px; height: 130px;")
@@ -121,4 +121,4 @@
        :width 375
        :height 160
        :left (- (current-window-width) 390)
-       :top (- (current-window-height) 170))
+       :top (- (current-window-height) 170)))

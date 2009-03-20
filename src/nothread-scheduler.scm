@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/src/nothread-scheduler.scm        */
+;*    serrano/prgm/project/hop/1.10.x/src/nothread-scheduler.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:28:00 2008                          */
-;*    Last change :  Sat Sep 20 07:54:06 2008 (serrano)                */
+;*    Last change :  Wed Nov 19 11:37:26 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NOTHREAD scheduler                                               */
@@ -15,6 +15,8 @@
 (module hop_scheduler-nothread
    
    (import hop_scheduler)
+
+   (include "stage.sch")
 
    (cond-expand
       (enable-threads
@@ -43,6 +45,12 @@
    "")
 
 ;*---------------------------------------------------------------------*/
+;*    stage ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-method (stage scd::nothread-scheduler thread proc::procedure . args)
+   (apply proc scd thread args))
+
+;*---------------------------------------------------------------------*/
 ;*    spawn ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (spawn scd::nothread-scheduler proc::procedure . args)
@@ -58,7 +66,7 @@
    (unless (thread? *fake-thread*)
       (set! *fake-thread* (instantiate::hopthread (body list))))
    (hopthread-onerror-set! *fake-thread* #f)
-   (stage0 scd *fake-thread* proc))
+   (stage scd *fake-thread* proc))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn1 ...                                                       */
@@ -67,7 +75,7 @@
    (unless (thread? *fake-thread*)
       (set! *fake-thread* (instantiate::hopthread (body list))))
    (hopthread-onerror-set! *fake-thread* #f)
-   (stage1 scd *fake-thread* proc a0))
+   (stage scd *fake-thread* proc a0))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn2 ...                                                       */
@@ -76,7 +84,7 @@
    (unless (thread? *fake-thread*)
       (set! *fake-thread* (instantiate::hopthread (body list))))
    (hopthread-onerror-set! *fake-thread* #f)
-   (stage2 scd *fake-thread* proc a0 a1))
+   (stage scd *fake-thread* proc a0 a1))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn3 ...                                                       */
@@ -85,7 +93,7 @@
    (unless (thread? *fake-thread*)
       (set! *fake-thread* (instantiate::hopthread (body list))))
    (hopthread-onerror-set! *fake-thread* #f)
-   (stage3 scd *fake-thread* proc a0 a1 a2))
+   (stage scd *fake-thread* proc a0 a1 a2))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn4 ...                                                       */
@@ -94,5 +102,14 @@
    (unless (thread? *fake-thread*)
       (set! *fake-thread* (instantiate::hopthread (body list))))
    (hopthread-onerror-set! *fake-thread* #f)
-   (stage4 scd *fake-thread* proc a0 a1 a2 a3))
+   (stage scd *fake-thread* proc a0 a1 a2 a3))
+
+;*---------------------------------------------------------------------*/
+;*    spawn5 ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-method (spawn5 scd::nothread-scheduler proc::procedure a0 a1 a2 a3 a4)
+   (unless (thread? *fake-thread*)
+      (set! *fake-thread* (instantiate::hopthread (body list))))
+   (hopthread-onerror-set! *fake-thread* #f)
+   (stage scd *fake-thread* proc a0 a1 a2 a3 a4))
 

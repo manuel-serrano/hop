@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Thu Oct 16 11:23:50 2008 (serrano)                */
+/*    Last change :  Sat Dec  6 06:56:59 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -161,7 +161,7 @@ function dom_create( tag, args ) {
 		       (loop (cddr args)
 			     attrs
 			     (cons (list (substring s 2 (string-length s))
-					 `(lambda () ,(cadr args)))
+					 `(lambda (event) ,(cadr args)))
 				   listeners))))
 		   (else
 		    (loop (cddr args)
@@ -1195,18 +1195,38 @@ function node_style_get( obj, prop ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_start_tag ...                                                */
+/*---------------------------------------------------------------------*/
+var hop_start_tag = new RegExp( "^<([a-zA-Z]+)" );
+var hop_tags_parent = {
+   'tr' : 'tbody',
+   'td' : 'tr',
+   'th' : 'tr',
+   'li' : 'ul',
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_create_element ...                                           */
-/*    -------------------------------------------------------------    */
-/*    For a reason that I don't understand (a bug?) IE7 refuses to     */
-/*    create elements whose body is composed of a single SCRIPT        */
-/*    node. To prevent this but, this function always append an        */
-/*    extra node that is then ignored when returning!                  */
 /*---------------------------------------------------------------------*/
 function hop_create_element( html ) {
-   var div = document.createElement( 'div' );
+   var m = html.match( hop_start_tag );
+   var tag;
+   
+   if( m ) {
+      var t = m[ 1 ];
+      tag = ( t in hop_tags_parent ) ? hop_tags_parent[ t ] : "div";
+   } else {
+      tag = "div";
+   }
 
-   div.innerHTML = "<span>IE7 bug</span>" + html;
-   return div.childNodes[ 1 ];
+   try {
+      var el = document.createElement( tag );
+      el.innerHTML = html;
+   } catch( e ) {
+      alert( "Cannot create tag element: " + tag );
+   }
+
+   return el.childNodes[ 0 ];
 }
 
 /*---------------------------------------------------------------------*/
@@ -1313,7 +1333,7 @@ function hop_bounding_box( e, m ) {
    }
 
    if( !m ) m = 0;
-   
+
    return [ hop_element_x( n ) - m, hop_element_y( n ) - m,
 	    n.offsetWidth + (2*m), n.offsetHeight + (2*m) ];
 }
@@ -1357,4 +1377,3 @@ function hop_bounding_box_y( bbox, loc ) {
       return bbox[ 1 ] + bbox[ 3 ];
    return 0;
 }
-

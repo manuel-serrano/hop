@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Oct  9 07:41:39 2008 (serrano)                */
+;*    Last change :  Tue Dec 30 10:48:28 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -51,6 +51,9 @@
 
 	    (hop-somaxconn::int)
 	    (hop-somaxconn-set! ::int)
+
+	    (hop-sndbuf::int)
+	    (hop-sndbuf-set! ::int)
 	    
 	    (hop-enable-https::bool)
 	    (hop-enable-https-set! ::bool)
@@ -83,7 +86,10 @@
 	    (hop-script-file-set! ::obj)
 
 	    (hop-get-cache-size::int)
-	    (hop-get-cache-size-set! ::int))
+	    (hop-get-cache-size-set! ::int)
+
+	    (hop-user::obj)
+	    (hop-user-set! ::obj))
 
    (eval    (export-exports)))
 
@@ -181,7 +187,13 @@
 ;*    actual maximal limit of SOMAXCONN.                               */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-somaxconn
-   128)
+   16)
+
+;*---------------------------------------------------------------------*/
+;*    hop-sndbuf ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-sndbuf
+   (*fx 1024 12))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-https ...                                             */
@@ -259,3 +271,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-get-cache-size
    64)
+
+;*---------------------------------------------------------------------*/
+;*    hop-user ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-user
+   "hop")

@@ -185,6 +185,10 @@ These functions respectively register and unregister event handlers.
     * ++serverready++: the server is ready to send events.
     * ++serverclose++: the server closed its connection.
     * ++timeout++: an event raised at regular time interval.
+    * ++iconify++: an event raised when an inner window is about to be iconified.
+    * ++maximize++: an event raised when an inner window is about to be maximized.
+    * ++close++: an event raised when an inner window is about to be closed.
+    * ++raise++: an event raised when an inner window is about to be raised.
 
   * The third element is the event handler. It is a procedure of one argument.
  When the event occurs on a node, the node's handler is called passing an 

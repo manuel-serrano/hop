@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Thu Oct  9 15:32:40 2008 (serrano)                */
+;*    Last change :  Thu Nov 20 17:33:39 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
@@ -76,19 +76,43 @@
 ;*    spawn ::pool-scheduler ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (spawn scd::pool-scheduler p . args)
-   (with-access::pool-scheduler scd (mutex condv free nfree)
-      (mutex-lock! mutex)
+   (with-access::pool-scheduler scd ((smutex mutex) condv free nfree)
+      (mutex-lock! smutex)
       (let loop ()
 	 (unless (pair? free)
 	    ;; we have to wait for a thread to complete
-	    (condition-variable-wait! condv mutex)
+	    (condition-variable-wait! condv smutex)
 	    (loop)))
       (let ((thread (car free)))
-	 (set! free (cdr free))
-	 (set! nfree (-fx nfree 1))
-	 (mutex-unlock! mutex)
-	 (with-access::hopthread thread (proc mutex condv)
+	 (with-access::hopthread thread (proc mutex condv userdata)
+	    (set! userdata free)
+	    (set! free (cdr free))
+	    (set! nfree (-fx nfree 1))
+	    (mutex-unlock! smutex)
 	    (set! proc (lambda (s t) (apply p s t args)))
+	    (mutex-lock! mutex)
+	    (condition-variable-signal! condv)
+	    (mutex-unlock! mutex)
+	    thread))))
+
+;*---------------------------------------------------------------------*/
+;*    spawn5 ::pool-scheduler ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (spawn5 scd::pool-scheduler p a0 a1 a2 a3 a4)
+   (with-access::pool-scheduler scd ((smutex mutex) condv free nfree)
+      (mutex-lock! smutex)
+      (let loop ()
+	 (unless (pair? free)
+	    ;; we have to wait for a thread to complete
+	    (condition-variable-wait! condv smutex)
+	    (loop)))
+      (let ((thread (car free)))
+	 (with-access::hopthread thread (proc mutex condv userdata)
+	    (set! userdata free)
+	    (set! free (cdr free))
+	    (set! nfree (-fx nfree 1))
+	    (mutex-unlock! smutex)
+	    (set! proc (lambda (s t) (p s t a0 a1 a2 a3 a4)))
 	    (mutex-lock! mutex)
 	    (condition-variable-signal! condv)
 	    (mutex-unlock! mutex)
@@ -100,23 +124,27 @@
 (define (pool-thread-body t)
    (let* ((scd (hopthread-scheduler t))
 	  (mutex (hopthread-mutex t))
-	  (condv (hopthread-condv t))
-	  (smutex (pool-scheduler-mutex scd)))
+	  (condv (hopthread-condv t)))
       (mutex-lock! mutex)
       (let loop ()
 	 (condition-variable-wait! condv mutex)
-	 (let liip ((proc (hopthread-proc t)))
+	 (let ((proc (hopthread-proc t)))
 	    ;; complete the demanded task
 	    (with-handler
 	       (make-scheduler-error-handler t)
 	       (proc scd t))
 	    ;; go back to the free pool
-	    (mutex-lock! smutex)
-	    (with-access::pool-scheduler scd (free nfree)
-	       (set! free (cons t free))
-	       (set! nfree (+fx nfree 1))
-	       (mutex-unlock! smutex)
-	       (loop))))))
+	    (with-access::pool-scheduler scd ((smutex mutex)
+					      (scondv condv)
+					      free nfree)
+	       (mutex-lock! smutex)
+	       (let ((cell (hopthread-userdata t)))
+		  (set-cdr! cell free)
+		  (set! free cell)
+		  (set! nfree (+fx nfree 1))
+		  (condition-variable-signal! scondv)
+		  (mutex-unlock! smutex)
+		  (loop)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    make-pool-thread ...                                             */

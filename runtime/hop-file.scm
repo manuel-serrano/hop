@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Mon Oct 13 19:43:48 2008 (serrano)                */
+;*    Last change :  Mon Nov 17 12:16:10 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -79,7 +79,8 @@
 	 (service :name "server-file/addplace" (id url)
 	    (when (is-directory? url)
 	       (let ((old (preference-get 'filechooser/places :default '())))
-		  (preference-store! 'filechooser/places (append! old (list url)))))
+		  (unless (member url old)
+		     (preference-store! 'filechooser/places (append! old (list url))))))
 	    (<FILECHOOSER:PLACES> id)))
    (set! *removeplace-service*
 	 (service :name "server-file/removeplace" (id url)
@@ -283,6 +284,7 @@
       (<TR>
 	 (<TH> "Location: ")
 	 (<TD> (<INPUT> :type 'url
+		  :id (string-append id "-location-input")
 		  :class "filechooser-location"
 		  :onkeypress (format "hop_filechooser_location_keypress( this, event, ~s )"
 				      id)

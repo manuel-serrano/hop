@@ -47,7 +47,7 @@ lazily, each time the parameter is used.
 </function>
 </function>
 
-=== ++(define-preferences name clause<sub>0</sub>...)++ ===
+=== ++(define-preferences name [:onload thunk] clause<sub>0</sub>...)++ ===
 <function> define-preferences
 
 <arguments>
@@ -96,6 +96,10 @@ This special form defines three functions named after ++name++.
 Editing parameters for a user requires to be granted the right to
 execute the ++/admin/preferences/edit++. Saving the parameters requires
 the ++/admin/preferences/save++ service access.
+
+The optional ++:onload++ argument specifies a thunk (i.e., a function accepting
+no argument) that is evaluated once the parameter file saved by 
+++name//-save//++ is loaded back.
 
 </function>
 

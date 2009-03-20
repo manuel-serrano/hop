@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/Makefile                         */
+#*    serrano/prgm/project/hop/1.11.x/Makefile                         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Oct 13 15:33:24 2008 (serrano)                */
+#*    Last change :  Thu Jan 29 18:08:24 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -112,21 +112,26 @@ install-quick: hop-dirs install-init
 	(cd etc && $(MAKE) install)
 
 install-init: hop-dirs
-	cp $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init && \
+	$(INSTALL) $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init;
-	cp $(BUILDLIBDIR)/scheme2js.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/scheme2js.init && \
+	$(INSTALL) $(BUILDLIBDIR)/scheme2js.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/scheme2js.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/scheme2js.init;
-	cp $(BUILDLIBDIR)/hopscheme.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init && \
+	$(INSTALL) $(BUILDLIBDIR)/hopscheme.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init;
 
 hop-dirs:
 	mkdir -p $(DESTDIR)$(HOPBINDIR)
 	mkdir -p $(DESTDIR)$(HOPLIBDIR)
-	mkdir -p $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR)
-	mkdir -p $(DESTDIR)$(HOPWEBLETSDIR)
-	mkdir -p $(DESTDIR)$(HOPCONTRIBSDIR)
 	mkdir -p $(DESTDIR)$(HOPETCDIR)
+	mkdir -p $(DESTDIR)$(HOPLIBDIR)/hop \
+         && chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/hop
+	mkdir -p $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \
+         && chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)
+	mkdir -p $(DESTDIR)$(HOPWEBLETSDIR) \
+	 && chmod $(BMASK) $(DESTDIR)$(HOPWEBLETSDIR)
+	mkdir -p $(DESTDIR)$(HOPCONTRIBSDIR) \
+	 && chmod $(BMASK) $(DESTDIR)$(HOPCONTRIBSDIR) 
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
@@ -148,6 +153,7 @@ clean-quick:
 	(cd src; $(MAKE) clean)
 	(cd hopsh; $(MAKE) clean)
 	(cd hopreplay; $(MAKE) clean)
+	(cd weblets; $(MAKE) clean)
 
 clean:
 	(cd runtime; $(MAKE) clean)
@@ -156,6 +162,8 @@ clean:
 	(cd src; $(MAKE) clean)
 	(cd hopsh; $(MAKE) clean)
 	(cd hopreplay; $(MAKE) clean)
+	(cd etc; $(MAKE) clean)
+	(cd weblets; $(MAKE) clean)
 
 devclean:
 	(cd runtime; $(MAKE) devclean)
@@ -165,6 +173,9 @@ devclean:
 
 distclean: clean devclean
 	/bin/rm -f etc/Makefile.hopconfig
+	/bin/rm -f etc/hop.man
+	/bin/rm -f etc/hopsh.man
+	/bin/rm -f etc/hopreplay.man
 	/bin/rm -f lib/hop.init
 	/bin/rm -f lib/scheme2js.init
 	/bin/rm -f lib/hopscheme.init
@@ -212,9 +223,11 @@ distrib-inc-version:
             fi; \
             distrib=$$version-$$devel$$min; \
           fi; \
-          echo "major=$$version" > .hoprelease; \
+          echo "#!/bin/sh" > .hoprelease; \
+          echo "major=$$version" >> .hoprelease; \
           echo "state=$$devel" >> .hoprelease; \
           echo "minor=$$min" >> .hoprelease; \
+          chmod a+rx .hoprelease; \
         fi
 
 distrib-sans-version: 
@@ -240,6 +253,8 @@ distrib-sans-version:
 	  echo "Building hop-$(HOPRELEASE).tar.gz..."; \
           $(MAKE) clone CLONEDIR=$(HOPTMPDIR)/hop-tmp && \
 	  $(MAKE) changelog > $(HOPTMPDIR)/hop-tmp/ChangeLog && \
+	  $(RM) -rf $(HOPTMPDIR)/hop-tmp/weblets/home/talks && \
+	  $(RM) -rf $(HOPTMPDIR)/hop-tmp/weblets/home/videos && \
           mv $(HOPTMPDIR)/hop-tmp $(HOPTMPDIR)/hop-$$distrib && \
           tar cvfz hop-$$distrib.tar.gz --exclude .hg -C $(HOPTMPDIR) hop-$$distrib && \
           $(RM) -rf $(HOPTMPDIR)/hop-$$distrib && \
@@ -256,6 +271,8 @@ distrib-sans-version:
            ./configure --backend=jvm && \
            $(MAKE) && \
 	   $(MAKE) changelog > ChangeLog && \
+	   $(RM) -rf $(HOPTMPDIR)/hop-tmp/weblets/home/talks && \
+	   $(RM) -rf $(HOPTMPDIR)/hop-tmp/weblets/home/videos && \
            /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.jar && \
            mv bin/hop.jar $(HOPDISTRIBDIR)/hop-$$distrib.jar) && \
           $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \

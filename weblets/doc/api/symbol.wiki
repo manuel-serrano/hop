@@ -25,14 +25,16 @@ HTML characters.
 
 <arguments>
 ^  attributes   ^   type     ^   default    ^  short description     ^
-|  symbol       |  symbol    |      -       |  The symbol name.      |
+|  symbol       |  obj       |      -       |  The symbol name.      |
 </arguments>
 </markup>
 
 Introduce a special character in the output document. The document is
-referenced to by its name. The names are:
+referenced to by its name which can either be a string or a
+symbol. The names are:
 
-,(let* ((l (hop-symbol-alist))
+,(let* ((l (sort (lambda (v1 v2) (string<? (cdr v1) (cdr v2)))
+                 (hop-symbol-alist)))
       	(l2 (list-split! l 
                          (inexact->exact (ceiling (/ (length l) 3)))
 		         (cons "&nbsp;" "&nbsp;")))

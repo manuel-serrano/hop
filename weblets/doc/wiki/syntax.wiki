@@ -20,6 +20,11 @@ inside double angle parenthesis.
 ,(meta-wiki-example "link.wiki")
 
 
+== Images ==
+
+,(meta-wiki-example "image.wiki")
+
+
 == Sectioning ==
 HOP supports 5 section levels. They starts by a double equal sign
 at the beginning of line.

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Oct 15 11:09:41 2008 (serrano)                */
+;*    Last change :  Sat Dec 13 13:56:37 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -39,6 +39,7 @@
 	    (get-all-services ::http-request)
 	    (get-service-url::bstring #!optional (prefix ""))
 	    (hop-service-path? ::bstring)
+	    (make-hop-funcall-url ::symbol ::symbol ::bstring ::pair-nil ::pair-nil)
 	    (make-hop-service-url::bstring ::hop-service . o)
 	    (make-service-url::bstring ::hop-service . o)
 	    (hop-request-service-name::bstring ::http-request)
@@ -133,27 +134,45 @@
 	     (loop (+fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    make-hop-funcall-url ...                                         */
+;*---------------------------------------------------------------------*/
+(define (make-hop-funcall-url mode id path args vals)
+   (cond
+      ((and (null? args) (null? vals))
+       path)
+      ((=fx (length args) (length vals))
+       (case mode
+	  ((hop)
+	   (apply string-append
+		  path
+		  "?hop-encoding=hop"
+		  (map (lambda (f v)
+			  (format "&~a=~a" f (url-path-encode (obj->string v))))
+		       args vals)))
+	  ((plain)
+	   (apply string-append
+		  path
+		  "?hop-encoding=none"
+		  (map (lambda (f v)
+			  (let ((a (if (string? v) (url-path-encode v) v)))
+			     (format "&~a=~a" f a)))
+		       args vals)))
+	  (else
+	   (error 'make-hop-funcall-url "Illegal funcall mode" mode))))
+      (else
+       (error 'make-hop-funcall-url
+	      (format "arity mismatch, expecting ~a values, getting ~a"
+		      (length args) (length vals))
+	      id))))
+
+;*---------------------------------------------------------------------*/
 ;*    make-hop-service-url ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (make-hop-service-url svc . vals)
    (if (not (hop-service? svc))
        (bigloo-type-error 'make-hop-service-url 'service svc)
        (with-access::hop-service svc (id path args)
-	  (cond
-	     ((and (null? args) (null? vals))
-	      path)
-	     ((=fx (length args) (length vals))
-	      (apply string-append
-		     path
-		     "?hop-encoding=hop"
-		     (map (lambda (f v)
-			     (format "&~a=~a" f (url-path-encode (obj->string v))))
-			  args vals)))
-	     (else
-	      (error 'make-hop-service-url
-		     (format "arity mismatch, expecting ~a values, getting ~a"
-			     (length args) (length vals))
-		     id))))))
+	  (make-hop-funcall-url 'hop id path args vals))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-service-url ...                                             */
@@ -162,24 +181,7 @@
    (if (not (hop-service? svc))
        (bigloo-type-error 'make-hop-service-url 'service svc)
        (with-access::hop-service svc (id path args)
-	  (cond
-	     ((null? args)
-	      (if (null? vals)
-		  path
-		  (error 'make-service-url id "too many arguments provided")))
-	     ((=fx (length args) (length vals))
-	      (apply string-append
-		     path
-		     "?hop-encoding=none"
-		     (map (lambda (f v)
-			     (let ((a (if (string? v) (url-path-encode v) v)))
-				(format "&~a=~a" f a)))
-			  args vals)))
-	     (else
-	      (error 'make-service-url
-		     (format "arity mismatch, expecting ~a values, getting ~a"
-			     (length args) (length vals))
-		     id))))))
+	  (make-hop-funcall-url 'plain id path args vals))))
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure->service ...                                           */

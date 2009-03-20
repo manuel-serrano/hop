@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/flash/HopAudio.as           */
+/*    serrano/prgm/project/hop/1.11.x/share/flash/HopAudio.as          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Aug 23 16:16:58 2007                          */
-/*    Last change :  Wed Apr  9 12:01:50 2008 (serrano)                */
-/*    Copyright   :  2007-08 Manuel Serrano                            */
+/*    Last change :  Sun Jan 18 16:55:53 2009 (serrano)                */
+/*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopAudio flash support.                                          */
 /*                                                                     */
@@ -22,7 +22,7 @@ import flash.external.ExternalInterface;
 /*    HopAudio ...                                                     */
 /*---------------------------------------------------------------------*/
 class HopAudio {
-   static var app : HopAudio;
+   static var app = new Array();
 
    function HopAudio( init ) {
       var snd = new Sound();
@@ -164,7 +164,8 @@ class HopAudio {
 	    }
 	 } else {
 	    if( onerror ) {
-	       ExternalInterface.call( onerror, domid, false );
+	       ExternalInterface.call( onerror, domid, false,
+				       "Cannot load stream..." );
 	    }
 	 }
       }
@@ -194,6 +195,6 @@ class HopAudio {
 
    // entry point
    static function main( mc ) {
-      app = new HopAudio( _root.arg );
+      app.push( new HopAudio( _root.arg ) );
    }
 }

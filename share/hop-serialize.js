@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Wed Sep 24 15:10:23 2008 (serrano)                */
+/*    Last change :  Sun Dec 14 19:53:10 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -46,9 +46,9 @@ function hop_bigloo_serialize( item ) {
       return hop_serialize_date( item );
 
    if( (item instanceof Object) &&
-       (typeof item.hop_bigloo_serialize == "function") )
+       ((typeof item.hop_bigloo_serialize) == "function") )
       return item.hop_bigloo_serialize();
-
+   
    if( (HTMLCollection != undefined) && (item instanceof HTMLCollection) )
       return hop_serialize_array( item );
       
@@ -68,6 +68,30 @@ function hop_bigloo_serialize( item ) {
       return hop_serialize_html( item );
 
    return hop_bigloo_serialize( "#<" + tname + ">" );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_object ...                                  */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_object() {
+   var o = this;
+   var str = "|" + "%27" + hop_serialize_string( '%22', o.hop_classname );
+   var args = "";
+   var len = 1;
+
+   for( var p in o ) {
+      if( (p != "hop_bigloo_serialize") && (p != "hop_classname") ) {
+	 len++;
+ 	 args += hop_bigloo_serialize( o[ p ] );
+      }
+   }
+
+   str += hop_serialize_word( len );
+   str += hop_serialize_boolean( false );
+   str += args;
+   str += hop_bigloo_serialize( o.hop_classhash );
+   
+   return str;
 }
 
 /*---------------------------------------------------------------------*/

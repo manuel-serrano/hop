@@ -20,6 +20,8 @@ documentation of this function is copied from the SRFI documentation.
 === Client ===
 
   (trace arg ...)
+  (hop-debug)
+  (hop-debug-set! val)
 
 
 == Examples ==
@@ -108,13 +110,27 @@ service of the
 | arg         |  obj     | optional argument.                              |
 </arguments>
 
-The function ++trace++ displays, on the **server console**, its arguments,
-provided the parameter ++hop-verbose++ is greater or equal to ++1++.
+The function ++trace++ displays its arguments on the **server console**, 
+provided the parameter ++hop-verbose++ is greater or equal to ++1++ and
+++hop-debug++ is greater to 1. 
 
 ~~ The ++trace++ function actually invokes the eponymous service of
 the ,(<WEBLETREF> "TRACE" (make-file-path (hop-weblets-directory) "trace/etc/trace.wiki"))++ weblet. This weblet allows some users customizations.
 </procedure>
 
+=== ++(hop-debug)++ ===
+=== ++(hop-debug-set! arg)++ ===
+<procedure> hop-debug
+<procedure> hop-debug-set!
+<arguments>
+^  arguments  ^   type   ^   description   ^
+| arg         |  int     | debug level.   |
+</arguments>
+
+Gets (respec. sets) the HOP client side debug value. The value is an integer
+value. A value smaller or equal to 0 disable debugging.
+</procedure>
+</procedure>
 </client>
 
 == See also ==

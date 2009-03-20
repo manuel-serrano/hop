@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/scheme2js/Makefile                */
+#*    serrano/prgm/project/hop/1.10.x/scheme2js/Makefile               */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Thu Feb 21 11:43:24 2008 (serrano)                */
+#*    Last change :  Fri Nov 28 10:55:54 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -99,13 +99,13 @@ include $(SCHEME2JS_RUNTIME)/Makefile.include
 
 runtime-install:
 	mkdir -p $(DESTDIR)$(SCHEME2JSSHAREDIR) && \
-	install -m a+r $(SCHEME2JS_RUNTIME)/runtime.js \
+	$(INSTALL) $(SCHEME2JS_RUNTIME)/runtime.js \
                 $(DESTDIR)$(SCHEME2JSSHAREDIR) && \
-	install -m a+r $(SCHEME2JS_RUNTIME)/runtime_callcc.js \
+	$(INSTALL) $(SCHEME2JS_RUNTIME)/runtime_callcc.js \
                 $(DESTDIR)$(SCHEME2JSSHAREDIR) && \
-	install -m a+r $(SCHEME2JS_RUNTIME)/runtime_interface.js \
+	$(INSTALL) $(SCHEME2JS_RUNTIME)/runtime_interface.js \
                 $(DESTDIR)$(SCHEME2JSSHAREDIR) && \
-	install -m a+r $(SCHEME2JS_RUNTIME)/runtime_interface_callcc.js \
+	$(INSTALL) $(SCHEME2JS_RUNTIME)/runtime_interface_callcc.js \
                 $(DESTDIR)$(SCHEME2JSSHAREDIR)
 
 runtime-uninstall:

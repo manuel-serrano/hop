@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Oct  7 14:30:56 2008 (serrano)                */
+;*    Last change :  Tue Dec 16 08:27:28 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -110,9 +110,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    <EIMG> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (<EIMG> #!key src)
+(define (<EIMG> #!key src req)
    (<IMG> :style "padding: 20px;"
-      :src (make-file-name (hop-icons-directory) src)))
+      :src (if (http-proxy-request? req)
+	       (format "http://~a:~a~a"
+		       (hostname)
+		       (hop-port)
+		       (make-file-name (hop-icons-directory) src))
+	       (make-file-name (hop-icons-directory) src))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ETD> ...                                                        */
@@ -209,7 +214,7 @@
 		       (<ETABLE>
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src "error2.png"))
+				(<EIMG> :src "error2.png" :req req))
 			     (<ETD>
 				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title" "Unknown Host"))
@@ -235,7 +240,7 @@
 		       (<ETABLE>
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src "error2.png"))
+				(<EIMG> :src "error2.png" :req req))
 			     (<ETD>
 				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title"
@@ -263,7 +268,7 @@
 			  (<ETABLE>
 			     (<TR>
 				(<ETD> :class "logo" :valign 'top
-				   (<EIMG> :src "warning.png"))
+				   (<EIMG> :src "warning.png" :req req))
 				(<ETD>
 				   (<TABLE> :width "100%"
 				      (<TR> (<ETD> :class "title"
@@ -366,7 +371,8 @@ a timeout which has now expired. The service is then no longer available."))
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (if (&io-timeout-error? e)
 						 "timeout.png"
-						 "error.png")))
+						 "error.png")
+				   :req req))
 			     (<ETD>
 				(<TABLE> :width "100%"
 				   (<TR>
@@ -415,7 +421,7 @@ a timeout which has now expired. The service is then no longer available."))
 		       (<ETABLE>
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src "error.png"))
+				(<EIMG> :src "error.png" :req req))
 			     (<ETD>
 				(<TABLE> :width "100%"
 				   (<TR>
@@ -447,7 +453,7 @@ a timeout which has now expired. The service is then no longer available."))
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "stop.png"))
+			     (<EIMG> :src "stop.png" :req req))
 			  (<ETD>
 			     (<TABLE> :width "100%"
 				(<TR> (<ETD> :class "title"
@@ -482,7 +488,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "error.png"))
+			     (<EIMG> :src "error.png" :req req))
 			  (<ETD>
 			     (<TABLE> :width "100%"
 				(<TR> (<ETD> :class "title"
@@ -524,7 +530,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 		       (<ETABLE>
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src "warning.png"))
+				(<EIMG> :src "warning.png" :req req))
 			     (<ETD>
 				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title"
@@ -555,7 +561,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 		       (<ETABLE>
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src "error.png"))
+				(<EIMG> :src "error.png" :req req))
 			     (<ETD>
 				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title" "Service Unavailable"))
@@ -587,7 +593,8 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (if (&io-timeout-error? e)
 						 "timeout.png"
-						 "error.png")))
+						 "error.png")
+				   :req req))
 			     (<ETD>
 				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title" "An error occured while talking to a remote host"))
@@ -617,7 +624,8 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (if (&io-timeout-error? e)
 						 "error2.png"
-						 "error.png")))
+						 "error.png")
+				   :req req))
 			     (<ETD>
 				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title" "IO Error"))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Sun Oct 19 17:48:58 2008 (serrano)                */
+;*    Last change :  Wed Nov 19 11:24:38 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -34,11 +34,12 @@
 		  (error-args-length::int (default 0))
 		  (inbuf::bstring (default (make-string 512)))
 		  (outbuf::bstring (default (make-string 8192)))
-		  (flushbuf::bstring (default (make-string 16))))))
+		  (flushbuf::bstring (default (make-string 16)))
+		  (userdata::obj (default #unspecified)))))
       (else
        (export (class hopthread::thread
 		  (proc::procedure (default (lambda (t) #f)))
-		  (condv::condvar read-only (default (make-condition-variable)))
+ 		  (condv::condvar read-only (default (make-condition-variable)))
 		  (mutex::mutex read-only (default (make-mutex)))
 		  (scheduler::scheduler (default (scheduler-nil)))
 		  (info::obj (default #unspecified))
@@ -49,7 +50,8 @@
 		  (inbuf::bstring (default (make-string 512)))
 		  (outbuf::bstring (default (make-string 8192)))
 		  (flushbuf::bstring (default (make-string 8)))
-		  (body::procedure read-only)))))
+		  (body::procedure read-only)
+		  (userdata::obj (default #unspecified))))))
    
    (export (macro debug-thread-info-set! thread info)
 	   (macro with-stage-handler thread args . body)
@@ -222,48 +224,6 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (stage5 scd::scheduler thread proc::procedure a0 a1 a2 a3 a4)
    (stage scd thread proc a0 a1 a2 a3 a4))
-
-;*---------------------------------------------------------------------*/
-;*    stage ::row-scheduler ...                                        */
-;*---------------------------------------------------------------------*/
-(define-method (stage scd::row-scheduler thread proc . args)
-   (apply proc scd thread args))
-
-;*---------------------------------------------------------------------*/
-;*    stage0 ::row-scheduler ...                                       */
-;*---------------------------------------------------------------------*/
-(define-method (stage0 scd::row-scheduler thread proc)
-   (proc scd thread))
-
-;*---------------------------------------------------------------------*/
-;*    stage1 ::row-scheduler ...                                       */
-;*---------------------------------------------------------------------*/
-(define-method (stage1 scd::row-scheduler thread proc a0)
-   (proc scd thread a0))
-
-;*---------------------------------------------------------------------*/
-;*    stage2 ::row-scheduler ...                                       */
-;*---------------------------------------------------------------------*/
-(define-method (stage2 scd::row-scheduler thread proc a0 a1)
-   (proc scd thread a0 a1))
-
-;*---------------------------------------------------------------------*/
-;*    stage3 ::row-scheduler ...                                       */
-;*---------------------------------------------------------------------*/
-(define-method (stage3 scd::row-scheduler thread proc a0 a1 a2)
-   (proc scd thread a0 a1 a2))
-
-;*---------------------------------------------------------------------*/
-;*    stage4 ::row-scheduler ...                                       */
-;*---------------------------------------------------------------------*/
-(define-method (stage4 scd::row-scheduler thread proc a0 a1 a2 a3)
-   (proc scd thread a0 a1 a2 a3))
-
-;*---------------------------------------------------------------------*/
-;*    stage5 ::row-scheduler ...                                       */
-;*---------------------------------------------------------------------*/
-(define-method (stage5 scd::row-scheduler thread proc a0 a1 a2 a3 a4)
-   (proc scd thread a0 a1 a2 a3 a4))
 
 ;*---------------------------------------------------------------------*/
 ;*    *thread-info* ...                                                */

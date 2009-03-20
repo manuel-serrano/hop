@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Mon Sep 29 12:25:59 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Thu Jan 15 07:13:47 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
 ;*=====================================================================*/
@@ -82,12 +82,12 @@
 		     (<ZIMG> (make-service-url home/demos/rss)
 			     "news-32x32.png" "news-48x48.png" inl
 			     570 370)))
-	       (<TR>
-		  (<TD>
-		     :align "left"
-		     (<ZIMG> (make-service-url home/demos/repl)
-			     "term-32x32.png" "term-48x48.png" inl
-			     640 500)))
+;* 	       (<TR>                                                   */
+;* 		  (<TD>                                                */
+;* 		     :align "left"                                     */
+;* 		     (<ZIMG> (make-service-url home/demos/repl)        */
+;* 			     "term-32x32.png" "term-48x48.png" inl     */
+;* 			     640 500)))                                */
 	       (<TR>
 		  (<TD>
 		     :align "left"
@@ -138,12 +138,12 @@ playground contains the following demonstrations:])
  demonstration, RSS feeds are fetched from the network and parsed only
  when items are unfolded. This demonstration also shows how to
  program applications that uses third party servers.])
-       (<H2> "Repl")
-       (<P> :class "descr" [This is a HOP client side interpreter. Each time,
- the \[return\] key is pressed. The expression after the prompt (the string
- ,(<TT> ":=>")) is sent to the server for compilation. Once back, it is
- evaluated on the client browser. The expressions may refer to the whole
- HOP client side API. In particular, they can manipulate the current DOM.])
+;*        (<H2> "Repl")                                                */
+;*        (<P> :class "descr" [This is a HOP client side interpreter. Each time, */
+;*  the \[return\] key is pressed. The expression after the prompt (the string */
+;*  ,(<TT> ":=>")) is sent to the server for compilation. Once back, it is */
+;*  evaluated on the client browser. The expressions may refer to the whole */
+;*  HOP client side API. In particular, they can manipulate the current DOM.]) */
        (<H2> "Wiki")
        (<P> :class "descr" [This demonstration uses the HOP Wiki library. It
 also shows how HOP ,(<EM> "signals") can be deployed for allowing external

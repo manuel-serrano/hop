@@ -1,3 +1,4 @@
-major=1.10.0
+#!/bin/sh
+major=1.11.0
 state=pre
-minor=3
+minor=1

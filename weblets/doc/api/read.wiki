@@ -21,18 +21,31 @@ These functions parses file according to the HOP syntax.
 == Server Definitions ==
 <server>
 
-=== ++(hop-read [port])++ ===
+=== ++(hop-read [port] [charset (hop-locale)]++ ===
 <function> hop-read
 
 <arguments>
 ^  arguments  ^   type      ^  short description          ^
 | port        | input-port  | the input port.             |
 </arguments>
-</function>
 
 The function ++hop-read++ reads an entire expression from an input port.
+When a text is read (the ++[...]++ expressions as described in the 
+(<SPAN> :class "href wikiref" 
+      :onclick ~(with-history
+		 (lambda ()
+		    (notepad-select "doc-notepad" "doc-core")
+		    (window.scrollTo 0 0)))
+"Syntex") section)
+are //automatically// encoded into the ++charset++ value. That is,
+they are assumed to be expressed in the ++(hop-locale)++ encoding and the
+reader decodes and re-encodes them using the encoding specified in the
+optional ++charset++ argument.
 
-=== ++(hop-load path [:env] [:mode])++ ===
+</function>
+
+
+=== ++(hop-load path [:env] [:mode load] [charset (hop-locale)])++ ===
 <function> hop-load
 
 <arguments>
@@ -55,7 +68,7 @@ The function ++hop-load++ is thread safe. No more than one thread
 can simultaneously reads a single file.
 </function>
 
-=== ++(hop-load-once path [:env])++ ===
+=== ++(hop-load-once path [:env] [charset (hop-locale)])++ ===
 <function> hop-load-once
 
 <arguments>

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/http-response.scm        */
+;*    serrano/prgm/project/hop/1.11.x/runtime/http-response.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun Oct 19 18:13:32 2008 (serrano)                */
-;*    Copyright   :  2004-08 Manuel Serrano                            */
+;*    Last change :  Sun Jan 18 17:01:21 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -513,7 +513,7 @@
    (cond
       ((string? obj)
        (instantiate::http-response-string
-	  (charset (hop-locale))
+	  (charset (hop-charset))
 	  (request req)
 	  (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	  (bodyp (not (eq? (http-request-method req) 'HEAD)))
@@ -590,8 +590,11 @@
 		  (http :in in :out out
 		     :protocol scheme :method method :http-version httpv
 		     :host host :port port :path path :header header
-		     :authorization (and (http-server-request? req)
-					 (http-server-request-authorization req))
+		     :authorization (if (and (http-server-request? req)
+					     (http-server-request-authorization req))
+					(http-server-request-authorization req)
+					(let ((auth (assq :authorization header)))
+					   (when (pair? auth) (cdr auth))))
 		     :timeout timeout
 		     :login user
 		     :body socket

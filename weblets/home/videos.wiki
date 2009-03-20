@@ -1,0 +1,17 @@
+
+  * **HopDiffuse** (1 hour): Programming Diffuse Applications with HOP, a presentation given at Google Mountain View, January 2009.
+ ,(<DIV> :style "margin-top: 1em; margin-bottom: 1em;"
+    (<VIDEO> :src (make-file-name (home-dir) "videos/hopx10.flv") 
+       :width 320 :height 200))
+See also the companion ,(<A> :href (string-append (home-dir)
+                                       "/talks/hopdiffuse.xhtml.gz") "slides").
+  * **HopX10** (2 min): Your House in your pocket (or Home Automation with Hop),September 2009.
+ ,(<DIV> :style "margin-top: 1em; margin-bottom: 1em;"
+    (<VIDEO> :src (make-file-name (home-dir) "videos/hopx10.flv") 
+       :width 320 :height 200))
+  * **SLUG 07** (45 min): 
+ ,(<A> :href "http://video.google.ca/videoplay?docid=6867885938648486821"
+          "Programming multimedia applications with HOP"), presentation given
+ at the Montreal Scheme and Lisp User Group, October 2007.
+ ,(<DIV> :style "margin-top: 1em; margin-bottom: 1em;"
+   (<EMBED> id: "VideoPlayback" src: "http://video.google.ca/googleplayer.swf?docid=6867885938648486821&hl=en&fs=true" style: "width:320px"))

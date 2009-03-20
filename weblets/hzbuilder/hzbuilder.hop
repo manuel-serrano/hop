@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Sep 29 10:36:57 2008 (serrano)                */
+;*    Last change :  Fri Oct 24 19:20:44 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZBUILDER weblet                                                 */
@@ -291,6 +291,7 @@
 					  :oncancel (window-close "hzb-filebrowser")
 					  :onopen (begin
 						     (set! $img.src this.value)
+						     (set! $img.title this.value)
 						     (window-close "hzb-filebrowser"))
 					  (<DIV> :id "hzb-preview"
 					     :onclick ~(window-open :src this.value)

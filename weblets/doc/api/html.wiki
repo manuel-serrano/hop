@@ -324,7 +324,6 @@ summarizes the most frequent ones.
 </markup>
 </markup>
 </markup>
-</markup>
 
 == See also ==
 <see-also><CANVAS></see-also>

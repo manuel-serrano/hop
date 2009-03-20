@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Wed Oct 15 13:52:57 2008 (serrano)                */
+;*    Last change :  Fri Dec  5 17:25:09 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module hop_pipeline
 
-   (library hop)
+   (library hop) 
 
    (include "stage.sch")
    
@@ -112,6 +112,8 @@
    ;; verbose function (only for log and debug)
    (define (http-connect-verb scd id sock req)
       (with-access::http-request req (method scheme host port path user header)
+	 (hop-verb 4 (hop-color id id " CONNECT.header") ": "
+		   (with-output-to-string (lambda () (write header))) "\n")
 	 (hop-verb 2 (if (http-proxy-request? req)
 			 (hop-color req req
 				    (if (eq? mode 'keep-alive)
@@ -126,9 +128,7 @@
 		   ": " method " " scheme "://"
 		   (user-name user) "@" host ":" port (string-for-read path)
 		   " " (http-request-http req)
-		   "\n")
-	 (hop-verb 4 (hop-color id id " CONNECT.header") ": "
-		   (with-output-to-string (lambda () (write header))) "\n")))
+		   "\n")))
 
    ;; log
    (unless (eq? mode 'keep-alive)
@@ -153,7 +153,7 @@
 	 ;; decrement the keep-alive number (we have a valid connection)
 	 (when (eq? mode 'keep-alive) (keep-alive--))
 	 ;; start compting the answer
-	 (stage2 scd thread stage-response id req))))
+	 (stage scd thread stage-response id req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-request-error-handler ...                                  */
@@ -277,11 +277,12 @@
 ;*    request.                                                         */
 ;*---------------------------------------------------------------------*/
 (define (stage-response scd thread id req)
-   (hopthread-request-set! thread req)
+   (current-request-set! thread req)
    (hop-verb 3 (hop-color id id " RESPONSE") (format " ~a" thread) "\n")
    (with-stage-handler
       response-error-handler (scd req)
-      (let ((resp (with-time (request->response req) id "RESPONSE")))
+      (let ((resp (with-time (request->response req thread) id "RESPONSE")))
+	 (evmeaning-reset-error!)
 	 (debug-thread-info-set! thread
 				 (format "~a ~a://~a:~a~a... -> ~a"
 					 (http-request-method req)
@@ -293,7 +294,7 @@
 	 (let ((proc (if (http-response-static? resp)
 			 stage-static-answer
 			 stage-dynamic-answer)))
-	    (stage3 scd thread proc id req resp)))))
+	    (stage scd thread proc id req resp)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-static-answer ...                                          */
@@ -306,14 +307,32 @@
 ;*---------------------------------------------------------------------*/
 (define (stage-dynamic-answer scd thread id req resp)
    (stage-answer scd thread id req resp))
-   
+
+;*---------------------------------------------------------------------*/
+;*    stage-answer-verb ...                                            */
+;*---------------------------------------------------------------------*/
+(define (stage-answer-verb scd thread req resp connection mode)
+   (hop-verb 3 (hop-color req req mode)
+	     (format " ~a" thread)
+	     " load=" (scheduler-load scd)
+	     (scheduler-stat scd)
+	     ": " (find-runtime-type resp) " " connection
+	     " [" (current-date) "] "
+	     (if (and (eq? connection 'keep-alive) (>=fx (hop-verbose) 4))
+		 (format " keep-alive [open=~a/~a]"
+			 (keep-alive)
+			 (hop-keep-alive-threshold))
+		 connection)
+	     "\n"))
+
 ;*---------------------------------------------------------------------*/
 ;*    stage-answer ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (stage-answer scd thread id req resp)
-   (hopthread-request-set! thread req)
-   ;; log4
-   (hop-verb 4 (hop-color req req " EXEC")
+   (current-request-set! thread req)
+   ;; log
+   (hop-verb 3 (hop-color req req " EXEC")
+	     " load=" (scheduler-load scd)
 	     (scheduler-stat scd)
 	     (format " ~a" thread)
 	     ": " (find-runtime-type resp)
@@ -333,35 +352,34 @@
 					 (http-request-path req)
 					 (find-runtime-type resp)
 					 connection))
-	 ;; log2
-	 (hop-verb 3 (hop-color req req
-				(if (eq? connection 'keep-alive)
-				    " KEEP-ALIVE"
-				    " END"))
-		   (format " ~a" thread)
-		   (scheduler-stat scd)
-		   ": " (find-runtime-type resp) " " connection
-		   " [" (current-date) "] "
-		   (if (and (eq? connection 'keep-alive) (>=fx (hop-verbose) 4))
-		       (format " keep-alive [open=~a/~a]"
-			       (keep-alive)
-			       (hop-keep-alive-threshold))
-		       connection)
-		   "\n")
-
 	 (case connection
 	    ((persistent)
+	     (when (>=fx (hop-verbose) 3)
+		(stage-answer-verb scd thread req resp connection
+				   " PERSISTENT"))
 	     #unspecified)
 	    ((keep-alive)
-	     (if (and (hop-enable-keep-alive)
-		      (<fx (scheduler-load scd) 50)
-		      (<fx (keep-alive) (hop-keep-alive-threshold)))
-		 (begin
+	     (let ((load (scheduler-load scd)))
+		(cond
+		   ((or (>=fx (keep-alive) (hop-keep-alive-threshold))
+			(=fx load 100))
+		    (when (>=fx (hop-verbose) 3)
+		       (stage-answer-verb scd thread req resp connection
+					  " END"))
+		    (socket-close sock))
+		   ((>=fx load 80)
+		    (when (>=fx (hop-verbose) 3)
+		       (stage-answer-verb scd thread req resp connection
+					  " KEEP-ALIVE"))
 		    (keep-alive++)
-		    (stage4 scd thread stage-request
-			    id sock 'keep-alive (hop-keep-alive-timeout)))
-		 (socket-close sock)))
+		    (stage scd thread stage-request id sock 'keep-alive 1))
+		   (else
+		    (when (>=fx (hop-verbose) 3)
+		       (stage-answer-verb scd thread req resp connection
+					  " KEEP-ALIVE"))
+		    (keep-alive++)
+		    (stage scd thread stage-request id sock 'keep-alive (hop-keep-alive-timeout))))))
 	    (else
+	     (when (>=fx (hop-verbose) 3)
+		(stage-answer-verb scd thread req resp connection " END"))
 	     (socket-close sock))))))
-
-   

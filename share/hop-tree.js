@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/share/hop-tree.js                */
+/*    serrano/prgm/project/hop/1.11.x/share/hop-tree.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Mon Oct 13 15:29:18 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Wed Jan 21 15:52:03 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
 /*=====================================================================*/
@@ -55,7 +55,7 @@ function hop_tree_root( tree ) {
    var aux = tree;
    var root = tree;
 
-   while( aux && aux.className == "hop-tree" ) {
+   while( aux && aux.className === "hop-tree" ) {
       root = aux;
       aux = root.parent;
    }
@@ -88,7 +88,7 @@ function hop_tree_close( tree ) {
       var i;
 
       for( i = 0; i < children.length; i++ ) {
-	 if( children[ i ].className == "hop-tree" ) {
+	 if( children[ i ].className === "hop-tree" ) {
 	    hop_tree_close( children[ i ] );
 	 }
       }
@@ -182,7 +182,7 @@ function hop_tree_children_update( node, level, isrc ) {
 
       img.src = isrc;
       
-      if( c.className == "hop-tree" ) {
+      if( c.className === "hop-tree" ) {
 	 hop_tree_children_update( c, level, isrc );
       }
    }
@@ -198,9 +198,7 @@ function hop_tree_add( tree, child ) {
       var c = children[ children.length - 1 ];
       c.last = false;
 
-      if( c.className == "hop-tree" ) {
-	 c.img_join.src = (c.openp ? tree.iconminusbottom:tree.iconplusbottom);
-	 
+      if( c.className === "hop-tree" ) {
 	 hop_tree_children_update( c, tree.level + 1, tree.iconvline );
       } else {
 	 c.img_join.src = tree.iconjoinbottom;
@@ -222,8 +220,6 @@ function hop_push_vlines( par, row, level ) {
 
       if( par && par.visible ) {
 	 var img = document.createElement( "img" );
-
-	 td.setAttribute( "nowrap", "nowrap" );
 
 	 img.src = ((par && !par.last) ? par.iconvline : par.iconempty);
 	 img.className = "hop-tree";
@@ -260,11 +256,10 @@ function hop_tree_row_select( root, row, forcemulti ) {
 function hop_tree_row_unselect( root, row ) {
    row.className = "hop-tree-row-unselected";
    root.selection = false;
-   var i;
 
    if( root.onunselect ) root.onunselect();
       
-   for( i = 0; i < root.selections.length; i++ ) {
+   for( var i = 0; i < root.selections.length; i++ ) {
       if( root.selections[ i ] == row ) {
 	 root.selections.splice( i, 1 );
 	 break;
@@ -279,7 +274,7 @@ function hop_tree_row_set_select_all( tree, select ) {
    var root = hop_tree_root( tree );
    
    var traverse_lr = function( tree ) {
-      if( tree.className == "hop-tree-leaf" ) {
+      if( tree.className === "hop-tree-leaf" ) {
 	 if( select ) {
 	    hop_tree_row_select( root, tree.row, true );
 	 } else {
@@ -326,7 +321,7 @@ function hop_tree_row_toggle_selected( event, tree, row ) {
       hop_tree_reset( tree );
    }
 
-   if( row.className == "hop-tree-row-selected" ) {
+   if( row.className === "hop-tree-row-selected" ) {
       hop_tree_row_unselect( root, row );
    } else {
       hop_tree_row_select( root, row, event.shiftKey );
@@ -350,7 +345,7 @@ function hop_tree_row_select_next( tree ) {
       var row = root.selection ? root.selection : root.row;
       
       var traverse_lr = function( tree, stop ) {
-	 if( tree.className == "hop-tree-leaf" ) {
+	 if( tree.className === "hop-tree-leaf" ) {
 	    if( stop == 1 ) {
 	       hop_tree_row_select( root, tree.row, false );
 	       return -1;
@@ -397,7 +392,7 @@ function hop_tree_row_select_previous( tree ) {
       var row = root.selection ? root.selection : root.row;
       
       var traverse_rl = function( tree, stop ) {
-	 if( tree.className == "hop-tree-leaf" ) {
+	 if( tree.className === "hop-tree-leaf" ) {
 	    if( stop == 1 ) {
 	       hop_tree_row_select( root, tree.row, false );
 	       return -1;
@@ -474,18 +469,14 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    
    /* the tree first line */
    var table = document.createElement( "table" );
-   
-   table.setAttribute( "cellpadding", 0 );
-   table.setAttribute( "cellspacing", 0 );
-   table.setAttribute( "border", 0 );
    table.className = "hop-tree";
    
    /* the body of the table */
    var tb = document.createElement( "tbody" );
    var row = document.createElement( "tr" );
-   row.id = id + "-trrow";
+   
    row.className = "hop-tree-row-unselected";
-   row.setAttribute( "align", "left" );
+   row.id = id + "-trrow";
    
    /* build the left vertical lines */
    hop_push_vlines( parent, row, level );
@@ -493,7 +484,6 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    /* the plus/minus icon */
    var td1 = document.createElement( "td" );
    td1.className = "hop-tree";
-   td1.setAttribute( "nowrap", "nowrap" );
    
    var join = document.createElement( "img" );
    join.className = "hop-tree-openclose";
@@ -519,7 +509,6 @@ function hop_make_tree( parent, id, visible, level, proc, title,
       }
    
       td2.className = "hop-tree";
-      td2.setAttribute( "nowrap", "nowrap" );
       td2.onclick = function( e ) {
 	 hop_tree_row_toggle_selected( e == undefined ? event : e, tree, row );
       }
@@ -530,7 +519,6 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    /* the title */
    var td3 = document.createElement( "td" );
    td3.className = "hop-tree-title";
-   td3.setAttribute( "nowrap", "nowrap" );
    td3.onclick = function( e ) {
       hop_tree_row_toggle_selected( e == undefined ? event : e, tree, row );
    }
@@ -649,7 +637,7 @@ function hop_make_tree_leaf( tree, klass, content, value, icon, iconerr ) {
    leaf.setAttribute( "cellpadding", 0 );
    leaf.setAttribute( "cellspacing", 0 );
    leaf.setAttribute( "border", 0 );
-   leaf.className = klass;
+   leaf.className = "hop-tree-leaf " + klass;
 
    /* the body of the table */
    var tb = document.createElement( "tbody" );
@@ -663,7 +651,6 @@ function hop_make_tree_leaf( tree, klass, content, value, icon, iconerr ) {
    /* space */
    var td1 = document.createElement( "td" );
    td1.className = "hop-tree";
-   td1.setAttribute( "nowrap", "nowrap" );
    
    var join = document.createElement( "img" );
    join.className = "hop-tree";

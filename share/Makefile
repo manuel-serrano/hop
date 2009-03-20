@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/trashcan/1.10.x/share/Makefile                           */
+#*    serrano/prgm/project/hop/1.10.x/share/Makefile                   */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Oct 22 18:39:43 2008 (serrano)                */
-#*    Copyright   :  2004-08 Manuel Serrano                            */
+#*    Last change :  Wed Jan  7 16:41:21 2009 (serrano)                */
+#*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -26,6 +26,7 @@ FLASHOBJS	= HopServevt.swf HopAudio.swf HopVideo.swf \
                   hop-sound.swf 
 FLASHSRC	= HopServevt.as HopAudio.as HopVideo.as
 FLASH		= $(FLASHOBJS) $(FLASHSRC)
+FLASHOPT	= player.swf swfobject.js
 
 RTS		= $(RTSCONFIG)
 
@@ -81,7 +82,8 @@ ICONS		= important.png shadow-se.png \
 		  resize-grip.png stop.png \
 		  error.png shadow-e.png timeout.png \
 		  error2.png shadow-ne.png warning.png \
-		  hop-16x16.png hop-48x48.png hop.png hop-128x128.png hop.svg \
+		  hop-16x16.png hop-48x48.png hop-32x32.png hop-128x128.png \
+                  hop.png hop.svg \
                   shadow-s.png window-handle.png \
 		  $(ICONS_AUDIO:%=hop-audio/%) \
                   $(ICONS_PANED:%=hop-paned/%) \
@@ -117,35 +119,43 @@ build: hop.js $(FLASHSRC:%.as=flash/%.swf) hop-runtime.js $(BACKEND)
 #*---------------------------------------------------------------------*/
 install:
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR) && \
+        chmod $(BMASK) $(DESTDIR)$(HOPSHAREDIR) && \
         for p in hop.js hop-autoconf.js $(RTS); do \
-	  install -m a+r $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
 	  $(GZIP) $(BUILDSHAREDIR)/$$p -c > $(DESTDIR)$(HOPSHAREDIR)/$$p.gz 2> /dev/null; \
+          chmod $(BMASK) $(DESTDIR)$(HOPSHAREDIR)/$$p.gz; \
         done
-	  install -m a+r ../scheme2js/runtime/runtime.js $(DESTDIR)$(HOPSHAREDIR)/runtime.js; \
+	  $(INSTALL) ../scheme2js/runtime/runtime.js $(DESTDIR)$(HOPSHAREDIR)/runtime.js; \
 	  $(GZIP) ../scheme2js/runtime/runtime.js -c > $(DESTDIR)$(HOPSHAREDIR)/runtime.js.gz; \
+          chmod $(BMASK) $(DESTDIR)$(HOPSHAREDIR)/runtime.js.gz; \
         for p in $(EXTRA); do \
-	  install -m a+r $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
         done
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/icons && \
 	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/icons && \
         for p in $(ICONS:%=icons/%); do \
           mkdir -p $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p` && \
 	  chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p` && \
-	  install -m a+r $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
         done
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/buttons && \
 	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/buttons && \
         for p in $(BUTTONS:%=buttons/%); do \
-	  install -m a+r $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
         done
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/flash && \
 	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/flash && \
         for p in $(FLASHOBJS:%=flash/%); do \
-	  install -m a+r $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+        done
+	for p in $(FLASHOPT:%=flash/%); do \
+	  if [ -f $$p ]; then \
+            $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+          fi; \
         done
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/editor && \
 	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/editor && \
-	install -m a+r $(BUILDSHAREDIR)/editor/* $(DESTDIR)$(HOPSHAREDIR)/editor
+	$(INSTALL) $(BUILDSHAREDIR)/editor/* $(DESTDIR)$(HOPSHAREDIR)/editor
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */

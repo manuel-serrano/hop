@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/home/home.hop             */
+;*    serrano/prgm/project/hop/1.10.x/weblets/home/home.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Fri Sep 19 16:39:23 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Thu Jan 15 07:43:43 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
 ;*=====================================================================*/
@@ -116,6 +116,15 @@
 			(download-versions-set!)
 			(<DIV> :class "hop-tab"
 			   (wiki->hop "presentation.wiki")))))
+	 (<NPTAB> :id "videos"
+		  (<NPTABHEAD>
+		     (<IMG> :inline #f
+			:src (service-resource home "etc/video.png"))
+		     "Videos")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV> :class "hop-tab"
+			   (wiki->hop "videos.wiki")))))
 	 (<NPTAB> :id "demo-tab"
 		  (<NPTABHEAD>
 		     (<IMG> :inline #f
@@ -175,7 +184,7 @@
 		  (<NPTABHEAD>
 		     (<IMG> :inline #f
 			:src (service-resource home "etc/statistics.png"))
-		     "Statistics")
+		     "Stats")
 		  (<DELAY>
 		     (lambda ()
 			(<DIV> :class "hop-tab"

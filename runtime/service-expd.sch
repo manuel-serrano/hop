@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/service-expd.sch          */
+;*    serrano/prgm/project/hop/1.10.x/runtime/service-expd.sch         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Wed Jun 18 08:42:25 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Wed Jan 14 07:09:25 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
 ;*    at compile-time and runtime-time.                                */
@@ -49,14 +49,16 @@
 ;*---------------------------------------------------------------------*/
 (define (expand-service id wid url timeout ttl args body)
    (let ((proc (if (symbol? wid) wid 'svc))
-	 (errid (if (symbol? wid) `',wid wid)))
-      `(let* ((,proc ,(if (pair? body)
-			 `(lambda ,args ,@body)
-			 `(lambda ,args
-			     (let ((path (make-hop-service-url ,id ,@args)))
-				(instantiate::http-response-remote
-				   (path path)
-				   (encoded-path path))))))
+	 (errid (if (symbol? wid) `',wid wid))
+	 (id (if (symbol? id) `',id `(string->symbol ,url)))
+	 (path (gensym 'path)))
+      `(let* ((,path ,url)
+	      (,proc ,(if (pair? body)
+			  `(lambda ,args ,@body)
+			  `(lambda ,args
+			      (instantiate::http-response-remote
+				 (port (hop-port))
+				 (path (make-hop-funcall-url 'hop ,id ,path ',args (list ,@args)))))))
 	      (exec ,(if (pair? body)
 			 `(lambda (req)
 			     (let* ((ca (http-request-cgi-args req))
@@ -76,24 +78,23 @@
 			     (error ',id
 				    "Illegal service exec (imported service)"
 				    ',args))))
-	      (path ,url)
 	      (file (the-loading-file))
 	      (svc (instantiate::hop-service
 		      (wid ,(if (symbol? wid) `',wid wid))
-		      (id ,(if (symbol? id) `',id `(string->symbol ,url)))
-		      (path path)
+		      (id ,id)
+		      (path ,path)
 		      (args ',args)
 		      (%exec exec)
 		      (proc ,proc)
-		      (javascript ,(jscript args 'path))
+		      (javascript ,(jscript args path))
 		      (creation (date->seconds (current-date)))
 		      (timeout ,timeout)
 		      (ttl ,ttl)
 		      (resource (and (string? file) (dirname file)))
 		      (source (and (string? file) (basename file))))))
-	  (unless (<fx ,ttl 0)
-	     (tprint "hop-service id=" ',id " wid=" ',wid " ttl=" ,ttl))
-	  (register-service! svc))))
+	  ,(if (pair? body)
+	       `(register-service! svc)
+	       'svc))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-define-service-expander ...                                  */
@@ -124,8 +125,6 @@
 	     ((or (symbol? (car a))
 		  (and (list? (car a)) (every? symbol? (car a))))
 	      (cond
-		 ((null? (cdr a))
-		  (error 'service "Illegal service (empty body)" x))
 		 ((not (list? (car a)))
 		  (error 'service
 			 "Variable arity services not supported yet"
@@ -253,7 +252,12 @@
 			(cons* (cadr opts) (car opts) args)
 			success failure))))
 	   ;; a local call
-	   (let ((nx `(with-hop-local ((hop-service-proc ,svc) ,@a) ,@opts)))
+	   (let ((nx `(with-hop-local ((hop-service-proc ,svc) ,@a)
+				      ,(when (pair? opts)
+					  (car opts))
+				      ,(when (and (pair? opts)
+						  (pair? (cdr opts)))
+					  (cadr opts)))))
 	      (e (evepairify nx x) e))))
       (else
        (error 'with-hop "Illegal form" x))))

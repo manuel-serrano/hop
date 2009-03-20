@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Oct 15 12:30:15 2008 (serrano)                */
-;*    Copyright   :  2004-08 Manuel Serrano                            */
+;*    Last change :  Fri Jan  2 19:06:50 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -127,6 +127,7 @@
 	    (hop-default-mime-type-set! ::bstring)
 
 	    (hop-json-mime-type::bstring)
+	    (hop-json-mime-type-symbol::symbol)
 	    (hop-bigloo-mime-type::bstring)
 
 	    (hop-authorize-service-hook::procedure)
@@ -141,11 +142,13 @@
 	    (hop-charset::symbol)
 	    (hop-charset-set! ::symbol)
 	    
-	    (hop-charset->locale::procedure)
-	    (hop-locale->charset::procedure)
-
 	    (hop-locale::symbol)
 	    (hop-locale-set! ::symbol)
+
+	    (hop-charset->locale::procedure)
+	    (hop-charset->locale!::procedure)
+	    (hop-locale->charset::procedure)
+	    (hop-locale->charset!::procedure)
 
 	    (hop-upload-directory::bstring)
 	    (hop-upload-directory-set! ::bstring)
@@ -238,7 +241,7 @@
 
 	    (hop-accept-kill::bool)
 	    (hop-accept-kill-set! ::bool)
-	    
+
 	    (hop-enable-proxy-sniffer::bool)
 	    (hop-enable-proxy-sniffer-set! ::bool)
 	    
@@ -705,7 +708,13 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-json-mime-type
    ;;"application/json"
-   "application/x-javascript")
+   "application/x-javascript"
+   (lambda (v)
+      (hop-json-mime-type-symbol-set! (string->symbol v))
+      v))
+
+(define-parameter hop-json-mime-type-symbol
+   'application/x-javascript)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-bigloo-mime-type ...                                         */
@@ -751,11 +760,51 @@
 (define-parameter hop-charset->locale
    (lambda (x) x))
 
+(define-parameter hop-charset->locale!
+   (lambda (x) x))
+
 (define-parameter hop-locale->charset
    (lambda (x) x))
 
+(define-parameter hop-locale->charset!
+   (lambda (x) x))
+
+;*---------------------------------------------------------------------*/
+;*    hop-locale ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    This parameter specifies the default charset of files hosted on  */
+;*    the server disc and the default charset of string responses.     */
+;*    HOP-LOCALE is mainly used to convert the files read from the     */
+;*    disc into the charset specified by HOP-CHARSET.                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-locale
+   (cond-expand
+      ((or bigloo3.1a bigloo3.1b)
+       'ISO-8859-1)
+      (else
+       (case (string->symbol (os-charset))
+	  ((UTF-8) 'UTF-8)
+	  (else 'ISO-8859-1))))
+   (lambda (v)
+      (when (and (symbol? v) (symbol? *hop-charset*))
+	 (hop-locale->charset-set! (charset-converter v (hop-charset)))
+	 (hop-locale->charset!-set! (charset-converter! v (hop-charset)))
+	 (hop-charset->locale-set! (charset-converter (hop-charset) v))
+	 (hop-charset->locale!-set! (charset-converter! (hop-charset) v)))
+      (case v
+	 ((UTF-8 utf-8) 'UTF-8)
+	 ((UCS-2 ucs-2) 'UCS-2)
+	 ((ISO-LATIN-1 iso-latin-1) 'ISO-LATIN-1)
+	 ((ISO-8859-1 iso-8859-1) 'ISO-8859-1)
+	 ((ISO-8859-2 iso-8859-2) 'ISO-8859-2)
+	 ((ISO-8859-15 iso-8859-15) 'ISO-8859-15)
+	 ((WINDOW-1252 window-1252) 'WINDOW-1252)
+	 (else (error 'hop-locale-set! "Illegal charset" v)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-charset ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    It is highly recommended to use 'UTF-8 as value.                 */
 ;*    -------------------------------------------------------------    */
 ;*    This parameter specifies the charset used by HOP for             */
 ;*    representing texts inside XML trees (i.e., http-response-hop)    */
@@ -768,9 +817,12 @@
 (define-parameter hop-charset
    'UTF-8
    (lambda (v)
-      (when (and (symbol? v) (symbol? *hop-locale*))
-	 (hop-locale->charset-set! (charset-converter v (hop-locale)))
-	 (hop-charset->locale-set! (charset-converter (hop-locale) v)))
+      (when (symbol? v)
+	 (when (symbol? *hop-locale*)
+	    (hop-locale->charset-set! (charset-converter (hop-locale) v))
+	    (hop-locale->charset!-set! (charset-converter! (hop-locale) v))
+	    (hop-charset->locale-set! (charset-converter v (hop-locale)))
+	    (hop-charset->locale!-set! (charset-converter! v (hop-locale)))))
       (case v
 	 ((UTF-8 utf-8) 'UTF-8)
 	 ((UCS-2 ucs-2) 'UCS-2)
@@ -780,30 +832,6 @@
 	 ((ISO-8859-15 iso-8859-15) 'ISO-8859-15)
 	 ((WINDOW-1252 window-1252) 'WINDOW-1252)
 	 (else (error 'hop-charset-set! "Illegal charset" v)))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-locale ...                                                   */
-;*    -------------------------------------------------------------    */
-;*    This parameter specifies the default charset of files hosted on  */
-;*    the server disc and the default charset of string responses.     */
-;*    HOP-LOCALE is mainly used to convert the files read from the     */
-;*    disc into the charset specified by HOP-CHARSET.                  */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-locale
-   'ISO-8859-1
-   (lambda (v)
-      (when (and (symbol? v) (symbol? (hop-charset)))
-	 (hop-locale->charset-set! (charset-converter v (hop-charset)))
-	 (hop-charset->locale-set! (charset-converter (hop-charset) v)))
-      (case v
-	 ((UTF-8 utf-8) 'UTF-8)
-	 ((UCS-2 ucs-2) 'UCS-2)
-	 ((ISO-LATIN-1 iso-latin-1) 'ISO-LATIN-1)
-	 ((ISO-8859-1 iso-8859-1) 'ISO-8859-1)
-	 ((ISO-8859-2 iso-8859-2) 'ISO-8859-2)
-	 ((ISO-8859-15 iso-8859-15) 'ISO-8859-15)
-	 ((WINDOW-1252 window-1252) 'WINDOW-1252)
-	 (else (error 'hop-locale-set! "Illegal charset" v)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-upload-directory ...                                         */
