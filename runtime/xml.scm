@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/xml.scm                  */
+;*    serrano/prgm/project/hop/2.0.x/runtime/xml.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Jan  2 19:05:19 2009 (serrano)                */
+;*    Last change :  Fri Mar 20 12:28:43 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -645,7 +645,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (xml-write-attribute attr::obj id p)
    ;; boolean false attribute has no value
-   (unless (eq? attr #f)
+   (when attr
       (display id p)
       ;; boolean true attribute has no value
       (display "='" p)
@@ -653,7 +653,9 @@
 	 ((eq? attr #t)
 	  (display id p))
 	 ((procedure? attr)
-	  (error 'xml "Illegal procedure argument in XML attribute" id))
+	  (if (hop-service? (procedure-attr attr))
+	      (display (hop-service-path (procedure-attr attr)) p)
+	      (error 'xml "Illegal procedure argument in XML attribute" id)))
 	 (else
 	  (display (xml-attribute-encode attr) p)))
       (display "'" p)))
@@ -662,6 +664,8 @@
 ;*    xml-write-attribute ::xml-tilde ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-attribute attr::xml-tilde id p)
+   ;; this case should no longer appears since service are now
+   ;; nested inside functions
    (display id p)
    (display "='" p)
    (display (xml-tilde->attribute attr) p)

@@ -14,8 +14,6 @@ invoked from client. This page describes how to create and how to use
   (define-service (name arg ...) ...)
   (service-resource svc ...)
   (service-base-url svc req)
-  (make-hop-service-url svc arg ...)
-  (make-service-url svc arg ...)
   (procedure->service proc)
 
   (hop-autoload-directories)
@@ -191,34 +189,6 @@ URL! The :base attribute has to be used cautionly.
 Which such browsers the :base attribute cannot be produce by the
 function ++(service-resource ...)++ which produces a relative URI.
 
-</function>
-
-=== ++(make-hop-service-url svc arg<sub>0</sub> ...)++ ===
-<function> make-hop-service-url
-
-<arguments>
-^  arguments       ^   type       ^  short description              ^
-| svc              |  service     | the service.                    |
-| arg<sub>0</sub>  |  symbol      | the first argument.             |
-</arguments>
-
-The function ++make-hop-service-url++ forges an URL from a service and
-from arguments. This name can be used on the server to invoke the service
-from a distant server (see ++http-send-request++).
-</function>
-
-=== ++(make-service-url svc arg<sub>0</sub> ...)++ ===
-<function> make-service-url
-
-<arguments>
-^  arguments       ^   type       ^  short description              ^
-| svc              |  service     | the service.                    |
-| arg<sub>0</sub>  |  symbol      | the first argument.             |
-</arguments>
-
-The function ++make-service-url++ forges an URL from a service and
-from arguments that is suitable for invoking the service from a client.
-In particular, the URL can be used in client ++<FORM>++ markups.
 </function>
 
 === ++(procedure->service proc)++ ===

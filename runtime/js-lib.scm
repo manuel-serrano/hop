@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/js-lib.scm               */
+;*    serrano/prgm/project/hop/2.0.x/runtime/js-lib.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sun Dec 14 19:54:52 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Fri Mar 20 12:22:43 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
 ;*=====================================================================*/
@@ -18,7 +18,8 @@
 	    
    (import  __hop_param
 	    __hop_types
-	    __hop_xml)
+	    __hop_xml
+	    __hop_service)
 
    (export  (json-string-encode::bstring ::bstring ::bool)
 	    (generic hop->json ::obj ::bool ::bool)
@@ -165,9 +166,11 @@
       ((eq? obj #unspecified)
        "undefined")
       ((procedure? obj)
-       (error 'hop->json
-	      "Illegal procedure in JavaScript conversion"
-	      obj))
+       (if (service? obj)
+	   (hop->json (procedure-attr obj) isrep isflash)
+	   (error 'hop->json
+		  "Illegal procedure in JavaScript conversion"
+		  obj)))
       ((date? obj)
        (format "new Date( ~a000 )" (date->seconds obj)))
       (else

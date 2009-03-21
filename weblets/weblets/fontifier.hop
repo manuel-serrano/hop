@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/weblets/fontifier.hop     */
+;*    serrano/prgm/project/hop/2.0.x/weblets/weblets/fontifier.hop     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano, Florian Loitsch                   */
 ;*    Creation    :  Thu Sep  7 17:29:41 2006                          */
-;*    Last change :  Mon Dec 10 14:11:35 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Fri Mar 20 11:47:14 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    fontifiers                                                       */
 ;*=====================================================================*/
@@ -201,7 +201,7 @@
 		  "with-hop" "with-url"))
       (for-each (lambda (k)
 		   (hashtable-put! t k "server"))
-		'("roundtrip"))
+		'())
       t))
 
 ;*---------------------------------------------------------------------*/

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/weblets/home/demo.hop            */
+;*    serrano/prgm/project/hop/2.0.x/weblets/home/demo.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Thu Jan 15 07:13:47 2009 (serrano)                */
+;*    Last change :  Fri Mar 20 14:12:21 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -50,25 +50,25 @@
 	       (<TR>
 		  (<TD>
 		     :align "left"
-		     (<ZIMG> (make-service-url home/demos/sudoku)
+		     (<ZIMG> (home/demos/sudoku)
 			     "games1-32x32.png" "games1-48x48.png" inl
 			     500 420)))
 	       (<TR>
 		  (<TD>
 		     :align "left"
-		     (<ZIMG> (make-service-url home/demos/minesweeper)
+		     (<ZIMG> (home/demos/minesweeper)
 			     "mines-32x32.png" "mines-48x48.png" inl
 			     320 320)))
 	       (<TR>
 		  (<TD>
 		     :align "left"
-		     (<ZIMG> (make-service-url home/demos/set)
+		     (<ZIMG> (home/demos/set)
 			     "set-32x32.png" "set-48x48.png" inl
 			     500 400)))
 	       (<TR>
 		  (<TD>
 		     :align "left"
-		     (<ZIMG> (make-service-url home/demos/music)
+		     (<ZIMG> (home/demos/music)
 			     "music-32x32.png" "music-48x48.png" inl
 			     420 320)))
 ;* 	    (<TR>                                                      */
@@ -79,7 +79,7 @@
 	       (<TR>
 		  (<TD>
 		     :align "left"
-		     (<ZIMG> (make-service-url home/demos/rss)
+		     (<ZIMG> (home/demos/rss)
 			     "news-32x32.png" "news-48x48.png" inl
 			     570 370)))
 ;* 	       (<TR>                                                   */
@@ -91,19 +91,19 @@
 	       (<TR>
 		  (<TD>
 		     :align "left"
-		     (<ZIMG> (make-service-url home/demos/wiki)
+		     (<ZIMG> (home/demos/wiki)
 			     "wiki-32x32.png" "wiki-48x48.png" inl
 			     390 450)))
 	       (<TR>
 		  (<TD>
 		     :align "left"
-		     (<ZIMG> (make-service-url home/demos/rewrite)
+		     (<ZIMG> (home/demos/rewrite)
 			     "utilities-32x32.png" "utilities-48x48.png" inl
 			     500 220)))
 	       (<TR>
 		  (<TD>
 		     :align "left"
-		     (<ZIMG> (make-service-url home/demos/source)
+		     (<ZIMG> (home/demos/source)
 			     "computer-32x32.png" "computer-48x48.png" inl
 			     700 500))))))))
 
@@ -173,7 +173,7 @@ be used to access the whole source code of this playground.]))))
 	     (t (document.getElementById $id))
 	     (p (document.getElementById "demo-playground")))
 	  (set! frame.className "demos")
-	  (set! frame.src $(make-service-url home/demos/tips))
+	  (set! frame.src $(home/demos/tips))
 	  (node-style-set! frame "border-width" "0")
 	  (node-style-set! frame "width" "100%")
 	  (node-style-set! frame "height" $(format "~apx" h))

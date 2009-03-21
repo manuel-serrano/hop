@@ -1,10 +1,10 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.11.x/configure                        */
+#*    serrano/prgm/project/hop/2.0.x/configure                         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Jan 29 18:17:57 2009 (serrano)                */
+#*    Last change :  Fri Mar 20 12:38:09 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -53,7 +53,7 @@ cssmimetype="text/css"
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="1.11.0"
+version="2.0.0"
 devel=pre
 
 branch="`echo $version | sed 's/[0-9][0-9]*$/x/'`"
@@ -545,6 +545,7 @@ echo ";* Automatically generated file (don't edit) */" > $configure
 
 cat etc/configure.scm.in \
     | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
           -e "s|@BACKEND@|$backend|" \
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
@@ -566,6 +567,7 @@ hoprc=etc/hoprc.hop
 rm -f $hoprc 2> /dev/null
 cat etc/hoprc.hop.in \
     | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
           -e "s|@SHAREDIR@|$sharedir|" \
@@ -580,6 +582,7 @@ hopshrc=etc/hopshrc.hop
 rm -f $hopshrc 2> /dev/null
 cat etc/hopshrc.hop.in \
     | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
           -e "s|@SHAREDIR@|$sharedir|" \
@@ -597,6 +600,7 @@ echo ";* Automatically generated file (don't edit) */" > $init
 
 cat etc/hop.init.in \
     | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
           -e "s|@BIGLOOSSL@|$bigloossl|" \
           -e "s|@BIGLOOPTH@|$bigloopth|" \
     >> $init
@@ -627,6 +631,7 @@ echo ";* Automatically generated file (don't edit) */" > $init
 
 cat etc/scheme2js.init.in \
     | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
     >> $init
 echo "" >> $init
 chmod a-w $init
@@ -641,6 +646,7 @@ echo ";* Automatically generated file (don't edit) */" > $init
 
 cat etc/hopscheme.init.in \
     | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
     >> $init
 echo "" >> $init
 chmod a-w $init
@@ -653,6 +659,7 @@ echo ";* Automatically generated file (don't edit) */" > $init
 
 cat etc/hopwiki.init.in \
     | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
     >> $init
 echo "" >> $init
 chmod a-w $init
@@ -665,6 +672,7 @@ echo "/* Automatically generated file (don't edit) */" > $init
 
 cat etc/hop-autoconf.js.in \
     | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
           -e "s|@BACKEND@|$backend|" \
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/src/main.scm                     */
+;*    serrano/prgm/project/hop/2.0.x/src/main.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Mar  3 07:52:42 2009 (serrano)                */
+;*    Last change :  Fri Mar 20 12:36:31 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -77,6 +77,7 @@
    ;; set the Hop cond-expand identification
    (register-eval-srfi! 'hop)
    (register-eval-srfi! (string->symbol (format "hop-~a" (hop-version))))
+   (register-eval-srfi! (string->symbol (format "hop-~a" (hop-branch))))
    ;; set the library load path
    (let ((hop-path (make-file-path (hop-lib-directory) "hop" (hop-version))))
       (bigloo-library-path-set! (cons hop-path (bigloo-library-path))))

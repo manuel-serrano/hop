@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/hop.scm                  */
+;*    serrano/prgm/project/hop/2.0.x/runtime/hop.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Jan 14 07:03:28 2009 (serrano)                */
+;*    Last change :  Fri Mar 20 12:11:18 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -369,7 +369,8 @@
 				   (header '())
 				   (input-port ip)))))
 		    (http-send-request req hdl))
-		 (http-send-request req hdl)))))))
+		 (http-send-request req hdl))))))
+   #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    fail-or-raise ...                                                */
@@ -383,7 +384,8 @@
 ;*    with-hop-local ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-generic (with-hop-local obj success fail)
-   (when (procedure? success) (success obj)))
+   (when (procedure? success) (success obj))
+   #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-remote ...                        */

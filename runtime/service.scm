@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/runtime/service.scm              */
+;*    serrano/prgm/project/hop/2.0.x/runtime/service.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sun Feb  8 09:48:52 2009 (serrano)                */
+;*    Last change :  Sat Mar 21 07:09:59 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -36,22 +36,30 @@
 	    __hop_hop-audio)
    
    (export  (init-hop-services!)
+	    (inline service?::bool ::obj)
 	    (get-all-services ::http-request)
 	    (get-service-url::bstring #!optional (prefix ""))
 	    (hop-service-path? ::bstring)
+	    (service-funcall-url::bstring ::hop-service . o)
 	    (make-hop-funcall-url ::symbol ::symbol ::bstring ::pair-nil ::pair-nil)
 	    (make-hop-service-url::bstring ::hop-service . o)
 	    (make-service-url::bstring ::hop-service . o)
 	    (hop-request-service-name::bstring ::http-request)
-	    (procedure->service::hop-service ::procedure)
+	    (procedure->service::procedure ::procedure)
             (%eval::%http-response ::obj ::http-request ::procedure)
 	    (service-filter ::http-request)
 	    (register-service!::hop-service ::hop-service)
 	    (expired-service-path?::bool ::bstring)
-	    (service-resource::bstring ::hop-service #!optional file)
-	    (service-base-url::bstring ::hop-service ::http-request)
+	    (service-resource::bstring ::procedure #!optional file)
+	    (service-base-url::bstring ::procedure ::http-request)
 	    (service-etc-path-table-fill! ::bstring)
 	    (etc-path->service ::bstring)))
+
+;*---------------------------------------------------------------------*/
+;*    service? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (service? obj)
+   (and (procedure? obj) (hop-service? (procedure-attr obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    mutexes ...                                                      */
@@ -134,6 +142,38 @@
 	     (loop (+fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    service-funcall-url ...                                          */
+;*---------------------------------------------------------------------*/
+(define (service-funcall-url svc . vals)
+   (if (not (hop-service? svc))
+       (bigloo-type-error 'make-hop-service-url 'service svc)
+       (with-access::hop-service svc (id path)
+	  (string-append path
+			 "?hop-encoding=hop"
+			 "&vals=" (url-path-encode (obj->string vals))))))
+
+;*---------------------------------------------------------------------*/
+;*    service-handler ...                                              */
+;*---------------------------------------------------------------------*/
+(define (service-handler svc req)
+   (let* ((ca (http-request-cgi-args req))
+	  (enc (cgi-arg "hop-encoding" ca)))
+      (cond
+	 ((null? (cdr ca))
+	  ((hop-service-proc svc)))
+	 ((and (string? enc) (string=? enc "hop"))
+	  (http-request-charset-set! req 'UTF-8)
+	  (apply (hop-service-proc svc) (serialized-cgi-arg "vals" ca)))
+	 (else
+	  (let ((proc (hop-service-proc svc))
+		(vals (map cdr (cdr ca))))
+	     (if (correct-arity? proc (length vals))
+		 (apply proc vals)
+		 (error (hop-service-id svc)
+			"Wrong number of arguments"
+			`(,(hop-service-id svc) ,@vals))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    make-hop-funcall-url ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (make-hop-funcall-url mode id path args vals)
@@ -186,7 +226,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    procedure->service ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (procedure->service::hop-service proc::procedure)
+(define (procedure->service::procedure proc::procedure)
    (let ((arity (procedure-arity proc)))
       (case arity
 	 ((0)
@@ -317,7 +357,7 @@
 	       (cond
 		  ((hop-service? svc)
 		   (set! service svc)
-		   (with-access::hop-service svc (%exec ttl path id wid)
+		   (with-access::hop-service svc (ttl path id wid)
 		      (cond
 			 ((=fx ttl 1)
 			  (unregister-service! svc))
@@ -329,7 +369,7 @@
 			  #f)
 			 ((or (authorized-service? req wid)
 			      (authorized-service? req id))
-			  (scheme->response (%exec req) req))
+			  (scheme->response (service-handler svc req) req))
 			 (else
 			  (user-service-denied req user id)))))
 		  (else
@@ -452,7 +492,7 @@
 ;*    service-resource ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (service-resource svc #!optional file)
-   (with-access::hop-service svc (resource)
+   (with-access::hop-service (procedure-attr svc) (resource)
       (if (string? file)
 	  (string-append resource "/" file)
 	  resource)))
@@ -497,3 +537,4 @@
 ;*---------------------------------------------------------------------*/
 (define (etc-path->service path)
    (hashtable-get *etc-table* path))
+

@@ -1,6 +1,6 @@
 ;; automatically generated, don't edit
-;; /users/serrano/prgm/project/hop/1.9.x/weblets/hz
-;; Fri Jun 27 15:34:19 2008
+;; /users/serrano/prgm/project/hop/2.0.x/weblets/hz
+;; Sat Mar 21 05:41:23 2009
 
 (
   (hz_config "config.hop")

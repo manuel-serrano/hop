@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.11.x/weblets/doc/Makefile             */
+#*    serrano/prgm/project/hop/2.0.x/weblets/doc/Makefile              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Mar  6 08:13:24 2009 (serrano)                */
+#*    Last change :  Sat Mar 21 07:12:47 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -47,7 +47,7 @@ EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   foldlist-1.hop foldlist-2.hop hook-1.hop inline.hop \
                   iwindow.hop notepad-1.hop notepad-2.hop notepad-3.hop \
                   paned-1.hop paned-2.hop parameter.hop request-1.hop rss.hop \
-                  service-1.hop service-2.hop service-3.hop service-4.hop \
+                  service-2.hop service-3.hop service-4.hop \
                   service-5.hop service-6.hop slider-1.hop slider-2.hop \
                   sorttable.hop sound-1.hop sound-2.hop sound-3.hop \
                   tabslider-1.hop tabslider-2.hop \

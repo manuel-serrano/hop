@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/types.scm                */
+;*    serrano/prgm/project/hop/2.0.x/runtime/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Oct 24 05:30:36 2008 (serrano)                */
-;*    Copyright   :  2004-08 Manuel Serrano                            */
+;*    Last change :  Sat Mar 21 06:49:02 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
 ;*=====================================================================*/
@@ -143,8 +143,6 @@
 	      (path::bstring read-only)
 	      ;; the service formals
 	      (args::obj read-only)
-	      ;; the implementation body
-	      (%exec::procedure read-only)
 	      ;; the user procedure associated
 	      (proc::procedure read-only)
 	      ;; the JS code calling that service

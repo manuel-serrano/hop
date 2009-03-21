@@ -16,6 +16,7 @@
    (export (hop-configure ::bstring)
 	   (hop-name)
            (hop-version)
+           (hop-branch)
            (hop-backend)
 	   (hop-url)
 	   (inline hop-bin-directory)
@@ -33,6 +34,7 @@
    
    (eval   (export hop-name)
 	   (export hop-version)
+	   (export hop-branch)
 	   (export hop-backend)
 	   (export hop-url)
 	   (export hop-etc-directory)
@@ -55,6 +57,8 @@
    (case (string->symbol config)
       ((--version)
        (print (hop-version)))
+      ((--branch)
+       (print (hop-branch)))
       ((--backend)
        (print (hop-backend)))
       ((--etcdir)
@@ -90,6 +94,7 @@
 	     (newline)
 	     (print "Option:")
 	     (print "  [--version]")
+	     (print "  [--branch]")
 	     (print "  [--backend]")
 	     (print "  [--etcdir]")
 	     (print "  [--bindir]")
@@ -107,6 +112,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-name) "Hop")
 (define (hop-version) "@VERSION@")
+(define (hop-branch) "@BRANCH@")
 (define (hop-backend) "@BACKEND@")
 (define (hop-url) "@URL@")
 

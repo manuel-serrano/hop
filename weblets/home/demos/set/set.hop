@@ -204,5 +204,4 @@
 		(set! *games* (cons (cons name g) *games*))
 		(instantiate::http-response-string
 		   (start-line "HTTP/1.0 301 Moved Permanently")
-		   (header (list (cons 'location:
-				       (make-service-url svc)))))))))))
+		   (header (list (cons 'location: (svc)))))))))))

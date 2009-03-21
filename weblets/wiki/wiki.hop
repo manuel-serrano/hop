@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/weblets/wiki/wiki.hop            */
+;*    serrano/prgm/project/hop/2.0.x/weblets/wiki/wiki.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Mar 10 10:26:03 2009 (serrano)                */
+;*    Last change :  Fri Mar 20 14:10:30 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -280,7 +280,7 @@
 (define (<EDIT:EDIT> file)
    (list "[ "
 	 (<SPAN> :class "edit"
-	    :onclick ~(window.open $(make-service-url wiki/edit file)) "edit")
+	    :onclick ~(window.open $(wiki/edit file)) "edit")
 	 " ]"))
    
 ;*---------------------------------------------------------------------*/
@@ -290,11 +290,11 @@
    (let ((editor (preference-get 'wiki-editor :default "emacs")))
       (list "[ "
 	    (<SPAN> :class "edit"
-	       :onclick ~(window.open $(make-service-url wiki/edit file)) "edit")
+	       :onclick ~(window.open $(wiki/edit file)) "edit")
 	    " | "
 	    (<SPAN>
 	       :class "edit"
-	       :onclick ~(with-hop ($wiki/edit/editor $file $editor))
+	       :onclick ~(with-hop $(wiki/edit/editor file editor))
 	       (basename editor))
 	    " ]")))
    

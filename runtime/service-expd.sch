@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/service-expd.sch         */
+;*    serrano/prgm/project/hop/2.0.x/runtime/service-expd.sch          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Wed Jan 14 07:09:25 2009 (serrano)                */
+;*    Last change :  Sat Mar 21 07:01:05 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -45,56 +45,64 @@
 	    ,path))
 
 ;*---------------------------------------------------------------------*/
+;*    jscript-funcall ...                                              */
+;*---------------------------------------------------------------------*/
+(define (jscript-funcall path args)
+   `(format "function() { return service_funcall_url( ~s, arguments ) }" ,path))
+
+;*---------------------------------------------------------------------*/
 ;*    expand-service ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (expand-service id wid url timeout ttl args body)
-   (let ((proc (if (symbol? wid) wid 'svc))
+   
+   (define (pair->list args)
+      (if (list? args)
+	  args
+	  (let loop ((args args))
+	     (cond
+		((null? args) '())
+		((pair? args) (cons (car args) (loop (cdr args))))
+		(else (list args))))))
+
+   (define (args->list args)
+      (pair->list (dsssl-formals->scheme-formals args error)))
+   
+   (let ((proc (if (symbol? wid) (symbol-append wid '-proc) 'proc))
+	 (hdl (if (symbol? wid) (symbol-append wid '-handler) 'hdl))
+	 (svc (if (symbol? wid) (symbol-append wid '-svc) 'svc))
 	 (errid (if (symbol? wid) `',wid wid))
 	 (id (if (symbol? id) `',id `(string->symbol ,url)))
-	 (path (gensym 'path)))
+	 (path (gensym 'path))
+	 (fun (gensym 'fun))
+	 (vars (args->list args)))
       `(let* ((,path ,url)
 	      (,proc ,(if (pair? body)
 			  `(lambda ,args ,@body)
 			  `(lambda ,args
 			      (instantiate::http-response-remote
 				 (port (hop-port))
-				 (path (make-hop-funcall-url 'hop ,id ,path ',args (list ,@args)))))))
-	      (exec ,(if (pair? body)
-			 `(lambda (req)
-			     (let* ((ca (http-request-cgi-args req))
-				    (enc (cgi-arg "hop-encoding" ca)))
-				(if (and (string? enc) (string=? enc "hop"))
-				    (begin
-				       (http-request-charset-set! req 'UTF-8)
-				       (,proc ,@(map (lambda (a)
-							`(serialized-cgi-arg
-							  ,(symbol->string a) ca))
-						     args)))
-				    (,proc ,@(map (lambda (a)
-						     `(cgi-arg
-						       ,(symbol->string a) ca))
-						  args)))))
-			 `(lambda (req)
-			     (error ',id
-				    "Illegal service exec (imported service)"
-				    ',args))))
+				 (path (,fun ,@vars))))))
 	      (file (the-loading-file))
-	      (svc (instantiate::hop-service
-		      (wid ,(if (symbol? wid) `',wid wid))
-		      (id ,id)
-		      (path ,path)
-		      (args ',args)
-		      (%exec exec)
-		      (proc ,proc)
-		      (javascript ,(jscript args path))
-		      (creation (date->seconds (current-date)))
-		      (timeout ,timeout)
-		      (ttl ,ttl)
-		      (resource (and (string? file) (dirname file)))
-		      (source (and (string? file) (basename file))))))
-	  ,(if (pair? body)
-	       `(register-service! svc)
-	       'svc))))
+	      (,svc (instantiate::hop-service
+		       (wid ,(if (symbol? wid) `',wid wid))
+		       (id ,id)
+		       (path ,path)
+		       (args ',args)
+		       (proc ,proc)
+		       (javascript ,(jscript-funcall path args))
+		       (creation (date->seconds (current-date)))
+		       (timeout ,timeout)
+		       (ttl ,ttl)
+		       (resource (and (string? file) (dirname file)))
+		       (source (and (string? file) (basename file)))))
+	      (,fun (lambda ,args
+		       (service-funcall-url ,svc ,@vars))))
+
+	  ,(when (pair? body)
+	     `(register-service! ,svc))
+	  
+	  (procedure-attr-set! ,fun ,svc)
+	  ,fun)))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-define-service-expander ...                                  */
@@ -102,12 +110,10 @@
 (define (hop-define-service-expander x e)
    (match-case x
       ((?- (?id . ?args) . ?body)
-       (if (not (and (symbol? id) (and (list? args) (every? symbol? args))))
-	   (error 'define-service "Illegal service declaration" x)
-	   (let* ((url (symbol->string id))
-		  (wid (string->symbol (car (file-name->list url))))
-		  (svc (expand-service id wid `(make-hop-url-name ,url) -1 -1 args body)))
-	      `(define ,id ,(e (evepairify svc x) e)))))
+       (let* ((url (symbol->string id))
+	      (wid (string->symbol (car (file-name->list url))))
+	      (svc (expand-service id wid `(make-hop-url-name ,url) -1 -1 args body)))
+	  `(define ,id ,(e (evepairify svc x) e))))
       (else
        (error 'define-service "Illegal form" x))))
 
@@ -122,19 +128,12 @@
 		  (ttl -1)
 		  (url '(make-hop-url-name (get-service-url))))
 	  (cond
-	     ((or (symbol? (car a))
-		  (and (list? (car a)) (every? symbol? (car a))))
-	      (cond
-		 ((not (list? (car a)))
-		  (error 'service
-			 "Variable arity services not supported yet"
-			 x))
-		 (else
-		  (let ((svc (expand-service
-			      #f
-			      '(hop-service-weblet-wid)
-			      url tmt ttl (car a) (cdr a))))
-		     (e (evepairify svc x) e)))))
+	     ((or (symbol? (car a)) (null? (car a)) (pair? (car a)))
+	      (let ((svc (expand-service
+			  #f
+			  '(hop-service-weblet-wid)
+			  url tmt ttl (car a) (cdr a))))
+		 (e (evepairify svc x) e)))
 	     ((eq? (car a) :timeout)
 	      (if (null? (cdr a))
 		  (error 'service
@@ -177,44 +176,6 @@
        (error 'service "Illegal form" x))))
 
 ;*---------------------------------------------------------------------*/
-;*    expand-roundtrip ...                                             */
-;*---------------------------------------------------------------------*/
-(define (expand-roundtrip bindings body)
-   (if (null? bindings)
-       `(begin ,body)
-       (let ((vec (gensym)))
-	  (let loop ((obindings bindings)
-		     (i 0)
-		     (nbindings '()))
-	     (if (null? obindings)
-		 `(%eval (list ,@(map cadr bindings))
-			 (current-request)
-			 (lambda (,vec) (let ,nbindings ,@body)))
-		 (let ((binding (car obindings)))
-		    (loop (cdr obindings)
-			  (+fx i 1)
-			  (cons `(,(car binding) (vector-ref ,vec ,i))
-				nbindings))))))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-roundtrip-expander ...                                       */
-;*---------------------------------------------------------------------*/
-(define (hop-roundtrip-expander x e)
-   (match-case x
-      ((?- ?bindings . ?body)
-       (for-each (lambda (binding)
-		    (match-case binding
-		       (((and (? symbol?) ?id) ?-)
-			#t)
-		       (else
-			(error '$roundtrip "Illegal binding" binding))))
-		 bindings)
-       (e (evepairify (expand-roundtrip bindings body) x) e))
-      (else
-       (error '$roundtrip "Illegal form" x))))
-
-
-;*---------------------------------------------------------------------*/
 ;*    hop-with-hop-expander ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (hop-with-hop-expander x e)
@@ -228,7 +189,7 @@
 		      (failure #f))
 	      (cond
 		 ((null? opts)
-		  (let ((nx `(with-hop-remote (make-hop-service-url ,svc ,@a)
+		  (let ((nx `(with-hop-remote (,svc ,@a)
 					      ,success ,failure
 					      ,@(reverse! args))))
 		     (e (evepairify nx x) e)))
@@ -252,7 +213,8 @@
 			(cons* (cadr opts) (car opts) args)
 			success failure))))
 	   ;; a local call
-	   (let ((nx `(with-hop-local ((hop-service-proc ,svc) ,@a)
+	   (let ((nx `(with-hop-local ((hop-service-proc (procedure-attr ,svc))
+				       ,@a)
 				      ,(when (pair? opts)
 					  (car opts))
 				      ,(when (and (pair? opts)

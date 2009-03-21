@@ -1,4 +1,4 @@
 #!/bin/sh
-major=1.11.0
-state=pre
-minor=2
+major=2.0.0
+state=
+minor=

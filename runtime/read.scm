@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/runtime/read.scm                 */
+;*    serrano/prgm/project/hop/2.0.x/runtime/read.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Feb 17 06:30:55 2009 (serrano)                */
+;*    Last change :  Fri Mar 20 17:14:12 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -23,7 +23,8 @@
 	    __hop_css
 	    __hop_charset)
 
-   (use     __hop_types)
+   (use     __hop_types
+	    __hop_xml)
    
    (export  (loading-file-set! ::obj)
 	    (the-loading-file)
@@ -559,8 +560,11 @@
        (hop-read-hss (the-port)))
       
       ("~"
-       (let ((expr (ignore)))
-	  (list '<TILDE> ((hop-make-escape) (the-port) expr))))
+       (let* ((loc (list 'at
+			 (input-port-name (the-port))
+			 (input-port-position (the-port))))
+	      (expr (ignore)))
+	  (econs '<TILDE> (list ((hop-make-escape) (the-port) expr)) loc)))
       
       ;; structures
       ("#{"
@@ -851,14 +855,28 @@
 				 (let ((sexp (hop-read port charset)))
 				    (if (eof-object? sexp)
 					(if hook (hook last) last)
-					(loop (eval! sexp env))))))
+					(let ((val (eval! sexp env)))
+					   (when (xml-tilde? val)
+					      (warning/location
+					       file-name
+					       (caddr (cer sexp))
+					       'hop-load
+					       "Useless ~ expression"))
+					   (loop val))))))
 			     ((include)
 			      (let loop ((res '()))
 				 (let ((sexp (hop-read port charset)))
 				    (if (eof-object? sexp)
 					(let ((val (reverse! res)))
 					   (if hook (hook val) val))
-					(loop (cons (eval! sexp env) res))))))
+					(let ((val (eval! sexp env)))
+					   (when (xml-tilde? val)
+					      (warning/location
+					       file-name
+					       (caddr (cer sexp))
+					       'hop-load
+					       "Useless ~ expression"))
+					   (loop (cons val res)))))))
 			     (else
 			      (error 'hop-load "Illegal mode" mode))))
 		       (begin

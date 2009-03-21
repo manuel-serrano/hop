@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/hop-foldlist.scm          */
+;*    serrano/prgm/project/hop/2.0.x/runtime/hop-foldlist.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Thu Jun 26 09:46:02 2008 (serrano)                */
+;*    Last change :  Fri Mar 20 12:05:01 2009 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL> markup.                           */
 ;*=====================================================================*/
@@ -122,9 +122,7 @@
 	     (fprintf p
 		      "<tr onclick='hop_fold_item_toggle_service(~s,~a,~s) ~a'>"
 		      id history
-		      (hop-service-path
-		       (procedure->service
-			(xml-delay-thunk (car body))))
+		      ((procedure->service (xml-delay-thunk (car body))))
 		      (if (html-foldlist-stop parent) ";hop_stop_propagation( event, true )" ""))
 	     (set-car! body ""))
 	    ((and (pair? body)
@@ -134,9 +132,7 @@
 	     (fprintf p
 		      "<tr onclick='hop_fold_item_toggle_service(~s,~a,~s) ~a'>"
 		      id history
-		      (hop-service-path
-		       (procedure->service
-			(xml-delay-thunk (cadr body))))
+		      ((procedure->service (xml-delay-thunk (cadr body))))
 		      (if (html-foldlist-stop parent) ";hop_stop_propagation( event, true )" ""))
 	     (set-car! (cdr body) ""))
 	    (else
