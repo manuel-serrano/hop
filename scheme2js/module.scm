@@ -58,10 +58,12 @@
 		(eq? (car clause) 'module)
 		(pair? (cdr clause))
 		(symbol? (cadr clause))
-		(every (lambda (sub-term)
-			  (and (pair? sub-term)
-			       (list? sub-term)))
-		       (cddr clause)))
+		;; due to Hop we can't test if all terms are pairs.
+; 		(every (lambda (sub-term)
+; 			  (and (pair? sub-term)
+; 			       (list? sub-term)))
+; 		       (cddr clause))
+		)
       (error "scheme2js-module"
 	     "bad module-clause"
 	     clause)))

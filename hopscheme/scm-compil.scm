@@ -15,10 +15,10 @@
    ;; no need for locks. in the worst case we create more than one list.
    (when (not *cached-config*)
       (set! *cached-config*
-	    (extend-config* `((dollar-eval . #t) ;; do an 'eval' on $s.
+	    (extend-config* (hopscheme-config #t)
+			    `((dollar-eval . #t) ;; do an 'eval' on $s.
 			      ;; allow $(import xyz) ...
-			      (module-preprocessor . ,(dollar-modules-adder)))
-			    (hopscheme-config #t))))
+			      (module-preprocessor . ,(dollar-modules-adder))))))
    *cached-config*)
        
 ;*---------------------------------------------------------------------*/
