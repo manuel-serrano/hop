@@ -23,16 +23,16 @@
    (<TEST-HTML> :include "hop-foldlist"
       :source (service-resource test/busy "busy.hop")
       (<DIV> :class "comment"
-	 "This test checks busy animation. When click the buttton
-below, you should see a small animation of the right hand-side of the
+	 "This test checks busy animation. After clicking the buttton
+below, you should see a small animation on the right-hand side of the
 window. This animation should last approximatively 3 seconds and
-disapears.")
+then disappear.")
       (<BUTTON> :onclick ~(with-hop ($(service () (sleep 3000000) #t)))
 	 "Click me to see the Hop busy animation")
       (<BR>) (<BR>)
       (<DIV> :class "comment"
 	 "This second test uses a different animation which still should
-last approximatively 3 seconds and disapears.")
+last approximatively 3 seconds before it disappears.")
       (<BUTTON> :onclick ~(with-hop ($(service () (sleep 3000000) #t))
 			     :anim (lambda (title)
 				      (<DIV>
