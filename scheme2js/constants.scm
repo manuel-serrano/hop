@@ -34,12 +34,20 @@
 	     (body body)
 	     (kind 'let))
 	  body)))
-   
+
+(define (my-hash o)
+   (cond
+      ((pair? o)
+       (bit-xor (my-hash (car o))
+		(my-hash (cdr o))))
+      (else
+       (get-hashnumber o))))
+
 (define-nmethod (Module.const! ht)
    (with-access::Module this (body)
       (if (config 'encapsulate-modules)
 	  (default-walk! this #f)
-	  (let ((ht (make-hashtable)))
+	  (let ((ht (create-hashtable :hash my-hash)))
 	     (default-walk! this ht)
 	     (set! body (make-constants-let ht body))
 	     this))))
@@ -81,11 +89,16 @@
 		     (vector? (vector-ref v i)))
 		 #t)
 		(else (loop (+ i 1)))))))
+   (define (long-enough-string? v)
+      (>fx (string-length v) 15))
+
    (with-access::Const this (value)
       (if (or (and (pair? value)
 		   (long-enough-list? value))
 	      (and (vector? value)
-		   (long-enough-vector? value)))
+		   (long-enough-vector? value))
+	      (and (string? value)
+		   (long-enough-string? value)))
 	  (let ((cached (hashtable-get constant-ht value)))
 	     (if cached
 		 (with-access::Ref cached (var)

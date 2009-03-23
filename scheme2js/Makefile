@@ -44,12 +44,13 @@ _BGL_OBJECTS = main scheme2js \
         rm-unused-vars \
         tail-rec tail loop-updates var-ref-util \
         constant-propagation constants scope while \
-        loop-hoist propagation statements push-set \
+        propagation statements push-set \
         rm-tail-breaks \
 	out compile-optimized-call compile-optimized-set compile-optimized-boolify \
           allocate-names template-display \
         scm-out \
-        callcc callcc_anormalform callcc_resume_push callcc_locations callcc_checkpoint
+        callcc callcc_anormalform callcc_resume_push callcc_locations callcc_checkpoint \
+	trampoline
 
 _OBJECTS = $(_BGL_OBJECTS)
 
@@ -210,6 +211,10 @@ o/walk.o classes/mimosa/inria/scheme2js/walk.class: mco/export.mco       \
       mco/nodes.mco 
 o/expand.o classes/mimosa/inria/scheme2js/expand.class: mco/tools.mco    \
       mco/verbose.mco 
+o/trampoline.o classes/mimosa/inria/scheme2js/trampoline.class:          \
+      mco/tools.mco mco/var-ref-util.mco mco/verbose.mco mco/side.mco    \
+      mco/tail.mco mco/symbol.mco mco/walk.mco mco/export.mco            \
+      mco/nodes.mco mco/config.mco 
 o/mapping1.o classes/mimosa/inria/scheme2js/mapping1.class: mapping.sch  \
       mco/tools.mco mco/export.mco 
 o/symbol-table.o classes/mimosa/inria/scheme2js/symbol-table.class:      \
@@ -226,13 +231,13 @@ o/compile-optimized-call.o classes/mimosa/inria/scheme2js/compile-optimized-call
 o/infotron.o classes/mimosa/inria/scheme2js/infotron.class:              \
       mco/config.mco mco/mutable-strings.mco mco/module.mco              \
       mco/verbose.mco 
-o/allocate-names.o classes/mimosa/inria/scheme2js/allocate-names.class:  \
-      mco/gen-js.mco mco/verbose.mco mco/walk.mco mco/export.mco         \
-      mco/nodes.mco mco/tools.mco mco/config.mco 
 o/symbol.o classes/mimosa/inria/scheme2js/symbol.class:                  \
       mco/pobject-conv.mco mco/gen-js.mco mco/verbose.mco mco/walk.mco   \
       mco/export.mco mco/nodes.mco mco/config.mco mco/symbol-table.mco   \
       mco/tools.mco mco/mapping2.mco mco/mapping1.mco 
+o/allocate-names.o classes/mimosa/inria/scheme2js/allocate-names.class:  \
+      mco/gen-js.mco mco/verbose.mco mco/walk.mco mco/export.mco         \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
 o/module.o classes/mimosa/inria/scheme2js/module.class: mco/config.mco   \
       mco/infotron.mco mco/export.mco mco/verbose.mco 
 o/loop-updates.o classes/mimosa/inria/scheme2js/loop-updates.class:      \
@@ -255,9 +260,6 @@ o/out.o classes/mimosa/inria/scheme2js/out.class:                        \
       mco/nodes.mco mco/tools.mco mco/config.mco 
 o/push-set.o classes/mimosa/inria/scheme2js/push-set.class:              \
       mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco 
-o/loop-hoist.o classes/mimosa/inria/scheme2js/loop-hoist.class:          \
-      mco/verbose.mco mco/captured-vars.mco mco/side.mco mco/walk.mco    \
-      mco/export.mco mco/nodes.mco mco/tools.mco mco/config.mco 
 o/var-ref-util.o classes/mimosa/inria/scheme2js/var-ref-util.class:      \
       mco/export.mco mco/nodes.mco mco/tools.mco mco/config.mco 
 o/while.o classes/mimosa/inria/scheme2js/while.class: mco/verbose.mco    \
@@ -381,6 +383,10 @@ o/node-elimination.o classes/mimosa/inria/scheme2js/node-elimination.class: \
 o/compile-optimized-set.o classes/mimosa/inria/scheme2js/compile-optimized-set.class: \
       mco/export.mco mco/allocate-names.mco mco/nodes.mco                \
       mco/template-display.mco mco/tools.mco mco/config.mco 
+o/trampoline.o classes/mimosa/inria/scheme2js/trampoline.class:          \
+      mco/tools.mco mco/var-ref-util.mco mco/verbose.mco mco/side.mco    \
+      mco/tail.mco mco/symbol.mco mco/walk.mco mco/export.mco            \
+      mco/nodes.mco mco/config.mco 
 o/template-display.o classes/mimosa/inria/scheme2js/template-display.class: \
       mco/tools.mco 
 o/verbose.o classes/mimosa/inria/scheme2js/verbose.class: mco/config.mco 
@@ -412,9 +418,9 @@ o/encapsulation.o classes/mimosa/inria/scheme2js/encapsulation.class:    \
       mco/verbose.mco mco/config.mco mco/export.mco mco/nodes.mco        \
       mco/symbol.mco 
 o/scheme2js.o classes/mimosa/inria/scheme2js/scheme2js.class:            \
-      mco/callcc.mco mco/verbose.mco mco/scm-out.mco mco/out.mco         \
-      mco/rm-tail-breaks.mco mco/statements.mco mco/propagation.mco      \
-      mco/loop-hoist.mco mco/while.mco mco/scope.mco mco/constants.mco   \
+      mco/trampoline.mco mco/callcc.mco mco/verbose.mco mco/scm-out.mco  \
+      mco/out.mco mco/rm-tail-breaks.mco mco/statements.mco              \
+      mco/propagation.mco mco/while.mco mco/scope.mco mco/constants.mco  \
       mco/constant-propagation.mco mco/tail-rec.mco                      \
       mco/rm-unused-vars.mco mco/inline.mco mco/node-elimination.mco     \
       mco/encapsulation.mco mco/letrec-expansion.mco mco/symbol.mco      \
@@ -443,9 +449,6 @@ o/callcc_anormalform.o classes/mimosa/inria/scheme2js/callcc_anormalform.class: 
       mco/tools.mco mco/side.mco mco/verbose.mco                         \
       mco/callcc_locations.mco mco/walk.mco mco/export.mco mco/nodes.mco \
       mco/config.mco 
-o/loop-hoist.o classes/mimosa/inria/scheme2js/loop-hoist.class:          \
-      mco/verbose.mco mco/captured-vars.mco mco/side.mco mco/walk.mco    \
-      mco/export.mco mco/nodes.mco mco/tools.mco mco/config.mco 
 o/side.o classes/mimosa/inria/scheme2js/side.class: mco/verbose.mco      \
       mco/walk.mco mco/export.mco mco/nodes.mco mco/config.mco 
 o/constants.o classes/mimosa/inria/scheme2js/constants.class:            \
@@ -481,9 +484,9 @@ o/deep-clone.o classes/mimosa/inria/scheme2js/deep-clone.class:          \
       mco/verbose.mco mco/walk.mco mco/tools.mco mco/export.mco          \
       mco/nodes.mco 
 o/scheme2js.o classes/mimosa/inria/scheme2js/scheme2js.class:            \
-      mco/callcc.mco mco/verbose.mco mco/scm-out.mco mco/out.mco         \
-      mco/rm-tail-breaks.mco mco/statements.mco mco/propagation.mco      \
-      mco/loop-hoist.mco mco/while.mco mco/scope.mco mco/constants.mco   \
+      mco/trampoline.mco mco/callcc.mco mco/verbose.mco mco/scm-out.mco  \
+      mco/out.mco mco/rm-tail-breaks.mco mco/statements.mco              \
+      mco/propagation.mco mco/while.mco mco/scope.mco mco/constants.mco  \
       mco/constant-propagation.mco mco/tail-rec.mco                      \
       mco/rm-unused-vars.mco mco/inline.mco mco/node-elimination.mco     \
       mco/encapsulation.mco mco/letrec-expansion.mco mco/symbol.mco      \

@@ -3,7 +3,8 @@
    (library scheme2js)
    
    (import __hopscheme_config
-	   __dollar_scheme2js_module)
+	   __dollar_scheme2js_module
+	   __hop_exports)
 
    (export (compile-scheme-file file::bstring)))
    
@@ -26,6 +27,7 @@
       (lambda ()
 	 (scheme2js-compile-file file              ;; input-files
 				 "-"               ;; output-file
-				 '()               ;; additional module-headers
+				 `( ;; module-headers
+				   (merge-first (import ,(hop-runtime-module))))
 				 (get-cached-config)
 				 :reader *hop-reader*))))

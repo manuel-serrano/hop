@@ -35,9 +35,12 @@
 	    (pair? (cadr l)))
        (if (scheme2js-config 'dollar-eval)
 	   (let ((val (dollar-eval (cadr l))))
-	      (set-car! l `(pragma ,val))
-	      (set-cdr! l (unhop-list! (cddr l)))
-	      l)
+	      (if (eq? val #unspecified)
+		  (unhop-list! (cddr l)) ;; skip '$ and (...)
+		  (begin
+		     (set-car! l `(pragma ,val))
+		     (set-cdr! l (unhop-list! (cddr l)))
+		     l)))
 	   (begin
 	      (set-car! l `(pragma ,(with-output-to-string
 				       (lambda ()
@@ -48,14 +51,6 @@
       (else
        (set-cdr! l (unhop-list! (cdr l)))
        l)))
-
-(define (unhop-bindings! bindings)
-   (unless (not (list? bindings)) ;; bad 'let'
-      (for-each (lambda (binding)
-		   (unless (not (and (pair? binding)
-				     (pair? (cdr binding))))
-		      (unhop-list! (cdr binding))))
-		bindings)))
    
 (define (unhop x)
    (cond
@@ -86,26 +81,22 @@
 	    (or (eq? (car x) 'quote)
 		(eq? (car x) 'quasiquote)))
        x)
-      ((not (pair? x))
+      ;(let (bindings) ...)
+      ((and (pair? x)
+	    (eq? (car x) 'let)
+	    (pair? (cdr x))
+	    (pair? (cadr x)))
+       (let ((bindings (cadr x)))
+	  (for-each (lambda (binding)
+		       (set-cdr! binding (unhop-list! (cdr binding))))
+		    bindings)
+	  x))
+      ; (... $ (...) ....)
+      ((pair? x)
+       (unhop-list! x)
        x)
       (else
-       (match-case x
-	  (((or let let* letrec) ((?- . ?-) . ?-) . ?-)
-	   (unhop-bindings! (cadr x))
-	   x)
-	  ((let (? symbol?) ((?- . ?-) . ?-) . ?-)
-	   (unhop-bindings! (caddr x))
-	   x)
-	  ((@ . ?-)
-	   x)
-	  ((pragma . ?-)
-	   x)
-	  ((define-macro . ?-)
-	   x)
-	  (else
-	   ; (... $ (...) ....)
-	   (unhop-list! x)
-	   x)))))
+       x)))
 
 (add-pre-expand! 10 ;; high priority: execute before other expansions.
 		    ;; -> $(servic...).f becomes (pragma..).f and not

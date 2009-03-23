@@ -44,7 +44,6 @@
      (do-inlining . #f)
      (inline-runtime . #f)
      (runtime-is-constant . #f)
-     (loop-hoist . #f)
      (propagation . #f)
      (constant-propagation . #f)
      (while . #f)
@@ -54,7 +53,8 @@
      (optimize-set! . #f)
      (max-tail-depth . 40)
      (var-elimination . #f)
-     (optimize-consts . #f)))
+     (optimize-consts . #f)
+     (bigloo-runtime-eval . #f)))
 (define (O0-config) *O0*)
 
 (define *O1*
@@ -64,7 +64,6 @@
      (max-inline-size . 30)
      (inline-runtime . #t)
      (runtime-is-constant . #t)
-     (loop-hoist . #f)
      (propagation . #t)
      (constant-propagation . #t)
      (while . #t)
@@ -74,7 +73,8 @@
      (optimize-set! . #t)
      (max-tail-depth . 40)
      (var-elimination . #t)
-     (optimize-consts . #t)))
+     (optimize-consts . #t)
+     (bigloo-runtime-eval . #f)))
 (define (O1-config) *O1*)
 
 (define *O2*
@@ -84,7 +84,6 @@
      (max-inline-size . 15)
      (inline-runtime . #f)
      (runtime-is-constant . #t)
-     (loop-hoist . #f)
      (propagation . #t)
      (constant-propagation . #t)
      (while . #t)
@@ -94,7 +93,8 @@
      (optimize-set! . #t)
      (max-tail-depth . 40)
      (var-elimination . #t)
-     (optimize-consts . #t)))
+     (optimize-consts . #t)
+     (bigloo-runtime-eval . #t)))
 (define (O2-config) *O2*)
 
 (define *O3*
@@ -104,7 +104,6 @@
      (max-inline-size . 45)
      (inline-runtime . #t)
      (runtime-is-constant . #t)
-     (loop-hoist . #t)
      (propagation . #t)
      (constant-propagation . #t)
      (while . #t)
@@ -124,7 +123,6 @@
      (max-inline-size . 45)
      (inline-runtime . #t)
      (runtime-is-constant . #t)
-     (loop-hoist . #t)
      (propagation . #t)
      (constant-propagation . #t)
      (while . #t)
@@ -134,7 +132,8 @@
      (optimize-set! . #t)
      (max-tail-depth . 40)
      (var-elimination . #t)
-     (optimize-consts . #t)))
+     (optimize-consts . #t)
+     (bigloo-runtime-eval . #t)))
 
 (define (Obench-config) *Obench*)
 

@@ -4,11 +4,11 @@
 	   nodes
 	   export-desc)
    (export (constant-var n)
-	   (runtime-var n)
+	   (runtime-ref-var n)
 	   (call-target operator::Node)
-	   (runtime-var-ref-id n)
-	   (runtime-var-ref? n)
-	   (higher-order-runtime-var-ref? n)
+	   (runtime-ref-var-id n)
+	   (runtime-ref?::bool n)
+	   (higher-order-runtime-ref?::bool n)
 	   (transitive-value var-ref::Ref)))
 
 (define (constant-var n)
@@ -19,25 +19,26 @@
 	      (and constant?
 		   var)))))
 
-(define (runtime-var n)
+;; if n is a runtime-ref then return the var. otherwise #f
+(define (runtime-ref-var n)
    (let ((v (constant-var n)))
       (and v
 	   (eq? (Var-kind v) 'imported)
 	   (Export-Desc-runtime? (Var-export-desc v))
 	   v)))
 
-(define (runtime-var-ref? n)
-   (and (runtime-var n)
+(define (runtime-ref? n)
+   (and (runtime-ref-var n)
 	#t))
 
-(define (higher-order-runtime-var-ref? n)
-   (let ((v (runtime-var n)))
+(define (higher-order-runtime-ref? n)
+   (let ((v (runtime-ref-var n)))
       (and v
 	   (Export-Desc-higher? (Var-export-desc v))
 	   #t)))
 
-(define (runtime-var-ref-id n)
-   (let ((v (runtime-var n)))
+(define (runtime-ref-var-id n)
+   (let ((v (runtime-ref-var n)))
       (and v
 	   (Var-id v))))
 
@@ -45,7 +46,7 @@
    (cond
       ((Lambda? operator)
        operator)
-      ((runtime-var-ref-id operator)
+      ((runtime-ref? operator)
        operator)
       ((and (Ref? operator)
 	    (with-access::Ref operator (var)
@@ -58,7 +59,7 @@
        #f)))
 
 (define (transitive-value var-ref::Ref)
-   (if (runtime-var-ref? var-ref)
+   (if (runtime-ref? var-ref)
        var-ref
        (with-access::Ref var-ref (var)
 	  (with-access::Var var (constant? value)

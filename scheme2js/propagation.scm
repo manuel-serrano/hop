@@ -11,7 +11,8 @@
 	   mutable-strings)
    (static (class Prop-Env
 	      call/cc?::bool
-	      suspend/resume?::bool)
+	      suspend/resume?::bool
+	      bigloo-runtime-eval?::bool)
 	   (wide-class Prop-Call/cc-Call::Call
 	      mutated-vars ;; vars that are mutated after the call
 	      visible-whiles)
@@ -51,7 +52,10 @@
 
 (define (pass1 tree)
    (verbose " propagation1")
-   (changed tree (make-Prop-Env (config 'call/cc) (config 'suspend/resume))
+   (changed tree (instantiate::Prop-Env
+		    (call/cc? (config 'call/cc))
+		    (suspend/resume? (config 'suspend/resume))
+		    (bigloo-runtime-eval? (config 'bigloo-runtime-eval)))
 	    #f '() #f))
 
 (define (widen-vars! vars)
@@ -222,7 +226,10 @@
 
 (define (pass2! tree)
    (verbose " propagation2")
-   (propagate! tree (make-Prop-Env (config 'call/cc) (config 'suspend/resume))
+   (propagate! tree (instantiate::Prop-Env
+		       (call/cc? (config 'call/cc))
+		       (suspend/resume? (config 'suspend/resume))
+		       (bigloo-runtime-eval? (config 'bigloo-runtime-eval)))
 	       (make-List-Box '())))
 
 ;; b1 will be the result-box
@@ -332,7 +339,8 @@
 			    (char? value)
 			    (boolean? value)
 			    (and (not (use-mutable-strings?))
-				 (string? value))
+				 (string? value)
+				 (not (>fx (string-length value) 15)))
 			    (eqv? #unspecified value))))
 		(instantiate::Const (value (Const-value val))))
 	       (else
@@ -407,8 +415,9 @@
    
    (default-walk! this var/vals)
    (with-access::Call this (operator operands)
-      (if (and (Ref? operator)
-	       (runtime-var (Ref-var operator))
+      (if (and (Prop-Env-bigloo-runtime-eval? env)
+	       (Ref? operator)
+	       (runtime-ref? operator)
 	       (every? constant-value? operands))
 	  ;; for most runtime-functions we should be able to compute the result
 	  ;; right now. (obviously a "print" won't work now...)

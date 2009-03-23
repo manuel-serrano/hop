@@ -21,20 +21,15 @@
 	   constants
 	   scope
 	   while
-	   loop-hoist
 	   propagation
 	   statements
 	   rm-tail-breaks
 	   out
 	   scm-out
 	   verbose
-	   callcc)
-   ;; module-headers are module-clauses without the module-name
-   ;; they are of the form (module-pairs . kind)
-   ;;    kind can be either provide, replace, merge-first or merge-last
-   ;;    replace (which must be unique) replaces any existing module-header
-   ;;    provides are only used, if the file does not have any module-clause
-   ;;    merge-first/last are added before/after the module-clause.
+	   callcc
+	   trampoline)
+   ;; see module.scm for information on module-headers.
    (export (scheme2js-compile-expr expr
 				   out-p
 				   module-headers::pair-nil
@@ -80,11 +75,10 @@
       (pass 'rm-unused      (rm-unused-vars! tree))
       (pass 'node-elim3     (node-elimination! tree))
       (pass 'call/cc-early  (call/cc-early! tree))
-      ;(trampoline tree)
+      (pass 'trampoline     (trampoline tree))
       (pass 'scope          (scope-resolution! tree))
       (pass 'constants      (constants! tree))
       (pass 'while          (tail-rec->while! tree))
-      (pass 'hoist          (loop-hoist! tree))
       (pass 'propagation    (propagation! tree))
       ;(var-elimination! tree)
       (pass 'rm-unused2     (rm-unused-vars! tree))
@@ -129,6 +123,10 @@
 		  (string=? "-" in-file))
 	 (config-set! 'statics-suffix
 		      (string-append "_" (prefix (basename in-file)))))
+
+      ;; slightly hackish.
+      ;; The compilation-unit's name is set to #f if no 'module clause had been
+      ;; given. (or if an override wants us to think this way)
 
       (when (eq? (config 'export-globals) 'module)
 	 (config-set! 'export-globals

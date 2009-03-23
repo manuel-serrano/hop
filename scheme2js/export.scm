@@ -1,6 +1,9 @@
 (module export-desc
    (import gen-js)
    (export
+    (final-class Export-Table
+       qualifier::symbol
+       id-ht) ;; hashtable of Export-Descs
     (final-class Export-Desc
        (id::symbol read-only)
        (js-id::bstring read-only)

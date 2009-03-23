@@ -14,6 +14,7 @@
 	      (target (default #f))
 	      (verify-later-targets::pair-nil (default '())))
 	   (final-class Mark-Env
+	      assume-call/cc?::bool
 	      extern-always-call/cc?::bool))
    (export (call/cc-locations tree::Module)))
 
@@ -61,8 +62,9 @@
 
 (define (callcc-mark tree)
    (verbose " call/cc mark")
-   (mark tree (instantiate::Mark-Env (extern-always-call/cc?
-				      (config 'extern-always-call/cc)))
+   (mark tree (instantiate::Mark-Env
+		 (assume-call/cc? (config 'assume-callcc?)) ;; for benchmarking
+		 (extern-always-call/cc? (config 'extern-always-call/cc)))
 	 #f)
    (finish-marking tree #f))
 
@@ -73,6 +75,8 @@
    (default-walk this #f))
 
 (define-nmethod (Lambda.mark current-fun)
+   (when (Mark-Env-assume-call/cc? env)
+      (mark-call/cc-fun this))
    (default-walk this this))
 
 (define (unsafe-param? param call current-fun env)

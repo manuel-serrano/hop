@@ -22,7 +22,17 @@
 (define-nmethod (Execution-Unit.find-free surrounding-fun visible-vars-list)
    (with-access::Execution-Unit this (scope-vars free-vars)
       (set! free-vars '())
-      (default-walk this this (list scope-vars))))
+      (default-walk this this (list scope-vars))
+      (when surrounding-fun
+	 (let ((this-free-vars free-vars))
+	    (with-access::Execution-Unit surrounding-fun (free-vars)
+	       ;; free vars could be free for surrounding fun too.
+	       (for-each (lambda (var)
+			    (unless (or (any? (lambda (s) (memq var s))
+					      visible-vars-list)
+					(memq var free-vars))
+			       (cons-set! free-vars var)))
+			 this-free-vars))))))
 
 (define-nmethod (Scope.find-free surrounding-fun visible-vars-list)
    (with-access::Scope this (scope-vars)

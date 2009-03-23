@@ -15,7 +15,7 @@
 	   template-display)
    (static (class Out-Env::Display-Env
 	      trampoline?::bool
-	      max-tail-depth
+	      max-tail-depth::bint
 	      suspend-resume?::bool
 	      call/cc?::bool
 	      optimize-var-number?::bool
@@ -160,20 +160,32 @@
 	    "$js-id"))))
 
 (define-nmethod (Module.compile p stmt?)
-   (define (exported-vars-code)
-      (with-access::Module this (scope-vars)
-	 (unless (null? scope-vars)
-	    (template-display p env
-	       "/* Exported Variables */\n"
-	       "~e" (for-each (lambda (var)
-				 (with-access::Named-Var var (js-id)
-				    (template-display p env
-				       "var $js-id;\n")))
-			      scope-vars)
-	       "/* End Exports */\n\n"))))
+   ;; exported-vars
+   (with-access::Module this (scope-vars)
+      (unless (null? scope-vars)
+	 (template-display p env
+	    "/* Exported Variables */\n"
+	    "~e" (for-each (lambda (var)
+			      (with-access::Named-Var var (js-id)
+				 (template-display p env
+				    "var $js-id;\n")))
+			   scope-vars)
+	    "/* End Exports */\n\n")))
 
-   (exported-vars-code)
+   ;; trampoline-code
+   (when (Out-Env-trampoline? env)
+      (scm2js-globals-init p env)
+      (let ((tail-obj (scm2js-global "TAIL_OBJECT"))
+	    (max-tail-depth (Out-Env-max-tail-depth env)))
+	 [assert (max-tail-depth) (fixnum? max-tail-depth)]
+	 (template-display p env
+	    "var sc_tailTmp;\n"
+	    "var sc_tailObj = ~a;\n" tail-obj
+	    "~a.calls = ~a;\n" tail-obj max-tail-depth
+	    "~a.MAX_TAIL_CALLs = ~a;\n" tail-obj max-tail-depth
+	    "var sc_funTailCalls = ~a;\n"max-tail-depth)))
 
+   ;; declared variables
    (with-access::Module this (declared-vars body)
       (for-each (lambda (var)
 		   (unless (eq? (Var-kind var) 'exported)
@@ -181,7 +193,8 @@
 			 (template-display p env
 			    "var $js-id;\n"))))
 		declared-vars)
-      
+
+      ;; finally the body.
       (walk body p #t)))
 
 (define-nmethod (Lambda.compile p stmt?)
@@ -206,6 +219,13 @@
 	    "  $js-id = sc_cons(arguments[$*tmp-var*], $js-id);\n"
 	    "}\n")))
 
+   (define (trampoline-start-code)
+      (template-display p env
+	 "var sc_tailTmp;\n"
+	 "var sc_tailObj;\n"
+	 "var sc_funTailCalls = (sc_tailObj = ~a).calls;\n"
+	 (scm2js-global "TAIL_OBJECT")))
+
    (define (declare/reset-counter-variables)
       (with-access::Lambda this (call/cc-nb-while-counters)
 	 (if (zerofx? call/cc-nb-while-counters)
@@ -222,7 +242,14 @@
 	    (unless (>=fx i call/cc-nb-while-counters)
 	       (let ((name (call/cc-counter-name i)))
 		  (template-display p env
-		     "~a = sc_callCcState.~a || 0;\n" name name))
+		     ;; if a counter-var is in the state, then we will enter
+		     ;; the while during restoration and thus increment it at
+		     ;; that time. For simplicity we will decrement _all_
+		     ;; loop-variables before "jumping" to the target. Therefore
+		     ;; we  assign "1" to those counters that are not yet
+		     ;; active. They will then be decrement as well (but not
+		     ;; incremented again during the jump).
+		     "~a = sc_callCcState.~a || 1;\n" name name))
 	       (loop (+fx i 1))))))
 
    (define (restore-frames)
@@ -331,6 +358,15 @@
    ;; one into the new one.
    (define (save-frames)
       (define (save-frame scope)
+	 ;; if this is a while-frame always save the counter-id
+	 (let* ((frame-counter-id (Call/cc-Scope-Info-counter-id-nb scope))
+		(frame-counter (and frame-counter-id
+				    (call/cc-counter-name frame-counter-id))))
+	    (when frame-counter
+	       (template-display p env
+		  "sc_callCcState[~a] = ~a;\n"
+		  frame-counter frame-counter)))
+
 	 (let* ((frame-name (call/cc-frame-name scope))
 		(call/cc? (Out-Env-call/cc? env)) ;; and not just suspend
 		(while (Call/cc-Scope-Info-surrounding-while scope))
@@ -429,8 +465,8 @@
 		(values (reverse! (cdr rev))
 			(car rev))))))
    
-   (with-access::Out-Lambda this
-	 (lvalue declared-vars body vaarg? formals call/cc?)
+   (with-access::Out-Lambda this (lvalue declared-vars body vaarg? formals
+					 call/cc? contains-trampoline-call?)
       (receive (formals-w/o-vaarg vaarg)
 	 (split-formals/vaarg)
 
@@ -482,12 +518,14 @@
 		   (when vaarg?
 		      (with-access::Ref vaarg (var)
 			 (vaarg-code var (- (length formals) 1)))))
-	       (?? call/cc? "~e" (scm2js-globals-init p env))
+	       (?? (or call/cc? contains-trampoline-call?)
+		   "~e" (scm2js-globals-init p env))
+	       (?? contains-trampoline-call? "~e" (trampoline-start-code))
 	       (?@ call/cc?
 		   "try {\n"
-		   "  ~e"        (call/cc-start-code)
-		   "  ~@" ;; body
-		   "} ~e\n"      (call/cc-end-code))
+		   "  ~e"   (call/cc-start-code)
+		   "  ~@"   ;; body
+		   "} ~e\n" (call/cc-end-code))
 	       "  ~e" ;; declared-vars
 	       "  ~e" ;; body
 	       (each (lambda (var)
@@ -629,54 +667,6 @@
      (?@ stmt? "~@;\n")
      "sc_callCcIndex = 0"))
 
-; (define (tail-call-compile n p)
-;    (define (tail-call n tail-obj)
-;       (p-display p "(" tail-obj ".f =")
-;       (n.operator.compile p)
-; ;      (p-display p ".call(" tail-obj)
-;       (p-display p "," tail-obj ".f(")
-; ;      (if (not (null? n.operands))
-; ;	  (p-display p ", "))
-;       (compile-separated-list p n.operands ", ")
-;       (p-display p "))"))
-   
-;    (p-display
-;     p
-;     "(\n"
-;     (indent) "  (this === (sc_tailTmp =" (scm2js-global "TAIL_OBJECT") "))?\n"
-;     (indent) "  ((!sc_funTailCalls)?\n"
-;     (indent) "    (sc_tailTmp = [")
-;    (compile-separated-list p n.operands ", ")
-;    (p-display
-;     p
-;     "],\n"
-;     (indent) "    sc_tailTmp.callee = ")
-;    (n.operator.compile p)
-;    (p-display
-;     p
-;     ",\n"
-;     (indent) "    new sc_Trampoline(sc_tailTmp, " (config 'max-tail-depth) "))\n"
-;     (indent) "    :\n"
-;     (indent) "    (this.calls = sc_funTailCalls - 1,\n"
-;     (indent) "     ")
-;    (tail-call n "sc_tailTmp")
-;    (p-display
-;     p
-;     ")\n"
-;     (indent) "):(\n"
-;     (indent) "    sc_tailTmp.calls = " (config 'max-tail-depth) ",\n"
-;     (indent) "    sc_tailTmp = ")
-;    (tail-call n "sc_tailTmp") ;(scm2js-global "TAIL_OBJECT"))
-;    (p-display
-;     p
-;     ",\n"
-;     (indent) "    ((typeof sc_tailTmp === 'object' &&"
-;     "sc_tailTmp instanceof sc_Trampoline)?\n"
-;     (indent) "       sc_tailTmp.restart() :\n"
-;     (indent) "       sc_tailTmp)\n"
-;     (indent) "  )\n"
-;     (indent) ")"))
-
 (define-nmethod (Call.compile p stmt?)
    (define (compile-operator)
       ;; if the operator is a var-ref and contains a "." we have to do
@@ -693,22 +683,58 @@
 		   (template-display p env
 		      "(0, $js-id)")))
 	     (walk operator p #f))))
+
+   (define (compile-operands)
+      (with-access::Call this (operands)
+	 (template-display p env
+	    "~e"
+	    (separated ", "
+		       (lambda (operand) "~e" (walk operand p #f))
+		       operands))))
       
-   (with-access::Call this (operator operands call/cc? call/cc-index)
+   (define (compile-trampoline-call)
+      (define (do-trampoline-call tail-obj)
+	 (with-access::Call this (operator)
+	    (template-display p env
+	       "(~a.f = ~e," tail-obj (walk operator p #f)
+	       " ~a.f(~e))"  tail-obj (compile-operands))))
+
+      (let ((operator (Call-operator this))
+	    (max-tail-depth (Out-Env-max-tail-depth env)))
+	 (with-access::Call this (operator)
+	    (template-display p env
+	       "(this === sc_tailObj?\n"
+	       "     (!sc_funTailCalls?\n"  ;; == 0
+	       "          (this.args = [~e],"   (compile-operands)
+	       "           this.f = ~e,"        (walk operator p #f)
+	       "           this)\n"
+	       "       :\n"
+	       "          (this.calls = sc_funTailCalls - 1,\n"
+	       "          ~e))\n"         (do-trampoline-call "this")
+	       "  :\n"
+	       "     (sc_tailObj.calls = ~a,\n" max-tail-depth
+	       "      sc_tailTmp = ~e,\n" (do-trampoline-call "sc_tailObj")
+	       "      (sc_tailObj === sc_tailTmp?"
+	       "                 sc_tailObj.restart()"
+	       "               : sc_tailTmp)))"))))
+
+   (with-access::Call this (operator operands call/cc? call/cc-index
+				     trampoline?)
       (template-display p env
 	 (?@ stmt? "~@;\n")
 	 (?@ (not stmt?) "(~@)") ;; just for now. better than nothing.
 	 (?@ (and call/cc? call/cc-index)
 	     "sc_callCcIndex = ~a, ~@" call/cc-index)
 	 "~e"
-	 (unless (and (Out-Env-optimize-calls? env)
-		      (compile-optimized-call p env walk operator operands))
-	    (template-display p env
-	       "~e(~e)"
-	       (compile-operator)
-	       (separated ", "
-			  (lambda (operand) "~e" (walk operand p #f))
-			  operands))))))
+	 (cond
+	    ((and (Out-Env-optimize-calls? env)
+		  (compile-optimized-call p env walk operator operands))
+	     'do-nothing) ;; already printed
+	    (trampoline?
+	     (compile-trampoline-call))
+	    (else
+	     (template-display p env
+		"~e(~e)" (compile-operator) (compile-operands)))))))
 
 (define-nmethod (While.compile p stmt?)
    (define (finally-outs scope)

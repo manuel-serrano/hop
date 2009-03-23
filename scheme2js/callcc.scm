@@ -21,7 +21,9 @@
 	      (indices::pair-nil (default '()))
 
 	      (finally-vars::pair-nil (default '()))
-	      (surrounding-while read-only)))
+	      (surrounding-while read-only)
+
+	      (counter-id-nb (default #f)))) ;; only applies to Whiles
 	   
    (export (call/cc-early! tree::Module)
 	   (call/cc-middle tree::Module)
@@ -152,14 +154,16 @@
 					  scope-vars))
 		    (finally-vars (filter finally-var? to-save-vars)))
 
-		(if (null? to-save-vars)
-		    (default-walk this surrounding-fun this scopes)
-		    (let ((scope-info (instantiate::Call/cc-Scope-Info
-					 (id (gensym 'while))
-					 (vars to-save-vars)
-					 (indices '())
-					 (surrounding-while this)
-					 (finally-vars finally-vars))))
+		;; even when there are no variables to save. there is always
+		;; the loop-counter.
+		;; TODO: but there is no need, when we only have suspend/resume.
+		(let ((scope-info (instantiate::Call/cc-Scope-Info
+				     (id (gensym 'while))
+				     (vars to-save-vars)
+				     (indices '())
+				     (surrounding-while this)
+				     (finally-vars finally-vars)
+				     (counter-id-nb call/cc-counter-nb))))
 
 		       (when (not (null? finally-vars))
 			  (set! call/cc-finally-scopes (list scope-info)))
@@ -167,7 +171,7 @@
 		       (cons-set! call/cc-contained-scopes scope-info)
 
 		       (default-walk this surrounding-fun this
-			             (cons scope-info scopes)))))))))
+			             (cons scope-info scopes))))))))
 
 (define-nmethod (Let.scope surrounding-fun surrounding-while scopes)
    (with-access::Let this (call/cc? scope-vars bindings body)

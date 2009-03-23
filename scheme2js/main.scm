@@ -50,7 +50,7 @@
       (("--infotron" (help (default-str "Activate support for Infotrons." 'infotron)))
        (update-conf 'infotron (not invert-flag?)))
       (("--js-dot-notation"
-	(help (default-str "Disallows the access of JS-fields with dots."
+	(help (default-str "Allows the access of JS-fields with dots."
 		 'direct-js-object-access)))
        (update-conf 'direct-js-object-access (not invert-flag?)))
       (("--encapsulate-modules"
@@ -97,17 +97,13 @@
 	     (help "Set Optimization Level [0-3,bench]"))
        (set! *config*
 	     (set-optim-level *config* (or (string->number level) (string->symbol level)))))
-      (("--tailrec"
+      (("--tail-rec"
 	(help (default-str "transform tail-recursive calls into while-loops."
 		 'optimize-tail-rec)))
        (update-conf 'optimize-tail-rec (not invert-flag?)))
       (("--while"
 	(help (default-str "Search for typical Loop-patterns." 'while)))
        (update-conf 'while (not invert-flag?)))
-      (("--loop-hoist"
-	(help (default-str "hoists functions outside loops"
-		 'loop-hoist)))
-       (update-conf 'loop-hoist (not invert-flag?)))
       (("--inlining"
 	(help (default-str "Enable inlining" 'do-inlining)))
        (update-conf 'do-inlining (not invert-flag?)))
@@ -120,9 +116,9 @@
 		     "--max-inline-size requires a number as argument"
 		     size))
 	  (update-conf 'max-inline-size new-size)))
-      (("--rec-inline-nb" ?nb
-			  (help (default-str "Maximal nb of nested inlining."
-				   'rec-inline-nb)))
+      (("--max-rec-inline" ?nb
+			   (help (default-str "Maximal nb of nested inlining."
+				    'rec-inline-nb)))
        (let ((new-nb (string->number nb)))
 	  (if (not new-nb)
 	      (error #f
@@ -162,6 +158,10 @@
 	(help (default-str "Factor expensive constants into global variables."
 		 'optimize-consts)))
        (update-conf 'optimize-consts (not invert-flag?)))
+      (("--bigloo-runtime-eval"
+	(help (default-str "Evaluate 'constant' expressions at compile time"
+		 'bigloo-runtime-eval)))
+       (update-conf 'bigloo-runtime-eval (not invert-flag?)))
       
       (section "Trampolines and Call/cc")
       (("--trampoline"
@@ -216,6 +216,8 @@
 	   (error #f
 		  "only one input-file allowed"
 		  (cons *in-file* else)))
+	  ((string=? else "--assume-callcc")
+	   (update-conf 'assume-callcc #t))
 	  (else
 	   (set! *in-file* else))))))
 

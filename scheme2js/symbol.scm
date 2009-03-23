@@ -113,8 +113,16 @@
 	 (let loop ((imports imports))
 	    (if (null? imports)
 		#f
-		(let* ((imps-qualifier (caar imports))
-		       (imps (cdar imports)))
+		(let* ((import (car imports))
+		       (imps-qualifier
+			(cond
+			   ((pair? import) (car import))
+			   ((Export-Table? import)
+			    (Export-Table-qualifier import))
+			   (else (error #f "internal error" #f))))
+		       (imps (if (pair? import)
+				 (cdr import)
+				 (Export-Table-id-ht import))))
 		   (cond
 		      ((null? imps) (loop (cdr imports)))
 		      ((and qualifier

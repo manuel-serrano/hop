@@ -242,20 +242,24 @@
 				  constant?)))))
 		
 		(set! operator (move-stmt-walk operator stmt-operator? #t))
-		
-		(let loop ((ops operands)
-			   (stmts? stmt-operands)
-			   (partial? (unaffected? operator)))
-		   (cond
-		      ((null? ops)
-		       'done)
-		      (else
-		       (set-car! ops
-				 (move-stmt-walk (car ops) (car stmts?)
-						 partial?))
-		       (loop (cdr ops) (cdr stmts?)
-			     (and partial? (unaffected? (car ops)))))))
-		
+
+		(if (not stmt-operands)
+		    (set! operands
+			  (map! (lambda (o)
+				   (walk! o surrounding-fun stmt-begin))
+				operands))
+		    (let loop ((ops operands)
+			       (stmts? stmt-operands)
+			       (partial? (unaffected? operator)))
+		       (cond
+			  ((null? ops)
+			   'done)
+			  (else
+			   (set-car! ops
+				     (move-stmt-walk (car ops) (car stmts?)
+						     partial?))
+			   (loop (cdr ops) (cdr stmts?)
+				 (and partial? (unaffected? (car ops))))))))
 		(shrink! this)
 		this))))))
 

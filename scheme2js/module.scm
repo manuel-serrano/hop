@@ -4,11 +4,11 @@
 	   infotron
 	   config)
    (export (final-class Compilation-Unit
-	      name              ;; #f if no module-clause
+	      name              ;; #f if user has not given module-clause.
 	      top-level         ;; id or pair-nil
 	      macros::pair-nil  ;; of form (define-macro ... )
 	      imports::pair-nil ;; a list of export-lists/hashtables.
-	      exports::pair-nil)
+	      exports)          ;; list or Export-Table (see export.scm)
 	   (wide-class WIP-Unit::Compilation-Unit ;; work in progress
 	      header)
 	   (create-module-from-file file::bstring override-headers::pair-nil
@@ -23,26 +23,35 @@
 ;; one. It is also possible to provide headers that are only "applied" if the
 ;; file does not have any.
 ;; headers are of the form:
-;;  '((header . kind) ...)
-;; header is a std module-header (the "module name" part can be omitted)
+;;  '((kind header) ...)
+;;  '((module-kind module) ...)
+;; The kind clauses work on individual headers (such as '(import m)) whereas
+;; the module-kind clauses work on complete modules (such
+;;  as '(module foo (import ...))
+;; The modules for the module-kind may give name==#f - as
+;; in '(module #f (import ...)) - in which case the module-name will not be set
+;; (and the module is treated as if no module-clause had been given). This is
+;; only interesting when configs are set to 'module (for instance
+;; 'export-globals).
+;;
 ;; kind is one of:
-;; - replace: replace original header. can only be used once
-;; - provide: use this header if no original header was there. (replace will
+;; - module-replace: replace original header. can only be used once
+;; - module-provide: use this header if no original header was there. (replace will
 ;; replace this header as well!)
-;; - merge-first: but module-clauses before original header (or the
+;; - merge-first: put module-clause before original clause (or the
 ;; replaced/provided one).
-;; - merge-last: but module-clauses after the original header (or ...).
+;; - merge-last: put module-clause after the original header (or ...).
 ;;
 ;; Note: additional headers can (currently) only be used through the
 ;; library. The main-executable has no means to add them (as of 2008/10/22).
 ;; Note2: This module deals with user-code. -> we need to do many checks.
 
-;; does not verify it is a well-formed module-clause.
+;; does _not_ verify if it is a well-formed module-clause.
 (define (module-clause? e)
    (and (pair? e)
 	(eq? (car e) 'module)))
 
-;; checks that module-clause is well formed.
+;; checks that (user-supplied) module-clause is well formed.
 (define (check-module-clause clause)
    (unless (and (list? clause)
 		(pair? clause)
@@ -106,7 +115,7 @@
 	 (widen!::WIP-Unit m
 	    (header header))
 
-	 (if (not (string=? file "-")) (close-input-port in-port))
+	 (unless (string=? file "-") (close-input-port in-port))
 
 	 (prepare-module! m override-headers file-path reader)
 
@@ -142,6 +151,7 @@
 			       (eq? type (car entry))))
 		       header)))
 
+;; precondition: the WIP-Unit's header is either #f or well formed.
 (define (prepare-module! m::WIP-Unit override-headers::pair-nil
 			 file-path::bstring reader::procedure)
    (let ((include-paths (cons file-path (config 'include-paths)))
@@ -162,7 +172,7 @@
 	 (module-postprocessor m))))
 
 (define (check-override-headers o-headers)
-   (define valid-kinds '(replace provide merge-first merge-last))
+   (define valid-kinds '(module-replace module-provide merge-first merge-last))
 
    (unless (list? o-headers)
       (error "scheme2js-module"
@@ -171,37 +181,67 @@
 
    (let loop ((o-headers o-headers)
 	      (already-a-replace? #f)
-	      (found-provides? #f))
-      (cond
-	 ((null? o-headers)
+	      (found-provide? #f))
+      (if (null? o-headers)
 	  (when (and already-a-replace?
-		     found-provides?)
-	     (warning "replace-header is always shadowing provide-header")))
-	 ((not (pair? (car o-headers)))
-	  (error "scheme2js-module"
-		 "override-header not a pair" (car o-headers)))
-	 ((not (list? (caar o-headers)))
-	  (error "scheme2js-module"
-		 "override-header does not contain list"
-		 (car o-headers)))
-	 ((not (and (symbol? (cdar o-headers))
-		    (memq (cdar o-headers) valid-kinds)))
-	  (error "scheme2js-module"
-		 (string-append "cdr of override-header must be one of "
-				"replace, provide, merge-first, merge-last")
-		 (car o-headers)))
-	 ((and (eq? (cdar o-headers) 'replace)
-	       already-a-replace?)
-	  (error "scheme2js-module"
-		 "only one replace override header allowed"
-		 (car o-headers)))
-	 ((eq? (cdar o-headers) 'replace)
-	  (loop (cdr o-headers) #t found-provides?))
-	 ((eq? (cdar o-headers) 'provide)
-	  (loop (cdr o-headers) already-a-replace? #t))
-	 (else (loop (cdr o-headers) already-a-replace? found-provides?)))))
+		     found-provide?)
+	     (warning "replace-header is always shadowing provide-header"))
+	  (let ((override (car o-headers)))
+	     (cond
+		((not (and (pair? override)
+			   (pair? (cdr override))
+			   (null? (cddr override))))
+		 (error "scheme2js-module"
+			"invalid override-header - not a list of 2 elements"
+			(car o-headers)))
+		((not (and (symbol? (car override))
+			   (memq (car override) valid-kinds)))
+		 (error "scheme2js-module"
+			(string-append "car of override-header must be one of "
+				       "module-replace, module-provide, "
+				       "merge-first, merge-last")
+			override))
+		((and (or (eq? (car override) 'module-replace)
+			  (eq? (car override) 'module-provide))
+		      (not (match-case override
+			      ((module (? (lambda (n)
+					     (or (eq? n #f)
+						 (symbol? n))))
+				  (? list?))
+			       #t)
+			      (else #f))))
+		 (error "scheme2js-module"
+			"invalid override-header"
+			override))
+		((and (eq? (car override) 'module-replace)
+		      already-a-replace?)
+		 (error "scheme2js-module"
+			"only one replace override header allowed"
+			override))
+		((and (eq? (car override) 'module-provide)
+		      found-provide?)
+		 (error "scheme2js-module"
+			"only one provide override header allowed"
+			override))
+		((eq? (car override) 'module-replace)
+		 (loop (cdr o-headers) #t found-provide?))
+		((eq? (car override) 'module-provide)
+		 (loop (cdr o-headers) already-a-replace? #t))
+		(else (loop (cdr o-headers)
+			    already-a-replace?
+			    found-provide?)))))))
 
+;; precondition: the WIP-Unit's header is either #f or well formed.
+;;
+;; CARE: inefficient, but the override-headers should not be too big.
 (define (merge-headers! m::WIP-Unit override-headers)
+   (define (select-name header replace provide)
+      (cond
+	 (replace (cadr replace))
+	 (header (cadr header))
+	 (provide (cadr provide))
+	 (else #f)))
+	  
    (with-access::WIP-Unit m (header)
       (cond
 	 ((and (null? override-headers)
@@ -211,47 +251,38 @@
 	  'do-nothing)
 	 (else
 	  (check-override-headers override-headers)
-	  (let ((replaces (filter-map (lambda (p)
-					 (and (eq? (cdr p) 'replace)
-					      (car p)))
-				      override-headers))
-		(provides (filter-map (lambda (p)
-					 (and (eq? (cdr p) 'provide)
-					      (car p)))
-				      override-headers))
-		(merge-firsts (filter-map (lambda (p)
-					     (and (eq? (cdr p) 'merge-first)
-						  (car p)))
+	  (let* ((replace (let ((t (assq 'module-replace override-headers)))
+			     (and t (cadr t))))
+		 (provide (let ((t (assq 'module-provide override-headers)))
+			      (and t (cadr t))))
+		 (merge-firsts (filter-map (lambda (p)
+					      (and (eq? (car p) 'merge-first)
+						   (cadr p)))
+					   override-headers))
+		 (merge-lasts (filter-map (lambda (p)
+					     (and (eq? (car p) 'merge-last)
+						  (cadr p)))
 					  override-headers))
-		(merge-lasts (filter-map (lambda (p)
-					    (and (eq? (cdr p) 'merge-last)
-						 (car p)))
-					 override-headers)))
-	     (set! header `(module ,(if header
-					(cadr header)
-					#f)
-			      ,@(apply append merge-firsts)
+		 ;; replace and provide are complete module-headers (they
+		 ;; must start with (module ...)
+		 (new-name (select-name header replace provide)))
+	     (set! header `(module ,new-name
+			      ,@merge-firsts
 			      ,@(cond
-				   ((not (null? replaces))
-				    (car replaces))
-				   (header
-				    (cddr header))
-				   (else
-				    (apply append provides)))
-			      ,@(apply append merge-lasts))))))))
+				   (replace (cddr replace))
+				   (header (cddr header))
+				   (provide (cddr header))
+				   (else '()))
+			      ,@merge-lasts)))))))
 
 (define (set-name! m::WIP-Unit)
    (with-access::WIP-Unit m (header name)
       (cond
 	 ((null? header)
 	  (set! name #f))
-	 ((not (and (pair? header)
-		    (pair? (cdr header))
-		    (symbol? (cadr header))))
-	  (error "module-system"
-		 "bad module-clause. could not get name"
-		 header))
 	 (else
+	  ;; this might be #f too. But only if it was not supplied by the
+	  ;; user. (For instance using replace-overrides.)
 	  (set! name (cadr header))))))
 
 (define (read-includes! m::WIP-Unit include-paths reader)
@@ -282,8 +313,13 @@
 (define (read-imports! m::WIP-Unit include-paths reader bigloo-modules?)
    (define (get-import-list header)
       (let ((import-list (extract-entries header 'import)))
-	 (unless (every symbol? import-list)
+	 (unless (every (lambda (im)
+			   (or (symbol? im)
+			       (Compilation-Unit? im)))
+			import-list)
 	    (error "scheme2js-module"
+		   ;; we allow compilation units too, but this should not
+		   ;; appear in error message.
 		   "only symbols are allowed in import-list"
 		   import-list))
 	 import-list))
@@ -292,10 +328,20 @@
       (let loop ((imported-modules (get-import-list header))
 		 (new-macros macros)
 		 (new-imports imports))
-	 (if (null? imported-modules)
-	     (begin
-		(set! macros new-macros)
-		(set! imports new-imports))
+	 (cond
+	    ((null? imported-modules)
+	     (set! macros new-macros)
+	     (set! imports new-imports))
+	    ((Compilation-Unit? (car imported-modules))
+	     (let ((im (car imported-modules)))
+		(loop (cdr imported-modules)
+		      (append new-macros
+			      (Compilation-Unit-macros im))
+		      (if (null? (Compilation-Unit-exports im))
+			  new-imports
+			  (cons (Compilation-Unit-exports im)
+				new-imports)))))
+	    (else
 	     (let* ((imported-module (car imported-modules))
 		    (module-str (symbol->string imported-module))
 		    (module-filenames (map (lambda (extension)
@@ -337,7 +383,7 @@
 					     ;; followed by exports.
 					     (cons (cons name exports)
 						   new-imports))))))
-			  (close-input-port ip)))))))))
+			  (close-input-port ip))))))))))
 
 (define (normalize-JS-imports! m)
    (with-access::WIP-Unit m (header imports)

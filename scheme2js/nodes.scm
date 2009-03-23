@@ -79,6 +79,8 @@
        (call/cc-nb-indices::bint (default 0))
        (call/cc-hoisted::pair-nil (default '())) ;; a-list (index rev-hoisted ...)
        (call/cc-contained-scopes::pair-nil (default '()))
+
+       (contains-trampoline-call?::bool (default #f))
        )
     (final-class If::Node
        test::Node
@@ -108,7 +110,9 @@
        operands::pair-nil
 
        (call/cc?::bool (default #f))
-       (call/cc-index (default #f))) ;; #f -> tail call
+       (call/cc-index (default #f)) ;; #f -> tail call
+
+       (trampoline?::bool (default #f)))
 
    ;; optimization-nodes
 
