@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/share/hop-file.js                */
+/*    serrano/prgm/project/hop/1.11.x/share/hop-file.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 07:05:30 2008                          */
-/*    Last change :  Mon Nov 17 12:13:22 2008 (serrano)                */
-/*    Copyright   :  2008 Manuel Serrano                               */
+/*    Last change :  Sun Feb  8 18:33:08 2009 (serrano)                */
+/*    Copyright   :  2008-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side support for url browsers.                            */
 /*=====================================================================*/
@@ -83,7 +83,7 @@ function hop_filechooser_button_push( button, id, url ) {
       hop_innerHTML_set( id + "-files", h.car )
 	 
       el.selected = false;
-      el.value = false;
+      el.value = url;
    }
    
    with_hop( svc, callback );

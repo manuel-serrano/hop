@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop.old/1.10.x/weblets/doc/wiki.hop         */
+;*    serrano/prgm/project/hop/1.10.x/weblets/doc/wiki.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Wed Oct 22 11:39:08 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Sun Feb  8 08:52:11 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
 ;*=====================================================================*/
@@ -297,7 +297,7 @@
 ;*---------------------------------------------------------------------*/
 (define (wiki-tt-parser parser)
    (lambda x
-      (if (and (null? (cdr x)) (every? string? (car x)))
+      (if (and (null? (cdr x)) (pair? (car x)) (every? string? (car x)))
 	  (let ((s (html-string-decode (apply string-append (car x)))))
 	     (or (parser s) (<TT> x)))
 	  (<TT> x))))

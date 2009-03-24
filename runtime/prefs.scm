@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/prefs.scm                */
+;*    serrano/prgm/project/hop/1.11.x/runtime/prefs.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Thu Dec 11 07:35:20 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Sun Feb  8 09:49:41 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
 ;*=====================================================================*/
@@ -109,34 +109,36 @@
    ;; prefs/edit
    (set! *prefs-edit-svc*
 	 (service :name "admin/preferences/edit" (name type value key)
-	    (mutex-lock! (preferences-mutex))
-	    (let* ((pref (string->symbol name))
-		   (value (string->value (string->symbol type) value))
-		   (validator (hashtable-get *pref-validator-table* pref)))
-	       (mutex-unlock! (preferences-mutex))
-	       (when (or (not validator) (validator value))
-		  (if (string=? key "pref")
-		      (preference-store! pref value)
-		      (begin
-			 (mutex-lock! (preferences-mutex))
-			 (let ((set (hashtable-get *pref-set-table* key)))
-			    (mutex-unlock! (preferences-mutex))
-			    (when (procedure? set)
-			       (set value)))))
-		  #t))))
+	    (when (and name type value key)
+	       (mutex-lock! (preferences-mutex))
+	       (let* ((pref (string->symbol name))
+		      (value (string->value (string->symbol type) value))
+		      (validator (hashtable-get *pref-validator-table* pref)))
+		  (mutex-unlock! (preferences-mutex))
+		  (when (or (not validator) (validator value))
+		     (if (string=? key "pref")
+			 (preference-store! pref value)
+			 (begin
+			    (mutex-lock! (preferences-mutex))
+			    (let ((set (hashtable-get *pref-set-table* key)))
+			       (mutex-unlock! (preferences-mutex))
+			       (when (procedure? set)
+				  (set value)))))
+		     #t)))))
    ;; prefs/save
    (set! *prefs-save-svc*
 	 (service :name "admin/preferences/save" (key file ov)
-	    (mutex-lock! (preferences-mutex))
-	    (let ((save (hashtable-get *pref-save-table* key))
-		  (req (current-request)))
-	       (mutex-unlock! (preferences-mutex))
-	       (when (procedure? save)
-		  (if (and (or (authorized-service? req 'admin)
-			       (authorized-service? req 'admin/preferences/save))
-			   (authorized-path? req file))
-		      (save file (string=? ov "true"))
-		      (user-access-denied req)))))))
+	    (when (and key file ov)
+	       (mutex-lock! (preferences-mutex))
+	       (let ((save (hashtable-get *pref-save-table* key))
+		     (req (current-request)))
+		  (mutex-unlock! (preferences-mutex))
+		  (when (procedure? save)
+		     (if (and (or (authorized-service? req 'admin)
+				  (authorized-service? req 'admin/preferences/save))
+			      (authorized-path? req file))
+			 (save file (string=? ov "true"))
+			 (user-access-denied req))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string->value ...                                                */

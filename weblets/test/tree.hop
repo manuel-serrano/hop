@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
-;*    Last change :  Fri Dec 19 17:41:46 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Mon Feb 16 09:31:33 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Trees                                                            */
 ;*=====================================================================*/
@@ -24,7 +24,7 @@
       :source (service-resource test/tree "tree.hop")
       (<DIV> :class "comment"
 	 "This test checks trees. If the test succeeds you should
-be able to fold/unfold all the trees above")
+be able to fold/unfold all the trees below")
       (<H3> "A static tree")
       (<TREE> :id "computer-science"
 	 :open #t

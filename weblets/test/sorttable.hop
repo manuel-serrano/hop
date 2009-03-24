@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/test/sorttable.hop              */
+;*    serrano/prgm/project/hop/1.11.x/weblets/test/sorttable.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
-;*    Last change :  Sat Jul  7 08:25:27 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Mon Feb 16 07:02:18 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Sorttables                                                       */
 ;*=====================================================================*/
@@ -33,7 +33,7 @@
 	 :source (service-resource test/sorttable "sorttable.hop")
 	 (<DIV> :class "comment"
 	    [This test checks Sorttable. Click the headers of the table
-		  above. Note that the language column is not sortted
+		  above. Note that the language column is not sorted
 		  lexicographically. The order is
 		  ,(<TT> "hop > lisp > dylan").])
 	 (<SORTTABLE>

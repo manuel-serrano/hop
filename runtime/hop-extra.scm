@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Nov 12 10:30:41 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Tue Feb 10 08:44:35 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -220,7 +220,7 @@
 		     ((string? (cadr a))
 		      (loop (cddr a) :css rts dir path inl packed
 			    (cons (css (absolute-path (cadr a) dir) inl) els)))
-		     ((pair? (cadr a))
+		     ((list? (cadr a))
 		      (let ((css-files (map (lambda (f)
 					       (css (absolute-path f dir) inl))
 					    (cadr a))))
@@ -236,7 +236,7 @@
 		      (loop (cddr a) :jscript rts dir path inl packed
 			    (cons (script (absolute-path (cadr a) dir) inl)
 				  els)))
-		     ((pair? (cadr a))
+		     ((list? (cadr a))
 		      (let ((js-files (map (lambda (f)
 					      (script (absolute-path f dir)
 						      inl))
@@ -258,7 +258,7 @@
 		     ((string? (cadr a))
 		      (loop (cddr a) :include rts dir path inl packed
 			    (append (incl (cadr a) inl path) els)))
-		     ((pair? (cadr a))
+		     ((list? (cadr a))
 		      (loop (cddr a) :include rts dir path inl packed
 			    (append (reverse!
 				     (append-map (lambda (i)

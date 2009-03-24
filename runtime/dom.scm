@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/dom.scm                         */
+;*    serrano/prgm/project/hop/1.11.x/runtime/dom.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Fri Nov  2 10:12:22 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Wed Feb 18 09:28:11 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
 ;*=====================================================================*/
@@ -72,16 +72,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-element-by-id ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-generic (dom-get-element-by-id obj id)
-   (cond
-      ((or (string? obj) (number? obj) (symbol? obj))
-       #f)
-      ((null? obj)
-       #f)
-      ((not obj)
-       #f)
-      (else
-       (error 'dom-get-element-by-id "Illegal xml object" obj))))
+(define-generic (dom-get-element-by-id obj id::bstring)
+   (when (pair? obj)
+      (dom-get-element-by-id* obj id)))
    
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-element-by-id ::dom-document ...                         */
@@ -102,15 +95,14 @@
 ;*    dom-get-element-by-id ::xml-delay ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (dom-get-element-by-id obj::xml-delay id)
-   (if (eq? id (xml-delay-id obj))
-       obj
-       #f))
+   (when (string=? id (xml-delay-id obj))
+      obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-element-by-id ::xml-element ...                          */
 ;*---------------------------------------------------------------------*/
 (define-method (dom-get-element-by-id obj::xml-element id)
-   (if (eq? id (xml-element-id obj))
+   (if (string=? id (xml-element-id obj))
        obj
        (dom-get-element-by-id* (xml-element-body obj) id)))
 
@@ -133,7 +125,7 @@
 	    ((xml-document? parent)
 	     parent)
 	    ((xml-element? parent)
-	     (loop (xml-element-parent obj)))
+	     (loop (xml-element-parent parent)))
 	    (else
 	     #f)))))
 
@@ -426,24 +418,24 @@
 ;*    dom-replace-child! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (dom-replace-child! node new old)
-   (and (xml-element? node)
-	(with-access::xml-element node (parent)
-	   (and (xml-element? parent)
-		(with-access::xml-markup parent (body)
-		   (let loop ((body (remq! new body)))
-		      (cond
-			 ((null? body)
-			  (error 'dom-replace-child "old not a child" node))
-			 ((eq? (car body) old)
-			  (let ((doc (dom-owner-document node))
-				(id (xml-element-id new)))
-			     (when (xml-document? doc)
-				(with-access::xml-document doc (%idtable)
-				   (hashtable-remove! %idtable id)
-				   (hashtable-put! %idtable id new))))
-			  (set-car! body new))
-			 (else
-			  (loop (cdr body))))))))))
+   (when (xml-element? node)
+      (with-access::xml-markup node (body)
+	 (let loop ((body (remq! new body)))
+	    (cond
+	       ((null? body)
+		(error 'dom-replace-child "old not a child" node))
+	       ((eq? (car body) old)
+		(let ((doc (dom-owner-document node))
+		      (id (xml-element-id new)))
+		   (when (xml-document? doc)
+		      (with-access::xml-document doc (%idtable)
+			 (hashtable-remove! %idtable id)
+			 (when (xml-element? new)
+			    (with-access::xml-element new (id)
+			       (hashtable-put! %idtable id new))))))
+		(set-car! body new))
+	       (else
+		(loop (cdr body))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-elements-by-tag-name ...                                 */

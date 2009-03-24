@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/test/window.hop           */
+;*    serrano/prgm/project/hop/1.11.x/weblets/test/window.hop          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jul  7 08:33:34 2007                          */
-;*    Last change :  Thu Apr 10 09:09:47 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Mon Feb 16 09:52:07 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing window                                                   */
 ;*=====================================================================*/
@@ -42,7 +42,7 @@
       (<H3> "Plain native window")
       (<BUTTON> "open" :onclick ~(window-open :src $test/window
 				    :title "native window 1"))
-      (<H3> "A fixed-size native window")
+      (<H3> "A 200x200 native window")
       (<BUTTON> "open" :onclick ~(window-open :src $test/window
 				    :title "native window 2"
 				    :width 200 :height 200))
@@ -57,6 +57,10 @@
       (<H2> "Inner windows")
       (<H3> "Plain inner window")
       (<BUTTON> "open" :onclick ~(window-open :src $test/window/inner
+				    :width 300
+				    :height 200
+				    :top (- (event-mouse-y event) 150)
+				    :left (- (event-mouse-x event) 100)
 				    :parent document.body
 				    :background "#ccc"
-				    :title "inner window 1"))))
+				    :title (format "inner window ~a" (gensym))))))

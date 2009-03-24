@@ -101,6 +101,6 @@ Sometime it might be useful to evaluate HOP expression when HOP is fully
 initialized. This is the role of the **script file**. This specifies a 
 set of expression that are evaluated just before the main HOP loop
 is entered. A script file is specified using either the ++hop-script-file++
-parameter or the ++--script-file++ command line option.
+parameter or the ++\-\-script-file++ command line option.
 
 </doc>

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-paned.js                */
+/*    serrano/prgm/project/hop/1.11.x/share/hop-paned.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Mon Jun 23 13:12:30 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Mon Feb 16 08:45:21 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
 /*=====================================================================*/
@@ -61,12 +61,10 @@ function hop_vpaned_fraction_set( paned, fraction ) {
 /*    hop_hpaned_dimension_set ...                                     */
 /*---------------------------------------------------------------------*/
 function hop_hpaned_dimension_set( paned, val1, height ) {
-   var cursor_height = 10;
-
    node_style_set( paned.pan1, "height", val1 + "px" );
-   node_style_set( paned.pan2, "height", (height-val1-cursor_height) + "px" );
+   node_style_set( paned.pan2, "height", (height - val1) + "px" );
    paned.fraction = Math.round( (val1 / height) * 100 );
-   
+
    if( paned.onresize != undefined ) {
       paned.onresize();
    }
@@ -89,7 +87,7 @@ function hop_hpaned_mousemove( e, paned ) {
 /*---------------------------------------------------------------------*/
 function hop_hpaned_fraction_set( paned, fraction ) {
    var frac;
-   
+
    if( (fraction instanceof String) || (typeof fraction == "string") ) {
       frac = parseInt( fraction );
    } else {
@@ -99,8 +97,11 @@ function hop_hpaned_fraction_set( paned, fraction ) {
    if( (frac < 0) || (frac > 100) ) {
       return false;
    } else {
-      var height = paned.clientHeight;
-
+      // MS: 16 Feb 2009, I have no idea where this 6 is coming from.
+      // I presume that it is due to a border, margin, or padding property
+      // of some child but I'm not able (at that time) to find which...
+      var height = paned.offsetHeight - paned.cursor.offsetHeight - 6;
+      
       if( height > 0 ) {
 	 var val1 = height * (frac / 100);
 	 hop_hpaned_dimension_set( paned, val1, height );
