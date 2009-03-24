@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.11.x/weblets/wiki/wiki.hss            */
+/*    serrano/prgm/project/hop/2.0.x/weblets/wiki/wiki.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Tue Mar 10 16:37:30 2009 (serrano)                */
+/*    Last change :  Mon Mar 23 12:39:49 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for the WIKI weblet                                          */
@@ -172,7 +172,7 @@ div#wiki-toc {
 
 div.wiki-toc-popup {
   border: 2px ridge #bbb;
-  font-size: 100%;
+  font-size: 80%;
   display: none;
   position: fixed;
   top: 100px;
@@ -268,7 +268,6 @@ div.hopbbdb-body {
 
 span.wiki-strike {
   text-decoration: line-through;
-  color: #555;
 }
 
 /*---------------------------------------------------------------------*/

@@ -99,12 +99,16 @@ table.weblet {
 table.weblet td.logo {
   border: 1px outset transparent;
   -moz-border-radius: 0.2em;
+  -webkit-border-radius: 0.2em;
+  border-radius: 0.2em;
 }
 
 table.weblet td.logo:hover {
   border: 1px outset #777;
   background-color: #fbffe1;
   -moz-border-radius: 0.2em;
+  -webkit-border-radius: 0.2em;
+  border-radius: 0.2em;
 }
 
 table.weblet td.legend {
@@ -123,6 +127,8 @@ table.hop {
   border: 1px solid $border-color;
   background-color: white;
   -moz-border-radius: 0.5em;
+  -webkit-border-radius: 0.5em;
+  border-radius: 0.5em;
 }
 
 div#title {

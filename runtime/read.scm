@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Mar 20 17:14:12 2009 (serrano)                */
+;*    Last change :  Mon Mar 23 17:31:49 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -563,8 +563,9 @@
        (let* ((loc (list 'at
 			 (input-port-name (the-port))
 			 (input-port-position (the-port))))
-	      (expr (ignore)))
-	  (econs '<TILDE> (list ((hop-make-escape) (the-port) expr)) loc)))
+	      (expr (ignore))
+	      (args (list ((hop-make-escape) (the-port) expr) :src `',expr)))
+	  (econs '<TILDE> args loc)))
       
       ;; structures
       ("#{"
@@ -870,12 +871,6 @@
 					(let ((val (reverse! res)))
 					   (if hook (hook val) val))
 					(let ((val (eval! sexp env)))
-					   (when (xml-tilde? val)
-					      (warning/location
-					       file-name
-					       (caddr (cer sexp))
-					       'hop-load
-					       "Useless ~ expression"))
 					   (loop (cons val res)))))))
 			     (else
 			      (error 'hop-load "Illegal mode" mode))))

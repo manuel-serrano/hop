@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/runtime/hop-file.scm             */
+;*    serrano/prgm/project/hop/2.0.x/runtime/hop-file.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Sun Feb  8 18:29:07 2009 (serrano)                */
+;*    Last change :  Mon Mar 23 09:06:22 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -72,12 +72,12 @@
 	 (service :name "server-file/filechooser" (args)
 	    (apply <FILECHOOSER> args)))
    (set! *files-service*
-	 (service :name "server-file/files" (id url regexp hidden)
+	 (service :name "server-file/files" (id url regexp showhidden)
 	    (let ((url (if (string? url)
 			   ((hop-charset->locale) url)
 			   (pwd))))
 	       (preference-store! 'filechooser/url url)
-	       (list (<FILECHOOSER:FILES> id url regexp (equal? hidden "false"))
+	       (list (<FILECHOOSER:FILES> id url regexp (not showhidden))
 		     (<FILECHOOSER:PATH> id url)))))
    (set! *addplace-service*
 	 (service :name "server-file/addplace" (id url)
@@ -98,10 +98,9 @@
 		      (delete! ((hop-charset->locale) url) old)))))
 	    (<FILECHOOSER:PLACES> id)))
    (set! *toggle-service*
-	 (service :name "server-file/togglelocation" (id flag)
-	    (let ((v (string=? flag "on")))
-	       (preference-store! 'filechooser/show-location v)
-	       (location-classname v)))))
+	 (service :name "server-file/togglelocation" (id v)
+	    (preference-store! 'filechooser/show-location v)
+	    (location-classname v))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webdav? ...                                                      */

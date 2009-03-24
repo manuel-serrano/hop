@@ -394,6 +394,6 @@ previous default animation function.
 
 
 == See also ==
-<see-also>service, define-service, make-hop-service-url, make-service-url, procedure->service, hop-autoload, with-hop</see-also>
+<see-also>service, define-service, procedure->service, hop-autoload, with-hop</see-also>
 
 </doc>

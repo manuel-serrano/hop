@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Mar 20 14:10:30 2009 (serrano)                */
+;*    Last change :  Mon Mar 23 08:45:40 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -22,7 +22,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    wiki ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define-service (wiki path)
+(define-service (wiki #!optional path)
    (let ((req (current-request)))
       (if (string? path)
 	  (if (authorized-path? req path)
@@ -37,7 +37,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    wiki ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define-service (wiki/compile path)
+(define-service (wiki/compile #!optional path)
    (let ((req (current-request)))
       (if (string? path)
 	  (if (authorized-path? req path)

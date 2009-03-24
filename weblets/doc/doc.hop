@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/weblets/doc/doc.hop              */
+;*    serrano/prgm/project/hop/2.0.x/weblets/doc/doc.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Sun Feb  8 07:15:00 2009 (serrano)                */
+;*    Last change :  Mon Mar 23 11:58:26 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -43,7 +43,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    doc/weblet ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-service (doc/weblet weblet)
+(define-service (doc/weblet #!key weblet)
    (setup-api-tables!)
    (doc-main (<SCRIPT> :type "text/javascript"
 		(select-weblet-pad-on-load weblet))))
@@ -51,7 +51,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    doc/feature ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-service (doc/feature feature)
+(define-service (doc/feature #!key feature)
    (setup-api-tables!)
    (doc-main (<SCRIPT> :type "text/javascript"
 		(select-api-pad-on-load

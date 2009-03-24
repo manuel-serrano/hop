@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.11.x/runtime/Makefile                 */
+#*    serrano/prgm/project/hop/2.0.x/runtime/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Feb 24 11:58:14 2009 (serrano)                */
+#*    Last change :  Tue Mar 24 08:20:35 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/

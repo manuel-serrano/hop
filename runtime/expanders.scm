@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/expanders.scm                   */
+;*    serrano/prgm/project/hop/2.0.x/runtime/expanders.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:46:47 2006                          */
-;*    Last change :  Wed Dec  6 18:32:34 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Tue Mar 24 08:21:16 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop expanders                                                    */
 ;*=====================================================================*/

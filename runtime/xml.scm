@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Mar 20 12:28:43 2009 (serrano)                */
+;*    Last change :  Mon Mar 23 17:32:08 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -75,6 +75,7 @@
 	    (class xml-tilde::xml
 	       (body read-only)
 	       (parent (default #unspecified))
+	       (src read-only (default #f))
 	       (%js-expression (default #f))
 	       (%js-statement (default #f))
 	       (%js-return (default #f))
@@ -205,7 +206,7 @@
 	    (<UL> . ::obj)
 	    (<VAR> . ::obj)
 
-	    (<TILDE> ::obj)
+	    (<TILDE> ::obj #!key src)
 	    (<DELAY> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -963,9 +964,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    <TILDE> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (<TILDE> body)
+(define (<TILDE> body #!key src)
    (instantiate::xml-tilde
-      (body body)))
+      (body body)
+      (src src)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <DELAY> ...                                                      */

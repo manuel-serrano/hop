@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/share/hop-lib.js                 */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-lib.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Tue Nov 25 16:10:59 2008 (serrano)                */
-/*    Copyright   :  2007-08 Manuel Serrano                            */
+/*    Last change :  Sun Mar 22 07:15:48 2009 (serrano)                */
+/*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
 /*=====================================================================*/
@@ -115,9 +115,8 @@ function hop_debug_set( v ) {
 /*** META ((export trace)) */
 function hop_trace() {
    if( hop_client_debug > 0 ) {
-      var svc = hop_service_url( hop_service_base() + "/trace",
-				 [ "args" ],
-				 new Array( sc_vector2list( arguments ) ) );
+      var svc = hop_apply_url( hop_service_base() + "/trace",
+			       arguments );
       hop_send_request( svc, true, function() {}, function() {}, false, [] );
    }
 }
@@ -126,9 +125,8 @@ function hop_trace() {
 /*    hop_tprint ...                                                   */
 /*---------------------------------------------------------------------*/
 function hop_tprint( file, pos, rest ) {
-   var svc = hop_service_url( hop_service_base() + "/trace/tprint",
-	   	              [ "file", "pos", "args" ],
-			      [ file, pos, rest ] );
+   var svc = hop_apply_url( hop_service_base() + "/trace/tprint",
+			    [ file, pos, rest ] );
    hop_send_request( svc, true, function() {}, function() {}, false, [] );
 }
 

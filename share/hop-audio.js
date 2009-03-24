@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.11.x/share/hop-audio.js               */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-audio.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Sun Jan 18 17:20:28 2009 (serrano)                */
+/*    Last change :  Sun Mar 22 06:59:35 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -114,7 +114,7 @@ function HopAudioServerProxy( a, u ) {
 
    // ... and starts the server event notification
    hop_add_event_listener( document, "serverready", function() {
-	 with_hop( hop_service_url_varargs( u, Sready ) );
+	 with_hop( hop_apply_url( u, [ Sready, false ] ) );
       } );
 }
 
@@ -125,23 +125,23 @@ HopAudioProxy.prototype.toString = function() {
 };
 
 HopAudioServerProxy.prototype.playlist_play = function( index ) {
-   with_hop( hop_service_url_varargs( this.url, Splay, index ), this.err );
+   with_hop( hop_apply_url( this.url, [ Splay, index ] ), this.err );
 };
    
 HopAudioServerProxy.prototype.play = function( start ) {
-   with_hop( hop_service_url_varargs( this.url, Splay, 0 ), this.err );
+   with_hop( hop_apply_url( this.url, [ Splay, 0 ] ), this.err );
 };
 
 HopAudioServerProxy.prototype.stop = function() {
-   with_hop( hop_service_url_varargs( this.url, Sstop ), this.err );
+   with_hop( hop_apply_url( this.url, [ Sstop, false ] ), this.err );
 };
 
 HopAudioServerProxy.prototype.close = function() {
-   with_hop( hop_service_url_varargs( this.url, Sclose ), this.err );
+   with_hop( hop_apply_url( this.url, [ Sclose, false ] ), this.err );
 };
 
 HopAudioServerProxy.prototype.pause = function() {
-   with_hop( hop_service_url_varargs( this.url, Spause ), this.err );
+   with_hop( hop_apply_url( this.url, [ Spause, false ] ), this.err );
 };
 
 HopAudioServerProxy.prototype.load = function( l, s ) {
@@ -153,13 +153,13 @@ HopAudioServerProxy.prototype.load = function( l, s ) {
 	 err( h );
       } else {
 	 if( s ) {
-	    with_hop( hop_service_url_varargs( url, Splay, 0 ), err );
+	    with_hop( hop_apply_url( url, [ Splay, 0 ] ), err );
 	 }
 	 hop_audio_run_hooks( audio, "load" );
       }
    };
       
-   with_hop( hop_service_url_varargs( url, Sload, l ), success );
+   with_hop( hop_apply_url( url, [ Sload, l ] ), success );
 };
 
 HopAudioServerProxy.prototype.position_get = function() {
@@ -167,7 +167,7 @@ HopAudioServerProxy.prototype.position_get = function() {
 };
 
 HopAudioServerProxy.prototype.position_set = function( p ) {
-   with_hop( hop_service_url_varargs( this.url, Sposition, p ), this.err );
+   with_hop( hop_apply_url( this.url, [ Sposition, p ] ), this.err );
 };
 
 HopAudioServerProxy.prototype.pan_get = function() {
@@ -175,7 +175,7 @@ HopAudioServerProxy.prototype.pan_get = function() {
 };
 
 HopAudioServerProxy.prototype.pan_set = function( p ) {
-   with_hop( hop_service_url_varargs( this.url, Span, p ), this.err );
+   with_hop( hop_apply_url( this.url, [ Span, p ] ), this.err );
 };
 
 HopAudioServerProxy.prototype.volume_get = function() {
@@ -183,7 +183,7 @@ HopAudioServerProxy.prototype.volume_get = function() {
 };
 
 HopAudioServerProxy.prototype.volume_set = function( val ) {
-   with_hop( hop_service_url_varargs( this.url, Svolume, val ), this.err );
+   with_hop( hop_apply_url( this.url, [ Svolume, val ] ), this.err );
 };
 
 HopAudioServerProxy.prototype.duration_get = function() {
@@ -202,7 +202,7 @@ HopAudioServerProxy.prototype.playlist_set = function( plist, autorun ) {
    var o = this;
    this.playlist = plist;
    
-   with_hop( hop_service_url_varargs( this.url, Splaylist, plist ),
+   with_hop( hop_apply_url( this.url, [ Splaylist, plist ] ),
 	     function( h ) {
 		hop_audio_run_hooks( o.audio, "load" );
 		if( autorun ) o.playlist_play( 0 );

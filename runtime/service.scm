@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Mar 21 07:09:59 2009 (serrano)                */
+;*    Last change :  Mon Mar 23 08:53:20 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -40,10 +40,8 @@
 	    (get-all-services ::http-request)
 	    (get-service-url::bstring #!optional (prefix ""))
 	    (hop-service-path? ::bstring)
+	    (hop-apply-url::bstring ::bstring ::obj)
 	    (service-funcall-url::bstring ::hop-service . o)
-	    (make-hop-funcall-url ::symbol ::symbol ::bstring ::pair-nil ::pair-nil)
-	    (make-hop-service-url::bstring ::hop-service . o)
-	    (make-service-url::bstring ::hop-service . o)
 	    (hop-request-service-name::bstring ::http-request)
 	    (procedure->service::procedure ::procedure)
             (%eval::%http-response ::obj ::http-request ::procedure)
@@ -51,6 +49,7 @@
 	    (register-service!::hop-service ::hop-service)
 	    (expired-service-path?::bool ::bstring)
 	    (service-resource::bstring ::procedure #!optional file)
+	    (service-path::bstring ::procedure)
 	    (service-base-url::bstring ::procedure ::http-request)
 	    (service-etc-path-table-fill! ::bstring)
 	    (etc-path->service ::bstring)))
@@ -142,86 +141,48 @@
 	     (loop (+fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-apply-url ...                                                */
+;*---------------------------------------------------------------------*/
+(define (hop-apply-url base vals)
+   (let ((o (if (vector? vals) (vector->list vals) vals)))
+      (string-append base
+		     "?hop-encoding=hop"
+		     "&vals=" (url-path-encode (obj->string o)))))
+
+;*---------------------------------------------------------------------*/
 ;*    service-funcall-url ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (service-funcall-url svc . vals)
    (if (not (hop-service? svc))
-       (bigloo-type-error 'make-hop-service-url 'service svc)
+       (bigloo-type-error 'service-funcall-url 'service svc)
        (with-access::hop-service svc (id path)
-	  (string-append path
-			 "?hop-encoding=hop"
-			 "&vals=" (url-path-encode (obj->string vals))))))
+	  (hop-apply-url path vals))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-handler ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (service-handler svc req)
+   
+   (define (invoke proc vals)
+      (if (correct-arity? proc (length vals))
+	  (apply proc vals)
+	  (error (hop-service-id svc)
+		 "Wrong number of arguments"
+		 `(,(hop-service-id svc) ,@vals))))
+   
    (let* ((ca (http-request-cgi-args req))
 	  (enc (cgi-arg "hop-encoding" ca)))
       (cond
 	 ((null? (cdr ca))
-	  ((hop-service-proc svc)))
+	  (invoke (hop-service-proc svc) '()))
 	 ((and (string? enc) (string=? enc "hop"))
 	  (http-request-charset-set! req 'UTF-8)
-	  (apply (hop-service-proc svc) (serialized-cgi-arg "vals" ca)))
+	  (invoke (hop-service-proc svc) (serialized-cgi-arg "vals" ca)))
 	 (else
-	  (let ((proc (hop-service-proc svc))
-		(vals (map cdr (cdr ca))))
-	     (if (correct-arity? proc (length vals))
-		 (apply proc vals)
-		 (error (hop-service-id svc)
-			"Wrong number of arguments"
-			`(,(hop-service-id svc) ,@vals))))))))
-
-;*---------------------------------------------------------------------*/
-;*    make-hop-funcall-url ...                                         */
-;*---------------------------------------------------------------------*/
-(define (make-hop-funcall-url mode id path args vals)
-   (cond
-      ((and (null? args) (null? vals))
-       path)
-      ((=fx (length args) (length vals))
-       (case mode
-	  ((hop)
-	   (apply string-append
-		  path
-		  "?hop-encoding=hop"
-		  (map (lambda (f v)
-			  (format "&~a=~a" f (url-path-encode (obj->string v))))
-		       args vals)))
-	  ((plain)
-	   (apply string-append
-		  path
-		  "?hop-encoding=none"
-		  (map (lambda (f v)
-			  (let ((a (if (string? v) (url-path-encode v) v)))
-			     (format "&~a=~a" f a)))
-		       args vals)))
-	  (else
-	   (error 'make-hop-funcall-url "Illegal funcall mode" mode))))
-      (else
-       (error 'make-hop-funcall-url
-	      (format "arity mismatch, expecting ~a values, getting ~a"
-		      (length args) (length vals))
-	      id))))
-
-;*---------------------------------------------------------------------*/
-;*    make-hop-service-url ...                                         */
-;*---------------------------------------------------------------------*/
-(define (make-hop-service-url svc . vals)
-   (if (not (hop-service? svc))
-       (bigloo-type-error 'make-hop-service-url 'service svc)
-       (with-access::hop-service svc (id path args)
-	  (make-hop-funcall-url 'hop id path args vals))))
-
-;*---------------------------------------------------------------------*/
-;*    make-service-url ...                                             */
-;*---------------------------------------------------------------------*/
-(define (make-service-url svc . vals)
-   (if (not (hop-service? svc))
-       (bigloo-type-error 'make-hop-service-url 'service svc)
-       (with-access::hop-service svc (id path args)
-	  (make-hop-funcall-url 'plain id path args vals))))
+	  (invoke (hop-service-proc svc)
+		  (append-map (lambda (p)
+				 (list (string->keyword (car p)) (cdr p)))
+			      (cdr ca)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure->service ...                                           */
@@ -496,6 +457,13 @@
       (if (string? file)
 	  (string-append resource "/" file)
 	  resource)))
+
+;*---------------------------------------------------------------------*/
+;*    service-path ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (service-path svc)
+   (with-access::hop-service (procedure-attr svc) (path)
+      path))
    
 ;*---------------------------------------------------------------------*/
 ;*    service-base-url ...                                             */

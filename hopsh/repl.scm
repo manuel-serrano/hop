@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/hopsh/repl.scm                   */
+;*    serrano/prgm/project/hop/2.0.x/hopsh/repl.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Mon Jan  5 10:57:29 2009 (serrano)                */
+;*    Last change :  Sun Mar 22 07:28:52 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
@@ -60,10 +60,7 @@
 ;*    expression->url ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (expression->url obj)
-   (make-hopsh-url "hop"
-		   (hopsh-eval-service)
-		   (string-append "&exp="
-				  (url-path-encode (obj->string obj)))))
+   (make-hopsh-url (hopsh-eval-service) (list obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    eval-command ...                                                 */
@@ -80,22 +77,19 @@
 	 (let ((args (port->string-list (current-input-port))))
 	    (if (null? args)
 		(error 'command->url "Illegal command" str)
-		(make-hopsh-url "no"
-				(car args)
-				(apply string-append
-				       (command-options str (cdr args)))))))))
+		(make-hopsh-url (car args)
+				(command-options str (cdr args))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-hopsh-url ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (make-hopsh-url encoding cmd options)
-   (format "http://~a:~a~a/~a?hop-encoding=~a~a"
-	   (hopsh-host)
-	   (hop-port)
-	   (hop-service-base)
-	   cmd
-	   encoding
-	   options))
+(define (make-hopsh-url cmd options)
+   (hop-apply-url (format "http://~a:~a~a/~a"
+			  (hopsh-host)
+			  (hop-port)
+			  (hop-service-base)
+			  cmd)
+		  options))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopsh-exec ...                                                   */
@@ -136,25 +130,24 @@
 ;*    command-options ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (command-options str opts)
-   (let loop ((opts opts))
+   (let loop ((o opts))
       (cond
-	 ((null? opts)
+	 ((null? o)
 	  '())
-	 ((null? (cdr opts))
+	 ((null? (cdr o))
 	  (error 'command->url
-		 (format "Illegal command option `~a'" (car opts))
+		 (format "Illegal command option `~a'" (car o))
 		 str))
-	 ((not (char=? (string-ref (car opts) 0) #\-))
+	 ((not (char=? (string-ref (car o) 0) #\-))
+	  (cons (car o) (loop (cdr o))))
+	 ((null? (cdr o))
 	  (error 'command->url
-		 (format "Illegal command option `~a'" (car opts))
-		 str))
+		 (format "Actual value missing for option: ~a" (car o))
+		 `(,str ,@opts)))
 	 (else
-	  (cons (format "&~a=~a"
-			(substring (car opts)
-				   1
-				   (string-length (car opts)))
-			(url-path-encode (cadr opts)))
-		(loop (cddr opts)))))))
+	  (cons* (string->keyword (substring (car o) 1 (string-length (car o))))
+		 (cadr o)
+		 (loop (cddr o)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopsh-read-line-or-exp ...                                       */

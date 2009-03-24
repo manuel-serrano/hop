@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/hopsh/hopsh.hop           */
+;*    serrano/prgm/project/hop/2.0.x/weblets/hopsh/hopsh.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Apr 18 15:49:09 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Sun Mar 22 06:46:40 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hopsh weblet                                                 */
 ;*=====================================================================*/
@@ -21,7 +21,7 @@
 ;*    dangerous to execute an expression if no authentication is       */
 ;*    provided.                                                        */
 ;*---------------------------------------------------------------------*/
-(define-service (hopsh exp)
+(define-service (hopsh #!key exp)
    (let ((req (current-request)))
       (if (authorized-service? req 'hopsh)
 	  (if (not exp)
@@ -38,7 +38,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopsh ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define-service (hopsh/string exp)
+(define-service (hopsh/string #!key exp)
    (let ((req (current-request)))
       (if (authorized-service? req 'hopsh)
 	  (if (not exp)

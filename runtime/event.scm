@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/event.scm                */
+;*    serrano/prgm/project/hop/2.0.x/runtime/event.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Oct  1 15:26:41 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Sat Mar 21 18:01:02 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -313,7 +313,7 @@
 		     (vector (hostname) port (get-ajax-key (or port 0)))))
 	    
 	    (set! *init-service*
-		  (service :name "server-event/init" (key)
+		  (service :name "server-event/init" (#!key key)
 		     (with-lock *event-mutex*
 			(lambda ()
 			   (let ((req (current-request)))
@@ -332,14 +332,14 @@
 				 (name key)))))))
 
 	    (set! *policy-file-service
-		  (service :name "server-event/policy-file" (port key)
+		  (service :name "server-event/policy-file" (#!key port key)
 		     (instantiate::http-response-string
 			(request (current-request))
 			(content-type "application/xml")
 			(body (hop-event-policy port)))))
 
 	    (set! *close-service*
-		  (service :name "server-event/close" (key)
+		  (service :name "server-event/close" (#!key key)
 		     (with-lock *event-mutex*
 			(lambda ()
 			   (let ((key (string->symbol key)))
@@ -350,11 +350,11 @@
 					     *flash-request-list*)))))))
 
 	    (set! *unregister-service*
-		  (service :name "server-event/unregister" (event key)
+		  (service :name "server-event/unregister" (#!key event key)
 		     (server-event-unregister event key)))
 	    
 	    (set! *register-service*
-		  (service :name "server-event/register" (event key flash)
+		  (service :name "server-event/register" (#!key event key flash)
 		     (server-event-register event key flash)))))))
 
 ;*---------------------------------------------------------------------*/

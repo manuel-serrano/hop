@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sat Mar 21 07:01:05 2009 (serrano)                */
+;*    Last change :  Sun Mar 22 07:28:22 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -11,44 +11,10 @@
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
-;*    service-js-arguments ...                                         */
-;*---------------------------------------------------------------------*/
-(define (service-js-arguments formals)
-   (if (null? formals)
-       "[]"
-       (let loop ((l formals)
-		  (res '()))
-	  (cond
-	     ((null? l)
-	      (apply string-append (reverse! (cons "]" res))))
-	     (else
-	      (loop (cdr l)
-		    (cons (format "~a\"~a\""
-				  (if (null? res) "[" ", ") (car l))
-			  res)))))))
-
-;*---------------------------------------------------------------------*/
-;*    jscript ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (jscript args path)
-   `(format
-     (string-append "function() { return hop_service_url( ~s, "
-		    ,(service-js-arguments args)
-		    ", arguments ) }")
-     ,path))
-
-;*---------------------------------------------------------------------*/
-;*    jscript-varargs ...                                              */
-;*---------------------------------------------------------------------*/
-(define (jscript-varargs path)
-   `(format "function() { return hop_service_url_varargs( ~s, arguments ) }"
-	    ,path))
-
-;*---------------------------------------------------------------------*/
 ;*    jscript-funcall ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (jscript-funcall path args)
-   `(format "function() { return service_funcall_url( ~s, arguments ) }" ,path))
+   `(format "function() { return hop_apply_url( ~s, arguments ) }" ,path))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-service ...                                               */
