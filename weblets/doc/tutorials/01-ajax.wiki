@@ -56,15 +56,22 @@ mapping ++module-name x file-name++. With our previous example, the
   )
 </code>
 
+And the module statement should look like this:
 
-One may write these ++.afile++ by hand of use the tool ++bglafile++ that can
+<code>
+  (module my-module
+    (import mod1))
+</code>
+
+
+One may write these ++.afile++ by hand or use the tool ++bglafile++ that can
 generate these files. Using ++bglafile++ is straightforward, in general a
 simple execution such as (in the code below, lines prefixed with a ++$++ sign
 are assumed to be command lines executed with a command line editor such as
 a Unix shell):
 
 <console>
-  $ bglafile *.hop > .afile
+  $ bglafile -suffix hop *.hop > .afile
 </console>
 
 
@@ -114,7 +121,10 @@ the graphical user interface.
 
 === The server code ===
 The server code implements a small database containing programming
-language description.
+language description.  (Note that results window that pops up when 
+you hit the "Run" button will only contain the return value of the
+last command executed, the definition of the ++tutorial-ajax/query++
+service.)
 
 <example>
   (module tutorial-ajax-database
@@ -161,10 +171,12 @@ This returns a vector that is displayed in the ++show++ ++<DIV>++ element.
            (<BODY>
               (<DIV> "Type a programming language name")
               (<INPUT> :type "text"
-                       :onkeyup ~(with-hop ($tutorial-ajax this.value)
+                       :onkeyup ~(with-hop ($tutorial-ajax/query this.value)
                                      (lambda (h) (innerHTML-set! $show h))))
               (<DIV> "Results...")
-              show)))
+              show))))
+
+  (with-hop (tutorial-ajax) (lambda (h) h))
 
 == Version 2 ==
 
@@ -230,4 +242,7 @@ the server to the client.
                                           (dom-append-child! $show table)))))
               (<DIV> "Results...")
               show))))
+
+  (with-hop (tutorial-ajax-v2) (lambda (h) h))
+
 </doc>
