@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Mar 25 16:29:22 2009 (serrano)                */
+;*    Last change :  Wed Mar 25 18:18:58 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -309,7 +309,6 @@
 	      (read-error "Illegal char" c (the-port))
 	      (read-error "Illegal token" (string #\# c) (the-port)))))))
 
-
 ;*---------------------------------------------------------------------*/
 ;*    current-module-clientc-import ...                                */
 ;*---------------------------------------------------------------------*/
@@ -320,7 +319,11 @@
       (else
        (let ((mod (eval-module)))
 	  (if (evmodule? mod)
+	      (let ((e
 	      (evmodule-extension mod)
+	      ))
+		 (tprint "e=" e)
+		 e)
 	      '())))))
 
 ;*---------------------------------------------------------------------*/

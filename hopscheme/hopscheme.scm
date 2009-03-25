@@ -6,5 +6,6 @@
    (from __hopscheme_scm-compil)
    (export (compile-scheme-module clause)))
 
-(define (compile-scheme-module clause)
-   (list 'merge-first clause))
+(define (compile-scheme-module clauses)
+   (tprint "clause=" clauses)
+   (list (list 'merge-first clauses)))

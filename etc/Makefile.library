@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.11.x/etc/Makefile.library             */
+#*    serrano/prgm/project/hop/2.0.x/etc/Makefile.library              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Fri Mar  6 08:43:24 2009 (serrano)                */
+#*    Last change :  Wed Mar 25 18:06:30 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -72,14 +72,14 @@ $(HEAPJVM_FILE): .jfile .afile make-lib.scm
 lib: lib-jvm lib-dotnet
 
 #*--- lib-c -----------------------------------------------------------*/
-lib-c: $(TAGS) .afile o lib-c-static lib-c-shared
+lib-c: $(TAGS) o lib-c-static lib-c-shared
 
 o:
 	mkdir -p $@
 
-lib-c-static: o \
-              $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a \
-              $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a
+lib-c-static: .afile o 
+	$(MAKE) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a \
+	        $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a
 
 # lib-c-shared depends on lib-c-static only to force the compilation
 # order when invoking make with --jobs N
