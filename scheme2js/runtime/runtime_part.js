@@ -2043,22 +2043,14 @@ function sc_counterHash() {
     return this.sc_hash;
 }
 
-function sc_Trampoline(args, maxTailCalls) {
-    this['__trampoline return__'] = true;
-    this.args = args;
-    this.MAX_TAIL_CALLs = maxTailCalls;
+function sc_Trampoline() {
 }
-// TODO: call/cc stuff
+
 sc_Trampoline.prototype.restart = function() {
-    var o = this;
     while (true) {
-	// set both globals.
-	SC_TAIL_OBJECT.calls = o.MAX_TAIL_CALLs-1;
-	var fun = o.args.callee;
-	var res = fun.apply(SC_TAIL_OBJECT, o.args);
-	if (res instanceof sc_Trampoline)
-	    o = res;
-	else
+	this.calls = this.MAX_TAIL_CALLs-1;
+	var res = this.f.apply(this, this.args);
+	if (res !== this)
 	    return res;
     }
 }
@@ -2085,7 +2077,5 @@ function sc_BindExitException() {
 
 var SC_SCM2JS_GLOBALS = new Object();
 
-// default tail-call depth.
-// normally the program should set it again. but just in case...
-var SC_TAIL_OBJECT = new Object();
+var SC_TAIL_OBJECT = new sc_Trampoline();  // (used in runtime_callcc.)
 SC_SCM2JS_GLOBALS.TAIL_OBJECT = SC_TAIL_OBJECT;

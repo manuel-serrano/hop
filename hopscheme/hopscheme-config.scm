@@ -41,8 +41,6 @@
 		   (include-paths . ,(list *hop-share-directory*))
 		   ;; currently we are still using scheme2js-modules
 		   (bigloo-modules . #f)
-		   ;; post-processor that will add all the hop-runtime-exports.
-		   (module-postprocessor . ,(hop-runtime-adder))
 		   )))
 	  *cached-config*)))
 

@@ -27,7 +27,7 @@
 	 :source (service-resource test/events "event.hop")
 	 (<DIV> :class "comment"
 	    "This test checks events. If the test succeeds you should see
-notification when the mouse enters and leaves the area above. You should
+notifications when the mouse enters and leaves the area above. You should
 also see a notification for mouse moves and clicks. In addition, if server
 events succeeded, you should see an acknowledge.")
 	 (let* ((b (<DIV> :align "center"

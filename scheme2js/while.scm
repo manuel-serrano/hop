@@ -14,6 +14,8 @@
 	      ;; if a Labeled surrounds a While, then the while-label is
 	      ;; stored in the break-label too.
 	      (while-label (default #f))))
+   (static (final-class Env
+	      call/cc?::bool))
    (export (tail-rec->while! tree::Module)
 	   (optimize-while! tree::Module)))
 
@@ -79,22 +81,17 @@
 ;;   blah_no_break [ remove continues to this while ]
 ;; }
 ;; foo
-;;
 (define (optimize-while! tree)
    (when (config 'while)
       (verbose " optimize-while")
-      (search-patterns! tree)))
-
-;; search for our pattern(s) and apply them/it if found.
-(define (search-patterns! tree)
-   (verbose " search-patterns")
-   (patterns! tree #f))
+      ;; search for our pattern(s) and apply them/it if found.
+      (patterns! tree (instantiate::Env (call/cc? (config 'call/cc))))))
 
 (define-nmethod (Node.patterns!)
    (default-walk! this))
 
 (define-nmethod (While.patterns!)
-   (with-access::While this (test body label)
+   (with-access::While this (call/cc? test body label)
       
       (define (apply-pattern! continue-branch iff-test iff-then iff-else)
 	 (case continue-branch
@@ -106,7 +103,7 @@
 	     (instantiate::Begin
 		(exprs (list this iff-else))))
 	    ((no-continue-in-then)
-	     (set! test (instantiate::SCall
+	     (set! test (instantiate::Call
 			   (operator (runtime-reference 'not))
 			   (operands (list iff-test))))
 	     (set! body iff-else)
@@ -117,7 +114,9 @@
 	    (else
 	     (error "While-patterns!" "should never happen" #f))))
 
-      (if (and (Const? test)
+      (if (and (or (not (Env-call/cc? env)) ;; call/cc (and not just suspend)
+		   (not call/cc?)) ;; this could be set by suspend/resume too.
+	       (Const? test)
 	       (eq? (Const-value test) #t)
 	       (If? body))
 	  (with-access::If body (test then else)

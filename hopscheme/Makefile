@@ -33,7 +33,8 @@ BLIBFLAGS = $(BSCM2JSFLAGS)
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
 _BGL_OBJECTS = hopscheme scm-compil dollar-escape \
-	       tilde-escape hopscheme-config hop-exports
+	       tilde-escape hopscheme-config hop-exports \
+	       dollar-scheme2js-module
 
 _OBJECTS = $(_BGL_OBJECTS)
 

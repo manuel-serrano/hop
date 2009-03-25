@@ -14,14 +14,22 @@
        ;; export-desc is used for exported and imported vars.
        (export-desc::Export-Desc (default (Export-Desc-nil)) read-only)
 
-       (already-defined?::bool (default #f)) ;; TODO: remove (side)
        (constant?::bool (default #f))
        (value (default #f))
        (uses::bint (default 0))
        (captured?::bool (default #f))
        (escapes?::bool (default #f))
+       (mutated-outside-local?::bool (default #f))
 
-       (indirect?::bool (default #f))) ;; used in Scope.
+       (needs-boxing?::bool (default #f))
+       (needs-frame?::bool (default #f))
+       (needs-uniquization?::bool (default #f))
+       (needs-update?::bool (default #f))
+
+       (indirect?::bool (default #f)) ;; not essential, but handy.
+
+       (already-defined?::bool (default #f)) ;; TODO: remove (side)
+       )
 
     ;; ===========================  Nodes ==========================
     (class Node
@@ -29,10 +37,12 @@
     (final-class Const::Node
        value)
     (final-class Ref::Node
-       id::symbol
+       id ;; either symbol or qualified id of form (symbol module)
        (var::Var (default (Var-nil))))
     (class Scope::Node
-       (scope-vars::pair-nil (default '()))) ;; list of Vars
+       (scope-vars::pair-nil (default '())) ;; list of Vars
+
+       (call/cc?::bool (default #f)))
     (class Execution-Unit::Scope ;; basically Modules and Lambdas
        ;; this-vars are always instantiated, but might not be used during
        ;; symbol-resolution
@@ -44,8 +54,7 @@
        
        (free-vars::pair-nil (default '()))
 
-       (declared-vars::pair-nil (default '()))
-       (contained-scopes::pair-nil (default '())))
+       (declared-vars::pair-nil (default '())))
     
     (final-class Module::Execution-Unit
        ;; all scope-vars are exported.
@@ -64,6 +73,14 @@
        (nested-closures?::bool (default #f))
 
        (size::bint (default 0))
+
+       (call/cc-finally-scopes::pair-nil (default '()))
+       (call/cc-nb-while-counters::bint (default 0))
+       (call/cc-nb-indices::bint (default 0))
+       (call/cc-hoisted::pair-nil (default '())) ;; a-list (index rev-hoisted ...)
+       (call/cc-contained-scopes::pair-nil (default '()))
+
+       (contains-trampoline-call?::bool (default #f))
        )
     (final-class If::Node
        test::Node
@@ -84,11 +101,18 @@
        body::Node
        kind::symbol) ;; either 'let or 'letrec
     (final-class Begin::Node
-       exprs::pair-nil)
-    (class Call::Node
+       exprs::pair-nil
+
+       (call/cc?::bool (default #f))
+       (call/cc-ranges::pair-nil (default '())))
+    (final-class Call::Node
        operator::Node
-       operands::pair-nil)
-    (final-class SCall::Call) ;; so we can widen it.
+       operands::pair-nil
+
+       (call/cc?::bool (default #f))
+       (call/cc-index (default #f)) ;; #f -> tail call
+
+       (trampoline?::bool (default #f)))
 
    ;; optimization-nodes
 
@@ -128,15 +152,11 @@
        body::Node
        label::Label
 
-       (contained-scopes::pair-nil (default '()))
+       (call/cc-finally-scopes::pair-nil (default '()))
+       (call/cc-counter-nb::bint (default -1))
        )
-    (final-class Call/cc-Call::Call
-       (visible-scopes::pair-nil (default '())))
     (final-class Call/cc-Resume::Node
-       ;(set! this.indices/vars (list (cons index #f))))
-       indices/vars::pair-nil)
-    (final-class Call/cc-Counter-Update::Node
-       index::bint)
+       indices::pair-nil)
 
     (Ref-of-new-Var::Ref id::symbol)
     (var-reference v::Var)

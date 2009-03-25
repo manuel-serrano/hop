@@ -21,19 +21,15 @@
 	   constants
 	   scope
 	   while
-	   loop-hoist
 	   propagation
 	   statements
 	   rm-tail-breaks
 	   out
 	   scm-out
-	   verbose)
-   ;; module-headers are module-clauses without the module-name
-   ;; they are of the form (module-pairs . kind)
-   ;;    kind can be either provide, replace, merge-first or merge-last
-   ;;    replace (which must be unique) replaces any existing module-header
-   ;;    provides are only used, if the file does not have any module-clause
-   ;;    merge-first/last are added before/after the module-clause.
+	   verbose
+	   callcc
+	   trampoline)
+   ;; see module.scm for information on module-headers.
    (export (scheme2js-compile-expr expr
 				   out-p
 				   module-headers::pair-nil
@@ -63,37 +59,37 @@
 	  (tree (pobject-conv top-level-runtime-e)))
 
       ;;we could do the letrec-expansion in list-form too.
-      (pass 'letrec        (letrec-expansion! tree))
+      (pass 'letrec      (letrec-expansion! tree))
 
       (pass 'symbol      (symbol-resolution tree
 					    (Compilation-Unit-imports module)
 					    (Compilation-Unit-exports module)))
-      (pass 'encapsulation (encapsulation! tree))
-      (pass 'node-elim1    (node-elimination! tree))
-      (pass 'tail-rec      (tail-rec! tree))
-      (pass 'node-elim2    (node-elimination! tree))
-      (pass 'inline        (inline! tree #t))
-      (pass 'tail-rec2     (tail-rec! tree))
-      (pass 'inline2       (inline! tree #f)) ;; a second faster inlining.
-      (pass 'constant      (constant-propagation! tree))
-      (pass 'rm-unused     (rm-unused-vars! tree))
-      (pass 'node-elim3    (node-elimination! tree))
-      ;(call/cc-early tree)
-      ;(trampoline tree)
-      (pass 'constants     (constants! tree))
-      (pass 'scope         (scope-resolution! tree))
-      (pass 'while         (tail-rec->while! tree))
-      (pass 'hoist         (loop-hoist! tree))
-      (pass 'propagation   (propagation! tree))
+      (pass 'encapsulation  (encapsulation! tree))
+      (pass 'node-elim1     (node-elimination! tree))
+      (pass 'tail-rec       (tail-rec! tree))
+      (pass 'node-elim2     (node-elimination! tree))
+      (pass 'inline         (inline! tree #t))
+      (pass 'tail-rec2      (tail-rec! tree))
+      (pass 'inline2        (inline! tree #f)) ;; a second faster inlining.
+      (pass 'constant       (constant-propagation! tree))
+      (pass 'rm-unused      (rm-unused-vars! tree))
+      (pass 'node-elim3     (node-elimination! tree))
+      (pass 'call/cc-early  (call/cc-early! tree))
+      (pass 'trampoline     (trampoline tree))
+      (pass 'scope          (scope-resolution! tree))
+      (pass 'constants      (constants! tree))
+      (pass 'while          (tail-rec->while! tree))
+      (pass 'propagation    (propagation! tree))
       ;(var-elimination! tree)
-      (pass 'rm-unused2    (rm-unused-vars! tree))
-      (pass 'flatten       (scope-flattening! tree))
-      (pass 'stmts         (statements! tree))
-      (pass 'while-optim   (optimize-while! tree))
-      (pass 'node-elim4    (node-elimination! tree))
-      (pass 'rm-breaks     (rm-tail-breaks! tree))
-      (pass 'node-elim5    (node-elimination! tree))
-      ;(call/cc-late! tree)
+      (pass 'rm-unused2     (rm-unused-vars! tree))
+      (pass 'call/cc-middle (call/cc-middle tree))
+      (pass 'flatten        (scope-flattening! tree))
+      (pass 'stmts          (statements! tree))
+      (pass 'while-optim    (optimize-while! tree))
+      (pass 'node-elim4     (node-elimination! tree))
+      (pass 'rm-breaks      (rm-tail-breaks! tree))
+      (pass 'node-elim5     (node-elimination! tree))
+      (pass 'call/cc-late   (call/cc-late! tree))
       ;(locations tree)
       (if debug-stage
 	  (let ((tmp (open-output-string)))
@@ -127,6 +123,10 @@
 		  (string=? "-" in-file))
 	 (config-set! 'statics-suffix
 		      (string-append "_" (prefix (basename in-file)))))
+
+      ;; slightly hackish.
+      ;; The compilation-unit's name is set to #f if no 'module clause had been
+      ;; given. (or if an override wants us to think this way)
 
       (when (eq? (config 'export-globals) 'module)
 	 (config-set! 'export-globals

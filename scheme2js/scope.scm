@@ -13,42 +13,18 @@
 	      contains-call/cc?::bool
 	      modified-vars::pair-nil)
 	   (wide-class Scope-Var::Var
+	      (inside-loop?::bool (default #f))
 	      (call/cc-when-alive?::bool (default #f))
 	      (modified-after-call/cc?::bool (default #f))
-	      (needs-boxing?::bool (default #f))
-	      (needs-uniquization?::bool (default #f))
-	      (needs-frame?::bool (default #f))
-	      (needs-update?::bool (default #f))
-	      (box-repl-var (default #f)))
+	      (modified-outside-local?::bool (default #f))
+
+	      (repl-var (default #f)))
 	      
 	   (class Frame-Env
 	      call/cc?::bool))
    (export (scope-resolution! tree::Module)
-	   (scope-flattening! tree::Module))
-   (export (class Scope-Info
-	      id::symbol
-	      vars::pair-nil
-	      surrounding-while
+	   (scope-flattening! tree::Module)))
 
-	      (call/cc-vars::pair-nil (default '()))
-	      (call/cc-indices::pair-nil (default '())))))
-
-;; When call/cc is activated (and not just suspend/resume) then we treat While
-;; and Call/cc-Calls the same way. Both are repetition
-;; points. Whereas the While is an well defined interval, Call/cc-Calls reach
-;; to the end of the function. In other words Call/cc-repetitions have as
-;; body the remaining function body. If they are inside a While, than the whole
-;; body of the While is part of this Call/cc-repetition too.
-;;
-;; Suppose a repetition (be it While or a Call/cc-loop) contains a Scope of
-;; variable 'x'. If x is not captured or it is constant and the init-value is
-;; not changed during the loop, then x can be reused for several iterations,
-;; and thus may be defined as fun-var. (In other words the Scope can be
-;; discarded.) The term ".. init-value not changed during the loop .." is
-;; transitive. That is, if the init-value itself is initialized during the
-;; loop, then the init-value of the init-value must not be changed during the
-;; loop...
-;;
 ;; Note that call/cc calls may return different values at each call. The
 ;; letrec-expansion pass however ensures, that call/cc-calls can not happen
 ;; inside a Letrec-form. Handling call/cc-calls inside Lets is not that
@@ -74,14 +50,12 @@
    (let-split! tree)
    (free-vars tree)
    (captured-vars tree)
-   ;; scope-widen-vars! widens all vars. no other analysis is allowed from now
-   ;; on, as they might widen too.
+   ;; no other analysis is allowed from now on, as other analyses might widen
+   ;; variables, too.
    (scope-widen-vars! tree)
-   (scope-call/cc-when-alive? tree)
-   (scope-needs-frame/uniquization? tree)
-   (scope-needs-boxing? tree)
-   (scope-needs-updates? tree)
-   (scope-loops! tree)
+   (scope-predicates tree)
+   (scope-temporaries! tree)
+   (scope-shrink-vars! tree)
    (let-merge! tree)
    (scope-frame-alloc! tree))
 
@@ -163,24 +137,42 @@
 	     #f))))
 
 ;; some predicates (which are added as .flags to the vars):
-;;  - call/cc-when-alive? : a call/cc is inside the scope
-;;  - modified-after-call/cc? : the variable is updated after a call/cc-call.
-;;  - needs-boxing? : the variable is not constant, escapes, and has a call/cc
+;;  auxiliary predicates:
+;;   - constant?, escapes?, captured? (by free-vars and captured-vars)
+;;
+;;   - inside-loop?: variable is declared inside while-loop.
+;;   - call/cc-when-alive? : a call/cc is inside the scope
+;;   - modified-after-call/cc? : the variable is updated after a call/cc-call.
+;;
+;;  main predicates:
+;;   - needs-boxing? : the variable is not constant, escapes, and has a call/cc
 ;;         call inside the scope. Due to the call/cc it must 
 ;;         be boxed to ensure that the function that uses the escaping variable
 ;;         still references the same var after restoration. (The boxing can
 ;;         occur anywhere before its use).
-;;  - needs-uniquization? : the variable is "constant", captured, and is inside a
-;;         loop. The init-value may change depending on the iteration. Each
-;;         capturing function must capture a "uniquized" variable.
-;;  - needs-frame? : the variable is not constant, inside a loop, and is
+;;   - needs-uniquization? : the variable is "constant", captured, and is
+;;         inside a loop. The init-value may change depending on the
+;;         iteration. Each capturing function must capture a "uniquized"
+;;         variable.
+;;   - needs-frame? : the variable is not constant, inside a loop, and is
 ;;         captured. Each capturing function needs to capture a separate
 ;;         frame. The frame must be constructed at each iteration.
-;;  - needs-update? : the variable is not constant, has a call/cc, and is
+;;   - needs-update? : the variable is not constant, has a call/cc, and is
 ;;         modified after a call/cc. The call/ccs that have captured the
 ;;         variable need to be updated during a finally.
-;;  - indirect? : if a variable is only referenced through a storage-object.
+;;   (- indirect? : if a variable is only referenced through a storage-object.)
 
+(define (scope-predicates tree)
+   (verbose " predicates")
+   (auxiliary-predicates tree)
+   (main-predicates tree))
+
+(define (auxiliary-predicates tree)
+   (verbose " auxiliary predicates")
+   (scope-inside-loop? tree)
+   (scope-call/cc tree))
+
+  
 (define (scope-widen-vars! tree)
    (verbose " Widening vars")
    (widen!_ tree #f))
@@ -212,6 +204,48 @@
       (widen!-vars scope-vars))
    (default-walk this))
 
+(define-nmethod (Ref.widen!_)
+   (with-access::Ref this (var)
+      (when (not (Scope-Var? var))
+	 (error "scope"
+		"not scope-var: "
+		var))))
+
+
+;; adds inside-loop?-flag.
+(define (scope-inside-loop? tree)
+   (verbose "  inside loop?")
+   (inside tree #f #f))
+
+(define-nmethod (Node.inside inside-loop?::bool)
+   (default-walk this inside-loop?))
+
+(define-nmethod (Execution-Unit.inside inside-loop?)
+   ;; by default all variables.inside-loop? are set to #f. no need to do
+   ;; anything here.
+   ;; clear inside-loop?-flag for contained nodes.
+   (default-walk this #f))
+
+(define-nmethod (Scope.inside loop?)
+   (with-access::Scope this (scope-vars)
+      (for-each (lambda (var)
+		   (with-access::Scope-Var var (inside-loop?)
+		      (set! inside-loop? loop?)))
+		scope-vars))
+   (default-walk this loop?))
+
+(define-nmethod (Tail-rec.inside inside-loop?)
+   (with-access::Tail-rec this (scope-vars inits body)
+      (for-each (lambda (var)
+		   (with-access::Scope-Var var (inside-loop?)
+		      (set! inside-loop? #t)))
+		scope-vars)
+      ;; inits are outside of loop.
+      (for-each (lambda (init)
+		   (walk init inside-loop?))
+		inits)
+      (walk body #t)))
+
 ;; determine if a let contains a call/cc. Every variable of the let is
 ;; flagged by .call/cc-when-alive? if it has.
 ;; also: for any variable inside a let determine if it is modified after a
@@ -228,11 +262,26 @@
 ;; set!-line is before the call/cc-line.
 ;;   
 ;; Global variables are excluded (the are simply not affected by call/ccs).
-(define (scope-call/cc-when-alive? tree)
+(define (scope-call/cc tree)
    (when (config 'suspend/resume)
       (verbose " Looking for call/ccs inside scopes")
       (call/ccs tree #f '() (make-eq-hashtable))))
-   
+
+;; the 'surrounding-scopes' and 'var->scope-ht' are here just to shield 'let's
+;; from 'while's.
+;; for instance:
+;;  in the following example 'x' is inside a while, but _not_ modified after a
+;;  call/cc. The 'let' is completely contained within the 'while'.
+;;
+;;         (while  (let ((x (some-fun))) (set! x ...) ... (call/cc)))
+;;
+;;
+;;  in the following example 'x' is inside a while, and modified after a
+;;  call/cc (even though it is located before the call/cc-call). The while is
+;;  nested inside the let.
+;;
+;;         (let ((x y)) (while .. (set! x ...) ... (call/cc)))
+;;   
 (define-nmethod (Node.call/ccs surrounding-scopes var->scope-ht)
    (default-walk this surrounding-scopes var->scope-ht))
 
@@ -253,8 +302,9 @@
 (define-nmethod (Let.call/ccs surrounding-scopes var->scope-ht)
    (with-access::Let this (kind scope-vars bindings body)
       (let ((this+surrounding-scopes (cons this surrounding-scopes)))
-	 ;; in theory lets and letrecs should be identic for this pass (due to
-	 ;; the letrec-expansion). The if here should hence not be necessary.
+	 ;; in theory lets and letrecs should be identical for this pass (due
+	 ;; to the letrec-expansion). The if here should hence not be
+	 ;; necessary.
 	 (if (eq? kind 'letrec)
 	     (begin
 		;; letrec -> add variables before traversing bindings
@@ -269,8 +319,7 @@
 		;; we do not yet add the variables into the
 		;; hashtable. The refs to the Let-variables are hence
 		;; 'unresolved'. The Set! has to be aware of that.
-		;; At the same time, the rhs are analysed in the scope outside
-		;; the current Let (which is what should happen).
+		;; The main advantage is, that the Set! can be faster.
 		(for-each (lambda (binding)
 			     (walk binding surrounding-scopes
 				   var->scope-ht))
@@ -295,6 +344,8 @@
       ;; variables are added to the ht only after the inits have been
       ;; traversed. Any call/cc during initialisation is hence part of the
       ;; surrounding scope, and not the loop.
+      ;;
+      ;; sidenote: from now on the order of inits is fixed.
       (for-each (lambda (init)
 		   (walk init surrounding-scopes var->scope-ht))
 		inits)
@@ -320,16 +371,17 @@
 		   (hashtable-remove! var->scope-ht var))
 		scope-vars)))
 
-(define-nmethod (Call/cc-Call.call/ccs surrounding-scopes var->scope-ht)
+(define-nmethod (Call.call/ccs surrounding-scopes var->scope-ht)
    (default-walk this surrounding-scopes var->scope-ht)
-   (for-each (lambda (scope)
-		(cond
-		   ((Lambda? scope) (widen!::Call/cc-Lambda scope))
-		   ((Let? scope) (widen!::Call/cc-Let scope))
-		   ((Call/cc-Tail-rec? scope)
-		    (with-access::Call/cc-Tail-rec scope (contains-call/cc?)
-		       (set! contains-call/cc? #t)))))
-	     surrounding-scopes))
+   (when (Call-call/cc? this)
+      (for-each (lambda (scope)
+		   (cond
+		      ((Lambda? scope) (widen!::Call/cc-Lambda scope))
+		      ((Let? scope) (widen!::Call/cc-Let scope))
+		      ((Call/cc-Tail-rec? scope)
+		       (with-access::Call/cc-Tail-rec scope (contains-call/cc?)
+			  (set! contains-call/cc? #t)))))
+		surrounding-scopes)))
 
 (define-nmethod (Set!.call/ccs surrounding-scopes var->scope-ht)
    (default-walk this surrounding-scopes var->scope-ht)
@@ -339,6 +391,11 @@
 	    (when (not modified-after-call/cc?)
 	       (let ((scope (hashtable-get var->scope-ht var)))
 		  (cond
+		     ((not scope)
+		      ;; the var is just now bound for the first time (i.e. we
+		      ;; are in the bindings-part of a 'let').
+		      ;; -> the variable can not be '.modified-after-call/cc?'.
+		      'do-nothing)
 		     ((or (Call/cc-Lambda? scope)
 			  (Call/cc-Let? scope))
 		      ;; there was already a call/cc in the scope of the var
@@ -368,280 +425,200 @@
 			    (else
 			     (loop (cdr scopes) last-loop))))))))))))
 
-;; determine if a scope is inside a loop. Loop can be either a Tail-rec, or a
-;; call/cc-loop (repetetive application of a captured continuation).
-;; This excludes suspend/resume.
-;;
-;; If a scope is inside a loop we look if the variable can be reused or if we
-;; need to build a proper frame. (predicate needs-frame?)
-;; If it can _not_ be reused we flag it with .needs-frame?
-(define (scope-needs-frame/uniquization? tree)
-   (verbose " Scope Needs Frame?")
-   (frame tree (make-Frame-Env (config 'call/cc))
-	  #f (cons #f #unspecified)))
 
-;; TODO: room for optimization. Init-value may be a variable, but only, if the
-;; variable is not changed within the loop.
-(define (needs-frame? var::Var)
-   (with-access::Var var (captured? constant?)
-      (and captured? (not constant?))))
-(define (needs-uniquization? var::Var)
-   (with-access::Var var (captured? constant? value)
-      (and captured?
-	   constant?
-	   (not (Const? value)))))
+;; assigns the predicates for each variable
+(define (main-predicates tree)
+   (main tree #f))
 
-(define-nmethod (Node.frame inside-loop? inside-call/cc-loop?)
-   (default-walk this inside-loop? inside-call/cc-loop?))
-
-;; Module.frame should not be necessaire. just for clarity.
-(define-nmethod (Module.frame inside-loop? inside-call/cc-loop?)
-   (default-walk this #f (cons #f #unspecified)))
-
-(define-nmethod (Lambda.frame inside-loop? inside-call/cc-loop?)
-   (default-walk this #f (cons #f #unspecified)))
-
-(define-nmethod (Let.frame inside-loop? inside-call/cc-loop?)
-   (with-access::Let this (scope-vars)
-      (when (or inside-loop? (car inside-call/cc-loop?))
-	 (for-each (lambda (var)
-		      ;; can't use with-access here, as this would shadow the
-		      ;; functions.
-		      (cond
-			 ((needs-frame? var)
-			  (Scope-Var-needs-frame?-set! var #t))
-			 ((needs-uniquization? var)
-			  (Scope-Var-needs-uniquization?-set! var #t))))
-		   scope-vars))
-      ;; walk must be after tests, as inside-call/cc-loop? will be physically modified.
-      (default-walk this inside-loop? inside-call/cc-loop?)))
-
-;; this method establishes an order for the loop-variables. whereas up to now
-;; we were free to change the order of the inits, due to potential call/cc
-;; calls this is not possible from now on.
-(define-nmethod (Tail-rec.frame inside-loop? inside-call/cc-loop?)
-   (with-access::Tail-rec this (inits body scope-vars)
-      (for-each (lambda (init)
-		   (walk init inside-loop? inside-call/cc-loop?))
-		inits)
-      (walk body #t inside-call/cc-loop?)
-      ;; loop-variables are not (yet) handled specially.
-      (for-each (lambda (var)
-		   ;; can't use with-access here, as this would shadow the
-		   ;; functions.
-		   (cond
-		      ((needs-frame? var)
-		       (Scope-Var-needs-frame?-set! var #t))
-		      ((needs-uniquization? var)
-		       (Scope-Var-needs-uniquization?-set! var #t))))
-		scope-vars)))
-
-(define-nmethod (Call/cc-Call.frame inside-loop? inside-call/cc-loop?)
-   (default-walk this inside-loop? inside-call/cc-loop?)
-   (if (Frame-Env-call/cc? env)
-       (set-car! inside-call/cc-loop? #t)))
-
-;; Variables that are not inside any scope, or that do not need any scope
-;; (either cause they are not in any loop, or cause they are reused) may need
-;; to be boxed (or put into a scope again) if they escape (and if there is a
-;; call/cc inside their scope)
-;; If a var needs to be boxed it is marked with .needs-boxing?
-;; Arguments must not be boxed, so if one of them responds to a predicate, we
-;; introduce a temporary variable that takes its place.
-(define (scope-needs-boxing? tree)
-   (when (config 'suspend/resume)
-      (verbose " needs boxing?")
-      (box!_ tree #f)))
-
-(define (needs-boxing? var::Var)
-   (with-access::Scope-Var var (constant? needs-frame? needs-uniquization?
-					  escapes? call/cc-when-alive?)
-      (and (not constant?)
-	   (not needs-frame?)
-	   (not needs-uniquization?)
-	   escapes?
-	   call/cc-when-alive?)))
-
-(define-nmethod (Node.box!_)
+(define-nmethod (Node.main)
    (default-walk this))
 
-;; Module should not be concerned.
+(define (boxed? var)
+   ;; TODO: only true, when using 'with' or boxes. not when using anonymous
+   ;; functions!
+   (with-access::Scope-Var var (needs-boxing? needs-frame? needs-uniquization?)
+      (or needs-boxing? needs-frame? needs-uniquization?)))
 
-(define-nmethod (Lambda.box!_)
-   (with-access::Lambda this (formals scope-vars body)
-      (default-walk this)
-      (let* ((new-formals
-	      (map (lambda (formal-decl)
-		      (with-access::Ref formal-decl (var)
-			 (if (needs-boxing? var)
-			     (let* ((repl-decl (Ref-of-new-Var 'arg))
-				    (repl-var (Ref-var repl-decl)))
-				(widen!::Scope-Var repl-var)
-				(with-access::Scope-Var var (box-repl-var)
-				   (set! box-repl-var repl-var))
-				repl-decl)
-			     formal-decl)))
-		   formals))
-	     (extracted-vars (filter-map (lambda (decl)
-					    (with-access::Ref decl (var)
-					       (and (needs-boxing? var)
-						    var)))
-					 formals))
-	     (new-scope-vars (map! (lambda (var)
-				      (with-access::Scope-Var var
-					    (box-repl-var)
-					 (or box-repl-var
-					     var)))
-				   scope-vars))
-	     (assigs (map (lambda (decl)
-			     (with-access::Ref decl (var)
-				(with-access::Scope-Var var (box-repl-var)
-				   (instantiate::Set!
-				      (lvalue decl)
-				      (val (var-reference box-repl-var))))
-				(shrink! var)))
-			  extracted-vars)))
-	 (unless (null? extracted-vars)
-	    (set! formals new-formals)
-	    (set! scope-vars new-scope-vars)
-	    (for-each (lambda (var)
-			 (with-access::Scope-Var var (needs-boxing?)
-			    (set! needs-boxing? #t)))
-		      extracted-vars)
-	    (with-access::Return body (val)
-	       (set! val
-		     (instantiate::Let
-			(scope-vars extracted-vars)
-			(bindings assigs)
-			(body val)
-			(kind 'let))))))))
-
-(define-nmethod (Let.box!_)
-   (default-walk this)
-   (with-access::Let this (scope-vars)
-      (for-each (lambda (var)
-		   (when (needs-boxing? var)
-		      (with-access::Scope-Var var (needs-boxing?)
-			 (set! needs-boxing? #t))))
-		scope-vars)))
-
-(define-nmethod (Tail-rec.box!_)
-   (default-walk this)
-   (with-access::Tail-rec this (scope-vars)
-      (for-each (lambda (var)
-		   (when (needs-boxing? var)
-		      (with-access::Scope-Var var (needs-boxing?)
-			 (set! needs-boxing? #t))))
-		scope-vars)))
-
-;; Vars that may be modified after a call/cc need to update the
-;; call/cc-storage. If the variable is inside a loop and it is reused, then
-;; this must happen at the end of the loop-body.
-;; Variables that need a finally-update are marked with a .needs-update? flag.
-(define (scope-needs-updates? tree)
-   (when (config 'suspend/resume)
-      (verbose " finding vars, that need updates")
-      (update tree #f)))
-
-(define (needs-update? var::Var)
-   (with-access::Scope-Var var (constant? needs-frame? needs-boxing?
+(define (compute-predicates var::Var)
+   (with-access::Scope-Var var (constant? escapes? captured? inside-loop?
 					  call/cc-when-alive?
-					  modified-after-call/cc?)
-      (and (not constant?)
-	   (not needs-frame?)
-	   (not needs-boxing?)
-	   call/cc-when-alive?
-	   modified-after-call/cc?)))
+					  modified-after-call/cc?
+					  mutated-outside-local?
+					  needs-boxing? needs-frame?
+					  needs-uniquization? needs-update?
+					  value)
+;       (tprint (Var-id var)
+; 	      " constant?: " constant?
+; 	      " escapes?: " escapes?
+; 	      " captured?: " captured?
+; 	      " inside-loop?: " inside-loop?
+; 	      " call/cc-when-alive?: " call/cc-when-alive?
+; 	      " modified-after-call/cc?: " modified-after-call/cc?
+; 	      " mutated-outside-local?: " mutated-outside-local?)
 
-(define (mark-updates vars)
-   (for-each (lambda (var)
-		(when (needs-update? var)
-		   (with-access::Scope-Var var (needs-update?)
-		      (set! needs-update? #t))))
-	     vars))
+      ;; Variables that are not inside any scope, or that do not need any scope
+      ;; (either cause they are not in any loop, or cause they are reused) may
+      ;; need to be boxed (or put into a scope again) if they escape (and if
+      ;; there is a call/cc inside their scope)
+      ;; If a var needs to be boxed it is marked with .needs-boxing?
+      (set! needs-boxing? (and (not constant?)
+			       escapes?
+			       (or mutated-outside-local?
+				   modified-after-call/cc?)))
+      (set! needs-frame? (and inside-loop?
+			      captured?
+			      (not constant?)))
+      (set! needs-uniquization? (and inside-loop?
+				     captured?
+				     constant?
+				     (not (Const? value))))
+      (set! needs-update? (and (not (boxed? var))
+			       modified-after-call/cc?))))
 
-(define-nmethod (Node.update)
+(define-nmethod (Module.main)
+   (with-access::Module this (scope-vars runtime-vars imported-vars this-var)
+      (for-each compute-predicates scope-vars)
+      (for-each compute-predicates runtime-vars)
+      (for-each compute-predicates imported-vars)
+      (compute-predicates this-var))
    (default-walk this))
 
-(define-nmethod (Lambda.update)
-   (mark-updates (Lambda-scope-vars this))
-   (default-walk this))
-(define-nmethod (Tail-rec.update)
-   (mark-updates (Tail-rec-scope-vars this))
-   (default-walk this))
-(define-nmethod (Let.update)
-   (mark-updates (Let-scope-vars this))
-   (default-walk this))
-
-;; loop-variables that need to be inside a frame are moved inside the loop's
-;; body, so that the loop variables are only temporary variables (that are not
-;; concerned by frame allocation anymore...).
-(define (scope-loops! tree)
-   (loop!_ tree #f))
-
-(define-nmethod (Node.loop!_)
+(define-nmethod (Lambda.main)
+   (with-access::Lambda this (scope-vars this-var)
+      (for-each compute-predicates scope-vars)
+      (compute-predicates this-var))
+      (default-walk this))
+   
+(define-nmethod (Scope.main)
+   (with-access::Scope this (scope-vars)
+      (for-each compute-predicates scope-vars))
    (default-walk this))
 
-(define-nmethod (Tail-rec.loop!_)
-   (with-access::Tail-rec this (scope-vars inits body)
-      (let loop ((vars scope-vars)
-		 (inits inits)
-		 (let-vars '())
-		 (bindings '()))
-	 (cond
-	    ((and (null? vars)
-		  (null? bindings))
-	     'do-nothing)
-	    ((null? vars)
-	     (set! body (instantiate::Let
-			   (scope-vars let-vars)
-			   (bindings bindings)
-			   (body body)
-			   (kind 'let))))
-	    ((with-access::Scope-Var (car vars)
-		   (needs-frame? needs-boxing? needs-uniquization?)
-		(or needs-frame?
-		    needs-boxing?
-		    needs-uniquization?))
-	     (let* ((tmp-decl (Ref-of-new-Var 'tmploop))
-		    (tmp-var (Ref-var tmp-decl))
-		    (old-var (car vars)))
-		(widen!::Scope-Var tmp-var)
-		(replace-var! (car inits)
-			      old-var
-			      tmp-var)
-		(set-car! vars tmp-var)
-		(loop (cdr vars)
-		      (cdr inits)
-		      (cons old-var let-vars)
-		      (cons (instantiate::Set!
-			       (lvalue (var-reference old-var))
-			       (val tmp-decl))
-			    bindings))))
-	    (else
+
+;; introduce temporary variables for formals and loop-variables.
+;; - formals are not allowed to be boxed.
+;; - loop-variables that need to be inside a frame are moved inside the loop's
+;;  body, so that the loop variables are only temporary variables (that are not
+;;  concerned by frame allocation anymore...).
+(define (scope-temporaries! tree)
+   (temporaries!_ tree #f))
+
+(define-nmethod (Node.temporaries!_)
+   (default-walk this))
+
+(define (create-temporaries! l pred)
+   (let loop ((l l)
+	      (created-temp? #f))
+      (cond
+	 ((null? l)
+	  created-temp?)
+	 ((pred (car l))
+	  (let ((var (car l)))
+	     (with-access::Scope-Var var (repl-var)
+		(set! repl-var (instantiate::Var
+				  (id 'tmp)
+				  (kind 'local)))
+		(widen!::Scope-Var repl-var)))
+	  (loop (cdr l) #t))
+	 (else
+	  (loop (cdr l) created-temp?)))))
+
+(define (create-let vars body)
+   (let loop ((vars vars)
+	      (let-vars '())
+	      (inits '()))
+      (cond
+	 ((null? vars)
+	  (instantiate::Let
+	     (scope-vars let-vars)
+	     (bindings inits)
+	     (body body)
+	     (kind 'let)))
+	 ((Scope-Var-repl-var (car vars))
+	  (let* ((var (car vars))
+		 (repl-var (Scope-Var-repl-var var)))
 	     (loop (cdr vars)
-		   (cdr inits)
-		   let-vars
-		   bindings))))
-      (default-walk this)))
+		   (cons var let-vars)
+		   (cons (var-assig var (var-reference repl-var)) inits))))
+	 (else
+	  (loop (cdr vars) let-vars inits)))))
 
-;; physically modify Refs with .var == var-to-replace
-(define (replace-var! tree var-to-replace new-var)
-   (replace!_ tree #f var-to-replace new-var))
+;; and removes the repl-var.
+(define (replace-vars! l)
+   (map! (lambda (var)
+	    (with-access::Scope-Var var (repl-var)
+	       (if repl-var
+		   (let ((r-var repl-var))
+		      (set! repl-var #f)
+		      r-var)
+		   var)))
+	 l))
 
-(define-nmethod (Node.replace!_ old-var new-var)
-   (default-walk this old-var new-var))
+(define-nmethod (Lambda.temporaries!_)
+   (with-access::Lambda this (formals scope-vars body)
+      ;; Arguments must not be boxed. If necessary introduce a temporary
+      ;; variable that takes its place.
+      (if (create-temporaries! scope-vars boxed?)
+	  (with-access::Return body (val)
+	     (set! val (create-let scope-vars val))
+	     (for-each walk formals) ;; replaces the variables.
+	     (replace-vars! scope-vars) ;; removes repl-vars
+	     (walk body)) ;; should not replace anything.
+	  (default-walk this))))
 
-(define-nmethod (Lambda.replace!_ old-var new-var)
-   ;; don't go into lambdas.
-   'do-nothing)
+(define-nmethod (Tail-rec.temporaries!_)
+   (with-access::Tail-rec this (scope-vars inits body)
+      (if (create-temporaries! scope-vars
+			       (lambda (var)
+				  (with-access::Scope-Var var (needs-frame?
+							       needs-boxing?
+							       needs-uniquization?)
+				     (or needs-frame? needs-boxing?
+					 needs-uniquization?))))
+	  (begin
+	     (set! body (create-let scope-vars body))
+	     (for-each walk inits) ;; replaces the variables
+	     (replace-vars! scope-vars) ;; removes repl-vars
+	     (walk body))
+	  (default-walk this))))
 
-(define-nmethod (Ref.replace!_ old-var new-var)
-   ;; physically modify the Ref
+(define-nmethod (Ref.temporaries!_)
+   ;; physically modify the Ref if var has a repl-var
    (with-access::Ref this (var id)
-      (when (eq? var old-var)
-	 (set! var new-var)
-	 (set! id (Var-id new-var)))))
+      (with-access::Scope-Var var (repl-var)
+	 (when repl-var
+	    (set! var repl-var)
+	    (set! id (Var-id repl-var))))))
+
+
+(define (scope-shrink-vars! tree)
+   (verbose " Shrinking vars")
+   (shrink!_ tree #f))
+
+(define (shrink!-vars vs)
+   (for-each (lambda (v) (shrink! v)) vs))
+
+(define-nmethod (Node.shrink!_)
+   (default-walk this))
+
+(define-nmethod (Module.shrink!_)
+   (with-access::Module this (scope-vars runtime-vars imported-vars this-var)
+      (shrink!-vars scope-vars)
+      (shrink!-vars runtime-vars)
+      (shrink!-vars imported-vars)
+      (shrink! this-var))
+   (default-walk this))
+
+(define-nmethod (Lambda.shrink!_)
+   (with-access::Lambda this (scope-vars this-var)
+      (shrink!-vars scope-vars)
+      (shrink! this-var))
+   (default-walk this))
+   
+(define-nmethod (Scope.shrink!_)
+   (with-access::Scope this (scope-vars)
+      (shrink!-vars scope-vars))
+   (default-walk this))
 
 
 ;; merge Scopes, if there is no "offending" instruction between both scopes:
@@ -653,47 +630,75 @@
 ;;       (let (z)
 ;;           .....
 ;;
-;; We can merge 'x' with lambda 'f', and 'z' with the tail-rec. But we can't
-;; move 'z' to lambda 'f'. (at least not yet).
+;; We can merge 'x' with (a new let of) lambda 'f', and 'z' with the
+;; tail-rec. But we can't move 'z' to lambda 'f'. (at least not yet).
 ;;
 ;; ->
 ;; (define (f)
-;;   [local var x]
+;;   [local var x]  ;; new Let
 ;;   (tail-rec (y z)
 ;;     (print y)
 ;;     .....
 (define (let-merge! tree)
-   (merge! tree #f #f (cons #f #f)))
+   (merge! tree #f #f #f #f))
 
-(define-nmethod (Node.merge! last-scope last-scope-valid?)
-   (default-walk! this last-scope last-scope-valid?))
+(define (make-box v)
+   (cons '*box* v))
+
+(define (box-set! b v)
+   (set-cdr! b v))
+
+(define (unbox b)
+   (cdr b))
+
+;; last-scope-valid?::box the last scope is still valid and should be merged.
+;; <-call/cc-call?::box return-value. #t when a call/cc-was encountered.
+;; <-call/cc-call? implies (not last-scope-valid?). But the inverse is not
+;; true.
+(define-nmethod (Node.merge! last-scope last-scope-valid? <-call/cc-call?)
+   (default-walk! this last-scope last-scope-valid? <-call/cc-call?))
 
 ;; Modules are only for parameters and exported vars.
-(define-nmethod (Module.merge! last-scope last-scope-valid?)
-   (default-walk! this #f (cons #f #f)))
+(define-nmethod (Module.merge! last-scope last-scope-valid? <-call/cc-call?)
+   (default-walk! this #f (make-box #f) (make-box #f)))
 
-;; Lambdas are only for parameters and exported vars.
+;; Lambdas are only for parameters.
 ;; but we want a Let directly within the Return. In the worst case it will have
 ;; no variables.
-(define-nmethod (Lambda.merge! last-scope last-scope-valid?)
+(define-nmethod (Lambda.merge! last-scope last-scope-valid? <-call/cc-call?)
    ;; body must be a Return.
    (with-access::Lambda this (body)
       (with-access::Return body (val)
-	 (set! val (instantiate::Let
-		      (scope-vars '())
-		      (bindings '())
-		      (body val)
-		      (kind 'let)))
-	 (default-walk! this #f (cons #f #f)))))
+	 (unless (Let? val)
+	    (set! val (instantiate::Let
+			 (scope-vars '())
+			 (bindings '())
+			 (body val)
+			 (kind 'let))))
+	 ;; lambda shields
+	 (default-walk! this #f (make-box #f) (make-box #f)))))
 
 ;; if possible move variables to outer scope.
-(define-nmethod (Let.merge! last-scope last-scope-valid?)
+(define-nmethod (Let.merge! last-scope last-scope-valid? <-call/cc-call?)
    (with-access::Let this (bindings body scope-vars)
       (set! bindings (map! (lambda (n)
-			      (walk! n last-scope last-scope-valid?))
+			      (walk! n last-scope last-scope-valid?
+				     <-call/cc-call?))
 			   bindings))
-      (set! body (walk! body this (cons #t #t)))
-      (let ((valid? (car last-scope-valid?)))
+      (let ((valid? (unbox last-scope-valid?))
+	    (c-call? (unbox <-call/cc-call?)))
+	 
+	 ;; reuse the boxes
+	 (box-set! last-scope-valid? #t)
+	 (box-set! <-call/cc-call? #f)
+	 
+	 (set! body (walk! body this last-scope-valid? <-call/cc-call?))
+
+	 ;; don't forget to update the boxes
+	 (box-set! last-scope-valid? (and valid? (unbox last-scope-valid?)))
+	 (box-set! <-call/cc-call? (or c-call? (unbox <-call/cc-call?)))
+
+	 ;; let's merge.
 	 (when valid?
 	    (let ((this-scope-vars scope-vars))
 	       (with-access::Let last-scope (scope-vars)
@@ -709,34 +714,70 @@
 	 (else
 	  this))))
 
-;; Calls must be in A-Normal form when using call/cc.
-;; Otherwise the order of parameter-evaluation is not yet clear, which
-;; could lead to big troubles...
-;; Ex:
-;; (some_f (let ((x 0)) (capture! x))
-;;         (call/cc))
-;; there are two ways to evaluate this:
-;; (let ((tmp (let ((x 0)) (capture! x))))
-;;    (some_f tmp (call/cc)))
-;; or
-;; (let ((tmp (call/cc)))
-;;   (some_f (let ((x 0)) (capture! x)) tmp))
-;;
-;; in the first case the x can/must be reused.
-;; in the second it must be reconstructed at each iteration.
-(define-nmethod (Call/cc-Call.merge! last-scope last-scope-valid?)
-   (default-walk! this last-scope last-scope-valid?)
-   (set-car! last-scope-valid? #f)
+;; call/cc-calls invalidate the last scope.
+(define-nmethod (Call.merge! last-scope last-scope-valid? <-call/cc-call?)
+   (default-walk! this last-scope last-scope-valid? <-call/cc-call?)
+   (with-access::Call this (call/cc?)
+      (when call/cc?
+	 (box-set! last-scope-valid? #f)
+	 (box-set! <-call/cc-call? #t)))
    this)
 
 ;; loops invalidate the last scope
-(define-nmethod (Tail-rec.merge! last-scope last-scope-valid?)
+(define-nmethod (Tail-rec.merge! last-scope last-scope-valid? <-call/cc-call?)
    (with-access::Tail-rec this (inits body)
       (set! inits (map! (lambda (n)
-			   (walk! n last-scope last-scope-valid?))
+			   (walk! n last-scope last-scope-valid?
+				  <-call/cc-call?))
 			inits))
-      (set! body (walk! body #f (cons #f #f)))
+      ;; reuse the box
+      (let ((old-valid? (unbox last-scope-valid?))
+	    (old-call? (unbox <-call/cc-call?)))
+
+	 (box-set! last-scope-valid? #f)
+	 (box-set! <-call/cc-call? #f)
+	 (set! body (walk! body #f last-scope-valid? <-call/cc-call?))
+
+	 ;; update the boxes...
+	 ;; here we use the <-call/cc-call?. Without it we would not know if
+	 ;; the previous scope was still valid.
+	 ;; Ex:
+	 ;;     (let ...                   [1]
+	 ;;         (while ... (call/cc .. [2]
+	 ;;         (let ...               [3]
+	 ;; The while in [2] contains a call/cc. However it already marks its
+	 ;; outer let as invalid. Without the <-call/cc-call? it would not know
+	 ;; if the let of [3] could be merged into [1] or not.
+	 (box-set! last-scope-valid? (and old-valid?
+					  (not (unbox <-call/cc-call?))))
+	 (box-set! <-call/cc-call? (or old-call? (unbox <-call/cc-call?))))
+
       this))
+
+;; just an optimization. would work without, too.
+(define-nmethod (If.merge! last-scope last-scope-valid? <-call/cc-call?)
+   (with-access::If this (test then else)
+      (set! test (walk! test last-scope last-scope-valid? <-call/cc-call?))
+      (let ((old-valid? (unbox last-scope-valid?))
+	    (old-c-call? (unbox <-call/cc-call?)))
+	 (set! then (walk! then last-scope last-scope-valid? <-call/cc-call?))
+	 (let ((then-valid? (unbox last-scope-valid?))
+	       (then-c-call? (unbox <-call/cc-call?)))
+	    ;; if the last scope was valid after the test, then it is still
+	    ;; valid for the else-clause, too.
+	    (box-set! last-scope-valid? old-valid?)
+	    (box-set! <-call/cc-call? old-c-call?)
+	    (set! else (walk! else last-scope last-scope-valid?
+			      <-call/cc-call?))
+
+	    ;; update the boxes
+	    (box-set! last-scope-valid? (and old-valid?
+					     then-valid?
+					     (unbox last-scope-valid?)))
+	    (box-set! <-call/cc-call? (or old-c-call?
+					  then-c-call?
+					  (unbox <-call/cc-call?))))))
+   this)
 
 ;; Creates a Scope-Allocate for every Scope that needs it, and creates the
 ;; necessary frame-pushes.
@@ -746,20 +787,14 @@
 ;; 'with', or with an anonymous function.)
 (define (scope-frame-alloc! tree)
    (verbose " create storage allocations for Lets and adding frame pushes")
-   (alloc! tree #f #f))
+   (alloc! tree #f))
 
-(define-nmethod (Node.alloc! inside-loop?)
-   (default-walk! this inside-loop?))
-
-(define-nmethod (Lambda.alloc! inside-loop?)
-   (default-walk! this #f))
+(define-nmethod (Node.alloc!)
+   (default-walk! this))
 
 ;; TODO: optimize: currently needs-boxing? and needs-frame? are treated the
 ;; same way.
-;; TODO: optimize: No need to allocate a storage-object, if the recursion is
-;; due to to call/cc (and all variables do not have any call/cc inside their
-;; scope). See comments at top.
-(define-nmethod (Let.alloc! inside-loop?)
+(define-nmethod (Let.alloc!)
    (with-access::Let this (scope-vars body)
       (let ((frame-vars (cp-filter
 			 (lambda (var)
@@ -771,7 +806,7 @@
 				   needs-uniquization?)))
 			 scope-vars)))
 	 (if (null? frame-vars)
-	     (default-walk! this inside-loop?)
+	     (default-walk! this)
 	     ;; create storage-var
 	     (let* ((storage-decl (Ref-of-new-Var 'storage))
 		    (storage-var (Ref-var storage-decl))
@@ -783,33 +818,18 @@
 				(set! indirect? #t)))
 			  frame-vars)
 		(widen!::Scope-Var storage-var)
-		(with-access::Scope-Var storage-var (call/cc-when-alive?)
-		   (set! call/cc-when-alive?
-			 (any? Scope-Var-call/cc-when-alive? frame-vars)))
 
-		(default-walk! this inside-loop?)
+		(default-walk! this)
 
 		(instantiate::Let
 		   (scope-vars (list storage-var))
 		   (bindings (list (instantiate::Set!
 				      (lvalue storage-decl)
 				      (val frame-alloc))))
-		   ;; TODO: with call/cc this would not be correct anymore...
-		   (body (if (not inside-loop?)
-			     this
-			     (instantiate::Frame-push
-				(frame-allocs (list frame-alloc))
-				(body this))))
+		   (body (instantiate::Frame-push
+			    (frame-allocs (list frame-alloc))
+			    (body this)))
 		   (kind 'let)))))))
-
-;; TODO: optimize: needs-boxing? and needs-frame? treated the same way.
-(define-nmethod (Tail-rec.alloc! inside-loop?)
-   (with-access::Tail-rec this (inits body)
-      (set! inits (map! (lambda (n)
-			   (walk! n inside-loop?))
-			inits))
-      (set! body (walk! body #t))
-      this))
 
 
 (define (scope-flattening! tree)
@@ -817,129 +837,51 @@
    (let-removal! tree))
 	    
 ;; Remove Let-nodes.
-;; In the process create scope-nodes that contain the following information:
-;;  - vars, and
-;;  - surrounding while (if any)
-;; Each node needing this information (in particular call/cc nodes), get a list
-;; of these structures.
-;;
-;; Also create a declared-vars list for each module/lambda. These nodes need to
+;; Create a declared-vars list for each module/lambda. These nodes need to
 ;; be declared by "var".
-;;
-;; Finally every Module, Lambda and While receive a list of contained scopes.
 (define (let-removal! tree)
-   (remove! tree #f #f #f #f))
+   (remove! tree #f #f))
 
 ;; surrounding-fun could be a Module too!
-(define-nmethod (Node.remove! scopes surrounding-fun surrounding-while)
-   (default-walk! this scopes surrounding-fun surrounding-while))
+(define-nmethod (Node.remove! surrounding-fun)
+   (default-walk! this surrounding-fun))
 
-(define-nmethod (Module.remove! scopes surrounding-fun surrounding-while)
-   (with-access::Module this (scope-vars declared-vars contained-scopes)
-      (let ((scope (instantiate::Scope-Info
-		      (id 'module)
-		      (vars scope-vars)
-		      (surrounding-while #f))))
+(define-nmethod (Module.remove! surrounding-fun)
+   (with-access::Module this (scope-vars declared-vars)
 	 (set! declared-vars scope-vars)
-	 (set! contained-scopes (list scope))
+	 (default-walk! this this)))
 
-	 (default-walk! this (list scope) this #f))))
+(define-nmethod (Lambda.remove! surrounding-fun)
+   (with-access::Lambda this (declared-vars)
+      (set! declared-vars '()) ;; don't add formals. they don't need 'var'
+      (default-walk! this this)))
 
-(define-nmethod (Lambda.remove! scopes surrounding-fun surrounding-while)
-   (with-access::Lambda this (scope-vars declared-vars contained-scopes
-					 formals)
-      (let ((scope (instantiate::Scope-Info
-		      (id (gensym 'lambda))
-		      (vars scope-vars)
-		      (surrounding-while #f)))
-	    (formal-vars (map Ref-var formals)))
-	 (set! declared-vars '()) ;; don't add formals. they don't need 'var'
-	 (set! contained-scopes (list scope))
-	 (default-walk! this (list scope) this #f))))
-
-(define-nmethod (Let.remove! scopes surrounding-fun surrounding-while)
+(define-nmethod (Let.remove! surrounding-fun)
    (with-access::Let this (scope-vars bindings body kind)
       (let ((fun-vars (filter (lambda (var)
 				 (with-access::Var var (indirect?)
 				    (not indirect?)))
-			      scope-vars))
-	    (scope (instantiate::Scope-Info
-		      (id (gensym 'let))
-		      (vars scope-vars)
-		      (surrounding-while surrounding-while))))
+			      scope-vars)))
 	 (if (Module? surrounding-fun)
 	     (with-access::Module surrounding-fun (declared-vars)
 		(set! declared-vars (append fun-vars declared-vars)))
 	     (with-access::Lambda surrounding-fun (declared-vars)
-		(set! declared-vars (append fun-vars declared-vars))))
-	 (let ((outer-while/fun (or surrounding-while surrounding-fun)))
-	    (cond
-	       ((Module? outer-while/fun)
-		(with-access::Module outer-while/fun (contained-scopes)
-		   (cons-set! contained-scopes scope)))
-	       ((Lambda? outer-while/fun)
-		(with-access::Lambda outer-while/fun (contained-scopes)
-		   (cons-set! contained-scopes scope)))
-	       (else
-		(with-access::While outer-while/fun (contained-scopes)
-		   (cons-set! contained-scopes scope)))))
-      ;; the differentiation of letrec and let should not be necessary, but
-      ;; just in case we change other parts of the compiler somewhere in the
-      ;; future...
-      (if (eq? kind 'letrec)
-	  (set! bindings (map! (lambda (n)
-				  (walk! n (cons scope scopes)
-					 surrounding-fun
-					 surrounding-while))
-			       bindings))
-	  (set! bindings (map! (lambda (n)
-				  (walk! n scopes
-					 surrounding-fun
-					 surrounding-while))
-			       bindings)))
-      (set! body (walk! body (cons scope scopes)
-			surrounding-fun
-			surrounding-while))
+		(set! declared-vars (append fun-vars declared-vars)))))
+      (default-walk! this surrounding-fun)
       ;; remove Let-node
       (instantiate::Begin
-	 (exprs (append! bindings (list body)))))))
+	 (exprs (append! bindings (list body))))))
 
-(define-nmethod (While.remove! scopes surrounding-fun surrounding-while)
-   (with-access::While this (scope-vars contained-scopes)
+(define-nmethod (While.remove! surrounding-fun)
+   (with-access::While this (scope-vars)
       (let ((fun-vars (filter (lambda (var)
 				 (with-access::Var var (indirect?)
 				    (not indirect?))) ;; should be all of them.
-			      scope-vars))
-	    (scope (instantiate::Scope-Info
-		      (id (gensym 'while))
-		      (vars scope-vars)
-		      (surrounding-while this))))
-	 
+			      scope-vars)))
 	 (if (Module? surrounding-fun)
 	     (with-access::Module surrounding-fun (declared-vars)
 		(set! declared-vars (append fun-vars declared-vars)))
 	     (with-access::Lambda surrounding-fun (declared-vars)
 		(set! declared-vars (append fun-vars declared-vars))))
-	 (set! contained-scopes (list scope))
-	 (default-walk! this (cons scope scopes) surrounding-fun this)
-	 (let ((outer-while/fun (or surrounding-while surrounding-fun))
-	       (this-scopes contained-scopes))
-	    (cond
-	       ((Module? outer-while/fun)
-		(with-access::Module outer-while/fun (contained-scopes)
-		   (set! contained-scopes
-			 (append this-scopes contained-scopes)))) 
-	       ((Lambda? outer-while/fun)
-		(with-access::Lambda outer-while/fun (contained-scopes)
-		   (set! contained-scopes
-			 (append this-scopes contained-scopes))))
-	       (else
-		(with-access::While outer-while/fun (contained-scopes)
-		   (set! contained-scopes
-			 (append this-scopes contained-scopes))))))
+	 (default-walk! this surrounding-fun)
 	 this)))
-
-(define-nmethod (Call/cc-Call.remove! scopes surrounding-fun surrounding-while)
-   (with-access::Call/cc-Call this (visible-scopes)
-      (set! visible-scopes scopes))
-   (default-walk! this scopes surrounding-fun surrounding-while))

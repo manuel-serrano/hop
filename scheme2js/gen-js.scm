@@ -1,11 +1,35 @@
 (module gen-js
    (export (mangle-JS-sym::bstring sym::symbol)
 	   (gen-JS-sym::bstring sym::symbol)
-	   (valid-JS-str?::bool str::bstring)))
+	   (valid-JS-str?::bool str::bstring)
+	   (mangle-qualified-var::bstring sym::symbol qualifier)))
 
 (define counter 0)
 
 (define *js-counter-mutex* (make-mutex))
+
+(define (mangle-qualified-var sym qualifier)
+   (if (not qualifier)
+       (mangle-JS-sym sym)
+       (let* ((sym-str (symbol->string sym))
+	      (qual-str (symbol->string qualifier)))
+	  (cond
+	     ((and (bigloo-need-mangling? sym-str)
+		   (bigloo-need-mangling? qual-str))
+	      (bigloo-mangle
+	       (string-append (symbol->string sym)
+			      "__"
+			      (symbol->string qualifier))))
+	     (else
+	      (let ((mangled-sym (if (bigloo-need-mangling? sym-str)
+				     (bigloo-mangle sym-str)
+				     sym-str))
+		    (mangled-qual (if (bigloo-need-mangling? qual-str)
+				      (bigloo-mangle qual-str)
+				      qual-str)))
+		 (string-append mangled-sym
+				"__"
+				mangled-qual)))))))
 
 ;; mangle variables, so they are valid JS-vars.
 (define (mangle-JS-sym sym)

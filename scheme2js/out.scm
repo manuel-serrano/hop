@@ -8,13 +8,14 @@
 	   mutable-strings
 	   verbose
 	   allocate-names
+	   callcc
 	   compile-optimized-call
 	   compile-optimized-boolify
 	   compile-optimized-set
 	   template-display)
    (static (class Out-Env::Display-Env
 	      trampoline?::bool
-	      max-tail-depth
+	      max-tail-depth::bint
 	      suspend-resume?::bool
 	      call/cc?::bool
 	      optimize-var-number?::bool
@@ -56,17 +57,24 @@
 (define *symbol-prefix* "\\uEBAC")
 (define *keyword-prefix* "\\uEBAD")
 
+;; TODO propose other global access as option.
+; (define (scm2js-globals-init p)
+;    'do-nothing)
+; (define (scm2js-global global)
+;    (string-append "SC_" global))
+
 (define (scm2js-globals-init p env)
    (template-display p env
       "var sc_globals = SC_SCM2JS_GLOBALS;\n"))
 (define (scm2js-global global)
    (string-append "sc_globals." global))
 
-;; TODO propose other global access as option.
-; (define (scm2js-globals-init p)
-;    'do-nothing)
-; (define (scm2js-global global)
-;    (string-append "SC_" global))
+(define (call/cc-frame-name scope)
+   (with-access::Call/cc-Scope-Info scope (id)
+      (string-append "'frame-" (symbol->string id) "'")))
+
+(define (call/cc-counter-name nb)
+   (string-append "sc_counter_" (number->string nb)))
 
 (define-nmethod (Node.compile ignored ignored2)
    (error #f "forgot node-type: " this))
@@ -152,20 +160,32 @@
 	    "$js-id"))))
 
 (define-nmethod (Module.compile p stmt?)
-   (define (exported-vars-code)
-      (with-access::Module this (scope-vars)
-	 (unless (null? scope-vars)
-	    (template-display p env
-	       "/* Exported Variables */\n"
-	       "~e" (for-each (lambda (var)
-				 (with-access::Named-Var var (js-id)
-				    (template-display p env
-				       "var $js-id;\n")))
-			      scope-vars)
-	       "/* End Exports */\n\n"))))
+   ;; exported-vars
+   (with-access::Module this (scope-vars)
+      (unless (null? scope-vars)
+	 (template-display p env
+	    "/* Exported Variables */\n"
+	    "~e" (for-each (lambda (var)
+			      (with-access::Named-Var var (js-id)
+				 (template-display p env
+				    "var $js-id;\n")))
+			   scope-vars)
+	    "/* End Exports */\n\n")))
 
-   (exported-vars-code)
+   ;; trampoline-code
+   (when (Out-Env-trampoline? env)
+      (scm2js-globals-init p env)
+      (let ((tail-obj (scm2js-global "TAIL_OBJECT"))
+	    (max-tail-depth (Out-Env-max-tail-depth env)))
+	 [assert (max-tail-depth) (fixnum? max-tail-depth)]
+	 (template-display p env
+	    "var sc_tailTmp;\n"
+	    "var sc_tailObj = ~a;\n" tail-obj
+	    "~a.calls = ~a;\n" tail-obj max-tail-depth
+	    "~a.MAX_TAIL_CALLs = ~a;\n" tail-obj max-tail-depth
+	    "var sc_funTailCalls = ~a;\n"max-tail-depth)))
 
+   ;; declared variables
    (with-access::Module this (declared-vars body)
       (for-each (lambda (var)
 		   (unless (eq? (Var-kind var) 'exported)
@@ -173,12 +193,9 @@
 			 (template-display p env
 			    "var $js-id;\n"))))
 		declared-vars)
-      
+
+      ;; finally the body.
       (walk body p #t)))
-
-(define (call/cc-loop-counter index)
-   (string-append "sc_callccLoopCounter" (number->string index) "_"))
-
 
 (define-nmethod (Lambda.compile p stmt?)
    (widen!::Out-Lambda this
@@ -202,6 +219,244 @@
 	    "  $js-id = sc_cons(arguments[$*tmp-var*], $js-id);\n"
 	    "}\n")))
 
+   (define (trampoline-start-code)
+      (template-display p env
+	 "var sc_tailTmp;\n"
+	 "var sc_tailObj;\n"
+	 "var sc_funTailCalls = (sc_tailObj = ~a).calls;\n"
+	 (scm2js-global "TAIL_OBJECT")))
+
+   (define (declare/reset-counter-variables)
+      (with-access::Lambda this (call/cc-nb-while-counters)
+	 (if (zerofx? call/cc-nb-while-counters)
+	     (template-display p env "/*do nothing*/\n")
+	     (let loop ((i 0))
+		(unless (>=fx i call/cc-nb-while-counters)
+		   (template-display p env
+		      "var ~a = 0;\n" (call/cc-counter-name i))
+		   (loop (+fx i 1)))))))
+
+   (define (restore-counter-variables)
+      (with-access::Lambda this (call/cc-nb-while-counters)
+	 (let loop ((i 0))
+	    (unless (>=fx i call/cc-nb-while-counters)
+	       (let ((name (call/cc-counter-name i)))
+		  (template-display p env
+		     ;; if a counter-var is in the state, then we will enter
+		     ;; the while during restoration and thus increment it at
+		     ;; that time. For simplicity we will decrement _all_
+		     ;; loop-variables before "jumping" to the target. Therefore
+		     ;; we  assign "1" to those counters that are not yet
+		     ;; active. They will then be decrement as well (but not
+		     ;; incremented again during the jump).
+		     "~a = sc_callCcState.~a || 1;\n" name name))
+	       (loop (+fx i 1))))))
+
+   (define (restore-frames)
+      (with-access::Lambda this (call/cc-contained-scopes)
+	 (for-each
+	  (lambda (scope)
+	     (with-access::Call/cc-Scope-Info scope (vars)
+		(unless (null? vars) ;; should only happen for lambda-frame
+		   (let ((frame-name (call/cc-frame-name scope)))
+		      (template-display p env
+			 "if (sc_callCcFrame = sc_callCcState[~a]) {\n"
+			 "  ~e"
+			 "}\n"
+			 frame-name
+			 (each (lambda (var)
+				  "~a = sc_callCcFrame.~a;\n"
+				  (Named-Var-js-id var) (Named-Var-js-id var))
+			       vars))))))
+	  call/cc-contained-scopes)))
+
+   (define (do-hoisted)
+      (define (emit-commands rev-hoisted)
+	 (if (null? rev-hoisted)
+	     (template-display p env "sc_callCcTmp")
+	     (match-case (car rev-hoisted)
+		((set! ?v)
+		 (template-display p env
+		    "~a = ~e"
+		    (Named-Var-js-id v)
+		    (emit-commands (cdr rev-hoisted))))
+		((return)
+		 (template-display p env
+		    "return ~e" (emit-commands (cdr rev-hoisted))))
+		(else
+		 (error "out"
+			"forgot to implement hoisted command"
+			(car rev-hoisted))))))
+
+      (with-access::Lambda this (call/cc-hoisted)
+	 (unless (null? call/cc-hoisted)
+	    (template-display p env
+	       "switch (sc_callCcIndex) {\n"
+	       "  ~e"
+	       "}\n"
+	       (each (lambda (index/rev-hoisted)
+			"case ~a: ~e; break;\n"
+			(car index/rev-hoisted)
+			(emit-commands (cdr index/rev-hoisted)))
+		     call/cc-hoisted)))))
+
+   (define (decrement-counter-variables)
+      ;; by decrementing all counter-variables, we can increment the variable
+      ;; unconditionally at the beginning of whiles, thus removing an 'if'.
+      (with-access::Lambda this (call/cc-nb-while-counters)
+	 (let loop ((i 0))
+	    (unless (>=fx i call/cc-nb-while-counters)
+	       (template-display p env
+		  "~a--;\n" (call/cc-counter-name i))
+	       (loop (+fx i 1))))))
+   
+   (define (call/cc-start-code)
+      (let ((storage (scm2js-global "CALLCC_STORAGE")))
+	 (template-display p env
+	    "var sc_callCcTmp;\n"
+	    "var sc_callCcIndex = 0;\n"
+	    "var sc_callCcState = false;\n"
+	    "if (~a" storage "['doCall/CcDefault?']) {\n"
+	    "  ~e" (declare/reset-counter-variables)
+	    "} else if (~a" storage "['doCall/CcRestore?']) {\n"
+	    "  var sc_callCcFrame;\n"
+	    "  sc_callCcState = ~a" storage ".pop();\n"
+	    "  sc_callCcIndex = sc_callCcState.sc_callCcIndex;\n"
+	    "  ~e" (restore-counter-variables)
+	    "  ~e" (restore-frames)
+	    "  sc_callCcTmp = ~a" storage ".callNext();\n"
+	    "  ~e" (decrement-counter-variables)
+	    "  ~e" (do-hoisted)
+	    "} else { // root-fun\n"
+	    "  return sc_callCcRoot(this, arguments);\n"
+	    "}\n")))
+
+   (define (finally-updates)
+      (define (vars-update scope)
+	 (with-access::Call/cc-Scope-Info scope (finally-vars)
+	    (let ((frame-name (call/cc-frame-name scope)))
+	       (template-display p env
+		  ;; note: the '=' is intentional (and should not be a '===')
+		  "if (sc_callCcFrame = sc_callCcState[~a" frame-name "]) {\n"
+		  "  ~e"
+		  "}\n"
+		  (each (lambda (var)
+			   "sc_callCcFrame.~a = ~a;\n"
+			   (Named-Var-js-id var) (Named-Var-js-id var))
+			finally-vars)))))
+
+      (with-access::Lambda this (call/cc-finally-scopes)
+	 (unless (null? call/cc-finally-scopes)
+	    (template-display p env
+	       "finally {\n"
+	       "  if (sc_callCcState) {\n"
+	       "    ~e" (for-each vars-update call/cc-finally-scopes)
+	       "  }\n"
+	       "}"))))
+
+   ;; if the was already an old state, copy the relevant frames from the old
+   ;; one into the new one.
+   (define (save-frames)
+      (define (save-frame scope)
+	 ;; if this is a while-frame always save the counter-id
+	 (let* ((frame-counter-id (Call/cc-Scope-Info-counter-id-nb scope))
+		(frame-counter (and frame-counter-id
+				    (call/cc-counter-name frame-counter-id))))
+	    (when frame-counter
+	       (template-display p env
+		  "sc_callCcState[~a] = ~a;\n"
+		  frame-counter frame-counter)))
+
+	 (let* ((frame-name (call/cc-frame-name scope))
+		(call/cc? (Out-Env-call/cc? env)) ;; and not just suspend
+		(while (Call/cc-Scope-Info-surrounding-while scope))
+		(while-nb (and while (While-call/cc-counter-nb while)))
+		(counter (and while-nb (call/cc-counter-name while-nb)))
+		(vars (Call/cc-Scope-Info-vars scope)))
+	    (template-display p env
+	       "if (sc_old_callCcState && "
+	       (?? (and call/cc? counter)
+		   "sc_old_callCcState.~a " counter " === ~a" counter " && ")
+	       "    sc_old_callCcState[~a" frame-name"]) {\n"
+	       "  sc_callCcState[~a" frame-name "] = "
+	       "                sc_old_callCcState[~a" frame-name"];\n"
+	       ;; no need to update the variables. If this was necessary it
+	       ;; will happen in the finally clause.
+	       "} else {\n"
+	       "  sc_callCcState[~a" frame-name "] = { ~e };\n"
+	       "}\n"
+	       (separated ", "
+			  (lambda (var)
+			     "~a: ~a"
+			     (Named-Var-js-id var) (Named-Var-js-id var))
+			  vars))))
+
+      (define (conditional-save-frame scope)
+	 (with-access::Lambda this (call/cc-nb-indices)
+	    (let* ((indices (Call/cc-Scope-Info-indices scope))
+		   (sorted (sort <fx indices))
+		   (continuous? (let loop ((i (car sorted))
+					   (l (cdr sorted)))
+				   (cond
+				      ((null? l) #t)
+				      ((=fx (+fx i 1) (car l))
+				       (loop (car l) (cdr l)))
+				      (else #f))))
+		   (len (length sorted))
+		   (single? (=fx len 1))
+		   (always? (and continuous? (=fx len call/cc-nb-indices))))
+	       (cond
+		  (always? (save-frame scope))
+		  (single?
+		   (template-display p env
+		      "if (sc_callCcIndex === ~a) {\n" (car sorted)
+		      "  ~e" (save-frame scope)
+		      "}\n"))
+		  ((and continuous? (=fx (car sorted) 1))
+		   (template-display p env
+		      "if (sc_callCcIndex <= ~a) {\n"
+		      (car (last-pair sorted))
+		      "  ~e" (save-frame scope)
+		      "}\n"))
+		  ((and continuous?
+			(=fx (car (last-pair sorted)) call/cc-nb-indices))
+		   (template-display p env
+		      "if (sc_callCcIndex >= ~a) {\n"
+		      (car sorted)
+		      "  ~e" (save-frame scope)
+		      "}\n"))
+		  (continuous?
+		   (template-display p env
+		      "if (sc_callCcIndex >= ~a && sc_callCcIndex <= ~a) {\n"
+		      (car sorted) (car (last-pair sorted))
+		      "  ~e" (save-frame scope)
+		      "}\n"))
+		  (else
+		   (template-display p env
+		      "switch (sc_callCcIndex) {\n"
+		      "  ~e\n" (each (lambda (i) "case ~a: " i) indices)
+		      "  ~e"   (save-frame scope)
+		      "}\n"))))))
+
+      (with-access::Lambda this (call/cc-contained-scopes)
+	 (for-each conditional-save-frame call/cc-contained-scopes)))
+
+   (define (call/cc-end-code)
+      (template-display p env
+	 "catch (sc_e) {\n"
+	 "  if (sc_e instanceof sc_CallCcException && sc_e.backup "
+	 "      && sc_callCcIndex !== 0) {\n" ;; if 0 then it was tail-call
+	 "    var sc_old_callCcState = sc_callCcState;\n"
+	 "    sc_callCcState = {};\n"
+	 "    ~e" (save-frames)
+	 "    sc_callCcState.sc_callCcIndex = sc_callCcIndex;\n"
+	 "    sc_callCcState.this_ = this;\n"
+	 "    sc_callCcState.callee = arguments.callee;\n"
+	 "    sc_e.push(sc_callCcState);\n"
+	 "  }\n"
+	 "  throw sc_e;\n"
+	 "} ~e" (finally-updates)))
+
    (define (split-formals/vaarg)
       (with-access::Lambda this (vaarg? formals)
 	 (if (not vaarg?)
@@ -210,8 +465,8 @@
 		(values (reverse! (cdr rev))
 			(car rev))))))
    
-   (with-access::Out-Lambda this
-	 (lvalue declared-vars body vaarg? formals)
+   (with-access::Out-Lambda this (lvalue declared-vars body vaarg? formals
+					 call/cc? contains-trampoline-call?)
       (receive (formals-w/o-vaarg vaarg)
 	 (split-formals/vaarg)
 
@@ -256,16 +511,23 @@
 	       (?@ stmt? "~@;\n")
 	       (?@ needs-parenthesis? "(~@)")
 	       (?@ lvalue "~e = ~@" (walk lvalue p #f))
-	       "function(~e) {\n"
-	       "  ~e" ;; vaarg
+	       (?@ #t "function(~e) {\n ~e ~@ }" ;; always.
+		   (separated ","
+			      (lambda (e) "~e" (walk e p #f))
+			      formals-w/o-vaarg)
+		   (when vaarg?
+		      (with-access::Ref vaarg (var)
+			 (vaarg-code var (- (length formals) 1)))))
+	       (?? (or call/cc? contains-trampoline-call?)
+		   "~e" (scm2js-globals-init p env))
+	       (?? contains-trampoline-call? "~e" (trampoline-start-code))
+	       (?@ call/cc?
+		   "try {\n"
+		   "  ~e"   (call/cc-start-code)
+		   "  ~@"   ;; body
+		   "} ~e\n" (call/cc-end-code))
 	       "  ~e" ;; declared-vars
 	       "  ~e" ;; body
-	       "}"
-	       (separated ","
-			  (lambda (e) "~e" (walk e p #f))
-			  formals-w/o-vaarg)
-	       (when vaarg? (with-access::Ref vaarg (var)
-			       (vaarg-code var (- (length formals) 1))))
 	       (each (lambda (var)
 			"var ~a;\n" (Named-Var-js-id var))
 		     declared-vars)
@@ -366,80 +628,44 @@
 	     "~e" (compile-set! p env walk this)))))
 
 (define-nmethod (Begin.compile p stmt?)
-   (with-access::Begin this (exprs)
-      (if stmt?
+   (define (call/cc-begin-out)
+      (with-access::Begin this (exprs call/cc-ranges)
+	 (template-display p env
+	    "switch (sc_callCcIndex) {\n"
+	    " case 0:\n"
+	    "  ~e"
+	    "}\n"
+	    (for-each (lambda (expr range)
+			 (template-display p env
+			    (?? (and range (not (null? range)))
+				"~e\n" ;; the cases
+				(each (lambda (index)
+					 "case ~a: " index)
+				      range))
+			    "~e" (walk expr p #t)))
+		      exprs
+		      call/cc-ranges))))
+   
+   (with-access::Begin this (exprs call/cc? call/cc-ranges)
+      (cond
+	 ((and call/cc? (not (null? call/cc-ranges)))
+	  (call/cc-begin-out))
+	 (stmt?
 	  ;; we do not need { }, as all statements that could contain blocks
 	  ;; already have them (or do not need them).
 	  (for-each (lambda (n) (walk n p #t))
-		    exprs)
+		    exprs))
+	 (else
 	  (template-display p env
 	     "(~e)"
 	     (separated ", "
 			(lambda (e) "~e" (walk e p #f))
-			exprs)))))
+			exprs))))))
 
-;(define-nmethod (Call/cc-Resume.compile p)
-;   (p-display
-;    p (indent env)
-;    "sc_callCcIndex = 0;\n"))
-
-; (define-nmethod (Call/cc-Call.compile p)
-;    (if (statement-form? this)
-;        (p-display p
-; 		  (indent++) "{ sc_callCcIndex = " this.call/cc-index ";\n")
-;        (p-display p "(sc_callCcIndex = " this.call/cc-index ", "))
-;    (pcall this Call-compile p)
-;    (if (statement-form? this)
-;        (p-display p (--indent) "}\n")
-;        (p-display p ")")))
-
-; (define (tail-call-compile n p)
-;    (define (tail-call n tail-obj)
-;       (p-display p "(" tail-obj ".f =")
-;       (n.operator.compile p)
-; ;      (p-display p ".call(" tail-obj)
-;       (p-display p "," tail-obj ".f(")
-; ;      (if (not (null? n.operands))
-; ;	  (p-display p ", "))
-;       (compile-separated-list p n.operands ", ")
-;       (p-display p "))"))
-   
-;    (p-display
-;     p
-;     "(\n"
-;     (indent) "  (this === (sc_tailTmp =" (scm2js-global "TAIL_OBJECT") "))?\n"
-;     (indent) "  ((!sc_funTailCalls)?\n"
-;     (indent) "    (sc_tailTmp = [")
-;    (compile-separated-list p n.operands ", ")
-;    (p-display
-;     p
-;     "],\n"
-;     (indent) "    sc_tailTmp.callee = ")
-;    (n.operator.compile p)
-;    (p-display
-;     p
-;     ",\n"
-;     (indent) "    new sc_Trampoline(sc_tailTmp, " (config 'max-tail-depth) "))\n"
-;     (indent) "    :\n"
-;     (indent) "    (this.calls = sc_funTailCalls - 1,\n"
-;     (indent) "     ")
-;    (tail-call n "sc_tailTmp")
-;    (p-display
-;     p
-;     ")\n"
-;     (indent) "):(\n"
-;     (indent) "    sc_tailTmp.calls = " (config 'max-tail-depth) ",\n"
-;     (indent) "    sc_tailTmp = ")
-;    (tail-call n "sc_tailTmp") ;(scm2js-global "TAIL_OBJECT"))
-;    (p-display
-;     p
-;     ",\n"
-;     (indent) "    ((typeof sc_tailTmp === 'object' &&"
-;     "sc_tailTmp instanceof sc_Trampoline)?\n"
-;     (indent) "       sc_tailTmp.restart() :\n"
-;     (indent) "       sc_tailTmp)\n"
-;     (indent) "  )\n"
-;     (indent) ")"))
+(define-nmethod (Call/cc-Resume.compile p stmt?)
+  (template-display p env
+     (?@ stmt? "~@;\n")
+     "sc_callCcIndex = 0"))
 
 (define-nmethod (Call.compile p stmt?)
    (define (compile-operator)
@@ -457,23 +683,94 @@
 		   (template-display p env
 		      "(0, $js-id)")))
 	     (walk operator p #f))))
+
+   (define (compile-operands)
+      (with-access::Call this (operands)
+	 (template-display p env
+	    "~e"
+	    (separated ", "
+		       (lambda (operand) "~e" (walk operand p #f))
+		       operands))))
       
-   (template-display p env
-      (?@ stmt? "~@;\n")
-      (?@ (not stmt?) "(~@)") ;; just for now. better than nothing.
-      "~e"
-      (with-access::Call this (operator operands)
-	 (unless (and (Out-Env-optimize-calls? env)
-		      (compile-optimized-call p env walk operator operands))
+   (define (compile-trampoline-call)
+      (define (do-trampoline-call tail-obj)
+	 (with-access::Call this (operator)
 	    (template-display p env
-	       "~e(~e)"
-	       (compile-operator)
-	       (separated ", "
-			  (lambda (operand) "~e" (walk operand p #f))
-			  operands))))))
+	       "(~a.f = ~e," tail-obj (walk operator p #f)
+	       " ~a.f(~e))"  tail-obj (compile-operands))))
+
+      (let ((operator (Call-operator this))
+	    (max-tail-depth (Out-Env-max-tail-depth env)))
+	 (with-access::Call this (operator)
+	    (template-display p env
+	       "(this === sc_tailObj?\n"
+	       "     (!sc_funTailCalls?\n"  ;; == 0
+	       "          (this.args = [~e],"   (compile-operands)
+	       "           this.f = ~e,"        (walk operator p #f)
+	       "           this)\n"
+	       "       :\n"
+	       "          (this.calls = sc_funTailCalls - 1,\n"
+	       "          ~e))\n"         (do-trampoline-call "this")
+	       "  :\n"
+	       "     (sc_tailObj.calls = ~a,\n" max-tail-depth
+	       "      sc_tailTmp = ~e,\n" (do-trampoline-call "sc_tailObj")
+	       "      (sc_tailObj === sc_tailTmp?"
+	       "                 sc_tailObj.restart()"
+	       "               : sc_tailTmp)))"))))
+
+   (with-access::Call this (operator operands call/cc? call/cc-index
+				     trampoline?)
+      (template-display p env
+	 (?@ stmt? "~@;\n")
+	 (?@ (not stmt?) "(~@)") ;; just for now. better than nothing.
+	 (?@ (and call/cc? call/cc-index)
+	     "sc_callCcIndex = ~a, ~@" call/cc-index)
+	 "~e"
+	 (cond
+	    ((and (Out-Env-optimize-calls? env)
+		  (compile-optimized-call p env walk operator operands))
+	     'do-nothing) ;; already printed
+	    (trampoline?
+	     (compile-trampoline-call))
+	    (else
+	     (template-display p env
+		"~e(~e)" (compile-operator) (compile-operands)))))))
 
 (define-nmethod (While.compile p stmt?)
-   (with-access::While this (init test body label)
+   (define (finally-outs scope)
+      (with-access::Call/cc-Scope-Info scope (finally-vars)
+	 (let ((frame-name (call/cc-frame-name scope))
+	       (counter (call/cc-counter-name
+			 (While-call/cc-counter-nb this))))
+	    (template-display p env
+	       "if (sc_callCcState.~a === ~a && sc_callCcState[~a]) {\n"
+	       ;; state.counter === counter && state.frame
+	       counter counter frame-name
+	       "  ~e"
+	       "}\n"
+	       (each (lambda (var)
+			"sc_callCcState[~a].~a = ~a;\n"
+			;; state.frame.var-id = var-id;
+			frame-name (Named-Var-js-id var) (Named-Var-js-id var))
+		     finally-vars)))))
+
+   (define (body-out)
+      (with-access::While this (body call/cc? call/cc-finally-scopes
+				     call/cc-counter-nb)
+	 (template-display p env
+	    (?? call/cc? "~a++;\n" (call/cc-counter-name call/cc-counter-nb))
+	    (?@ (not (null? call/cc-finally-scopes))
+		"try {"
+		"  ~@"
+		"} finally {"
+		"  if (sc_callCcState) {"
+		"    ~e"
+		"  }"
+		"}\n"
+		(for-each finally-outs call/cc-finally-scopes))
+	    "~e" (walk body p #t))))
+
+   (with-access::While this (init test body label call/cc?)
       (template-display p env
 	 ;; init
 	 (?? (not (Const? init)) "~e" (walk init p #t))
@@ -481,23 +778,24 @@
 	 (?? (not (eq? label (default-label)))
 	     "~a:\n" (mangle-JS-sym (Label-id label))))
 
-      (if (and (Const? test)
+      (cond
+	 ((and (Const? test)
 	       (eq? (Const-value test) #t))
 	  (template-display p env
 	     "do {\n"
-	     "  ~e" (walk body p #t)
-	     "} while (true);\n")
+	     "  ~e" (body-out)
+	     "} while (true);\n"))
+	 ((not call/cc?)
 	  (template-display p env
-	     "while (~e) {\n" (walk test p #f)
+	     "while (~e) {\n" (compile-boolified p env walk test)
 	     "  ~e"           (walk body p #t)
-	     "}\n"))))
+	     "}\n"))
+	 (else
+	  (template-display p env
+	     "while (sc_callCcIndex || (~e)) {\n" (walk test p #f)
+	     "  ~e"                               (body-out)
+	     "}\n")))))
 			  
-;(define-nmethod (Call/cc-Counter-Update.compile p)
-;   (with-access::Call/cc-Counter-Update this (index)
-;      (template-display p env
-;	 (?@ (statement-form? this) "~@;\n")
-;	 "~a++" (call/cc-loop-counter index))))
-
 (define-nmethod (Continue.compile p stmt?)
    (with-access::Continue this (label)
       (if (eq? label (default-label))

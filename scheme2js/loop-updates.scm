@@ -98,9 +98,9 @@
 	 (cond
 	    ((not target)
 	     (potential-uses (Shallow-Env-escaping-vars env) self-var b))
-	    ((higher-order-runtime-var-ref? target)
+	    ((higher-order-runtime-ref? target)
 	     (potential-uses (Shallow-Env-escaping-vars env) self-var b))
-	    ((runtime-var-ref? target)
+	    ((runtime-ref? target)
 	     ;; arguments are already taken care of.
 	     'do-nothing)
 	    ((Lambda? target)

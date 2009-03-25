@@ -242,20 +242,24 @@
 				  constant?)))))
 		
 		(set! operator (move-stmt-walk operator stmt-operator? #t))
-		
-		(let loop ((ops operands)
-			   (stmts? stmt-operands)
-			   (partial? (unaffected? operator)))
-		   (cond
-		      ((null? ops)
-		       'done)
-		      (else
-		       (set-car! ops
-				 (move-stmt-walk (car ops) (car stmts?)
-						 partial?))
-		       (loop (cdr ops) (cdr stmts?)
-			     (and partial? (unaffected? (car ops)))))))
-		
+
+		(if (not stmt-operands)
+		    (set! operands
+			  (map! (lambda (o)
+				   (walk! o surrounding-fun stmt-begin))
+				operands))
+		    (let loop ((ops operands)
+			       (stmts? stmt-operands)
+			       (partial? (unaffected? operator)))
+		       (cond
+			  ((null? ops)
+			   'done)
+			  (else
+			   (set-car! ops
+				     (move-stmt-walk (car ops) (car stmts?)
+						     partial?))
+			   (loop (cdr ops) (cdr stmts?)
+				 (and partial? (unaffected? (car ops))))))))
 		(shrink! this)
 		this))))))
 
@@ -302,12 +306,7 @@
 	  (move-to-begin this walk! surrounding-fun stmt-begin)
 	  (default-walk! this surrounding-fun #f))))
       
-;; TODO: what about Call/cc-Call ?
-;(define-nmethod (Call/cc-Resume.stmts! surrounding-fun state-var/return
-;				       statement-form?)
-;   (Value-stmts! this state-var/return statement-form?))
-;
-;(define-nmethod (Call/cc-Counter-Update.stmts! surrounding-fun
-;					       state-var/return
-;					       statement-form?)
-;   (Value-stmts! this state-var/return statement-form?))
+(define-nmethod (Call/cc-Resume.stmts! surrounding-fun stmt-begin)
+   (error "statements"
+	  "internal error: Call/cc-Resume nodes should not exist yet."
+	  #f))

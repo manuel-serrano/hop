@@ -80,7 +80,8 @@
 		       (create-js-var scheme-sym imported? desc))))
 
 ;; lazy lookup will not create Vars until they are actually used.
-(define (lazy-imported-lookup imports)
+;; if JS? is true then direct accesses are to be found/added here.
+(define (lazy-imported-lookup imports JS?)
    (define (export-in-list sym l)
       (any (lambda (desc)
 	      (and (eq? (Export-Desc-id desc) sym)
@@ -91,30 +92,84 @@
 	 (and tmp
 	      (create-js-var sym #t tmp))))
 
-   (cond
-      ((null? imports)
-       (lambda (symbol) #f))
-      ((and (pair? imports)
-	    (Export-Desc? (car imports)))
-       (lambda (symbol)
-	  (export-in-list symbol imports)))
-      ((pair? imports)
-       (lambda (symbol)
-	  (any (lambda (imps)
-		  (cond
-		     ((null? imps) #f)
-		     ((pair? imps) (export-in-list symbol imps))
-		     (else         (export-in-ht symbol imps))))
-	       imports)))
-      (else
-       (lambda (symbol)
-	  (export-in-ht symbol imports)))))
+   (define (qualified? v) ;; just assume it is correctly formed.
+      (pair? v))
+
+   (define (id-symbol id)
+      (if (qualified? id)
+	  (car id)
+	  id))
+   (define (id-qualifier id)
+      (if (qualified? id)
+	  (cadr id)
+	  #f))
+
+   (define (update-scope! scope symbol qualified v)
+      (symbol-var-set! scope qualified v))
+      
+   (define (lazy-lookup scope id)
+      (let ((sym (id-symbol id))
+	    (qualifier (id-qualifier id)))
+	 (let loop ((imports imports))
+	    (if (null? imports)
+		#f
+		(let* ((import (car imports))
+		       (imps-qualifier
+			(cond
+			   ((pair? import) (car import))
+			   ((Export-Table? import)
+			    (Export-Table-qualifier import))
+			   (else (error #f "internal error" #f))))
+		       (imps (if (pair? import)
+				 (cdr import)
+				 (Export-Table-id-ht import))))
+		   (cond
+		      ((null? imps) (loop (cdr imports)))
+		      ((and qualifier
+			    (not (eq? qualifier imps-qualifier)))
+		       (loop (cdr imports)))
+		      ((or (and (pair? imps)
+				(export-in-list sym imps))
+			   (and (hashtable? imps)
+				(export-in-ht sym imps)))
+		       =>
+		       (lambda (v)
+			  (update-scope! scope sym
+					 (if (qualified? id)
+					     id
+					     (list sym imps-qualifier))
+					 v)
+			  v))
+		      (else
+		       (loop (cdr imports)))))))))
+      
+   ;; when this fun is called then the scope does not contain the id that we
+   ;; are looking for. -> if we want to cache, just add the new var to the
+   ;; scope.
+   (lambda (scope id)
+      (let ((v (lazy-lookup scope id)))
+	 (cond
+	    (v v)
+	    ((not JS?) #f)
+	    ((and (qualified? id)
+		  (eq? (id-qualifier id) '_)) ;; JS
+	     (let* ((scheme-sym (id-symbol id))
+		    (js-str (symbol->string scheme-sym)) ;; do not mangle.
+		    (var (create-js-var scheme-sym #t
+					(instantiate::Export-Desc
+					   (id scheme-sym)
+					   (js-id js-str)
+					   (exported-as-const? #f)))))
+		(update-scope! scope scheme-sym id var)
+		var))
+	    (else #f)))))
     
 (define-nmethod (Module.resolve! symbol-table)
    (let* ((runtime-scope (make-lazy-scope
-			  (lazy-imported-lookup (Env-runtime env))))
+			  (lazy-imported-lookup `((* . ,(Env-runtime env)))
+						#f)))
 	  (imported-scope (make-lazy-scope
-			   (lazy-imported-lookup (Env-imports env))))
+			   (lazy-imported-lookup (Env-imports env) #t)))
 	  ;; module-scope might grow, but 'length' is just an indication. 
 	  (module-scope (make-scope (length (Env-exports env))))
 	  (extended-symbol-table (cons* module-scope
@@ -141,14 +196,20 @@
 				  (symbol-var runtime-scope id)))
       
       (Env-runtime-scope-set! env runtime-scope)
-      (Env-unbound-add!-set! env
-			     (lambda (scheme-sym js-str)
-				(js-symbol-add! imported-scope
-						(instantiate::Export-Desc
-						   (id scheme-sym)
-						   (js-id js-str)
-						   (exported-as-const? #f))
-						#t)))
+      (Env-unbound-add!-set!
+       env
+       (lambda (id)
+	  (if (pair? id) ;; qualified
+	      (error "symbol-resolution"
+		     "could not resolve qualified variable"
+		     (cons '@ id))
+	      (let ((js-str (mangle-JS-sym id)))
+		 (js-symbol-add! imported-scope
+				 (instantiate::Export-Desc
+				    (id id)
+				    (js-id js-str)
+				    (exported-as-const? #f))
+				 #t)))))
 
       (with-access::Module this (this-var runtime-vars imported-vars
 					  scope-vars body)
@@ -211,9 +272,6 @@
 (define-nmethod (Lambda.resolve! symbol-table)
    ;; this.body must be 'return'.
    (with-access::Lambda this (body formals scope-vars this-var)
-      (with-access::Return body (val)
-	 (set! val (defines->letrec! val)))
-      
       (let* ((formals-scope (make-scope))
 	     (new-symbol-table (cons formals-scope symbol-table)))
 	 (for-each (lambda (formal)
@@ -227,7 +285,6 @@
    
 (define-nmethod (Let.resolve! symbol-table)
    (with-access::Let this (body bindings kind scope-vars)
-      (set! body (defines->letrec! body))
       (let ((local-scope (make-scope)))
 	 (for-each (lambda (binding)
 		      (with-access::Set! binding (lvalue)
@@ -261,7 +318,7 @@
 	 (cond
 	    (v (set! var v))
 	    ((config 'unresolved=JS)
-	     ((Env-unbound-add! env) id (mangle-JS-sym id))
+	     ((Env-unbound-add! env) id)
 	     (verbose "Unresolved symbol '" id "' assumed to be a JS-var")
 	     (ncall resolve! this symbol-table)) ;; try again.
 	    (else
@@ -321,42 +378,3 @@
 				      (kind 'local))))
 		       (symbol-var-set! module-scope id new-var))))))))
       (else 'do-nothing)))
-
-(define (defines->letrec! n)
-   (cond
-      ((Define? n)
-       ;; wrap into begin.
-       (defines->letrec! (instantiate::Begin
-			    (exprs (list n)))))
-      ((Begin? n)
-       (let ((bindings (map (lambda (n) (shrink! n)) (head-defines! n))))
-	  (if (null? bindings)
-	      n
-	      (instantiate::Let
-		 (bindings bindings)
-		 (body n)
-		 (kind 'letrec)))))
-      (else n)))
-
-(define (head-defines! bnode::Begin)
-   (define (inner bnode::Begin rev-found-defines finish-fun)
-      (let loop ((exprs (Begin-exprs bnode))
-		 (rev-defines rev-found-defines))
-	 (cond
-	    ((null? exprs)
-	     rev-defines)
-	    ((Begin? (car exprs))
-	     (loop (cdr exprs)
-		   (inner (car exprs)
-			  rev-defines
-			  finish-fun)))
-	    ((Define? (car exprs))
-	     (let ((binding (car exprs)))
-		(set-car! exprs (instantiate::Const (value #unspecified)))
-		(loop (cdr exprs)
-		      (cons binding rev-defines))))
-	    (else
-	     (finish-fun rev-defines)))))
-
-   (reverse! (bind-exit (finish-fun)
-		(inner bnode '() finish-fun))))

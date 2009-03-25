@@ -1,226 +1,304 @@
 (module callcc
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (include "tools.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   config
+   (import config
 	   nodes
+	   walk
 	   side
 	   free-vars
 	   tail
-	   locals
 	   mark-statements
-	   var
 	   var-ref-util
 	   verbose
 	   node-elimination
+	   tools
+	   export-desc
 	   callcc-a-normal-form
 	   callcc-check-point
 	   callcc-locations
 	   callcc-resume-push)
-   (export (call/cc-early! tree::pobject)
-	   (call/cc-late! tree::pobject)
+   (export (final-class Call/cc-Scope-Info
+	      (id::symbol read-only)
+	      (vars::pair-nil (default '())) ;; might contain indirect vars!
+	      (indices::pair-nil (default '()))
+
+	      (finally-vars::pair-nil (default '()))
+	      (surrounding-while read-only)
+
+	      (counter-id-nb (default #f)))) ;; only applies to Whiles
+	   
+   (export (call/cc-early! tree::Module)
+	   (call/cc-middle tree::Module)
+	   (call/cc-late! tree::Module)
 	   ))
 
 (define (call/cc-early! tree)
    (when (config 'suspend/resume)
       (verbose "call/cc early")
       (call/cc-locations tree)
-      ;; must extract call/cc calls out of Tail-calls
       (call/cc-a-normal-form! tree)
-      (call/cc-check-point! tree)))
-   
+      (call/cc-check-point tree)))
+
+
+;; find variables that have to be saved, ... when a call/cc occurs.
+;; This has to happen late, after temporary variables have been introduced, but
+;; still before the scope-flattening pass.
+(define (call/cc-middle tree)
+   (when (config 'suspend/resume)
+      (verbose "call/cc middle (scoping)")
+      (call/cc-mark-instrumented tree)
+      (call/cc-scoping tree)))
+
 ;; the statement-pass introduces new Set!s. We shift the call/cc information
 ;; down to the Set!s.
 (define (call/cc-late! tree)
    (when (config 'suspend/resume)
       (verbose "call/cc late")
       (call/cc-resume-push! tree)
-      (call/cc-scoping tree)
+      (remove-While-inits! tree)
       (node-elimination! tree)
       (call/cc-ranges tree)))
 
-;; ever call/cc-call now has a list of scopes associated. move this information
-;; to the fun-node. (that's where it's needed during output)
-;; We also add a finally-scopes-list to funs and whiles.
-;; And we add a Call/cc-Counter-Update object, if the While needs one.
+;; just reupdate the call/cc? fields in scopes. Contrary to before we only mark
+;; scopes that actually need instrumenting. In particulary tail-calls are
+;; ignored now.
+(define (call/cc-mark-instrumented tree)
+   (mark tree #f #f))
+
+(define-nmethod (Node.mark surrounding-scope)
+   (default-walk this surrounding-scope))
+
+(define-nmethod (Scope.mark surrounding-scope)
+   (with-access::Scope this (call/cc?)
+      (set! call/cc? #f)
+      (default-walk this this)
+      (when (and call/cc? surrounding-scope)
+	 (with-access::Scope surrounding-scope (call/cc?)
+	    (set! call/cc? #t)))))
+
+(define-nmethod (Let.mark surrounding-scope)
+   (with-access::Let this (bindings body call/cc?)
+      (set! call/cc? #f)
+      (for-each (lambda (binding)
+		   (walk binding surrounding-scope))
+		bindings)
+      (walk body this)
+      (when (and call/cc? surrounding-scope)
+	 (with-access::Scope surrounding-scope (call/cc?)
+	    (set! call/cc? #t)))))
+
+(define-nmethod (Lambda.mark surrounding-scope)
+   (with-access::Scope this (call/cc?)
+      (set! call/cc? #f)
+      (default-walk this this))) ;; do not propagate call/cc
+
+(define-nmethod (Call.mark surrounding-scope)
+   (default-walk this surrounding-scope)
+   (with-access::Call this (call/cc? call/cc-index)
+      ;; ignore tail-calls (which do not have any call/cc-index)
+      (when (and call/cc? call/cc-index surrounding-scope)
+	 (with-access::Scope surrounding-scope (call/cc?)
+	    (set! call/cc? #t)))))
+
+
+(define (finally-var? var)
+   (and (not (Var-indirect? var))
+	(Var-needs-update? var)))
+
 (define (call/cc-scoping tree)
-   (verbose " call/cc scope assoc")
-   (overload traverse scope! (Node
-			     (Module Lambda-scope!)
-			     Lambda
-			     While
-			     Call/cc-Call)
-	     (tree.traverse #f)))
+   (scope tree #f #f #f '()))
 
-(define-pmethod (Node-scope! surrounding-fun)
-   (this.traverse1 surrounding-fun))
+(define-nmethod (Node.scope surrounding-fun surrounding-while scopes)
+   (default-walk this surrounding-fun surrounding-while scopes))
 
-;; scopes with direct-vars inside, that are marked .call/cc?
-;; direct vars are stored inside the scope as ".call/cc-vars"
-(define (call/cc-scopes! scopes)
-   (cp-filter (lambda (scope)
-		 (and scope.call/cc?
-		      (let ((direct-vars (filter (lambda (var)
-						    (not var.indirect?))
-						 scope.vars)))
-			 (set! scope.call/cc-vars direct-vars)
-			 (not (null? direct-vars)))))
-	      scopes))
-   
-;; scopes with vars inside, that need updates.
-;; these vars are stored inside the scope as ".finally-vars"
-(define (finally-scopes! scopes)
-   (cp-filter (lambda (scope)
-		 (let ((finally-vars (filter (lambda (var)
-						var.needs-update?)
-					     scope.vars)))
-		    (set! scope.finally-vars finally-vars)
-		    (not (null? finally-vars))))
-	      scopes))
+(define-nmethod (Lambda.scope surrounding-fun surrounding-while scopes)
+   (with-access::Lambda this (call/cc? call/cc-finally-scopes
+				       call/cc-contained-scopes
+				       call/cc-nb-while-counters
+				       scope-vars)
+      ;; Note: function scope-vars can not be indirect. (Otherwise they would
+      ;; have been replaced by temporary variables).
+      (if (and call/cc? (not (null? scope-vars)))
+	  (let ((scope-info (instantiate::Call/cc-Scope-Info
+			       (id (gensym 'lambda))
+			       (vars scope-vars)
+			       (indices '())
+			       (surrounding-while #f)
+			       (finally-vars (filter finally-var?
+						     scope-vars)))))
+	     (when (not (null? (Call/cc-Scope-Info-finally-vars scope-info)))
+		(set! call/cc-finally-scopes (list scope-info)))
+	     
+	     (set! call/cc-contained-scopes (list scope-info))
 
-(define-pmethod (Lambda-scope! surrounding-fun)
-   (set! this.counter 0)
-   (this.traverse1 this)
-   ;; just rename the counter-var
-   (set! this.call/cc-nb-counters this.counter)
-   (delete! this.counter)
-   (set! this.call/cc-scopes (call/cc-scopes! this.contained-scopes))
-   (let ((scopes-outside-whiles (filter (lambda (scope)
-					      (not scope.surrounding-while))
-					   this.call/cc-scopes)))
-      (set! this.finally-scopes (finally-scopes! scopes-outside-whiles))))
+	     (set! call/cc-nb-while-counters 0)
+	     
+	     (default-walk this this #f call/cc-contained-scopes))
+	  (begin
+	     (set! call/cc-contained-scopes '())
+	     (set! call/cc-finally-scopes '())
+	     (set! call/cc-nb-while-counters 0)
+	     (default-walk this this #f '())))))
 
-(define-pmethod (While-scope! surrounding-fun)
-   (this.traverse1 surrounding-fun)
-   (set! this.call/cc-scopes (call/cc-scopes! this.contained-scopes))
-   (let ((scopes-outside-nested-whiles
-	  (filter (lambda (scope)
-			(eq? scope.surrounding-while this))
-		     this.call/cc-scopes)))
-      (set! this.finally-scopes
-	    (finally-scopes! scopes-outside-nested-whiles)))
-   (if this.call/cc-loop-counter
-       (let ((counter-update (new-node Call/cc-Counter-Update
-				       this.call/cc-loop-counter)))
-	  (mark-statement-form! counter-update #t)
-	  (cond
-	     ((inherits-from? this.body (node 'Begin))
-	      (cons-set! this.body.exprs counter-update))
-	     (else
-	      (let ((bnode (new-node Begin (list counter-update this.body))))
-		 (mark-statement-form! bnode #t)
-		 (set! this.body bnode)))))))
+;; we set the call/cc-counter-id here too.
+(define-nmethod (While.scope surrounding-fun surrounding-while scopes)
+   (with-access::While this (call/cc? call/cc-finally-scopes
+				       scope-vars call/cc-counter-nb)
+      (if (not call/cc?)
+	  (default-walk this surrounding-fun this scopes)
+	  (with-access::Lambda surrounding-fun (call/cc-contained-scopes
+						call/cc-nb-while-counters)
+	     [assert (surrounding-fun) surrounding-fun]
+	     (set! call/cc-counter-nb call/cc-nb-while-counters)
+	     (set! call/cc-nb-while-counters (+fx 1 call/cc-counter-nb))
 
-(define-pmethod (Call/cc-Call-scope! surrounding-fun)
-   (this.traverse1 surrounding-fun)
-   (for-each (lambda (scope)
-		(set! scope.call/cc-indices
-		      (cons this.call/cc-index (or scope.call/cc-indices '())))
-		(set! scope.call/cc? #t))
-	     this.visible-scopes)
-   (when (config 'call/cc)
-      ;; add a counter-index to while-loops (if necessary)
-      (let loop ((scopes this.visible-scopes))
-	 (if (null? scopes)
-	     'done
-	     (let ((scope (car scopes)))
-		(cond
-		   ((not scope.surrounding-while)
-		    'done)
-		   (scope.surrounding-while.call/cc-loop-counter
-		    ;; already has a counter-var
-		    'done)
-		   (else
-		    (let ((counter surrounding-fun.counter)
-			  (while scope.surrounding-while))
-		       (set! surrounding-fun.counter (+ 1 counter))
-		       (set! while.call/cc-loop-counter counter))))
-		(loop (cdr scopes)))))))
+	     (let* ((to-save-vars (filter (lambda (var) (not (Var-indirect? var)))
+					  scope-vars))
+		    (finally-vars (filter finally-var? to-save-vars)))
 
+		;; even when there are no variables to save. there is always
+		;; the loop-counter.
+		;; TODO: but there is no need, when we only have suspend/resume.
+		(let ((scope-info (instantiate::Call/cc-Scope-Info
+				     (id (gensym 'while))
+				     (vars to-save-vars)
+				     (indices '())
+				     (surrounding-while this)
+				     (finally-vars finally-vars)
+				     (counter-id-nb call/cc-counter-nb))))
+
+		       (when (not (null? finally-vars))
+			  (set! call/cc-finally-scopes (list scope-info)))
+
+		       (cons-set! call/cc-contained-scopes scope-info)
+
+		       (default-walk this surrounding-fun this
+			             (cons scope-info scopes))))))))
+
+(define-nmethod (Let.scope surrounding-fun surrounding-while scopes)
+   (with-access::Let this (call/cc? scope-vars bindings body)
+      (if (not call/cc?)
+	  (default-walk this surrounding-fun surrounding-while scopes)
+	  (let* ((to-save-vars (filter (lambda (var) (not (Var-indirect? var)))
+				       scope-vars))
+		 (finally-vars (filter finally-var? to-save-vars)))
+	     (if (null? to-save-vars)
+		 (default-walk this surrounding-fun surrounding-while scopes)
+		 ;; letrecs have been expanded so they can not have any call/cc
+		 ;; in the right-hand-side. -> no need to look at kind. We can
+		 ;; always treet the Let as if it was a 'let (and not 'letrec).
+		 (let ((scope-info (instantiate::Call/cc-Scope-Info
+				      (id (gensym 'let))
+				      (vars to-save-vars)
+				      (indices '())
+				      (surrounding-while surrounding-while)
+				      (finally-vars finally-vars))))
+		    (when (not (null? finally-vars))
+		       (if surrounding-while
+			   (with-access::While surrounding-while
+				 (call/cc-finally-scopes)
+			      (cons-set! call/cc-finally-scopes scope-info))
+			   (with-access::Lambda surrounding-fun
+				 (call/cc-finally-scopes)
+			      (cons-set! call/cc-finally-scopes scope-info))))
+		    
+		    [assert (surrounding-fun) surrounding-fun]
+		    (with-access::Lambda surrounding-fun
+			  (call/cc-contained-scopes)
+		       (cons-set! call/cc-contained-scopes scope-info))
+		    
+		    (for-each (lambda (binding)
+				 (walk binding surrounding-fun
+				       surrounding-while scopes))
+			      bindings)
+		    (walk body surrounding-fun surrounding-while
+			  (cons scope-info scopes))))))))
+
+(define-nmethod (Call.scope surrounding-fun surrounding-while scopes)
+   (with-access::Call this (call/cc? call/cc-index)
+      (default-walk this surrounding-fun surrounding-while scopes)
+      (when (and call/cc? call/cc-index) ;; ignore tail calls.
+	 (for-each (lambda (scope)
+		      (with-access::Call/cc-Scope-Info scope (indices)
+			 (cons-set! indices call/cc-index)))
+		   scopes))))
+
+;; While nodes must not have Inits, as they can't be skipped this way.
+(define (remove-While-inits! tree)
+   (verbose " remove While inits")
+   (rm! tree #f))
+
+(define-nmethod (Node.rm!)
+   (default-walk! this))
+
+(define-nmethod (While.rm!)
+   (default-walk! this)
+   (with-access::While this (call/cc? init)
+      (cond
+	 ((not call/cc?)
+	  this)
+	 ((Const? init)
+	  this)
+	 (else
+	  (let ((old-init init))
+	     (set! init (instantiate::Const (value #unspecified)))
+	     (instantiate::Begin
+		(exprs (list old-init this))))))))
+
+;; In our current implementation Begin's are the only way to skip expressions.
 (define (call/cc-ranges tree)
    (verbose " call/cc ranges")
-   (overload traverse ranges (Node
-			      Call/cc-Resume
-			      Lambda
-			      If
-			      Case
-			      Clause
-			      Begin
-			      Set!
-			      Call
-			      While
-			      Break)
-	     (set! (node 'Node).proto.default-traverse-value '())
-	     (tree.traverse)
-	     (delete! (node 'Node).proto.default-traverse-value)))
+   (ranges tree #f #f))
 
-(define (range-merge Ls)
-   (let ((ht (make-eq-hashtable)))
-      (for-each (lambda (l)
-		   (for-each (lambda (v)
-				(hashtable-put! ht v #t))
-			     l))
-		Ls)
-      (hashtable-key-list ht)))
-   
+;; TODO: containers should be sorted...
+(define (make-range-container)
+   (cons 'ranges '()))
 
-(define (multi-traverse n children)
-   (let* ((children-range (range-merge (map (lambda (n)
-					       (n.traverse))
-					    children))))
-      (if (and (statement-form? n)
-	       children-range
-	       (not (null? children-range)))
-	  (set! n.call/cc-range children-range))
-      children-range))
+;; result will be in cont1
+(define (range-merge! cont1 cont2)
+   (when cont1
+      (let ((l1 (cdr cont1))
+	    (l2 (cdr cont2)))
+	 (let loop ((l l2)
+		    (res l1))
+	    (cond
+	       ((null? l)
+		(set-cdr! cont1 res))
+	       ((memq (car l) l1)
+		(loop (cdr l) res))
+	       (else
+		(loop (cdr l) (cons (car l) res))))))))
 
-(define-pmethod (Node-ranges)
-   (let* ((children-range (this.traverse0)))
-      (if (and (statement-form? this)
-	       children-range
-	       (not (null? children-range)))
-	  (set! this.call/cc-range children-range))
-      children-range))
+(define (range-add! cont1 is)
+   (when cont1
+      (for-each (lambda (i)
+		   (unless (memq i (cdr cont1))
+		      (set-cdr! cont1 (cons i (cdr cont1)))))
+		is)))
 
-(define-pmethod (Call/cc-Resume-ranges)
-   (set! this.call/cc-range this.indices/vars)
-   this.indices/vars)
+(define (container-ranges cont)
+   (cdr cont))
 
-(define-pmethod (Lambda-ranges)
-   (multi-traverse this (list this.body))
-   '())
-   
-(define-pmethod (If-ranges)
-   (begin0
-    (multi-traverse this (list this.test this.then this.else))
-    (let ((then-range this.then.call/cc-range)
-	  (else-range this.else.call/cc-range))
-       (if (and then-range (not (null? then-range)))
-	   (set! this.call/cc-then-range then-range))
-       (if (and else-range (not (null? else-range)))
-	   (set! this.call/cc-else-range else-range)))))
+(define-nmethod (Node.ranges container)
+   (default-walk this container))
 
-(define-pmethod (Case-ranges)
-   (multi-traverse this (cons this.key this.clauses)))
+(define-nmethod (Begin.ranges container)
+   (with-access::Begin this (exprs call/cc? call/cc-ranges)
+      (set! call/cc-ranges
+	    (map (lambda (exp)
+		    (let ((c (make-range-container)))
+		       (walk exp c)
+		       (when (not (null? (container-ranges c)))
+			  (set! call/cc? #t)
+			  (range-merge! container c)
+			  (container-ranges c))))
+		 exprs))
+      (when (not call/cc?)
+	 ;; free memory
+	 (set! call/cc-ranges '()))))
 
-(define-pmethod (Clause-ranges)
-   (multi-traverse this (append this.consts (list this.expr))))
+(define-nmethod (Execution-Unit.ranges container)
+   (default-walk this #f))
 
-(define-pmethod (Begin-ranges)
-   (multi-traverse this this.exprs))
-
-(define-pmethod (Call-ranges)
-   (multi-traverse this (cons this.operator this.operands)))
-
-(define-pmethod (While-ranges)
-   (multi-traverse this (list this.test this.body)))
-
-(define-pmethod (Set!-ranges)
-   (multi-traverse this (list this.lvalue this.val)))
-
-(define-pmethod (Break-ranges)
-   (if this.val
-       (this.val.traverse)
-       '()))
+(define-nmethod (Call/cc-Resume.ranges container)
+   (default-walk this container)
+   (with-access::Call/cc-Resume this (indices)
+      (range-add! container indices)))

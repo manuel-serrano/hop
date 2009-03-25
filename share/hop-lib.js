@@ -138,12 +138,12 @@ function hop_tprint( file, pos, rest ) {
    (if (epair? rest)
        (match-case (cer rest)
 	  ((at ?name ?pos)
-	   `(hop_tprint ,(relative-file-name name (pwd))
-			,(file-position->line pos name)
-			(list ,@rest)))
+	   `((@ hop_tprint _) ,(relative-file-name name (pwd))
+			      ,(file-position->line pos name)
+			      (list ,@rest)))
 	  (else
-	   `(hop_tprint #f #f (list ,@rest))))
-       `(hop_tprint #f #f (list ,@rest))))
+	   `((@ hop_tprint _) #f #f (list ,@rest))))
+       `((@ hop_tprint _) #f #f (list ,@rest))))
 */
 
 /*---------------------------------------------------------------------*/

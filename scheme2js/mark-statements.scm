@@ -14,7 +14,7 @@
 	      stmt-exprs) ;; may be #f if none is stmt.
 	   (wide-class Stmt-Set!::Set!
 	      stmt-val?::bool)
-	   (wide-class Stmt-Call::SCall
+	   (wide-class Stmt-Call::Call
 	      stmt-operator?::bool
 	      stmt-operands)) ;; may be #f if none is stmt.
    (export (mark-statements tree::Module)))
@@ -135,11 +135,5 @@
    (default-walk this)
    #t)
 
-(define-nmethod (Call/cc-Call.mark)
-   (with-access::Call/cc-Call this (operator operands)
-      (let* ((operands-tmp (list-mark operands walk))
-	     (operator-tmp (walk operator)))
-	 #t)))
-   
 (define-nmethod (Call/cc-Resume.mark)
    #t)

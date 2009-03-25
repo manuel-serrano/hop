@@ -15,7 +15,8 @@
 
 (define (var-out v::Var)
    (with-access::Var v (id)
-      id))
+      (symbol-append id '_ (string->symbol
+			    (number->string (get-hashnumber v))))))
 
 (define (label-out label::Label)
    (with-access::Label label (id)
@@ -105,8 +106,12 @@
       `(begin ,@(map walk exprs))))
 
 (define-nmethod (Call.scm)
-   (with-access::Call this (operator operands)
-      `(,(walk operator) ,@(map walk operands))))
+   (with-access::Call this (operator operands call/cc-index)
+      (if call/cc-index
+	  `(begin
+	      ,call/cc-index
+	      ,(walk operator) ,@(map walk operands))
+	  `(,(walk operator) ,@(map walk operands)))))
 
 (define-nmethod (Frame-alloc.scm)
    (with-access::Frame-alloc this (storage-var vars)

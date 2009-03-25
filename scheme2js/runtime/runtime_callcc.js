@@ -587,7 +587,10 @@ sc_CallCcStorage.prototype.duplicate = function() {
 };
 sc_CallCcStorage.prototype.callNext = function() {
     var nextState = this.states[this.states.length-1];
-    return nextState.callee.call(nextState.this_);
+    if (nextState.this_ === SC_TAIL_OBJECT)
+	return (0, nextState.callee)(); // use global obj as 'this'.
+    else
+	return nextState.callee.call(nextState.this_);
 };
 sc_CallCcStorage.prototype.getCallNextFunction = function() {
     var storage = this;

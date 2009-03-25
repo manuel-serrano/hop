@@ -44,7 +44,17 @@
    (with-access::Execution-Unit this (scope-vars declared-vars free-vars)
       (set! free-vars '())
       ;; scope-vars contains parameters to functions.
-      (default-walk this this (list scope-vars declared-vars))))
+      (default-walk this this (list scope-vars declared-vars))
+      (when surrounding-fun
+	 (let ((this-free-vars free-vars))
+	    ;; free vars might be free for surrounding too.
+	    (with-access::Execution-Unit surrounding-fun (free-vars)
+	       (for-each (lambda (var)
+			    (unless (or (any? (lambda (s) (memq var s))
+					      declared-vars-list)
+					(memq var free-vars))
+			       (cons-set! free-vars var)))
+			 this-free-vars))))))
 (define-nmethod (Frame-push.find-free surrounding-fun declared-vars-list)
    (with-access::Frame-push this (frame-allocs)
       ;; the storage-vars allocate new vars that are supposed to be visible

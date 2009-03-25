@@ -46,7 +46,7 @@
 	       vaarg?)
 	  ;; create a list, and map vaarg to it.
 	  ;; then return the whole list of pairs.
-	  (let ((rvalue (instantiate::SCall
+	  (let ((rvalue (instantiate::Call
 			   (operator (runtime-reference 'list))
 			   (operands opnds))))
 	     (cons (cons (car formals) rvalue)

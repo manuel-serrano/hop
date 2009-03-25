@@ -11,11 +11,7 @@
 /*    This assumes that hop-autoconf is already loaded.                */
 /*=====================================================================*/
 
-/* {*---------------------------------------------------------------------*} */
-/* {*    document ...                                                     *} */
-/* {*---------------------------------------------------------------------*} */
-/* {*** META ((export #t)) *}                                          */
-/* var document;                                                       */
+/*** META ((export document) (JS document)) */
 
 /*---------------------------------------------------------------------*/
 /*    dom_add_child ...                                                */
@@ -106,9 +102,6 @@ function dom_node_document_attrp( node ) {
 /*---------------------------------------------------------------------*/
 /*    dom_create ...                                                   */
 /*---------------------------------------------------------------------*/
-/* we need dom_create (as macros are depending on it. But still call
- * it dom_create and not dom-create */
-/*** META ((export dom_create)) */
 function dom_create( tag, args ) {
    var el = document.createElement( tag );
    var l = arguments.length;
@@ -156,7 +149,7 @@ function dom_create( tag, args ) {
 		(cond
 		   ((null? args)
 		    (let ((v (gensym)))
-		       `(let ((,v (dom_create ,tag ,@(reverse! attrs))))
+		       `(let ((,v ((@ dom_create _) ,tag ,@(reverse! attrs))))
 			   ,@(map (lambda (listener)
 				     `(add-event-listener! ,v ,@listener))
 				  listeners)

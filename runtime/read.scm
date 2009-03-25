@@ -315,7 +315,7 @@
 ;*---------------------------------------------------------------------*/
 (define (current-module-clientc-import)
    (cond-expand
-      ((or bigloo-3.1 bigloo-3.2a)
+      ((or bigloo3.1a bigloo3.1b bigloo3.2a)
        '())
       (else
        (let ((mod (eval-module)))

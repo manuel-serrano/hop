@@ -1,18 +1,17 @@
 (module trampoline
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (include "tools.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   config
+   (import config
 	   nodes
+	   export-desc
+	   walk
 	   symbol
-	   var
 	   tail
 	   side
 	   verbose
-	   var-ref-util)
-   (export (trampoline tree::pobject)))
+	   var-ref-util
+	   tools)
+   (static (wide-class Trampoline-Lambda::Lambda
+	      (finished?::bool (default #f))))
+   (export (trampoline tree::Module)))
 
 ;; find tail-calls, and mark them with .tail-call?
 ;; for our trampolines to work we must not execute any tail-call during
@@ -20,84 +19,97 @@
 ;; const or a var-ref, move them in front of the call (using temporary
 ;; variables). As the creation of these variables creates new scopes, we have
 ;; to do this pass before the scope-resolution pass.
-(define (trampoline tree::pobject)
+(define (trampoline tree::Module)
    (when (config 'trampoline)
       (verbose "trampoline")
-      (tail-exprs tree
-		  #f) ;; intermediate nodes are not considered to be tail.
+      ;; we need the result of both analyses. For now this is possible.
+      ;; However, this is slightly a hack. If side-effect was to use
+      ;; wide-classes we would be doomed.
+      (tail-calls tree)
       (side-effect tree)
-      (overload traverse! trampoline! (Node
-				      Lambda
-				      Call)
-		(tree.traverse! #f))))
+      (trampoline! tree #f #f)))
 
-(define-pmethod (Node-trampoline! current-fun)
-   (this.traverse1! current-fun))
+(define-nmethod (Node.trampoline! current-fun)
+   (default-walk! this current-fun))
 
-(define-pmethod (Lambda-trampoline! current-fun)
-   (unless (or this.trampolined? this.in-progress)
-      (set! this.in-progress #t)
-      (this.traverse1! this)
-      (delete! this.in-progress)
-      (set! this.trampolined? #t))
+(define-nmethod (Trampoline-Lambda.trampoline! current-fun)
    this)
 
-(define (potential-tail-fun? operator)
-   (cond
-      ((inherits-from? operator (node 'Lambda))
-       (cond
-	  (operator.in-progress
-	   #t)
-	  (operator.trampolined?
-	   operator.contains-tail-calls?)
-	  (else
-	   (operator.traverse! #f)
-	   operator.contains-tail-calls?)))
-      ((runtime-var-ref? operator)
-       #f)
-      ((and (inherits-from? operator (node 'Var-ref))
-	    operator.var.constant?)
-       (potential-tail-fun? operator.var.value))
-      (else
-       #t)))
+(define-nmethod (Lambda.trampoline! current-fun)
+   (widen!::Trampoline-Lambda this)
+   (default-walk! this this)
+   (with-access::Trampoline-Lambda this (finished?)
+      (set! finished? #t))
+   this)
+
+(define (potential-tail-fun? operator walk!)
+   (let ((target (call-target operator)))
+      (cond
+	 ((not target) #t)
+	 ((Trampoline-Lambda? target)
+	  (with-access::Trampoline-Lambda target (finished?
+						  contains-trampoline-call?)
+	     (or (not finished?) contains-trampoline-call?)))
+	 ((Lambda? target)
+	  (walk! target #f))
+	 ((runtime-ref? target)
+	  #f)
+	 (else #t))))
 
 (define (a-normal-form call)
+   (define (allowed-call? call)
+      (with-access::Call call (operator operands)
+	 (let ((target (call-target operator)))
+	    (and (runtime-ref? target)
+		 (not (higher-order-runtime-ref? target))
+		 ;; finally weed things like: (+ (f ..) (let ...))
+		 (every? (lambda (op)
+			    (or (Const? op)
+				(Ref? op)))
+			 operands)))))
+
    (let ((hoisted '()))
       (define (hoist n)
 	 (cond
-	    ((or (inherits-from? n (node 'Const))
-		 (inherits-from? n
-				 (node 'Var-ref)))
+	    ((or (Const? n)
+		 (Ref? n))
 	     n)
-	    ((and (inherits-from? n (node 'Call))
-		  (runtime-var-ref? n.operator)
-		  (not (runtime-var n.operator).higher?))
+	    ((and (Call? n)
+		  (allowed-call? n))
 	     n)
 	    (else
-	     ;; TODO: variables must be in scope
-	     (let* ((tmp-decl (Decl-of-new-Var (gensym 'tail)))
-		    (assig (new-node Set! tmp-decl n)))
-		(set! hoisted (cons assig hoisted))
-		(tmp-decl.var.reference)))))
+	     (let* ((tmp-decl (Ref-of-new-Var 'tail))
+		    (tmp-var (Ref-var tmp-decl))
+		    (assig (var-assig tmp-var n)))
+		(cons-set! hoisted assig)
+		tmp-decl))))
 
-      (set! call.operands (map! hoist call.operands))
-      (set! call.operator (hoist call.operator))
-      (if (null? hoisted)
-	  call
-	  (new-node Let
-		    (map (lambda (assig) assig.lvalue.var) hoisted)
-		    hoisted
-		    call
-		    'let))))
+      (with-access::Call call (operator operands)
+	 (set! operator (hoist operator))
+	 (set! operands (map! hoist operands))
+	 (if (null? hoisted)
+	     call
+	     (instantiate::Let
+		(scope-vars (map (lambda (assig)
+				    (with-access::Set! assig (lvalue)
+				       (Ref-var lvalue)))
+				 hoisted))
+		(bindings hoisted)
+		(body call)
+		(kind 'let))))))
 
-(define-pmethod (Call-trampoline! current-fun)
-   (this.traverse1! current-fun)
-   (if (and this.tail?
-	    (potential-tail-fun? this.operator))
-       (begin
-	  (set! this.tail-call? #t)
-	  (and current-fun (set! current-fun.contains-tail-calls? #t))))
-   (if this.tail-call?
-       (a-normal-form this)
-       this))
+(define-nmethod (Call.trampoline! current-fun)
+   (default-walk! this current-fun))
 
+(define-nmethod (Tail-Call.trampoline! current-fun)
+   (default-walk! this current-fun)
+   (with-access::Tail-Call this (operator trampoline?)
+      (set! trampoline? (potential-tail-fun? operator walk!))
+
+      (when (and trampoline? current-fun)
+	 (with-access::Trampoline-Lambda current-fun
+	       (contains-trampoline-call?)
+	    (set! contains-trampoline-call? #t)))
+      (if trampoline?
+	  (a-normal-form this)
+	  this)))

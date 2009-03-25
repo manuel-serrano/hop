@@ -89,7 +89,7 @@
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set! hop-load-modified)
    (cond-expand
-      ((or bigloo-3.1 bigloo-3.2a)
+      ((or bigloo3.1a bigloo3.1b bigloo3.2a)
        #unspecified)
       (else
        (bigloo-module-extension-handler-set! hop-module-extension-handler)))

@@ -1,5 +1,5 @@
-(module set
-   (export init-game!))
+;(module set
+;   (export init-game!))
 
 ;; will all be set in init-game!
 (define submit-set! #unspecified)

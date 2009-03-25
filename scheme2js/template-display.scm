@@ -296,15 +296,6 @@
 				    ,@disp-body))
 			      ,@lists)
 		    ,@(aux (cdr patterns) (cdr args) hole)))
-		 ((each-e ?fun . ?lists)
-		  (let ((formals (map (lambda (i)
-					 (string->symbol (format "arg~a" i))
-					 (iota (length lists))))))
-		     `((for-each (lambda ,formals
-				    (template-display ,p ,env
-				       "~e" (,fun ,@formals)))
-				 ,@lists)
-		       ,@(aux (cdr patterns) args hole))))
 		 ((each-a ?fun . ?lists)
 		  (let ((formals (map (lambda (i)
 					 (string->symbol (format "arg~a" i))

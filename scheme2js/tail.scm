@@ -3,7 +3,7 @@
 	   export-desc
 	   walk
 	   verbose)
-   (export (wide-class Tail-Call::SCall))
+   (export (wide-class Tail-Call::Call))
    (static (wide-class Tail-Label::Label))
    (export (tail-calls tree::Module)))
 
@@ -58,7 +58,7 @@
 	     (walk (car exprs) #f)
 	     (loop (cdr exprs)))))))
 
-(define-nmethod (SCall.tail tail?)
+(define-nmethod (Call.tail tail?)
    (cond
       (tail?
        (widen!::Tail-Call this))
@@ -87,17 +87,14 @@
 	  (walk val #t)
 	  (walk val #f))))
 
+(define-nmethod (Tail-rec.tail tail?)
+   (with-access::Tail-rec this (inits body label)
+      (for-each (lambda (init) (walk init #f)) inits)
+      (when (Tail-Label? label) (shrink! label))
+      (walk body tail?)))
+   
 (define-nmethod (Tail-rec-Call.tail tail?)
    (default-walk this #f))
 
 (define-nmethod (While.tail tail?)
    (default-walk this #f))
-
-(define-nmethod (Call/cc-Call.tail tail?)
-   (error #f "TODO Call/cc-Call.tail TODO" #f))
-
-(define-nmethod (Call/cc-Resume.tail tail?)
-   (error #f "TODO Call/cc-Resume.tail TODO" #f))
-
-(define-nmethod (Call/cc-Counter-Update.tail tail?)
-   (error #f "TODO Call/cc-Counter-Update.tail TODO" #f))

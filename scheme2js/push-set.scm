@@ -96,7 +96,7 @@
 	     (loop (cdr exprs)))))
       this))
 
-(define-nmethod (SCall.push! var/return)
+(define-nmethod (Call.push! var/return)
    (default-walk! this #f)
    (assign! this var/return))
 

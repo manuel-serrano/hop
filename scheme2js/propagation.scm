@@ -10,8 +10,10 @@
 	   verbose
 	   mutable-strings)
    (static (class Prop-Env
-	      call/cc?::bool)
-	   (wide-class Prop-Call/cc-Call::Call/cc-Call
+	      call/cc?::bool
+	      suspend/resume?::bool
+	      bigloo-runtime-eval?::bool)
+	   (wide-class Prop-Call/cc-Call::Call
 	      mutated-vars ;; vars that are mutated after the call
 	      visible-whiles)
 	   (wide-class Prop-While::While
@@ -39,19 +41,21 @@
 ;; the current value. a set! obviously updates it. a loop kills all the
 ;; variables that are affected.
 ;; if we have a binding x = y, and this is the only use of y (see
-;; var-elimination), then we replace x by y.
+;; var-elimination), then we replace x by y. Exception applies for call/cc.
 (define (propagation! tree)
    (when (config 'propagation)
       (verbose "propagation")
       (side-effect tree)
       (free-vars tree)
-      (let ((call/cc? (config 'call/cc)))
-	 (pass1 tree call/cc?)
-	 (pass2! tree call/cc?))))
+      (pass1 tree)
+      (pass2! tree)))
 
-(define (pass1 tree call/cc?)
+(define (pass1 tree)
    (verbose " propagation1")
-   (changed tree (make-Prop-Env call/cc?)
+   (changed tree (instantiate::Prop-Env
+		    (call/cc? (config 'call/cc))
+		    (suspend/resume? (config 'suspend/resume))
+		    (bigloo-runtime-eval? (config 'bigloo-runtime-eval)))
 	    #f '() #f))
 
 (define (widen-vars! vars)
@@ -145,10 +149,11 @@
 	     (merge-call/ccs! call/ccs call/ccs-clauses)))
        (default-walk this surrounding-fun surrounding-whiles call/ccs)))
 	 
-(define-nmethod (Call/cc-Call.changed surrounding-fun surrounding-whiles
-				      call/ccs)
+(define-nmethod (Call.changed surrounding-fun surrounding-whiles
+			      call/ccs)
    (default-walk this surrounding-fun surrounding-whiles call/ccs)
-   (when (Prop-Env-call/cc? env)
+   (when (and (Call-call/cc? this)
+	      (Prop-Env-call/cc? env))
       (with-access::List-Box call/ccs (v)
       (cons-set! v this)
       
@@ -219,9 +224,12 @@
 	 ;; update the call/ccs (which in turn will update their whiles
 	 (for-each update-call/cc-call (List-Box-v call/ccs)))))
 
-(define (pass2! tree call/cc?)
+(define (pass2! tree)
    (verbose " propagation2")
-   (propagate! tree (make-Prop-Env call/cc?)
+   (propagate! tree (instantiate::Prop-Env
+		       (call/cc? (config 'call/cc))
+		       (suspend/resume? (config 'suspend/resume))
+		       (bigloo-runtime-eval? (config 'bigloo-runtime-eval)))
 	       (make-List-Box '())))
 
 ;; b1 will be the result-box
@@ -314,7 +322,14 @@
 		    (eq? val 'unknown)
 		    escaping-mutated?)
 		this)
-	       ((and (Ref? val)
+	       ;; do not propagate variable-references when in suspend/call/cc
+	       ;; mode.
+	       ;; i.e. avoid things like
+	       ;;   (let ((x y)) (if x (set! y (not y))))
+	       ;; ->
+	       ;;   (if y (set! y (not y)))
+	       ((and (not (Prop-Env-suspend/resume? env))
+		     (Ref? val)
 		     (not (Prop-Var-escaping-mutated? (Ref-var val))))
 		(var-reference (Ref-var val)))
 	       ((and (Const? val)
@@ -324,7 +339,8 @@
 			    (char? value)
 			    (boolean? value)
 			    (and (not (use-mutable-strings?))
-				 (string? value))
+				 (string? value)
+				 (not (>fx (string-length value) 15)))
 			    (eqv? #unspecified value))))
 		(instantiate::Const (value (Const-value val))))
 	       (else
@@ -399,8 +415,9 @@
    
    (default-walk! this var/vals)
    (with-access::Call this (operator operands)
-      (if (and (Ref? operator)
-	       (runtime-var (Ref-var operator))
+      (if (and (Prop-Env-bigloo-runtime-eval? env)
+	       (Ref? operator)
+	       (runtime-ref? operator)
 	       (every? constant-value? operands))
 	  ;; for most runtime-functions we should be able to compute the result
 	  ;; right now. (obviously a "print" won't work now...)
@@ -475,9 +492,6 @@
 (define-nmethod (Call/cc-Resume.propagate! var/vals)
    (default-walk! this var/vals))
 
-(define-nmethod (Call/cc-Counter-Update.propagate! var/vals)
-   (default-walk! this var/vals))
-
 
 
 (define (optimize-runtime-op op operands)
@@ -517,7 +531,7 @@
 		     (instantiate::Const
 			(value (apply equal? (map operand->val operands)))))
 		  #f))))
-      ((equal? number? = < > <= >= zero? negative? odd? even? max min
+      ((equal? number? = < > <= >= zero? zerofx? negative? odd? even? max min
 	    + * - / remainder modulo gcd lcm floor ceiling truncate round exp
 	    log sin cos tan asin acos atan sqrt expt not boolean? pair? null?
 	    char-numeric? char-whitespace? char-upper-case? char-lower-case?

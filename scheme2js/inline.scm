@@ -19,7 +19,7 @@
 	      max-inline-size::bint)
 	   (class Inline-Env
 	      counter::bint)
-	   (wide-class Inlined-Call::SCall
+	   (wide-class Inlined-Call::Call
 	      cloned-fun::Lambda)
 	   (wide-class Inlined-Local::Var))
    (export (inline! tree::Module full?::bool)))

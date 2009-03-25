@@ -5,8 +5,12 @@
 	   (JS-expression::bstring t::pair)
 	   (JS-statement::bstring t::pair)
 	   (JS-return::bstring t::pair))
-   (import __hopscheme_config))
+   (import __hopscheme_config
+	   __hop_exports))
 
+;; this function is called during parsing. It returns an expression that is
+;; supposed to take the place of a tilde expression. We therefore return a
+;; quotted 'cons (instead of a pair).
 (define (compile-scheme-expression e env)
    (let ((s-port (open-output-string))
 	 (assig-var (gensym 'result)))
@@ -17,7 +21,9 @@
 	 (scheme2js-compile-expr
 	  e              ;; top-level
 	  s-port         ;; out-port
-	  env            ;; module-headers
+	  `(             ;; override-headers
+	    (merge-first (import ,(hop-runtime-module)))
+	    ,@env)
 	  (extend-config (hopscheme-config #f) 'module-result-var assig-var)) ;; config
 	 `(cons ',assig-var ,(*hop-postprocess* (close-output-port s-port))))))
 

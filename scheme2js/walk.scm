@@ -186,5 +186,4 @@
 (gen-walks Tail-rec-Call (updates))
 (gen-walks While init test body)
 (gen-walks Call/cc-Resume)
-(gen-walks Call/cc-Counter-Update)
 

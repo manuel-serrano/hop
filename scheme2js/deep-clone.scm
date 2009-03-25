@@ -106,6 +106,7 @@
 	  "clone on Call/cc-Resume should never happen. Change method!"
 	  #f))
 
+;; define-do-clone clones the given class, but calls 'clone' on the fields.
 (define-macro (define-do-clone class . fields)
    `(define-method (do-clone ,(symbol-append 'this:: class))
        (,(symbol-append 'duplicate:: class)
@@ -135,7 +136,7 @@
 (define-do-clone Set! lvalue val)
 (define-do-clone Let (scope-vars) (bindings) body)
 (define-do-clone Begin (exprs))
-(define-do-clone SCall operator (operands))
+(define-do-clone Call operator (operands))
 (define-do-clone Return val)
 (define-do-clone Labeled label body)
 (define-do-clone Break val label)
@@ -148,4 +149,3 @@
 (define-do-clone Frame-alloc storage-var (vars))
 (define-do-clone Frame-push body (frame-allocs))
 (define-do-clone While test body label)
-(define-do-clone Call/cc-Call operator (operands))

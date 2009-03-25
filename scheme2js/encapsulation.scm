@@ -22,7 +22,7 @@
 					 (formals '())
 					 (vaarg? #f)
 					 (body encapsulated-body)))
-		(call (instantiate::SCall
+		(call (instantiate::Call
 			 (operator (runtime-reference 'js-call))
 			 (operands (list (var-reference this-var)
 					 encapsulation-lambda)))))
