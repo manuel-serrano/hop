@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Mar 23 17:31:49 2009 (serrano)                */
+;*    Last change :  Wed Mar 25 15:34:29 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -21,7 +21,8 @@
    (import  __hop_param
 	    __hop_read-js
 	    __hop_css
-	    __hop_charset)
+	    __hop_charset
+	    __hop_clientc)
 
    (use     __hop_types
 	    __hop_xml)
@@ -564,7 +565,8 @@
 			 (input-port-name (the-port))
 			 (input-port-position (the-port))))
 	      (expr (ignore))
-	      (args (list ((hop-make-escape) (the-port) expr) :src `',expr)))
+	      (args (list ((clientc-expressionc (hop-clientc)) expr '())
+			  :src `',expr)))
 	  (econs '<TILDE> args loc)))
       
       ;; structures

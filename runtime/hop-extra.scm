@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/runtime/hop-extra.scm            */
+;*    serrano/prgm/project/hop/2.0.x/runtime/hop-extra.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Mar  3 07:32:19 2009 (serrano)                */
+;*    Last change :  Wed Mar 25 15:18:49 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -28,7 +28,7 @@
 	    __hop_hop
 	    __hop_user
 	    __hop_css
-	    __hop_scm
+	    __hop_clientc
 	    __hop_hop-file)
 
    (export  (<HTML> . ::obj)
@@ -503,7 +503,7 @@
    (define (default src)
       (if (string? src)
 	  (let ((src (if (member (suffix src) (hop-client-script-suffixes))
-			 (scm2js-url src)
+			 (clientc-url src)
 			 src)))
 	     (when inline (warning '<SCRIPT> "Cannot inline file -- " src))
 	     (instantiate::xml-cdata
@@ -517,7 +517,7 @@
    
    (define (inl src)
       (let ((body (if (member (suffix src) (hop-client-script-suffixes))
-		      (scm2js-compile-file src)
+		      (get-clientc-compiled-file src)
 		      (with-input-from-file src read-string))))
 	 (if body
 	     (instantiate::xml-cdata

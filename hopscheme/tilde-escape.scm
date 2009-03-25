@@ -1,13 +1,13 @@
 (module __hopscheme_tilde-escape
    (library scheme2js)
-   (export (compile-scheme-expression e)
-	   (compile-hop-client e)
+   (export (compile-scheme-expression e ::obj)
+	   (compile-hop-client e #!optional (env '()))
 	   (JS-expression::bstring t::pair)
 	   (JS-statement::bstring t::pair)
 	   (JS-return::bstring t::pair))
    (import __hopscheme_config))
 
-(define (compile-scheme-expression e)
+(define (compile-scheme-expression e env)
    (let ((s-port (open-output-string))
 	 (assig-var (gensym 'result)))
       (with-handler
@@ -17,7 +17,7 @@
 	 (scheme2js-compile-expr
 	  e              ;; top-level
 	  s-port         ;; out-port
-	  '()            ;; module-headers
+	  env            ;; module-headers
 	  (extend-config (hopscheme-config #f) 'module-result-var assig-var)) ;; config
 	 `(cons ',assig-var ,(*hop-postprocess* (close-output-port s-port))))))
 
@@ -41,9 +41,9 @@
        "{ " e "\n"
        "return " assig-var-str "; }")))
 
-(define (compile-hop-client e)
+(define (compile-hop-client e #!optional (env '()))
    ;; This function is used from weblets, don't remove it!
-   (let ((ce (compile-scheme-expression e)))
+   (let ((ce (compile-scheme-expression e env)))
       (match-case ce
 	 ((cons ((kwote quote) ?var) ?expr)
 	  (JS-expression (cons var expr)))

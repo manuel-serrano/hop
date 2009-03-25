@@ -1,19 +1,19 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/scm.scm                   */
+;*    serrano/prgm/project/hop/2.0.x/runtime/clientc.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
-;*    Creation    :  Wed Dec 26 08:30:35 2007                          */
-;*    Last change :  Wed Mar 25 14:27:24 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
+;*    Last change :  Wed Mar 25 15:17:31 2009 (serrano)                */
+;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
-;*    HOP client-side -> JavaScript compiler                           */
+;*    HOP client-side compiler                                         */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hop_scm
-   
+(module __hop_clientc
+
    (library web)
    
    (include "xml.sch"
@@ -33,38 +33,65 @@
 	    __hop_http-error
 	    __hop_xml)
    
-   (export  (init-scm-compiler! ::procedure ::procedure)
-	    (scm-response::%http-response ::http-request ::bstring)
-	    (scm2js-url ::bstring)
-	    (scm2js-compile-file ::bstring)))
+   (export  (class clientc
+	       (filec::procedure read-only)
+	       (expressionc::procedure read-only)
+	       (modulec::procedure read-only)
+	       (JS-expression::procedure read-only)
+	       (JS-statement::procedure read-only)
+	       (JS-return::procedure read-only))
+
+	    (init-clientc-compiler! #!key
+				    filec expressionc modulec JS-expression
+				    JS-statement JS-return)
+	    (clientc-url ::bstring)
+	    (clientc-response::%http-response ::http-request ::bstring)
+	    (get-clientc-compiled-file ::bstring)))
 
 ;*---------------------------------------------------------------------*/
-;*    scm2js-compiler ...                                              */
+;*    clientc-cache ...                                                */
 ;*---------------------------------------------------------------------*/
-(define scm2js-compiler
-   (lambda (f _) (error 'scm2js "no compiler provided" #f)))
+(define clientc-cache #f)
 
 ;*---------------------------------------------------------------------*/
-;*    scm2js-cache ...                                                 */
+;*    clientc-mutex ...                                                */
 ;*---------------------------------------------------------------------*/
-(define scm2js-cache #f)
+(define clientc-mutex (make-mutex 'scm))
 
 ;*---------------------------------------------------------------------*/
-;*    scm2js-mutex ...                                                 */
+;*    init-clientc-compiler! ...                                       */
 ;*---------------------------------------------------------------------*/
-(define scm2js-mutex (make-mutex 'scm))
-
+(define (init-clientc-compiler! #!key filec expressionc modulec JS-expression
+				JS-statement JS-return)
+   ;; prepare the client-code compiler cache
+   (set! clientc-cache
+	 (instantiate::cache-disk
+	    (path (make-file-path (hop-rc-directory)
+				  "cache"
+				  (string-append "clientc-"
+						 (integer->string (hop-port)))))
+	    (out (lambda (o p) (with-output-to-port p (lambda () (print o)))))))
+   ;; hook the client-code compiler
+   (hop-clientc-set!
+    (instantiate::clientc
+       (filec filec)
+       (expressionc expressionc)
+       (modulec modulec)
+       (JS-expression JS-expression)
+       (JS-statement JS-statement)
+       (JS-return JS-return))))
+   
 ;*---------------------------------------------------------------------*/
-;*    scm2js-url ...                                                   */
+;*    clientc-url ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (scm2js-url path)
+(define (clientc-url path)
    (string-append path "?" (hop-scm-compile-suffix)))
 
 ;*---------------------------------------------------------------------*/
-;*    scm-response ...                                                 */
+;*    clientc-response ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (scm-response req path)
-   (let ((cache (cache-get scm2js-cache path))
+(define (clientc-response req path)
+   (let ((cache (cache-get clientc-cache path))
 	 (mime (mime-type path (hop-javascript-mime-type)))
 	 (method (http-request-method req)))
       (if (string? cache)
@@ -79,8 +106,8 @@
 	     (file cache))
 	  (let ((m (eval-module)))
 	     (unwind-protect
-		(let* ((jscript (scm2js-compiler path '()))
-		       (cache (cache-put! scm2js-cache path jscript)))
+		(let* ((jscript ((clientc-filec (hop-clientc)) path '()))
+		       (cache (cache-put! clientc-cache path jscript)))
 		   (instantiate::http-response-file
 		      (request req)
 		      (charset (hop-locale))
@@ -90,25 +117,10 @@
 		(eval-module-set! m))))))
 
 ;*---------------------------------------------------------------------*/
-;*    scm2js-compile-file ...                                          */
+;*    get-clientc-compiled-file ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (scm2js-compile-file path)
+(define (get-clientc-compiled-file path)
    (let* ((req (current-request))
-	  (rep (scm-response req path)))
+	  (rep (clientc-response req path)))
       (with-input-from-file (http-response-file-file rep) read-string)))
       
-;*---------------------------------------------------------------------*/
-;*    init-scm-compiler! ...                                           */
-;*---------------------------------------------------------------------*/
-(define (init-scm-compiler! file-compiler expression-compiler module-compiler)
-   
-   (set! scm2js-cache
-	 (instantiate::cache-disk
-	    (path (make-file-path (hop-rc-directory)
-				  "cache"
-				  (string-append "scm2js-"
-						 (integer->string (hop-port)))))
-	    (out (lambda (o p) (with-output-to-port p (lambda () (print o)))))))
-   
-   (set! scm2js-compiler file-compiler)
-   (hop-make-escape-set! (lambda (p expr) (expression-compiler expr '()))))

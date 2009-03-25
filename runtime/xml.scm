@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Mar 23 17:32:08 2009 (serrano)                */
+;*    Last change :  Wed Mar 25 15:11:45 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -14,8 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_xml
 
-   (library  web
-	     hopscheme)
+   (library  web)
    
    (include "param.sch"
 	    "xml.sch")
@@ -25,7 +24,8 @@
 	    __hop_misc
 	    __hop_param
 	    __hop_configure
-	    __hop_css)
+	    __hop_css
+	    __hop_clientc)
 
    (export  (class xml-backend
 	      (id::symbol read-only)
@@ -498,13 +498,13 @@
 (define-method (xml-write obj::xml-tilde p backend)
    (with-access::xml-tilde obj (body parent)
       (if (and (xml-markup? parent) (eq? (xml-markup-markup parent) 'script))
-	  (xml-write (JS-statement body) p backend)
+	  (xml-write ((clientc-JS-statement (hop-clientc)) body) p backend)
 	  (with-access::xml-backend backend (cdata-start cdata-stop)
 	     (display "<script type='" p)
 	     (display (hop-javascript-mime-type) p)
 	     (display "'>" p)
 	     (when cdata-start (display cdata-start p))
-	     (xml-write (JS-statement body) p backend)
+	     (xml-write ((clientc-JS-statement (hop-clientc)) body) p backend)
 	     (when cdata-stop (display cdata-stop p))
 	     (display "</script>\n" p)))))
       
@@ -795,7 +795,8 @@
    (with-access::xml-tilde obj (%js-statement)
       (if (string? %js-statement)
 	  %js-statement
-	  (let ((js-stmt (JS-statement (xml-tilde-body obj))))
+	  (let* ((body (xml-tilde-body obj))
+		 (js-stmt ((clientc-JS-statement (hop-clientc)) body)))
 	     (set! %js-statement js-stmt)
 	     js-stmt))))
 
@@ -806,7 +807,8 @@
    (with-access::xml-tilde obj (%js-expression)
       (if (string? %js-expression)
 	  %js-expression
-	  (let ((js-expr (JS-expression (xml-tilde-body obj))))
+	  (let* ((body (xml-tilde-body obj))
+		 (js-expr ((clientc-JS-expression (hop-clientc)) body)))
 	     (set! %js-expression js-expr)
 	     js-expr))))
 
@@ -817,7 +819,8 @@
    (with-access::xml-tilde obj (%js-return)
       (if (string? %js-return)
 	  %js-return
-	  (let ((js-ret (JS-return (xml-tilde-body obj))))
+	  (let* ((body (xml-tilde-body obj))
+		 (js-ret ((clientc-JS-return (hop-clientc)) body)))
 	     (set! %js-return js-ret)
 	     js-ret))))
 

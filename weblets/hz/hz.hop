@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/hz/hz.hop                 */
+;*    serrano/prgm/project/hop/2.0.x/weblets/hz/hz.hop                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Tue Apr 22 14:40:11 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Wed Mar 25 15:23:47 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
 ;*=====================================================================*/
@@ -75,7 +75,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz/install ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-service (hz/install url)
+(define-service (hz/install #!key url)
    (let ((req (current-request)))
       (if (not (authorized-service? req 'admin))
 	  (user-access-denied req)
@@ -86,7 +86,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz/run ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-service (hz/run url)
+(define-service (hz/run #!key url)
    (multiple-value-bind (name version)
       (package-url-parse url)
       (hz-load url)

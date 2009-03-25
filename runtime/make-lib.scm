@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/runtime/make-lib.scm             */
+;*    serrano/prgm/project/hop/2.0.x/runtime/make-lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Tue Feb 24 11:58:04 2009 (serrano)                */
+;*    Last change :  Wed Mar 25 14:39:46 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -27,7 +27,7 @@
 	   __hop_read
 	   __hop_read-js
 	   __hop_css
-	   __hop_scm
+	   __hop_clientc
 	   __hop_cgi
 	   __hop_user
 	   __hop_js-lib

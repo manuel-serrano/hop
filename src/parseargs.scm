@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/src/parseargs.scm                */
+;*    serrano/prgm/project/hop/2.0.x/src/parseargs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Mar  3 07:40:04 2009 (serrano)                */
+;*    Last change :  Wed Mar 25 15:33:04 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -213,18 +213,22 @@
       
       ;; init hss, scm compilers, and services
       (init-hss-compiler!)
-      (init-hopscheme! (lambda (p v) (hop-read p))
-		       (hop-share-directory)
-		       (hop-verbose)
-		       (lambda (e)
-			  (hop->json (eval e) #f #f))
-		       (lambda (s)
-			  (with-input-from-string s
-			     (lambda ()
-				(hop-read-javascript
-				 (current-input-port)
-				 (hop-charset))))))
-      (init-scm-compiler! compile-scheme-file compile-scheme-expression)
+      (init-hopscheme! :reader (lambda (p v) (hop-read p))
+	 :share (hop-share-directory)
+	 :verbose (hop-verbose)
+	 :eval (lambda (e) (hop->json (eval e) #f #f))
+	 :postprocess (lambda (s)
+			 (with-input-from-string s
+			    (lambda ()
+			       (hop-read-javascript
+				(current-input-port)
+				(hop-charset))))))
+      (init-clientc-compiler! :filec compile-scheme-file
+	 :expressionc (lambda (expr env) (compile-scheme-expression expr env))
+	 :modulec compile-scheme-module
+	 :JS-expression JS-expression
+	 :JS-statement JS-statement
+	 :JS-return JS-return)
       (init-hop-services!)
       
       ;; hoprc
@@ -232,7 +236,7 @@
       
       ;; default backend
       (when (string? be) (hop-xml-backend-set! (string->symbol be)))
-      
+
       ;; server event port
       (when (hop-enable-fast-server-event)
 	 (if (<fx ep 1024)

@@ -2,11 +2,7 @@
    (library scheme2js)
    (import __hop_exports)
    (export (hopscheme-config compile-file?)
-	   (init-hopscheme! reader::procedure
-			    path::bstring
-			    verbose::int
-			    eval::procedure
-			    postprocess::procedure)
+	   (init-hopscheme! #!key reader share path verbose eval postprocess)
 	   *hop-reader*
 	   *hop-share-directory*
 	   *hop-eval*
@@ -77,7 +73,7 @@
       conf-module))
 
 ;;
-(define (init-hopscheme! reader share verbose eval postprocess)
+(define (init-hopscheme! #!key reader share path verbose eval postprocess)
    (set! *hop-reader* reader)
    (set! *hop-share-directory* share)
    (set! *hop-verbose* verbose)

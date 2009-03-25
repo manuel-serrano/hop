@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/hop-tree.scm             */
+;*    serrano/prgm/project/hop/2.0.x/runtime/hop-tree.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Jan  2 08:36:05 2009 (serrano)                */
+;*    Last change :  Wed Mar 25 15:09:05 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -14,8 +14,6 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hop-tree
 
-   (library hopscheme)
-   
    (include "xml.sch"
 	    "service.sch")
 

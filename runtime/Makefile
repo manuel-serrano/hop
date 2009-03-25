@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Mar 24 08:20:35 2009 (serrano)                */
+#*    Last change :  Wed Mar 25 14:39:31 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -33,7 +33,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 _OBJECTS = param misc types \
            xml charset dom read \
-           read-js css scm js-lib cgi \
+           read-js css clientc js-lib cgi \
            hop service \
            job mime user cache \
            http-lib http-request \

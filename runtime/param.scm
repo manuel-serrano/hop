@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/param.scm                */
+;*    serrano/prgm/project/hop/2.0.x/runtime/param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Jan  2 19:06:50 2009 (serrano)                */
+;*    Last change :  Wed Mar 25 15:01:41 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -197,8 +197,8 @@
 	    (hop-weblets::pair-nil)
 	    (hop-weblets-set! ::pair-nil)
 
-	    (hop-make-escape::procedure)
-	    (hop-make-escape-set! ::procedure)
+	    (hop-clientc::obj)
+	    (hop-clientc-set! ::obj)
 	    
 	    (hop-read-pre-hook::procedure)
 	    (hop-read-pre-hook-set! ::procedure)
@@ -925,15 +925,10 @@
    '())
 
 ;*---------------------------------------------------------------------*/
-;*    hop-make-escape ...                                              */
+;*    hop-clientc ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-make-escape
-   (lambda (x p)
-      (error 'hop-make-escape "No escape hooked." x))
-   (lambda (v)
-      (if (or (not (procedure? v)) (not (correct-arity? v 2)))
-	  (error 'hop-make-escape-set! "Illegal value" v)
-	  v)))
+(define-parameter hop-clientc
+   #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-pre-hook ...                                            */

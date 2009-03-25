@@ -4,7 +4,7 @@
    
    (import __hopscheme_config)
 
-   (export (compile-scheme-file file::bstring)))
+   (export (compile-scheme-file file::bstring ::obj)))
    
 ;*---------------------------------------------------------------------*/
 (define *cached-config* #f)
@@ -17,11 +17,11 @@
    *cached-config*)
        
 ;*---------------------------------------------------------------------*/
-(define (compile-scheme-file file)
+(define (compile-scheme-file file env)
    (with-output-to-string
       (lambda ()
 	 (scheme2js-compile-file file              ;; input-files
 				 "-"               ;; output-file
-				 '()               ;; additional module-headers
+				 env               ;; additional module-headers
 				 (get-cached-config)
 				 :reader *hop-reader*))))
