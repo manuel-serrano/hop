@@ -12,9 +12,7 @@
 		   (let ((desc (create-Export-Desc e #f #f)))
 		      (hashtable-put! ht (Export-Desc-id desc) desc)))
 		exports)
-      (instantiate::Export-Table
-	 (qualifier 'hop)
-	 (id-ht ht))))
+      ht))
 
 (define-macro (read-Hop-runtime-exports)
    (let* ((module-clause (with-input-from-file "hop-runtime.sch"
@@ -28,7 +26,9 @@
 	     (exports (make-exports-table ',exports))
 	     ;; following fields are unused.
 	     (imports '())
-	     (top-level '())))))
+	     (top-level '())
+	     ;; declared-module? is ignored.
+	     (declared-module? #f)))))
 
 (read-Hop-runtime-exports)
 

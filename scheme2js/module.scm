@@ -1,21 +1,31 @@
 (module module-system
    (import verbose
 	   export-desc
+	   module-resolver
 	   infotron
 	   config)
    (export (final-class Compilation-Unit
-	      name              ;; #f if user has not given module-clause.
+	      name::symbol      ;; module-name
 	      top-level         ;; id or pair-nil
 	      macros::pair-nil  ;; of form (define-macro ... )
 	      imports::pair-nil ;; a list of export-lists/hashtables.
-	      exports)          ;; list or Export-Table (see export.scm)
+	      exports           ;; list or hashtable (see export.scm)
+	      ;; #t if the file/unit contained a module header.
+	      declared-module?::bool)
 	   (wide-class WIP-Unit::Compilation-Unit ;; work in progress
 	      header)
 	   (create-module-from-file file::bstring override-headers::pair-nil
 				    reader::procedure)
-	   (create-module-from-expr expr override-headers::pair-nil)))
+	   (create-module-from-expr expr override-headers::pair-nil)
+	   (read-imported-module-file module-name::symbol file
+				      reader
+				      #!key
+				      (bigloo-modules? #t)
+				      (store-exports-in-ht? #f))))
 
-(define *module-extensions* '("scm" "sch"))
+;; uses config 'module-resolver (if given). Should be a procedure that, given a
+;; module name, returns a list of potential files that could contain the
+;; module.
 
 ;; reads an evaluates the module/infotron clauses in the beginning of files.
 ;; In addition to the (optionel) module-header found in files one can provide
@@ -23,7 +33,7 @@
 ;; one. It is also possible to provide headers that are only "applied" if the
 ;; file does not have any.
 ;; headers are of the form:
-;;  '((kind header) ...)
+;;  '((kind header1 ...) ...)
 ;;  '((module-kind module) ...)
 ;; The kind clauses work on individual headers (such as '(import m)) whereas
 ;; the module-kind clauses work on complete modules (such
@@ -51,32 +61,27 @@
    (and (pair? e)
 	(eq? (car e) 'module)))
 
-;; checks that (user-supplied) module-clause is well formed.
-(define (check-module-clause clause)
-   (unless (and (list? clause)
-		(pair? clause)
-		(eq? (car clause) 'module)
-		(pair? (cdr clause))
-		(symbol? (cadr clause))
-		;; due to Hop we can't test if all terms are pairs.
+;; verifies that (user-supplied) module-clause is well formed.
+(define (verify-module-clause clause)
+   (and (list? clause)
+	(pair? clause)
+	(eq? (car clause) 'module)
+	(pair? (cdr clause))
+	(symbol? (cadr clause))
+	;; due to Hop we can't test if all terms are pairs.
 ; 		(every (lambda (sub-term)
 ; 			  (and (pair? sub-term)
 ; 			       (list? sub-term)))
 ; 		       (cddr clause))
-		)
+		))
+   
+(define (check-module-clause clause)
+   (unless (verify-module-clause clause)
       (error "scheme2js-module"
 	     "bad module-clause"
 	     clause)))
 
-;; verify that module-header and file-name are the same.
 (define (check-module-name module-name file-name)
-   (when (or (not (symbol? module-name))
-	     (and (not (string=? file-name "-"))
-		  (not (eq? (string->symbol (prefix (basename file-name)))
-			    module-name))))
-      (error "module"
-	     "Module-name and filename are not equal."
-	     (prefix (basename file-name))))
    (when (or (eq? module-name '*)
 	     (eq? module-name '_))
       (error "module"
@@ -108,11 +113,12 @@
 					 (not header-sexp?)))
 	     (file-path (if (string=? "-" file) "." (dirname file)))
 	     (m (instantiate::Compilation-Unit
-		   (name #f)
+		   (name 'tmp) ;; will be set later.
 		   (top-level top-level)
 		   (macros '())
 		   (imports '())
-		   (exports '()))))
+		   (exports '())
+		   (declared-module? header-sexp?))))
 	 (when header-sexp? (check-module-clause header))
 	 (widen!::WIP-Unit m
 	    (header header))
@@ -131,11 +137,12 @@
 
 (define (create-module-from-expr expr override-headers)
    (let ((m (instantiate::Compilation-Unit
-	       (name #f)
+	       (name (gensym 'module))
 	       (top-level (list expr))
 	       (macros '())
 	       (imports '())
-	       (exports '())))
+	       (exports '())
+	       (declared-module? #f)))
 	 (file-path ".")) ;; filepath is assumed to be "."
       (widen!::WIP-Unit m
 	 (header #f))
@@ -156,16 +163,18 @@
 ;; precondition: the WIP-Unit's header is either #f or well formed.
 (define (prepare-module! m::WIP-Unit override-headers::pair-nil
 			 file-path::bstring reader::procedure)
-   (let ((include-paths (cons file-path (config 'include-paths)))
-	 (module-preprocessor (config 'module-preprocessor))
-	 (module-postprocessor (config 'module-postprocessor))
-	 (bigloo-modules? (config 'bigloo-modules)))
+   (let* ((include-paths (cons file-path (config 'include-paths)))
+	  (module-preprocessor (config 'module-preprocessor))
+	  (module-postprocessor (config 'module-postprocessor))
+	  (bigloo-modules? (config 'bigloo-modules))
+	  (module-resolver (or (config 'module-resolver)
+			       (extension-resolver include-paths))))
       (when module-preprocessor
 	 (module-preprocessor m))
       (merge-headers! m override-headers)
       (set-name! m)
       (read-includes! m include-paths reader)
-      (read-imports! m include-paths reader bigloo-modules?) ;; macros too
+      (read-imports! m module-resolver reader bigloo-modules?) ;; macros too
       (normalize-JS-imports! m)
       (normalize-exports! m bigloo-modules?)
       (when (config 'infotron)
@@ -259,32 +268,38 @@
 			      (and t (cadr t))))
 		 (merge-firsts (filter-map (lambda (p)
 					      (and (eq? (car p) 'merge-first)
-						   (cadr p)))
+						   (cdr p)))
 					   override-headers))
 		 (merge-lasts (filter-map (lambda (p)
 					     (and (eq? (car p) 'merge-last)
-						  (cadr p)))
+						  (cdr p)))
 					  override-headers))
 		 ;; replace and provide are complete module-headers (they
 		 ;; must start with (module ...)
 		 (new-name (select-name header replace provide)))
 	     (set! header `(module ,new-name
-			      ,@merge-firsts
+			      ,@(apply append merge-firsts)
 			      ,@(cond
 				   (replace (cddr replace))
 				   (header (cddr header))
 				   (provide (cddr header))
 				   (else '()))
-			      ,@merge-lasts)))))))
+			      ,@(apply append merge-lasts))))))))
 
 (define (set-name! m::WIP-Unit)
-   (with-access::WIP-Unit m (header name)
+   (with-access::WIP-Unit m (header name declared-module?)
       (cond
 	 ((null? header)
-	  (set! name #f))
-	 (else
-	  ;; this might be #f too. But only if it was not supplied by the
-	  ;; user. (For instance using replace-overrides.)
+	  (set! name (gensym 'module)))
+	 ((eq? (cadr header) #f) ;; can only be a override header
+	  (set! declared-module? #f)
+	  (set! name (gensym 'module)))
+	 ((not declared-module?)
+	  ;; override header provides name now.
+	  ;; -> declared module becomes true.
+	  (set! declared-module? #t)
+	  (set! name (cadr header)))
+	 (else ;; the typical case. just take the name out of the header.
 	  (set! name (cadr header))))))
 
 (define (read-includes! m::WIP-Unit include-paths reader)
@@ -312,7 +327,51 @@
 	       (append! (append-map! read-file include-files)
 			top-level)))))
 
-(define (read-imports! m::WIP-Unit include-paths reader bigloo-modules?)
+;; returns #f if the file is not the correct one.
+(define (read-imported-module-file module-name file reader
+				   #!key
+				   (bigloo-modules? #t)
+				   (store-exports-in-ht? #f))
+   (when (file-exists? file)
+      (let ((ip (open-input-file file)))
+	 (unwind-protect
+	    (let ((module-clause (reader ip #t)))
+	       (cond
+		  ((or (not (pair? module-clause))
+		       (not (eq? (car module-clause) 'module)))
+		   #f)
+		  ((not (verify-module-clause module-clause))
+		   (warning "scheme2js module"
+			    "invalid module-clause skipped"
+			    file)
+		   #f)
+		  ((not (eq? (cadr module-clause) module-name))
+		   #f)
+		  (else
+		   (let ((im (instantiate::Compilation-Unit ;; import-module
+				(name module-name)
+				(top-level #f)
+				(imports '())
+				(exports '())
+				(macros '())
+				;; declared-module is undefined.
+				(declared-module? #f))))
+		      (widen!::WIP-Unit im (header module-clause))
+		      ;; normalize-exports might need the 'ip' in
+		      ;; case it needs to search for macros.
+		      (normalize-exports! im bigloo-modules?
+					  #t  ;; get macros
+					  reader ip)
+		      im))))
+	    (close-input-port ip)))))
+
+(define (export-list? l)
+   (or (null? l)
+       (and (pair? l)
+	    (Export-Desc? (car l))
+	    (export-list? (cdr l)))))
+
+(define (read-imports! m::WIP-Unit module-resolver reader bigloo-modules?)
    (define (get-import-list header)
       (let ((import-list (extract-entries header 'import)))
 	 (unless (every (lambda (im)
@@ -336,56 +395,39 @@
 	     (set! imports new-imports))
 	    ((Compilation-Unit? (car imported-modules))
 	     (let ((im (car imported-modules)))
-		(loop (cdr imported-modules)
-		      (append new-macros
-			      (Compilation-Unit-macros im))
-		      (if (null? (Compilation-Unit-exports im))
-			  new-imports
-			  (cons (Compilation-Unit-exports im)
-				new-imports)))))
-	    (else
+		(with-access::Compilation-Unit im  (exports macros name)
+		   (loop (cdr imported-modules)
+			 (append new-macros macros)
+			 (if (empty-exports? exports)
+			     new-imports
+			     (cons (cons name exports)
+				   new-imports))))))
+	    ((symbol? (car imported-modules))
 	     (let* ((imported-module (car imported-modules))
-		    (module-str (symbol->string imported-module))
-		    (module-filenames (map (lambda (extension)
-					      (string-append module-str
-							     "."
-							     extension))
-					   *module-extensions*))
-		    (module-file (any (lambda (file)
-					 (find-file/path file include-paths))
-				      module-filenames)))
-		(if (not module-file)
-		    (error "scheme2js module"
-			   "can't find imported module"
-			   imported-module)
-		    (let ((ip (open-input-file module-file)))
-		       (unwind-protect
-			  (let ((module-clause (reader ip #t)))
-			     (check-module-clause module-clause)
-			     (check-module-name (cadr module-clause) module-file)
-			     (let ((im (instantiate::Compilation-Unit ;; import-module
-					  (name imported-module)
-					  (top-level #f)
-					  (imports '())
-					  (exports '())
-					  (macros '()))))
-				(widen!::WIP-Unit im (header module-clause))
-				;; normalize-exports might need the 'ip' in
-				;; case it needs to search for macros.
-				(normalize-exports! im bigloo-modules?
-						    #t reader ip) ;; get macros
-				(loop (cdr imported-modules)
-				      (append new-macros
-					      (Compilation-Unit-macros im))
-				      (if (null? (Compilation-Unit-exports im))
-					  new-imports
-					  (with-access::Compilation-Unit im
-						(name exports)
-					     ;; qualified exports. that is name
-					     ;; followed by exports.
-					     (cons (cons name exports)
-						   new-imports))))))
-			  (close-input-port ip))))))))))
+		    (module-files (module-resolver imported-module)))
+		(let liip ((files module-files))
+		   (cond
+		      ((null? files)
+		       (error "scheme2js module"
+			      "can't find imported module"
+			      imported-module))
+		      ((read-imported-module-file
+			imported-module
+			(car module-files)
+			reader
+			:bigloo-modules? bigloo-modules?)
+		       =>
+		       (lambda (im)
+			  ;; just reuse the cond-clause above.
+			  (loop (cons im (cdr imported-modules))
+				new-macros
+				new-imports)))
+		      (else
+		       (liip (cdr files)))))))
+	    (else
+	     (error "scheme2js module"
+		    "bad import clause"
+		    imports))))))
 
 (define (normalize-JS-imports! m)
    (with-access::WIP-Unit m (header imports)

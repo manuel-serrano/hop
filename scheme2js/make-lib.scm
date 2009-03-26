@@ -13,6 +13,7 @@
 	   (mangle-qualified-var gen-js)
 	   expand
 	   export-desc
-	   module-system)
+	   (read-imported-module-file Compilation-Unit WIP-Unit
+	    module-system))
 
    (eval   (export-all)))

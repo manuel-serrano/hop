@@ -33,7 +33,7 @@ BLIBFLAGS = $(BSCM2JSFLAGS)
 _BGL_OBJECTS = main scheme2js \
         tools \
         config mutable-strings verbose \
-        module infotron \
+        module module-resolver infotron \
         expand expanders runtime-expander dot-expand \
         nodes export walk \
         pobject-conv \
@@ -239,7 +239,8 @@ o/allocate-names.o classes/mimosa/inria/scheme2js/allocate-names.class:  \
       mco/gen-js.mco mco/verbose.mco mco/walk.mco mco/export.mco         \
       mco/nodes.mco mco/tools.mco mco/config.mco 
 o/module.o classes/mimosa/inria/scheme2js/module.class: mco/config.mco   \
-      mco/infotron.mco mco/export.mco mco/verbose.mco 
+      mco/infotron.mco mco/module-resolver.mco mco/export.mco            \
+      mco/verbose.mco 
 o/loop-updates.o classes/mimosa/inria/scheme2js/loop-updates.class:      \
       mco/verbose.mco mco/var-ref-util.mco mco/walk.mco mco/export.mco   \
       mco/nodes.mco mco/tools.mco mco/config.mco 
@@ -305,7 +306,8 @@ o/symbol.o classes/mimosa/inria/scheme2js/symbol.class:                  \
       mco/export.mco mco/nodes.mco mco/config.mco mco/symbol-table.mco   \
       mco/tools.mco mco/mapping2.mco mco/mapping1.mco 
 o/module.o classes/mimosa/inria/scheme2js/module.class: mco/config.mco   \
-      mco/infotron.mco mco/export.mco mco/verbose.mco 
+      mco/infotron.mco mco/module-resolver.mco mco/export.mco            \
+      mco/verbose.mco 
 o/while.o classes/mimosa/inria/scheme2js/while.class: mco/verbose.mco    \
       mco/loop-updates.mco mco/symbol.mco mco/walk.mco mco/export.mco    \
       mco/nodes.mco mco/tools.mco mco/config.mco 

@@ -82,16 +82,6 @@
 ;; lazy lookup will not create Vars until they are actually used.
 ;; if JS? is true then direct accesses are to be found/added here.
 (define (lazy-imported-lookup imports JS?)
-   (define (export-in-list sym l)
-      (any (lambda (desc)
-	      (and (eq? (Export-Desc-id desc) sym)
-		   (create-js-var sym #t desc)))
-	   l))
-   (define (export-in-ht sym ht)
-      (let ((tmp (hashtable-get ht sym)))
-	 (and tmp
-	      (create-js-var sym #t tmp))))
-
    (define (qualified? v) ;; just assume it is correctly formed.
       (pair? v))
 
@@ -114,32 +104,22 @@
 	    (if (null? imports)
 		#f
 		(let* ((import (car imports))
-		       (imps-qualifier
-			(cond
-			   ((pair? import) (car import))
-			   ((Export-Table? import)
-			    (Export-Table-qualifier import))
-			   (else (error #f "internal error" #f))))
-		       (imps (if (pair? import)
-				 (cdr import)
-				 (Export-Table-id-ht import))))
+		       (imps-qualifier (car import))
+		       (imps (cdr import))) ;; exports from other module.
 		   (cond
-		      ((null? imps) (loop (cdr imports)))
 		      ((and qualifier
 			    (not (eq? qualifier imps-qualifier)))
 		       (loop (cdr imports)))
-		      ((or (and (pair? imps)
-				(export-in-list sym imps))
-			   (and (hashtable? imps)
-				(export-in-ht sym imps)))
+		      ((find-desc-in-exports sym imps)
 		       =>
-		       (lambda (v)
-			  (update-scope! scope sym
-					 (if (qualified? id)
-					     id
-					     (list sym imps-qualifier))
-					 v)
-			  v))
+		       (lambda (desc)
+			  (let ((v (create-js-var sym #t desc)))
+			     (update-scope! scope sym
+					    (if (qualified? id)
+						id
+						(list sym imps-qualifier))
+					    v)
+			     v)))
 		      (else
 		       (loop (cdr imports)))))))))
       

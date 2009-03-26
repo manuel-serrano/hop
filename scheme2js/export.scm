@@ -1,9 +1,8 @@
 (module export-desc
    (import gen-js)
    (export
-    (final-class Export-Table
-       qualifier::symbol
-       id-ht) ;; hashtable of Export-Descs
+    (find-desc-in-exports sym::symbol l/ht)
+    (empty-exports?::bool l/ht)
     (final-class Export-Desc
        (id::symbol read-only)
        (js-id::bstring read-only)
@@ -15,6 +14,24 @@
        (return-type    (default #f) read-only))
     (create-Export-Desc::Export-Desc info module-name runtime?::bool)))
 
+
+(define (empty-exports? l/ht)
+   (or (null? l/ht)
+       (and (hashtable? l/ht)
+	    (zerofx? (hashtable-size l/ht)))))
+(define (find-desc-in-exports sym l/ht)
+   (cond
+      ((pair? l/ht)
+       (any (lambda (desc)
+	       (and (eq? (Export-Desc-id desc) sym)
+		    desc))
+	    l/ht))
+      (hashtable? l/ht
+       (hashtable-get l/ht sym))
+      (else
+       (error "export.scm"
+	      "internal error"
+	      l/ht))))
 
 (define (entry-val sym l)
    (let ((try (assq sym (cdr l))))
