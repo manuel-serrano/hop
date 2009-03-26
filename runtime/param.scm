@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Mar 25 15:01:41 2009 (serrano)                */
+;*    Last change :  Thu Mar 26 05:26:17 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -778,13 +778,9 @@
 ;*    disc into the charset specified by HOP-CHARSET.                  */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-locale
-   (cond-expand
-      ((or bigloo3.1a bigloo3.1b)
-       'ISO-8859-1)
-      (else
-       (case (string->symbol (os-charset))
-	  ((UTF-8) 'UTF-8)
-	  (else 'ISO-8859-1))))
+   (case (string->symbol (os-charset))
+      ((UTF-8) 'UTF-8)
+      (else 'ISO-8859-1))
    (lambda (v)
       (when (and (symbol? v) (symbol? *hop-charset*))
 	 (hop-locale->charset-set! (charset-converter v (hop-charset)))

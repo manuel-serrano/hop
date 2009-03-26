@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/misc.scm                 */
+;*    serrano/prgm/project/hop/2.0.x/runtime/misc.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Thu Oct  9 05:06:29 2008 (serrano)                */
-;*    Copyright   :  2004-08 Manuel Serrano                            */
+;*    Last change :  Thu Mar 26 05:25:58 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
 ;*=====================================================================*/
@@ -310,17 +310,6 @@
    (make-url-name (hop-service-base) abspath))
 
 ;*---------------------------------------------------------------------*/
-;*    output-port-timeout-set! ...                                     */
-;*---------------------------------------------------------------------*/
-(cond-expand
-   (bigloo2.8a (define (output-port-timeout-set! p t) #f))
-   (else #unspecified))
-
-(cond-expand
-   (bigloo2.8a (define (input-port-timeout-set! p t) #f))
-   (else #unspecified))
-
-;*---------------------------------------------------------------------*/
 ;*    make-client-socket/timeout ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (make-client-socket/timeout host port timeout::int msg::obj ssl::bool)
@@ -399,13 +388,6 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (micro-seconds ms)
    (*fx 1000 ms))
-
-;*---------------------------------------------------------------------*/
-;*    input-port-timeout-set! ...                                      */
-;*---------------------------------------------------------------------*/
-(cond-expand
-   (bigloo2.8a (define (input-port-timeout-set! p t) #f))
-   (else #unspecified))
 
 ;*---------------------------------------------------------------------*/
 ;*    input-timeout-set! ...                                           */

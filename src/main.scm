@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Mar 25 16:21:23 2009 (serrano)                */
+;*    Last change :  Thu Mar 26 05:27:29 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -88,11 +88,7 @@
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set! hop-load-modified)
-   (cond-expand
-      ((or bigloo3.1a bigloo3.1b bigloo3.2a)
-       #unspecified)
-      (else
-       (bigloo-module-extension-handler-set! hop-module-extension-handler)))
+   (bigloo-module-extension-handler-set! hop-module-extension-handler)
    ;; parse the command line
    (parse-args args)
    (hop-verb 1 "Starting hop (v" (hop-version)
@@ -155,11 +151,7 @@
 	 (exit 1))
       (let ((serv (hop-server-socket)))
 	 ;; tune the server socket
-	 (cond-expand
-	    ((or bigloo3.1a bigloo3.1b)
-	     #unspecified)
-	    (else
-	     (socket-option-set! serv :TCP_NODELAY #t)))
+	 (socket-option-set! serv :TCP_NODELAY #t)
 	 ;; start the job (background taks, a la cron) scheduler
 	 (when (>fx (hop-max-threads) 1)
 	    (job-start-scheduler!))

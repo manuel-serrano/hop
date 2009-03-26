@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/http-remote.scm          */
+;*    serrano/prgm/project/hop/2.0.x/runtime/http-remote.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Thu Nov  6 10:23:31 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Thu Mar 26 05:24:50 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
 ;*=====================================================================*/
@@ -41,18 +41,6 @@
 	       date::elong))
    
    (export  (response-remote-start-line ::http-response-remote)))
-
-;*---------------------------------------------------------------------*/
-;*    http-send-chunks ...                                             */
-;*---------------------------------------------------------------------*/
-(define-expander http-send-chunks
-   (cond-expand
-      ((or bigloo3.1a bigloo3.1b)
-       (lambda (x e)
-	  `(http-send-chunks ,(e (cadr x) e) ,(e (caddr x) e))))
-      (else
-       (lambda (x e)
-	  (map (lambda (x) (e x e)) x)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    response-remote-start-line ...                                   */

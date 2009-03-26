@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/runtime/http-request.scm         */
+;*    serrano/prgm/project/hop/2.0.x/runtime/http-request.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Jan 17 17:38:03 2009 (serrano)                */
+;*    Last change :  Thu Mar 26 05:25:01 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -55,11 +55,6 @@
       (let* ((req (read/rp request-line-grammar port id out))
 	     (localc (string=? (socket-local-address sock)
 			       (socket-host-address sock))))
-	 (cond-expand
-	    ((or bigloo3.1a bigloo3.1b)
-	     (socket-timeout-set! sock 0 0))
-	    (else
-	     #unspecified))
 	 (with-access::http-request req (socket localclientp)
 	    (set! socket sock)
 	    (set! localclientp localc)

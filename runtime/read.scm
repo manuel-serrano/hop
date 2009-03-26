@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Mar 25 18:18:58 2009 (serrano)                */
+;*    Last change :  Thu Mar 26 05:26:38 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -313,18 +313,10 @@
 ;*    current-module-clientc-import ...                                */
 ;*---------------------------------------------------------------------*/
 (define (current-module-clientc-import)
-   (cond-expand
-      ((or bigloo3.1a bigloo3.1b bigloo3.2a)
-       '())
-      (else
-       (let ((mod (eval-module)))
-	  (if (evmodule? mod)
-	      (let ((e
-	      (evmodule-extension mod)
-	      ))
-		 (tprint "e=" e)
-		 e)
-	      '())))))
+   (let ((mod (eval-module)))
+      (if (evmodule? mod)
+	  (evmodule-extension mod)
+	  '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    *hop-grammar* ...                                                */
@@ -835,18 +827,6 @@
 				       (let ((fs (map! add-dir (cdr a))))
 					  (evmodule-add-access! (car a) fs))))
 				exp))))))))
-
-;*---------------------------------------------------------------------*/
-;*    eval! ...                                                        */
-;*---------------------------------------------------------------------*/
-(define-expander eval!
-   (cond-expand
-      ((or bigloo3.1a bigloo3.1b)
-       (lambda (x e)
- 	  `(eval ,@(map (lambda (x) (e x e)) (cdr x)))))
-      (else
-       (lambda (x e)
-	  (map (lambda (x) (e x e)) x)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load ...                                                     */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/runtime/http-response.scm        */
+;*    serrano/prgm/project/hop/2.0.x/runtime/http-response.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Mar  9 17:35:51 2009 (serrano)                */
+;*    Last change :  Thu Mar 26 05:25:27 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -181,11 +181,7 @@
 	 (let ((connection (http-request-connection request))
 	       (p (socket-output socket))
 	       (clen content-length)
-	       (chunked (cond-expand
-			   ((or bigloo3.1a bigloo3.1b)
-			    #f)
-			   (else
-			    (eq? (http-request-http request) 'HTTP/1.1)))))
+	       (chunked (eq? (http-request-http request) 'HTTP/1.1)))
 	    (output-timeout-set! p timeout)
 	    (http-write-line-string p start-line)
 	    (http-write-header p header)
@@ -205,29 +201,21 @@
 	    (when server
 	       (http-write-line-string p "Server: " server))
 	    (http-write-line-string p "Hhop: true")
-	    (cond-expand
-	       ((or bigloo3.1a bigloo3.1b)
+	    (if chunked
+		(begin
+		   (flush-output-port p)
+		   (output-port-flush-hook-set! p chunked-flush-hook))
 		(http-write-line p))
-	       (else
-		(if chunked
-		    (begin
-		       (flush-output-port p)
-		       (output-port-flush-hook-set! p chunked-flush-hook))
-		    (http-write-line p))))
 	    ;; the body
 	    (with-trace 4 'http-response-hop
 	       (when bodyp
 		  (xml-write xml p backend)))
 	    (flush-output-port p)
 	    ;; for chunked, write the last 0 chunk
-	    (cond-expand
-	       ((or bigloo3.1a bigloo3.1b)
-		#unspecified)
-	       (else
-		(when chunked
+	    (when chunked
 		   (output-port-flush-hook-set! p #unspecified)
 		   (http-write-line p "\r\n0\r\n")
-		   (flush-output-port p))))
+		   (flush-output-port p))
 	    connection))))
 
 ;*---------------------------------------------------------------------*/

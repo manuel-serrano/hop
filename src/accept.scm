@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/src/accept.scm                   */
+;*    serrano/prgm/project/hop/2.0.x/src/accept.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Wed Nov 26 16:18:15 2008 (serrano)                */
-;*    Copyright   :  2008 Manuel Serrano                               */
+;*    Last change :  Thu Mar 26 05:26:53 2009 (serrano)                */
+;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
 ;*=====================================================================*/
@@ -67,12 +67,8 @@
 ;*    tune-socket! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (tune-socket! sock)
-   (cond-expand
-      ((or bigloo3.1a bigloo3.1b)
-       #unspecified)
-      (else
-       (socket-option-set! sock :SO_SNDBUF (hop-sndbuf))
-       (socket-option-set! sock :TCP_NODELAY #t))))
+   (socket-option-set! sock :SO_SNDBUF (hop-sndbuf))
+   (socket-option-set! sock :TCP_NODELAY #t))
     
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-accept-loop ...                                        */

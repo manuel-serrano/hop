@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/charset.scm              */
+;*    serrano/prgm/project/hop/2.0.x/runtime/charset.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 10 06:46:43 2007                          */
-;*    Last change :  Fri Jan  2 08:13:30 2009 (serrano)                */
+;*    Last change :  Thu Mar 26 05:23:31 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with charset.                              */
@@ -17,16 +17,6 @@
 	   (charset-converter!::procedure ::symbol ::symbol)
 	   (charset-convert ::obj ::symbol ::symbol)
 	   (charset-convert! ::obj ::symbol ::symbol)))
-
-;*---------------------------------------------------------------------*/
-;*    compatibility kit                                                */
-;*---------------------------------------------------------------------*/
-(cond-expand
-   ((or bigloo3.1a bigloo3.1b)
-    (define (utf8->cp1252 x) (utf8->iso-latin x))
-    (define (utf8->cp1252! x) (utf8->iso-latin! x))
-    (define (cp1252->utf8 x) (iso-latin->utf8 x))
-    (define (cp1252->utf8! x) (iso-latin->utf8! x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    charset-alias ...                                                */
