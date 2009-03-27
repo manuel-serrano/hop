@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Fri Mar 27 14:10:52 2009 (serrano)                */
+;*    Last change :  Fri Mar 27 14:44:09 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
@@ -30,11 +30,11 @@
 (define (hop-module-extension-handler exp)
    (match-case exp
       ((?- ?- . ?clauses)
-       (let ((i (map (lambda (c)
-			(match-case c
-			   ((<TILDE> ??- :src (quote ?import)) import)
-			   (else '())))
-		     clauses)))
+       (let ((i (filter-map (lambda (c)
+			       (match-case c
+				  ((<TILDE> ??- :src (quote ?import)) import)
+				  (else #f)))
+			    clauses)))
 	  (if (pair? i)
 	      ((clientc-modulec (hop-clientc)) i)
 	      i)))
@@ -109,5 +109,3 @@
 			   (untar p :directory dir)
 			   (close-input-port iport))))))
 	    (make-file-name dir base)))))
-
-

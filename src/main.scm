@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Mar 27 10:42:57 2009 (serrano)                */
+;*    Last change :  Fri Mar 27 15:13:07 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -94,7 +94,7 @@
    ;; caches from one session to another
    (unless (hop-restore-disk-cache)
       (when (directory? (hop-module-cache))
-	 (delete-directory (hop-module-cache))
+	 (delete-path (hop-module-cache))
 	 (make-directory (hop-module-cache))))
    ;; parse the command line
    (parse-args args)

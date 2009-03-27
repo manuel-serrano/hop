@@ -7,4 +7,4 @@
    (export (compile-scheme-module clause)))
 
 (define (compile-scheme-module clauses)
-   (list (list 'merge-first clauses)))
+   (list (cons 'merge-first clauses)))
