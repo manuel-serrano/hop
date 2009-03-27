@@ -51,11 +51,11 @@
 	  (top-level-e (my-expand `(begin
 				      ,@(Compilation-Unit-macros module)
 				      ,@(Compilation-Unit-top-level module))))
-	  (dummy1 (if (eq? debug-stage 'expand)
-		      (pp top-level-e p)))
+	  (dummy1 (when (eq? debug-stage 'expand)
+		     (pp top-level-e p)))
 	  (top-level-runtime-e (runtime-expand! top-level-e))
-	  (dummy2 (if (eq? debug-stage 'runtime-expand)
-		      (pp top-level-runtime-e p)))
+	  (dummy2 (when (eq? debug-stage 'runtime-expand)
+		     (pp top-level-runtime-e p)))
 	  (tree (pobject-conv top-level-runtime-e)))
 
       ;;we could do the letrec-expansion in list-form too.
@@ -102,7 +102,7 @@
 				module-headers
 				configuration)
    (config-init! configuration)
-   (let ((module (create-module-from-expr expr module-headers)))
+   (let* ((module (create-module-from-expr expr module-headers)))
       (scheme2js module out-p)))
 
 (define (scheme2js-compile-file in-file out-file
@@ -112,30 +112,41 @@
 				#!key (reader read))
    ;; we need this for "verbose" outputs.
    (config-init! configuration)
-   (let* ((module (create-module-from-file in-file module-headers reader))
-	  (out-port (if (string=? "-" out-file)
-		       (current-output-port)
-		       (open-output-file out-file))))
+   (let ((actual-file? (not (string=? "-" out-file))))
+      (with-handler
+	 ;; delete unfinished file, so that we don't give impression that
+	 ;; compilation was successful (for tools like 'make'...).
+	 ;; note: the port was already closed before.
+	 (lambda (e)
+	    ;; when debugging we usually want the
+	    ;; output even (or especially) if there was an error.
+	    (unless (or (config 'debug-stage)
+			(not actual-file?))
+	       (delete-file out-file))
+	    (raise e))
+	 (let ((module (create-module-from-file in-file
+						module-headers
+						reader)))
 
-      ;; set the global-seed to the input-file's name (which is the same as the
-      ;; module's name, if any was given).
-      (unless (or (config 'statics-suffix)
-		  (string=? "-" in-file))
-	 (config-set! 'statics-suffix
-		      (string-append "_" (prefix (basename in-file)))))
+	    ;; set the global-seed to the input-file's name (which is the same
+	    ;; as the module's name, if any was given).
+	    (unless (or (config 'statics-suffix)
+			(string=? "-" in-file))
+	       (config-set! 'statics-suffix
+			    (string-append "_" (prefix (basename in-file)))))
 
-      ;; slightly hackish.
-      ;; The compilation-unit's name is set to #f if no 'module clause had been
-      ;; given. (or if an override wants us to think this way)
+	    (with-access::Compilation-Unit module (declared-module?)
+	       (when (eq? (config 'export-globals) 'module)
+		  (config-set! 'export-globals
+			       (not declared-module?)))
 
-      (when (eq? (config 'export-globals) 'module)
-	 (config-set! 'export-globals
-		      (not (Compilation-Unit-name module))))
+	       (when (eq? (config 'unresolved=JS) 'module)
+		  (config-set! 'unresolved=JS
+			       (not declared-module?))))
 
-      (when (eq? (config 'unresolved=JS) 'module)
-	 (config-set! 'unresolved=JS
-		      (not (Compilation-Unit-name module))))
-
-      (scheme2js module out-port)
-      (if (not (string=? "-" out-file))
-	  (close-output-port out-port))))
+	    (let ((out-p (if actual-file?
+			     (open-output-file out-file)
+			     (current-output-port))))
+	       (unwind-protect
+		  (scheme2js module out-p)
+		  (when actual-file? (close-output-port out-p))))))))
