@@ -7,5 +7,4 @@
    (export (compile-scheme-module clause)))
 
 (define (compile-scheme-module clauses)
-   (tprint "clause=" clauses)
    (list (list 'merge-first clauses)))

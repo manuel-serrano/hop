@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Thu Mar 26 05:26:38 2009 (serrano)                */
+;*    Last change :  Fri Mar 27 13:44:52 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -818,15 +818,7 @@
 	  (mutex-unlock! *afile-mutex*)
 	  (let ((path (make-file-name dir ".afile")))
 	     (when (file-exists? path)
-		(let ((exp (with-input-from-file path read)))
-		   (when (list? exp)
-		      (for-each (lambda (a)
-				   (if (and (list? a)
-					    (symbol? (car a))
-					    (every? string? (cdr a)))
-				       (let ((fs (map! add-dir (cdr a))))
-					  (evmodule-add-access! (car a) fs))))
-				exp))))))))
+		(module-load-access-file path))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load ...                                                     */
@@ -837,7 +829,8 @@
 		  (mode 'load)
 		  (charset (hop-locale))
 		  (hook #f))
-   (let ((path (find-file/path file-name (hop-path))))
+   (let ((path (find-file/path file-name (hop-path)))
+	 (loc `(at ,file-name 0)))
       (if (not (string? path))
 	  (raise (instantiate::&io-file-not-found-error
 		    (proc 'hop-load)
@@ -857,7 +850,7 @@
 				 (let ((sexp (hop-read port charset)))
 				    (if (eof-object? sexp)
 					(if hook (hook last) last)
-					(let ((val (eval! sexp env)))
+					(let ((val (eval! sexp env loc)))
 					   (when (xml-tilde? val)
 					      (warning/location
 					       file-name
@@ -871,7 +864,7 @@
 				    (if (eof-object? sexp)
 					(let ((val (reverse! res)))
 					   (if hook (hook val) val))
-					(let ((val (eval! sexp env)))
+					(let ((val (eval! sexp env loc)))
 					   (loop (cons val res)))))))
 			     (else
 			      (error 'hop-load "Illegal mode" mode))))

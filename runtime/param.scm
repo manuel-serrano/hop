@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Mar 26 05:26:17 2009 (serrano)                */
+;*    Last change :  Fri Mar 27 10:50:05 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -21,7 +21,7 @@
 	    __hop_charset)
 
    (export  (hop-uptime::date)
-	    
+
 	    (hop-rc-directory::bstring)
 	    (hop-rc-directory-set! ::bstring)
 	    
@@ -249,6 +249,11 @@
 	    (hop-proxy-sniffer-set! ::procedure)
 	    (hop-proxy-sniffer-add! ::procedure)
 
+	    (hop-hz-package-suffix::bstring)
+	    (hop-hz-package-suffix-set! ::bstring)
+	    
+	    (hop-module-cache::bstring)
+	    
 	    (hop-rc-loaded!)))
 
 ;*---------------------------------------------------------------------*/
@@ -257,6 +262,12 @@
 (define-parameter hop-uptime
    (current-date))
 
+;*---------------------------------------------------------------------*/
+;*    hop-module-cache ...                                             */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-module-cache
+   (os-tmp))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-directory ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -279,6 +290,8 @@
 			(loop (prefix host))))))))
    (lambda (v)
       (hop-path-set! (cons (make-file-name v "cache") (hop-path)))
+      (hop-module-cache-set!
+       (make-file-path (hop-rc-directory) "cache" "modules"))
       v))
 
 ;*---------------------------------------------------------------------*/
@@ -1115,6 +1128,12 @@
 			(close-output-port old)
 			(close-output-port new))))
 		 new))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-hz-package-suffix ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hz-package-suffix
+   "hz")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-loaded! ...                                               */

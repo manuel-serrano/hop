@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Mar 25 15:33:04 2009 (serrano)                */
+;*    Last change :  Fri Mar 27 10:42:19 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -286,7 +286,7 @@
 			  ;; this is a plain file
 			  (hop-load-weblet path)))))
 		(reverse! files))
-      
+
       ;; write the process key
       (hop-process-key-write (hop-process-key) (hop-port))
       (register-exit-function! (lambda (ret)

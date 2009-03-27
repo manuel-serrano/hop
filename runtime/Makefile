@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Mar 25 14:39:31 2009 (serrano)                */
+#*    Last change :  Thu Mar 26 15:32:45 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -32,7 +32,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
 _OBJECTS = param misc types \
-           xml charset dom read \
+           xml charset dom read module \
            read-js css clientc js-lib cgi \
            hop service \
            job mime user cache \
@@ -45,7 +45,7 @@ _OBJECTS = param misc types \
            hop-audio hop-video \
            hop-svg hop-mathml \
            event color weblets prefs expanders  \
-           hop-wiki wiki-syntax wiki-parser wiki-toc
+           hop-wiki wiki-syntax wiki-parser wiki-toc hz
 
 OBJECTS = $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS = o/make-lib.o

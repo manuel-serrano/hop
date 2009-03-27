@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/weblets/weblets/homepage.hop     */
+;*    serrano/prgm/project/hop/2.0.x/weblets/weblets/homepage.hop      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec  7 07:29:36 2007                          */
-;*    Last change :  Thu Oct  2 07:32:40 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Thu Mar 26 10:53:30 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The service that dynamically creates weblets homagepage.         */
 ;*=====================================================================*/
@@ -30,7 +30,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    weblets/homepage ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-service (weblets/homepage weblet)
+(define-service (weblets/homepage #!key weblet)
    ;; check if the weblet exists
    (if (not weblet)
        (http-bad-request "/hop/weblets/homage -- parameter `weblet' should be provided")

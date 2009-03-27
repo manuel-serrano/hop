@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Mar 26 05:27:29 2009 (serrano)                */
+;*    Last change :  Fri Mar 27 10:42:57 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -89,6 +89,13 @@
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set! hop-load-modified)
    (bigloo-module-extension-handler-set! hop-module-extension-handler)
+   (bigloo-module-resolver-set! (make-hop-module-resolver (bigloo-module-resolver)))
+   ;; clear the module cache unless we preserve
+   ;; caches from one session to another
+   (unless (hop-restore-disk-cache)
+      (when (directory? (hop-module-cache))
+	 (delete-directory (hop-module-cache))
+	 (make-directory (hop-module-cache))))
    ;; parse the command line
    (parse-args args)
    (hop-verb 1 "Starting hop (v" (hop-version)

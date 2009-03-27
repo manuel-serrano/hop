@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Wed Mar 25 16:26:54 2009 (serrano)                */
+;*    Last change :  Fri Mar 27 14:08:08 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -46,8 +46,7 @@
 				    JS-statement JS-return)
 	    (clientc-url ::bstring)
 	    (clientc-response::%http-response ::http-request ::bstring)
-	    (get-clientc-compiled-file ::bstring)
-	    (hop-module-extension-handler ::obj)))
+	    (get-clientc-compiled-file ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    clientc-cache ...                                                */
@@ -125,23 +124,3 @@
 	  (rep (clientc-response req path)))
       (with-input-from-file (http-response-file-file rep) read-string)))
       
-;*---------------------------------------------------------------------*/
-;*    hop-module-extension-handler ...                                 */
-;*---------------------------------------------------------------------*/
-(define (hop-module-extension-handler exp)
-   (match-case exp
-      ((?- ?id . ?clauses)
-       (let ((cimports (append-map (lambda (c)
-				      (match-case c
-					 ((<TILDE> ??- :src (quote ?import))
-					  import)
-					 (else
-					  '())))
-				   clauses)))
-	  (if (pair? cimports)
-	      (begin
-		 (tprint "module=" id " " cimports)
-		 ((clientc-modulec (hop-clientc)) cimports))
-	      '())))
-      (else
-       '())))
