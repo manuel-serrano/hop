@@ -3,4 +3,4 @@ a "++<Q>++" HTML expression but as all wiki syntax constructor,
 this can be changed by creating and using a personal wiki
 ++wiki-syntax++ object.
 
-~~ The Wiki syntax also supports --strike--.
+~~ The Wiki syntax also supports --strike-- and <<notes>>.

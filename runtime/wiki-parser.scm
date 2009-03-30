@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/runtime/wiki-parser.scm          */
+;*    serrano/prgm/project/hop/2.0.x/runtime/wiki-parser.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue Mar 10 16:26:29 2009 (serrano)                */
+;*    Last change :  Mon Mar 30 11:17:37 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -31,7 +31,8 @@
 	       value::obj)
 	    (class expr::state)
 	    (class block::state
-	       (is-subblock read-only (default #f))))
+	       (is-subblock read-only (default #f)))
+	    (class plugin::state))
 
    (export  (wiki-string->hop ::bstring #!key
 			      syntax
@@ -209,6 +210,20 @@
 		    "." dbgcount " [state] "
 		    (map state-markup state)))
 	 (let ((st (instantiate::state
+		      (markup st)
+		      (syntax fun)
+		      (expr '())
+		      (value value))))
+	    (set! state (cons st state))))
+      
+      (define (enter-plugin! st fun value)
+	 (when (wiki-debug?)
+	    (set! dbgcount (+fx 1 dbgcount))
+	    (fprint (current-error-port)
+		    (make-string (length state) #\space) ">>> " st
+		    "." dbgcount " [plugin] "
+		    (map state-markup state)))
+	 (let ((st (instantiate::plugin
 		      (markup st)
 		      (syntax fun)
 		      (expr '())
@@ -503,17 +518,22 @@
 					 (>=fx value lv)))))
 			     (in-state
 			      (lambda (s n)
-				 (when (pair? n)
-				    (with-access::state (car n) (markup value)
-				       (and (eq? markup 'section)
-					    (<fx value lv)))))))))
+				 (let loop ((s s)
+					    (n n))
+				    (when (pair? n)
+				       (if (plugin? s)
+					   (loop (car n) (cdr n))
+					   (with-access::state (car n)
+						 (markup value)
+					      (and (eq? markup 'section)
+						   (<fx value lv)))))))))))
 		 (when st (unwind-state! st))
 		 (enter-state! 'section sx lv)
 		 (enter-expr! '==
 			      (lambda expr
 				 (let ((name (wiki-name expr)))
 				    (when (wiki-debug?)
-				       (fprint (current-error-port) ";; " name))
+				       (fprint (current-error-port) ";;" name))
 				    (list (<A> :name name)
 					  (apply hx :name name expr))))
 			      #f)
@@ -636,7 +656,20 @@
 		 (enter-expr! '__ (wiki-syntax-u syn) #f)
 		 (ignore)))))
 
-      ((: "<" (out #\> #\/) (* (out #\>)) ">")
+      ("<<"
+       (enter-expr! '<< (wiki-syntax-note syn) #f)
+       (ignore))
+      (">>"
+       (let ((s (in-state '<<)))
+	  (if s
+	      (begin
+		 (unwind-state! s)
+		 (ignore))
+	      (begin
+		 (add-expr! (the-string))
+		 (ignore)))))
+      
+      ((: "<" (out #\< #\> #\/) (* (out #\>)) ">")
        (let ((id (the-symbol)))
 	  (case id
 	     ((<del>)
@@ -682,9 +715,9 @@
 			     (proc (the-port)
 				   (substring title 0 (-fx ltitle l/markup))
 				   #f))
-			    (enter-state! id
-					  (lambda el (proc (the-port) title el))
-					  #f)))
+			    (enter-plugin! id
+					   (lambda e (proc (the-port) title e))
+					   #f)))
 		     (add-expr! (the-html-string)))
 		 (ignore))))))
       ((: "</" (+ (out #\>)) ">")
@@ -755,7 +788,7 @@
 		 (ignore)))))
 
       ;; keywords
-      ((: (in " \t") #\: (out " \t\n:") (* (out " \t\n")))
+      ((: (in " \t") #\: (out " \t\n:)\"'`;#") (* (out " \t\n)\"'`;#")))
        (add-expr! " ")
        (add-expr! ((wiki-syntax-keyword syn) (the-html-substring 1 (the-length))))
        (ignore))

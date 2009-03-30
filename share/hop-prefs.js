@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/share/hop-prefs.js               */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-prefs.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Apr 21 11:52:04 2008                          */
-/*    Last change :  Wed Oct 29 20:55:13 2008 (serrano)                */
-/*    Copyright   :  2008 Manuel Serrano                               */
+/*    Last change :  Sat Mar 28 06:17:05 2009 (serrano)                */
+/*    Copyright   :  2008-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    PREFS client-side runtime.                                       */
 /*=====================================================================*/
@@ -33,11 +33,11 @@ function hop_prefs_editor_expr( event, inp, name, parse, type, key ) {
    if( hop_event_key_code( event ) == 13 ) {
       inp.className = inp.className.replace( /hop-pr-changed/, "hop-pr-saved" );
       if( !parse || parse( inp.value ) ) {
-	 var svc = hop_prefs_edit_svc +
-	    "?name=" + name +
-	    "&type=" + type +
-	    "&value=" + encodeURIComponent( inp.value ) +
-	    "&key=" + key;
+	 var svc = hop_apply_url( hop_prefs_edit_svc,
+				  [ name,
+				    type,
+				    encodeURIComponent( inp.value ),
+				    key ] );
       
 	 with_hop( svc, hop_prefs_callback );
       }
@@ -51,11 +51,11 @@ function hop_prefs_editor_expr( event, inp, name, parse, type, key ) {
 /*---------------------------------------------------------------------*/
 function hop_prefs_editor_bool( event, inp, name, parse, type, key ) {
    if( !parse || parse( inp.value ) ) {
-      var svc = hop_prefs_edit_svc +
-	 "?name=" + name +
-	 "&type=" + type +
-	 "&value=" + inp +
-	 "&key=" + key;
+      var svc = hop_apply_url( hop_prefs_edit_svc,
+			       [ name,
+				 type,
+				 inp,
+				 key ] );
       
       with_hop( svc, hop_prefs_callback );
    }
@@ -94,12 +94,13 @@ function hop_prefs_save( id, file ) {
    
    if( hop_prefs_valid( el ) ||
        confirm( "Some values or not validated, save anyway?" ) ) {
-      var base = hop_prefs_save_svc + "?key=" + el.lang + "&file=" + file;
-      var svc = base + "&ov=false";
+      var svc = hop_apply_url( hop_prefs_save_svc,
+			       [ el.lang, file, false ] );
 
       with_hop( svc, function( h ) {
 	    if( !h ) {
-	       svc = base + "&ov=true";
+	       var svc = hop_apply_url( hop_prefs_save_svc,
+					[ el.lang, file, true ] );
 	       if( confirm( file + " has been changed, override it?" ) ) {
 		  with_hop( svc );
 	       }

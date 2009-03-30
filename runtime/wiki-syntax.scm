@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/runtime/wiki-syntax.scm          */
+;*    serrano/prgm/project/hop/2.0.x/runtime/wiki-syntax.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Mar  9 16:13:51 2009 (serrano)                */
+;*    Last change :  Mon Mar 30 11:18:09 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -61,6 +61,8 @@
 	       (math::procedure (default (lambda (s)
 					    (<MATH>
 					       (<MATH:TEX> s)))))
+	       (note::procedure (default (lambda l
+					    (<SPAN> :class "wiki-note" l))))
 	       (pre::procedure (default <PRE>))
 	       (table::procedure (default <TABLE>))
 	       (tr::procedure (default <TR>))

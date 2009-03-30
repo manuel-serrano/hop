@@ -17,7 +17,7 @@ and layout are presented side-by-side.
 ,(meta-wiki-example "tt.wiki")
 
 
-=== Quotation and Strike ===
+=== Quotation, Strike, and Note ===
 ,(meta-wiki-example "quote.wiki")
 
 

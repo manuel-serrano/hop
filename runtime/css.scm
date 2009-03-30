@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/css.scm                  */
+;*    serrano/prgm/project/hop/2.0.x/runtime/css.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sat Jan  3 06:33:29 2009 (serrano)                */
+;*    Last change :  Mon Mar 30 07:36:22 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -31,7 +31,13 @@
 	    __hop_mime
 	    __hop_types)
 
-   (export  (init-hss-compiler!)
+   (static  (class css-ruleset-unfold
+	       (ruleset+::pair read-only)))
+   
+   (export  (class hss-compiler
+	       (element::bstring read-only)
+	       (properties::pair-nil read-only (default '())))
+	    (init-hss-compiler!)
 	    (hss-response::%http-response ::http-request ::bstring)
 	    (hss->css ::bstring)
 	    (hss->css-url ::bstring)
@@ -39,6 +45,61 @@
 	    (hop-read-hss ::input-port)
 
 	    (hop-hss-type! ::bstring ::bstring)))
+
+;*---------------------------------------------------------------------*/
+;*    aliasing control ...                                             */
+;*---------------------------------------------------------------------*/
+(define *hss-compiler-mutex* (make-mutex "hop-hss-type"))
+(define *hss-types* (make-hashtable))
+(define *hss-compilers* (make-hashtable))
+
+;*---------------------------------------------------------------------*/
+;*    hss-register-compiler! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (hss-register-compiler! element c)
+   (with-lock *hss-compiler-mutex*
+      (lambda ()
+	 (hashtable-put! *hss-compilers* (string-downcase element) c)
+	 (hashtable-put! *hss-compilers* (string-upcase element) c))))
+
+;*---------------------------------------------------------------------*/
+;*    hss-find-compiler ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hss-find-compiler o)
+   (with-access::css-selector o (element)
+      (when element
+	 (with-access::css-selector-name element (name)
+	    (when (string? name)
+	       (hashtable-get *hss-compilers* name))))))
+
+;*---------------------------------------------------------------------*/
+;*    hss-compile-selector ...                                         */
+;*---------------------------------------------------------------------*/
+(define (hss-compile-selector o hc)
+   (with-access::css-selector o (element attr*)
+      (let ((el (css-selector-name-name element)))
+	 (instantiate::css-selector
+	    (element (hss-compiler-element hc))
+	    (attr* (cons (instantiate::css-selector-class
+			    (name (format (format "__HSS_~a" el))))
+			 attr*))))))
+
+;*---------------------------------------------------------------------*/
+;*    hss-compile-declaration* ...                                     */
+;*---------------------------------------------------------------------*/
+(define (hss-compile-declaration* decl hc)
+   (let loop ((decl decl)
+	      (old '())
+	      (new '()))
+      (if (null? decl)
+	  (values (reverse! old) (reverse! new))
+	  (with-access::css-declaration (car decl) (property expr prio)
+	     (let ((cell (assoc property (hss-compiler-properties hc))))
+		(if (pair? cell)
+		    (let ((n (duplicate::css-declaration (car decl)
+				(property (caadr cell)))))
+		       (loop (cdr decl) old (cons (cons (cadr cell) n) new)))
+		    (loop (cdr decl) (cons (car decl) old) new)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *hss-builtin-types* ...                                          */
@@ -86,15 +147,6 @@
 (define hss-mutex (make-mutex 'hss))
 
 ;*---------------------------------------------------------------------*/
-;*    hss-write ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (hss-write hss p)
-   (let loop ((hss hss))
-      (if (string? hss)
-	  (display hss p)
-	  (for-each loop hss))))
-
-;*---------------------------------------------------------------------*/
 ;*    hss-cache ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define hss-cache
@@ -113,7 +165,7 @@
 		(let* ((hss (hop-load-hss path))
 		       (cache (cache-put! hss-cache path hss)))
 		   (let ((p (open-output-string)))
-		      (hss-write hss p)
+		      (css-write hss p)
 		      (close-output-port p))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -134,7 +186,7 @@
 	    (path (make-file-path (hop-rc-directory)
 				  "cache"
 				  (format "hss-~a" (hop-port))))
-	    (out (lambda (o p) (hss-write o p))))))
+	    (out (lambda (o p) (css-write o p))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-response ...                                                 */
@@ -168,7 +220,7 @@
 			      (content-type mime)
 			      (bodyp (eq? method 'GET))
 			      (proc (lambda (p)
-				       (hss-write hss p))))))))))
+				       (css-write hss p))))))))))
        (user-access-denied req)))
 
 ;*---------------------------------------------------------------------*/
@@ -185,7 +237,7 @@
 		 (begin
 		    ;; each hss file is read inside a dummy empty module
 		    (eval `(module ,(gensym)))
-		    (hop-read-hss p))
+		    (css-compile (hop-read-hss p)))
 		 (begin
 		    (when mod (eval-module-set! mod))
 		    (close-input-port p)
@@ -198,6 +250,7 @@
 		 (proc 'hop-load)
 		 (msg "file does not exist")
 		 (obj file)))))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-read-hss ...                                                 */
@@ -218,13 +271,117 @@
 			   (location pos))))
 		(else
 		 (raise e)))))
-      (css-parse iport
-		 :extension hss-extension
-		 :element-name (lambda (i)
-				  (let ((new (hashtable-get *hss-types* i)))
-				     (if (string? new)
-					 new
-					 i))))))
+      (css->ast iport :extension hss-extension)))
+
+;*---------------------------------------------------------------------*/
+;*    css-write ::css-ruleset-unfold ...                               */
+;*    -------------------------------------------------------------    */
+;*    css-rulesef-unfold i produced by the compilation of a            */
+;*    ruleset.                                                         */
+;*---------------------------------------------------------------------*/
+(define-method (css-write o::css-ruleset-unfold p::output-port)
+   (for-each (lambda (o) (css-write o p)) (css-ruleset-unfold-ruleset+ o)))
+			  
+;*---------------------------------------------------------------------*/
+;*    css-compile ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (css-compile o::css-stylesheet)
+   (duplicate::css-stylesheet o
+      (rule* (map hss-compile (css-stylesheet-rule* o)))))
+
+;*---------------------------------------------------------------------*/
+;*    hss-compile ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-generic (hss-compile r)
+   (if (pair? r)
+       (map hss-compile r)
+       r))
+
+;*---------------------------------------------------------------------*/
+;*    hss-compile ::css-media ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (hss-compile o::css-media)
+   (duplicate::css-media o
+      (ruleset* (map! hss-compile (css-media-ruleset* o)))))
+
+;*---------------------------------------------------------------------*/
+;*    hss-compile ::css-ruleset ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (hss-compile o::css-ruleset)
+   
+   (define (compile-rule o)
+      (with-access::css-ruleset o (selector+ declaration*)
+	 (let ((hc (hss-find-compiler (car (last-pair (car selector+)))))
+	       (ndeclaration* (map hss-compile declaration*)))
+	    (if hc
+		(multiple-value-bind (old new)
+		   (hss-compile-declaration* ndeclaration* hc)
+		   (let ((nselector (hss-compile-selector* (car selector+))))
+		      (if (pair? new)
+			  ;; the compilation of the declarations has created
+			  ;; new rules, we have to unfold...
+			  (instantiate::css-ruleset-unfold
+			     (ruleset+ (list
+					(instantiate::css-ruleset
+					   (selector+ (list nselector))
+					   (declaration* old))
+					(instantiate::css-ruleset
+					   (selector+ (list (append nselector
+								    (car new))))
+					   (declaration* (cdr new))))))
+			  (duplicate::css-ruleset o
+			     (selector+ (list nselector))
+			     (declaration* old)))))
+		(duplicate::css-ruleset o
+		   (selector+ (map! hss-compile-selector* selector+))
+		   (declaration* ndeclaration*))))))
+   
+   (with-access::css-ruleset o (selector+ declaration*)
+      (if (and (pair? (cdr selector+))
+	       (any? (lambda (s)
+			(let ((hc (hss-find-compiler (car (last-pair s)))))
+			   (when hc (pair? (hss-compiler-properties hc)))))
+		     selector+))
+	  ;; the ruleset is unfolded iff:
+	  ;;    it uses several selectors
+	  ;;    one of the selector refers to a compiler in the last position
+	  (instantiate::css-ruleset-unfold
+	     (ruleset+ (map (lambda (s)
+			       (compile-rule
+				(instantiate::css-ruleset
+				   (selector+ (list (hss-compile s)))
+				   (declaration* declaration*))))
+			    selector+)))
+	  (compile-rule o))))
+
+;*---------------------------------------------------------------------*/
+;*    hss-compile-selector* ...                                        */
+;*---------------------------------------------------------------------*/
+(define (hss-compile-selector* lst)
+   
+   (define (compile o)
+      (if (symbol? o)
+	  o
+	  (let ((hc (hss-find-compiler o)))
+	     (with-access::css-selector o (element)
+		(if (hss-compiler? hc)
+		    (hss-compile-selector o hc)
+		    (duplicate::css-selector o
+		       (element (hss-compile element))))))))
+   
+   (map! compile lst))
+		 
+;*---------------------------------------------------------------------*/
+;*    hss-compile ::css-selector-name ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (hss-compile o::css-selector-name)
+   (with-access::css-selector-name o (name)
+      (if (string? name)
+	  (let ((new (hashtable-get *hss-types* name)))
+	     (if new
+		 (instantiate::css-selector-name (name new))
+		 o))
+	  o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-extension ...                                                */
@@ -247,22 +404,14 @@
 				  (raise e)))
 			   (eval exp))))
 		(cond
-		   ((string? val)
-		    val)
-		   (else
-		    #unspecified)))))))
-
-;*---------------------------------------------------------------------*/
-;*    aliasing control ...                                             */
-;*---------------------------------------------------------------------*/
-(define *hss-type-mutex* (make-mutex "hop-hss-type"))
-(define *hss-types* (make-hashtable))
+		   ((string? val) val)
+		   (else #unspecified)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-hss-type! ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (hop-hss-type! old new)
-   (with-lock *hss-type-mutex*
+   (with-lock *hss-compiler-mutex*
       (lambda ()
 	 (hashtable-put! *hss-types* (string-upcase old) new)
 	 (hashtable-put! *hss-types* (string-downcase old) new)
@@ -272,3 +421,8 @@
 ;*    default hss type ...                                             */
 ;*---------------------------------------------------------------------*/
 (hop-hss-type! "window" "table.hop-window td.hop-window-content")
+
+(hss-register-compiler! "gauge"
+			(instantiate::hss-compiler
+			   (element "span")
+			   (properties '(("foo" "div.foo" "bg")))))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/runtime/prefs.scm                */
+;*    serrano/prgm/project/hop/2.0.x/runtime/prefs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Sun Feb  8 09:52:56 2009 (serrano)                */
+;*    Last change :  Sat Mar 28 06:19:20 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -110,6 +110,7 @@
    ;; prefs/edit
    (set! *prefs-edit-svc*
 	 (service :name "admin/preferences/edit" (name type value key)
+	    (tprint "edit name=" name " type=" type " value=" value " key=" key)
 	    (if (and name type value key)
 		(begin
 		   (mutex-lock! (preferences-mutex))
@@ -235,7 +236,9 @@
 	     ((text ?- . ?-)
 	      val)
 	     (else
-	      (error 'value->string "Illegal type" type)))))))
+	      (error 'value->string
+		     "Illegal type (see the documentation)"
+		     type)))))))
 		 
 ;*---------------------------------------------------------------------*/
 ;*    add-validator! ...                                               */
