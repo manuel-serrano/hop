@@ -14,6 +14,13 @@
 		exports)
       ht))
 
+(define (make-exported-macros-table macros)
+   (let ((ht (make-hashtable)))
+      (for-each (lambda (macro)
+		   (add-macro-to-ht macro ht))
+		macros)
+      ht))
+
 (define-macro (read-Hop-runtime-exports)
    (let* ((module-clause (with-input-from-file "hop-runtime.sch"
 			    read))
@@ -22,7 +29,7 @@
       `(define *hop-module*
 	  (instantiate::Compilation-Unit
 	     (name 'hop)
-	     (macros ',macros)
+	     (exported-macros (make-exported-macros-table ',macros))
 	     (exports (make-exports-table ',exports))
 	     ;; following fields are unused.
 	     (imports '())

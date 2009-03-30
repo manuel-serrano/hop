@@ -1,5 +1,7 @@
 (module module-system
    (import verbose
+	   tools
+	   expand
 	   export-desc
 	   module-resolver
 	   infotron
@@ -7,11 +9,17 @@
    (export (final-class Compilation-Unit
 	      name::symbol      ;; module-name
 	      top-level         ;; id or pair-nil
-	      macros::pair-nil  ;; of form (define-macro ... )
-	      imports::pair-nil ;; a list of export-lists/hashtables.
+	      exported-macros   ;; ht or list of macros.
+	                        ;;  with list: of form (define-macro...)
 	      exports           ;; list or hashtable (see export.scm)
+
+	      ;; the following two entries will be filled in this module
+	      ;;  list of hts/lists of macros that are imported
+	      (macros::pair-nil (default '()))
+	      ;;  a list of 'Export'-lists/hashtables.
+	      (imports::pair-nil (default '()))
 	      ;; #t if the file/unit contained a module header.
-	      declared-module?::bool)
+	      (declared-module?::bool (default #f)))
 	   (wide-class WIP-Unit::Compilation-Unit ;; work in progress
 	      header)
 	   (create-module-from-file file::bstring override-headers::pair-nil
@@ -21,7 +29,8 @@
 				      reader
 				      #!key
 				      (bigloo-modules? #t)
-				      (store-exports-in-ht? #f))))
+				      (store-exports-in-ht? #f)
+				      (store-exported-macros-in-ht? #f))))
 
 ;; uses config 'module-resolver (if given). Should be a procedure that, given a
 ;; module name, returns a list of potential files that could contain the
@@ -115,8 +124,7 @@
 	     (m (instantiate::Compilation-Unit
 		   (name 'tmp) ;; will be set later.
 		   (top-level top-level)
-		   (macros '())
-		   (imports '())
+		   (exported-macros '())
 		   (exports '())
 		   (declared-module? header-sexp?))))
 	 (when header-sexp? (check-module-clause header))
@@ -139,8 +147,7 @@
    (let ((m (instantiate::Compilation-Unit
 	       (name (gensym 'module))
 	       (top-level (list expr))
-	       (macros '())
-	       (imports '())
+	       (exported-macros '())
 	       (exports '())
 	       (declared-module? #f)))
 	 (file-path ".")) ;; filepath is assumed to be "."
@@ -199,12 +206,6 @@
 	     (warning "replace-header is always shadowing provide-header"))
 	  (let ((override (car o-headers)))
 	     (cond
-		((not (and (pair? override)
-			   (pair? (cdr override))
-			   (null? (cddr override))))
-		 (error "scheme2js-module"
-			"invalid override-header - not a list of 2 elements"
-			(car o-headers)))
 		((not (and (symbol? (car override))
 			   (memq (car override) valid-kinds)))
 		 (error "scheme2js-module"
@@ -331,7 +332,8 @@
 (define (read-imported-module-file module-name file reader
 				   #!key
 				   (bigloo-modules? #t)
-				   (store-exports-in-ht? #f))
+				   (store-exports-in-ht? #f)
+				   (store-exported-macros-in-ht? #f))
    (when (file-exists? file)
       (let ((ip (open-input-file file)))
 	 (unwind-protect
@@ -351,17 +353,29 @@
 		   (let ((im (instantiate::Compilation-Unit ;; import-module
 				(name module-name)
 				(top-level #f)
-				(imports '())
 				(exports '())
-				(macros '())
-				;; declared-module is undefined.
-				(declared-module? #f))))
+				(exported-macros '()))))
 		      (widen!::WIP-Unit im (header module-clause))
 		      ;; normalize-exports might need the 'ip' in
 		      ;; case it needs to search for macros.
 		      (normalize-exports! im bigloo-modules?
 					  #t  ;; get macros
 					  reader ip)
+		      (with-access::Compilation-Unit im (exports exported-macros)
+			 (when store-exports-in-ht?
+			    (let ((ht (make-eq-hashtable)))
+			       (for-each (lambda (desc)
+					    (hashtable-put! ht
+							    (Export-Desc-id desc)
+							    desc))
+					 exports)
+			       (set! exports ht)))
+			 (when store-exported-macros-in-ht?
+			    (let ((ht (make-eq-hashtable)))
+			       (for-each (lambda (def-macro)
+					    (add-macro-to-ht def-macro ht))
+					 exported-macros)
+			       (set! exported-macros ht))))
 		      im))))
 	    (close-input-port ip)))))
 
@@ -387,7 +401,7 @@
 
    (with-access::WIP-Unit m (header imports macros)
       (let loop ((imported-modules (get-import-list header))
-		 (new-macros macros)
+		 (new-macros '())
 		 (new-imports imports))
 	 (cond
 	    ((null? imported-modules)
@@ -395,9 +409,14 @@
 	     (set! imports new-imports))
 	    ((Compilation-Unit? (car imported-modules))
 	     (let ((im (car imported-modules)))
-		(with-access::Compilation-Unit im  (exports macros name)
+		(with-access::Compilation-Unit im  (exports exported-macros name)
 		   (loop (cdr imported-modules)
-			 (append new-macros macros)
+			 (if (or (null? exported-macros)
+				 (and (hashtable? exported-macros)
+				      (zerofx? (hashtable-size
+						exported-macros))))
+			     new-macros
+			     (cons exported-macros new-macros))
 			 (if (empty-exports? exports)
 			     new-imports
 			     (cons (cons name exports)
@@ -551,13 +570,13 @@
 		   (else
 		    (loop new-macros rev-res)))))))
 			  
-   (with-access::WIP-Unit m (header name exports macros top-level)
+   (with-access::WIP-Unit m (header name exports exported-macros top-level)
       (let ((new-exports (extract-entries header 'export))
 	    (pragmas (extract-entries header 'scheme2js-pragma)))
 	 (let loop ((entries new-exports)
 		    (new-macros '()))
 	    (if (null? entries)
-		(set! macros (append (find-macros new-macros) macros))
+		(set! exported-macros (find-macros new-macros))
 		(let ((e (car entries)))
 		   (cond
 		      ((symbol? e)
@@ -608,11 +627,15 @@
 	     ex)))
 
 (define (normalize-scheme2js-exports! m::WIP-Unit)
-   (with-access::WIP-Unit m (header name exports macros)
+   (with-access::WIP-Unit m (header name exports exported-macros macros)
       (set! exports (append exports (map (lambda (ex)
 					    (check-scheme2js-export-clause ex)
 					    (create-Export-Desc ex name #f))
 					 (extract-entries header 'export))))
-      (let ((exported-macros (extract-entries header 'export-macros)))
-	 (for-each check-scheme2js-export-clause exported-macros)
-	 (set! macros (append macros exported-macros)))))
+      (let ((exported-ms (extract-entries header 'export-macros)))
+	 (for-each check-scheme2js-export-clause exported-ms)
+	 (set! exported-macros exported-ms)
+	 ;; HACK: in scheme2js-modules the exported modules are known to the
+	 ;; module too.
+	 ;; Add them to the macros.
+	 (set! macros (append exported-ms macros)))))

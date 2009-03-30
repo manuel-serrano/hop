@@ -8,11 +8,11 @@
 ;; lambda.
 (install-expander!
  'lambda
- (lambda (x e macros-ht)
+ (lambda (x e macros-hts)
     (match-case x
        ((?- ?formal ?- . (? list?))
 	;; ignore formal
-	(set-cdr! (cdr x) (map! (lambda (y) (e y e macros-ht))
+	(set-cdr! (cdr x) (map! (lambda (y) (e y e macros-hts))
 				(cddr x))))
        (else
 	(error "lambda-expand" "bad 'lambda'-form" x)))
@@ -27,106 +27,53 @@
 ;        (install-expander! id (eval expander))
 ;        #unspecified)))
 
-
 (install-expander!
  'define-macro
- (lambda (x e macros-ht)
-
-    (define (deep-copy o)
-       (cond
-	  ((epair? o)
-	   (econs (deep-copy (car o))
-		  (deep-copy (cdr o))
-		  (deep-copy (cer o))))
-	  ((pair? o)
-	   (cons (deep-copy (car o))
-		 (deep-copy (cdr o))))
-	  ((vector? o)
-	   (copy-vector o (vector-length o)))
-	  ((string? o)
-	   (string-copy o))
-	  (else
-	   o)))
-
-    (define (destructure pat arg bindings)
-       (cond
-	  ((null? pat) bindings)
-	  ((symbol? pat) `((,pat ,arg) ,@bindings))
-	  ((pair? pat)
-	   (destructure (car pat)
-			`(car ,arg)
-			(destructure (cdr pat) `(cdr ,arg) bindings)))))
-
-    (define (macro->expander macro)
-       (match-case macro
-	  ((?- (?name . ?args) ?e0 . ?body)
-	   (let ((L (gensym 'L)))
-	      (eval `(lambda (x e macros-ht)
-			(let ((,L (cdr x)))
-			   (e
-			    ;; macros might reference lists twice.
-			    ;; by deep-copying the result, we are sure,
-			    ;; that we don't share anything.
-			    (,deep-copy
-			     (let ,(destructure args L '())
-				,e0 ,@body))
-			    e macros-ht))))))))
-       
-    (define (lazy-macro macro)
-       (lambda (x e macros-ht)
-	  (let ((name (car (cadr macro)))
-		(macro-expander (macro->expander macro)))
-	     ;; replace this lazy fun by the actual macro-expander.
-	     ;; CARE: we assume that the macros-ht is the same as before, and
-	     ;; that there has not been made any copy... In other words: we
-	     ;; assume that we actually replace the original entry.
-	     (hashtable-put! macros-ht name macro-expander)
-	     ;; execute the macro.
-	     (macro-expander x e macros-ht))))
-
+ (lambda (x e macros-hts)
     (match-case x
        ((?- (?name . ?args) ?e0 . ?body)
-	   (hashtable-put! macros-ht
+	(let ((ht (car macros-hts)))
+	   (hashtable-put! ht
 			   name
-			   (lazy-macro x))
-	   #unspecified)
+			   (lazy-macro x ht))
+	   #unspecified))
        (else
 	(error "define-macro" "Illegal 'define-macro' syntax" x)))))
 
 (install-expander! 'when
-		   (lambda (x e macros-ht)
+		   (lambda (x e macros-hts)
 		      (match-case x
 			 ((?- ?test . ?body)
 			  (e
 			   `(if ,test (begin ,@body) #f)
-			   e macros-ht))
+			   e macros-hts))
 			 (else
 			  (error "when-expand" "Invalid when form: " x)))))
 
 (install-expander! 'unless
-		   (lambda (x e macros-ht)
+		   (lambda (x e macros-hts)
 		      (match-case x
 			 ((?- ?test . ?body)
 			  (e
 			   `(if ,test #f (begin ,@body))
-			   e macros-ht))
+			   e macros-hts))
 			 (else
 			  (error "unless-expand" "Invalid unless form: " x)))))
 
 (install-expander! 'define
-		   (lambda (x e macros-ht)
+		   (lambda (x e macros-hts)
 		      (match-case x
 			 ((?- (?fun . ?formals) . ?body)
 			  (e
 			   `(define ,fun (lambda ,formals ,@body))
-			   e macros-ht))
+			   e macros-hts))
 			 ((?- ?var ?val)
-			  `(define ,(e var e macros-ht) ,(e val e macros-ht)))
+			  `(define ,(e var e macros-hts) ,(e val e macros-hts)))
 			 (else
 			  (error "define-expand" "Invalid define-form: " x)))))
 
 (install-expander! 'or
-		   (lambda (x e macros-ht)
+		   (lambda (x e macros-hts)
 		      (match-case x
 			 ((?-) #f)
 			 ((?- . (and (? pair?) ?tests))
@@ -137,12 +84,12 @@
 					(if ,tmp-var
 					    ,tmp-var
 					    (or ,@(cdr tests))))))
-			     e macros-ht))
+			     e macros-hts))
 			 (else
 			  (error "or-expand" "Invalid 'or'-form" x)))))
 
 (install-expander! 'and
-		   (lambda (x e macros-ht)
+		   (lambda (x e macros-hts)
 		      (match-case x
 			 ((?-) #t)
 			 ((?- . (and (? pair?) ?tests))
@@ -151,13 +98,13 @@
 				 `(if ,(car tests)
 				      (and ,@(cdr tests))
 				      #f))
-			     e macros-ht))
+			     e macros-hts))
 			 (else
 			  (error "and-expand" "Invalid 'and'-form" x)))))
 
 (install-expander!
  'do
- (lambda (x e macros-ht)
+ (lambda (x e macros-hts)
     (match-case x
        ((?- ?bindings (?test . ?finally) . ?commands)
 	(unless (and (list? finally)
@@ -187,7 +134,7 @@
 					  (car bind)
 					  (caddr bind)))
 				   bindings)))))
-	      e macros-ht)))
+	      e macros-hts)))
        (else
 	(error "do-expand" "Invalid 'do'-form" x)))))
 
@@ -273,17 +220,17 @@
 	  head))))
 
 (install-expander! 'quasiquote
-		   (lambda (x e macros-ht)
+		   (lambda (x e macros-hts)
 		      (if (or (null? (cdr x))
 			      (not (pair? (cdr x)))
 			      (not (null? (cddr x))))
 			  (error "quasiquote-expander"
 				 "Illegal Quasiquote form"
 				 x))
-		      (e (quasiquote-expand! (cadr x) 0) e macros-ht)))
+		      (e (quasiquote-expand! (cadr x) 0) e macros-hts)))
 
 (install-expander! 'cond
-		   (lambda (x e macros-ht)
+		   (lambda (x e macros-hts)
 		      (e (match-case x
 			    ((?-) #f)
 			    ((?- (else . ?alternate))
@@ -300,11 +247,11 @@
 			     `(if ,test
 				  (begin ,@consequent)
 				  (cond ,@rest))))
-			 e macros-ht)))
+			 e macros-hts)))
 
 ;; transform let* into nested lets
 (install-expander! 'let*
-		   (lambda (x e macros-ht)
+		   (lambda (x e macros-hts)
 		      (match-case x
 			 ((?- ((?v ?val) . ?bindings) . ?body)
 			  (e `(let ((,v ,val))
@@ -312,7 +259,7 @@
 				       body
 				       `((let* ,bindings
 					    ,@body))))
-			     e macros-ht))
+			     e macros-hts))
 			 (else
 			  (error "let*-expand"
 				 "Invalid 'let*'-form"
@@ -342,7 +289,7 @@
 	 `(letrec ((,loop-name (lambda ,vars ,@body)))
 	     (,loop-name ,@init-values)))))
 
-(define (expand-let x e macros-ht)
+(define (expand-let x e macros-hts)
    ;; we know it's of form (?- (? list?) . ?-)
    (let* ((bindings (cadr x))
 	  (body (cddr x)))
@@ -357,23 +304,23 @@
 		x))
 
       `(let ,(map (lambda (binding)
-		     (list (e (car binding) e macros-ht)
-			   (e (cadr binding) e macros-ht)))
+		     (list (e (car binding) e macros-hts)
+			   (e (cadr binding) e macros-hts)))
 		  bindings)
-	  ,@(map (lambda (y) (e y e macros-ht)) body))))
+	  ,@(map (lambda (y) (e y e macros-hts)) body))))
 
 (install-expander! 'let ;; named let
-		   (lambda (x e macros-ht)
+		   (lambda (x e macros-hts)
 		      (match-case x
 			 ((?- (? symbol?) (? list?) . ?-)
-			  (e (expand-named-let x) e macros-ht))
+			  (e (expand-named-let x) e macros-hts))
 			 ((?- (? list?) . ?-)
-			  (expand-let x e macros-ht))
+			  (expand-let x e macros-hts))
 			 (else
 			  (error "let expand" "Illegal form" x)))))
 
 (install-expander! 'define-struct
- (lambda (x e macros-ht)
+ (lambda (x e macros-hts)
     (match-case x
        ((?- ?name . ?fields)
 	(unless (and (symbol? name)
@@ -439,11 +386,11 @@
 	       x)))))
 
 (install-expander! 'delay
-		   (lambda (x e macros-ht)
+		   (lambda (x e macros-hts)
 		      (match-case x
 			 ((?- ?exp)
 			  (e `(,(runtime-ref 'make-promise)
-			       (lambda () ,exp)) e macros-ht))
+			       (lambda () ,exp)) e macros-hts))
 			 (else
 			  (error "delay expand"
 				 "Illegal 'delay' form"
@@ -451,7 +398,7 @@
 
 (install-expander!
  'bind-exit
- (lambda (x e macros-ht)
+ (lambda (x e macros-hts)
     (match-case x
        ((?- (?escape) ?expr . ?Lrest)
 	(e
@@ -459,13 +406,13 @@
 	   (lambda (,escape)
 	      ,expr
 	      ,@Lrest))
-	 e macros-ht))
+	 e macros-hts))
        (else
 	(error "bind-exit" "Invalid bind-exit-form: " x)))))
 
 (install-expander!
  'with-handler
- (lambda (x e macros-ht)
+ (lambda (x e macros-hts)
     (match-case x
        ((?- ?handler ?expr . ?Lrest)
 	(e
@@ -474,11 +421,11 @@
 	   (lambda ()
 	      ,expr
 	      ,@Lrest))
-	 e macros-ht))
+	 e macros-hts))
        (else
 	(error "with-handler" "Invalid with-handler-form: " x)))))
 
-(define (receive-expander x e macros-ht)
+(define (receive-expander x e macros-hts)
    (match-case x
       ((?- ?vars ?producer ?expr . ?Lrest)
        (e
@@ -487,7 +434,7 @@
 	  (lambda ,vars
 	     ,expr
 	     ,@Lrest))
-	e macros-ht))
+	e macros-hts))
       (else
        (error "receive/multiple-value-bind"
 	      "Invalid form: "
@@ -496,4 +443,4 @@
 (install-expander! 'receive receive-expander)
 (install-expander! 'multiple-value-bind receive-expander)
 
-(install-expander! '@ (lambda (x e macros-ht) x))
+(install-expander! '@ (lambda (x e macros-hts) x))
