@@ -70,10 +70,10 @@
 
 (install-expander!
  'cond-expand
- (lambda (x e macros-hts)
+ (lambda (x e)
     (match-case x
        ((?- ?clause . ?Lclauses)
-	(e `(begin ,@(match-clauses (cdr x) x)) e macros-hts))
+	(e `(begin ,@(match-clauses (cdr x) x)) e))
        (else
 	(error "cond-expand"
 	       "Illegal cond-expand form"

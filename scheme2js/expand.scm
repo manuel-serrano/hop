@@ -7,9 +7,10 @@
 	   ;; priority: lower -> later
 	   (add-pre-expand! priority::bint f::procedure)
 	   (pre-expand! x)
-	   (identify-expander x e macros-ht)
+	   (identity-expander x e)
 	   (add-macro-to-ht macro ht)
-	   (lazy-macro macro ht))
+	   (lazy-macro macro ht)
+	   (module-macro-ht))
    (eval (export add-pre-expand!)))
 
 (define *pre-expanders* '())
@@ -44,6 +45,12 @@
       (mutex-unlock! *mutex*)
       res))
 
+(define (module-macro-ht)
+   (thread-parameter 'scheme2js-module-macro-ht))
+(define (module-macro-ht-set! new-ht)
+   (thread-parameter-set! 'scheme2js-module-macro-ht new-ht))
+   
+
 (define (lazy-macro macro ht)
    (define (destructure pat arg bindings)
       (cond
@@ -74,7 +81,7 @@
       (match-case macro
 	 ((?- (?name . ?args) ?e0 . ?body)
 	  (let ((L (gensym 'L)))
-	     (eval `(lambda (x e macros-hts)
+	     (eval `(lambda (x e)
 		       (let ((,L (cdr x)))
 			  (e
 			   ;; macros might reference lists twice.
@@ -83,15 +90,15 @@
 			   (,deep-copy
 			    (let ,(destructure args L '())
 			       ,e0 ,@body))
-			   e macros-hts))))))))
+			   e))))))))
        
-   (lambda (x e macros-hts)
+   (lambda (x e)
       (let ((name (car (cadr macro)))
 	    (macro-expander (macro->expander macro)))
 	 ;; replace this lazy fun by the actual macro-expander.
 	 (hashtable-put! ht name macro-expander)
 	 ;; execute the macro.
-	 (macro-expander x e macros-hts))))
+	 (macro-expander x e))))
 
 (define (add-macro-to-ht macro ht)
    (match-case macro
@@ -147,41 +154,48 @@
 
 (define (my-expand x additional-macros)
    (verbose "expanding")
-   (let ((macro-mapping (prepare-additional-macros additional-macros)))
-      (scheme2js-initial-expander x scheme2js-initial-expander macro-mapping)))
+   (let* ((macro-mapping (prepare-additional-macros additional-macros))
+	  (old-module-macro-ht (module-macro-ht))
+	  (initial-expander (scheme2js-initial-expander macro-mapping)))
+      (module-macro-ht-set! (car macro-mapping))
+      (unwind-protect
+	 (initial-expander x initial-expander)
+	 (module-macro-ht-set! old-module-macro-ht))))
+
 
 ;; macros can not be global variable. (Parallel compilation could
 ;; yield bad results).
-(define (scheme2js-initial-expander x e macros-hts)
-   (let ((e1 (cond
-		((symbol? x) symbol-expander)
-		((not (pair? x)) identify-expander)
-		((symbol? (car x))
-		 (cond
-		    ;; user-defined macros win over compiler-macros
-		    ((any (lambda (ht)
-			     (hashtable-get ht (car x)))
-			  macros-hts)
-		     => (lambda (macro-e)
-			   macro-e))
-		    ;; compiler-macros
-		    ((expander (car x))
-		     => (lambda (expander)
-			   expander))
-		    (else
-		     application-expander)))
-		(else
-		 application-expander)))
-	 (pre-expanded-x (pre-expand! x)))
-      (e1 pre-expanded-x e macros-hts)))
+(define (scheme2js-initial-expander macros-hts)
+   (lambda (x e)
+      (let ((e1 (cond
+		   ((symbol? x) symbol-expander)
+		   ((not (pair? x)) identity-expander)
+		   ((symbol? (car x))
+		    (cond
+		       ;; user-defined macros win over compiler-macros
+		       ((any (lambda (ht)
+				(hashtable-get ht (car x)))
+			     macros-hts)
+			=> (lambda (macro-e)
+			      macro-e))
+		       ;; compiler-macros
+		       ((expander (car x))
+			=> (lambda (expander)
+			      expander))
+		       (else
+			application-expander)))
+		   (else
+		    application-expander)))
+	    (pre-expanded-x (pre-expand! x)))
+	 (e1 pre-expanded-x e))))
 
-(define (symbol-expander x e macros-hts)
+(define (symbol-expander x e)
    x)
 	     
-(define (identify-expander x e macros-hts) x)
+(define (identity-expander x e) x)
 
-(define (application-expander x e macros-hts)
-   (map! (lambda (y) (e y e macros-hts)) x))
+(define (application-expander x e)
+   (map! (lambda (y) (e y e)) x))
 
 ;; compiler expanders are shared by all parallel compilations.
 (define *expanders* '())
