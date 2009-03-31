@@ -3,6 +3,7 @@
    (include "version.sch")
    (import config
 	   nodes
+	   srfi0
 	   export-desc
 	   module-system
 	   expand

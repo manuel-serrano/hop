@@ -1,5 +1,6 @@
 (module module-system
    (import verbose
+	   srfi0
 	   tools
 	   expand
 	   export-desc
@@ -96,7 +97,48 @@
       (error "module"
 	     "Invalid module name"
 	     module-name)))
-   
+
+(define (cond-expand-headers! m::WIP-Unit)
+   (with-access::WIP-Unit m (header)
+      (when (any? (lambda (h)
+		     (match-case h
+			((cond-expand . ?L) #t)
+			(else #f)))
+		  header)
+	 ;; make a copy so we can physically modify the list.
+	 (let* ((copy (map (lambda (x) x) header)))
+	    (let loop ((clauses copy)
+		       ;; a module always starts with (module xyz ...)
+		       ;; therefore we can't have a cond-expand as first el.
+		       (last-list-el #f))
+	    (cond
+	       ((null? clauses)
+		(set! header copy))
+	       ((not (pair? clauses))
+		(error "module"
+		       "invalid module-clause"
+		       header))
+	       (else
+		(match-case (car clauses)
+		   ((cond-expand ?clause . ?Lclauses)
+		    (let ((new-clauses (srfi0-expand (car clauses))))
+		       (cond
+			  ((null? new-clauses)
+			   (set-cdr! last-list-el (cdr clauses))
+			   (loop (cdr clauses) last-list-el))
+			  ((list? new-clauses)
+			   (let ((new-last-list-el (last-pair new-clauses)))
+			      (set-cdr! last-list-el new-clauses)
+			      (set-cdr! new-last-list-el (cdr clauses))
+			      (loop (cdr clauses) new-last-list-el)))
+			  (else
+			   (error "module"
+				  "invalid cond-expand module-clause"
+				  (car clauses))))))
+		   (else
+		    (loop (cdr clauses)
+			  clauses))))))))))
+
 (define (create-module-from-file file override-headers reader)
    (define (read-file-exprs in-port first-expr use-first-expr?)
       (let loop ((rev-top-level (if (and use-first-expr?
@@ -179,6 +221,7 @@
       (when module-preprocessor
 	 (module-preprocessor m))
       (merge-headers! m override-headers)
+      (cond-expand-headers! m)
       (set-name! m)
       (read-includes! m include-paths reader)
       (read-imports! m module-resolver reader bigloo-modules?) ;; macros too
@@ -356,6 +399,7 @@
 				(exports '())
 				(exported-macros '()))))
 		      (widen!::WIP-Unit im (header module-clause))
+		      (cond-expand-headers! im)
 		      ;; normalize-exports might need the 'ip' in
 		      ;; case it needs to search for macros.
 		      (normalize-exports! im bigloo-modules?
