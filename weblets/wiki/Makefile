@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.11.x/weblets/wiki/Makefile            */
+#*    serrano/prgm/project/hop/2.0.x/weblets/wiki/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Mar 10 11:28:02 2009 (serrano)                */
+#*    Last change :  Mon Mar 30 12:25:42 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the wiki weblet                                  */
