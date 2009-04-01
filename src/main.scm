@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Mar 27 15:13:07 2009 (serrano)                */
+;*    Last change :  Wed Apr  1 16:26:30 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -93,9 +93,10 @@
    ;; clear the module cache unless we preserve
    ;; caches from one session to another
    (unless (hop-restore-disk-cache)
-      (when (directory? (hop-module-cache))
-	 (delete-path (hop-module-cache))
-	 (make-directory (hop-module-cache))))
+      (let ((c (make-file-path (hop-rc-directory) "cache" (hop-module-cache))))
+	 (when (directory? c)
+	    (delete-path c)
+	    (make-directory c))))
    ;; parse the command line
    (parse-args args)
    (hop-verb 1 "Starting hop (v" (hop-version)

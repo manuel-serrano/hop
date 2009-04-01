@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Apr  1 11:39:57 2009 (serrano)                */
+;*    Last change :  Wed Apr  1 14:38:47 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -37,7 +37,7 @@
    (export  (class hss-compiler
 	       (element::bstring read-only)
 	       (properties::pair-nil read-only (default '())))
-	    (init-hss-compiler!)
+	    (init-hss-compiler! ::int)
 	    (hss-response::%http-response ::http-request ::bstring)
 	    (hss->css ::bstring)
 	    (hss->css-url ::bstring)
@@ -201,7 +201,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    init-hss-compiler! ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (init-hss-compiler!)
+(define (init-hss-compiler! port)
    ;; builtin hss types
    (for-each (lambda (t) (apply hop-hss-type! t)) *hss-builtin-types*)
    ;; hss cache
@@ -209,7 +209,7 @@
 	 (instantiate::cache-disk
 	    (path (make-file-path (hop-rc-directory)
 				  "cache"
-				  (format "hss-~a" (hop-port))))
+				  (format "hss-~a" port)))
 	    (out (lambda (o p) (css-write o p))))))
 
 ;*---------------------------------------------------------------------*/

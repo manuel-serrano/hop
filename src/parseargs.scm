@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Mar 27 10:42:19 2009 (serrano)                */
+;*    Last change :  Wed Apr  1 14:39:09 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -212,7 +212,7 @@
        (make-file-name (hop-rc-directory) "weblets"))
       
       ;; init hss, scm compilers, and services
-      (init-hss-compiler!)
+      (init-hss-compiler! (hop-port))
       (init-hopscheme! :reader (lambda (p v) (hop-read p))
 	 :share (hop-share-directory)
 	 :verbose (hop-verbose)

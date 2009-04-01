@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Sat Mar 28 08:57:53 2009 (serrano)                */
+;*    Last change :  Wed Apr  1 18:21:25 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
@@ -46,6 +46,7 @@
 ;*---------------------------------------------------------------------*/
 (define (make-hop-module-resolver resolver)
    (lambda (module abase)
+      (tprint "hop-module-resolver module=" module " abase=" abase)
       (let ((files (resolver module abase)))
 	 (if (pair? files)
 	     (hop-module-afile-resolver module files)
@@ -80,32 +81,10 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-resolver module url)
    ;; feed the cache
-   (let ((dir (hop-module-feed-cache url (hop-module-cache))))
+   (let ((dir (hz-download-to-cache url)))
       ;; resolve the module
       (let ((afile (make-file-path dir ".afile")))
 	 (when (file-exists? afile) (module-load-access-file afile))
+	 (when (file-exists? afile) (tprint "loading afile for resolver: " afile))
 	 ((bigloo-module-resolver) module dir))))
 
-;*---------------------------------------------------------------------*/
-;*    hop-module-feed-cache ...                                        */
-;*---------------------------------------------------------------------*/
-(define (hop-module-feed-cache url dest)
-   (multiple-value-bind (_ _ host port abspath)
-      (url-parse url)
-      (multiple-value-bind (base version)
-	 (hz-package-name-parse abspath)
-	 (let ((dir (if host
-			(make-file-name dest
-					(format "~a_~a~a-~a"
-						host port
-						(prefix (basename abspath))))
-			(make-file-name dest (prefix (basename abspath))))))
-	    (unless (directory? dir)
-	       (call-with-input-file url
-		  (lambda (iport)
-		     (make-directories dir)
-		     (let* ((p (open-input-gzip-port iport)))
-			(unwind-protect
-			   (untar p :directory dir)
-			   (close-input-port iport))))))
-	    (make-file-name dir base)))))
