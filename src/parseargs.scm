@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Apr  1 14:39:09 2009 (serrano)                */
+;*    Last change :  Wed Apr  1 19:52:58 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -223,9 +223,9 @@
 			       (hop-read-javascript
 				(current-input-port)
 				(hop-charset))))))
-      (init-clientc-compiler! :filec compile-scheme-file
-	 :expressionc (lambda (expr env) (compile-scheme-expression expr env))
-	 :modulec compile-scheme-module
+      (init-clientc-compiler! :modulec compile-scheme-module
+	 :expressionc compile-scheme-expression
+	 :filec compile-scheme-file
 	 :JS-expression JS-expression
 	 :JS-statement JS-statement
 	 :JS-return JS-return)

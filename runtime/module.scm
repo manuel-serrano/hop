@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Wed Apr  1 18:21:25 2009 (serrano)                */
+;*    Last change :  Wed Apr  1 19:54:29 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
@@ -46,7 +46,6 @@
 ;*---------------------------------------------------------------------*/
 (define (make-hop-module-resolver resolver)
    (lambda (module abase)
-      (tprint "hop-module-resolver module=" module " abase=" abase)
       (let ((files (resolver module abase)))
 	 (if (pair? files)
 	     (hop-module-afile-resolver module files)
@@ -85,6 +84,5 @@
       ;; resolve the module
       (let ((afile (make-file-path dir ".afile")))
 	 (when (file-exists? afile) (module-load-access-file afile))
-	 (when (file-exists? afile) (tprint "loading afile for resolver: " afile))
 	 ((bigloo-module-resolver) module dir))))
 
