@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed Apr  1 12:00:35 2009 (serrano)                */
+#*    Last change :  Thu Apr  2 05:58:05 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Generic Makefile to build Hop weblets.                           */
@@ -21,12 +21,12 @@ MINHOP=@MINHOP@
 MAXHOP=@MAXHOP@
 HOME=@HOME@
 
-CLIENT_SOURCES=config.hop.in
-SOURCES=@HZ@.hop @HZ@.hss $(CLIENT_SOURCES)
+CLIENT_SOURCES=@HZ@.hop config.hop.in @HZ@.hss 
+SOURCES=$(CLIENT_SOURCES)
 DASHBOARDPNG=@DASHBOARDPNG@
 
 FILES=$(SOURCES) \
-  etc/logo.png etc/favicon.png etc/@HZ@.wiki.in etc/weblet.info.in \
+  etc/logo.png etc/favicon.png etc/$(HZ).wiki.in etc/weblet.info.in \
   etc/homepage/01-homepage.wiki etc/homepage/01-homepage.png \
   $(DASHBOARDPNG) \
   Makefile

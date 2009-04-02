@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Apr  1 16:26:30 2009 (serrano)                */
+;*    Last change :  Thu Apr  2 05:45:52 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -93,7 +93,7 @@
    ;; clear the module cache unless we preserve
    ;; caches from one session to another
    (unless (hop-restore-disk-cache)
-      (let ((c (make-file-path (hop-rc-directory) "cache" (hop-module-cache))))
+      (let ((c (make-file-path (hop-rc-directory) "cache" (hop-api-cache))))
 	 (when (directory? c)
 	    (delete-path c)
 	    (make-directory c))))

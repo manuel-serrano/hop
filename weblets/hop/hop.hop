@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/weblets/hop/hop.hop              */
+;*    serrano/prgm/project/hop/2.0.x/weblets/hop/hop.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon Mar  2 05:27:06 2009 (serrano)                */
+;*    Last change :  Thu Apr  2 07:06:59 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -76,12 +76,30 @@
 			  (<WEBLETS> k (hop-additional-row ws :open open))))
 		    (sort (hashtable-key-list ct) string<?))
 	      (let ((ws (map cdr (apply append (hashtable->list ct)))))
-		 (<WEBLETS> "Additional Weblets"
-			    (hop-additional-row ws
-						:showtitle showtitle
-						:width width :height height
-						:icons icons
-						:open open))))))))
+		 (let loop ((ws ws)
+			    (apps '())
+			    (apis '()))
+		    (if (null? ws)
+			(list
+			 (<WEBLETS> "Additional Weblets"
+				    (hop-additional-row (reverse! apps)
+							:showtitle showtitle
+							:width width
+							:height height
+							:icons icons
+							:open open))
+			 (<WEBLETS> "Additional APIs"
+				    (hop-additional-row (reverse! apis)
+							:showtitle showtitle
+							:width width
+							:height height
+							:icons icons
+							:open open)))
+			(let* ((a (car ws))
+			       (name (cadr (assq 'name a))))
+			   (if (string-suffix? "-api" name)
+			       (loop (cdr ws) apps (cons a apis))
+			       (loop (cdr ws) (cons a apps) apis)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop/panel ...                                                    */

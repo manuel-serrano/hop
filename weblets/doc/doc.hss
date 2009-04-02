@@ -38,7 +38,7 @@ $(define type-color "#00bb00")
 $(define example-background "#eeffdd")
 $(define console-background "#eeeeff")
 $(define edit-background "#ffffee")
-$(define source-background "#ffeeff")
+$(define source-background "#fff7ff")
 $(define doc-opacity "0.97")
 $(define deep-blue "#00a")
 $(define deep-green "#0a0")
@@ -735,6 +735,7 @@ doc toc {
   background-color: $popup-menu-color;
   border: $popup-menu-border;
   -moz-opacity: $doc-opacity;
+  padding-right: 2px;
 }
 
 doc logo {

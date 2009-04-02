@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Sun Mar 22 07:28:52 2009 (serrano)                */
+;*    Last change :  Thu Apr  2 09:42:27 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
@@ -102,7 +102,7 @@
 	 :fail (lambda (xhr)
 		  (case (xml-http-request-status xhr)
 		     ((404)
-		      (error 'hopsh "url not found" url))
+		      (error 'hopsh "document not found" url))
 		     ((401)
 		      (if (=fx count 0)
 			  (error 'hop-sh "permission denied'" url)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Apr  1 16:26:57 2009 (serrano)                */
+;*    Last change :  Thu Apr  2 05:41:56 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -249,7 +249,7 @@
 	    (hop-proxy-sniffer-set! ::procedure)
 	    (hop-proxy-sniffer-add! ::procedure)
 
-	    (hop-module-cache::bstring)
+	    (hop-api-cache::bstring)
 	    
 	    (hop-hz-package-suffix::bstring)
 	    (hop-hz-package-suffix-set! ::bstring)
@@ -263,9 +263,9 @@
    (current-date))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-module-cache ...                                             */
+;*    hop-api-cache ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-module-cache
+(define-parameter hop-api-cache
    (os-tmp))
    
 ;*---------------------------------------------------------------------*/
@@ -351,7 +351,7 @@
       (if (integer? v)
 	  (begin
 	     (hop-login-cookie-id-set! (format "hop@~a:~a" (hostname) v))
-	     (hop-module-cache-set! (format "modules-~a" v))
+	     (hop-api-cache-set! (format "api-~a" v))
 	     v)
 	  (error 'hop-port "Illegal hop port" v))))
 
