@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Fri Mar 27 14:08:08 2009 (serrano)                */
+;*    Last change :  Wed Apr  1 19:54:01 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -74,7 +74,9 @@
    ;; hook the client-code compiler
    (hop-clientc-set!
     (instantiate::clientc
-       (filec filec)
+       (filec (lambda (file env)
+		 (hop-load-afile (dirname file))
+		 (filec file env)))
        (expressionc expressionc)
        (modulec modulec)
        (JS-expression JS-expression)

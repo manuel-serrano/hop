@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    .../hop/1.10.x/weblets/hzbuilder/etc/skeleton/Makefile           */
+#*    .../hop/2.0.x/weblets/hzbuilder/etc/skeleton/Makefile            */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Jan  5 20:04:56 2009 (serrano)                */
+#*    Last change :  Thu Apr  2 05:58:05 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Generic Makefile to build Hop weblets.                           */
@@ -21,11 +21,12 @@ MINHOP=@MINHOP@
 MAXHOP=@MAXHOP@
 HOME=@HOME@
 
-SOURCES=@HZ@.hop @HZ@.hss config.hop.in
+CLIENT_SOURCES=@HZ@.hop config.hop.in @HZ@.hss 
+SOURCES=$(CLIENT_SOURCES)
 DASHBOARDPNG=@DASHBOARDPNG@
 
 FILES=$(SOURCES) \
-  etc/logo.png etc/favicon.png etc/@HZ@.wiki.in etc/weblet.info.in \
+  etc/logo.png etc/favicon.png etc/$(HZ).wiki.in etc/weblet.info.in \
   etc/homepage/01-homepage.wiki etc/homepage/01-homepage.png \
   $(DASHBOARDPNG) \
   Makefile
@@ -108,9 +109,16 @@ config.hop: config.hop.in Makefile
 .etags: $(filter %.scm %.hop %.sch, $(OBJECTS))
 	$(BTAGS) --ignore-error -suffix hop --define-fun define-service $^ -o $@
 
+.hop:
+	echo -n "(" > $@
+	for p in $(CLIENT_SOURCES:%.in=%); do \
+          echo -n "\"$$p\" " >> $@; \
+        done
+	echo ")" >> $@
+
 clean:
 	/bin/rm -f etc/weblet.info
-	/bin/rm -f .afile .etags
+	/bin/rm -f .afile .etags .hop
 
 getsources: 
 	@echo $(filter %.scm %.hop %.sch, $(FILES))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Mar 25 15:18:49 2009 (serrano)                */
+;*    Last change :  Wed Apr  1 18:17:14 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -29,7 +29,8 @@
 	    __hop_user
 	    __hop_css
 	    __hop_clientc
-	    __hop_hop-file)
+	    __hop_hop-file
+	    __hop_hz)
 
    (export  (<HTML> . ::obj)
 	    (<HEAD> . ::obj)
@@ -157,6 +158,41 @@
 	 :rel "stylesheet"
 	 :type (hop-configure-css-mime-type)
 	 :href p))
+
+   (define (hz-get-files path suffix)
+      (let ((hop (make-file-name path ".hop")))
+	 (filter-map (lambda (f)
+			(when (is-suffix? f suffix)
+			   (make-file-name path f)))
+		     (if (file-exists? hop)
+			 (call-with-input-file hop read)
+			 (directory->list path)))))
+   
+   (define (hz->client path suffix)
+      (let ((file (make-file-name path (string-append ".hop." suffix))))
+	 (if (file-exists? file)
+	     file
+	     (let ((files (hz-get-files path suffix)))
+		(when (pair? files)
+		   (call-with-output-file file
+		      (lambda (op)
+			 (for-each (lambda (hss)
+				      (call-with-input-file hss
+					 (lambda (ip)
+					    (display (read-string ip) op))))
+				   files)))
+		   file)))))
+   
+   (define (hz f inl)
+      (let* ((path (hz-download-to-cache f))
+	     (hss (hz->client path "hss"))
+	     (jscript (hz->client path "hop")))
+	 (tprint "hss=" hss " jscript=" jscript)
+	 (cond
+	    ((and hss jscript) (list (css hss inl) (script jscript inl)))
+	    (hss (list (css hss inl)))
+	    (jscript (list (script jscript inl)))
+	    (else '()))))
    
    (define (incl f inl path)
       (let* ((res '())
@@ -260,8 +296,13 @@
 		 ((:include)
 		  (cond
 		     ((string? (cadr a))
-		      (loop (cddr a) :include rts dir path inl packed
-			    (append (incl (cadr a) inl path) els)))
+		      ;; automatic detection of hz package (it is really
+		      ;; a good idea since there is the special :hz keyword)
+		      (if (hz-package-filename? (cadr a))
+			  (loop (cddr a) :include rts dir path inl packed
+				(append (hz (cadr a) inl) els))
+			  (loop (cddr a) :include rts dir path inl packed
+				(append (incl (cadr a) inl path) els))))
 		     ((list? (cadr a))
 		      (loop (cddr a) :include rts dir path inl packed
 			    (append (reverse!
@@ -273,6 +314,11 @@
 		      (loop (cddr a) :include rts dir path inl packed els))
 		     (else
 		      (error '<HEAD> "Illegal :include" (cadr a)))))
+		 ((:hz)
+		  (if (string? (cadr a))
+		      (loop (cddr a) :include rts dir path inl packed
+			    (append (hz (cadr a) inl) els))
+		      (error '<HEAD> "Illegal :hz" (cadr a))))
 		 ((:rts)
 		  (if (boolean? (cadr a))
 		      (loop (cddr a) #f (cadr a) dir path inl packed els)

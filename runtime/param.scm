@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Mar 27 10:50:05 2009 (serrano)                */
+;*    Last change :  Thu Apr  2 05:41:56 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -249,10 +249,10 @@
 	    (hop-proxy-sniffer-set! ::procedure)
 	    (hop-proxy-sniffer-add! ::procedure)
 
+	    (hop-api-cache::bstring)
+	    
 	    (hop-hz-package-suffix::bstring)
 	    (hop-hz-package-suffix-set! ::bstring)
-	    
-	    (hop-module-cache::bstring)
 	    
 	    (hop-rc-loaded!)))
 
@@ -263,9 +263,9 @@
    (current-date))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-module-cache ...                                             */
+;*    hop-api-cache ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-module-cache
+(define-parameter hop-api-cache
    (os-tmp))
    
 ;*---------------------------------------------------------------------*/
@@ -290,8 +290,6 @@
 			(loop (prefix host))))))))
    (lambda (v)
       (hop-path-set! (cons (make-file-name v "cache") (hop-path)))
-      (hop-module-cache-set!
-       (make-file-path (hop-rc-directory) "cache" "modules"))
       v))
 
 ;*---------------------------------------------------------------------*/
@@ -330,7 +328,7 @@
 ;*    hop-login-cookie-id ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-login-cookie-id
-   (format "hop@~a:~a" (hostname) hop-port))
+   (format "hop@~a:~a" (hostname) 8080))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-login-cookie-crypt-key ...                                   */
@@ -353,6 +351,7 @@
       (if (integer? v)
 	  (begin
 	     (hop-login-cookie-id-set! (format "hop@~a:~a" (hostname) v))
+	     (hop-api-cache-set! (format "api-~a" v))
 	     v)
 	  (error 'hop-port "Illegal hop port" v))))
 

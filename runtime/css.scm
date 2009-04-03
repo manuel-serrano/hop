@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Mon Mar 30 07:36:22 2009 (serrano)                */
+;*    Last change :  Wed Apr  1 14:38:47 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -37,7 +37,7 @@
    (export  (class hss-compiler
 	       (element::bstring read-only)
 	       (properties::pair-nil read-only (default '())))
-	    (init-hss-compiler!)
+	    (init-hss-compiler! ::int)
 	    (hss-response::%http-response ::http-request ::bstring)
 	    (hss->css ::bstring)
 	    (hss->css-url ::bstring)
@@ -87,19 +87,43 @@
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile-declaration* ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (hss-compile-declaration* decl hc)
+(define (hss-compile-declaration* selector decl hc)
+   
+   (define (compose-selectors selector sel)
+      (append selector
+	      (list 'childolf
+		    (instantiate::css-selector-name
+		       (name sel)))))
+   
+   (define (compile-alias decl alias)
+      (let ((nsel (car alias))
+	    (ndecl (cadr alias)))
+	 (instantiate::css-ruleset
+	    (selector+ (list (compose-selectors selector nsel)))
+	    (declaration* (list (duplicate::css-declaration decl
+				   (property ndecl)))))))
+   
    (let loop ((decl decl)
 	      (old '())
-	      (new '()))
+	      (nrules '()))
       (if (null? decl)
-	  (values (reverse! old) (reverse! new))
+	  (let ((orules (instantiate::css-ruleset
+			   (selector+ (list selector))
+			   (declaration* old))))
+	     (if (pair? nrules)
+		 ;; the compilation of the declarations has created
+		 ;; new rules, we have to unfold...
+		 (instantiate::css-ruleset-unfold
+		    (ruleset+ (list orules nrules)))
+		 orules))
 	  (with-access::css-declaration (car decl) (property expr prio)
 	     (let ((cell (assoc property (hss-compiler-properties hc))))
 		(if (pair? cell)
-		    (let ((n (duplicate::css-declaration (car decl)
-				(property (caadr cell)))))
-		       (loop (cdr decl) old (cons (cons (cadr cell) n) new)))
-		    (loop (cdr decl) (cons (car decl) old) new)))))))
+		    (let ((rules (map (lambda (alias)
+					 (compile-alias (car decl) alias))
+				      (cdr cell))))
+		       (loop (cdr decl) old (append rules nrules)))
+		    (loop (cdr decl) (cons (car decl) old) nrules)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *hss-builtin-types* ...                                          */
@@ -177,7 +201,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    init-hss-compiler! ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (init-hss-compiler!)
+(define (init-hss-compiler! port)
    ;; builtin hss types
    (for-each (lambda (t) (apply hop-hss-type! t)) *hss-builtin-types*)
    ;; hss cache
@@ -185,7 +209,7 @@
 	 (instantiate::cache-disk
 	    (path (make-file-path (hop-rc-directory)
 				  "cache"
-				  (format "hss-~a" (hop-port))))
+				  (format "hss-~a" port)))
 	    (out (lambda (o p) (css-write o p))))))
 
 ;*---------------------------------------------------------------------*/
@@ -308,30 +332,14 @@
 ;*    hss-compile ::css-ruleset ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (hss-compile o::css-ruleset)
-   
+
    (define (compile-rule o)
       (with-access::css-ruleset o (selector+ declaration*)
 	 (let ((hc (hss-find-compiler (car (last-pair (car selector+)))))
 	       (ndeclaration* (map hss-compile declaration*)))
 	    (if hc
-		(multiple-value-bind (old new)
-		   (hss-compile-declaration* ndeclaration* hc)
-		   (let ((nselector (hss-compile-selector* (car selector+))))
-		      (if (pair? new)
-			  ;; the compilation of the declarations has created
-			  ;; new rules, we have to unfold...
-			  (instantiate::css-ruleset-unfold
-			     (ruleset+ (list
-					(instantiate::css-ruleset
-					   (selector+ (list nselector))
-					   (declaration* old))
-					(instantiate::css-ruleset
-					   (selector+ (list (append nselector
-								    (car new))))
-					   (declaration* (cdr new))))))
-			  (duplicate::css-ruleset o
-			     (selector+ (list nselector))
-			     (declaration* old)))))
+		(let ((nselector (hss-compile-selector* (car selector+))))
+		   (hss-compile-declaration* nselector ndeclaration* hc))
 		(duplicate::css-ruleset o
 		   (selector+ (map! hss-compile-selector* selector+))
 		   (declaration* ndeclaration*))))))
@@ -422,7 +430,13 @@
 ;*---------------------------------------------------------------------*/
 (hop-hss-type! "window" "table.hop-window td.hop-window-content")
 
-(hss-register-compiler! "gauge"
-			(instantiate::hss-compiler
-			   (element "span")
-			   (properties '(("foo" "div.foo" "bg")))))
+;*---------------------------------------------------------------------*/
+;*    Example a hss compiler                                           */
+;*---------------------------------------------------------------------*/
+;; (hss-register-compiler!
+;; "gauge"
+;;  (instantiate::hss-compiler
+;;    (element "span")
+;;    (properties '(("foo" ("span.foo" "bg") ("span.gee" "fg"))
+;; 		    ("gee" ("span.foo" "fg"))
+;;		    ("bar" ("span.foo span.bar" "fg"))))))

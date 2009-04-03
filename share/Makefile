@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/share/Makefile                   */
+#*    serrano/prgm/project/hop/2.0.x/share/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Jan  7 16:41:21 2009 (serrano)                */
+#*    Last change :  Wed Apr  1 16:50:03 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -83,6 +83,7 @@ ICONS		= important.png shadow-se.png \
 		  error.png shadow-e.png timeout.png \
 		  error2.png shadow-ne.png warning.png \
 		  hop-16x16.png hop-48x48.png hop-32x32.png hop-128x128.png \
+                  hop-api-48x48.png \
                   hop.png hop.svg \
                   shadow-s.png window-handle.png \
 		  $(ICONS_AUDIO:%=hop-audio/%) \

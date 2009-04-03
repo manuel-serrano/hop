@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Thu Mar 26 15:35:19 2009 (serrano)                */
+;*    Last change :  Thu Apr  2 05:42:12 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -19,7 +19,8 @@
    (export (hz-package-filename? ::bstring)
 	   (hz-package-name-parse ::bstring)
 	   (hz-package-url-parse ::bstring)
-	   (hz-package-info ::bstring)))
+	   (hz-package-info ::bstring)
+	   (hz-download-to-cache ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-package-filename? ...                                         */
@@ -37,16 +38,9 @@
                    (+fx 1 (string-length (hop-hz-package-suffix))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hz-package-name-parse ...                                        */
-;*    -------------------------------------------------------------    */
-;*    Parses a hz-package file name and returns the base name, the     */
-;*    version number, and release number.                              */
-;*    The syntax of a hz-package name is:                              */
-;*       .*-[0-9]+.0-9]+.[0-9]+(-{pre,rc}?[0-9]+)?.hz                  */
+;*    hz-package-name-parse-sans-url ...                               */
 ;*---------------------------------------------------------------------*/
-(define (hz-package-name-parse name)
-   (unless (hz-package-filename? name)
-      (error 'hz-package-name-parse "Illegal hz-package name" name))
+(define (hz-package-name-parse-sans-url name)
    (let* ((n (hz-package-sans-suffix (basename name)))
           (index (string-index-right n #\-))
           (vdot (string-index-right n #\.)))
@@ -68,6 +62,23 @@
 		    (values base version))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    hz-package-name-parse ...                                        */
+;*    -------------------------------------------------------------    */
+;*    Parses a hz-package file name and returns the base name, the     */
+;*    version number, and release number.                              */
+;*    The syntax of a hz-package name is:                              */
+;*       .*-[0-9]+.0-9]+.[0-9]+(-{pre,rc}?[0-9]+)?.hz                  */
+;*---------------------------------------------------------------------*/
+(define (hz-package-name-parse name)
+   (unless (hz-package-filename? name)
+      (error 'hz-package-name-parse "Illegal hz-package name" name))
+   (let ((varg (string-index-right name "?&")))
+      (if varg
+	  (let ((name (substring name (+fx varg 1) (string-length name))))
+	     (hz-package-name-parse name))
+	  (hz-package-name-parse-sans-url name))))
+
+;*---------------------------------------------------------------------*/
 ;*    hz-package-url-parse ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hz-package-url-parse url)
@@ -86,3 +97,29 @@
 	 (unwind-protect
 	    (untar ip :file info)
 	    (close-input-port ip)))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-download-to-cache ...                                         */
+;*---------------------------------------------------------------------*/
+(define (hz-download-to-cache url)
+   (multiple-value-bind (_ _ host port abspath)
+      (url-parse url)
+      (multiple-value-bind (base version)
+	 (hz-package-name-parse abspath)
+	 (let* ((dest (make-file-path
+		       (hop-rc-directory) "cache" (hop-api-cache)))
+		(dir (if host
+			 (make-file-name dest
+					 (format "~a_~a~a-~a"
+						 host port
+						 (prefix (basename abspath))))
+			 (make-file-name dest (prefix (basename abspath))))))
+	    (unless (directory? dir)
+	       (call-with-input-file url
+		  (lambda (iport)
+		     (make-directories dir)
+		     (let* ((p (open-input-gzip-port iport)))
+			(unwind-protect
+			   (untar p :directory dir)
+			   (close-input-port iport))))))
+	    (make-file-name dir base)))))
