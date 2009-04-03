@@ -5,6 +5,7 @@
 				    operator::Node
 				    operands::pair-nil))
    (import config
+	   error
 	   tools
 	   template-display
 	   nodes
@@ -165,9 +166,11 @@
 				 (if (symbol? value)
 				     (template-display p env
 					"+\"$value\"")
-				     (error "symbolAppend_immutable-op"
-					    "symbol-append requires symbols as arguments"
-					    value)))
+				     (scheme2js-error
+				      "symbolAppend_immutable-op"
+				      "symbol-append requires symbols as arguments"
+				      value
+				      operand)))
 			      (template-display p env
 				 "+~e.slice(1)"
 				 (compile operand p #f))))
@@ -180,9 +183,11 @@
 	  (with-access::Const operand (value)
 	     (if (string? value)
 		 (template-display p env "\"$(string-for-read value)\"")
-		 (error "stringAppend_mutable-op"
-			"string-append requires strings as arguments"
-			value)))
+		 (scheme2js-error
+		  "stringAppend_mutable-op"
+		  "string-append requires strings as arguments"
+		  value
+		  operand)))
 	  (template-display p env
 	     "~e.val" (compile operand p #f))))
 
@@ -259,9 +264,11 @@
 		    (if (string? value)
 			(template-display p env
 			   "\"$(string-for-read value)\"")
-			(error "string2jsstring_mutable-op"
-			       "string->jsstring requires string as argument"
-			       value)))
+			(scheme2js-error
+			 "string2jsstring_mutable-op"
+			 "string->jsstring requires string as argument"
+			 value
+			 operand)))
 		 (template-display p env
 		    "(~e.val)"
 		    (compile operand p #f))))))
@@ -277,9 +284,11 @@
 		 (with-access::Const operand (value)
 		    (if (symbol? value)
 			(template-display p env "\"$value\"")
-			(error "symbol2jsstring_immutable-op"
-			       "symbol->jsstring requires symbol as argument"
-			       value)))
+			(scheme2js-error
+			 "symbol2jsstring_immutable-op"
+			 "symbol->jsstring requires symbol as argument"
+			 value
+			 operand)))
 		 (template-display p env
 		    "(~e).slice(1)" (compile operand p #f))))))
       (< nb-operands 2))) ;; 0 et 1 have been handled.
@@ -322,7 +331,9 @@
 		       ((modulo) modulo-op)
 		       ((values) values-op)
 		       ((not) not-op)
-		       (else (error "compile-optimized-call"
-				    "forgot optimize-fun:"
-				    (car peephole))))))
+		       (else (scheme2js-error
+			      "compile-optimized-call"
+			      "forgot optimize-fun:"
+			      (car peephole)
+			      operator)))))
 	       (optimize-fun p env compile operands))))))

@@ -24,7 +24,7 @@
 
 (define-nmethod (Node.scm)
    (error "scm-out"
-	  "forgot node-type"
+	  "Internal Error: forgot node-type"
 	  this))
 
 (define-nmethod (Const.scm)

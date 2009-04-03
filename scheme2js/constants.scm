@@ -18,10 +18,11 @@
 (define (make-constants-let constants-ht body)
    (let ((bindings (hashtable-map
 		    constants-ht
-		    (lambda (const decl)
+		    (lambda (const decl/loc)
 		       (instantiate::Set!
-			  (lvalue decl)
+			  (lvalue (car decl/loc))
 			  (val (instantiate::Const
+				  (location (cdr decl/loc))
 				  (value const))))))))
       (if (pair? bindings)
 	  (instantiate::Let
@@ -56,7 +57,7 @@
    (with-access::Lambda this (body)
       (if ht ;; either module or another lambda already created the ht)
 	  (default-walk! this ht)
-	  (let ((ht (make-hashtable)))
+	  (let ((ht (create-hashtable :hash my-hash)))
 	     (default-walk! this ht)
 	     ;; Lambda-body must be Return.
 	     (with-access::Return body (val)
@@ -101,10 +102,14 @@
 		   (long-enough-string? value)))
 	  (let ((cached (hashtable-get constant-ht value)))
 	     (if cached
-		 (with-access::Ref cached (var)
-		    (var-reference var))
+		 (begin
+		    (set-cdr! cached #f)
+		    (with-access::Ref (car cached) (var)
+		       (var-reference var :location this)))
 		 (let ((new-const (Ref-of-new-Var 'const)))
-		    (hashtable-put! constant-ht value new-const)
+		    (hashtable-put! constant-ht value
+				    (cons new-const
+					  (Node-location this)))
 		    (with-access::Ref new-const (var)
-		       (var-reference var)))))
+		       (var-reference var :location this)))))
 	  this)))

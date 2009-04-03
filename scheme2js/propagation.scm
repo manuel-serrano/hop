@@ -307,7 +307,7 @@
 
 (define-nmethod (Node.propagate! var/vals::List-Box)
    (error 'propagate
-	  "forgot node type"
+	  "Internal Error: forgot node type"
 	  this))
 
 (define-nmethod (Const.propagate! var/vals)
@@ -331,7 +331,7 @@
 	       ((and (not (Prop-Env-suspend/resume? env))
 		     (Ref? val)
 		     (not (Prop-Var-escaping-mutated? (Ref-var val))))
-		(var-reference (Ref-var val)))
+		(var-reference (Ref-var val) :location val))
 	       ((and (Const? val)
 		     (with-access::Const val (value)
 			(or (number? value)
@@ -342,7 +342,9 @@
 				 (string? value)
 				 (not (>fx (string-length value) 15)))
 			    (eqv? #unspecified value))))
-		(instantiate::Const (value (Const-value val))))
+		(instantiate::Const
+		   (location (Node-location val))
+		   (value (Const-value val))))
 	       (else
 		this))))))
 
@@ -423,7 +425,8 @@
 	  ;; right now. (obviously a "print" won't work now...)
 	  ;;
 	  ;; optimize-runtime-op is at bottom of file.
-	  (or (optimize-runtime-op (Var-id (Ref-var operator)) operands)
+	  (or (optimize-runtime-op (Var-id (Ref-var operator)) operands
+				   (Node-location operator))
 	      this)
 	  this)))
 
@@ -494,7 +497,7 @@
 
 
 
-(define (optimize-runtime-op op operands)
+(define (optimize-runtime-op op operands location)
    (define (operand->val op)
       (let ((tmp (if (Const? op)
 		     (Const-value op)
@@ -529,6 +532,7 @@
 		  (with-handler
 		     (lambda (e) #f)
 		     (instantiate::Const
+			(location location)
 			(value (apply equal? (map operand->val operands)))))
 		  #f))))
       ((equal? number? = < > <= >= zero? zerofx? negative? odd? even? max min
@@ -547,7 +551,9 @@
        (with-handler
 	  (lambda (e) #f)
 	  (let ((res (eval `(,op ,@(map operand->val operands)))))
-	     (instantiate::Const (value res)))))
+	     (instantiate::Const
+		(location location)
+		(value res)))))
       ((car cdr cadr cddr caar cdar
 	    cadar cddar caaar cdaar caddr cdddr caadr cdadr
 	    member memq memv length assoc assq assv)
@@ -567,7 +573,9 @@
 		     (boolean? res)
 		     (keyword? res)
 		     (eq? res #unspecified))
-		 (instantiate::Const (value res))
+		 (instantiate::Const
+		    (location location)
+		    (value res))
 		 #f))))
       (else
        #f)))

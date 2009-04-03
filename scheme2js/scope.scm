@@ -110,6 +110,7 @@
 					     (not (eq? var binding-var)))
 					  scope-vars))
 			   (walk! (instantiate::Let
+				     (location (Node-location this))
 				     (scope-vars (list binding-var))
 				     (bindings (list binding))
 				     (body this)
@@ -208,7 +209,7 @@
    (with-access::Ref this (var)
       (when (not (Scope-Var? var))
 	 (error "scope"
-		"not scope-var: "
+		"Internal Error: not scope-var: "
 		var))))
 
 

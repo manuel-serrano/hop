@@ -87,10 +87,13 @@
 		       bindings))
 	 (let* ((tmp-vars (map (lambda (ign) (gensym 'ltr-tmp))
 			       bindings))
+		(location (Node-location this))
 		(new-bindings (map (lambda (tmp-var binding)
 				      (with-access::Set! binding (val)
 					 (instantiate::Set!
+					    (location location)
 					    (lvalue (instantiate::Ref
+						       (location location)
 						       (id tmp-var)))
 					    (val val))))
 				   tmp-vars
@@ -98,8 +101,10 @@
 		(assigs (map (lambda (tmp-var binding)
 				(with-access::Set! binding (lvalue)
 				   (instantiate::Set!
+				      (location location)
 				      (lvalue lvalue)
 				      (val (instantiate::Ref
+					      (location location)
 					      (id tmp-var))))))
 			     tmp-vars
 			     bindings)))
@@ -107,11 +112,14 @@
 	    (for-each (lambda (binding)
 			 (with-access::Set! binding (val)
 			    (set! val
-				  (instantiate::Const (value #unspecified)))))
+				  (instantiate::Const
+				     (location location)
+				     (value #unspecified)))))
 		      bindings)
 	    ;; then evaluate the inits and store them in temporary variables
 	    (set! body
 		  (instantiate::Let
+		     (location location)
 		     (bindings new-bindings)
 		     (body (instantiate::Begin
 			      ;; and finally assign them back to the originals.
@@ -129,6 +137,7 @@
 	  (if (null? bindings)
 	      n
 	      (instantiate::Let
+		 (location (Node-location n))
 		 (bindings bindings)
 		 (body n)
 		 (kind 'letrec)))))
@@ -148,7 +157,9 @@
 			  finish-fun)))
 	    ((Define? (car exprs))
 	     (let ((binding (car exprs)))
-		(set-car! exprs (instantiate::Const (value #unspecified)))
+		(set-car! exprs (instantiate::Const
+				   (location (Node-location (car exprs)))
+				   (value #unspecified)))
 		(loop (cdr exprs)
 		      (cons binding rev-defines))))
 	    (else

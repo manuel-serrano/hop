@@ -19,7 +19,7 @@
 
 (define-nmethod (Node.elim! val-is-needed?)
    (error 'elim
-	  "Forgot node type"
+	  "Internal Error: Forgot node type"
 	  this))
 
 (define-nmethod (Const.elim! val-is-needed?)

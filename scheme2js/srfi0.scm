@@ -1,6 +1,6 @@
 (module srfi0
    (include "version.sch")
-   (import expand)
+   (import error expand)
    (export
     (srfi0-expand expr)
     (srfi0-declare! sym::symbol)
@@ -17,56 +17,68 @@
 (srfi0-declare! 'scheme2js)
 (srfi0-declare! 'srfi0)
 
-(define (check-srfi0-test test)
-   (match-case test
-      (((kwote and) . ?Ltests)
-       (every? check-srfi0-test Ltests))
-      (((kwote or) . ?Ltests)
-       (any? check-srfi0-test Ltests))
-      (((kwote not) ?test)
-       (not (check-srfi0-test test)))
-      (else
-       (if (symbol? test)
-	   (srfi0-declared? test)
-	   (error "cond-expand"
-		  "Illegal feature-requirement"
-		  test)))))
+(define (check-srfi0-test test clause)
+   (define (inner-tester test)
+      (match-case test
+	 (((kwote and) . ?Ltests)
+	  (every? inner-tester Ltests))
+	 (((kwote or) . ?Ltests)
+	  (any? inner-tester Ltests))
+	 (((kwote not) ?test)
+	  (not (inner-tester test)))
+	 (else
+	  (if (symbol? test)
+	      (srfi0-declared? test)
+	      (scheme2js-error "cond-expand"
+			       "Illegal feature-requirement"
+			       test
+			       (if (pair? test)
+				   test
+				   clause))))))
+   (inner-tester test))
 
 (define (match-clauses clauses complete-form)
    (cond
       ((null? clauses)
-       (error "cond-expand"
-	      "no matching clause"
-	      complete-form))
+       (scheme2js-error "cond-expand"
+			"no matching clause"
+			complete-form
+			complete-form))
       ((not (pair? clauses))
-       (error "cond-expand"
-	      "Illegal cond-expand form"
-	      complete-form))
+       (scheme2js-error "cond-expand"
+			"Illegal cond-expand form"
+			complete-form
+			complete-form))
       (else
        (match-case (car clauses)
 	  ((else ?exp0 . ?Lexps)
 	   (when (not (null? (cdr clauses)))
-	      (error "cond-expand"
-		     "Illegal cond-expand form"
-		     complete-form))
+	      (scheme2js-error "cond-expand"
+			       "Illegal cond-expand form"
+			       complete-form
+			       complete-form))
 	   (cdr (car clauses)))
 	  ((?test ?exp0 . ?Lexps)
-	   (if (check-srfi0-test test)
+	   (if (check-srfi0-test test (car clauses))
 	       (cdr (car clauses))
 	       (match-clauses (cdr clauses) complete-form)))
 	  (else
-	   (error "cond-expand"
-		  "Illegal cond-expand clause"
-		  (car clauses)))))))
+	   (scheme2js-error "cond-expand"
+			    "Illegal cond-expand clause"
+			    (car clauses)
+			    (if (pair? (car clauses))
+				(car clauses)
+				complete-form)))))))
 
 (define (srfi0-expand expr)
    (match-case expr
       ((cond-expand ?clause . ?Lclauses)
        (match-clauses (cdr expr) expr))
       (else
-       (error "srfi0-expand"
-	      "srfi0-expand called on invalid cond-expand form"
-	      expr))))
+       (scheme2js-error "srfi0-expand"
+			"srfi0-expand called on invalid cond-expand form"
+			expr
+			expr))))
 
 (install-expander!
  'cond-expand
@@ -75,6 +87,7 @@
        ((?- ?clause . ?Lclauses)
 	(e `(begin ,@(match-clauses (cdr x) x)) e))
        (else
-	(error "cond-expand"
-	       "Illegal cond-expand form"
-	       x)))))
+	(scheme2js-error "cond-expand"
+			 "Illegal cond-expand form"
+			 x
+			 x)))))

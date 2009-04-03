@@ -239,7 +239,9 @@
 	  this)
 	 (else
 	  (let ((old-init init))
-	     (set! init (instantiate::Const (value #unspecified)))
+	     (set! init (instantiate::Const
+			   (location (Node-location this))
+			   (value #unspecified)))
 	     (instantiate::Begin
 		(exprs (list old-init this))))))))
 

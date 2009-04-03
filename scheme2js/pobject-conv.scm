@@ -1,5 +1,6 @@
 (module pobject-conv
    (import nodes
+	   error
 	   export-desc
 	   config
 	   verbose)
@@ -27,9 +28,10 @@
 	 ((null? l)
 	  (reverse! rev-res))
 	 ((not (pair? l))
-	  (error "Object-conv"
-		 "invalid expression-list"
-		 l))
+	  (scheme2js-error "Object-conv"
+			   "invalid expression-list"
+			   l
+			   l))
 	 (else
 	  (let ((loc (location l)))
 	     (loop (cdr l)
@@ -84,9 +86,10 @@
 
       (unless (and (list? formals)
 		   (every? symbol? formals))
-	 (error "Object-conv"
-		"Invalid arguments-clause"
-		arguments))
+	 (scheme2js-error "Object-conv"
+			  "Invalid arguments-clause"
+			  arguments
+			  arguments))
 
       (let ((formal-decls
 	     (location-map (lambda (formal loc)
@@ -106,14 +109,15 @@
 		(null? (cdr binding))
 		(not (symbol? (car binding)))
 		(not (null? (cddr binding))))
-	 (error "pobject-conversion"
-		"Bad Let-form binding"
-		binding))
+	 (scheme2js-error "pobject-conversion"
+			  "Bad Let-form binding"
+			  binding
+			  binding))
       (let ((var (car binding))
 	    (val (cadr binding)))
 	 (instantiate::Set!
 	    (lvalue (attach-location (instantiate::Ref (id var))
-				   (location binding)))
+				     (location binding)))
 	    (val (scheme->pobject val (location (cdr binding)))))))
    
    (let ((pobject-bindings (map! binding->pobject bindings)))
@@ -136,9 +140,10 @@
 		    (default-clause? #t))
 		 (begin
 		    (unless (list? consts)
-		       (error "Object-conv"
-			      "bad constants in case-clause"
-			      consts))
+		       (scheme2js-error "Object-conv"
+					"bad constants in case-clause"
+					consts
+					consts))
 		    (instantiate::Clause
 		       (consts (map (lambda (const)
 				       (instantiate::Const (value const)))
@@ -146,18 +151,20 @@
 		       (expr begin-expr)
 		       (default-clause? #f))))))
 	 (else
-	  (error "Object-conv"
-		 "bad Case-clause"
-		 clause))))
+	  (scheme2js-error "Object-conv"
+			   "bad Case-clause"
+			   clause
+			   clause))))
    
    (define (clauses->pobjects clauses rev-result)
       (cond
 	 ((null? clauses) ;; should never happen
 	  (reverse! rev-result))
 	 ((not (pair? clauses)) ;; dotted form (x . y)
-	  (error "Object-conv"
-		 "bad case-form"
-		 clauses))
+	  (scheme2js-error "Object-conv"
+			   "bad case-form"
+			   clauses
+			   clauses))
 	 ((null? (cdr clauses))
 	  (let ((rev-all-clauses (cons (clause->pobject (car clauses) #t)
 				       rev-result)))
@@ -190,7 +197,7 @@
 	      (test (scheme->pobject test (location (cdr exp))))
 	      (then (scheme->pobject then (location (cddr exp))))
 	      (else (scheme->pobject else (location (cdddr exp))))))
-	  ((if . ?L) (error #f "bad if-form: " exp))
+	  ((if . ?L) (scheme2js-error #f "bad if-form" exp exp))
 	  ((case ?key . ?clauses)
 	   (case->pobject key clauses))
 	  ((set! (and ?var (? symbol?)) ?expr)
@@ -206,7 +213,7 @@
 					     (id id))
 					  (location (cdr exp))))
 		 (val (scheme->pobject expr (location (cddr exp)))))))
-	  ((set! . ?L) (error #f "bad set!-form: " exp))
+	  ((set! . ?L) (scheme2js-error #f "bad set!-form" exp exp))
 	  ((let ?bindings . ?body) (let-form->pobject bindings body 'let))
 	  ((letrec ?bindings . ?body) (let-form->pobject bindings body 'letrec))
 	  ((begin . ?body) (instantiate::Begin (exprs (scheme->pobject-map body))))
@@ -228,7 +235,7 @@
 		    (eq? operator 'return!))
 	       (if (or (null? operands)
 		       (not (null? (cdr operands))))
-		   (error #f "bad return! form: " exp)
+		   (scheme2js-error #f "bad return! form: " exp exp)
 		   (instantiate::Return
 		      (val (scheme->pobject (car operands)
 					    (location operands)))))
@@ -242,7 +249,7 @@
        (instantiate::Ref
 	  (id exp)))
       ((vector? exp)
-       (error #f "vectors must be quoted" exp))
+       (scheme2js-error #f "vectors must be quoted" exp exp))
       (else
        (instantiate::Const (value exp)))))
 

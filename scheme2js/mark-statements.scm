@@ -33,7 +33,7 @@
 
 (define-nmethod (Node.mark)
    (error 'stmt-mark
-	  "Forgot node type"
+	  "Internal Error: forgot node type"
 	  this))
 
 (define-nmethod (Const.mark)

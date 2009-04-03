@@ -37,7 +37,9 @@
       (default-walk! this)
       (shrink! label)
       (let* ((break-label (make-Label (gensym 'while-break)))
+	     (location (Node-location this))
 	     (while (instantiate::While
+		       (location location)
 		       (scope-vars scope-vars)
 		       (init (cond
 				((null? inits)
@@ -47,8 +49,11 @@
 				(else
 				 (instantiate::Begin
 				    (exprs inits)))))
-		       (test (instantiate::Const (value #t)))
+		       (test (instantiate::Const
+				(location location)
+				(value #t)))
 		       (body (instantiate::Break
+				(location location)
 				(val body)
 				(label break-label)))
 		       (label label)))
@@ -63,7 +68,9 @@
 	 (default-walk! this)
 	 (instantiate::Begin
 	    (exprs (list (loop-updates-free-order vars updates)
-			 (instantiate::Continue (label label))))))))
+			 (instantiate::Continue
+			    (location (Node-location this))
+			    (label label))))))))
    
 ;; try to find loops, that can be transformed into optimized whiles.
 ;; In particular we want the test of the while to have a meaning (and not just
@@ -112,7 +119,7 @@
 	     (instantiate::Begin
 		(exprs (list this iff-then))))
 	    (else
-	     (error "While-patterns!" "should never happen" #f))))
+	     (error "While-patterns!" "Internal Error: should never happen" #f))))
 
       (if (and (or (not (Env-call/cc? env)) ;; call/cc (and not just suspend)
 		   (not call/cc?)) ;; this could be set by suspend/resume too.

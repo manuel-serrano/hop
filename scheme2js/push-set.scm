@@ -17,7 +17,9 @@
    (cond
       ((not to) node)
       ((Return? to)
-       (instantiate::Return (val node)))
+       (instantiate::Return
+	  (location (Node-location to))
+	  (val node)))
       ((Break? to)
        (with-access::Break to (label)
 	  (with-access::Push-Label label (var/return)
@@ -35,7 +37,7 @@
 ;; if var/return is not #f push it (and finally assign a value to it)
 (define-nmethod (Node.push! var/return)
    (error 'push-set!s/return
-	  "forgot node type"
+	  "Internal Error: forgot node type"
 	  this))
 
 (define-nmethod (Const.push! var/return)

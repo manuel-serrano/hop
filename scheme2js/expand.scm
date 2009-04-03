@@ -1,5 +1,6 @@
 (module expand
    (import verbose
+	   error
 	   tools)
    (export (my-expand x
 		      additional-macros) ;; list of lists/ht of macros
@@ -107,9 +108,10 @@
 		       name
 		       (lazy-macro macro ht)))
       (else
-       (error "add-macro-to-ht"
-	      "bad macro"
-	      macro))))
+       (scheme2js-error "add-macro-to-ht"
+			"bad macro"
+			macro
+			macro))))
    
 (define (prepare-additional-macros macros)
    ;; we want to have a list of hashtables.
@@ -148,9 +150,10 @@
 		ht
 		res))
 	 (else
-	  (error "macro"
-		 "bad additional macros form"
-		 (car ms))))))
+	  (scheme2js-error "macro"
+			   "bad additional macros form"
+			   (car ms)
+			   ms)))))
 
 (define (my-expand x additional-macros)
    (verbose "expanding")

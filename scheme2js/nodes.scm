@@ -158,29 +158,38 @@
     (final-class Call/cc-Resume::Node
        indices::pair-nil)
 
-    (Ref-of-new-Var::Ref id::symbol)
-    (var-reference v::Var)
-    (var-assig v::Var val::Node)
+    (Ref-of-new-Var::Ref id::symbol #!key (location #f))
+    (var-reference v::Var #!key (location #f))
+    (var-assig v::Var val::Node #!key (location #f))
 
     (default-label::Label)
     ))
 
-(define (var-reference v::Var)
+(define (var-reference v::Var #!key (location #f))
    (instantiate::Ref
+      (location (if (Node? location)
+		    (Node-location location)
+		    location))
       (id (Var-id v))
       (var v)))
 
-(define (var-assig v::Var val::Node)
-   (let ((var-ref (var-reference v)))
+(define (var-assig v::Var val::Node #!key (location #f))
+   (let ((var-ref (var-reference v :location location)))
       (instantiate::Set!
+	 (location (if (Node? location)
+		       (Node-location location)
+		       location))
 	 (lvalue var-ref)
 	 (val val))))
 
-(define (Ref-of-new-Var id)
+(define (Ref-of-new-Var id #!key (location #f))
    (let* ((var (instantiate::Var
 		  (id id)
 		  (kind 'local))))
       (instantiate::Ref
+	 (location (if (Node? location)
+		       (Node-location location)
+		       location))
 	 (id id)
 	 (var var))))
 

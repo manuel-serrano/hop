@@ -29,7 +29,7 @@
 
 (define-generic (clone this::object)
    (error "clone"
-	  "forgot something..."
+	  "Internal Error. forgot something..."
 	  this))
 
 (define-method (clone this::Node)
@@ -103,7 +103,8 @@
 
 (define-method (clone this::Call/cc-Resume)
    (error "clone"
-	  "clone on Call/cc-Resume should never happen. Change method!"
+	  "Internal Error. clone on Call/cc-Resume should never happen."
+	  ;; had the message 'Change method!'. no idea why... [flo]
 	  #f))
 
 ;; define-do-clone clones the given class, but calls 'clone' on the fields.
@@ -124,7 +125,7 @@
 
 (define-generic (do-clone this::Node)
    (error "do-clone"
-	  "forgot Node-type"
+	  "Internal Error. forgot Node-type"
 	  this))
 
 (define-do-clone Const)

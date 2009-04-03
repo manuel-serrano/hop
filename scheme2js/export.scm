@@ -1,5 +1,5 @@
 (module export-desc
-   (import gen-js)
+   (import gen-js error)
    (export
     (find-desc-in-exports sym::symbol l/ht)
     (empty-exports?::bool l/ht)
@@ -55,23 +55,31 @@
 			   (mangle-qualified-var scheme-sym module-name))
 		     (cdr export))))))
       (else
-       (error "normalize-export" "bad import/export clause: " export))))
+       (scheme2js-error "normalize-export"
+			"bad import/export clause"
+			export
+			export))))
 
-(define (normalize-js-id id)
-   (cond
-      ((symbol? id)
-       (symbol->string id))
-      ((string? id)
-       id)
-      (else 
-       (error "exported variable"
-	      "JS-clause must be either symbol or string"
-	      id))))
+(define (normalize-js-id normalized)
+   (let* ((clause (assq 'JS (cdr normalized)))
+	  (id (and clause
+		   (pair? (cdr clause))
+		   (cadr clause))))
+      (cond
+	 ((symbol? id)
+	  (symbol->string id))
+	 ((string? id)
+	  id)
+	 (else 
+	  (scheme2js-error "exported variable"
+			   "JS-clause must be either symbol or string"
+			   id
+			   clause)))))
 
 (define (create-Export-Desc::Export-Desc info module-name runtime?)
    (let* ((normalized (normalize-export info module-name))
 	  (scheme-sym (car normalized))
-	  (js-id (normalize-js-id (entry-val 'JS normalized)))
+	  (js-id (normalize-js-id normalized))
 	  (peephole (entry-val 'peephole normalized))
 	  (higher? (entry-val 'call/cc? normalized))
 	  (higher-params (entry-val 'call/cc-params normalized))

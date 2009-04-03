@@ -1,5 +1,6 @@
 (module transform-util
    (import nodes
+	   error
 	   export-desc
 	   symbol)
    (export (parameter-assig-mapping operands
@@ -29,7 +30,10 @@
 	 ;; no formals, but opnds
 	 ((and (not (null? opnds))
 	       (null? formals))
-	  (error #f "Too many arguments. " opnds))
+	  (scheme2js-error "parametr-assig-mapping"
+			   "too many arguments"
+			   '()
+			   (car opnds)))
 	 
 	 ;; the last element is a vaarg
 	 ;; and no operands left
@@ -47,6 +51,10 @@
 	  ;; create a list, and map vaarg to it.
 	  ;; then return the whole list of pairs.
 	  (let ((rvalue (instantiate::Call
+			   (location (if (and (pair? operands)
+					      (Node? (car operands)))
+					 (Node-location (car operands))
+					 #f))
 			   (operator (runtime-reference 'list))
 			   (operands opnds))))
 	     (cons (cons (car formals) rvalue)
@@ -55,7 +63,11 @@
 	 ;; no opnds, but formals
 	 ((and (null? opnds)
 	       (not (null? formals)))
-	  (error #f "Not enough arguments. " formals))
+	  (scheme2js-error #f "not enough arguments"
+			   (if (Ref (car formals))
+			       (Var-id (Ref-var (car formals)))
+			       '())
+			   (car formals)))
 
 	 ;; still (non-vaarg)-formals and operands left.
 	 (else

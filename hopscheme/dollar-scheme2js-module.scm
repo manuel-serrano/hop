@@ -15,6 +15,11 @@
 	 (let loop ((header (cddr header))
 		    (rev-dollar-clauses '()))
 	    (cond
+	       ((or (not (pair? header))
+		    (and (not (pair? (cdr header)))
+			 (not (null? (cdr header)))))
+		;; not a list or empty list.
+		'do-nothing)
 	       ((or (not header)
 		    (null? header)
 		    (null? (cdr header)))

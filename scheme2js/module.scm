@@ -1,5 +1,6 @@
 (module module-system
    (import verbose
+	   error
 	   srfi0
 	   tools
 	   expand
@@ -71,33 +72,113 @@
    (and (pair? e)
 	(eq? (car e) 'module)))
 
+;; m.header must be of form (module sym ...)
+(define (normalize-module-header! m::WIP-Unit)
+   (define (add-new-els! acc new-elements)
+      (let loop ((new-els new-elements))
+	 (cond
+	    ((null? new-els) 'done)
+	    ((epair? new-els)
+	     ;; don't forget the location
+	     (set-cdr! acc
+		       (econs (car new-els)
+			      (cdr acc)
+			      (cer new-els)))
+	     (loop (cdr new-els)))
+	    ((pair? new-els)
+	     (set-cdr! acc
+		       (cons (car new-els)
+			     (cdr acc)))
+	     (loop (cdr new-els)))
+	    (else
+	     (scheme2js-error
+	      "module"
+	      "invalid module-clause"
+	      new-els
+	      new-elements)))))
+	     
+   (with-access::WIP-Unit m (header)
+      (let loop ((h (cddr header))
+		 (rev-res '())) ;; only the assq themselves are reversed
+	 (cond
+	    ((null? h)
+	     (for-each (lambda (clause)
+			  (when (pair? clause)
+			     (set-cdr! clause (reverse! (cdr clause)))))
+		       rev-res)
+	     (set! header (cons* (car header) (cadr header) rev-res)))
+	    ((not (pair? h))
+	     (scheme2js-error "module"
+			      "invalid module-header"
+			      h
+			      header))
+	    ((or (not (pair? (car h)))
+		 (not (symbol? (car (car h)))))
+	     (scheme2js-error "module"
+			      "invalide module-clause"
+			      (car h)
+			      h))
+	    (else
+	     (let* ((clause (car h))
+		    (acc (assq (car clause) rev-res)))
+		(cond
+		   (acc ;; already have an entry for this kind.
+		    (add-new-els! acc (cdr clause))
+		    (loop (cdr h) rev-res))
+		   ((epair? clause)
+		    (let ((acc (econs (car clause)
+				      '()
+				      (cer clause))))
+		       (add-new-els! acc (cdr clause))
+		       (loop (cdr h)
+			     (cons acc rev-res))))
+		   (else
+		    (let ((acc (list (car clause))))
+		       (add-new-els! acc (cdr clause))
+		       (loop (cdr h)
+			     (cons acc rev-res)))))))))))
+
 ;; verifies that (user-supplied) module-clause is well formed.
 (define (verify-module-clause clause)
    (and (list? clause)
 	(pair? clause)
 	(eq? (car clause) 'module)
 	(pair? (cdr clause))
-	(symbol? (cadr clause))
-	;; due to Hop we can't test if all terms are pairs.
-; 		(every (lambda (sub-term)
-; 			  (and (pair? sub-term)
-; 			       (list? sub-term)))
-; 		       (cddr clause))
-		))
+	(symbol? (cadr clause))))
    
 (define (check-module-clause clause)
    (unless (verify-module-clause clause)
-      (error "scheme2js-module"
-	     "bad module-clause"
-	     clause)))
+      (scheme2js-error "scheme2js-module"
+		       "bad module-clause"
+		       clause
+		       clause)))
 
-(define (check-module-name module-name file-name)
+(define (check-module-name module-name file-name header)
    (when (or (eq? module-name '*)
 	     (eq? module-name '_))
-      (error "module"
-	     "Invalid module name"
-	     module-name)))
+      (scheme2js-error "module"
+		       "Invalid module name"
+		       module-name
+		       header)))
 
+(define (make-ecopy in-l)
+   (let loop ((l in-l)
+	      (rev-res '()))
+      (cond
+	 ((null? l) (reverse! rev-res))
+	 ((epair? l) (loop (cdr l)
+			   (econs (car l)
+				  rev-res
+				  (cer l))))
+	 ((pair? l) (loop (cdr l)
+			  (cons (car l) rev-res)))
+	 (else
+	  (scheme2js-error
+	   "module"
+	   "bad list"
+	   l
+	   in-l)))))
+   
 (define (cond-expand-headers! m::WIP-Unit)
    (with-access::WIP-Unit m (header)
       (when (any? (lambda (h)
@@ -106,7 +187,7 @@
 			(else #f)))
 		  header)
 	 ;; make a copy so we can physically modify the list.
-	 (let* ((copy (map (lambda (x) x) header)))
+	 (let ((copy (make-ecopy header)))
 	    (let loop ((clauses copy)
 		       ;; a module always starts with (module xyz ...)
 		       ;; therefore we can't have a cond-expand as first el.
@@ -115,9 +196,10 @@
 	       ((null? clauses)
 		(set! header copy))
 	       ((not (pair? clauses))
-		(error "module"
-		       "invalid module-clause"
-		       header))
+		(scheme2js-error "module"
+				 "invalid module-clause"
+				 header
+				 header))
 	       (else
 		(match-case (car clauses)
 		   ((cond-expand ?clause . ?Lclauses)
@@ -132,9 +214,12 @@
 			      (set-cdr! new-last-list-el (cdr clauses))
 			      (loop (cdr clauses) new-last-list-el)))
 			  (else
-			   (error "module"
-				  "invalid cond-expand module-clause"
-				  (car clauses))))))
+			   (scheme2js-error "module"
+					    "invalid cond-expand module-clause"
+					    (car clauses)
+					    (if (pair? new-clauses)
+						new-clauses
+						(car clauses)))))))
 		   (else
 		    (loop (cdr clauses)
 			  clauses))))))))))
@@ -154,8 +239,8 @@
    (let ((in-port (if (string=? file "-")
 		      (current-input-port)
 		      (open-input-file file))))
-      (if (not in-port)
-	  (error "read-file" "couldn't open: " file))
+      (when (not in-port)
+	 (error "read-file" "couldn't open: " file))
       (let* ((sexp (reader in-port #t))
 	     (header-sexp? (module-clause? sexp))
 	     (header (and header-sexp? sexp))
@@ -180,7 +265,7 @@
 	 (let ((module-name (WIP-Unit-name m)))
 	    (unless (or (config 'infotron)
 			(not header-sexp?))
-	       (check-module-name module-name file)))
+	       (check-module-name module-name file header)))
 
 	 (shrink! m)
 	 m)))
@@ -201,13 +286,12 @@
       (shrink! m)
       m))
 
-;; really inefficient, but the module-headers should not be too big.
-(define (extract-entries header type)
-   (append-map cdr
-	       (filter (lambda (entry)
-			  (and (pair? entry)
-			       (eq? type (car entry))))
-		       header)))
+;; header must be #f or of form (module sym ...)
+(define (module-entries header type)
+   (let ((tmp (assq type (cddr header))))
+      (if tmp
+	  (cdr tmp)
+	  '())))
 
 ;; precondition: the WIP-Unit's header is either #f or well formed.
 (define (prepare-module! m::WIP-Unit override-headers::pair-nil
@@ -221,12 +305,15 @@
       (when module-preprocessor
 	 (module-preprocessor m))
       (merge-headers! m override-headers)
-      (cond-expand-headers! m)
       (set-name! m)
-      (read-includes! m include-paths reader)
-      (read-imports! m module-resolver reader bigloo-modules?) ;; macros too
-      (normalize-JS-imports! m)
-      (normalize-exports! m bigloo-modules?)
+      (with-access::WIP-Unit m (header)
+	 (when header
+	    (cond-expand-headers! m)
+	    (normalize-module-header! m)
+	    (read-includes! m include-paths reader)
+	    (read-imports! m module-resolver reader bigloo-modules?) ;; macros too
+	    (normalize-JS-imports! m)
+	    (normalize-exports! m bigloo-modules?)))
       (when (config 'infotron)
 	 (module->infotron! m))
       (when module-postprocessor
@@ -236,9 +323,10 @@
    (define valid-kinds '(module-replace module-provide merge-first merge-last))
 
    (unless (list? o-headers)
-      (error "scheme2js-module"
-	     "Override headers must be a list"
-	     o-headers))
+      (scheme2js-error "scheme2js-module"
+		       "Override headers must be a list"
+		       o-headers
+		       o-headers))
 
    (let loop ((o-headers o-headers)
 	      (already-a-replace? #f)
@@ -249,35 +337,49 @@
 	     (warning "replace-header is always shadowing provide-header"))
 	  (let ((override (car o-headers)))
 	     (cond
+		((not (list? override))
+		 (scheme2js-error
+		  "scheme2js-module"
+		  "invalid override-header"
+		  override
+		  o-headers))
 		((not (and (symbol? (car override))
 			   (memq (car override) valid-kinds)))
-		 (error "scheme2js-module"
-			(string-append "car of override-header must be one of "
-				       "module-replace, module-provide, "
-				       "merge-first, merge-last")
-			override))
+		 (scheme2js-error
+		  "scheme2js-module"
+		  (string-append "car of override-header must be one of "
+				 "module-replace, module-provide, "
+				 "merge-first, merge-last")
+		  override
+		  override))
 		((and (or (eq? (car override) 'module-replace)
 			  (eq? (car override) 'module-provide))
-		      (not (match-case override
-			      ((module (? (lambda (n)
-					     (or (eq? n #f)
-						 (symbol? n))))
-				  (? list?))
-			       #t)
-			      (else #f))))
-		 (error "scheme2js-module"
-			"invalid override-header"
-			override))
+		      (or (null? (cdr override))
+			  (not (match-case (cadr override)
+				  ((module (? (lambda (n)
+						 (or (eq? n #f)
+						     (symbol? n))))
+				      (? list?))
+				   #t)
+				  (else #f)))))
+		 (scheme2js-error "scheme2js-module"
+				  "invalid override-header"
+				  override
+				  override))
 		((and (eq? (car override) 'module-replace)
 		      already-a-replace?)
-		 (error "scheme2js-module"
-			"only one replace override header allowed"
-			override))
+		 (scheme2js-error
+		  "scheme2js-module"
+		  "only one replace override header allowed"
+		  override
+		  override))
 		((and (eq? (car override) 'module-provide)
 		      found-provide?)
-		 (error "scheme2js-module"
-			"only one provide override header allowed"
-			override))
+		 (scheme2js-error
+		  "scheme2js-module"
+		  "only one provide override header allowed"
+		  override
+		  override))
 		((eq? (car override) 'module-replace)
 		 (loop (cdr o-headers) #t found-provide?))
 		((eq? (car override) 'module-provide)
@@ -299,9 +401,6 @@
 	  
    (with-access::WIP-Unit m (header)
       (cond
-	 ((and (null? override-headers)
-	       (not header))
-	  (set! header '()))
 	 ((null? override-headers)
 	  'do-nothing)
 	 (else
@@ -333,7 +432,7 @@
 (define (set-name! m::WIP-Unit)
    (with-access::WIP-Unit m (header name declared-module?)
       (cond
-	 ((null? header)
+	 ((not header)
 	  (set! name (gensym 'module)))
 	 ((eq? (cadr header) #f) ;; can only be a override header
 	  (set! declared-module? #f)
@@ -346,17 +445,41 @@
 	 (else ;; the typical case. just take the name out of the header.
 	  (set! name (cadr header))))))
 
+(define (emap f L)
+   (let loop ((L L)
+	      (rev-res '()))
+      (cond
+	 ((null? L)
+	  (reverse! rev-res))
+	 ((epair? L)
+	  (loop (cdr L)
+		(cons (f (car L) (cer L))
+		      rev-res)))
+	 ((pair? L)
+	  (loop (cdr L)
+		(cons (f (car L) #f)
+		      rev-res)))
+	 (else
+	  (scheme2js-error
+	   "module"
+	   "bad module clause"
+	   L
+	   L)))))
+
 (define (read-includes! m::WIP-Unit include-paths reader)
-   (define (read-file f)
+   (define (read-file f loc)
       (unless (string? f)
-	 (error "scheme2js-module"
-		"include-parameter must be a string"
-		f))
+	 (scheme2js-error
+	  "scheme2js-module"
+	  "include-parameter must be a string"
+	  f
+	  loc))
       (let ((file (find-file/path f include-paths)))
 	 (unless file
-	    (error "scheme2js module"
-		   "can't find include-file"
-		   f))
+	    (scheme2js-error "scheme2js module"
+			     "can't find include-file"
+			     f
+			     loc))
 	 (with-input-from-file file
 	    (lambda ()
 	       (let loop ((rev-source '()))
@@ -366,10 +489,11 @@
 			 (loop (cons sexp rev-source)))))))))
       
    (with-access::WIP-Unit m (header top-level)
-      (let* ((include-files (extract-entries header 'include)))
-	 (set! top-level
-	       (append! (append-map! read-file include-files)
-			top-level)))))
+      (let* ((include-files (module-entries header 'include))
+	     (read-includes (emap read-file include-files)))
+	 (unless (null? include-files)
+	    (set! top-level
+		  (apply append! (append read-includes (list top-level))))))))
 
 ;; returns #f if the file is not the correct one.
 (define (read-imported-module-file module-name file reader
@@ -400,6 +524,7 @@
 				(exported-macros '()))))
 		      (widen!::WIP-Unit im (header module-clause))
 		      (cond-expand-headers! im)
+		      (normalize-module-header! im)
 		      ;; normalize-exports might need the 'ip' in
 		      ;; case it needs to search for macros.
 		      (normalize-exports! im bigloo-modules?
@@ -431,7 +556,7 @@
 
 (define (read-imports! m::WIP-Unit module-resolver reader bigloo-modules?)
    (define (get-import-list header)
-      (let ((import-list (extract-entries header 'import)))
+      (let ((import-list (module-entries header 'import)))
 	 (unless (every (lambda (im)
 			   (or (symbol? im)
 			       (Compilation-Unit? im)))
@@ -494,7 +619,7 @@
 
 (define (normalize-JS-imports! m)
    (with-access::WIP-Unit m (header imports)
-      (let* ((direct-JS-imports (extract-entries header 'JS))
+      (let* ((direct-JS-imports (module-entries header 'JS))
 	     (descs (map (lambda (js)
 			    (when (not (symbol? js))
 			       (error "scheme2js module"
@@ -615,8 +740,8 @@
 		    (loop new-macros rev-res)))))))
 			  
    (with-access::WIP-Unit m (header name exports exported-macros top-level)
-      (let ((new-exports (extract-entries header 'export))
-	    (pragmas (extract-entries header 'scheme2js-pragma)))
+      (let ((new-exports (module-entries header 'export))
+	    (pragmas (module-entries header 'scheme2js-pragma)))
 	 (let loop ((entries new-exports)
 		    (new-macros '()))
 	    (if (null? entries)
@@ -675,8 +800,8 @@
       (set! exports (append exports (map (lambda (ex)
 					    (check-scheme2js-export-clause ex)
 					    (create-Export-Desc ex name #f))
-					 (extract-entries header 'export))))
-      (let ((exported-ms (extract-entries header 'export-macros)))
+					 (module-entries header 'export))))
+      (let ((exported-ms (module-entries header 'export-macros)))
 	 (for-each check-scheme2js-export-clause exported-ms)
 	 (set! exported-macros exported-ms)
 	 ;; HACK: in scheme2js-modules the exported modules are known to the

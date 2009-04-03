@@ -71,6 +71,14 @@
 		       (cons (car chars) rev-res))))))))
 
 (define (extract-scheme-names var meta)
+   (define (my-error msg)
+      (let ((loc (if (epair? meta) (cer meta) #f)))
+	 (match-case loc
+	    ((at ?fname ?loc)
+	     (error/location "exporter" msg meta fname loc))
+	    (else
+	     (error "exporter" msg meta)))))
+
    (let* ((scheme-funs-entry (assq 'export meta)))
       (cond
 	 ((not scheme-funs-entry)
@@ -78,14 +86,12 @@
 		   var)
 	  '())
 	 ((null? (cdr scheme-funs-entry))
-	  (error "exporter" "(export) -clause without value" meta))
+	  (my-error "(export) -clause without value"))
 	 ((and (eq? (cadr scheme-funs-entry) #t)
 	       (not var))
 	  (let ((var-name-p (assq 'JS meta)))
 	     (unless var-name-p
-		(error "exporter"
-		       "meta without name and without JS"
-		       meta))
+		(my-error "meta without name and without JS"))
 	     ;; TODO: more error-handling.
 	     (list (unmarshall (cadr var-name-p)))))
 	 ((eq? (cadr scheme-funs-entry) #t)
