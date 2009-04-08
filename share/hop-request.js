@@ -495,6 +495,11 @@ function with_hop( svc, success, failure, sync, anim ) {
 		 (error 'with-hop "Illegal :user argument" rest)
 		 (set! user (cadr rest)))
 	     (loop (cddr rest)))
+	    ((eq? (car rest) :sync)
+	     (if (null? (cdr rest))
+		 (error 'with-hop "Illegal :sync argument" rest)
+		 (set! sync (cadr rest)))
+	     (loop (cddr rest)))
 	    ((eq? (car rest) :password)
 	     (if (null? (cdr rest))
 		 (error 'with-hop "Illegal :password argument" rest)
@@ -507,8 +512,7 @@ function with_hop( svc, success, failure, sync, anim ) {
 	     (set! fail (car rest))
 	     (loop (cdr rest)))
 	    (else
-	     (set! sync (car rest))
-	     (loop (cdr rest)))))))
+             (error 'with-hop "Illegal argument" rest))))))
 */
 
 /*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Mon Mar 23 08:53:20 2009 (serrano)                */
+;*    Last change :  Wed Apr  8 16:28:15 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -155,7 +155,7 @@
 (define (service-funcall-url svc . vals)
    (if (not (hop-service? svc))
        (bigloo-type-error 'service-funcall-url 'service svc)
-       (with-access::hop-service svc (id path)
+       (with-access::hop-service svc (path)
 	  (hop-apply-url path vals))))
 
 ;*---------------------------------------------------------------------*/

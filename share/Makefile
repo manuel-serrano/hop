@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Apr  1 16:50:03 2009 (serrano)                */
+#*    Last change :  Fri Apr  3 15:57:56 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -49,6 +49,7 @@ EXTRA		= hop-paned.css hop-sorttable.js hop-tree.js \
                   hop-audio.js hop-audio.hss \
                   hop-video.js hop-video.hss \
                   hop-login.js hop-login.hss \
+                  hop-box.scm hop-box.hss \
                   hop-canvas.scm
 
 ICONS_AUDIO	= mute.png pause.png playlist.png prefs.png stop.png \

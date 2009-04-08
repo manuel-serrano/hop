@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Apr  1 18:17:14 2009 (serrano)                */
+;*    Last change :  Fri Apr  3 07:42:09 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -167,27 +167,29 @@
 		     (if (file-exists? hop)
 			 (call-with-input-file hop read)
 			 (directory->list path)))))
+
+   (define (read-file file)
+      (call-with-input-file file
+	 (lambda (ip)
+	    (display (read-string ip)))))
    
-   (define (hz->client path suffix)
+   (define (hz->client path suffix file-to-string)
       (let ((file (make-file-name path (string-append ".hop." suffix))))
 	 (if (file-exists? file)
 	     file
 	     (let ((files (hz-get-files path suffix)))
 		(when (pair? files)
-		   (call-with-output-file file
+		   (with-output-to-file file
 		      (lambda (op)
-			 (for-each (lambda (hss)
-				      (call-with-input-file hss
-					 (lambda (ip)
-					    (display (read-string ip) op))))
-				   files)))
+			 (for-each file-to-string files)))
 		   file)))))
    
    (define (hz f inl)
+      ;; hss file be all merged into a single file, jscript files
+      ;; have to be compiled separatly.
       (let* ((path (hz-download-to-cache f))
-	     (hss (hz->client path "hss"))
-	     (jscript (hz->client path "hop")))
-	 (tprint "hss=" hss " jscript=" jscript)
+	     (hss (hz->client path "hss" read-file))
+	     (jscript (hz->client path "hop" get-clientc-compiled-file)))
 	 (cond
 	    ((and hss jscript) (list (css hss inl) (script jscript inl)))
 	    (hss (list (css hss inl)))

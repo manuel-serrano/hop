@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:46:47 2006                          */
-;*    Last change :  Tue Mar 24 08:21:16 2009 (serrano)                */
+;*    Last change :  Fri Apr  3 15:35:27 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop expanders                                                    */
@@ -17,6 +17,7 @@
    (include "service-expd.sch"
 	    "prefs-expd.sch"
 	    "param-expd.sch"
+	    "hss-expd.sch"
 	    "xml-expd.sch"
 	    "expanders.sch")
 

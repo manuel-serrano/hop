@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Mar 26 05:22:45 2009 (serrano)                */
+#*    Last change :  Fri Apr  3 15:36:05 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -611,6 +611,8 @@ echo "(register-eval-srfi! 'hop-eval)" >> $init
 cat runtime/xml-expd.sch >> $init
 echo "" >> $init
 cat runtime/param-expd.sch >> $init
+echo "" >> $init
+cat runtime/hss-expd.sch >> $init
 echo "" >> $init
 cat runtime/prefs-expd.sch >> $init
 echo "" >> $init
