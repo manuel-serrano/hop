@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Apr  3 07:42:09 2009 (serrano)                */
+;*    Last change :  Wed Apr  8 19:20:19 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -189,12 +189,16 @@
       ;; have to be compiled separatly.
       (let* ((path (hz-download-to-cache f))
 	     (hss (hz->client path "hss" read-file))
-	     (jscript (hz->client path "hop" get-clientc-compiled-file)))
-	 (cond
-	    ((and hss jscript) (list (css hss inl) (script jscript inl)))
-	    (hss (list (css hss inl)))
-	    (jscript (list (script jscript inl)))
-	    (else '()))))
+	     (jscript1 (hz->client path "hop" get-clientc-compiled-file))
+	     (jscript2 (hz->client path "js" read-file))
+	     (res '()))
+	 (when hss
+	    (set! res (cons (css hss inl) res)))
+	 (when jscript1
+	    (set! res (cons (script jscript1 inl) res)))
+	 (when jscript2
+	    (set! res (cons (script jscript2 inl) res)))
+	 res))
    
    (define (incl f inl path)
       (let* ((res '())
