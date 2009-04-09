@@ -372,7 +372,7 @@
 			 (else
 			  (error "let expand" "Illegal form" x)))))
 
-(install-expander! 'define-struct
+#;(install-expander! 'define-struct
  (lambda (x e macros-ht)
     (match-case x
        ((?- ?name . ?fields)
@@ -430,6 +430,64 @@
 						      ',name
 						      ',(symbol-append 'f- field)
 						      val)))))
+		      field-ids
+		      field-getters
+		      field-setters))))
+       (else
+	(error "define-struct expand"
+	       "Illegal 'define-struct' form"
+	       x)))))
+
+(install-expander! 'define-struct
+ (lambda (x e macros-ht)
+    (match-case x
+       ((?- ?name . ?fields)
+	(unless (and (symbol? name)
+		     (list? fields)
+		     (every (lambda (f)
+			       (or (symbol? f)
+				   (and (pair? f)
+					(symbol? (car f))
+					(pair? (cdr f))
+					(null? (cddr f)))))
+			    fields))
+	   (error "define-struct expand"
+		  "Illegal 'define-struct' form"
+		  x))
+	(let* ((field-ids (map (lambda (f)
+				  (if (pair? f) (car f) f))
+			       fields))
+	       (field-getters (map (lambda (field)
+				      (symbol-append name '- field))
+				   field-ids))
+	       (field-setters (map (lambda (field)
+				      (symbol-append name '- field '-set!))
+				   field-ids))
+	       (defaults (map (lambda (f)
+				 (if (pair? f) (cadr f) '()))
+			      fields))
+	       (tmp (gensym)))
+	   `(begin
+	       (define ,(symbol-append 'make- name)
+		  (lambda ()
+		     (,name ,@defaults)))
+	       (define ,name
+		  (lambda ,field-ids
+		     (let ((,tmp (make-struct ',name)))
+			,@(map (lambda (setter val)
+				  `(,setter ,tmp ,val))
+			       field-setters field-ids)
+			,tmp)))
+	       (define ,(symbol-append name '?)
+		  (lambda (s) (struct-named? ',name s)))
+	       ,@(map (lambda (field getter setter)
+			 `(begin
+			     (define ,getter
+				(lambda (s)
+				   (struct-field s ',name ,(symbol->string field))))
+			     (define ,setter
+				(lambda (s val)
+				   (struct-field-set! s ',name ,(symbol->string field) val)))))
 		      field-ids
 		      field-getters
 		      field-setters))))
