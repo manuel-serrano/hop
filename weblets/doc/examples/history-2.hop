@@ -13,7 +13,7 @@
 	 (list
 	  (<DIV> "Increment the following counter as many times as you
 want and then hit the " (<TT> "back button") " of your browser or the
-buttons above.")
+buttons below.")
 	  (<BR>)
 	  (<BUTTON> :onclick ~(begin
 				 (set! val (+ 1 val))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/1.10.x/weblets/hzbuilder/generate.hop       */
+;*    .../prgm/project/hop/2.0.x/weblets/hzbuilder/generate.hop        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 24 15:46:26 2008                          */
-;*    Last change :  Wed Jan 14 08:59:54 2009 (serrano)                */
+;*    Last change :  Fri Apr 10 15:32:40 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The code generator                                               */
@@ -174,7 +174,7 @@
 	 (set! res (cons (<DIV> "File created: " (<TTFILE> mkmfname)) res))
 	 (sed (hzbuilder-makefile-skeleton) mkmfname replac))
       ;; copy the additional templates
-      (let ((custom (hzbuilder-custom-skeleton-dir)))
+      (let ((custom (hzbuilder-custom-skeletons-dir)))
 	 (when (and (string? custom) (directory? custom))
 	    (set! res (append (copy-directory custom dirname replac) res))))
       ;; add the okay button and return

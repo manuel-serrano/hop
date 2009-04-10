@@ -73,6 +73,17 @@ Within a CSS2/DOM2/EcmaScript (aka Javacript) compliant web browser
 If the test succeeds, you should be presented with several icons. Clicking
 each of them spawns a HOP weblet.
 
+However, the first time you start up, you will be logged in as the
+anonymous user which doesn't have the privileges to access most
+weblets.  To create user accounts with more privileges, you can use
+the Wizard weblet, located here:
+
+    http://localhost:8080/hop/wizard
+
+When you save the settings in that weblet, you will have created new
+user accounts, but you'll need to restart Hop to re-login with them.
+
+
 == 8. Using HOP as a Web proxy ==
 
 HOP can be used as a Web proxy. Once you have configured your browser to

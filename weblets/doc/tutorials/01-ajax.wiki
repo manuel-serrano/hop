@@ -139,12 +139,12 @@ service.)
 
   ;; populate the table
   (for-each (lambda (kind)
-	       (for-each (lambda (lang)
-			    (sqlite-exec *db* "INSERT INTO languages VALUES (~q, ~q)" lang (car kind)))
-			 (cadr kind)))
-	    '(("functional" ("Haskell" "Hop" "ML"))
-	      ("imperative" ("Ada" "C" "Pascal"))
-	      ("object" ("Smalltalk" "Java"))))
+               (for-each (lambda (lang)
+                            (sqlite-exec *db* "INSERT INTO languages VALUES (~q, ~q)" lang (car kind)))
+                         (cadr kind)))
+            '(("functional" ("Haskell" "Hop" "ML"))
+              ("imperative" ("Ada" "C" "Pascal"))
+              ("object" ("Smalltalk" "Java"))))
 
   ;; define the weblet searching the database
   (define-service (tutorial-ajax/query v)
@@ -164,7 +164,7 @@ This returns a vector that is displayed in the ++show++ ++<DIV>++ element.
   (module tutorial-ajax
      (import tutorial-ajax-database))
 
-  (define-service (tutorial-ajax)
+  (define (tutorial-ajax)
      (<HTML>
         (<HEAD>)
         (let ((show (<DIV> "")))
@@ -176,7 +176,8 @@ This returns a vector that is displayed in the ++show++ ++<DIV>++ element.
               (<DIV> "Results...")
               show))))
 
-  (with-hop (tutorial-ajax) (lambda (h) h))
+  (tutorial-ajax)
+</example>
 
 == Version 2 ==
 
@@ -190,7 +191,7 @@ The only variation with respect to the first version are located in the
 <example>
   (module tutorial-ajax-database-v2
      (library sqlite)
-     (export tutorial-ajax))
+     (export tutorial-ajax/query-v2))
 
   ;; create an in-memory database
   (define *db* (instantiate::sqlite))
@@ -200,15 +201,15 @@ The only variation with respect to the first version are located in the
 
   ;; populate the table
   (for-each (lambda (kind)
-	       (for-each (lambda (lang)
-			    (sqlite-exec *db* "INSERT INTO languages VALUES (~q, ~q)" lang (car kind)))
-			 (cadr kind)))
-	    '(("functional" ("Haskell" "Hop" "ML"))
-	      ("imperative" ("Ada" "C" "Pascal"))
-	      ("object" ("Smalltalk" "Java"))))
+               (for-each (lambda (lang)
+                            (sqlite-exec *db* "INSERT INTO languages VALUES (~q, ~q)" lang (car kind)))
+                         (cadr kind)))
+            '(("functional" ("Haskell" "Hop" "ML"))
+              ("imperative" ("Ada" "C" "Pascal"))
+              ("object" ("Smalltalk" "Java"))))
 
   ;; define the weblet searching the database
-  (define-service (tutorial-ajax v)
+  (define-service (tutorial-ajax/query-v2 v)
      (sqlite-map *db* (lambda (x) x) "SELECT name FROM languages WHERE (name LIKE '%~a%')" v))
 </example>
 
@@ -225,17 +226,17 @@ the server to the client.
   (module tutorial-ajax-v2
      (import tutorial-ajax-database-v2))
 
-  (define-service (tutorial-ajax-v2)
+  (define (tutorial-ajax-v2)
      (<HTML>
         (<HEAD>)
         (let ((show (<DIV> "")))
            (<BODY>
               (<DIV> "Type a programming language name")
               (<INPUT> :type "text"
-                       :onkeyup ~(with-hop ($tutorial-ajax this.value)
+                       :onkeyup ~(with-hop ($tutorial-ajax/query-v2 this.value)
                                     (lambda (h)
                                        (let ((table (<TABLE> :border 1
-				   	                (<TBODY>
+                                                        (<TBODY>
                                                            (map (lambda (x) (<TR> (<TD> x))) h)))))
                                           (if (dom-has-child-nodes? $show)
                                               (dom-remove-child! $show (car (dom-child-nodes $show))))
@@ -243,6 +244,7 @@ the server to the client.
               (<DIV> "Results...")
               show))))
 
-  (with-hop (tutorial-ajax-v2) (lambda (h) h))
+  (tutorial-ajax-v2)
+</example>
 
 </doc>

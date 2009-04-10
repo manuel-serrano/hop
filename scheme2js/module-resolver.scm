@@ -7,7 +7,7 @@
 (define *module-extensions* '("scm" "sch"))
 
 (define (extension-resolver include-paths)
-   (lambda (module)
+   (lambda (module abase)
       (let* ((module-str (symbol->string module))
 	     (module-filenames (map (lambda (extension)
 				       (string-append module-str

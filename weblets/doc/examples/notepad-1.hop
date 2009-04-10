@@ -8,4 +8,6 @@
 	    (<TABLE> (<TR> (map <TD> (iota 10)))))
 	 (<NPTAB>
 	    (<NPTABHEAD> "Characters")
-	    (<TABLE> (<TR> (map <TD> (iota 10 65))))))))
+	    (<TABLE> (<TR> (map (lambda (c)
+				   (<TD> (string (integer->char c))))
+				(iota 10 65))))))))

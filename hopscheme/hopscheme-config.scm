@@ -41,9 +41,6 @@
 		   (include-paths . ,(list *hop-share-directory*))
 		   ;; currently we are still using scheme2js-modules
 		   (bigloo-modules . #f)
-		   ;; module resolver
-		   (module-resolver . ,(lambda (mod)
-					  ((bigloo-module-resolver) mod '*)))
 		   )))
 	  *cached-config*)))
 

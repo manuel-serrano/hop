@@ -1,25 +1,29 @@
 ;; //Parameters// and //Preferences//
-(define-parameter load-dir
-   (dirname (the-loading-file)))
+(define-parameter share-dir
+   (hop-share-directory))
+
+(define rc-file-path
+   (make-file-name "/tmp2" "foo2.rc"))
 
 (define-parameter rc-dir
    "/tmp"
    (lambda (v)
-      (set! rc-file-path (make-file-name (rc-dir) v))
+      (set! rc-file-path (make-file-name v (dirname rc-file-path)))
       v))
 
 (define-parameter rc-file
-   "foo.rc"
+   "foo3.rc"
    (lambda (v)
-      (set! rc-file-path (make-file-name (rc-dir) v))
+      (set! rc-file-path (make-file-name (basename rc-file-path) v))
       v))
 
-(define rc-file-path
-   (make-file-name (rc-dir) (rc-file)))
-
-(define-preferences preferences
+(define-preferences test-preferences
    "Path"
-   ("Load dir" load-dir)
+   ("Load dir" share-dir)
    ("RC dir" string rc-dir)
    ("RC file" string rc-file))
 
+(<HTML>
+   (<HEAD> :include "hop-prefs")
+   (<BODY>
+      (test-preferences-edit :id "test-pref")))

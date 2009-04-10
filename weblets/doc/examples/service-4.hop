@@ -10,6 +10,7 @@
       (<BODY>
 	 s
 	 (with-hop (doc/demo/service-complex 1 0)
+	    :sync #t
 	    (lambda (obj)
 	       (<TABLE>
 		  (<TR> (<TH> "x=") (<TD> (point-x obj))
