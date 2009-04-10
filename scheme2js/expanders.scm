@@ -416,38 +416,30 @@
 					(symbol-append name '- field '-set!))
 				     field-ids))
 	       (defaults (emap1 (lambda (f)
-				   (if (pair? f) (cadr f) #unspecified))
+				   (if (pair? f) (cadr f) '()))
 				fields))
 	       (tmp (gensym)))
 	   `(begin
 	       (define ,(symbol-append 'make- name)
-		  (lambda args (let ((,tmp (make-struct ',name)))
-				  ,@(map (lambda (setter default)
-					    `(if (null? args)
-						 (,setter ,tmp ,default)
-						 (begin
-						    (,setter ,tmp (car args))
-						    (set! args (cdr args)))))
-					 field-setters
-					 defaults)
-				  ,tmp)))
-	       ;; alias for make-name
-	       (define ,name ,(symbol-append 'make- name))
+		  (lambda ()
+		     (,name ,@defaults)))
+	       (define ,name
+		  (lambda ,field-ids
+		     (let ((,tmp (make-struct ',name)))
+			,@(map (lambda (setter val)
+				  `(,setter ,tmp ,val))
+			       field-setters field-ids)
+			,tmp)))
 	       (define ,(symbol-append name '?)
 		  (lambda (s) (struct-named? ',name s)))
 	       ,@(map (lambda (field getter setter)
 			 `(begin
 			     (define ,getter
 				(lambda (s)
-				   (struct-field s
-						 ',name
-						 ',(symbol-append 'f- field))))
+				   (struct-field s ',name ,(symbol->string field))))
 			     (define ,setter
 				(lambda (s val)
-				   (struct-field-set! s
-						      ',name
-						      ',(symbol-append 'f- field)
-						      val)))))
+				   (struct-field-set! s ',name ,(symbol->string field) val)))))
 		      field-ids
 		      field-getters
 		      field-setters))))

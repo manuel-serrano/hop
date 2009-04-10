@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sun Mar 22 07:28:22 2009 (serrano)                */
+;*    Last change :  Wed Apr  8 16:26:26 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -31,7 +31,33 @@
 		(else (list args))))))
 
    (define (args->list args)
-      (pair->list (dsssl-formals->scheme-formals args error)))
+      (filter-map (lambda (f)
+		     (cond
+			((symbol? f) f)
+			((and (pair? f) (symbol? (car f))) (car f))
+			(else #f)))
+		  (pair->list args)))
+
+   (define (call args)
+      (let loop ((args args)
+		 (state 'plain))
+	 (cond
+	    ((null? args)
+	     '())
+	    ((symbol? args)
+	     (list args))
+	    ((symbol? (car args))
+	     (if (eq? state 'plain)
+		 (cons (car args) (loop (cdr args) state))
+		 (cons* (symbol->keyword (car args))
+			(car args)
+			(loop (cdr args) state))))
+	    ((eq? (car args) #!key)
+	     (loop (cdr args) 'key))
+	    ((eq? (car args) #!optional)
+	     (loop (cdr args) 'plain))
+	    ((eq? (car args) #!rest)
+	     (list (cadr args))))))
    
    (let ((proc (if (symbol? wid) (symbol-append wid '-proc) 'proc))
 	 (hdl (if (symbol? wid) (symbol-append wid '-handler) 'hdl))
@@ -40,15 +66,17 @@
 	 (id (if (symbol? id) `',id `(string->symbol ,url)))
 	 (path (gensym 'path))
 	 (fun (gensym 'fun))
-	 (vars (args->list args)))
+	 (file (gensym 'file)))
       `(let* ((,path ,url)
+	      (,file (the-loading-file))
+	      (,fun (lambda ,args
+		       (hop-apply-url ,path (list ,@(call args)))))
 	      (,proc ,(if (pair? body)
 			  `(lambda ,args ,@body)
 			  `(lambda ,args
 			      (instantiate::http-response-remote
 				 (port (hop-port))
-				 (path (,fun ,@vars))))))
-	      (file (the-loading-file))
+				 (path (hop-apply-url ,path (list ,@(call args))))))))
 	      (,svc (instantiate::hop-service
 		       (wid ,(if (symbol? wid) `',wid wid))
 		       (id ,id)
@@ -59,10 +87,8 @@
 		       (creation (date->seconds (current-date)))
 		       (timeout ,timeout)
 		       (ttl ,ttl)
-		       (resource (and (string? file) (dirname file)))
-		       (source (and (string? file) (basename file)))))
-	      (,fun (lambda ,args
-		       (service-funcall-url ,svc ,@vars))))
+		       (resource (and (string? ,file) (dirname ,file)))
+		       (source (and (string? ,file) (basename ,file))))))
 
 	  ,(when (pair? body)
 	     `(register-service! ,svc))
@@ -145,48 +171,77 @@
 ;*    hop-with-hop-expander ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (hop-with-hop-expander x e)
+   
+   (define (with-hop-local svc args success failure auth)
+      `(with-hop-local ((hop-service-proc (procedure-attr ,svc)) ,@args)
+		       ,success
+		       ,failure
+		       ,auth))
+
+   (define (with-hop-remote svc args success failure opts)
+      `(with-hop-remote (,svc ,@args) ,success ,failure ,@(reverse! args)))
+   
    (match-case x
       ((?- (?svc . ?a) . ?opts)
-       (if (any? keyword? opts)
-	   ;; a remote call
-	   (let loop ((opts opts)
-		      (args '())
-		      (success #f)
-		      (failure #f))
+       ;; a remote call
+       (let loop ((opts opts)
+		  (args '())
+		  (success #f)
+		  (failure #f)
+		  (host #f)
+		  (sync #f)
+		  (auth #f))
+	  (cond
+	     ((null? opts)
+	      (let ((nx (if (not host)
+			    ;; a local call
+			    (let ((wh (with-hop-local svc a success failure auth)))
+			       (if sync
+				   (let ((v (gensym)))
+				      `(let ((,v ,wh))
+					  (if ,sync ,v #unspecified)))
+				   `(begin ,wh #unspecified)))
+			    ;; a remote call
+			    (with-hop-remote svc a success failure args))))
+		 (e (evepairify nx x) e)))
+	     ((not (keyword? (car opts)))
 	      (cond
-		 ((null? opts)
-		  (let ((nx `(with-hop-remote (,svc ,@a)
-					      ,success ,failure
-					      ,@(reverse! args))))
-		     (e (evepairify nx x) e)))
-		 ((not (keyword? (car opts)))
-		  (cond
-		     ((not success)
-		      (loop (cdr opts) args (car opts) failure))
-		     ((not failure)
-		      (loop (cdr opts) args success (car opts)))
-		     (else
-		      (error 'with-hop
-			     (format "Illegal optional argument: ~a" (car opts))
-			     x))))
-		 ((null? (cdr opts))
-		  (error 'with-hop
-			 (format "missing value for optional argument: ~a"
-				 (car opts))
-			 x))
+		 ((not success)
+		  (loop (cdr opts) args (car opts) failure host sync auth))
+		 ((not failure)
+		  (loop (cdr opts) args success (car opts) host sync auth))
 		 (else
-		  (loop (cddr opts)
-			(cons* (cadr opts) (car opts) args)
-			success failure))))
-	   ;; a local call
-	   (let ((nx `(with-hop-local ((hop-service-proc (procedure-attr ,svc))
-				       ,@a)
-				      ,(when (pair? opts)
-					  (car opts))
-				      ,(when (and (pair? opts)
-						  (pair? (cdr opts)))
-					  (cadr opts)))))
-	      (e (evepairify nx x) e))))
+		  (error 'with-hop
+			 (format "Illegal optional argument: ~a" (car opts))
+			 x))))
+	     ((null? (cdr opts))
+	      (error 'with-hop
+		     (format "missing value for optional argument: ~a"
+			     (car opts))
+		     x))
+	     ((eq? (car opts) :host)
+	      (loop (cddr opts)
+		    (cons* (cadr opts) (car opts) args)
+		    success failure
+		    (cadr opts)
+		    sync auth))
+	     ((eq? (car opts) :sync)
+	      (loop (cddr opts)
+		    (cons* (cadr opts) (car opts) args)
+		    success failure
+		    host
+		    (cadr opts)
+		    auth))
+	     ((eq? (car opts) :authorization)
+	      (loop (cddr opts)
+		    (cons* (cadr opts) (car opts) args)
+		    success failure
+		    host sync
+		    (cadr opts)))
+	     (else
+	      (loop (cddr opts)
+		    (cons* (cadr opts) (car opts) args)
+		    success failure host sync auth)))))
       (else
        (error 'with-hop "Illegal form" x))))
    

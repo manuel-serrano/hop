@@ -2,14 +2,15 @@
 (module example
    (static (class point x y)))
  
-(define-service (doc/demo/service-complex v0 v1)
+(define-service (doc/demo/service-complex-5 v0 v1)
    (instantiate::point (x v0) (y v1)))
 
 (<HTML>
    (let ((s (<SPAN> "")))
       (<BODY>
 	 s
-	 (with-hop :host (format "http://hop:~a" (hop-port)) (doc/demo/service-complex 1 0)
+	 (with-hop :host "localhost" (doc/demo/service-complex-5 1 3)
+	    :sync #t
 	    (lambda (obj)
 	       (<TABLE>
 		  (<TR> (<TH> "x=") (<TD> (point-x obj))

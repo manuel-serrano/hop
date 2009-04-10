@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Mar 30 06:50:47 2009 (serrano)                */
+#*    Last change :  Fri Apr  3 17:41:11 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -42,7 +42,7 @@ _OBJECTS = param misc types \
            http-error http-filter \
            hop-img hop-extra hop-notepad hop-tree hop-slider \
            hop-paned hop-tabslider hop-inline hop-foldlist \
-           hop-editor hop-file hop-rss hop-sym \
+           hop-editor hop-file hop-rss hop-sym hop-box \
            hop-audio hop-video \
            hop-svg hop-mathml \
            event color weblets prefs expanders
@@ -62,6 +62,7 @@ INCLUDES = http-lib.sch \
            expanders.sch \
            xml.sch xml-expd.sch \
            param.sch param-expd.sch \
+           hss.sch hss-expd.sch \
            prefs.sch prefs-expd.sch  \
            service.sch service-expd.sch \
            enable-thread.sch disable-thread.sch

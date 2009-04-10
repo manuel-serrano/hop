@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Apr  2 05:45:52 2009 (serrano)                */
+;*    Last change :  Fri Apr 10 10:39:04 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -87,7 +87,7 @@
 	     (hop-preload-libraries))
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
-   (bigloo-load-module-set! hop-load-modified)
+   (bigloo-load-module-set! (lambda (f) (hop-load-modified f :abase #f)))
    (bigloo-module-extension-handler-set! hop-module-extension-handler)
    (bigloo-module-resolver-set! (make-hop-module-resolver (bigloo-module-resolver)))
    ;; clear the module cache unless we preserve

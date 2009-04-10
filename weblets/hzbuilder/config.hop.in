@@ -223,7 +223,7 @@
    ("Documentation skeleton" string hzbuilder-doc-skeleton)
    ("Weblet.info" string hzbuilder-webletinfo-skeleton)
    ("Home page skeleton" string hzbuilder-homepage-skeleton)
-   ("Extra skeleton directory" string hzbuilder-custom-skeletons-dir)
+   ("Extra skeletons directory" string hzbuilder-custom-skeletons-dir)
    
    "Icons"
    ("Default logo icon" string hzbuilder-logo-skeleton)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Mar 20 12:11:18 2009 (serrano)                */
+;*    Last change :  Wed Apr  8 17:44:11 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -52,8 +52,9 @@
 			     (user #f)
 			     (password #f)
 			     (authorization #f)
-			     (anim #f))
-	    (generic with-hop-local obj proc fail)
+			     (anim #f)
+			     (sync #f))
+	    (generic with-hop-local obj success fail authorization)
 	    (hop-get-file::obj ::bstring ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -220,7 +221,7 @@
 		 (success (string->obj (read p))))
 		(else
 		 (if (eq? ctype (hop-json-mime-type-symbol))
-		     (success (json->hop p))  
+		     (success (json->hop p))
 		     (success (read-string p)))))))
 	 ((201 204 304)
 	  ;; no message body
@@ -330,7 +331,8 @@
 			 (user #f)
 			 (password #f)
 			 (authorization #f)
-			 (anim #f))
+			 (anim #f)
+			 (sync #f))
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
 	     ": " path "\n")
@@ -383,9 +385,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-generic (with-hop-local obj success fail)
-   (when (procedure? success) (success obj))
-   #unspecified)
+(define-generic (with-hop-local obj success fail auth)
+   (when (procedure? success) (success obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-remote ...                        */
@@ -393,19 +394,20 @@
 ;*    This method is used for imported services. This services         */
 ;*    are called locally but they are still remote.                    */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-remote success fail)
-   (with-hop-remote (http-response-remote-path obj) success fail))
+(define-method (with-hop-local obj::http-response-remote success fail auth)
+   (let ((url (http-response-remote-path obj)))
+      (with-hop-remote url success fail :authorization auth)))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::xml ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::xml success fail)
+(define-method (with-hop-local obj::xml success fail auth)
    (when (procedure? success) (success obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-authentication ...                */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local o::http-response-authentication success fail)
+(define-method (with-hop-local o::http-response-authentication success fail aut)
    (fail (instantiate::&error
 	       (proc 'with-hop)
 	       (msg "Authentication required")
@@ -414,32 +416,32 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-string ...                        */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-string success fail)
+(define-method (with-hop-local obj::http-response-string success fail auth)
    (when (procedure? success) (success (http-response-string-body obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-js ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-js success fail)
+(define-method (with-hop-local obj::http-response-js success fail auth)
    (when (procedure? success) (success (http-response-js-value obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-hop ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-hop success fail)
+(define-method (with-hop-local obj::http-response-hop success fail auth)
    (when (procedure? success) (success (http-response-hop-xml obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-procedure ...                     */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-procedure success fail)
+(define-method (with-hop-local obj::http-response-procedure success fail auth)
    (when (procedure? success)
       (success (with-output-to-string (http-response-procedure-proc obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-file ...                          */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-file success fail)
+(define-method (with-hop-local obj::http-response-file success fail auth)
    (let* ((f (http-response-file-file obj))
 	  (pf (open-input-file f)))
       (if (not (input-port? pf))
@@ -461,7 +463,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-cgi ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-cgi success fail)
+(define-method (with-hop-local obj::http-response-cgi success fail auth)
    (fail-or-raise
     fail
     (instantiate::&error
@@ -472,7 +474,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-put ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-put success fail)
+(define-method (with-hop-local obj::http-response-put success fail auth)
    (fail-or-raise
     fail
     (instantiate::&error
@@ -481,42 +483,9 @@
        (obj obj))))
 
 ;*---------------------------------------------------------------------*/
-;*    with-hop-local ::http-response-remote ...                        */
-;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-remote success fail)
-   (with-access::http-response-remote obj (host port path userinfo)
-      (let ((req (instantiate::http-server-request
-		    (user (anonymous-user))
-		    (userinfo userinfo)
-		    (host host)
-		    (port port)
-		    (path path))))
-	 (http-send-request req
-			    (lambda (p status header clength tenc)
-			       (case status
-				  ((200)
-				   (when (procedure? success)
-				      (success (read-string p))))
-				  ((401 407)
-				   (fail-or-raise
-				    fail
-				    (instantiate::&error
-				       (proc 'with-hop)
-				       (msg "Access denied")
-				       (obj req))))
-				  (else
-				   (fail-or-raise
-				    fail
-				    (instantiate::&error
-				       (proc 'with-hop)
-				       (msg (format "Illegal status ~a"
-						    status))
-				       (obj (read-string )))))))))))
-
-;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-filter ...                        */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-filter success fail)
+(define-method (with-hop-local obj::http-response-filter success fail auth)
    (fail-or-raise
     fail 
     (instantiate::&error
@@ -527,7 +496,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-persistent ...                    */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local o::http-response-persistent success fail)
+(define-method (with-hop-local o::http-response-persistent success fail auth)
    (when (procedure? success) (success o)))
 
 ;*---------------------------------------------------------------------*/

@@ -30,5 +30,9 @@
 				 `(                ;; headers-overrides
 				   (merge-first (import ,(hop-runtime-module)))
 				   ,@env)
-				 (get-cached-config)
+				 (extend-config (get-cached-config)
+						'module-resolver
+						(lambda (mod)
+						   ((bigloo-module-resolver)
+						    mod (module-abase))))
 				 :reader *hop-reader*))))

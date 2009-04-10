@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Mar 27 19:46:32 2009 (serrano)                */
+;*    Last change :  Fri Apr 10 15:42:06 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -42,18 +42,21 @@
 		      (env (interaction-environment))
 		      (mode 'load)
 		      (charset (hop-locale))
-		      (hook #f))
+		      (hook #f)
+		      (abase #t))
 
 	    (hop-load-once ::bstring
 			   #!key
 			   (env (interaction-environment))
 			   (charset (hop-locale))
-			   (hook #f))
+			   (hook #f)
+			   (abase #t))
 	    (hop-load-modified ::bstring
 			       #!key
 			       (env (interaction-environment))
 			       (charset (hop-locale))
-			       (hook #f))
+			       (hook #f)
+			       (abase #t))
 	    (hop-load-once-unmark! ::bstring)
 	    
 	    (read-error msg obj port)
@@ -828,9 +831,13 @@
 		  (env (interaction-environment))
 		  (mode 'load)
 		  (charset (hop-locale))
-		  (hook #f))
+		  (hook #f)
+		  (abase #t))
    (let ((path (find-file/path file-name (hop-path)))
-	 (loc `(at ,file-name 0)))
+	 (apath (cond
+		   ((string? abase) abase)
+		   (abase (dirname file-name))
+		   (else "."))))
       (if (not (string? path))
 	  (raise (instantiate::&io-file-not-found-error
 		    (proc 'hop-load)
@@ -842,7 +849,8 @@
 		       (f (the-loading-file)))
 		    (unwind-protect
 		       (begin
-			  (hop-load-afile (dirname path))
+			  (hop-load-afile apath)
+			  (when abase (module-abase-set! apath))
 			  (loading-file-set! path)
 			  (case mode
 			     ((load)
@@ -850,7 +858,7 @@
 				 (let ((sexp (hop-read port charset)))
 				    (if (eof-object? sexp)
 					(if hook (hook last) last)
-					(let ((val (eval! sexp env loc)))
+					(let ((val (eval! sexp env)))
 					   (when (xml-tilde? val)
 					      (warning/location
 					       file-name
@@ -864,7 +872,7 @@
 				    (if (eof-object? sexp)
 					(let ((val (reverse! res)))
 					   (if hook (hook val) val))
-					(let ((val (eval! sexp env loc)))
+					(let ((val (eval! sexp env)))
 					   (loop (cons val res)))))))
 			     (else
 			      (error 'hop-load "Illegal mode" mode))))
@@ -894,7 +902,7 @@
 ;*    is #t and if the file has changed since the last load, it is     */
 ;*    reloaded.                                                        */
 ;*---------------------------------------------------------------------*/
-(define (%hop-load-once file env charset modifiedp hook)
+(define (%hop-load-once file env charset modifiedp hook abase)
    (with-trace 1 '%hop-load-once
       (trace-item "file=" file)
       (trace-item "env=" (if (evmodule? env) (evmodule-name env) ""))
@@ -943,7 +951,8 @@
 				   :mode 'load
 				   :env env
 				   :charset charset
-				   :hook hook))
+				   :hook hook
+				   :abase abase))
 		      (mutex-lock! *load-once-mutex*)
 		      (hashtable-put! *load-once-table* f (cons 'loaded t))
 		      (condition-variable-signal! cv)
@@ -956,8 +965,9 @@
 		       #!key
 		       (env (interaction-environment))
 		       (charset (hop-locale))
-		       (hook #f))
-   (%hop-load-once file env charset #f hook))
+		       (hook #f)
+		       (abase #t))
+   (%hop-load-once file env charset #f hook abase))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-modified ...                                            */
@@ -966,8 +976,9 @@
 			   #!key
 			   (env (interaction-environment))
 			   (charset (hop-locale))
-			   (hook #f))
-   (%hop-load-once file env charset #t hook))
+			   (hook #f)
+			   (abase #t))
+   (%hop-load-once file env charset #t hook abase))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-once-unmark! ...                                        */

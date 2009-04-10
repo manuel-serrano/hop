@@ -1,11 +1,16 @@
 ;; A basic HOP filter
-(hop-filter-add!
- (lambda (req)
-    (with-access::http-request req (path)
-       (if (string=? path "/date")
-	   (instantiate::http-response-string
-	      (body (format "~a's date is ~a" (hostname) (date))))))))
-
-(<HTML>
-   (<BODY>
-      [Get the server ,(<A> :href "/date" "date").]))
+(if (hop-filters-open?)
+    (begin
+       (hop-filter-add!
+        (lambda (req)
+           (with-access::http-request req (path)
+              (if (string=? path "/date")
+                  (instantiate::http-response-string
+                     (body (format "~a's date is ~a" (hostname) (date))))))))
+       
+       (<HTML>
+          (<BODY>
+             [Get the server ,(<A> :href "/date" "date").])))
+    (<HTML>
+       (<BODY>
+          "Filters must be added from the rc file.")))

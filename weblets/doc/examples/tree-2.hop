@@ -3,7 +3,7 @@
    
    (define (directory->tree id dir)
       (<TREE> :id id :multiselect #t
-	 (<TRHEAD> :value dir (basename shape))
+	 (<TRHEAD> :value dir (basename dir))
 	 (<TRBODY>
 	    (<DELAY>
 	       (lambda ()

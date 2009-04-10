@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Fri Mar 20 12:22:43 2009 (serrano)                */
+;*    Last change :  Wed Apr  8 17:45:25 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -329,6 +329,7 @@
 	  ((new) (list 'NEW))
 	  ((function) (list 'FUNCTION))
 	  ((return) (list 'RETURN))
+	  ((var) (list 'VAR))
 	  (else (list 'IDENTIFIER (the-symbol)))))
       
       (else
@@ -347,7 +348,7 @@
       ;; tokens
       (CONSTANT PAR-OPEN PAR-CLO BRA-OPEN BRA-CLO ANGLE-OPEN ANGLE-CLO
        COMMA SEMI-COMMA DOT =
-       IDENTIFIER ERROR NEW CONS DATE FUNCTION RETURN)
+       IDENTIFIER ERROR NEW CONS DATE FUNCTION RETURN VAR)
       
       ;; initial rule
       (start
@@ -358,6 +359,39 @@
       (expression
        ((CONSTANT)
 	(car CONSTANT))
+       ((IDENTIFIER)
+	(car IDENTIFIER))
+       ((new)
+	new)
+       ((IDENTIFIER PAR-OPEN vals PAR-CLO)
+	(case (car IDENTIFIER)
+	   ((sc_consStart) (apply cons* vals))
+	   ((sc_Pair) (cons (car vals) (cadr vals)))
+	   ((sc_list) vals)
+	   ((sc_jsstring2symbol) (string->symbol (car vals)))
+	   ((sc_jsstring2keyword) (string->keyword (car vals)))
+	   (else (error 'json->hop "Unknown function" (car IDENTIFIER)))))
+       ((ANGLE-OPEN ANGLE-CLO)
+	'#())
+       ((ANGLE-OPEN array-elements ANGLE-CLO)
+	(list->vector array-elements))
+       ((object)
+	object)
+       ((get-element-by-id)
+	get-element-by-id)
+       ((service)
+	service)
+       ((PAR-OPEN FUNCTION PAR-OPEN PAR-CLO BRA-OPEN
+		  VAR set SEMI-COMMA
+		  set+
+		  RETURN new SEMI-COMMA
+		  BRA-CLO PAR-CLO PAR-OPEN PAR-CLO)
+	new)
+       ((constructor)
+	#unspecified))
+
+      ;; new
+      (new
        ((NEW IDENTIFIER PAR-OPEN vals PAR-CLO)
 	(case (car IDENTIFIER)
 	   ((sc_Pair)
@@ -378,27 +412,9 @@
 		   (error 'json->hop "Can't find class" c)
 		   (let* ((constr (class-constructor c))
 			  (create (class-creator c))
-			  (ins (apply constr vals)))
-		      (when (procedure? create) (create ins))
-		      ins))))))
-       ((IDENTIFIER PAR-OPEN vals PAR-CLO)
-	(case (car IDENTIFIER)
-	   ((sc_consStart) (apply cons* vals))
-	   ((sc_Pair) (cons (car vals) (cadr vals)))
-	   ((sc_list) vals)
-	   ((sc_jsstring2symbol) (string->symbol (car vals)))
-	   ((sc_jsstring2keyword) (string->keyword (car vals)))
-	   (else (error 'json->hop "Unknown function" (car IDENTIFIER)))))
-       ((ANGLE-OPEN ANGLE-CLO)
-	'#())
-       ((ANGLE-OPEN array-elements ANGLE-CLO)
-	(list->vector array-elements))
-       ((object)
-	object)
-       ((get-element-by-id)
-	get-element-by-id)
-       ((service)
-	service))
+			  (ins (apply create vals)))
+		      (when (procedure? constr) (constr ins))
+		      ins)))))))
       
       ;; array
       (array-elements
@@ -409,8 +425,8 @@
 
       ;; object
       (object
-       ((FUNCTION IDENTIFIER PAR-OPEN arguments PAR-CLO
-		  BRA-OPEN sets BRA-CLO SEMI-COMMA
+       ((FUNCTION IDENTIFIER PAR-OPEN argument+ PAR-CLO
+		  BRA-OPEN set+ BRA-CLO SEMI-COMMA
 		  BRA-OPEN proto BRA-CLO SEMI-COMMA
 		  NEW IDENTIFIER@klass PAR-OPEN vals PAR-CLO)
 	(let ((c (find-class klass)))
@@ -422,27 +438,40 @@
 		  (when (procedure? create) (create ins))
 		  ins)))))
 
-      (arguments
+      (argument*
        (()
 	'())
        ((IDENTIFIER)
 	(list (car IDENTIFIER)))
-       ((IDENTIFIER COMMA arguments)
-	(cons (car IDENTIFIER) arguments)))
+       ((IDENTIFIER COMMA argument*)
+	(cons (car IDENTIFIER) argument*)))
 
-      (sets
-       (()
-	'())
-       ((set SEMI-COMMA sets)
-	(cons set sets)))
+      (argument+
+       ((IDENTIFIER)
+	(list (car IDENTIFIER)))
+       ((IDENTIFIER COMMA argument+)
+	(cons (car IDENTIFIER) argument+)))
+
+      (set+
+       ((set SEMI-COMMA set*)
+	(cons set set*)))
+
+      (set*
+       (() '())
+       ((set SEMI-COMMA set*)
+	(cons set set*)))
+
+      (set
+       ((IDENTIFIER = expression)
+	'_)
+       ((IDENTIFIER DOT IDENTIFIER = expression)
+	'_)
+       ((IDENTIFIER DOT IDENTIFIER DOT IDENTIFIER = expression)
+	'_))
 
       (proto
        ((IDENTIFIER@c DOT IDENTIFIER@p DOT IDENTIFIER@f = IDENTIFIER@fun)
 	(list c p f fun)))
-
-      (set
-       ((IDENTIFIER DOT IDENTIFIER = expression)
-	'_))
 
       (vals
        (()
@@ -462,8 +491,15 @@
       ;; service
       (service
        ((FUNCTION PAR-OPEN PAR-CLO BRA-OPEN RETURN IDENTIFIER
-		  PAR-OPEN arguments PAR-CLO BRA-CLO)
-	(error 'json->hop "Service cannot be transmitted" IDENTIFIER)))))
+		  PAR-OPEN argument* PAR-CLO BRA-CLO)
+	(error 'json->hop "Service cannot be transmitted" IDENTIFIER)))
+
+      ;; constructor
+      (constructor
+       ((FUNCTION PAR-OPEN argument+ PAR-CLO
+		  BRA-OPEN set+ BRA-CLO)
+	#unspecified))))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    json->hop ...                                                    */

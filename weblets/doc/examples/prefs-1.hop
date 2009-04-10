@@ -28,8 +28,8 @@
 
 (define (<SAVE-PREFS>)
    (<BUTTON> :onclick
-      ~(if (or (prefs-valid? "foo-pref")
-	       (confirm "Some values or not validated, save anyway?"))
+      ~(if (or (preferences-valid? "foo-pref")
+	       (confirm "Some values are not validated, save anyway?"))
 	   (let loop ((override #f))
 	      (with-hop ($(service (ov)
 			     (foo-preferences-save "/tmp/foorc.hop" ov))
@@ -40,7 +40,7 @@
 			  (loop #t)))))))
       "Save"))
 
-(define-service (foo/preferences)
+(define (foo/preferences)
    (<HTML>
       (<HEAD> :include "hop-prefs")
       (<BODY>
@@ -52,3 +52,5 @@
 	    " Manual save procedure: "
 	    (<SAVE-PREFS>)))))
    
+
+(foo/preferences)
