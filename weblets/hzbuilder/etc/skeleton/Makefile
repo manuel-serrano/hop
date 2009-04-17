@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Apr  2 05:58:05 2009 (serrano)                */
+#*    Last change :  Fri Apr 17 10:30:58 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Generic Makefile to build Hop weblets.                           */
@@ -19,7 +19,7 @@ CATEGORY=@CATEGORY@
 
 MINHOP=@MINHOP@
 MAXHOP=@MAXHOP@
-HOME=@HOME@
+WEBLETHOME=@HOME@
 
 CLIENT_SOURCES=@HZ@.hop config.hop.in @HZ@.hss 
 SOURCES=$(CLIENT_SOURCES)
@@ -73,7 +73,7 @@ etc/weblet.info: etc/weblet.info.in Makefile
                      -e "s|@@DATE@@|$(DATE)|" \
                      -e "s|@@PRIVATEHOST@@|$(PRIVATEHOST)|" \
                      -e "s|@@PUBLICHOST@@|$(PUBLIKHOST)|" \
-                     -e "s|@@HOME@@|$(HOME)|" \
+                     -e "s|@@HOME@@|$(WEBLETHOME)|" \
                      -e "s|@@CATEGORY@@|$(CATEGORY)|" > $@
 
 %.wiki: %.wiki.in Makefile
@@ -87,7 +87,7 @@ etc/weblet.info: etc/weblet.info.in Makefile
                      -e "s|@@TITLE@@|$(TITLE)|" \
                      -e "s|@@PRIVATEHOST@@|$(PRIVATEHOST)|" \
                      -e "s|@@PUBLICHOST@@|$(PUBLIKHOST)|" \
-                     -e "s|@@HOME@@|$(HOME)|" \
+                     -e "s|@@HOME@@|$(WEBLETHOME)|" \
                      -e "s|@@CATEGORY@@|$(CATEGORY)|" > $@
 
 config.hop: config.hop.in Makefile
@@ -100,7 +100,7 @@ config.hop: config.hop.in Makefile
                      -e "s|@@REPOSITORY@@|$(PUBLICREPOSITORY)|" \
                      -e "s|@@PRIVATEHOST@@|$(PRIVATEHOST)|" \
                      -e "s|@@PUBLICHOST@@|$(PUBLIKHOST)|" \
-                     -e "s|@@HOME@@|$(HOME)|" \
+                     -e "s|@@HOME@@|$(WEBLETHOME)|" \
                      -e "s|@@CATEGORY@@|$(CATEGORY)|" > $@
 
 .afile: $(filter %.scm %.hop %.sch, $(OBJECTS))

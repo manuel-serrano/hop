@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Mar 30 11:17:37 2009 (serrano)                */
+;*    Last change :  Thu Apr 16 08:38:35 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -36,7 +36,8 @@
 
    (export  (wiki-string->hop ::bstring #!key
 			      syntax
-			      (charset (hop-locale)))
+			      (charset (hop-locale))
+			      env)
 	    (wiki-file->hop ::bstring #!key
 			    syntax
 			    (charset (hop-locale)))
@@ -72,7 +73,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    wiki-string->hop ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (wiki-string->hop string #!key syntax (charset (hop-locale)))
+(define (wiki-string->hop string #!key syntax (charset (hop-locale)) env)
    (with-input-from-string string
       (lambda ()
 	 (read/rp *wiki-grammar*
@@ -84,7 +85,8 @@
 		  0
 		  (if (procedure? charset)
 		      charset
-		      (charset-converter! charset (hop-charset)))))))
+		      (charset-converter! charset (hop-charset)))
+		  env))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-file->hop ...                                               */
@@ -116,7 +118,8 @@
 			0
 			(if (procedure? charset)
 			    charset
-			    (charset-converter! charset (hop-charset)))))))))
+			    (charset-converter! charset (hop-charset)))
+			#f))))))
       ((not syntax)
        (with-loading-file (input-port-name iport)
           (lambda ()
@@ -129,7 +132,8 @@
 		      0
 		      (if (procedure? charset)
 			  charset
-			  (charset-converter! charset (hop-charset)))))))
+			  (charset-converter! charset (hop-charset)))
+		      #f))))
       (else
        (error 'wiki-input-port->hop "Illegal syntax" syntax))))
 
@@ -182,8 +186,14 @@
    (regular-grammar ((punct (in "+*=/_-$#%!`'"))
 		     (blank (in "<>^|:~;,(){}[] \\\n"))
 		     (letter (out "<>+^|*=/_-$#%:~;,\"`'(){}[]! \\\n"))
-		     syn state result trcount dbgcount charset)
+		     syn state result trcount dbgcount charset env)
 
+      ;; eval-wiki
+      (define (eval-wiki exp)
+	 (if (pair? env)
+	     (eval `(let (,env) ,exp))
+	     (eval exp)))
+      
       ;; misc
       (define (the-html-string)
 	 (html-string-encode (charset (the-string))))
@@ -321,13 +331,20 @@
 			     (loop (cdr st) ne))))))))
 
       ;; table cell
-      (define (table-first-row-cell char rightp)
+      (define (table-first-row-cell char rightp id class)
 	 (let ((tc (if (char=? char #\^)
 		       (wiki-syntax-th syn)
 		       (wiki-syntax-td syn))))
 	    (unless (is-state? 'table)
 	       (set! trcount 0)
-	       (enter-block! 'table (wiki-syntax-table syn) #f #f))
+	       (enter-block! 'table
+			     (if (or class id)
+				 (lambda l
+				    (apply (wiki-syntax-table syn)
+					   :ident id :class class
+					   l))
+				 (wiki-syntax-table syn))
+			     #f #f))
 	    (enter-expr! 'tr
 			 (lambda exp
 			    (let ((cl (if (evenfx? trcount)
@@ -389,7 +406,7 @@
 				  (let ((e (substring name 1 (string-length name))))
 				     (with-input-from-string e
 					(lambda ()
-					   (eval (read)))))
+					   (eval-wiki (read)))))
 				  (let ((dir (dirname (input-port-name (the-port)))))
 				     (find-file/path name (list "." dir))))))
 		    (cond
@@ -418,7 +435,7 @@
 		      (lambda (e)
 			 (exception-notify e)
 			 "")
-		      (eval (hop-read (current-input-port))))))
+		      (eval-wiki (hop-read (current-input-port))))))
 	     s))
 
       ;; continuation lines
@@ -597,10 +614,18 @@
 
       ;; tables
       ((bol (in "^|"))
-       (table-first-row-cell (the-character) #f))
+       (table-first-row-cell (the-character) #f #f #f))
+      ((bol (: (in "^|") (: ":" (+ (out " \t\r\n")))))
+       (multiple-value-bind (id class)
+	  (wiki-parse-ident (the-substring 2 (the-length)))
+	  (table-first-row-cell (the-character) #f id class)))
 
       ((bol (: (in "^|") "  "))
-       (table-first-row-cell (the-character) #t))
+       (table-first-row-cell (the-character) #t #f #f))
+      ((bol (: (in "^|") (: ":" (+ (out " \t\r\n"))) "  "))
+       (multiple-value-bind (id class)
+	  (wiki-parse-ident (the-substring 2 -2))
+	  (table-first-row-cell (the-character) #t id class)))
 
       ;; table cells
       ((: (+ (in "^|")) (* (in " \t")) (? #\Return) #\Newline)
@@ -816,7 +841,7 @@
 			  (lambda (e)
 			     (exception-notify e)
 			     "")
-			  (let ((e (eval (hop-read (current-input-port)))))
+			  (let ((e (eval-wiki (hop-read (current-input-port)))))
 			     (values e e))))))
 		((or (=fx (string-length s) 0)
 		     (and (not (char=? (string-ref s 0) #\/))
@@ -887,7 +912,7 @@
 				      (with-output-to-string
 					 (lambda ()
 					    (write expr))))))
-		(add-expr! (eval expr)))))
+		(add-expr! (eval-wiki expr)))))
        (ignore))
        
       ;; single escape characters

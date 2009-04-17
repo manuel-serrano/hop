@@ -1,6 +1,6 @@
 ;; automatically generated, don't edit
-;; /users/serrano/prgm/project/hop/1.9.x/weblets/hop
-;; Fri Dec 14 10:01:20 2007
+;; /users/serrano/prgm/project/hop/2.0.x/weblets/hop
+;; Sat Mar 21 05:41:23 2009
 
 (
   (hophop_config "config.hop")

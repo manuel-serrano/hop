@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Apr 10 15:42:06 2009 (serrano)                */
+;*    Last change :  Fri Apr 17 07:29:55 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -42,20 +42,17 @@
 		      (env (interaction-environment))
 		      (mode 'load)
 		      (charset (hop-locale))
-		      (hook #f)
 		      (abase #t))
 
 	    (hop-load-once ::bstring
 			   #!key
 			   (env (interaction-environment))
 			   (charset (hop-locale))
-			   (hook #f)
 			   (abase #t))
 	    (hop-load-modified ::bstring
 			       #!key
 			       (env (interaction-environment))
 			       (charset (hop-locale))
-			       (hook #f)
 			       (abase #t))
 	    (hop-load-once-unmark! ::bstring)
 	    
@@ -703,18 +700,18 @@
 	      (item (cset (the-string)))
 	      (rest (ignore)))
 	  (econs item rest loc)))
-      ("\\\\"
-       (cons "\\" (ignore)))
-      ("\\n"
-       (cons "\n" (ignore)))
-      ("\\t"
-       (cons "\t" (ignore)))
+;*       ("\\\\"                                                       */
+;*        (cons "\\" (ignore)))                                        */
+;*       ("\\n"                                                        */
+;*        (cons "\n" (ignore)))                                        */
+;*       ("\\t"                                                        */
+;*        (cons "\t" (ignore)))                                        */
       ("\\]"
        (cons "]" (ignore)))
       ("\\["
        (cons "[" (ignore)))
-      ("\\,"
-       (cons "," (ignore)))
+;*       ("\\,"                                                        */
+;*        (cons "," (ignore)))                                         */
       (#\\
        (cons "\\" (ignore)))
       (else
@@ -831,7 +828,6 @@
 		  (env (interaction-environment))
 		  (mode 'load)
 		  (charset (hop-locale))
-		  (hook #f)
 		  (abase #t))
    (let ((path (find-file/path file-name (hop-path)))
 	 (apath (cond
@@ -857,7 +853,7 @@
 			      (let loop ((last #unspecified))
 				 (let ((sexp (hop-read port charset)))
 				    (if (eof-object? sexp)
-					(if hook (hook last) last)
+					last
 					(let ((val (eval! sexp env)))
 					   (when (xml-tilde? val)
 					      (warning/location
@@ -870,8 +866,7 @@
 			      (let loop ((res '()))
 				 (let ((sexp (hop-read port charset)))
 				    (if (eof-object? sexp)
-					(let ((val (reverse! res)))
-					   (if hook (hook val) val))
+					(reverse! res)
 					(let ((val (eval! sexp env)))
 					   (loop (cons val res)))))))
 			     (else
@@ -902,7 +897,7 @@
 ;*    is #t and if the file has changed since the last load, it is     */
 ;*    reloaded.                                                        */
 ;*---------------------------------------------------------------------*/
-(define (%hop-load-once file env charset modifiedp hook abase)
+(define (%hop-load-once file env charset modifiedp abase)
    (with-trace 1 '%hop-load-once
       (trace-item "file=" file)
       (trace-item "env=" (if (evmodule? env) (evmodule-name env) ""))
@@ -951,7 +946,6 @@
 				   :mode 'load
 				   :env env
 				   :charset charset
-				   :hook hook
 				   :abase abase))
 		      (mutex-lock! *load-once-mutex*)
 		      (hashtable-put! *load-once-table* f (cons 'loaded t))
@@ -965,9 +959,8 @@
 		       #!key
 		       (env (interaction-environment))
 		       (charset (hop-locale))
-		       (hook #f)
 		       (abase #t))
-   (%hop-load-once file env charset #f hook abase))
+   (%hop-load-once file env charset #f abase))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-modified ...                                            */
@@ -976,9 +969,8 @@
 			   #!key
 			   (env (interaction-environment))
 			   (charset (hop-locale))
-			   (hook #f)
 			   (abase #t))
-   (%hop-load-once file env charset #t hook abase))
+   (%hop-load-once file env charset #t abase))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-once-unmark! ...                                        */

@@ -5,7 +5,7 @@
  (repository "@@REPOSITORY@@")
  (category "@@CATEGORY@@")
  (minhop "@@MINHOP@@")
- (mxhop "@@MAXHOP@@")
+ (maxhop "@@MAXHOP@@")
  (home "@@HOME@@")
  (title "@TITLE@")
  (comment "@DESCRIPTION@"))

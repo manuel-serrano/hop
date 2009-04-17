@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Thu Apr  2 05:42:12 2009 (serrano)                */
+;*    Last change :  Fri Apr 17 10:40:56 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -110,10 +110,17 @@
 		       (hop-rc-directory) "cache" (hop-api-cache)))
 		(dir (if host
 			 (make-file-name dest
-					 (format "~a_~a~a-~a"
+					 (format "~a_~a~a"
 						 host port
 						 (prefix (basename abspath))))
-			 (make-file-name dest (prefix (basename abspath))))))
+			 (make-file-name dest (prefix (basename abspath)))))
+		(url (if (string? (hop-hz-local-repository))
+			 (let ((f (make-file-name (hop-hz-local-repository)
+						  (basename abspath))))
+			    (if (file-exists? f)
+				f
+				url))
+			 url)))
 	    (unless (directory? dir)
 	       (call-with-input-file url
 		  (lambda (iport)

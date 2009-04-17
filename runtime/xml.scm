@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Mar 25 15:11:45 2009 (serrano)                */
+;*    Last change :  Thu Apr 16 08:54:18 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -44,6 +44,9 @@
 	    (class xml
 	       (%xml-constructor))
 
+	    (class xml-verbatim
+	       (body::string read-only))
+	    
 	    (class css::xml)
 	    
 	    (class xml-if::xml
@@ -464,6 +467,13 @@
        #unspecified)
       (else
        (error 'xml-write "Illegal xml object" obj))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write ::xml-verbatim ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::xml-verbatim p backend)
+   (with-access::xml-verbatim obj (body)
+      (display body p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-if ...                                           */

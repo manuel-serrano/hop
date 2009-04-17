@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/runtime/hop-mathml.scm           */
+;*    serrano/prgm/project/hop/2.0.x/runtime/hop-mathml.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:24:08 2007                          */
-;*    Last change :  Fri Feb 27 08:51:29 2009 (serrano)                */
+;*    Last change :  Tue Apr 14 07:04:41 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop MATHML support.                                              */
@@ -757,6 +757,9 @@
       ;; tex spaces
       ("\\;"
        (cons 'IDENT "&ensp;&ensp;"))
+      ;; prims
+      ((+ #\')
+       (cons 'IDENT (the-string)))
       ;; default
       (else
        (let ((c (the-failure)))

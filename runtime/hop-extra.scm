@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Apr  8 19:20:19 2009 (serrano)                */
+;*    Last change :  Fri Apr 17 10:49:40 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -159,14 +159,21 @@
 	 :type (hop-configure-css-mime-type)
 	 :href p))
 
+   (define (hz-get-weblet-info-files path)
+      (let ((hop (make-file-path path "etc" "weblet.info")))
+	 (when (file-exists? hop)
+	    (let ((l (call-with-input-file hop read)))
+	       (when (pair? l)
+		  (let ((c (assq 'api l)))
+		     (when (pair? c)
+			(cadr c))))))))
+      
    (define (hz-get-files path suffix)
-      (let ((hop (make-file-name path ".hop")))
-	 (filter-map (lambda (f)
-			(when (is-suffix? f suffix)
-			   (make-file-name path f)))
-		     (if (file-exists? hop)
-			 (call-with-input-file hop read)
-			 (directory->list path)))))
+      (filter-map (lambda (f)
+		     (when (is-suffix? f suffix)
+			(make-file-name path f)))
+		  (or (hz-get-weblet-info-files path)
+		      (directory->list path))))
 
    (define (read-file file)
       (call-with-input-file file
@@ -180,7 +187,7 @@
 	     (let ((files (hz-get-files path suffix)))
 		(when (pair? files)
 		   (with-output-to-file file
-		      (lambda (op)
+		      (lambda ()
 			 (for-each file-to-string files)))
 		   file)))))
    

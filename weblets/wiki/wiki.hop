@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Mar 23 08:45:40 2009 (serrano)                */
+;*    Last change :  Fri Apr 17 09:33:06 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -13,11 +13,18 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module wiki
+   
    (import wiki_config)
+   
    (export wiki
 	   wiki/compile
 	   wiki/documentation
-	   wiki/preferences))
+	   wiki/preferences
+	   (<DOCUMENT> . l))
+
+   (static (class wiki-document
+	      (head read-only)
+	      (body read-only))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki ...                                                         */
@@ -227,52 +234,118 @@
    (unless (file-exists? file)
       (with-output-to-file file (lambda () (display "== Sample ==\n"))))
    (if (file-exists? file)
-       (let* ((hoppath (string-append (prefix file) ".hop"))
-	      (body (if (file-exists? hoppath)
-			(hop-load hoppath :hook (lambda (s) (wiki-load file s)))
-			(wiki-load file #f))))
-	  (<HTML>
-	     (<HEAD> :title "Hop wiki"
-		:inline compiled
-		:favicon (service-resource wiki "etc/favicon.png")
-		:css (service-resource wiki "wiki.hss")
-		:jscript (service-resource wiki "wiki.scm")
-		:include "hop-dashboard"
-		:jscript ~(define (oncompile) $compiled)
-		:jscript (sort (lambda (s1 s2)
-				  (string<? (prefix s1) (prefix s2)))
-			       (filter (lambda (path)
-					  (or (string-suffix? ".scm" path)
-					      (string-suffix? ".js" path)))
-				       (directory->path-list (dirname file))))
-		:css (sort (lambda (s1 s2)
-			      (string<? (prefix s1) (prefix s2)))
-			   (filter (lambda (path)
-				      (or (string-suffix? ".hss" path)
-					  (string-suffix? ".css" path)))
-				   (directory->path-list (dirname file)))))
-	     (<WIKI:BODY> :class "wiki"
-		:prefs prefs
-		:compiled compiled
-		:path file
-		(unless compiled
-		   (<DIV> :id "wiki-edit"
-		      (when (authorized-service? req 'wiki/edit)
-			 (<TABLE> :class 'edit :width "100%"
-			    (<TR> (<TD> file)
-				  (<TD> :class 'edit
-				     (if (http-server-request? req)
-					 (<EDIT:EMACS> file)
-					 (<EDIT:EDIT> file))))))))
-		(<DIV> :class "wiki-head" :id "wiki-head")
-		(<DIV> :class "wiki-toc" :id "wiki-toc"
-		   (hop-wiki->toc body :max-depth 3 :ul <OL>))
-		(<DIV> :class "wiki-toc wiki-toc-popup" :id "wiki-toc-popup"
-		   :onclick ~(wiki-hide-toc-popup this)
-		   (hop-wiki->toc body :max-depth 3 :ul <OL>))
-		(<DIV> :class "wiki-body" :id "wiki-body" body)
-		(<DIV> :class "wiki-foot" :id "wiki-foot"))))
+       (let ((hoppath (string-append (prefix file) ".hop")))
+	  (if (file-exists? hoppath)
+	      (wiki-view-hop hoppath req file prefs compiled)
+	      (wiki-view-wiki req file prefs compiled)))))
+
+;*---------------------------------------------------------------------*/
+;*    wiki-view-wiki ...                                               */
+;*---------------------------------------------------------------------*/
+(define (wiki-view-wiki req file prefs compiled)
+   (if (file-exists? file)
+       (let* ((body (wiki-load file #f))
+	      (jscript (sort (lambda (s1 s2)
+				(string<? (prefix s1) (prefix s2)))
+			     (filter (lambda (path)
+					(or (string-suffix? ".scm" path)
+					    (string-suffix? ".js" path)))
+				     (directory->path-list (dirname file)))))
+	      (css (sort (lambda (s1 s2)
+			    (string<? (prefix s1) (prefix s2)))
+			 (filter (lambda (path)
+				    (or (string-suffix? ".hss" path)
+					(string-suffix? ".css" path)))
+				 (directory->path-list (dirname file)))))
+	      (head (make-wiki-head compiled :jscript jscript :css css)))
+	  (<WIKI:HTML> :compiled compiled :prefs prefs :file file
+	     :req req
+	     head body))
        (http-file-not-found file)))
+
+;*---------------------------------------------------------------------*/
+;*    wiki-env ...                                                     */
+;*---------------------------------------------------------------------*/
+(define wiki-env (eval-find-module 'wiki))
+
+;*---------------------------------------------------------------------*/
+;*    wiki-view-hop ...                                                */
+;*---------------------------------------------------------------------*/
+(define (wiki-view-hop path req file prefs compiled)
+   (cond
+      ((not (file-exists? file))
+       (http-file-not-found file))
+      ((not (file-exists? path))
+       (http-file-not-found path))
+      (else
+       (let ((doc (hop-load path :env wiki-env)))
+	  (if (wiki-document? doc)
+	      (with-access::wiki-document doc (head body)
+		 (let ((head (when head
+				(apply make-wiki-head compiled
+				       (xml-element-body head)))))
+		    (<WIKI:HTML> :compiled compiled :prefs prefs :file file
+		       :req req
+		       head body)))
+	      (http-service-error req
+				  'wiki
+				  (format "Loading path \"~a\"should have produced a DOCUMENT" path)))))))
+
+;*---------------------------------------------------------------------*/
+;*    make-wiki-head ...                                               */
+;*---------------------------------------------------------------------*/
+(define (make-wiki-head compiled . attributes)
+   (<HEAD> :title "Hop wiki"
+      :inline compiled
+      :favicon (service-resource wiki "etc/favicon.png")
+      :css (service-resource wiki "wiki.hss")
+      :jscript (service-resource wiki "wiki.scm")
+      :include "hop-dashboard"
+      :jscript ~(define (oncompile) $compiled)
+      attributes))
+
+;*---------------------------------------------------------------------*/
+;*    <WIKI:HTML> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <WIKI:HTML> ((compiled #f boolean)
+				  (prefs #f)
+				  (file #unspecified string)
+				  (req #f)
+				  (attributes)
+				  body)
+   (<HTML>
+      (car body)
+      (<WIKI:BODY> :class "wiki"
+	 :prefs prefs
+	 :compiled compiled
+	 :path file
+	 (unless compiled
+	    (<DIV> :id "wiki-edit"
+	       (when (authorized-service? req 'wiki/edit)
+		  (<TABLE> :class 'edit :width "100%"
+		     (<TR> (<TD> file)
+			   (<TD> :class 'edit
+			      (if (http-server-request? req)
+				  (<EDIT:EMACS> file)
+				  (<EDIT:EDIT> file))))))))
+	 (<DIV> :class "wiki-head" :id "wiki-head")
+	 (<DIV> :class "wiki-toc" :id "wiki-toc"
+	    (hop-wiki->toc body :max-depth 3 :ul <OL>))
+	 (<DIV> :class "wiki-toc wiki-toc-popup" :id "wiki-toc-popup"
+	    :onclick ~(wiki-hide-toc-popup this)
+	    (hop-wiki->toc body :max-depth 3 :ul <OL>))
+	 (<DIV> :class "wiki-body" :id "wiki-body" (cdr body))
+	 (<DIV> :class "wiki-foot" :id "wiki-foot"))))
+
+;*---------------------------------------------------------------------*/
+;*    <DOCUMENT> ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (<DOCUMENT> . l)
+   (let ((heads (filter (lambda (x) (xml-markup-is? x 'head)) l))
+	 (body (filter (lambda (x) (not (xml-markup-is? x 'head))) l)))
+      (instantiate::wiki-document
+	 (head (when (pair? heads) (car heads)))
+	 (body body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <EDIT:EDIT> ...                                                  */

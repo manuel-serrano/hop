@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Apr  8 14:07:20 2009 (serrano)                */
+;*    Last change :  Fri Apr 17 10:06:45 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -253,6 +253,9 @@
 	    
 	    (hop-hz-package-suffix::bstring)
 	    (hop-hz-package-suffix-set! ::bstring)
+
+	    (hop-hz-local-repository::obj)
+	    (hop-hz-local-repository-set! ::obj)
 	    
 	    (hop-rc-loaded!)))
 
@@ -1133,6 +1136,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-hz-package-suffix
    "hz")
+
+;*---------------------------------------------------------------------*/
+;*    hop-hz-local-repository ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hz-local-repository
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-loaded! ...                                               */

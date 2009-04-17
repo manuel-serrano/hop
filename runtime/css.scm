@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Apr  1 14:38:47 2009 (serrano)                */
+;*    Last change :  Tue Apr 14 09:25:00 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -440,3 +440,20 @@
 ;;    (properties '(("foo" ("span.foo" "bg") ("span.gee" "fg"))
 ;; 		    ("gee" ("span.foo" "fg"))
 ;;		    ("bar" ("span.foo span.bar" "fg"))))))
+
+
+;*---------------------------------------------------------------------*/
+;*    Modifier les compilateurs afin de pouvoir ecrire une expension   */
+;*    telle que :                                                      */
+;*                                                                     */
+;*    article-figure {                                                 */
+;*      align: center;                                                 */
+;*    }                                                                */
+;*                                                                     */
+;*      ==>                                                            */
+;*                                                                     */
+;*    div.article-figure-center table.article-figure {                 */
+;*      margin-left: auto;                                             */
+;*      margin-right: auto;                                            */
+;*    }                                                                */
+;*---------------------------------------------------------------------*/

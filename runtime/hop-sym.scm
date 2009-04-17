@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/runtime/hop-sym.scm              */
+;*    serrano/prgm/project/hop/2.0.x/runtime/hop-sym.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 27 09:39:08 2006                          */
-;*    Last change :  Mon Mar  2 12:15:49 2009 (serrano)                */
+;*    Last change :  Thu Apr 16 08:47:54 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML symbols (special characters).                               */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hop-sym
 
+   (import  __hop_xml)
+   
    (export  (<SYM> ::obj)
 	    (hop-symbol-alist)))
 
@@ -251,6 +253,12 @@
 		  ("rfloor" "&#8971;")
 		  ("langle" "&#9001;")
 		  ("rangle" "&#9002;")
+		  ("[[" "&#10214;")
+		  ("]]" "&#10215;")
+		  ("<" "&#10216;")
+		  (">" "&#10217;")
+		  ("<<" "&#10218;")
+		  (">>" "&#10219;")
 		  ;; Misc
 		  ("loz" "&#9674;") 
 		  ("spades" "&#9824;")
@@ -292,7 +300,7 @@
    (let ((s (if (symbol? sym) (symbol->string sym) sym)))
       (let ((e (hashtable-get *symbol-table* s)))
 	 (if e
-	     e
+	     (instantiate::xml-verbatim (body e))
 	     (error '<SYM> "Illegal symbol" sym)))))
 
 ;*---------------------------------------------------------------------*/
