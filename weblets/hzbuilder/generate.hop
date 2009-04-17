@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 24 15:46:26 2008                          */
-;*    Last change :  Fri Apr 10 15:32:40 2009 (serrano)                */
+;*    Last change :  Fri Apr 17 13:41:38 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The code generator                                               */
@@ -29,7 +29,7 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hzbuilder/generate dir name version header description author
 				    logo favicon dashboard
-				    category minhop maxhop home)
+				    category minhop maxhop home download)
    ;; mandatory checks
    (cond
       ((not (string-valid? dir))
@@ -53,7 +53,7 @@
       (set! author ""))
    (hzbuilder-generate dir name version header description author
 		       logo favicon dashboard
-		       category minhop maxhop home))
+		       category minhop maxhop home download))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TTDIR> ...                                                      */
@@ -72,7 +72,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hzbuilder-generate dir name version header description
 			    author logo favicon dashboard
-			    category minhop maxhop home)
+			    category minhop maxhop home download)
    (let* ((now (current-date))
 	  (replac `((@HZ@ ,name)
 		    (@HZUPCASE@ ,(string-upcase name))
@@ -81,6 +81,7 @@
 		    (@MINHOP@ ,minhop)
 		    (@MAXHOP@ ,maxhop)
 		    (@HOME@ ,home)
+		    (@DOWNLOAD@ ,download)
 		    (@CATEGORY@ ,category)
 		    (@AUTHOR@ ,author)
 		    (@DATE@ now)
