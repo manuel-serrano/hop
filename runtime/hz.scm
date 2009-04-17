@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Apr 17 10:40:56 2009 (serrano)                */
+;*    Last change :  Fri Apr 17 15:48:51 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -99,34 +99,47 @@
 	    (close-input-port ip)))))
 
 ;*---------------------------------------------------------------------*/
+;*    abspath->filename ...                                            */
+;*---------------------------------------------------------------------*/
+(define (abspath->filename abspath)
+   (let ((i (string-index abspath #\?)))
+      (if i
+	  (let ((j (string-index abspath #\= i)))
+	     (if j
+		 (substring abspath (+fx 1 j) (string-length abspath))
+		 abspath))
+	  abspath)))
+
+;*---------------------------------------------------------------------*/
 ;*    hz-download-to-cache ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hz-download-to-cache url)
    (multiple-value-bind (_ _ host port abspath)
       (url-parse url)
-      (multiple-value-bind (base version)
-	 (hz-package-name-parse abspath)
-	 (let* ((dest (make-file-path
-		       (hop-rc-directory) "cache" (hop-api-cache)))
-		(dir (if host
-			 (make-file-name dest
-					 (format "~a_~a~a"
-						 host port
-						 (prefix (basename abspath))))
-			 (make-file-name dest (prefix (basename abspath)))))
-		(url (if (string? (hop-hz-local-repository))
-			 (let ((f (make-file-name (hop-hz-local-repository)
-						  (basename abspath))))
-			    (if (file-exists? f)
-				f
-				url))
-			 url)))
-	    (unless (directory? dir)
-	       (call-with-input-file url
-		  (lambda (iport)
-		     (make-directories dir)
-		     (let* ((p (open-input-gzip-port iport)))
-			(unwind-protect
-			   (untar p :directory dir)
-			   (close-input-port iport))))))
-	    (make-file-name dir base)))))
+      (let ((apath (abspath->filename abspath)))
+	 (multiple-value-bind (base version)
+	    (hz-package-name-parse apath)
+	    (let* ((dest (make-file-path
+			  (hop-rc-directory) "cache" (hop-api-cache)))
+		   (dir (if host
+			    (make-file-name dest
+					    (format "~a_~a~a"
+						    host port
+						    (prefix (basename apath))))
+			    (make-file-name dest (prefix (basename apath)))))
+		   (url (if (string? (hop-hz-local-repository))
+			    (let ((f (make-file-name (hop-hz-local-repository)
+						     (basename apath))))
+			       (if (file-exists? f)
+				   f
+				   url))
+			    url)))
+	       (unless (directory? dir)
+		  (call-with-input-file url
+		     (lambda (iport)
+			(make-directories dir)
+			(let* ((p (open-input-gzip-port iport)))
+			   (unwind-protect
+			      (untar p :directory dir)
+			      (close-input-port iport))))))
+	       (make-file-name dir base))))))

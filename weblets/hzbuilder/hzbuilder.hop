@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Apr 17 13:43:26 2009 (serrano)                */
+;*    Last change :  Fri Apr 17 15:34:43 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZBUILDER weblet                                                 */
@@ -364,9 +364,10 @@
 	 (<TD> (<ENTRY> :class "required" :title "The name of the weblet"
 		  :id "hzb-name"
 		  :onkeyup ~(let ((e1 (dom-get-element-by-id "hzb-home"))
-				  (e2 (dom-get-element-by-id "hzb-download")))
+				  (e2 (dom-get-element-by-id "hzb-download"))
+				  (e3 (dom-get-element-by-id "hzb-version")))
 			       (set! e2.value (format "http://localhost:8080/hop/weblets/homepage?weblet=~a" this.value))
-			       (set! e2.value (format "http://localhost:8080/hop/weblets/download?weblet=~a" this.value)))
+			       (set! e2.value (format "http://localhost:8080/hop/weblets/download?weblet=~a-~a.hz" this.value e3.value)))
 		  "name"))
 	 (<TD> (<ENTRY> :title "The author name"
 		  :id "hzb-author"
@@ -376,6 +377,9 @@
 	 (<TD> (<ENTRY> :class "required" :default "1.0.0"
 		  :id "hzb-version"
 		  :title "The weblet version number"
+		  :onkeyup ~(let ((e2 (dom-get-element-by-id "hzb-download"))
+				  (e3 (dom-get-element-by-id "hzb-version")))
+			       (set! e2.value (format "http://localhost:8080/hop/weblets/download?weblet=~a-~a.hz" this.value e3.value)))
 		  "version"))
 	 (<TD> (<ENTRY> :title "The license" :default "GPL v2"
 		  :id "hzb-license"
