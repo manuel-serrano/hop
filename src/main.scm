@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Apr 10 10:39:04 2009 (serrano)                */
+;*    Last change :  Sun Apr 19 06:35:31 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -78,6 +78,7 @@
    (register-eval-srfi! 'hop)
    (register-eval-srfi! (string->symbol (format "hop-~a" (hop-version))))
    (register-eval-srfi! (string->symbol (format "hop-~a" (hop-branch))))
+   (cond-expand (enable-threads (register-eval-srfi! 'enable-threads)))
    ;; set the library load path
    (let ((hop-path (make-file-path (hop-lib-directory) "hop" (hop-version))))
       (bigloo-library-path-set! (cons hop-path (bigloo-library-path))))
