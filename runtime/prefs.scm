@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Sat Mar 28 06:19:20 2009 (serrano)                */
+;*    Last change :  Sun Apr 19 07:32:32 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -80,7 +80,7 @@
 ;*---------------------------------------------------------------------*/
 (define *pref-set-table*
    (make-hashtable))
-
+ 
 ;*---------------------------------------------------------------------*/
 ;*    *pref-save-table* ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -110,7 +110,6 @@
    ;; prefs/edit
    (set! *prefs-edit-svc*
 	 (service :name "admin/preferences/edit" (name type value key)
-	    (tprint "edit name=" name " type=" type " value=" value " key=" key)
 	    (if (and name type value key)
 		(begin
 		   (mutex-lock! (preferences-mutex))
@@ -132,7 +131,7 @@
    ;; prefs/save
    (set! *prefs-save-svc*
 	 (service :name "admin/preferences/save" (key file ov)
-	    (if (and key file ov)
+	    (if (and key file)
 		(begin
 		   (mutex-lock! (preferences-mutex))
 		   (let ((save (hashtable-get *pref-save-table* key))
@@ -142,7 +141,7 @@
 			 (if (and (or (authorized-service? req 'admin)
 				      (authorized-service? req 'admin/preferences/save))
 				  (authorized-path? req file))
-			     (save file (string=? ov "true"))
+			     (save file ov)
 			     (user-access-denied req)))))
 		(http-bad-request "admin/preferences/save")))))
 
