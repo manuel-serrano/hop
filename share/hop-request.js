@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sun Mar 22 07:11:26 2009 (serrano)                */
+/*    Last change :  Sat Apr 18 18:38:34 2009 (serrano)                */
 /*    Copyright   :  2004-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -31,18 +31,23 @@ function hop_apply_form_url( service, args ) {
    for( i = els.length - 1 ; i >=0 ; i-- ) {
       if( els[ i ].type == "checkbox" ) {
 	 nargs = sc_cons( els[ i ].checked ? els[ i ].value : false, nargs );
+	 nargs = sc_cons( sc_jsstring2keyword( els[ i ].name ), nargs );
       } else {
 	 if( els[ i ].type == "radio" ) {
 	    if( els[ i ].checked ) {
 	       nargs = sc_cons( els[ i ].value, nargs );
+	       nargs = sc_cons( sc_jsstring2keyword( els[ i ].name ), nargs );
 	    }
 	 } else {
-	    nargs = sc_cons( els[ i ].value, nargs );
+	    if( els[ i ].name !== "" ) {
+	       nargs = sc_cons( els[ i ].value, nargs );
+	       nargs = sc_cons( sc_jsstring2keyword( els[ i ].name ), nargs );
+	    }
 	 }
       }
    }
 
-   return hop_apply_url( service, args );
+   return hop_apply_url( service, nargs );
 }
 
 /*---------------------------------------------------------------------*/

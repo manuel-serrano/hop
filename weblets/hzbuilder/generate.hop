@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 24 15:46:26 2008                          */
-;*    Last change :  Fri Apr 17 13:41:38 2009 (serrano)                */
+;*    Last change :  Sat Apr 18 07:12:23 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The code generator                                               */
@@ -29,7 +29,8 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hzbuilder/generate dir name version header description author
 				    logo favicon dashboard
-				    category minhop maxhop home download)
+				    category license
+				    minhop maxhop home download)
    ;; mandatory checks
    (cond
       ((not (string-valid? dir))
@@ -44,6 +45,8 @@
        (http-bad-request (format "Favicon does not exist: ~a" favicon)))
       ((not (string-valid? category))
        (http-bad-request (format "Illegal category: ~a" category)))
+      ((not (string-valid? license))
+       (http-bad-request (format "Illegal license: ~a" license)))
       ((not (string-valid? minhop))
        (http-bad-request (format "Illegal min hop value: ~a" minhop))))
    ;; optional checks
@@ -53,7 +56,7 @@
       (set! author ""))
    (hzbuilder-generate dir name version header description author
 		       logo favicon dashboard
-		       category minhop maxhop home download))
+		       category license minhop maxhop home download))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TTDIR> ...                                                      */
@@ -72,7 +75,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hzbuilder-generate dir name version header description
 			    author logo favicon dashboard
-			    category minhop maxhop home download)
+			    category license minhop maxhop home download)
    (let* ((now (current-date))
 	  (replac `((@HZ@ ,name)
 		    (@HZUPCASE@ ,(string-upcase name))
@@ -83,6 +86,7 @@
 		    (@HOME@ ,home)
 		    (@DOWNLOAD@ ,download)
 		    (@CATEGORY@ ,category)
+		    (@LICENSE@ ,license)
 		    (@AUTHOR@ ,author)
 		    (@DATE@ now)
 		    (@DASHBOARD@ ,(if dashboard "#t" "#f"))

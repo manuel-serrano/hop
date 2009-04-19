@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Apr 17 15:34:43 2009 (serrano)                */
+;*    Last change :  Sat Apr 18 07:13:09 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZBUILDER weblet                                                 */
@@ -54,6 +54,7 @@
 		      (dc (dom-get-element-by-id "hzb-dash"))
 		      (da (dom-get-element-by-id "hzb-dashboard"))
 		      (ca (dom-get-element-by-id "hzb-category"))
+		      (li (dom-get-element-by-id "hzb-license"))
 		      (mih (dom-get-element-by-id "hzb-minhop"))
 		      (mah (dom-get-element-by-id "hzb-maxhop"))
 		      (ho (dom-get-element-by-id "hzb-home"))
@@ -77,6 +78,7 @@
 				  fv.title
 				  (when dc.checked da.title)
 				  ca.value
+				  li.value
 				  mih.value
 				  mah.value
 				  ho.value

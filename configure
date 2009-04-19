@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Apr  3 15:36:05 2009 (serrano)                */
+#*    Last change :  Sat Apr 18 19:58:31 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -738,6 +738,6 @@ echo "Internals:"
 echo "  mime types............................ $mimetypes"
 echo "  default JavaScript mime type.......... $jsmimetype"
 echo "  default CSS mime type................. $cssmimetype"
-echo "  multi threading....................... $threads"
+echo "  multi-threading....................... $threads"
 echo "  https support......................... $ssl"
 

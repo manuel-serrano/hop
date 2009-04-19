@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Thu Mar 26 05:26:53 2009 (serrano)                */
+;*    Last change :  Sun Apr 19 05:49:34 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -235,15 +235,19 @@
 ;*    scheduler-accept-loop ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-accept-loop scd::nothread-scheduler serv::socket)
-   (let ((thread (nothread-scheduler-get-fake-thread)))
-      (with-handler
-	 (make-scheduler-error-handler thread)
-	 (let loop ((id 1))
-	    (let ((s (socket-accept serv
-				    :inbuf (hopthread-inbuf thread)
-				    :outbuf (hopthread-outbuf thread))))
-	       ;; tune the socket
-	       (tune-socket! s)
-	       ;; process the request
-	       (spawn scd stage-request id s 'connect (hop-read-timeout))
-	       (loop (+fx id 1)))))))
+   (letrec ((thread (nothread-scheduler-get-fake-thread
+		     (lambda ()
+			(with-handler
+			   (make-scheduler-error-handler thread)
+			   (let loop ((id 1))
+			      (let ((s (socket-accept
+					serv
+					:inbuf (hopthread-inbuf thread)
+					:outbuf (hopthread-outbuf thread))))
+				 ;; tune the socket
+				 (tune-socket! s)
+				 ;; process the request
+				 (spawn scd stage-request id s
+					'connect (hop-read-timeout))
+				 (loop (+fx id 1)))))))))
+      (thread-start! thread)))

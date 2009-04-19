@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/src/scheduler.scm                */
+;*    serrano/prgm/project/hop/2.0.x/src/scheduler.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Wed Nov 19 11:24:38 2008 (serrano)                */
-;*    Copyright   :  2008 Manuel Serrano                               */
+;*    Last change :  Sun Apr 19 06:02:07 2009 (serrano)                */
+;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
 ;*=====================================================================*/
@@ -18,11 +18,11 @@
    
    (cond-expand
       (enable-threads
-       (library pthread)))
+       (library pthread))
+      (else
+       (static (class pthread::nothread))))
    
-   (cond-expand
-      (enable-threads
-       (export (class hopthread::pthread
+   (export (class hopthread::pthread
 		  (proc::procedure (default (lambda (t) #f)))
 		  (condv::condvar read-only (default (make-condition-variable)))
 		  (mutex::mutex read-only (default (make-mutex)))
@@ -35,25 +35,9 @@
 		  (inbuf::bstring (default (make-string 512)))
 		  (outbuf::bstring (default (make-string 8192)))
 		  (flushbuf::bstring (default (make-string 16)))
-		  (userdata::obj (default #unspecified)))))
-      (else
-       (export (class hopthread::thread
-		  (proc::procedure (default (lambda (t) #f)))
- 		  (condv::condvar read-only (default (make-condition-variable)))
-		  (mutex::mutex read-only (default (make-mutex)))
-		  (scheduler::scheduler (default (scheduler-nil)))
-		  (info::obj (default #unspecified))
-		  (request::obj (default #f))
-		  (onerror::obj (default #f))
-		  (error-args::vector read-only (default (make-vector 3)))
-		  (error-args-length::int (default 0))
-		  (inbuf::bstring (default (make-string 512)))
-		  (outbuf::bstring (default (make-string 8192)))
-		  (flushbuf::bstring (default (make-string 8)))
-		  (body::procedure read-only)
-		  (userdata::obj (default #unspecified))))))
-   
-   (export (macro debug-thread-info-set! thread info)
+		  (userdata::obj (default #unspecified)))
+
+           (macro debug-thread-info-set! thread info)
 	   (macro with-stage-handler thread args . body)
 
 	   (class &ignore-exception::&exception)
@@ -90,14 +74,6 @@
 	   (scheduler-default-handler ::obj)
 	   (scheduler-error-handler ::obj ::thread)
 	   (make-scheduler-error-handler ::obj)))
-
-;*---------------------------------------------------------------------*/
-;*    thread-start!                                                    */
-;*---------------------------------------------------------------------*/
-(cond-expand
-   ((not enable-threads)
-    (define-method (thread-start! o::hopthread . scd)
-       ((hopthread-body o)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    debug-thread-info-set! ...                                       */
@@ -261,7 +237,7 @@
    (hopthread-request th))
 
 ;*---------------------------------------------------------------------*/
-;*    thread-request ::hopthread ...                                   */
+;*    thread-request-set! ::hopthread ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (thread-request-set! th::hopthread req)
    (hopthread-request-set! th req))

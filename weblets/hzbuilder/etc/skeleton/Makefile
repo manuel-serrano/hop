@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Apr 17 13:40:46 2009 (serrano)                */
+#*    Last change :  Sat Apr 18 07:11:09 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Generic Makefile to build Hop weblets.                           */
@@ -16,6 +16,7 @@
 HZ=@HZ@
 VERSION=@VERSION@
 CATEGORY=@CATEGORY@
+LICENSE=@LICENSE@
 
 MINHOP=@MINHOP@
 MAXHOP=@MAXHOP@
@@ -76,7 +77,8 @@ etc/weblet.info: etc/weblet.info.in Makefile
                      -e "s|@@PUBLICHOST@@|$(PUBLIKHOST)|" \
                      -e "s|@@HOME@@|$(WEBLETHOME)|" \
                      -e "s|@@DOWNLOAD@@|$(DOWNLOAD)|" \
-                     -e "s|@@CATEGORY@@|$(CATEGORY)|" > $@
+                     -e "s|@@CATEGORY@@|$(CATEGORY)|" \
+                     -e "s|@@LICENSE@@|$(LICENSE)|" > $@
 
 %.wiki: %.wiki.in Makefile
 	cat $< | sed -e "s|@@VERSION@@|$(VERSION)|" \
@@ -91,7 +93,8 @@ etc/weblet.info: etc/weblet.info.in Makefile
                      -e "s|@@PUBLICHOST@@|$(PUBLIKHOST)|" \
                      -e "s|@@HOME@@|$(WEBLETHOME)|" \
                      -e "s|@@DOWNLOAD@@|$(DOWNLOAD)|" \
-                     -e "s|@@CATEGORY@@|$(CATEGORY)|" > $@
+                     -e "s|@@CATEGORY@@|$(CATEGORY)|" \
+                     -e "s|@@LICENSE@@|$(LICENSE)|" > $@
 
 config.hop: config.hop.in Makefile
 	cat $< | sed -e "s|@@VERSION@@|$(VERSION)|" \
@@ -105,7 +108,8 @@ config.hop: config.hop.in Makefile
                      -e "s|@@PUBLICHOST@@|$(PUBLIKHOST)|" \
                      -e "s|@@HOME@@|$(WEBLETHOME)|" \
                      -e "s|@@DOWNLOAD@@|$(DOWNLOAD)|" \
-                     -e "s|@@CATEGORY@@|$(CATEGORY)|" > $@
+                     -e "s|@@CATEGORY@@|$(CATEGORY)|" \
+                     -e "s|@@LICENSE@@|$(LICENSE)|" > $@
 
 .afile: $(filter %.scm %.hop %.sch, $(OBJECTS))
 	$(AFILE) -w -suffix hop $^ -o $@
