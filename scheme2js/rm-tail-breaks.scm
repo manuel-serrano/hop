@@ -105,7 +105,9 @@
 (define-nmethod (Continue.tail! break-label while-label)
    (with-access::Continue this (label)
       (if (eq? while-label label)
-	  (instantiate::Const (value #unspecified))
+	  (instantiate::Const
+	     (location (Node-location this))
+	     (value #unspecified))
 	  this)))
 
 

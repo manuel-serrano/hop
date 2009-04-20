@@ -1,5 +1,6 @@
 (module statements
    (import nodes
+	   error
 	   tools
 	   export-desc
 	   config
@@ -47,16 +48,19 @@
        (with-access::Begin stmt-begin (exprs)
 	  (cons-set! exprs
 		     (walk! n surrounding-fun #f)) ;; n is at stmt-level now.
-	  (instantiate::Const (value #unspecified)))))
+	  (instantiate::Const
+	     (location (Node-location n))
+	     (value #unspecified)))))
 
 
 ;; if state-var/return is not #f, then we need to assign any value to it
 ;; if stmt-begin is not #f, then the construct must be converted to expression
 ;; (by moving any stmt to stmt-begin).
 (define-nmethod (Node.stmts! surrounding-fun stmt-begin)
-   (error "Node-stmts!"
-	  "forgot Node-type: "
-	  this))
+   (scheme2js-error "Node-stmts!"
+		    "forgot Node-type: "
+		    this
+		    this))
 
 (define-nmethod (Const.stmts! surrounding-fun stmt-begin)
    this)
@@ -307,6 +311,8 @@
 	  (default-walk! this surrounding-fun #f))))
       
 (define-nmethod (Call/cc-Resume.stmts! surrounding-fun stmt-begin)
-   (error "statements"
-	  "internal error: Call/cc-Resume nodes should not exist yet."
-	  #f))
+   (scheme2js-error
+    "statements"
+    "internal error: Call/cc-Resume nodes should not exist yet."
+    #f
+    this))

@@ -9,10 +9,10 @@
 		 #f)
 		((not current-port)
 		 (set! current-port (open-input-file (car files)))
-		 (if (not current-port)
-		     (error "multi-file-port"
-			    "could not open file: "
-			    (car files)))
+		 (when (not current-port)
+		    (error "multi-file-port"
+			   "could not open file: "
+			   (car files)))
 		 (set! files (cdr files))
 		 (read-multi))
 		(else

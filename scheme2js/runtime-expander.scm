@@ -1,5 +1,6 @@
 (module runtime-expander
    (import config
+	   error
 	   verbose
 	   (runtime-ref pobject-conv))
    (export (runtime-expand! prog)))
@@ -156,6 +157,50 @@
 
 (define & runtime-ref)
 
+(define (emap1 f orig-L)
+   (let loop ((L orig-L)
+	      (rev-res '()))
+      (cond
+	 ((null? L)
+	  (reverse! rev-res))
+	 ((epair? L)
+	  (loop (cdr L)
+		(econs (f (car L))
+		       rev-res
+		       (cer L))))
+	 ((pair? L)
+	  (loop (cdr L)
+		(cons (f (car L))
+		      rev-res)))
+	 (else
+	  (scheme2js-error
+	   "expander"
+	   "not a list"
+	   orig-L
+	   orig-L)))))
+
+(define (emap2 f orig-L)
+   (let loop ((L orig-L)
+	      (rev-res '()))
+      (cond
+	 ((null? L)
+	  (reverse! rev-res))
+	 ((epair? L)
+	  (loop (cdr L)
+		(econs (f (car L) (cer L))
+		       rev-res
+		       (cer L))))
+	 ((pair? L)
+	  (loop (cdr L)
+		(cons (f (car L) #f)
+		      rev-res)))
+	 (else
+	  (scheme2js-error
+	   "expander"
+	   "not a list"
+	   orig-L
+	   orig-L)))))
+
 ;; be careful: expansion is already finished. So do not add bad constructs that
 ;; should be macro-expanded...
 (define *rt-expanders*
@@ -164,26 +209,39 @@
 	  (match-case x
 	     ((?- ?proc ?L1 . ?Lrest)
 	      (let* ((Ls (cons L1 Lrest))
-		     (L-ids (map (lambda (ignored)
-				    (gensym 'L))
-				 Ls))
+		     (L-ids (emap1 (lambda (ignored)
+				      (gensym 'L))
+				   Ls))
 		     (tmp-f (gensym 'tmpF))
-		     (loop (gensym 'loop)))
-		 `(let ((,tmp-f ,proc))
+		     (loop (gensym 'loop))
+		     (proc-loc (if (epair? (cdr x)) (cer (cdr x)) #f))
+		     (for-each-loc (if (epair? x) (cer x) #f)))
+		 (econs
+		  'let
+		  `(#;let (,(econs tmp-f  ;; (,tmp-f ,proc)
+				   (econs proc '() proc-loc)
+				   proc-loc))
 		     (letrec ((,loop
 			       (lambda ,L-ids
 				  (if (,(& 'null?) ,(car L-ids))
 				      #unspecified
 				      (begin
-					 (,tmp-f ,@(map
-						    (lambda (L)
-						       `(,(& 'car) ,L))
+					 (,tmp-f ,@(emap2
+						    (lambda (L pos)
+						       ;; `(,&car ,L)
+						       (cons (& 'car)
+							     (econs L '()
+								    pos)))
 						    L-ids))
-					 (,loop  ,@(map
-						    (lambda (L)
-						       `(,(& 'cdr) ,L))
+					 (,loop  ,@(emap2
+						    (lambda (L pos)
+						       ;; `(,&cdr ,L)
+						       (cons (& 'cdr)
+							     (econs L '()
+								    pos)))
 						    L-ids)))))))
-			(,loop ,@Ls)))))
+			(,loop ,@Ls)))
+		  for-each-loc)))
 	     (else
 	      x))))
      (map
@@ -191,15 +249,21 @@
 	  (match-case x
 	     ((?- ?proc ?L1 . ?Lrest)
 	      (let* ((Ls (cons L1 Lrest))
-		     (L-ids (map (lambda (ignored)
-				    (gensym 'L))
-				 Ls))
+		     (L-ids (emap1 (lambda (ignored)
+				      (gensym 'L))
+				   Ls))
 		     (tmp-f (gensym 'tmpF))
 		     (loop (gensym 'loop))
 		     (false-head (gensym 'falseHead))
-		     (tail (gensym 'tail)))
-		 `(let ((,tmp-f ,proc)
-			(,false-head (,(& 'cons) '() '())))
+		     (tail (gensym 'tail))
+		     (proc-loc (if (epair? (cdr x)) (cer (cdr x)) #f))
+		     (map-loc (if (epair? x) (cer x) #f)))
+		 (econs
+		  'let
+		  `(#;let (,(econs tmp-f ;; (,tmp-f ,proc)
+				   (econs proc '() proc-loc)
+				   proc-loc)
+			   (,false-head (,(& 'cons) '() '())))
 		     (letrec ((,loop
 			       (lambda ,(cons tail L-ids)
 				  (if (,(& 'null?) ,(car L-ids))
@@ -208,17 +272,24 @@
 					 (,(& 'set-cdr!)
 					  ,tail
 					  (,(& 'cons)
-					   (,tmp-f ,@(map
-						      (lambda (L)
-							 `(,(& 'car) ,L))
+					   (,tmp-f ,@(emap2
+						      (lambda (L pos)
+							 ;; `(,&car ,L)
+							 (cons (& 'car)
+							       (econs L '()
+								      pos)))
 						      L-ids))
 					   '()))
 					 (,loop  (,(& 'cdr) ,tail)
-						 ,@(map
-						    (lambda (L)
-						       `(,(& 'cdr) ,L))
+						 ,@(emap2
+						    (lambda (L pos)
+						       ;; `(,&cdr ,L)
+						       (cons (& 'cdr)
+							     (econs L '()
+								    pos)))
 						    L-ids)))))))
-			(,loop ,false-head ,@Ls)))))
+			(,loop ,false-head ,@Ls)))
+		  map-loc)))
 	     (else
 	      x))))
 
@@ -227,14 +298,20 @@
 	  (match-case x
 	     ((?- ?proc ?L1 . ?Lrest)
 	      (let* ((Ls (cons L1 Lrest))
-		     (L-ids (map (lambda (ignored)
-				    (gensym 'L))
-				 Ls))
+		     (L-ids (emap1 (lambda (ignored)
+				      (gensym 'L))
+				   Ls))
 		     (loop (gensym 'loop))
 		     (tmp-f (gensym 'tmpF))
-		     (first-L (gensym 'firstL)))
-		 `(let ((,tmp-f ,proc)
-			(,first-L ,L1))
+		     (first-L (gensym 'firstL))
+		     (proc-loc (if (epair? (cdr x)) (cer (cdr x)) #f))
+		     (map!-loc (if (epair? x) (cer x) #f)))
+		 (econs
+		  'let
+		 `(#;let (,(econs tmp-f ;; (,tmp-f ,proc)
+				  (econs proc '() proc-loc)
+				  proc-loc)
+			  (,first-L ,L1))
 		     (letrec ((,loop
 			       (lambda ,L-ids
 				  (if (,(& 'null?) ,(car L-ids))
@@ -242,15 +319,22 @@
 				      (begin
 					 (,(& 'set-car!)
 					  ,(car L-ids)
-					  (,tmp-f ,@(map
-						     (lambda (L)
-							`(,(& 'car) ,L))
+					  (,tmp-f ,@(emap2
+						     (lambda (L pos)
+							;; `(,&car ,L)
+							(cons (& 'car)
+							      (econs L '()
+								     pos)))
 						     L-ids)))
-					 (,loop ,@(map
-						   (lambda (L)
-						      `(,(& 'cdr) ,L))
+					 (,loop ,@(emap2
+						   (lambda (L pos)
+						      ;; `(,&cdr ,L)
+						      (cons (& 'cdr)
+							    (econs L '()
+								   pos)))
 						   L-ids)))))))
-			(,loop ,first-L ,@(cdr Ls))))))
+			(,loop ,first-L ,@(cdr Ls))))
+		 map!-loc)))
 	     (else
 	      x))))
      (filter
@@ -261,9 +345,15 @@
 		     (tmp-f (gensym 'tmpF))
 		     (loop (gensym 'loop))
 		     (false-head (gensym 'falseHead))
-		     (tail (gensym 'tail)))
-		 `(let ((,tmp-f ,proc)
-			(,false-head (,(& 'cons) '() '())))
+		     (tail (gensym 'tail))
+		     (proc-loc (if (epair? (cdr x)) (cer (cdr x)) #f))
+		     (filter-loc (if (epair? x) (cer x) #f)))
+		 (econs
+		  'let
+		 `(#;let (,(econs tmp-f ;; (,tmp-f ,proc)
+				  (econs proc '() proc-loc)
+				  proc-loc)
+			  (,false-head (,(& 'cons) '() '())))
 		     (letrec ((,loop
 			       (lambda (,tail ,L-id)
 				  (if (,(& 'null?) ,L-id)
@@ -279,7 +369,8 @@
 						    (,(& 'cdr) ,L-id)))
 					  (,loop  ,tail
 						  (,(& 'cdr) ,L-id)))))))
-			(,loop ,false-head ,L)))))
+			(,loop ,false-head ,L)))
+		 filter-loc)))
 	     (else
 	      x))))
      (filter!
@@ -290,8 +381,14 @@
 		     (tmp-f (gensym 'tmpF))
 		     (L-id (gensym 'L))
 		     (tail (gensym 'tail))
-		     (false-head (gensym 'falseHead)))
-		 `(let ((,tmp-f ,proc)
+		     (false-head (gensym 'falseHead))
+		     (proc-loc (if (epair? (cdr x)) (cer (cdr x)) #f))
+		     (filter!-loc (if (epair? x) (cer x) #f)))
+		 (econs
+		  'let
+		  `(#;let (,(econs tmp-f ;; (,tmp-f ,proc)
+				   (econs proc '() proc-loc)
+				   proc-loc)
 			(,false-head (,(& 'cons) '() '())))
 		     (letrec ((,loop
 			       (lambda (,tail ,L-id)
@@ -304,7 +401,8 @@
 					     (,(& 'set-cdr!) ,tail ,L-id)
 					     (,loop ,L-id (,(& 'cdr) ,L-id)))
 					  (,loop ,tail (,(& 'cdr) ,L-id)))))))
-			(,loop ,false-head ,L)))))
+			(,loop ,false-head ,L)))
+		  filter!-loc)))
 	     (else
 	      x))))))
 
@@ -314,4 +412,3 @@
 
 (define (rt-expander id)
    (cadr (assq id *rt-expanders*)))
-

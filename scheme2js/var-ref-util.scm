@@ -8,8 +8,7 @@
 	   (call-target operator::Node)
 	   (runtime-ref-var-id n)
 	   (runtime-ref?::bool n)
-	   (higher-order-runtime-ref?::bool n)
-	   (transitive-value var-ref::Ref)))
+	   (higher-order-runtime-ref?::bool n)))
 
 (define (constant-var n)
    (and n
@@ -57,30 +56,3 @@
 	     (call-target value))))
       (else
        #f)))
-
-(define (transitive-value var-ref::Ref)
-   (if (runtime-ref? var-ref)
-       var-ref
-       (with-access::Ref var-ref (var)
-	  (with-access::Var var (constant? value)
-	     (cond
-		((and constant?
-		      value
-		      (Const? value)
-		      (let ((const (Const-value value)))
-			 ;; do not propagate vectors and lists.
-			 (or (number? const)  
-			     (symbol? const)
-			     (char? const)
-			     (boolean? const)
-			     (eqv? #unspecified const))))
-		 value)
-		((and constant?
-		      value
-		      (Ref? value)
-		      (with-access::Ref value (var)
-			 (with-access::Var var (constant?)
-			    (and constant?
-				 (not (eq? (Var-kind var) 'this))))))
-		 (transitive-value value))
-		(else var-ref))))))

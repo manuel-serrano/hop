@@ -83,7 +83,8 @@
 		(inits (map (lambda (formal repl-var)
 			       (instantiate::Set!
 				  (lvalue formal)
-				  (val (var-reference repl-var))))
+				  (val (var-reference repl-var
+						      :location formal))))
 			    formals
 			    replacement-vars))
 		(tail-rec (instantiate::Tail-rec

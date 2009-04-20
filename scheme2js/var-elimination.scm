@@ -53,7 +53,9 @@
 		  (when (var-is-available? var)
 		     (hashtable-put! fun-ht var
 				     (lambda (new-lvar)
-					(let ((ref (var-reference new-lvar)))
+					(let ((ref (var-reference
+						    new-lvar
+						    :location (car formals))))
 					   (widen!::Replaced-Var var)
 					   (set-car! formals ref))))
 		     (loop (cdr formals))))))

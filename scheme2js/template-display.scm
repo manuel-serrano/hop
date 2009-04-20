@@ -65,6 +65,16 @@
 
 
 (define-macro (template-display p env . Largs)
+   (define (my-error msg val)
+      (let ((loc (if (epair? Largs) (cer Largs) #f)))
+	 (my-error2 msg val loc)))
+   (define (my-error2 msg val loc)
+      (match-case loc
+	 ((at ?fname ?loc)
+	  (error/location "template-display" msg val fname loc))
+	 (else
+	  (error "template-display" msg val))))
+
    (define (nl-disp expr)
       `(begin (when (Display-Env-after-NL? ,env)
 		 (display (indent env) ,p)
@@ -111,13 +121,9 @@
 	  '())
 	 ((and hole
 	       (null? patterns))
-	  (error "template-display"
-		 "?@ without obligatory hole"
-		 Largs))
+	  (my-error "?@ without obligatory hole" Largs))
 	 ((null? patterns)
-	  (error "template-display"
-		 "too many arguments"
-		 Largs))
+	  (my-error "too many arguments" Largs))
 	 (else
 	  (match-case (car patterns)
 	     (((kwote ?@) ?test . ?cond-args)
@@ -244,9 +250,7 @@
 			       (cons (car chars) rev-non-special))))))))
 	     ((__HOLE_P_DISPLAY__)
 	      (when (not hole)
-		 (error "template-display"
-			"~@ without surrounding ?@ (or more than one ~@)"
-			Largs))
+		 (my-error "~@ without surrounding ?@ (or more than one ~@)" Largs))
 	      (if (and (not (null? args))
 		       (pair? (car args)) ;; a symbol
 		       (eq? (caar args) 'quote))
@@ -256,9 +260,7 @@
 		    ,@(aux (cdr patterns) args #f))))
 	     ((__EXEC_P_DISPLAY__)
 	      (when (null? args)
-		 (error "template-display"
-			"not enough arguments (~e)"
-			Largs))
+		 (my-error "not enough arguments (~e)" Largs))
 	      (match-case (car args)
 		 ((separated ?separator
 			     (lambda ?formals
@@ -310,25 +312,22 @@
 		    ,@(aux (cdr patterns) (cdr args) hole)))))
 	     ((__VALUE_P_DISPLAY__)
 	      (when (null? args)
-		 (error "template-display"
-			"not enough arguments (~a or $)"
-			Largs))
+		 (my-error "not enough arguments (~a or $)" Largs))
 	      `(,(nl-disp (car args))
 		,@(aux (cdr patterns) (cdr args) hole)))
 	     ((__MAYBE_P_DISPLAY__)
 	      (when (null? args)
-		 (error "template-display"
-			"not enough arguments (~?)"
-			Largs))
+		 (my-error "not enough arguments (~?)" Largs))
 	      (let ((tmp (gensym 'tmp)))
 		 `((let ((,tmp ,(car args)))
 		      (when ,tmp
 			 ,(nl-disp tmp))
 		      ,@(aux (cdr patterns) (cdr args) hole)))))
 	     (else
-	      (error "template-display"
-		     "bad pattern"
-		     (car patterns)))))))
+	      (my-error2 "bad pattern" (car patterns)
+			 (if (epair? (car patterns))
+			     (car patterns)
+			     patterns)))))))
    (receive (patterns args)
       (split-args Largs)
       `(begin ,@(aux patterns args #f))))

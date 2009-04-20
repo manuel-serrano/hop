@@ -1,5 +1,6 @@
 (module side
    (import config
+	   error
 	   nodes
 	   export-desc
 	   walk
@@ -93,11 +94,13 @@
    (with-access::Set! this (lvalue val)
       (walk val)
       (with-access::Ref lvalue (var)
-	 (if (and (eq? (Var-kind var) 'imported)
-		  (Var-constant? var)) ;; equal to exported-as-const?
-	     (error "Set!"
-		    "Imported variable is constant, and must not be modified."
-		    (Var-id var)))
+	 (when (and (eq? (Var-kind var) 'imported)
+		    (Var-constant? var)) ;; equal to exported-as-const?
+	    (scheme2js-error
+	     "Set!"
+	     "Imported variable is constant, and must not be modified."
+	     (Var-id var)
+	     lvalue))
 	 (with-access::Var var (already-defined? constant? value)
 	    (if already-defined?
 		(begin

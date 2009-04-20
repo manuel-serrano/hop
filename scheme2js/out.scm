@@ -77,7 +77,7 @@
    (string-append "sc_counter_" (number->string nb)))
 
 (define-nmethod (Node.compile ignored ignored2)
-   (error #f "forgot node-type: " this))
+   (error #f "Internal Error: forgot node-type" this))
 
 ;; return true, if we should use nested new sc_Pairs instead of sc_list(...).
 (define (small-list/pair? l)
@@ -144,7 +144,7 @@
 	      "(new sc_Keyword(\"~a\"))" (keyword->string const))
 	   (template-display p env
 	      "\"~a~a\"" *keyword-prefix* (keyword->string const))))
-      (else (error #f "forgot Const-type: " const))))
+      (else (error #f "Internal Error: forgot Const-type" const))))
    
 (define-nmethod (Const.compile p stmt?)
    (with-access::Const this (value)
@@ -285,7 +285,7 @@
 		    "return ~e" (emit-commands (cdr rev-hoisted))))
 		(else
 		 (error "out"
-			"forgot to implement hoisted command"
+			"Internal Error: forgot to implement hoisted command"
 			(car rev-hoisted))))))
 
       (with-access::Lambda this (call/cc-hoisted)

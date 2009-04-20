@@ -1,21 +1,46 @@
 (module expanders
    (import expand
+	   error
 	   (runtime-ref pobject-conv)))
 
+(define (emap1 f orig-L)
+   (let loop ((L orig-L)
+	      (rev-res '()))
+      (cond
+	 ((null? L)
+	  (reverse! rev-res))
+	 ((epair? L)
+	  (loop (cdr L)
+		(econs (f (car L))
+		       rev-res
+		       (cer L))))
+	 ((pair? L)
+	  (loop (cdr L)
+		(cons (f (car L))
+		      rev-res)))
+	 (else
+	  (scheme2js-error
+	   "expander"
+	   "not a list"
+	   orig-L
+	   orig-L)))))
+     
 ;; don't go into quotes.
-(install-expander! 'quote identify-expander)
+(install-expander! 'quote identity-expander)
 
 ;; lambda.
 (install-expander!
  'lambda
- (lambda (x e macros-ht)
+ (lambda (x e)
     (match-case x
        ((?- ?formal ?- . (? list?))
-	;; ignore formal
-	(set-cdr! (cdr x) (map! (lambda (y) (e y e macros-ht))
+	;; do not expand formal
+	(set-cdr! (cdr x) (map! (lambda (y) (e y e))
 				(cddr x))))
        (else
-	(error "lambda-expand" "bad 'lambda'-form" x)))
+	(scheme2js-error "lambda-expand"
+			 "bad 'lambda'-form"
+			 x x)))
     x))
 
 ;; not used.
@@ -27,106 +52,61 @@
 ;        (install-expander! id (eval expander))
 ;        #unspecified)))
 
-
 (install-expander!
  'define-macro
- (lambda (x e macros-ht)
-
-    (define (deep-copy o)
-       (cond
-	  ((epair? o)
-	   (econs (deep-copy (car o))
-		  (deep-copy (cdr o))
-		  (deep-copy (cer o))))
-	  ((pair? o)
-	   (cons (deep-copy (car o))
-		 (deep-copy (cdr o))))
-	  ((vector? o)
-	   (copy-vector o (vector-length o)))
-	  ((string? o)
-	   (string-copy o))
-	  (else
-	   o)))
-
-    (define (destructure pat arg bindings)
-       (cond
-	  ((null? pat) bindings)
-	  ((symbol? pat) `((,pat ,arg) ,@bindings))
-	  ((pair? pat)
-	   (destructure (car pat)
-			`(car ,arg)
-			(destructure (cdr pat) `(cdr ,arg) bindings)))))
-
-    (define (macro->expander macro)
-       (match-case macro
-	  ((?- (?name . ?args) ?e0 . ?body)
-	   (let ((L (gensym 'L)))
-	      (eval `(lambda (x e macros-ht)
-			(let ((,L (cdr x)))
-			   (e
-			    ;; macros might reference lists twice.
-			    ;; by deep-copying the result, we are sure,
-			    ;; that we don't share anything.
-			    (,deep-copy
-			     (let ,(destructure args L '())
-				,e0 ,@body))
-			    e macros-ht))))))))
-       
-    (define (lazy-macro macro)
-       (lambda (x e macros-ht)
-	  (let ((name (car (cadr macro)))
-		(macro-expander (macro->expander macro)))
-	     ;; replace this lazy fun by the actual macro-expander.
-	     ;; CARE: we assume that the macros-ht is the same as before, and
-	     ;; that there has not been made any copy... In other words: we
-	     ;; assume that we actually replace the original entry.
-	     (hashtable-put! macros-ht name macro-expander)
-	     ;; execute the macro.
-	     (macro-expander x e macros-ht))))
-
+ (lambda (x e)
     (match-case x
        ((?- (?name . ?args) ?e0 . ?body)
-	   (hashtable-put! macros-ht
+	(let ((ht (module-macro-ht)))
+	   (hashtable-put! ht
 			   name
-			   (lazy-macro x))
-	   #unspecified)
+			   (lazy-macro x ht))
+	   #unspecified))
        (else
-	(error "define-macro" "Illegal 'define-macro' syntax" x)))))
+	(scheme2js-error "define-macro"
+			 "Illegal 'define-macro' syntax"
+			 x x)))))
 
 (install-expander! 'when
-		   (lambda (x e macros-ht)
+		   (lambda (x e)
 		      (match-case x
 			 ((?- ?test . ?body)
 			  (e
 			   `(if ,test (begin ,@body) #f)
-			   e macros-ht))
+			   e))
 			 (else
-			  (error "when-expand" "Invalid when form: " x)))))
+			  (scheme2js-error "when-expand"
+					   "Invalid 'when' form"
+					   x x)))))
 
 (install-expander! 'unless
-		   (lambda (x e macros-ht)
+		   (lambda (x e)
 		      (match-case x
 			 ((?- ?test . ?body)
 			  (e
 			   `(if ,test #f (begin ,@body))
-			   e macros-ht))
+			   e))
 			 (else
-			  (error "unless-expand" "Invalid unless form: " x)))))
+			  (scheme2js-error "unless-expand"
+					   "Invalid 'unless' form"
+					   x x)))))
 
 (install-expander! 'define
-		   (lambda (x e macros-ht)
+		   (lambda (x e)
 		      (match-case x
 			 ((?- (?fun . ?formals) . ?body)
 			  (e
 			   `(define ,fun (lambda ,formals ,@body))
-			   e macros-ht))
+			   e))
 			 ((?- ?var ?val)
-			  `(define ,(e var e macros-ht) ,(e val e macros-ht)))
+			  `(define ,(e var e) ,(e val e)))
 			 (else
-			  (error "define-expand" "Invalid define-form: " x)))))
+			  (scheme2js-error "define-expand"
+					   "Invalid 'define'-form"
+					   x x)))))
 
 (install-expander! 'or
-		   (lambda (x e macros-ht)
+		   (lambda (x e)
 		      (match-case x
 			 ((?-) #f)
 			 ((?- . (and (? pair?) ?tests))
@@ -137,12 +117,14 @@
 					(if ,tmp-var
 					    ,tmp-var
 					    (or ,@(cdr tests))))))
-			     e macros-ht))
+			     e))
 			 (else
-			  (error "or-expand" "Invalid 'or'-form" x)))))
+			  (scheme2js-error "or-expand"
+					   "Invalid 'or'-form"
+					   x x)))))
 
 (install-expander! 'and
-		   (lambda (x e macros-ht)
+		   (lambda (x e)
 		      (match-case x
 			 ((?-) #t)
 			 ((?- . (and (? pair?) ?tests))
@@ -151,13 +133,15 @@
 				 `(if ,(car tests)
 				      (and ,@(cdr tests))
 				      #f))
-			     e macros-ht))
+			     e))
 			 (else
-			  (error "and-expand" "Invalid 'and'-form" x)))))
+			  (scheme2js-error "and-expand"
+					   "Invalid 'and'-form"
+					   x x)))))
 
 (install-expander!
  'do
- (lambda (x e macros-ht)
+ (lambda (x e)
     (match-case x
        ((?- ?bindings (?test . ?finally) . ?commands)
 	(unless (and (list? finally)
@@ -171,25 +155,40 @@
 					 (and (pair? (cddr b))
 					      (null? (cdddr b))))))
 			     bindings))
-	   (error "do-expand" "Invalid 'do'-form" x))
+	   (scheme2js-error "do-expand" "Invalid 'do'-form" x x))
 	(let ((loop (gensym 'doloop)))
-	   (e `(let ,loop ,(map (lambda (binding)
-				   (list (car binding)
-					 (cadr binding)))
-				bindings)
+	   (e `(let ,loop ,(emap1 (lambda (binding)
+				     (cond
+					((and (epair? binding)
+					      (epair? (cdr binding)))
+					 (econs (car binding)
+						(econs (cadr binding)
+						       '()
+						       (cer (cdr binding)))
+						(cer binding)))
+					((and (pair? binding)
+					      (pair? (cdr binding)))
+					 (list (car binding) (cadr binding)))
+					(else
+					 (scheme2js-error
+					  "do-expand"
+					  "invalid binding in 'do' form"
+					  binding
+					  binding))))
+				  bindings)
 		    (if ,test
 			(begin ,@finally)
 			(begin
 			   ,@commands
 			   (,loop
-			    ,@(map (lambda (bind)
-				      (if (null? (cddr bind))
-					  (car bind)
-					  (caddr bind)))
-				   bindings)))))
-	      e macros-ht)))
+			    ,@(emap1 (lambda (bind)
+					(if (null? (cddr bind))
+					    (car bind)
+					    (caddr bind)))
+				     bindings)))))
+	      e)))
        (else
-	(error "do-expand" "Invalid 'do'-form" x)))))
+	(scheme2js-error "do-expand" "Invalid 'do'-form" x x)))))
 
 (define (quasiquote-expand! x level)
    ;; conservative: if the function returns #f, then there's
@@ -263,7 +262,9 @@
 		 (set-cdr! x '())
 		 (loop x last-pair))
 		((unquote)
-		 (error "quasiquote-expander" "Illegal Unquote form" x))
+		 (scheme2js-error "quasiquote-expander"
+				  "Illegal Unquote form"
+				  x x))
 		((?fst . ?-)
 		 (set-car! x (quasiquote-expand! fst level))
 		 (loop (cdr x)
@@ -273,17 +274,17 @@
 	  head))))
 
 (install-expander! 'quasiquote
-		   (lambda (x e macros-ht)
+		   (lambda (x e)
 		      (if (or (null? (cdr x))
 			      (not (pair? (cdr x)))
 			      (not (null? (cddr x))))
-			  (error "quasiquote-expander"
-				 "Illegal Quasiquote form"
-				 x))
-		      (e (quasiquote-expand! (cadr x) 0) e macros-ht)))
+			  (scheme2js-error "quasiquote-expander"
+					   "Illegal Quasiquote form"
+					   x x))
+		      (e (quasiquote-expand! (cadr x) 0) e)))
 
 (install-expander! 'cond
-		   (lambda (x e macros-ht)
+		   (lambda (x e)
 		      (e (match-case x
 			    ((?-) #f)
 			    ((?- (else . ?alternate))
@@ -300,11 +301,11 @@
 			     `(if ,test
 				  (begin ,@consequent)
 				  (cond ,@rest))))
-			 e macros-ht)))
+			 e)))
 
 ;; transform let* into nested lets
 (install-expander! 'let*
-		   (lambda (x e macros-ht)
+		   (lambda (x e)
 		      (match-case x
 			 ((?- ((?v ?val) . ?bindings) . ?body)
 			  (e `(let ((,v ,val))
@@ -312,12 +313,26 @@
 				       body
 				       `((let* ,bindings
 					    ,@body))))
-			     e macros-ht))
+			     e))
 			 (else
-			  (error "let*-expand"
-				 "Invalid 'let*'-form"
-				 x)))))
-		      
+			  (scheme2js-error "let*-expand"
+					   "Invalid 'let*'-form"
+					   x x)))))
+
+(define (init-values bindings)
+   (let loop ((bs bindings)
+	      (rev-res '()))
+      (if (null? bs)
+	  (reverse! rev-res)
+	  (let ((binding (car bs)))
+	     (if (epair? (cdr binding))
+		 (loop (cdr bs)
+		       (econs (cadr binding)
+			      rev-res
+			      (cer (cdr binding))))
+		 (loop (cdr bs)
+		       (cons (cadr binding) rev-res)))))))
+
 (define (expand-named-let expr)
    ;; we know it's of form (?- (? symbol?) (? list?) . ?-)
    (let* ((loop-name (cadr expr))
@@ -329,20 +344,20 @@
 			      (null? (cddr b))
 			      (symbol? (car b))))
 		      binding-clauses)
-	 (error "named-let expand"
-		"Invalid named-let form"
-		expr))
-      (let ((vars (map car binding-clauses))
-	    (init-values (map cadr binding-clauses)))
+	 (scheme2js-error "named-let expand"
+			  "Invalid named-let form"
+			  expr expr))
+      (let ((vars (emap1 car binding-clauses))
+	    (init-vals (init-values binding-clauses)))
       ;; correct version would be the following expansion
 ;      `((letrec ((,loop-name (lambda ,vars ,@body)))
 ;	   ,loop-name)
 ;	,@init-values)
       ;; this version is however more efficient:
 	 `(letrec ((,loop-name (lambda ,vars ,@body)))
-	     (,loop-name ,@init-values)))))
+	     (,loop-name ,@init-vals)))))
 
-(define (expand-let x e macros-ht)
+(define (expand-let x e)
    ;; we know it's of form (?- (? list?) . ?-)
    (let* ((bindings (cadr x))
 	  (body (cddr x)))
@@ -352,94 +367,31 @@
 			      (null? (cddr b))
 			      (symbol? (car b))))
 		      bindings)
-	 (error "let expand"
-		"Invalid 'let' form"
-		x))
-
-      `(let ,(map (lambda (binding)
-		     (list (e (car binding) e macros-ht)
-			   (e (cadr binding) e macros-ht)))
-		  bindings)
-	  ,@(map (lambda (y) (e y e macros-ht)) body))))
+	 (scheme2js-error "let expand"
+			  "Invalid 'let' form"
+			  x x))
+      (for-each (lambda (binding)
+		   (set-car! binding (e (car binding) e))
+		   (set-car! (cdr binding)
+			     (e (cadr binding) e)))
+		bindings)
+		   
+      `(let ,bindings
+	  ,@(map! (lambda (y) (e y e)) body))))
 
 (install-expander! 'let ;; named let
-		   (lambda (x e macros-ht)
+		   (lambda (x e)
 		      (match-case x
 			 ((?- (? symbol?) (? list?) . ?-)
-			  (e (expand-named-let x) e macros-ht))
+			  (e (expand-named-let x) e))
 			 ((?- (? list?) . ?-)
-			  (expand-let x e macros-ht))
+			  (expand-let x e))
 			 (else
-			  (error "let expand" "Illegal form" x)))))
-
-#;(install-expander! 'define-struct
- (lambda (x e macros-ht)
-    (match-case x
-       ((?- ?name . ?fields)
-	(unless (and (symbol? name)
-		     (list? fields)
-		     (every (lambda (f)
-			       (or (symbol? f)
-				   (and (pair? f)
-					(symbol? (car f))
-					(pair? (cdr f))
-					(null? (cddr f)))))
-			    fields))
-	   (error "define-struct expand"
-		  "Illegal 'define-struct' form"
-		  x))
-	(let* ((field-ids (map (lambda (f)
-				  (if (pair? f) (car f) f))
-			       fields))
-	       (field-getters (map (lambda (field)
-				      (symbol-append name '- field))
-				   field-ids))
-	       (field-setters (map (lambda (field)
-				      (symbol-append name '- field '-set!))
-				   field-ids))
-	       (defaults (map (lambda (f)
-				 (if (pair? f) (cadr f) #unspecified))
-			      fields))
-	       (tmp (gensym)))
-	   `(begin
-	       (define ,(symbol-append 'make- name)
-		  (lambda args (let ((,tmp (make-struct ',name)))
-				  ,@(map (lambda (setter default)
-					    `(if (null? args)
-						 (,setter ,tmp ,default)
-						 (begin
-						    (,setter ,tmp (car args))
-						    (set! args (cdr args)))))
-					 field-setters
-					 defaults)
-				  ,tmp)))
-	       ;; alias for make-name
-	       (define ,name ,(symbol-append 'make- name))
-	       (define ,(symbol-append name '?)
-		  (lambda (s) (struct-named? ',name s)))
-	       ,@(map (lambda (field getter setter)
-			 `(begin
-			     (define ,getter
-				(lambda (s)
-				   (struct-field s
-						 ',name
-						 ',(symbol-append 'f- field))))
-			     (define ,setter
-				(lambda (s val)
-				   (struct-field-set! s
-						      ',name
-						      ',(symbol-append 'f- field)
-						      val)))))
-		      field-ids
-		      field-getters
-		      field-setters))))
-       (else
-	(error "define-struct expand"
-	       "Illegal 'define-struct' form"
-	       x)))))
+			  (scheme2js-error "let expand" "Illegal 'let' form"
+					   x x)))))
 
 (install-expander! 'define-struct
- (lambda (x e macros-ht)
+ (lambda (x e)
     (match-case x
        ((?- ?name . ?fields)
 	(unless (and (symbol? name)
@@ -451,21 +403,21 @@
 					(pair? (cdr f))
 					(null? (cddr f)))))
 			    fields))
-	   (error "define-struct expand"
-		  "Illegal 'define-struct' form"
-		  x))
-	(let* ((field-ids (map (lambda (f)
-				  (if (pair? f) (car f) f))
-			       fields))
-	       (field-getters (map (lambda (field)
-				      (symbol-append name '- field))
-				   field-ids))
-	       (field-setters (map (lambda (field)
-				      (symbol-append name '- field '-set!))
-				   field-ids))
-	       (defaults (map (lambda (f)
-				 (if (pair? f) (cadr f) '()))
-			      fields))
+	   (scheme2js-error "define-struct expand"
+			    "Illegal 'define-struct' form"
+			    x x))
+	(let* ((field-ids (emap1 (lambda (f)
+				    (if (pair? f) (car f) f))
+				 fields))
+	       (field-getters (emap1 (lambda (field)
+					(symbol-append name '- field))
+				     field-ids))
+	       (field-setters (emap1 (lambda (field)
+					(symbol-append name '- field '-set!))
+				     field-ids))
+	       (defaults (emap1 (lambda (f)
+				   (if (pair? f) (cadr f) '()))
+				fields))
 	       (tmp (gensym)))
 	   `(begin
 	       (define ,(symbol-append 'make- name)
@@ -492,24 +444,24 @@
 		      field-getters
 		      field-setters))))
        (else
-	(error "define-struct expand"
-	       "Illegal 'define-struct' form"
-	       x)))))
+	(scheme2js-error "define-struct expand"
+			 "Illegal 'define-struct' form"
+			 x x)))))
 
 (install-expander! 'delay
-		   (lambda (x e macros-ht)
+		   (lambda (x e)
 		      (match-case x
 			 ((?- ?exp)
 			  (e `(,(runtime-ref 'make-promise)
-			       (lambda () ,exp)) e macros-ht))
+			       (lambda () ,exp)) e))
 			 (else
-			  (error "delay expand"
-				 "Illegal 'delay' form"
-				 x)))))
+			  (scheme2js-error "delay expand"
+					   "Illegal 'delay' form"
+					   x x)))))
 
 (install-expander!
  'bind-exit
- (lambda (x e macros-ht)
+ (lambda (x e)
     (match-case x
        ((?- (?escape) ?expr . ?Lrest)
 	(e
@@ -517,13 +469,13 @@
 	   (lambda (,escape)
 	      ,expr
 	      ,@Lrest))
-	 e macros-ht))
+	 e))
        (else
-	(error "bind-exit" "Invalid bind-exit-form: " x)))))
+	(scheme2js-error "bind-exit" "Invalid 'bind-exit' form" x x)))))
 
 (install-expander!
  'with-handler
- (lambda (x e macros-ht)
+ (lambda (x e)
     (match-case x
        ((?- ?handler ?expr . ?Lrest)
 	(e
@@ -532,11 +484,11 @@
 	   (lambda ()
 	      ,expr
 	      ,@Lrest))
-	 e macros-ht))
+	 e))
        (else
-	(error "with-handler" "Invalid with-handler-form: " x)))))
+	(scheme2js-error "with-handler" "Invalid 'with-handler' form" x x)))))
 
-(define (receive-expander x e macros-ht)
+(define (receive-expander x e)
    (match-case x
       ((?- ?vars ?producer ?expr . ?Lrest)
        (e
@@ -545,13 +497,13 @@
 	  (lambda ,vars
 	     ,expr
 	     ,@Lrest))
-	e macros-ht))
+	e))
       (else
-       (error "receive/multiple-value-bind"
-	      "Invalid form: "
-	      x))))
+       (scheme2js-error "receive/multiple-value-bind"
+	      "Invalid 'receive' form"
+	      x x))))
 
 (install-expander! 'receive receive-expander)
 (install-expander! 'multiple-value-bind receive-expander)
 
-(install-expander! '@ (lambda (x e macros-ht) x))
+(install-expander! '@ (lambda (x e) x))

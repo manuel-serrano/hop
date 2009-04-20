@@ -54,7 +54,9 @@
 (define (simplified-begin bnode::Begin)
    (with-access::Begin bnode (exprs)
       (cond
-	 ((null? exprs) (instantiate::Const (value #unspecified)))
+	 ((null? exprs) (instantiate::Const
+			   (location (Node-location bnode))
+			   (value #unspecified)))
 	 ((null? (cdr exprs)) (car exprs))
 	 (else
 	  bnode))))
@@ -91,6 +93,7 @@
 	  (begin
 	     (default-walk! this surrounding-fun)
 	     (let ((resume-node (instantiate::Call/cc-Resume
+				   (location (Node-location this))
 				   (indices (list call/cc-index)))))
 		(instantiate::Begin
 		   (exprs (list this resume-node))))))))

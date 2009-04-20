@@ -1,5 +1,6 @@
 (module infotron
    (import verbose
+	   error
 	   module-system
 	   mutable-strings
 	   config)
@@ -15,8 +16,21 @@
 (define (module->infotron! module)
    (define (make-uuid a-list name)
       (let ((entry (assq 'uuid a-list)))
-	 (if entry
-	     (cadr entry)
+	 (cond
+	    ((and entry
+		  (or (not (pair? (cdr entry)))
+		      (not (null? (cddr entry)))))
+	     (scheme2js-error "infotron"
+			      "bad 'uuid' clause"
+			      entry
+			      entry))
+	    ((and entry
+		  (not (string? (cadr entry))))
+	     (scheme2js-error "infotron"
+			      "uuid must be given as string"
+			      (cadr entry)
+			      (cdr entry)))
+	    (else
 	     (let ((seed-entry (assq 'uuid-seed a-list)))
 		(if seed-entry
 		    (md5sum-string (with-output-to-string
@@ -27,8 +41,27 @@
 		       (warning "uuid will be randomly generated")
 		       (md5sum-string
 			(with-output-to-string
-			   (lambda () (print (current-seconds)))))))))))
-   
+			   (lambda () (print (current-seconds))))))))))))
+
+   (define (get-and-verify-config-name a-list)
+      (let ((entry (assq 'config-name a-list)))
+	 (cond
+	    ((and entry
+		  (or (not (pair? (cdr entry)))
+		      (not (null? (cddr entry)))))
+	     (scheme2js-error "infotron"
+			      "bad 'config-name' clause"
+			      entry
+			      entry))
+	    ((and entry
+		  (not (symbol? (cadr entry))))
+	     (scheme2js-error "infotron"
+			      "config-name must be a symbol"
+			      (cadr entry)
+			      (cdr entry)))
+	    (else
+	     *default-config-name*))))
+      
    (verbose "*infotron*")
    (define (extract-entries a-list type)
       (append-map cdr
@@ -44,8 +77,7 @@
 	  (module-name (WIP-Unit-name module))
 	  (a-list (filter pair? header))
 	  (uuid (make-uuid a-list module-name))
-	  (config-name (let ((entry (assq 'config-name a-list)))
-			  (if entry (cadr entry) *default-config-name*)))
+	  (config-name (get-and-verify-config-name a-list))
 	  (iterms (extract-entries a-list 'iterms))
 	  (oterms (extract-entries a-list 'oterms))
 	  (properties (extract-entries a-list 'properties))
@@ -56,14 +88,16 @@
 	  (exports (WIP-Unit-exports module))
 	  (macros (WIP-Unit-macros module)))
       (verbose "Infotron " module-name " has uuid " uuid) 
-      (unless (string? uuid)
-	 (error "infotron" "uuid must be given (as string)" uuid))
-      (unless (symbol? config-name)
-	 (error "infotron" "config-name must be a symbol" config-name))
       (unless (null? exports)
-	 (error "infotron" "infotrons must not export variables" exports))
+	 (scheme2js-error "infotron"
+			  "infotrons must not export variables"
+			  exports
+			  exports))
       (unless (null? macros)
-	 (error "infotron" "infotrons must not export macros" macros))
+	 (scheme2js-error "infotron"
+			  "infotrons must not export macros"
+			  macros
+			  macros))
       (let ((tl (infotron-preexpand (WIP-Unit-top-level module)
 				    BLUEPRINT
 				    Object

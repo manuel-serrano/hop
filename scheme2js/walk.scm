@@ -24,11 +24,17 @@
 ;;      (optim! n env x y))
 ;;   BODY)
 (define-macro (define-nmethod args . body)
+   (define (my-error msg val)
+      (let ((loc (if (epair? args) (cer meta) #f)))
+	 (match-case loc
+	    ((at ?fname ?loc)
+	     (error/location "walk" msg val fname loc))
+	    (else
+	     (error "walk" msg val)))))
+
    (define (without-type sym)
       (if (not (symbol? sym))
-	  (error "walk"
-		 "bad define-nmethod (expected symbol)"
-		 args)
+	  (my-error "bad define-nmethod (expected symbol)" args)
 	  (let* ((str (symbol->string sym))
 		 (pos (string-contains str "::")))
 	     (if pos
@@ -40,10 +46,8 @@
 	  (str-type.name (symbol->string Type.name))
 	  (str-len (string-length str-type.name))
 	  (dot-pos (string-index str-type.name #\.))
-	  (dummy (if (not dot-pos)
-		     (error "walk"
-			    "bad define-nmethod name"
-			    Type.name)))
+	  (dummy (when (not dot-pos)
+		    (my-error "bad define-nmethod name" Type.name)))
 	  (type (string->symbol (substring str-type.name 0 dot-pos)))
 	  (name (string->symbol (substring str-type.name
 					   (+fx dot-pos 1)
@@ -70,44 +74,44 @@
     
 (define-generic (walk0 n::Node env p::procedure)
    (error "walk0"
-	  "forgot Node type"
+	  "Internal Error: forgot Node type"
 	  (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk1 n::Node env p::procedure arg0)
    (error "walk1"
-	  "forgot Node type"
+	  "Internal Error: forgot Node type"
 	  (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk2 n::Node env p::procedure arg0 arg1)
    (error "walk2"
-	  "forgot Node type"
+	  "Internal Error: forgot Node type"
 	  (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk3 n::Node env p::procedure arg0 arg1 arg2)
    (error "walk3"
-	  "forgot Node type"
+	  "Internal Error: forgot Node type"
 	  (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk4 n::Node env p::procedure arg0 arg1 arg2 arg3)
    (error "walk4"
-	  "forgot Node type"
+	  "Internal Error: forgot Node type"
 	  (with-output-to-string (lambda () (write-circle n)))))
 
 (define-generic (walk0! n::Node env p::procedure)
    (error "walk0!"
-	  "forgot Node type"
+	  "Internal Error: forgot Node type"
 	  (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk1! n::Node env p::procedure arg0)
    (error "walk1!"
-	  "forgot Node type"
+	  "Internal Error: forgot Node type"
 	  (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk2! n::Node env p::procedure arg0 arg1)
    (error "walk2!"
-	  "forgot Node type"
+	  "Internal Error: forgot Node type"
 	  (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk3! n::Node env p::procedure arg0 arg1 arg2)
    (error "walk3!"
-	  "forgot Node type"
+	  "Internal Error: forgot Node type"
 	  (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk4! n::Node env p::procedure arg0 arg1 arg2 arg3)
    (error "walk4!"
-	  "forgot Node type"
+	  "Internal Error: forgot Node type"
 	  (with-output-to-string (lambda () (write-circle n)))))
 
 (define-macro (gen-walks class . fields)

@@ -78,7 +78,7 @@
 			(s-end shorted-this))
 		(cond
 		   ((null? s-begin)
-		    (error #f "Must not happen: liveness" '()))
+		    (error 'liveness "Internal error: liveness" '()))
 		   ((eq? (cdr s-begin) (cdr s-end))
 		    ;; this even works for 'if/then/else'
 		    ;; although it isn't optimal.
@@ -104,7 +104,7 @@
    (let ((var this.var))
       (if var.live-begin
 	  (error "Decl-rev-liveness"
-		 "Recursive nodes or 2 Decls for one var: "
+		 "Internal error. Recursive nodes or 2 Decls for one var: "
 		 var.id))
       (if var.live-begin-stack
 	  (let* ((begin-node (car var.live-begin-stack))

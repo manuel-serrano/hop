@@ -8,7 +8,15 @@
 	   (scheme2js-config conf)
 	   (default-config-alist)
 	   (default-scheme2js-config)
-	   (set-optim-level config level)))
+	   (set-optim-level config level)
+	   (configs-backup)
+	   (configs-restore! backuped-config)))
+
+
+(define (configs-backup)
+   (thread-parameter '*config*))
+(define (configs-restore! backuped-config)
+   (thread-parameter-set! '*config* backuped-config))
 
 
 (define (extend-config c conf val)

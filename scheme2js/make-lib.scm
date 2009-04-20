@@ -14,6 +14,7 @@
 	   expand
 	   export-desc
 	   (read-imported-module-file Compilation-Unit WIP-Unit
-	    module-system))
+	    module-system)
+	   (srfi0-declare! srfi0-declared? srfi0))
 
    (eval   (export-all)))
