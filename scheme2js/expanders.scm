@@ -150,6 +150,8 @@
 		     (every? (lambda (b)
 				(and (pair? b)
 				     (symbol? (car b))
+				     ;; at least one initializer
+				     ;; but maybe no next.
 				     (pair? (cdr b))
 				     (or (null? (cddr b))
 					 (and (pair? (cddr b))
