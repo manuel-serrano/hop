@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Apr 18 19:58:31 2009 (serrano)                */
+#*    Last change :  Mon Apr 20 08:46:47 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -647,19 +647,6 @@ rm -f $init 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $init
 
 cat etc/hopscheme.init.in \
-    | sed -e "s|@VERSION@|$version|" \
-          -e "s|@BRANCH@|$branch|" \
-    >> $init
-echo "" >> $init
-chmod a-w $init
-
-# lib/hopwiki.init
-init=lib/hopwiki.init
-mkdir -p lib
-rm -f $init 2> /dev/null
-echo ";* Automatically generated file (don't edit) */" > $init
-
-cat etc/hopwiki.init.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
     >> $init
