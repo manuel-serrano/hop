@@ -19,6 +19,7 @@ executed.
   (hop-share-directory)
   (hop-contribs-directory)
   (hop-weblets-directory)
+  (hop-var-directory)
   (hop-mime-types-file)
 
 
@@ -94,6 +95,15 @@ executed.
 <arguments>
 ^  access  ^   type    ^  current value             ^  short description      ^
 |   r      |  string   |  ++,(hop-weblets-directory)++  | The weblets directory name. |
+</arguments>
+</parameter>
+
+=== ++hop-var-directory++ ===
+<parameter> hop-var-directory
+
+<arguments>
+^  access  ^   type    ^  current value             ^  short description      ^
+|   r      |  string   |  ++,(hop-var-directory)++  | The var directory name. |
 </arguments>
 </parameter>
 

@@ -104,7 +104,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX): \
 $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX): \
    .afile $(OBJECTS)
 	@ $(MAKE) shared-lib \
-             LDINSTALLNAMEDIR=lib/hop/$(HOPRELEASE) \
+             LDINSTALLNAMEDIR=Frameworks/hop/$(HOPRELEASE) \
              BOOTLIBDIR=$(BUILDLIBDIR) \
              FORCELD=true \
              LIBDEST=$@ \
@@ -115,7 +115,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX): \
 $(BUILDLIBDIR)/lib$(TARGETNAME)_e-$(HOPRELEASE).$(SHAREDSUFFIX): \
    .afile $(EOBJECTS)
 	@ $(MAKE) shared-lib \
-             LDINSTALLNAMEDIR=lib/hop/$(HOPRELEASE) \
+             LDINSTALLNAMEDIR=Frameworks/hop/$(HOPRELEASE) \
              BOOTLIBDIR=$(BUILDLIBDIR) \
              OBJECTS=$(EOBJECTS) \
              FORCELD=true \

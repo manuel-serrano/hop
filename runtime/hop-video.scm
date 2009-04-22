@@ -57,7 +57,7 @@
 	 (<SCRIPT> :type "text/javascript"
 	    (format "var ~a = new SWFObject('~a','~a','~a','~a','9','#FFFFFF');"
 		    tmp
-		    (make-file-path (hop-share-directory) "flash" "player.swf")
+		    (make-file-path (hop-flash-directory) "flash" "player.swf")
 		    (xml-make-id id 'video)
 		    width height src)
 	    (format "~a.addParam('allowfullscreen','true');" tmp)

@@ -57,7 +57,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-rc-directory ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-parameter hz-rc-directory (make-file-name (hop-rc-directory) "hz"))
+(define-parameter hz-rc-directory (make-file-name (hop-var-directory) "hz"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-download-directory ...                                        */
@@ -74,7 +74,7 @@
 ;*    hz-weblets-directory ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-parameter hz-weblets-directory
-   (make-file-name (hop-rc-directory) "weblets")
+   (hop-user-weblets-directory)
    (lambda (v)
       (unless (directory? v)
 	 (unless (make-directories v)

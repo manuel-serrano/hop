@@ -34,9 +34,9 @@ Several tutorials are related to [[/hop/hzbuilder|HzBuilder]]:
 
 Serveral other Weblets are also related to [[/hop/hzbuilder|HzBuilder]]:
 
-  * ,(<WEBLETREF> "hz" (make-file-path (hop-weblets-directory) "hz/etc/hz.wiki")): the documentation
- of the HOP Hz package manager.
-  * ,(<WEBLETREF> "weblets" (make-file-path (hop-weblets-directory) "hz/etc/weblets.wiki")): the
+  * ,(<WEBLETREF> "hz" (make-file-path (hop-weblets-directory) "hz" "etc" "hz.wiki")): the
+ documentation of the HOP Hz package manager.
+  * ,(<WEBLETREF> "weblets" (make-file-path (hop-weblets-directory) "hz" "etc" "weblets.wiki")): the
  documentation of the Weblets weblet that let you manage your locals weblets.
 
 

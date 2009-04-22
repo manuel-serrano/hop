@@ -47,8 +47,7 @@
       (set! img-disk-cache
 	    (instantiate::cache-disk
 	       (path (make-file-path
-		      (hop-rc-directory)
-		      "cache"
+		      (hop-cache-directory)
 		      (string-append "img-" (integer->string (hop-port)))))
 	       (out display)))
       (set! img-memory-cache

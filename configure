@@ -89,6 +89,8 @@ ssl="no"
 locevent="true"
 threads=""
 
+hopsrfis=""
+
 rts="hop-dom.js hop-event.js hop-serialize.js base64.js hop-request.js hop-lib.js hop-history.js hopscheme.js"
 
 hopservicebase="/hop"
@@ -171,6 +173,9 @@ while : ; do
     --bcflags=*)
       bcflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
+    --extra-bcflags=*)
+      bcflags="$bcflags $(echo $1 | sed 's/^[-a-z]*=//')";;
+
     --blflags=*)
       blflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
@@ -240,6 +245,9 @@ while : ; do
     --disable-threads)
       threads=no;;
 
+    --srfi=*)
+      hopsrfis="$hopsrfis `echo $1 | sed 's/^[^=]*=//'`";;
+
     -*)
       echo "*** Configure error, unknown option $1" >&2;
       echo >&2;
@@ -281,6 +289,7 @@ while : ; do
       echo "   --disable-locevent.... Disables location event support" >&2;
       echo "   --enable-threads...... Enables multi-threading support (default)" >&2;
       echo "   --disable-threads..... Disables multi-threading support" >&2;
+      echo "   --srfi=sym............ Activate this srfi (during compilation and runtime)" >&2;
       exit -1;
   esac
   shift
@@ -346,7 +355,7 @@ if [ "$ssl " = " " ]; then
 fi
 
 if [ "$ssl" = "yes" ]; then
-  bcflags="$bcflags -srfi enable-ssl"
+  hopsrfis="$hopsrfis enable-ssl"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -370,7 +379,7 @@ if [ "$threads" = "yes" ]; then
     echo "or re-configure and re-install your Bigloo compiler."
     exit 1;
   fi
-  bcflags="$bcflags -srfi enable-threads"
+  hopsrfis="$hopsrfis enable-threads"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -466,6 +475,13 @@ jvmziplibs="$slib $jvmziplibs";
 jvminits="$bigloolibdir/pthread.init $jvminits";
 
 #*---------------------------------------------------------------------*/
+#*    Srfis                                                            */
+#*---------------------------------------------------------------------*/
+for srfi in $hopsrfis; do
+    bcflags="$bcflags -srfi $srfi";
+done
+
+#*---------------------------------------------------------------------*/
 #*    Makefile.hopconfig                                               */
 #*---------------------------------------------------------------------*/
 if [ "$ssl " = "yes " ]; then
@@ -545,6 +561,7 @@ echo ";* Automatically generated file (don't edit) */" > $configure
 
 cat etc/configure.scm.in \
     | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BIGLOOVERSION@|$bglversion|" \
           -e "s|@BRANCH@|$branch|" \
           -e "s|@BACKEND@|$backend|" \
           -e "s|@URL@|$url|" \
@@ -560,6 +577,7 @@ cat etc/configure.scm.in \
           -e "s|@HOPJS@|$hopjs|" \
           -e "s|@HOPJSFILES@|$hopjsfiles|" \
           -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
+          -e "s|@HOPSRFIS@|$hopsrfis|" \
     >> $configure
 
 # etc/hoprc.hop

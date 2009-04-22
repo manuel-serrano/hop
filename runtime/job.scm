@@ -70,7 +70,7 @@
    (with-lock *job-mutex*
       (lambda ()
 	 (thread-start!	(make-thread job-scheduler 'job-scheduler))
-	 (let ((f (make-file-name (hop-rc-directory) (hop-job-file))))
+	 (let ((f (make-file-name (hop-var-directory) (hop-job-file))))
 	    (when (file-exists? f)
 	       (hop-load f))))))
 
@@ -285,7 +285,7 @@
       (display " ") (write (job-repeat j))
       (display " ") (write (job-interval j)) (newline)
       (print " )"))
-   (with-output-to-file (make-file-name (hop-rc-directory) (hop-job-file))
+   (with-output-to-file (make-file-name (hop-var-directory) (hop-job-file))
       (lambda ()
 	 (for-each job-dump *jobs-queue*))))
 	    

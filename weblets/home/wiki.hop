@@ -25,8 +25,7 @@
 ;*---------------------------------------------------------------------*/
 (define wiki-cache
    (instantiate::cache-disk
-      (path (make-file-path (hop-rc-directory)
-			    "cache"
+      (path (make-file-path (hop-cache-directory)
 			    (string-append "home-"
 					   (integer->string (hop-port)))))
       (out (lambda (o p)

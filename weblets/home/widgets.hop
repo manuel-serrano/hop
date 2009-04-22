@@ -27,7 +27,7 @@
       (<HEAD>
 	 :title "Hop Home page"
 	 :include "hop-notepad" "hop-window" "hop-foldlist"
-	 :jscript (make-file-path (hop-share-directory) "flash" "swfobject.js")
+	 :jscript (make-file-path (hop-flash-directory) "swfobject.js")
 	 :favicon (service-resource home "etc/gohome.png")
 	 (<LINK> :rel "alternate" :type "application/rss+xml"
 	    :title "Latest HOP weblets"

@@ -67,6 +67,33 @@
        (make-server-socket (hop-port) :backlog (hop-somaxconn))))
 
 ;*---------------------------------------------------------------------*/
+;*    create-var-setup ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Create the Hop server socket according to user options.          */
+;*---------------------------------------------------------------------*/
+(define (create-var-setup)
+   (let* ((var-dir (hop-var-directory))
+	  (f (make-file-path var-dir "hop-setup.js")))
+      (unless (directory? var-dir)
+	 ;; try to create it. maybe it was just never used before
+	 (make-directories var-dir)
+	 (when (not (directory? var-dir))
+	    (error 'hop
+		   "could not create var directory"
+		   var-dir)))
+      (with-output-to-file f
+	 (lambda ()
+	    (print
+"function hop_etc_directory()     { return \"" (hop-etc-directory) "\"; }
+function hop_bin_directory()      { return \"" (hop-bin-directory) "\"; }
+function hop_lib_directory()      { return \"" (hop-lib-directory) "\"; }
+function hop_share_directory()    { return \"" (hop-share-directory) "\"; }
+function hop_contribs_directory() { return \"" (hop-contribs-directory) "\"; }
+function hop_weblets_directory()      { return \"" (hop-weblets-directory) "\"; }
+function hop_user_weblets_directory() { return \"" (hop-user-weblets-directory) "\"; }
+function hop_var_directory()          { return \"" (hop-var-directory) "\"; }")))))
+
+;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
@@ -75,11 +102,11 @@
    ;; catch critical signals
    (signal-init!)
    ;; set the Hop cond-expand identification
-   (register-eval-srfi! 'hop)
-   (register-eval-srfi! (string->symbol (format "hop-~a" (hop-version))))
-   (register-eval-srfi! (string->symbol (format "hop-~a" (hop-branch))))
-   (cond-expand (enable-threads (register-eval-srfi! 'enable-threads)))
+   (for-each register-eval-srfi! (hop-autoconf-srfis))
    ;; set the library load path
+   (cond-expand
+      (macosx-bundle
+       (bigloo-library-path-set! (cons (bundle-bigloo-lib-path) (bigloo-library-path)))))
    (let ((hop-path (make-file-path (hop-lib-directory) "hop" (hop-version))))
       (bigloo-library-path-set! (cons hop-path (bigloo-library-path))))
    ;; preload the hop libraries
@@ -94,12 +121,13 @@
    ;; clear the module cache unless we preserve
    ;; caches from one session to another
    (unless (hop-restore-disk-cache)
-      (let ((c (make-file-path (hop-rc-directory) "cache" (hop-api-cache))))
+      (let ((c (make-file-path (hop-cache-directory) (hop-api-cache))))
 	 (when (directory? c)
 	    (delete-path c)
 	    (make-directory c))))
    ;; parse the command line
    (parse-args args)
+   (create-var-setup)
    (hop-verb 1 "Starting hop (v" (hop-version)
 	     ", " (hop-backend)
 	     (cond-expand

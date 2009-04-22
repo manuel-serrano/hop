@@ -43,8 +43,7 @@
 ;*    weblets-cache-dir ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-parameter weblets-cache-dir
-   (make-file-path (hop-rc-directory)
-		   "cache"
+   (make-file-path (hop-cache-directory)
 		   (string-append "weblets-" (integer->string (hop-port)))))
 
 ;*---------------------------------------------------------------------*/

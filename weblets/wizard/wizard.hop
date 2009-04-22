@@ -18,7 +18,11 @@
 ;*    hoprc-dir ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hoprc-dir
-   (make-file-path (getenv "HOME") ".config" "hop"))
+   (cond-expand
+      (macosx
+       (make-file-path (getenv "HOME") "Library" "Preferences" "hop"))
+      (else
+       (make-file-path (getenv "HOME") ".config" "hop"))))
    
 ;*---------------------------------------------------------------------*/
 ;*    wizard ...                                                       */
@@ -441,6 +445,8 @@ of computers that are allowed to use this Hop as proxy.])))))
 	       (newline)
 	       (newline))))
       (list 'save
-	    (format "Accounts for ~a saved in `~a'.<BR>You must now <A href='/hop/shutdown'>restart</a> Hop!" accounts passwdfile))))
+	    (format "Accounts for ~a saved in `~a'.<BR>
+You must now <A href='/hop/shutdown'>shutdown</a> and restart Hop!"
+		    accounts passwdfile))))
 
 

@@ -67,8 +67,13 @@
 	 (("--rc-file" ?file (help "Load alternate rc file"))
 	  (set! rc-file file))
 	 (("--rc-dir" ?dir (help "Set rc directory"))
-	  (hop-rc-directory-set! dir)
-	  (hop-upload-directory-set! (make-file-name dir "upload")))
+	  (hop-rc-directory-set! dir))
+	 (("--var-dir" ?dir (help "Set var directory"))
+	  (hop-var-directory-set! dir)
+	  (hop-upload-directory-set! (make-file-name dir "upload"))
+	  (hop-user-weblets-directory-set! (make-file-name dir "weblets")))
+	 (("--cache-dir" ?dir (help "Set cache directory"))
+	  (hop-cache-directory-set! dir))
 	 (("--script-file" ?file (help "A file loaded before the main loop"))
 	  (hop-script-file-set! file))
 	 (("--enable-autoload" (help "Enable autoload (default)"))
@@ -183,9 +188,19 @@
 	  (hop-restore-disk-cache-set! #t))
 	 (("--no-restore-cache" (help "Do not restore disk caches"))
 	  (hop-restore-disk-cache-set! #f))
-	 (("-?dummy")
-	  (args-parse-usage #f)
-	  (exit 1))
+         (("-?dummy")
+          (cond-expand
+             (macosx-bundle
+              ;; macosx-bundles may get an additional parameter with the
+              ;; process serial number. Just ignore it.
+              (if (string-prefix? "psn_" dummy)
+                  'do-nothing
+                  (begin
+                     (args-parse-usage #f)
+                     (exit 1))))
+             (else
+              (args-parse-usage #f)
+              (exit 1))))
 	 (else
 	  (set! files (cons else files))))
       
@@ -208,8 +223,7 @@
 			      (make-file-name (getenv "HOME") ".mime.types"))))
       
       ;; weblets path
-      (hop-autoload-directory-add!
-       (make-file-name (hop-rc-directory) "weblets"))
+      (hop-autoload-directory-add! (hop-weblets-directory))
       
       ;; init hss, scm compilers, and services
       (init-hss-compiler! (hop-port))
@@ -343,7 +357,7 @@
 ;*    key-filepath ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (key-filepath port)
-   (make-file-name (hop-rc-directory) (key-filename port)))
+   (make-file-name (hop-var-directory) (key-filename port)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-process-key-write ...                                        */
@@ -351,7 +365,7 @@
 ;*    Write the HOP process for other Hop processes.                   */
 ;*---------------------------------------------------------------------*/
 (define (hop-process-key-write key port)
-   (let ((dir (hop-rc-directory)))
+   (let ((dir (hop-var-directory)))
       (when (directory? dir)
 	 (let ((path (make-file-name dir (key-filename port))))
 	    (when (file-exists? path) (delete-file path))
@@ -362,7 +376,7 @@
 ;*    hop-process-key-read ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hop-process-key-read port)
-   (let ((dir (hop-rc-directory)))
+   (let ((dir (hop-var-directory)))
       (when (directory? dir)
 	 (let ((path (make-file-name dir (key-filename port))))
 	    (when (file-exists? path)
@@ -372,7 +386,7 @@
 ;*    hop-process-key-delete ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (hop-process-key-delete port)
-   (let* ((dir (hop-rc-directory))
+   (let* ((dir (hop-var-directory))
 	  (path (make-file-name dir (key-filename port))))
       (when (file-exists? path) (delete-file path))))
    
