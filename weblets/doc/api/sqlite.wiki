@@ -162,6 +162,11 @@ implicitly invoking ++sqlite-format++ on ++fmt++ on and the optional
 ++arg<sub>0</sub>++, ... arguments. The result of the function is
 built by applying ++proc++ to the first value returned by the
 SQLite call.  
+
+~~ Note: user callback (++procedure++) **must not** exit. That is they must
+not invoke a function create by @code{bind-exit}. Exiting from a callback will
+leave the database in a inconsistent state that prevent transactions to
+be rolled back.
 </function>
 
 === ++(sqlite-map db proc fmt arg<sub>0</sub> ...) ===
@@ -180,6 +185,11 @@ implicitly invoking ++sqlite-format++ on ++string++ and the optional
 ++arg<sub>0</sub>++, ... arguments. The result is a list whose
 elements are built by applying ++proc++ to all the values
 returned by the SQLite call.  
+
+~~ Note: user callback (++procedure++) **must not** exit. That is they must
+not invoke a function create by @code{bind-exit}. Exiting from a callback will
+leave the database in a inconsistent state that prevent transactions to
+be rolled back.
 
 Examples:
   (module example
