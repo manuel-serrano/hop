@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Feb 16 10:06:22 2009 (serrano)                */
+;*    Last change :  Wed Apr 22 07:32:08 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
@@ -23,7 +23,7 @@
 ;*---------------------------------------------------------------------*/
 (define-service (shutdown)
    (let ((req (current-request)))
-      (if (authorized-service? req 'admin)
+      (if (or (authorized-service? req 'admin) (authorized-service? req 'shutdown))
 	  (<SHUTDOWN> req (<SPAN> "Shutdown the serving HOP broker..."))
 	  (user-access-denied req))))
 
@@ -45,7 +45,7 @@
 	 :base (service-base-url shutdown req)
 	 :css "shutdown.hss"
 	 :favicon "etc/favicon.png")
-      (<BODY>
+      (<BODY> :id "body"
 	 (<DIV> :align "center"
 	    (<TABLE> :class "shutdown"
 	       (<TR>
@@ -61,7 +61,9 @@
 			(<TR>
 			   (<TD> :id "buttons" :align 'right
 			      (<BUTTON> :onclick
-				 ~(set! document.location "/hop")
+				 ~(begin
+				     (node-style-set! "shutdown" :color "black")
+				     (set! document.location "/hop"))
 				 "Cancel")
 			      (<BUTTON> :id "shutdown" :onclick
 				 ~(let ((but this))
@@ -73,12 +75,15 @@
 					(if (>= i 1)
 					    (let ((m (format "~as" i)))
 					       (innerHTML-set! but m)
+					       (node-style-set! but :color "red")
 					       (after 1000
 						      (lambda () (loop (- i 1)))))
-					    (let ((body (dom-get-element-by-id "buttons")))
+					    (begin
 					       (innerHTML-set! $msg "System down...")
 					       (innerHTML-set! but "0s")
-					       (with-hop ($(service () (exit 0))))))))
+					       (with-hop ($(service () (exit 0)))
+						  (lambda (_) #f)
+						  (lambda (e) #f))))))
 				 "Shutdown"))))))))
 	 (<FOOT>))))
 
