@@ -44,7 +44,8 @@ loads programs in the server.
 
 .SH CONFIGURATION FILE
 Each \fBHop\fR's user can use a special configuration file named
-`~/.config/hoprc.hop'. This file makes it possible to modify the 
+`~/.config/hoprc.hop' (or ~/Library/Preferences/hop/hoprc.hop under
+MacOsX). This file makes it possible to modify the 
 behaviour of the server. This file is a regular Hop program file.
 See the documentation for details.
 

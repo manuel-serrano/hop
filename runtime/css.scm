@@ -207,8 +207,7 @@
    ;; hss cache
    (set! hss-cache
 	 (instantiate::cache-disk
-	    (path (make-file-path (hop-rc-directory)
-				  "cache"
+	    (path (make-file-path (hop-cache-directory)
 				  (format "hss-~a" port)))
 	    (out (lambda (o p) (css-write o p))))))
 

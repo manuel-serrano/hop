@@ -18,7 +18,11 @@
 ;*    hoprc-dir ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hoprc-dir
-   (make-file-path (getenv "HOME") ".config" "hop"))
+   (cond-expand
+      (macosx
+       (make-file-path (getenv "HOME") "Library" "Preferences" "hop"))
+      (else
+       (make-file-path (getenv "HOME") ".config" "hop"))))
    
 ;*---------------------------------------------------------------------*/
 ;*    wizard ...                                                       */

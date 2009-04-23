@@ -120,7 +120,7 @@
 	 (multiple-value-bind (base version)
 	    (hz-package-name-parse apath)
 	    (let* ((dest (make-file-path
-			  (hop-rc-directory) "cache" (hop-api-cache)))
+			  (hop-cache-directory) (hop-api-cache)))
 		   (dir (if host
 			    (make-file-name dest
 					    (format "~a_~a~a"

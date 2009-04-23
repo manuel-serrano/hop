@@ -204,7 +204,7 @@
 ;*    <AUDIO-OBJECT> ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (<AUDIO-OBJECT> id pid init controller)
-   (let ((swf (make-file-path (hop-share-directory) "flash" "HopAudio.swf"))
+   (let ((swf (make-file-path (hop-flash-directory) "HopAudio.swf"))
 	 (fvar (string-append "arg=hop_audio_flash_init_" pid)))
       (<DIV> :id id :class "hop-audio"
 	 controller

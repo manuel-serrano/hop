@@ -163,6 +163,12 @@
    (<TABLE>
       :class "hop-info"
       (<TR>
+	 (<TH> :align 'right "Var directory")
+	 (<TD> :align 'left (hop-var-directory)))
+      (<TR>
+	 (<TH> :align 'right "Cache directory")
+	 (<TD> :align 'left (hop-cache-directory)))
+      (<TR>
 	 (<TH> :align 'right "RC directory")
 	 (<TD> :align 'left (hop-rc-directory)))
       (<TR>

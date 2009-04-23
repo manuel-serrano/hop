@@ -92,8 +92,8 @@
 	 (cname (make-file-path
 		 (hop-rc-directory) "users" (string-append name ".prefs")))
 	 (c '())
-	 (d (list (hop-share-directory)
-		  (make-file-name (hop-rc-directory) "cache"))))
+	 (d (list (hop-share-directory) (hop-cache-directory)
+		  (hop-var-directory))))
       (let loop ((a args))
 	 (cond
 	    ((null? a)

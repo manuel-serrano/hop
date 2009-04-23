@@ -24,14 +24,32 @@
 	   (inline hop-etc-directory)
 	   (inline hop-share-directory)
 	   (inline hop-contribs-directory)
-           (inline hop-weblets-directory)
+	   (inline hop-weblets-directory)
            (inline hop-mime-types-file)
 	   (inline hop-configure-javascript-mime-type)
 	   (inline hop-configure-css-mime-type)
 	   (inline hop-runtime-system::pair)
+	   (inline hop-var-runtime-system::pair)
 	   (inline hop-runtime-system-files::pair)
-	   (inline hop-service-base::bstring))
-   
+	   (inline hop-service-base::bstring)
+	   (hop-autoconf-srfis))
+
+   (export
+    ;; will only be used in macosx-bundle mode, but due to bigloo
+    ;; limitations must always be exported.
+    (hop-mac-bin-directory)
+    (hop-mac-lib-directory)
+    (hop-mac-etc-directory)
+    (hop-mac-share-directory)
+    (hop-mac-weblets-directory))
+
+   (cond-expand (macosx-bundle (export (bundle-bigloo-lib-path))))
+   (cond-expand
+      (macosx-bundle
+       (extern
+	(include "macosx_bundle.h")
+	(macro resource-dir-fill!::int (::string ::int) "resourceDirFill"))))
+
    (eval   (export hop-name)
 	   (export hop-version)
 	   (export hop-branch)
@@ -47,6 +65,7 @@
 	   (export hop-configure-javascript-mime-type)
 	   (export hop-configure-css-mime-type)
            (export hop-runtime-system)
+           (export hop-var-runtime-system)
            (export hop-runtime-system-files)
 	   (export hop-service-base)))
 
@@ -83,6 +102,8 @@
        (print (hop-url)))
       ((--hop-runtime-system)
        (print (hop-runtime-system)))
+      ((--hop-var-runtime-system)
+       (print (hop-var-runtime-system)))
       ((--hop-runtime-system-files)
        (print (hop-runtime-system-files)))
       ((--hop-service-base)
@@ -119,12 +140,49 @@
 ;*---------------------------------------------------------------------*/
 ;*    Install directories ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-inline (hop-etc-directory) "@ETCDIR@")
-(define-inline (hop-bin-directory) "@BINDIR@")
-(define-inline (hop-lib-directory) "@LIBDIR@")
-(define-inline (hop-share-directory) "@SHAREDIR@")
+(cond-expand
+   (macosx-bundle
+    (define *bundle-dir* (let* ((str (make-string 1024))
+				(len (resource-dir-fill! str 1024)))
+			    (when (<fx len 0)
+			       (error "hop configure"
+				      "could not get bundle directory"
+				      #f))
+			    (string-shrink! str len)
+			    ;; resource directory is inside bundle directory.
+			    (file-name-unix-canonicalize! (make-file-path str ".."))))
+    (define (bundle-dir) *bundle-dir*)
+    (define (hop-mac-bin-directory) (make-file-path (bundle-dir) "@BINDIR@"))
+    (define (hop-mac-etc-directory) (make-file-path (bundle-dir) "@ETCDIR@"))
+    (define (hop-mac-lib-directory) (make-file-path (bundle-dir) "@LIBDIR@"))
+    (define (hop-mac-share-directory) (make-file-path (bundle-dir) "@SHAREDIR@"))
+    (define (hop-mac-weblets-directory) (make-file-path (bundle-dir)
+							"@WEBLETSDIR@")))
+   (else
+    (define (hop-mac-bin-directory) "")
+    (define (hop-mac-etc-directory) "")
+    (define (hop-mac-lib-directory) "")
+    (define (hop-mac-share-directory) "")
+    (define (hop-mac-weblets-directory) "")))
+
+(define-inline (hop-etc-directory)
+   (cond-expand (macosx-bundle (hop-mac-etc-directory)) (else "@ETCDIR@")))
+(define-inline (hop-bin-directory)
+   (cond-expand (macosx-bundle (hop-mac-bin-directory)) (else "@BINDIR@")))
+(define-inline (hop-lib-directory)
+   (cond-expand (macosx-bundle (hop-mac-lib-directory)) (else "@LIBDIR@")))
+(define-inline (hop-share-directory)
+   (cond-expand (macosx-bundle (hop-mac-share-directory)) (else "@SHAREDIR@")))
+;; contribs-dir is absolute even in a macosx-bundle
 (define-inline (hop-contribs-directory) "@CONTRIBSDIR@")
-(define-inline (hop-weblets-directory) "@WEBLETSDIR@")
+(define-inline (hop-weblets-directory)
+   (cond-expand (macosx-bundle (hop-mac-weblets-directory))
+		(else "@WEBLETSDIR@")))
+
+(cond-expand
+   (macosx-bundle
+    (define (bundle-bigloo-lib-path)
+       (make-file-path (bundle-dir) "Frameworks" "bigloo" "@BIGLOOVERSION@"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    Misc ...                                                         */
@@ -137,6 +195,7 @@
 ;*    hop-runtime-system ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (hop-runtime-system) '(@HOPJS@))
+(define-inline (hop-var-runtime-system) '("hop-setup.js")) ;; TODO remove hardcoded.
 (define-inline (hop-runtime-system-files) '(@HOPJSFILES@))
 
 ;*---------------------------------------------------------------------*/
@@ -145,3 +204,15 @@
 ;*    The prefix of all HOP weblets.                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (hop-service-base) "@HOPSERVICEBASE@")
+
+
+
+;*---------------------------------------------------------------------*/
+;*    register-eval-srfis ...                                          */
+;*---------------------------------------------------------------------*/
+(define *hop-autoconf-srfis*
+   `(@HOPSRFIS@
+     ,(string->symbol (format "hop-~a" (hop-version)))
+     ,(string->symbol (format "hop-~a" (hop-branch)))))
+
+(define (hop-autoconf-srfis) *hop-autoconf-srfis*)

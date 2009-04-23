@@ -104,8 +104,7 @@
    
    (set! scm2js-cache
 	 (instantiate::cache-disk
-	    (path (make-file-path (hop-rc-directory)
-				  "cache"
+	    (path (make-file-path (hop-cache-directory)
 				  (string-append "scm2js-"
 						 (integer->string (hop-port)))))
 	    (out (lambda (o p) (with-output-to-port p (lambda () (print o)))))))

@@ -66,8 +66,7 @@
    ;; prepare the client-code compiler cache
    (set! clientc-cache
 	 (instantiate::cache-disk
-	    (path (make-file-path (hop-rc-directory)
-				  "cache"
+	    (path (make-file-path (hop-cache-directory)
 				  (string-append "clientc-"
 						 (integer->string (hop-port)))))
 	    (out (lambda (o p) (with-output-to-port p (lambda () (print o)))))))

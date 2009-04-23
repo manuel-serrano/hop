@@ -43,7 +43,12 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
+   ;; set the Hop cond-expand identification
+   (for-each register-eval-srfi! (hop-autoconf-srfis))
    ;; set the library load path
+   (cond-expand
+      (macosx-bundle
+       (bigloo-library-path-set! (cons (bundle-bigloo-lib-path) (bigloo-library-path)))))
    (let ((hop-path (make-file-path (hop-lib-directory) "hop" (hop-version))))
       (bigloo-library-path-set! (cons hop-path (bigloo-library-path))))
    ;; preload the hop library

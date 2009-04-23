@@ -87,44 +87,62 @@
    ;; this is used for non-inlined header on common regular browsers
    (unless head-runtime-system-packed
       (set! head-runtime-system-packed 
-	    (cons (let ((p (make-file-name (hop-share-directory) "hop.css")))
-		     (<LINK> :inline #f
-			:rel "stylesheet"
-			:type (hop-configure-css-mime-type) 
-			:href p))
-		  (map (lambda (f)
-			  (let ((p (make-file-name (hop-share-directory) f)))
-			     (<SCRIPT> :inline #f
-				:type (hop-configure-javascript-mime-type)
-				:src p)))
-		       (hop-runtime-system))))
+	    `(,(let ((p (make-file-name (hop-share-directory) "hop.css")))
+		  (<LINK> :inline #f
+		     :rel "stylesheet"
+		     :type (hop-configure-css-mime-type) 
+		     :href p))
+	      ,@(map (lambda (f)
+			(let ((p (make-file-name (hop-var-directory) f)))
+			   (<SCRIPT> :inline #f
+			      :type (hop-configure-javascript-mime-type)
+			      :src p)))
+		     (hop-var-runtime-system))
+	      ,@(map (lambda (f)
+			(let ((p (make-file-name (hop-share-directory) f)))
+			   (<SCRIPT> :inline #f
+			      :type (hop-configure-javascript-mime-type)
+			      :src p)))
+		     (hop-runtime-system))))
       ;; this is used for non-inlined header for browsers that restrict
       ;; size of javascript files (e.g., IE6 on WinCE)
       (set! head-runtime-system-unpacked
-	    (cons (let ((p (make-file-name (hop-share-directory) "hop.css")))
-		     (<LINK> :inline #f
-			:rel "stylesheet"
-			:type (hop-configure-css-mime-type) 
-			:href p))
-		  (map (lambda (f)
-			  (let ((p (make-file-name (hop-share-directory) f)))
-			     (<SCRIPT> :inline #f
-				:type (hop-configure-javascript-mime-type)
-				:src p)))
-		       (hop-runtime-system-files))))
+	    `(,(let ((p (make-file-name (hop-share-directory) "hop.css")))
+		  (<LINK> :inline #f
+		     :rel "stylesheet"
+		     :type (hop-configure-css-mime-type) 
+		     :href p))
+	      ,@(map (lambda (f)
+			(let ((p (make-file-name (hop-var-directory) f)))
+			   (<SCRIPT> :inline #f
+			      :type (hop-configure-javascript-mime-type)
+			      :src p)))
+		     (hop-var-runtime-system))
+	      ,@(map (lambda (f)
+			(let ((p (make-file-name (hop-share-directory) f)))
+			   (<SCRIPT> :inline #f
+			      :type (hop-configure-javascript-mime-type)
+			      :src p)))
+		     (hop-runtime-system-files))))
       ;; this is used for inlined headers
       (set! head-runtime-system-inline
-	    (cons (let ((p (make-file-name (hop-share-directory) "hop.css")))
-		     (<LINK> :inline #t
-			:rel "stylesheet"
-			:type (hop-configure-css-mime-type) 
-			:href p))
-		  (map (lambda (f)
-			  (let ((p (make-file-name (hop-share-directory) f)))
-			     (<SCRIPT> :inline #t
-				:type (hop-configure-javascript-mime-type)
-				:src p)))
-		       (hop-runtime-system))))))
+	    `(,(let ((p (make-file-name (hop-share-directory) "hop.css")))
+		  (<LINK> :inline #t
+		     :rel "stylesheet"
+		     :type (hop-configure-css-mime-type) 
+		     :href p))
+	      ,@(map (lambda (f)
+			(let ((p (make-file-name (hop-var-directory) f)))
+			   (<SCRIPT> :inline #t
+			      :type (hop-configure-javascript-mime-type)
+			      :src p)))
+		     (hop-var-runtime-system))
+	      ,@(map (lambda (f)
+			(let ((p (make-file-name (hop-share-directory) f)))
+			   (<SCRIPT> :inline #t
+			      :type (hop-configure-javascript-mime-type)
+			      :src p)))
+		     (hop-runtime-system))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    head-parse ...                                                   */
