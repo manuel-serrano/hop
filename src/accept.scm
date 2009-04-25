@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Sun Apr 19 05:49:34 2009 (serrano)                */
+;*    Last change :  Sat Apr 25 10:03:56 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -37,7 +37,7 @@
 	    hop_scheduler-accept-many
 	    hop_pipeline)
 
-   (export  (generic scheduler-accept-loop ::scheduler ::socket)
+   (export  (generic scheduler-accept-loop ::scheduler ::socket ::bool)
 	    *verb-mutex*))
 
 ;*---------------------------------------------------------------------*/
@@ -73,7 +73,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-accept-loop ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-generic (scheduler-accept-loop scd::scheduler serv::socket)
+(define-generic (scheduler-accept-loop scd::scheduler serv::socket wait::bool)
    (let loop ((id 1))
       (let ((sock (socket-accept serv)))
 	 (hop-verb 2 (hop-color id id " ACCEPT")
@@ -100,7 +100,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-accept-loop ::queue-scheduler ...                      */
 ;*---------------------------------------------------------------------*/
-(define-method (scheduler-accept-loop scd::queue-scheduler serv::socket)
+(define-method (scheduler-accept-loop scd::queue-scheduler serv::socket w::bool)
    (let* ((acclen (min 50 (/fx (hop-max-threads) 2)))
 	  (socks (make-vector acclen))) 
       (let loop ((id 1))
@@ -134,7 +134,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-accept-loop ::pool-scheduler ...                       */
 ;*---------------------------------------------------------------------*/
-(define-method (scheduler-accept-loop scd::pool-scheduler serv::socket)
+(define-method (scheduler-accept-loop scd::pool-scheduler serv::socket w::bool)
    
    (define dummybuf (make-string 512))
    (define idmutex (make-mutex))
@@ -184,7 +184,8 @@
    
    (let loop ((i nbthreads))
       (if (<=fx i 1)
-	  (thread-join! (spawn scd connect-stage))
+	  (let ((th (spawn scd connect-stage)))
+	     (when w (thread-join! th)))
 	  (begin
 	     (spawn scd connect-stage)
 	     (loop (-fx i 1))))))
@@ -192,7 +193,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-accept-loop ::accept-many-scheduler ...                */
 ;*---------------------------------------------------------------------*/
-(define-method (scheduler-accept-loop scd::accept-many-scheduler serv::socket)
+(define-method (scheduler-accept-loop scd::accept-many-scheduler serv::socket w)
    
    (define acclen (length (pool-scheduler-free scd)))
    (define dummybufs (make-vector acclen (make-string 10)))
@@ -234,7 +235,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-accept-loop ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (scheduler-accept-loop scd::nothread-scheduler serv::socket)
+(define-method (scheduler-accept-loop scd::nothread-scheduler serv::socket w)
    (letrec ((thread (nothread-scheduler-get-fake-thread
 		     (lambda ()
 			(with-handler
@@ -250,4 +251,6 @@
 				 (spawn scd stage-request id s
 					'connect (hop-read-timeout))
 				 (loop (+fx id 1)))))))))
-      (thread-start! thread)))
+      (if w
+	  (thread-join! (thread-start-joinable! thread))
+	  (thread-start! thread))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Apr 19 06:35:31 2009 (serrano)                */
+;*    Last change :  Sat Apr 25 10:00:54 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -191,7 +191,7 @@
 			    (autoload-filter req))))
 		   (hop-preload-services))
 	 ;; start the main loop
-	 (scheduler-accept-loop (hop-scheduler) serv))))
+	 (scheduler-accept-loop (hop-scheduler) serv #t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    set-hop-owner! ...                                               */
@@ -256,4 +256,4 @@
        ;; run in a separate thread
        (hop-event-init! (hop-fast-server-event-port))
        (let ((serv (make-server-socket (hop-fast-server-event-port))))
-	  (scheduler-accept-loop scd serv)))))
+	  (scheduler-accept-loop scd serv #f)))))
