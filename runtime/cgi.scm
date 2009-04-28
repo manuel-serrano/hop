@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/cgi.scm                  */
+;*    serrano/prgm/project/hop/2.0.x/runtime/cgi.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Fri Jan  2 08:36:03 2009 (serrano)                */
+;*    Last change :  Sun Apr 26 17:31:52 2009 (serrano)                */
 ;*    Copyright   :  2003-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -80,7 +80,9 @@
    (with-trace 2 'http-request-cgi-args
       (trace-item "path=" (http-request-path req))
       (trace-item "abspath=" (string-for-read (http-request-abspath req)))
-      (trace-item "query=" (string-for-read (http-request-query req)))
+      (trace-item "query=" (if (string? (http-request-query req))
+			       (string-for-read (http-request-query req))
+			       "#f"))
       (let ((args (cgi-args req)))
 	 (trace-item "args="
 		     (map (lambda (a)
