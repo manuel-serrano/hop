@@ -35,12 +35,12 @@
 		   (procedures-provide-js-this . #t)
 		   ;; one can use the 'return!' form now. eg: (return! #t)
 		   (return . #t)
-		   ;; no indentation
-		   (indent . #f)
 		   ;; include-path
 		   (include-paths . ,(list *hop-share-directory*))
 		   ;; currently we are still using scheme2js-modules
 		   (bigloo-modules . #t)
+		   ;; compress the output
+		   (compress . #t)
 		   )))
 	  *cached-config*)))
 
@@ -62,7 +62,7 @@
 
    (let* ((config (get-cached-config))
 	  (conf-indent (if (>fx *hop-verbose* 0)
-			   (extend-config config 'indent 2)
+			   (extend-config config 'compress #f)
 			   config))
 	  (conf-verbose (if (>fx *hop-verbose* 10)
 			    (extend-config config 'verbose #t)

@@ -1,4 +1,5 @@
 (module scheme2js-main
+   (library pthread)
    (import scheme2js
 	   config)
    (include "version.sch")
@@ -46,6 +47,9 @@
       (("--bigloo-modules" (help (default-str "Use Bigloo-module headers."
 				    'bigloo-modules)))
        (update-conf 'bigloo-modules (not invert-flag?)))
+      (("--compress" (help (default-str "Compress the JavaScript output."
+			      'compress)))
+       (update-conf 'compress (not invert-flag?)))
       (section "JavaScript Interface")
       (("--infotron" (help (default-str "Activate support for Infotrons." 'infotron)))
        (update-conf 'infotron (not invert-flag?)))
@@ -83,6 +87,9 @@
 						"exported) variables. (default: _ followed by the"
 						" file-name without extension)")))
        (update-conf 'statics-suffix suffix))
+      (("--pp" (help (default-str "Produce pretty-printed JavaScript code"
+			'pp)))
+       (update-conf 'pp (not invert-flag?)))
       (("--indent" ?width
 		   (help (default-str "Set indentation-width of produced code"
 			    'indent)))
@@ -96,7 +103,8 @@
       (("-O" ?level
 	     (help "Set Optimization Level [0-3,bench]"))
        (set! *config*
-	     (set-optim-level *config* (or (string->number level) (string->symbol level)))))
+	     (set-optim-level *config* (or (string->number level)
+					   (string->symbol level)))))
       (("--tail-rec"
 	(help (default-str "transform tail-recursive calls into while-loops."
 		 'optimize-tail-rec)))

@@ -47,10 +47,12 @@ _BGL_OBJECTS = main scheme2js srfi0 \
         propagation statements push-set \
         rm-tail-breaks \
 	out compile-optimized-call compile-optimized-set compile-optimized-boolify \
-          allocate-names template-display \
+          allocate-names template-display push-declarations \
         scm-out \
         callcc callcc_anormalform callcc_resume_push callcc_locations callcc_checkpoint \
-	trampoline
+	trampoline \
+	pipe-port \
+	js-pp js-lexer js-parser js-nodes js-out
 
 _OBJECTS = $(_BGL_OBJECTS)
 
@@ -185,6 +187,7 @@ o/callcc.o classes/mimosa/inria/scheme2js/callcc.class:                  \
       mco/tail.mco mco/free-vars.mco mco/side.mco mco/walk.mco           \
       mco/nodes.mco mco/config.mco 
 o/out.o classes/mimosa/inria/scheme2js/out.class:                        \
+      mco/push-declarations.mco mco/js-pp.mco mco/pipe-port.mco          \
       mco/template-display.mco mco/compile-optimized-set.mco             \
       mco/compile-optimized-boolify.mco mco/compile-optimized-call.mco   \
       mco/callcc.mco mco/allocate-names.mco mco/verbose.mco              \
@@ -194,6 +197,9 @@ o/callcc_checkpoint.o classes/mimosa/inria/scheme2js/callcc_checkpoint.class: \
       mco/tools.mco mco/verbose.mco mco/callcc_locations.mco             \
       mco/tail.mco mco/walk.mco mco/export.mco mco/nodes.mco             \
       mco/config.mco 
+o/push-declarations.o classes/mimosa/inria/scheme2js/push-declarations.class: \
+      mco/verbose.mco mco/tools.mco mco/walk.mco mco/config.mco          \
+      mco/export.mco mco/nodes.mco 
 o/rm-tail-breaks.o classes/mimosa/inria/scheme2js/rm-tail-breaks.class:  \
       mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco          \
       mco/tools.mco mco/config.mco 
@@ -255,10 +261,11 @@ o/letrec-expansion.o classes/mimosa/inria/scheme2js/letrec-expansion.class: \
       mco/gen-js.mco mco/verbose.mco mco/walk.mco mco/export.mco         \
       mco/pobject-conv.mco mco/nodes.mco mco/config.mco 
 o/runtime-expander.o classes/mimosa/inria/scheme2js/runtime-expander.class: \
-      mco/pobject-conv.mco mco/verbose.mco mco/config.mco 
+      mco/pobject-conv.mco mco/verbose.mco mco/error.mco mco/config.mco 
 o/mapping2.o classes/mimosa/inria/scheme2js/mapping2.class: mapping.sch  \
       mco/tools.mco mco/export.mco 
 o/out.o classes/mimosa/inria/scheme2js/out.class:                        \
+      mco/push-declarations.mco mco/js-pp.mco mco/pipe-port.mco          \
       mco/template-display.mco mco/compile-optimized-set.mco             \
       mco/compile-optimized-boolify.mco mco/compile-optimized-call.mco   \
       mco/callcc.mco mco/allocate-names.mco mco/verbose.mco              \
@@ -268,6 +275,8 @@ o/push-set.o classes/mimosa/inria/scheme2js/push-set.class:              \
       mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco 
 o/srfi0.o classes/mimosa/inria/scheme2js/srfi0.class: mco/expand.mco     \
       mco/error.mco version.sch 
+o/js-parser.o classes/mimosa/inria/scheme2js/js-parser.class:            \
+      mco/js-lexer.mco mco/js-nodes.mco 
 o/var-ref-util.o classes/mimosa/inria/scheme2js/var-ref-util.class:      \
       mco/export.mco mco/nodes.mco mco/tools.mco mco/config.mco 
 o/while.o classes/mimosa/inria/scheme2js/while.class: mco/verbose.mco    \
@@ -291,7 +300,7 @@ o/mark-statements.o classes/mimosa/inria/scheme2js/mark-statements.class: \
       mco/verbose.mco mco/config.mco mco/walk.mco mco/export.mco         \
       mco/nodes.mco 
 o/runtime-expander.o classes/mimosa/inria/scheme2js/runtime-expander.class: \
-      mco/pobject-conv.mco mco/verbose.mco mco/config.mco 
+      mco/pobject-conv.mco mco/verbose.mco mco/error.mco mco/config.mco 
 o/scm-out.o classes/mimosa/inria/scheme2js/scm-out.class: mco/walk.mco   \
       mco/tools.mco mco/export.mco mco/nodes.mco 
 o/transform-util.o classes/mimosa/inria/scheme2js/transform-util.class:  \
@@ -300,10 +309,17 @@ o/inline.o classes/mimosa/inria/scheme2js/inline.class: mco/verbose.mco  \
       mco/transform-util.mco mco/fun-size.mco mco/nested-closures.mco    \
       mco/use-count.mco mco/side.mco mco/deep-clone.mco mco/walk.mco     \
       mco/export.mco mco/nodes.mco mco/tools.mco mco/config.mco 
+o/push-declarations.o classes/mimosa/inria/scheme2js/push-declarations.class: \
+      mco/verbose.mco mco/tools.mco mco/walk.mco mco/config.mco          \
+      mco/export.mco mco/nodes.mco 
+o/js-pp.o classes/mimosa/inria/scheme2js/js-pp.class: mco/js-out.mco     \
+      mco/js-nodes.mco mco/js-parser.mco 
 o/scm-out.o classes/mimosa/inria/scheme2js/scm-out.class: mco/walk.mco   \
       mco/tools.mco mco/export.mco mco/nodes.mco 
 o/use-count.o classes/mimosa/inria/scheme2js/use-count.class:            \
       mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco 
+o/js-out.o classes/mimosa/inria/scheme2js/js-out.class: mco/js-lexer.mco \
+      mco/js-nodes.mco 
 o/nodes.o classes/mimosa/inria/scheme2js/nodes.class: mco/export.mco     \
       mco/verbose.mco 
 o/captured-vars.o classes/mimosa/inria/scheme2js/captured-vars.class:    \
@@ -330,6 +346,10 @@ o/statements.o classes/mimosa/inria/scheme2js/statements.class:          \
       mco/verbose.mco mco/push-set.mco mco/side.mco                      \
       mco/mark-statements.mco mco/walk.mco mco/config.mco mco/export.mco \
       mco/tools.mco mco/error.mco mco/nodes.mco 
+o/js-parser.o classes/mimosa/inria/scheme2js/js-parser.class:            \
+      mco/js-lexer.mco mco/js-nodes.mco 
+o/js-pp.o classes/mimosa/inria/scheme2js/js-pp.class: mco/js-out.mco     \
+      mco/js-nodes.mco mco/js-parser.mco 
 o/fun-size.o classes/mimosa/inria/scheme2js/fun-size.class:              \
       mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco 
 o/mapping1.o classes/mimosa/inria/scheme2js/mapping1.class: mapping.sch  \
@@ -388,6 +408,8 @@ o/callcc_resume_push.o classes/mimosa/inria/scheme2js/callcc_resume_push.class: 
 o/free-vars.o classes/mimosa/inria/scheme2js/free-vars.class:            \
       mco/verbose.mco mco/walk.mco mco/tools.mco mco/export.mco          \
       mco/nodes.mco 
+o/js-out.o classes/mimosa/inria/scheme2js/js-out.class: mco/js-lexer.mco \
+      mco/js-nodes.mco 
 o/tail.o classes/mimosa/inria/scheme2js/tail.class: mco/verbose.mco      \
       mco/walk.mco mco/export.mco mco/nodes.mco 
 o/node-elimination.o classes/mimosa/inria/scheme2js/node-elimination.class: \

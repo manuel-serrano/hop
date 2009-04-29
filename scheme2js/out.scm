@@ -1,4 +1,5 @@
 (module out
+   (library pthread)
    (import config
 	   tools
 	   nodes
@@ -12,14 +13,24 @@
 	   compile-optimized-call
 	   compile-optimized-boolify
 	   compile-optimized-set
-	   template-display)
-   (static (class Out-Env::Display-Env
+	   template-display
+	   pipe-port
+	   js-pp
+	   push-declarations)
+   (static
+    (class Pragmas
+       lock
+       pragmas::pair ;; will start with "dummy"-pair
+       last-pragma::pair) ;; last in list
+    (class Out-Env::Display-Env
 	      trampoline?::bool
 	      max-tail-depth::bint
 	      suspend-resume?::bool
 	      call/cc?::bool
-	      optimize-var-number?::bool
 	      optimize-calls?::bool
+
+	      pp?::bool
+	      pragmas       ;; ::Pragmas or #f
 
 	      last-line
 	      last-file)
@@ -30,10 +41,38 @@
 (define (out tree p)
    (verbose "Compiling")
    (gen-var-names tree)
-   (gen-code tree p))
+   (push-var-declarations tree)
+   (if (config 'pp)
+       (pp-gen-code tree p)
+       (gen-code tree p #f)))
 
-
-(define (gen-code tree p)
+(define (pp-gen-code tree p)
+   (let* ((dummy-pair (list 'dummy))
+	  (pragmas (instantiate::Pragmas
+		     (lock (make-mutex))
+		     (pragmas dummy-pair)
+		     (last-pragma dummy-pair))))
+      (receive (out-p in-p out-p-closer)
+	 (open-pipe-port)
+	 (let* ((compress? (config 'compress))
+		(indent-width (let ((t (config 'indent)))
+				 (if (and (fixnum? t)
+					  (positive? t))
+				     t
+				     0)))
+		(t (make-thread (lambda ()
+				   (js-pp in-p
+					  p
+					  (lambda ()
+					     (consume-next-pragma! pragmas))
+					  compress?
+					  indent-width)))))
+	    (thread-start-joinable! t)
+	    (gen-code tree out-p pragmas)
+	    (out-p-closer)
+	    (thread-join! t)))))
+   
+(define (gen-code tree p pragmas)
    (verbose "  generating code")
    (let ((env (instantiate::Out-Env
 		 (indent (or (config 'indent) 0))
@@ -44,8 +83,10 @@
 		 (max-tail-depth (config 'max-tail-depth))
 		 (suspend-resume? (and (config 'suspend-resume) #t))
 		 (call/cc? (and (config 'call/cc) #t))
-		 (optimize-var-number? (and (config 'optimize-var-number?) #t))
 		 (optimize-calls? (and (config 'optimize-calls) #t))
+
+		 (pp? (and (config 'pp) #t))
+		 (pragmas pragmas)
 
 		 (last-line 0)
 		 (last-file ""))))
@@ -470,15 +511,15 @@
       (receive (formals-w/o-vaarg vaarg)
 	 (split-formals/vaarg)
 
-	 (let* ((declaration? (and #f ;; TODO: currently disabled.
+	 (let* ((declaration? (and #f ;; TODO: currently disabled as function
+				   ;; declarations are only allowed at
+				   ;; source-element positions. Not inside
+				   ;; try/catch (for instance).
+				   
 				   ;source-element?
 				   lvalue
 				   stmt?
 			     
-				   ;; if we optimize the var-number we might reuse
-				   ;; variables. Don't play with that...
-				   (not (Out-Env-optimize-var-number? env))
-
 				   (with-access::Ref lvalue (var)
 				      (with-access::Var var (constant?)
 					 constant?)) ;; not muted or anything
@@ -614,6 +655,12 @@
 	     ;; body
 	     "~e" (walk expr p #t)
 	     "break;\n"))))
+
+(define-nmethod (Decl-Set!.compile p stmt?)
+   [assert (stmt?) stmt?]
+   (with-access::Set! this (lvalue val)
+      (template-display p env
+	 "var ~e;\n" (compile-unoptimized-set! p env walk this))))
 
 (define-nmethod (Set!.compile p stmt?)
    (with-access::Set! this (lvalue val)
@@ -828,8 +875,45 @@
 				(mangle-JS-sym id))
 	    "}\n"))))
 
+; (define-nmethod (Pragma.compile p stmt?)
+;    (with-access::Pragma this (str)
+;       (template-display p env
+; 	 (?@ stmt? "~@;\n")
+; 	 "(~a)" str)))
+
+
 (define-nmethod (Pragma.compile p stmt?)
    (with-access::Pragma this (str)
-      (template-display p env
-	 (?@ stmt? "~@;\n")
-	 "(~a)" str)))
+      (with-access::Out-Env env (pp? pragmas)
+	 (when pp?
+	    (add-pragma! pragmas str))
+	 (let ((to-be-displayed (if pp?
+				    ;; placeholder
+				    #a000
+				    str)))
+	    (template-display p env
+	       (?@ stmt? "~@;\n")
+	       "(~a)" to-be-displayed)))))
+
+(define (add-pragma! pragmas::Pragmas p)
+   (with-access::Pragmas pragmas (lock last-pragma)
+      (with-lock lock
+	 (lambda ()
+	    (let ((tmp (list p)))
+	       (set-cdr! last-pragma tmp)
+	       (set! last-pragma tmp))))))
+
+(define (consume-next-pragma! pragmas::Pragmas)
+   (with-access::Pragmas pragmas (lock pragmas)
+      (with-lock lock
+	 (lambda ()
+	    (when (null? (cdr pragmas))
+	       ;; should never happen
+	       (error "out"
+		      "consume-pragma call without pragma"
+		      #f))
+	    (let ((res (cadr pragmas)))
+	       (set! pragmas (cdr pragmas))
+	       res)))))
+
+
