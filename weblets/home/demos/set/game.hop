@@ -1,5 +1,6 @@
 (module hophome_demos-set-game
    (import hophome_demos-set-util)
+   ~(import hophome_demos-set_js)
    (export
     (class Player
        (login::bstring read-only)

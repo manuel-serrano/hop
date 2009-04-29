@@ -1,5 +1,7 @@
-;(module set
-;   (export init-game!))
+(module hophome_demos-set_js
+   (export (init-game! cards borders scores-div
+		       event
+		       set-submit)))
 
 ;; will all be set in init-game!
 (define submit-set! #unspecified)

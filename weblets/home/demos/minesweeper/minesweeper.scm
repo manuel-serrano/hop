@@ -1,7 +1,7 @@
-;(module minesweeper
-;   (export board-init!
-;	   game-start!)
-;   (JS Math))
+(module hophome_demos-minesweeper_js
+   (export (board-init!)
+	   (game-start!))
+   (JS Math))
 
 (define (img-path file)
    file)

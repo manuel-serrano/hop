@@ -7,11 +7,11 @@
 ;*    -------------------------------------------------------------    */
 ;*    Sudoku HOP demo                                                  */
 ;*=====================================================================*/
-;(module sudoku
-;   (export *show-errors*
-;	   show-solution
-;	   click-cell
-;	   start-game))
+(module hophome_demos-sudoku_js
+   (export *show-errors*
+	   (show-solution)
+	   (click-cell id)
+	   (start-game board)))
 
 (define *selected-cell* #f)
 (define *board* #f) ;; will be set in start-game

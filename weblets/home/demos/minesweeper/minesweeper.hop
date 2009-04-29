@@ -1,4 +1,5 @@
 (module hophome_demos-minesweeper
+   ~(import hophome_demos-minesweeper_js)
    (export (home/demos/minesweeper)))
 
 (define-service (home/demos/minesweeper)

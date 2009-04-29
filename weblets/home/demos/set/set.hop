@@ -137,7 +137,7 @@
 				    (<LI> "different texture"))))))))))))
 			      
 
-(define-service (home/demos/set/join-game login name)
+(define-service (home/demos/set/join-game #!key login name)
    (with-lock *set-lock*
       (lambda ()
 	 (let ((g (assoc name *games*)))
@@ -167,7 +167,7 @@
 					  (current-request))
 			login (cdr g) #f)))))))
 
-(define-service (home/demos/set/new-game login name rounds)
+(define-service (home/demos/set/new-game #!key login name rounds)
 ;   (tprint "login: " login "\n"
 ;	   "name: " name "\n"
 ;	   "rounds: " rounds)
@@ -198,8 +198,9 @@
 	     (let* ((g (new-game name rounds))
 		    (base (service-base-url home/demos/set/new-game
 					    (current-request)))
-		    (svc (service  :ttl 1 ()
-				   (<GAME> base login g #t))))
+		    ;(svc (service :ttl 1 ()
+		    (svc (service  ()
+			    (<GAME> base login g #t))))
 
 		(set! *games* (cons (cons name g) *games*))
 		(instantiate::http-response-string

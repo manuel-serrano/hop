@@ -37,6 +37,7 @@ POPULATION	= Makefile .afile home.hss tips.hss \
                   $(SOURCES) $(HOP_POP) config.hop.in
 
 HOP_DEMOS	= minesweeper/minesweeper.hop \
+	          minesweeper/minesweeper.scm \
                   music/music.hop \
                   repl/repl.hop \
                   rewrite/rewrite.hop \
@@ -44,8 +45,10 @@ HOP_DEMOS	= minesweeper/minesweeper.hop \
                   set/set.hop \
                   set/util.hop \
                   set/game.hop \
+	          set/set.scm \
                   source/source.hop \
                   sudoku/sudoku.hop \
+                  sudoku/sudoku.scm \
                   wiki/wiki.hop
 
                  

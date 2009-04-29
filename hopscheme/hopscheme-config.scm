@@ -40,7 +40,7 @@
 		   ;; include-path
 		   (include-paths . ,(list *hop-share-directory*))
 		   ;; currently we are still using scheme2js-modules
-		   (bigloo-modules . #f)
+		   (bigloo-modules . #t)
 		   )))
 	  *cached-config*)))
 
