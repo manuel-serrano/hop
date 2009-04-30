@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Apr  8 17:44:11 2009 (serrano)                */
+;*    Last change :  Thu Apr 30 16:09:06 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -338,6 +338,7 @@
 	     ": " path "\n")
    (with-trace 2 'with-hop
       (trace-item "host=" host " port=" port " path=" path " abspath=" abspath)
+      (trace-item "authorization=" authorization)
       (cond
 	 ((and (procedure? fail) (not (correct-arity? fail 1)))
 	  (error 'with-hop "Illegal fail handler" fail))
@@ -359,20 +360,19 @@
 		 (with-handler
 		    (lambda (e)
 		       (let* ((strerr (if (&error? e)
-					 (let ((op (open-output-string)))
-					    (with-error-to-port op
-					       (lambda ()
-						  (error-notify e)))
-					    (close-output-port op))
-					 "connection refused"))
+					  (let ((op (open-output-string)))
+					     (with-error-to-port op
+						(lambda ()
+						   (error-notify e)))
+					     (close-output-port op))
+					  "connection refused"))
 			      (ip (open-input-string strerr)))
 			  (fail (instantiate::xml-http-request
 				   (status 501)
 				   (header '())
 				   (input-port ip)))))
-		    (http-send-request req hdl))
-		 (http-send-request req hdl))))))
-   #unspecified)
+		    (if sync (http-send-request req hdl) #unspecified))
+		 (if sync (http-send-request req hdl) #unspecified)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fail-or-raise ...                                                */

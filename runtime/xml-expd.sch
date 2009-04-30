@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/xml-expd.sch             */
+;*    serrano/prgm/project/hop/2.0.x/runtime/xml-expd.sch              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Tue Oct 28 08:59:46 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Thu Apr 30 16:49:36 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
 ;*=====================================================================*/
@@ -355,4 +355,5 @@
    (match-case x
       ((?- ?id ?bindings . ?body)
        (e (evepairify (expand-define-xml-compound id bindings body) x) e))
-      (error 'define-xml-compound "Illegal form" x)))
+      (else
+       (error 'define-xml-compound "Illegal form" x))))

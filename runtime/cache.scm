@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/runtime/cache.scm                */
+;*    serrano/prgm/project/hop/2.0.x/runtime/cache.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Wed Feb 18 10:12:16 2009 (serrano)                */
+;*    Last change :  Wed Apr 29 14:20:23 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
