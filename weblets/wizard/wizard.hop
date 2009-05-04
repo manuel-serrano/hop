@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Apr 22 07:22:20 2009 (serrano)                */
+;*    Last change :  Mon May  4 20:15:55 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -18,11 +18,7 @@
 ;*    hoprc-dir ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hoprc-dir
-   (cond-expand
-      (macosx
-       (make-file-path (getenv "HOME") "Library" "Preferences" "hop"))
-      (else
-       (make-file-path (getenv "HOME") ".config" "hop"))))
+   (hop-rc-directory))
    
 ;*---------------------------------------------------------------------*/
 ;*    wizard ...                                                       */

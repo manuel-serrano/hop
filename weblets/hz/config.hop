@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/weblets/hz/config.hop            */
+;*    serrano/prgm/project/hop/2.0.x/weblets/hz/config.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Wed Oct  1 16:22:51 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Mon May  4 20:19:27 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ configuration                                                 */
 ;*=====================================================================*/
@@ -74,7 +74,7 @@
 ;*    hz-weblets-directory ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-parameter hz-weblets-directory
-   (hop-user-weblets-directory)
+   (make-file-name (hop-rc-directory) "weblets")
    (lambda (v)
       (unless (directory? v)
 	 (unless (make-directories v)
