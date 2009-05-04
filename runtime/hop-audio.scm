@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon May  4 17:21:49 2009 (serrano)                */
+;*    Last change :  Mon May  4 20:50:09 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -204,7 +204,7 @@
 ;*    <AUDIO-OBJECT> ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (<AUDIO-OBJECT> id pid init controller)
-   (let ((swf (make-file-path (hop-flash-directory) "HopAudio.swf"))
+   (let ((swf (make-file-path (hop-share-directory) "flash" "HopAudio.swf"))
 	 (fvar (string-append "arg=hop_audio_flash_init_" pid)))
       (<DIV> :id id :class "hop-audio"
 	 controller

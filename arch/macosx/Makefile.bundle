@@ -1,10 +1,10 @@
 # Not tested (and most probably won't work) if placed inside a directory with spaces.
 #
 # Typical usage to create macosx/hop.dmg (the -j3 is not necessary)
-# make -f Makefile.macosx configure
-# make -f Makefile.macosx -j3
-# make -f Makefile.macosx bundle
-# make -f Makefile.macosx dmg
+# make -f arch/macosx/Makefile.bundle configure
+# make -f arch/macosx/Makefile.bundle -j3
+# make -f arch/macosx/Makefile.bundle bundle
+# make -f arch/macosx/Makefile.bundle dmg
 
 default: build
 
@@ -31,8 +31,9 @@ build:
 # note that we need declare webletsdir and libdir as relative paths.
 # during 'install' we need to override these values...
 configure:
-	./configure --prefix=/ \
-	--srfi=macosx --srfi=macosx-bundle \
+	./configure --macosx-bundle \
+        --prefix=/ \
+	--srfi=macosx 
 	--bindir=MacOS --mandir=Resources/man \
 	--contribsdir=$(CONTRIBS_DIR) \
 	--webletsdir=Resources/Weblets \

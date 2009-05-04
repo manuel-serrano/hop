@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon May  4 17:22:06 2009 (serrano)                */
+;*    Last change :  Mon May  4 20:50:25 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Video support.                                               */
@@ -57,7 +57,7 @@
 	 (<SCRIPT> :type "text/javascript"
 	    (format "var ~a = new SWFObject('~a','~a','~a','~a','9','#FFFFFF');"
 		    tmp
-		    (make-file-path (hop-flash-directory) "flash" "player.swf")
+		    (make-file-path (hop-share-directory) "flash" "player.swf")
 		    (xml-make-id id 'video)
 		    width height src)
 	    (format "~a.addParam('allowfullscreen','true');" tmp)
