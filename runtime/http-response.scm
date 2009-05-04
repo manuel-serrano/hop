@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Mar 26 05:25:27 2009 (serrano)                */
+;*    Last change :  Sun Apr 26 04:56:47 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -213,9 +213,9 @@
 	    (flush-output-port p)
 	    ;; for chunked, write the last 0 chunk
 	    (when chunked
-		   (output-port-flush-hook-set! p #unspecified)
-		   (http-write-line p "\r\n0\r\n")
-		   (flush-output-port p))
+	       (output-port-flush-hook-set! p #unspecified)
+	       (http-write-line p "\r\n0\r\n")
+	       (flush-output-port p))
 	    connection))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Apr 17 15:48:51 2009 (serrano)                */
+;*    Last change :  Mon May  4 13:46:55 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -119,8 +119,7 @@
       (let ((apath (abspath->filename abspath)))
 	 (multiple-value-bind (base version)
 	    (hz-package-name-parse apath)
-	    (let* ((dest (make-file-path
-			  (hop-cache-directory) (hop-api-cache)))
+	    (let* ((dest (make-file-path (hop-cache-directory) (hop-api-cache)))
 		   (dir (if host
 			    (make-file-name dest
 					    (format "~a_~a~a"

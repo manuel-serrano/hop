@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Apr  1 19:52:58 2009 (serrano)                */
+;*    Last change :  Mon May  4 14:56:57 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -70,8 +70,7 @@
 	  (hop-rc-directory-set! dir))
 	 (("--var-dir" ?dir (help "Set var directory"))
 	  (hop-var-directory-set! dir)
-	  (hop-upload-directory-set! (make-file-name dir "upload"))
-	  (hop-user-weblets-directory-set! (make-file-name dir "weblets")))
+	  (hop-upload-directory-set! (make-file-name dir "upload")))
 	 (("--cache-dir" ?dir (help "Set cache directory"))
 	  (hop-cache-directory-set! dir))
 	 (("--script-file" ?file (help "A file loaded before the main loop"))
@@ -188,19 +187,9 @@
 	  (hop-restore-disk-cache-set! #t))
 	 (("--no-restore-cache" (help "Do not restore disk caches"))
 	  (hop-restore-disk-cache-set! #f))
-         (("-?dummy")
-          (cond-expand
-             (macosx-bundle
-              ;; macosx-bundles may get an additional parameter with the
-              ;; process serial number. Just ignore it.
-              (if (string-prefix? "psn_" dummy)
-                  'do-nothing
-                  (begin
-                     (args-parse-usage #f)
-                     (exit 1))))
-             (else
-              (args-parse-usage #f)
-              (exit 1))))
+	 (("-?dummy")
+	  (args-parse-usage #f)
+	  (exit 1))
 	 (else
 	  (set! files (cons else files))))
       
@@ -223,7 +212,8 @@
 			      (make-file-name (getenv "HOME") ".mime.types"))))
       
       ;; weblets path
-      (hop-autoload-directory-add! (hop-weblets-directory))
+      (hop-autoload-directory-add!
+       (make-file-name (hop-rc-directory) "weblets"))
       
       ;; init hss, scm compilers, and services
       (init-hss-compiler! (hop-port))
@@ -357,7 +347,7 @@
 ;*    key-filepath ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (key-filepath port)
-   (make-file-name (hop-var-directory) (key-filename port)))
+   (make-file-name (hop-rc-directory) (key-filename port)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-process-key-write ...                                        */
@@ -365,7 +355,7 @@
 ;*    Write the HOP process for other Hop processes.                   */
 ;*---------------------------------------------------------------------*/
 (define (hop-process-key-write key port)
-   (let ((dir (hop-var-directory)))
+   (let ((dir (hop-rc-directory)))
       (when (directory? dir)
 	 (let ((path (make-file-name dir (key-filename port))))
 	    (when (file-exists? path) (delete-file path))
@@ -376,7 +366,7 @@
 ;*    hop-process-key-read ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hop-process-key-read port)
-   (let ((dir (hop-var-directory)))
+   (let ((dir (hop-rc-directory)))
       (when (directory? dir)
 	 (let ((path (make-file-name dir (key-filename port))))
 	    (when (file-exists? path)
@@ -386,7 +376,7 @@
 ;*    hop-process-key-delete ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (hop-process-key-delete port)
-   (let* ((dir (hop-var-directory))
+   (let* ((dir (hop-rc-directory))
 	  (path (make-file-name dir (key-filename port))))
       (when (file-exists? path) (delete-file path))))
    

@@ -40,21 +40,6 @@ function hop_url() {
 }
 
 /*---------------------------------------------------------------------*/
-/*    Hop server directories ...                                       */
-/*  -----------------------------------------------------------------  */
-/* They might be variable (in the case of MacOsX-bundles and therefore */
-/* defined in a separate file which is built at runtime.               */
-/*---------------------------------------------------------------------*/
-/*** META ((export hop-etc-directory) (JS hop_etc_directory)) */
-/*** META ((export hop-bin-directory) (JS hop_bin_directory)) */
-/*** META ((export hop-lib-directory) (JS hop_lib_directory))) */
-/*** META ((export hop-share-directory) (JS hop_share_directory)) */
-/*** META ((export hop-contribs-directory) (JS hop_contribs_directory)) */
-/*** META ((export hop-weblets-directory) (JS hop_weblets_directory)) */
-/*** META ((export hop-user-weblets-directory) (JS hop_user_weblets_directory)) */
-/*** META ((export hop-var-directory) (JS hop_var_directory)) */
-
-/*---------------------------------------------------------------------*/
 /*    Hop configuration                                                */
 /*---------------------------------------------------------------------*/
 var hop_enable_location_event = @LOCEVENT@;

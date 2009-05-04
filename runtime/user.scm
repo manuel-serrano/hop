@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/user.scm                 */
+;*    serrano/prgm/project/hop/2.0.x/runtime/user.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sat Oct 18 17:19:52 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Mon May  4 14:01:17 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -92,7 +92,8 @@
 	 (cname (make-file-path
 		 (hop-rc-directory) "users" (string-append name ".prefs")))
 	 (c '())
-	 (d (list (hop-share-directory) (hop-cache-directory)
+	 (d (list (hop-share-directory)
+		  (hop-cache-directory)
 		  (hop-var-directory))))
       (let loop ((a args))
 	 (cond

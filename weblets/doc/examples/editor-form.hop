@@ -4,7 +4,7 @@
       :include "hop-editor")
    (<BODY>
       :style "background: #7782D9"
-      (<FORM> :action (service (title content)
+      (<FORM> :action (service (#!key title content)
 			 (<HTML>
 			    (<BODY>
 			       (<B> title)
@@ -15,4 +15,3 @@
 	      (<B> "Enter a title: ")
 	      (<INPUT> :name "title")
 	      (<EDITOR> :width "100%" :height "300px" :name "content"))))
-		  
