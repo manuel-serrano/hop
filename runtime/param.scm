@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Apr 17 10:06:45 2009 (serrano)                */
+;*    Last change :  Mon May  4 17:17:57 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -27,7 +27,13 @@
 	    
 	    (hop-rc-file::bstring)
 	    (hop-rc-file-set! ::bstring)
-	    
+
+	    (hop-var-directory::bstring)
+	    (hop-var-directory-set! ::bstring)
+
+	    (hop-cache-directory::bstring)
+	    (hop-cache-directory-set! ::bstring)
+
 	    (hop-load-preferences::bool)
 	    (hop-load-preferences-set! ::bool)
 	    (hop-store-preferences::bool)
@@ -275,26 +281,27 @@
 ;*    hop-rc-directory ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-rc-directory
-   (let ((home (or (getenv "HOME") "/"))
-	 (host (hostname)))
-      (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
-	 (if (string? host)
-	     (let ((home/host (string-append home "/.config/hop." host)))
-		(if (and (file-exists? home/host) (directory? home/host))
-		    home/host
-		    (if (string=? (suffix host) "")
-			(let ((home/def (make-file-name home ".config/hop")))
-			   (cond
-			      ((and (file-exists? home/def)
-				    (directory? home/def))
-			       home/def)
-			      (else
-			       home)))
-			(loop (prefix host))))))))
+   (hop-configure-rc-directory))
+
+;*---------------------------------------------------------------------*/
+;*    hop-var-directory ...                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-var-directory
+   (or (hop-configure-var-directory) (hop-rc-directory))
    (lambda (v)
-      (hop-path-set! (cons (make-file-name v "cache") (hop-path)))
+      (hop-path-set! (cons v (hop-path)))
       v))
 
+;*---------------------------------------------------------------------*/
+;*    hop-cache-directory ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-cache-directory
+   (or (hop-configure-cache-directory)
+       (make-file-name (hop-rc-directory) "cache"))
+   (lambda (v)
+      (hop-path-set! (cons v (hop-path)))
+      v))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-file ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -602,7 +609,7 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-path
    (list "."
-	 (make-file-name (hop-rc-directory) "cache")
+	 (make-file-name (hop-var-directory) "cache")
 	 (hop-share-directory)
 	 (hop-weblets-directory)
 	 (hop-contribs-directory)))

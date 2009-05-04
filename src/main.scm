@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Apr 25 10:00:54 2009 (serrano)                */
+;*    Last change :  Mon May  4 18:05:21 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -34,6 +34,7 @@
 	    hop_scheduler-accept-many)
 
    (main    main))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    signal-init! ...                                                 */
@@ -75,13 +76,9 @@
    ;; catch critical signals
    (signal-init!)
    ;; set the Hop cond-expand identification
-   (register-eval-srfi! 'hop)
-   (register-eval-srfi! (string->symbol (format "hop-~a" (hop-version))))
-   (register-eval-srfi! (string->symbol (format "hop-~a" (hop-branch))))
-   (cond-expand (enable-threads (register-eval-srfi! 'enable-threads)))
+   (for-each register-eval-srfi! (hop-srfis))
    ;; set the library load path
-   (let ((hop-path (make-file-path (hop-lib-directory) "hop" (hop-version))))
-      (bigloo-library-path-set! (cons hop-path (bigloo-library-path))))
+   (bigloo-library-path-set! (hop-library-path))
    ;; preload the hop libraries
    (for-each (lambda (l)
 		(eval `(library-load ',l)))
@@ -94,7 +91,7 @@
    ;; clear the module cache unless we preserve
    ;; caches from one session to another
    (unless (hop-restore-disk-cache)
-      (let ((c (make-file-path (hop-rc-directory) "cache" (hop-api-cache))))
+      (let ((c (make-file-path (hop-cache-directory) (hop-api-cache))))
 	 (when (directory? c)
 	    (delete-path c)
 	    (make-directory c))))

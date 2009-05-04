@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/job.scm                   */
+;*    serrano/prgm/project/hop/2.0.x/runtime/job.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 14 14:53:17 2005                          */
-;*    Last change :  Wed May  7 14:01:04 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Mon May  4 13:47:13 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop JOB management                                               */
 ;*=====================================================================*/
@@ -70,7 +70,7 @@
    (with-lock *job-mutex*
       (lambda ()
 	 (thread-start!	(make-thread job-scheduler 'job-scheduler))
-	 (let ((f (make-file-name (hop-rc-directory) (hop-job-file))))
+	 (let ((f (make-file-name (hop-var-directory) (hop-job-file))))
 	    (when (file-exists? f)
 	       (hop-load f))))))
 
@@ -285,7 +285,7 @@
       (display " ") (write (job-repeat j))
       (display " ") (write (job-interval j)) (newline)
       (print " )"))
-   (with-output-to-file (make-file-name (hop-rc-directory) (hop-job-file))
+   (with-output-to-file (make-file-name (hop-var-directory) (hop-job-file))
       (lambda ()
 	 (for-each job-dump *jobs-queue*))))
 	    

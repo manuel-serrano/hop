@@ -8,11 +8,17 @@
 ;*    -------------------------------------------------------------    */
 ;*    HOP runtime command file.                                        */
 ;*    -------------------------------------------------------------    */
-;*    When HOP starts, it first search the RC files in the following   */
+;*    When HOP starts, it first searches the RC files in the following */
 ;*    order:                                                           */
 ;*      $HOME/.config/hop.$HOSTNAME/hoprc.hop                          */
 ;*      $HOME/.config/hop/hoprc.hop                                    */
 ;*      $ETC/hoprc.hop                                                 */
+;*                                                                     */
+;*    Under MacOsX the paths are                                       */
+;*      $HOME/Library/Preferences/hop/$HOSTNAME/hoprc.hop              */
+;*      $HOME/Library/Preferences/hop/hoprc.hop                        */
+;*      $ETC/hoprc.hop                                                 */
+;*    $ETC will point inside the bundle.                               */
 ;*                                                                     */
 ;*    Hence, if users want to define their own RC file but still load  */
 ;*    the one from /etc, they have to add the following expression     */
@@ -150,7 +156,7 @@ A good starting point is probably to copy the file
 to
 ,(<BR>)
 ,(<TT> :style "color: #ff881c"
-    (make-file-path (hop-rc-directory) ".config" "hop" (hop-rc-file)))
+    (make-file-path (hop-rc-directory) (hop-rc-file)))
 ,(<BR>)
 and customize it for your own needs.])))))
 

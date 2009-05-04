@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Apr 29 14:20:40 2009 (serrano)                */
+;*    Last change :  Mon May  4 13:43:42 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -207,8 +207,7 @@
    ;; hss cache
    (set! hss-cache
 	 (instantiate::cache-disk
-	    (path (make-file-path (hop-rc-directory)
-				  "cache"
+	    (path (make-file-path (hop-cache-directory)
 				  (format "hss-~a" port)))
 	    (out (lambda (o p) (css-write o p))))))
 

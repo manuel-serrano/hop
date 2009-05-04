@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Apr  1 19:52:58 2009 (serrano)                */
+;*    Last change :  Mon May  4 14:56:57 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -67,8 +67,12 @@
 	 (("--rc-file" ?file (help "Load alternate rc file"))
 	  (set! rc-file file))
 	 (("--rc-dir" ?dir (help "Set rc directory"))
-	  (hop-rc-directory-set! dir)
+	  (hop-rc-directory-set! dir))
+	 (("--var-dir" ?dir (help "Set var directory"))
+	  (hop-var-directory-set! dir)
 	  (hop-upload-directory-set! (make-file-name dir "upload")))
+	 (("--cache-dir" ?dir (help "Set cache directory"))
+	  (hop-cache-directory-set! dir))
 	 (("--script-file" ?file (help "A file loaded before the main loop"))
 	  (hop-script-file-set! file))
 	 (("--enable-autoload" (help "Enable autoload (default)"))

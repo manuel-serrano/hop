@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec 26 08:30:35 2007                          */
-;*    Last change :  Wed Mar 25 14:27:24 2009 (serrano)                */
+;*    Last change :  Mon May  4 16:25:45 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side -> JavaScript compiler                           */
@@ -104,8 +104,7 @@
    
    (set! scm2js-cache
 	 (instantiate::cache-disk
-	    (path (make-file-path (hop-rc-directory)
-				  "cache"
+	    (path (make-file-path (hop-cache-directory)
 				  (string-append "scm2js-"
 						 (integer->string (hop-port)))))
 	    (out (lambda (o p) (with-output-to-port p (lambda () (print o)))))))

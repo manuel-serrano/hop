@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/hopreplay/parseargs.scm           */
+;*    serrano/prgm/project/hop/2.0.x/hopreplay/parseargs.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Apr 26 14:43:11 2008 (serrano)                */
-;*    Copyright   :  2004-08 Manuel Serrano                            */
+;*    Last change :  Mon May  4 13:39:52 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPREPLAY command line parsing                                   */
 ;*=====================================================================*/
@@ -48,8 +48,12 @@
 	 (("--rc-file" ?file (help "Load alternate rc file"))
 	  (set! rc-file file))
 	 (("--rc-dir" ?dir (help "Set rc directory"))
-	  (hop-rc-directory-set! dir)
+	  (hop-rc-directory-set! dir))
+	 (("--var-dir" ?dir (help "Set var directory"))
+	  (hop-var-directory-set! dir)
 	  (hop-upload-directory-set! (make-file-name dir "upload")))
+	 (("--cache-dir" ?dir (help "Set cache directory"))
+	  (hop-cache-directory-set! dir))
          (("-v?level" (help "Increase or set verbosity level (-v0 crystal silence)"))
           (if (string=? level "")
 	      (hop-verbose-set! (+fx 1 (hop-verbose)))

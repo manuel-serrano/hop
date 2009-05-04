@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/hopsh/main.scm                   */
+;*    serrano/prgm/project/hop/2.0.x/hopsh/main.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jan  5 10:52:19 2009 (serrano)                */
+;*    Last change :  Mon May  4 16:32:40 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPSH entry point                                            */
@@ -43,9 +43,10 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
+   ;; set the Hop cond-expand identification
+   (for-each register-eval-srfi! (hop-srfis))
    ;; set the library load path
-   (let ((hop-path (make-file-path (hop-lib-directory) "hop" (hop-version))))
-      (bigloo-library-path-set! (cons hop-path (bigloo-library-path))))
+   (bigloo-library-path-set! (hop-library-path))
    ;; preload the hop library
    (eval `(library-load 'hop))
    ;; parse the command line

@@ -1,11 +1,11 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/etc/configure.scm.in              */
+;*    .../prgm/project/hop/2.0.x/etc/configure.scm.macosx-bundle       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Mon May  4 17:19:06 2009 (serrano)                */
+;*    Last change :  Mon May  4 17:17:25 2009 (serrano)                */
 ;*    -------------------------------------------------------------    */
-;*    HOP configuration                                                */
+;*    HOP configuration (tuned for MacOSX bundle)                      */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -13,19 +13,28 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_configure
 
+   (extern (include "macosx_bundle.h")
+	   (macro resource-dir-fill!::int (::string ::int) "resourceDirFill"))
+   
    (export (hop-configure ::bstring)
 	   (hop-name)
            (hop-version)
            (hop-branch)
            (hop-backend)
 	   (hop-url)
+	   %etc-directory
+	   %bin-directory
+	   %lib-directory
+	   %share-directory
+	   %contribs-directory
+	   %weblets-directory
 	   (inline hop-bin-directory)
 	   (inline hop-lib-directory)
 	   (inline hop-etc-directory)
 	   (inline hop-share-directory)
 	   (inline hop-contribs-directory)
            (inline hop-weblets-directory)
-	   (inline hop-library-path)
+           (inline hop-library-path)
            (inline hop-mime-types-file)
 	   (inline hop-configure-javascript-mime-type)
 	   (inline hop-configure-css-mime-type)
@@ -48,7 +57,7 @@
 	   (export hop-share-directory)
 	   (export hop-contribs-directory)
            (export hop-weblets-directory)
-	   (export hop-library-path)
+           (export hop-library-path)
            (export hop-mime-types-file)
 	   (export hop-configure-javascript-mime-type)
 	   (export hop-configure-css-mime-type)
@@ -59,6 +68,18 @@
 	   (export hop-configure-var-directory)
 	   (export hop-configure-cache-directory)
 	   (export hop-srfis)))
+
+;*---------------------------------------------------------------------*/
+;*    *macosx-bundle-dir* ...                                          */
+;*---------------------------------------------------------------------*/
+(define *macosx-bundle-dir*
+   (let* ((str (make-string 1024))
+	  (len (resource-dir-fill! str 1024)))
+      (when (<fx len 0)
+	 (error "hop configure" "could not get bundle directory" #f))
+      (string-shrink! str len)
+      ;; resource directory is inside bundle directory.
+      (file-name-unix-canonicalize! (dirname str))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure ...                                                */
@@ -132,18 +153,34 @@
 ;*---------------------------------------------------------------------*/
 ;*    Install directories ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-inline (hop-etc-directory) "@ETCDIR@")
-(define-inline (hop-bin-directory) "@BINDIR@")
-(define-inline (hop-lib-directory) "@LIBDIR@")
-(define-inline (hop-share-directory) "@SHAREDIR@")
-(define-inline (hop-contribs-directory) "@CONTRIBSDIR@")
-(define-inline (hop-weblets-directory) "@WEBLETSDIR@")
+(define %etc-directory
+   (make-file-path *macosx-bundle-dir* "@ETCDIR@"))
+(define %bin-directory
+   (make-file-path *macosx-bundle-dir* "@BINDIR@"))
+(define %lib-directory
+   (make-file-path *macosx-bundle-dir* "@LIBDIR@"))
+(define %share-directory
+   (make-file-path *macosx-bundle-dir* "@SHAREDIR@"))
+(define %contribs-directory
+   (make-file-path *macosx-bundle-dir* "@CONTRIBSDIR@"))
+(define %weblets-directory
+   (make-file-path *macosx-bundle-dir* "@WEBLETSDIR@"))
+
+(define-inline (hop-etc-directory) %etc-directory)
+(define-inline (hop-bin-directory) %bin-directory)
+(define-inline (hop-lib-directory) %lib-directory)
+(define-inline (hop-share-directory) %share-directory)
+(define-inline (hop-contribs-directory) %contribs-directory)
+(define-inline (hop-weblets-directory) %weblets-directory)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-library-path ...                                             */
 ;*---------------------------------------------------------------------*/
+(define %lib-path
+   (make-file-path *macosx-bundle-dir* "Frameworks" "bigloo" "@BIGLOOVERSION@"))
+
 (define-inline (hop-library-path)
-   (cons "@LIBPATH@" (bigloo-library-path)))
+   (cons %lib-path (bigloo-library-path)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Misc ...                                                         */
@@ -168,36 +205,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-rc-directory ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (hop-configure-rc-directory)
-   (let ((home (or (getenv "HOME") "/"))
-	 (host (hostname))
-	 (pref ".config/hop"))
-      (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
-	 (if (string? host)
-	     (let ((home/host (make-file-name home (string-append pref "." host))))
-		(if (and (file-exists? home/host) (directory? home/host))
-		    home/host
-		    (if (string=? (suffix host) "")
-			(let ((home/def (make-file-name home pref)))
-			   (cond
-			      ((and (file-exists? home/def)
-				    (directory? home/def))
-			       home/def)
-			      (else
-			       home)))
-			(loop (prefix host)))))))))
+(define (hop-configure-rc-directory) "Library/Preferences/hop")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-var-directory ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (hop-configure-var-directory)
-   #f)
+(define (hop-configure-var-directory) "Library/Application Support/hop")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-cache-directory ...                                */
 ;*---------------------------------------------------------------------*/
-(define (hop-configure-cache-directory)
-   #f)
+(define (hop-configure-cache-directory) "Library/Caches/hop")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-srfis ...                                                    */

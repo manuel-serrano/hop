@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/hopsh/parseargs.scm              */
+;*    serrano/prgm/project/hop/2.0.x/hopsh/parseargs.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Jan  5 10:52:42 2009 (serrano)                */
+;*    Last change :  Mon May  4 13:41:59 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -54,8 +54,12 @@
 	 (("--rc-file" ?file (help "Load alternate rc file"))
 	  (set! rc-file file))
 	 (("--rc-dir" ?dir (help "Set rc directory"))
-	  (hop-rc-directory-set! dir)
+	  (hop-rc-directory-set! dir))
+	 (("--var-dir" ?dir (help "Set var directory"))
+	  (hop-var-directory-set! dir)
 	  (hop-upload-directory-set! (make-file-name dir "upload")))
+	 (("--cache-dir" ?dir (help "Set cache directory"))
+	  (hop-cache-directory-set! dir))
          (("-v?level" (help "Increase or set verbosity level (-v0 crystal silence)"))
           (if (string=? level "")
 	      (hop-verbose-set! (+fx 1 (hop-verbose)))

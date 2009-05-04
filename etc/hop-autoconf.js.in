@@ -40,34 +40,6 @@ function hop_url() {
 }
 
 /*---------------------------------------------------------------------*/
-/*    Hop server directories ...                                       */
-/*---------------------------------------------------------------------*/
-/*** META ((export hop-etc-directory)) */
-function hop_etc_directory() { 
-   return "@ETCDIR@";
-}
-/*** META ((export hop-bin-directory)) */
-function hop_bin_directory() {
-   return "@BINDIR@";
-}
-/*** META ((export hop-lib-directory)) */
-function hop_lib_directory() {
-   return "@LIBDIR@";
-}
-/*** META ((export hop-share-directory)) */
-function hop_share_directory() {
-   return "@SHAREDIR@";
-}
-/*** META ((export hop-contribs-directory)) */
-function hop_contribs_directory() {
-   return "@CONTRIBSDIR@";
-}
-/*** META ((export hop-weblets-directory)) */
-function hop_weblets_directory() {
-   return "@WEBLETSDIR@";
-}
-
-/*---------------------------------------------------------------------*/
 /*    Hop configuration                                                */
 /*---------------------------------------------------------------------*/
 var hop_enable_location_event = @LOCEVENT@;
