@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Sat Mar 21 07:12:47 2009 (serrano)                */
+#*    Last change :  Tue May  5 07:54:19 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -66,7 +66,7 @@ TUTORIAL_POP	= 00-hello.wiki 01-ajax.wiki 02-hss.wiki 03-proxy.wiki \
                   07-hoprc.wiki 08-history.wiki 09-resource.wiki \
                   10-javascript.wiki
 
-POPULATION	= Makefile .afile doc.hss doc.scm \
+POPULATION	= Makefile doc.hss doc.scm \
                   examples api core wiki tutorials etc/weblet.info.in \
                   etc/logo.png etc/doc.wiki.in \
                   etc/sound1.mp3 etc/sound2.mp3 \
