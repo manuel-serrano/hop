@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon May  4 17:59:09 2009 (serrano)                */
+#*    Last change :  Tue May  5 09:58:57 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -61,8 +61,6 @@ date=`date +"%d %B %Y"`
 
 url="http://hop.inria.fr/"
 
-configurescmin=configure.scm.in
-
 etcdir=$prefix/etc
 bindir=$prefix/bin
 libdir=$prefix/lib
@@ -102,6 +100,8 @@ hopjsfiles='"hop-autoconf.js" "runtime.js"'
 for p in $rts; do
   hopjsfiles="$hopjsfiles \"$p\""; 
 done
+
+arch=noarch
 
 # Argument parsing
 while : ; do
@@ -251,7 +251,7 @@ while : ; do
       hopsrfis="$hopsrfis `echo $1 | sed 's/^[^=]*=//'`";;
 
     --macosx-bundle)
-      configurescmin=configure.scm.macosx-bundle;;
+      arch=macosx-bundle;;
 
     -*)
       echo "*** Configure error, unknown option $1" >&2;
@@ -562,31 +562,33 @@ cat $mkmf.in \
     >> $mkmf
 
 # runtime/configure.scm
-configure=runtime/configure.scm
-rm -f $configure 2> /dev/null
-echo ";* Automatically generated file (don't edit) */" > $configure
-
-cat etc/$configurescmin \
-    | sed -e "s|@VERSION@|$version|" \
-          -e "s|@BIGLOOVERSION@|$bglversion|" \
-          -e "s|@BRANCH@|$branch|" \
-          -e "s|@BACKEND@|$backend|" \
-          -e "s|@URL@|$url|" \
-          -e "s|@BINDIR@|$bindir|" \
-          -e "s|@LIBDIR@|$libdir|" \
-          -e "s|@LIBPATH@|$libdir/hop/$version|" \
-          -e "s|@SHAREDIR@|$sharedir|" \
-          -e "s|@ETCDIR@|$etcdir|" \
-          -e "s|@WEBLETSDIR@|$webletsdir|" \
-          -e "s|@CONTRIBSDIR@|$contribsdir|" \
-          -e "s|@MIMETYPES@|$mimetypes|" \
-          -e "s|@JSMIMETYPE@|$jsmimetype|" \
-          -e "s|@CSSMIMETYPE@|$cssmimetype|" \
-          -e "s|@HOPJS@|$hopjs|" \
-          -e "s|@HOPJSFILES@|$hopjsfiles|" \
-          -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
-          -e "s|@HOPSRFIS@|$hopsrfis|" \
-    >> $configure
+for p in configure.scm configure-noarch.sch configure-macosx.sch; do
+  configure=runtime/$p
+  rm -f $configure 2> /dev/null
+  echo ";* Automatically generated file (don't edit) */" > $configure
+  cat etc/$p.in \
+      | sed -e "s|@VERSION@|$version|" \
+            -e "s|@BIGLOOVERSION@|$bglversion|" \
+            -e "s|@BRANCH@|$branch|" \
+            -e "s|@BACKEND@|$backend|" \
+            -e "s|@URL@|$url|" \
+            -e "s|@BINDIR@|$bindir|" \
+            -e "s|@LIBDIR@|$libdir|" \
+            -e "s|@LIBPATH@|$libdir/hop/$version|" \
+            -e "s|@SHAREDIR@|$sharedir|" \
+            -e "s|@ETCDIR@|$etcdir|" \
+            -e "s|@WEBLETSDIR@|$webletsdir|" \
+            -e "s|@CONTRIBSDIR@|$contribsdir|" \
+            -e "s|@MIMETYPES@|$mimetypes|" \
+            -e "s|@JSMIMETYPE@|$jsmimetype|" \
+            -e "s|@CSSMIMETYPE@|$cssmimetype|" \
+            -e "s|@HOPJS@|$hopjs|" \
+            -e "s|@HOPJSFILES@|$hopjsfiles|" \
+            -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
+            -e "s|@HOPSRFIS@|$hopsrfis|" \
+            -e "s|@HOPARCH@|$arch|" \
+      >> $configure
+done
 
 # etc/hoprc.hop
 hoprc=etc/hoprc.hop

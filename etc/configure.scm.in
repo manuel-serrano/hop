@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Mon May  4 17:19:06 2009 (serrano)                */
+;*    Last change :  Tue May  5 10:02:57 2009 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration                                                */
 ;*=====================================================================*/
@@ -12,53 +12,55 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_configure
-
-   (export (hop-configure ::bstring)
-	   (hop-name)
-           (hop-version)
-           (hop-branch)
-           (hop-backend)
-	   (hop-url)
-	   (inline hop-bin-directory)
-	   (inline hop-lib-directory)
-	   (inline hop-etc-directory)
-	   (inline hop-share-directory)
-	   (inline hop-contribs-directory)
-           (inline hop-weblets-directory)
-	   (inline hop-library-path)
-           (inline hop-mime-types-file)
-	   (inline hop-configure-javascript-mime-type)
-	   (inline hop-configure-css-mime-type)
-	   (inline hop-runtime-system::pair)
-	   (inline hop-runtime-system-files::pair)
-	   (inline hop-service-base::bstring)
-	   (hop-configure-rc-directory)
-	   (hop-configure-var-directory)
-	   (hop-configure-cache-directory)
-	   (hop-srfis::pair-nil))
-
-   (eval   (export hop-name)
-	   (export hop-version)
-	   (export hop-branch)
-	   (export hop-backend)
-	   (export hop-url)
-	   (export hop-etc-directory)
-	   (export hop-bin-directory)
-	   (export hop-lib-directory)
-	   (export hop-share-directory)
-	   (export hop-contribs-directory)
-           (export hop-weblets-directory)
-	   (export hop-library-path)
-           (export hop-mime-types-file)
-	   (export hop-configure-javascript-mime-type)
-	   (export hop-configure-css-mime-type)
-           (export hop-runtime-system)
-           (export hop-runtime-system-files)
-	   (export hop-service-base)
-	   (export hop-configure-rc-directory)
-	   (export hop-configure-var-directory)
-	   (export hop-configure-cache-directory)
-	   (export hop-srfis)))
+   
+   (include "configure-@HOPARCH@.sch")
+   
+   (export  (hop-configure ::bstring)
+	    (hop-name)
+	    (hop-version)
+	    (hop-branch)
+	    (hop-backend)
+	    (hop-url)
+	    (inline hop-bin-directory)
+	    (inline hop-lib-directory)
+	    (inline hop-etc-directory)
+	    (inline hop-share-directory)
+	    (inline hop-contribs-directory)
+	    (inline hop-weblets-directory)
+	    (inline hop-library-path)
+	    (inline hop-mime-types-file)
+	    (inline hop-configure-javascript-mime-type)
+	    (inline hop-configure-css-mime-type)
+	    (inline hop-runtime-system::pair)
+	    (inline hop-runtime-system-files::pair)
+	    (inline hop-service-base::bstring)
+	    (hop-configure-rc-directory)
+	    (hop-configure-var-directory)
+	    (hop-configure-cache-directory)
+	    (hop-srfis::pair-nil))
+   
+   (eval    (export hop-name)
+	    (export hop-version)
+	    (export hop-branch)
+	    (export hop-backend)
+	    (export hop-url)
+	    (export hop-etc-directory)
+	    (export hop-bin-directory)
+	    (export hop-lib-directory)
+	    (export hop-share-directory)
+	    (export hop-contribs-directory)
+	    (export hop-weblets-directory)
+	    (export hop-library-path)
+	    (export hop-mime-types-file)
+	    (export hop-configure-javascript-mime-type)
+	    (export hop-configure-css-mime-type)
+	    (export hop-runtime-system)
+	    (export hop-runtime-system-files)
+	    (export hop-service-base)
+	    (export hop-configure-rc-directory)
+	    (export hop-configure-var-directory)
+	    (export hop-configure-cache-directory)
+	    (export hop-srfis)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure ...                                                */
@@ -130,22 +132,6 @@
 (define (hop-url) "@URL@")
 
 ;*---------------------------------------------------------------------*/
-;*    Install directories ...                                          */
-;*---------------------------------------------------------------------*/
-(define-inline (hop-etc-directory) "@ETCDIR@")
-(define-inline (hop-bin-directory) "@BINDIR@")
-(define-inline (hop-lib-directory) "@LIBDIR@")
-(define-inline (hop-share-directory) "@SHAREDIR@")
-(define-inline (hop-contribs-directory) "@CONTRIBSDIR@")
-(define-inline (hop-weblets-directory) "@WEBLETSDIR@")
-
-;*---------------------------------------------------------------------*/
-;*    hop-library-path ...                                             */
-;*---------------------------------------------------------------------*/
-(define-inline (hop-library-path)
-   (cons "@LIBPATH@" (bigloo-library-path)))
-
-;*---------------------------------------------------------------------*/
 ;*    Misc ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (hop-mime-types-file) "@MIMETYPES@")
@@ -164,40 +150,6 @@
 ;*    The prefix of all HOP weblets.                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (hop-service-base) "@HOPSERVICEBASE@")
-
-;*---------------------------------------------------------------------*/
-;*    hop-configure-rc-directory ...                                   */
-;*---------------------------------------------------------------------*/
-(define (hop-configure-rc-directory)
-   (let ((home (or (getenv "HOME") "/"))
-	 (host (hostname))
-	 (pref ".config/hop"))
-      (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
-	 (if (string? host)
-	     (let ((home/host (make-file-name home (string-append pref "." host))))
-		(if (and (file-exists? home/host) (directory? home/host))
-		    home/host
-		    (if (string=? (suffix host) "")
-			(let ((home/def (make-file-name home pref)))
-			   (cond
-			      ((and (file-exists? home/def)
-				    (directory? home/def))
-			       home/def)
-			      (else
-			       home)))
-			(loop (prefix host)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-configure-var-directory ...                                  */
-;*---------------------------------------------------------------------*/
-(define (hop-configure-var-directory)
-   #f)
-
-;*---------------------------------------------------------------------*/
-;*    hop-configure-cache-directory ...                                */
-;*---------------------------------------------------------------------*/
-(define (hop-configure-cache-directory)
-   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-srfis ...                                                    */
