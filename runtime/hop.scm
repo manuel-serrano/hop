@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu Apr 30 16:09:06 2009 (serrano)                */
+;*    Last change :  Tue May  5 16:29:10 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -287,7 +287,7 @@
 			   (close-input-port p)
 			   (suc s))
 			(if (procedure? fail)
-			    (fail url #f)
+			    (fail url)
 			    (raise (instantiate::&io-error
 				      (proc 'with-url)
 				      (msg "Cannot open url")

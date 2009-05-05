@@ -24,6 +24,18 @@
 	   %weblets-directory))
 
 ;*---------------------------------------------------------------------*/
+;*    *macosx-bundle-dir* ...                                          */
+;*---------------------------------------------------------------------*/
+(define *macosx-bundle-dir*
+   (let* ((str (make-string 1024))
+          (len (resource-dir-fill! str 1024)))
+      (when (<fx len 0)
+         (error "hop configure" "could not get bundle directory" #f))
+      (string-shrink! str len)
+      ;; resource directory is inside bundle directory.
+      (file-name-unix-canonicalize! (dirname str))))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-library-path ...                                             */
 ;*---------------------------------------------------------------------*/
 (define %lib-path

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/http-error.scm           */
+;*    serrano/prgm/project/hop/2.0.x/runtime/http-error.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Dec 16 08:27:28 2008 (serrano)                */
-;*    Copyright   :  2004-08 Manuel Serrano                            */
+;*    Last change :  Tue May  5 17:03:26 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
 ;*=====================================================================*/
@@ -376,7 +376,7 @@ a timeout which has now expired. The service is then no longer available."))
 			     (<ETD>
 				(<TABLE> :width "100%"
 				   (<TR>
-				      (<ETD> :class "title" "Internal Error"))
+				      (<ETD> :class "title" "Server Error"))
 				   (<TR>
 				      (<ETD> :class "msg" msg))
 				   (<TR>
