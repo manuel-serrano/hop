@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue May  5 09:58:57 2009 (serrano)                */
+#*    Last change :  Tue May  5 17:18:36 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -250,8 +250,8 @@ while : ; do
     --srfi=*)
       hopsrfis="$hopsrfis `echo $1 | sed 's/^[^=]*=//'`";;
 
-    --macosx-bundle)
-      arch=macosx-bundle;;
+    --macosx-bundle|--macosx)
+      arch=macosx;;
 
     -*)
       echo "*** Configure error, unknown option $1" >&2;
@@ -295,7 +295,7 @@ while : ; do
       echo "   --enable-threads...... Enables multi-threading support (default)" >&2;
       echo "   --disable-threads..... Disables multi-threading support" >&2;
       echo "   --srfi=sym............ Activate this srfi (during compilation and runtime)" >&2;
-      echo "   --macosx-bundle....... Prepare the production of a MacOSX bundle" >&2;
+      echo "   --macosx.............. Prepare the production of a MacOSX bundle" >&2;
       exit -1;
   esac
   shift
