@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/weblets/hz/weblet.hop            */
+;*    serrano/prgm/project/hop/2.0.x/weblets/hz/weblet.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Wed Oct  1 16:13:29 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Wed May  6 10:26:25 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with weblets.                              */
 ;*=====================================================================*/
@@ -31,10 +31,11 @@
 	      (maxhop::bstring read-only)
 	      (title::bstring read-only)
 	      (comment::bstring read-only (info "BLOB"))
-	      (signature::bstring read-only (default "")))
+	      (signature::bstring read-only (default ""))
+	      (authorization read-only (default #f)))
 
 	   (weblet->list::pair ::weblet)
-	   (info->weblet::weblet ::pair #!key name version url)))
+	   (info->weblet::weblet ::pair #!key name version url authorization)))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblet->list ...                                                 */
@@ -63,7 +64,7 @@
 ;*                                                                     */
 ;*    Extra fields are simply ignored by HZ.                           */
 ;*---------------------------------------------------------------------*/
-(define (info->weblet info::pair #!key name version url)
+(define (info->weblet info::pair #!key name version url authorization)
 
    (define (find key default)
       (cond
@@ -121,4 +122,5 @@
 	 (minhop (find 'minhop "0"))
 	 (maxhop (find 'maxhop "z"))
 	 (title (convert (find 'title "")))
-	 (comment (convert (find 'comment ""))))))
+	 (comment (convert (find 'comment "")))
+	 (authorization authorization))))

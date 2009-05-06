@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Mon May  4 20:19:27 2009 (serrano)                */
+;*    Last change :  Wed May  6 10:24:14 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ configuration                                                 */
@@ -20,7 +20,9 @@
 	   (hz-dir::bstring)
 	   (hz-rc-directory::bstring)
 	   (hz-download-directory::bstring)
+	   (hz-download-directory-set! ::bstring)
 	   (hz-weblets-directory::bstring)
+	   (hz-weblets-directory-set! ::bstring)
 	   (hz-package-suffix::bstring)
 	   (hz-db::bstring)
 	   (hz-connection-timeout::int)
@@ -110,7 +112,7 @@
       (if enable 
 	  (hz-publishers-set! (cons publisher (hz-publishers)))
 	  (hz-publishers-set! (cons (list publisher #f) (hz-publishers))))
-      (hz-preferences-save (hz-prefs))))
+      (hz-preferences-save (hz-prefs) #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-publisher-enable! ...                                         */
@@ -129,7 +131,7 @@
 				   (else
 				    x)))
 			     (hz-publishers)))
-   (hz-preferences-save (hz-prefs)))
+   (hz-preferences-save (hz-prefs) #t))
    
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-inspector-url ...                                          */
@@ -159,6 +161,10 @@
 ;*---------------------------------------------------------------------*/
 (define-preferences hz-preferences
    "Setup"
-   ("Publishers" expr hz-publishers)
-   ("Connections timeout" integer hz-connection-timeout))
+   ("Publishers" quote hz-publishers)
+   ("Connections timeout" integer hz-connection-timeout)
+   "Path"
+   ("Install directory" path hz-weblets-directory)
+   ("Download directory" path hz-download-directory))
+   
 

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/hz/db.hop                 */
+;*    serrano/prgm/project/hop/2.0.x/weblets/hz/db.hop                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
-;*    Last change :  Mon Apr 21 17:31:16 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Wed May  6 10:24:29 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
 ;*=====================================================================*/
@@ -162,7 +162,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-make-weblet ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (hz-make-weblet st dr na ve in ur ho pu au ca mi ma ti co sig)
+(define (hz-make-weblet st dr na ve in ur ho pu au ca mi ma ti co sig auth)
    (instantiate::weblet
       (stamp (string->integer st))
       (driver dr)
@@ -178,7 +178,8 @@
       (maxhop ma)
       (title ti)
       (comment co)
-      (signature sig)))
+      (signature sig)
+      (authorization auth)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-find ...                                                   */
