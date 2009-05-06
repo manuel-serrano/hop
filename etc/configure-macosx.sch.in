@@ -72,15 +72,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-rc-directory ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (hop-configure-rc-directory) "Library/Preferences/hop")
+(define (hop-configure-rc-directory)
+   (make-file-path (or (getenv "HOME") "/") "Library/Preferences/hop"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-var-directory ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (hop-configure-var-directory) "Library/Application Support/hop")
+(define (hop-configure-var-directory)
+   (make-file-path (or (getenv "HOME") "/") "Library/Application Support/hop"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-cache-directory ...                                */
 ;*---------------------------------------------------------------------*/
-(define (hop-configure-cache-directory) "Library/Caches/hop")
+(define (hop-configure-cache-directory)
+   (make-file-path (or (getenv "HOME") "/") "Library/Caches/hop"))
 
