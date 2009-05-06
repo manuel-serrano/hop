@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed May  6 10:50:02 2009 (serrano)                */
+;*    Last change :  Wed May  6 13:17:23 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -548,48 +548,51 @@
 ;*    http-send-request ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-send-request req::http-request proc::procedure)
-   (with-access::http-request req (scheme method path (httpv http) host port header socket userinfo timeout)
-      (let ((ssl (eq? scheme 'https)))
-	 (let loop ((host host)
-		    (port port)
-		    (user userinfo)
-		    (path path))
-	    (let* ((sock (if (and (not ssl) (hop-use-proxy))
-			     (make-proxy-socket (hop-use-proxy) timeout)
-			     (make-client-socket/timeout host port
-							 timeout req ssl)))
-		   (out (socket-output sock))
-		   (in (socket-input sock)))
-	       (when (> timeout 0)
-		  (output-port-timeout-set! out timeout)
-		  (input-port-timeout-set! in timeout))
-	       (with-handler
-		  (lambda (e)
-		     (if (&http-redirection? e)
-			 (multiple-value-bind (rhost rport ruser rpath)
-			    (redirect e)
-			    (loop (or rhost host)
-				  (or rport port)
-				  (or ruser user)
-				  (if rhost
-				      (make-file-name (dirname path) rpath)
-				      rpath)))
-			 (raise e)))
-		  (http :in in :out out
-		     :protocol scheme :method method :http-version httpv
-		     :host host :port port :path path :header header
-		     :authorization (if (and (http-server-request? req)
-					     (http-server-request-authorization req))
-					(http-server-request-authorization req)
-					(let ((auth (assq :authorization header)))
-					   (when (pair? auth) (cdr auth))))
-		     :timeout timeout
-		     :login user
-		     :body socket
-		     :proxy (hop-use-proxy))
-		  (unwind-protect
-		     (http-parse-response in out proc)
-		     (socket-close sock))))))))
+   (with-trace 3 'http-send-request
+      (with-access::http-request req (scheme method path (httpv http) host port header socket userinfo timeout)
+	 (let ((ssl (eq? scheme 'https)))
+	    (let loop ((host host)
+		       (port port)
+		       (user userinfo)
+		       (path path))
+	       (trace-item "scheme=" scheme " host=" host " port=" port)
+	       (trace-item "method=" method " path=" path)
+	       (let* ((sock (if (and (not ssl) (hop-use-proxy))
+				(make-proxy-socket (hop-use-proxy) timeout)
+				(make-client-socket/timeout host port
+							    timeout req ssl)))
+		      (out (socket-output sock))
+		      (in (socket-input sock)))
+		  (when (> timeout 0)
+		     (output-port-timeout-set! out timeout)
+		     (input-port-timeout-set! in timeout))
+		  (with-handler
+		     (lambda (e)
+			(if (&http-redirection? e)
+			    (multiple-value-bind (rhost rport ruser rpath)
+			       (redirect e)
+			       (loop (or rhost host)
+				     (or rport port)
+				     (or ruser user)
+				     (if rhost
+					 (make-file-name (dirname path) rpath)
+					 rpath)))
+			    (raise e)))
+		     (http :in in :out out
+			:protocol scheme :method method :http-version httpv
+			:host host :port port :path path :header header
+			:authorization (if (and (http-server-request? req)
+						(http-server-request-authorization req))
+					   (http-server-request-authorization req)
+					   (let ((auth (assq :authorization header)))
+					      (when (pair? auth) (cdr auth))))
+			:timeout timeout
+			:login user
+			:body socket
+			:proxy (hop-use-proxy))
+		     (unwind-protect
+			(http-parse-response in out proc)
+			(socket-close sock)))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    redirect ...                                                     */

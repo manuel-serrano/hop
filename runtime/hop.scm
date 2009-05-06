@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed May  6 10:57:26 2009 (serrano)                */
+;*    Last change :  Wed May  6 13:18:14 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -371,8 +371,10 @@
 				   (status 501)
 				   (header '())
 				   (input-port ip)))))
-		    (if sync (http-send-request req hdl) #unspecified))
-		 (if sync (http-send-request req hdl) #unspecified)))))))
+		    (let ((v (http-send-request req hdl)))
+		       (if sync v #unspecified)))
+		 (let ((v (http-send-request req hdl)))
+		    (if sync v #unspecified))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fail-or-raise ...                                                */
