@@ -6,6 +6,8 @@ This document presents the core constructions of the HOP programming language.
 It does not present the APIs which are already presented in the ++API++ tab.
 
 ~~ HOP is functional expression based programming language. That is:
+
+
   * All HOP expression as a value.
   * Functions are first class values. They can be passed as argument,
  returned as result, or stored in data structure.

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat Apr 18 18:38:34 2009 (serrano)                */
+/*    Last change :  Wed May  6 14:13:43 2009 (serrano)                */
 /*    Copyright   :  2004-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -391,7 +391,9 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 
    xhr.open( "GET", svc, (sync != true) );
 
-   xhr.setRequestHeader( 'Connection', 'close' );
+   if( hop_config.navigator_family != "safari" &&
+       hop_config.navigator_family != "webkit" )
+      xhr.setRequestHeader( 'Connection', 'close' );
    xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
    // to force the response to be interpreted as latin-1:
    // xhr.overrideMimeType( 'text/html; charset=ISO-8859-1' );
