@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Thu Apr 30 14:51:42 2009 (serrano)                */
+;*    Last change :  Wed May  6 11:48:43 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -58,25 +58,31 @@
 	     (loop (cdr args) 'plain))
 	    ((eq? (car args) #!rest)
 	     (list (cadr args))))))
-   
-   (let ((proc (if (symbol? wid) (symbol-append wid '-proc) 'proc))
-	 (hdl (if (symbol? wid) (symbol-append wid '-handler) 'hdl))
-	 (svc (if (symbol? wid) (symbol-append wid '-svc) 'svc))
-	 (errid (if (symbol? wid) `',wid wid))
-	 (id (if (symbol? id) `',id `(string->symbol ,url)))
-	 (path (gensym 'path))
-	 (fun (gensym 'fun))
-	 (file (gensym 'file)))
+
+   (let* ((proc (if (symbol? wid) (symbol-append wid '-proc) 'proc))
+	  (hdl (if (symbol? wid) (symbol-append wid '-handler) 'hdl))
+	  (svc (if (symbol? wid) (symbol-append wid '-svc) 'svc))
+	  (errid (if (symbol? wid) `',wid wid))
+	  (id (if (symbol? id) `',id `(string->symbol ,url)))
+	  (path (gensym 'path))
+	  (fun (gensym 'fun))
+	  (file (gensym 'file))
+	  (actuals (call args))
+	  (mkurl (if (and (pair? args)
+			  (list? args)
+			  (eq? (car args) #!key)
+			  (every? symbol? (cdr args)))
+		     `(hop-apply-nice-url ,path (list ,@actuals))
+		     `(hop-apply-url ,path (list ,@actuals)))))
       `(let* ((,path ,url)
 	      (,file (the-loading-file))
-	      (,fun (lambda ,args
-		       (hop-apply-url ,path (list ,@(call args)))))
+	      (,fun (lambda ,args ,mkurl))
 	      (,proc ,(if (pair? body)
 			  `(lambda ,args ,@body)
 			  `(lambda ,args
 			      (instantiate::http-response-remote
 				 (port (hop-port))
-				 (path (hop-apply-url ,path (list ,@(call args))))))))
+				 (path ,mkurl)))))
 	      (,svc (instantiate::hop-service
 		       (wid ,(if (symbol? wid) `',wid wid))
 		       (id ,id)

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/weblets/hz/hz.hss                 */
+/*    serrano/prgm/project/hop/2.0.x/weblets/hz/hz.hss                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Mon Apr 21 17:23:51 2008 (serrano)                */
-/*    Copyright   :  2006-08 Manuel Serrano                            */
+/*    Last change :  Wed May  6 10:26:32 2009 (serrano)                */
+/*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
 /*=====================================================================*/
@@ -513,6 +513,11 @@ weblets table.weblet td.update {
 
 weblets table.weblet p.title {
   font-weight: bold;
+}
+
+weblets table.weblet td.author {
+  font-weight: bold;
+  color: #777;
 }
 
 weblets table.weblet .title {

@@ -1,7 +1,6 @@
 ((name "@@HZ@@")
  (author "@AUTHOR@")
  (version "@@VERSION@@")
- (publisher "@@PUBLISHER@@")
  (repository "@@REPOSITORY@@")
  (category "@@CATEGORY@@")
  (minhop "@@MINHOP@@")
