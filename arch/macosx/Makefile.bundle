@@ -33,7 +33,7 @@ build:
 configure:
 	./configure --macosx-bundle \
         --prefix=/ \
-	--srfi=macosx 
+	--srfi=macosx \
 	--bindir=MacOS --mandir=Resources/man \
 	--contribsdir=$(CONTRIBS_DIR) \
 	--webletsdir=Resources/Weblets \

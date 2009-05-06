@@ -27,7 +27,7 @@
 	    (inline hop-share-directory)
 	    (inline hop-contribs-directory)
 	    (inline hop-weblets-directory)
-	    (inline hop-library-path)
+	    (hop-library-path)
 	    (inline hop-mime-types-file)
 	    (inline hop-configure-javascript-mime-type)
 	    (inline hop-configure-css-mime-type)

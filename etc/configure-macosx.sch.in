@@ -36,15 +36,6 @@
       (file-name-unix-canonicalize! (dirname str))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-library-path ...                                             */
-;*---------------------------------------------------------------------*/
-(define %lib-path
-   (make-file-path *macosx-bundle-dir* "Frameworks" "bigloo" "@BIGLOOVERSION@"))
-
-(define-inline (hop-library-path)
-   (cons %lib-path (bigloo-library-path)))
-
-;*---------------------------------------------------------------------*/
 ;*    Install directories ...                                          */
 ;*---------------------------------------------------------------------*/
 (define %etc-directory
@@ -66,6 +57,17 @@
 (define-inline (hop-share-directory) %share-directory)
 (define-inline (hop-contribs-directory) %contribs-directory)
 (define-inline (hop-weblets-directory) %weblets-directory)
+
+;*---------------------------------------------------------------------*/
+;*    hop-library-path ...                                             */
+;*---------------------------------------------------------------------*/
+(define %bigloo-lib-path
+   (make-file-path (hop-lib-directory) "bigloo" "@BIGLOOVERSION@"))
+(define %hop-lib-path
+   (make-file-path *macosx-bundle-dir* "@LIBPATH@"))
+
+(define (hop-library-path)
+   (cons* %bigloo-lib-path %hop-lib-path (hop-lib-directory) (bigloo-library-path)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-rc-directory ...                                   */

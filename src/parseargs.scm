@@ -187,6 +187,9 @@
 	  (hop-restore-disk-cache-set! #t))
 	 (("--no-restore-cache" (help "Do not restore disk caches"))
 	  (hop-restore-disk-cache-set! #f))
+	 (("-psn_?dummy") ;; Macosx sends process serial numbers this way.
+	  ;; just ignore it.
+	  'do-nothing)
 	 (("-?dummy")
 	  (args-parse-usage #f)
 	  (exit 1))
