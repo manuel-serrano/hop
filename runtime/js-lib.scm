@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/js-lib.scm                      */
+;*    serrano/prgm/project/hop/2.0.x/runtime/js-lib.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Tue Oct 30 08:48:24 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Wed Apr  8 17:45:25 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
 ;*=====================================================================*/
@@ -14,56 +14,55 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_js-lib
 
+   (library web)
+	    
    (import  __hop_param
 	    __hop_types
-	    __hop_xml)
+	    __hop_xml
+	    __hop_service)
 
-   (export  (json-string-encode::bstring ::bstring)
-	    (generic hop->json ::obj)
-	    (json->hop ::input-port)))
+   (export  (json-string-encode::bstring ::bstring ::bool)
+	    (generic hop->json ::obj ::bool ::bool)
+	    (json->hop ::input-port)
+	    (hop->js-callback ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    list->arguments ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (list->arguments lst)
+(define (list->arguments lst isrep isflash)
    (let loop ((lst lst)
 	      (res '()))
       (if (null? lst)
 	  (apply string-append (reverse! res))
 	  (loop (cdr lst)
 		(cons* (if (pair? (cdr lst)) "," ")")
-		       (hop->json (car lst))
+		       (hop->json (car lst) isrep isflash)
 		       res)))))
-
-;*---------------------------------------------------------------------*/
-;*    list->array ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (list->array lst)
-   (string-append "new Array(" (list->arguments lst)))
 
 ;*---------------------------------------------------------------------*/
 ;*    vector->json ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (vector->json vec)
+(define (vector->json vec m f)
    (let ((len (vector-length vec)))
       (case len
 	 ((0)
 	  "[]")
 	 ((1)
-	  (string-append "[" (hop->json (vector-ref vec 0)) "]"))
+	  (string-append "[" (hop->json (vector-ref vec 0) m f) "]"))
 	 (else
 	  (let loop ((i (-fx len 2))
-		     (strs (list (hop->json (vector-ref vec (-fx len 1)))
+		     (strs (list (hop->json (vector-ref vec (-fx len 1)) m f)
 				 "]")))
 	     (if (=fx i -1)
 		 (apply string-append "[" strs)
 		 (loop (-fx i 1)
-		       (cons* (hop->json (vector-ref vec i)) ", " strs))))))))
+		       (cons* (hop->json (vector-ref vec i) m f) ", " strs))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    json-string-encode ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (json-string-encode str)
+(define (json-string-encode str isflash)
+
    (define (count str ol)
       (let loop ((i 0)
 		 (n 0))
@@ -72,9 +71,10 @@
 	     (let ((c (string-ref str i)))
 		(case c
 		   ((#\" #\\ #\Newline #\Return)
-		    (loop (+fx i 1) (+fx n 2)))
+		    (loop (+fx i 1) (+fx n (if isflash 3 2))))
 		   (else
 		    (loop (+fx i 1) (+fx n 1))))))))
+   
    (define (encode str ol nl)
       (if (=fx nl ol)
 	  str
@@ -85,22 +85,39 @@
 		    res
 		    (let ((c (string-ref str i)))
 		       (case c
-			  ((#\")
-			   (string-set! res j #\\)
-			   (string-set! res (+fx j 1) c)
-			   (loop (+fx i 1) (+fx j 2)))
-			  ((#\\)
-			   (string-set! res j #\\)
-			   (string-set! res (+fx j 1) c)
-			   (loop (+fx i 1) (+fx j 2)))
+			  ((#\" #\\)
+			   (if isflash
+			       (begin
+				  (string-set! res j #\\)
+				  (string-set! res (+fx j 1) #\\)
+				  (string-set! res (+fx j 2) c)
+				  (loop (+fx i 1) (+fx j 3)))
+			       (begin
+				  (string-set! res j #\\)
+				  (string-set! res (+fx j 1) c)
+				  (loop (+fx i 1) (+fx j 2)))))
 			  ((#\Newline)
-			   (string-set! res j #\\)
-			   (string-set! res (+fx j 1) #\n)
-			   (loop (+fx i 1) (+fx j 2)))
+			   (if isflash
+			       (begin
+				  (string-set! res j #\\)
+				  (string-set! res (+fx j 1) #\\)
+				  (string-set! res (+fx j 2) #\n)
+				  (loop (+fx i 1) (+fx j 3)))
+			       (begin
+				  (string-set! res j #\\)
+				  (string-set! res (+fx j 1) #\n)
+				  (loop (+fx i 1) (+fx j 2)))))
 			  ((#\Return)
-			   (string-set! res j #\\)
-			   (string-set! res (+fx j 1) #\r)
-			   (loop (+fx i 1) (+fx j 2)))
+			   (if isflash
+			       (begin
+				  (string-set! res j #\\)
+				  (string-set! res (+fx j 1) #\\)
+				  (string-set! res (+fx j 2) #\r)
+				  (loop (+fx i 1) (+fx j 3)))
+			       (begin
+				  (string-set! res j #\\)
+				  (string-set! res (+fx j 1) #\r)
+				  (loop (+fx i 1) (+fx j 2)))))
 			  (else
 			   (string-set! res j c)
 			   (loop (+fx i 1) (+fx j 1))))))))))
@@ -110,16 +127,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-generic (hop->json obj)
+(define-generic (hop->json obj isrep isflash)
    (cond
       ((string? obj)
-       (string-append "\"" (json-string-encode obj) "\"\n"))
+       (string-append "\"" (json-string-encode obj isflash) "\"\n"))
       ((number? obj)
        (number->string obj))
       ((symbol? obj)
-       (string-append "sc_string2symbol_immutable(\"" (symbol->string obj) "\")"))
+       (string-append "sc_jsstring2symbol(\"" (symbol->string obj) "\")"))
       ((keyword? obj)
-       (string-append "sc_string2keyword_immutable(\"" (keyword->string obj) "\")"))
+       (string-append "sc_jsstring2keyword(\"" (keyword->string obj) "\")"))
       ((eq? obj #t)
        "true")
       ((eq? obj #f)
@@ -127,30 +144,33 @@
       ((null? obj)
        "null")
       ((pair? obj)
-       (if (and (pair? (cdr obj))
-		(pair? (cddr obj)))
+       (if (and (pair? (cdr obj)) (pair? (cddr obj)))
 	   ;; avoid deep recursion for long lists
-	   (let loop ((els (hop->json (car obj)))
+	   (let loop ((els (hop->json (car obj) isrep isflash))
 		      (rest (cdr obj)))
 	      (cond
 		 ((null? rest)
 		  (format "sc_list(~a)" els))
 		 ((pair? rest)
-		  (loop (format "~a, ~a" els (hop->json (car rest)))
+		  (loop (format "~a, ~a"
+				els (hop->json (car rest) isrep isflash))
 			(cdr rest)))
 		 (else
-		  (format "sc_consStar(~a, ~a)" els (hop->json rest)))))
-	   (let ((car (hop->json (car obj)))
-		 (cdr (hop->json (cdr obj))))
+		  (format "sc_consStar(~a, ~a)"
+			  els (hop->json rest isrep isflash)))))
+	   (let ((car (hop->json (car obj) isrep isflash))
+		 (cdr (hop->json (cdr obj) isrep isflash)))
 	      (format "new sc_Pair( ~a, ~a )" car cdr))))
       ((vector? obj)
-       (vector->json obj))
+       (vector->json obj isrep isflash))
       ((eq? obj #unspecified)
        "undefined")
       ((procedure? obj)
-       (error 'hop->json
-	      "Illegal procedure in JavaScript conversion"
-	      obj))
+       (if (service? obj)
+	   (hop->json (procedure-attr obj) isrep isflash)
+	   (error 'hop->json
+		  "Illegal procedure in JavaScript conversion"
+		  obj)))
       ((date? obj)
        (format "new Date( ~a000 )" (date->seconds obj)))
       (else
@@ -159,7 +179,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::object ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json obj::object)
+(define-method (hop->json obj::object isrep isflash)
    (define (list->block lst)
       (let loop ((lst lst)
 		 (res '()))
@@ -176,8 +196,9 @@
 	  (name (if (bigloo-need-mangling? kname)
 		    (bigloo-mangle kname)
 		    kname))
+	  (hash (class-hash klass))
 	  (fields (class-all-fields klass)))
-      (format "(function() {var ~a=function(~a) {~a}; return new ~a(~a;})()"
+      (format "(function() {var ~a=function(~a) {~a}; ~a.prototype.hop_bigloo_serialize = hop_bigloo_serialize_object; ~a.prototype.hop_classname = '~a'; ~a.prototype.hop_classhash = ~a; return new ~a(~a;})()"
 	      name
 	      (list->block (map class-field-name fields))
 	      (apply string-append
@@ -186,31 +207,50 @@
 				(format "this.~a = ~a;" n n)))
 			  fields))
 	      name
+	      name
+	      name
+	      name
+	      hash
+	      name
 	      (list->arguments (map (lambda (f) ((class-field-accessor f) obj))
-				    fields)))))
+				    fields)
+			       isrep
+			       isflash))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::xml ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json obj::xml)
+(define-method (hop->json obj::xml isrep isflash)
    (error 'hop->json "Cannot translate xml element" xml))
+
+;*---------------------------------------------------------------------*/
+;*    hop->json ::xml-markup ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (hop->json obj::xml-markup isrep isflash)
+   (with-access::xml-markup obj (markup)
+      (let ((s (with-output-to-string
+		  (lambda ()
+		     (xml-write obj (current-output-port) (hop-xml-backend))))))
+	 (format "hop_create_encoded_element( \"~a\" )" (url-path-encode s)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::xml-element ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json obj::xml-element)
-   (format "document.getElementById( \"~a\" )" (xml-element-id obj)))
+(define-method (hop->json obj::xml-element isrep isflash)
+   (if isrep
+       (call-next-method)
+       (format "document.getElementById( '~a' )" (xml-element-id obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::xml-tilde ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json obj::xml-tilde)
-   (xml-tilde-body obj))
+(define-method (hop->json obj::xml-tilde isrep isflash)
+   (xml-tilde->statement obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json obj::hop-service)
+(define-method (hop->json obj::hop-service isrep isflash)
    (hop-service-javascript obj))
 
 ;*---------------------------------------------------------------------*/
@@ -289,8 +329,7 @@
 	  ((new) (list 'NEW))
 	  ((function) (list 'FUNCTION))
 	  ((return) (list 'RETURN))
-	  ((sc_Pair) (list 'CONS))
-	  ((Date) (list 'DATE))
+	  ((var) (list 'VAR))
 	  (else (list 'IDENTIFIER (the-symbol)))))
       
       (else
@@ -309,7 +348,7 @@
       ;; tokens
       (CONSTANT PAR-OPEN PAR-CLO BRA-OPEN BRA-CLO ANGLE-OPEN ANGLE-CLO
        COMMA SEMI-COMMA DOT =
-       IDENTIFIER ERROR NEW CONS DATE FUNCTION RETURN)
+       IDENTIFIER ERROR NEW CONS DATE FUNCTION RETURN VAR)
       
       ;; initial rule
       (start
@@ -320,17 +359,20 @@
       (expression
        ((CONSTANT)
 	(car CONSTANT))
-       ((NEW CONS PAR-OPEN expression@a COMMA expression@d PAR-CLO)
-	(cons a d))
-       ((NEW DATE PAR-OPEN CONSTANT PAR-CLO)
-	(let ((sec (car CONSTANT)))
-	   (if (integer? sec)
-	       (seconds->date (/fx sec 1000))
-	       (error 'json->hop "Illegal `date' construction" sec))))
+       ((IDENTIFIER)
+	(car IDENTIFIER))
+       ((new)
+	new)
+       ((IDENTIFIER PAR-OPEN vals PAR-CLO)
+	(case (car IDENTIFIER)
+	   ((sc_consStart) (apply cons* vals))
+	   ((sc_Pair) (cons (car vals) (cadr vals)))
+	   ((sc_list) vals)
+	   ((sc_jsstring2symbol) (string->symbol (car vals)))
+	   ((sc_jsstring2keyword) (string->keyword (car vals)))
+	   (else (error 'json->hop "Unknown function" (car IDENTIFIER)))))
        ((ANGLE-OPEN ANGLE-CLO)
 	'#())
-       ((ANGLE-OPEN expression ANGLE-CLO)
-	(vector expression))
        ((ANGLE-OPEN array-elements ANGLE-CLO)
 	(list->vector array-elements))
        ((object)
@@ -338,19 +380,54 @@
        ((get-element-by-id)
 	get-element-by-id)
        ((service)
-	service))
+	service)
+       ((PAR-OPEN FUNCTION PAR-OPEN PAR-CLO BRA-OPEN
+		  VAR set SEMI-COMMA
+		  set+
+		  RETURN new SEMI-COMMA
+		  BRA-CLO PAR-CLO PAR-OPEN PAR-CLO)
+	new)
+       ((constructor)
+	#unspecified))
+
+      ;; new
+      (new
+       ((NEW IDENTIFIER PAR-OPEN vals PAR-CLO)
+	(case (car IDENTIFIER)
+	   ((sc_Pair)
+	    (match-case vals
+	       ((?a ?d)
+		(cons a d))
+	       (else
+		(error 'json->hop "Illegal `cons' construction" vals))))
+	   ((Date)
+	    (match-case vals
+	       ((and ?sec (? integer?))
+		(seconds->date (/fx sec 1000)))
+	       (else
+		(error 'json->hop "Illegal `date' construction" vals))))
+	   (else
+	    (let ((c (find-class (car IDENTIFIER))))
+	       (if (not (class? c))
+		   (error 'json->hop "Can't find class" c)
+		   (let* ((constr (class-constructor c))
+			  (create (class-creator c))
+			  (ins (apply create vals)))
+		      (when (procedure? constr) (constr ins))
+		      ins)))))))
       
       ;; array
       (array-elements
-       ((COMMA expression)
-	expression)
-       ((expression array-elements)
+       ((expression)
+	(list expression))
+       ((expression COMMA array-elements)
 	(cons expression array-elements)))
 
       ;; object
       (object
-       ((FUNCTION IDENTIFIER PAR-OPEN arguments PAR-CLO
-		  BRA-OPEN sets BRA-CLO SEMI-COMMA
+       ((FUNCTION IDENTIFIER PAR-OPEN argument+ PAR-CLO
+		  BRA-OPEN set+ BRA-CLO SEMI-COMMA
+		  BRA-OPEN proto BRA-CLO SEMI-COMMA
 		  NEW IDENTIFIER@klass PAR-OPEN vals PAR-CLO)
 	(let ((c (find-class klass)))
 	   (if (not (class? c))
@@ -361,27 +438,46 @@
 		  (when (procedure? create) (create ins))
 		  ins)))))
 
-      (arguments
+      (argument*
        (()
 	'())
        ((IDENTIFIER)
 	(list (car IDENTIFIER)))
-       ((IDENTIFIER COMMA arguments)
-	(cons (car IDENTIFIER) arguments)))
+       ((IDENTIFIER COMMA argument*)
+	(cons (car IDENTIFIER) argument*)))
 
-      (sets
-       (()
-	'())
-       ((set SEMI-COMMA sets)
-	(cons set sets)))
+      (argument+
+       ((IDENTIFIER)
+	(list (car IDENTIFIER)))
+       ((IDENTIFIER COMMA argument+)
+	(cons (car IDENTIFIER) argument+)))
+
+      (set+
+       ((set SEMI-COMMA set*)
+	(cons set set*)))
+
+      (set*
+       (() '())
+       ((set SEMI-COMMA set*)
+	(cons set set*)))
 
       (set
+       ((IDENTIFIER = expression)
+	'_)
        ((IDENTIFIER DOT IDENTIFIER = expression)
+	'_)
+       ((IDENTIFIER DOT IDENTIFIER DOT IDENTIFIER = expression)
 	'_))
+
+      (proto
+       ((IDENTIFIER@c DOT IDENTIFIER@p DOT IDENTIFIER@f = IDENTIFIER@fun)
+	(list c p f fun)))
 
       (vals
        (()
 	'())
+       ((expression)
+	(list expression))
        ((expression COMMA vals)
 	(cons expression vals)))
 
@@ -395,11 +491,30 @@
       ;; service
       (service
        ((FUNCTION PAR-OPEN PAR-CLO BRA-OPEN RETURN IDENTIFIER
-		  PAR-OPEN arguments PAR-CLO BRA-CLO)
-	(error 'json->hop "Service cannot be transmitted" IDENTIFIER)))))
+		  PAR-OPEN argument* PAR-CLO BRA-CLO)
+	(error 'json->hop "Service cannot be transmitted" IDENTIFIER)))
+
+      ;; constructor
+      (constructor
+       ((FUNCTION PAR-OPEN argument+ PAR-CLO
+		  BRA-OPEN set+ BRA-CLO)
+	#unspecified))))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    json->hop ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (json->hop ip)
    (read/lalrp *json-parser* *json-lexer* ip))
+
+;*---------------------------------------------------------------------*/
+;*    hop->js-callback ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hop->js-callback obj)
+   (cond
+      ((xml-tilde? obj)
+       (format "function( event ) { ~a }" (xml-tilde->return obj)))
+      ((string? obj)
+       (format "function( event ) { ~a }" obj))
+      (else
+       "false")))

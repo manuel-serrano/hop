@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/http-request.scm                */
+;*    serrano/prgm/project/hop/2.0.x/runtime/http-request.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Nov 20 16:32:02 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Thu Mar 26 05:25:01 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
 ;*    -------------------------------------------------------------    */
@@ -25,10 +25,11 @@
 	    __hop_types
 	    __hop_http-lib
 	    __hop_user
-	    __hop_misc)
+	    __hop_misc
+	    __hop_charset)
    
    (export  (http-parse-request::http-request ::socket ::int ::int)))
-	   
+
 ;*---------------------------------------------------------------------*/
 ;*    parse-error ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -50,28 +51,23 @@
 (define (http-parse-request sock id timeout)
    (let ((port (socket-input sock))
 	 (out (socket-output sock)))
-      (input-timeout-set! port timeout)
+      (socket-timeout-set! sock timeout timeout)
       (let* ((req (read/rp request-line-grammar port id out))
 	     (localc (string=? (socket-local-address sock)
-			       (socket-host-address sock)))
-	     (localh (or (not (hop-enable-proxing))
-			 (not (http-request-proxyp req))
-			 (when (=fx (http-request-port req) (hop-port))
-			    (or (is-local? (http-request-host req))
-				(let ((ip (host (http-request-host req))))
-				   (or (string=? ip (socket-local-address sock))
-				       (string=? ip (hop-server-hostip)))))))))
-	 (input-timeout-set! port 0)
-	 (with-access::http-request req (socket localclientp localhostp user userinfo)
+			       (socket-host-address sock))))
+	 (with-access::http-request req (socket localclientp)
 	    (set! socket sock)
 	    (set! localclientp localc)
-	    (set! localhostp localh)
-	    (when (and (not user) localhostp)
-	       (set! user (if (string? userinfo)
-			      (or (find-authenticated-user userinfo)
-				  (anonymous-user))
-			      (anonymous-user))))
 	    req))))
+
+;*---------------------------------------------------------------------*/
+;*    request-eof ...                                                  */
+;*---------------------------------------------------------------------*/
+(define request-eof-exception
+   (instantiate::&io-parse-error
+      (obj beof)
+      (proc 'request-list-grammar)
+      (msg "Illegal premature end-of-file")))
 
 ;*---------------------------------------------------------------------*/
 ;*    request-line-grammar ...                                         */
@@ -81,131 +77,153 @@
 		     (CRLF "\r\n")
 		     id
 		     out)
-      ((: "GET" SP)
-       (http-parse-method-request 'GET (the-port) out id))
-      ((: "HOP" SP)
-       (http-parse-method-request 'HOP (the-port) out id))
-      ((: "HEAD" SP)
-       (http-parse-method-request 'HEAD (the-port) out id))
-      ((: "POST" SP)
-       (http-parse-method-request 'POST (the-port) out id))
-      ((: "PUT" SP)
-       (http-parse-method-request 'PUT (the-port) out id))
-      ((: "TRACE" SP)
-       (http-parse-method-request 'TRACE (the-port) out id))
-      ((: "OPTIONS" SP)
-       (http-parse-method-request 'OPTIONS (the-port) out id))
-      ((: "PROPFIND" SP)
-       (http-parse-method-request 'PROPFIND (the-port) out id))
-      ((: "PROPPATCH" SP)
-       (http-parse-method-request 'PROPPATCH (the-port) out id))
-      ((: "MKCOL" SP)
-       (http-parse-method-request 'MKCOL (the-port) out id))
-      ((: "DELETE" SP)
-       (http-parse-method-request 'DELETE (the-port) out id))
-      ((: "COPY" SP)
-       (http-parse-method-request 'COPY (the-port) out id))
-      ((: "MOVE" SP)
-       (http-parse-method-request 'MOVE (the-port) out id))
-      ((: "LOCK" SP)
-       (http-parse-method-request 'LOCK (the-port) out id))
-      ((: "UNLOCK" SP)
-       (http-parse-method-request 'UNLOCK (the-port) out id))
-      ((: (+ (in ("AZaz"))) SP)
+      ((: (+ (in ("AZ"))) SP)
+       ;; HTTP requests
+       (http-parse-method-request (the-subsymbol 0 -1) (the-port) out id))
+      ((: "<" (+ (in "policyferqust" #\-)) (* SP) "/>" #a000)
+       ;; Flash authentication requests
+       (http-parse-policy-file-request id (the-string) (the-port)))
+      ((: (out #\< SP) (+ (out SP)) SP)
+       ;; Illegal (parsed) requests
        (raise (instantiate::&hop-method-error
 		 (proc 'request-line-grammar)
 		 (msg "Method not implemented")
 		 (obj (the-string)))))
       (else
-       (parse-error 'request-line-grammar
-		    "Illegal character"
-		    (the-failure)
-		    (the-port)))))
+       (let ((o (the-failure)))
+	  (if (eof-object? o)
+	      (raise request-eof-exception)
+	      (parse-error 'request-line-grammar
+			   "Illegal method"
+			   o
+			   (the-port)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-method-request ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (http-parse-method-request method pi::input-port po::output-port id)
    (with-trace 3 'http-parse-method-request
-      (let (scheme hostname port abspath http-version userinfo)
-	 (let ((pi2 (if (or (>fx (hop-verbose) 2) (>=fx (bigloo-debug) 3))
-			(let ((line (http-read-line pi)))
-			   (when (>fx (hop-verbose) 2)
-			      (hop-verb 3 (hop-color id id " PARSE REQ")
-					": [" method " "
-					(string-for-read line) "]\n"))
-			   (trace-item method " " )
-			   (open-input-string line))
-			pi)))
-	    (multiple-value-bind (s u h p a)
-	       (http-url-parse pi2)
-	       (trace-item "scheme=" s " user=" u
-			   " hostname=" h " port=" p " abspath=[" a "]")
-	       (set! scheme (string->symbol s))
-	       (set! hostname h)
-	       (set! port p)
-	       (set! abspath a)
-	       (set! userinfo u)
-	       (read/rp http-sp-grammar pi2)
-	       (set! http-version (read/rp http-version-grammar pi2))
-	       (http-read-crlf pi2)
-	       (if (input-string-port? pi2)
-		   (close-input-port pi2))))
+      (let (scheme hostname port path http-version userinfo)
+	 (multiple-value-bind (s u h p a)
+	    (http-url-parse pi)
+	    (trace-item "scheme=" s " user=" u
+			" hostname=" h " port=" p " path=[" a "]")
+	    (set! scheme (string->symbol s))
+	    (set! hostname h)
+	    (set! port p)
+	    (set! path a)
+	    (set! userinfo u)
+	    (set! http-version (read/rp http-version-grammar pi))
+	    (when (input-string-port? pi)
+	       (close-input-port pi)))
 	 (multiple-value-bind (header actual-host actual-port cl te auth pauth co)
 	    (http-parse-header pi po)
-	    (let ((cabspath (http-file-name-canonicalize! abspath))
-		  (connection (or co
-				  (if (string<? http-version "HTTP/1.1")
-				      'close
-				      'keep-alive))))
-	       (trace-item "cabspath=" cabspath " connection=" connection)
-	       (instantiate::http-request
-		  (id id)
-		  (method method)
-		  (http http-version)
-		  (scheme scheme)
-		  (proxyp (string? hostname))
-		  (path (xml-string-decode cabspath))
-		  (userinfo userinfo)
-		  (encoded-path cabspath)
-		  (header header)
-		  (port (or actual-port port (hop-port)))
-		  (host (or actual-host hostname "localhost"))
-		  (content-length cl)
-		  (transfer-encoding te)
-		  (authorization auth)
-		  (proxy-authorization pauth)
-		  (connection connection)
-		  (user (or (and (string? auth)
-				 (or (find-authenticated-user auth)
-				     (anonymous-user)))
-			    (and (string? pauth)
-				 (or (find-authenticated-user pauth)
-				     (anonymous-user)))
-			    (anonymous-user)))))))))
+	    (let* ((i (string-index path #\?))
+		   (query #f)
+                   (abspath (cond
+                               ((not i)
+				;; file name canonicalization is needed
+				;; for authentication
+				(file-name-canonicalize! (url-decode! path)))
+                               ((>fx i 0)
+                                (let ((l (string-length path)))
+                                   (set! query (substring path (+fx i 1) l)))
+                                (let ((p (url-decode! (substring path 0 i))))
+                                   (file-name-canonicalize! p)))
+                               (else
+                                (let ((l (string-length path)))
+                                   (set! query (substring path 1 l)))   
+                                "/")))
+		   (connection (if (hop-enable-keep-alive)
+				   (or co
+				       (if (eq? http-version 'HTTP/1.1)
+					   'keep-alive
+					   'close))
+				   'close)))
+	       (trace-item "abspath=" abspath
+			   " query=" query
+			   " connection=" connection)
+	       (let ((user (or (and (string? auth)
+				    (find-authenticated-user auth abspath))
+			       (and (string? pauth)
+				    (find-authenticated-user pauth abspath))
+			       (and (string? userinfo)
+				    (find-authenticated-user userinfo abspath))
+			       (anonymous-user))))
+		  (if (string? hostname)
+		      (instantiate::http-proxy-request
+			 (id id)
+			 (method method)
+			 (http http-version)
+			 (scheme scheme)
+			 (userinfo userinfo)
+			 (path path)
+			 (abspath abspath)
+			 (query query)
+			 (header header)
+			 (port (or actual-port port (hop-port)))
+			 (host (or actual-host hostname "localhost"))
+			 (content-length cl)
+			 (transfer-encoding te)
+			 (proxy-authorization pauth)
+			 (connection connection)
+			 (user user))
+		      (instantiate::http-server-request
+			 (id id)
+			 (method method)
+			 (http http-version)
+			 (scheme scheme)
+			 (userinfo userinfo)
+			 (path path)
+			 (abspath abspath)
+			 (query query)
+			 (header header)
+			 (port (or actual-port port (hop-port)))
+			 (host (or actual-host hostname "localhost"))
+			 (content-length cl)
+			 (transfer-encoding te)
+			 (authorization auth)
+			 (connection connection)
+			 (user user)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    http-file-name-canonicalize! ...                                 */
+;*    http-parse-policy-file-request ...                               */
 ;*---------------------------------------------------------------------*/
-(define (http-file-name-canonicalize! path)
-   (let ((len (string-length path)))
-      (let loop ((i 0))
-	 (cond
-	    ((=fx i len)
-	     (file-name-canonicalize! path))
-	    ((char=? (string-ref path i) #\?)
-	     (string-append (file-name-canonicalize! (substring path 0 i))
-			    (substring path i len)))
-	    (else
-	     (loop (+fx i 1)))))))
-   
+(define (http-parse-policy-file-request id string port)
+   (if (substring-at? string "<policy-file-request" 0)
+       ;; This request is emitted by Flash plugins >= 9.0.115.
+       ;; This plugins are buggous because they should seek for
+       ;; the policy file using the /hop/server-event/policy-file.
+       ;; In the meantime, Hop also handles the <policy-file-request/>.
+       (instantiate::http-server-request
+	  (id id)
+	  (method 'FLASH-POLICY-FILE)
+	  (http 'HTTP/0.0)
+	  (scheme 'policy-file-request)
+	  (path "<policy-file-request/>")
+	  (abspath "<policy-file-request/>")
+	  (header '())
+	  (port (hop-port))
+	  (host "localhost")
+	  (content-length 10)
+	  (user (anonymous-user)))
+       (raise (instantiate::&hop-method-error
+		 (proc 'request-line-grammar)
+		 (msg "Method not implemented")
+		 (obj string)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    http-version-grammar ...                                         */
 ;*---------------------------------------------------------------------*/
 (define http-version-grammar
-   (regular-grammar ((DIGIT (in ("09"))))
-      ((: "HTTP/" (+ DIGIT) "." (+ DIGIT))
-       (the-string))
+   (regular-grammar ((DIGIT (in ("09")))
+		     (SP (+ #\Space)))
+      (SP
+       (ignore))
+      ((: "HTTP/" (+ DIGIT) "." (+ DIGIT) "\n")
+       (the-subsymbol 0 -1))
+      ((: "HTTP/" (+ DIGIT) "." (+ DIGIT) "\r\n")
+       (the-subsymbol 0 -2))
       (else
        (parse-error 'http-version-grammar "Illegal character"
 		    (the-failure)

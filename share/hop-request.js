@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-request.js                    */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-request.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Nov 14 10:51:09 2007 (serrano)                */
-/*    Copyright   :  2004-07 Manuel Serrano                            */
+/*    Last change :  Sat Apr 18 18:38:34 2009 (serrano)                */
+/*    Copyright   :  2004-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
 /*=====================================================================*/
@@ -22,156 +22,143 @@ var hop_anim_latency = 400;
 var hop_busy_anim_16_16 = "data:image/gif;base64,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";
 
 /*---------------------------------------------------------------------*/
-/*    hop_error ...                                                    */
+/*    hop_apply_form_url ...                                           */
 /*---------------------------------------------------------------------*/
-function hop_error( msg ) {
-   alert( msg );
-   throw new Error( msg );
-}
+function hop_apply_form_url( service, args ) {
+   var nargs = null;
+   var els = args[ 0 ].elements;
 
-/*---------------------------------------------------------------------*/
-/*    error ...                                                        */
-/*---------------------------------------------------------------------*/
-function error( msg ) {
-   hop_error( msg );
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_service_url ...                                              */
-/*---------------------------------------------------------------------*/
-function hop_service_url( service, formals, args ) {
-   var len = formals.length;
-
-   if( len == 0 ) {
-      return service + "?hop-encoding=hop";
-   } else {
-      var url = service + "?hop-encoding=hop";
-      var i;
-
-      if( (args.length == 1) &&
-	  (HTMLFormElement != undefined) &&
-	  (args[ 0 ] instanceof HTMLFormElement) ) {
-	 var els = args[ 0 ].elements;
-
-	 for( i = 0; i < els.length; i++ ) {
-	    if( els[ i ].type == "checkbox" ) {
-	       var val = els[ i ].checked ? els[ i ].value : false;
-
-	       url += "&" + els[ i ].name + "=" + hop_bigloo_serialize( val );
-	    } else {
-	       if( els[ i ].type == "radio" ) {
-		  if( els[ i ].checked ) {
-		     url += "&" + els[ i ].name + "=" + hop_bigloo_serialize( els[ i ].value );
-		  }
-	       } else {
-		  url += "&" + els[ i ].name + "=" + hop_bigloo_serialize( els[ i ].value );
-	       }
+   for( i = els.length - 1 ; i >=0 ; i-- ) {
+      if( els[ i ].type == "checkbox" ) {
+	 nargs = sc_cons( els[ i ].checked ? els[ i ].value : false, nargs );
+	 nargs = sc_cons( sc_jsstring2keyword( els[ i ].name ), nargs );
+      } else {
+	 if( els[ i ].type == "radio" ) {
+	    if( els[ i ].checked ) {
+	       nargs = sc_cons( els[ i ].value, nargs );
+	       nargs = sc_cons( sc_jsstring2keyword( els[ i ].name ), nargs );
+	    }
+	 } else {
+	    if( els[ i ].name !== "" ) {
+	       nargs = sc_cons( els[ i ].value, nargs );
+	       nargs = sc_cons( sc_jsstring2keyword( els[ i ].name ), nargs );
 	    }
 	 }
-
-	 return url;
-      } else {
-	 for( i = 0; i < len; i++ ) {
-	    url += "&" + formals[ i ] + "=" + hop_bigloo_serialize( args[ i ] );
-	 }
-
-	 return url;
       }
    }
+
+   return hop_apply_url( service, nargs );
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_service_url_varargs ...                                      */
+/*    hop_apply_url ...                                                */
 /*---------------------------------------------------------------------*/
-function hop_service_url_varargs( service, args ) {
-   var len = (arguments.length - 1);
-   
-   if( len == 0 ) {
-      return service;
+/*** META ((export #t)) */
+function hop_apply_url( service, args ) {
+   if( sc_isPair( args ) ) {
+      return service
+	 + "?hop-encoding=hop"
+	 + "&vals=" + hop_bigloo_serialize( args );
    } else {
-      var url = service + "?hop-encoding=hop";
-      var i;
-
-      for( i = 0; i < len; i++ ) {
-	 url += "&a" + i + "=" + hop_bigloo_serialize( arguments[ i + 1 ] );
+      if( (args.length == 1) && hop_is_dom_form_element( args[ 0 ] ) ) {
+	 return hop_apply_form_url( service, args );
+      } else {
+	 return service
+	    + "?hop-encoding=hop"
+	    + "&vals=" + hop_bigloo_serialize( sc_vector2list( args ) );
       }
-
-      return url;
    }
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_default_failure ...                                          */
 /*---------------------------------------------------------------------*/
-function hop_default_failure( http ) {
-   var t = http.responseText;
-   
-   if( !t ) return;
-	       
+/*** META ((export #t)) */
+function hop_default_failure( xhr ) {
    var div = document.getElementById( "hop_default_failure" );
    var div2 = document.getElementById( "hop_default_failure_background" );
 
-   t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
-   t = t.replace( /<head[^>]*>/g, "<div style='display: none;'>" );
-   t = t.replace( /<\/head>/g, "</div>" );
-   t = t.replace( /<(meta|link)[^>]*>/g, "<span style='display: none'></span>" );
-   t = t.replace( /<html[^>]*>/g, "<div align='center' style='background: transparent; cursor: pointer' onclick='document.body.removeChild( document.getElementById( \"hop_default_failure_background\" ) ); document.body.removeChild( document.getElementById( \"hop_default_failure\" ) );' title='Click to hide this message'>" );
-   t = t.replace( /<\/html>/g, "</div>" );
-   t = t.replace( /<body[^>]*>/g, "<div align='center' style='border: 3px dashed red; overflow: auto; width: 50em; background: white; padding: 4px; font-family: sans serif; text-align: center;'>" );
-   t = t.replace( /<\/body>/g, "</div>" );
-   t = t.replace( /&quot;/g, "\"" );
-   
+   var notify_error = function( d, xhr ) {
+      if( xhr.responseError ) {
+	 d.appendChild( xhr.responseError );
+      } else {
+	 var t = xhr.responseText;
+	 if( t ) {
+	    t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
+	    t = t.replace( /<head[^>]*>/g, "<div style='display: none;'>" );
+	    t = t.replace( /<\/head>/g, "</div>" );
+	    t = t.replace( /<(meta|link)[^>]*>/g, "<span style='display: none'></span>" );
+	    t = t.replace( /<html[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
+	    t = t.replace( /<\/html>/g, "</div>" );
+	    t = t.replace( /<body[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
+	    t = t.replace( /<\/body>/g, "</div>" );
+	    t = t.replace( /&quot;/g, "\"" );
+	    d.innerHTML = t;
+	 } else {
+	    d.innerHTML = "Status: " + xhr.status + " -- " + xhr.statusText;
+	 }
+      }
+   }
+      
+   if( !div ) {
+      var w = (hop_current_window_width() / 8) + "px";
+      var ch = hop_current_window_height();
+      var t = (ch > 800 ? "50px" : "10px");
+
+      div = document.createElement( "div" );
+      div.id = "hop_default_failure";
+      div.align = "center";
+      node_style_set( div, "position", "fixed" );
+      node_style_set( div, "top",  t );
+      node_style_set( div, "bottom", t );
+      node_style_set( div, "left", w );
+      node_style_set( div, "right", w );
+      node_style_set( div, "text-align", "center" );
+      node_style_set( div, "border", "5px dashed #f87d0f" );
+      node_style_set( div, "z-index", "10000" );
+      node_style_set( div, "background", "#fff" );
+      node_style_set( div, "padding", "4px" );
+      node_style_set( div, "padding-bottom", "8px" );
+      node_style_set( div, "overflow", "hidden" );
+      node_style_set( div, "background", "#F0F2F2" );
+   } else {
+      div.innerHTML = "";
+   }
+
    if( !div2 ) {
       div2 = document.createElement( "div" );
       div2.id = "hop_default_failure_background";
+      div2.align = "center";
       node_style_set( div2, "position", "fixed" );
       node_style_set( div2, "top", "0" );
       node_style_set( div2, "bottom", "0" );
       node_style_set( div2, "left", "0" );
       node_style_set( div2, "right", "0" );
-      node_style_set( div2, "background", "#000" );
-      node_style_set( div2, "opacity", "0.5" );
+      node_style_set( div2, "background", "#333" );
+      node_style_set( div2, "opacity", "0.9" );
       node_style_set( div2, "overflow", "hidden" );
       node_style_set( div2, "text-align", "center" );
       node_style_set( div2, "z-index", "9999" );
+      node_style_set( div2, "text-align", "center" );
 
       document.body.appendChild( div2 );
    }
-   
-   if( !div ) {
-      div = document.createElement( "div" );
-      div.id = "hop_default_failure";
-      node_style_set( div, "position", "fixed" );
-      node_style_set( div, "top", "100px" );
-      node_style_set( div, "left", "0" );
-      node_style_set( div, "right", "0" );
-      node_style_set( div, "text-align", "center" );
-      node_style_set( div, "border", "0" );
-      node_style_set( div, "z-index", "10000" );
-      node_style_set( div, "opacity", "1" );
-      div.align = "center";
 
-      div.innerHTML = t;
-
-      document.body.appendChild( div );
+   if( xhr.status >= 500 ) {
+      node_style_set( div, "border", "5px dashed red" );
    } else {
-      div.innerHTML = t;
+      node_style_set( div, "border", "5px dashed #f87d0f" );
    }
-}
 
-/*---------------------------------------------------------------------*/
-/*    hop_failure_alert ...                                            */
-/*---------------------------------------------------------------------*/
-function hop_failure_alert( http ) {
-   var t = http.responseText;
+   notify_error( div, xhr );
+   div2.appendChild( div );
    
-   t = t.replace( /<\tr>/g, "\n" );
-   t = t.replace( /<[^>]+>/g, " " );
-   t = t.replace( /&lt;/g, "<" );
-   t = t.replace( /&gt;/g, ">" );
-   t = t.replace( /&quot;/g, "\"" );
-   
-   hop_error( "*** Hop Error " + http.status + ": " + t );
+   node_style_set( div2, "display", "block" );
+   hop_add_event_listener( div2,
+			   "click",
+			   function() {
+			      node_style_set( div2, "display", "none" );
+			   } );
 }
 
 /*---------------------------------------------------------------------*/
@@ -200,7 +187,7 @@ function hop_anim_16_16( title ) {
    var img = document.createElement( "img" );
    img.className = "hop-busy-anim";
 
-   if( hop_msiep() ) {
+   if( !hop_config.inline_image ) {
       img.src = hop_share_directory() + "/icons/busy-anim-16.gif";
    } else {
       img.src = hop_busy_anim_16_16;
@@ -212,18 +199,42 @@ function hop_anim_16_16( title ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_default_anim ...                                             */
+/*---------------------------------------------------------------------*/
+var hop_default_anim = hop_anim_16_16;
+
+/*---------------------------------------------------------------------*/
+/*    hop_default_anim_set ...                                         */
+/*---------------------------------------------------------------------*/
+/*** META ((export with-hop-default-anim-set!)) */
+function hop_default_anim_set( anim ) {
+   var old = hop_default_anim;
+   hop_default_anim = anim;
+   return old;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_default_anim_get ...                                         */
+/*---------------------------------------------------------------------*/
+/*** META ((export with-hop-default-anim)) */
+function hop_default_anim_get( ) {
+   return hop_default_anim;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_anim_vis ...                                                 */
 /*---------------------------------------------------------------------*/
 var hop_anim_vis = false;
 var hop_anim_service = false;
 var hop_anim_interval;
+var hop_anim_fun = false;
 
 /*---------------------------------------------------------------------*/
 /*    hop_stop_anim ...                                                */
 /*---------------------------------------------------------------------*/
 function hop_stop_anim() {
    if( hop_anim_interval ) {
-      clearInterval( hop_anim_interval );
+      if( hop_has_setInterval ) clearInterval( hop_anim_interval );
       hop_anim_interval = false;
    }
 }
@@ -231,22 +242,32 @@ function hop_stop_anim() {
 /*---------------------------------------------------------------------*/
 /*    hop_anim ...                                                     */
 /*---------------------------------------------------------------------*/
-function hop_anim( service ) {
+function hop_anim( service, user_anim ) {
    hop_stop_anim();
 
    if( hop_anim_service == service ) {
-      if( hop_anim_vis ) {
+      if( hop_anim_vis && (hop_anim_fun == user_anim) ) {
 	 hop_anim_vis.title = service;
 	 // node_style_set( hop_anim_vis, "visibility", "visible" );
 	 node_style_set( hop_anim_vis, "display", "block" );
 	 return hop_anim_vis;
       } else {
-	 hop_anim_vis = hop_anim_16_16( service );
+	 hop_anim_vis = user_anim( service );
 	 document.body.appendChild( hop_anim_vis );
 	 return hop_anim_vis;
       }
    }
    return false;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_responsetext_error ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_responsetext_error( xhr ) {
+   if( xhr.responseText.length > 80 )
+      return xhr.responseText.substring( 0, 80 );
+   else
+      return xhr.responseText;
 }
 
 /*---------------------------------------------------------------------*/
@@ -257,8 +278,23 @@ function hop_anim( service ) {
 /*    -------------------------------------------------------------    */
 /*    This function DOES NOT evaluates its result.                     */
 /*---------------------------------------------------------------------*/
-function hop_send_request( svc, sync, success, failure, anim, henv ) {
+function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
    var xhr = hop_make_xml_http_request();
+   /* MS, 20 Jun 08: I cannot understand why but sometime hop_error is */
+   /* unbound (at least in Firefox) when used inside a catch! Binding  */
+   /* it to a local var elimintates this problem.                      */
+   var hop_err = hop_error;
+   var hop_err_html = hop_error_html;
+   var hop_reperror = hop_responsetext_error;
+   var hop_header_ctype = hop_header_content_type;
+   var fail = (typeof failure == "function") ? failure : hop_default_failure;
+   
+   var err = function( exc, xhr, ctype ) {
+      var txt = hop_reperror( xhr );
+      var fun = ctype ? ("with-hop [content-type=" + ctype + "]") : "with-hop";
+      
+      return hop_err( fun, exc, txt, svc );
+   }
 
    function onreadystatechange() {
       if( xhr.readyState == 4 ) {
@@ -268,34 +304,34 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 	    switch( status ) {
 	       case 200:
 		  try {
-		     if( hop_is_http_json( xhr ) ) {
-			var expr;
+		     var ctype = hop_header_ctype( xhr );
+		     var expr;
+		     
+		     if( ctype === "application/x-javascript" ) {
+			/* ctype must match the value hop-json-mime-type */
+			/* which is defined in runtime/param.scm.        */
 			try {
 			   expr = eval( xhr.responseText );
-			} catch( e ) {
-			   hop_error( "*** WITH-HOP JSON error: " + svc +
-				      ": " + e + " -- " +
-				      xhr.responseText );
+			} catch( exc ) {
+			   xhr.responseError = hop_err_html( svc, exc, xhr.responseText );
+			   fail( xhr );
 			   expr = false;
 			}
+
 			return success( expr, xhr );
+		     } else if( (ctype === "text/html") ||
+				(ctype === "application/xhtml+xml") ) {
+			var el = hop_create_element( xhr.responseText );
+
+			return success( el, xhr );
 		     } else {
 			return success( xhr.responseText, xhr );
 		     }
-		  } catch( e ) {
-		     if( e.line ) {
-			hop_error( "*** WITH-HOP error: " + svc +
-				   ": " + e + "(line " + e.line + ") -- " +
-				   xhr.responseText );
-		     } else {
-			hop_error( "*** WITH-HOP error: " + svc +
-				   ": " + e + " -- " +
-				   xhr.responseText );
-		     }
+		  } catch( exc ) {
+		     xhr.responseError = hop_err_html( svc, exc, xhr.responseText );
+		     fail( xhr );
+		     return false;
 		  }
-
-	       case 202:
-		  return success( hop_unserialize( xhr.responseText ), xhr );
 
 	       case 204:
 		  return false;
@@ -314,8 +350,8 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 		  return false;
 
 	       case 407:
-		  hop_error( "*** Hop Authentication Error " + status + ": `"
-			     + xhr.responseText + "'" );
+		  xhr.responseError = hop_err_html( svc, "Bad authentication", xhr.responseText );
+		  fail( xhr );
 		  return false;
 
 	       default:
@@ -325,24 +361,24 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 			return success( xhr.responseText, xhr );
 		     }
 		  } else {
-		     if( failure ) {
-			return failure( xhr );
-		     } else {
-			return hop_default_failure( xhr );
-		     }
+		     fail( xhr );
+		     return false;
 		  }
 	    }
-	 } catch( e ) {
-	    if( typeof failure == "function" ) {
-	       failure( xhr );
-	    } else {
-	       throw e;
-	    }
+	 } catch( exc ) {
+	    xhr.responseError = hop_err_html( svc, exc, xhr.responseText );
+
+	    fail( xhr );
+	    return false;
 	 } finally {
-	    if( hop_anim_vis != false ) {
-	       node_style_set( hop_anim_vis, "display", "none" );
+	    try {
+	       if( hop_anim_vis != false ) {
+		  node_style_set( hop_anim_vis, "display", "none" );
+	       }
+	       hop_anim_service = false;
+	    } catch( e ) {
+	       ;
 	    }
-	    hop_anim_service = false;
 	 }
       }
 
@@ -355,13 +391,17 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 
    xhr.open( "GET", svc, (sync != true) );
 
-   xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
    xhr.setRequestHeader( 'Connection', 'close' );
+   xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
    // to force the response to be interpreted as latin-1:
    // xhr.overrideMimeType( 'text/html; charset=ISO-8859-1' );
    
    if( henv.length > 0 ) {
       xhr.setRequestHeader( 'Hop-Env', hop_serialize_request_env() );
+   }
+
+   if( auth ) {
+      xhr.setRequestHeader( 'Authorization', auth );
    }
    
    try {
@@ -371,16 +411,21 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 
       hop_stop_anim();
       
-      if( anim ) {
+      if( anim && hop_has_setInterval ) {
+	 var a = (anim instanceof Function) ? anim : hop_default_anim;
+
 	 hop_anim_interval =
-	    setInterval( function() { hop_anim( svc ) }, hop_anim_latency );
+	    setInterval( function() { hop_anim( svc, a ) }, hop_anim_latency );
       }
 
       if( sync ) {
 	 if( xhr.readyState == 4 ) {
 	    onreadystatechange();
 	 } else {
-	    hop_error( "hop_send_request: synchronous call failed: " + svc );
+	    hop_error( "with-hop", 
+		       "synchronous call failed",
+		       "readyState: " + xhr.readyState,
+		       svc );
 	 }
       }
    } catch( e ) {
@@ -388,8 +433,8 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 	 node_style_set( hop_anim_vis, "display", "none" );
       }
       hop_anim_service = false;
-      
-      hop_error( e );
+
+      hop_error( "with-hop", e, "Cannot call server", svc );
    }
 
    return xhr;
@@ -398,14 +443,82 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 /*---------------------------------------------------------------------*/
 /*    with_hop ...                                                     */
 /*---------------------------------------------------------------------*/
-function with_hop( svc, success, failure, sync ) {
+/*** META ((export #t)) */
+function with_hop( svc, success, failure, sync, anim ) {
    if( !success ) success = function( h ) { return h };
    if( !failure ) failure = hop_default_failure;
    
    return hop_send_request( svc, sync,
 			    success, failure,
-			    true, hop_serialize_request_env() );
+			    true, hop_serialize_request_env(), false );
 }
+
+/*---------------------------------------------------------------------*/
+/*    with_hop ...                                                     */
+/*---------------------------------------------------------------------*/
+/*** META
+(define-macro (with-hop svc . rest)
+   (let ((success #f)
+	 (fail #f)
+	 (sync #f)
+	 (anim #t)
+	 (user #f)
+	 (password #f)
+	 (authorization #f))
+      (let loop ((rest rest))
+	 (cond
+	    ((null? rest)
+	     `((@ hop_send_request _)
+	                        ,svc
+				,sync
+				,(or success '(lambda (h) h))
+				,(or fail '(@ hop_default_failure _))
+				,anim
+				((@ hop_serialize_request_env _))
+				,(cond
+				    (authorization
+				     authorization)
+				    ((and (string? user)
+					  (string? password))
+				     (string-append
+				      "Basic "
+				      (base64-encode
+				       (string-append
+					user ":" password)))))))
+	    ((eq? (car rest) :anim)
+	     (if (null? (cdr rest))
+		 (error 'with-hop "Illegal :anim argument" rest)
+		 (set! anim (cadr rest)))
+	     (loop (cddr rest)))
+	    ((eq? (car rest) :authorization)
+	     (if (null? (cdr rest))
+		 (error 'with-hop "Illegal :authorization argument" rest)
+		 (set! authorization (cadr rest)))
+	     (loop (cddr rest)))
+	    ((eq? (car rest) :user)
+	     (if (null? (cdr rest))
+		 (error 'with-hop "Illegal :user argument" rest)
+		 (set! user (cadr rest)))
+	     (loop (cddr rest)))
+	    ((eq? (car rest) :sync)
+	     (if (null? (cdr rest))
+		 (error 'with-hop "Illegal :sync argument" rest)
+		 (set! sync (cadr rest)))
+	     (loop (cddr rest)))
+	    ((eq? (car rest) :password)
+	     (if (null? (cdr rest))
+		 (error 'with-hop "Illegal :password argument" rest)
+		 (set! password (cadr rest)))
+	     (loop (cddr rest)))
+	    ((not success)
+	     (set! success (car rest))
+	     (loop (cdr rest)))
+	    ((not fail)
+	     (set! fail (car rest))
+	     (loop (cdr rest)))
+	    (else
+             (error 'with-hop "Illegal argument" rest))))))
+*/
 
 /*---------------------------------------------------------------------*/
 /*    hop ...                                                          */
@@ -505,7 +618,7 @@ function hop_serialize_request_env() {
 /*    Is this really needed?                                           */
 /*    I think that if it is, a function that returns the whole list    */
 /*    of currently binding cells will also be required. For now,       */
-/*       this function is not bound in the Hop syntax (hop-alias.scm). */
+/*    this function is not exported.                                   */
 /*---------------------------------------------------------------------*/
 function hop_request_reset() {
    hop_request_env_string = "";
@@ -516,6 +629,7 @@ function hop_request_reset() {
 /*---------------------------------------------------------------------*/
 /*    hop_request_set ...                                              */
 /*---------------------------------------------------------------------*/
+/*** META ((export request-set!)) */
 function hop_request_set( key, val ) {
    hop_request_env_invalid = true;
    hop_request_env[ key ] = val;
@@ -525,7 +639,10 @@ function hop_request_set( key, val ) {
 /*---------------------------------------------------------------------*/
 /*    hop_request_get ...                                              */
 /*---------------------------------------------------------------------*/
+/*** META ((export request-get)
+           (peephole: (hole 1 "hop_request[" key"]"))) */
 function hop_request_get( key ) {
    return hop_request[ key ];
 }
+
 

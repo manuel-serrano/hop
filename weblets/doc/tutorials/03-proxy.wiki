@@ -45,7 +45,7 @@ constitute the HOP respond.
 
 <example>
   (define (linux-kernel-hooking req resp)
-     (with-access::http-request req (host path localhostp)
+     (with-access::http-request req (host path)
         (when (and (string=? host "www.kernel.org")
                    (substring-at? path "/" 0))
            (instantiate::http-response-filter
@@ -62,12 +62,6 @@ constitute the HOP respond.
    (lambda (req resp)
       (or (linux-kernel-hooking req resp)
           resp)))
-
-  (<HTML>
-     (<BODY> "Remote hooking is now registered!")
-     (<BR>)
-     (<BR>)
-     (<A> :href "http://www.kernel.org" "http://www.kernel.org"))
 </example>
 
 The first part of the source code define the hook. As all hooks, it
@@ -82,6 +76,10 @@ the ::http-response-filter is built and returned. That filter executes
 the initial request and then, using regular expressions, it replace
 all the occurrences of the word //Linux// with //Xunil//.
 
+~~ Server requests and proxy requests can be distinguished because they
+are not reified using the same class. More precisely, both are instances
+of ++http-request++ but only the former are also instances of
+++http-server-request++.
 
 == Avoiding bouncing ==
 

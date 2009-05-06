@@ -21,33 +21,29 @@
 			   (<TT> 
 			      :onclick (let ((svc (if (member (suffix f) '("png" "gif" "jpeg"))
 						      (service ()
-							 (<DIV>
-							    :class "img"
+							 (<DIV> :class "img"
 							    :align "center"
 							    (<IMG> :inline #t :src qf)))
-						      (service () (<PRE> (file->string qf))))))
+						      (service ()
+							 (<PRE> (file->string qf))))))
 					   ~(with-hop ($svc)
 					       (lambda (h)
-						  (set! $disp.innerHTML h))))
+						  (innerHTML-set! $disp h))))
 			      f)))))
 	      (directory->list dir)))))
 
 (define-service (home/demos/source)
    (<HTML>
-      (<HEAD>
-	 :title "Home Source demo"
-	 :base (service-base-url home/demos/source (current-request))
+      (<HEAD> :title "Home Source demo"
 	 :include "hop-paned" "hop-tree"
-	 :css "source.hss")
+	 :css (service-resource home/demos/source "source.hss"))
       (<BODY>
 	 (<H3> "Source code browser")
 	 (let ((disp (<DIV> :class "file" ""))
 	       (d (dirname (dirname *source-directory*))))
-	    (<PANED>
-	       :fraction 40
+	    (<PANED> :fraction 40
 	       (<PAN>
-		  (<DIV>
-		     :class "tree"
+		  (<DIV> :class "tree"
 		     (directory->tree d (basename d) #t disp)))
 	       (<PAN>
 		  disp))))))

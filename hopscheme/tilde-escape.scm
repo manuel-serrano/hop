@@ -1,64 +1,59 @@
-(module tilde-escape
-   (import  hopscheme_aliases)
-   (library hop
-	    scheme2js)
-   (export (compile-hop-client e))
-   (import hopscheme-config))
+(module __hopscheme_tilde-escape
+   (library scheme2js)
+   (export (compile-scheme-expression e ::obj)
+	   (compile-hop-client e #!optional (env '()))
+	   (JS-expression::bstring t::pair)
+	   (JS-statement::bstring t::pair)
+	   (JS-return::bstring t::pair))
+   (import __hopscheme_config
+	   __hop_exports))
 
-;; ===========================================================================
-;; add hook for '~'-escaped expressions.
-;; ===========================================================================
-
-(define *rev-scheme-exprs* (make-hashtable))
-
-(define *tilde-mutex* (make-mutex))
-
-(define (js->hop js-expr)
-   (list (hop-read-javascript (open-input-string (string-append js-expr "}")))))
-
-(define (new-scheme-expr p expr)
-   (let* ((proxy (list 'begin #f))
-	  (module
-	   (list 'module expr
-		 (lambda (p)
-		    (cons (open-output-string)
-			  (lambda (string-port)
-			     (let ((js-expr (close-output-port string-port)))
-				(set-cdr! proxy
-					  (js->hop js-expr))
-				(display ";" p))))))))
-      (mutex-lock! *tilde-mutex*)
-      (hashtable-update! *rev-scheme-exprs*
-			 p
-			 (lambda (old-l)
-			    (cons module old-l))
-			 (list module))
-      (mutex-unlock! *tilde-mutex*)
-      proxy))
-
-(hop-make-escape-set! new-scheme-expr)
-
-
-(define (compile-hop-client e)
-   (let ((s-port (open-output-string)))
+;; this function is called during parsing. It returns an expression that is
+;; supposed to take the place of a tilde expression. We therefore return a
+;; quotted 'cons (instead of a pair).
+(define (compile-scheme-expression e env)
+   (let ((s-port (open-output-string))
+	 (assig-var (gensym 'result)))
       (with-handler
 	 (lambda (e)
 	    (close-output-port s-port)
 	    (raise e))
-	 (scheme2js (list e) (hopscheme-aliases) (hopscheme-config) s-port)
-	 (close-output-port s-port))))
+	 (scheme2js-compile-expr
+	  e              ;; top-level
+	  s-port         ;; out-port
+	  `(             ;; override-headers
+	    (merge-first (import ,(hop-runtime-module)))
+	    ,@env)
+	  (extend-config (hopscheme-config #f) 'module-result-var assig-var)) ;; config
+	 `(cons ',assig-var ,(*hop-postprocess* (close-output-port s-port))))))
 
-;; ===========================================================================
-;; and one, once an expression has been read.
-;; ===========================================================================
+(define (JS-expression t)
+   (let* ((assig-var (car t))
+	  (assig-var-str (symbol->string assig-var))
+	  (e (cdr t)))
+      (string-append
+       "(function() { " e "\n"
+       "return " assig-var-str "; })"
+       ".call(this)")))
 
-(define (post-compile p)
-;   (print "post-compile")
-   (let ((rev-scheme-exprs (hashtable-get *rev-scheme-exprs* p)))
-      (when rev-scheme-exprs
-	 (mutex-lock! *tilde-mutex*)
-	 (hashtable-remove! *rev-scheme-exprs* p)
-	 (mutex-unlock! *tilde-mutex*)
-	 (for-each compile-hop-client (reverse! rev-scheme-exprs)))))
+(define (JS-statement t)
+   (cdr t))
 
-(hop-read-post-hook-set! post-compile)
+(define (JS-return t)
+   (let* ((assig-var (car t))
+	  (assig-var-str (symbol->string assig-var))
+	  (e (cdr t)))
+      (string-append
+       "{ " e "\n"
+       "return " assig-var-str "; }")))
+
+(define (compile-hop-client e #!optional (env '()))
+   ;; This function is used from weblets, don't remove it!
+   (let ((ce (compile-scheme-expression e env)))
+      (match-case ce
+	 ((cons ((kwote quote) ?var) ?expr)
+	  (JS-expression (cons var expr)))
+	 (else
+	  (error 'compile-hop-client "Compilation failed" e)))))
+       
+   

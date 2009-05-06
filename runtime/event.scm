@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/event.scm                       */
+;*    serrano/prgm/project/hop/2.0.x/runtime/event.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sun Nov 25 06:24:35 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Sat Mar 21 18:01:02 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -14,11 +14,15 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_event
 
+   (library web)
+   
    (include "xml.sch"
-	    "service.sch")
+	    "service.sch"
+	    "param.sch")
 
    (import  __hop_param
 	    __hop_types
+	    __hop_user
 	    __hop_xml
 	    __hop_hop-extra
 	    __hop_misc
@@ -28,24 +32,34 @@
 	    __hop_cgi
 	    __hop_read
 	    __hop_service
-	    __hop_http-response)
+	    __hop_http-response
+	    __hop_http-error)
 
-   (static  (class http-response-event::%http-response
+   (static  (class http-response-event::%http-response-local
 	       (name::bstring read-only))
-
+	    
 	    (class ajax-connection
+	       (mutex::mutex read-only (default (make-mutex)))
 	       (req (default #f))
 	       key::symbol
-	       (buffer::pair-nil (default '()))
-	       (lastpair::pair-nil (default '()))
-	       (date::elong (default (current-seconds)))
-	       (count::int (default 0))))
+	       (buffers::pair-nil (default '()))
+	       (marktime::elong (default (current-seconds)))
+	       (pingtime::elong (default #e0)))
+	    
+	    (class buffer
+	       (buffer-init)
+	       (size::int read-only (default (hop-event-buffer-size)))
+	       (mutex::mutex read-only (default (make-mutex)))
+	       (cells::pair-nil (default '()))
+	       (head::pair-nil (default '()))
+	       (tail::pair-nil (default '()))))
 	    
    (export  (hop-event-init! ::obj)
 	    (hop-event-tables)
 	    (hop-event-signal! ::bstring ::obj)
 	    (hop-event-broadcast! ::bstring ::obj)
-	    (hop-event-client-ready? ::bstring)))
+	    (hop-event-client-ready? ::bstring)
+	    (hop-event-policy-file ::http-request)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *event-mutex* ...                                                */
@@ -59,26 +73,12 @@
 (define *register-service* #f)
 (define *unregister-service* #f)
 (define *init-service* #f)
+(define *policy-file-service #f)
 (define *close-service* #f)
 (define *client-key* 0)
-(define *default-request* (instantiate::http-request))
+(define *default-request* (instantiate::http-server-request (user (user-nil))))
 (define *ping* (symbol->string (gensym 'ping)))
-
-;*---------------------------------------------------------------------*/
-;*    *ajax-connection-table* ...                                      */
-;*---------------------------------------------------------------------*/
-(define *ajax-connection-table* (make-hashtable))
-
-;*---------------------------------------------------------------------*/
-;*    ajax-find-connection ...                                         */
-;*---------------------------------------------------------------------*/
-(define (ajax-find-connection name key)
-   (let ((bucket (hashtable-get *ajax-connection-table* name)))
-      (let loop ((bucket bucket))
-	 (when (pair? bucket)
-	    (if (eq? key (ajax-connection-key (car bucket)))
-		(car bucket)
-		(loop (cdr bucket)))))))
+(define *clients-number* 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-display ::ajax-connection ...                             */
@@ -88,67 +88,219 @@
       (with-access::ajax-connection obj (key req)
 	 (display key p)
 	 (display " " p)
-	 (let ((sock (http-request-socket req)))
-	    (display (socket-hostname sock) p)
-	    (display ":" p)
-	    (display (socket-port-number sock) p)))))
+	 (if (http-request? req)
+	     (let ((sock (http-request-socket req)))
+		(display (socket-hostname sock) p)
+		(display ":" p)
+		(display (socket-port-number sock) p))
+	     "unattached"))))
 
 ;*---------------------------------------------------------------------*/
-;*    ajax-store-connection! ...                                       */
+;*    buffer-init ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (ajax-store-connection! name conn)
-   (hashtable-update! *ajax-connection-table*
-		      name
-		      (lambda (l) (cons conn l))
-		      (list conn)))
+(define (buffer-init buf)
+   (with-access::buffer buf (size head tail cells)
+      (set! cells (map! (lambda (i) (cons #f #unspecified)) (iota size)))
+      (set! head cells)
+      (set! tail cells)))
 
 ;*---------------------------------------------------------------------*/
-;*    ajax-connection-get! ...                                         */
+;*    buffer-empty? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (buffer-empty? buf)
+   (with-access::buffer buf (head mutex)
+      (mutex-lock! mutex)
+      (let ((r (not (car (car head)))))
+	 (mutex-unlock! mutex)
+	 r)))
+
+;*---------------------------------------------------------------------*/
+;*    buffer-push! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (buffer-push! buf val)
+   (with-access::buffer buf (size head tail cells mutex)
+      (mutex-lock! mutex)
+      (if (pair? tail)
+	  ;; we have free cells
+	  (let ((cell (car tail)))
+	     (set! tail (cdr tail))
+	     (set-car! cell #t)
+	     (set-cdr! cell val))
+	  ;; we dont have free cells, we remove the first one
+	  (let* ((l head)
+		 (cell (car l)))
+	     (set! head (cdr head))
+	     (set-cdr! l '())
+	     (set-cdr! cell val)
+	     (set-cdr! (last-pair head) l)
+	     (set! tail '())))
+      (mutex-unlock! mutex)))
+
+;*---------------------------------------------------------------------*/
+;*    buffer-pop! ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (buffer-pop! buf)
+   (with-access::buffer buf (size head tail cells mutex)
+      (mutex-lock! mutex)
+      (let ((cell (car head)))
+	 (if (car cell)
+	     (let ((val (cdr cell)))
+		(set-car! cell #f)
+		(let ((l head))
+		   (set! head (cdr head))
+		   (set-cdr! l '())
+		   (if (pair? tail)
+		       (set-cdr! (last-pair tail) l)
+		       (begin
+			  (set-cdr! (last-pair head) l)
+			  (set! tail l))))
+		(mutex-unlock! mutex)
+		val)
+	     (begin
+		(mutex-unlock! mutex)
+		#f)))))
+   
+;*---------------------------------------------------------------------*/
+;*    buffer-pop-all! ...                                              */
 ;*    -------------------------------------------------------------    */
-;*    Get values from a non empty buffer.                              */
+;*    Contrary to buffer-pop!, buffer-pop-all! assumes that the        */
+;*    mutex is already acquired.                                       */
 ;*---------------------------------------------------------------------*/
-(define (ajax-connection-get! conn)
-   (with-access::ajax-connection conn (buffer lastpair count date)
-      (let ((res buffer))
-	 (set! date (current-seconds))
-	 (set! count 0)
-	 (set! buffer '())
-	 (set! lastpair '())
-	 res)))
+(define (buffer-pop-all! buf)
+   (with-access::buffer buf (size head tail cells)
+      (let loop ((res '())
+		 (last (last-pair head)))
+	 (let ((cell (car head)))
+	    (if (car cell)
+		(let ((val (cdr cell)))
+		   (set-car! cell #f)
+		   (let ((l head))
+		      (set! head (cdr head))
+		      (set-cdr! l '())
+		      (set-cdr! last l)
+		      (loop (cons val res) l)))
+		(reverse! res))))))
 
 ;*---------------------------------------------------------------------*/
-;*    ajax-connection-put! ...                                         */
+;*    buffer-get-all ...                                               */
+;*---------------------------------------------------------------------*/
+(define (buffer-get-all buf)
+   (with-access::buffer buf (size head tail cells mutex)
+      (mutex-lock! mutex)
+      (let loop ((res '()))
+	 (let ((cell (car head)))
+	    (if (car cell)
+		(let ((val (cdr cell)))
+		   (let ((l head))
+		      (set! head (cdr head))
+		      (loop (cons val res))))
+		(begin
+		   (mutex-unlock! mutex)
+		   (reverse! res)))))))
+
+;*---------------------------------------------------------------------*/
+;*    *ajax-connection-key-table* ...                                  */
+;*---------------------------------------------------------------------*/
+(define *ajax-connection-key-table* (make-hashtable))
+(define *ajax-connection-name-table* (make-hashtable))
+
+;*---------------------------------------------------------------------*/
+;*    ajax-find-connection-by-key ...                                  */
+;*---------------------------------------------------------------------*/
+(define (ajax-find-connection-by-key key)
+   (hashtable-get *ajax-connection-key-table* key))
+
+;*---------------------------------------------------------------------*/
+;*    ajax-find-connections-by-name ...                                */
+;*---------------------------------------------------------------------*/
+(define (ajax-find-connections-by-name name)
+   (or (hashtable-get *ajax-connection-name-table* name) '()))
+
+;*---------------------------------------------------------------------*/
+;*    ajax-connection-event-pop! ...                                   */
+;*---------------------------------------------------------------------*/
+(define (ajax-connection-event-pop! conn name)
+   (with-access::ajax-connection conn (buffers)
+      (let ((cell (assoc name buffers)))
+	 (when (pair? cell)
+	    (buffer-pop! (cdr cell))))))
+
+;*---------------------------------------------------------------------*/
+;*    ajax-connection-event-pop-all! ...                               */
+;*---------------------------------------------------------------------*/
+(define (ajax-connection-event-pop-all! conn)
+   (with-access::ajax-connection conn (buffers)
+      (filter-map (lambda (buffer)
+		     (let ((vals (buffer-pop-all! (cdr buffer))))
+			(when (pair? vals) (cons (car buffer) vals))))
+		  buffers)))
+
+;*---------------------------------------------------------------------*/
+;*    ajax-connection-event-push! ...                                  */
 ;*    -------------------------------------------------------------    */
-;*    Put into a non-full buffer.                                      */
+;*    This function assumes that the event mutex is acquired.          */
 ;*---------------------------------------------------------------------*/
-(define (ajax-connection-put! conn val)
-   (with-access::ajax-connection conn (buffer lastpair count)
-      (set! count (+fx count 1))
-      (if (pair? lastpair)
-	  (set-cdr! lastpair (cons val '()))
-	  (begin
-	     (set! buffer (cons val '()))
-	     (set! lastpair buffer)))
-      val))
+(define (ajax-connection-event-push! conn name value)
+   [assert (conn) (not (symbol? (mutex-state (ajax-connection-mutex conn))))]
+   (with-access::ajax-connection conn (buffers mutex buffers)
+      (let ((cell (assoc name buffers)))
+	 (when (pair? cell)
+	    (buffer-push! (cdr cell) value)))))
 
 ;*---------------------------------------------------------------------*/
-;*    ajax-connection-empty? ...                                       */
+;*    ajax-connection-abandon-for! ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (ajax-connection-empty? conn)
-   (with-access::ajax-connection conn (count)
-      (=fx count 0)))
+(define (ajax-connection-abandon-for! conn nreq)
+   (with-access::ajax-connection conn (req mutex)
+      (when (http-request? req)
+	 (ajax-signal-value req (scheme->response '() req)))
+      (set! req nreq)))
 
 ;*---------------------------------------------------------------------*/
-;*    ajax-connection-available? ...                                   */
+;*    ajax-connection-add-event! ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (ajax-connection-available? conn)
-   (with-access::ajax-connection conn (count date req)
-      (or (http-request? req)
-	  (and (<fx count (hop-event-buffer-size))
-	       (<elong (-elong (current-seconds) date) (hop-event-timeout))))))
+(define (ajax-connection-add-event! conn name)
+   (with-access::ajax-connection conn (mutex buffers)
+      (let ((cell (assoc name buffers)))
+	 (unless (pair? cell)
+	    (hashtable-update! *ajax-connection-name-table*
+			       name
+			       (lambda (l) (cons conn l))
+			       (list conn))
+	    (set! buffers (cons (cons name (instantiate::buffer)) buffers))))))
+
+;*---------------------------------------------------------------------*/
+;*    ajax-connection-remove-event! ...                                */
+;*---------------------------------------------------------------------*/
+(define (ajax-connection-remove-event! conn name)
+   (with-access::ajax-connection conn (mutex buffers)
+      (mutex-lock! mutex)
+      (let ((cell (assoc name buffers)))
+	 (when (pair? cell)
+	    (set! buffers (remq! cell buffers))
+	    (hashtable-update! *ajax-connection-name-table*
+			       name
+			       (lambda (l)
+				  (remq! conn l))
+			       '())))
+      (mutex-unlock! mutex)))
+
+;*---------------------------------------------------------------------*/
+;*    ajax-register-new-connection! ...                                */
+;*---------------------------------------------------------------------*/
+(define (ajax-register-new-connection! req key)
+   (let ((conn (instantiate::ajax-connection
+		  (key key)
+		  (req req))))
+      (hashtable-put! *ajax-connection-key-table* key conn)))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-init! ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Flash >= 9.0.115 enforces security policies using "policy files" */
+;*    which are described at:                                          */
+;*        http://www.adobe.com/devnet/flashplayer/articles/            */
+;*          fplayer9_security.html                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-event-init! port)
    (with-lock *event-mutex*
@@ -157,11 +309,11 @@
 	    (set! *client-key* (elong->fixnum (current-seconds)))
 	    
 	    (set! *port-service*
-		  (service :url "server-event-info" ()
-		     (vector (hostname) port (get-ajax-key port))))
+		  (service :name "server-event/info" ()
+		     (vector (hostname) port (get-ajax-key (or port 0)))))
 	    
 	    (set! *init-service*
-		  (service :url "server-event-init" (key)
+		  (service :name "server-event/init" (#!key key)
 		     (with-lock *event-mutex*
 			(lambda ()
 			   (let ((req (current-request)))
@@ -169,29 +321,54 @@
 			      (read-byte
 			       (socket-input (http-request-socket req)))
 			      (set! *flash-request-list*
-				    (cons (cons (string->symbol key) req)
+				    (cons (list (string->symbol key)
+						req
+						(current-seconds))
 					  *flash-request-list*))
+			      ;; increments the number of connected clients
+			      (set! *clients-number* (+fx *clients-number* 1))
 			      (instantiate::http-response-event
 				 (request req)
 				 (name key)))))))
 
+	    (set! *policy-file-service
+		  (service :name "server-event/policy-file" (#!key port key)
+		     (instantiate::http-response-string
+			(request (current-request))
+			(content-type "application/xml")
+			(body (hop-event-policy port)))))
+
 	    (set! *close-service*
-		  (service :url "server-event-close" (key)
+		  (service :name "server-event/close" (#!key key)
 		     (with-lock *event-mutex*
 			(lambda ()
 			   (let ((key (string->symbol key)))
+			      (set! *clients-number* (-fx *clients-number* 1))
 			      (set! *flash-request-list*
 				    (filter! (lambda (e)
 						(not (eq? (car e) key)))
 					     *flash-request-list*)))))))
 
 	    (set! *unregister-service*
-		  (service :url "server-event-unregister" (event key)
+		  (service :name "server-event/unregister" (#!key event key)
 		     (server-event-unregister event key)))
 	    
 	    (set! *register-service*
-		  (service :url "server-event-register" (event key flash)
+		  (service :name "server-event/register" (#!key event key flash)
 		     (server-event-register event key flash)))))))
+
+;*---------------------------------------------------------------------*/
+;*    dump-ajax-table ...                                              */
+;*---------------------------------------------------------------------*/
+(define (dump-ajax-table table)
+   (hashtable-map table
+		  (lambda (k conn)
+		     (with-access::ajax-connection conn (key marktime buffers)
+			(cons (cons key (seconds->date marktime))
+			      (map (lambda (buf)
+				      (cons (car buf)
+					    (buffer-get-all (cdr buf))))
+				   buffers))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-tables ...                                             */
@@ -201,9 +378,67 @@
 (define (hop-event-tables)
    (with-lock *event-mutex*
       (lambda ()
-	 `((*flash-request-list* ,*flash-request-list*)
+	 `((*clients-number* ,*clients-number*)
+	   (*flash-request-list* ,*flash-request-list*)
 	   (*flash-socket-table* ,*flash-socket-table*)
-	   (*ajax-connection-table* ,*ajax-connection-table*)))))
+	   (*ajax-connection-key-table* ,(dump-ajax-table *ajax-connection-key-table*))))))
+
+;*---------------------------------------------------------------------*/
+;*    server-event-gc ...                                              */
+;*---------------------------------------------------------------------*/
+(define (server-event-gc)
+
+   (define (ajax-connection-expired? conn)
+      (with-access::ajax-connection conn (pingtime)
+	 (when (>elong pingtime #e0)
+	    (>fx (elong->fixnum (-elong (current-seconds) pingtime))
+		 (/fx (hop-connection-timeout) 1000)))))
+		 
+   (define (ajax-connection-ping? conn)
+      (with-access::ajax-connection conn (req marktime)
+	 (when req
+	    (>elong (-elong (current-seconds) marktime)
+		    (hop-event-keep-alive)))))
+
+   (define (ajax-connection-ping! conn)
+      (with-access::ajax-connection conn (req mutex pingtime)
+	 (set! pingtime (current-seconds))
+	 (when (http-request? req)
+	    (ajax-signal-value req (scheme->response '() req)))))
+   
+   (define (server-event-ajax-gc)
+      ;; cleanup the ping-ed connections that did not respond
+      (hashtable-for-each *ajax-connection-key-table*
+			  (lambda (key conn)
+			     (when (ajax-connection-expired? conn)
+				(tprint "*** ajax collecting: " conn)
+				(set! *clients-number* (-fx *clients-number* 1))
+				(with-access::ajax-connection conn (buffers)
+				   (for-each (lambda (buffer)
+						(ajax-connection-remove-event!
+						 conn (car buffer)))
+					     buffers))
+				(hashtable-remove! *ajax-connection-key-table*
+						   key))))
+      ;; ping the old connection
+      (hashtable-for-each *ajax-connection-key-table*
+			  (lambda (k conn)
+			     (when (ajax-connection-ping? conn)
+				(tprint "ping: " conn)
+				(ajax-connection-ping! conn)))))
+
+   (define (flash-connection-ping? e)
+      (>elong (-elong (current-seconds) (caddr e)) (hop-event-keep-alive)))
+   
+   (define (server-event-flash-gc)
+      ;; not implemented yet
+      (for-each (lambda (e)
+		   (when (flash-connection-ping? e)
+		      (flash-signal-value (cadr e) *ping* #unspecified)))
+		*flash-request-list*))
+   
+   (server-event-ajax-gc)
+   (server-event-flash-gc))
 
 ;*---------------------------------------------------------------------*/
 ;*    server-event-register ...                                        */
@@ -211,83 +446,71 @@
 (define (server-event-register event key flash)
    
    (define (ajax-register-event! req name key)
-      (tprint "ajax-register-event, name=" name " key=" key)
-      (let ((conn (ajax-find-connection name key)))
+      (tprint "***** ajax-register-event, name=" name " key=" key)
+      (let ((conn (ajax-find-connection-by-key key)))
 	 (if conn
-	     ;; we already have a connection...
-	     (if (ajax-connection-empty? conn)
-		 ;; with an empty buffer...
-		 (with-access::ajax-connection conn ((r req) date)
-		    (set! date (current-seconds))
-		    (when (http-request? r)
-		       ;; we already have a connection but this connection
-		       ;; has probably timeouted, so we close it before
-		       ;; using the new one
-		       (socket-close (http-request-socket r)))
-		    (set! r req)
-		    (instantiate::http-response-persistent
-		       (request req)))
-		 ;; we already have a value
-		 (scheme->response (ajax-connection-get! conn) req))
-	     ;; we don't have connection yet
-	     (let ((conn (instantiate::ajax-connection
-			    (req req)
-			    (key key))))
-		(ajax-store-connection! name conn)
-		;; adapt dynamically the buffer size
-		(let ((sz (hashtable-size *ajax-connection-table*)))
-		   (when (>fx sz (hop-event-buffer-size))
-		      (hop-event-buffer-size-set! (*fx 2 sz))))
+	     (with-lock (ajax-connection-mutex conn)
+		(lambda ()
+		   ;; mark the conn for protecting it from being collected
+		   (ajax-connection-marktime-set! conn (current-seconds))
+		   (ajax-connection-pingtime-set! conn #e0)
+		   (unless (string=? name "")
+		      ;; this is not an automatic re-registry
+		      (ajax-connection-add-event! conn name))
+		   (let ((vals (ajax-connection-event-pop-all! conn)))
+		      (if (pair? vals)
+			  (scheme->response vals req)
+			  (begin
+			     (ajax-connection-abandon-for! conn req)
+			     (instantiate::http-response-persistent
+				(request req)))))))
+	     (let ((conn (ajax-register-new-connection! req key)))
+		;; increment the number of connected client
+		(set! *clients-number* (+fx 1 *clients-number*))
+		(ajax-connection-add-event! conn name)
 		(instantiate::http-response-persistent
 		   (request req))))))
    
    (define (flash-register-event! req name)
-      (tprint "flash-register-event, name=" name)
       (hashtable-update! *flash-socket-table*
 			 name
 			 (lambda (l) (cons req l))
 			 (list req))
-      (instantiate::http-response-string))
+      (instantiate::http-response-string
+	 (request req)))
 
    (with-lock *event-mutex*
       (lambda ()
-	 (let ((req (current-request))
-	       (key (string->symbol key)))
-	    ;; set an output timeout on the socket
-	    (output-timeout-set! (socket-output (http-request-socket req))
-				 (hop-connection-timeout))
-	    ;; register the client
-	    (if flash
-		(let ((req (cdr (assq key *flash-request-list*))))
-		   (flash-register-event! req event))
-		(ajax-register-event! req event key))))))
+	 (if (<fx *clients-number* (hop-event-max-clients))
+	     (let ((req (current-request))
+		   (key (string->symbol key)))
+		;; set an output timeout on the socket
+		(output-timeout-set! (socket-output (http-request-socket req))
+				     (hop-connection-timeout))
+		;; register the client
+		(let ((r (if flash
+			     (let ((req (cadr (assq key *flash-request-list*))))
+				(flash-register-event! req event))
+			     (ajax-register-event! req event key))))
+		   ;; cleanup the current connections
+		   (server-event-gc)
+		   r))
+	     (http-service-unavailable event)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    server-event-unregister ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (server-event-unregister event key)
    
-   (define (unregister-ajax-event! event key)
-      (let ((conn (ajax-find-connection event key)))
+   (define (unregister-ajax-event! name key)
+      (let ((conn (ajax-find-connection-by-key key)))
 	 (when (ajax-connection? conn)
-	    (with-access::ajax-connection conn (req)
-	       (when (http-request? req)
-		  (socket-close (http-request-socket req)))
-	       (let ((clean #f))
-		  (hashtable-update! *ajax-connection-table*
-				     event
-				     (lambda (l)
-					(let ((nl (delete! conn l)))
-					   (set! clean (null? nl))
-					   nl))
-				     '())
-		  (when clean
-		     (hashtable-remove! *ajax-connection-table* event)))))))
+	    (ajax-connection-remove-event! conn name))))
    
    (define (unregister-flash-event! event key)
       (let ((c (assq (string->symbol key) *flash-request-list*)))
 	 (when (pair? c)
-	    (let ((req (cdr c)))
+	    (let ((req (cadr c)))
 	       (hashtable-update! *flash-socket-table*
 				  event
 				  (lambda (l) (delete! req l))
@@ -297,7 +520,6 @@
 	       ;; will be removed from the tables.
 	       (flash-signal-value req *ping* #unspecified)))))
    
-   (tprint "server-event-unregister: " event " key=" key)
    (with-lock *event-mutex*
       (lambda ()
 	 (unregister-ajax-event! event key)
@@ -314,7 +536,7 @@
    (socket-close (http-request-socket req))
    ;; remove the request from the *flash-request-list*
    (set! *flash-request-list*
-	 (filter! (lambda (e) (not (eq? (cdr e) req))) *flash-request-list*))
+	 (filter! (lambda (e) (not (eq? (cadr e) req))) *flash-request-list*))
    ;; remove the request from the *flash-socket-table*
    (hashtable-for-each *flash-socket-table*
 		       (lambda (k l)
@@ -330,7 +552,7 @@
 (define (hop-event-client-ready? name)
    
    (define (ajax-event-client-ready? name)
-      (pair? (hashtable-get *ajax-connection-table* name)))
+      (pair? (ajax-find-connections-by-name name)))
 
    (define (flash-event-client-ready? name)
       (let ((l (hashtable-get *flash-socket-table* name)))
@@ -365,9 +587,9 @@
 (define (get-ajax-key port)
    (mutex-lock! *event-mutex*)
    (set! *client-key* (+fx 1 *client-key*))
-   (let ((r (format "~a:~a://~a" (hostname) port *client-key*)))
+   (let ((key (format "~a:~a://~a" (hostname) port *client-key*)))
       (mutex-unlock! *event-mutex*)
-      r))
+      key))
 
 ;*---------------------------------------------------------------------*/
 ;*    ajax-signal-value ...                                            */
@@ -377,10 +599,11 @@
       (with-handler
 	 (lambda (e)
 	    (unless (&io-timeout-error? e)
-	       (raise e)))
-	 (begin
-	    (http-response resp s)
-	    (socket-close s)))))
+	       (raise e))
+	    #f)
+	 (http-response resp s)
+	 (socket-close s)
+	 #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    flash-signal-value ...                                           */
@@ -390,11 +613,10 @@
 	  (p (socket-output s)))
       (with-handler
 	 (lambda (e)
-	    (tprint "flash-signal-value: " (find-runtime-type e) " -> " e)
 	    (if (&io-timeout-error? e)
-		(with-lock *event-mutex*
-		   (lambda ()
-		      (flash-close-request! req)))
+		(begin
+		   (set! *clients-number* (-fx *clients-number* 1))
+		   (flash-close-request! req))
 		(raise e)))
 	 (begin
 	    (fprintf p "<event name='~a'>" name)
@@ -413,7 +635,7 @@
       ((or (string? value) (number? value))
        value)
       (else
-       (string-append "<json>" (hop->json value) "</json>"))))
+       (string-append "<json><![CDATA[" (hop->json value #f #t) "]]></json>"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    for-each-socket ...                                              */
@@ -427,30 +649,46 @@
 			    l)
 			 '())
       r))
-   
+
+;*---------------------------------------------------------------------*/
+;*    hop-signal-id ...                                                */
+;*---------------------------------------------------------------------*/
+(define hop-signal-id 0)
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-signal! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hop-event-signal! name value)
-
+   
    (define (ajax-event-signal! name value)
-      (let ((conns (hashtable-get *ajax-connection-table* name)))
-	 (when (pair? conns)
-	    (let loop ((l conns))
-	       (if (pair? l)
-		   (with-access::ajax-connection (car l) (req)
-		      (if (http-request? req)
-			  (let ((val (scheme->response (list value) req)))
-			     (tprint "ajax signal: " name)
-			     (ajax-signal-value req val)
-			     (set! req #f))
-			  (loop (cdr l))))
-		   ;; there is no active ajax connection, fill the first
-		   ;; non full one
-		   (let ((l (filter! ajax-connection-available? conns)))
-		      (when (pair? l)
-			 (ajax-connection-put! (car l) value))
-		      (hashtable-put! *ajax-connection-table* name l)))))))
+      (let ((conns (ajax-find-connections-by-name name)))
+	 (let loop ((l conns))
+	    (if (pair? l)
+		(with-access::ajax-connection (car l) (req mutex)
+		   (mutex-lock! mutex)
+		   (if (http-request? req)
+		       (let* ((r req)
+			      (val (unwind-protect
+				      (scheme->response
+				       (list (list name value)) req)
+				      (begin
+					 (set! req #f)
+					 (mutex-unlock! mutex)))))
+			  (tprint "AJAX SIGNAL: " name)
+			  (or (ajax-signal-value r val)
+			      (loop (cdr l))))
+		       (begin
+			  (mutex-unlock! mutex)
+			  (loop (cdr l)))))
+		(when (pair? conns)
+		   (tprint "PUSHING: " value)
+		   (let* ((conn (car conns))
+			  (mutex (ajax-connection-mutex conn)))
+		      (mutex-lock! mutex)
+		      (ajax-connection-event-push! conn name value)
+		      (mutex-unlock! mutex)
+		      (tprint "PUSHING: done"))
+		   #t)))))
    
    (define (flash-event-signal! name value)
       (for-each-socket
@@ -458,15 +696,26 @@
        name
        (lambda (l)
 	  (when (pair? l)
-	     (let ((val (flash-make-signal-value value)))
-		(tprint "flash signal: " name)
-		(flash-signal-value (car l) name val)
-		#t)))))
+		(let ((val (flash-make-signal-value value)))
+		   (flash-signal-value (car l) name val)
+		   #t)))))
 
+   (set! hop-signal-id (-fx hop-signal-id 1))
+   (hop-verb 2 (hop-color hop-signal-id hop-signal-id " SIGNAL")
+	     ": " name)
+   (hop-verb 3 " value=" (with-output-to-string (lambda () (write value))))
+   (hop-verb 2 "\n")
    (mutex-lock! *event-mutex*)
-   (unless (flash-event-signal! name value)
-      (ajax-event-signal! name value))
-   (mutex-unlock! *event-mutex*))
+   (unwind-protect
+      (unless (flash-event-signal! name value)
+	 (ajax-event-signal! name value))
+      (mutex-unlock! *event-mutex*))
+   #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    hop-broadcast-id ...                                             */
+;*---------------------------------------------------------------------*/
+(define hop-broadcast-id 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-broadcast! ...                                         */
@@ -474,26 +723,19 @@
 (define (hop-event-broadcast! name value)
    
    (define (ajax-event-broadcast! name value)
-      (let ((conns (hashtable-get *ajax-connection-table* name)))
-	 (when (pair? conns)
-	    (let ((val (scheme->response (list value) *default-request*)))
-	       (for-each (lambda (conn)
-			    (with-access::ajax-connection conn (req)
-			       (when (http-request? req)
-				  (tprint "ajax broadcast: " name)
-				  (ajax-signal-value req val))))
-			 conns)
-	       (let ((l (filter! ajax-connection-available? conns)))
-		  (when (pair? l)
-		     (for-each (lambda (conn)
-				  (with-access::ajax-connection conn (req)
-				     (if (http-request? req)
-					 (set! req #f)
-					 (begin
-					    (tprint "ajax store: " name)
-					    (ajax-connection-put! conn value)))))
-			       l))
-		  (hashtable-put! *ajax-connection-table* name l))))))
+      (for-each (lambda (conn)
+		   (with-access::ajax-connection conn (req mutex)
+		      (with-lock mutex
+			 (lambda ()
+			    (if (http-request? req)
+				(let ((val (scheme->response
+					    (list (list name value)) req)))
+				   (tprint ">>> hop-event-broadcast, ajax broadcast: " name " "
+					   (http-request-socket req))
+				   (ajax-signal-value req val)
+				   (set! req #f))
+				(ajax-connection-event-push! conn name value))))))
+		(ajax-find-connections-by-name name)))
    
    (define (flash-event-broadcast! name value)
       (for-each-socket
@@ -503,13 +745,37 @@
 	  (when (pair? l)
 	     (let ((val (flash-make-signal-value value)))
 		(for-each (lambda (req)
-			     (tprint "flash broadcast: " name " "
-				     (http-request-socket req))
 			     (flash-signal-value req name val))
 			  l))))))
 
+   (set! hop-broadcast-id (-fx hop-broadcast-id 1))
+   (hop-verb 2 (hop-color hop-broadcast-id hop-broadcast-id " BROADCAST")
+	     ": " name)
+   (hop-verb 3 " value=" (with-output-to-string (lambda () (write-circle value))))
+   (hop-verb 2 "\n")
    (mutex-lock! *event-mutex*)
-   (ajax-event-broadcast! name value)
-   (flash-event-broadcast! name value)
-   (mutex-unlock! *event-mutex*)
+   (unwind-protect
+      (begin
+	 (ajax-event-broadcast! name value)
+	 (flash-event-broadcast! name value))
+      (mutex-unlock! *event-mutex*))
    #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    hop-event-policy ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hop-event-policy port)
+   (format "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<cross-domain-policy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"http://www.adobe.com/xml/schemas/PolicyFileSocket.xsd\">
+<allow-access-from domain=\"*\" to-ports=\"~a\" />
+</cross-domain-policy>" port))
+
+;*---------------------------------------------------------------------*/
+;*    hop-event-policy-file ...                                        */
+;*---------------------------------------------------------------------*/
+(define (hop-event-policy-file req)
+   (instantiate::http-response-raw
+      (request req)
+      (proc (lambda (p)
+	       (display (hop-event-policy (http-request-port req)) p)
+	       (write-char #a000 p)))))

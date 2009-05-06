@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/hz/hz.hop                       */
+;*    serrano/prgm/project/hop/2.0.x/weblets/hz/hz.hop                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Fri Nov 30 16:01:52 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Tue May  5 10:49:28 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
 ;*=====================================================================*/
@@ -26,11 +26,6 @@
 	   hz/preferences
 	   hz/install
 	   hz/run))
-
-;*---------------------------------------------------------------------*/
-;*    The user configuration                                           */
-;*---------------------------------------------------------------------*/
-(hop-load-rc "hzrc.hop")
 
 ;*---------------------------------------------------------------------*/
 ;*    hz ...                                                           */
@@ -66,6 +61,7 @@
 		:title "Hop Hz Preferences"
 		:base (service-base-url hz/preferences req)
 		:favicon "etc/favicon.png"
+		:include "hop-prefs"
 		:css "hz.hss")
 	     (<HZ:BODY>
 		(<DIV> :id "body"
@@ -74,7 +70,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz/install ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-service (hz/install url)
+(define-service (hz/install #!key url)
    (let ((req (current-request)))
       (if (not (authorized-service? req 'admin))
 	  (user-access-denied req)
@@ -85,9 +81,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz/run ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-service (hz/run url)
+(define-service (hz/run #!key url)
    (multiple-value-bind (name version)
       (package-url-parse url)
       (hz-load url)
       (<HTML>
 	 ~(set! document.location (string-append "/hop/" $name)))))
+
+;*---------------------------------------------------------------------*/
+;*    The user configuration                                           */
+;*---------------------------------------------------------------------*/
+(hop-load-rc "hzrc.hop")
+

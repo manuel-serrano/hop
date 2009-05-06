@@ -1,44 +1,69 @@
 (module constant-propagation
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   config
+   (import config
 	   nodes
-	   var
+	   export-desc
+	   walk
+	   var-ref-util
 	   side
 	   use-count
 	   verbose)
-   (export (constant-propagation! tree::pobject)))
+   (export (constant-propagation! tree::Module)))
 
 (define (constant-propagation! tree)
    (if (config 'constant-propagation)
-       (begin
-	  (verbose "constant-propagation")
+       (unless (config 'call/cc)
+	  (verbose "propagation")
 	  (side-effect tree)
-	  (use-count tree)
-	  (overload traverse! propagate! (Node
-					  Var-ref
-					  Set!)
-		    (tree.traverse!)))))
+	  (propagate! tree #f))))
 
-(define-pmethod (Node-propagate!)
-   (this.traverse0!))
+(define-nmethod (Node.propagate!)
+   (default-walk! this))
 
-(define-pmethod (Var-ref-propagate!)
-   (let ((single-value this.var.single-value))
-      (if (and single-value
-	       (inherits-from? single-value (node 'Const))
-	       (or (config 'inline-globals)
-		   (not this.var.is-global?))
-	       (or (= this.var.uses 1)
-		   (number? single-value.value)
-		   (symbol? single-value.value)
-		   (char? single-value.value)))
-	  (new-node Const single-value.value)
-	  this)))
 
-(define-pmethod (Set!-propagate!)
+(define (transitive-value var-ref::Ref)
+   (if (runtime-ref? var-ref)
+       var-ref
+       (with-access::Ref var-ref (var)
+	  (with-access::Var var (constant? value)
+	     (cond
+		((and constant?
+		      value
+		      (Const? value)
+		      (let ((const (Const-value value)))
+			 ;; do not propagate vectors, lists and
+			 ;; strings. Otherwise 'eq?' might not work anymore.
+			 ;; Also strings can be quite long.
+			 (or (number? const)  
+			     (symbol? const)
+			     (char? const)
+			     (boolean? const)
+			     (eqv? #unspecified const))))
+		 value)
+		((and constant?
+		      value
+		      (Ref? value)
+		      (with-access::Ref value (var)
+			 (with-access::Var var (constant?)
+			    (and constant?
+				 (not (eq? (Var-kind var) 'this))))))
+		 (transitive-value value))
+		(else var-ref))))))
+
+(define-nmethod (Ref.propagate!)
+   (let* ((target (transitive-value this)))
+      (cond
+	 ((Const? target)
+	  (instantiate::Const
+	     (location (Node-location target))
+	     (value (Const-value target))))
+	 ((and (Ref? target)
+	       (not (eq? this target)))
+	  (with-access::Ref target (var)
+	     (var-reference var :location target)))
+	 (else this))))
+
+(define-nmethod (Set!.propagate!)
    ;; don't visit lvalue
-   (set! this.val (this.val.traverse!))
+   (with-access::Set! this (val)
+      (set! val (walk! val)))
    this)

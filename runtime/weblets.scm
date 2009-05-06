@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/weblets.scm                     */
+;*    serrano/prgm/project/hop/2.0.x/runtime/weblets.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Tue Nov 20 07:06:36 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Fri Apr 10 09:11:47 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
 ;*=====================================================================*/
@@ -16,7 +16,8 @@
 
    (include "xml.sch")
    
-   (import __hop_param
+   (import __hop_configure
+	   __hop_param
 	   __hop_types
 	   __hop_xml
 	   __hop_service
@@ -34,10 +35,13 @@
 	    (reset-autoload!)
 	    (get-autoload-directories::pair-nil)
 	    (get-autoload-weblet-directories::pair-nil)
+	    (hop-load-hz ::bstring)
+	    (hop-load-weblet ::bstring)
 	    (install-autoload-weblets! ::pair-nil)
 	    (autoload-prefix::procedure ::bstring)
 	    (autoload ::bstring ::procedure . hooks)
-	    (autoload-filter ::http-request)))
+	    (autoload-filter ::http-request)
+	    (autoload-force-load! ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-weblets-in-directory ...                                    */
@@ -102,24 +106,83 @@
    *weblet-autoload-dirs*)
 
 ;*---------------------------------------------------------------------*/
+;*    hop-load-hz ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (hop-load-hz path)
+   (let ((p (open-input-gzip-file path)))
+      (unwind-protect
+	 (let* ((tmp (make-file-name (os-tmp) "hop"))
+		(file (car (untar p :directory tmp)))
+		(base (substring file
+				 (+fx (string-length tmp) 1)
+				 (string-length file)))
+		(dir (dirname base))
+		(name (if (string=? dir ".") base dir))
+		(src (make-file-path tmp name (string-append name ".hop"))))
+	    (hop-load-weblet src))
+	 (close-input-port p))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-load-weblet ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hop-load-weblet path)
+   (let* ((dir (dirname path))
+	  (name (basename (prefix path))))
+      (if (file-exists? path)
+	  (begin
+	     (hop-load path)
+	     (let* ((winfoname (make-file-path name "etc" "weblet.info"))
+		    (winfo (if (file-exists? winfoname)
+			       (with-input-from-file winfoname read)
+			       '()))
+		    (url (string-append "/hop/" name)))
+		(install-weblet-dashboard! name dir winfo url)))
+	  (error 'hop-load-weblet "Cannot find HOP source" path))))
+
+;*---------------------------------------------------------------------*/
+;*    install-weblet-dashboard! ...                                    */
+;*---------------------------------------------------------------------*/
+(define (install-weblet-dashboard! name dir winfo url)
+   
+   (define (add-dashboard-applet! name icon svc)
+      (unless (pair? (assoc name (hop-dashboard-weblet-applets)))
+	 (hop-dashboard-weblet-applets-set!
+	  (cons (list name icon svc) (hop-dashboard-weblet-applets)))))
+
+   (unless (member name (hop-dashboard-weblet-disabled-applets))
+      ;; the user does not want of this weblet
+      (let ((dashboard (assq 'dashboard winfo)))
+	 ;; dashboard declaration
+	 (if (pair? dashboard)
+	     ;; a customized dashboard
+	     (for-each (lambda (d)
+			  (match-case d
+			     ((?i ?svc)
+			      (let ((p (make-file-path dir "etc" i)))
+				 (add-dashboard-applet! dir p svc)))
+			     ((and ?i (? string?))
+			      (let* ((p (make-file-path dir "etc" i))
+				     (svc (string-append url "/dashboard")))
+				 (add-dashboard-applet! name i svc)))
+			     (else
+			      (warning 'autoload-weblets
+				       "bad dashboard declaration"
+				       d))))
+		       (cdr dashboard))
+	     ;; is there a dashboard icon for a regular an applet?
+	     (let ((icon (make-file-path dir "etc" "dashboard.png")))
+		(when (file-exists? icon)
+		   (let ((svc (string-append url "/dashboard")))
+		      (add-dashboard-applet! name icon svc))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    install-autoload-weblets! ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (install-autoload-weblets! dirs)
-   
+
    (define (install-autoload-prefix path url)
-      (hop-verb 2 "Setting autoload " path " on " url "\n")
+      (hop-verb 4 (hop-color 1 "" "AUTOLOAD") " " path " for " url "\n")
       (autoload path (autoload-prefix url)))
-   
-   (define (is-service-base? req)
-      (with-access::http-request req (path)
-	 (let ((base (hop-service-base)))
-	    (and (substring-at? base path 0)
-		 (let ((lp (string-length path))
-		       (lb (string-length base)))
-		    (or (=fx lp lb)
-			(and (=fx lp (+fx lb 1))
-			     (char=? (string-ref path (-fx lp 1))
-				     #\/))))))))
    
    (define (warn name opath npath)
       (when (> (bigloo-warning) 1)
@@ -128,10 +191,6 @@
 		   "autoload already installed on:\n  ~a\nignoring:\n  ~a"
 		   opath
 		   npath))))
-
-   (define (add-dashboard-applet! name icon svc)
-      (hop-dashboard-weblet-applets-set!
-       (cons (list name icon svc) (hop-dashboard-weblet-applets))))
    
    (define (maybe-autoload x)
       (let ((cname (assq 'name x)))
@@ -142,29 +201,12 @@
 		    (path (cadr (assq 'weblet x)))
 		    (autopred (assq 'autoload x))
 		    (rc (assq 'rc x))
-		    (dashboard (assq 'dashboard x))
 		    (opath (hashtable-get *weblet-table* name)))
-		(if (pair? dashboard)
-		    (for-each (lambda (d)
-				 (match-case d
-				    ((?i ?svc)
-				     (let ((p (make-file-path prefix "etc" i)))
-					(add-dashboard-applet! name p svc)))
-				    ((and ?i (? string?))
-				     (let ((p (make-file-path prefix "etc" i)))
-					(add-dashboard-applet! name i "svc")))
-				    (else
-				     (warning 'autoload-weblets
-					      "bad dashboard declaration"
-					      d))))
-			      (cdr dashboard))
-		    (let ((icon (make-file-path prefix "etc" "dashboard.png")))
-		       (when (file-exists? icon)
-			  (add-dashboard-applet!
-			   name
-			   icon
-			   (string-append url "/dashboard")))))
+		;; dashboard setup
+		(install-weblet-dashboard! name prefix x url)
+		;; rc setup
 		(when (pair? rc) (eval (cadr rc)))
+		;; autoload per say
 		(cond
 		   ((string? opath)
 		    (warn name opath path))
@@ -196,21 +238,13 @@
 ;*    Builds a predicate that matches iff the request path is a        */
 ;*    prefix of STRING.                                                */
 ;*---------------------------------------------------------------------*/
-(define (autoload-prefix string)
-   (let* ((p string)
-	  (p/ (string-append string "/"))
-	  (lp (string-length p)))
+(define (autoload-prefix path)
+   (let ((lp (string-length path)))
       (lambda (req)
-	 (with-access::http-request req (path)
-	    (let ((i (string-index path #\?))
-		  (l (string-length path)))
-	       (if (or (not i) (=fx i -1))
-		   (and (substring-at? path p 0)
-			(or (=fx l lp) (eq? (string-ref path lp) #\/)))
-		   (and (>=fx i lp)
-			(substring-at? path p 0 i)
-			(or (=fx i lp)
-			    (char=? (string-ref path lp) #\/)))))))))
+	 (with-access::http-request req (abspath)
+	    (and (substring-at? abspath path 0)
+		 (let ((la (string-length abspath)))
+		    (or (=fx la lp) (char=? (string-ref abspath lp) #\/))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *autoload-mutex* ...                                             */
@@ -291,3 +325,14 @@
 		    (mutex-unlock! *autoload-mutex*)
 		    #t)
 		 (loop (cdr al)))))))
+
+;*---------------------------------------------------------------------*/
+;*    autoload-force-load! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (autoload-force-load! path)
+   (autoload-filter
+    (instantiate::http-server-request
+       (localclientp #t)
+       (port (hop-port))
+       (path path))))
+

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/test/busy.hop                   */
+;*    serrano/prgm/project/hop/1.9.x/weblets/test/busy.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jul  4 05:13:53 2007                          */
-;*    Last change :  Sat Jul  7 08:24:44 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Thu Apr 17 08:35:19 2008 (serrano)                */
+;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Busy Animation test                                              */
 ;*=====================================================================*/
@@ -23,11 +23,29 @@
    (<TEST-HTML> :include "hop-foldlist"
       :source (service-resource test/busy "busy.hop")
       (<DIV> :class "comment"
-	 "This test checks busy animation. When click the buttton
-below, you should see a small animation of the right hand-side of the
+	 "This test checks busy animation. After clicking the buttton
+below, you should see a small animation on the right-hand side of the
 window. This animation should last approximatively 3 seconds and
-disapears.")
+then disappear.")
       (<BUTTON> :onclick ~(with-hop ($(service () (sleep 3000000) #t)))
+	 "Click me to see the Hop busy animation")
+      (<BR>) (<BR>)
+      (<DIV> :class "comment"
+	 "This second test uses a different animation which still should
+last approximatively 3 seconds before it disappears.")
+      (<BUTTON> :onclick ~(with-hop ($(service () (sleep 3000000) #t))
+			     :anim (lambda (title)
+				      (<DIV>
+					 :style {
+                                            position: fixed;
+					    top: 150px;
+					    width: 100%;
+					    text-align: center;
+					    z-index: 100;
+					    background: transparent;
+                                         }
+					 (<IMG> :src
+					    $(service-resource test/busy "anim128x128.gif")))))
 	 "Click me to see the Hop busy animation")))
 	 
    

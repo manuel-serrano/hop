@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-svg.scm                     */
+;*    serrano/prgm/project/hop/1.10.x/runtime/hop-svg.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Mon Oct 29 17:37:17 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Tue Jan 13 18:26:06 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
 ;*=====================================================================*/
@@ -47,6 +47,7 @@
 	   (<SVG:TREF> . ::obj)
 	   (<SVG:TEXTPATH> . ::obj)
 	   (<SVG:PATH> . ::obj)
+	   (<SVG:FOREIGNOBJECT> . ::obj)
 	   (<SVG:IMG> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -78,6 +79,7 @@
 (define-xml xml-element #t <SVG:PATH> :markup path)
 (define-xml xml-element #t <SVG:G> :markup g)
 (define-xml xml-element #t <SVG:DEFS> :markup defs)
+(define-xml xml-element #t <SVG:FOREIGNOBJECT> :markup foreignObject)
 ;; basic shapes
 (define-xml xml-element #t <SVG:RECT> :markup rect)
 (define-xml xml-element #t <SVG:CIRCLE> :markup circle)
@@ -147,10 +149,12 @@
        (display o))
       ((pair? o)
        (cond
-	  ((eq? (car o) 'instruction)
+	  ((or (eq? (car o) 'xml-decl) (eq? (car o) 'instruction))
 	   #unspecified)
 	  ((eq? (car o) 'declaration)
-	   (display (cdr o)))
+	   ;; ms: 13 jan 2009
+ 	   ;; (display (cdr o))
+	   #unspecified)
 	  (else
 	  (for-each (lambda (o) (show-svg-img o prefix)) o))))
       (else
@@ -160,6 +164,12 @@
 ;*    show-svg-img-attributes                                          */
 ;*---------------------------------------------------------------------*/
 (define (show-svg-img-attributes l prefix)
+   
+   (define (kwote s)
+      (if (string? s)
+	  (string-replace! s #\' #\")
+	  s))
+   
    (for-each (lambda (a)
 		(display " ")
 		(display (car a))
@@ -167,23 +177,26 @@
 		(cond
 		   ((eq? (car a) 'id)
 		    (display prefix)
-		    (display (cdr a)))
+		    (display (xml-attribute-encode (kwote (cdr a)))))
 		   ((and (eq? (car a) 'xlink:href)
 			 (string? (cdr a))
 			 (char=? (string-ref (cdr a) 0) #\#))
-		       (display "#")
-		       (display prefix)
-		       (display (substring (cdr a) 1 (string-length (cdr a)))))
+		    (display "#")
+		    (display prefix)
+		    (display
+		     (kwote (substring (cdr a) 1 (string-length (cdr a))))))
 		   ((and (eq? (car a) 'style) (string? (cdr a)))
 		    (display
-		     (pregexp-replace*
-		      "url[(]#" (cdr a) (string-append "url(#" prefix))))
+		     (kwote
+		      (pregexp-replace*
+		       "url[(]#" (cdr a) (string-append "url(#" prefix)))))
 		   ((and (string? (cdr a)) (substring-at? (cdr a) "url(#" 0))
 		    (display "url(#")
 		    (display prefix)
-		    (display (substring (cdr a) 5 (string-length (cdr a)))))
+		    (display
+		     (kwote (substring (cdr a) 5 (string-length (cdr a))))))
 		   (else
-		    (display (cdr a))))
+		    (display (kwote (xml-attribute-encode (cdr a))))))
 		(display "'"))
 	     l))
 
@@ -423,14 +436,32 @@
        (read-svg-img-brute id attributes p)))
 
 ;*---------------------------------------------------------------------*/
+;*    height->width ...                                                */
+;*---------------------------------------------------------------------*/
+(define (height->width dim)
+   (if (and (string? dim) (string-suffix? "ex" dim))
+       (string-append (substring dim 0 (-fx (string-length dim) 2)) "em")
+       dim))
+
+;*---------------------------------------------------------------------*/
+;*    width->height ...                                                */
+;*---------------------------------------------------------------------*/
+(define (width->height dim)
+   (if (and (string? dim) (string-suffix? "em" dim))
+       (string-append (substring dim 0 (-fx (string-length dim) 2)) "ex")
+       dim))
+
+;*---------------------------------------------------------------------*/
 ;*    SVG:IMG ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <SVG:IMG> ((id #unspecified)
+				(class #f)
 				(width #f)
 				(height #f)
-				(style "display: -moz-inline-box; position: relative; text-align: center" string)
+				(style "text-align: center" string)
 				(src #unspecified string)
 				(prefix #t boolean)
+				(display "-moz-inline-box; -moz-box-orient:vertical; display:inline-block")
 				(attrs))
    (cond
       ((not (string? src))
@@ -443,14 +474,23 @@
 			     (string-append "gzip:" src)
 			     src)
 		      (lambda ()
-			 (read-svg-img id prefix attrs (current-input-port)))))
-	      (style1 (if width
-			  (format "width: ~a; ~a" width style)
-			  style))
-	      (style2 (if height
-			  (format "height: ~a; ~a" height style1)
-			  style1)))
-	  (<DIV> :style style2
+ 			 (read-svg-img id prefix attrs (current-input-port)))))
+	      (style0 (format "display: ~a; position: relative; ~a" display style))
+	      (style1 (cond
+			 (width
+			  (format "width: ~a; ~a" width style0))
+			 (height
+			  (format "width: ~a; ~a" (height->width height) style0))
+			 (else
+			  style0)))
+	      (style2 (cond
+			 (height
+			  (format "height: ~a; ~a" height style1))
+			 (width
+			  (format "height: ~a; ~a" (width->height width) style1))
+			 (else
+			  style1))))
+	  (<DIV> :style style2 :class class
 	     (instantiate::xml-svg
 		(markup 'dummy)
 		(id 'dummy)

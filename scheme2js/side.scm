@@ -1,67 +1,112 @@
 (module side
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
+   (import config
+	   error
 	   nodes
-	   var
+	   export-desc
+	   walk
 	   verbose)
-   (export (side-effect tree::pobject)))
+   (static (class Env
+	      runtime-is-constant?::bool))
+   (export (side-effect tree::Module)))
 
-(define (side-effect tree::pobject)
+(define (side-effect tree)
    (verbose "side-effect")
-   (overload traverse clean-side (Node
-				  Program
-				  Decl)
-	     (tree.traverse))
-   (overload traverse side (Node
-			    Program
-			    Lambda
-			    Set!)
-	     (tree.traverse)))
+   (side tree (make-Env (config 'runtime-is-constant))))
 
-(define-pmethod (Node-clean-side)
-   (this.traverse0))
+(define-nmethod (Node.side)
+   (default-walk this))
 
-(define-pmethod (Program-clean-side)
-   (for-each (lambda (js-var)
-		(delete! js-var.already-defined?)
-		(delete! js-var.muted?)
-		(delete! js-var.single-value))
-	     this.imported)
-   (this.traverse0))
+(define-nmethod (Module.side)
+   (with-access::Module this (runtime-vars imported-vars scope-vars)
+      (for-each (lambda (js-var)
+		   (with-access::Var js-var (already-defined? constant? value)
+		      (set! already-defined? #t)
+		      (set! constant? (Env-runtime-is-constant? env))
+		      (set! value #f)))
+		runtime-vars)
+      (for-each (lambda (js-var)
+		   (with-access::Var js-var
+			 (export-desc already-defined? constant? value)
+		      (with-access::Export-Desc export-desc (exported-as-const?)
+			 (set! already-defined? #t)
+			 (set! constant? exported-as-const?)
+			 (set! value #f))))
+		imported-vars)
+      (for-each (lambda (js-var)
+		   (with-access::Var js-var
+			 (export-desc already-defined? constant? value)
+		      (with-access::Export-Desc export-desc (exported-as-const?)
+			 (set! already-defined? (not exported-as-const?))
+			 (set! constant? #f)
+			 (set! value #f))))
+		scope-vars)
+      (default-walk this)))
 
-(define-pmethod (Decl-clean-side)
-   (let ((var this.var))
-      (delete! var.already-defined?)
-      (delete! var.muted?)
-      (delete! var.single-value)))
-
-(define-pmethod (Node-side)
-   (this.traverse0))
-
-(define-pmethod (Program-side)
-   (for-each (lambda (js-var)
-		(set! js-var.already-defined? #t))
-	     this.imported)
-   (this.traverse0))
-
-(define-pmethod (Lambda-side)
-   (for-each (lambda (formal)
-		(set! formal.var.already-defined? #t))
-	     this.formals)
-   (if this.vaarg
-       (set! this.vaarg.var.already-defined? #t))
+(define-nmethod (Lambda.side)
+   (with-access::Lambda this (scope-vars)
+      (for-each (lambda (var)
+		   (with-access::Var var (already-defined? constant? value)
+		      (set! already-defined? #t)
+		      (set! constant? #t)
+		      (set! value #f)))
+		scope-vars))
    ;; revisits the formals, but doesn't make any difference.
-   (this.traverse0))
+   (default-walk this))
 
-(define-pmethod (Set!-side)
-   (this.val.traverse)
-   (let ((var this.lvalue.var))
-      (if var.already-defined?
-	  (begin
-	     (set! var.muted? #t)
-	     (delete! var.single-value))
-	  (begin
-	     (set! var.already-defined? #t)
-	     (set! var.single-value this.val)))))
+(define (clean-local l::Var)
+   (with-access::Var l (already-defined? constant? value)
+      (set! already-defined? #f)
+      (set! constant? #f)
+      (set! value #f)))
+   
+(define-nmethod (Tail-rec.side)
+   (with-access::Tail-rec this (inits scope-vars body)
+      (for-each clean-local scope-vars)
+
+      (for-each walk inits)
+      ;; we can leave the "constant?" flag, but we have to remove the
+      ;; value-entry. Otherwise we might propagate the init-value.
+      (for-each (lambda (var)
+		   (with-access::Var var (value)
+		      (set! value #f)))
+		scope-vars)
+      (walk body)))
+
+(define-nmethod (While.side)
+   (with-access::While this (init scope-vars body)
+      (for-each clean-local scope-vars)
+
+      (walk init)
+      ;; we can leave the "constant?" flag, but we have to remove the
+      ;; value-entry. Otherwise we might propagate the init-value.
+      (for-each (lambda (var)
+		   (with-access::Var var (value)
+		      (set! value #f)))
+		scope-vars)
+      (walk body)))
+
+(define-nmethod (Scope.side)
+   (with-access::Scope this (scope-vars)
+      (for-each clean-local scope-vars))
+   (default-walk this))
+
+(define-nmethod (Set!.side)
+   (with-access::Set! this (lvalue val)
+      (walk val)
+      (with-access::Ref lvalue (var)
+	 (when (and (eq? (Var-kind var) 'imported)
+		    (Var-constant? var)) ;; equal to exported-as-const?
+	    (scheme2js-error
+	     "Set!"
+	     "Imported variable is constant, and must not be modified."
+	     (Var-id var)
+	     lvalue))
+	 (with-access::Var var (already-defined? constant? value)
+	    (if already-defined?
+		(begin
+		   (set! constant? #f)
+		   (set! value #f))
+		(begin
+		   (set! already-defined? #t)
+		   (set! constant? #t)
+		   (set! value val)))))))

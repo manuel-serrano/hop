@@ -1,7 +1,0 @@
-((name "webfilter")
- (version "1.0.0")
- (author "M. Serrano")
- (title "HOP Web filtering.")
- (about-service "about")
- (rc (hop-load-once (make-file-path (hop-weblets-directory) "webfilter" "webfilter.hop")))
- (autoload #f))

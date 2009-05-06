@@ -1,0 +1,171 @@
+/*=====================================================================*/
+/*    .../project/hop/1.10.x/weblets/weblets/weblets-homepage.hss      */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sat Aug 12 13:49:57 2006                          */
+/*    Last change :  Thu Oct  2 07:50:29 2008 (serrano)                */
+/*    Copyright   :  2006-08 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    HOP weblets homepage cascade style sheet                         */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module weblets-homepage-hss)
+
+/*---------------------------------------------------------------------*/
+/*    User configuration                                               */
+/*---------------------------------------------------------------------*/
+$(define font-family "Lucida Grande, Verdana, Lucida, Helvetica, Arial")
+$(define typewriter "Bitstream Vera Sans Mono, Andale Mono, monospace")
+$(define background "#e0e0e0")
+$(define border-color "#bbb")
+$(define home-color "#f9f9f9")
+$(define header-color "#fffff0")
+$(define title-color "#ddd")
+$(define pagearea-color "#fff")
+
+$(define deep-blue "#00a")
+$(define deep-green "#0a0")
+$(define deep-magenta "#7a459e")
+$(define deep-magenta2 "#4a346c")
+$(define deep-orange "#d89220")
+
+/*--- notepad ---------------------------------------------------------*/
+notepad-title {
+  background-color: transparent;
+  padding: 0 10px 20px 0;
+}
+
+notepad-tabs {
+  background-color: transparent;
+  padding: 0;
+  padding-top: 40px;
+  padding-left: 10px;
+  margin-left: 10px;
+  margin-right: 0;
+}
+
+nptab {
+  font-size: small;
+  border-color: $border-color;
+  margin: 0 4px 0 0;
+  padding-top: 1px;
+}
+
+nptab img {
+  vertical-align: bottom;
+  padding-right: 2px;
+}
+
+nptab-active {
+  background-color: $home-color;
+  border-bottom-color: $home-color;
+  color: #8381de;
+}
+
+notepad-body {
+  border-color: $border-color;
+  border-left: 1px solid $border-color;
+  border-right: 1px solid $border-color;
+  border-bottom: 1px solid $border-color;
+  padding: 10px;
+  font-size: small;
+  background-color: $home-color;
+}
+
+nptab-body {
+  border-color: blue;
+  background-color: $home-color;
+}
+
+div.weblets-homepage-tab {
+  font-weight: normal;
+}
+
+/*--- sectionning -----------------------------------------------------*/
+div.weblet-homepage h1 {
+  margin-left: 2px;
+  margin-right: 2px;
+  font-size: 105%;
+  margin-top: 15px;
+  border-bottom: 1px dotted $border-color;
+}
+
+div.weblet-homepage  h2 {
+  margin-left: -5px;
+  font-size: 100%;
+  color: $deep-magenta2;
+}
+
+a.img-ref img {
+  border-color: transparent;
+}
+
+a.img-ref:href img {
+  border-color: blue;
+}
+
+/*---------------------------------------------------------------------*/
+/*    program fontification                                            */
+/*---------------------------------------------------------------------*/
+pre.hop span.homepage-program-comment {
+  color: #ffa600;
+  font-weight: bold;
+  font-weight: bold;
+}
+
+pre.hop span.homepage-program-line-comment {
+  color: #ffa600;
+  font-style: italic;
+}
+
+pre.hop span.homepage-program-markup {
+  color: #1919af;
+  font-weight: bold;
+}
+
+pre.hop span.homepage-program-string {
+  color: red;
+}
+
+pre.hop span.homepage-program-type {
+  color: #00cf00;
+  font-weight: bold;
+}
+
+pre.hop span.homepage-program-define {
+  color: #6959cf;
+  font-weight: bold;
+}
+
+pre.hop span.homepage-program-special {
+  color: #ee0000;
+  font-weight: bold;
+}
+
+pre.hop span.homepage-program-client {
+  color: #ee0000;
+  font-weight: bold;
+}
+
+pre.hop span.homepage-program-server {
+  color: #0000ee;
+  font-weight: bold;
+}
+
+pre.hop span.homepage-program-important {
+  color: #ee0000;
+  font-weight: bold;
+}
+
+pre.hop span.homepage-program-reserved {
+  font-weight: bold;
+}
+
+pre.hop span.homepage-program-keyword {
+  font-weight: bold;
+  color: #0a0;
+}
+

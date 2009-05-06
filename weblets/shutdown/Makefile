@@ -1,13 +1,45 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/shutdown/Makefile               */
+#*    serrano/prgm/project/hop/1.10.x/weblets/shutdown/Makefile        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Nov 16 10:16:23 2007 (serrano)                */
-#*    Copyright   :  2006-07 Manuel Serrano                            */
+#*    Last change :  Mon Sep 29 09:39:50 2008 (serrano)                */
+#*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the shutdown weblet                              */
 #*=====================================================================*/
+
+#*---------------------------------------------------------------------*/
+#*    CONFIG ...                                                       */
+#*---------------------------------------------------------------------*/
+TITLE = shutdown
+VERSION = 1.0.0
+MINHOP = $(HOPRELEASE) 
+MAXHOP =
+CATEGORY = hop
+DATE = $(HOPDATE)
+
+#*---------------------------------------------------------------------*/
+#*    POPULATION                                                       */
+#*---------------------------------------------------------------------*/
+SOURCES         = shutdown.hop shutdown.hss \
+POPULATION	= Makefile \
+                  etc/weblet.info.in etc/shutdown.wiki.in \
+                  etc/logo.png etc/favicon.png \
+                  $(SOURCES)
+
+#*---------------------------------------------------------------------*/
+#*    Targets                                                          */
+#*---------------------------------------------------------------------*/
+build: etc/weblet.info etc/$(TITLE).wiki .afile
+
+.afile: $(HOP_POP)
+	$(AFILE) -suffix hop $(POPULATION) -o .afile
+
+clean:
+
+distclean:
+	$(RM) etc/weblet.info etc/$(TITLE).wiki
 
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
@@ -16,15 +48,28 @@ include ../../etc/Makefile.hopconfig
 include ../../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
-#*    POPULATION                                                       */
+#*    Dependencies                                                     */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile shutdown.hop shutdown.hss \
-                  etc/weblet.info etc/shutdown.wiki \
-                  etc/logo.png
+etc/weblet.info: etc/weblet.info.in Makefile
+	cat $< | sed -e "s|@HZ@|$(HZ)|" \
+                     -e "s|@TITLE@|$(TITLE)|" \
+                     -e "s|@VERSION@|$(VERSION)|" \
+                     -e "s|@MINHOP@|$(MINHOP)|" \
+                     -e "s|@MAXHOP@|$(MAXHOP)|" \
+                     -e "s|@PUBLISHER@|$(PUBLISHER)|" \
+                     -e "s|@DATE@|$(DATE)|" \
+                     -e "s|@PRIVATEHOST@|$(PRIVATEHOST)|" \
+                     -e "s|@PUBLICHOST@|$(PUBLICKHOST)|" \
+                     -e "s|@CATEGORY@|$(CATEGORY)|" > $@
 
-build: .afile
+%.wiki: %.wiki.in Makefile
+	cat $< | sed -e "s|@VERSION@|$(VERSION)|" \
+                     -e "s|@MINHOP@|$(MINHOP)|" \
+                     -e "s|@HZ@|$(HZ)|" \
+                     -e "s|@MAXHOP@|$(MAXHOP)|" \
+                     -e "s|@HOST@|$(PRIVATEHOST)|" \
+                     -e "s|@DATE@|$(DATE)|" \
+                     -e "s|@PUBLISHER@|$(PUBLISHER)|" \
+                     -e "s|@TITLE@|$(TITLE)|" \
+                     -e "s|@CATEGORY@|$(CATEGORY)|" > $@
 
-.afile: $(POPULATION)
-	$(AFILE) -suffix hop $(POPULATION) > .afile
-
-clean:

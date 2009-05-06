@@ -1,26 +1,43 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/epassword/Makefile              */
+#*    serrano/prgm/project/hop/1.10.x/weblets/epassword/Makefile       */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Jun  7 07:33:30 2007 (serrano)                */
-#*    Copyright   :  2006-07 Manuel Serrano                            */
+#*    Last change :  Mon Sep 29 09:47:17 2008 (serrano)                */
+#*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the password weblet                              */
 #*=====================================================================*/
+
+#*---------------------------------------------------------------------*/
+#*    CONFIG ...                                                       */
+#*---------------------------------------------------------------------*/
+TITLE = epassword
+VERSION = 1.0.0
+MINHOP = $(HOPRELEASE) 
+MAXHOP =
+CATEGORY = hop
+DATE = 18 april 2008
+
+#*---------------------------------------------------------------------*/
+#*    POPULATION                                                       */
+#*---------------------------------------------------------------------*/
+SOURCES		= epassword.hss epassword.hop
+POPULATION	= Makefile $(SOURCES) \
+		  etc/weblet.info.in etc/logo.png etc/favicon.png \
+                  etc/epassword.wiki.in
+
+build: etc/weblet.info etc/$(TITLE).wiki .afile
+
+clean:
+
+distclean:
+	$(RM) etc/weblet.info etc/$(TITLE).wiki
 
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
 include ../../etc/Makefile.hopconfig
 include ../../etc/Makefile.version
+include ../../etc/Makefile.weblet
 
-#*---------------------------------------------------------------------*/
-#*    POPULATION                                                       */
-#*---------------------------------------------------------------------*/
-POPULATION	= Makefile epassword.hss epassword.hop \
-		  etc/weblet.info etc/logo.png etc/epassword.wiki
-
-build:
-
-clean:

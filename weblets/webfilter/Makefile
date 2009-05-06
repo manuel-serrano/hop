@@ -1,13 +1,45 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/webfilter/Makefile              */
+#*    serrano/prgm/project/hop/1.10.x/weblets/webfilter/Makefile       */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Nov 29 07:28:21 2007 (serrano)                */
-#*    Copyright   :  2006-07 Manuel Serrano                            */
+#*    Last change :  Mon Sep 29 09:44:46 2008 (serrano)                */
+#*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Weblet Makefile                                                  */
 #*=====================================================================*/
+
+#*---------------------------------------------------------------------*/
+#*    CONFIG ...                                                       */
+#*---------------------------------------------------------------------*/
+TITLE = webfilter
+VERSION = 1.0.0
+MINHOP = $(HOPRELEASE) 
+MAXHOP =
+CATEGORY = hop
+DATE = $(HOPDATE)
+
+#*---------------------------------------------------------------------*/
+#*    POPULATION                                                       */
+#*---------------------------------------------------------------------*/
+SOURCES		= webfilter.hop 
+
+POPULATION	= Makefile webfilter.hss etc/weblet.info.in \
+                  etc/logo.png etc/favicon.png etc/webfilter.wiki.in BLACKLIST \
+                  $(SOURCES)
+
+#*---------------------------------------------------------------------*/
+#*    Targets                                                          */
+#*---------------------------------------------------------------------*/
+build: etc/weblet.info etc/$(TITLE).wiki .afile
+
+.afile: $(SOURCES)
+	$(AFILE) -suffix hop $(POPULATION) -o .afile
+
+clean:
+
+distclean:
+	$(RM) etc/weblet.info etc/$(TITLE).wiki
 
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
@@ -16,11 +48,27 @@ include ../../etc/Makefile.hopconfig
 include ../../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
-#*    POPULATION                                                       */
+#*    Dependencies                                                     */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile webfilter.hss webfilter.hop etc/weblet.info \
-                  etc/logo.png etc/favicon.png etc/webfilter.wiki BLACKLIST
+etc/weblet.info: etc/weblet.info.in Makefile
+	cat $< | sed -e "s|@HZ@|$(HZ)|" \
+                     -e "s|@TITLE@|$(TITLE)|" \
+                     -e "s|@VERSION@|$(VERSION)|" \
+                     -e "s|@MINHOP@|$(MINHOP)|" \
+                     -e "s|@MAXHOP@|$(MAXHOP)|" \
+                     -e "s|@PUBLISHER@|$(PUBLISHER)|" \
+                     -e "s|@DATE@|$(DATE)|" \
+                     -e "s|@PRIVATEHOST@|$(PRIVATEHOST)|" \
+                     -e "s|@PUBLICHOST@|$(PUBLICKHOST)|" \
+                     -e "s|@CATEGORY@|$(CATEGORY)|" > $@
 
-build:
-
-clean:
+%.wiki: %.wiki.in Makefile
+	cat $< | sed -e "s|@VERSION@|$(VERSION)|" \
+                     -e "s|@MINHOP@|$(MINHOP)|" \
+                     -e "s|@HZ@|$(HZ)|" \
+                     -e "s|@MAXHOP@|$(MAXHOP)|" \
+                     -e "s|@HOST@|$(PRIVATEHOST)|" \
+                     -e "s|@DATE@|$(DATE)|" \
+                     -e "s|@PUBLISHER@|$(PUBLISHER)|" \
+                     -e "s|@TITLE@|$(TITLE)|" \
+                     -e "s|@CATEGORY@|$(CATEGORY)|" > $@

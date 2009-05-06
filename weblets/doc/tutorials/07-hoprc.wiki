@@ -92,4 +92,15 @@ In the following section, we show how to add new weblets search paths.
 </code>
 
 
+== The script file ==
+
+The HOP RC file is loaded just after command line options have been parsed.
+The RC file is used to specified paths or general HOP options. In particular,
+this file is used to configure HOP and to specifies how it must be initialized.
+Sometime it might be useful to evaluate HOP expression when HOP is fully
+initialized. This is the role of the **script file**. This specifies a 
+set of expression that are evaluated just before the main HOP loop
+is entered. A script file is specified using either the ++hop-script-file++
+parameter or the ++\-\-script-file++ command line option.
+
 </doc>

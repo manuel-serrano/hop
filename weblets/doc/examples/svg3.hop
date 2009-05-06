@@ -1,0 +1,14 @@
+;; Web sites in SVG canvas
+(<HTML>
+   (<IFRAME>
+      :style "border: 0; width: 400px; height: 400px; overflow: hidden;"
+      :src ((service ()
+	       (instantiate::http-response-hop
+		  (backend (hop-get-xml-backend 'xhtml))
+		  (xml (<HTML>
+			  (<SVG> :width 400 :height 400
+			     (<SVG:G> :transform "translate(200, 0) rotate(50) scale(0.5)"
+				(<SVG:FOREIGNOBJECT> :x "10" :y "10" :width "800" :height "800"
+				   (<BODY> :xmlns "http://www.w3.org/1999/xhtml"
+				      (<IFRAME> :style "width:700px; height:700px"
+					 :src "http://hop.inria.fr"))))))))))))

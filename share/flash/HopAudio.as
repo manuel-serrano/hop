@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/flash/HopAudio.as                 */
+/*    serrano/prgm/project/hop/1.11.x/share/flash/HopAudio.as          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Aug 23 16:16:58 2007                          */
-/*    Last change :  Wed Nov 14 17:40:41 2007 (serrano)                */
-/*    Copyright   :  2007 Manuel Serrano                               */
+/*    Last change :  Sun Jan 18 16:55:53 2009 (serrano)                */
+/*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopAudio flash support.                                          */
 /*                                                                     */
@@ -22,7 +22,7 @@ import flash.external.ExternalInterface;
 /*    HopAudio ...                                                     */
 /*---------------------------------------------------------------------*/
 class HopAudio {
-   static var app : HopAudio;
+   static var app = new Array();
 
    function HopAudio( init ) {
       var snd = new Sound();
@@ -105,16 +105,19 @@ class HopAudio {
 
       // setPosition
       var setPosition = function( position ) {
-	 seek = true;
-	 snd.stop();
-	 seek= false;
-
-	 snd.start( position );
+	 // this is not implemented because snd.start( offset ) just delay
+	 // the starting, it does not seek!
       }
 
       // getPosition
       var getPosition = function() {
-	 return Math.floor( snd.getPosition() / 1000 );
+	 var pos = snd.getPosition();
+	 
+	 if( pos > 0 ) {
+	    return Math.floor( pos / 1000 );
+	 } else {
+	    return 0;
+	 }
       }
 
       // getId3
@@ -161,11 +164,15 @@ class HopAudio {
 	    }
 	 } else {
 	    if( onerror ) {
-	       ExternalInterface.call( onerror, domid, false );
+	       ExternalInterface.call( onerror, domid, false,
+				       "Cannot load stream..." );
 	    }
 	 }
       }
-	       
+
+      // initial configuration
+      setVolume( 50 );
+      
       // External interface binding
       ExternalInterface.addCallback( 'load', this, loadSound );
       ExternalInterface.addCallback( 'flash_play', this, playSound );
@@ -188,6 +195,6 @@ class HopAudio {
 
    // entry point
    static function main( mc ) {
-      app = new HopAudio( _root.arg );
+      app.push( new HopAudio( _root.arg ) );
    }
 }

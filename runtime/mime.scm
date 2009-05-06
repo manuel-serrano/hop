@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/mime.scm                        */
+;*    serrano/prgm/project/hop/1.9.x/runtime/mime.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 07:59:54 2006                          */
-;*    Last change :  Fri Feb 10 08:49:34 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Fri Aug 22 15:52:06 2008 (serrano)                */
+;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP mime types management.                                       */
 ;*=====================================================================*/
@@ -23,18 +23,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    *mime-types-table* ...                                           */
 ;*---------------------------------------------------------------------*/
-(define *mime-types-table* (make-hashtable))
+(define *mime-types-table*
+   (create-hashtable
+    :eqtest (lambda (v k)
+	       (string-suffix? v k))
+    :hash (lambda (s)
+	     (let* ((l (string-length s))
+		    (r (string-index-right s #\.))
+		    (b (if r (+fx r 1) 0)))
+		(string-hash s b l)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    mime-type ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (mime-type path default)
-   (let loop ((suf (string-downcase (suffix path))))
-      (or (hashtable-get *mime-types-table* suf)
-	  (let ((ns (suffix suf)))
-	     (if (=fx (string-length ns) 0)
-		 default
-		 (loop ns))))))
+   (or (hashtable-get *mime-types-table* path) default))
 
 ;*---------------------------------------------------------------------*/
 ;*    mime-type-add! ...                                               */

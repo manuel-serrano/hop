@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/weblets/hop/hop.hss                     */
+/*    serrano/prgm/project/hop/1.10.x/weblets/hop/hop.hss              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Tue Jul  3 07:33:50 2007 (serrano)                */
-/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    Last change :  Fri Nov 28 10:28:49 2008 (serrano)                */
+/*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -48,10 +48,19 @@ body {
 
 img.logo {
   background: transparent;
+  padding: 15px;
 }
 
-img.logo {
-  padding: 15px;
+/*--- dashboard -------------------------------------------------------*/
+body.hop-dashboard-panel {
+  background-color: white;
+  font-size: 80%;
+  overflow: visible;
+  font-family: $font-family;
+}
+
+body.hop-dashboard-panel img.logo {
+  padding: 2px;
 }
 
 /*--- directory -------------------------------------------------------*/
@@ -66,7 +75,7 @@ div.weblets {
 }
 
 /*--- title -----------------------------------------------------------*/
-div.title {
+div.weblets-title {
   text-align: left;
   font-weight: bold;
   font-size: 100%;
@@ -77,6 +86,11 @@ div.title {
   border-top: 1px solid $border-color;
 }
 
+body.hop-dashboard-panel div.weblets-title {
+  margin-top: 0;
+  margin-bottom: 2ex;
+}
+
 /*--- weblet ----------------------------------------------------------*/
 table.weblet {
   float: left;
@@ -85,12 +99,16 @@ table.weblet {
 table.weblet td.logo {
   border: 1px outset transparent;
   -moz-border-radius: 0.2em;
+  -webkit-border-radius: 0.2em;
+  border-radius: 0.2em;
 }
 
 table.weblet td.logo:hover {
   border: 1px outset #777;
   background-color: #fbffe1;
   -moz-border-radius: 0.2em;
+  -webkit-border-radius: 0.2em;
+  border-radius: 0.2em;
 }
 
 table.weblet td.legend {
@@ -109,6 +127,8 @@ table.hop {
   border: 1px solid $border-color;
   background-color: white;
   -moz-border-radius: 0.5em;
+  -webkit-border-radius: 0.5em;
+  border-radius: 0.5em;
 }
 
 div#title {

@@ -22,6 +22,7 @@ in the documentation for the ++with-hop++ form.
   (abstract-class %http-response-local::%http-response ...)
   (class http-response-hop::%http-response-local ...)
   (class http-response-procedure::%http-response-local ...)
+  (class http-response-raw::%http-response-local ...)
   (class http-response-file::%http-response-local ...)
   (class http-response-shoutcast::http-response-file ...)
   (class http-response-string::%http-response-local ...)
@@ -200,7 +201,29 @@ the XHTML backend object.
 The class ::http-response-procedure is used to construct dynamic 
 responses. When a response denoted by this class is served, the
 server invokes the fields ++procedure++ with an output port
-denoting the connection with the client.
+denoting the connection with the client. The server handles the header
+of the response. The body is provided by the procedure.
+</class>
+
+=== ++(class http-response-raw::%http-response-local ...)++ ===
+<class> http-response-raw
+
+<fields>
+^  fields              ^   access  ^       type        ^  default value        ^  short description                          ^
+| ...                  |    ...    |        ...        |     ...               | fields from ::%http-response-local          |
+| procedure            |    r      |       procedure   |      _                | the procedure producing the whole response content.  |
+</fields>
+
+The class ::http-response-raw is used to construct dynamic 
+responses. When a response denoted by this class is served, the
+server invokes the fields ++procedure++ with an output port
+denoting the connection with the client. The procedure produces
+**all** the characters transmitted to the client, **including**
+the header. It thus differs from ++http-response-procedure++ which is 
+only in charge of producing the //body// of the response, not its 
+header. Responses instances of the class ++http-response-raw++
+may be used to implement non-http response (such as responses to Flash 
+++<policy-file-request/>++ requests).
 </class>
 
 === ++(class http-response-file::%http-response-local ...)++ ===
@@ -302,7 +325,7 @@ for HTTP ++PUT++ and ++POST++ requests.
      (let ((c (http-header-field (http-request-header req) content-type:)))
 	(if (and (string? c)
 		 (string=? c "application/x-www-form-urlencoded")
-		 (http-request-localhostp req))
+                 (http-server-request? req))
 	    (case (http-request-method req)
 	       ((PUT)
 		(instantiate::http-response-put

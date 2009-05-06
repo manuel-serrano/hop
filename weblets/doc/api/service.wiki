@@ -14,8 +14,6 @@ invoked from client. This page describes how to create and how to use
   (define-service (name arg ...) ...)
   (service-resource svc ...)
   (service-base-url svc req)
-  (make-hop-service-url svc arg ...)
-  (make-service-url svc arg ...)
   (procedure->service proc)
 
   (hop-autoload-directories)
@@ -25,7 +23,13 @@ invoked from client. This page describes how to create and how to use
 
 === Server & Client ===
 
-  (with-hop (svc arg ...) [success] [failure])
+  (with-hop (svc arg ...) [attributes ...] [success] [failure])
+
+
+=== Client ===
+
+  (with-hop-default-anim)
+  (with-hop-default-anim-set! anim)
 
 
 == Examples ==
@@ -49,7 +53,8 @@ automatic coercions that take place when a service is invoked.
 ^  arguments       ^   type       ^  short description              ^
 | :timeout         |  integer     | An optional timeout.            |
 | :ttl             |  integer     | An optional time-to-live.       |
-| :url             |  string      | An optional associated url  .   |
+| :url             |  string      | An optional associated url.     |
+| :name            |  string      | An optional associated url.     |
 | arg<sub>0</sub>  |  symbol      | the first argument identifier.  |
 | body             |  expression  | the body of the service.        |
 </arguments>
@@ -62,6 +67,13 @@ the timeout (a number of seconds) is expired the service is invalidated.
 
 ~~ the :ttl argument controls how many the service can be invoked
 before being invalidated.
+
+~~ the :url argument specifies a full URL that can be used to invoke the 
+service.
+
+~~ the :name argument specifies a relative URL suffix that can be used to
+invoke the service. The whole URL is produced by the expression
+++(make-hop-url-name name)++
 </function>
 
 === ++(define-service (name arg<sub>0</sub> ...) body)++ ===
@@ -179,34 +191,6 @@ function ++(service-resource ...)++ which produces a relative URI.
 
 </function>
 
-=== ++(make-hop-service-url svc arg<sub>0</sub> ...)++ ===
-<function> make-hop-service-url
-
-<arguments>
-^  arguments       ^   type       ^  short description              ^
-| svc              |  service     | the service.                    |
-| arg<sub>0</sub>  |  symbol      | the first argument.             |
-</arguments>
-
-The function ++make-hop-service-url++ forges an URL from a service and
-from arguments. This name can be used on the server to invoke the service
-from a distant server (see ++http-send-request++).
-</function>
-
-=== ++(make-service-url svc arg<sub>0</sub> ...)++ ===
-<function> make-service-url
-
-<arguments>
-^  arguments       ^   type       ^  short description              ^
-| svc              |  service     | the service.                    |
-| arg<sub>0</sub>  |  symbol      | the first argument.             |
-</arguments>
-
-The function ++make-service-url++ forges an URL from a service and
-from arguments that is suitable for invoking the service from a client.
-In particular, the URL can be used in client ++<FORM>++ markups.
-</function>
-
 === ++(procedure->service proc)++ ===
 <function> procedure->service
 
@@ -251,21 +235,40 @@ the currently available weblets. These are automatically
 <client>
 
 
-=== (with-hop [:host host] (svc v<sub>0</sub> ...) [success] [fail]) ===
+=== (with-hop (svc v<sub>0</sub> ...) [attributes ...] [success] [fail]) ===
 <function> with-hop
 <procedure> with-hop
 <arguments>
-^  arguments       ^   type       ^  short description              ^
-| host             |  string      | a URL of a remote server.       |
-| svc              |  service     | the invoked service.            |
-| v<sub>0</sub>    |  obj         | the first argument.             |
-| ...              |  ...         | ...                             |
-| v<sub>n</sub>    |  obj         | the n<sup>th</sup> argument.    |
-| success          |  procedure   | a procedure of one argument.    |
-| fail             |  procedure   | a procedure of one argument.    |
+^  arguments       ^   type              ^  short description               ^
+| svc              |  service            | the invoked service.             |
+| v<sub>0</sub>    |  obj                | the first argument.              |
+| ...              |  ...                | ...                              |
+| v<sub>n</sub>    |  obj                | the n<sup>th</sup> argument.     |
+| success          |  procedure          | a procedure of one argument.     |
+| fail             |  procedure          | a procedure of one argument.     |
 </arguments>
 
-The special form ++with-hop++ invokes the server service ++svc++ with
+<arguments>
+^  common attributes  ^   type           ^  short description               ^
+| :name             |  string             | a remote user name.              |
+| :password         |  string             | a remote user password.          |
+| :authorization    |  string             | a remote authorization.          |
+</arguments>
+
+<arguments>
+^  server attributes    ^   type         ^  short description           ^
+| :host             |  string             | a remote server name.        |
+| :port             |  integer            | a remote server port.        |
+| :abspath          |  string             | the abspath of the service.  |
+</arguments>
+
+<arguments>
+^  client arguments  ^   type   ^  short description  ^
+| :anim        |  procedure or bool  | the animation to play while calling.  |
+</arguments>
+
+
+~~ The special form ++with-hop++ invokes the server service ++svc++ with
 arguments ++v<sub>0</sub>++, ... On success, it then invokes the
 function ++success++ with an object constructed from the service
 answer. On failure, it invokes ++failure++. 
@@ -276,6 +279,14 @@ Otherwise, when ++with-hop++ is used from a server without specifying
 a remote ++host++, the service is executed locally. No remote ++host++
 might specified when used from a client. Only the server that has
 provided the page might be invoked in such a situation.
+
+~~ When used from a client **only**, an animation procedure can be
+specified. This procedure of one argument should return a DOM object
+that is inserted in the document during a ++with-hop++ call. This
+object is automatically hidden when the call completes. If no :anim
+attributed is specified, then the value return by ++((with-hop-default-anim))++
+is used as animation.
+o
 
 ~~ The evaluation of the service ++svc++ produce a response.  If its
 type is not an instance of ::%http-response HOP performs automatic
@@ -307,7 +318,7 @@ In this first example, an anonymous service send a HTML table to
 a client. The return type of the service is an XML element, as
 constructed by any markup.
 
-<example>Sending a HTML Tree</example>
+<example>Sending a HTML tree</example>
 
 ===== 2. Sending Complex Values =====
 
@@ -341,13 +352,48 @@ may transmit compound values. In the example above, one service sends
 an HTML tree. The other one sends a list of strings.
 
 <example>Invoking remote services from the server</example>
+
+===== 5. Specifying a custom animation ====
+
+This example shows how to specify a custom animation when calling
+a server service.
+
+<example>WITH-HOP animation</example>
+
+
 </procedure>
 </function>
+
 
 </client>
 </server>
 
+== Client Definitions ==
+<client>
+=== (with-hop-default-anim) ===
+
+<procedure> with-hop-default-anim
+
+The function ++with-hop-default-anim++ returns the default function for
+producing visual animations during ++with-hop++ calls.
+</procedure>
+
+=== (with-hop-default-anim-set! procedure) ===
+<procedure> with-hop-default-anim-set!
+<arguments>
+^  arguments       ^   type              ^  short description               ^
+| anim             |  procedure or bool  | a procedure of one argument.     |
+</arguments>
+</procedure>
+
+The function ++with-hop-default-anim-set!++ set! the default function for
+producing visual animations during ++with-hop++ calls. It returns the
+previous default animation function.
+
+</client>
+
+
 == See also ==
-<see-also>service, define-service, make-hop-service-url, make-service-url, procedure->service, hop-autoload, with-hop</see-also>
+<see-also>service, define-service, procedure->service, hop-autoload, with-hop</see-also>
 
 </doc>

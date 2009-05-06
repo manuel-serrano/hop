@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/hz/sync.hop                     */
+;*    serrano/prgm/project/hop/2.0.x/weblets/hz/sync.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Wed Nov 28 11:16:04 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Wed May  6 10:55:45 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
 ;*=====================================================================*/
@@ -63,7 +63,8 @@
 	      (auth (with-lock *hz-mutex*
 		       (lambda ()
 			  (hashtable-get *url-authenticate-table* url))))
-	      (pub `((publisher ,pub))))
+	      (basic-auth (when (pair? auth)
+			     (http-basic-authorization (car auth) (cdr auth)))))
 	  (with-handler
 	     (lambda (e)
 		(cond
@@ -78,21 +79,20 @@
 		   (with-input-from-string s
 		      (lambda ()
 			 (filter-map (lambda (e)
-					(let ((w (info->weblet (append e pub))))
+					(let ((w (info->weblet e :authorization basic-auth)))
 					   (hz-db-add-or-update! w)
 					   #f))
 				     (read)))))
-		:timeout (* 1000 (hz-connection-timeout))
-		:header (if (pair? auth)
-			    (list (list authorization:
-					(string-append "Basic "
-						       (base64-encode
-							(string-append
-							 (car auth)
-							 ":"
-							 (cdr auth))))))
+		:timeout (hz-connection-timeout)
+		:header (if basic-auth
+			    (list (list authorization: basic-auth))
 			    '()))))
        '()))
+
+;*---------------------------------------------------------------------*/
+;*    *standard-insync* ...                                            */
+;*---------------------------------------------------------------------*/
+(define *standard-insync* #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-sync-standard-weblets! ...                                    */
@@ -121,5 +121,7 @@
    (define (sync-dir! dir)
       (when (directory? dir)
 	 (sync-weblet! dir (make-file-path dir "etc" "weblet.info"))))
-   
-   (for-each sync-dir! (directory->path-list (hop-weblets-directory))))
+
+   (unless *standard-insync*
+      (set! *standard-insync* #t)
+      (for-each sync-dir! (directory->path-list (hop-weblets-directory)))))

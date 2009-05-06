@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/wizard/wizard.hop               */
+;*    serrano/prgm/project/hop/2.0.x/weblets/wizard/wizard.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Nov 30 12:37:38 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Mon May  4 20:15:55 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
 ;*=====================================================================*/
@@ -18,7 +18,7 @@
 ;*    hoprc-dir ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hoprc-dir
-   (make-file-path (getenv "HOME") ".config" "hop"))
+   (hop-rc-directory))
    
 ;*---------------------------------------------------------------------*/
 ;*    wizard ...                                                       */
@@ -29,7 +29,8 @@
 	 :title "Hop Wizard"
 	 :base (service-base-url wizard (current-request))
 	 :include "md5" "hop-fileselect" "hop-window" "hop-tree" "hop-notepad"
-	 :css "wizard.hss")
+	 :css "wizard.hss"
+	 :favicon "etc/favicon.png")
       (<BODY>
 	 ~(define (crypt na pd)
 	     (let* ((str (string-append na " " pd)))
@@ -90,19 +91,20 @@
 							     proxyr proxym
 							     webdav)
 					(lambda (h)
-					   (set! status.innerHTML (cadr h))
-					   (set! message.innerHTML
-						 (if (pair? (cddr h))
-						     (caddr h)
-						     ""))))
+					   (innerHTML-set! status (cadr h))
+					   (innerHTML-set! message
+							   (if (pair? (cddr h))
+							       (caddr h)
+							       ""))))
 				     (begin
-					(set! status.innerHTML "Nothing saved")
-					(set! message.innerHTML "")))))
+					(innerHTML-set! status "Nothing saved")
+					(innerHTML-set! message "")))))
 			     (else
-			      (set! status.innerHTML (cadr h))
+			      (innerHTML-set! status (cadr h))
 			      (if (pair? (cddr h))
-				  (set! message.innerHTML (caddr h))
-				  (set! message.innerHTML ""))))))))))
+				  (innerHTML-set! message (caddr h))
+				  (innerHTML-set! message ""))))))))))
+	 
 	 (<DIV> :align "center"
 	    (<TABLE> :class "wizard" 
 	       (<TR>
@@ -112,7 +114,11 @@
 		     (<TABLE>
 			(<TR>
 			   (<TD> :colspan 2
-			      (<DIV> :id "title" "Hop Wizard")))
+			      (<DIV> :id "title" "Hop Wizard")
+			      (<DIV> :id "description"
+				 [The Wizard creates the minimal
+				      ,(<TT> "hoprc.hop") file that
+				      is required for running HOP.])))
 			(<TR>
 			   (<TD> :colspan 2
 			      (<SPAN> :class "head" "Accounts:")))
@@ -217,6 +223,7 @@ The regular user is likely to be the owner of the Hop process.])))))))
 				       (<TD> (<INPUT> :type 'text
 						:class "optional"
 						:id "gname"
+						:onkeypress
 						~(require "gpasswd" this.value)
 						:value ""
 						:size 40)))
@@ -434,6 +441,6 @@ of computers that are allowed to use this Hop as proxy.])))))
 	       (newline)
 	       (newline))))
       (list 'save
-	    (format "Accounts for ~a saved in `~a'.<BR>You must now <A href='/hop/shutdown'>restart</a> Hop!" accounts passwdfile))))
+	    (format "Accounts for ~a saved in `~a'.<BR>You must now <A href='/hop/shutdown'>shutdown</a> and restart Hop!" accounts passwdfile))))
 
 

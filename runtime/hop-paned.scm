@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-paned.scm                   */
+;*    serrano/prgm/project/hop/1.10.x/runtime/hop-paned.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue Nov 13 09:35:17 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Mon Oct 13 19:41:33 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
 ;*=====================================================================*/
@@ -19,6 +19,7 @@
    (import  __hop_param
 	    __hop_types
 	    __hop_xml
+	    __hop_css
 	    __hop_misc
 	    __hop_js-lib
 	    __hop_service)
@@ -41,6 +42,8 @@
    
 ;*---------------------------------------------------------------------*/
 ;*    <PANED> ...                                                      */
+;*    -------------------------------------------------------------    */
+;*    See __hop_css for HSS types.                                     */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <PANED> ((id #unspecified string)
 			      (class #unspecified string)
@@ -118,7 +121,7 @@
 	       fraction
 	       (cond
 		  ((xml-tilde? onresize)
-		   (tilde->string onresize))
+		   (xml-tilde->return onresize))
 		  ((string? onresize)
 		   onresize)
 		  (else
@@ -159,7 +162,7 @@
 		   fraction)
 	       (cond
 		  ((xml-tilde? onresize)
-		   (tilde->string onresize))
+		   (xml-tilde->return onresize))
 		  ((string? onresize)
 		   onresize)
 		  (else
@@ -170,13 +173,15 @@
 ;*    xml-write ::html-pan ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-pan p backend)
-   (with-access::html-pan obj (id klass body)
+   (with-access::html-pan obj (id klass body attributes)
       (display "<div id='" p)
       (display id p)
       (display "' class='hop-pan" p)
       (when (string? klass)
 	 (display " " p)
 	 (display klass p))
-      (display "'>" p)
+      (display "' " p)
+      (xml-write-attributes attributes p)
+      (display ">" p)
       (xml-write body p backend)
       (display "</div>" p)))

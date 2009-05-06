@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/base64.js                         */
+/*    serrano/prgm/project/hop/1.9.x/share/base64.js                   */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Tyler Akins                                       */
 /*    Creation    :  Thu Sep 21 15:34:59 2006                          */
-/*    Last change :  Thu Sep 21 15:35:55 2006 (serrano)                */
-/*    Copyright   :  2006 Manuel Serrano                               */
+/*    Last change :  Mon Dec  3 12:32:10 2007 (serrano)                */
+/*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Simple base64 encoder/decoder                                    */
 /*    -------------------------------------------------------------    */
@@ -18,6 +18,7 @@ var keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 /*---------------------------------------------------------------------*/
 /*    base64_encode ...                                                */
 /*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
 function base64_encode( input ) {
    var output = "";
    var chr1, chr2, chr3;
@@ -49,8 +50,44 @@ function base64_encode( input ) {
 
 /*---------------------------------------------------------------------*/
 /*    function                                                         */
+/*    utf8_decode ...                                                  */
+/*---------------------------------------------------------------------*/
+function utf8_decode( input ) {
+   var string = "";
+   var i = 0;
+   var c = c1 = c2 = 0;
+
+   while ( i < input.length ) {
+      c = input.charCodeAt(i);
+
+      if( c < 128 ) {
+	 string += String.fromCharCode( c );
+	 i++;
+      }
+      else if( (c > 191) && (c < 224) ) {
+	 c2 = input.charCodeAt( i + 1 );
+	 string += String.fromCharCode( ((c & 31) << 6) | (c2 & 63) );
+	 i += 2;
+      }
+      else {
+	 c2 = input.charCodeAt( i + 1 );
+	 c3 = input.charCodeAt( i + 2 );
+	 string += String.fromCharCode( ((c & 15) << 12) |
+					((c2 & 63) << 6) |
+					(c3 & 63) );
+	 i += 3;
+      }
+
+   }
+
+   return string;
+}
+
+/*---------------------------------------------------------------------*/
+/*    function                                                         */
 /*    base64_decode ...                                                */
 /*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
 function base64_decode( input ) {
    var output = "";
    var chr1, chr2, chr3;
@@ -80,5 +117,6 @@ function base64_decode( input ) {
       }
    } while( i < input.length );
 
-   return output;
+   return utf8_decode( output );
 }
+

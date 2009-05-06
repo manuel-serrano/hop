@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/prefs-expd.sch                  */
+;*    serrano/prgm/project/hop/1.10.x/runtime/prefs-expd.sch           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:04:20 2006                          */
-;*    Last change :  Tue Jun 26 10:12:48 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Wed Nov 12 08:31:51 2008 (serrano)                */
+;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the DEFINE-PREFERENCES macro.                  */
 ;*=====================================================================*/
@@ -15,101 +15,137 @@
 ;*    This generates three functions: id-load, id-save, and id-edit.   */
 ;*---------------------------------------------------------------------*/
 (define (hop-define-prefs-expander x e)
-   
+
+   ;; make-load
    (define (make-load id)
       (let ((mod (eval-module)))
 	 `(define (,id file)
-	     ,(if (evmodule? mod)
-		  `(hop-load file :env (eval-find-module ',(evmodule-name mod)))
-		  `(hop-load file)))))
-   
-   (define (make-save-clause c)
-      (match-case c
-	 ((?- ?type ?get ?set)
-	  `(begin
-	      ,(if (eq? type 'expr)
-		   `(write (list ,set '(,get)))
-		   `(write (list ,set (,get))))
-	      (newline)))
-	 ((?- ?type (and (? symbol?) ?get))
-	  `(begin
-	      ,(if (eq? type 'expr)
-		   `(write (list ',(symbol-append get '-set!)
-				 (list 'quote (,get))))
-		   `(write (list ',(symbol-append get '-set!) (,get))))
-	      (newline)))
-	 ((or (? string?) (? symbol?))
-	  #unspecified)
-	 (((? string?) ?-)
-	  #unspecified)
+	     (with-lock (preferences-mutex)
+		(lambda ()
+		   ,(if (evmodule? mod)
+			`(hop-load file
+		            :env (eval-find-module ',(evmodule-name mod)))
+			`(hop-load file)))))))
+
+   ;; make-save
+   (define (make-save id key clauses)
+
+      (define sig ";; hop-sig: ")
+
+      (define (make-save-clause c)
+	 (match-case c
+	    ((?- ?type (and (? symbol?) ?param))
+	     `(begin
+		 ,(match-case type
+		     (expr
+		      `(write (list ',(symbol-append param '-set!)
+				    (,param))))
+		     ((or quote (list . ?-))
+		      `(write (list ',(symbol-append param '-set!)
+				    (list 'quote (,param)))))
+		     (else
+		      `(write (list ',(symbol-append param '-set!) (,param)))))
+		 (newline)))
+	    (else
+	     #unspecified)
+	    (((? string?) ?-)
+	     #unspecified)))
+
+      (define (onload clauses)
+	 (let ((k (memq :onload clauses)))
+	    (if (and (pair? k) (pair? (cdr k)))
+		`(begin
+		    (write '(,(cadr k)))
+		    (newline))
+		#unspecified)))
+
+      `(begin
+	  ;; generate the save procedure
+	  (define (,id file #!optional force-override)
+	     
+	     (define (save file)
+		(let* ((str (with-output-to-string
+			       (lambda ()
+				  ,@(map make-save-clause clauses)
+				  ,(onload clauses))))
+		       (sum (md5sum str)))
+		   (with-lock (preferences-mutex)
+		      (lambda ()
+			 (with-output-to-file file
+			    (lambda ()
+			       (display ,sig)
+			       (print sum)
+			       (display str))))))
+		file)
+	     
+	     (define (signed? file)
+		(when (file-exists? file)
+		   (with-input-from-file file
+		      (lambda ()
+			 (let ((l (read-line)))
+			    (when (substring-at? l ,sig 0)
+			       (let ((sum (substring l
+						     ,(string-length sig)
+						     (string-length l)))
+				     (rest (read-string)))
+				  (string=? sum (md5sum rest)))))))))
+
+	     (cond
+		((or (not (file-exists? file)) (signed? file))
+		 (save file))
+		(force-override
+		 (rename-file file (string-append file ".hopsave"))
+		 (save file))
+		(else
+		 #f)))
+	  ;; register the save procedure
+	  (preferences-register-save! ,key ,id)))
+
+   ;; make-edit
+   (define (make-edit id key clauses)
+
+      (define (make-edit-clause c)
+	 (match-case c
+	    (((and (? string?) ?lbl) ?type (and (? symbol?) ?param))
+	     (let ((get param)
+		   (set (symbol-append param '-set!)))
+		`(<PR> :param (list ',param ,get ,set) :type ',type ,lbl)))
+	    ((? string?)
+	     `(<PRLABEL> ,c))
+	    (--
+	     '(<PRSEP>))
+	    (else
+	     #f)))
+      
+      `(define (,id #!key id)
+	  (<PREFS> :id (xml-make-id id 'preferences) :lang ,key
+	     ,@(filter-map make-edit-clause clauses))))
+
+   ;; check clauses
+   (define (check-clauses clauses)
+      (cond
+	 ((null? clauses)
+	  #t)
+	 ((eq? (car clauses) :onload)
+	  (if (null? (cdr clauses))
+	      (error 'define-preferences "Illegal form" x)
+	      (check-clauses (cddr clauses))))
+	 ((or (string? (car clauses)) (eq? (car clauses) '--))
+	  (check-clauses (cddr clauses)))
 	 (else
-	  (error 'define-preferences "Illegal clause" c))))
-   
-   (define (make-save id clauses)
-      `(define (,id file)
-	  (with-output-to-file file
-	     (lambda ()
-		,@(map make-save-clause clauses)))
-	  file))
-   
-   (define (make-value-clause lbl value)
-      `(<TR>
-	  (<TH> ,lbl)
-	  (<TD> ,value)))
-   
-   (define (make-edit-clause/set-get lbl type get set)
-      `(<TR>
-	  (<TH> ,lbl)
-	  (<TD> (preferences-editor ',type ,get ,set))))
-   
-   (define (make-label-clause lbl)
-      `(<TR>
-	  (<TH> :class "label" :colspan 2 ,lbl)))
-   
-   (define (make-sep-clause lbl)
-      `(<TR>
-	  (<TD> :class "separator" :colspan 2 "&nbsp;")))
-   
-   (define (make-edit-clause c)
-      (match-case c
-	 (((and (? string?) ?lbl) ?value)
-	  (make-value-clause lbl value))
-	 ((?lbl ?type ?get ?set)
-	  (make-edit-clause/set-get lbl type get set))
-	 ((?lbl ?type (and (? symbol?) ?get))
-	  (make-edit-clause/set-get lbl type get (symbol-append get '-set!)))
-	 ((? string?)
-	  (make-label-clause c))
-	 (--
-	  (make-sep-clause c))
-	 (else
-	  (error 'define-preferences "Illegal clause" c))))
-   
-   (define (make-edit id clauses)
-      `(define (,id #!key onclick)
-	  (<TABLE> :class "preferences"
-	     (<COLGROUP>
-		(<COL> :width "0*" :class "col1")
-		(<COL> :width "0*" :class "col2"))
-	     (when onclick
-		(<TR> (<TD> :class "save"
-			 :colspan 2
-			 :title "Save current preferences"
-			 (<BUTTON>
-			    :onclick
-			    (tilde-compose
-			     (string->tilde
-			      "var els = document.getElementsByClass( 'pref_applied' ); var i; for( i = 0; i < els.length; i++ ) { els[ i ].className = 'pref_saved'; }")
-			     onclick)
-			    "save preferences"))))
-	     ,@(map make-edit-clause clauses))))
+	  (match-case (car clauses)
+	     (((and (? string?) ?lbl) ?type (and (? symbol?) ?param))
+	      (check-clauses (cdr clauses)))
+	     (else
+	      (error 'define-preferences "Illegal form" x))))))
    
    (match-case x
       ((?- (and (? symbol?) ?id) . ?clauses)
-       (let ((body `(begin
-		       ,(make-load (symbol-append id '-load))
-		       ,(make-save (symbol-append id '-save) clauses)
-		       ,(make-edit (symbol-append id '-edit) clauses))))
+       (let* ((key (symbol->string (gensym id)))
+	      (body `(begin
+			,(make-load (symbol-append id '-load))
+			,(make-save (symbol-append id '-save) key clauses)
+			,(make-edit (symbol-append id '-edit) key clauses))))
 	  (e (evepairify body x) e)))
       (else
        (error 'define-preferences "Illegal form" x))))

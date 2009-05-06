@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/etc/configure.scm.in                    */
+;*    serrano/prgm/project/hop/2.0.x/etc/configure.scm.in              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Sat Oct 14 11:14:11 2006 (serrano)                */
+;*    Last change :  Tue May  5 10:02:57 2009 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration                                                */
 ;*=====================================================================*/
@@ -13,34 +13,54 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_configure
    
-   (export (hop-configure ::bstring)
-	   (hop-name)
-           (hop-version)
-           (hop-backend)
-	   (hop-url)
-	   (hop-bin-directory)
-	   (hop-lib-directory)
-	   (hop-etc-directory)
-	   (hop-share-directory)
-	   (hop-contribs-directory)
-           (hop-weblets-directory)
-           (hop-mime-types-file)
-	   (hop-configure-javascript-mime-type)
-	   (hop-runtime-system::pair))
+   (include "configure-@HOPARCH@.sch")
    
-   (eval   (export hop-name)
-	   (export hop-version)
-	   (export hop-backend)
-	   (export hop-url)
-	   (export hop-etc-directory)
-	   (export hop-bin-directory)
-	   (export hop-lib-directory)
-	   (export hop-share-directory)
-	   (export hop-contribs-directory)
-           (export hop-weblets-directory)
-           (export hop-mime-types-file)
-	   (export hop-configure-javascript-mime-type)
-           (export hop-runtime-system)))
+   (export  (hop-configure ::bstring)
+	    (hop-name)
+	    (hop-version)
+	    (hop-branch)
+	    (hop-backend)
+	    (hop-url)
+	    (inline hop-bin-directory)
+	    (inline hop-lib-directory)
+	    (inline hop-etc-directory)
+	    (inline hop-share-directory)
+	    (inline hop-contribs-directory)
+	    (inline hop-weblets-directory)
+	    (inline hop-library-path)
+	    (inline hop-mime-types-file)
+	    (inline hop-configure-javascript-mime-type)
+	    (inline hop-configure-css-mime-type)
+	    (inline hop-runtime-system::pair)
+	    (inline hop-runtime-system-files::pair)
+	    (inline hop-service-base::bstring)
+	    (hop-configure-rc-directory)
+	    (hop-configure-var-directory)
+	    (hop-configure-cache-directory)
+	    (hop-srfis::pair-nil))
+   
+   (eval    (export hop-name)
+	    (export hop-version)
+	    (export hop-branch)
+	    (export hop-backend)
+	    (export hop-url)
+	    (export hop-etc-directory)
+	    (export hop-bin-directory)
+	    (export hop-lib-directory)
+	    (export hop-share-directory)
+	    (export hop-contribs-directory)
+	    (export hop-weblets-directory)
+	    (export hop-library-path)
+	    (export hop-mime-types-file)
+	    (export hop-configure-javascript-mime-type)
+	    (export hop-configure-css-mime-type)
+	    (export hop-runtime-system)
+	    (export hop-runtime-system-files)
+	    (export hop-service-base)
+	    (export hop-configure-rc-directory)
+	    (export hop-configure-var-directory)
+	    (export hop-configure-cache-directory)
+	    (export hop-srfis)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure ...                                                */
@@ -49,6 +69,8 @@
    (case (string->symbol config)
       ((--version)
        (print (hop-version)))
+      ((--branch)
+       (print (hop-branch)))
       ((--backend)
        (print (hop-backend)))
       ((--etcdir)
@@ -63,12 +85,22 @@
        (print (hop-contribs-directory)))
       ((--webletsdir)
        (print (hop-weblets-directory)))
+      ((--library-path)
+       (print (hop-library-path)))
       ((--mimetypes)
        (print (hop-mime-types-file)))
       ((--javascript-mime-type)
        (print (hop-configure-javascript-mime-type)))
+      ((--css-mime-type)
+       (print (hop-configure-css-mime-type)))
       ((--url)
        (print (hop-url)))
+      ((--hop-runtime-system)
+       (print (hop-runtime-system)))
+      ((--hop-runtime-system-files)
+       (print (hop-runtime-system-files)))
+      ((--hop-service-base)
+       (print (hop-service-base)))
       (else
        (with-output-to-port (current-error-port)
 	  (lambda ()
@@ -76,6 +108,7 @@
 	     (newline)
 	     (print "Option:")
 	     (print "  [--version]")
+	     (print "  [--branch]")
 	     (print "  [--backend]")
 	     (print "  [--etcdir]")
 	     (print "  [--bindir]")
@@ -83,8 +116,10 @@
 	     (print "  [--sharedir]")
 	     (print "  [--contribsdir]")
              (print "  [--webletsdir]")
+	     (print "  [--library-path]")
              (print "  [--mimetypes]")
              (print "  [--javascript-mime-type]")
+             (print "  [--css-mime-type]")
 	     (print "  [--url]"))))))
 	     
 ;*---------------------------------------------------------------------*/
@@ -92,26 +127,32 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-name) "Hop")
 (define (hop-version) "@VERSION@")
+(define (hop-branch) "@BRANCH@")
 (define (hop-backend) "@BACKEND@")
 (define (hop-url) "@URL@")
 
 ;*---------------------------------------------------------------------*/
-;*    Install directories ...                                          */
-;*---------------------------------------------------------------------*/
-(define (hop-etc-directory) "@ETCDIR@")
-(define (hop-bin-directory) "@BINDIR@")
-(define (hop-lib-directory) "@LIBDIR@")
-(define (hop-share-directory) "@SHAREDIR@")
-(define (hop-contribs-directory) "@CONTRIBSDIR@")
-(define (hop-weblets-directory) "@WEBLETSDIR@")
-
-;*---------------------------------------------------------------------*/
 ;*    Misc ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define (hop-mime-types-file) "@MIMETYPES@")
-(define (hop-configure-javascript-mime-type) "@JSMIMETYPE@")
+(define-inline (hop-mime-types-file) "@MIMETYPES@")
+(define-inline (hop-configure-javascript-mime-type) "@JSMIMETYPE@")
+(define-inline (hop-configure-css-mime-type) "@CSSMIMETYPE@")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-runtime-system ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (hop-runtime-system) '(@HOPJS@))
+(define-inline (hop-runtime-system) '(@HOPJS@))
+(define-inline (hop-runtime-system-files) '(@HOPJSFILES@))
+
+;*---------------------------------------------------------------------*/
+;*    hop-service-base ...                                             */
+;*    -------------------------------------------------------------    */
+;*    The prefix of all HOP weblets.                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (hop-service-base) "@HOPSERVICEBASE@")
+
+;*---------------------------------------------------------------------*/
+;*    hop-srfis ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (hop-srfis) 
+   (list-copy '(@HOPSRFIS@ hop-@BRANCH@ hop-@VERSION@)))

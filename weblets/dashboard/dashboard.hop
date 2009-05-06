@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/dashboard/dashboard.hop         */
+;*    .../prgm/project/hop/1.9.x/weblets/dashboard/dashboard.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Jul 10 08:26:49 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Fri Jun 20 10:35:06 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP dashboard                                                    */
 ;*=====================================================================*/
@@ -18,86 +18,72 @@
 	   dashboard/populate))
 
 ;*---------------------------------------------------------------------*/
-;*    dashboard ...                                                    */
-;*---------------------------------------------------------------------*/
-(define-service (dashboard)
-   (<HTML>
-      (<HEAD> :title "Hop dashboard"
-	 :base (service-base-url dashboard (current-request))
-	 :css "dashboard.hss")
-      (<BODY>
-	 (<DIV> :align "center"
-	    (<TABLE> :class "dashboard"
-	       (<COLGROUP> (<COL> :width "0*"))
-	       (<TR>
-		  (<TD> :id "logo" (<IMG> :id "logo" :src "etc/logo.png"))
-		  (<TD> (<TABLE> :width "100%"
-			   (<TR> (<TD> :id "title" "Hop Dashboard"))
-			   (<TR> (<TD> "")))))))
-	 (<FOOT>))))
-   
-;*---------------------------------------------------------------------*/
 ;*    dashboard/documentation ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-service (dashboard/documentation)
    (let* ((file (service-resource dashboard/documentation "etc/dashboard.wiki"))
-	  (url (format "/hop/dashboard/weblet?weblet=~a" file)))
+	  (url (format "/hop/doc/weblet?weblet=~a" file)))
       (instantiate::http-response-string
 	 (start-line "HTTP/1.0 301 Moved Permanently")
-	 (header (list (cons 'location: url))))))
+	 (header (list (cons 'location: dashboard-doc-url))))))
 
 ;*---------------------------------------------------------------------*/
-;*    dashboard-icon ...                                               */
+;*    dashboard ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (dashboard-icon icon)
-   (service-resource dashboard (make-file-name "etc" icon)))
+(define-service (dashboard)
+   (let* ((file (service-resource dashboard/documentation "etc/dashboard.wiki"))
+	  (url (format "/hop/doc/weblet?weblet=~a" file)))
+      (<HTML>
+	 (<HEAD> :title "Hop dashboard"
+	    :base (service-base-url dashboard (current-request))
+	    :css "dashboard.hss"
+	    :include "hop-dashboard"
+	    :favicon (img-base64-encode
+		      (service-resource dashboard "etc/favicon.png")))
+	 (<BODY>
+	    (<DIV> :align "center"
+	       (<TABLE> :class "dashboard"
+		  (<COLGROUP> (<COL> :width "0*"))
+		  (<TR>
+		     (<TD> :id "logo" (<IMG> :id "logo" :src "etc/logo.png"))
+		     (<TD> (<TABLE> :width "100%"
+			      (<TR> (<TD> :id "title" "Hop Dashboard"))
+			      (<TR> (<TD> [
+Dashboard is a Hop weblet that manages a small toolbar on the left-side of
+the bottom of Web pages (such as the one present in this page). This toolbar
+is intended to be used by ,(<EM> "other") weblets. As such ,(<TT> "dashboard")
+provides a service that is not supposed to be used directly. Please refer to
+the Dashboard ,(<A> :href url :target "_blank" "documentation") for
+further investigation.]))
+			      (<TR> (<TD> (<BR>)))
+			      (<TR> (<TD> "The list of applets:"))
+			      (<TR> (<TD> (<APPLETS>))))))))
+	    (<FOOT>)))))
 
 ;*---------------------------------------------------------------------*/
-;*    dashboard/rfc ...                                                */
+;*    applets ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-service (dashboard/rfc)
-   (let ((rfc (<INPUT> :type 'text :size 40))
-	 (repo (<INPUT> :type 'text :size 40
-		  :value "http://tools.ietf.org/html")))
-      (<DASHBOARD> :style "width: 35em; height: 14ex"
-	 (<TABLE>
-	    (<TR>
-	       (<TD> :rowspan 4 :valign 'top
-		  (<IMG> :src (dashboard-icon "dashboard-rfc.png"))))
-	    (<TR>
-	       (<TH> :class "kind" "Rfc")
-	       (<TD> rfc))
-	    (<TR>
-	       (<TH> :class "kind" "Repository")
-	       (<TD> repo))
-	    (<TR>
-	       (<TD> :style "padding-top: 1ex" :colspan 2 :align 'right
-		  (<A> :href "http://tools.ietf.org/html"
-		     :class "button"
-		     :target "_blank"
-		     :onclick ~(set! this.href
-				     (format "~a/rfc~a" $repo.value $rfc.value))
-		     "Go")))))))
+(define (applets)
+   (sort (lambda (s1 s2)
+	    (string<=? (car s1) (car s2)))
+	 (hop-dashboard-weblet-applets)))
 
 ;*---------------------------------------------------------------------*/
-;*    <DASHBOARD> ...                                                  */
+;*    <APPLETS> ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <DASHBOARD> ((style #f)
-				  (class #f)
-				  body)
-   (<HTML>
-      (<HEAD> :css (service-resource dashboard "dashboard-applet.hss"))
-      (<BODY> :class (if (string? class)
-			 (string-append "hop-dashboard-applet " class)
-			 "hop-dashboard-applet")
-	      :style style
-	      body)))
+(define (<APPLETS>)
+   (<UL>
+      (map (lambda (x)
+	      (let* ((svc (caddr x))
+		     (url (if (or (string-prefix? "http://" svc)
+				  (string-prefix? "https://" svc))
+			      svc
+			      (dirname svc))))
+		 (<LI> (<A> :href url (<TT> url)))))
+	   (applets))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dashboard/populate ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-service (dashboard/populate)
-   (append (hop-dashboard-weblet-applets)
-	   (list (list "rfc"
-		       (dashboard-icon "dashboard-rfc.png")
-		       (make-service-url dashboard/rfc)))))
+   (applets))

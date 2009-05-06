@@ -1,0 +1,89 @@
+-include ../../etc/Makefile.scheme2jsconfig
+
+RUNTIME_FILES = $(SCHEME2JS_RUNTIME)/runtime.js $(SCHEME2JS_RUNTIME)/runtime_callcc.js
+RUNTIME_EXPORTER_FLAGS = --ignored-prefixes '("sc_" "sci_")'
+RUNTIME_INTERFACE_FLAGS = --interface-prefix "sci_" --ignored-prefixes '("sc_")'
+
+ifdef MUTABLE_STRINGS
+RUNTIME_POPULATION = runtime_part IO mutable
+else
+RUNTIME_POPULATION = runtime_part IO immutable
+endif
+RUNTIME_POPULATION_JS = $(RUNTIME_POPULATION:%=$(SCHEME2JS_RUNTIME)/%.js)
+
+runtime-build: $(SCHEME2JS_RUNTIME)/runtime.js \
+		$(SCHEME2JS_RUNTIME)/runtime.sch $(SCHEME2JS_RUNTIME)/runtime-callcc.sch\
+		$(SCHEME2JS_RUNTIME)/mod-runtime.sch $(SCHEME2JS_RUNTIME)/mod-runtime-callcc.sch\
+		$(SCHEME2JS_RUNTIME)/runtime_interface.js $(SCHEME2JS_RUNTIME)/runtime_interface_callcc.js
+
+#==============================================================================
+#  runtime.js
+#==============================================================================
+
+$(SCHEME2JS_RUNTIME)/runtime.js: $(RUNTIME_POPULATION_JS)
+	echo "/************* GENERATED FILE - DO NOT EDIT *************/" > $@ && \
+	echo "/************* GENERATED FILE - DO NOT EDIT *************/" >> $@ && \
+	echo "/************* GENERATED FILE - DO NOT EDIT *************/" >> $@ && \
+	echo "/************* GENERATED FILE - DO NOT EDIT *************/" >> $@ && \
+	echo "/************* GENERATED FILE - DO NOT EDIT *************/" >> $@ && \
+	echo "/************* GENERATED FILE - DO NOT EDIT *************/" >> $@ && \
+	echo "/************* GENERATED FILE - DO NOT EDIT *************/" >> $@ && \
+	echo "/************* GENERATED FILE - DO NOT EDIT *************/" >> $@ && \
+	cat $^ >> $@;
+
+
+#==============================================================================
+#  runtime.sch runtime-callcc.sch mod-runtime.sch mod-runtime-callcc.sch
+#==============================================================================
+$(SCHEME2JS_RUNTIME)/runtime.sch $(SCHEME2JS_RUNTIME)/runtime-callcc.sch \
+$(SCHEME2JS_RUNTIME)/mod-runtime.sch $(SCHEME2JS_RUNTIME)/mod-runtime-callcc.sch: $(SCHEME2JS_RUNTIME)/exporter
+
+$(SCHEME2JS_RUNTIME)/runtime.sch: $(SCHEME2JS_RUNTIME)/runtime.js
+	$(SCHEME2JS_RUNTIME)/exporter --scheme2js-modules --constant --module runtime $(RUNTIME_EXPORTER_FLAGS) -o $@ $<
+$(SCHEME2JS_RUNTIME)/runtime-callcc.sch: $(SCHEME2JS_RUNTIME)/runtime.js $(SCHEME2JS_RUNTIME)/runtime_callcc.js
+	$(SCHEME2JS_RUNTIME)/exporter --scheme2js-modules --constant --module runtime-callcc $(RUNTIME_EXPORTER_FLAGS) -o $@ \
+	$(SCHEME2JS_RUNTIME)/runtime.js	$(SCHEME2JS_RUNTIME)/runtime_callcc.js
+$(SCHEME2JS_RUNTIME)/mod-runtime.sch: $(SCHEME2JS_RUNTIME)/runtime_interface.js
+	$(SCHEME2JS_RUNTIME)/exporter --scheme2js-modules --module mod-runtime $(RUNTIME_EXPORTER_FLAGS) -o $@ $<
+$(SCHEME2JS_RUNTIME)/mod-runtime-callcc.sch: $(SCHEME2JS_RUNTIME)/runtime_interface.js $(SCHEME2JS_RUNTIME)/runtime_interface_callcc.js
+	$(SCHEME2JS_RUNTIME)/exporter --scheme2js-modules --module mod-runtime-callcc $(RUNTIME_EXPORTER_FLAGS) -o $@ \
+	$(SCHEME2JS_RUNTIME)/runtime_interface.js $(SCHEME2JS_RUNTIME)/runtime_interface_callcc.js
+
+#==============================================================================
+#  interface-files
+#==============================================================================
+$(SCHEME2JS_RUNTIME)/runtime_interface.js \
+$(SCHEME2JS_RUNTIME)/runtime_interface_callcc.js: $(SCHEME2JS_RUNTIME)/interface
+
+$(SCHEME2JS_RUNTIME)/runtime_interface.js: $(SCHEME2JS_RUNTIME)/runtime.js
+	$(SCHEME2JS_RUNTIME)/interface $(RUNTIME_INTERFACE_FLAGS) -o $@ $<
+
+$(SCHEME2JS_RUNTIME)/runtime_interface_callcc.js: $(SCHEME2JS_RUNTIME)/runtime_callcc.js
+	$(SCHEME2JS_RUNTIME)/interface $(RUNTIME_INTERFACE_FLAGS) -o $@ $<
+
+
+#==============================================================================
+#  exporter / interface
+#==============================================================================
+
+RUNTIME_EXPORTER_MODULES = exporter meta multi-file-port string
+RUNTIME_EXPORTER_SCMS = $(RUNTIME_EXPORTER_MODULES:%=$(SCHEME2JS_RUNTIME)/%.scm)
+
+$(SCHEME2JS_RUNTIME)/exporter: $(RUNTIME_EXPORTER_SCMS)
+	$(BIGLOO) -g -o $@ $^
+
+RUNTIME_INTERFACE_MODULES = interface meta multi-file-port string
+RUNTIME_INTERFACE_SCMS = $(RUNTIME_INTERFACE_MODULES:%=$(SCHEME2JS_RUNTIME)/%.scm)
+$(SCHEME2JS_RUNTIME)/interface: $(RUNTIME_INTERFACE_SCMS)
+	$(BIGLOO) -g -o $@ $^
+
+runtime-clean:
+	rm -f $(SCHEME2JS_RUNTIME)/exporter;
+	rm -f $(SCHEME2JS_RUNTIME)/interface;
+	rm -f $(SCHEME2JS_RUNTIME)/*.o;
+	rm -f $(SCHEME2JS_RUNTIME)/runtime.js;
+	rm -f $(SCHEME2JS_RUNTIME)/runtime.sch;
+	rm -f $(SCHEME2JS_RUNTIME)/mod-runtime.sch;
+	rm -f $(SCHEME2JS_RUNTIME)/runtime-callcc.sch;
+	rm -f $(SCHEME2JS_RUNTIME)/mod-runtime-callcc.sch;
+	rm -f $(SCHEME2JS_RUNTIME)/runtime_interface_callcc.js $(SCHEME2JS_RUNTIME)/runtime_interface.js;

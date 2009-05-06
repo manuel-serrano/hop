@@ -13,13 +13,15 @@ These are used for user server-side customizations and configurations.
   (define-preferences name ...)
 
 == Examples ==
-<example>define-parameter</example>
+<example>define-parameter, define-lazy-parameter</example>
 
 == Server Definitions ==
 <server>
 
 === ++(define-parameter name obj [proc])++ ===
+=== ++(define-lazy-parameter name obj [proc])++ ===
 <function> define-parameter
+<function> define-lazy-parameter
 
 <arguments>
 ^  arguments       ^   type       ^  short description                   ^
@@ -38,9 +40,14 @@ named after ++name++.
 provided, the new value of the parameter is the result of the application
 of ++proc++ to the argument.
 
+The form ++define-lazy-parameter++ is similar to ++define-parameter++ with
+a single difference. Until the parameter is set a new value (using the
+++name-//set!//++ function, the default value of the parameter is computed
+lazily, each time the parameter is used.
+</function>
 </function>
 
-=== ++(define-preferences name clause<sub>0</sub>...)++ ===
+=== ++(define-preferences name [:onload thunk] clause<sub>0</sub>...)++ ===
 <function> define-preferences
 
 <arguments>
@@ -70,10 +77,11 @@ The ++//type//++ of the last two clauses can be one of:
 
   * ++integer++: a numeral value.
   * ++string++: a string of characters.
+  * ++(text rows cols)++: a text displayed in a ++rows x cols++ text area.
   * ++expr++: any HOP value.
   * ++bool++: a //yes-no// value.
   * ++(bool //yes-label// //no-label//)++: a //yes-no// value with user 
- specified //yes// and //no// labels.
+  * ++(enum //key1// //key2// //key3// ...)++: an enumeration.
 
 
 This special form defines three functions named after ++name++.
@@ -84,6 +92,15 @@ This special form defines three functions named after ++name++.
  saves preferences in a file.
   * ++name//-edit//++: this is a function of no argument. It produces a
  graphical user interface for letting users configuring arguments.
+
+Editing parameters for a user requires to be granted the right to
+execute the ++/admin/preferences/edit++. Saving the parameters requires
+the ++/admin/preferences/save++ service access.
+
+The optional ++:onload++ argument specifies a thunk (i.e., a function accepting
+no argument) that is evaluated once the parameter file saved by 
+++name//-save//++ is loaded back.
+
 </function>
 
 </server>

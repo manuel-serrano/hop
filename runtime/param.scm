@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/param.scm                       */
+;*    serrano/prgm/project/hop/2.0.x/runtime/param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Nov 30 07:34:48 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Mon May  4 17:17:57 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -17,17 +17,30 @@
    (include "param.sch")
 
    (import  __hop_configure
-	    __hop_mime)
+	    __hop_mime
+	    __hop_charset)
 
    (export  (hop-uptime::date)
-	    
+
 	    (hop-rc-directory::bstring)
 	    (hop-rc-directory-set! ::bstring)
 	    
 	    (hop-rc-file::bstring)
 	    (hop-rc-file-set! ::bstring)
-	    
-	    (hop-verbose::int)
+
+	    (hop-var-directory::bstring)
+	    (hop-var-directory-set! ::bstring)
+
+	    (hop-cache-directory::bstring)
+	    (hop-cache-directory-set! ::bstring)
+
+	    (hop-load-preferences::bool)
+	    (hop-load-preferences-set! ::bool)
+	    (hop-store-preferences::bool)
+	    (hop-store-preferences-set! ::bool)
+
+	    %%*hop-verbose*
+	    (inline hop-verbose::int)
 	    (hop-verbose-set! ::int)
 	    
 	    (hop-session::int)
@@ -51,6 +64,15 @@
 
 	    (hop-log::int)
 	    (hop-log-set! ::int)
+
+	    (hop-max-file-size-cache::elong)
+	    (hop-max-file-size-cache-set! ::elong)
+
+	    (hop-max-file-entry-cache::int)
+	    (hop-max-file-entry-cache-set! ::int)
+	    
+	    (hop-restore-disk-cache::bool)
+	    (hop-restore-disk-cache-set! ::bool)
 	    
 	    (hop-http-request-error::obj)
 	    (hop-http-request-error-set! ::obj)
@@ -59,6 +81,7 @@
 	    (hop-http-response-error-set! ::obj)
 
 	    (hop-filters-close!)
+	    (hop-filters-open?::bool)
 	    (hop-filters::pair-nil)
 	    (hop-filters-set! ::pair-nil)
 	    (hop-filter-add! ::procedure)
@@ -85,8 +108,10 @@
 	    (hop-server-hostname::bstring)
 	    (hop-server-hostip::bstring)
 
-	    (hop-service-base::bstring)
-	    (hop-client-script-suffix::bstring)
+	    (hop-scm-compile-suffix::bstring)
+	    (hop-hss-compile-suffix::bstring)
+	    
+	    (hop-client-script-suffixes::pair-nil)
 	    
 	    (hop-service-weblet-name::bstring)
 	    (hop-service-weblet-wid::symbol)
@@ -104,6 +129,13 @@
 	    (hop-mime-types::pair-nil)
 	    (hop-mime-types-set! ::pair-nil)
 	    
+	    (hop-default-mime-type::bstring)
+	    (hop-default-mime-type-set! ::bstring)
+
+	    (hop-json-mime-type::bstring)
+	    (hop-json-mime-type-symbol::symbol)
+	    (hop-bigloo-mime-type::bstring)
+
 	    (hop-authorize-service-hook::procedure)
 	    (hop-authorize-service-hook-set! ::procedure)
 	    
@@ -119,8 +151,10 @@
 	    (hop-locale::symbol)
 	    (hop-locale-set! ::symbol)
 
-	    (hop-default-mime-type::bstring)
-	    (hop-default-mime-type-set! ::bstring)
+	    (hop-charset->locale::procedure)
+	    (hop-charset->locale!::procedure)
+	    (hop-locale->charset::procedure)
+	    (hop-locale->charset!::procedure)
 
 	    (hop-upload-directory::bstring)
 	    (hop-upload-directory-set! ::bstring)
@@ -134,8 +168,7 @@
 	    (hop-server-name::bstring)
 	    (hop-server-name-set! ::bstring)
 	    
-	    hop-icons-directory
-	    hop-demos-directory
+	    (hop-icons-directory)
 
 	    (hop-connection-ttl::int) 
 	    (hop-connection-ttl-set! ::int)
@@ -146,11 +179,11 @@
 	    (hop-read-timeout::int) 
 	    (hop-read-timeout-set! ::int)
 
-	    (hop-enable-remote-keep-alive::bool) 
-	    (hop-enable-remote-keep-alive-set! ::bool)
-
 	    (hop-enable-keep-alive::bool) 
 	    (hop-enable-keep-alive-set! ::bool)
+
+	    (hop-enable-remote-keep-alive::bool) 
+	    (hop-enable-remote-keep-alive-set! ::bool)
 
 	    (hop-keep-alive-timeout::int) 
 	    (hop-keep-alive-timeout-set! ::int)
@@ -158,14 +191,20 @@
 	    (hop-remote-keep-alive-timeout::int) 
 	    (hop-remote-keep-alive-timeout-set! ::int)
 
+	    (hop-keep-alive-threshold::int)
+	    (hop-keep-alive-threshold-set! ::int)
+
 	    (hop-max-remote-keep-alive-connection::int)
 	    (hop-max-remote-keep-alive-connection-set! ::int)
+
+	    (hop-remanent-timeout::int) 
+	    (hop-remanent-timeout-set! ::int)
 
 	    (hop-weblets::pair-nil)
 	    (hop-weblets-set! ::pair-nil)
 
-	    (hop-make-escape::procedure)
-	    (hop-make-escape-set! ::procedure)
+	    (hop-clientc::obj)
+	    (hop-clientc-set! ::obj)
 	    
 	    (hop-read-pre-hook::procedure)
 	    (hop-read-pre-hook-set! ::procedure)
@@ -185,17 +224,29 @@
 	    (hop-service-flush-pace::long)
 	    (hop-service-flush-pace-set! ::long)
 
+	    (hop-allow-service-override::bool)
+	    (hop-allow-service-override-set! ::bool)
+
 	    (hop-enable-dashboard::bool)
 	    (hop-enable-dashboard-set! ::bool)
 
 	    (hop-dashboard-weblet-applets::pair-nil)
 	    (hop-dashboard-weblet-applets-set! ::pair-nil)
 
+	    (hop-dashboard-weblet-disabled-applets::pair-nil)
+	    (hop-dashboard-weblet-disabled-applets-set! ::pair-nil)
+
 	    (hop-event-buffer-size::int)
 	    (hop-event-buffer-size-set! ::int)
 
-	    (hop-event-timeout::elong)
-	    (hop-event-timeout-set! ::elong)
+	    (hop-event-max-clients::int)
+	    (hop-event-max-clients-set! ::int)
+
+	    (hop-event-keep-alive::elong)
+	    (hop-event-keep-alive-set! ::elong)
+
+	    (hop-accept-kill::bool)
+	    (hop-accept-kill-set! ::bool)
 
 	    (hop-enable-proxy-sniffer::bool)
 	    (hop-enable-proxy-sniffer-set! ::bool)
@@ -203,6 +254,14 @@
 	    (hop-proxy-sniffer::procedure)
 	    (hop-proxy-sniffer-set! ::procedure)
 	    (hop-proxy-sniffer-add! ::procedure)
+
+	    (hop-api-cache::bstring)
+	    
+	    (hop-hz-package-suffix::bstring)
+	    (hop-hz-package-suffix-set! ::bstring)
+
+	    (hop-hz-local-repository::obj)
+	    (hop-hz-local-repository-set! ::obj)
 	    
 	    (hop-rc-loaded!)))
 
@@ -213,26 +272,36 @@
    (current-date))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-api-cache ...                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-api-cache
+   (os-tmp))
+   
+;*---------------------------------------------------------------------*/
 ;*    hop-rc-directory ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-rc-directory
-   (let ((home (or (getenv "HOME") "/"))
-	 (host (hostname)))
-      (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
-	 (if (string? host)
-	     (let ((home/host (string-append home "/.config/hop." host)))
-		(if (and (file-exists? home/host) (directory? home/host))
-		    home/host
-		    (if (string=? (suffix host) "")
-			(let ((home/def (make-file-name home ".config/hop")))
-			   (cond
-			      ((and (file-exists? home/def)
-				    (directory? home/def))
-			       home/def)
-			      (else
-			       home)))
-			(loop (prefix host)))))))))
+   (hop-configure-rc-directory))
 
+;*---------------------------------------------------------------------*/
+;*    hop-var-directory ...                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-var-directory
+   (or (hop-configure-var-directory) (hop-rc-directory))
+   (lambda (v)
+      (hop-path-set! (cons v (hop-path)))
+      v))
+
+;*---------------------------------------------------------------------*/
+;*    hop-cache-directory ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-cache-directory
+   (or (hop-configure-cache-directory)
+       (make-file-name (hop-rc-directory) "cache"))
+   (lambda (v)
+      (hop-path-set! (cons v (hop-path)))
+      v))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-file ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -240,10 +309,24 @@
    "hoprc.hop")
 
 ;*---------------------------------------------------------------------*/
-;*    hop-verbose ...                                                  */
+;*    hop-load-preferences ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-verbose
-   0)
+(define-parameter hop-load-preferences
+   #t)
+
+(define-parameter hop-store-preferences
+   #t)
+
+;*---------------------------------------------------------------------*/
+;*    hop-verbose ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    HOP-VERBOSE is used everywhere so it's performance matters.      */
+;*    For that reason it is implemented as an inline function and      */
+;*    the global register *HOP-VERBOSE* is exported.                   */
+;*---------------------------------------------------------------------*/
+(define %%*hop-verbose* 0)
+(define-inline (hop-verbose) %%*hop-verbose*)
+(define (hop-verbose-set! v) (set! %%*hop-verbose* v))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-session ...                                                  */
@@ -255,7 +338,7 @@
 ;*    hop-login-cookie-id ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-login-cookie-id
-   (format "hop@~a:~a" (hostname) hop-port))
+   (format "hop@~a:~a" (hostname) 8080))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-login-cookie-crypt-key ...                                   */
@@ -278,6 +361,7 @@
       (if (integer? v)
 	  (begin
 	     (hop-login-cookie-id-set! (format "hop@~a:~a" (hostname) v))
+	     (hop-api-cache-set! (format "api-~a" v))
 	     v)
 	  (error 'hop-port "Illegal hop port" v))))
 
@@ -316,6 +400,24 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-log
    0)
+
+;*---------------------------------------------------------------------*/
+;*    hop-restore-disk-cache ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-restore-disk-cache
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-max-file-size-cache ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-max-file-size-cache
+   #e16384)
+
+;*---------------------------------------------------------------------*/
+;*    hop-max-file-entry-cache ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-max-file-entry-cache
+   16)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-request-error ...                                       */
@@ -358,6 +460,14 @@
    (with-lock (hop-filter-mutex)
       (lambda ()
 	 (set! *hop-filters-open* #f))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-filters-open? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hop-filters-open?)
+   (with-lock (hop-filter-mutex)
+      (lambda ()
+	 *hop-filters-open*)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-filter ...                                                   */
@@ -499,8 +609,7 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-path
    (list "."
-	 (hop-rc-directory)
-	 (make-file-name (hop-rc-directory) "weblets")
+	 (make-file-name (hop-var-directory) "cache")
 	 (hop-share-directory)
 	 (hop-weblets-directory)
 	 (hop-contribs-directory)))
@@ -518,20 +627,24 @@
    (host (hop-server-hostname)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-service-base ...                                             */
+;*    hop-scm-compile-suffix ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-scm-compile-suffix
+   "scm")
+
+;*---------------------------------------------------------------------*/
+;*    hop-hss-compile-suffix ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hss-compile-suffix
+   "hss")
+
+;*---------------------------------------------------------------------*/
+;*    hop-client-script-suffixes ...                                   */
 ;*    -------------------------------------------------------------    */
-;*    The prefix of all HOP weblets.                                   */
+;*    The suffixes of the client compilation urls                      */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-service-base
-   "/hop")
-   
-;*---------------------------------------------------------------------*/
-;*    hop-client-script-suffix ...                                     */
-;*    -------------------------------------------------------------    */
-;*    The suffix of the client compilation urls                        */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-client-script-suffix
-   "?hop")
+(define-parameter hop-client-script-suffixes
+   '("hop" "scm"))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-initial-weblet ...                                           */
@@ -581,6 +694,7 @@
    '(;; web
      ("text/html" "html" "htm" "shtml")
      ("text/css" "css" "hss")
+     ("application/xhtml+xml" "xhtml")
      ("application/x-javascript" "js")
      ("application/xml" "xml" "rss")
      ;; audio
@@ -590,24 +704,51 @@
      ("audio/mpeg" "mp3")
      ("audio/x-ogg" "ogg")
      ("audio/flac" "flac")
+     ;; images
+     ("image/png" "png")
+     ("image/jpeg" "jpeg" "jpg")
+     ("image/gif" "gif")
      ;; video
      ("video/mpeg" "avi")
-     ("video/mpeg" "mpg"))
+     ("video/mpeg" "mpg")
+     ("video/x-flv" "flv"))
    (lambda (v)
       (mime-type-add-list! v)
       v))
+
+;*---------------------------------------------------------------------*/
+;*    hop-default-mime-type ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-default-mime-type
+   "text/plain")
+
+;*---------------------------------------------------------------------*/
+;*    hop-json-mime-type ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Opera8 only accepts application/x-javascript. It encodes all     */
+;*    the other mimetypes that are then unusable with with-hop.        */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-json-mime-type
+   ;;"application/json"
+   "application/x-javascript"
+   (lambda (v)
+      (hop-json-mime-type-symbol-set! (string->symbol v))
+      v))
+
+(define-parameter hop-json-mime-type-symbol
+   'application/x-javascript)
+
+;*---------------------------------------------------------------------*/
+;*    hop-bigloo-mime-type ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-bigloo-mime-type
+   "application/bigloo")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-icons-directory ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-icons-directory
    (make-file-name (hop-share-directory) "icons"))
-
-;*---------------------------------------------------------------------*/
-;*    hop-demos-directory ...                                          */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-demos-directory
-   (make-file-name (hop-share-directory) "demos"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-authorize-service-hook ...                                   */
@@ -636,34 +777,19 @@
    ".hopaccess")
 
 ;*---------------------------------------------------------------------*/
-;*    hop-default-mime-type ...                                        */
+;*    hop-charset->locale ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-default-mime-type
-   "text/html")
+(define-parameter hop-charset->locale
+   (lambda (x) x))
 
-;*---------------------------------------------------------------------*/
-;*    hop-charset ...                                                  */
-;*    -------------------------------------------------------------    */
-;*    This parameter specifies the charset used by HOP for             */
-;*    representing texts inside XML trees (i.e., http-response-hop)    */
-;*    If one wish to change the value of this parameter, he should     */
-;*    make the change before any HOP tree has been produced, i.e., at  */
-;*    the very beginning of the HOP session.                           */
-;*    It should be noted that other responses (e.g.,                   */
-;*    http-response-string) can use a different charset.               */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-charset
-   'UTF-8
-   (lambda (v)
-      (case v
-	 ((UTF-8 utf-8) 'UTF-8)
-	 ((UCS-2 ucs-2) 'UCS-2)
-	 ((ISO-LATIN-1 iso-latin-1) 'ISO-LATIN-1)
-	 ((ISO-8859-1 iso-8859-1) 'ISO-8859-1)
-	 ((ISO-8859-2 iso-8859-2) 'ISO-8859-2)
-	 ((ISO-8859-15 iso-8859-15) 'ISO-8859-15)
-	 ((WINDOW-1252 window-1252) 'WINDOW-1252)
-	 (else (error 'hop-charset-set! "Illegal charset" v)))))
+(define-parameter hop-charset->locale!
+   (lambda (x) x))
+
+(define-parameter hop-locale->charset
+   (lambda (x) x))
+
+(define-parameter hop-locale->charset!
+   (lambda (x) x))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-locale ...                                                   */
@@ -674,8 +800,15 @@
 ;*    disc into the charset specified by HOP-CHARSET.                  */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-locale
-   'ISO-8859-1
+   (case (string->symbol (os-charset))
+      ((UTF-8) 'UTF-8)
+      (else 'ISO-8859-1))
    (lambda (v)
+      (when (and (symbol? v) (symbol? *hop-charset*))
+	 (hop-locale->charset-set! (charset-converter v (hop-charset)))
+	 (hop-locale->charset!-set! (charset-converter! v (hop-charset)))
+	 (hop-charset->locale-set! (charset-converter (hop-charset) v))
+	 (hop-charset->locale!-set! (charset-converter! (hop-charset) v)))
       (case v
 	 ((UTF-8 utf-8) 'UTF-8)
 	 ((UCS-2 ucs-2) 'UCS-2)
@@ -685,6 +818,38 @@
 	 ((ISO-8859-15 iso-8859-15) 'ISO-8859-15)
 	 ((WINDOW-1252 window-1252) 'WINDOW-1252)
 	 (else (error 'hop-locale-set! "Illegal charset" v)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-charset ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    It is highly recommended to use 'UTF-8 as value.                 */
+;*    -------------------------------------------------------------    */
+;*    This parameter specifies the charset used by HOP for             */
+;*    representing texts inside XML trees (i.e., http-response-hop)    */
+;*    If one wishes to change the value of this parameter, he should   */
+;*    make the change before any HOP tree has been produced, i.e., at  */
+;*    the very beginning of the HOP session.                           */
+;*    It should be noted that other responses (e.g.,                   */
+;*    http-response-string) can use a different charset.               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-charset
+   'UTF-8
+   (lambda (v)
+      (when (symbol? v)
+	 (when (symbol? *hop-locale*)
+	    (hop-locale->charset-set! (charset-converter (hop-locale) v))
+	    (hop-locale->charset!-set! (charset-converter! (hop-locale) v))
+	    (hop-charset->locale-set! (charset-converter v (hop-locale)))
+	    (hop-charset->locale!-set! (charset-converter! v (hop-locale)))))
+      (case v
+	 ((UTF-8 utf-8) 'UTF-8)
+	 ((UCS-2 ucs-2) 'UCS-2)
+	 ((ISO-LATIN-1 iso-latin-1) 'ISO-LATIN-1)
+	 ((ISO-8859-1 iso-8859-1) 'ISO-8859-1)
+	 ((ISO-8859-2 iso-8859-2) 'ISO-8859-2)
+	 ((ISO-8859-15 iso-8859-15) 'ISO-8859-15)
+	 ((WINDOW-1252 window-1252) 'WINDOW-1252)
+	 (else (error 'hop-charset-set! "Illegal charset" v)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-upload-directory ...                                         */
@@ -719,40 +884,57 @@
 
 (define-parameter hop-connection-timeout
    ;; a number of milli-seconds before a connection fails
-   1500)
+   20000)
 
 (define-parameter hop-read-timeout
    ;; the number of milli-seconds to wait for parsing http headers
-   20000)
+   60000)
 
-(define-parameter hop-enable-remote-keep-alive
-   ;; does hop support keep-alive remote connection (when proxying)
-   #t)
-   
 (define-parameter hop-enable-keep-alive
    ;; does hop support keep-alive connection
-   #t
+   (cond-expand
+      ;; in a multi-threaded config, by default, it does
+      (enable-threads #t)
+      ;; in a single env, it does not
+      (else #f))
    (lambda (v)
       (unless v (hop-enable-remote-keep-alive-set! v))
       v))
+
+(define-parameter hop-enable-remote-keep-alive
+   ;; does hop support keep-alive remote connection (when proxying)
+   (cond-expand
+      (enable-threads #t)
+      (else #f)))
    
 (define-parameter hop-keep-alive-timeout
    ;; the number of milli-seconds to wait for keep-alive connections
-   300)
+   ;; Don't change this value, it is an optimal value that it in phase
+   ;; with browsers value. There is a tradeoff here, higher value raises
+   ;; the number of re-use connections but it also increases the cost
+   ;; of abandonned keep-alive connections.
+   5000)
 
 (define-parameter hop-remote-keep-alive-timeout
    ;; the number of milli-seconds to keep alive remote connections
-   2000)
+   30)
 
+(define-parameter hop-keep-alive-threshold
+   ;; the max number of connections above which keep-alive are closed
+   256)
+   
 (define-parameter hop-max-remote-keep-alive-connection
    ;; the max number of keep-alive remote (proxing) connections
-   50
+   8
    (lambda (v)
-      (if (<fx v 10)
+      (if (<fx v 4)
 	  (error 'hop-max-remote-keep-alive-connection-set!
-		 "value should be greater or equal to 10"
+		 "value should be greater or equal to 4"
 		 v)
 	  v)))
+
+(define-parameter hop-remanent-timeout
+   (* 1000 30))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-weblets ...                                                  */
@@ -761,15 +943,10 @@
    '())
 
 ;*---------------------------------------------------------------------*/
-;*    hop-make-escape ...                                              */
+;*    hop-clientc ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-make-escape
-   (lambda (x p)
-      (error 'hop-make-escape "No escape hooked." x))
-   (lambda (v)
-      (if (or (not (procedure? v)) (not (correct-arity? v 2)))
-	  (error 'hop-make-escape-set! "Illegal value" v)
-	  v)))
+(define-parameter hop-clientc
+   #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-pre-hook ...                                            */
@@ -806,9 +983,7 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-path-access-control
    (lambda (req path)
-      (any? (lambda (p)
-	       (substring-at? path p 0))
-	    (hop-path)))
+      #f)
    (lambda (v)
       (cond
 	 (*hop-rc-loaded*
@@ -835,8 +1010,7 @@
 ;*    control.                                                         */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-service-access-control
-   (lambda (req svc)
-      #f)
+   (lambda (req svc) #f)
    (lambda (v)
       (cond
 	 (*hop-rc-loaded*
@@ -869,6 +1043,12 @@
    100)
 
 ;*---------------------------------------------------------------------*/
+;*    hop-allow-service-override ...                                   */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-allow-service-override
+   #f)
+
+;*---------------------------------------------------------------------*/
 ;*    hop-enable-dashboard ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-dashboard
@@ -881,20 +1061,40 @@
    '())
 
 ;*---------------------------------------------------------------------*/
+;*    hop-dashboard-weblet-disabled-applets ...                        */
+;*    -------------------------------------------------------------    */
+;*    A list of dashboard applets that are disabled.                   */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-dashboard-weblet-disabled-applets
+   '())
+
+;*---------------------------------------------------------------------*/
 ;*    hop-event-buffer-size ...                                        */
 ;*    -------------------------------------------------------------    */
 ;*    The maximum number of entries an event server buffer may hold.   */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-event-buffer-size
-   100)
+   5)
 
 ;*---------------------------------------------------------------------*/
-;*    hop-event-timeout ...                                            */
+;*    hop-event-max-clients ...                                        */
 ;*    -------------------------------------------------------------    */
-;*    A number of seconds a server event buffer is kept alive          */
+;*    The maximum number of simultaneous clients waiting for events.   */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-event-timeout
-   #e30)
+(define-parameter hop-event-max-clients 200)
+
+;*---------------------------------------------------------------------*/
+;*    hop-event-keep-alive ...                                         */
+;*    -------------------------------------------------------------    */
+;*    The number of seconds to keep an ajax connection alive.          */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-event-keep-alive #e121)
+
+;*---------------------------------------------------------------------*/
+;*    hop-accept-kill ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-accept-kill
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-proxy-sniffer ...                                     */
@@ -937,6 +1137,18 @@
 			(close-output-port old)
 			(close-output-port new))))
 		 new))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-hz-package-suffix ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hz-package-suffix
+   "hz")
+
+;*---------------------------------------------------------------------*/
+;*    hop-hz-local-repository ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hz-local-repository
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-loaded! ...                                               */

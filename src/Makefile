@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/src/Makefile                            */
+#*    serrano/prgm/project/hop/1.10.x/src/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Sep  3 15:34:58 2007 (serrano)                */
+#*    Last change :  Fri Nov 28 11:08:22 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -23,9 +23,15 @@ EXEC		= hop
 #*---------------------------------------------------------------------*/
 #*    Sources    					               */
 #*---------------------------------------------------------------------*/
-MODULES		= hop-param parseargs main init
+MODULES		= hop-param parseargs main init \
+                  scheduler accept pipeline \
+                  nothread-scheduler \
+                  queue-scheduler \
+                  oto-scheduler \
+                  pool-scheduler \
+                  amany-scheduler
 
-INCLUDES	= 
+INCLUDES	= stage.sch
 
 CLASS_DIR	= o/class_s/bigloo/hop
 
@@ -58,7 +64,7 @@ $(CLASS_DIR):
 	mkdir -p $@
 
 $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
-	@ $(call compile,BIGLOO,BCFLAGS,-o $@ $(OBJECTS))
+	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $@ $(OBJECTS))
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
 $(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-etc jvm-lib
@@ -82,10 +88,9 @@ jvm-stdlibs: o/class_s/lib/hop/$(HOPRELEASE)
         done
 
 jvm-share:
+	$(RM) -r o/class_s/share
 	cp -r ../share o/class_s
 	cp -r ../scheme2js/runtime/*.js o/class_s/share
-	cp -r ../weblets o/class_s/share
-	$(MAKE) -s jvm-list SRC=.. DIR=weblets DEST=o/class_s/share
 
 jvm-etc:
 	mkdir -p o/class_s/etc
@@ -101,7 +106,9 @@ jvm-list:
         done
 
 jvm-lib: o/class_s/lib/hop/$(HOPRELEASE)
-	cp $(BUILDLIBDIR)/*.init $<
+	cp -r ../weblets o/class_s/lib
+	$(MAKE) -s jvm-list SRC=.. DIR=weblets DEST=o/class_s/lib
+	touch $</foo.init && $(RM) $</*.init && cp $(BUILDLIBDIR)/*.init $<
 
 META-INF/MANIFEST.MF: META-INF
 	echo "Manifest-Version: 1.0" > $@
@@ -128,6 +135,9 @@ o/%.o: %.scm .afile
 
 $(CLASS_DIR)/%.class: %.scm .afile
 	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
+
+o/main.o: main.scm
+	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV,$< -o $@ -c)
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */
@@ -170,17 +180,21 @@ install: install-$(BACKEND)
 
 install-native:
 	mkdir -p $(DESTDIR)$(HOPBINDIR)
-	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)
+	$(INSTALL) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)/hop-$(HOPRELEASE)
+	chmod $(BMASK) $(DESTDIR)$(HOPBINDIR)/hop-$(HOPRELEASE)
+	(cd $(DESTDIR)$(HOPBINDIR) && $(RM) hop && ln hop-$(HOPRELEASE) hop)
 
 install-jvm:
 	mkdir -p $(DESTDIR)$(HOPBINDIR)
-	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC).jar $(DESTDIR)$(HOPBINDIR)
+	$(INSTALL) $(BUILDBINDIR)/$(EXEC).jar $(DESTDIR)$(HOPBINDIR)
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
+	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)-$(HOPRELEASE)
 	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)
+	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/$(EXEC).jar
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */

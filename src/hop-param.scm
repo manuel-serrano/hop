@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/src/hop-param.scm                       */
+;*    serrano/prgm/project/hop/2.0.x/src/hop-param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Sep 26 13:29:04 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Fri Mar 27 07:43:51 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -16,14 +16,11 @@
    
    (library hop)
    
-   (export  (hop-max-accept-thread::int)
-	    (hop-max-accept-thread-set! ::int)
-	    
-	    (hop-max-reply-thread::int)
-	    (hop-max-reply-thread-set! ::int)
-	    
-	    (hop-max-reply-persite-thread::int)
-	    (hop-max-reply-persite-thread-set! ::int)
+   (export  (hop-scheduler::obj)
+	    (hop-scheduler-set! ::obj)
+
+	    (hop-max-threads::int)
+	    (hop-max-threads-set! ::int)
 	    
 	    (hop-autoload-directories::pair-nil)
 	    (hop-autoload-directories-set! ::pair-nil)
@@ -51,38 +48,66 @@
 	    
 	    (hop-scheduling::symbol)
 	    (hop-scheduling-set! ::symbol)
+
+	    (hop-somaxconn::int)
+	    (hop-somaxconn-set! ::int)
+
+	    (hop-sndbuf::int)
+	    (hop-sndbuf-set! ::int)
 	    
 	    (hop-enable-https::bool)
 	    (hop-enable-https-set! ::bool)
-
+	    
 	    (hop-fast-server-event-port::int)
 	    (hop-fast-server-event-port-set! ::int)
 	    
 	    (hop-enable-fast-server-event::bool)
 	    (hop-enable-fast-server-event-set! ::bool)
-
+	    
 	    (hop-enable-repl::bool)
 	    (hop-enable-repl-set! ::bool)
 	    
 	    (hop-https-protocol::symbol)
 	    (hop-https-protocol-set! ::symbol)
-
+	    
 	    (hop-enable-webdav::bool)
-	    (hop-enable-webdav-set! ::bool))
+	    (hop-enable-webdav-set! ::bool)
+	    
+	    (hop-gzipped-directories::pair-nil)
+	    (hop-gzipped-directories-set! ::pair-nil)
+
+	    (hop-process-key::bstring)
+	    (hop-process-key-set! ::bstring)
+
+	    (hop-report-execution-time::bool)
+	    (hop-report-execution-time-set! ::bool)
+
+	    (hop-script-file::obj)
+	    (hop-script-file-set! ::obj)
+
+	    (hop-get-cache-size::int)
+	    (hop-get-cache-size-set! ::int)
+
+	    (hop-user::obj)
+	    (hop-user-set! ::obj)
+
+	    (hop-preload-services::pair-nil)
+	    (hop-preload-services-set! ::pair-nil))
 
    (eval    (export-exports)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Thread management                                                */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-max-accept-thread
-   7)
+(define-parameter hop-scheduler
+   #unspecified)
 
-(define-parameter hop-max-reply-thread
-   13)
-
-(define-parameter hop-max-reply-persite-thread
-   4)
+(define-parameter hop-max-threads
+   12
+   (lambda (v)
+      (cond-expand
+	 (enable-threads v)
+	 (else 1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    Autoload                                                         */
@@ -156,7 +181,22 @@
 ;*    hop-scheduling ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-scheduling
-   'cohort)
+   'pool)
+
+;*---------------------------------------------------------------------*/
+;*    hop-somaxconn ...                                                */
+;*    -------------------------------------------------------------    */
+;*    On Linux 2.6.x see /proc/sys/net/core/somaxconn for the          */
+;*    actual maximal limit of SOMAXCONN.                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-somaxconn
+   16)
+
+;*---------------------------------------------------------------------*/
+;*    hop-sndbuf ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-sndbuf
+   (*fx 1024 12))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-https ...                                             */
@@ -200,3 +240,49 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-webdav
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-gzipped-directories ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-gzipped-directories
+   (list (hop-share-directory))
+   (lambda (v)
+      (if (every? string? v)
+	  v
+	  (error 'hop-gzipped-directories "Illegal gzipped directory list" v))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-process-key ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-process-key
+   (md5sum-string (elong->string (current-seconds))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-report-execution-time ...                                    */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-report-execution-time
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-script-file ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-script-file
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-get-cache-size ...                                           */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-get-cache-size
+   64)
+
+;*---------------------------------------------------------------------*/
+;*    hop-user ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-user
+   "hop")
+
+;*---------------------------------------------------------------------*/
+;*    hop-preload-services ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-preload-services
+   '())

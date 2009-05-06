@@ -1,4 +1,4 @@
 ((name "wiki")
  (author "M. Serrano")
- (version "1.0.0")
+ (version "1.2.0")
  (title "The Hop Wiki Viewer"))

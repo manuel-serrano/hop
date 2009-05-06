@@ -1,161 +1,90 @@
-<doc> File selectors
+<doc> File chooser
 
 == Description ==
 
-These markups implement //File selectors// in HOP documents. The first
-markup, ++<FILESELECT>++ is made of a small input text entry. By contrast
-with a regular ++<INPUT>++ element, it provides automatic file completion.
-Each time the charcter ++tab++ is typed-in, the server proposes to the
-client a list of possible file completions.
-
-The markup ++<FILEBROWSE>++ pops up a new window containing a file browser
-presenting the server files.
+The markup ++<FILECHOOSER>++ implements a //File selector// in HOP
+documents. This markup can be used in replacement for a ++<INPUT>++ 
+markup. 
 
 == Synopsis ==
 
-=== Server ===
+=== Server and Clients ===
 
-  (<FILESELECT> arg ...)
-  (<FILEBROWSE> arg ...)
+  (<FILECHOOSER> arg ...)
 
-  (filebrowse arg ...)
 
 === Requirements ===
 
-Client codes using //File selectors// need to load the script
-++hop-fileselect.js++. They also need to load the
-++hop-fileselect.css++ style sheet. Hence, documents using //File
-selectors// must include in their header, the following statement:
-
-
-  (<HEAD> :include "hop-fileselect")
-
-
 Client codes using //File browsers// need to load the script
-++hop-fileselect.js++, ++hop-tree.js++, and ++hop-iwindow.js++. They
-also need to load the ++hop-fileselect.css++, ++hop-tree.css++, and
-++hop-iwindow.css++ style sheets. Hence, documents using //File
+++hop-file.js++ and ++hop-paned.js++. They also need to load the
+++hop-file.hss++, ++hop-paned.hss++. Hence, documents using //File
 browsers// must include in their header, the following statement:
 
 
-  (<HEAD> :include "hop-fileselect" "hop-tree" "hop-window")
+  (<HEAD> :include "hop-file" "hop-paned")
+
+
+~~ Note: The ++FILECHOOSER++ which has been introduced in Hop 1.9.x
+replaces the old markup ++FILESELECTOR++ and the function
+++fileselect++. The new markup subsumes these old facilities
+since it can be used in server //and// client code.
 
 
 == Examples ==
 
-<example><FILEBROWSE>, <FILESELECT>, filebrowse</example>
+<example><FILECHOOSER></example>
 
-== Server Definitions ==
+== Server and client Definitions ==
 <server>
+<client>
 
-=== ++<FILESELECT>++ ===
-<markup> <FILESELECT>
-
-<arguments>
-^  attributes  ^   type    ^   default    ^  short description          ^
-| :id          |  string   |  //random//  | element identifier.         |
-| :value       |  string   |              | the default value.          |
-| :size        |  integer  |     10       | the size in character.      |
-</arguments>
-
-The argument :value specifies an initial value for the file selector.
-The argument :size give the length expressed in number of characters.
-
-When the value of the ++<FILESELECT>++ changes (i.e., when the
-character ++Return++ is typed in) the event handler :onchange is
-invoked.  
-
-The ++<FILESELECT>++ widget handles access controls. That is, it does not
-complete inside directories for which the access is not granted.
-</markup>
-
-=== ++<FILEBROWSE>++ ===
-<markup> <FILEBROWSE>
+=== ++<FILECHOOSER>++ ===
+<markup> <FILECHOOSER>
 <arguments>
 ^  attributes  ^   type            ^   default    ^  short description                   ^
 | :id        |  string             |  //random//  | element identifier.                  |
-| :label     |  string             |              | the selector tree root label.        |
-| :value     |  string             |              | the root directory.                  |
-| :path      |  string             |              | the directory to be opened.          |
-| :title     |  string             |  //value//   | the title of the browser window.     |
-| :text      |  string             |  ++Browse++  | the button text.                     |
-| :width     |  integer            |  ++500++     | the pixel width.                     |
-| :height    |  integer            |  ++400++     | the pixel height.                    |
-| :filter    |  procedure          |              | filter filtering.                    |
-| :multiselect  |  boolean         |   ++#f++     | enable/disable multiple selections.  |
+| :class     |  string             |  //random//  | element class.                       |
+| :filters   |  list               |              | a list of file filters.              |
+| :hidden    |  boolean            |   ++#t++     | private files hidden.                |
+| :url       |  string             |  //string//  | initial value for chooser.           |
+| :onselect  |  procedure          |              | call on select.                      |
+| :onopen    |  procedure          |              | call on open.                        |
+| :oncancel  |  procedure          |              | call on cancel.                      |
+| :onrun     |  procedure          |              | call on run.                         |
 </arguments>
 
-The argument :value specifies the root directory of the browser. Files located
-on parents of this directory won't be accessible by this browser.
+The markup ++<FILECHOOSER>++ creates a widget for selecting files. It lets
+users browsing a file system located either of the server or on a Webdav
+server. When a lightweight widget is wanted for selected files, the
+++<INPUT>++ markup with the type set to ++url++ can be preferred.
 
-The argument :path specifies an optional directory to be //opened// on the
-browser at creation time.
+The argument :url specifies the initial value for the file chooser.
 
-The argument :filter specifies a predicate that returns ++#t++ when a given
-file should be exposed by the browser. The default :filter value filters out
-file names starting the a dot character (++#\.++).
+The argument :filters specifies a list of file filters. Each filter is
+a list of two elements: a filter name and a regular expression. By defaults
+the following filter list is used:
 
-When a value of the ++<FILEBROWSE>++ is selected (i.e., when the
-mouse is clicked over a row) the event handler :onselect is
-invoked. 
+  '(("All Files" "^[^.].*"))
 
-The event :onclick is executed when the browse "select" button is clicked.
 
-The event :onmousedown is executed when the main browse button is pressed
-down.
-
-The ++<FILEBROWSE>++ widget is aware of access controls. That
-is, it does expose directories for which the access is not granted.
+The argument :hidden controls whether private files (e.g., files starting with
+a . character) are by default displayed or not.
 
 </markup>
+</client>
+</server>
 
-=== ++(filebrowse :select :value :path ...)++ ===
-<function> filebrowse
-<arguments>
-^  attributes  ^   type            ^   default    ^  short description                 ^
-| :select    |  client procedure   |              | the client action.                 |
-| :label     |  client expression  |              | the selector tree root label.      |
-| :value     |  client expression  |              | the root directory.                |
-| :path      |  client expression  |              | the directory to be opened.        |
-| :filter    |  procedure          |              | filter filtering.                  |
-| :title     |  string             |  //value//   | the title of the browser window.   |
-| :width     |  integer            |  ++500++     | the pixel width.                   |
-| :height    |  integer            |  ++400++     | the pixel height.                  |
-| :multiselect  |  boolean         |   ++#f++  | enable/disable multiple selections.   |
-</arguments>
-
-The **server** function ++filebrowse++ elaborates a **client expression** that,
-when executed, pops up a file browser. A typical usage of ++filebrowse++
-is used in client actions such as:
-
-<code>
-  (<BUTTON> :onclick (filebrowse ...) "Browse me")
-</code>
-
-~~ Note: since ++filebrowse++ is a server function it call **must not** be 
-prefixed with a ++~++ sign.
-
-</function>
-
-== Style ==
 <style>
-This section describes the various CSS elements used to configure
-file selectors.
+=== ++hop-file.hss++ ===
+The file ++hop-file.hss++ contains the default graphical configuration.
+It is defined as:
 
-=== ++fileselect++ ===
-<css> fileselect
+,(<P>)
+<share>hop-file.hss</share>
+</style>
 
-This element specifies the graphical configuration of the input text
-of the file selector. The HSS selector ++fileselect++ is an alias
-for ++input.hop-fileselect++.
-</css>
 
-=== ++filebrowse++ ===
-<css> filebrowse
-
-This element specifies the graphical configuration of the main division
-of the file browser. The HSS selector ++filebrowse++ is an alias
-for ++div.hop-filebrowse++.
-</css>
+== See also ==
+<see-also><FILECHOOSER>, input</see-also>
 
 </doc>

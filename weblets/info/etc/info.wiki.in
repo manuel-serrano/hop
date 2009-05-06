@@ -1,0 +1,20 @@
+<doc> INFO -- Report information about the Hop broker
+
+== Description ==
+
+[[info|INFO]] provides information about the state of the currently running 
+Hop broker. For instance, it reports about the up time, the cache status, etc.
+
+~~
+,(<TABLE> :class "weblet-facts"
+  (<TR> (<TD> :rowspan 5 :class "logo"
+            (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png")))
+        (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
+  (<TR> (<TH> "Hop min version") (<TD> "@MINHOP@"))
+  (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
+  (<TR> (<TH> "Date") (<TD> "@DATE@"))
+  (<TR> (<TH> "Category") (<TD> "@CATEGORY@")))
+
+
+</doc>
+

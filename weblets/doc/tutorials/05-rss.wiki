@@ -5,34 +5,48 @@
 This tutorial shows how the various HOP facilities for downloading and
 parsing XML documents can be used to implement RSS readers. This
 tutorial builds a function ++rss->html++ that accepts the URL of a RSS
-feeds a build a HOP tree for representing it.  It rests on the server
+feeds and build a HOP tree for representing it.  It rests on the server
 function ++with-url++ to manage the connection with the remote host
-and on the function ++rss-parse++ to build the tree.
+and on the function ++feed-parse++ to build the tree.
 
 == Utility functions ==
 
-The ++rss-parse++ function excepts to be invoked with tree constructors 
-for building the its representation of the RSS feeds. With start
-providing implementation for these constructors. It this simple
+The ++feed-parse++ function excepts to be invoked with tree constructors 
+for building its representation of the RSS feeds. We start by
+providing implementation for these constructors. In this simple
 version, we implement them as simple ,(<APIREF> "HTML" "html.wiki")
 elements:
 
 <example>
+  (module rh-utils
+     (export 
+          make-rss
+          make-channel
+          make-item))
+
   (define (make-rss channel items)
      (<DIV>
         :style "border: 1px solid black; background: #ddd" channel
         (map (lambda (i) (<DIV> i)) items)))
 
-  (define (make-channel link title)
+  (define (make-channel #!key link title)
      (<BIG> (<STRONG> (<A> :href link title))))
 
-  (define (make-item link title date subject descr)
+  (define (alternate links)
+    (when (pair? links)
+       (let ((e (assq 'alternate links)))
+          (when (pair? e)
+              (let ((c (assq 'href (cdr e))))
+                 (when (pair? c)
+                    (cdr c)))))))
+
+  (define (make-item #!key links title date categories summary)
      (<DIV>
         :style "border: 1px solid #ccc; margin: 1px; padding: 2px;"
-        (<A> :href link title)
+        (<A> :href (alternate links) title)
         (if date (list "(" date ")") "")
-        (if subject (<I> subject))
-        descr))
+        (if categories (<I> categories))
+        summary))
 </example>
 
 == ++rss->html++ v1 ==
@@ -41,12 +55,25 @@ The function ++rss->html++ simply opens a connection and parses the
 read character. A simple implementation can be:
 
 <example>
+   (module rh-v1
+     (import rh-utils))
+   
    (define (rss->html-v1 url)
       (with-url url
          (lambda (h)
             (with-input-from-string h
                (lambda ()
-                  (rss-parse (current-input-port) make-rss make-channel make-item))))))
+                  (feed-parse (current-input-port) make-rss make-channel make-item))))))
+
+
+  (<HTML>
+     (<HEAD> 
+        :include "hop-foldlist"
+        (<STYLE> :type "text/css" "table { font-size: xx-small }"))
+     (<BODY>
+        (<DIV>
+           :style "font-size: small"
+           (rss->html-v1 "http://kernel.org/kdist/rss.xml"))))
 </example>
 
 This compact implementation suffers one problem. The internal machinery for
@@ -62,7 +89,11 @@ In addition to ++with-url++, HOP provides a lower level library function
 for dealing with HTTP request, namely the function ++http-send-request++.
 
 <example>
-  (define (rss->html-v2 url)
+   (module rh-v2    
+     (import rh-utils)
+     (export rss->html-v2))
+
+   (define (rss->html-v2 url)
      (multiple-value-bind (_ _ host port path)
         (url-parse url)
         (http-send-request
@@ -72,7 +103,7 @@ for dealing with HTTP request, namely the function ++http-send-request++.
             (path path))
          (lambda (p status header len tenc)
 	    (if (=fx status 200)
-		(rss-parse p make-rss make-channel make-item :content-length len)
+		(feed-parse p make-rss make-channel make-item :content-length len)
 		"Error")))))
 </example>
 
@@ -83,13 +114,16 @@ On this example, we extract information available for the Linux
 kernel.
 
 <example>
+  (module rh-test
+     (import rh-v2))
+
   (<HTML>
      (<HEAD>
         (<STYLE> :type "text/css" "table { font-size: xx-small }"))
      (<BODY>
         (<DIV>
            :style "font-size: xx-small"
-	   (rss->html-v2 "kernel.org/kdist/rss.xml"))))
+	   (rss->html-v2 "http://kernel.org/kdist/rss.xml"))))
 </example>
 
 == A fancier interface ==
@@ -104,27 +138,40 @@ unfolded.
   (define (make-rss channel items)
      (<FL> items))
 
-  (define (make-channel link title)
+  (define (make-channel #!key link title)
      (<STRONG> (<A> :href link title)))
 
-  (define (make-item link title date subject descr)
+  (define (make-item #!key links title date categories summary)
      (<FLITEM>
         (<FLHEAD> title)
         (<DIV>
            :style "background: #ddd; border: 1px solid black"
-           (<A> :href link title)
+           (<A> :href links title)
            (if date (list "(" date ")") "")
-           (if subject (<I> subject))
-           descr)))
+           (if categories (<I> categories))
+           summary)))
 
-  (<HTML>
+  (define (rss->html-v2 url)
+     (multiple-value-bind (_ _ host port path)
+        (url-parse url)
+        (http-send-request
+         (instantiate::http-request
+            (host host)
+            (port port)
+            (path path))
+         (lambda (p status header len tenc)
+            (if (=fx status 200)
+                (feed-parse p make-rss make-channel make-item :content-length len)
+                "Error")))))
+
+    (<HTML>
      (<HEAD> 
         :include "hop-foldlist"
         (<STYLE> :type "text/css" "table { font-size: xx-small }"))
      (<BODY>
         (<DIV>
            :style "font-size: small"
-           (rss->html-v2 "kernel.org/kdist/rss.xml"))))
+           (rss->html-v2 "http://kernel.org/kdist/rss.xml"))))
 </example>
  
 

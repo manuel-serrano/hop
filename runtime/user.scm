@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/user.scm                        */
+;*    serrano/prgm/project/hop/2.0.x/runtime/user.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Nov 30 15:05:17 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Wed May  6 07:14:05 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -15,16 +15,20 @@
 (module __hop_user
    
    (import  __hop_param
+	    __hop_configure
 	    __hop_types
 	    __hop_http-lib
 	    __hop_misc
-	    __hop_service)
+	    __hop_service
+	    __hop_cache)
    
    (export  (users-close!)
 	    (add-user! ::bstring . opt)
 	    (user-exists? ::bstring)
+	    (encrypt-authentication ::symbol ::bstring ::bstring)
+	    (decrypt-authentication ::bstring ::bstring)
 	    (anonymous-user::user)
-	    (find-authenticated-user ::bstring)
+	    (find-authenticated-user ::bstring ::bstring)
 	    (find-user ::bstring ::bstring)
 	    (find-user/encrypt ::bstring ::bstring ::procedure)
 	    (user-authorized-request?::bool ::user ::http-request)
@@ -35,7 +39,7 @@
 	    (user-access-denied ::http-request #!optional message)
 	    (user-service-denied ::http-request ::user ::symbol)
 	    (proxy-denied ::http-request ::user ::bstring)))
-
+	    
 ;*---------------------------------------------------------------------*/
 ;*    *user-mutex* ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -82,61 +86,79 @@
 ;*    %add-user! ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (%add-user! name args)
-   (let loop ((a args)
-	      (g '())
-	      (p #f)
-	      (s '())
-	      (d '()))
-      (cond
-	 ((null? a)
-	  (let ((u (instantiate::user
-		      (name name)
-		      (groups g)
-		      (password (or p (symbol->string (gensym))))
-		      (services s)
-		      (directories d)))
-		(k (make-user-key name p)))
+   (let ((g '())
+	 (p #f)
+	 (s '())
+	 (cname (make-file-path
+		 (hop-rc-directory) "users" (string-append name ".prefs")))
+	 (c '())
+	 (d (list (hop-share-directory)
+		  (hop-cache-directory)
+		  (hop-var-directory))))
+      (let loop ((a args))
+	 (cond
+	    ((null? a)
 	     (with-lock *user-mutex*
 		(lambda ()
-		   (if (hashtable-get *users* name)
-		       (begin
-			  (hashtable-remove! *users* name)
+		   (when (string? cname)
+		      (unless (directory? (dirname cname))
+			 (make-directories (dirname cname))))
+		   (let* ((prefs (if (and (hop-load-preferences)
+					  (string? cname)
+					  (file-exists? cname))
+				     (with-input-from-file cname read)
+				     '()))
+			  (u (instantiate::user
+				(name name)
+				(groups g)
+				(password (or p (symbol->string (gensym))))
+				(services s)
+				(preferences (append c prefs))
+				(preferences-filename cname)
+				(directories d)))
+			  (k (make-user-key name p)))
+		      (if (hashtable-get *users* name)
+			  (begin
+			     (hashtable-remove! *users* name)
+			     (hashtable-put! *users* name u))
 			  (hashtable-put! *users* name u))
-		       (hashtable-put! *users* name u))))
-	     u))
-	 ((or (not (keyword? (car a))) (null? (cdr a)))
-	  (error 'add-user! "Illegal arguments" args))
-	 (else
-	  (case (car a)
-	     ((:groups)
-	      (if (not (and (list? (cadr a)) (every? symbol? (cadr a))))
-		  (error 'add-user! "Illegal group" (cadr a))
-		  (loop (cddr a) (cadr a) p s d)))
-	     ((:password)
-	      (if (not (string? (cadr a)))
-		  (error 'add-user! "Illegal password" (cadr a))
-		  (loop (cddr a) g (cadr a) s d)))
-	     ((:services)
-	      (if (not (or (eq? (cadr a) '*)
-			   (and (list? (cadr a)) (every? symbol? (cadr a)))))
-		  (error 'add-user! "Illegal services" (cadr a))
-		  (loop (cddr a) g p
-			(if (eq? s '*)
-			    s
-			    (if (eq? (cadr a) '*)
-				'*
-				(cons (hop-service-weblet-wid) (cadr a))))
-			d)))
-	     ((:directories)
-	      (cond
-		 ((eq? (cadr a) '*)
-		  (loop (cddr a) g p s (if (eq? d '*) d (cadr a))))
-		 ((and (list? (cadr a)) (every? string? (cadr a)))
-		  (loop (cddr a) g p s (map file-name-unix-canonicalize (cadr a))))
-		 (else
-		  (error 'add-user! "Illegal directories" (cadr a)))))
-	     (else
-	      (error 'add-user! "Illegal argument" args)))))))
+		      u))))
+	    ((or (not (keyword? (car a))) (null? (cdr a)))
+	     (error 'add-user! "Illegal arguments" args))
+	    (else
+	     (case (car a)
+		((:groups)
+		 (if (not (and (list? (cadr a)) (every? symbol? (cadr a))))
+		     (error 'add-user! "Illegal group" (cadr a))
+		     (set! g (cadr a))))
+		((:password)
+		 (if (not (string? (cadr a)))
+		     (error 'add-user! "Illegal password" (cadr a))
+		     (set! p (cadr a))))
+		((:services)
+		 (if (not (or (eq? (cadr a) '*)
+			      (and (list? (cadr a)) (every? symbol? (cadr a)))))
+		     (error 'add-user! "Illegal services" (cadr a))
+		     (unless (eq? s '*)
+			(if (eq? (cadr a) '*)
+			    (set! s '*)
+			    (set! s (cons (hop-service-weblet-wid) (cadr a)))))))
+		((:directories)
+		 (unless (eq? d '*)
+		    (cond
+		       ((eq? (cadr a) '*)
+			(set! d '*))
+		       ((and (list? (cadr a)) (every? string? (cadr a)))
+			(set! d (append (map file-name-unix-canonicalize (cadr a)) d)))
+		       (else
+			(error 'add-user! "Illegal directories" (cadr a))))))
+		((:preferences)
+		 (set! c (append c (cadr a))))
+		((:preferences-filename)
+		 (set! cname (cadr a)))
+		(else
+		 (error 'add-user! "Illegal argument" args)))
+	     (loop (cddr a)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-exists? ...                                                 */
@@ -146,6 +168,80 @@
       (lambda ()
 	 (user? (hashtable-get *users* name)))))
 
+;*---------------------------------------------------------------------*/
+;*    encrypt-authentication ...                                       */
+;*---------------------------------------------------------------------*/
+(define (encrypt-authentication algo auth path)
+   
+   (define (encrypt-ho0-authentication i auth path)
+      (let ((n (substring auth 0 i))
+	    (p (substring auth (+fx i 1) (string-length auth))))
+	 (string-append "HO0" n ":" (md5sum (format "~a ~a" n p)))))
+
+   (define (encrypt-ho1-authentication i auth path)
+      (let* ((n (substring auth 0 i))
+	     (p (substring auth (+fx i 1) (string-length auth)))
+	     (k (md5sum (string-append n " " p))))
+	 (string-append "HO1" n ":" (md5sum (string-append k path)))))
+   
+   (let* ((i (string-index auth #\:)))
+      (if (not (fixnum? i))
+	  (error 'encrypt-authentication "Illegal authentication" auth)
+	  (case algo
+	     ((none)
+	      auth)
+	     ((ho0)
+	      (encrypt-ho0-authentication i auth path))
+	     ((ho1)
+	      (encrypt-ho1-authentication i auth path))
+	     (else
+	      (error 'encrypt-authentication "Illegal algorithm" algo))))))
+
+;*---------------------------------------------------------------------*/
+;*    decrypt-authentication ...                                       */
+;*    -------------------------------------------------------------    */
+;*    This function never raises an error. It returns #f if something  */
+;*    goes wrong.                                                      */
+;*---------------------------------------------------------------------*/
+(define (decrypt-authentication auth path)
+   
+   (define (find-none-authentication auth n p path)
+      (let ((u (find-user n (md5sum (format "~a ~a" n p)))))
+	 (if (user? u)
+	     (add-cached-user! auth u)
+	     (hop-verb 2 "Can't authentify user: " n "\n"))
+	 u))
+   
+   (define (find-ho0-authentication auth n md5p path)
+      (let ((u (find-user n md5p)))
+	 (if (user? u)
+	     (add-cached-user! auth u)
+	     (hop-verb 2 "HO0: Can't authentify user: " n "\n"))
+	 u))
+   
+   (define (find-ho1-authentication auth n md5p path)
+      (let ((u (hashtable-get *users* n)))
+	 (when (user? u)
+	    (if (string=? (md5sum (string-append (user-password u) path)) md5p)
+		u
+		(begin
+		   (hop-verb 2 "HO1: Can't authentify user: " n "\n")
+		   #f)))))
+   
+   (let ((i (string-index auth #\:)))
+      (when (and (fixnum? i) (>fx i 0))
+	 (let ((s (substring auth 0 i))
+	       (p (substring auth (+fx i 1) (string-length auth))))
+	    (cond
+	       ((substring-at? s "HO0" 0)
+		(let ((n (substring s 3 (string-length s))))
+		   (find-ho0-authentication auth n p path)))
+	       ((substring-at? s "HO1" 0)
+		(let ((n (substring s 3 (string-length s))))
+		   (find-ho1-authentication auth n p path)))
+	       (else
+		(find-none-authentication auth s p path)))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    *authenticated-users* ...                                        */
 ;*    -------------------------------------------------------------    */
@@ -192,25 +288,6 @@
 	 (set! *last-user* u))))
 
 ;*---------------------------------------------------------------------*/
-;*    find-authenticated-user ...                                      */
-;*---------------------------------------------------------------------*/
-(define (find-authenticated-user auth)
-   (and (string? auth)
-	(or (find-cached-user auth)
-	    (let* ((dauth (http-decode-authentication auth))
-		   (len (string-length dauth))
-		   (i (string-index dauth #\:)))
-	       (and (fixnum? i)
-		    (>fx i 0)
-		    (let* ((n (substring dauth 0 i))
-			   (p (substring dauth (+fx i 1) len))
-			   (u (find-user n (md5sum (format "~a ~a" n p)))))
-		       (if (user? u)
-			   (add-cached-user! auth u)
-			   (hop-verb 2 "Can't authentify user: " n))
-		       u))))))
-
-;*---------------------------------------------------------------------*/
 ;*    find-user ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (find-user user-name encoded-passwd)
@@ -229,20 +306,43 @@
 	   u)))
 
 ;*---------------------------------------------------------------------*/
+;*    find-authenticated-user ...                                      */
+;*    -------------------------------------------------------------    */
+;*    The authorization is of the form "Basic <base64string>".         */
+;*---------------------------------------------------------------------*/
+(define (find-authenticated-user auth path)
+   (and (string? auth)
+	(or (find-cached-user auth)
+	    (decrypt-authentication (http-decode-authentication auth) path))))
+
+;*---------------------------------------------------------------------*/
+;*    hopaccess-cache ...                                              */
+;*---------------------------------------------------------------------*/
+(define hopaccess-cache
+   (instantiate::cache-memory
+      (max-entries 256)))
+
+;*---------------------------------------------------------------------*/
 ;*    find-hopaccess ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (find-hopaccess path)
-   (let loop ((path path))
-      (cond
-	 ((string=? path "/")
-	  #f)
-	 ((string=? path ".")
-	  #f)
-	 (else
-	  (let ((hopaccess (make-file-name path (hop-hopaccess))))
-	     (if (file-exists? hopaccess)
-		 hopaccess
-		 (loop (dirname path))))))))
+   (let loop ((p path))
+      (let ((cache (cache-memory-get hopaccess-cache p)))
+	 (cond
+	    (cache
+	     (when (string? cache) cache))
+	    ((string=? p "/")
+	     (cache-put! hopaccess-cache path #t)
+	     #f)
+	    ((string=? p ".")
+	     #f)
+	    (else
+	     (let ((hopaccess (make-file-name p (hop-hopaccess))))
+		(if (file-exists? hopaccess)
+		    (begin
+		       (cache-put! hopaccess-cache path hopaccess)
+		       hopaccess)
+		    (loop (dirname p)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-authorized-path? ...                                        */
@@ -251,12 +351,13 @@
    (define (path-member path dirs)
       (any? (lambda (d) (substring-at? path d 0)) dirs))
    (and (with-access::user user (directories services)
-	   (let ((cpath (file-name-unix-canonicalize path)))
-	      (or (eq? directories '*)
-		  (path-member cpath directories)
-		  (let ((service-path (etc-path->service cpath)))
-		     (and (symbol? service-path)
-			  (user-authorized-service? user service-path))))))
+	   (or (eq? directories '*)
+	       (path-member path directories)
+	       (let ((cpath (file-name-unix-canonicalize path)))
+		  (or (path-member cpath directories)
+		      (let ((service-path (etc-path->service cpath)))
+			 (and (symbol? service-path)
+			      (user-authorized-service? user service-path)))))))
 	(let ((hopaccess (find-hopaccess path)))
 	   (or (not hopaccess)
 	       (let ((access (with-input-from-file hopaccess read)))
@@ -281,7 +382,11 @@
 (define (user-authorized-service? user service)
    (or (with-access::user user (services)
 	  (or (eq? services '*) (memq service services)))
-       ((hop-authorize-service-hook) user service)))
+       ((hop-authorize-service-hook) user service)
+       ;; flash sends anonymous requests so we have to access server-event/init
+       ;; requests for all users
+       (eq? service 'server-event/init)
+       (eq? service 'server-event/policy-file)))
 
 ;*---------------------------------------------------------------------*/
 ;*    authorized-service? ...                                          */
@@ -318,7 +423,7 @@
 	       (message
 		message)
 	       ((http-request? req)
-		(format "Protected Area! Authentication required: ~a:~a:/~a"
+		(format "Protected Area! Authentication required: ~a:~a:~a"
 			(http-request-host req)
 			(http-request-port req)
 			(http-request-path req)))

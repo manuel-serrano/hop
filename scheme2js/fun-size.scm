@@ -1,33 +1,28 @@
 (module fun-size
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   nodes
-	   var
+   (import nodes
+	   export-desc
+	   walk
 	   verbose)
-   (export (fun-size tree::pobject)))
+   (export (fun-size tree::Module)))
 
 ;; rough estimation of function sizes.
-;; nested functions are not counted.
+;; nested functions are added to the size of the surrounding fun.
 
-(define (fun-size tree::pobject)
+(define (fun-size tree)
    (verbose " fun-size")
-   (overload traverse fun-size (Node
-				   (Program Fun-fun-size)
-				   (Lambda Fun-fun-size)
-;				   (Tail-rec Fun-fun-size)
-				   )
-	     (tree.traverse #f)))
+   (size tree #f #f))
 
-(define-pmethod (Node-fun-size surrounding-scope)
+(define-nmethod (Node.size surrounding-fun)
    ;; TODO: optimize fun-size.
-   (if surrounding-scope
-       (set! surrounding-scope.size (+ surrounding-scope.size 1)))
-   (this.traverse1 surrounding-scope))
+   (when surrounding-fun
+      (with-access::Lambda surrounding-fun (size)
+	 (set! size (+fx size 1))))
+   (default-walk this surrounding-fun))
 
-(define-pmethod (Fun-fun-size surrounding-scope)
-   (set! this.size 0)
-   (this.traverse1 this)
-   (when surrounding-scope
-      (set! surrounding-scope.size (+ surrounding-scope.size this.size))))
+(define-nmethod (Lambda.size surrounding-fun)
+   (with-access::Lambda this (size)
+      (set! size 0))
+   (default-walk this this)
+   (when surrounding-fun
+      (with-access::Lambda surrounding-fun (size)
+	 (set! size (+fx size (Lambda-size this))))))

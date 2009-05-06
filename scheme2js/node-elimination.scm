@@ -1,72 +1,113 @@
 (module node-elimination
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   nodes
+   (import nodes
+	   export-desc
+	   walk
 	   verbose
 	   mark-statements)
-   (export (node-elimination! tree::pobject)))
+   (static (class Elim-Env
+	      ;; default-label represents a normal label.
+	      ;; the target is in here.
+	      (default-label-val-is-needed? (default #f)))
+	   (wide-class Elim-Label::Label
+	      val-is-needed?::bool
+	      (used?::bool (default #f))))
+   (export (node-elimination! tree::Module)))
 
-(define (node-elimination! tree::pobject)
+(define (node-elimination! tree::Module)
    (verbose "node-elimination")
-   (overload traverse! node-elimination! (Node
-					  Body
-					  Let-form
-					  Set!
-					  Begin
-					  Labelled
-					  Break)
-	     (tree.traverse!)))
+   (elim! tree (instantiate::Elim-Env) #f))
 
-(define-pmethod (Node-node-elimination!)
-   (this.traverse0!))
+(define-nmethod (Node.elim! val-is-needed?)
+   (error 'elim
+	  "Internal Error: Forgot node type"
+	  this))
 
-;; let-form becomes a sequence ('begin') of bindings followed by the body.
-(define-pmethod (Let-form-node-elimination!)
-   (new-node Begin (append (map (lambda (binding)
-				   (binding.traverse!))
-				this.bindings)
-			   (list (this.body.traverse!)))))
+(define-nmethod (Const.elim! val-is-needed?)
+   this)
 
-;; drop Body-node
-(define-pmethod (Body-node-elimination!)
-   (this.expr.traverse!))
+(define-nmethod (Ref.elim! val-is-needed?)
+   this)
+
+(define-nmethod (Module.elim! val-is-needed?)
+   ;; if the result of a module is needed, assign the complete expression...
+   (default-walk! this #f))
+
+(define-nmethod (Lambda.elim! val-is-needed?)
+   (default-walk! this #f)) ;; only something in a return is needed.
+
+(define-nmethod (If.elim! val-is-needed?)
+   (with-access::If this (test then else)
+      (set! test (walk! test #t))
+      (set! then (walk! then val-is-needed?))
+      (set! else (walk! else val-is-needed?))
+      ;; some unlikely cases, but does not cost much to test for them...
+      (cond
+	 ((Const? test) ;; (if #t x y)
+	  (if (Const-value test)
+	      then
+	      else))
+	 ((and (Const? then) ;; (begin (if (do-something) 1 2) ... )
+	       (Const? else)
+	       (not val-is-needed?))
+	  test)
+	 (else
+	  this))))
+
+(define-nmethod (Case.elim! val-is-needed?)
+   (with-access::Case this (key clauses)
+      (set! key (walk! key #t))
+      (set! clauses (map! (lambda (clause) (walk! clause val-is-needed?))
+			  clauses))
+      this))
+
+(define-nmethod (Clause.elim! val-is-needed?)
+   (default-walk! this val-is-needed?))
 
 ;; remove x=x sets
-;; leave Decl, if there was one.
-(define-pmethod (Set!-node-elimination!)
-   (this.traverse0!)
-   (if (and (inherits-from? this.lvalue (node 'Var-ref))
-	    (inherits-from? this.val (node 'Var-ref))
-	    (eq? this.lvalue.var this.val.var))
-       (cond
-	  ((inherits-from? this.lvalue (node 'Decl))
-	   this.lvalue)
-	  ((inherits-from? this.val (node 'Decl))
-	   this.val)
-	  (else (new-node Const #unspecified)))
-       this))
-   
+(define-nmethod (Set!.elim! val-is-needed?)
+   (default-walk! this #t) ;; both are needed.
+   (with-access::Set! this (lvalue val)
+      (if (and (Ref? val)
+	       (eq? (Ref-var lvalue)
+		    (Ref-var val)))
+	  (instantiate::Const
+	     (value #unspecified))
+	  this)))
+
+(define-nmethod (Let.elim! val-is-needed?)
+   (with-access::Let this (scope-vars bindings body)
+      ;; remove empty Lets
+      (if (null? scope-vars)
+	  (let ((bnode (instantiate::Begin
+			  (exprs (append bindings (list body))))))
+	     (walk! bnode val-is-needed?))
+	  (begin
+	     (set! bindings (map! (lambda (b) (walk! b #f)) bindings))
+	     (set! body (walk! body val-is-needed?))
+	     this))))
+
 ;; if Begin only contains one entry, replace it by this entry.
 ;; if a Begin contains another Begin merge them.
-(define-pmethod (Begin-node-elimination!)
-   (let ((exprs this.exprs)
-	 (statement? (statement-form? this)))
+(define-nmethod (Begin.elim! val-is-needed?)
+   (with-access::Begin this (exprs)
       (cond
 	 ((null? exprs)
-	  (new-node Const #unspecified))
+	  (instantiate::Const
+	     (value #unspecified)))
 	 ((null? (cdr exprs))
-	  ((car exprs).traverse!))
+	  (walk! (car exprs) val-is-needed?))
 	 (else
+	  ;; walk through all exprs.
+	  ;; if the expr is a Begin, merge it with this one.
 	  (let loop ((exprs exprs))
 	     (unless (null? exprs)
-		(let ((expr ((car exprs).traverse!))
+		(let ((expr (walk! (car exprs) (and val-is-needed?
+						    (null? (cdr exprs)))))
 		      (exprs-tail (cdr exprs)))
 		   (set-car! exprs expr)
-		   (if (inherits-from? expr (node 'Begin))
+		   (if (Begin? expr)
 		       ;; insert into our list.
-		       (let ((other-exprs expr.exprs))
+		       (let ((other-exprs (Begin-exprs expr)))
 			  ;; we know there must be at least 2 elements.
 			  ;; otherwise we wouldn't have gotten a 'Begin'.
 			  (set-car! exprs (car other-exprs))
@@ -80,25 +121,27 @@
 		     (head exprs)
 		     (last #f)) ;; last-pair, that is in the 'accepted' list
 	     (cond
-		((null? exprs) ;; should only happen if statement
+		((null? exprs) ;; happens only if the not val-is-needed (in
+		               ;; which case the last el can be removed too).
 		 (cond
 		    ((not last) ;; no element got through our weeding
-		     (new-node Const #unspecified))
+		     (instantiate::Const
+			(value #unspecified)))
 		    ((null? (cdr head)) ;; only one element got through
 		     (car head))
 		    (else
-		     (set! this.exprs head)
+		     (Begin-exprs-set! this head)
 		     this)))
-		((and (not statement?) (null? (cdr exprs)))
+		((and (null? (cdr exprs))
+		      val-is-needed?)
 		 (if last
 		     (begin
-			(set! this.exprs head)
+			(Begin-exprs-set! this head)
 			this)
 		     (car exprs)))
-		((or (inherits-from? (car exprs) (node 'Lambda))
-		     (inherits-from? (car exprs) (node 'Const))
-		     (and (inherits-from? (car exprs) (node 'Var-ref))
-			  (not (inherits-from? (car exprs) (node 'Decl)))))
+		((or (Lambda? (car exprs))
+		     (Const? (car exprs))
+		     (Ref? (car exprs)))
 		 (if last
 		     (begin
 			(set-cdr! last (cdr exprs)) ;; remove the current el.
@@ -108,14 +151,14 @@
 		     (loop (cdr exprs)
 			   (cdr exprs) ;; head is the next element (for now)
 			   #f)))
-		((or (inherits-from? (car exprs) (node 'Break))
-		     (inherits-from? (car exprs) (node 'Return))
-		     (inherits-from? (car exprs) (node 'Tail-rec-call)))
+		((or (Break? (car exprs))
+		     (Return? (car exprs))
+		     (Continue? (car exprs)))
 		 ;; remove remaining els
 		 (set-cdr! exprs '())
 		 (if last
 		     (begin
-			(set! this.exprs head)
+			(Begin-exprs-set! this head)
 			this)
 		     (car exprs)))
 		(else
@@ -123,15 +166,81 @@
 		       head          ;; keep head
 		       exprs)))))))) ;; we are the last pair that got through
 
-;; remove unused labels.
-(define-pmethod (Labelled-node-elimination!)
-   (this.traverse0!)
-   (if (not this.used?)
-       this.body
-       (begin
-	  (delete! this.used?)
-	  this)))
+(define-nmethod (Call.elim! val-is-needed?)
+   (default-walk! this #t))
 
-(define-pmethod (Break-node-elimination!)
-   (set! this.labelled.used? #t)
+(define-nmethod (Frame-alloc.elim! val-is-needed?)
+   this)
+
+(define-nmethod (Frame-push.elim! val-is-needed?)
+   (default-walk! this val-is-needed?))
+
+(define-nmethod (Return.elim! val-is-needed?)
+   (default-walk! this #t))
+
+;; remove unused labeled.
+(define-nmethod (Labeled.elim! val-is-needed?)
+   (with-access::Labeled this (label body)
+      (widen!::Elim-Label label
+	 (val-is-needed? val-is-needed?))
+      (default-walk! this val-is-needed?)
+      (with-access::Elim-Label label (used?)
+	 (if (not used?)
+	     body
+	     (begin
+		(shrink! label)
+		this)))))
+
+(define-nmethod (Break.elim! val-is-needed?)
+   (with-access::Break this (label)
+      (if (eq? label (default-label))
+	  (with-access::Elim-Env env (default-label-val-is-needed?)
+	     (default-walk! this default-label-val-is-needed?))
+	  (with-access::Elim-Label label (used? val-is-needed?)
+	     (set! used? #t)
+	     (default-walk! this val-is-needed?)))))
+
+(define-nmethod (Continue.elim! val-is-needed?)
+   (with-access::Continue this (label)
+      (unless (eq? label (default-label))
+	 (with-access::Elim-Label label (used?)
+	    (set! used? #t))))
+   this)
+
+(define-nmethod (Pragma.elim! val-is-needed?)
+   this)
+
+(define-nmethod (Tail-rec.elim! val-is-needed?)
+   (with-access::Tail-rec this (inits body)
+      (set! inits (map! (lambda (init) (walk! init #f))
+			inits))
+      (set! body (walk! body val-is-needed?))
+      this))
+
+(define-nmethod (Tail-rec-Call.elim! val-is-needed?)
+   (default-walk! this #t))
+
+(define-nmethod (While.elim! val-is-needed?)
+   (with-access::While this (label init test body)
+      (with-access::Elim-Env env (default-label-val-is-needed?)
+	 (set! default-label-val-is-needed? val-is-needed?))
+
+      (unless (eq? label (default-label))
+	 (widen!::Elim-Label label
+	    ;; will not be used but needs to be set.
+	    ;; important for While-labels is the 'used?'-field.
+	    (val-is-needed? val-is-needed?)))
+
+      (set! init (walk! init #f))
+      (set! test (walk! test #t))
+      (set! body (walk! body #f)) ;; if needed, then there is a Labeled.
+
+      (unless (eq? label (default-label))
+	 (with-access::Elim-Label label (used?)
+	    (if used?
+		(shrink! label)
+		(set! label (default-label)))))
+      this))
+
+(define-nmethod (Call/cc-Resume.elim! val-is-needed?)
    this)

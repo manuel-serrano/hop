@@ -1,0 +1,16 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/1.9.x/share/hop-video.hss               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Tue Jan 15 08:33:56 2008                          */
+/*    Last change :  Tue Jan 15 08:34:20 2008 (serrano)                */
+/*    Copyright   :  2008 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Hop Video's cascade style sheet.                                 */
+/*=====================================================================*/
+
+div.hop-video {
+  width: 400px;
+  height: 400px;
+  border: 1px solid red;
+}

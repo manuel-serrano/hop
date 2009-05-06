@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/webfilter/webfilter.hop         */
+;*    .../prgm/project/hop/2.0.x/weblets/webfilter/webfilter.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Nov 29 07:28:28 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Sun Apr 19 07:53:13 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
 ;*=====================================================================*/
@@ -13,11 +13,6 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module weblet_webfilter)
-
-;*---------------------------------------------------------------------*/
-;*    The user configuration                                           */
-;*---------------------------------------------------------------------*/
-(hop-load-rc "webfilterrc.hop")
 
 ;*---------------------------------------------------------------------*/
 ;*    webfilter-dir ...                                                */
@@ -44,7 +39,7 @@
 
 (define-preferences webfilter-preferences
    ("Header filtering" (bool "enable" "disable") webfilter-http-header-filter)
-   ("Header re-writting" expr webfilter-http-headers)
+   ("Header re-writting" quote webfilter-http-headers)
    ("Blacklisting" (bool "enable" "disable") webfilter-blacklist)
    ("Google unbouncing" (bool "enable" "disable") webfilter-google-unbounce)
    ("Flash stopping" (bool "enable" "disable") webfilter-flash-stop)
@@ -80,85 +75,112 @@
       t))
 
 ;*---------------------------------------------------------------------*/
+;*    blacklist-domain! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (blacklist-domain! domain)
+   (hashtable-put! *domain-blacklist* domain #t))
+
+;*---------------------------------------------------------------------*/
+;*    <WEBFILTER:HTML> ...                                             */
+;*---------------------------------------------------------------------*/
+(define (<WEBFILTER:HTML> body)
+   (<HTML>
+      (<HEAD>
+	 :favicon (service-resource webfilter "etc/favicon.png")
+	 :title "Hop Webfilter"
+	 :include "hop-notepad" "hop-sorttable" "hop-prefs"
+	 :base (service-base-url webfilter (current-request))
+	 :css "webfilter.hss")
+      (<BODY>
+	 (<DIV> :align "center"
+	    (<TABLE> :class "webfilter"
+	       (<TR>
+		  (<TD>
+		     (<IMG> :src "etc/logo.png"))
+		  (<TD>
+		     (<TABLE>
+			(<TR>
+			   (<TD>
+			      (<DIV> :id "title" "Hop Web Filtering")))
+			(<TR>
+			   (<TD>
+			      body)))))))
+	 (<FOOT>))))
+   
+;*---------------------------------------------------------------------*/
 ;*    <HTTP-HEADERS-TABLE> ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (<HTTP-HEADERS-TABLE> id)
-   (<TABLE>
-      :class "http-headers"
-      (<TR>
-	 (<TH> "Key") (<TH> "Value"))
-      (map (lambda (l)
-	      (let ((key (if (eq? l #unspecified)
-			     ""
-			     (keyword->string (car l))))
-		    (val (if (eq? l #unspecified)
-			     ""
-			     (cdr l)))
-		    (id1 (xml-make-id))
-		    (id2 (xml-make-id)))
-		 (define save-entry
-		    (service (key val)
-		       (cond
-			  ((eq? l #unspecified)
-			   (if (or (string=? val "") (string=? key ""))
-			       #t
-			       (let ((key (string->keyword
-					   (string-downcase key))))
-				  (webfilter-http-headers-set!
-				   (cons (cons key val)
-					 (webfilter-http-headers)))
-				  (webfilter-preferences-save
-				   webfilter-prefs)
-				  (<HTTP-HEADERS-TABLE> id))))
-			  (else
-			   (if (or (string=? val "") (string=? key ""))
-			       (begin
-				  (webfilter-http-headers-set!
-				   (remq! l (webfilter-http-headers)))
-				  (webfilter-preferences-save
-				   webfilter-prefs)
-				  (<HTTP-HEADERS-TABLE> id))
-			       (let ((key (string->keyword
-					   (string-downcase key))))
-				  (set-car! l key)
-				  (set-cdr! l val)
-				  (webfilter-preferences-save
-				   webfilter-prefs)
-				  (<HTTP-HEADERS-TABLE> id)))))))
-		 (define keypress {
-		     this.style.color = "red";
-		     if( event.keyCode == 13 ) {
-			  var key = document.getElementById($id1).value
-			  var val = document.getElementById($id2).value
-			  this.style.color = "blue";
-			  hop( $save-entry( key, val ),
-			       function( http ) {
-			          if( http.responseText.length != 0 ) {
-				      hop_replace_inner_id( $id )( http );
-				  }
-			     } )
-			 }
-		     })
-		 (<TR>
-		    (<TD>
-		       (<INPUT>
-			  :id id1
-			  :type "text"
-			  :size 30
-			  :value key
-			  :onkeypress keypress))
-		    (<TD>
-		       (<INPUT>
-			  :id id2
-			  :type "text"
-			  :size 80
-			  :value val
-			  :onkeypress keypress)))))
-	   (append (sort (webfilter-http-headers)
-			 (lambda (c1 c2)
-			    (string-ci<? (keyword->string (car c1))
-					 (keyword->string (car c2)))))
-		   '(#unspecified)))))
+   
+   (define (save-entry l key val)
+      (cond
+	 ((eq? l #unspecified)
+	  (if (or (string=? val "") (string=? key ""))
+	      #t
+	      (let ((key (string->keyword (string-downcase key))))
+		 (webfilter-http-headers-set!
+		  (cons (cons key val) (webfilter-http-headers)))
+		 (webfilter-preferences-save webfilter-prefs)
+		 (<HTTP-HEADERS-TABLE> id))))
+	 (else
+	  (if (or (string=? val "") (string=? key ""))
+	      (begin
+		 (webfilter-http-headers-set!
+		  (remq! l (webfilter-http-headers)))
+		 (webfilter-preferences-save webfilter-prefs)
+		 (<HTTP-HEADERS-TABLE> id))
+	      (let ((key (string->keyword (string-downcase key))))
+		 (set-car! l key)
+		 (set-cdr! l val)
+		 (webfilter-preferences-save webfilter-prefs)
+		 (<HTTP-HEADERS-TABLE> id))))))
+   
+   (<DIV>
+    ~(define (keypress el event id1 id2 save)
+	(node-style-set! el :color "red")
+	(if (= event.keyCode 13)
+	    (let* ((el1 (dom-get-element-by-id id1))
+		   (el2 (dom-get-element-by-id id2))
+		   (key el1.value)
+		   (val el2.value))
+	       (node-style-set! el :color "blue")
+	       (with-hop (save key val)
+		  (lambda (t)
+		     (innerHTML-set! $id t))))))
+    (<TABLE>
+       :class "http-headers"
+       (<TR>
+	  (<TH> "Key") (<TH> "Value"))
+       (map (lambda (l)
+	       (let ((key (if (eq? l #unspecified)
+			      ""
+			      (keyword->string (car l))))
+		     (val (if (eq? l #unspecified)
+			      ""
+			      (cdr l)))
+		     (id1 (xml-make-id))
+		     (id2 (xml-make-id))
+		     (save (service (key val) (save-entry l key val))))
+		  (<TR>
+		     (<TD>
+			(<INPUT>
+			   :id id1
+			   :type "text"
+			   :size 30
+			   :value key
+			   :onkeypress ~(keypress this event $id1 $id2 $save)))
+		     (<TD>
+			(<INPUT>
+			   :id id2
+			   :type "text"
+			   :size 80
+			   :value val
+			   :onkeypress ~(keypress this event $id1 $id2 $save))))))
+	    (append (sort (webfilter-http-headers)
+			  (lambda (c1 c2)
+			     (string-ci<? (keyword->string (car c1))
+					  (keyword->string (car c2)))))
+		    '(#unspecified))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HTTP-HEADERS> ...                                               */
@@ -179,13 +201,13 @@
 	       (<INPUT>
 		  :type "checkbox"
 		  :checked (webfilter-http-header-filter)
-		  :onchange {
-		     hop($(service (val)
-			     (webfilter-http-header-filter-set! val)
-			     (webfilter-preferences-save webfilter-prefs))
-			  (this.checked));
-		     ($txt).className = this.checked ? "enable" : "disable"
-		     })
+		  :onchange ~(begin
+				(with-hop ($(service (val)
+					       (webfilter-http-header-filter-set! val)
+					       (webfilter-preferences-save webfilter-prefs))
+					    this.checked))
+				(set! $txt.className
+				      (if this.checked "enable" "disable"))))
 	       txt)))
       (<TR>
 	 (let ((id "http-headers-table"))
@@ -208,39 +230,13 @@
 	       (<INPUT>
 		  :type "checkbox"
 		  :checked (webfilter-blacklist)
-		  :onchange {
-		     hop($(service (val)
-			     (webfilter-blacklist-set! val)
-			     (webfilter-preferences-save webfilter-prefs))
-			  (this.checked));
-		     ($txt).className = this.checked ? "enable" : "disable"
-		  })
-	       txt)))))
-   
-;*---------------------------------------------------------------------*/
-;*    <BLACKLIST> ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (<BLACKLIST>)
-   (<TABLE>
-      :class "webfilter-config"
-      (<TR>
-	 (<TH>
-	    (<P> [This filter bans domains registered in black lists.])))
-      (let ((txt (<SPAN>
-		    :class (if (webfilter-blacklist) "enable" "disable")
-		    "Black listing")))
-	 (<TR>
-	    (<TD>
-	       (<INPUT>
-		  :type "checkbox"
-		  :checked (webfilter-blacklist)
-		  :onchange {
-		     hop($(service (val)
-			     (webfilter-blacklist-set! val)
-			     (webfilter-preferences-save webfilter-prefs))
-			  (this.checked));
-		     ($txt).className = this.checked ? "enable" : "disable"
-		  })
+		  :onchange ~(begin
+				(with-hop ($(service (val)
+					       (webfilter-blacklist-set! val)
+					       (webfilter-preferences-save webfilter-prefs))
+					    this.checked))
+				(set! $txt.className
+				      (if this.checked "enable" "disable"))))
 	       txt)))))
    
 ;*---------------------------------------------------------------------*/
@@ -265,13 +261,13 @@ Google, each containing a forward pointer to the actual URL.])))
 	       (<INPUT>
 		  :type "checkbox"
 		  :checked (webfilter-google-unbounce)
-		  :onchange {
-		     hop($(service (val)
-			     (webfilter-google-unbounce-set! val)
-			     (webfilter-preferences-save webfilter-prefs))
-			  (this.checked));
-		     ($txt).className = this.checked ? "enable" : "disable"
-		  })
+		  :onchange ~(begin
+				(with-hop ($(service (val)
+					       (webfilter-google-unbounce-set! val)
+					       (webfilter-preferences-save webfilter-prefs)))
+				   this.checked)
+				(set! $txt.className
+				      (if this.checked "enable" "disable"))))
 	       txt)))))
    
 ;*---------------------------------------------------------------------*/
@@ -298,27 +294,27 @@ Google, each containing a forward pointer to the actual URL.])))
 	       (<INPUT>
 		  :type "checkbox"
 		  :checked (webfilter-flash-stop)
-		  :onchange {
-		     hop($(service (val)
-			     (webfilter-flash-stop-set! val)
-			     (webfilter-preferences-save webfilter-prefs))
-			  (this.checked));
-		     ($txt1).className = this.checked ? "enable" : "disable"
-		  })
+		  :onchange ~(begin
+				(with-hop ($(service (val)
+					       (webfilter-flash-stop-set! val)
+					       (webfilter-preferences-save webfilter-prefs)))
+				   this.checked)
+				(set! $txt1.className
+				      (if this.checked "enable" "disable"))))
 	       txt1
 	       "&#160;&#160;"
 	       (<INPUT>
 		  :type "text"
 		  :size 6
 		  :value (webfilter-flash-content-length)
-		  :onchange {
-		     hop($(service (val)
-			     (webfilter-flash-content-length-set!
-			      (string->elong val))
-			     (webfilter-preferences-save webfilter-prefs))
-			  (this.checked));
-		     ($txt2).className = this.checked ? "enable" : "disable"
-		     })
+		  :onchange ~(begin
+				(with-hop ($(service (val)
+					       (webfilter-flash-content-length-set!
+						(string->elong val))
+					       (webfilter-preferences-save webfilter-prefs))
+					    this.checked))
+				(set! $txt2.className
+				      (if this.checked "enable" "disable"))))
 	       txt2)))))
    
 ;*---------------------------------------------------------------------*/
@@ -331,42 +327,22 @@ Google, each containing a forward pointer to the actual URL.])))
 (define-service (webfilter)
    (let ((req (current-request)))
       (if (authorized-service? req 'admin)
-	  (<HTML>
-	     (<HEAD>
-		:favicon (service-resource webfilter "etc/favicon.png")
-		:title "Hop Webfilter"
-		:include "hop-notepad" "hop-sorttable"
-		:base (service-base-url webfilter req)
-		:css "webfilter.hss")
-	     (<BODY>
-		(<DIV> :align "center"
-		   (<TABLE> :class "webfilter"
-		      (<TR>
-			 (<TD>
-			    (<IMG> :src "etc/logo.png"))
-			 (<TD>
-			    (<TABLE>
-			       (<TR>
-				  (<TD>
-				     (<DIV> :id "title" "Hop Web Filtering")))
-			       (<TR>
-				  (<TD>
-				     (<DIV> :id "glop"
-					(<NOTEPAD>
-					   (<NPHEAD> "")
-					   (<NPTAB>
-					      (<NPTABHEAD> "Headers")
-					      (<HTTP-HEADERS>))
-					   (<NPTAB>
-					      (<NPTABHEAD> "Blacklist")
-					      (<BLACKLIST>))
-					   (<NPTAB>
-					      (<NPTABHEAD> "Google")
-					      (<GOOGLE>))
-					   (<NPTAB>
-					      (<NPTABHEAD> "Flash")
-					      (<FLASH>)))))))))))
-		(<FOOT>)))
+	  (<WEBFILTER:HTML>
+	     (<DIV>
+		(<NOTEPAD>
+		   (<NPHEAD> "")
+		   (<NPTAB>
+		      (<NPTABHEAD> "Headers")
+		      (<HTTP-HEADERS>))
+		   (<NPTAB>
+		      (<NPTABHEAD> "Blacklist")
+		      (<BLACKLIST>))
+		   (<NPTAB>
+		      (<NPTABHEAD> "Google")
+		      (<GOOGLE>))
+		   (<NPTAB>
+		      (<NPTABHEAD> "Flash")
+		      (<FLASH>)))))
 	  (user-access-denied req))))
 
 ;*---------------------------------------------------------------------*/
@@ -385,7 +361,7 @@ Google, each containing a forward pointer to the actual URL.])))
 (define (http-headers-rewrite resp)
    (with-access::%http-response resp (header)
       (for-each (lambda (h)
-		   (when (pair? h)
+		   (when (and (pair? h) (string? (car h)))
 		      (let* ((v (string->keyword
 				 (string-downcase!
 				  (keyword->string (car h)))))
@@ -485,35 +461,21 @@ Google, each containing a forward pointer to the actual URL.])))
    (let ((req (current-request)))
       (if (not (user-authorized-service? (http-request-user req) 'admin))
 	  (user-access-denied req)
-	  (<HTML>
-	     (<HEAD>
-		:favicon (service-resource webfilter "etc/favicon.png")
-		:title "Hop Webfilter preferences"
-		:include "hop-notepad" "hop-sorttable"
-		:base (service-base-url webfilter/preferences req)
-		:css "webfilter.hss")
-	     (<BODY>
-		(<CENTER>
-		   (<TABLE> :class "webfilter"
-		      (<TR>
-			 (<TD>
-			    (<IMG> :src (service-resource webfilter/preferences
-							  "etc/logo.png")))
-			 (<TD>
-			    (<TABLE>
-			       (<TR>
-				  (<TD>
-				     (<DIV> :id "title"
-					"Hop Web Filtering Preferences")))
-			       (<TR>
-				  (<TD>
-				     (<PREFERENCES>)))))))))))))
+	  (<WEBFILTER:HTML>
+	     (<PREFERENCES>)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <PREFERENCES> ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (<PREFERENCES>)
-   (webfilter-preferences-edit
-    :onclick ~(with-hop ($(service ()
-			     (webfilter-preferences-save webfilter-prefs))))))
+   (<DIV>
+      (<BUTTON> :title "Save configuration (needs admin privileges)"
+	 :onclick ~(preferences-save "webfilter-configure" $webfilter-prefs)
+	 "Save configuration")
+      (webfilter-preferences-edit :id "webfilter-configure")))
+
+;*---------------------------------------------------------------------*/
+;*    The user configuration                                           */
+;*---------------------------------------------------------------------*/
+(hop-load-rc "webfilterrc.hop")
 

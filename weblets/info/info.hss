@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/weblets/info/info.hss                   */
+/*    serrano/prgm/project/hop/1.9.x/weblets/info/info.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat Nov 24 07:36:46 2007 (serrano)                */
-/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    Last change :  Wed Apr 16 10:47:18 2008 (serrano)                */
+/*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    INFO HOP CSS                                                     */
 /*=====================================================================*/
@@ -71,31 +71,31 @@ table td {
   vertical-align: top;
 }
 
-div.hop-notepad-title {
+notepad-title {
   background: transparent;
 }
 
-div.hop-notepad-body {
+notepad-body {
   border-color: $border-color;
   font-size: small;
   background-color: $info-color;
 }
 
-div.hop-notepad-tabs {
+notepad-tabs {
   background: transparent;
 }
 
-div.hop-notepad-tabs span.hop-nptab {
+nptab {
   font-size: small;
   border-color: $border-color;
 }
 
-div.hop-notepad-tabs span.hop-nptab-active {
+nptab-active {
   background-color: $info-color;
   border-bottom-color: $info-color;
 }
 
-div.hop-notepad-body-tab {
+nptab-body {
   border-color: blue;
   background-color: $info-color;
 }  
@@ -264,4 +264,11 @@ div.dump-events table.dump-events td {
   font-weight: 100;
 }
 
+div.dump-events table.dump-events td.ajax-buffer {
+  margin-left: 6px;
+}
+
+div.dump-events table.dump-events td.ajax-buffer:after {
+  content: ": ";
+}
 

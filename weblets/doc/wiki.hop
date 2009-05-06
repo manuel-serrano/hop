@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/doc/wiki.hop                    */
+;*    serrano/prgm/project/hop/2.0.x/weblets/doc/wiki.hop              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Wed Nov 21 12:16:34 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Mon Mar 23 11:59:11 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
 ;*=====================================================================*/
@@ -50,13 +50,15 @@
 (define (wiki-plugins id)
    (case id
       ((<doc>) <WIKI-DOC>)
+      ((<logo>) <WIKI-LOGO>)
       ((<library>) <WIKI-LIBRARY>)
       ((<css>) <WIKI-CSS>)
       ((<arguments>) <WIKI-ARGUMENTS>)
       ((<fields>) <WIKI-FIELDS>)
       ((<example>) <WIKI-EXAMPLE>)
       ((<code>) <WIKI-CODE>)
-      ((<share>) <WIKI-SHARE>)))
+      ((<share>) <WIKI-SHARE>)
+      ((<rc>) <WIKI-RC>)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *doc-syntax*                                                     */
@@ -93,7 +95,7 @@
 			 (lambda (port t expr)
 			    (let ((title (if mktitle (mktitle t) t)))
 			       (if (authorized-service? req 'admin)
-				   (if (http-request-localhostp req)
+				   (if (http-request-localclientp req)
 				       (<DOC/emacs> port title expr)
 				       (<DOC/edit> port title expr))
 				   (<WIKI-DOC> port title expr)))))
@@ -105,19 +107,26 @@
 ;*---------------------------------------------------------------------*/
 (define (<WIKI-DOC> port title expr)
    (list
-    (<DIV>
-       :class "doc-title"
-       (<TABLE>
-	  :width "100%"
+    (<DIV> :class "doc-title"
+       (<TABLE> :width "100%"
 	  (<TR>
-	     (<TH>
-		:align 'left title))))
-    (<DIV>
-       :class "doc"
-       (<DIV>
-	  :class "toc"
+	     (<TH> :align 'left title))))
+    (<DIV> :class "doc"
+       (<DIV> :class "toc"
 	  (hop-wiki->toc expr :max-depth 3))
        expr)))
+
+;*---------------------------------------------------------------------*/
+;*    <WIKI-LOGO> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<WIKI-LOGO> port src expr)
+   (let* ((dname (dirname (input-port-name port)))
+	  (file (if (and (string? src) (>fx (string-length src) 0))
+		    src
+		    "logo.png"))
+	  (logo (make-file-name dname file)))
+      (<DIV> :class "logo"
+	 (<IMG> :src logo :class "doc-logo"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WIKI-LIBRARY> ...                                               */
@@ -130,29 +139,21 @@
 ;*---------------------------------------------------------------------*/
 (define (<DOC/edit> port title expr)
    (list
-    (<DIV>
-       :class "doc-title"
-       (<TABLE>
-	  :width "100%"
+    (<DIV> :class "doc-title"
+       (<TABLE> :width "100%"
 	  (<TR>
-	     (<TH>
-		:align 'left title)
-	     (<TD>
-		:align 'right "[ "
-		(<SPAN>
-		   :class "edit"
-		   :onclick ~(window.open $(make-service-url doc/edit (input-port-name port)))
+	     (<TH> :align 'left title)
+	     (<TD> :align 'right "[ "
+		(<SPAN> :class "edit"
+		   :onclick ~(window.open $(doc/edit (input-port-name port)))
 		   "edit")
 		" | "
-		(<SPAN>
-		   :class "edit"
-		   :onclick ~(window.open $(make-service-url doc/edit (input-port-name port)))
+		(<SPAN> :class "edit"
+		   :onclick ~(window.open $(doc/edit (input-port-name port)))
 		   "new")
 		" ]"))))
-    (<DIV>
-       :class "doc"
-       (<DIV>
-	  :class "toc"
+    (<DIV> :class "doc"
+       (<DIV> :class "toc"
 	  (hop-wiki->toc expr :max-depth 3))
        expr)))
 
@@ -161,23 +162,17 @@
 ;*---------------------------------------------------------------------*/
 (define (<DOC/emacs> port title expr)
    (list
-    (<DIV>
-       :class "doc-title"
-       (<TABLE>
-	  :width "100%"
+    (<DIV> :class "doc-title"
+       (<TABLE> :width "100%"
 	  (<TR>
-	     (<TH>
-		:align 'left title)
-	     (<TD>
-		:class "edit"
+	     (<TH> :align 'left title)
+	     (<TD> :class "edit"
 		"[ "
-		(<SPAN>
-		   :class "edit"
-		   :onclick ~(window.open $(make-service-url doc/edit (input-port-name port)))
+		(<SPAN> :class "edit"
+		   :onclick ~(window.open $(doc/edit (input-port-name port)))
 		   "edit")
 		" | "
-		(<SPAN>
-		   :class "edit"
+		(<SPAN> :class "edit"
 		   :onclick ~(with-hop
 				   ($(service (file)
 					(run-process (doc-editor) file :wait #f)
@@ -185,8 +180,7 @@
 				     $(input-port-name port)))
 		   (basename (doc-editor)))
 		" | "
-		(<SPAN>
-		   :class "edit"
+		(<SPAN> :class "edit"
 		   :onclick ~(with-hop
 				   ($(service (file)
 					(let ((f (make-file-name
@@ -202,10 +196,8 @@
 				     $(input-port-name port)))
 		   "new")
 		" ]"))))
-    (<DIV>
-       :class "doc"
-       (<DIV>
-	  :class "toc"
+    (<DIV> :class "doc"
+       (<DIV> :class "toc"
 	  (hop-wiki->toc expr :max-depth 3))
        expr)))
 
@@ -235,9 +227,7 @@
 ;*    <WIKI-CODE> ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (<WIKI-CODE> port title expr)
-   (<DIV>
-      :class "code"
-      :align "center"
+   (<DIV> :class "code" :align "center"
       (decorate-api-wiki-code expr)))
 
 ;*---------------------------------------------------------------------*/
@@ -262,6 +252,22 @@
 		      (read-string (current-input-port))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    <WIKI-RC> ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (<WIKI-RC> port file body)
+   (let ((path (make-file-name (hop-rc-directory) file)))
+      (when (file-exists? path)
+	 (<FL>
+	    (<FLITEM>
+	       (<FLHEAD> file)
+	       (with-input-from-file path
+		  (lambda ()
+		     (<PRE>
+			:class "source"
+			(html-string-encode
+			 (read-string (current-input-port)))))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    doc-page ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (doc-page page syntax)
@@ -280,7 +286,7 @@
 		       (m2 (eval-module)))
 		    (unwind-protect
 		       (begin
-			  (eval-module-set! m1)
+			  (when m1 (eval-module-set! m1))
 			  (wiki-input-port->hop iport :syntax syntax))
 		       (begin
 			  (eval-module-set! m2)
@@ -291,7 +297,7 @@
 ;*---------------------------------------------------------------------*/
 (define (wiki-tt-parser parser)
    (lambda x
-      (if (and (null? (cdr x)) (every? string? (car x)))
+      (if (and (null? (cdr x)) (pair? (car x)) (every? string? (car x)))
 	  (let ((s (html-string-decode (apply string-append (car x)))))
 	     (or (parser s) (<TT> x)))
 	  (<TT> x))))

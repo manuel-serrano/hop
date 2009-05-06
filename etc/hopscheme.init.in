@@ -1,19 +1,23 @@
 ;*=====================================================================*/
-;*    The hopscheme lib init file.                                     */
+;*    serrano/prgm/project/hop/1.9.x/etc/hopscheme.init.in             */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Apr 21 08:47:34 2008                          */
+;*    Last change :  Mon Apr 21 08:50:03 2008 (serrano)                */
+;*    Copyright   :  2008 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    HOPSCHEME init file.                                             */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
-;*    The basename of the hopscheme library name                       */
+;*    Library                                                          */
 ;*---------------------------------------------------------------------*/
-(cond-expand
-   (bigloo-c
-    ;; the C basename of the HOP library
-    (library-translation-table-add! 'hopscheme "hopscheme" "@VERSION@"))
-   (bigloo-jvm
-    ;; the C basename of the HOP library
-    (library-translation-table-add! 'hopscheme "bigloo/hopscheme/make-lib" #f))
-   (else
-    #unspecified))
+(declare-library! 'hopscheme
+		  :version "@VERSION@"
+		  :module-init '__hopscheme_scm-compil
+		  :module-eval '__hopscheme_makelib
+		  :class-init "bigloo.hopscheme.scm-compil"
+		  :class-eval "bigloo.hopscheme.make-lib")
 
 ;*---------------------------------------------------------------------*/
 ;*    Link option                                                      */

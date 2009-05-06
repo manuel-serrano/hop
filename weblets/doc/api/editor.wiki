@@ -42,19 +42,17 @@ using //editors// must include in their header, the following statement:
 | :width       |  dimension  |  //100%//    | the width                   |
 | :heigh       |  dimension  |  //600px//   | the height                  |
 | :name        |  string    |              | name (used in forms only)   |
-| :submit      |  function  |  see below   | action associated to submit button  |
-| :cancel      |  function  |  see below   | action associated to cancel button  |
-| :cancel      |  script   |              | the cancel procedure.       |
+| :onsubmit    |  expr  |  see below   | action associated to submit button  |
+| :oncancel    |  expr  |  see below   | action associated to cancel button  |
 | body         |   xml     |              | the initial content.        |
 </arguments>
 
-By default, the **submit** and **cancel** client functions are associated to 
-functions which try to find if the editor is embedded in a form. 
-If this is the case, these functions do the right job. Otherwise, they do
-nothing. 
+By default, the ++onsubmit++ and ++oncancel++ client actions check if the
+editor is embedded in a form. If it is, the default actions invoke those
+of the form. Otherwise, they do nothing.
 
-~~Submit and Cancel functions are called with the element 
-identifier of the editor as parameter. 
+~~ The receiver object (i.e., ++this++) of editor actions is the editor
+itself.
 
 </markup>
 </server>

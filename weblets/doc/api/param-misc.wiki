@@ -93,6 +93,10 @@ are:
   * ++UTF-8++
   * ++UCS-2++
 
+
+When HOP reads source files, it automatically encodes texts (i.e., ++[...]++
+expressions) into the the ++(hop-charset)++.
+
 </parameter>
 </parameter>
 

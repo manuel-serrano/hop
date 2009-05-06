@@ -1,12 +1,21 @@
 (module pobject-conv
-   (option (loadq "protobject-eval.sch"))
-   (include "protobject.sch")
-   (include "nodes.sch")
    (import nodes
+	   error
+	   export-desc
 	   config
-	   protobject
 	   verbose)
-   (export (pobject-conv::pobject prog)))
+   (export
+    ;; going to be used in symbol-pass.
+    (wide-class Runtime-Ref::Ref)
+    (wide-class Define::Set!))
+   (export (pobject-conv::Node prog)
+	   (runtime-ref id::symbol)))
+
+;; recognized as "artificial" runtime-reference.
+(define (runtime-ref id)
+   ;; we use a function to differenciate this construct
+   ;; from similar user-constructs.
+   (list 'runtime-ref id (lambda () 'runtime-ref)))
 
 (define (location s-expr)
    (and (epair? s-expr)
@@ -15,12 +24,19 @@
 (define (scheme->pobject-map l)
    (let loop ((l l)
 	      (rev-res '()))
-      (if (null? l)
-	  (reverse! rev-res)
+      (cond
+	 ((null? l)
+	  (reverse! rev-res))
+	 ((not (pair? l))
+	  (scheme2js-error "Object-conv"
+			   "invalid expression-list"
+			   l
+			   l))
+	 (else
 	  (let ((loc (location l)))
 	     (loop (cdr l)
 		   (cons (scheme->pobject (car l) loc)
-			 rev-res))))))
+			 rev-res)))))))
 
 (define (location-map f l)
    (let loop ((l l)
@@ -33,82 +49,127 @@
 			 rev-res))))))
 
 (define (attach-location o loc)
-   (if loc (set! o.loc loc))
+   (when loc (Node-location-set! o loc))
    o)
    
 (define (pobject-conv prog)
    (verbose "list->pobject")
-   (nodes-init!)
-   (new-node Program
-	(new-node Module
-		  (scheme->pobject prog (location prog))
-		  (lambda (p) (cons p (lambda (p) 'do-nothing))))))
-   
-(define (expr-list->Body expr-list)
-   (new-node Body (expr-list->Begin expr-list)))
+   (instantiate::Module
+      (body (scheme->pobject prog (location prog)))))
 
 (define (expr-list->Begin expr-list)
-   (new-node Begin (scheme->pobject-map expr-list)))
+   (instantiate::Begin
+      (exprs (scheme->pobject-map expr-list))))
 
-(define (lambda->pobject formals-vaarg body)
-   (define (split-formals-vaarg! formals-vaarg)
+(define (lambda->pobject arguments body)
+   ;; if there's a vaarg, make it a the last element of the list and return
+   ;; (the list . #t)
+   (define (vaarg-list! arguments)
       (cond
-	 ((null? formals-vaarg)
-	  (cons '() #f))
-	 ((not (pair? formals-vaarg))
-	  (cons '() formals-vaarg))
+	 ((null? arguments)
+	  (values arguments #f))
+	 ((not (pair? arguments))
+	  (values (list arguments) #t))
 	 (else
-	  (let* ((p (last-pair formals-vaarg))
+	  (let* ((p (last-pair arguments))
 		 (vaarg (cdr p)))
-	     (set-cdr! p '()) ;; physically truncate the list
-	     (cons formals-vaarg
-		   (and (not (null? vaarg)) vaarg))))))
+	     (cond
+		((null? vaarg)
+		 (values arguments #f))
+		(else
+		 (set-cdr! p (list vaarg)) ;; physically attach the vaarg
+		 (values arguments #t)))))))
+	 
       
-   (let* ((formals/vaarg (split-formals-vaarg! formals-vaarg))
-	  (formals (car formals/vaarg))
-	  (vaarg (cdr formals/vaarg)))
-      (new-node Lambda
-	   (location-map (lambda (formal loc)
-			    (attach-location (new-node Decl formal) loc))
-			 formals)
-	   (and vaarg (new-node Decl vaarg))
-	   (new-node Return (expr-list->Body body)))))
+   (receive (formals vaarg?)
+      (vaarg-list! arguments)
+
+      (unless (and (list? formals)
+		   (every? symbol? formals))
+	 (scheme2js-error "Object-conv"
+			  "Invalid arguments-clause"
+			  arguments
+			  arguments))
+
+      (let ((formal-decls
+	     (location-map (lambda (formal loc)
+			      (attach-location (instantiate::Ref
+						  (id formal))
+					       loc))
+			   formals)))
+	 (instantiate::Lambda
+	    (formals formal-decls)
+	    (vaarg? vaarg?)
+	    (body (instantiate::Return
+		     (val (expr-list->Begin body))))))))
 
 (define (let-form->pobject bindings body kind)
    (define (binding->pobject binding)
+      (when (or (null? binding)
+		(null? (cdr binding))
+		(not (symbol? (car binding)))
+		(not (null? (cddr binding))))
+	 (scheme2js-error "pobject-conversion"
+			  "Bad Let-form binding"
+			  binding
+			  binding))
       (let ((var (car binding))
 	    (val (cadr binding)))
-	 (new-node Binding
-	      (attach-location (new-node Decl var) (location binding))
-	      (scheme->pobject val (location (cdr binding))))))
+	 (instantiate::Set!
+	    (lvalue (attach-location (instantiate::Ref (id var))
+				     (location binding)))
+	    (val (scheme->pobject val (location (cdr binding)))))))
    
    (let ((pobject-bindings (map! binding->pobject bindings)))
-      (new-node Let-form pobject-bindings (expr-list->Body body) kind)))
+      (instantiate::Let
+	 (bindings pobject-bindings)
+	 (body (expr-list->Begin body))
+	 (kind kind))))
 
 (define (case->pobject key clauses)
    (define (clause->pobject clause last?)
-      (let* ((consts (car clause))
-	     (raw-exprs (cdr clause))
-	     (exprs (scheme->pobject-map raw-exprs))
-	     (begin-expr (new-node Begin exprs)))
-	 (if (and last?
-		  (eq? consts 'else))
-	     (new-node Clause '() begin-expr #t)
-	     (new-node Clause (map (lambda (const)
-				 (new-node Const const))
-			      consts)
-		       begin-expr
-		       #f))))
+      (match-case clause
+	 ((?consts . ?raw-exprs)
+	  (let* ((exprs (scheme->pobject-map raw-exprs))
+		 (begin-expr (instantiate::Begin (exprs exprs))))
+	     (if (and last?
+		      (eq? consts 'else))
+		 (instantiate::Clause
+		    (consts '())
+		    (expr begin-expr)
+		    (default-clause? #t))
+		 (begin
+		    (unless (list? consts)
+		       (scheme2js-error "Object-conv"
+					"bad constants in case-clause"
+					consts
+					consts))
+		    (instantiate::Clause
+		       (consts (map (lambda (const)
+				       (instantiate::Const (value const)))
+				    consts))
+		       (expr begin-expr)
+		       (default-clause? #f))))))
+	 (else
+	  (scheme2js-error "Object-conv"
+			   "bad Case-clause"
+			   clause
+			   clause))))
    
    (define (clauses->pobjects clauses rev-result)
       (cond
 	 ((null? clauses) ;; should never happen
 	  (reverse! rev-result))
+	 ((not (pair? clauses)) ;; dotted form (x . y)
+	  (scheme2js-error "Object-conv"
+			   "bad case-form"
+			   clauses
+			   clauses))
 	 ((null? (cdr clauses))
 	  (let ((rev-all-clauses (cons (clause->pobject (car clauses) #t)
 				       rev-result)))
 	     ;; if there was no default clause, we add one.
-	     (if (car rev-all-clauses).default-clause?
+	     (if (Clause-default-clause? (car rev-all-clauses))
 		 (reverse! rev-all-clauses)
 		 (reverse! (cons (clause->pobject '(else #unspecified) #t)
 				 rev-all-clauses)))))
@@ -117,73 +178,80 @@
 			     (cons (clause->pobject (car clauses) #f)
 				   rev-result)))))
 
-   (new-node Case
-	(scheme->pobject-no-loc key)
-	(clauses->pobjects clauses '())))
+   (instantiate::Case
+      (key (scheme->pobject-no-loc key))
+      (clauses (clauses->pobjects clauses '()))))
 
 (define (scheme->pobject-no-loc exp)
    (cond
       ((pair? exp)
        (match-case exp
-	  ((quote ?datum) (new-node Const datum))
+	  ((quote ?datum) (instantiate::Const (value datum)))
 	  ((lambda ?formals . ?body) (lambda->pobject formals body))
 	  ((if ?test ?then)
 	   ;(scheme->pobject `(if ,test ,then #unspecified)))
 	   (set-cdr! (cddr exp) '(#unspecified))
 	   (scheme->pobject-no-loc exp))
 	  ((if ?test ?then ?else)
-	   (new-node If
-		(scheme->pobject test (location (cdr exp)))
-		(scheme->pobject then (location (cddr exp)))
-		(scheme->pobject else (location (cdddr exp)))))
-	  ((if . ?L) (error #f "bad if-form: " exp))
+	   (instantiate::If
+	      (test (scheme->pobject test (location (cdr exp))))
+	      (then (scheme->pobject then (location (cddr exp))))
+	      (else (scheme->pobject else (location (cdddr exp))))))
+	  ((if . ?L) (scheme2js-error #f "bad if-form" exp exp))
 	  ((case ?key . ?clauses)
 	   (case->pobject key clauses))
-	  ((set! ?var ?expr)
-	   (new-node Set!
-		(attach-location (new-node Var-ref var) (location (cdr exp)))
-		(scheme->pobject expr (location (cddr exp)))))
-	  ((set! . ?L) (error #f "bad set!-form: " exp))
+	  ((set! (and ?var (? symbol?)) ?expr)
+	   (instantiate::Set!
+	      (lvalue (attach-location (instantiate::Ref
+					  (id var))
+				       (location (cdr exp))))
+	      (val (scheme->pobject expr (location (cddr exp))))))
+	  ((set! (@ ?sym ?qualifier) ?expr)
+	   (let ((id (cadr exp)))
+	      (instantiate::Set!
+		 (lvalue (attach-location (instantiate::Ref
+					     (id id))
+					  (location (cdr exp))))
+		 (val (scheme->pobject expr (location (cddr exp)))))))
+	  ((set! . ?L) (scheme2js-error #f "bad set!-form" exp exp))
 	  ((let ?bindings . ?body) (let-form->pobject bindings body 'let))
 	  ((letrec ?bindings . ?body) (let-form->pobject bindings body 'letrec))
-	  ((begin . ?body) (new-node Begin (scheme->pobject-map body)))
+	  ((begin . ?body) (instantiate::Begin (exprs (scheme->pobject-map body))))
 	  ((define ?var ?expr)
-	   (new-node Define
-		(attach-location (new-node Decl var) (location (cdr exp)))
-		(scheme->pobject expr (location (cddr exp)))))
+	   (instantiate::Define
+	      (lvalue (attach-location (instantiate::Ref
+					(id var))
+				     (location (cdr exp))))
+	      (val (scheme->pobject expr (location (cddr exp))))))
 	  ((pragma ?str)
-	   (new-node Pragma str))
-	  ;; 'part' is obsolete.
-	  ((part ?expr (and ?fun (? procedure?)))
-	   (new-node Module
-		     (scheme->pobject expr (location (cdr exp)))
-		     fun))
-	  ((module ?expr (and ?fun (? procedure?)))
-	   (new-node Module
-		     (scheme->pobject expr (location (cdr exp)))
-		     fun))
+	   (instantiate::Pragma (str str)))
 	  ((runtime-ref ?id (? procedure?))
-	   (new-node Runtime-Var-ref id))
+	   (instantiate::Runtime-Ref
+	      (id id)))
+	  ((@ ?sym ?qualifier)
+	   (instantiate::Ref (id (cdr exp))))
 	  ((?operator . ?operands)
 	   (if (and (config 'return)
 		    (eq? operator 'return!))
 	       (if (or (null? operands)
 		       (not (null? (cdr operands))))
-		   (error #f "bad return! form: " exp)
-		   (new-node Return (scheme->pobject (car operands)
-						     (location operands))))
-	       (new-node Call
-			 (scheme->pobject operator (location exp))
-			 (scheme->pobject-map operands))))))
+		   (scheme2js-error #f "bad return! form: " exp exp)
+		   (instantiate::Return
+		      (val (scheme->pobject (car operands)
+					    (location operands)))))
+	       (instantiate::Call
+		  (operator (scheme->pobject operator (location exp)))
+		  (operands (scheme->pobject-map operands)))))))
       ((eq? exp #unspecified)
-	(new-node Const #unspecified))
+	(instantiate::Const (value #unspecified)))
        ;; unquoted symbols must be var-refs
       ((symbol? exp)
-       (new-node Var-ref exp))
+       (instantiate::Ref
+	  (id exp)))
       ((vector? exp)
-       (error #f "vectors must be quoted" exp))
+       (scheme2js-error #f "vectors must be quoted" exp exp))
       (else
-       (new-node Const exp))))
+       (instantiate::Const (value exp)))))
 
 (define (scheme->pobject exp loc)
    (attach-location (scheme->pobject-no-loc exp) loc))

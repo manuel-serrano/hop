@@ -11,10 +11,16 @@ parsing URLs.
 
   (url-encode url)
   (url-parse url)
+  (make-hop-url-name abspath)
+
+=== Server & Client ===
+
+  (dirname path)
+  (basename path)
 
 == Examples ==
 
-<example>url-</example>
+<example>url-, dirname, basename</example>
 
 == Server Definitions ==
 <server>
@@ -72,6 +78,67 @@ value composed of:
      (url-parse "https://foo:bar@nowhere.org:4567/tmp/")
      (list proto uinfo host port path)))
 </function> 
+
+=== ++(make-hop-url-name abspath) ===
+<function> make-hop-url-name
+
+<arguments>
+^  arguments  ^   type          ^  short description             ^
+| abspath     |  string         | a path.                       |
+</arguments>
+
+The function ++make-hop-url-name++ builds a complete URL as used in a HOP
+service. The function ++make-hop-url-name++ prefixes the ++abspath++ argument
+with the common prefix used by all HOP services, generally the prefix ++/hop++.
+</function>
+
+</server>
+
+== Server & Client Definitions ==
+<server>
+<client>
+=== ++(basename abspath) ===
+<function> basename
+
+<arguments>
+^  arguments  ^   type          ^  short description             ^
+| abspath     |  string         | a path.                       |
+</arguments>
+
+Returns a copy of ++abspath++ where the longest prefix ending in ++/++ is
+deleted if any existed.
+</function>
+
+=== ++(dirname abspath) ===
+<function> dirname
+
+<arguments>
+^  arguments  ^   type          ^  short description             ^
+| abspath     |  string         | a path.                       |
+</arguments>
+
+Returns a new string which is the directory component of ++string++.
+For instance:
+
+  (dirname "abc/def/ghi") 
+,(begin "&#8658;") 
+"abc/def"
+
+  (dirname "abc") 
+,(begin "&#8658;")  
+"." 
+
+  (dirname "abc/") 
+,(begin "&#8658;") 
+"abc"
+
+  (dirname "/abc") 
+,(begin "&#8658;") 
+"/"
+
+
+</function>
+</client>
 </server>
 
 == See also ==

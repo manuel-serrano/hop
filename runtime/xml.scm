@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/xml.scm                         */
+;*    serrano/prgm/project/hop/2.0.x/runtime/xml.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Nov 29 12:21:41 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Thu Apr 16 08:54:18 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_xml
 
-   (library web)
+   (library  web)
    
    (include "param.sch"
 	    "xml.sch")
@@ -24,8 +24,9 @@
 	    __hop_misc
 	    __hop_param
 	    __hop_configure
-	    __hop_css)
-   
+	    __hop_css
+	    __hop_clientc)
+
    (export  (class xml-backend
 	      (id::symbol read-only)
 	      (mime-type::bstring read-only)
@@ -33,14 +34,19 @@
 	      (header-format::bstring read-only)
 	      (html-attributes::pair-nil read-only (default '()))
 	      (no-end-tags-elements::pair-nil read-only (default '()))
-	      (script-start (default #f))
-	      (script-stop (default #f))
+	      (cdata-start (default #f))
+	      (cdata-stop (default #f))
+	      (css-start (default #f))
+	      (css-stop (default #f))
 	      (meta-format::bstring read-only)
 	      (abbrev-emptyp::bool (default #f)))
 
 	    (class xml
 	       (%xml-constructor))
 
+	    (class xml-verbatim
+	       (body::string read-only))
+	    
 	    (class css::xml)
 	    
 	    (class xml-if::xml
@@ -67,11 +73,16 @@
 
 	    (class xml-empty-element::xml-element)
 
-	    (class xml-script::xml-element)
+	    (class xml-cdata::xml-element)
 	    
 	    (class xml-tilde::xml
 	       (body read-only)
-	       (parent (default #unspecified)))
+	       (parent (default #unspecified))
+	       (src read-only (default #f))
+	       (%js-expression (default #f))
+	       (%js-statement (default #f))
+	       (%js-return (default #f))
+	       (%js-attribute (default #f)))
 
 	    (class xml-meta::xml-markup)
 
@@ -98,7 +109,7 @@
 
  	    (generic xml-write ::obj ::output-port ::xml-backend)
 	    (generic xml-write-attribute ::obj ::obj ::output-port)
-	    (generic xml-write-initializer ::obj ::output-port)
+	    (generic xml-write-expression ::obj ::output-port)
 	    (xml-write-attributes ::pair-nil ::output-port)
 
 	    (xml->string ::obj ::xml-backend)
@@ -106,14 +117,10 @@
 	    (string->html ::bstring)
 	    (string->xml ::bstring)
 
-	    (string->tilde::xml-tilde ::bstring)
-	    (tilde->string::bstring ::xml-tilde)
-	    (tilde-compose::xml-tilde ::xml-tilde ::xml-tilde)
-	    (tilde-make-thunk::xml-tilde ::xml-tilde)
-	    (xml-write-tilde-as-expression ::xml-tilde ::output-port)
+	    (xml-tilde->statement::bstring ::xml-tilde)
+	    (xml-tilde->expression::bstring ::xml-tilde)
+	    (xml-tilde->return::bstring ::xml-tilde)
 
-	    (img-base64-encode::bstring ::bstring)
-	    
 	    (<A> . ::obj)
 	    (<ABBR> . ::obj)
 	    (<ACRONYM> . ::obj)
@@ -159,8 +166,6 @@
 	    (<HR> . ::obj)
 	    (<I> . ::obj)
 	    (<IFRAME> . ::obj)
-	    (<IMG> . ::obj)
-	    (<INPUT> . ::obj)
 	    (<INS> . ::obj)
 	    (<ISINDEX> . ::obj)
 	    (<KBD> . ::obj)
@@ -188,7 +193,6 @@
 	    (<SPAN> . ::obj)
 	    (<STRIKE> . ::obj)
 	    (<STRONG> . ::obj)
-	    (<STYLE> . ::obj)
 	    (<SUB> . ::obj)
 	    (<SUP> . ::obj)
 	    (<TABLE> . ::obj)
@@ -205,7 +209,7 @@
 	    (<UL> . ::obj)
 	    (<VAR> . ::obj)
 
-	    (<TILDE> ::obj)
+	    (<TILDE> ::obj #!key src)
 	    (<DELAY> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -239,7 +243,8 @@
 ;*    hop-xhtml-xmlns ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-xhtml-xmlns
-   '((xmlns . "http://www.w3.org/1999/xhtml"))
+   '((xmlns . "http://www.w3.org/1999/xhtml")
+     (xmlns:svg . "http://www.w3.org/2000/svg"))
    (lambda (v)
       (if (every? (lambda (x)
 		     (and (pair? x) (symbol? (car x)) (string? (cdr x))))
@@ -254,12 +259,12 @@
    (instantiate::xml-backend
       (id 'html-4.01)
       (mime-type "text/html")
-      (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Strict//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n")
+      (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Strict//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">")
       (html-attributes '())
       (header-format "")
       (no-end-tags-elements '(link))
       ;; the meta-format contains the closing >
-      (meta-format "content=\"~a; charset=~a\">")))
+      (meta-format " content=\"~a; charset=~a\">")))
 
 ;*---------------------------------------------------------------------*/
 ;*    *xhtml-backend* ...                                              */
@@ -268,15 +273,16 @@
    (instantiate::xml-backend
       (id 'xhtml-1.0)
       (mime-type "application/xhtml+xml")
-      (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">")
+;*       (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">") */
+      (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN\" \"http://www.w3.org/2002/04/xhtml-math-svg/xhtml-math-svg.dtd\" [<!ENTITY nbsp \"&#160;\">]>")
       (html-attributes (hop-xhtml-xmlns))
-      (header-format "<?xml version=\"1.0\" encoding=\"~a\"?>")
+      (header-format "<?xml version=\"1.0\" encoding=\"~a\"?>\n")
       (no-end-tags-elements '())
       ;; XHTML scripts have to be protected
-      (script-start "\n<![CDATA[\n")
-      (script-stop "]]>\n")
+      (cdata-start "\n<![CDATA[\n")
+      (cdata-stop "]]>\n")
       ;; the meta-format contains the closing />
-      (meta-format "/>")))
+      (meta-format " content=\"~a; charset=~a\"/>")))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-xml-backend ...                                              */
@@ -463,6 +469,13 @@
        (error 'xml-write "Illegal xml object" obj))))
 
 ;*---------------------------------------------------------------------*/
+;*    xml-write ::xml-verbatim ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::xml-verbatim p backend)
+   (with-access::xml-verbatim obj (body)
+      (display body p)))
+
+;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-if ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-if p backend)
@@ -472,25 +485,22 @@
 	  (xml-write otherwise p backend))))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-write ::xml-script ...                                       */
+;*    xml-write ::xml-cdata ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-script p backend)
-   (with-access::xml-script obj (body attributes)
-      (with-access::xml-backend backend (script-start script-stop)
-	 (if (pair? attributes)
-	     (begin
-		(display "<script" p)
-		(xml-write-attributes attributes p)
-		(display ">" p))
-	     (begin
-		(display "<script type='" p)
-		(display (hop-javascript-mime-type) p)
-		(display "'>" p)))
-	 (when (pair? body)
-	    (when script-start (display script-start p))
+(define-method (xml-write obj::xml-cdata p backend)
+   (with-access::xml-cdata obj (markup body attributes)
+      (with-access::xml-backend backend (cdata-start cdata-stop)
+	 (display "<" p)
+	 (display markup p)
+	 (xml-write-attributes attributes p)
+	 (display ">" p)
+	 (unless (or (not body) (null? body))
+	    (when cdata-start (display cdata-start p))
 	    (xml-write body p backend)
-	    (when script-stop (display script-stop p)))
-	 (display "</script>\n" p))))
+	    (when cdata-stop (display cdata-stop p)))
+	 (display "</" p)
+	 (display markup p)
+	 (display ">\n" p))))
    
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-tilde ...                                        */
@@ -498,14 +508,14 @@
 (define-method (xml-write obj::xml-tilde p backend)
    (with-access::xml-tilde obj (body parent)
       (if (and (xml-markup? parent) (eq? (xml-markup-markup parent) 'script))
-	  (xml-write body p backend)
-	  (with-access::xml-backend backend (script-start script-stop)
+	  (xml-write ((clientc-JS-statement (hop-clientc)) body) p backend)
+	  (with-access::xml-backend backend (cdata-start cdata-stop)
 	     (display "<script type='" p)
 	     (display (hop-javascript-mime-type) p)
 	     (display "'>" p)
-	     (when script-start (display script-start p))
-	     (xml-write body p backend)
-	     (when script-stop (display script-stop p))
+	     (when cdata-start (display cdata-start p))
+	     (xml-write ((clientc-JS-statement (hop-clientc)) body) p backend)
+	     (when cdata-stop (display cdata-stop p))
 	     (display "</script>\n" p)))))
       
 ;*---------------------------------------------------------------------*/
@@ -556,9 +566,9 @@
 	 ((and (null? body) (null? attributes))
 	  (display "<" p)
 	  (display markup p)
-	  (display " id=\"" p)
+	  (display " id='" p)
 	  (display id p)
-	  (display "\"" p)
+	  (display "'" p)
 	  (if (xml-backend-abbrev-emptyp backend)
 	      (display "/>" p)
 	      (begin
@@ -568,9 +578,9 @@
 	 ((null? body)
 	  (display "<" p)
 	  (display markup p)
-	  (display " id=\"" p)
+	  (display " id='" p)
 	  (display id p)
-	  (display "\"" p)
+	  (display "'" p)
 	  (xml-write-attributes attributes p)
 	  (cond
 	     ((xml-backend-abbrev-emptyp backend)
@@ -585,9 +595,9 @@
 	 (else
 	  (display "<" p)
 	  (display markup p)
-	  (display " id=\"" p)
+	  (display " id='" p)
 	  (display id p)
-	  (display "\"" p)
+	  (display "'" p)
 	  (xml-write-attributes attributes p)
 	  (display ">" p)
 	  (for-each (lambda (b) (xml-write b p backend)) body)
@@ -603,9 +613,9 @@
    (with-access::xml-empty-element obj (markup id attributes)
       (display "<" p)
       (display markup p)
-      (display " id=\"" p)
+      (display " id='" p)
       (display id p)
-      (display "\"" p)
+      (display "'" p)
       (xml-write-attributes attributes p)
       (display "/>" p)
       (xml-write-initializations obj p backend)))
@@ -616,7 +626,6 @@
 (define-method (xml-write obj::xml-html p backend)
    (with-access::xml-backend backend (header-format doctype html-attributes)
       (fprintf p header-format (hop-charset))
-      (newline p)
       (display doctype p)
       (newline p)
       (with-access::xml-html obj (markup attributes body)
@@ -647,7 +656,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (xml-write-attribute attr::obj id p)
    ;; boolean false attribute has no value
-   (unless (eq? attr #f)
+   (when attr
       (display id p)
       ;; boolean true attribute has no value
       (display "='" p)
@@ -655,10 +664,32 @@
 	 ((eq? attr #t)
 	  (display id p))
 	 ((procedure? attr)
-	  (error 'xml "Illegal procedure argument in XML attribute" id))
+	  (if (hop-service? (procedure-attr attr))
+	      (display (hop-service-path (procedure-attr attr)) p)
+	      (error 'xml "Illegal procedure argument in XML attribute" id)))
 	 (else
 	  (display (xml-attribute-encode attr) p)))
       (display "'" p)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write-attribute ::xml-tilde ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write-attribute attr::xml-tilde id p)
+   ;; this case should no longer appears since service are now
+   ;; nested inside functions
+   (display id p)
+   (display "='" p)
+   (display (xml-tilde->attribute attr) p)
+   (display "'" p))
+   
+;*---------------------------------------------------------------------*/
+;*    xml-write-attribute ::hop-service ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write-attribute attr::hop-service id p)
+   (display id p)
+   (display "='" p)
+   (display (hop-service-path attr) p)
+   (display "'" p))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-initializations ...                                    */
@@ -666,7 +697,7 @@
 (define (xml-write-initializations obj p backend)
    (with-access::xml-element obj (id initializations)
       (when (pair? initializations)
-	 (with-access::xml-backend backend (script-start script-stop)
+	 (with-access::xml-backend backend (cdata-start cdata-stop)
 	    (display "<script type='" p)
 	    (display (hop-javascript-mime-type) p)
 	    (display "'>" p)
@@ -676,12 +707,12 @@
 	       (display " = document.getElementById( \"" p)
 	       (display id p)
 	       (display "\" );" p)
-	       (when script-start (display script-start p))
+	       (when cdata-start (display cdata-start p))
 	       (for-each (lambda (a)
 			    (xml-write-initialization (cdr a) (car a) var p)
 			    (newline p))
 			 initializations)
-	       (when script-stop (display script-stop p))
+	       (when cdata-stop (display cdata-stop p))
 	       (display "</script>\n" p))))))
 
 ;*---------------------------------------------------------------------*/
@@ -695,7 +726,7 @@
 	  (display "[\"" p)
 	  (display (if (eq? id 'class) "className" id) p)
 	  (display "\"]=" p)
-	  (xml-write-initializer tilde p)
+	  (xml-write-expression tilde p)
 	  (display ";" p))))
 
 ;*---------------------------------------------------------------------*/
@@ -708,25 +739,9 @@
    (display "hop_style_attribute_set(" p)
    (display var p)
    (display "," p)
-   (xml-write-initializer tilde p)
+   (xml-write-expression tilde p)
    (display ");" p))
    
-;*---------------------------------------------------------------------*/
-;*    xml-write-attribute ::xml-tilde ...                              */
-;*---------------------------------------------------------------------*/
-(define-method (xml-write-attribute attr::xml-tilde id p)
-   (with-access::xml-tilde attr (body)
-      (xml-write-attribute body id p)))
-   
-;*---------------------------------------------------------------------*/
-;*    xml-write-attribute ::hop-service ...                            */
-;*---------------------------------------------------------------------*/
-(define-method (xml-write-attribute attr::hop-service id p)
-   (display id p)
-   (display "='" p)
-   (display (hop-service-path attr) p)
-   (display "'" p))
-
 ;*---------------------------------------------------------------------*/
 ;*    xml->string ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -784,6 +799,53 @@
 		     (eval e))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    xml-tilde->statement ...                                         */
+;*---------------------------------------------------------------------*/
+(define (xml-tilde->statement obj)
+   (with-access::xml-tilde obj (%js-statement)
+      (if (string? %js-statement)
+	  %js-statement
+	  (let* ((body (xml-tilde-body obj))
+		 (js-stmt ((clientc-JS-statement (hop-clientc)) body)))
+	     (set! %js-statement js-stmt)
+	     js-stmt))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-tilde->expression ...                                        */
+;*---------------------------------------------------------------------*/
+(define (xml-tilde->expression obj)
+   (with-access::xml-tilde obj (%js-expression)
+      (if (string? %js-expression)
+	  %js-expression
+	  (let* ((body (xml-tilde-body obj))
+		 (js-expr ((clientc-JS-expression (hop-clientc)) body)))
+	     (set! %js-expression js-expr)
+	     js-expr))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-tilde->return ...                                            */
+;*---------------------------------------------------------------------*/
+(define (xml-tilde->return obj)
+   (with-access::xml-tilde obj (%js-return)
+      (if (string? %js-return)
+	  %js-return
+	  (let* ((body (xml-tilde-body obj))
+		 (js-ret ((clientc-JS-return (hop-clientc)) body)))
+	     (set! %js-return js-ret)
+	     js-ret))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-tilde->attribute ...                                         */
+;*---------------------------------------------------------------------*/
+(define (xml-tilde->attribute obj)
+   (with-access::xml-tilde obj (%js-attribute)
+      (if (string? %js-attribute)
+	  %js-attribute
+	  (let ((js-attr (xml-attribute-encode (xml-tilde->statement obj))))
+	     (set! %js-attribute js-attr)
+	     js-attr))))
+
+;*---------------------------------------------------------------------*/
 ;*    HTML 4.01 elements ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-xml-element <A>)
@@ -819,7 +881,6 @@
 (define-xml-element <EMBED>)
 (define-xml-element <FIELDSET>)
 (define-xml-element <FONT>)
-(define-xml-element <FORM>)
 (define-xml xml-empty-element #t <FRAME>)
 (define-xml-element <FRAMESET>)
 (define-xml-element <H1>)
@@ -831,7 +892,6 @@
 (define-xml xml-empty-element #t <HR>)
 (define-xml-element <I>)
 (define-xml-element <IFRAME>)
-(define-xml xml-empty-element #t <INPUT>)
 (define-xml-element <INS>)
 (define-xml-element <ISINDEX>)
 (define-xml-element <KBD>)
@@ -859,7 +919,6 @@
 (define-xml-element <SPAN>)
 (define-xml-element <STRIKE>)
 (define-xml-element <STRONG>)
-(define-xml-markup <STYLE>)
 (define-xml-element <SUB>)
 (define-xml-element <SUP>)
 (define-xml-element <TABLE>)
@@ -877,11 +936,51 @@
 (define-xml-element <VAR>)
 
 ;*---------------------------------------------------------------------*/
+;*    <FORM> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <FORM> ((id #unspecified string)
+			     (onsubmit #f)
+			     (onreset #f)
+			     (action #f)
+			     (attrs)
+			     body)
+   (let* ((attrs (cond
+		    ((xml-tilde? onsubmit)
+		     (cons (cons 'onsubmit (xml-tilde->return onsubmit)) attrs))
+		    (onsubmit
+		     (cons (cons 'onsubmit onsubmit) attrs))
+		    (else
+		     attrs)))
+	  (attrs (cond
+		    ((xml-tilde? onreset)
+		     (cons (cons 'onreset (xml-tilde->return onreset)) attrs))
+		    (onreset
+		     (cons (cons 'onreset onreset) attrs))
+		    (else
+		     attrs)))
+	  (attrs (cond
+		    ((xml-tilde? action)
+		     (cons (cons 'action
+				 (format "javascript: ~a"
+					 (xml-tilde->statement action)))
+			   attrs))
+		    (action
+		     (cons (cons 'action action) attrs))
+		    (else
+		     attrs))))
+      (instantiate::xml-element
+	 (markup 'form)
+	 (id (xml-make-id id 'FORM))
+	 (attributes attrs)
+	 (body body))))
+
+;*---------------------------------------------------------------------*/
 ;*    <TILDE> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (<TILDE> body)
+(define (<TILDE> body #!key src)
    (instantiate::xml-tilde
-      (body body)))
+      (body body)
+      (src src)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <DELAY> ...                                                      */
@@ -897,146 +996,25 @@
        (error '<DELAY> "Illegal delay's thunk" (car body))))
 
 ;*---------------------------------------------------------------------*/
-;*    img-base64-encode ...                                            */
+;*    xml-write-expression ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (img-base64-encode src)
-   (if (file-exists? src)
-       (let ((p (open-input-file src)))
-	  (if (input-port? p)
-	      (unwind-protect
-		 (format "data:~a;base64,~a"
-			 (mime-type src (format "image/~a" (suffix src)))
-			 (base64-encode (read-string p) -1))
-		 (close-input-port p))
-	      src))
-       src))
-
-;*---------------------------------------------------------------------*/
-;*    onerror-img ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (onerror-img attributes src)
-   (let* ((val (format "if( !this.onhoperror ) { this.onhoperror = true; hop_deinline_image(this, ~s) }" src))
-	  (onerror (when (pair? attributes) (assq 'onerror attributes)))
-	  (oval (when (pair? onerror) (cdr onerror))))
-      (cond
-	 ((string? oval)
-	  (set-cdr! onerror (string-append oval "; " val))
-	  attributes)
-	 ((xml-tilde? oval)
-	  (let ((tilde (string->tilde val)))
-	     (set-cdr! onerror (tilde-compose oval tilde)))
-	  attributes)
-	 (else
-	  (cons `(onerror . ,val) attributes)))))
-
-;*---------------------------------------------------------------------*/
-;*    IMG ...                                                          */
-;*---------------------------------------------------------------------*/
-(define-xml-compound <IMG> ((id #unspecified string)
-			    (inline #f boolean)
-			    (alt #f)
-			    (src #unspecified)
-			    (attributes)
-			    body)
-   (cond
-      ((xml-tilde? src)
-       (instantiate::xml-empty-element
-	  (markup 'img)
-	  (id (xml-make-id id 'img))
-	  (attributes (cons* `(alt . ,alt) attributes))
-	  (initializations (list (cons 'src src)))
-	  (body '())))
-      ((string? src)
-       (let ((src (if inline (img-base64-encode src) src))
-	     (attrs (if (eq? inline #t)
-			(onerror-img attributes src)
-			attributes)))
-	  (instantiate::xml-empty-element
-	     (markup 'img)
-	     (id (xml-make-id id 'img))
-	     (attributes (cons* `(src . ,src)
-				`(alt . ,(or alt src))
-				attrs))
-	     (body '()))))
-      (else
-       (error '<IMG> "Illegal image src" src))))
-
-;*---------------------------------------------------------------------*/
-;*    string->tilde ...                                                */
-;*---------------------------------------------------------------------*/
-(define (string->tilde string)
-   (instantiate::xml-tilde
-      (body string)))
-
-;*---------------------------------------------------------------------*/
-;*    tilde->string ...                                                */
-;*---------------------------------------------------------------------*/
-(define (tilde->string t)
-   (with-access::xml-tilde t (body)
-      body))
-
-;*---------------------------------------------------------------------*/
-;*    tilde-compose ...                                                */
-;*---------------------------------------------------------------------*/
-(define (tilde-compose t1 t2)
-   (instantiate::xml-tilde
-      (body (string-append (xml-tilde-body t1) "\n" (xml-tilde-body t2)))))
-
-;*---------------------------------------------------------------------*/
-;*    tilde-make-thunk ...                                             */
-;*---------------------------------------------------------------------*/
-(define (tilde-make-thunk t)
-   (instantiate::xml-tilde
-      (body (string-append "function() { return " (xml-tilde-body t) "}"))))
-
-;*---------------------------------------------------------------------*/
-;*    xml-write-tilde-as-expression ...                                */
-;*---------------------------------------------------------------------*/
-(define (xml-write-tilde-as-expression t::xml-tilde p::output-port)
-   (let* ((t (tilde->string t))
-	  (l (string-length t)))
-      (let loop ((i (-fx l 1)))
-	 (if (<fx i 0)
-	     ;; the tilde expression is empty!
-	     #unspecified
-	     (let ((c (string-ref t i)))
-		(case c
-		   ((#\Newline #\Return #\Space #\Tab)
-		    ;; skip the trailing space and newline
-		    (loop (-fx i 1)))
-		   ((#\;)
-		    ;; a statement
-		    (display "(function(){ return " p)
-		    (display t p)
-		    (display "})()" p))
-		   ((#\})
-		    ;; a block
-		    (display "(function()" p)
-		    (display t p)
-		    (display ")()" p))
-		   (else
-		    ;; a regular expression
-		    (display t p))))))))
-      
-;*---------------------------------------------------------------------*/
-;*    xml-write-initializer ...                                        */
-;*---------------------------------------------------------------------*/
-(define-generic (xml-write-initializer obj p)
+(define-generic (xml-write-expression obj p)
    (cond
       ((string? obj)
-       (write obj p))
+       (display "'" p)
+       (display (string-escape obj #\') p)
+       (display "'" p))
       ((eq? obj #t)
        (display "true" p))
       ((eq? obj #f)
        (display "false" p))
+      ((eq? obj #unspecified)
+       (display "undefined" p))
       (else
        (display obj p))))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-write-initializer ::xml-tilde ...                            */
+;*    xml-write-expression ::xml-tilde ...                             */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write-initializer obj::xml-tilde p)
-   (display "(function(){return " p)
-   (display (xml-attribute-encode (xml-tilde-body obj)) p)
-   (display "})()" p))
-   
+(define-method (xml-write-expression obj::xml-tilde p)
+   (display (xml-tilde->expression obj) p))

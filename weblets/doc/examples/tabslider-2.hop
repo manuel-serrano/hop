@@ -1,0 +1,22 @@
+;; A //Dynamic// tabslider
+(<HTML>
+   (<HEAD> :include "hop-tabslider")
+   (<BODY>
+      (<DIV>
+	 (<BUTTON> :onclick ~(tabslider-select "tabslider2" "tabslider2.1")
+	    "Select pad1")
+	 (<BUTTON> :onclick ~(tabslider-select "tabslider2" "tabslider2.2")
+	    "Select pad2"))
+      (<TABSLIDER> :id "tabslider2"
+	 :onchange ~(alert "Tabslider changed: " this)
+	 :height "200px"
+	 (<TSPAN> :id "tabslider2.1"
+	    :onselect ~(alert "pad1 selected")
+	    (<TSHEAD> "Creation date")
+	    (date))
+	 (<TSPAN> :id "tabslider2.2"
+	    :onselect ~(alert "pad2 selected")
+	    (<TSHEAD> "Server date")
+	    (<DELAY>
+	       (lambda ()
+		  (date)))))))

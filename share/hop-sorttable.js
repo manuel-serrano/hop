@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-sorttable.js                  */
+/*    serrano/prgm/project/hop/1.9.x/share/hop-sorttable.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 10 14:25:42 2004                          */
-/*    Last change :  Thu Oct 12 16:58:35 2006 (serrano)                */
-/*    Copyright   :  2004-06 Manuel Serrano                            */
+/*    Last change :  Mon Mar 31 11:17:39 2008 (serrano)                */
+/*    Copyright   :  2004-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Sortable tables                                                  */
 /*    -------------------------------------------------------------    */
@@ -42,7 +42,7 @@ function make_sorttable( table ) {
       var cell = firstRow.cells[ i ];
       var txt = hop_sorttable_getInnerText( cell );
       
-      cell.innerHTML = '<a href="#" class="hop-sortheader" onclick="hop_sorttable_sort(this);return false;">'+ txt +'<span class="hop-sortarrow">&nbsp;</span></a>';
+      cell.innerHTML = '<a href="#" class="hop-sortheader" onclick="hop_sorttable_sort(this);return false;">'+ txt +'<span class="hop-sortarrow"> </span></a>';
    }
 }
 
@@ -111,7 +111,7 @@ function hop_sorttable_sort( lnk ) {
 
    // Remove all the arrows
    if( table.arrow != undefined ) {
-      table.arrow.innerHTML = "";
+      table.arrow.innerHTML = " ";
       table.arrow = undefined;
    }
    

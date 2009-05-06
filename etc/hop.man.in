@@ -1,0 +1,59 @@
+.TH HOP 1 "Version @RELEASE@"
+.de BP
+.sp
+.ti -.2i
+..
+.SH NAME
+hop @RELEASE@ \- `an Everyware Development Kit'
+
+.SH SYNOPSIS
+.B hop
+[ options ]
+[ \fIinput\fR ]
+
+.SH DESCRIPTION
+.PP
+\fBHop\fR is a development kit for diffuse (or ubiquitous) Web 
+applications. It contains a Web server (that is started by invoking the 
+\fBhop\fR command, a server-side native compiler, a client-side compiler, 
+and one server-side interpreter. The client-side compiler and the server-side
+interpreter are embedded inside the Web server. The native compiler
+is an extension of the \fBBigloo\fR compiler.
+
+The complete \fBHop\fR documentation is available as a Web application. 
+To access it, starts the server and browse the url 
+
+   http://localhost:8080/hop/doc
+
+.SH OPTIONS
+
+.TP 10
+options
+Many options are available. Type `hop -help' to print them.
+.TP 10
+-p port 
+Selects the port the server listened connections to.
+.TP 10
+-v
+Increases verbosity.
+.TP 10
+.I input
+If an input file is provided, \fBHop\fR loads it at 
+boot-time. The purpose of this option is let end users automatically 
+loads programs in the server.
+
+.SH CONFIGURATION FILE
+Each \fBHop\fR's user can use a special configuration file named
+`~/.config/hoprc.hop' (or ~/Library/Preferences/hop/hoprc.hop under
+MacOsX). This file makes it possible to modify the 
+behaviour of the server. This file is a regular Hop program file.
+See the documentation for details.
+
+.SH "SEE ALSO"
+hopsh(1), hopreplay(1), bigloo(1), bglafile(1)
+
+.SH AUTHOR
+Manuel SERRANO,
+Manuel.Serrano@inria.fr
+
+

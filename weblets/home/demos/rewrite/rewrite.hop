@@ -8,8 +8,7 @@
       (<HTML>
 	 (<HEAD>
 	    :title "Home rewrite demo"
-	    :base (service-base-url home/demos/rewrite (current-request))
-	    :css "rewrite.hss")
+	    :css (service-resource home/demos/rewrite "rewrite.hss"))
 	 (<BODY>
 	    (<H1> "Rewrite the following URL")
 	    url
@@ -26,11 +25,16 @@
 				      $url.value))))))
 
 (define-service (home/demos/rewrite/doit url old new)
-   (with-url url
-      (lambda (h)
-	 (pregexp-replace*
-	  old h
-	  (format "<span style='color: red'>~a</span>" new)))))
+   (with-handler
+      (lambda (e)
+	 (http-remote-error e))
+      (with-url url
+	 (lambda (h)
+	    (instantiate::http-response-string
+	       (content-type "text/html")
+	       (body (pregexp-replace*
+		      old h
+		      (format "<span style='color: red'>~a</span>" new))))))))
 
 	       
 	       

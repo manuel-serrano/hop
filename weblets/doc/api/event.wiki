@@ -92,9 +92,6 @@ The value associated to a server event can be obtained using the
 event. The **bubbling** phase describe in the previous section also
 applies to server events.
 
-~~ When the server closes the connection with a client, all server event
-listeners are executed and their associated value is  ++#f++.
-
 ~~ The document can also receive server events. The expression:
 
   (add-event-listener! document "server" (lambda (evt) (alert evt.name)))
@@ -105,6 +102,9 @@ whose listener has set the ++capture++ flag to ++#t++.
 
 ~~ When a client is ready to received server events, it triggers a
 ++serverready++ event that can be intercepted by the root document.
+
+~~ When a client is disconnected from a server, it triggers a
+++serverclose++ event that can be intercepted by the root document.
 
 == Server ==
 <server>
@@ -183,7 +183,12 @@ These functions respectively register and unregister event handlers.
     * ++location++: current location changes.
     * ++server++: the client receives a server event.
     * ++serverready++: the server is ready to send events.
+    * ++serverclose++: the server closed its connection.
     * ++timeout++: an event raised at regular time interval.
+    * ++iconify++: an event raised when an inner window is about to be iconified.
+    * ++maximize++: an event raised when an inner window is about to be maximized.
+    * ++close++: an event raised when an inner window is about to be closed.
+    * ++raise++: an event raised when an inner window is about to be raised.
 
   * The third element is the event handler. It is a procedure of one argument.
  When the event occurs on a node, the node's handler is called passing an 

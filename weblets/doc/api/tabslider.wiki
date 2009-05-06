@@ -14,7 +14,7 @@ client side programming. They are only available on server side.])
 
   (<TABSLIDER> args ...)
   (<TSPAN> args ...)
-  (<TSPHEAD> args ...)
+  (<TSHEAD> args ...)
 
 === Requirements ===
 
@@ -41,7 +41,9 @@ using //tabsliders// must include in their header, the following statement:
 | :id          |  string            |  //random//  | element identifier.     |
 | :width       |  dimension         |              | the width.              |
 | :height      |  dimension         |              | the height.             |
+| :speed       |  integer           |    ++20++    | animation speed (0=no anim).  |            |
 | :index       |  integer           |    ++0++     | the selected tab.       |
+| :onchange    |  function          |      -       | a function to invoke on pad selection.  |
 | history      |  obj               |     _        | enables history.        |
 | body         |  ++<TSPAN>++ list  |              | the list of items.      |
 </arguments>
@@ -60,6 +62,7 @@ if it is not ++#f++ and an ++:id++ value is provided.
 <arguments>
 ^  attributes  ^   type      ^   default    ^  short description           ^
 | :id          |  string     |  //random//  | element identifier.          |
+| :onselect    |  function   |      -       | a function to invoke on pad selection.  |
 | body         | HTML tree   |              | the body.                    |
 </arguments>
 
@@ -80,6 +83,30 @@ then the item is re-computed each time it is re-open.
 </markup>
 </server>
 
+== Client Definitions ==
+<client>
+
+=== ++(tabslider-select tabslider pan [history #t])++ ===
+<procedure> tabslider-select
+
+<arguments>
+^  arguments  ^   type                 ^  short description     ^
+| tabslider   |  tabslider or string   | the tabslider.         |
+| pan         |  pan or string         | the pan.               |
+| history     |  a boolean             | enables history.       |
+| callback    |  #f or a procedure     | user callback.         |
+</arguments>
+
+This function selects a //pan// in a //tabslider//.
+
+  * The ++history++ argument, when true, records the selection in the
+browser history.
+
+
+</procedure>
+</client>
+
+
 == Style ==
 <style>
 
@@ -91,6 +118,6 @@ This section describes the various CSS elements used to configure
 </style>
 
 == See also ==
-<see-also><TABSLIDER></see-also>
+<see-also><TABSLIDER>, tabslider-select</see-also>
 
 </doc>

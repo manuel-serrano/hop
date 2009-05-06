@@ -1,19 +1,13 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-tree.js                       */
+/*    serrano/prgm/project/hop/1.11.x/share/hop-tree.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Tue Nov 13 14:07:49 2007 (serrano)                */
-/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    Last change :  Wed Jan 21 15:52:03 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
 /*=====================================================================*/
-
-/*---------------------------------------------------------------------*/
-/*    Autoconfiguration                                                */
-/*---------------------------------------------------------------------*/
-var hop_tree_correct_browserp =
-   hop_mozillap() && !hop_msiep() && !hop_khtmlp() && !hop_operap();
 
 /*---------------------------------------------------------------------*/
 /*    hop tree default connection icons                                */
@@ -36,7 +30,7 @@ var hop_tree_default_open_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA
 var hop_tree_default_close_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH1wYSBSoOOKfPRwAAAJRJREFUOMvFUzkShDAMEwwfMl8i3b5nO/Meuvg5KUUBuwMkZpKlWM1kcliSVcTAQ3Sfgyp4LYZw5rhQBVNKJOO+lKRyN+VtAlVwHCeXEONcfA9hSzYAgMjLNchrEWYLgJkAuuFYqIKdr32TyADILwZyEDcluHZuTiAFcVUCr7Pl1L5K5Ii//8DsnZuU9ptZ4NNZ+h9WRsVBhT94M5oAAAAASUVORK5CYII=";
 var hop_tree_default_device_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH1wYSBSsEwWkXGAAAAJRJREFUOMvtkrENwyAURB8SBS1lxvAKtB6HNWAExoCSNTxCSijpSEWU2IkclCpSrrrmnfTvH/wlhrHW9lnYey/kgI0xU3DOGaBLa213zk3BIYS7lwDbtlFrfQuUUlgvKySIS6S19hyglKKUgtb6JQwQrxGWY7jc3XSqfVcSoLXGpz2klI4Bj6VMvBBAjB30bzb047oBYBc056hSeS0AAAAASUVORK5CYII=";
 
-if( hop_msiep() ) {
+if( !hop_config.inline_image ) {
    /* IE does not support inline images! */
    var icon_dir = hop_share_directory() + "/icons/hop-tree/";
    
@@ -61,7 +55,7 @@ function hop_tree_root( tree ) {
    var aux = tree;
    var root = tree;
 
-   while( aux && aux.className == "hop-tree" ) {
+   while( aux && aux.className === "hop-tree" ) {
       root = aux;
       aux = root.parent;
    }
@@ -71,6 +65,7 @@ function hop_tree_root( tree ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_close ...                                               */
 /*---------------------------------------------------------------------*/
+/*** META ((export tree-close)) */
 function hop_tree_close( tree ) {
    if( tree.openp ) {
       tree.openp = false;
@@ -93,16 +88,19 @@ function hop_tree_close( tree ) {
       var i;
 
       for( i = 0; i < children.length; i++ ) {
-	 if( children[ i ].className == "hop-tree" ) {
+	 if( children[ i ].className === "hop-tree" ) {
 	    hop_tree_close( children[ i ] );
 	 }
       }
+      
+      if( tree.onclose ) tree.onclose();
    }
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_tree_open ...                                                */
 /*---------------------------------------------------------------------*/
+/*** META ((export tree-open)) */
 function hop_tree_open( tree ) {
    if( tree.proc ) hop_tree_populate( tree );
    
@@ -118,6 +116,8 @@ function hop_tree_open( tree ) {
       tree.iconerror = tree.iconopenerr;
       tree.img_folder.src = tree.iconopen;
    }
+
+   if( tree.onopen ) tree.onopen();
       
    node_style_set( tree.body, "display", "block" );
 }
@@ -126,6 +126,7 @@ function hop_tree_open( tree ) {
 /*    hop_tree_populate ...                                            */
 /*---------------------------------------------------------------------*/
 function hop_tree_populate( tree ) {
+   
    var success = function( html ) {
       tree.populated = true;
 
@@ -140,7 +141,18 @@ function hop_tree_populate( tree ) {
       }
    }
    
-   return hop( tree.proc(), success );
+   var failure = function( xhr ) {
+      try {
+	 var proc = eval( xhr.responseText );
+	 if( proc ) proc( function() { return hop_tree_populate( tree ) } );
+      } catch( e ) {
+	 hop_error( "*** Hop Tree, handler error failure: " + tree +
+		    ": " + e + " -- " +
+		    hop_responsetext_error( xhr ) );
+      }
+   }
+
+   return hop( tree.proc(), success, failure );
 }
 
 /*---------------------------------------------------------------------*/
@@ -170,7 +182,7 @@ function hop_tree_children_update( node, level, isrc ) {
 
       img.src = isrc;
       
-      if( c.className == "hop-tree" ) {
+      if( c.className === "hop-tree" ) {
 	 hop_tree_children_update( c, level, isrc );
       }
    }
@@ -186,9 +198,7 @@ function hop_tree_add( tree, child ) {
       var c = children[ children.length - 1 ];
       c.last = false;
 
-      if( c.className == "hop-tree" ) {
-	 c.img_join.src = (c.openp ? tree.iconminusbottom:tree.iconplusbottom);
-	 
+      if( c.className === "hop-tree" ) {
 	 hop_tree_children_update( c, tree.level + 1, tree.iconvline );
       } else {
 	 c.img_join.src = tree.iconjoinbottom;
@@ -210,8 +220,6 @@ function hop_push_vlines( par, row, level ) {
 
       if( par && par.visible ) {
 	 var img = document.createElement( "img" );
-
-	 td.setAttribute( "nowrap", "nowrap" );
 
 	 img.src = ((par && !par.last) ? par.iconvline : par.iconempty);
 	 img.className = "hop-tree";
@@ -248,11 +256,10 @@ function hop_tree_row_select( root, row, forcemulti ) {
 function hop_tree_row_unselect( root, row ) {
    row.className = "hop-tree-row-unselected";
    root.selection = false;
-   var i;
 
    if( root.onunselect ) root.onunselect();
       
-   for( i = 0; i < root.selections.length; i++ ) {
+   for( var i = 0; i < root.selections.length; i++ ) {
       if( root.selections[ i ] == row ) {
 	 root.selections.splice( i, 1 );
 	 break;
@@ -267,7 +274,7 @@ function hop_tree_row_set_select_all( tree, select ) {
    var root = hop_tree_root( tree );
    
    var traverse_lr = function( tree ) {
-      if( tree.className == "hop-tree-leaf" ) {
+      if( tree.className === "hop-tree-leaf" ) {
 	 if( select ) {
 	    hop_tree_row_select( root, tree.row, true );
 	 } else {
@@ -297,6 +304,9 @@ function hop_tree_row_set_select_all( tree, select ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_row_select_all ...                                      */
 /*---------------------------------------------------------------------*/
+/*** META ((export tree-select-all!)
+           (peehole (hole 1 "hop_tree_row_set_select_all(" tree ", true)")))
+*/
 function hop_tree_row_select_all( tree ) {
    hop_tree_row_set_select_all( tree, true );
 }
@@ -311,7 +321,7 @@ function hop_tree_row_toggle_selected( event, tree, row ) {
       hop_tree_reset( tree );
    }
 
-   if( row.className == "hop-tree-row-selected" ) {
+   if( row.className === "hop-tree-row-selected" ) {
       hop_tree_row_unselect( root, row );
    } else {
       hop_tree_row_select( root, row, event.shiftKey );
@@ -321,6 +331,7 @@ function hop_tree_row_toggle_selected( event, tree, row ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_row_select_next ...                                     */
 /*---------------------------------------------------------------------*/
+/*** META ((export tree-select-next!)) */
 function hop_tree_row_select_next( tree ) {
    var root = hop_tree_root( tree );
 
@@ -334,7 +345,7 @@ function hop_tree_row_select_next( tree ) {
       var row = root.selection ? root.selection : root.row;
       
       var traverse_lr = function( tree, stop ) {
-	 if( tree.className == "hop-tree-leaf" ) {
+	 if( tree.className === "hop-tree-leaf" ) {
 	    if( stop == 1 ) {
 	       hop_tree_row_select( root, tree.row, false );
 	       return -1;
@@ -367,6 +378,7 @@ function hop_tree_row_select_next( tree ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_row_select_previous ...                                 */
 /*---------------------------------------------------------------------*/
+/*** META ((export tree-select-previous!)) */
 function hop_tree_row_select_previous( tree ) {
    var root = hop_tree_root( tree );
 
@@ -380,7 +392,7 @@ function hop_tree_row_select_previous( tree ) {
       var row = root.selection ? root.selection : root.row;
       
       var traverse_rl = function( tree, stop ) {
-	 if( tree.className == "hop-tree-leaf" ) {
+	 if( tree.className === "hop-tree-leaf" ) {
 	    if( stop == 1 ) {
 	       hop_tree_row_select( root, tree.row, false );
 	       return -1;
@@ -415,7 +427,7 @@ function hop_tree_row_select_previous( tree ) {
 /*---------------------------------------------------------------------*/
 function hop_make_tree( parent, id, visible, level, proc, title,
 			openp, delayedp,
-			mu, ons, onus, value, history,
+			mu, ons, onus, ono, onc, value, history,
 			iconopen, iconopenerr,
 			iconclose, iconcloseerr,
 			icondir ) {
@@ -425,11 +437,10 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    if( iconopen == true ) {
       iconopen = hop_tree_default_open_icon;
    } else {
-      if( iconopen == 0 ) {
+      if( iconopen == undefined ) {
 	 iconopen = hop_tree_default_device_icon;
       } else {
-	 if( iconopen == -1 ) {
-	    iconopen = false;
+	 if( iconopen == false ) {
 	    iconclose = false;
 	 }
       }
@@ -439,12 +450,11 @@ function hop_make_tree( parent, id, visible, level, proc, title,
       if( iconclose == true ) {
 	 iconclose = hop_tree_default_close_icon;
       } else {
-	 if( iconclose == 0 ) {
+	 if( iconclose == undefined ) {
 	    iconclose = hop_tree_default_device_icon;
 	 } else {
-	    if( iconclose == -1 ) {
+	    if( iconclose == false ) {
 	       iconopen = false;
-	       iconclose = false;
 	    }
 	 }
       }
@@ -459,18 +469,14 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    
    /* the tree first line */
    var table = document.createElement( "table" );
-   
-   table.setAttribute( "cellpadding", 0 );
-   table.setAttribute( "cellspacing", 0 );
-   table.setAttribute( "border", 0 );
    table.className = "hop-tree";
    
    /* the body of the table */
    var tb = document.createElement( "tbody" );
    var row = document.createElement( "tr" );
-   row.id = id + "-trrow";
+   
    row.className = "hop-tree-row-unselected";
-   row.setAttribute( "align", "left" );
+   row.id = id + "-trrow";
    
    /* build the left vertical lines */
    hop_push_vlines( parent, row, level );
@@ -478,7 +484,6 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    /* the plus/minus icon */
    var td1 = document.createElement( "td" );
    td1.className = "hop-tree";
-   td1.setAttribute( "nowrap", "nowrap" );
    
    var join = document.createElement( "img" );
    join.className = "hop-tree-openclose";
@@ -504,7 +509,6 @@ function hop_make_tree( parent, id, visible, level, proc, title,
       }
    
       td2.className = "hop-tree";
-      td2.setAttribute( "nowrap", "nowrap" );
       td2.onclick = function( e ) {
 	 hop_tree_row_toggle_selected( e == undefined ? event : e, tree, row );
       }
@@ -515,7 +519,6 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    /* the title */
    var td3 = document.createElement( "td" );
    td3.className = "hop-tree-title";
-   td3.setAttribute( "nowrap", "nowrap" );
    td3.onclick = function( e ) {
       hop_tree_row_toggle_selected( e == undefined ? event : e, tree, row );
    }
@@ -585,6 +588,8 @@ function hop_make_tree( parent, id, visible, level, proc, title,
       tree.multiselect = false;
       tree.onselect = false;
       tree.onunselect = false;
+      tree.onopen = false;
+      tree.onclose = false;
    } else {
       parent.appendChild( tree );
 
@@ -596,7 +601,11 @@ function hop_make_tree( parent, id, visible, level, proc, title,
       tree.forcemulti = false;
    }
 
-   /* populate the tree is not delayed */
+   /* open/close listeneres */
+   tree.onopen = ono;
+   tree.onclose = onc;
+
+   /* populate the tree if not delayed */
    if( delayedp ) {
       /* store the populate procedure and not populate yet */
       tree.proc = proc;
@@ -614,21 +623,21 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    
    /* open the tree if required */
    if( openp ) hop_tree_open( tree );
-   
+
    return tree;
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_make_tree_leaf ...                                           */
 /*---------------------------------------------------------------------*/
-function hop_make_tree_leaf( tree, content, value, icon, iconerr ) {
+function hop_make_tree_leaf( tree, klass, content, value, icon, iconerr ) {
    var level = tree.level + 1;
    var leaf = document.createElement( "table" );
 
    leaf.setAttribute( "cellpadding", 0 );
    leaf.setAttribute( "cellspacing", 0 );
    leaf.setAttribute( "border", 0 );
-   leaf.className = "hop-tree-leaf";
+   leaf.className = "hop-tree-leaf " + klass;
 
    /* the body of the table */
    var tb = document.createElement( "tbody" );
@@ -642,7 +651,6 @@ function hop_make_tree_leaf( tree, content, value, icon, iconerr ) {
    /* space */
    var td1 = document.createElement( "td" );
    td1.className = "hop-tree";
-   td1.setAttribute( "nowrap", "nowrap" );
    
    var join = document.createElement( "img" );
    join.className = "hop-tree";
@@ -652,7 +660,7 @@ function hop_make_tree_leaf( tree, content, value, icon, iconerr ) {
    row.appendChild( td1 );
 
    /* add the icon assiocated with the node, if any */
-   if( icon && (icon != -1) ) {
+   if( icon && (icon != false) ) {
       var td2 = document.createElement( "td" );
       var fimg = document.createElement( "img" );
       fimg.onerror = function () {
@@ -709,6 +717,7 @@ function hop_make_tree_leaf( tree, content, value, icon, iconerr ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_reset ...                                               */
 /*---------------------------------------------------------------------*/
+/*** META ((export tree-reset!)) */
 function hop_tree_reset( tree ) {
    if( !tree ) {
       return false;
@@ -746,6 +755,7 @@ function hop_tree_id_reset( id ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_selection ...                                           */
 /*---------------------------------------------------------------------*/
+/*** META ((export tree-selection)) */
 function hop_tree_selection( tree ) {
    var sel = tree.selections;
    var len = sel.length;

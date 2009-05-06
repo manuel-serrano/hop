@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/weblets/wiki/wiki.hss                   */
+/*    serrano/prgm/project/hop/2.0.x/weblets/wiki/wiki.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Aug 10 15:33:51 2007 (serrano)                */
-/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    Last change :  Mon Mar 30 11:20:22 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for the WIKI weblet                                          */
 /*=====================================================================*/
@@ -17,38 +17,68 @@ body.wiki {
 }
 
 table.wiki {
-  width: 55em;
+  width: 90%;
   margin-top: 20px;
   padding: 10px;
   border: 1px solid $border-color;
   background: white;
   -moz-border-radius: 0.5em;
+  -webkit-border-radius: 0.5em;
+  border-radius: 0.5em;
+}
+
+table.wiki td.wiki-logo,
+table.wiki td.wiki-logo div.version {
+  text-align: center;
+  font-family: arial;
 }
 
 table.wiki img#logo {
-  padding: 20px;
+  padding: 20px 20px 0 20px;
 }
 
 table.wiki td {
   text-align: left;
 }
 
-div#wiki-title {
+table.wiki td#body {
+  width: 90%;
+  min-width: 45em;
+}
+
+table.wiki td.wiki-compiled {
+  padding-left: 6em;
+  padding-right: 6em;
+}
+
+div#wiki-weblet-title {
   font-size: x-large;
   font-weight: bold;
+  font-family: arial;
   border-bottom: 1px solid $border-color;
+  padding-bottom: 1px;
+  width: 100%;
+}
+
+div#wiki-edit {
+  font-size: small;
+  font-family: monospace;
   margin-bottom: 20px;
   padding-bottom: 1px;
   width: 100%;
 }
 
+div#wiki-edit table.edit td.edit {
+  text-align: right;
+}
+  
 table.wiki td#logo {
   vertical-align: top;
   text-align: center;
   width: 48px;
 }
 
-td.document {
+td.body {
   border: 1px solid #ccc;
   padding: 5px;
   background: #fafaff;
@@ -70,3 +100,239 @@ h4, h5 {
   font-size: 100%;
 }
 
+filechooser {
+  margin-top: 20px;
+  width: 100%;
+}
+
+filechooser div.filechooser-files {
+  height: 55ex;
+  overflow: auto;
+}
+
+div.version {
+  margin-left: 3px;
+  margin-right: 3px;
+  padding-top: 5px;
+  font-size: 60%;
+  text-align: left;
+  color: #777;
+  font-weight: bold;
+}
+
+span.edit {
+  cursor: default;
+  color: #00a;
+}
+
+span.edit:hover {
+  text-decoration: underline;
+}
+
+textarea.editor {
+  border: 1px solid $border-color;
+  padding: 10px;
+  margin-top: 20px;
+  background: #ffe;
+  width: 90%;
+  -moz-border-radius: 0.5em;
+  -webkit-border-radius: 0.5em;
+  border-radius: 0.5em;
+}
+
+button {
+  border: 1px outset #777;
+}
+
+p {
+  text-align: justify;
+  text-indent: 0em;
+}
+
+ul, ol {
+  padding-left: 2em;
+}
+
+/*---------------------------------------------------------------------*/
+/*    wiki-toc                                                         */
+/*---------------------------------------------------------------------*/
+div.wiki-toc {
+  margin-left: 20px;
+  background-color: #f3fff3;
+  font-family: arial;
+  padding: 0px 4px 0px 4px;
+}
+
+div#wiki-toc {
+  font-size: 80%;
+  float: right;
+  clear: both;
+  border: 1px dashed #bbb;
+}
+
+div.wiki-toc-popup {
+  border: 2px ridge #bbb;
+  font-size: 80%;
+  display: none;
+  position: fixed;
+  top: 100px;
+  left: 100px;
+  right: 100px;
+  overflow: none;
+  opacity: 0.95;
+}
+
+div.wiki-toc ol { 
+  line-height: 120%;
+  padding-left: 2px;
+/*   counter-reset: item;                                              */
+}
+
+div.wiki-toc ol ol { 
+  padding-left: 1em;
+}
+
+div.wiki-toc a { 
+  text-decoration: none;
+  color: #009;
+}
+
+div.wiki-toc a:hover { 
+  text-decoration: underline;
+}
+
+div.wiki-toc li { 
+  display: block;
+  font-weight: bold;
+}
+
+/* div.wiki-toc li:before {                                            */
+/*   content: counters(item, ".") " ";                                 */
+/*   counter-increment: item;                                          */
+/* }                                                                   */
+
+div.wiki-toc li li {
+  font-size: 95%;
+  font-weight: 200;
+}
+
+/*---------------------------------------------------------------------*/
+/*    left buttons                                                     */
+/*---------------------------------------------------------------------*/
+div.buttons {
+  border-top: 1px solid $border-color;
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+div.buttons div.button {
+  text-align: center;
+  margin-left: 6px;
+  margin-right: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border: 1px solid #bbb;
+  background: #f0f0f0;
+  -moz-border-radius: 0.3em;
+  -webkit-border-radius: 0.3em;
+  border-radius: 0.3em;
+}
+
+div.buttons div.prefs {
+  margin-top: 1em;
+}
+
+img.doc {
+  vertical-align: bottom;
+  border: none;
+  padding-right: 4px;
+}
+
+a.doc {
+  font-family: Arial,Helvetica,sans-serif;
+  font-weight: bold; 
+  font-size: 80%;
+  vertical-align: center;
+  cursor: default;
+  color: black;
+  text-decoration: none;
+}
+
+a.doc:hover {
+  color: #8381de;
+}
+
+div.hopbbdb-body {
+  margin-top: 10px;
+}
+
+span.wiki-strike {
+  text-decoration: line-through;
+}
+
+span.wiki-note {
+  color: darkorange;
+  font-weight: bold;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Printing                                                         */
+/*---------------------------------------------------------------------*/
+@media print {
+  
+  body.wiki {
+    font-size: 11pt;
+  }
+
+  tt {
+    font-family: Andale mono, Bistream Vera Sans mono;
+  }
+
+  div#wiki-edit {
+    display: none;
+  }
+
+  td.wiki-logo {
+    display: none;
+  }
+
+  div#wiki-weblet-title {
+    display: none;
+  }
+
+  table.wiki {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  div.foot {
+    display: none;
+  }
+
+  div.body {
+    border: 0;
+    padding: 0;
+    background: white;
+  }
+
+  div.wiki-toc {
+    display: none;
+  }
+
+  h1, h2, h3, h4, h5 {
+    font-weight: bold;
+    font-family: Andale, Bistream Vera Sans;
+  }
+
+  .hop-dashboard-button {
+    display: none;
+  }
+
+  table.wiki td.wiki-compiled {
+     padding-left: 0;
+     padding-right: 0;
+  }
+}
+  

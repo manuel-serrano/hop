@@ -1,40 +1,66 @@
 (module use-count
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   nodes
-	   var
+   (import nodes
+	   export-desc
+	   walk
 	   verbose)
-   (export (use-count tree::pobject)))
+   (export (use-count tree::Module)))
 
+;; counts the number of times a variable is referenced.
+;; Set!s are not counted. -> variables with use count 0 are unused.
+;; exported and imported variables are counted to have one use outside the
+;; module.
 (define (use-count tree)
-   (overload traverse clean-uses (Node
-				  Var-ref)
-	     (tree.traverse))
-   (overload traverse use-count (Node
-				 Var-ref
-				 Set!)
-	     (tree.traverse)))
+   (count tree #f))
 
-(define-pmethod (Node-clean-uses)
-   (this.traverse0))
+(define (clean-var var::Var)
+   (with-access::Var var (uses id)
+      (set! uses 0)))
 
-(define-pmethod (Var-ref-clean-uses)
-   (delete! this.var.uses))
+(define-nmethod (Node.count)
+   (default-walk this))
 
+(define (count+ var::Var)
+   (with-access::Var var (uses)
+      (set! uses (+fx uses 1))))
 
-(define-pmethod (Node-use-count)
-   (this.traverse0))
+(define-nmethod (Module.count)
+   (with-access::Module this (this-var scope-vars runtime-vars imported-vars declared-vars)
+      ;; we don't count this-initialization as 'use'.
+      (Var-uses-set! this-var 0)
+      ;; imported and runtime-vars could be incremented or not. we decided for
+      ;; not (more efficient).
+      ;; scope-vars are exported. -> they are used out there...
+      (for-each clean-var scope-vars) ;; first clean them.
+      (for-each clean-var declared-vars)
+      (for-each count+ scope-vars))
+   (default-walk this))
 
-(define-pmethod (Var-ref-use-count)
-   (let ((var this.var))
-      (if var.uses
-	  (set! var.uses (+ var.uses 1))
-	  (set! var.uses 1))))
+(define-nmethod (Scope.count)
+   (when (Lambda? this)
+      (with-access::Lambda this (this-var declared-vars)
+	 (Var-uses-set! this-var 0)
+	 (for-each clean-var declared-vars)))
+   (with-access::Scope this (scope-vars)
+      (for-each clean-var scope-vars))
+   (default-walk this))
 
-;; don't count lvalue of 'set!'s, but set the use-count to 0 (if necessary)
-(define-pmethod (Set!-use-count)
-   (if (not this.lvalue.var.uses)
-       (set! this.lvalue.var.uses 0))
-   (this.val.traverse))
+(define-nmethod (Ref.count)
+   (with-access::Ref this (var)
+      (count+ var)))
+
+(define-nmethod (Set!.count)
+   (with-access::Set! this (val)
+      (walk val)))
+
+(define-nmethod (Frame-alloc.count)
+   (with-access::Frame-alloc this (storage-var vars)
+      (count+ storage-var)
+      (for-each count+ vars)))
+
+(define-nmethod (Frame-push.count)
+   (with-access::Frame-push this (frame-allocs)
+      (for-each (lambda (frame-alloc)
+		   (with-access::Frame-alloc frame-alloc (storage-var)
+		      (count+ storage-var)))
+		frame-allocs))
+   (default-walk this))

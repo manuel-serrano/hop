@@ -56,5 +56,5 @@
       (<IFRAME>
 	 :class "view"
 	 :style "width: 95%;"
-	 :src (make-service-url wikiedit/view))))
+	 :src (wikiedit/view))))
    

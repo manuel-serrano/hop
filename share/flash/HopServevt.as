@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/flash/HopServevt.as               */
+/*    serrano/prgm/project/hop/2.0.x/share/flash/HopServevt.as         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Sep  7 15:31:58 2007                          */
-/*    Last change :  Wed Nov 14 09:23:34 2007 (serrano)                */
-/*    Copyright   :  2007 Manuel Serrano                               */
+/*    Last change :  Sat Mar 21 18:02:25 2009 (serrano)                */
+/*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    ActionScript server events runtime system.                       */
 /*    To be compiled with:                                             */
@@ -42,8 +42,8 @@ class HopServevt {
    
       socket.onConnect = function( success ) {
 	 if( success ) {
-	    socket.send( "GET /hop/server-event-init?key=" + key
-			 + " HTTP/1.1\n\n" );
+	    socket.send( "GET /hop/server-event/init?key="
+			 + key + " HTTP/1.1\n\n" );
 	 } else {
 	    err( "Flash proxy: Cannot establish connection to server" );
 	 }
@@ -55,13 +55,13 @@ class HopServevt {
 
       socket.onData = function( evt ) {
 	 var e = (new XML( evt )).firstChild;
-
+	 
 	 if( e.nodeName == "event" ) {
 	    var c = e.firstChild;
 	    var n = e.attributes.name;
 
 	    if( c.nodeName == "json" ) {
-	       ExternalInterface.call( onevent, n, evt, c.firstChild.nodeValue, true );
+	       ExternalInterface.call( onevent, n, "evt", c.firstChild.nodeValue, true );
 	    } else {
 	       ExternalInterface.call( onevent, n, evt, c.nodeValue, false );
 	    }
@@ -81,6 +81,20 @@ class HopServevt {
 
    // entry point
    static function main( mc ) {
+      //var url = "http://" + _root.host + ":" + _root.port +
+      // "/hop/server-event/policy-file?port=" + _root.port +
+      // "&key=" + _root.key;
+
+      // CARE: Since Flash 9.0.115, we have to read the security policy file
+      // first. The method loadPolicyFile tells the plugin where to find the
+      // actual policy file. However, this seems not to work in this version.
+      // Until this bug is fixed, the Hop server will keep receiving
+      // <file-policy-request/> requests (see http-request.scm). When this
+      // bug is fixed, the loadPolicyFile should prevent the
+      // <file-policy-request/>.
+      //System.security.loadPolicyFile( url );
+
+      // then we can opent the socket
       app = new HopServevt( _root.init, _root.port, _root.key,
 			    _root.onevent, _root.onclose, _root.onerror );
    }

@@ -1,7 +1,0 @@
-((name "hz")
- (author "M. Serrano")
- (version "1.0.1")
- (title "HZ HOP weblets manager")
- (comment "This HOP weblets manges other weblets installation, update,
-removal, and configuration. It manages a local database of weblets that
-can be feeded with weblets provided by remote publisers."))

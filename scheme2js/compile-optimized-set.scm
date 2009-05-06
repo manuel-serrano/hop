@@ -1,46 +1,72 @@
-;; part of compile-module
+(module compile-optimized-set
+   (export (compile-set! p env compile::procedure node::Node))
+   (import config
+	   tools
+	   template-display
+	   nodes
+	   allocate-names
+	   export-desc))
 
 (define *set!-operators*
-   '((sci_plus "+")
-     (sci_multi "*")
-     (sci_minus "-")
-     (sci_div "/")
+   '(("sc_plus" "+")
+     ("sc_multi" "*")
+     ("sc_minus" "-")
+     ("sc_div" "/")
      ;; TODO: modulo can't be converted directly to '%'
-     (sci_modulo "%")
-     (sci_bitAnd "&")
-     (sci_bitOr "|")
-     (sci_bitXor "^")))
+     ("sc_modulo" "%")
+     ("sc_bitAnd" "&")
+     ("sc_bitOr" "|")
+     ("sc_bitXor" "^")))
 
-(define (compile-optimized-set! p n)
-   (let ((lvar n.lvalue.var)
-	 (rvalue n.val))
-      (if (inherits-from? rvalue (node 'Call))
-	  (let ((operator rvalue.operator)
-		(operands rvalue.operands))
-	     (if (and (not (null? operands))
-		      (not (null? (cdr operands)))
-		      ;; next test not strictly necessary, but
-		      ;; simplifies cases like "(set! x (- x 1 2 3))"
-		      (null? (cddr operands))
-		      (or (inherits-from? (car operands) (node 'Var-ref))
-			  (inherits-from? (car operands) (node 'Closure-ref)))
-		      (eq? (car operands).var lvar)
-		      (inherits-from? operator (node 'Var-ref))
-		      (not operator.var.muted?))
-		 (let ((entry (assq operator.var.js-id *set!-operators*)))
-		    (if entry
-			(if (and (or (string=? (cadr entry) "+")
-				     (string=? (cadr entry) "-"))
-				 (inherits-from? (cadr operands) (node 'Const))
-				 (eq? (cadr operands).value 1))
-			    (p-display p
-				       "(" (cadr entry) (cadr entry)
-				       lvar.compiled ")")
-			    (begin
-			       (p-display p "(" lvar.compiled " "
-					  (cadr entry) "=")
-			       ((cadr operands).compile p)
-			       (p-display p ")")))
-			(compile-unoptimized-set! p n)))
-		 (compile-unoptimized-set! p n)))
-	  (compile-unoptimized-set! p n))))
+(define (compile-optimized-set! p env compile n)
+   (with-access::Set! n (lvalue val)
+      (with-access::Ref lvalue (var)
+	 (if (Call? val)
+	     (with-access::Call val (operator operands)
+		(if (and (not (null? operands))
+			 (not (null? (cdr operands)))
+			 ;; next test not strictly necessary, but
+			 ;; simplifies cases like "(set! x (- x 1 2 3))"
+			 (null? (cddr operands))
+			 (Ref? (car operands))
+			 (eq? (Ref-var (car operands)) var)
+			 (Ref? operator)
+			 (let ((op-var (Ref-var operator)))
+			    (with-access::Var op-var (constant? kind)
+			       (and (eq? kind 'imported)
+				    constant?))))
+		    (let* ((op-var (Ref-var operator))
+			   (desc (Var-export-desc op-var))
+			   (js-id (Export-Desc-js-id desc))
+			   (entry (assoc js-id *set!-operators*)))
+		       (if entry
+			   ;; get ++ and --
+			   (if (and (or (string=? (cadr entry) "+")
+					(string=? (cadr entry) "-"))
+				    (Const? (cadr operands))
+				    (eq? 1 (Const-value (cadr operands))))
+			       (template-display p env
+				  "(~a~a~a)"
+				  (cadr entry) (cadr entry) ;; ++ or --
+				  (Named-Var-js-id var))
+			       (with-access::Named-Var var (js-id)
+				  (template-display p env
+				     "($js-id ~a= ~e)"
+				     (cadr entry)
+				     (compile (cadr operands) p #f))))
+			   (compile-unoptimized-set! p env compile n)))
+		    (compile-unoptimized-set! p env compile n)))
+	     (compile-unoptimized-set! p env compile n)))))
+
+(define (compile-unoptimized-set! p env compile n)
+   (with-access::Set! n (lvalue val)
+      (template-display p env
+	 "~e = ~e"
+	 (compile lvalue p #f)
+	 (compile val p #f))))
+
+(define (compile-set! p env compile n)
+   ;; TODO: get rid of '(config ...)
+   (if (config 'optimize-set!)
+       (compile-optimized-set! p env compile n)
+       (compile-unoptimized-set! p env compile n)))

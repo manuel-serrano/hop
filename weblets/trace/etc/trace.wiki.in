@@ -1,0 +1,95 @@
+<doc> TRACE -- The simple Hop server-side tracing facility
+
+== Description ==
+
+This simple weblet is intended for displaying client messages on the
+server console. It provides facilities that may be used for simplistic
+debugging tasks.
+
+~~ The services provided by TRACE are not meant to be directly invoked.
+The actually are used as back-end implementation for the two client 
+functions ++trace++ and ++tprint++.
+
+~~
+,(<TABLE> :class "weblet-facts"
+  (<TR> (<TD> :rowspan 5 :class "logo"
+            (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png")))
+        (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
+  (<TR> (<TH> "Hop min version") (<TD> "@MINHOP@"))
+  (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
+  (<TR> (<TH> "Date") (<TD> "@DATE@"))
+  (<TR> (<TH> "Category") (<TD> "@CATEGORY@")))
+
+== Synopsis ==
+
+=== Services ===
+
+TRACE defines two service:
+
+  - ++[[trace]]++: This service displays its argument to the server console,
+ provided ++hop-verbose++ is greater or equal to ++1++.
+
+  - ++[[trace/tprint]]++: This is similar to ++trace++ except that:
+    * it unconditionally prints its argument on the server error console.
+    * on the server error console, before printing its arguments, this service
+ also display the filename and line number of the source code that contains
+ the call.
+
+== Configuration ==
+
+<server>
+
+=== RC file: ++tracerc.hop++ ===
+
+~~ At load time, the TRACE weblet loads the ++tracerc.hop++
+,(<TUTORIALREF> "RC file" "07-hoprc.wiki") file that can be used for
+configuring the printing:
+
+,(let ((path (make-file-name (hop-rc-directory) "tracerc.hop")))
+    (when (file-exists? path)
+	(<FL>
+	   (<FLITEM>
+	      (<FLHEAD> path)
+	      (with-input-from-file path
+		 (lambda ()
+		    (<PRE>
+		       :style "max-width: 80em; overflow: auto"
+		       :class "source"
+		       (decorate-api-code
+			(read-string (current-input-port))))))))))
+
+=== ++trace-print++ ===
+<parameter> trace-print
+<parameter> trace-print-set!
+
+<arguments>
+^  access  ^   type   ^  current value     ^  short description        ^
+|   r/w    |  procedure  |  _  | The procedure to print.     |
+</arguments>
+
+The ++trace-print++ parameter controls the printing of ++trace++ services.
+It is bound to a function accepting two parameters:
+
+  * an object denoting the current request.
+  * the arguments of the trace.
+
+
+A possible default value for ++trace-print++ could be defined as:
+
+<code>
+  (define-parameter trace-print
+     (lambda (req args)
+        (when (>= (hop-verbose) 1)
+           (with-output-to-port (current-error-port)
+               (lambda ()
+                   (display "TRACE: ")
+                   (for-each display args)
+                   (newline))))))
+</code>
+
+</parameter>
+</parameter>
+
+</server>
+</doc>
+

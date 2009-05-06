@@ -1,12 +1,7 @@
 ;; Embeded SVG image
 (<HTML>
    (<IFRAME> :style "border: 0; width: 300px; height: 200px; overflow: hidden"
-      :src (make-hop-service-url
-	    (service ()
-	       (tprint "PWD=" (pwd) " " (make-file-path
-					 (doc-dir)
-					 "etc"
-					 "kangaroo.svgz"))
+      :src ((service ()
 	       (instantiate::http-response-hop
 		  (backend (hop-get-xml-backend 'xhtml))
 		  (xml (<HTML>

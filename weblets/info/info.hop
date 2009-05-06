@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/info/info.hop                   */
+;*    serrano/prgm/project/hop/1.10.x/weblets/info/info.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Nov 29 07:28:48 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Fri Oct  3 09:17:40 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
 ;*=====================================================================*/
@@ -31,7 +31,7 @@
 (define traffic-hook
    (lambda (req rep)
       (when traffic-hookingp
-	 (with-access::http-request req (http host port path user date)
+	 (with-access::http-request req (http host port path user seconds)
 	    (hop-event-broadcast! info-event
 				  (<TR> :class "remote"
 				     (<TD> :nowrap #t
@@ -41,7 +41,7 @@
 				     (<TD> :nowrap #t
 					(if (user? user) (user-name user) ""))
 				     (<TD> :nowrap #t
-					date)))))
+					(seconds->date date))))))
       rep))
 
 ;*---------------------------------------------------------------------*/
@@ -163,6 +163,12 @@
    (<TABLE>
       :class "hop-info"
       (<TR>
+	 (<TH> :align 'right "Var directory")
+	 (<TD> :align 'left (hop-var-directory)))
+      (<TR>
+	 (<TH> :align 'right "Cache directory")
+	 (<TD> :align 'left (hop-cache-directory)))
+      (<TR>
 	 (<TH> :align 'right "RC directory")
 	 (<TD> :align 'left (hop-rc-directory)))
       (<TR>
@@ -215,25 +221,23 @@
 				    (<A> :href (format "http://~a:~a~a"
 						       (http-request-host req)
 						       (http-request-port req)
-						       (cache-entry-path ce))
+						       (cache-entry-upath ce))
 				       (cache-entry-upath ce))
 				    " " (round
-					 (/ (file-size (cache-entry-path ce))
+					 (/ (file-size (cache-entry-upath ce))
 					    1024))
-				    "KB ("
-				    (seconds->date (cache-entry-mtime ce))
-				    ")")))
+				    "KB")))
 			   l)))))
 	 (<TABLE> :class "info-cache"
 	    (<TR>
-	       (<TH> (cache-path c)))
+	       (<TH> (cache-disk-path c)))
 	    (<TR>
 	       (<TD> (format "~a files, ~a KB on cache."
 			     (length l)
 			     (round
 			      (/ (apply + (map (lambda (ce)
 						  (file-size
-						   (cache-entry-path ce)))
+						   (cache-entry-upath ce)))
 					       l))
 				 1024)))))
 	    (<TR> (<TD> "&#160;"))
@@ -242,7 +246,7 @@
 							(cache-clear c)
 							""))
 					    (lambda (h)
-					       (set! $d.innerHTML h)))
+					       (innerHTML-set! $d h)))
 			"clear cache")))
 	    (<TR> (<TD> "&#160;"))
 	    (<TR>
@@ -258,11 +262,11 @@
 			     :width "100%"
 			     :onclick ~(with-hop ($(service () (info-cache c)))
 					  (lambda (h)
-					     (set! $d.innerHTML h)))
+					     (innerHTML-set! $d h)))
 			     (make-file-name
-			      (basename (dirname (cache-path c)))
-			      (basename (cache-path c)))))
-		       (registered-caches))))
+			      (basename (dirname (cache-disk-path c)))
+			      (basename (cache-disk-path c)))))
+		       (filter cache-disk? (registered-caches)))))
 	    (<TD> :width "80%" :valign 'top
 	       d)))))
 
@@ -305,9 +309,17 @@
 (define (<EVENTS>)
    (<TABLE> :class "events"
       (<COLGROUP> (<COL> :span 2 :width "50%"))
+      (<TR> (<TD> :colspan 2 (<EVENT-CLIENTS>) " connected clients."))
       (<TR> (<TH> :class "events" "Flash") (<TH> :class "events" "Ajax"))
       (<TR> (<TD> (<EVENT-FLASH>)) (<TD> (<EVENT-AJAX>)))))
 
+;*---------------------------------------------------------------------*/
+;*    <EVENT-CLIENTS> ...                                              */
+;*---------------------------------------------------------------------*/
+(define (<EVENT-CLIENTS>)
+   (let ((tables (hop-event-tables)))
+      (<SPAN> :class "events-clients" (cadr (assq '*clients-number* tables)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    <EVENT-FLASH> ...                                                */
 ;*---------------------------------------------------------------------*/
@@ -321,7 +333,7 @@
 		       (<TH>
 			  (symbol->string (car e)))
 		       (<TD>
-			  (let ((sock (http-request-socket (cdr e))))
+			  (let ((sock (http-request-socket (cadr e))))
 			     (<SPAN> (socket-hostname sock)
 				     ":"
 				     (socket-port-number sock))))))
@@ -350,13 +362,18 @@
       (<DIV> :class "dump-events"
 	 (<H1> "Connections table")
 	 (<TABLE> :class "dump-events"
-	    (hashtable-map
-	     (cadr (assq '*ajax-connection-table* tables))
-	     (lambda (k l)
-		(cons (<TR> (<TH> k))
-		      (map (lambda (c)
-			      (<TR> (<TD> :class "ajax-connection"
-				       (with-output-to-string
-					  (lambda () (display c))))))
-			   l))))))))
+	    (map (lambda (conn)
+		    (list
+		     (<TR>
+			(<TH> :class "ajax-connection" :colspan 2
+			   (format "~a" (car (car conn)))))
+		     (<TR>
+			(<TD> :class "ajax-buffer" :valign 'top
+			   (<TABLE>
+			      (map (lambda (buf)
+				      (<TR>
+					 (<TD> :class "ajax-event" (car buf))
+					 (<TD> (<TT> (cdr buf)))))
+				   (cdr conn)))))))
+		 (cadr (assq '*ajax-connection-key-table* tables)))))))
    

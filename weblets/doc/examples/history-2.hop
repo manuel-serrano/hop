@@ -6,18 +6,18 @@
 	  (make-history "h1"
 			(lambda (id val)
 			   (let ((el (dom-get-element-by-id document id)))
-			      (set! el.innerHTML val)))
+			      (innerHTML-set! el val)))
 			"zero"))
       ~(define val 0)
       (let ((box (<SPAN> "_")))
 	 (list
 	  (<DIV> "Increment the following counter as many times as you
 want and then hit the " (<TT> "back button") " of your browser or the
-buttons above.")
+buttons below.")
 	  (<BR>)
 	  (<BUTTON> :onclick ~(begin
 				 (set! val (+ 1 val))
-				 (set! $box.innerHTML val)
+				 (innerHTML-set! $box val)
 				 (history-add! hist $box.id val))
 	     "+ 1")
 	  " "
@@ -27,7 +27,7 @@ buttons above.")
 				    (history-add! hist $box.id val)
 				    (set! val (+ 1 val))
 				    (history-add! hist $box.id val)
-				    (set! $box.innerHTML val)))
+				    (innerHTML-set! $box val)))
 	     "+ 2")
 	  " "
 	  box

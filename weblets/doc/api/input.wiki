@@ -1,0 +1,80 @@
+<doc> INPUT markup
+
+== Description ==
+
+This page described the HOP markup ++<INPUT>++. It differs from the original
+[[http://www.w3.org/TR/html4/|HTML]] one with one respect. It supports
+an additional type value ++:url++ that is used to specified a URL located
+on the broker.
+
+== Synopsis ==
+
+=== server ===
+
+  (<INPUT> ...)
+
+== Examples ==
+
+<example><INPUT></example>
+
+== Server Definitions ==
+<server>
+
+=== <INPUT> ===
+<markup> <INPUT>
+
+<arguments>
+^  arguments    ^   type     ^   default    ^  short description                   ^
+| :id           |  string    |  //random//  | element identifier.                  |
+| :class        |  string    |     _        | element class name.                  |
+| :type         |  symbol    |     _        | the input type.                      |
+| :name         |  string    |     _        | input name for forms.                |
+| :value        |  string    |     _        | initial value.                       |
+| :checked      |  boolean   |     _        | initially checked.                   |
+| :readonly     |  boolean   |     _        | read only input.                     |
+| :size         |  size      |     _        | specific to each type of field.      |
+| :maxlength    |  size      |     _        | max chars for text fields.           |
+| :src          |  string    |     _        | for fields with images.              |
+| :alt          |  string    |     _        | short description.                   |
+| :usemap       |  string    |     _        | use client-side image map.           |
+| :ismap        |  boolean   |     _        | use server-side image map.           |
+| :tabindex     |  number    |     _        | position in tabbing order.           |
+| :accesskey    |  char      |     _        | accessibility key character.         |
+| :style        |  string    |     _        | inline style information.            |
+| :onfocus      |  script    |     _        | event handler.                       |
+| :onblur       |  script    |     _        | event handler.                       |
+| :onselect     |  script    |     _        | event handler.                       |
+| :onchange     |  script    |     _        | event handler.                       |
+| :onclick      |  script    |     _        | event handler.                       |
+| :ondblclick   |  script    |     _        | event handler.                       |
+| :onmousedown  |  script    |     _        | event handler.                       |
+| :onmouseup    |  script    |     _        | event handler.                       |
+| :onmouseover  |  script    |     _        | event handler.                       |
+| :onmousemove  |  script    |     _        | event handler.                       |
+| :onmouseout   |  script    |     _        | event handler.                       |
+| :onkeypress   |  script    |     _        | event handler.                       |
+| :onkeydown    |  script    |     _        | event handler.                       |
+| :onkeyup      |  script    |     _        | event handler.                       |
+</arguments>
+
+The ++<INPUT>++ ++type++ can be any of:
+++url|text|password|checkbox|radio|submit|reset|file|hidden|image|button++
+
+~~ That is, in addition to regular HTML types, HOP also supports the **++url++** type.
+This type is used for denoting file paths located on the server. The behavior
+and customization of such fields is similar to ++text++ fields. The only difference
+is that when the ++tab++ key is pressed on the client, the server automatically
+completes the value of the form.
+
+~~ The ++<INPUT> :type 'url++ markup replaces the ++<FILESELECT>++ markup
+of previous HOP releases. It can be used in replacement of ++<FILECHOOSER>++
+when a lightweight widget is needed.
+
+</markup>
+</server>
+
+
+== See also ==
+<see-also><INPUT></see-also>
+
+</doc>

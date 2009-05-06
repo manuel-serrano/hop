@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/cgi.scm                         */
+;*    serrano/prgm/project/hop/2.0.x/runtime/cgi.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Tue Oct  2 16:28:26 2007 (serrano)                */
-;*    Copyright   :  2003-07 Manuel Serrano                            */
+;*    Last change :  Sun Apr 26 17:31:52 2009 (serrano)                */
+;*    Copyright   :  2003-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
 ;*=====================================================================*/
@@ -20,28 +20,9 @@
 	    __hop_types
 	    __hop_http-lib)
    
-   (export  (http-request-url-cgi-args::pair-nil ::bstring)
-	    (http-request-cgi-args::pair-nil ::http-request)
+   (export  (http-request-cgi-args::pair-nil ::http-request)
 	    (cgi-arg::obj ::bstring ::pair-nil)
 	    (serialized-cgi-arg name args)))
-
-;*---------------------------------------------------------------------*/
-;*    http-request-url-cgi-args ...                                    */
-;*    -------------------------------------------------------------    */
-;*    The former version of this function used to decode UTF8          */
-;*    argument before deserialization. This was required because       */
-;*    the former definition of the JS function hop_serialize_work      */
-;*    was using String.fromCharCode that produces UTF8 sequences.      */
-;*    This is no longer needed since the new version of this           */
-;*    function uses the %XX encoding.                                  */
-;*---------------------------------------------------------------------*/
-(define (http-request-url-cgi-args path)
-   (let ((i (string-index path #\?)))
-      (if (or (not i) (=fx i -1))
-	  (list path)
-	  (let ((cmd (xml-string-decode! (substring path 0 i)))
-		(args (substring path (+fx i 1) (string-length path))))
-	     (cons cmd (cgi-args->list args))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-request-cgi-args ...                                        */
@@ -49,7 +30,7 @@
 (define (http-request-cgi-args req::http-request)
    
    (define (cgi-args req)
-      (with-access::http-request req (socket method path encoded-path
+      (with-access::http-request req (socket method path abspath query
 					     header content-length)
 	 (case method
 	    ((POST)
@@ -74,9 +55,11 @@
 		    (let ((body (read-chars (elong->fixnum content-length) pi)))
 		       (cons path (cgi-args->list body))))))
 	    ((GET PUT)
-	     (http-request-url-cgi-args encoded-path))
+	     (if (string? query)
+		 (cons abspath (cgi-args->list query))
+		 (cons abspath '())))
 	    (else
-	     (error 'http-request-cgi-args "Not a cgi request" method)))))
+	     (error 'http-request-cgi-args "Illegal HTTP method" method)))))
    
    (define (normalize l)
       (let loop ((l l)
@@ -95,19 +78,22 @@
 		    (loop (cdr l) (cons (car l) res)))))))
 
    (with-trace 2 'http-request-cgi-args
-      (trace-item "encoded path=" (http-request-encoded-path req))
-      (trace-item "decoded path=" (string-for-read (http-request-path req)))
+      (trace-item "path=" (http-request-path req))
+      (trace-item "abspath=" (string-for-read (http-request-abspath req)))
+      (trace-item "query=" (if (string? (http-request-query req))
+			       (string-for-read (http-request-query req))
+			       "#f"))
       (let ((args (cgi-args req)))
-	 (trace-item "args=" (map (lambda (a)
-				     (cond
-					((string? a)
-					 (string-for-read a))
-					((pair? a)
-					 (cons (car a)
-					       (string-for-read (cdr a))))
-					(else
-					 a)))
-				  args))
+	 (trace-item "args="
+		     (map (lambda (a)
+			     (cond
+				((string? a)
+				 (string-for-read a))
+				((pair? a)
+				 (cons (car a) (string-for-read (cdr a))))
+				(else
+				 a)))
+			  args))
 	 (cons (car args) (normalize (cdr args))))))
 
 ;*---------------------------------------------------------------------*/

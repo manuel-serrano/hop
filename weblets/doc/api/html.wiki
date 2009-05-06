@@ -2,10 +2,10 @@
 
 == Description ==
 
-This page list the HTML markup that exist //as is// in HOP. The whole HTML
-markups have counterparts in HOP. All but two markups (++<HEAD>++ and
-++<IMG>++) having the same evaluation in HOP that in plain HTML, they are
-only listed here.
+This page list the HTML markup that exist //as is// in HOP. The whole
+HTML markups have counterparts in HOP. All but three markups
+(++<HEAD>++, ++<IMG>++, ++<INPUT>++) having the same evaluation in HOP
+that in plain HTML, they are only listed here.
 
 ~~ The markups are used to represent //graphical user interfaces// (which
 are generally called //document// in the HTML terminology). Such a interface
@@ -64,7 +64,6 @@ looks like:
   (<HTML> ...)
   (<I> ...)
   (<IFRAME> ...)
-  (<INPUT> ...)
   (<INS> ...)
   (<ISINDEX> ...)
   (<KBD> ...)
@@ -111,6 +110,10 @@ looks like:
   (<UL> ...)
   (<VAR> ...)
 
+
+== Examples ==
+
+<example><FORM></example>
 
 == Server Definitions ==
 <server>
@@ -161,7 +164,6 @@ looks like:
 <markup> <HTML>
 <markup> <I>
 <markup> <IFRAME>
-<markup> <INPUT>
 <markup> <INS>
 <markup> <ISINDEX>
 <markup> <KBD>
@@ -213,23 +215,23 @@ The actual list of HTML markup attributes is available at
 summarizes the most frequent ones.
 
 <arguments>
-^  arguments    ^   type     ^    short description                   ^
-| :id           |  string    | element identifier.                    |
-| :class        |  string    | element class name.                    |
-| :lang         |  string    | language information.                  |
-| :dir          |  string    | direction information.                 |
-| :title        |  string    | element title.                         |
-| :style        |  string    | inline style information.              |
-| :onclick      |  script    | event handler.                         |
-| :ondblclick   |  script    | event handler.                         |
-| :onmousedown  |  script    | event handler.                         |
-| :onmouseup    |  script    | event handler.                         |
-| :onmouseover  |  script    | event handler.                         |
-| :onmousemove  |  script    | event handler.                         |
-| :onmouseout   |  script    | event handler.                         |
-| :onkeypress   |  script    | event handler.                         |
-| :onkeydown    |  script    | event handler.                         |
-| :onkeyup      |  script    | event handler.                         |
+^  arguments    ^   type     ^  default  ^  short description                     ^
+| :id           |  string    |           | element identifier.                    |
+| :class        |  string    |           | element class name.                    |
+| :lang         |  string    |           | language information.                  |
+| :dir          |  string    |           | direction information.                 |
+| :title        |  string    |           | element title.                         |
+| :style        |  string    |           | inline style information.              |
+| :onclick      |  script    |           | event handler.                         |
+| :ondblclick   |  script    |           | event handler.                         |
+| :onmousedown  |  script    |           | event handler.                         |
+| :onmouseup    |  script    |           | event handler.                         |
+| :onmouseover  |  script    |           | event handler.                         |
+| :onmousemove  |  script    |           | event handler.                         |
+| :onmouseout   |  script    |           | event handler.                         |
+| :onkeypress   |  script    |           | event handler.                         |
+| :onkeydown    |  script    |           | event handler.                         |
+| :onkeyup      |  script    |           | event handler.                         |
 </arguments>
 
 </markup>
@@ -322,6 +324,8 @@ summarizes the most frequent ones.
 </markup>
 </markup>
 </markup>
-</markup>
+
+== See also ==
+<see-also><CANVAS></see-also>
 
 </doc>

@@ -1,0 +1,416 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/1.11.x/share/hop-file.hss               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Apr  2 10:58:15 2008                          */
+/*    Last change :  Sun Feb  8 18:07:52 2009 (serrano)                */
+/*    Copyright   :  2008-09 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    HopFile Hss                                                      */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module hopfile_hss)
+
+/*---------------------------------------------------------------------*/
+/*    Hop File config                                                  */
+/*---------------------------------------------------------------------*/
+$(define hopfile-font "Bitstream Vera Sans, Andale")
+$(define hopfile-font-mono "Bitstream Vera Sans Mono, Andale Mono")
+$(define hopfile-button-border "1px outset #aaa")
+$(define hopfile-button-selected-border "1px inset #aaa")
+$(define hopfile-input-border "1px inset #aaa")
+
+/*---------------------------------------------------------------------*/
+/*    Icons                                                            */
+/*---------------------------------------------------------------------*/
+$(define hopfile-keyboard-icon "url( icons/hop-filechooser/keyboard.png )")
+$(define hopfile-file-icon "url( icons/hop-filechooser/file.png )")
+$(define hopfile-folder-icon "url( icons/hop-filechooser/folder-close.png )")
+$(define hopfile-home-icon "url( icons/hop-filechooser/home.png )")
+$(define hopfile-desktop-icon "url( icons/hop-filechooser/desktop.png )")
+$(define hopfile-hdd-icon "url( icons/hop-filechooser/hdd.png )")
+
+$(define hopfile-edit-add-icon "url( icons/hop-filechooser/edit-add.png )")
+$(define hopfile-edit-remove-icon "url( icons/hop-filechooser/edit-remove.png )")
+
+$(define hopfile-open-icon "url( icons/hop-filechooser/open.png )")
+$(define hopfile-cancel-icon "url( icons/hop-filechooser/cancel.png )")
+$(define hopfile-run-icon "url( icons/hop-filechooser/run.png )")
+
+/*---------------------------------------------------------------------*/
+/*    filechooser                                                      */
+/*---------------------------------------------------------------------*/
+filechooser {
+  font-size: 9pt;
+  font-family: $hopfile-font-mono;
+  border: 1px outset black;
+  padding: 4px;
+  background: #eee;
+  width: 100%;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Misc widgets                                                     */
+/*---------------------------------------------------------------------*/
+/*--- paned -----------------------------------------------------------*/
+filechooser paned {
+  border: 1px outset #777;
+}
+
+filechooser td.hop-vpaned-pan {
+  background-color: white;
+}
+
+filechooser.filechooser-drag-and-drop td.hop-vpaned-pan-left {
+  cursor: move;
+}
+
+/*--- span.filechooser-button -----------------------------------------*/
+filechooser span.filechooser-button {
+  padding: 4px;
+  font-family: $hopfile-font-mono;
+  border: $hopfile-button-border;
+  background: #dddddd;
+  cursor: default;
+}
+
+filechooser span.filechooser-button-selected {
+  border: $hopfile-button-selected-border;
+  font-weight: bold;
+  background: #cccccc;
+}
+
+filechooser span.filechooser-button:hover {
+  background: #f0f0f0;
+}
+
+/*---------------------------------------------------------------------*/
+/*    path                                                             */
+/*---------------------------------------------------------------------*/
+filechooser span.filechooser-keyboard, 
+filechooser span.filechooser-keyboard:hover {
+  white-space: pre;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: $hopfile-keyboard-icon;
+  margin-right: 1em;
+}  
+
+filechooser div.filechooser-path {
+  padding-bottom: 1ex;
+  padding-top: 1ex;
+}
+
+/*---------------------------------------------------------------------*/
+/*    location                                                         */
+/*---------------------------------------------------------------------*/
+filechooser table.filechooser-location {
+  width: 100%;
+  padding-bottom: 1ex;
+  padding-right: 1ex;
+}
+
+filechooser table.filechooser-location th {
+  text-align: left;
+  font-weight: 100;
+  width: 4em;
+}
+
+filechooser table.filechooser-location td {
+  text-align: left;
+  font-weight: 100;
+  width: 100%;
+}
+
+filechooser input.filechooser-location {
+  width: 100%;
+  border: $hopfile-input-border;
+  padding: 2px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    files                                                            */
+/*---------------------------------------------------------------------*/
+filechooser div.filechooser-files {
+  height: 50ex;
+  overflow: auto;
+  width: 100%;
+}
+
+filechooser table.filechooser-body {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+filechooser table.filechooser-body td {
+  height: 100%;
+}
+
+filechooser td.filechooser-body {
+  padding: 5px;
+  background: #ccc;
+}
+
+filechooser table.filechooser-files {
+  width: 100%;
+}
+
+filechooser table.filechooser-files tr:hover {
+  background: #ffc;
+  cursor: default;
+}
+
+filechooser table.filechooser-files th {
+  font-family: $hopfile-font;
+  border: $hopfile-button-border;
+  padding: 3px;
+  text-align: left;
+  background: #dddddd;
+}
+
+filechooser table.filechooser-files td.filechooser-modified, 
+filechooser table.filechooser-files th.filechooser-modified {
+  white-space: nowrap;
+  font-size: inherit;
+}
+
+filechooser table.filechooser-files td {
+  padding: 1px 0px 0px 3px;
+  font-weight: 100;
+  text-align: left;
+  min-height: 16px;
+  font-size: 95%;
+}
+
+filechooser table.filechooser-files td.filechooser-icon {
+  padding: 3px 0px 3px 20px;
+  background-repeat: no-repeat;
+  background-position: 2px center;
+}
+
+filechooser table.filechooser-files td.filechooser-file {
+  background-image: $hopfile-file-icon;
+}
+
+filechooser table.filechooser-files td.filechooser-folder {
+  background-image: $hopfile-folder-icon;
+}
+
+filechooser table.filechooser-files tr {
+  cursor: default;
+}
+
+filechooser table.filechooser-files tr.even {
+  background: white;
+}
+
+filechooser table.filechooser-files tr.odd {
+  background: #eeeeee;
+}
+
+filechooser table.filechooser-files tr:hover {
+  color: black;
+  background: #ffc;
+}
+
+filechooser table.filechooser-files tr.selected {
+  color: white;
+  background: #00a;
+}
+
+/*---------------------------------------------------------------------*/
+/*    places                                                           */
+/*---------------------------------------------------------------------*/
+filechooser table.filechooser-places {
+  width: 100%;
+  font-size: 95%;
+}
+
+filechooser table.filechooser-places tr {
+  cursor: default;
+}
+
+filechooser table.filechooser-places tr:hover {
+  background: #ffc;
+}
+
+filechooser table.filechooser-places tr.selected {
+  color: white;
+  background: #00a;
+}
+
+filechooser table.filechooser-places th {
+  font-family: $hopfile-font;
+  border: $hopfile-button-border;
+  padding: 3px;
+  text-align: left;
+  background: #dddddd;
+  vertical-align: top;
+}
+
+filechooser table.filechooser-places td {
+  font-family: $hopfile-font-mono;
+  padding: 1px 0px 0px 3px;
+  vertical-align: top;
+}
+
+filechooser table.filechooser-places td.filechooser-icon {
+  padding: 3px 0px 3px 20px;
+  background-repeat: no-repeat;
+  background-position: 2px center;
+}
+
+filechooser table.filechooser-places td.filechooser-home {
+  background-image: $hopfile-home-icon;
+}
+
+filechooser table.filechooser-places td.filechooser-desktop {
+  background-image: $hopfile-desktop-icon;
+}
+
+filechooser table.filechooser-places td.filechooser-hdd {
+  background-image: $hopfile-hdd-icon;
+}
+
+filechooser table.filechooser-places td.filechooser-folder {
+  background-image: $hopfile-folder-icon;
+}
+
+filechooser table.filechooser-places td.filechooser-br {
+  border-top: 1px solid #aaa;
+}
+
+/*---------------------------------------------------------------------*/
+/*    buttons                                                          */
+/*---------------------------------------------------------------------*/
+filechooser table.filechooser-buttons {
+  width: 100%;
+}
+
+filechooser table.filechooser-buttons td {
+  text-align: left;
+}
+
+filechooser table.filechooser-buttons td.right {
+  text-align: right;
+}
+
+filechooser table.filechooser-buttons td button:hover {
+  background: #f0f0f0;
+}
+
+filechooser table.filechooser-buttons td button {
+  padding: 5px 0px 5px 20px;
+  font-family: $hopfile-font-mono;
+  cursor: default;
+  border: $hopfile-button-border;
+  background: #dddddd;
+  width: 8em;
+  margin-right: 5px;
+  text-align: center;
+}
+
+filechooser table.filechooser-buttons td button,
+filechooser table.filechooser-buttons td button:hover {
+  background-repeat: no-repeat;
+  background-position: 15% center;
+}
+
+filechooser table.filechooser-buttons button.filechooser-button-add,
+filechooser table.filechooser-buttons button.filechooser-button-add:hover {
+  background-image: $hopfile-edit-add-icon;
+}
+
+filechooser table.filechooser-buttons button.filechooser-button-remove,
+filechooser table.filechooser-buttons button.filechooser-button-remove:hover {
+  background-image: $hopfile-edit-remove-icon;
+}
+
+filechooser table.filechooser-buttons span.filechooser-hidden {
+  font-size: 90%;
+  margin-right: 2em;
+}
+
+filechooser table.filechooser-buttons span.filechooser-hidden input {
+  border-width: 1px;
+}
+
+filechooser select.filechooser-filters {
+  border: $hopfile-button-border;
+  background: #ddd;
+  padding: 4px;
+}
+
+filechooser select.filechooser-filters:hover {
+  background: #f0f0f0;
+}
+
+/*---------------------------------------------------------------------*/
+/*    okcancel                                                         */
+/*---------------------------------------------------------------------*/
+filechooser div.filechooser-okcancel {
+  padding-top: 2ex;
+  text-align: right;
+}
+
+filechooser div.filechooser-okcancel button:hover {
+  background: #f0f0f0;
+}
+
+filechooser div.filechooser-okcancel button {
+  padding: 3px;
+  font-family: $hopfile-font;
+  cursor: default;
+  width: 8em;
+  border: $hopfile-button-border;
+  margin-left: 5px;
+  padding: 5px 0px 5px 20px;
+}
+
+filechooser div.filechooser-okcancel button,
+filechooser div.filechooser-okcancel button:hover {
+  background-repeat: no-repeat;
+  background-position: 20% center;
+}
+  
+filechooser div.filechooser-okcancel button.filechooser-button-open,
+filechooser div.filechooser-okcancel button.filechooser-button-open:hover {
+  background-image: $hopfile-open-icon;
+}
+
+filechooser div.filechooser-okcancel button.filechooser-button-cancel,
+filechooser div.filechooser-okcancel button.filechooser-button-cancel:hover {
+  background-image: $hopfile-cancel-icon;
+}
+
+filechooser div.filechooser-okcancel button.filechooser-button-run,
+filechooser div.filechooser-okcancel button.filechooser-button-run:hover {
+  background-image: $hopfile-run-icon;
+  display: none;
+}
+
+filechooser span.filechooser-button-cancel:before {
+  content: "Cancel";
+}
+  
+filechooser span.filechooser-button-open:before {
+  content: "Open";
+}
+  
+filechooser span.filechooser-button-run:before {
+  content: "Run";
+}
+
+/*---------------------------------------------------------------------*/
+/*    drag and drop                                                    */
+/*---------------------------------------------------------------------*/
+filechooser img.filechooser-drag {
+  top: 0;
+  left: 0;
+  position: absolute;
+  visibility: hidden;
+  z-index: 100000;
+}

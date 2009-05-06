@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/trace/trace.hop                 */
+;*    serrano/prgm/project/hop/1.9.x/weblets/trace/trace.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Nov 20 14:31:07 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Sat Apr 26 14:41:39 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
 ;*=====================================================================*/
@@ -14,13 +14,11 @@
 ;*---------------------------------------------------------------------*/
 (module weblet_trace
    (export trace
+	   trace/tprint
+	   (trace-print)
+	   (trace-print-set!)
 	   trace/documentation
 	   trace/preferences))
-
-;*---------------------------------------------------------------------*/
-;*    The user configuration                                           */
-;*---------------------------------------------------------------------*/
-(hop-load-rc "tracerc.hop")
 
 ;*---------------------------------------------------------------------*/
 ;*    Global parameters                                                */
@@ -32,17 +30,37 @@
 	 (for-each (lambda (x) (hop-verb 1 x)) args))
       (hop-verb 1 "\n")))
 
+(define-preferences trace-preferences
+   ("printer" expr trace-print))
+
+;*---------------------------------------------------------------------*/
+;*    trace-mutex ...                                                  */
+;*---------------------------------------------------------------------*/
+(define trace-mutex (make-mutex))
+
 ;*---------------------------------------------------------------------*/
 ;*    trace ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (trace args)
-   (let ((req (current-request)))
+   (let ((req (current-request))
+	 (file (service-resource trace "etc/trace.wiki")))
+      (mutex-lock! trace-mutex)
       ((trace-print) req args)
-      (http-warning "The Trace produces no document. It merely prints a message on the server console.")))
+      (mutex-unlock! trace-mutex)
+      (http-warning [The Trace weblet produces no document. It merely implements
+ services that print messages on the server console.,(<BR>)
 
-(define-preferences trace-preferences
-   ("printer" expr trace-print))
- 
+ See the ,(<A> :href (format "/hop/doc/weblet?weblet=~a" file)"documentation")
+ for the TRACE weblet.])))
+
+;*---------------------------------------------------------------------*/
+;*    trace/tprint ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-service (trace/tprint file pos args)
+   (mutex-lock! trace-mutex)
+   (apply fprint (current-error-port) file "," pos ":" args)
+   (mutex-unlock! trace-mutex))
+
 ;*---------------------------------------------------------------------*/
 ;*    trace/documentation ...                                          */
 ;*---------------------------------------------------------------------*/
@@ -60,3 +78,9 @@
    (trace-preferences-edit
     :onclick ~(with-hop ($(service ()
 			     (trace-preferences-save trace-prefs))))))
+
+;*---------------------------------------------------------------------*/
+;*    The user configuration                                           */
+;*---------------------------------------------------------------------*/
+(hop-load-rc "tracerc.hop")
+

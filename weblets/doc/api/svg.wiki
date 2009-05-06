@@ -97,6 +97,12 @@ document. The interned DOM tree representing that image is **inlined** inside
 the produced XML document. Hence, the ++<SVG:IMG>++ markup can be conveniently
 used to produce documents that contain no external references.
 
+~~ If one SVG image has to be included twice, the elements of the image
+have to be given fresh names in order to avoid name collision in the document
+tree. This is the purpose of the ++prefix++ and ++id++ arguments. When an
+++id++ is specified and when ++prefix++ is ++#t++, then, all the identifier
+of elements contained in the image are prefixed with ++id++.
+
 <server>
 
 == See also ==

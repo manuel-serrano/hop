@@ -1,0 +1,7 @@
+;; an example of form with submit and action
+(define-service (form)
+   (<HTML>
+      (<BODY>
+	 (<FORM> :onsubmit ~(begin (alert "form submitted") #f)
+	    :action ~(alert "action")
+	    (<INPUT> :type 'submit :value "submit")))))

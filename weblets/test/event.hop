@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/test/event.hop                  */
+;*    serrano/prgm/project/hop/1.9.x/weblets/test/event.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Wed Nov 14 17:56:10 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Sun Feb 17 19:16:18 2008 (serrano)                */
+;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
 ;*=====================================================================*/
@@ -27,7 +27,7 @@
 	 :source (service-resource test/events "event.hop")
 	 (<DIV> :class "comment"
 	    "This test checks events. If the test succeeds you should see
-notification when the mouse enters and leaves the area above. You should
+notifications when the mouse enters and leaves the area above. You should
 also see a notification for mouse moves and clicks. In addition, if server
 events succeeded, you should see an acknowledge.")
 	 (let* ((b (<DIV> :align "center"
@@ -49,7 +49,7 @@ events succeeded, you should see an acknowledge.")
 		       ~(add-event-listener! $b
 					     "mouseout"
 					     (lambda (e)
-						(mouse-pos "mouse leaved" e)
+						(mouse-pos "mouse left" e)
 						(remove-event-listener!
 						 document
 						 "mousemove"

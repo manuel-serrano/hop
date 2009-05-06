@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-sym.scm                     */
+;*    serrano/prgm/project/hop/2.0.x/runtime/hop-sym.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 27 09:39:08 2006                          */
-;*    Last change :  Mon Nov 27 10:53:00 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Thu Apr 16 08:47:54 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML symbols (special characters).                               */
 ;*=====================================================================*/
@@ -14,13 +14,17 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hop-sym
 
-   (export  (<SYM> ::symbol)
+   (import  __hop_xml)
+   
+   (export  (<SYM> ::obj)
 	    (hop-symbol-alist)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *symbol-table* ...                                               */
 ;*---------------------------------------------------------------------*/
 (define *symbol-table*
+   ;; a complete encoding can be found at:
+   ;; http://theorem.ca/~mvcorks/cgi-bin/unicode.pl.cgi?start=2190&end=21FF
    (let ((t (make-hashtable)))
       (for-each (lambda (e)
 		   (hashtable-put! t (car e) (cadr e)))
@@ -167,17 +171,26 @@
 		  ("piv" "&#982;")
 		  ;; punctuation
 		  ("bullet" "&#8226;")
+		  ("tbullet" "&#x2023;")
+		  ("Tbullet" "&#x25B6;")
 		  ("ellipsis" "&#8230;")
 		  ("weierp" "&#8472;")
 		  ("image" "&#8465;")
 		  ("real" "&#8476;")
 		  ("tm" "&#8482;")
 		  ("alef" "&#8501;")
+		  ;; arrows (U+2190 to U+21FF)
 		  ("<-" "&#8592;")
 		  ("<--" "&#8592;")
 		  ("uparrow" "&#8593;")
 		  ("->" "&#8594;")
+		  ("->>" "&#x21A0;")
+		  (">->" "&#x21A3;")
 		  ("-->" "&#8594;")
+		  ("|->" "&#x21A6;")
+		  ("`->" "&#x21AA;")
+		  ("->|" "&#x21E5;")
+		  ("...>" "&#x21E2;")
 		  ("downarrow" "&#8595;")
 		  ("<->" "&#8596;")
 		  ("<-->" "&#8596;")
@@ -187,9 +200,12 @@
 		  ("Uparrow" "&#8657;")
 		  ("=>" "&#8658;")
 		  ("==>" "&#8658;")
+		  ("|=>" "&#x21F0;")
+		  (":=>" "&#x21E8;")
 		  ("Downarrow" "&#8659;")
 		  ("<=>" "&#8660;")
 		  ("<==>" "&#8660;")
+		  ("--" "&#8213;")
 		  ;; Mathematical operators 
 		  ("forall" "&#8704;")
 		  ("partial" "&#8706;")
@@ -237,6 +253,12 @@
 		  ("rfloor" "&#8971;")
 		  ("langle" "&#9001;")
 		  ("rangle" "&#9002;")
+		  ("[[" "&#10214;")
+		  ("]]" "&#10215;")
+		  ("<" "&#10216;")
+		  (">" "&#10217;")
+		  ("<<" "&#10218;")
+		  (">>" "&#10219;")
 		  ;; Misc
 		  ("loz" "&#9674;") 
 		  ("spades" "&#9824;")
@@ -244,25 +266,41 @@
 		  ("hearts" "&#9829;")
 		  ("diams" "&#9830;")
 		  ("euro" "&#8464;")
+		  ("permille" "&#8240;")
+		  ("pertentouhsand" "&#8241;")
+		  ;; smiley
+		  (":-)" "&#9786;")
+		  (":-]" "&#9787;")
+		  (":-(" "&#9785;")
+		  (":-|" "&#9865;")
+		  ;; figure
+		  ("skull" "&#9760;")
+		  ("rhand" "&#9755;")
+		  ("lhand" "&#9754;")
+		  ("wrhand" "&#9758;")
+		  ("wlhand" "&#9756;")
+		  ("phone" "&#9742;")
+		  ("wphone" "&#9743;")
+		  ("envelope" "&#9993;")
 		  ;; LaTeX 
-		  ("dag" "dag")
-		  ("ddag" "ddag")
+		  ("dag" "&#8224;")
+		  ("ddag" "&#8225;")
 		  ("circ" "o")
 		  ("top" "&#8868;")
 		  ("bottom" "&#8869;")
 		  ("lhd" "<")
 		  ("rhd" ">")
-		  ("parallel" "||")))
+		  ("parallel" "&#8214;")))
       t))
 
 ;*---------------------------------------------------------------------*/
 ;*    <SYM> ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (<SYM> sym)
-   (let ((s (symbol->string sym)))
+   (let ((s (if (symbol? sym) (symbol->string sym) sym)))
       (let ((e (hashtable-get *symbol-table* s)))
 	 (if e
-	     e
+	     (instantiate::xml-verbatim (body e))
 	     (error '<SYM> "Illegal symbol" sym)))))
 
 ;*---------------------------------------------------------------------*/

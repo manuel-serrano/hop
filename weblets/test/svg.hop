@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/test/svg.hop                    */
+;*    serrano/prgm/project/hop/1.9.x/weblets/test/svg.hop              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
-;*    Last change :  Fri Nov 30 17:44:16 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Fri Jun 27 13:44:14 2008 (serrano)                */
+;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SVG                                                              */
 ;*=====================================================================*/
@@ -61,7 +61,7 @@ three images an the drawing of a curve.")
 					 (make-file-name "etc" "kangaroo.svgz"))))))
       (<H3> "Curve")
 
-      (<DIV> :style "border: 1px solid green; background: white; width: 10em; height: 17ex; display: -moz-inline-box;  position: relative;"
+      (<DIV> :style "border: 1px solid green; background: white; width: 10em; height: 17ex; display: inline-box;  position: relative;"
 	 (let ((p (<SVG:PATH> :id "curve"
 		     :stroke "blue":stroke-width "2"
 		     :fill "none")))
@@ -73,4 +73,25 @@ three images an the drawing of a curve.")
 	       (<SVG:TEXT> :x "8" :y "-96" :font-size "15" "1")
 	       (<SVG:TEXT> :x "-104" :y "20" :font-size "15" "-1")
 	       (<SVG:TEXT> :x "96" :y "20" :font-size "15" "1")
-	       p)))))
+	       p)))
+
+      (<H3> "Shapes")
+      
+      (<SVG> :width 400 :height 430
+	 (<SVG:POLYGON> :style "stroke:blue; stroke-width:1.5;fill:silver"
+	    :points "10,10 180,10 10,250 50,50 10,10")
+	 (<SVG:CIRCLE> :style "stroke:red; stroke-width:2; fill: yellow; opacity: 0.5"
+	    :cx "100" :cy "80" :r "75")
+	 (<SVG:RECT> :style "stroke:green; stroke-width:3; fill: #ded; opacity:.8"
+	    :x "30" :y "80" :height "120" :width "220")
+	 (<SVG:PATH> :style "fill:red;fill-rule:evenodd;stroke:none"
+	    :d "M 230,250 C 360,30 10,255 110,140 z"))
+
+      (<H3> "Foreign")
+
+      (<SVG> :width 400 :height 400
+	 (<SVG:G> :transform "translate(20, 0) rotate(50) scale(0.5)"
+	    (<SVG:FOREIGNOBJECT> :x "10" :y "10" :width "800" :height "800"
+	       (<BODY> :xmlns "http://www.w3.org/1999/xhtml"
+		  (<IFRAME> :style "width:700px; height:700px"
+		     :src "http://hop.inria.fr")))))))

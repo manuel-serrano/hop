@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-slider.scm                  */
+;*    serrano/prgm/project/hop/1.10.x/runtime/hop-slider.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Oct 10 05:37:30 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Mon Oct 13 19:48:41 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
 ;*=====================================================================*/
@@ -69,8 +69,7 @@
       ((integer? obj)
        obj)
       ((xml-tilde? obj)
-       (format "function(){return ~a}()"
-	       (xml-attribute-encode (xml-tilde-body obj))))
+       (xml-tilde->expression obj))
       (else
        (error 'SLIDER (format "Illegal ~a" attr) obj))))
        
@@ -82,7 +81,7 @@
       (let ((gid (gensym))
 	    (oc (cond
 		   ((xml-tilde? onchange)
-		    (tilde->string onchange))
+		    (xml-tilde->return onchange))
 		   ((string? onchange)
 		    onchange)
 		   (else
@@ -97,15 +96,15 @@
 		 "document.getElementById( '" gid "' ), "
 		 "'" klass "', "
 		 "'" id "', ")
-	 (xml-write-initializer min p)
+ 	 (xml-write-expression min p)
 	 (display "," p)
-	 (xml-write-initializer max p)
+	 (xml-write-expression max p)
 	 (display "," p)
-	 (xml-write-initializer step p)
+	 (xml-write-expression step p)
 	 (display "," p)
-	 (xml-write-initializer value p)
+	 (xml-write-expression value p)
 	 (display "," p)
-	 (xml-write-initializer caption p)
+	 (xml-write-expression caption p)
 	 (fprint p"), function() { " oc " } )"))
       (display " </script>" p)
       (display "</span>" p)))

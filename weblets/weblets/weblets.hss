@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/weblets/weblets/weblets.hss             */
+/*    serrano/prgm/project/hop/1.9.x/weblets/weblets/weblets.hss       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug 12 13:49:57 2006                          */
-/*    Last change :  Fri Nov 23 14:35:17 2007 (serrano)                */
+/*    Last change :  Mon Dec 24 14:30:27 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP weblets cascade style sheet                                  */
@@ -24,7 +24,7 @@ $(define title-color "#ddd")
 /*---------------------------------------------------------------------*/
 /*    body                                                             */
 /*---------------------------------------------------------------------*/
-body#weblets {
+body#weblets, body#weblet-homepage {
   background: #e0e0e0;
   font-family: arial;
 }
@@ -43,7 +43,8 @@ button#weblets:hover {
   color: red;
 }
 
-table.weblets img.logo {
+table.weblets img.logo,
+table.weblet-homepage img.logo {
   padding: 20px;
 }
 
@@ -52,7 +53,8 @@ table td {
   vertical-align: top;
 }
 
-table.weblets {
+table.weblets,
+table.weblet-homepage {
   width: 55em;
   min-height: 40ex;
   margin-top: 20px;
@@ -60,13 +62,17 @@ table.weblets {
   border: 1px solid $border-color;
   background: white;
   -moz-border-radius: 0.5em;
+  -webkit-border-radius: 0.5em;
+  border-radius: 0.5em;
 }
 
-table.weblets td {
+table.weblets td,
+table.weblet-homepage td {
   font-weight: bold;
 }
 
-table.weblets td#buttons {
+table.weblets td#buttons,
+table.weblet-homepage td#buttons {
   text-align: right;
 }
 
@@ -110,6 +116,16 @@ div.weblet div.author {
   font-size: 95%;
 }
 
+div.weblet div.home {
+  margin-bottom: 1ex;
+  font-weight: 100;
+  font-size: 90%;
+}
+
+div.weblet div.home tt {
+  font-size: 120%;
+}
+
 div.weblet div.hop {
   font-size: 90%;
   font-weight: 100;
@@ -142,6 +158,87 @@ div.weblet div.install {
   float: right;
   margin-top: 1ex;
   margin-left: 1em;
+}
+
+/*---------------------------------------------------------------------*/
+/*    weblet-homepage                                                  */
+/*---------------------------------------------------------------------*/
+div.weblet-homepage {
+  font-size: 85%;
+  margin-bottom: 4ex;
+  width: 100%;
+}
+
+div.weblet-homepage div#title {
+  width: 100%;
+  font-size: x-large;
+  font-weight: bold;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 5px;
+  padding-bottom: 1px;
+}
+
+div.weblet-homepage div.package {
+  font-weight: bold;
+  font-size: 110%;
+  border-bottom: 1px solid $border-color;
+  color: #008;
+  clear: both;
+}
+
+div.weblet-homepage div.package span.name {
+  text-transform: capitalize;
+}
+
+div.weblet-homepage div.author {
+  margin-bottom: 1ex;
+}
+
+div.weblet-homepage div.version {
+  margin-bottom: 1ex;
+  font-size: 95%;
+  color: #333;
+}
+
+div.weblet-homepage div.hop {
+  font-size: 90%;
+  font-weight: 100;
+  margin-bottom: 1ex;
+}
+
+div.weblet-homepage div.hop span.min {
+  color: #0a0;
+  font-weight: bold;
+}
+
+div.weblet-homepage div.hop span.max {
+  color: red;
+  font-weight: bold;
+}
+
+div.weblet-homepage div.comment {
+  font-weight: 100;
+  font-size: 90%;
+  text-align: justify;
+  margin-bottom: 1ex;
+}
+
+div.weblet-homepage span.signature {
+  color: #555;
+  font-family: monospace;
+}
+
+div.weblet-homepage div.install {
+  float: right;
+  margin-top: 1ex;
+  margin-left: 1em;
+}
+
+/*---------------------------------------------------------------------*/
+/*    custom                                                           */
+/*---------------------------------------------------------------------*/
+div.weblet-homepage div.weblet-homepage-custom {
+  font-weight: 100;
 }
 
 /*---------------------------------------------------------------------*/

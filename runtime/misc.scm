@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/misc.scm                        */
+;*    serrano/prgm/project/hop/2.0.x/runtime/misc.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Wed Nov 28 18:59:39 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Thu Mar 26 05:25:58 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
 ;*=====================================================================*/
@@ -13,36 +13,42 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_misc
-
+   
    (cond-expand
       (enable-ssl (library ssl)))
-
-   (import  __hop_param
+   
+   (import  __hop_configure
+	    __hop_param
 	    __hop_types
 	    __hop_read)
    
-   (export (hop-verb ::int . args)
-	   (hop-color ::obj ::obj ::obj)
-	   (shortest-prefix ::bstring)
-	   (longest-suffix ::bstring)
-	   (is-suffix?::bool ::bstring ::bstring)
-	   (is-suffix-ci?::bool ::bstring ::bstring)
-	   (suffix-assoc ::bstring ::pair-nil)
-	   (suffix-assoc-ci ::bstring ::pair-nil)
-	   (suffix-member ::bstring ::pair-nil)
-	   (suffix-member-ci ::bstring ::pair-nil)
-	   (string-member? ::bstring ::bstring)
-	   (string-member-ci? ::bstring ::bstring)
-	   (is-local?::bool ::bstring)
-	   (string-escape::bstring ::bstring ::char)
-	   (escape-string::bstring ::bstring)
-	   (delete-path ::bstring)
-	   (make-url-name::bstring ::bstring ::bstring)
-	   (make-client-socket/timeout ::bstring ::int ::int ::obj ::bool)
-	   (ipv4->elong::elong ::bstring)
-	   (inline micro-seconds::int ::int)
-	   (inline input-timeout-set! ::input-port ::int)
-	   (inline output-timeout-set! ::output-port ::int)))
+   (extern  (macro fork::int () "fork"))
+   
+   (export  (hop-verb ::int . args)
+	    (hop-color ::obj ::obj ::obj)
+	    (shortest-prefix ::bstring)
+	    (longest-suffix ::bstring)
+	    (is-suffix?::bool ::bstring ::bstring)
+	    (is-suffix-ci?::bool ::bstring ::bstring)
+	    (suffix-assoc ::bstring ::pair-nil)
+	    (suffix-assoc-ci ::bstring ::pair-nil)
+	    (suffix-member ::bstring ::pair-nil)
+	    (suffix-member-ci ::bstring ::pair-nil)
+	    (string-member? ::bstring ::bstring)
+	    (string-member-ci? ::bstring ::bstring)
+	    (is-local?::bool ::bstring)
+	    (string-escape::bstring ::bstring ::char)
+	    (escape-string::bstring ::bstring)
+	    (delete-path ::bstring)
+	    (make-url-name::bstring ::bstring ::bstring)
+	    (make-hop-url-name::bstring ::bstring)
+	    (make-client-socket/timeout ::bstring ::int ::int ::obj ::bool)
+	    (ipv4->elong::elong ::bstring)
+	    (inline micro-seconds::int ::int)
+	    (inline input-timeout-set! ::input-port ::int)
+	    (inline output-timeout-set! ::output-port ::int)
+	    (inline socket-timeout-set! ::socket ::int ::int)
+	    (call-in-background ::procedure)))	   
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
@@ -298,15 +304,10 @@
 	     str))))
 
 ;*---------------------------------------------------------------------*/
-;*    output-port-timeout-set! ...                                     */
+;*    make-hop-url-name ...                                            */
 ;*---------------------------------------------------------------------*/
-(cond-expand
-   (bigloo2.8a (define (output-port-timeout-set! p t) #f))
-   (else #unspecified))
-
-(cond-expand
-   (bigloo2.8a (define (input-port-timeout-set! p t) #f))
-   (else #unspecified))
+(define (make-hop-url-name abspath)
+   (make-url-name (hop-service-base) abspath))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-client-socket/timeout ...                                   */
@@ -389,23 +390,37 @@
    (*fx 1000 ms))
 
 ;*---------------------------------------------------------------------*/
-;*    input-port-timeout-set! ...                                      */
-;*---------------------------------------------------------------------*/
-(cond-expand
-   (bigloo2.8a (define (input-port-timeout-set! p t) #f))
-   (else #unspecified))
-
-;*---------------------------------------------------------------------*/
 ;*    input-timeout-set! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (input-timeout-set! port t)
-   (let ((ms (micro-seconds t)))
+   (let ((ms (if (>fx t 0) (micro-seconds t) t)))
       (input-port-timeout-set! port ms)))
 
 ;*---------------------------------------------------------------------*/
 ;*    output-timeout-set! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (output-timeout-set! port t)
-   (let ((ms (micro-seconds t)))
+   (let ((ms (if (>fx t 0) (micro-seconds t) t)))
       (output-port-timeout-set! port ms)))
 
+;*---------------------------------------------------------------------*/
+;*    socket-timeout-set! ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (socket-timeout-set! socket ti to)
+   (input-timeout-set! (socket-input socket) ti)
+   (output-timeout-set! (socket-output socket) to))
+   
+;*---------------------------------------------------------------------*/
+;*    call-in-background ...                                           */
+;*    -------------------------------------------------------------    */
+;*    In a multi-threaded environment there is no need to spawn        */
+;*    a new process, we simply execute in the current thread.          */
+;*    -------------------------------------------------------------    */
+;*    In a single-threaded environment it is required to spawn         */
+;*    a new process for executing in background.                       */
+;*---------------------------------------------------------------------*/
+(define (call-in-background thunk)
+   (cond-expand
+      (enable-threads (thunk))
+      (bigloo-c (when (=fx (fork) 0) (thunk) (exit 0)))
+      (else (thunk))))

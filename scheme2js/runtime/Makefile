@@ -1,15 +1,7 @@
-all: runtime_mapping.sch runtime-interface.js
+SCHEME2JS_RUNTIME = .
 
-exporter: exporter.scm
-	bigloo -g -o $@ $^
+all: runtime-build
 
-runtime_mapping.sch: runtime.js exporter
-	./exporter $< mapping > $@
+include Makefile.include
 
-runtime-interface.js: runtime.js exporter
-	./exporter $< interface > $@
-
-clean:
-	rm -f exporter;
-	rm -f *.o;
-	rm -f runtime_mapping.sch runtime-interface.js
+clean: runtime-clean

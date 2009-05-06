@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/make-lib.scm                    */
+;*    serrano/prgm/project/hop/2.0.x/runtime/make-lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Wed Nov 14 13:30:22 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Wed Apr  8 14:07:23 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
 ;*=====================================================================*/
@@ -14,21 +14,21 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_makelib
 
-   (option  (set! *dlopen-init* "hop_e"))
-   
    (import __hop_configure
 	   __hop_param
 	   __hop_expanders
 	   __hop_misc
 	   __hop_mime
 	   __hop_types
-	   __hop_thread
 	   __hop_xml
+	   __hop_img
 	   __hop_charset
 	   __hop_dom
 	   __hop_read
+	   __hop_module
 	   __hop_read-js
 	   __hop_css
+	   __hop_clientc
 	   __hop_cgi
 	   __hop_user
 	   __hop_js-lib
@@ -51,10 +51,12 @@
 	   __hop_hop-tree
 	   __hop_hop-foldlist
 	   __hop_hop-editor
-	   __hop_hop-fileselector
+	   __hop_hop-file
+	   __hop_hop-box
 	   __hop_hop-sym
 	   __hop_hop-rss
 	   __hop_hop-audio
+	   __hop_hop-video
 	   __hop_hop-svg
 	   __hop_hop-mathml
 	   __hop_event
@@ -64,17 +66,24 @@
 	   __hop_cache
 	   __hop_wiki
 	   __hop_wiki-syntax
-           __hop_wiki-toc)
+	   __hop_wiki-parser
+           __hop_wiki-toc
+	   __hop_hz
+
+	   (hop-event-policy-file __hop_event))
 
    (eval   (export-all)
+
+	   (class job)
 	   
 	   (class xml-document)
-	   (class job)
 
 	   (class user)
 	   
 	   (class %http-message)
 	   (class http-request)
+	   (class http-server-request)
+	   (class http-proxy-request)
 	   (class %http-response)
 	   (class http-response-remote)
 	   (class http-response-filter)
@@ -83,6 +92,7 @@
 	   (class http-response-file)
 	   (class http-response-shoutcast)
 	   (class http-response-string)
+	   (class http-response-raw)
 	   (class http-response-js)
 	   (class http-response-authentication)
 	   (class http-response-cgi)
@@ -92,16 +102,21 @@
 	   (class hop-service)
 
 	   (class xml-backend)
+
+	   (class xml-http-request)
 	   
 	   (class xml)
 	   (class xml-markup)
 	   (class xml-element)
-	   (class xml-script)
+	   (class xml-cdata)
 	   (class xml-html)
 
-	   (class cache-entry)
 	   (class cache)
+	   (class cache-disk)
+	   (class cache-memory)
+	   
+	   (class cache-entry)
 
-	   (class wiki-syntax)
+  	   (class wiki-syntax)
 
 	   (class hop-audio-player)))

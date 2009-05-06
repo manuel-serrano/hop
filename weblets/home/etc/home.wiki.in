@@ -1,0 +1,18 @@
+<doc> HOME -- Hop Home page
+
+== Description ==
+
+[[/hop/home|HOME]] implements the Hop Home page.
+
+~~
+,(<TABLE> :class "weblet-facts"
+  (<TR> (<TD> :rowspan 5 :class "logo"
+            (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png")))
+        (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
+  (<TR> (<TH> "Hop min version") (<TD> "@MINHOP@"))
+  (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
+  (<TR> (<TH> "Date") (<TD> "@DATE@"))
+  (<TR> (<TH> "Category") (<TD> "@CATEGORY@")))
+
+</doc>
+

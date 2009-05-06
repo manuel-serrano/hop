@@ -1,10 +1,11 @@
 (module dot-expand
    (import verbose
+	   mutable-strings
 	   config
 	   expand))
 
 (define (field-name sym)
-   (if (config 'mutable-strings)
+   (if (use-mutable-strings?)
        `(quote ,sym)
        (symbol->string sym)))
 
@@ -45,14 +46,6 @@
 	  (loop `(js-field ,res ,(field-name (car splitted)))
 		(cdr splitted)))))
 
-(define (delete!-dot-expand splitted)
-   (let loop ((res (car splitted))
-	      (splitted (cdr splitted)))
-      (if (null? (cdr splitted))
-	  `(js-field-delete! ,res ,(field-name (car splitted)))
-	  (loop `(js-field ,res ,(field-name (car splitted)))
-		(cdr splitted)))))
-
 (define (expand-indirect-accesses! x)
    (if (and (pair? x)
 	    (pair? (cdr x)))
@@ -88,14 +81,6 @@
       ((set! (and (? pair?) ?p) (and (? starts-with-dot?) ?dot-y) . ?val-L)
        (let ((splitted (cons p (split-dot dot-y))))
 	  (set!-dot-expand splitted val-L)))
-      ;(delete! x.y)
-      ((delete! (and (? dotted-symbol?) ?x-dot-y))
-       (let ((splitted (split-dot x-dot-y)))
-	  (delete!-dot-expand splitted)))
-      ;(delete! (get-x).y)
-      ((delete! (and (? pair?) ?p) (and (? starts-with-dot?) ?dot-y))
-       (let ((splitted (cons p (split-dot dot-y))))
-	  (delete!-dot-expand splitted)))
       ;(x.f ...)
       (((and (? dotted-symbol?) ?x-dot-f) . ?args)
        (multiple-value-bind (o f)
@@ -113,15 +98,27 @@
       ;(quasiquote ...)
       (((kwote quasiquote) ???-)
        x)
-      ;(let (bindings) ...)
-      ((let (and (? pair?) ?bindings) . ?body)
+      ;(let(*) (bindings) ...)
+      (((or let let*) (and (? pair?) ?bindings) . ?body)
        (for-each expand-indirect-accesses! bindings)
+       x)
+      ;(let name (bindings) ...)
+      ((let (? symbol?) (and (? pair?) ?bindings) . ?body)
+       (for-each expand-indirect-accesses! bindings)
+       x)
+      ((do ?bindings ?test+finally . ?commands)
+       (for-each expand-indirect-accesses! bindings)
+       (expand-indirect-accesses! test+finally)
+       x)
+      ((define-struct ?name . ?fields)
+       (for-each expand-indirect-accesses! fields)
        x)
       (else
        (expand-indirect-accesses! x)
        x)))
 
-(add-pre-expand! (lambda (x)
+(add-pre-expand! 1
+		 (lambda (x)
 		    (if (config 'direct-js-object-access)
 			(undot x)
 			x)))

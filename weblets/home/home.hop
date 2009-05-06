@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/home/home.hop                   */
+;*    serrano/prgm/project/hop/1.10.x/weblets/home/home.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Wed Nov 21 14:25:55 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Thu Jan 15 07:43:43 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
 ;*=====================================================================*/
@@ -108,7 +108,7 @@
 	 :id "home-notepad"
 	 (<NPTAB> :id "Presentation"
 		  (<NPTABHEAD>
-		     (<IMG> :inline #t
+		     (<IMG> :inline #f
 			:src (service-resource home "etc/gohome.png"))
 		     "Main")
 		  (<DELAY>
@@ -116,9 +116,18 @@
 			(download-versions-set!)
 			(<DIV> :class "hop-tab"
 			   (wiki->hop "presentation.wiki")))))
+	 (<NPTAB> :id "videos"
+		  (<NPTABHEAD>
+		     (<IMG> :inline #f
+			:src (service-resource home "etc/video.png"))
+		     "Videos")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV> :class "hop-tab"
+			   (wiki->hop "videos.wiki")))))
 	 (<NPTAB> :id "demo-tab"
 		  (<NPTABHEAD>
-		     (<IMG> :inline #t
+		     (<IMG> :inline #f
 			:src (service-resource home "etc/demos.png"))
 		     "Demos")
 		  (<DELAY>
@@ -127,7 +136,7 @@
 			   (<DEMO> req)))))
 	 (<NPTAB> :id "download"
 		  (<NPTABHEAD>
-		     (<IMG> :inline #t
+		     (<IMG> :inline #f
 			:src (service-resource home "etc/download.png"))
 		     "Download")
 		  (<DELAY>
@@ -137,7 +146,7 @@
 			   (wiki->hop-no-cache "download.wiki")))))
 	 (<NPTAB> :id "weblets"
 		  (<NPTABHEAD>
-		     (<IMG> :inline #t
+		     (<IMG> :inline #f
 			:src (service-resource home "etc/package.png"))
 		     "Weblets")
 		  (<DELAY>
@@ -146,7 +155,7 @@
 			   (wiki->hop "weblets.wiki")))))
 	 (<NPTAB> :id "documentation"
 		  (<NPTABHEAD>
-		     (<IMG> :inline #t
+		     (<IMG> :inline #f
 			:src (service-resource home "etc/doc.png"))
 		     "Docs")
 		  (<DELAY>
@@ -155,7 +164,7 @@
 			   (wiki->hop "docs.wiki")))))
 	 (<NPTAB> :id "faq"
 		  (<NPTABHEAD>
-		     (<IMG> :inline #t
+		     (<IMG> :inline #f
 			:src (service-resource home "etc/faq.png"))
 		     "Faq&nbsp;&nbsp;&nbsp;")
 		  (<DELAY>
@@ -164,7 +173,7 @@
 			   (wiki->hop "faq.wiki")))))
 	 (<NPTAB> :id "community"
 		  (<NPTABHEAD>
-		     (<IMG> :inline #t
+		     (<IMG> :inline #f
 			:src (service-resource home "etc/people.png"))
 		     "Community")
 		  (<DELAY>
@@ -173,9 +182,9 @@
 			   (wiki->hop "community.wiki")))))
 	 (<NPTAB> :id "stats"
 		  (<NPTABHEAD>
-		     (<IMG> :inline #t
+		     (<IMG> :inline #f
 			:src (service-resource home "etc/statistics.png"))
-		     "Statistics")
+		     "Stats")
 		  (<DELAY>
 		     (lambda ()
 			(<DIV> :class "hop-tab"
@@ -239,6 +248,8 @@
 (define *stable-jar* #unspecified)
 (define *stable-tar-url* #unspecified)
 (define *stable-jar-url* #unspecified)
+(define *maemo-deb-url* #unspecified)
+(define *maemo-deb* #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    download-versions-set! ...                                       */
@@ -278,10 +289,20 @@
       
       (set! *stable-tar-url*
 	    (if (string? *stable-tar-gz*)
-		(make-file-name(home-ftp-hop-url) *stable-tar-gz*)
+		(make-file-name (home-ftp-hop-url) *stable-tar-gz*)
 		"not available"))
       
       (set! *stable-jar-url*
 	    (if (string? *stable-jar*)
-		(make-file-name(home-ftp-hop-url) *stable-jar*)
+		(make-file-name (home-ftp-hop-url) *stable-jar*)
+		"not available"))
+
+      (set! *maemo-deb*
+	    (if (string? (home-hop-stable-version))
+		(string-append "hop_" (home-hop-stable-version) "_armel.deb")
+		"not available"))
+      
+      (set! *maemo-deb-url*
+	    (if (string? *maemo-deb*)
+		(make-file-name (home-ftp-hop-url) *maemo-deb*)
 		"not available"))))

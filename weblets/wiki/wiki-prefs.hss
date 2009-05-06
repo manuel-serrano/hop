@@ -1,0 +1,105 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/1.11.x/weblets/wiki/wiki-prefs.hss      */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Feb 19 08:05:37 2009                          */
+/*    Last change :  Thu Feb 19 08:06:26 2009 (serrano)                */
+/*    Copyright   :  2009 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Wiki preferences                                                 */
+/*=====================================================================*/
+
+$(hop-hss-type! "preferences" "table.preferences")
+$(define border-color "#bbb")
+
+body.wiki-preferences {
+  background: #e0e0e0;
+  font-family: arial;
+}
+
+prlabel {
+  border-top: 1px dotted #eee;
+  color: #007;
+  font-size: 110%;
+}
+
+prlabel img {
+  margin-right: 3px;
+}
+
+pr-name {
+  font-size: 90%;
+  font-weight: 100;
+}
+
+preferences {
+  font-size: small;
+  width: 100%;
+}
+
+preferences col.col1 {
+  border: 1px solid red;
+}
+
+preferences th {
+  text-align: left;
+  white-space: nowrap;
+}
+
+preferences th.label {
+  padding-top: 10px;
+  font-size: small;
+  border-bottom: 1px solid $border-color;
+  color: #00a;
+}
+
+preferences td.save {
+  text-align: left;
+}
+
+preferences td.save button:hover {
+  color: darkorange;
+}
+
+preferences input.pref_modified {
+  color: red;
+}
+
+preferences input.pref_applied {
+  color: green;
+}
+
+preferences input.pref_saved {
+  color: blue;
+}
+
+button {
+  border-right: 1px solid #333;
+  border-bottom: 1px solid #333;
+  border-left: 1px solid #eee;
+  border-top: 1px solid #eee;
+  padding: 0px 20px 0px 20px;
+  margin-top: 3ex;
+  font-size: 90%;
+}
+
+button:hover {
+  background: #eee;
+}
+
+input {
+  border: 1px solid $border-color;
+  size: 100%;
+}
+
+td.wiki-preferences {
+  border: 1px solid #ccc;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-bottom: 5px;
+  background: #ffe;
+}
+
+td.wiki-preferences button {
+  margin-bottom: 10px;
+}

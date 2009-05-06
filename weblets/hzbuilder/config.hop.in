@@ -1,0 +1,234 @@
+;*=====================================================================*/
+;*    .../prgm/project/hop/1.10.x/weblets/hzbuilder/config.hop.in      */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Tue Jun 10 07:34:38 2008                          */
+;*    Last change :  Mon Sep 29 11:16:11 2008 (serrano)                */
+;*    Copyright   :  2008 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Hzbuilder configuration                                          */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module ...                                                   */
+;*---------------------------------------------------------------------*/
+(module hzbuilder_config
+ 
+   (import hzbuilder)
+   
+   (export (hzbuilder-version::bstring)
+           (hzbuilder-date::bstring)
+           (hzbuilder-author::bstring)
+	   (hzbuilder-dir::bstring)
+           (hzbuilder-rc-directory::bstring)
+           (hzbuilder-categories)
+	   (hzbuilder-port)
+	   (hzbuilder-repository)
+           (hzbuilder-previewers)
+	   (hzbuilder-preview-size)
+
+	   (hzbuilder-hop-skeleton::bstring)
+	   (hzbuilder-hop-skeleton-set! ::bstring)
+	   (hzbuilder-config-skeleton::bstring)
+	   (hzbuilder-config-skeleton-set! ::bstring)
+	   (hzbuilder-hss-skeleton::bstring)
+	   (hzbuilder-hss-skeleton-set! ::bstring)
+	   (hzbuilder-makefile-skeleton::bstring)
+	   (hzbuilder-makefile-skeleton-set! ::bstring)
+	   (hzbuilder-docpng::bstring)
+	   (hzbuilder-docpng-set! ::bstring)
+	   (hzbuilder-configurepng::bstring)
+	   (hzbuilder-configurepng-set! ::bstring)
+	   (hzbuilder-doc-skeleton::bstring)
+	   (hzbuilder-doc-skeleton-set! ::bstring)
+	   (hzbuilder-homepage-skeleton::bstring)
+	   (hzbuilder-homepage-skeleton-set! ::bstring)
+	   (hzbuilder-webletinfo-skeleton::bstring)
+	   (hzbuilder-webletinfo-skeleton-set! ::bstring)
+	   (hzbuilder-logo-skeleton::bstring)
+	   (hzbuilder-logo-skeleton-set! ::bstring)
+	   (hzbuilder-favicon-skeleton::bstring)
+	   (hzbuilder-favicon-skeleton-set! ::bstring)
+	   (hzbuilder-dashboard-skeleton::bstring)
+	   (hzbuilder-dashboard-skeleton-set! ::bstring)
+	   (hzbuilder-custom-skeletons-dir::bstring)
+	   (hzbuilder-custom-skeletons-dir-set! ::bstring)
+	   
+	   (hzbuilder-preferences-edit . obj)
+	   (hzbuilder-preferences-save file)))
+
+;*---------------------------------------------------------------------*/
+;*    Version                                                          */
+;*---------------------------------------------------------------------*/
+(define (hzbuilder-version) "@VERSION@")
+(define (hzbuilder-date) "@DATE@")
+(define (hzbuilder-author) "M. Serrano")
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-dir                                                    */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-dir
+   (dirname (the-loading-file)))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-rc-directory ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-rc-directory 
+   (make-file-name (hop-rc-directory) "hzbuilder"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-categories ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-categories
+   '("devel" "games" "multimedia" "other" "system" "desktop" "education"
+     "office" "scientific"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-port ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-port
+   8081)
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-repository ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-repository
+   "/tmp")
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-previewers ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-previewers
+   (list (lambda (base path)
+	    (cond
+	       ((pregexp-match "^.*[.](?:png|gif)$" base)
+		(<AUTOSIZE-IMG> path))
+	       ((pregexp-match "^.*[.](?:svg)$" base)
+		(<IFRAME> :class "preview"
+		   :width (-fx (car (hzbuilder-run-size)) 2)
+		   :height (-fx (cdr (hzbuilder-run-size)) 2)
+		   :src path))))
+	 (lambda (base path)
+	    (when (pregexp-match "^.*[.](?:jpeg|jpg)$" base)
+	       (<AUTOSIZE-IMG> path)))
+	 (lambda (base path)
+	    (when (pregexp-match "^.*[.](?:hop)$" base)
+	       (let ((logo (make-file-path (dirname path) "etc" "logo.png")))
+		  (when (file-exists? logo)
+		     (<DIV>
+			(<DIV>
+			   (<AUTOSIZE-IMG> logo))
+			(<DIV>
+			   (prefix base)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-preview-size ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-preview-size
+   128)
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-hop-skeleton ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-hop-skeleton
+   (make-file-path (hzbuilder-dir) "etc" "skeleton" "main.hop"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-config-skeleton ...                                    */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-config-skeleton
+   (make-file-path (hzbuilder-dir) "etc" "skeleton" "config.hop.in"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-hss-skeleton ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-hss-skeleton
+   (make-file-path (hzbuilder-dir) "etc" "skeleton" "default.hss"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-makefile-skeleton ...                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-makefile-skeleton
+   (make-file-path (hzbuilder-dir) "etc" "skeleton" "Makefile"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-doc-skeleton ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-doc-skeleton
+   (make-file-path (hzbuilder-dir) "etc" "skeleton" "doc.wiki.in"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-webletinfo-skeleton ...                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-webletinfo-skeleton
+   (make-file-path (hzbuilder-dir) "etc" "skeleton" "weblet.info.in"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-logo-skeleton ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-logo-skeleton
+   (make-file-path (hzbuilder-dir) "etc" "skeleton" "logo.png"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-favicon-skeleton ...                                   */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-favicon-skeleton
+   (make-file-path (hzbuilder-dir) "etc" "skeleton" "favicon.png"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-dashboard-skeleton ...                                 */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-dashboard-skeleton
+   (make-file-path (hzbuilder-dir) "etc" "skeleton" "dashboard.png"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-homepage-skeleton ...                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-homepage-skeleton
+   (make-file-path (hzbuilder-dir) "etc" "skeleton" "01-homepage.wiki"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-custom-skeletons-dir ...                               */
+;*---------------------------------------------------------------------*/
+(define-lazy-parameter hzbuilder-custom-skeletons-dir
+   (make-file-name (hzbuilder-rc-directory) "skeletons"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-docpng ...                                             */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-docpng
+   (make-file-name "etc" "doc.png"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-configurepng ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-configurepng
+   (make-file-name "etc" "configure.png"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-preferences                                            */
+;*---------------------------------------------------------------------*/
+(define-preferences hzbuilder-preferences
+   
+   "Misc"
+   ("Hz repository" string hzbuilder-repository)
+   ("Test port" integer hzbuilder-port)
+   ("Preview width" integer hzbuilder-preview-size)
+   
+   "Skeletons"
+   ("Hop skeleton" string hzbuilder-hop-skeleton)
+   ("Config skeleton" string hzbuilder-config-skeleton)
+   ("HSS skeleton" string hzbuilder-hss-skeleton)
+   ("Makefile skeleton" string hzbuilder-makefile-skeleton)
+   ("Documentation skeleton" string hzbuilder-doc-skeleton)
+   ("Weblet.info" string hzbuilder-webletinfo-skeleton)
+   ("Home page skeleton" string hzbuilder-homepage-skeleton)
+   ("Extra skeletons directory" string hzbuilder-custom-skeletons-dir)
+   
+   "Icons"
+   ("Default logo icon" string hzbuilder-logo-skeleton)
+   ("Default favicon icon" string hzbuilder-favicon-skeleton)
+   ("Default dashboard icon" string hzbuilder-dashboard-skeleton)
+   ("Default doc icon" string hzbuilder-docpng)
+   ("Default configure icon" string hzbuilder-configurepng))
+   

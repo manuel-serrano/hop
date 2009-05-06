@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/hopsh/Makefile                          */
+#*    serrano/prgm/project/hop/1.10.x/hopsh/Makefile                   */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Sep  3 15:35:15 2007 (serrano)                */
+#*    Last change :  Fri Nov 28 11:16:20 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds HopSh                                   */
 #*=====================================================================*/
@@ -84,6 +84,7 @@ jvm-stdlibs: o/class_s/lib/hop/$(HOPRELEASE)
         done
 
 jvm-share:
+	$(RM) -r o/class_s/share
 	cp -r ../share o/class_s
 	cp -r ../scheme2js/runtime/*.js o/class_s/share
 	cp -r ../weblets o/class_s/share
@@ -98,7 +99,7 @@ jvm-list:
         done
 
 jvm-lib: o/class_s/lib/hop/$(HOPRELEASE)
-	cp $(BUILDLIBDIR)/*.init $<
+	touch $</foo.init && $(RM) $</*.init && cp $(BUILDLIBDIR)/*.init $<
 
 META-INF/MANIFEST.MF: META-INF
 	echo "Manifest-Version: 1.0" > $@
@@ -162,11 +163,12 @@ install: install-$(BACKEND)
 
 install-native:
 	mkdir -p $(DESTDIR)$(HOPBINDIR)
-	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)
+	$(INSTALL) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)
+	chmod $(BMASK) $(DESTDIR)$(HOPBINDIR)/$(EXEC)
 
 install-jvm:
 	mkdir -p $(DESTDIR)$(HOPBINDIR)
-	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC).jar $(DESTDIR)$(HOPBINDIR)
+	$(INSTALL) $(BUILDBINDIR)/$(EXEC).jar $(DESTDIR)$(HOPBINDIR)
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */

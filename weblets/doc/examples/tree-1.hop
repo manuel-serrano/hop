@@ -3,31 +3,36 @@
    (<HTML>
       (<HEAD> :include "hop-tree")
       (<BODY>
+	 ~(define x 0)
 	 (<TREE> :id "computer-science"
-		 :open #t
-		 (<TRHEAD> "Computer Science")
-		 (<TRBODY>
-		    (<TRLEAF> (<A> :href "http://www.acm.org" "ACM") :value "acm")
-		    (<TRLEAF> (<A> :href "http://www.inria.fr" "INRIA") :value "inria")
-		    (<TREE>
-		       (<TRHEAD> "Programming languages")
-		       (<TRBODY>
-			  (<TREE>
-			     (<TRHEAD> "Functional")
-			     (<TRBODY>
-				(<TRLEAF> "Haskell")
-				(<TRLEAF> "Hop")
-				(<TRLEAF> "Lisp")
-				(<TRLEAF> "ML")))
-			  (<TREE> :iconopen img :iconclose img
-				  (<TRHEAD> "Imperative")
-				  (<TRBODY>
-				     (<TRLEAF> "Ada")
-				     (<TRLEAF> "C")
-				     (<TREE>
-					(<TRHEAD> "Object oriented")
-					(<TRBODY>
-					   (<TRLEAF> "C++")
-					   (<TRLEAF> "Java")))
-				     (<TRLEAF> "Pascal")))
-			  (<TRLEAF> "APL"))))))))
+	    :open #t
+	    :onselect ~(when (<fx x 2)
+			  (alert (vector-ref (tree-selection this) 0)))
+	    (<TRHEAD> "Computer Science")
+	    (<TRBODY>
+	       (<TRLEAF> (<A> :href "http://www.acm.org" "ACM") :value "acm")
+	       (<TRLEAF> (<A> :href "http://www.inria.fr" "INRIA") :value "inria")
+	       (<TREE>
+		  (<TRHEAD> "Programming languages")
+		  (<TRBODY>
+		     (<TREE> :onopen ~(when (= x 0)
+					 (set! x (+ x 1))
+					 (alert "A very good choice..."))
+			(<TRHEAD> "Functional")
+			(<TRBODY>
+			   (<TRLEAF> "Haskell")
+			   (<TRLEAF> :value "hop, excellent" "Hop")
+			   (<TRLEAF> "Lisp")
+			   (<TRLEAF> "ML")))
+		     (<TREE> :iconopen img :iconclose img
+			(<TRHEAD> "Imperative")
+			(<TRBODY>
+			   (<TRLEAF> "Ada")
+			   (<TRLEAF> "C")
+			   (<TREE>
+			      (<TRHEAD> "Object oriented")
+			      (<TRBODY>
+				 (<TRLEAF> "C++")
+				 (<TRLEAF> "Java")))
+			   (<TRLEAF> :value "pascal, obsolete, isn't it" "Pascal")))
+		     (<TRLEAF> :value "apl, old-fashioned, no?" "APL"))))))))

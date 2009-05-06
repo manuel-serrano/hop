@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/hz/config.hop                   */
+;*    serrano/prgm/project/hop/2.0.x/weblets/hz/config.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Wed Nov 28 11:01:05 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Wed May  6 10:24:14 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ configuration                                                 */
 ;*=====================================================================*/
@@ -20,7 +20,9 @@
 	   (hz-dir::bstring)
 	   (hz-rc-directory::bstring)
 	   (hz-download-directory::bstring)
+	   (hz-download-directory-set! ::bstring)
 	   (hz-weblets-directory::bstring)
+	   (hz-weblets-directory-set! ::bstring)
 	   (hz-package-suffix::bstring)
 	   (hz-db::bstring)
 	   (hz-connection-timeout::int)
@@ -47,7 +49,7 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hz-categories
    '("hop" "devel" "games" "multimedia" "other" "system" "desktop" "education"
-     "office" "scientific"))
+     "office" "scientific" "domotics"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-dir                                                           */
@@ -57,7 +59,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-rc-directory ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-parameter hz-rc-directory (make-file-name (hop-rc-directory) "hz"))
+(define-parameter hz-rc-directory (make-file-name (hop-var-directory) "hz"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-download-directory ...                                        */
@@ -94,7 +96,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-connection-timeout ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-parameter hz-connection-timeout 30000)
+(define-parameter hz-connection-timeout (*fx 3000 1000))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-publishers ...                                                */
@@ -110,7 +112,7 @@
       (if enable 
 	  (hz-publishers-set! (cons publisher (hz-publishers)))
 	  (hz-publishers-set! (cons (list publisher #f) (hz-publishers))))
-      (hz-preferences-save (hz-prefs))))
+      (hz-preferences-save (hz-prefs) #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-publisher-enable! ...                                         */
@@ -129,7 +131,7 @@
 				   (else
 				    x)))
 			     (hz-publishers)))
-   (hz-preferences-save (hz-prefs)))
+   (hz-preferences-save (hz-prefs) #t))
    
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-inspector-url ...                                          */
@@ -145,20 +147,24 @@
      ("multimedia" . "multimedia.png")
      ("scientific" . "scientific.png")
      ("devel" . "devel.png")
-     ("office" . "office.png")))
+     ("office" . "office.png")
+     ("system" . "system.png")))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-prefs ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-parameter hz-prefs
-   (make-file-name (hz-rc-directory) "hz.prefs"))
+   (make-file-name (hop-rc-directory) "hzrc.hop"))
 
 ;*---------------------------------------------------------------------*/
 ;*    preferences ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-preferences hz-preferences
-   
    "Setup"
-   ("Publishers" expr hz-publishers)
-   ("Connections timeout" integer hz-connection-timeout))
+   ("Publishers" quote hz-publishers)
+   ("Connections timeout" integer hz-connection-timeout)
+   "Path"
+   ("Install directory" path hz-weblets-directory)
+   ("Download directory" path hz-download-directory))
+   
 

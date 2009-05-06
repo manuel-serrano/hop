@@ -1,0 +1,36 @@
+.TH HOP 1 "Version @RELEASE@"
+.de BP
+.sp
+.ti -.2i
+..
+.SH NAME
+hopsh @RELEASE@ \- send a command to a running Hop server.
+
+.SH SYNOPSIS
+.B hopsh
+[ options ]
+[ \fIinput\fR ]
+
+.SH DESCRIPTION
+.PP
+\fBHopsh\fR is a tool that let users spawn \fBhop\fR from a command
+line interface.
+.SH OPTIONS
+
+.TP 10
+options
+Many options are available. Type `hopsh -help' to print them.
+
+The complete \fBHopsh\fR documentation is available as a Web application. 
+To access this documentation, starts the server and browse the url 
+
+   http://localhost:8080/hop/doc
+
+.SH "SEE ALSO"
+hop(1), hopreplay(1)
+
+.SH AUTHOR
+Manuel SERRANO,
+Manuel.Serrano@inria.fr
+
+

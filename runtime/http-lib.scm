@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/http-lib.scm                    */
+;*    serrano/prgm/project/hop/1.9.x/runtime/http-lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Sun Nov 25 06:49:35 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Mon May 26 05:42:03 2008 (serrano)                */
+;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
 ;*=====================================================================*/
@@ -27,6 +27,7 @@
 	    (http-cookie-get ::http-request ::bstring #!optional path domain)
 	    (http-basic-authentication? ::http-request ::bstring ::bstring)
 	    (http-basic-base64-authentication? ::http-request ::pair-nil)
+	    (http-basic-authorization::bstring ::bstring ::bstring)
 	    (http-htaccess-authentication? ::http-request ::bstring)
 	    (http-decode-authentication::bstring ::bstring)
 	    (http-write-header ::output-port ::pair-nil)
@@ -165,6 +166,12 @@
     (list (base64-encode (string-append user ":" password)))))
 
 ;*---------------------------------------------------------------------*/
+;*    http-basic-authorization ...                                     */
+;*---------------------------------------------------------------------*/
+(define (http-basic-authorization name passwd)
+   (string-append "Basic " (base64-encode (string-append name ":" passwd))))
+
+;*---------------------------------------------------------------------*/
 ;*    http-decode-authentication ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (http-decode-authentication auth)
@@ -203,7 +210,7 @@
 				     (or (string=? (base64-encode ps) s)
 					 (loop (read pf))))))
 			   (close-input-port pf)))))))))
-      
+
 ;*---------------------------------------------------------------------*/
 ;*    http-debug-read-line ...                                         */
 ;*---------------------------------------------------------------------*/

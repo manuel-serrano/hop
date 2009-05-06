@@ -1,6 +1,6 @@
-;; Dynamic web page re-writing.
+;; Dynamic web page re-writing
 (define (linux-kernel-hooking req resp)
-   (with-access::http-request req (host path localhostp)
+   (with-access::http-request req (host path)
       (when (and (string=? host "www.kernel.org")
                  (substring-at? path "/" 0))
          (instantiate::http-response-filter
@@ -13,13 +13,10 @@
                          (display s2 op)
                          (flush-output-port op))))))))
 
-(hop-http-response-remote-hook-add!
- (lambda (req resp)
-    (or (linux-kernel-hooking req resp)
-        resp)))
-
-(<HTML>
-   (<BODY> "Remote hooking is now registered!")
-   (<BR>)
-   (<BR>)
-   (<A> :href "http://www.kernel.org" "http://www.kernel.org"))
+(when (hop-filters-open?)
+   ;; when the first Hop request is answered, for security reasons;
+   ;; it is no longer possible to add new hook or filter
+   (hop-http-response-remote-hook-add!
+    (lambda (req resp)
+       (or (linux-kernel-hooking req resp)
+	   resp))))

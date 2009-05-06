@@ -3,13 +3,12 @@
    (<HEAD> :include "base64")
    (let ((out (<SPAN> "")))
       (<BODY>
-	 "Hit [return] on the text above for encoding on the client
-and decoding on the server."
-	 (<TABLE> :border 0 (<TR> (<TH> "result: ") (<TD> out)))
+	 "Enter some text. After you hit [return], the text will be encoded on the client, decoded on the server and displayed as the result."
 	 (<INPUT>
 	    :type "text"
 	    :onkeyup ~(if (= event.keyCode 13)
 			  (with-hop ($(service (val) (base64-decode val))
 				      (base64-encode this.value))
 			     (lambda (h)
-				(set! $out.innerHTML h))))))))
+				(innerHTML-set! $out h)))))
+	 (<TABLE> :border 0 (<TR> (<TH> "result: ") (<TD> out))))))

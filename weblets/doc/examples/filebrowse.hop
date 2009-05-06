@@ -1,11 +1,8 @@
-;; an example of FILEBROWSE markup
+;; an example of FILECHOOSER markup
 (<HTML>
     (<HEAD>
-       :include "hop-fileselect" "hop-window" "hop-tree")
+       :include "hop-paned" "hop-file")
     (<BODY>
-       (<FILEBROWSE>
-	  :value "/" :path "/tmp" :text "/tmp"
-	  :filter (lambda (d)
-		     (or (not (directory? d))
-			 (not (string=? (basename d) "lost+found"))))
-	  :onselect ~(alert "FILEBROWSE=" this.value))))
+       (<FILECHOOSER>
+	  :url "/tmp"
+	  :onopen ~(alert "FILEBROWSE=" this.value))))

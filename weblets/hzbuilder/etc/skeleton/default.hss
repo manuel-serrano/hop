@@ -1,0 +1,121 @@
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module @HZ@_hss
+    (import @HZ@_config))
+
+/*---------------------------------------------------------------------*/
+/*    Global configuration                                             */
+/*---------------------------------------------------------------------*/
+$(define border-color "#bbb")
+$(define background-color "#f9f9f9")
+
+/*---------------------------------------------------------------------*/
+/*    Icons                                                            */
+/*---------------------------------------------------------------------*/
+$(define doc-icon "url( etc/doc.png )")
+
+/*---------------------------------------------------------------------*/
+/*    General markups                                                  */
+/*---------------------------------------------------------------------*/
+body {
+  background: #e0e0e0;
+  font-family: arial, sans serif;
+}
+
+tt {
+  font-family: Bitstream Vera Sans Mono, Andale Mono, monospace;
+  font-size: 80%;
+}
+
+table td {
+  text-align: left;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Main frame                                                       */
+/*---------------------------------------------------------------------*/
+table.main {
+  width: 90%;
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid $border-color;
+  background: white;
+  -moz-border-radius: 0.5em;
+}
+
+table.main td.weblet-title {
+  font-size: x-large;
+  font-weight: bold;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 20px;
+  padding-bottom: 1px;
+  text-transform: capitalize;
+}
+
+table td {
+  vertical-align: top;
+}
+  
+table.body {
+  width: 100%;
+}
+
+/*--- logo ------------------------------------------------------------*/
+table.main img.logo {
+  padding: 20px 25px 0 25px;
+}
+
+table.main div.version {
+  margin-left: 3px;
+  margin-right: 3px;
+  padding-top: 5px;
+  font-size: 60%;
+  text-align: center;
+  color: #777;
+  font-weight: bold;
+}
+
+/*---------------------------------------------------------------------*/
+/*    left buttons                                                     */
+/*---------------------------------------------------------------------*/
+div.buttons {
+  border-top: 1px solid $border-color;
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+div.buttons div.button {
+  text-align: center;
+  margin-left: 6px;
+  margin-right: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border: 1px solid $border-color;
+  background: $background-color;
+  -moz-border-radius: 0.3em;
+}
+
+div.buttons div.prefs {
+  margin-top: 1em;
+}
+
+img.doc {
+  vertical-align: bottom;
+  border: none;
+  padding-right: 4px;
+}
+
+a.doc {
+  font-family: Arial,Helvetica,sans-serif;
+  font-weight: bold; 
+  font-size: 80%;
+  vertical-align: center;
+  cursor: default;
+  color: black;
+  text-decoration: none;
+}
+
+a.doc:hover {
+  color: #8381de;
+}

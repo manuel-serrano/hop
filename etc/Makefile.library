@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/etc/Makefile.library                    */
+#*    serrano/prgm/project/hop/2.0.x/etc/Makefile.library              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Mon Sep 10 20:30:50 2007 (serrano)                */
-#*    Copyright   :  2006-07 Manuel Serrano                            */
+#*    Last change :  Mon May  4 11:29:01 2009 (serrano)                */
+#*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
 #*=====================================================================*/
@@ -35,13 +35,13 @@ o/%.o: %.scm
 	@ $(call compile2,BIGLOO,BCFLAGS,BLFLAGS,$< -o $@ -c)
 
 $(CLASS_DIR)/%.class: %.scm
-	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
+	@ $(call compile2,BIGLOO,BJVMFLAGS,BLFLAGS,$< -o $@ -c)
 
 $(CLASS_EDIR)/%.class: %.scm
 	@ $(call compile2,BIGLOO,BJVMFLAGS,BLJVMFLAGS,$< -o $@ -c)
 
 $(DOTNET_OBJ_DIR)/%.obj: %.scm
-	@ $(call compile,BIGLOO,BDOTNETFLAGS,$< -o $@ -c)
+	@ $(call compile2,BIGLOO,BDOTNETFLAGS,BLFLAGS,$< -o $@ -c)
 
 $(DOTNET_OBJ_EDIR)/%.obj: %.scm
 	@ $(call compile2,BIGLOO,BDOTNETFLAGS,BLDOTNETFLAGS,$< -o $@ -c)
@@ -72,15 +72,16 @@ $(HEAPJVM_FILE): .jfile .afile make-lib.scm
 lib: lib-jvm lib-dotnet
 
 #*--- lib-c -----------------------------------------------------------*/
-lib-c: $(TAGS) .afile o lib-c-static lib-c-shared
+lib-c: $(TAGS) o lib-c-static lib-c-shared
 
 o:
 	mkdir -p $@
 
-lib-c-static: $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a \
-              $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a
+lib-c-static: .afile o 
+	$(MAKE) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a \
+	        $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a
 
-# lib-c-shared depends on lib-c-static only to force compilation
+# lib-c-shared depends on lib-c-static only to force the compilation
 # order when invoking make with --jobs N
 lib-c-shared: lib-c-static
 	@ if [ "$(SHAREDLIBRARYSUPPORT)" = "yes" ]; then \
@@ -96,14 +97,14 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX): \
    $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX)
 	@ cd $(BUILDLIBDIR) && \
         $(RM) -f lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX) && \
-        ln -s lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX) \
+        $(LN_S) lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX) \
               lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX)
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
 $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX): \
    .afile $(OBJECTS)
 	@ $(MAKE) shared-lib \
-             LDINSTALLNAMEDIR=lib/hop/$(HOPRELEASE) \
+             LDINSTALLNAMEDIR=$(LDINSTALLNAMEDIRROOT)/hop/$(HOPRELEASE) \
              BOOTLIBDIR=$(BUILDLIBDIR) \
              FORCELD=true \
              LIBDEST=$@ \
@@ -114,7 +115,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX): \
 $(BUILDLIBDIR)/lib$(TARGETNAME)_e-$(HOPRELEASE).$(SHAREDSUFFIX): \
    .afile $(EOBJECTS)
 	@ $(MAKE) shared-lib \
-             LDINSTALLNAMEDIR=lib/hop/$(HOPRELEASE) \
+             LDINSTALLNAMEDIR=$(LDINSTALLNAMEDIRROOT)/hop/$(HOPRELEASE) \
              BOOTLIBDIR=$(BUILDLIBDIR) \
              OBJECTS=$(EOBJECTS) \
              FORCELD=true \
@@ -127,7 +128,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a: \
    $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
 	@ cd $(BUILDLIBDIR) && \
         $(RM) -f lib$(TARGETNAME)_u-$(HOPRELEASE).a && \
-        ln -s lib$(TARGETNAME)_s-$(HOPRELEASE).a lib$(TARGETNAME)_u-$(HOPRELEASE).a
+        $(LN_S) lib$(TARGETNAME)_s-$(HOPRELEASE).a lib$(TARGETNAME)_u-$(HOPRELEASE).a
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
 $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a: .afile $(OBJECTS)
@@ -209,6 +210,7 @@ $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll: .afile $(BGL_DOTNET_EOBJ)
 #*---------------------------------------------------------------------*/
 stdclean:
 	$(RM) -f $(OBJECTS) $(_BGL_OBJECTS:%=%.c)
+	$(RM) -f $(EOBJECTS)
 	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
 	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a
 	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_e-$(HOPRELEASE).a
@@ -254,19 +256,22 @@ distclean: cleanall
 install: install-$(BACKEND)
 
 install-native:
-	cp $(BUILDLIBDIR)/$(TARGETNAME).heap $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap && \
+	$(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME).heap $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap && \
         chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap && \
         $(MAKE) install-lib \
+                INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR)\
                 LIBDIR=$(DESTDIR)$(HOPLIBDIR)\
                 LIB=lib$(TARGETNAME)_s-$(HOPRELEASE) && \
         $(MAKE) install-shared-lib \
+                INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
                 LIB=lib$(TARGETNAME)_e-$(HOPRELEASE) && \
         $(MAKE) install-lnlib \
+                INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
@@ -276,13 +281,13 @@ install-native:
 install-jvm:
 
 install-dotnet:
-	cp $(BUILDLIBDIR)/$(TARGETNAME).jheap $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).jheap && \
+	$(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME).jheap $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).jheap && \
         chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).jheap && \
-        cp $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll && \
+        $(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll && \
         chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll && \
-        cp $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll && \
+        $(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll && \
         chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll && \
-        cp $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll && \
+        $(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll && \
         chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll 
 
 uninstall:

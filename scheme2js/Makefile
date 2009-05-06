@@ -1,67 +1,79 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/scheme2js/Makefile                      */
+#*    serrano/prgm/project/hop/1.10.x/scheme2js/Makefile               */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Thu Sep 20 07:25:19 2007 (serrano)                */
-#*    Copyright   :  2006-07 Manuel Serrano                            */
+#*    Last change :  Fri Nov 28 10:55:54 2008 (serrano)                */
+#*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
 #*=====================================================================*/
-.PHONY: do 
+.PHONY: do
 
-do: build
+do: exec runtime-build
 
 #*---------------------------------------------------------------------*/
 #*    Standard Bigloo configuration                                    */
 #*---------------------------------------------------------------------*/
--include ../etc/Makefile.hopconfig
--include ../etc/Makefile.version
--include $(BIGLOOLIBDIR)/Makefile.config
+include Makefile.configs
 
 #*---------------------------------------------------------------------*/
 #*    Compilers, Tools and Destinations                                */
 #*---------------------------------------------------------------------*/
 # the library name
-TARGETNAME	= scheme2js
-HOPCLOSELIBS	= $(BGLCLOSELIBS)
-HOPCLOSELIBS_E	= -lscheme2js_s-$(HOPRELEASE)
+TARGETNAME = scheme2js
+MCO = bglmco -s
+EXEC = $(TARGETNAME)
+
+BLIBFLAGS = $(BSCM2JSFLAGS)
 
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_BGL_OBJECTS	= capture compile constants expanders \
-	gen-js inline js-interface liveness node-elimination \
-	nodes pobject-conv protobject scheme2js side statements symbol \
-	tail-rec tail transform-util traverse var expand verbose \
-	dot-expand allocate-names config locals use-count nested-closures \
-	constant-propagation fun-size rm-unused-vars captured-vars \
-	free-vars var-propagation mark-statements while trampoline \
-	locations callcc hack-encapsulation loop-hoist check deep-clone
+_BGL_OBJECTS = main scheme2js srfi0 \
+        tools \
+        config mutable-strings verbose error \
+        module module-resolver infotron \
+        expand expanders runtime-expander dot-expand \
+        nodes export walk \
+        pobject-conv \
+        symbol symbol-table gen-js mapping1 mapping2 \
+        letrec-expansion encapsulation node-elimination mark-statements \
+	inline deep-clone side use-count nested-closures captured-vars \
+          free-vars fun-size transform-util \
+        rm-unused-vars \
+        tail-rec tail loop-updates var-ref-util \
+        constant-propagation constants scope while \
+        propagation statements push-set \
+        rm-tail-breaks \
+	out compile-optimized-call compile-optimized-set compile-optimized-boolify \
+          allocate-names template-display \
+        scm-out \
+        callcc callcc_anormalform callcc_resume_push callcc_locations callcc_checkpoint \
+	trampoline
 
-_OBJECTS	= $(_BGL_OBJECTS)
+_OBJECTS = $(_BGL_OBJECTS)
 
-OBJECTS		= $(_OBJECTS:%=o/%.o)
-EOBJECTS	= o/make-lib.o
+OBJECTS = $(_OBJECTS:%=o/%.o)
+EOBJECTS = o/make-lib.o
 
-BGL_CLASSES	= $(_OBJECTS:%=$(CLASS_DIR)/%.class)
-BGL_ECLASSES	= $(CLASS_EDIR)/make-lib.class
+BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class)
+BGL_ECLASSES = $(CLASS_EDIR)/make-lib.class
 
-BGL_DOTNET_OBJ	= $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
+BGL_DOTNET_OBJ = $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
 BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make-lib.obj
 
-SOURCES		= $(_OBJECTS:%=%.scm)
+SOURCES = $(_OBJECTS:%=%.scm)
 
-INCLUDES	= nodes.sch protobject.sch tools.sch \
-	compile-optimized-boolify.scm compile-optimized-call.scm compile-optimized-set.scm
+INCLUDES = mapping.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
-POPULATION	= $(SOURCES) $(INCLUDES) make-lib.scm Makefile \
-                  runtime/exporter.scm runtime/runtime.js
+POPULATION = $(SOURCES) $(INCLUDES) make-lib.scm Makefile \
+             runtime/exporter.scm runtime/runtime_callcc.js
 
-include ../etc/Makefile.library
+-include ../etc/Makefile.library
 
 #*---------------------------------------------------------------------*/
 #*    all                                                              */
@@ -70,16 +82,13 @@ include ../etc/Makefile.library
 
 build: $(BACKEND) runtime-build
 
-scheme2js: $(OBJECTS)
-	$(BIGLOO) -o $@ $^
-
 native: heap-c lib-c
 jvm: heap-jvm lib-jvm
 dotnet: heap-jvm lib-dotnet
 
-clean: runtime-clean
-install: runtime-install
-uninstall: runtime-uninstall
+clean: runtime-clean mco-clean
+install:
+uninstall:
 
 #*---------------------------------------------------------------------*/
 #*    scheme2js runtime                                                */
@@ -87,26 +96,24 @@ uninstall: runtime-uninstall
 
 SCHEME2JS_RUNTIME = runtime
 
-runtime-build: $(SCHEME2JS_RUNTIME)/runtime-interface.js $(SCHEME2JS_RUNTIME)/runtime_mapping.sch
-
-$(SCHEME2JS_RUNTIME)/runtime_mapping.sch: $(SCHEME2JS_RUNTIME)/runtime.js \
-                                          $(SCHEME2JS_RUNTIME)/exporter.scm
-	$(BIGLOO) -i $(SCHEME2JS_RUNTIME)/exporter.scm $< mapping > $@ \
-         || ($(RM) -f $@ && exit 1)
-
-$(SCHEME2JS_RUNTIME)/runtime-interface.js: $(SCHEME2JS_RUNTIME)/runtime.js \
-                                           $(SCHEME2JS_RUNTIME)/exporter.scm
-	$(BIGLOO) -i $(SCHEME2JS_RUNTIME)/exporter.scm $< interface > $@ \
-         || ($(RM) -f $@ && exit 1)
-
-runtime-clean:
-	/bin/rm -f $(SCHEME2JS_RUNTIME)/runtime_mapping.sch
-	/bin/rm -f $(SCHEME2JS_RUNTIME)/runtime-interface.js
-	/bin/rm -f $(SCHEME2JS_RUNTIME)/*.o
+include $(SCHEME2JS_RUNTIME)/Makefile.include
 
 runtime-install:
+	mkdir -p $(DESTDIR)$(SCHEME2JSSHAREDIR) && \
+	$(INSTALL) $(SCHEME2JS_RUNTIME)/runtime.js \
+                $(DESTDIR)$(SCHEME2JSSHAREDIR) && \
+	$(INSTALL) $(SCHEME2JS_RUNTIME)/runtime_callcc.js \
+                $(DESTDIR)$(SCHEME2JSSHAREDIR) && \
+	$(INSTALL) $(SCHEME2JS_RUNTIME)/runtime_interface.js \
+                $(DESTDIR)$(SCHEME2JSSHAREDIR) && \
+	$(INSTALL) $(SCHEME2JS_RUNTIME)/runtime_interface_callcc.js \
+                $(DESTDIR)$(SCHEME2JSSHAREDIR)
 
 runtime-uninstall:
+	/bin/rm -f $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime.js && \
+	/bin/rm -f $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime_callcc.js && \
+	/bin/rm -f $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime_interface.js && \
+	/bin/rm -f $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime_interface_callcc.js
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */
@@ -127,95 +134,391 @@ ude:
 	@ $(BTAGS) -o .etags $(SOURCES)
 
 #*---------------------------------------------------------------------*/
-#*    Explicit dependency                                              */
+#*    Implicit Rules                                                   */
 #*---------------------------------------------------------------------*/
-scheme2js.scm: $(SCHEME2JS_RUNTIME)/runtime_mapping.sch
+MCOS = $(_OBJECTS:%=mco/%.mco)
+MCOS2 = $(_OBJECTS:%=mco/%.mco2)
+
+.PRECIOUS: $(MCOS)
+
+mco/%.mco: %.scm
+	@mkdir -p mco;
+	@if [ ! "$@"2 -nt "$^" ]; then \
+	  echo $(MCO) -I . -o $@ $<; \
+	  $(MCO) -I . -o $@ $<; \
+	fi;
+	@touch "$@"2;
+
+mco-clean:
+	rm -rf mco
+
+#*---------------------------------------------------------------------*/
+#*    Explicit Dependency
+#*---------------------------------------------------------------------*/
+$(CLASS_DIR)/mapping1.class o/mapping1.o: $(SCHEME2JS_RUNTIME)/runtime.sch $(SCHEME2JS_RUNTIME)/runtime-callcc.sch
+$(CLASS_DIR)/mapping2.class o/mapping2.o: $(SCHEME2JS_RUNTIME)/mod-runtime.sch $(SCHEME2JS_RUNTIME)/mod-runtime-callcc.sch
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/
 #*    Dependencies ...                                                 */
 #*---------------------------------------------------------------------*/
-o/var.o ./var.class: ./nodes.sch ./protobject.sch 
-o/locals.o locals.class: ./tools.sch ./nodes.sch ./protobject.sch 
-o/rm-unused-vars.o ./rm-unused-vars.class: ./tools.sch ./nodes.sch       \
-      ./protobject.sch 
-o/statements.o ./statements.class: ./nodes.sch ./protobject.sch 
-o/constants.o constants.class: ./tools.sch ./nodes.sch ./protobject.sch 
-o/protobject.o protobject.class: ./tools.sch ./protobject.sch 
-o/traverse.o ./traverse.class: ./nodes.sch ./protobject.sch 
-o/tail-rec.o tail-rec.class: ./tools.sch ./nodes.sch ./protobject.sch 
-o/transform-util.o transform-util.class: ./nodes.sch ./protobject.sch 
-o/liveness.o liveness.class: ./nodes.sch ./protobject.sch 
-o/symbol.o ./symbol.class: ./nodes.sch ./protobject.sch 
-o/allocate-names.o ./allocate-names.class: ./tools.sch ./nodes.sch       \
-      ./protobject.sch 
-o/pobject-conv.o pobject-conv.class: ./nodes.sch ./protobject.sch 
-o/gen-code.o ./gen-code.class: ./tools.sch 
-o/while.o while.class: ./tools.sch ./nodes.sch ./protobject.sch 
-o/nodes.o nodes.class: ./protobject.sch 
-o/compile.o ./compile.class: ./compile-optimized-boolify.scm             \
-      ./compile-optimized-call.scm ./tools.sch ./nodes.sch               \
-      ./protobject.sch 
-o/mark-statements.o ./mark-statements.class: ./nodes.sch                 \
-      ./protobject.sch 
-o/traverse.o traverse.class: ./nodes.sch ./protobject.sch 
-o/transform-util.o ./transform-util.class: ./nodes.sch ./protobject.sch 
-o/inline.o ./inline.class: ./tools.sch ./nodes.sch ./protobject.sch 
-o/compile.o compile.class: ./compile-optimized-boolify.scm               \
-      ./compile-optimized-call.scm ./tools.sch ./nodes.sch               \
-      ./protobject.sch 
-o/use-count.o ./use-count.class: ./nodes.sch ./protobject.sch 
-o/nodes.o ./nodes.class: ./protobject.sch 
-o/captured-vars.o ./captured-vars.class: ./tools.sch ./nodes.sch         \
-      ./protobject.sch 
-o/symbol.o symbol.class: ./nodes.sch ./protobject.sch 
-o/while.o ./while.class: ./tools.sch ./nodes.sch ./protobject.sch 
-o/var-propagation.o var-propagation.class: ./nodes.sch ./protobject.sch 
-o/nested-funs.o ./nested-funs.class: ./tools.sch ./nodes.sch             \
-      ./protobject.sch 
-o/free-vars.o ./free-vars.class: ./tools.sch ./nodes.sch                 \
-      ./protobject.sch 
-o/statements.o statements.class: ./nodes.sch ./protobject.sch 
-o/fun-size.o ./fun-size.class: ./nodes.sch ./protobject.sch 
-o/node-elimination.o node-elimination.class: ./nodes.sch                 \
-      ./protobject.sch 
-o/js-interface.o js-interface.class: ./runtime/runtime_mapping.sch 
-o/protobject.o ./protobject.class: ./tools.sch ./protobject.sch 
-o/capture.o ./capture.class: ./tools.sch ./nodes.sch ./protobject.sch 
-o/tail.o ./tail.class: ./nodes.sch ./protobject.sch 
-o/capture.o capture.class: ./tools.sch ./nodes.sch ./protobject.sch 
-o/use-count.o use-count.class: ./nodes.sch ./protobject.sch 
-o/constant-propagation.o ./constant-propagation.class: ./nodes.sch       \
-      ./protobject.sch 
-o/pobject-conv.o ./pobject-conv.class: ./nodes.sch ./protobject.sch 
-o/inline.o inline.class: ./tools.sch ./nodes.sch ./protobject.sch 
-o/free-vars.o free-vars.class: ./tools.sch ./nodes.sch ./protobject.sch 
-o/tail.o tail.class: ./nodes.sch ./protobject.sch 
-o/gen-code.o gen-code.class: ./tools.sch 
-o/node-elimination.o ./node-elimination.class: ./nodes.sch               \
-      ./protobject.sch 
-o/constant-propagation.o constant-propagation.class: ./nodes.sch         \
-      ./protobject.sch 
-o/rm-unused-vars.o rm-unused-vars.class: ./tools.sch ./nodes.sch         \
-      ./protobject.sch 
-o/tail-rec.o ./tail-rec.class: ./tools.sch ./nodes.sch ./protobject.sch 
-o/nested-funs.o nested-funs.class: ./tools.sch ./nodes.sch               \
-      ./protobject.sch 
-o/locals.o ./locals.class: ./tools.sch ./nodes.sch ./protobject.sch 
-o/var.o var.class: ./nodes.sch ./protobject.sch 
-o/liveness.o ./liveness.class: ./nodes.sch ./protobject.sch 
-o/side.o ./side.class: ./nodes.sch ./protobject.sch 
-o/constants.o ./constants.class: ./tools.sch ./nodes.sch                 \
-      ./protobject.sch 
-o/captured-vars.o captured-vars.class: ./tools.sch ./nodes.sch           \
-      ./protobject.sch 
-o/fun-size.o fun-size.class: ./nodes.sch ./protobject.sch 
-o/mark-statements.o mark-statements.class: ./nodes.sch ./protobject.sch 
-o/js-interface.o ./js-interface.class: ./runtime/runtime_mapping.sch 
-o/var-propagation.o ./var-propagation.class: ./nodes.sch                 \
-      ./protobject.sch 
-o/allocate-names.o allocate-names.class: ./tools.sch ./nodes.sch         \
-      ./protobject.sch 
-o/side.o side.class: ./nodes.sch ./protobject.sch 
+o/rm-unused-vars.o classes/mimosa/inria/scheme2js/rm-unused-vars.class:  \
+      mco/verbose.mco mco/use-count.mco mco/walk.mco mco/tools.mco       \
+      mco/export.mco mco/nodes.mco 
+o/constants.o classes/mimosa/inria/scheme2js/constants.class:            \
+      mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco          \
+      mco/tools.mco mco/config.mco 
+o/statements.o classes/mimosa/inria/scheme2js/statements.class:          \
+      mco/verbose.mco mco/push-set.mco mco/side.mco                      \
+      mco/mark-statements.mco mco/walk.mco mco/config.mco mco/export.mco \
+      mco/tools.mco mco/error.mco mco/nodes.mco 
+o/walk.o classes/mimosa/inria/scheme2js/walk.class: mco/export.mco       \
+      mco/nodes.mco 
+o/compile-optimized-boolify.o classes/mimosa/inria/scheme2js/compile-optimized-boolify.class: \
+      mco/verbose.mco mco/template-display.mco mco/export.mco            \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
+o/callcc.o classes/mimosa/inria/scheme2js/callcc.class:                  \
+      mco/callcc_resume_push.mco mco/callcc_locations.mco                \
+      mco/callcc_checkpoint.mco mco/callcc_anormalform.mco               \
+      mco/export.mco mco/tools.mco mco/node-elimination.mco              \
+      mco/verbose.mco mco/var-ref-util.mco mco/mark-statements.mco       \
+      mco/tail.mco mco/free-vars.mco mco/side.mco mco/walk.mco           \
+      mco/nodes.mco mco/config.mco 
+o/out.o classes/mimosa/inria/scheme2js/out.class:                        \
+      mco/template-display.mco mco/compile-optimized-set.mco             \
+      mco/compile-optimized-boolify.mco mco/compile-optimized-call.mco   \
+      mco/callcc.mco mco/allocate-names.mco mco/verbose.mco              \
+      mco/mutable-strings.mco mco/gen-js.mco mco/walk.mco mco/export.mco \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
+o/callcc_checkpoint.o classes/mimosa/inria/scheme2js/callcc_checkpoint.class: \
+      mco/tools.mco mco/verbose.mco mco/callcc_locations.mco             \
+      mco/tail.mco mco/walk.mco mco/export.mco mco/nodes.mco             \
+      mco/config.mco 
+o/rm-tail-breaks.o classes/mimosa/inria/scheme2js/rm-tail-breaks.class:  \
+      mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco          \
+      mco/tools.mco mco/config.mco 
+o/tail-rec.o classes/mimosa/inria/scheme2js/tail-rec.class:              \
+      mco/verbose.mco mco/captured-vars.mco mco/loop-updates.mco         \
+      mco/tail.mco mco/side.mco mco/transform-util.mco                   \
+      mco/var-ref-util.mco mco/symbol.mco mco/walk.mco mco/export.mco    \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
+o/dot-expand.o classes/mimosa/inria/scheme2js/dot-expand.class:          \
+      mco/expand.mco mco/config.mco mco/mutable-strings.mco              \
+      mco/verbose.mco 
+o/transform-util.o classes/mimosa/inria/scheme2js/transform-util.class:  \
+      mco/symbol.mco mco/export.mco mco/error.mco mco/nodes.mco 
+o/walk.o classes/mimosa/inria/scheme2js/walk.class: mco/export.mco       \
+      mco/nodes.mco 
+o/expand.o classes/mimosa/inria/scheme2js/expand.class: mco/tools.mco    \
+      mco/error.mco mco/verbose.mco 
+o/trampoline.o classes/mimosa/inria/scheme2js/trampoline.class:          \
+      mco/tools.mco mco/var-ref-util.mco mco/verbose.mco mco/side.mco    \
+      mco/tail.mco mco/symbol.mco mco/walk.mco mco/export.mco            \
+      mco/nodes.mco mco/config.mco 
+o/mapping1.o classes/mimosa/inria/scheme2js/mapping1.class: mapping.sch  \
+      mco/tools.mco mco/export.mco 
+o/symbol-table.o classes/mimosa/inria/scheme2js/symbol-table.class:      \
+      mco/tools.mco 
+o/encapsulation.o classes/mimosa/inria/scheme2js/encapsulation.class:    \
+      mco/verbose.mco mco/config.mco mco/export.mco mco/nodes.mco        \
+      mco/symbol.mco 
+o/nested-closures.o classes/mimosa/inria/scheme2js/nested-closures.class: \
+      mco/verbose.mco mco/captured-vars.mco mco/walk.mco mco/export.mco  \
+      mco/nodes.mco 
+o/compile-optimized-call.o classes/mimosa/inria/scheme2js/compile-optimized-call.class: \
+      mco/verbose.mco mco/export.mco mco/nodes.mco                       \
+      mco/template-display.mco mco/tools.mco mco/error.mco               \
+      mco/config.mco 
+o/infotron.o classes/mimosa/inria/scheme2js/infotron.class:              \
+      mco/config.mco mco/mutable-strings.mco mco/module.mco              \
+      mco/error.mco mco/verbose.mco 
+o/srfi0.o classes/mimosa/inria/scheme2js/srfi0.class: mco/expand.mco     \
+      mco/error.mco version.sch 
+o/symbol.o classes/mimosa/inria/scheme2js/symbol.class:                  \
+      mco/pobject-conv.mco mco/gen-js.mco mco/verbose.mco mco/walk.mco   \
+      mco/export.mco mco/nodes.mco mco/config.mco mco/symbol-table.mco   \
+      mco/tools.mco mco/mapping2.mco mco/mapping1.mco 
+o/allocate-names.o classes/mimosa/inria/scheme2js/allocate-names.class:  \
+      mco/gen-js.mco mco/verbose.mco mco/walk.mco mco/export.mco         \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
+o/module.o classes/mimosa/inria/scheme2js/module.class: mco/config.mco   \
+      mco/infotron.mco mco/module-resolver.mco mco/export.mco            \
+      mco/expand.mco mco/tools.mco mco/srfi0.mco mco/error.mco           \
+      mco/verbose.mco 
+o/loop-updates.o classes/mimosa/inria/scheme2js/loop-updates.class:      \
+      mco/verbose.mco mco/var-ref-util.mco mco/walk.mco mco/export.mco   \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
+o/pobject-conv.o classes/mimosa/inria/scheme2js/pobject-conv.class:      \
+      mco/verbose.mco mco/config.mco mco/export.mco mco/error.mco        \
+      mco/nodes.mco 
+o/letrec-expansion.o classes/mimosa/inria/scheme2js/letrec-expansion.class: \
+      mco/gen-js.mco mco/verbose.mco mco/walk.mco mco/export.mco         \
+      mco/pobject-conv.mco mco/nodes.mco mco/config.mco 
+o/runtime-expander.o classes/mimosa/inria/scheme2js/runtime-expander.class: \
+      mco/pobject-conv.mco mco/verbose.mco mco/config.mco 
+o/mapping2.o classes/mimosa/inria/scheme2js/mapping2.class: mapping.sch  \
+      mco/tools.mco mco/export.mco 
+o/out.o classes/mimosa/inria/scheme2js/out.class:                        \
+      mco/template-display.mco mco/compile-optimized-set.mco             \
+      mco/compile-optimized-boolify.mco mco/compile-optimized-call.mco   \
+      mco/callcc.mco mco/allocate-names.mco mco/verbose.mco              \
+      mco/mutable-strings.mco mco/gen-js.mco mco/walk.mco mco/export.mco \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
+o/push-set.o classes/mimosa/inria/scheme2js/push-set.class:              \
+      mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco 
+o/srfi0.o classes/mimosa/inria/scheme2js/srfi0.class: mco/expand.mco     \
+      mco/error.mco version.sch 
+o/var-ref-util.o classes/mimosa/inria/scheme2js/var-ref-util.class:      \
+      mco/export.mco mco/nodes.mco mco/tools.mco mco/config.mco 
+o/while.o classes/mimosa/inria/scheme2js/while.class: mco/verbose.mco    \
+      mco/loop-updates.mco mco/symbol.mco mco/walk.mco mco/export.mco    \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
+o/nodes.o classes/mimosa/inria/scheme2js/nodes.class: mco/export.mco     \
+      mco/verbose.mco 
+o/expand.o classes/mimosa/inria/scheme2js/expand.class: mco/tools.mco    \
+      mco/error.mco mco/verbose.mco 
+o/rm-tail-breaks.o classes/mimosa/inria/scheme2js/rm-tail-breaks.class:  \
+      mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco          \
+      mco/tools.mco mco/config.mco 
+o/export.o classes/mimosa/inria/scheme2js/export.class: mco/error.mco    \
+      mco/gen-js.mco 
+o/expanders.o classes/mimosa/inria/scheme2js/expanders.class:            \
+      mco/pobject-conv.mco mco/error.mco mco/expand.mco 
+o/letrec-expansion.o classes/mimosa/inria/scheme2js/letrec-expansion.class: \
+      mco/gen-js.mco mco/verbose.mco mco/walk.mco mco/export.mco         \
+      mco/pobject-conv.mco mco/nodes.mco mco/config.mco 
+o/mark-statements.o classes/mimosa/inria/scheme2js/mark-statements.class: \
+      mco/verbose.mco mco/config.mco mco/walk.mco mco/export.mco         \
+      mco/nodes.mco 
+o/runtime-expander.o classes/mimosa/inria/scheme2js/runtime-expander.class: \
+      mco/pobject-conv.mco mco/verbose.mco mco/config.mco 
+o/scm-out.o classes/mimosa/inria/scheme2js/scm-out.class: mco/walk.mco   \
+      mco/tools.mco mco/export.mco mco/nodes.mco 
+o/transform-util.o classes/mimosa/inria/scheme2js/transform-util.class:  \
+      mco/symbol.mco mco/export.mco mco/error.mco mco/nodes.mco 
+o/inline.o classes/mimosa/inria/scheme2js/inline.class: mco/verbose.mco  \
+      mco/transform-util.mco mco/fun-size.mco mco/nested-closures.mco    \
+      mco/use-count.mco mco/side.mco mco/deep-clone.mco mco/walk.mco     \
+      mco/export.mco mco/nodes.mco mco/tools.mco mco/config.mco 
+o/scm-out.o classes/mimosa/inria/scheme2js/scm-out.class: mco/walk.mco   \
+      mco/tools.mco mco/export.mco mco/nodes.mco 
+o/use-count.o classes/mimosa/inria/scheme2js/use-count.class:            \
+      mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco 
+o/nodes.o classes/mimosa/inria/scheme2js/nodes.class: mco/export.mco     \
+      mco/verbose.mco 
+o/captured-vars.o classes/mimosa/inria/scheme2js/captured-vars.class:    \
+      mco/verbose.mco mco/side.mco mco/free-vars.mco mco/walk.mco        \
+      mco/export.mco mco/nodes.mco 
+o/symbol.o classes/mimosa/inria/scheme2js/symbol.class:                  \
+      mco/pobject-conv.mco mco/gen-js.mco mco/verbose.mco mco/walk.mco   \
+      mco/export.mco mco/nodes.mco mco/config.mco mco/symbol-table.mco   \
+      mco/tools.mco mco/mapping2.mco mco/mapping1.mco 
+o/module.o classes/mimosa/inria/scheme2js/module.class: mco/config.mco   \
+      mco/infotron.mco mco/module-resolver.mco mco/export.mco            \
+      mco/expand.mco mco/tools.mco mco/srfi0.mco mco/error.mco           \
+      mco/verbose.mco 
+o/while.o classes/mimosa/inria/scheme2js/while.class: mco/verbose.mco    \
+      mco/loop-updates.mco mco/symbol.mco mco/walk.mco mco/export.mco    \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
+o/deep-clone.o classes/mimosa/inria/scheme2js/deep-clone.class:          \
+      mco/verbose.mco mco/walk.mco mco/tools.mco mco/export.mco          \
+      mco/nodes.mco 
+o/free-vars.o classes/mimosa/inria/scheme2js/free-vars.class:            \
+      mco/verbose.mco mco/walk.mco mco/tools.mco mco/export.mco          \
+      mco/nodes.mco 
+o/statements.o classes/mimosa/inria/scheme2js/statements.class:          \
+      mco/verbose.mco mco/push-set.mco mco/side.mco                      \
+      mco/mark-statements.mco mco/walk.mco mco/config.mco mco/export.mco \
+      mco/tools.mco mco/error.mco mco/nodes.mco 
+o/fun-size.o classes/mimosa/inria/scheme2js/fun-size.class:              \
+      mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco 
+o/mapping1.o classes/mimosa/inria/scheme2js/mapping1.class: mapping.sch  \
+      mco/tools.mco mco/export.mco 
+o/node-elimination.o classes/mimosa/inria/scheme2js/node-elimination.class: \
+      mco/mark-statements.mco mco/verbose.mco mco/walk.mco               \
+      mco/export.mco mco/nodes.mco 
+o/scope.o classes/mimosa/inria/scheme2js/scope.class:                    \
+      mco/captured-vars.mco mco/free-vars.mco mco/verbose.mco            \
+      mco/walk.mco mco/export.mco mco/nodes.mco mco/tools.mco            \
+      mco/config.mco 
+o/expanders.o classes/mimosa/inria/scheme2js/expanders.class:            \
+      mco/pobject-conv.mco mco/error.mco mco/expand.mco 
+o/tail.o classes/mimosa/inria/scheme2js/tail.class: mco/verbose.mco      \
+      mco/walk.mco mco/export.mco mco/nodes.mco 
+o/template-display.o classes/mimosa/inria/scheme2js/template-display.class: \
+      mco/tools.mco 
+o/infotron.o classes/mimosa/inria/scheme2js/infotron.class:              \
+      mco/config.mco mco/mutable-strings.mco mco/module.mco              \
+      mco/error.mco mco/verbose.mco 
+o/compile-optimized-set.o classes/mimosa/inria/scheme2js/compile-optimized-set.class: \
+      mco/export.mco mco/allocate-names.mco mco/nodes.mco                \
+      mco/template-display.mco mco/tools.mco mco/config.mco 
+o/dot-expand.o classes/mimosa/inria/scheme2js/dot-expand.class:          \
+      mco/expand.mco mco/config.mco mco/mutable-strings.mco              \
+      mco/verbose.mco 
+o/use-count.o classes/mimosa/inria/scheme2js/use-count.class:            \
+      mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco 
+o/export.o classes/mimosa/inria/scheme2js/export.class: mco/error.mco    \
+      mco/gen-js.mco 
+o/callcc_resume_push.o classes/mimosa/inria/scheme2js/callcc_resume_push.class: \
+      mco/tools.mco mco/verbose.mco mco/mark-statements.mco mco/tail.mco \
+      mco/walk.mco mco/export.mco mco/nodes.mco mco/config.mco 
+o/propagation.o classes/mimosa/inria/scheme2js/propagation.class:        \
+      mco/mutable-strings.mco mco/verbose.mco mco/side.mco               \
+      mco/free-vars.mco mco/var-ref-util.mco mco/walk.mco mco/export.mco \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
+o/constant-propagation.o classes/mimosa/inria/scheme2js/constant-propagation.class: \
+      mco/verbose.mco mco/use-count.mco mco/side.mco                     \
+      mco/var-ref-util.mco mco/walk.mco mco/export.mco mco/nodes.mco     \
+      mco/config.mco 
+o/pobject-conv.o classes/mimosa/inria/scheme2js/pobject-conv.class:      \
+      mco/verbose.mco mco/config.mco mco/export.mco mco/error.mco        \
+      mco/nodes.mco 
+o/inline.o classes/mimosa/inria/scheme2js/inline.class: mco/verbose.mco  \
+      mco/transform-util.mco mco/fun-size.mco mco/nested-closures.mco    \
+      mco/use-count.mco mco/side.mco mco/deep-clone.mco mco/walk.mco     \
+      mco/export.mco mco/nodes.mco mco/tools.mco mco/config.mco 
+o/scope.o classes/mimosa/inria/scheme2js/scope.class:                    \
+      mco/captured-vars.mco mco/free-vars.mco mco/verbose.mco            \
+      mco/walk.mco mco/export.mco mco/nodes.mco mco/tools.mco            \
+      mco/config.mco 
+o/callcc_resume_push.o classes/mimosa/inria/scheme2js/callcc_resume_push.class: \
+      mco/tools.mco mco/verbose.mco mco/mark-statements.mco mco/tail.mco \
+      mco/walk.mco mco/export.mco mco/nodes.mco mco/config.mco 
+o/free-vars.o classes/mimosa/inria/scheme2js/free-vars.class:            \
+      mco/verbose.mco mco/walk.mco mco/tools.mco mco/export.mco          \
+      mco/nodes.mco 
+o/tail.o classes/mimosa/inria/scheme2js/tail.class: mco/verbose.mco      \
+      mco/walk.mco mco/export.mco mco/nodes.mco 
+o/node-elimination.o classes/mimosa/inria/scheme2js/node-elimination.class: \
+      mco/mark-statements.mco mco/verbose.mco mco/walk.mco               \
+      mco/export.mco mco/nodes.mco 
+o/compile-optimized-set.o classes/mimosa/inria/scheme2js/compile-optimized-set.class: \
+      mco/export.mco mco/allocate-names.mco mco/nodes.mco                \
+      mco/template-display.mco mco/tools.mco mco/config.mco 
+o/trampoline.o classes/mimosa/inria/scheme2js/trampoline.class:          \
+      mco/tools.mco mco/var-ref-util.mco mco/verbose.mco mco/side.mco    \
+      mco/tail.mco mco/symbol.mco mco/walk.mco mco/export.mco            \
+      mco/nodes.mco mco/config.mco 
+o/template-display.o classes/mimosa/inria/scheme2js/template-display.class: \
+      mco/tools.mco 
+o/verbose.o classes/mimosa/inria/scheme2js/verbose.class: mco/config.mco 
+o/constant-propagation.o classes/mimosa/inria/scheme2js/constant-propagation.class: \
+      mco/verbose.mco mco/use-count.mco mco/side.mco                     \
+      mco/var-ref-util.mco mco/walk.mco mco/export.mco mco/nodes.mco     \
+      mco/config.mco 
+o/callcc_checkpoint.o classes/mimosa/inria/scheme2js/callcc_checkpoint.class: \
+      mco/tools.mco mco/verbose.mco mco/callcc_locations.mco             \
+      mco/tail.mco mco/walk.mco mco/export.mco mco/nodes.mco             \
+      mco/config.mco 
+o/rm-unused-vars.o classes/mimosa/inria/scheme2js/rm-unused-vars.class:  \
+      mco/verbose.mco mco/use-count.mco mco/walk.mco mco/tools.mco       \
+      mco/export.mco mco/nodes.mco 
+o/nested-closures.o classes/mimosa/inria/scheme2js/nested-closures.class: \
+      mco/verbose.mco mco/captured-vars.mco mco/walk.mco mco/export.mco  \
+      mco/nodes.mco 
+o/verbose.o classes/mimosa/inria/scheme2js/verbose.class: mco/config.mco 
+o/tail-rec.o classes/mimosa/inria/scheme2js/tail-rec.class:              \
+      mco/verbose.mco mco/captured-vars.mco mco/loop-updates.mco         \
+      mco/tail.mco mco/side.mco mco/transform-util.mco                   \
+      mco/var-ref-util.mco mco/symbol.mco mco/walk.mco mco/export.mco    \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
+o/main.o classes/mimosa/inria/scheme2js/main.class: version.sch          \
+      mco/config.mco mco/scheme2js.mco 
+o/symbol-table.o classes/mimosa/inria/scheme2js/symbol-table.class:      \
+      mco/tools.mco 
+o/encapsulation.o classes/mimosa/inria/scheme2js/encapsulation.class:    \
+      mco/verbose.mco mco/config.mco mco/export.mco mco/nodes.mco        \
+      mco/symbol.mco 
+o/error.o classes/mimosa/inria/scheme2js/error.class: mco/nodes.mco      \
+      mco/export.mco 
+o/scheme2js.o classes/mimosa/inria/scheme2js/scheme2js.class:            \
+      mco/trampoline.mco mco/callcc.mco mco/verbose.mco mco/scm-out.mco  \
+      mco/out.mco mco/rm-tail-breaks.mco mco/statements.mco              \
+      mco/propagation.mco mco/while.mco mco/scope.mco mco/constants.mco  \
+      mco/constant-propagation.mco mco/tail-rec.mco                      \
+      mco/rm-unused-vars.mco mco/inline.mco mco/node-elimination.mco     \
+      mco/encapsulation.mco mco/letrec-expansion.mco mco/symbol.mco      \
+      mco/pobject-conv.mco mco/dot-expand.mco mco/runtime-expander.mco   \
+      mco/expanders.mco mco/expand.mco mco/module.mco mco/export.mco     \
+      mco/srfi0.mco mco/nodes.mco mco/config.mco version.sch 
+o/callcc_anormalform.o classes/mimosa/inria/scheme2js/callcc_anormalform.class: \
+      mco/tools.mco mco/side.mco mco/verbose.mco                         \
+      mco/callcc_locations.mco mco/walk.mco mco/export.mco mco/nodes.mco \
+      mco/config.mco 
+o/callcc.o classes/mimosa/inria/scheme2js/callcc.class:                  \
+      mco/callcc_resume_push.mco mco/callcc_locations.mco                \
+      mco/callcc_checkpoint.mco mco/callcc_anormalform.mco               \
+      mco/export.mco mco/tools.mco mco/node-elimination.mco              \
+      mco/verbose.mco mco/var-ref-util.mco mco/mark-statements.mco       \
+      mco/tail.mco mco/free-vars.mco mco/side.mco mco/walk.mco           \
+      mco/nodes.mco mco/config.mco 
+o/callcc_locations.o classes/mimosa/inria/scheme2js/callcc_locations.class: \
+      mco/tools.mco mco/verbose.mco mco/var-ref-util.mco                 \
+      mco/free-vars.mco mco/side.mco mco/export.mco mco/walk.mco         \
+      mco/nodes.mco mco/config.mco 
+o/loop-updates.o classes/mimosa/inria/scheme2js/loop-updates.class:      \
+      mco/verbose.mco mco/var-ref-util.mco mco/walk.mco mco/export.mco   \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
+o/callcc_anormalform.o classes/mimosa/inria/scheme2js/callcc_anormalform.class: \
+      mco/tools.mco mco/side.mco mco/verbose.mco                         \
+      mco/callcc_locations.mco mco/walk.mco mco/export.mco mco/nodes.mco \
+      mco/config.mco 
+o/side.o classes/mimosa/inria/scheme2js/side.class: mco/verbose.mco      \
+      mco/walk.mco mco/export.mco mco/nodes.mco mco/error.mco            \
+      mco/config.mco 
+o/constants.o classes/mimosa/inria/scheme2js/constants.class:            \
+      mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco          \
+      mco/tools.mco mco/config.mco 
+o/compile-optimized-boolify.o classes/mimosa/inria/scheme2js/compile-optimized-boolify.class: \
+      mco/verbose.mco mco/template-display.mco mco/export.mco            \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
+o/fun-size.o classes/mimosa/inria/scheme2js/fun-size.class:              \
+      mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco 
+o/captured-vars.o classes/mimosa/inria/scheme2js/captured-vars.class:    \
+      mco/verbose.mco mco/side.mco mco/free-vars.mco mco/walk.mco        \
+      mco/export.mco mco/nodes.mco 
+o/error.o classes/mimosa/inria/scheme2js/error.class: mco/nodes.mco      \
+      mco/export.mco 
+o/propagation.o classes/mimosa/inria/scheme2js/propagation.class:        \
+      mco/mutable-strings.mco mco/verbose.mco mco/side.mco               \
+      mco/free-vars.mco mco/var-ref-util.mco mco/walk.mco mco/export.mco \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
+o/mapping2.o classes/mimosa/inria/scheme2js/mapping2.class: mapping.sch  \
+      mco/tools.mco mco/export.mco 
+o/mark-statements.o classes/mimosa/inria/scheme2js/mark-statements.class: \
+      mco/verbose.mco mco/config.mco mco/walk.mco mco/export.mco         \
+      mco/nodes.mco 
+o/allocate-names.o classes/mimosa/inria/scheme2js/allocate-names.class:  \
+      mco/gen-js.mco mco/verbose.mco mco/walk.mco mco/export.mco         \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
+o/push-set.o classes/mimosa/inria/scheme2js/push-set.class:              \
+      mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco 
+o/var-ref-util.o classes/mimosa/inria/scheme2js/var-ref-util.class:      \
+      mco/export.mco mco/nodes.mco mco/tools.mco mco/config.mco 
+o/side.o classes/mimosa/inria/scheme2js/side.class: mco/verbose.mco      \
+      mco/walk.mco mco/export.mco mco/nodes.mco mco/error.mco            \
+      mco/config.mco 
+o/deep-clone.o classes/mimosa/inria/scheme2js/deep-clone.class:          \
+      mco/verbose.mco mco/walk.mco mco/tools.mco mco/export.mco          \
+      mco/nodes.mco 
+o/scheme2js.o classes/mimosa/inria/scheme2js/scheme2js.class:            \
+      mco/trampoline.mco mco/callcc.mco mco/verbose.mco mco/scm-out.mco  \
+      mco/out.mco mco/rm-tail-breaks.mco mco/statements.mco              \
+      mco/propagation.mco mco/while.mco mco/scope.mco mco/constants.mco  \
+      mco/constant-propagation.mco mco/tail-rec.mco                      \
+      mco/rm-unused-vars.mco mco/inline.mco mco/node-elimination.mco     \
+      mco/encapsulation.mco mco/letrec-expansion.mco mco/symbol.mco      \
+      mco/pobject-conv.mco mco/dot-expand.mco mco/runtime-expander.mco   \
+      mco/expanders.mco mco/expand.mco mco/module.mco mco/export.mco     \
+      mco/srfi0.mco mco/nodes.mco mco/config.mco version.sch 
+o/callcc_locations.o classes/mimosa/inria/scheme2js/callcc_locations.class: \
+      mco/tools.mco mco/verbose.mco mco/var-ref-util.mco                 \
+      mco/free-vars.mco mco/side.mco mco/export.mco mco/walk.mco         \
+      mco/nodes.mco mco/config.mco 
+o/compile-optimized-call.o classes/mimosa/inria/scheme2js/compile-optimized-call.class: \
+      mco/verbose.mco mco/export.mco mco/nodes.mco                       \
+      mco/template-display.mco mco/tools.mco mco/error.mco               \
+      mco/config.mco 
 
 #bdepend stop

@@ -1,0 +1,81 @@
+<doc> Login panel
+
+== Description ==
+
+HOP supports //client-side login panels//. A login panel is displayed as
+a transient window that prompts for a login name and a password.
+
+~~ Login panel are dynamically introduced by the client-side function
+++hop-login++.
+
+== Synopsis ==
+
+=== Client ===
+
+  (login-panel [:class] [:logo] [:message] [:user] [:password] [:onlogin] [:oncancel]) 
+
+
+=== Requirements ===
+
+Client codes using //login panels// need to load the script ++hop-login.js++.
+They also need to load the ++hop-login.hss++ style sheet. Hence, documents
+using //login panels// must include in their header, the following statement:
+
+
+  (<HEAD> :include "hop-login")
+
+
+== Examples ==
+
+<example>hop-login</example>
+
+
+== Client Definitions ==
+<client>
+=== ++(login-panel ...)++ ===
+<procedure> login-panel
+<arguments>
+^  arguments  ^   type  ^   description  ^
+| class  |  string  | An optional class name.  |
+| logo  |  element or #f  | An optional logo.  |
+| message  |  element or #f  | An optional message.  |
+| user  |  string or #f  | An optional user name.  |
+| password  |  string or #f  | An optional initial user password.  |
+| onlogin  |  procedure  | A procedure to execute on login.  |
+| oncancel  |  procedure  | A procedure to execute on cancel.  |
+</arguments>
+
+The function ++login-panel++ pops up a window for asking a user //name// and
+a user //password//. When the user clicks on the ++login++ button, the 
+++onlogin++ function is invoked with one event value containing the name
+and password. When the ++cancel++ button is clicked, the ++oncancel++
+function is invoked.
+
+~~ The interpretation of the optional ++user++ argument depends on its type. 
+If bound to a:
+
+  * **string**, the value of the string is used as the //default// user name.
+  * **boolean**, if the value if ++#f++, then no "user name" field is displayed
+ in the login panel.
+
+
+</procedure>
+</client>
+
+== Style ==
+<style>
+This section describes the various CSS elements used to configure
+//Notepads//.
+
+=== ++hop-login.hss++ ===
+
+The file ++hop-login.hss++ contains the default graphical configuration.
+It is defined as:
+
+,(<P>)
+<share>hop-login.hss</share>
+</style>
+
+== See also ==
+<see-also>hop-login, confirm</see-also>
+</doc>

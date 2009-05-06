@@ -1,0 +1,163 @@
+<doc> DASHBOARD -- The Hop Dashboard
+
+== Description ==
+
+DASHBOARD is a weblet that manages a toolbar on the bottom a Web pages produced
+by HOP. This toolbar allows clients to start new Hop weblets with a single
+click. This toolbar mimics the behavior of traditional destkop environment
+toolbars.
+
+~~ By Default to dashboard toolbar is hidden. To make it present, uses must
+click on the left-hand-side button located on the bottom of the Web page.
+Clicking the button when the toolbar is present hides it back.
+
+~~ The rest of this documentation explains how to //customize// and how to
+//program// new dashboard entries.
+
+~~
+,(<TABLE> :class "weblet-facts"
+  (<TR> (<TD> :rowspan 5 :class "logo"
+            (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png")))
+        (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
+  (<TR> (<TH> "Hop min version") (<TD> "@MINHOP@"))
+  (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
+  (<TR> (<TH> "Date") (<TD> "@DATE@"))
+  (<TR> (<TH> "Category") (<TD> "@CATEGORY@")))
+
+== Services ==
+
+[[/hop/dashboard|DASHBOARD]] defines two services:
+
+  - ++[[dashboard]]++: This is service acts as a welcome banner for dashboard.
+  - ++[[dashboard/populate]]++: Returns the list of registered Dashboard
+ services. This service is used internally by Hop to compute the icon toolbar.
+
+== Configuring the Dashboard ==
+
+The Dashboard is configured via Hop ,(<APIREF> "parameters" "parameter.wiki")
+that are usually defined in the Hop ,(<APIREF> "RC file" "param-rc.wiki").
+
+=== ++hop-enable-dashboard++ ===
+<parameter> hop-enable-dashboard
+<parameter> hop-enable-dashboard-set!
+
+<arguments>
+^  access  ^   type    ^  current value   ^  short description  ^
+|   r/w  |  bool   |  ++,(if (hop-enable-dashboard) "#t" "#f")++  | Enable/disable the dashboard.  |
+</arguments>
+</parameter>
+</parameter>
+
+=== ++hop-dashboard-weblet-applets++ ===
+<parameter> hop-dashboard-weblet-applets
+<parameter> hop-dashboard-weblet-applets-set!
+
+<arguments>
+^  access  ^   type    ^  current value   ^  short description  ^
+|   r/w  |  list   |  _  | The list of applets.  |
+</arguments>
+
+The parameter ++hop-dashboard-weblet-applets++ specifies the list of applets
+(i.e., the weblet executed when an icon of the toolbar is clicked) that
+should be embedded in the toolbar. This list is automatically computed at
+run-time but it may be initially filled with extra applets.
+
+~~ Each entry of the ++hop-dashboard-weblets-applets++ list is a list of
+three elements:
+
+  * The name of the applet.
+  * The path of the icon used to represent the applet in the toolbar.
+  * The URL to run the applet.
+
+~~ Example:
+Here is an example that shows how to initialize the toolbar with two extra
+applets:
+
+  (hop-dashboard-weblet-applets-set!
+    `(("doc" ,(make-file-name (hop-rc-directory) "dashboard/doc.png") "/hop/doc/dashboard")
+      ("rfc" ,(make-file-name (hop-rc-directory) "dashboard/rfc.png") "http://tools.ietf.org/rfc/mini-index")))
+
+</parameter>
+</parameter>
+
+=== ++hop-dashboard-weblet-disabled-applets++ ===
+<parameter> hop-dashboard-weblet-disabled-applets
+<parameter> hop-dashboard-weblet-disabled-applets-set!
+
+<arguments>
+^  access  ^   type    ^  current value   ^  short description  ^
+|   r/w  |  list   |  _  | The list of disabled-applets.  |
+</arguments>
+
+The list ++hop-dashboard-weblet-disabled-applets++ contains names of
+weblets that should not be included in the dashboard tool, even though
+they might define a dashboard entry,
+
+~~ Example:
+The following example shows how to set this parameter for preventing 
+the dashboard entry specified by the ++usbkeymanager++ to be included
+in the dashboard toolbar.
+
+  (hop-dashboard-weblet-disabled-applets-set!
+    '("usbkeymanager"))
+
+</parameter>
+</parameter>
+
+== Programming with the Dashboard ==
+
+This section explains how to program new dashboard entries.
+
+=== Associating a Dashboard entry to a weblet ===
+
+When Hop starts, it searches all the Weblet available in the autoload
+directories (as specified by the parameter ++hop-autoload-directories++).
+For each found weblet //W//, Hop seeks for the file named
+++//W///etc/dashboard.png++. When such a file exists, an entry representing 
+the weblet //W// is added to the dashboard toolbar. Hop **assumes** that the
+weblet defines a service named ++//W///dashboard++.
+
+=== Specifying the action to be executed for a dashboard entry ===
+
+The action executed when the icon representing //W// is clicked depends on
+the nature of the URL associated with //W// in the list 
+++hop-dashboard-weblet-applets++. If this URL is:
+
+  * a ,(<APIREF> "service" "service.wiki") URL, this service is executed
+ and the result of that execution is added to the current document. If
+ the execution of that service fails (for instance because the service is
+ not provided by the weblet), then, a new window redirected to the Weblet
+ is opened on the Web browser.
+  * an absolute URL, this URL is opened in a new browser window.
+
+
+~~ For the sake of the example, here is an excerpt of the ++Hopcal++ weblet
+that defines a dashboard entry. The service ++hopcal/dashboard++ pops up
+a new inner window content is gived by the extra service 
+++hopcal/dashboard-panel++ (note that although the name ++hopcal/dashboard++
+cannot be changed because this name follows the conventions imposed by
+HopDashboard, the name ++hopcal/dashboard-panel++ could be freely changed).
+
+  (define-service (hopcal/dashboard)
+     ~(window-open :id "hopcal/dashboard"
+         :title "HopAudio"
+         :src (<IFRAME> :src ($hopcal/dashboard-panel)
+                 :style "border: 0; width: 210px; height: 140px; overflow: hidden")
+         :parent document.body
+         :width 220
+         :height 170
+         :left (- (current-window-width) 240)
+         :top (- (current-window-height) 190)))
+
+  (define-service (hopcal/dashboard-panel)
+     (let* ((req (current-request)))
+        ...
+        (<HTML> :class "hopcal-dashboard"
+           (<HEAD> 
+              :css (map (lambda (f)
+                           (service-resource hopcal/preferences f))
+                        (hopcal-config-hss))
+              :css (hopcal-hss))
+           (<BODY> :class "hopcal-dashboard"
+</doc>
+

@@ -20,9 +20,14 @@ format used for bundling weblets, is actually a tarball file (a
 code of the weblet plus some utility files and some contribution files
 (e.g., the icons of the application).
 
-~~ The documentation of the ++[[hz]]++ weblet can be found 
-,(<WEBLETREF> "here" (make-file-path (hop-weblets-directory) "hz/etc/hz.wiki")). The documentation of ++[[weblets]]++ 
+~~ The documentation of the ++[[/hop/hz|hz]]++ weblet can be found 
+,(<WEBLETREF> "here" (make-file-path (hop-weblets-directory) "hz/etc/hz.wiki")). The documentation of ++[[/hop/weblets|weblets]]++ 
 ,(<WEBLETREF> "here" (make-file-path (hop-weblets-directory) "hz/etc/weblets.wiki")).
+
+~~ The weblet ++[[/hop/hzbuilder|hzbuilder]]++ creates the minimal file 
+structure needed for a complete weblet. It operates automatically
+the various steps presented in this tutorial.
+
 
 == Requirements ==
 
@@ -75,12 +80,12 @@ all the files are created in a directory named
   
   (define-service (roman num)
      (<HTML>
-       (<HEAD> :base (service-base roman (current-request)) :css "roman.hss")
+       (<HEAD> :base (service-base-url roman (current-request)) :css "roman.hss")
        (<BODY>
           (<TABLE> 
               (<TR> 
-                 (<TD> :class "roman" num) 
-                 (<TD> :class "arabic" (roman->arabic num))))
+                 (<TD> :class "roman" (or num 10))
+                 (<TD> :class "arabic" (roman->arabic (or num 10)))))
           (<FOOT>))))
 
   (define-service (roman/preferences)
@@ -261,6 +266,7 @@ keys are:
     * ++education++
     * ++office++ 
     * ++scientific++
+    * ++domotics++ 
 
 
  this list might be extended in the future versions of HOP.   
@@ -317,7 +323,7 @@ following:
         ...
         ~(hop_install_weblet 
              "http://mhost.mydomain.org/roman-0.0.1.hz"
-             (string-append (hop-weblets-directory) "/hz/etc/hz-install.png"))
+             $(string-append (hop-weblets-directory) "/hz/etc/hz-install.png"))
         ...))
 </code>
 
@@ -409,5 +415,21 @@ command:
 
 generates a sync list out of the weblets found in the directory 
 ++/tmp/repository++ located in the server.
+
+=== Creating a web page for the weblet ===
+
+The [[/hop/weblets|WEBLETS]] weblet can be used to generated **automatically**
+a Web page for a weblet. This support two modes:
+
+  * a fully automatic mode where the Web page is generated out of the
+ information found in the ++etc/weblet.info++ file.
+  * a semi-automatic mode where the Web page is generated out of the optional
+ wiki files found in the directory ++etc/homepage++.
+
+
+These two techniques are presented in the [[/hop/weblets|WEBLETS]]
+,(<WEBLETREF> "documentation" 
+(make-file-path (hop-weblets-directory) "weblets/etc/weblets.wiki")).
+
 
 </doc>

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/doc/widgets.hop                 */
+;*    serrano/prgm/project/hop/2.0.x/weblets/doc/widgets.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Thu Nov 29 07:27:58 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Mon Mar 30 11:28:09 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
 ;*=====================================================================*/
@@ -36,7 +36,8 @@
       (<HEAD>
 	 :title "Hop documentation center (APIs &amp; libraries)"
 	 :include "hop-notepad" "hop-tree" "hop-sorttable" "hop-foldlist" 
-	 :include "hop-window" "hop-fx"
+	 :include "hop-window" "hop-fx" (doc-dashboard)
+	 :css (string-append (doc-dir) "/../wiki/wiki.hss")
 	 :favicon (string-append (doc-dir) "/etc/favicon.png")
 	 :css (string-append (doc-dir) "/doc.hss")
 	 :jscript (string-append (doc-dir) "/doc.scm")
@@ -96,9 +97,9 @@
 	     (event.stopPropagation))
 	  (with-hop ($click this.innerHTML)
 	     (lambda (h)
-		(if (> h.length 0)
+		(if h
 		    (begin
-		       (set! menu.innerHTML h)
+		       (innerHTML-set! menu h)
 		       (node-style-set! menu
 					:top
 					(string-append
@@ -158,11 +159,9 @@
 (define (<SEARCH-BAR> . obj)
    (let ((popup (<POPUP> (xml-make-id)))
 	 (width (round (* 100 (/ 1 (/ (length obj) 2))))))
-      (<DIV>
-	 :class "search-bar"
+      (<DIV> :class "search-bar"
 	 popup
-	 (<TABLE>
-	    :class "develop-menu"
+	 (<TABLE> :class "develop-menu"
 	    (<COLGROUP> :span 3 :width (format "~a%" width))
 	    (<TR>
 	       (map (lambda (el)
@@ -189,8 +188,7 @@
    (let ((es (vector-ref table (char->offset (string-ref i 0))))
 	 (id (xml-make-id)))
       (when (pair? es)
-	 (<TABLE>
-	    :class "popup-menu"
+	 (<TABLE> :class "popup-menu"
 	    :id id
 	    :onmouseup ~(let* ((n (document.getElementById $id))
 			       (p n.parentNode))
@@ -262,7 +260,7 @@
 		      (if b.edit
 			  (begin
 			     (set! b.edit #f)
-			     (set! b.innerHTML "cancel")
+			     (innerHTML-set! b "cancel")
 			     (set! e2.style.width
 				   (string-append e1.offsetWidth "px"))
 			     (set! e2.style.height
@@ -275,7 +273,7 @@
 			     (set! e1.style.display "none"))
 			  (begin
 			     (set! b.edit #t)
-			     (set! b.innerHTML "edit")
+			     (innerHTML-set! b "edit")
 			     (set! e1.style.display "block")
 			     (set! e2.style.display "none"))))
 	 "Edit")))

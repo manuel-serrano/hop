@@ -1,12 +1,12 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hopsh/main.scm                          */
+;*    serrano/prgm/project/hop/2.0.x/hopsh/main.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May 23 10:38:36 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Mon May  4 16:32:40 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    The HOP entry point                                              */
+;*    The HOPSH entry point                                            */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module hopsh
 
-   (library hop)
+   (library scheme2js hopscheme hop)
 
    (cond-expand
       (enable-threads (library pthread)))
@@ -43,9 +43,10 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
+   ;; set the Hop cond-expand identification
+   (for-each register-eval-srfi! (hop-srfis))
    ;; set the library load path
-   (let ((hop-path (make-file-path (hop-lib-directory) "hop" (hop-version))))
-      (bigloo-library-path-set! (cons hop-path (bigloo-library-path))))
+   (bigloo-library-path-set! (hop-library-path))
    ;; preload the hop library
    (eval `(library-load 'hop))
    ;; parse the command line

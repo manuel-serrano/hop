@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-tabslider.scm               */
+;*    serrano/prgm/project/hop/1.11.x/runtime/hop-tabslider.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Oct 10 05:37:55 2007 (serrano)                */
+;*    Last change :  Sun Feb 22 09:54:01 2009 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -18,6 +18,7 @@
    (import  __hop_param
 	    __hop_types
 	    __hop_xml
+	    __hop_hop-extra
 	    __hop_misc
 	    __hop_js-lib
 	    __hop_service)
@@ -26,8 +27,10 @@
 	       (width (default #f))
 	       (height (default #f))
 	       (index (default 0))
-	       (history read-only (default #t)))
-	    (class html-tspage::xml-element)
+	       (onchange (default #f))
+	       (history read-only (default #t))
+	       (speed read-only (default 14)))
+	    (class html-tspan::xml-element)
 	    (class html-tshead::xml-element))
 
    (export  (<TABSLIDER> . ::obj)
@@ -41,8 +44,11 @@
 				  (width #f)
 				  (height #f)
 				  (index 0)
+				  (onchange #f)
 				  (history #unspecified)
+				  (speed 20 integer)
 				  body)
+   
    ;; Verify that the body is a list of <TSPAN>
    (for-each (lambda (x)
 		(unless (and (xml-element? x)
@@ -56,6 +62,8 @@
       (width width)
       (height height)
       (index index)
+      (onchange onchange)
+      (speed speed)
       (history (if (boolean? history) history (not (eq? id #unspecified))))
       (body body)))
 
@@ -63,7 +71,7 @@
 ;*    xml-write ::html-tabslider ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-tabslider p backend)
-   (with-access::html-tabslider obj (id width height body index history)
+   (with-access::html-tabslider obj (id width height body index history onchange speed)
       (fprintf p "<div class='hop-tabslider' id='~a'" id)
       (when (or width height)
 	 (fprintf p " style=\"~a~a\""
@@ -73,49 +81,63 @@
       (xml-write body p backend)
       (display "</div>" p)
       (fprintf p
-	       "<script type='~a'>hop_tabslider_init('~a', ~a, ~a)</script>"
+	       "<script type='~a'>hop_tabslider_init('~a', ~a, ~a, ~a, ~a)</script>"
 	       (hop-javascript-mime-type)
 	       id index
-	       (if history "true" "false"))))
+	       (if history "true" "false")
+	       (hop->js-callback onchange)
+	       speed)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TSPAN> ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <TSPAN> ((id #unspecified string)
+			      (onselect #f)
 			      body)
-   ;; Check that body is well formed
-   (cond
-      ((or (null? body) (null? (cdr body)))
-       (error '<TSPAN> "Illegal body, at least two elements needed" body))
-      ((and (xml-delay? (cadr body)) (null? (cddr body)))
-       ;; a delayed tspan
-       (instantiate::html-tspage
-	  (markup 'tspan)
-	  (id (xml-make-id id 'TSPAN))
-	  (body (list (car body)
-		      (<DIV>
-			 :class "hop-tabslider-content"
-			 :lang "delay"
-			 :onkeyup (format "return ~a;"
-					  (hop->json
-					   (procedure->service
-					    (xml-delay-thunk (cadr body)))))
-			 "delayed tab")))))
-      (else
-       ;; an eager static tspan
-       (instantiate::html-tspage
-	  (markup 'tspan)
-	  (id (xml-make-id id 'TSPAN))
-	  (body (list (car body)
-		      (apply <DIV>
-			     :class "hop-tabslider-content"
-			     (cdr body))))))))
+   
+   (define (tspan-onselect id onselect)
+      (when onselect
+	 (<SCRIPT>
+	    (format "document.getElementById('~a').onselect=~a;"
+		    id (hop->js-callback onselect)))))
+   
+   (let ((id (xml-make-id id 'TSPAN)))
+      ;; Check that body is well formed
+      (cond
+	 ((or (null? body) (null? (cdr body)))
+	  (error '<TSPAN> "Illegal body, at least two elements needed" body))
+	 ((and (xml-delay? (cadr body)) (null? (cddr body)))
+	  ;; a delayed tspan
+	  (instantiate::html-tspan
+	     (markup 'tspan)
+	     (body (list (car body)
+			 (<DIV>
+			    :id id
+			    :class "hop-tabslider-content"
+			    :lang "delay"
+			    :onkeyup (format "return ~a;"
+					     (hop->json
+					      (procedure->service
+					       (xml-delay-thunk (cadr body)))
+					      #f #f))
+			    (tspan-onselect id onselect)
+			    "delayed tab")))))
+	 (else
+	  ;; an eager static tspan
+	  (instantiate::html-tspan
+	     (markup 'tspan)
+	     (body (list (car body)
+			 (apply <DIV>
+				:id id
+				:class "hop-tabslider-content"
+				(tspan-onselect id onselect)
+				(cdr body)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-tspan ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::html-tspage p backend)
-   (xml-write (html-tspage-body obj) p backend))
+(define-method (xml-write obj::html-tspan p backend)
+   (xml-write (html-tspan-body obj) p backend))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TSHEAD> ...                                                     */

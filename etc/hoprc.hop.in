@@ -1,18 +1,24 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/etc/hoprc.hop.in                        */
+;*    serrano/prgm/project/hop/1.10.x/etc/hoprc.hop.in                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 26 08:20:34 2006                          */
-;*    Last change :  Sat Feb  3 18:42:59 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Wed Dec 31 07:44:54 2008 (serrano)                */
+;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP runtime command file.                                        */
 ;*    -------------------------------------------------------------    */
-;*    When HOP starts, it first search the RC files in the following   */
+;*    When HOP starts, it first searches the RC files in the following */
 ;*    order:                                                           */
 ;*      $HOME/.config/hop.$HOSTNAME/hoprc.hop                          */
 ;*      $HOME/.config/hop/hoprc.hop                                    */
 ;*      $ETC/hoprc.hop                                                 */
+;*                                                                     */
+;*    Under MacOsX the paths are                                       */
+;*      $HOME/Library/Preferences/hop/$HOSTNAME/hoprc.hop              */
+;*      $HOME/Library/Preferences/hop/hoprc.hop                        */
+;*      $ETC/hoprc.hop                                                 */
+;*    $ETC will point inside the bundle.                               */
 ;*                                                                     */
 ;*    Hence, if users want to define their own RC file but still load  */
 ;*    the one from /etc, they have to add the following expression     */
@@ -27,21 +33,29 @@
 ;*---------------------------------------------------------------------*/
 ;; passwords
 ;; =========
-;; When exists, load an HOP password file.
+;; When exists, load a HOP passwords file.
 ;; 
-;; A user is declared with the ADD-USER! function, whose syntax is
+;; A user is declared with the ADD-USER! function, whose syntax is:
 ;;
 ;;   (add-user! <USERNAME>
 ;;   	   :groups <list-of-symbols>
 ;;   	   :password <PASSWORD>
 ;;   	   :directories <list-of-string> | '*
 ;;   	   :services (list-of-symbols) | '*
-;;
+;; 
+;;   Use the weblet /hop/epassword to generate the password (that is, visit
+;;   the URL http://localhost:8080/hop/epassword).
+;; 
 ;;   Examples:
 ;;
 ;;   (add-user! "admin"
-;;   	   :groups '(admin exec bbdb)
+;;   	   :groups '(admin exec)
 ;;   	   :password "3a8456e439c48f324cef234a4b687cd2"
+;;   	   :directories '*
+;;   	   :services '*)
+;;   (add-user! "hop"
+;;   	   :groups '(exec)
+;;   	   :password "172a1e3424c799061beb957ba957693e"
 ;;   	   :directories '*
 ;;   	   :services '*)
 ;;   (add-user! "guest"
@@ -53,8 +67,9 @@
 ;; It is required to define the "anonymous" user. An error will be raised
 ;; if this user is not declared when the first request is intercepted.
 (add-user! "anonymous" 
-           :services '(home doc epassword wizard hz/list)
-	   :directories (hop-path))
+           :services '(home doc epassword wizard hz/list shutdown)
+	   :directories (hop-path)
+           :preferences-filename #f)
 
 (when (file-exists? (make-file-name (hop-etc-directory) "passwd.hop"))
    (hop-load (make-file-name (hop-etc-directory) "passwd.hop")))
@@ -88,15 +103,15 @@
 ;(hop-xml-backend-set! 'xhtml-1.0)
 
 ;*---------------------------------------------------------------------*/
-;*    no root ...                                                      */
+;*    Hop user                                                         */
+;*    -------------------------------------------------------------    */
+;*    If started as root, HOP will drop root privileges and run as     */
+;*    this (HOP-USER) instead.  Otherwise, HOP will run as the user    */
+;*    it was started by.  If set to the symbol 'root, HOP will not     */
+;*    drop root privileges at all (not recommended).                   */
 ;*---------------------------------------------------------------------*/
-(when (equal? (getenv "USER") "root")
-   (error 'hop
-	  "Hop is not allowed to be executed as `root',
-Create a dedicated Hop user and run Hop on behalf of him.\n"
-	  "If you know what you are doing and want to run Hop with the
-`root' permissions, edit the Hop configuration file."))
-    
+(hop-user-set! (or (getenv "HOP_USER") "hop"))
+
 ;*---------------------------------------------------------------------*/
 ;*    welcome message ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -141,7 +156,7 @@ A good starting point is probably to copy the file
 to
 ,(<BR>)
 ,(<TT> :style "color: #ff881c"
-    (make-file-path (hop-rc-directory) "hop" ".config" (hop-rc-file)))
+    (make-file-path (hop-rc-directory) (hop-rc-file)))
 ,(<BR>)
 and customize it for your own needs.])))))
 

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-notepad.js                    */
+/*    serrano/prgm/project/hop/1.9.x/share/hop-notepad.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Wed Nov 21 08:28:30 2007 (serrano)                */
-/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    Last change :  Sat May 31 06:53:55 2008 (serrano)                */
+/*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
 /*=====================================================================*/
@@ -14,11 +14,15 @@
 /*---------------------------------------------------------------------*/
 function hop_notepad_inner_toggle( np, to, tabs, bodies ) {
    /* disactive last selected tab */
-   tabs.childNodes[ np.active_tab ].className = " hop-nptab hop-nptab-inactive";
+   tabs.childNodes[ np.active_tab ].className =
+      tabs.childNodes[ np.active_tab ].className.replace( "hop-nptab-active",
+							  "hop-nptab-inactive" );
    bodies.childNodes[ np.active_tab ].style.display = "none";
 
    /* active the new selected tab */
-   tabs.childNodes[ to ].className = "hop-nptab hop-nptab-active";
+   tabs.childNodes[ to ].className =
+      tabs.childNodes[ to ].className.replace( "hop-nptab-inactive",
+					       "hop-nptab-active" );
    bodies.childNodes[ to ].style.display = "block";
 
    /* update the layout of the children of the new tab */
@@ -32,21 +36,9 @@ function hop_notepad_inner_toggle( np, to, tabs, bodies ) {
 /*    hop_notepad_inner_select ...                                     */
 /*---------------------------------------------------------------------*/
 function hop_notepad_inner_select( np, to, callback ) {
-   var tabs = undefined;
-   var bodies = undefined;
+   var tabs = document.getElementById( np.id + "-tabs" );
+   var bodies = document.getElementById( np.id + "-body" );
    var i;
-
-   /* select the correct tab */
-   for( i = 0; i < np.childNodes.length; i++ ) {
-      if( np.childNodes[ i ].className == "hop-notepad-body" ) {
-	 bodies = np.childNodes[ i ];
-	 if( tabs != undefined ) break;
-      }
-      if( np.childNodes[ i ].className == "hop-notepad-tabs" ) {
-	 tabs = np.childNodes[ i ];
-	 if( bodies != undefined ) break;
-      }
-   }
 
    /* at creation time, tab 0 is active */
    if( np.active_tab == undefined ) np.active_tab = 0;
@@ -58,11 +50,23 @@ function hop_notepad_inner_select( np, to, callback ) {
 	      function( html ) {
 		 hop_innerHTML_set( bodies.childNodes[ to ], html );
 		 hop_notepad_inner_toggle( np, to, tabs, bodies );
+		 
 		 if( callback ) callback();
+		 /* the tab onselect handler */
+		 if( tabs.childNodes[ to ].onselect )
+		    tabs.childNodes[ to ].onselect();
+		 /* the global onchange handler */
+		 if( np.onchange )
+		    np.onchange( tabs.childNodes[ to ] );
 	      } );
       } else {
 	 hop_notepad_inner_toggle( np, to, tabs, bodies );
+	 
 	 if( callback ) callback();
+	 /* the tab onselect handler */
+	 if( tabs.childNodes[ to ].onselect ) tabs.childNodes[ to ].onselect();
+	 /* the global onchange handler */
+	 if( np.onchange ) np.onchange( tabs.childNodes[ to ] );
       }
    }
 }
@@ -73,17 +77,12 @@ function hop_notepad_inner_select( np, to, callback ) {
 /*    This is a user function that might be invoked with NOTEPAD       */
 /*    and PAN or IDENTs.                                               */
 /*---------------------------------------------------------------------*/
+/*** META ((export notepad-select)) */
 function hop_notepad_select( id1, id2, history, callback ) {
    var np = hop_is_html_element( id1 ) ? id1 : document.getElementById( id1 );
    var tab = hop_is_html_element( id2 ) ? id2 : document.getElementById( id2 );
-   var tabs;
+   var tabs = document.getElementById( np.id + "-tabs" );
    var i;
-
-   if( np.childNodes[ 1 ].className == "hop-notepad-tabs" ) {
-      tabs = np.childNodes[ 1 ];
-   } else {
-      tabs = np.childNodes[ 0 ];
-   }
 
    for( i = 0; i < tabs.childNodes.length; i++ ) {
       if( tabs.childNodes[ i ] == tab ) {
@@ -96,6 +95,17 @@ function hop_notepad_select( id1, id2, history, callback ) {
    alert( "*** Hop Error: hop_notepad_select -- Can't find pad: " + id2 );
 
    return false;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_notepad_selection ...                                        */
+/*---------------------------------------------------------------------*/
+/*** META ((export notepad-selection)) */
+function hop_notepad_selection( id ) {
+   var np = hop_is_html_element( id ) ? id : document.getElementById( id );
+   var tabs = document.getElementById( np.id + "-tabs" );
+
+   return tabs.childNodes[ np.active_tab ? np.active_tab : 0 ];
 }
 
 /*---------------------------------------------------------------------*/

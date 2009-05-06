@@ -2,11 +2,10 @@
 (define-service (doc/demo/request arg)
    (let ((req (current-request)))
       (<TABLE>
-	 (<TR> (<TH> "path:") (<TD> (http-request-encoded-path req)))
+	 (<TR> (<TH> "path:") (<TD> (http-request-path req)))
 	 (<TR> (<TH> "host:") (<TD> (http-request-host req)))
 	 (<TR> (<TH> "port:") (<TD> (http-request-port req)))
-	 (<TR> (<TH> "method:") (<TD> (http-request-method req)))
-	 (<TR> (<TH> "date:") (<TD> (http-request-date req))))))
+	 (<TR> (<TH> "method:") (<TD> (http-request-method req))))))
 
 (<HTML>
    (let ((res (<SPAN> "")))
@@ -14,4 +13,4 @@
 	 res
 	 (<SCRIPT> ~(with-hop ($doc/demo/request "foo")
 		       (lambda (h)
-			  (set! $res.innerHTML h)))))))
+			  (innerHTML-set! $res h)))))))

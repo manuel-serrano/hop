@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/shutdown/shutdown.hop           */
+;*    .../prgm/project/hop/1.11.x/weblets/shutdown/shutdown.hop        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Nov 16 10:39:03 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Wed Apr 22 07:32:08 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
 ;*=====================================================================*/
@@ -14,6 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module weblet_shutdown
    (export shutdown
+	   shutdown/kill
 	   shutdown/documentation
 	   shutdown/preferences))
 
@@ -21,51 +22,70 @@
 ;*    shutdown ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-service (shutdown)
-   (let* ((req (current-request))
-	  (msg (<SPAN> "Shutdown the serving HOP broker...")))
-      (if (authorized-service? req 'admin)
-	  (<HTML>
-	     (<HEAD>
-		:title "Hop Shutdown weblet"
-		:base (service-base-url shutdown req)
-		:css "shutdown.hss")
-	     (<BODY>
-		(<DIV> :align "center"
-		   (<TABLE> :class "shutdown"
-		      (<TR>
-			 (<TD> (<IMG> :src "etc/logo.png"))
-			 (<TD>
-			    (<TABLE>
-			       (<TR>
-				  (<TD>
-				     (<DIV> :id "title"
-					"Hop Shutdown")))
-			       (<TR>
-				  (<TD> msg))
-			       (<TR>
-				  (<TD> :id "buttons" :align 'right
-				     (<BUTTON> :onclick
-					~(set! document.location "/hop")
-					"Cancel")
-				     (<BUTTON> :id "shutdown" :onclick
-					~(let ((but this))
-					    (innerHTML-set!
-					     $msg
-					     (<SPAN> :class "warning"
-						"Shuting down in..."))
-					    (let loop ((i 3))
-					       (if (>= i 1)
-						   (let ((m (format "~as" i)))
-						      (innerHTML-set! but m)
-						      (after 1000
-							     (lambda () (loop (- i 1)))))
-						   (let ((body (dom-get-element-by-id "buttons")))
-						      (innerHTML-set! $msg "System down...")
-						      (innerHTML-set! but "0s")
-						      (with-hop ($(service () (exit 0))))))))
-					"Shutdown"))))))))
-		(<FOOT>)))
+   (let ((req (current-request)))
+      (if (or (authorized-service? req 'admin) (authorized-service? req 'shutdown))
+	  (<SHUTDOWN> req (<SPAN> "Shutdown the serving HOP broker..."))
 	  (user-access-denied req))))
+
+;*---------------------------------------------------------------------*/
+;*    shutdown/kill ...                                                */
+;*---------------------------------------------------------------------*/
+(define-service (shutdown/kill key)
+   (when (and (equal? key (hop-process-key)) (hop-accept-kill))
+      (hop-verb 1 "shutdown/kill...\n")
+      (exit 0)))
+       
+;*---------------------------------------------------------------------*/
+;*    <SHUTDOWN> ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (<SHUTDOWN> req msg)
+   (<HTML>
+      (<HEAD>
+	 :title "Hop Shutdown weblet"
+	 :base (service-base-url shutdown req)
+	 :css "shutdown.hss"
+	 :favicon "etc/favicon.png")
+      (<BODY> :id "body"
+	 (<DIV> :align "center"
+	    (<TABLE> :class "shutdown"
+	       (<TR>
+		  (<TD> (<IMG> :src "etc/logo.png"))
+		  (<TD>
+		     (<TABLE>
+			(<TR>
+			   (<TD>
+			      (<DIV> :id "title"
+				 "Hop Shutdown")))
+			(<TR>
+			   (<TD> msg))
+			(<TR>
+			   (<TD> :id "buttons" :align 'right
+			      (<BUTTON> :onclick
+				 ~(begin
+				     (node-style-set! "shutdown" :color "black")
+				     (set! document.location "/hop"))
+				 "Cancel")
+			      (<BUTTON> :id "shutdown" :onclick
+				 ~(let ((but this))
+				     (innerHTML-set!
+				      $msg
+				      (<SPAN> :class "warning"
+					 "Shutting down in..."))
+				     (let loop ((i 3))
+					(if (>= i 1)
+					    (let ((m (format "~as" i)))
+					       (innerHTML-set! but m)
+					       (node-style-set! but :color "red")
+					       (after 1000
+						      (lambda () (loop (- i 1)))))
+					    (begin
+					       (innerHTML-set! $msg "System down...")
+					       (innerHTML-set! but "0s")
+					       (with-hop ($(service () (exit 0)))
+						  (lambda (_) #f)
+						  (lambda (e) #f))))))
+				 "Shutdown"))))))))
+	 (<FOOT>))))
 
 ;*---------------------------------------------------------------------*/
 ;*    shutdown-preferences ...                                         */

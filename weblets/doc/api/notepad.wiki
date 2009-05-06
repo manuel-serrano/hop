@@ -26,6 +26,7 @@ client side programming. They are only supported on server side.])
 === Client ===
   
   (notepad-select notepad pad [history #t] [callback #f])
+  (notepad-selection notepad)
 
 === Requirements ===
 
@@ -69,9 +70,10 @@ if it is not ++#f++ and an ++:id++ value is provided.
 <markup> <NPHEAD>
 
 <arguments>
-^  attributes  ^   type    ^   default    ^  short description          ^
-| :id          |  string   |  //random//  | element identifier.         |
-| body         |  element  |  empty       | the body.                   |
+^  attributes  ^   type     ^   default    ^  short description                      ^
+| :id          |  string    |  //random//  | element identifier.                     |
+| :onchange    |  function  |      -       | a function to invoke on pad selection.  |
+| body         |  element   |  empty       | the body.                               |
 </arguments>
 
 This function creates an optional //notepad// header.
@@ -81,9 +83,10 @@ This function creates an optional //notepad// header.
 <markup> <NPTAB>
 
 <arguments>
-^  attributes  ^   type    ^   default    ^  short description          ^
-| :id          |  string   |  //random//  | element identifier.         |
-| body         |  element  |  empty       | the body.                   |
+^  attributes  ^   type     ^   default    ^  short description                      ^
+| :id          |  string    |  //random//  | element identifier.                     |
+| :onselect    |  function  |      -       | a function to invoke on pad selection.  |
+| body         |  element   |  empty       | the body.                               |
 </arguments>
 
 This function creates a //tab//. The first child of //tab// __must__
@@ -135,54 +138,31 @@ then update asychronously.
 
 
 </procedure>
+
+=== ++(notepad-selection notepad)++ ===
+<procedure> notepad-selection
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| notepad     |  notepad or string   | the notepad.           |
+</arguments>
+
+This function returns the currently selected in a //notepad//.
+
+</procedure>
+
 </client>
 
 == Style ==
 <style>
-This section describes the various CSS elements used to configure
-//Notepads//.
 
-=== ++div.hop-notepad-title++ ===
-<css> div.hop-notepad-title 
+=== ++hop-notepad.hss++ ===
 
-This element specifies the graphical configuration of the title (the
-++<NPHEAD>++ body) of the //Notepad//.
-</css>
-
-=== ++div.hop-notepad-body++ ===
-<css> div.hop-notepad-body 
-
-The overall body of the //Notepad//.
-</css>
-
-=== ++div.hop-notepad-tab++ ===
-<css> div.hop-notepad-tab 
-
-The box containing each tab body.
-</css>
-
-=== ++div.hop-notepad-tabs++ ===
-<css> div.hop-notepad-tabs 
-
-The horizontal box containing all tabs.
-</css>
-
-=== ++div.hop-notepad-tabs > span > span++ ===
-<css> div.hop-notepad-tabs > span > span
-
-The tab span. The active //tab// (i.e., the tab currently selected) is 
-denoted by the ++hop-nptab-active++ class. The inactives //tabs// are denoted 
-by the ++hop-nptab-inactive++ class.
-
-</css>
-
-=== ++hop-notepad.css++ ===
-
-The file ++hop-notepad.css++ contains the default graphical configuration.
+The file ++hop-notepad.hss++ contains the default graphical configuration.
 It is defined as:
 
 ,(<P>)
-<share>hop-notepad.css</share>
+<share>hop-notepad.hss</share>
 </style>
 
 == See also ==

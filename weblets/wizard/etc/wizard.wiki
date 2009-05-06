@@ -1,8 +1,18 @@
-<doc> WIZARD -- Wizard for account creation
+<doc> WIZARD -- Wizard for creating accounts
 
 == Description ==
 
 [[wizard|WIZARD]] let new users create graphical simplistic Hop account. 
+
+~~
+,(<TABLE> :class "weblet-facts"
+  (<TR> (<TD> :rowspan 5 :class "logo"
+            (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png")))
+        (<TH> (string-capitalize "") " version") (<TD> "1.0.0"))
+  (<TR> (<TH> "Hop min version") (<TD> "1.10.0 "))
+  (<TR> (<TH> "Hop max version") (<TD> ""))
+  (<TR> (<TH> "Date") (<TD> "29 September 2008"))
+  (<TR> (<TH> "Category") (<TD> "hop")))
 
 
 == Services ==

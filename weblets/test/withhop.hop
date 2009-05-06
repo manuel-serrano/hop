@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/test/withhop.hop                */
+;*    serrano/prgm/project/hop/1.11.x/weblets/test/withhop.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Wed Nov 14 10:25:45 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Mon Feb 16 06:53:57 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing with-hop                                                 */
 ;*=====================================================================*/
@@ -25,7 +25,7 @@
       (<DIV> :class "comment"
 	 "This test checks with-hop procedure calls. Executing each test
 should produce a \"ok\" result.")
-      (<H3> "Simple call")
+      (<H3> "1 Simple call")
       (<DIV> :style "font-size: 90%"
 	 "This test executes a simple server service call.")
       (let ((res (<SPAN> :style "color: red" "???")))
@@ -54,7 +54,7 @@ succeeds, if the first completes after the second.")
 					 (innerHTML-set! $res h))))
 	       "execute")
 	    "  Result: " res))
-      (<H3> "4 Parallel calls")
+      (<H3> "3 Parallel calls")
       (<DIV> :style "font-size: 90%"
 	 "This test spawns simulateously four server service calls. If this
 test succeeds, you should clearly see the following messages, in that order:")
@@ -84,5 +84,17 @@ then the test failed.")
 					       "waiting")
 				      (lambda (h)
 					 (innerHTML-set! $res h))))
+	       "execute")
+	    "  Result: " res))
+      (<H3> "4 Complex data")
+      (<DIV> :style "font-size: 90%"
+	 "This test calls a service that returns a list of XML elements.")
+      (let ((res (<SPAN> :style "color: red" "???")))
+	 (<DIV>
+	    (<BUTTON> :onclick ~(with-hop ($(service ()
+					       `((one ,(<SPAN> "o"))
+						 (two ,(<SPAN> "k")))))
+				   (lambda (v)
+				      (innerHTML-set! $res (map cadr v))))
 	       "execute")
 	    "  Result: " res))))

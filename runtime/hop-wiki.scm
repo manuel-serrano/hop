@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-wiki.scm                    */
+;*    serrano/prgm/project/hop/2.0.x/runtime/hop-wiki.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  6 07:37:32 2006                          */
-;*    Last change :  Mon Oct 15 15:36:14 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Thu Apr 16 08:18:28 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The wiki markup                                                  */
 ;*=====================================================================*/
@@ -20,25 +20,30 @@
 	    __hop_xml
 	    __hop_read
 	    __hop_cache
-	    __hop_wiki-syntax)
+	    __hop_wiki-syntax
+	    __hop_wiki-parser)
 
    (export  (<WIKI> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    flatten ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (flatten obj)
+(define (flatten obj env i id)
    (cond
       ((string? obj)
-       obj)
+       (values obj env i))
+      ((or (boolean? obj) (eq? obj #unspecified) (null? obj))
+       (values "" env i))
+      ((not (pair? obj))
+       (values (format ",(vector-ref ~a ~a)" id i) (cons obj env) (+fx i 1)))
       ((and (pair? obj) (every? string? obj))
-       (apply string-append obj))
-      ((pair? (car obj))
-       (flatten (cons (flatten (car obj)) (cdr obj))))
-      ((string? (car obj))
-       (string-append (car obj) (flatten (cdr obj))))
+       (values (apply string-append obj) env i))
       (else
-       (error '<WIKI> "Illegal body" obj))))
+       (multiple-value-bind (str env i)
+	  (flatten (car obj) env i id)
+	  (multiple-value-bind (str2 env2 i2)
+	     (flatten (cdr obj) env i id)
+	     (values (string-append str str2) env2 i2))))))
        
 ;*---------------------------------------------------------------------*/
 ;*    wiki-cache->hop ...                                              */
@@ -66,10 +71,14 @@
 			     body)
    (let ((syn (if (eq? syntax #unspecified)
 		  #f
-		  syntax)))
+		  syntax))
+	 (id (gensym)))
       (cond
 	 ((eq? src #unspecified)
-	  (wiki-string->hop (flatten body) :syntax syn :charset charset))
+	  (multiple-value-bind (str env i)
+	     (flatten body '() 0 id)
+	     (let ((venv `(,id ',(list->vector (reverse! env)))))
+		(wiki-string->hop str :syntax syn :charset charset :env venv))))
 	 ((not (string? src))
 	  (error '<WIKI> "Illegal wiki src" src))
 	 ((file-exists? src)

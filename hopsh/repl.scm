@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hopsh/repl.scm                          */
+;*    serrano/prgm/project/hop/2.0.x/hopsh/repl.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Tue Aug 14 08:17:27 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Thu Apr  2 09:42:27 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
 ;*=====================================================================*/
@@ -20,14 +20,14 @@
    (import  hopsh_param
 	    hopsh_login)
    
-   (export  (hopsh-eval ::bstring)
+   (export  (hopsh-eval ::obj)
 	    (hopsh-eval-string ::bstring)
 	    (hopsh-repl)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopsh-eval ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (hopsh-eval str)
+(define (hopsh-eval exp)
    (with-handler
       (lambda (e)
 	 (if (&error? e)
@@ -38,38 +38,29 @@
 		(sigsetmask 0)
 		#unspecified)
 	     (raise e)))
-      (hopsh-eval-string str)))
+      (if (string? exp)
+	  (hopsh-eval-string exp)
+	  (hopsh-eval-expression exp))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopsh-eval-string ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hopsh-eval-string str)
-   (cond
-      ((=fx (string-length str) 0)
-       ;; an empty command
-       "")
-      ((char=? (string-ref str 0) #\()
-       ;; a parenthetical expression
-       (eval-expression str))
-      (else
-       ;; a command
-       (eval-command str))))
+   (if (=fx (string-length str) 0)
+       ""
+       (eval-command str)))
 
 ;*---------------------------------------------------------------------*/
-;*    eval-expression ...                                              */
+;*    hopsh-eval-expression ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (eval-expression str)
-   (hopsh-exec (expression->url str)))
+(define (hopsh-eval-expression exp)
+   (hopsh-exec (expression->url exp)))
 
 ;*---------------------------------------------------------------------*/
 ;*    expression->url ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (expression->url str)
-   (let ((obj (with-input-from-string str read)))
-      (make-hopsh-url "hop"
-		      (hopsh-eval-service)
-		      (string-append "&exp="
-				     (url-encode (obj->string obj))))))
+(define (expression->url obj)
+   (make-hopsh-url (hopsh-eval-service) (list obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    eval-command ...                                                 */
@@ -86,22 +77,19 @@
 	 (let ((args (port->string-list (current-input-port))))
 	    (if (null? args)
 		(error 'command->url "Illegal command" str)
-		(make-hopsh-url "no"
-				(car args)
-				(apply string-append
-				       (command-options str (cdr args)))))))))
+		(make-hopsh-url (car args)
+				(command-options str (cdr args))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-hopsh-url ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (make-hopsh-url encoding cmd options)
-   (format "http://~a:~a~a/~a?hop-encoding=~a~a"
-	   (hopsh-host)
-	   (hop-port)
-	   (hop-service-base)
-	   cmd
-	   encoding
-	   options))
+(define (make-hopsh-url cmd options)
+   (hop-apply-url (format "http://~a:~a~a/~a"
+			  (hopsh-host)
+			  (hop-port)
+			  (hop-service-base)
+			  cmd)
+		  options))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopsh-exec ...                                                   */
@@ -111,10 +99,10 @@
 	      (count 3))
       (with-url url
 	 (lambda (s) s)
-	 :fail (lambda (status port)
-		  (case status
+	 :fail (lambda (xhr)
+		  (case (xml-http-request-status xhr)
 		     ((404)
-		      (error 'hopsh "url not found" url))
+		      (error 'hopsh "document not found" url))
 		     ((401)
 		      (if (=fx count 0)
 			  (error 'hop-sh "permission denied'" url)
@@ -125,8 +113,9 @@
 				      (-fx count 1))))))
 		     (else
 		      (error 'hopsh
-			     (format "Illegal status code `~a'" status)
-			     (read-string port)))))
+			     (format "Illegal status code `~a'"
+				     (xml-http-request-status xhr))
+			     (read-string (xml-http-request-input-port xhr))))))
 	 :header header)))
 
 ;*---------------------------------------------------------------------*/
@@ -141,25 +130,33 @@
 ;*    command-options ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (command-options str opts)
-   (let loop ((opts opts))
+   (let loop ((o opts))
       (cond
-	 ((null? opts)
+	 ((null? o)
 	  '())
-	 ((null? (cdr opts))
+	 ((null? (cdr o))
 	  (error 'command->url
-		 (format "Illegal command option `~a'" (car opts))
+		 (format "Illegal command option `~a'" (car o))
 		 str))
-	 ((not (char=? (string-ref (car opts) 0) #\-))
+	 ((not (char=? (string-ref (car o) 0) #\-))
+	  (cons (car o) (loop (cdr o))))
+	 ((null? (cdr o))
 	  (error 'command->url
-		 (format "Illegal command option `~a'" (car opts))
-		 str))
+		 (format "Actual value missing for option: ~a" (car o))
+		 `(,str ,@opts)))
 	 (else
-	  (cons (format "&~a=~a"
-			(substring (car opts)
-				   1
-				   (string-length (car opts)))
-			(url-encode (cadr opts)))
-		(loop (cddr opts)))))))
+	  (cons* (string->keyword (substring (car o) 1 (string-length (car o))))
+		 (cadr o)
+		 (loop (cddr o)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hopsh-read-line-or-exp ...                                       */
+;*---------------------------------------------------------------------*/
+(define (hopsh-read-line-or-exp)
+   (let ((c (peek-char)))
+      (if (eq? c #\()
+	  (read)
+	  (read-line))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopsh-repl ...                                                   */
@@ -167,9 +164,9 @@
 (define (hopsh-repl)
    (let loop ()
       (hopsh-prompt)
-      (let ((str (read-line)))
-	 (unless (eof-object? str)
-	    (print (hopsh-eval str))
+      (let ((exp (hopsh-read-line-or-exp)))
+	 (unless (eof-object? exp)
+	    (print (hopsh-eval exp))
 	    (loop)))))
 
 ;*---------------------------------------------------------------------*/

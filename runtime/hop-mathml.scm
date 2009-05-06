@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-mathml.scm                  */
+;*    serrano/prgm/project/hop/2.0.x/runtime/hop-mathml.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:24:08 2007                          */
-;*    Last change :  Wed Oct 10 05:36:14 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Tue Apr 14 07:04:41 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop MATHML support.                                              */
 ;*=====================================================================*/
@@ -89,7 +89,7 @@
 ;*---------------------------------------------------------------------*/
 (define (<MATH:TEX> formula)
    (parse-tex-formula formula))
-
+ 
 ;*---------------------------------------------------------------------*/
 ;*    parse-tex-error ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -227,7 +227,26 @@
 	     ((#\R)
 	      (if (eq? state 'left)
 		  (values 'left stack)
-		  (parse-tex-error "Unexpected \\right expression" state)))))
+		  (parse-tex-error "Unexpected \\right expression" state)))
+	     ((#\!)
+	      (multiple-value-bind (exp stack)
+		 (read-expression port stack 'end-of-expression)
+		 (let ((e (if (and (xml-markup-is? exp 'mo)
+				   (pair? (xml-markup-body exp))
+				   (string? (car (xml-markup-body exp)))
+				   (null? (cdr (xml-markup-body exp))))
+			      (let ((op (car (xml-markup-body exp))))
+				 (cond
+				    ((string=? op "&equiv;")
+				     (<MATH:MO> "&#x2262;"))
+				    ((string=? op "&eq;")
+				     (<MATH:MO> "&#x2260;"))
+				    ((string=? op "&isin;")
+				     (<MATH:MO> "&#x2209;"))
+				    (else
+				     (<MATH:MROW> (<MATH:MO> "&not;") exp))))
+			      (<MATH:MROW> (<MATH:MO> "&not;") exp))))
+		    (values e stack))))))
 	 (else
 	  (case (car token)
 	     ((NUMBER)
@@ -505,6 +524,7 @@
 		  ("downarrow" ("&darr;" :stretchy "false"))
 		  ("Downarrow" ("&dArr;" :stretchy "false"))
 		  "equiv"
+		  ("neq" "&#x2260;")
 		  ("exists" "&exists;")
 		  "ge"
 		  "gt"
@@ -530,7 +550,6 @@
 		  ("mid" "&mid;")
 		  ("mp" "&MinusPlus;")
 		  "ne"
-		  "not"
 		  "oint"
 		  ("partial" "&part;")
 		  ("pm" "&PlusMinus;")
@@ -711,6 +730,8 @@
 					   (string=? s "bigm")
 					   (string=? s "bigr"))
 				       (list 'PREFIXOP :stretchy "true"))
+				      ((string=? s "not")
+				       #\!)
 				      ((string=? s "left")
 				       #\L)
 				      ((string=? s "right")
@@ -736,6 +757,9 @@
       ;; tex spaces
       ("\\;"
        (cons 'IDENT "&ensp;&ensp;"))
+      ;; prims
+      ((+ #\')
+       (cons 'IDENT (the-string)))
       ;; default
       (else
        (let ((c (the-failure)))

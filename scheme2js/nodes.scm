@@ -1,335 +1,197 @@
 (module nodes
-   (include "protobject.sch")
-   (import protobject
-	   verbose)
-   (option (loadq "protobject-eval.sch"))
-   (export (node n::symbol)
-	   (nodes-init!)))
+   (import verbose
+	   export-desc)
+   (export
+    ;; Labels used for breaks and continues
+    (final-class Label
+       (id::symbol read-only))
 
-(define-macro (debug-print . L)
-;   (cons 'verbose L))
-   #unspecified)
+    ;; Variables
+    (final-class Var
+       (id::symbol read-only)
 
-(define-macro (proto-traverses class . fields)
-   (define (starts-with-? sym)
-      (char=? #\? (string-ref (symbol->string sym) 0)))
+       (kind::symbol read-only) ;; one out of local, exported, imported or this
+       ;; export-desc is used for exported and imported vars.
+       (export-desc::Export-Desc (default (Export-Desc-nil)) read-only)
 
-   (define (without-? sym)
-      (let ((symstr (symbol->string sym)))
-	 (string->symbol (substring symstr 1 (string-length symstr)))))
+       (constant?::bool (default #f))
+       (value (default #f))
+       (uses::bint (default 0))
+       (captured?::bool (default #f))
+       (escapes?::bool (default #f))
+       (mutated-outside-local?::bool (default #f))
 
-   (define (access field)
-      (symbol-append 'this. field))
-   
-   (define (gen-method define-name nb-args method-name modify-pass?)
-      (define (gen-args)
-	 (map (lambda (n)
-		 (string->symbol
-		  (string-append "arg"
-				 (number->string n))))
-	      (iota nb-args)))
-		   
-      (define (call-node node)
-	 `(,(symbol-append node (symbol-append (string->symbol ".") method-name))
-	   ,@(gen-args)))
-   
-      (define (run-over-list field-list)
-	 (if modify-pass?
-	     (let ((loop (gensym 'loop))
-		   (node (gensym 'node))
-		   (flist (gensym 'flist)))
-		`(let ,loop ((,flist ,(access field-list)))
-		      (unless (null? ,flist)
-			 (let ((,node (car ,flist)))
-			    (set-car! ,flist ,(call-node node))
-			    (,loop (cdr ,flist))))))
-	     (let ((node (gensym 'node)))
-		`(for-each (lambda (,node)
-			      ,(call-node node))
-			   ,(access field-list)))))
-							   
-      (define (visit field)
-	 (if modify-pass?
-	     `(set! ,(access field) ,(call-node (access field)))
-	     (call-node (access field))))
+       (needs-boxing?::bool (default #f))
+       (needs-frame?::bool (default #f))
+       (needs-uniquization?::bool (default #f))
+       (needs-update?::bool (default #f))
 
-      (define (traverse-field field)
-	 (cond
-	    ((and (pair? field) (starts-with-? (car field)))
-	     (let ((field-w/o-? (without-? (car field))))
-		`(and ,(access field-w/o-?)
-		      ,(run-over-list field-w/o-?))))
-	    ((pair? field)
-	     (run-over-list (car field)))
-	    ((starts-with-? field)
-	     (let ((field-w/o-? (without-? field)))
-		`(and ,(access field-w/o-?)
-		      ,(visit field-w/o-?))))
-	    (else
-	     (visit field))))
-      
-      (define (map-fields fields)
-	 (map (lambda (field)
-		 `(begin
-		     (debug-print ',field)
-		     ,(traverse-field field)))
-	      fields))
-      
-      `(define-pmethod (,define-name ,@(gen-args))
-	  (debug-print (pobject-name this))
-	  ,@(cond
-	       (modify-pass?
-		(append! (map-fields fields) '(this)))
-	       ((null? fields)
-		'(this.default-traverse-value))
-	       (else
-		(map-fields fields)))))
-      
-   (define (gen-traverse nb-args)
-      (let* ((method-name (symbol-append 'traverse (string->symbol
-						    (number->string nb-args))))
-	     (define-name (symbol-append class '-proto- method-name))
-	     ;; always just call 'traverse. up to the user to modify it.
-	     (method-definition (gen-method define-name nb-args 'traverse #f))
-	     (method-name! (symbol-append 'traverse
-					  (string->symbol
-					   (number->string nb-args))
-					  '!))
-	     (define-name! (symbol-append class '-proto- method-name!))
-	     ;; always just call 'traverse!. up to the user to modify it.
-	     (method-definition! (gen-method define-name! nb-args 'traverse! #t)))
-	 `(begin
-	     ,method-definition
-	     ,method-definition!
-	     (set! ,(symbol-append class '.proto. method-name) ,define-name)
-	     (set! ,(symbol-append class '.proto. method-name!)
-		   ,define-name!))))
-   `(begin
-       ,@(map gen-traverse (iota 4))))
+       (indirect?::bool (default #f)) ;; not essential, but handy.
 
-(define (node n)
-   (hashtable-get (thread-parameter '*nodes*) n))
+       (already-defined?::bool (default #f)) ;; TODO: remove (side)
+       )
 
-(define (nodes-init!)
-   (define nodes (or (thread-parameter '*nodes*)
-		     (make-hashtable)))
-   
-   (thread-parameter-set! '*nodes* nodes)
-   
-   ;;HACK HACK HACK: begins in begins..
-   (define-macro (define-node signature . Lrest)
-      (let ((name (car signature))
-	    (tmp (gensym 'tmp-HACK)))
-	 `(define ,name
-	     (let ((,tmp (create-pclass ',name
-					,(if (null? Lrest)
-					     'pobject-id
-					     `(pmethod ,(cdr signature)
-						       ,@Lrest)))))
-		(hashtable-put! nodes ',name ,tmp)
-		,tmp))))
-;	     (define-pclass ,signature ,@Lrest)
-;	     (hashtable-put! *nodes* ',name ,name))))
-   
-   (define-node (Node))
-   (proto-traverses Node)
-   (set! Node.proto.clone pobject-clone)
-   (set! Node.proto.deep-clone pobject-deep-clone)
+    ;; ===========================  Nodes ==========================
+    (class Node
+       (location (default #f)))
+    (final-class Const::Node
+       value)
+    (final-class Ref::Node
+       id ;; either symbol or qualified id of form (symbol module)
+       (var::Var (default (Var-nil))))
+    (class Scope::Node
+       (scope-vars::pair-nil (default '())) ;; list of Vars
 
-   (define-node (Const value)
-      (set! this.value value))
-   (set! Const.proto (new Node))
-   (proto-traverses Const)
+       (call/cc?::bool (default #f)))
+    (class Execution-Unit::Scope ;; basically Modules and Lambdas
+       ;; this-vars are always instantiated, but might not be used during
+       ;; symbol-resolution
+       (this-var::Var (default (instantiate::Var
+					  (id 'this)
+					  (kind 'this)))
+			   read-only)
+       body::Node
+       
+       (free-vars::pair-nil (default '()))
 
-   (define-node (Var-ref id)
-      (set! this.id id))
-   (set! Var-ref.proto (new Node))
-   (proto-traverses Var-ref)
+       (declared-vars::pair-nil (default '())))
+    
+    (final-class Module::Execution-Unit
+       ;; all scope-vars are exported.
 
-   ;; only short-term meaning.
-   ;; after symbol-pass a Runtime-Var-ref is identical to a Var-ref node.
-   ;; and not all Runtime-refs are Runtime-Var-refs.
-   (define-node (Runtime-Var-ref id)
-      (set! this.id id))
-   (set! Runtime-Var-ref.proto (empty-pobject Var-ref))
-   (proto-traverses Runtime-Var-ref)
+       (runtime-vars::pair-nil  (default '())) ;; list of Vars
+       (imported-vars::pair-nil (default '())) ;; list of Vars
 
-   (define-node (Decl id)
-      (set! this.id id))
-   (set! Decl.proto (empty-pobject Var-ref))
-   (proto-traverses Decl)
+       )
+    (final-class Lambda::Execution-Unit
+       ;; if the fun was vaarg, then the flag vaarg? has to be set, and the
+       ;; vaarg must be the last element of the formals.
+       formals::pair-nil           ;; list of Refs
+       vaarg?::bool
 
-   (define-node (Scope))
-   (set! Scope.proto (new Node))
-   (proto-traverses Scope) ;; should not be necessary
+       (closure?::bool (default #f))
+       (nested-closures?::bool (default #f))
 
-   (define-node (Program body)
-      (set! this.body body))
-   (set! Program.proto (new Scope))
-   (proto-traverses Program body)
+       (size::bint (default 0))
 
-   ;; a Module represents a functional part of a program. Besides of free variables
-   ;; the generated code should be fully functionally.
-   ;; the given function is called before code-generation with the current port
-   ;; as parameter and must return a
-   ;; pair containing a port as 'car' and a function to close the port as cdr.
-   ;; the closing function should have the following signature:
-   ;;  (define (close-port p::port is-statement-form?::bool) ...)
-   ;; A Module is currently *not* a scope. Two parts at the same level can
-   ;; therefore share  variables.
-   (define-node (Module body fun)
-      (set! this.body body)
-      (set! this.fun fun))
-   (set! Module.proto (empty-pobject Node))
-   (proto-traverses Module body)
+       (call/cc-finally-scopes::pair-nil (default '()))
+       (call/cc-nb-while-counters::bint (default 0))
+       (call/cc-nb-indices::bint (default 0))
+       (call/cc-hoisted::pair-nil (default '())) ;; a-list (index rev-hoisted ...)
+       (call/cc-contained-scopes::pair-nil (default '()))
 
-   ;; Body must receive an expr. (usually a Begin).
-   ;; this way there's only one class sequencing exprs.
-   (define-node (Body expr)
-      (set! this.expr expr))
-   (set! Body.proto (new Scope)) ;; every body might have 'defines'
-   (proto-traverses Body expr)
+       (contains-trampoline-call?::bool (default #f))
+       )
+    (final-class If::Node
+       test::Node
+       then::Node
+       else::Node)
+    (final-class Case::Node
+       key::Node
+       clauses::pair-nil)          ;; list of Clause
+    (final-class Clause::Node
+       consts::pair-nil            ;; list of Const. default clause has no consts
+       expr::Node
+       default-clause?::bool)
+    (final-class Set!::Node
+       lvalue::Ref
+       val::Node)
+    (final-class Let::Scope
+       bindings::pair-nil          ;; list of Set!s (at least initially)
+       body::Node
+       kind::symbol) ;; either 'let or 'letrec
+    (final-class Begin::Node
+       exprs::pair-nil
 
-   (define-node (Lambda formals vaarg body)
-      (set! this.formals formals)
-      (set! this.vaarg vaarg)
-      (set! this.body body))
-   (set! Lambda.proto (new Scope))
-   (proto-traverses Lambda (formals) ?vaarg body)
+       (call/cc?::bool (default #f))
+       (call/cc-ranges::pair-nil (default '())))
+    (final-class Call::Node
+       operator::Node
+       operands::pair-nil
 
-   (define-node (If test then else)
-      (set! this.test test)
-      (set! this.then then)
-      (set! this.else else))
-   (set! If.proto (new Node))
-   (proto-traverses If test then else)
+       (call/cc?::bool (default #f))
+       (call/cc-index (default #f)) ;; #f -> tail call
 
-   (define-node (Case key clauses)
-      (set! this.key key)
-      (set! this.clauses clauses))
-   (set! Case.proto (new Node))
-   (proto-traverses Case key (clauses))
-
-   (define-node (Clause consts expr default-clause?)
-      (set! this.consts consts) ;; default clause just has no consts
-      (set! this.expr expr)
-      (set! this.default-clause? default-clause?))
-   (set! Clause.proto (new Node))
-   (proto-traverses Clause (consts) expr)
-
-   (define-node (Set! lvalue val)
-      (set! this.lvalue lvalue)
-      (set! this.val val))
-   (set! Set!.proto (new Node))
-   (proto-traverses Set! lvalue val)
-
-   (define-node (Binding lvalue val)
-      (set! this.lvalue lvalue)
-      (set! this.val val))
-   (set! Binding.proto (empty-pobject Set!))
-   (proto-traverses Binding lvalue val)
-
-   ;; kind is either 'let or 'letrec
-   (define-node (Let-form bindings body kind)
-      (set! this.bindings bindings)
-      (set! this.body body)
-      (set! this.kind kind))
-   (set! Let-form.proto (new Scope))
-   (proto-traverses Let-form (bindings) body)
-
-   ;; Body and Begin are not equivalent.
-   (define-node (Begin exprs)
-      (set! this.exprs exprs))
-   (set! Begin.proto (new Node))
-   (proto-traverses Begin (exprs))
-
-   (define-node (Define lvalue val)
-      (set! this.lvalue lvalue)
-      (set! this.val val))
-   (set! Define.proto (empty-pobject Set!))
-   (proto-traverses Define lvalue val)
-
-   (define-node (Call operator operands)
-      (set! this.operator operator)
-      (set! this.operands operands))
-   (set! Call.proto (new Node))
-   (proto-traverses Call operator (operands))
+       (trampoline?::bool (default #f)))
 
    ;; optimization-nodes
 
-   (define-node (Tail-rec body label)
-      (set! this.body body)
-      (set! this.label label))
-   (set! Tail-rec.proto (empty-pobject Scope))
-   (proto-traverses Tail-rec body)
+    (final-class Frame-alloc::Node
+       storage-var::Var
+       vars::pair-nil)
+    (final-class Frame-push::Node
+       frame-allocs::pair-nil
+       body::Node)
+    (final-class Return::Node
+       val::Node)
+    (final-class Labeled::Node
+       body::Node
+       label::Label)
+   ;; break must never reference a loop.
+   ;; if this is needed, then the loop must be wrapped into a 'labeled'.
+    (final-class Break::Node
+       val::Node
+       label::Label)
+    (final-class Continue::Node
+       label::Label)
+    (final-class Pragma::Node
+       str::bstring)
+    (final-class Tail-rec::Scope
+       ;; inits are Set!s (no particular order)
+       inits::pair-nil
+       body::Node
+       label::Label)
+    (final-class Tail-rec-Call::Node
+       ;; updates here are not assignments
+       ;; they must be in the same order, as the scope-vars in the Tail-rec.
+       updates::pair-nil
+       label::Label)
+    (final-class While::Scope
+       init::Node
+       test::Node
+       body::Node
+       label::Label
 
-   (define-node (Tail-rec-call label)
-      (set! this.label label))
-   (set! Tail-rec-call.proto (new Node))
-   (proto-traverses Tail-rec-call)
-   
-   (define-node (Return val)
-      (set! this.val val))
-   (set! Return.proto (new Node))
-   (proto-traverses Return val)
+       (call/cc-finally-scopes::pair-nil (default '()))
+       (call/cc-counter-nb::bint (default -1))
+       )
+    (final-class Call/cc-Resume::Node
+       indices::pair-nil)
 
-   (define-node (Closure-alloc)
-      'do-nothing)
-   (set! Closure-alloc.proto (new Node))
-   (proto-traverses Closure-alloc)
+    (Ref-of-new-Var::Ref id::symbol #!key (location #f))
+    (var-reference v::Var #!key (location #f))
+    (var-assig v::Var val::Node #!key (location #f))
 
-   (define-node (Closure-use closures body)
-      (set! this.closures closures)
-      (set! this.body body))
-   (set! Closure-use.proto (new Node))
-   (proto-traverses Closure-use (closures) body)
+    (default-label::Label)
+    ))
 
-   (define-node (Closure-with-use closures body)
-      (set! this.closures closures)
-      (set! this.body body))
-   (set! Closure-with-use.proto (empty-pobject Closure-use))
-   (proto-traverses Closure-with-use (closures) body)
+(define (var-reference v::Var #!key (location #f))
+   (instantiate::Ref
+      (location (if (Node? location)
+		    (Node-location location)
+		    location))
+      (id (Var-id v))
+      (var v)))
 
-   (define-node (Closure-ref id var)
-      (set! this.id id)
-      (set! this.var var)
-      (set! this.obj-ref (var.obj.reference))
-      (set! this.field-ref (var.field.reference)))
-   (set! Closure-ref.proto (new Node))
-   (proto-traverses Closure-ref obj-ref field-ref)
+(define (var-assig v::Var val::Node #!key (location #f))
+   (let ((var-ref (var-reference v :location location)))
+      (instantiate::Set!
+	 (location (if (Node? location)
+		       (Node-location location)
+		       location))
+	 (lvalue var-ref)
+	 (val val))))
 
-   (define-node (Labelled body label)
-      (set! this.body body)
-      (set! this.label label))
-   (set! Labelled.proto (new Node))
-   (proto-traverses Labelled body)
+(define (Ref-of-new-Var id #!key (location #f))
+   (let* ((var (instantiate::Var
+		  (id id)
+		  (kind 'local))))
+      (instantiate::Ref
+	 (location (if (Node? location)
+		       (Node-location location)
+		       location))
+	 (id id)
+	 (var var))))
 
-   (define-node (Break val labelled)
-      (set! this.val val)
-      (set! this.labelled labelled))
-   (set! Break.proto (new Node))
-   (proto-traverses Break val)
-
-   (define-node (Pragma str)
-      (set! this.str str))
-   (set! Pragma.proto (new Node))
-   (proto-traverses Pragma)
-
-   (define-node (While test body)
-      (set! this.test test)
-      (set! this.body body))
-   (set! While.proto (new Node))
-   (proto-traverses While test body)
-
-   (define-node (Call/cc-Call operator operands)
-      (set! this.operator operator)
-      (set! this.operands operands))
-   (set! Call/cc-Call.proto (empty-pobject Call))
-   (proto-traverses Call/cc-Call operator (operands))
-
-   (define-node (Call/cc-Resume index)
-      (set! this.indices/vars (list (cons index #f))))
-   (set! Call/cc-Resume.proto (empty-pobject Node))
-   (proto-traverses Call/cc-Resume)
-   )
-   
+(define *default-label* (instantiate::Label (id 'default)))
+(define (default-label) *default-label*)

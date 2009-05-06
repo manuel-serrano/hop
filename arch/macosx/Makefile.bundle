@@ -1,0 +1,63 @@
+# Not tested (and most probably won't work) if placed inside a directory with spaces.
+#
+# Typical usage to create macosx/hop.dmg (the -j3 is not necessary)
+# make -f arch/macosx/Makefile.bundle configure
+# make -f arch/macosx/Makefile.bundle -j3
+# make -f arch/macosx/Makefile.bundle bundle
+# make -f arch/macosx/Makefile.bundle dmg
+
+default: build
+
+-include etc/Makefile.hopconfig
+
+PWD := $(shell pwd)
+BOOTDIR := $(PWD)
+BIN_NAME := hop
+TITLE := $(BIN_NAME)
+MACOSX_DIR := $(BOOTDIR)/macosx
+DMG_DIR := $(MACOSX_DIR)/dmg
+APP_DIR := $(DMG_DIR)/$(BIN_NAME).app
+CONTENTS_DIR := $(APP_DIR)/Contents
+
+CONTRIBS_DIR := /Library/Hop/Weblets
+
+HDIUTIL := hdiutil
+
+DMG := $(MACOSX_DIR)/$(TITLE).dmg
+
+build:
+	$(MAKE) LDEXTRA="-framework CoreFoundation"
+
+# note that we need declare webletsdir and libdir as relative paths.
+# during 'install' we need to override these values...
+configure:
+	./configure --macosx-bundle \
+        --prefix=/ \
+	--srfi=macosx 
+	--bindir=MacOS --mandir=Resources/man \
+	--contribsdir=$(CONTRIBS_DIR) \
+	--webletsdir=Resources/Weblets \
+	--etcdir=Resources/etc \
+	--sharedir=Resources \
+	--libdir=Frameworks
+
+bundle:
+	mkdir -p $(CONTENTS_DIR) && \
+	$(MAKE) DESTDIR=$(CONTENTS_DIR)/ install && \
+	BIGLOO_VERSION=`$(BIGLOO) -q -eval "(begin (print *bigloo-version*) (exit 0))"` && \
+	mkdir -p $(CONTENTS_DIR)/Frameworks/bigloo/$$BIGLOO_VERSION && \
+	cp -R $(BIGLOOLIBDIR)/*.dylib $(BIGLOOLIBDIR)/*.init $(BIGLOOLIBDIR)/*.heap $(CONTENTS_DIR)/Frameworks/bigloo/$$BIGLOO_VERSION/ && \
+	cp $(MACOSX_DIR)/Info.plist $(CONTENTS_DIR)/ && \
+	cp $(MACOSX_DIR)/hop.icns $(CONTENTS_DIR)/Resources
+
+dmg: $(DMG)
+
+$(DMG):
+	mkdir -p $(DMG_DIR) && \
+	$(HDIUTIL) create -srcfolder $(DMG_DIR) -volname $(TITLE) -format UDZO -ov "$@"
+
+clean:
+	-rm -rf $(APP_DIR)
+	-rm -f $(DMG)
+
+.PHONY: configure build bundle lib dmg clean

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/doc/api.hop                     */
+;*    serrano/prgm/project/hop/2.0.x/weblets/doc/api.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Mon Oct 29 14:26:05 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Sat Mar 28 08:30:08 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
 ;*=====================================================================*/
@@ -156,11 +156,7 @@
 ;*    select-api-pad ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (select-api-pad api k #!key (pad "api"))
-   ~(let ((el (document.getElementById $(string-append "pad-" pad))))
-       (with-history
-	  (lambda ()
-	     (notepad-select "doc-notepad" $(string-append "doc-" pad))
-	     (select-api-doc $doc/api $api el $k)))))
+   ~(select-api-pad $api $k $pad))
 
 ;*---------------------------------------------------------------------*/
 ;*    hash-parser ...                                                  */
@@ -216,6 +212,9 @@
    (regular-grammar ((letter (in "_-<>!?%" ("azAZ09")))
 		     (sep (out "_-<>!?%" ("azAZ09")))
 		     res)
+      ((: ";;" (* all))
+       (let ((k (the-string)))
+	  (<SPAN> :class "code-comment" k)))
       ((+ (or letter (: #\/ (out #\/))))
        (let ((k (the-string)))
 	  (set! res (cons (or (markup-parser k)
@@ -287,7 +286,7 @@
 		  (case id
 		     ((<see-also>)
 		      <SEE-ALSO>)
-		     ((<markup> <parameter> <function> <class>)
+		     ((<markup> <parameter> <preference> <function> <class>)
 		      (let* ((s (symbol->string id))
 			     (c (substring s 1 (-fx (string-length s) 1))))
 			 (lambda (port title expr)
@@ -350,7 +349,11 @@
 	       (set! *markup-menu-table* menu)
 	       (set! *markup-table* table))
 	    (multiple-value-bind (menu table)
-	       (make-doc-tables 0 "<parameter>" "<function>" "<class>")
+	       (make-doc-tables 0
+				"<parameter>"
+				"<preference>"
+				"<function>"
+				"<class>")
 	       (set! *server-menu-table* menu)
 	       (set! *server-table* table))
 	    (multiple-value-bind (_ table)
@@ -448,11 +451,11 @@
    ~(hop_window_onload_add 
      (lambda (e)
 	(with-history
-	   (lambda ()
-	      (history-add! api-history "pad-weblet" $weblet)
-	      (with-hop ($doc/api $weblet)
-		 (lambda (r)
-		    (notepad-select "doc-notepad" "doc-api")
-		    (let ((el (dom-get-element-by-id document "pad-api")))
-		       (set! el.innerHTML r))))))
+	 (lambda ()
+	    (history-add! api-history "pad-weblet" $weblet)
+	    (with-hop ($doc/api $weblet)
+	       (lambda (r)
+		  (notepad-select "doc-notepad" "doc-api")
+		  (let ((el (dom-get-element-by-id document "pad-api")))
+		     (innerHTML-set! el r))))))
 	#f)))

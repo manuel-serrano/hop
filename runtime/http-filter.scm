@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/http-filter.scm                 */
+;*    serrano/prgm/project/hop/2.0.x/runtime/http-filter.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Wed Nov 28 05:39:15 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Wed Apr  8 14:03:37 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
 ;*=====================================================================*/
@@ -50,7 +50,7 @@
 	     (rsock (make-client-socket/timeout host port timeout request ssl))
 	     (rp (socket-output rsock))
 	     (sp (socket-input socket)))
-	 (hop-verb 4
+	 (hop-verb 5
 		   (hop-color request request " FILTER")
 		   " " host ":" port "\n")
 	 (unwind-protect

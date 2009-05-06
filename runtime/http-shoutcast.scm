@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/http-shoutcast.scm              */
+;*    serrano/prgm/project/hop/1.10.x/runtime/http-shoutcast.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri May 25 08:10:57 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Mon Oct 13 07:09:48 2008 (serrano)                */
+;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -23,7 +23,7 @@
 	    __hop_http-lib
 	    __hop_http-response
 	    __hop_user
-	    __hop_thread))
+	    __hop_misc))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-shoutcast ...                      */
@@ -65,6 +65,8 @@
 				  (+elong
 				   (fixnum->elong (+fx 1 l))
 				   (/elong size psize)))))
+		;; remove the timeout
+		(output-port-timeout-set! p 0)
 		;; regular header
 		(http-write-line p start-line)
 		(http-write-header p header)
@@ -83,19 +85,30 @@
 		       (lambda ()
 			  (let ((pad (make-string (*fx l16 16) #a000)))
 			     (blit-string! title 0 pad 0 l)
-			     (send-chars pf p psize)
+			     (send-chars-all pf p psize)
 			     (display (integer->char l16) p)
 			     (display pad p)
 			     (let loop ((offset psize))
-				(when (<elong offset size)
-				   (send-chars pf p psize)
-				   (display #a000 p)
-				   (loop (+elong offset psize)))))))
+				(let ((len (-elong size offset)))
+				   (when (>elong len #e0)
+				      (let ((sz (minelong len psize)))
+					 (send-chars-all pf p sz)
+					 (display #a000 p)
+					 (loop (+elong offset sz)))))))))
 		      (begin
 			 (close-input-port pf)
 			 (flush-output-port p))))
 		;; close the connection
 		'close)))))
+
+;*---------------------------------------------------------------------*/
+;*    send-chars-all ...                                               */
+;*---------------------------------------------------------------------*/
+(define (send-chars-all pf::input-port p::output-port psize::elong)
+   (let loop ((psize psize))
+      (let ((psize (-elong psize (send-chars pf p psize))))
+	 (when (>elong psize #e0)
+	    (loop psize)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    icy-name ...                                                     */

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/etc/hop-autoconf.js.in                  */
+/*    serrano/prgm/project/hop/1.11.x/etc/hop-autoconf.js.in           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Nov  9 14:21:05 2007 (serrano)                */
-/*    Copyright   :  2006-07 Manuel Serrano                            */
+/*    Last change :  Fri Jan 23 15:00:19 2009 (serrano)                */
+/*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
@@ -12,25 +12,31 @@
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
-/*    Hop server directories ...                                       */
+/*    undefined value                                                  */
 /*---------------------------------------------------------------------*/
-function hop_etc_directory() { 
-    return  "@ETCDIR@";
+var undefined;
+
+/*---------------------------------------------------------------------*/
+/*    Name and version                                                 */
+/*---------------------------------------------------------------------*/
+/*** META ((export hop-name)) */
+function hop_name() {
+   return "Hop";
 }
-function hop_bin_directory() {
-    return "@BINDIR@";
- }
-function hop_lib_directory() {
-    return "@LIBDIR@";
+
+/*** META ((export hop-version)) */
+function hop_version() {
+   return "@VERSION@";
 }
-function hop_share_directory() {
-    return "@SHAREDIR@";
+
+/*** META ((export hop-backend)) */
+function hop_backend() {
+   return "@BACKEND@";
 }
-function hop_contribs_directory() {
-    return "@CONTRIBSDIR@";
-}
-function hop_weblets_directory() {
-    return "@WEBLETSDIR@";
+
+/*** META ((export hop-url)) */
+function hop_url() {
+   return "@URL@";
 }
 
 /*---------------------------------------------------------------------*/
@@ -39,28 +45,165 @@ function hop_weblets_directory() {
 var hop_enable_location_event = @LOCEVENT@;
 
 /*---------------------------------------------------------------------*/
-/*    DOMFormElement ...                                               */
+/*    hop-service-base                                                 */
+/*    -------------------------------------------------------------    */
+/*    The prefix of all HOP weblets.                                   */
 /*---------------------------------------------------------------------*/
-var undefined;
-
-if( window.HTMLFormElement === undefined ) {
-   window.HTMLFormElement = window.HTMLForm;
+/*** META ((export hop-service-base)) */
+function hop_service_base() {
+   return "@HOPSERVICEBASE@";
 }
 
-if( window.HTMLCollection === undefined ) {
-   window.HTMLCollection = function() { return false; };
+/*---------------------------------------------------------------------*/
+/*    hop_get_flash_version ...                                        */
+/*---------------------------------------------------------------------*/
+function hop_get_flash_version() {
+   if( navigator.mimeTypes
+       && navigator.mimeTypes[ "application/x-shockwave-flash" ] ) {
+      var p = navigator.mimeTypes[ "application/x-shockwave-flash" ].enabledPlugin;
+   
+      if( p && p.description ) {
+	 var d = p.description;
+
+	 if( (typeof d == "string") && (d.indexOf( "Shockwave Flash " ) == 0) ) {
+	    return parseFloat( d.substring( 16, d.indexOf( " ", 16 ) ) );
+	 }
+      }
+   }
+
+   return 0;
 }
 
-if( window.HTMLInputElement === undefined ) {
-   window.HTMLInputElement = function() { return false; };
+/*---------------------------------------------------------------------*/
+/*    hop_Config ...                                                   */
+/*    -------------------------------------------------------------    */
+/*    This mostly contains external information that cannot be         */
+/*    deduced by introspection.                                        */
+/*---------------------------------------------------------------------*/
+function hop_Config() {
+  /* cpu speed */
+  this.cpu_speed = 100;
+  if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.cpu_speed = 40;
+  if( navigator.platform.indexOf( "armv5" ) >= 0 ) this.cpu_speed = 30;
+  if( navigator.platform.indexOf( "WinCE" ) >= 0 ) this.cpu_speed = 30;
+  
+  /* gpu speed */
+  this.gpu_speed = 100;
+  if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.gpu_speed = 30;
+
+  /* pointing device */
+  this.is_tablet = ( navigator.userAgent.indexOf( "Tablet" ) >= 0 );
+
+  /* flash version */
+  this.flash_version = hop_get_flash_version();
+
+  /* default navigator setting (firefox settings) */
+  this.mouse_left_button = 0;
+  this.flash_external_interface = false;
+  this.flash_audio = false;
+  this.flash_markup = "embed";
+  this.inline_image = false;
+
+  /* navigator specific configuration */
+  if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {
+     this.navigator_family = "msie";
+     this.mouse_left_button = 1;
+     this.flash_external_interface = true;
+     this.flash_audio = false;
+     this.flash_markup = "object";
+     this.inline_image = false;
+     if( navigator.userAgent.indexOf( "MSIE 6.0" ) >= 0 ) {
+	hop_enable_location_event = false;
+     }
+  } else if( navigator.userAgent.indexOf( "Opera" ) >= 0 ) {
+     this.navigator_family = "opera";
+     this.mouse_left_button = 0;
+     this.flash_external_interface = false;
+     this.flash_audio = false;
+     this.flash_markup = "embed";
+     this.inline_image = true;
+  } else if( navigator.userAgent.indexOf( "Safari" ) >= 0 ) {
+     this.navigator_family = "safari";
+     this.mouse_left_button = 0;
+     this.flash_external_interface = true;
+     this.flash_audio = false;
+     this.flash_markup = "embed";
+     this.inline_image = true;
+  } else if( navigator.userAgent.indexOf( "WebKit" ) >= 0 ) {
+     this.navigator_family = "webkit";
+     this.mouse_left_button = 0;
+     this.flash_external_interface = true;
+     this.flash_audio = false;
+     this.flash_markup = "embed";
+     this.inline_image = true;
+  } else if( navigator.userAgent.indexOf( "KHTML" ) >= 0 ) {
+     this.navigator_family = "khtml";
+     this.mouse_left_button = 1;
+     this.flash_external_interface = true;
+     this.flash_audio = false;
+     this.flash_markup = "embed";
+     this.inline_image = true;
+  } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
+     this.navigator_family = "mozilla";
+     this.mouse_left_button = 0;
+     this.flash_external_interface = true;
+     this.flash_audio = true;
+     this.flash_markup = "embed";
+     this.inline_image = true;
+  } else {
+     alert( "Unknown navigator (" + navigator.userAgent +
+	    "), using default settings..." );
+  }
 }
 
-if( window.HTMLTextAreaElement === undefined ) {
-   window.HTMLTextAreaElement = function() { return false; };
+/*---------------------------------------------------------------------*/
+/*    hop_config ...                                                   */
+/*---------------------------------------------------------------------*/
+var hop_config = new hop_Config();
+
+/*---------------------------------------------------------------------*/
+/*    hop_flash_minversion_set ...                                     */
+/*---------------------------------------------------------------------*/
+function hop_flash_minversion_set( v ) {
+   if( v > hop_config.flash_version ) hop_config.flash_version = v;
 }
 
-if( window.HTMLSelectElement === undefined ) {
-   window.HTMLSelectElement = function() { return false; };
+/*---------------------------------------------------------------------*/
+/*    hop_flash_audio_set ...                                          */
+/*---------------------------------------------------------------------*/
+function hop_flash_audio_set( v ) {
+   hop_config.flash_audio = v;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_innerHTML_need_evalp ...                                     */
+/*    -------------------------------------------------------------    */
+/*    This test sets the variable hop_innerHTML_need_eval to           */
+/*    false if innerHTML evaluates the scripts contained in the        */
+/*    DOM nodes it receives as argument.                               */
+/*---------------------------------------------------------------------*/
+var hop_innerHTML_need_evalp = true;
+
+var tmp = document.createElement( "div" );
+
+try {
+   tmp.innerHTML = "<script type='text/javascript'>hop_innerHTML_need_evalp = false</script>";
+   if( ("body" in document) && (document.body != null) ) {
+      document.body.appendChild( tmp );
+      document.body.removeChild( tmp );
+   } else {
+      if( ("documentElement" in document) &&  
+          (document.documentElement != null) ) {
+	 document.documentElement.appendChild( tmp );
+	 document.documentElement.removeChild( tmp );
+      } else {
+	 var body = document.getElementsByTagName( "body" )[ 0 ];
+	 body.appendChild( tmp );
+	 body.removeChild( tmp );
+      }
+   }
+} catch( e ) {
+     ;
 }
 
 /*---------------------------------------------------------------------*/
@@ -82,11 +225,30 @@ function hop_properties_to_string( obj ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_properties_values_to_string ...                              */
+/*---------------------------------------------------------------------*/
+function hop_properties_values_to_string( obj ) {
+   var res = "";
+   var i = 0;
+   for( var p in obj ) {
+      if( i === 10 ) {
+	 res += p + "=" + obj[ p ] + "\n";
+	 i = 0;
+      } else {
+	 i++;
+	 res += p + "=" + obj[ p ] + " ";
+      }
+   }
+   return res;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_is_html_element ...                                          */
 /*---------------------------------------------------------------------*/
+/*** META ((export html-element?)) */
 var hop_is_html_element;
 
-if( window.HTMLElement === undefined ) {
+if( !("HTMLElement" in window) ) {
    hop_is_html_element = function hop_is_html_element( obj ) {
       return (obj != null)
               && (((obj instanceof Object) || (typeof obj == "object"))
@@ -109,13 +271,56 @@ if( window.HTMLElement === undefined ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    DOMFormElement ...                                               */
+/*---------------------------------------------------------------------*/
+var hop_is_dom_form_element;
+
+try {
+   if( undefined instanceof HTMLFormElement ) {
+      /* this test is always false but it checks if HTMLFormElement */
+      /* is a plain JavaScript class. See below the catch clause.   */
+      hop_is_dom_form_element = function hop_is_dom_form_element( obj ) {
+	 return false;
+      };
+   } else {
+      hop_is_dom_form_element = function hop_is_dom_form_element( obj ) {
+	 return obj instanceof HTMLFormElement;
+      };
+   }
+} catch( e ) {
+   /* on some browsers (guess how, always the same), HTMLFormElement is */
+   /* an opaque object that is not implemented as a plain JavaScript    */
+   /* class (i.e., a JavaScript function), hence instanceof cannot be   */
+   /* used.                                                             */
+   hop_is_dom_form_element = function hop_is_dom_form_element( obj ) {
+      return hop_is_html_element( obj ) && (obj.tagName === "form");
+   };
+}
+  
+if( !("HTMLCollection" in window) ) {
+   window.HTMLCollection = function() { return false; };
+}
+
+if( !("HTMLInputElement" in window) ) {
+   window.HTMLInputElement = function() { return false; };
+}
+
+if( !("HTMLTextAreaElement" in window) ) {
+   window.HTMLTextAreaElement = function() { return false; };
+}
+
+if( !("HTMLSelectElement" in window) ) {
+   window.HTMLSelectElement = function() { return false; };
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_make_xml_http_request ...                                    */
 /*---------------------------------------------------------------------*/
 var hop_make_xml_http_request;
 
-if( window.XMLHttpRequest != undefined ) {
+if( "XMLHttpRequest" in window ) {
    var req = new XMLHttpRequest();
-   if( req.overrideMimeType != undefined ) {
+   if( "overrideMimeType" in req ) {
       hop_make_xml_http_request = function hop_make_xml_http_request() {
 	 var req = new XMLHttpRequest();
 	 /* this is required by some versions of Mozilla */
@@ -128,16 +333,20 @@ if( window.XMLHttpRequest != undefined ) {
       }
    }
 } else {
-   if( window.ActiveXObject != undefined ) {
+   if( "ActiveXObject" in window ) {
       hop_make_xml_http_request = function hop_make_xml_http_request() {
 	 try {
 	    return new ActiveXObject( "Msxml2.XMLHTTP" );
 	 } catch( e ) {
-	    return new ActiveXObject( "Microsoft.XMLHTTP" );
+	    try {
+	       return new ActiveXObject( "Microsoft.XMLHTTP" );
+	    } catch( e ) {
+	       alert( "*** ERROR: Don't know how to create XMLHttpRequest" );
+	    }
 	 }
       }
    } else {
-      if( XMLHttpRequest != undefined ) {
+      if( "XMLHttpRequest" in window ) {
 	 hop_make_xml_http_request = function hop_make_xml_http_request() {
 	    return new XMLHttpRequest();
 	 }
@@ -150,32 +359,58 @@ if( window.XMLHttpRequest != undefined ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_is_http_json ...                                             */
+/*    hop_header_content_type ...                                      */
 /*---------------------------------------------------------------------*/
-var hop_is_http_json;
-var hop_is_http_json_autoconf = hop_make_xml_http_request();
+var hop_header_content_type;
+var hop_header_autoconf = hop_make_xml_http_request();
 
-if( (hop_is_http_json_autoconf.propertyIsEnumerable != undefined)
-    && hop_is_http_json_autoconf.propertyIsEnumerable( "getResponseHeader" )
-    && hop_is_http_json_autoconf.getResponseHeader != undefined ) {
-   hop_is_http_json = function hop_is_http_json( http ) {
-      return http.getResponseHeader( "hopjson" );
+if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
+   hop_header_content_type = function hop_header_content_type( http ) {
+      var h = http.getResponseHeader( "Content-Type" );
+
+      if( h ) {
+	 var i = h.indexOf( ";" );
+
+	 if( i >= 0 ) {
+	    return h.substring( 0, i );
+	 } else {
+	    return h;
+	 }
+      } else {
+	 return "application/text";
+      }
    }
 } else {
-   hop_is_http_json = function hop_is_http_json( http ) {
-      return (http.getAllResponseHeaders().indexOf( "hopjson" ) >= 0);
+   hop_header_content_type = function hop_header_content_type( http ) {
+      var hds = http.getAllResponseHeaders();
+      var i = hds.indexOf( "Content-Type" );
+
+      if( i < 0 ) i = hds.indexOf( "content-type" );
+      if( i < 0 ) i = hds.indexOf( "Content-type" );
+      if( i < 0 ) return "application/text";
+
+      var j = hds.indexOf( "\n", i + 1 );
+      var s = (j >= 0) ? hds.substring( i, j ) : hds.substring( i, s.length );
+      var m = s.match( "[ \t:]+([^ \n;]*)" );
+
+      if( m )
+	 return m[ 1 ];
+      else
+	 return "application/text";
    }
 }
 
 /*---------------------------------------------------------------------*/
 /*    node_style_set ...                                               */
 /*---------------------------------------------------------------------*/
-var node_style_set = undefined;
-
 function node_style_set_native( obj, prop, value ) {
+   if( (obj instanceof String) || (typeof obj === "string") )
+      obj = document.getElementById( obj );
+
    if( sc_isKeyword( prop ) )
-      prop = sc_keyword2string_mutable( prop );
-   if( !(value instanceof String) && (typeof value != "string") ) {
+      prop = sc_keyword2jsstring( prop );
+   
+   if( !(value instanceof String) && (typeof value !== "string") ) {
       if( !value && (value != 0) ) {
 	 throw new Error( "node-style-set: illegal \"" + prop + "\" value: "
 			  + value + " obj: " + obj );
@@ -183,14 +418,18 @@ function node_style_set_native( obj, prop, value ) {
 	 value = value.toString();
       }
    }
-   
+
    obj.style.setProperty( prop, value, "" );
 }
 
 function node_style_set_array( obj, prop, value ) {
+   if( (obj instanceof String) || (typeof obj === "string") )
+      obj = document.getElementById( obj );
+
    if( sc_isKeyword( prop ) )
-      prop = sc_keyword2string_mutable( prop );
-   if( !(value instanceof String) && (typeof value != "string") ) {
+      prop = sc_keyword2jsstring( prop );
+   
+   if( !(value instanceof String) && (typeof value !== "string") ) {
       if( !value && (value != 0) ) {
 	 throw new Error( "node-style-set: illegal \"" + prop + "\" value: "
 			  + value + " obj: " + obj );
@@ -202,8 +441,12 @@ function node_style_set_array( obj, prop, value ) {
    obj.style[ prop ] = value;
 }
 
-node_style_set = function( obj, property, value ) {
-   if( obj.style.setProperty != undefined ) {
+/*** META ((export node-style-set!)) */
+var node_style_set = function( obj, property, value ) {
+   if( (obj instanceof String) || (typeof obj === "string") )
+      obj = document.getElementById( obj );
+
+   if( "setProperty" in obj.style ) {
       node_style_set = node_style_set_native;
       return node_style_set_native( obj, property, value );
    } else {
@@ -219,18 +462,38 @@ node_style_set = function( obj, property, value ) {
 /*    ARM processors), use a reduced frequency.                        */
 /*---------------------------------------------------------------------*/
 var hop_active_location_timeout =
-   (navigator.platform.indexOf( "armv6" ) >= 0 ) ? 250 : 100;
+   ((hop_config.cpu_speed < 66) ? 100 : 250);
+
+/*---------------------------------------------------------------------*/
+/*    setInterval ...                                                  */
+/*---------------------------------------------------------------------*/
+var hop_has_setInterval = true;
+
+try {
+   var i = setInterval( function() { ; }, 1000 );
+   clearInterval( i );
+} catch( e ) {
+   var hop_has_setInterval = false;
+}
 
 /*---------------------------------------------------------------------*/
 /*    Event handlers                                                   */
 /*---------------------------------------------------------------------*/
 var hop_add_native_event_listener = undefined;
 var hop_remove_native_event_listener = undefined;
+/*** META ((export stop-event-propagation)) */
 var hop_stop_propagation = undefined;
+var hop_has_event20 = false;
 
-if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
+try {
+   hop_has_event20 = document.implementation.hasFeature( "Events" , "2.0" );
+} catch( e ) {
+   ;
+}
+
+if( hop_has_event20 ) {
    hop_add_native_event_listener = function( obj, event, proc, capture ) {
-      if( obj.addEventListener != undefined ) {
+      if( "addEventListener" in obj ) {
 	 return obj.addEventListener( event, proc, capture );
       } else {
 	 throw new Error( "add-event-listener!: cannot add `" 
@@ -240,7 +503,7 @@ if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
    }
 
    hop_remove_native_event_listener = function( obj, event, proc, capture ) {
-      if( obj.removeEventListener != undefined ) {
+      if( "removeEventListener" in obj ) {
 	 return obj.removeEventListener( event, proc, capture );
       } else {
 	 throw new Error( "remove-event-listener!: cannot remove `"
@@ -289,84 +552,6 @@ if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_mozillap ...                                                 */
-/*---------------------------------------------------------------------*/
-function hop_mozillap() {
-   return navigator.userAgent.indexOf( "Mozilla" ) >= 0;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_msiep ...                                                    */
-/*---------------------------------------------------------------------*/
-function hop_msiep() {
-   return navigator.userAgent.indexOf( "MSIE" ) >= 0;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_khtmlp ...                                                   */
-/*---------------------------------------------------------------------*/
-function hop_khtmlp() {
-   return navigator.userAgent.indexOf( "KHTML" ) >= 0;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_safarip ...                                                  */
-/*---------------------------------------------------------------------*/
-function hop_safarip() {
-   return navigator.userAgent.indexOf( "Safari" ) >= 0;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_webkitp ...                                                  */
-/*---------------------------------------------------------------------*/
-function hop_webkitp() {
-   return navigator.userAgent.indexOf( "WebKit" ) >= 0;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_operap ...                                                   */
-/*---------------------------------------------------------------------*/
-function hop_operap() {
-   return navigator.userAgent.indexOf( "Opera" ) >= 0;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_flash ...                                                    */
-/*---------------------------------------------------------------------*/
-var hop_flash = 0;
-
-/*---------------------------------------------------------------------*/
-/*    hop_flash_minversion_set ...                                     */
-/*---------------------------------------------------------------------*/
-function hop_flash_minversion_set( v ) {
-   if( v > hop_flash ) hop_flash = v;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_flash_version ...                                            */
-/*---------------------------------------------------------------------*/
-function hop_flash_version() {
-   if( hop_flash > 0 )
-      return hop_flash;
-   
-   if( navigator.mimeTypes
-       && navigator.mimeTypes[ "application/x-shockwave-flash" ] ) {
-      var p = navigator.mimeTypes[ "application/x-shockwave-flash" ].enabledPlugin;
-   
-      if( p && p.description ) {
-	 var d = p.description;
-
-	 if( (typeof d == "string") && (d.indexOf( "Shockwave Flash " ) == 0) ) {
-	    hop_flash = parseFloat( d.substring( 16, d.indexOf( " ", 16 ) ) );
-	    return hop_flash;
-	 }
-      }
-   }
-
-   return 0;
-}
-
-/*---------------------------------------------------------------------*/
 /*    hop_deinline_image ...                                           */
 /*    -------------------------------------------------------------    */
 /*    This function is invoked on inline images. It gives the          */
@@ -384,14 +569,22 @@ function hop_deinline_image( el, src ) {
 /*---------------------------------------------------------------------*/
 /*    mouse coords ...                                                 */
 /*---------------------------------------------------------------------*/
+/*** META ((export event-mouse-x)) */
 var hop_event_mouse_x = undefined;
+/*** META ((export event-mouse-y)) */
 var hop_event_mouse_y = undefined;
+/*** META ((export event-mouse-button)) */
 var hop_event_mouse_button = undefined;
+/*** META ((export event-key-code)) */
 var hop_event_key_code = undefined;
+/*** META ((export event-value)
+           (peephole: (postfix ".value"))) */
 function hop_event_value( evt ) { return evt.value; }
+/*** META ((export event-response-text)
+           (peephole: (postfix ".responseText"))) */
 function hop_event_response_text( evt ) { return evt.responseText; }
 
-if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
+if( hop_has_event20  ) {
    hop_event_mouse_x = function hop_event_mouse_x( event ) {
       return event.pageX;
    }
@@ -423,34 +616,43 @@ if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
    }
 }
 
-if( hop_msiep() || (hop_khtmlp() && !hop_safarip() && !hop_webkitp()) ) {
-   hop_event_mouse_button = function hop_event_mouse_button( e ) {
-      return e.button;
-   }
-} else {
-   hop_event_mouse_button = function hop_event_mouse_button( e ) {
-      return 1 + e.button;
-   }
+switch( hop_config.mouse_left_button ) {
+   case 0:
+      hop_event_mouse_button = function hop_event_mouse_button( e ) {
+	 return e.button + 1;
+      };
+      break;
+   case 1:
+      hop_event_mouse_button = function hop_event_mouse_button( e ) {
+	 return e.button;
+      }
+      break;
+   default:
+      hop_event_mouse_button = function hop_event_mouse_button( e ) {
+	 return e.button + (1 - hop_config.mouse_left_button);
+      }
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_window_width/height ...                                      */
+/*    hop_current_window_width/height ...                              */
 /*---------------------------------------------------------------------*/
-var hop_window_width = undefined;
-var hop_window_height = undefined;
+/*** META ((export current-window-width)) */
+var hop_current_window_width = undefined;
+/*** META ((export current-window-height)) */
+var hop_current_window_height = undefined;
 
 if( isNaN( window.innerWidth ) ) {
-   hop_window_width = function hop_window_width() {
+   hop_current_window_width = function hop_current_window_width() {
       return document.documentElement.clientWidth;
    }
-   hop_window_height = function hop_window_height() {
+   hop_current_window_height = function hop_current_window_height() {
       return document.documentElement.clientHeight;
    }
 } else {
-   hop_window_width = function hop_window_width() {
+   hop_current_window_width = function hop_current_window_width() {
       return window.innerWidth;
    }
-   hop_window_height = function hop_window_height() {
+   hop_current_window_height = function hop_current_window_height() {
       return window.innerHeight;
    }
 }
@@ -458,11 +660,12 @@ if( isNaN( window.innerWidth ) ) {
 /*---------------------------------------------------------------------*/
 /*    hop_iframe_scroll_height ...                                     */
 /*---------------------------------------------------------------------*/
+/*** META ((export iframe-scroll-height)) */
 function hop_iframe_scroll_height( e ) {
-   if( e.contentDocument != undefined ) {
+   if( "contentDocument" in e ) {
       return e.contentDocument.body.scrollHeight;
    } else {
-      if( e.document != undefined ) {
+      if( "document" in e ) {
 	 return e.document.body.scrollHeight;
       } else {
 	 return iframe.height;
@@ -473,11 +676,12 @@ function hop_iframe_scroll_height( e ) {
 /*---------------------------------------------------------------------*/
 /*    hop_iframe_scroll_width ...                                      */
 /*---------------------------------------------------------------------*/
+/*** META ((export iframe-scroll-width)) */
 function hop_iframe_scroll_width( e ) {
-   if( e.contentDocument != undefined ) {
+   if( "contentDocument" in e ) {
       return e.contentDocument.body.scrollWidth;
    } else {
-      if( e.document != undefined ) {
+      if( "document" in e ) {
 	 return e.document.body.scrollWidth;
       } else {
 	 return iframe.width;
@@ -488,6 +692,7 @@ function hop_iframe_scroll_width( e ) {
 /*---------------------------------------------------------------------*/
 /*    hop_get_selection                                                */
 /*---------------------------------------------------------------------*/
+/*** META ((export get-selection)) */
 var hop_get_selection;
 
 if( window.getSelection ) {

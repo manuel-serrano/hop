@@ -63,10 +63,7 @@
       this.loc/line)
 
    (define-pmethod (Lambda-loc)
-      (multi-traverse this (if this.vaarg
-			       (append this.formals (list this.vaarg
-							  this.body))
-			       (append this.formals (list this.body)))))
+      (multi-traverse this (append this.formals (list this.body))))
    
    (define-pmethod (If-loc)
       (multi-traverse this (list this.test this.then this.else)))

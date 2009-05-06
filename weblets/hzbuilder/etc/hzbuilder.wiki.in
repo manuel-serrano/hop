@@ -1,0 +1,226 @@
+<doc> HZBUILDER -- a wizard for building HZ packages
+
+== Description ==
+
+[[/hop/hzbuilder|HzBuilder]] is a simple tool that assist you in the
+process of creating a HZ package. ++HzBuilder++ will basically create
+the Makefile needed to generate a package and the standard files 
+that must be present in the package.
+
+
+,(<TABLE> :class "weblet-facts"
+  (<TR> (<TD> :rowspan 5 :class "logo"
+            (<TABLE>
+              (<TR>
+                (<TD> :style "text-align: center"
+                   (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png"))))
+             (<TR>
+                (<TD> :style "font-size: 90%; text-align: center"
+                   (<A> :href "@PUBLICHOST@/hop/weblets/homepage?weblet=@HZ@"
+                     "Home page")))))
+        (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
+  (<TR> (<TH> "Hop min version") (<TD> "@MINHOP@"))
+  (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
+  (<TR> (<TH> "Date") (<TD> "@DATE@"))
+  (<TR> (<TH> "Category") (<TD> "@CATEGORY@")))
+
+
+== Related documentations ==
+
+Several tutorials are related to [[/hop/hzbuilder|HzBuilder]]:
+
+  * ,(<TUTORIALREF> "hz tutorial" "06-hz.wiki")
+
+
+Serveral other Weblets are also related to [[/hop/hzbuilder|HzBuilder]]:
+
+  * ,(<WEBLETREF> "hz" (make-file-path (hop-weblets-directory) "hz" "etc" "hz.wiki")): the
+ documentation of the HOP Hz package manager.
+  * ,(<WEBLETREF> "weblets" (make-file-path (hop-weblets-directory) "hz" "etc" "weblets.wiki")): the
+ documentation of the Weblets weblet that let you manage your locals weblets.
+
+
+At least, some internal documentation pages may be helpful to understand
+how HOP weblets should be programmed:
+
+  * ,(<APIREF> "service" "service.wiki"): the definition of HOP services.
+  * ,(<APIREF> "hss" "hss.wiki"): HOP CSS facilities extensions.
+
+
+== Services ==
+
+Here are the services defined by this weblet:
+
+  - ++[[/hop/hzbuilder|hzbuilder]]++: 
+ The main entry point of Hzbuilder. 
+  - ++[[/hop/hzbuilder/documentation|hzbuilder/documentation]]++: 
+ This documentation page.
+  - ++[[/hop/hzbuilder/preferences|hzbuilder/preferences]]++: 
+ Various HzBuilder user configuration.
+
+
+=== HzBuilder skeletons ===
+
+HzBuilder creates all the files needed for an operational weblet. These
+files are created from //skeletons// that are installed in the created
+directory. Installing these files copy the skeletons and replace
+some patterns with the actual parameters of the weblet. Here is the
+list of the replacaments that take place during the installation.
+
+  * ++@,(begin "HZ")@++, the name of weblet.
+  * ++@,(begin "HZUPCASE")@++, the upcase name of the weblet.
+  * ++@,(begin "TITLE")@++, the weblets' title.
+  * ++@,(begin "VERSION")@++, the version.
+  * ++@,(begin "MINHOP")@++, the minimum Hop version supporting this weblet.
+  * ++@,(begin "MAXHOP")@++ ,the maximum Hop version supporting this weblet.
+  * ++@,(begin "HOME")@++, the weblet homepage.
+  * ++@,(begin "CATEGORY")@++, the category.
+  * ++@,(begin "AUTHOR")@++, the authors.
+  * ++@,(begin "DASHBOARD")@++ , does this weblet provides a dashboard entry.
+  * ++@,(begin "DESCRIPTION")@++, a description of the weblet.
+  * ++@,(begin "DATE")@++, the creation date. 
+  * ++@,(begin "DATEYEAR")@++, the year of creation.
+  * ++@,(begin "DATEMONTH")@++, the month of creation.
+  * ++@,(begin "DATEAMONTH")@++, the name of the creation month.
+  * ++@,(begin "DATEDAY")@++ , the day of the creation.
+  * ++@,(begin "REPOSITORY")@++, the directory where this weblet is to be installed.
+
+
+=== HzBuilder server functions ===
+
+==== ++hzbuilder-rc-directory++ ====
+<parameter> hzbuilder-rc-directory
+
+<arguments>
+^  access  ^   type    ^  current value      ^  short description            ^
+|   r      |  string     |  ++(hzbuilder-rc-directory)++  | The RC directory associated with Hzbuilder.      |
+</arguments>
+
+This parameter specifies the directory name used to store Hzbuilder RC files.
+When Hzbuilder starts it checks if the file 
+++(hzbuilder-rc-directory)/hzbuilderrc.hop++ exists. It it exists, it is loaded.
+
+</parameter>
+
+==== ++hzbuilder-hop-skeleton++ ====
+<parameter> hzbuilder-hop-skeleton
+<parameter> hzbuilder-hop-skeleton-set!
+
+<arguments>
+^  access  ^   type    ^  current value      ^  short description            ^
+|   r/w      |  string     |  ++(hzbuilder-hop-skeleton)++  | The main skeleton.      |
+</arguments>
+
+This parameter specifies the path of the file used as a skeleton for producing
+the main ++.hop++ file of the weblet.
+
+</parameter>
+</parameter>
+
+==== ++hzbuilder-config-skeleton++ ====
+<parameter> hzbuilder-config-skeleton
+<parameter> hzbuilder-config-skeleton-set!
+
+<arguments>
+^  access  ^   type    ^  current value      ^  short description            ^
+|   r/w      |  string     |  ++(hzbuilder-config-skeleton)++  | The config.hop skeleton.      |
+</arguments>
+
+This parameter specifies the path of the file used as a skeleton for producing
+the ++config.hop++ file of the weblet.
+
+</parameter>
+</parameter>
+
+==== ++hzbuilder-hss-skeleton++ ====
+<parameter> hzbuilder-hss-skeleton
+<parameter> hzbuilder-hss-skeleton-set!
+
+<arguments>
+^  access  ^   type    ^  current value      ^  short description            ^
+|   r/w      |  string     |  ++(hzbuilder-hss-skeleton)++  | The .hss skeleton.      |
+</arguments>
+
+This parameter specifies the path of the file used as a skeleton for producing
+the ++.hss++ file of the weblet.
+
+</parameter>
+</parameter>
+
+==== ++hzbuilder-makefile-skeleton++ ====
+<parameter> hzbuilder-makefile-skeleton
+<parameter> hzbuilder-makefile-skeleton-set!
+
+<arguments>
+^  access  ^   type    ^  current value      ^  short description            ^
+|   r/w      |  string     |  ++(hzbuilder-makefile-skeleton)++  | The Makefile skeleton.      |
+</arguments>
+
+This parameter specifies the path of the file used as a skeleton for producing
+the Makefile of the weblet.
+
+</parameter>
+</parameter>
+
+==== ++hzbuilder-doc-skeleton++ ====
+<parameter> hzbuilder-doc-skeleton
+<parameter> hzbuilder-doc-skeleton-set!
+
+<arguments>
+^  access  ^   type    ^  current value      ^  short description            ^
+|   r/w      |  string     |  ++(hzbuilder-doc-skeleton)++  | The .wiki skeleton.      |
+</arguments>
+
+This parameter specifies the path of the file used as a skeleton for producing
+the wiki manual page of the weblet.
+
+</parameter>
+</parameter>
+
+==== ++hzbuilder-homepage-skeleton++ ====
+<parameter> hzbuilder-homepage-skeleton
+<parameter> hzbuilder-homepage-skeleton-set!
+
+<arguments>
+^  access  ^   type    ^  current value      ^  short description            ^
+|   r/w      |  string     |  ++(hzbuilder-homepage-skeleton)++  | The .wiki skeleton.      |
+</arguments>
+
+This parameter specifies the path of the file used as a skeleton for producing
+the wiki homepage of the weblet.
+
+</parameter>
+</parameter>
+
+==== ++hzbuilder-webletinfo-skeleton++ ====
+<parameter> hzbuilder-webletinfo-skeleton
+<parameter> hzbuilder-webletinfo-skeleton-set!
+
+<arguments>
+^  access  ^   type    ^  current value      ^  short description            ^
+|   r/w      |  string     |  ++(hzbuilder-webletinfo-skeleton)++  | The weblet.info skeleton.      |
+</arguments>
+
+This parameter specifies the path of the file used as a skeleton for producing
+the ++weblet.info++ file of the weblet.
+
+</parameter>
+</parameter>
+
+==== ++hzbuilder-custom-skeleton-dir++ ====
+<parameter> hzbuilder-custom-skeleton-dir
+<parameter> hzbuilder-custom-skeleton-dir-set!
+
+<arguments>
+^  access  ^   type    ^  current value      ^  short description            ^
+|   r/w      |  string     |  ++(hzbuilder-custom-skeleton-dir)++  | An optional additional skeletons directory.      |
+</arguments>
+
+This parameter specifies the path of an optional directory containing
+skeleton files. When a weblet is built with ++HzBuilder++ all the files
+located in the ++hzbuilder-custom-skeleton-dir++ are copied into 
+the weblet directory.
+
+</parameter>
+</parameter>
+

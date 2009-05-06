@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/home/wiki.hop                   */
+;*    serrano/prgm/project/hop/1.9.x/weblets/home/wiki.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon May 15 06:46:38 2006                          */
-;*    Last change :  Wed Oct 10 05:43:55 2007 (serrano)                */
+;*    Last change :  Tue Dec 18 09:38:25 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME wiki manager                                            */
@@ -24,9 +24,8 @@
 ;*    wiki-cache ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define wiki-cache
-   (instantiate::cache
-      (path (make-file-path (hop-rc-directory)
-			    "cache"
+   (instantiate::cache-disk
+      (path (make-file-path (hop-cache-directory)
 			    (string-append "home-"
 					   (integer->string (hop-port)))))
       (out (lambda (o p)

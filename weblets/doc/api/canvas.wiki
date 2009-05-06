@@ -2,7 +2,7 @@
 
 == Description ==
 
-HOP supports //client-side canvases//. A Canvas is a drawing area that can
+HOP supports //client-side canvas//. A Canvas is a drawing area that can
 be included in HTML pages. Canvas are supported on many Web browsers, in
 particular Safari and Firefox. 
 

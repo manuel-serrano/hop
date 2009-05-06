@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/doc/doc.scm                     */
+;*    serrano/prgm/project/hop/1.11.x/weblets/doc/doc.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 22 08:00:34 2007                          */
-;*    Last change :  Mon Oct 29 14:51:49 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Sun Feb  8 07:14:49 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Doc weblet library                                               */
 ;*=====================================================================*/
@@ -17,7 +17,7 @@
    (with-hop (api-history-service entry)
       (lambda (r)
 	 (let ((el (dom-get-element-by-id document id)))
-	    (set! el.innerHTML r)))))
+	    (innerHTML-set! el r)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblet-history-handler ...                                       */
@@ -27,7 +27,7 @@
    (with-hop (weblet-history-service entry)
       (lambda (r)
 	 (let ((el (dom-get-element-by-id document id)))
-	    (set! el.innerHTML r)))))
+	    (innerHTML-set! el r)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tutorial-history-handler ...                                     */
@@ -37,7 +37,7 @@
    (with-hop (tutorial-history-service entry)
       (lambda (r)
 	 (let ((el (dom-get-element-by-id document id)))
-	    (set! el.innerHTML r)))))
+	    (innerHTML-set! el r)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    history managers                                                 */
@@ -79,7 +79,7 @@
    (history-add! api-history el.id entry)
    (with-hop (svc entry)
       (lambda (r)
-	 (set! el.innerHTML r)
+	 (innerHTML-set! el r)
 	 (when (and node-id (not (eq? node-id #unspecified)))
 	    (let ((eo (dom-get-element-by-id document node-id)))
 	       (when (and eo (not (null? eo)))
@@ -90,3 +90,29 @@
 			    (ob (if (eq? bd #unspecified) bd bd.background))
 			    (fad (make-fade-vector ob)))
 			(hop-fx-fade-background p 500 40 fad)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    select-api-pad ...                                               */
+;*---------------------------------------------------------------------*/
+(define (select-api-pad api k pad)
+   (let ((el (document.getElementById (string-append "pad-" pad))))
+       (with-history
+	  (lambda ()
+	     (notepad-select "doc-notepad" (string-append "doc-" pad))
+	     (select-api-doc doc/api api el k)))))
+
+;*---------------------------------------------------------------------*/
+;*    tutorialref ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (tutorialref id path)
+   (with-history
+    (lambda ()
+       (history-add! tutorial-history id path)
+       (with-hop (doc/tutorial path)
+	  (lambda (h)
+	     (let ((el (dom-get-element-by-id document id)))
+		(innerHTML-set! el h)
+		(notepad-select "doc-notepad" "doc-tutorials")
+		(window.scrollTo 0 0)))))))
+
+

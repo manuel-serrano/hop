@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/doc/search.hop                  */
+;*    serrano/prgm/project/hop/1.11.x/weblets/doc/search.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Fri Oct 26 17:53:09 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Sun Feb  8 09:22:40 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
 ;*=====================================================================*/
@@ -19,7 +19,8 @@
 	   hopdoc_wiki
 	   hopdoc_services
 	   hopdoc_api
-	   hopdoc_weblets)
+	   hopdoc_weblets
+	   hopdoc_tutorials)
 
    (export (<SEARCH>)
 	   (make-doc-tables offset . markups)
@@ -58,39 +59,45 @@
 ;*    global-search ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-service (global-search value)
-   (let ((table (kmp-table value)))
-      (<TABLE> :class "global-search"
-	 (apply append
-		(grep table (doc-api-dir)
-		      (lambda (file line)
-			 (<TR>
-			    (<TH> (basename file))
-			    (<TD> (<APIREF> (wiki-string->hop line)
-					    (basename file))))))
-		(grep table (doc-weblets-dir)
-		      (lambda (file line)
-			 (<TR>
-			    (<TH> (basename file))
-			    (<TD> (<WEBLETREF> (wiki-string->hop line)
-					       (basename file))))))
-		(grep table (doc-wiki-dir)
-		      (lambda (file line)
-			 (<TR>
-			    (<TH> (basename file))
-			    (<TD> (<WIKIREF> (wiki-string->hop line))))))
-		(grep table (doc-core-dir)
-		      (lambda (file line)
-			 (<TR>
-			    (<TH> (basename file))
-			    (<TD> :onclick
-			       ~(notepad-select "doc-notepad" "doc-core")
-			       (wiki-string->hop line)))))
-		(grep table (doc-wiki-dir)
-		      (lambda (file line)
-			 (<TR>
-			    (<TH> (basename file))
-			    (<TD> (<TUTORIALREF> (wiki-string->hop line)
-						 (basename file))))))))))
+   (let ((table (kmp-table value))
+	 (mo (eval-module))
+	 (mn (eval-find-module 'hopdoc_search)))
+      (unwind-protect
+	 (begin
+	    (when mn (eval-module-set! mn))
+	    (<TABLE> :class "global-search"
+	       (apply append
+		      (grep table (doc-api-dir)
+			    (lambda (file line)
+			       (<TR>
+				  (<TH> (basename file))
+				  (<TD> (<APIREF> (wiki-string->hop line)
+						  (basename file))))))
+		      (grep table (doc-weblets-dir)
+			    (lambda (file line)
+			       (<TR>
+				  (<TH> (basename file))
+				  (<TD> (<WEBLETREF> (wiki-string->hop line)
+						     (basename file))))))
+		      (grep table (doc-wiki-dir)
+			    (lambda (file line)
+			       (<TR>
+				  (<TH> (basename file))
+				  (<TD> (<WIKIREF> (wiki-string->hop line))))))
+		      (grep table (doc-core-dir)
+			    (lambda (file line)
+			       (<TR>
+				  (<TH> (basename file))
+				  (<TD> :onclick
+				     ~(notepad-select "doc-notepad" "doc-core")
+				     (wiki-string->hop line)))))
+		      (grep table (doc-wiki-dir)
+			    (lambda (file line)
+			       (<TR>
+				  (<TH> (basename file))
+				  (<TD> (<TUTORIALREF> (wiki-string->hop line)
+						       (basename file)))))))))
+	 (eval-module-set! mo))))
 
 ;*---------------------------------------------------------------------*/
 ;*    grep ...                                                         */
@@ -98,7 +105,7 @@
 (define (grep table dir proc)
    (filter-map (lambda (f)
 		  (unless (directory? f)
-		     (let* ((mm (open-mmap f read: #t))
+		     (let* ((mm (open-mmap f read: #t write: #f))
 			    (ls (mmap-length mm)))
 			(let loop ((o #e0)
 				   (r '()))
@@ -423,6 +430,14 @@
 ;*    search-weblets-inner ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (search-weblets-inner)
+   
+   (define (<webletref> l path)
+      (let* ((d (dirname path))
+	     (favicon (make-file-name d "favicon.png")))
+	 (if (file-exists? favicon)
+	     (list (<IMG> :src favicon :inline #t) " " (<WEBLETREF> l path))
+	     (<WEBLETREF> l path))))
+   
    (filter-map (let* ((key "<doc> ")
 		      (t (kmp-table key))
 		      (l (fixnum->elong (string-length key))))
@@ -435,7 +450,7 @@
 				 (let ((r (kmp-mmap t mm #e0)))
 				    (and (>=elong r #e0)
 					 (let ((l (mmap-line mm (+elong r l))))
-					    (cons l (<WEBLETREF> l path)))))
+					    (cons l (<webletref> l path)))))
 				 (close-mmap mm)))))))
 	       (delete-duplicates!
 		(append-map search-weblets-documentation

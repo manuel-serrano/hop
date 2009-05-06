@@ -1,0 +1,16 @@
+;; An example of dynamic authentication using the login panel
+(<HTML>
+   (<HEAD> :include "hop-login")
+   (let ((l (<TD> "nobody"))
+	 (p (<TD> "nothing")))
+      (<BODY>
+	 ~(define (onlogin e)
+	     (innerHTML-set! $l e.user)
+	     (innerHTML-set! $p e.password))
+	 (<TABLE> :border 1
+	    (<TR> (<TH> "login: ") l)
+	    (<TR> (<TH> "password: ") p))
+	 (<BUTTON> :onclick ~(login-panel :message
+				(<DIV> "Enter an name and password")
+				:onlogin onlogin)
+	    "login"))))

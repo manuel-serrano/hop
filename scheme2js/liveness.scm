@@ -1,12 +1,9 @@
 (module liveness
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
+   (import nodes
+	   walk
 	   captured-vars
-	   nodes
 	   verbose)
-   (export (liveness tree::pobject)))
+   (export (liveness tree::Module)))
 
 ;; very simple liveness analysis:
 ;; every node represents a nesting-level.
@@ -39,7 +36,7 @@
    (this.traverse1 (cons this nesting)))
 
 (define-pmethod (Lambda-liveness nesting)
-   (hashtable-for-each this.free-vars
+   (hashtable-for-each this.free-vars-ht
 		       (lambda (var ignored)
 			  (delete! var.live-begin-stack)
 			  (delete! var.live-end-stack)
@@ -55,9 +52,9 @@
 	  (live-begin-stack var.live-begin-stack)
 	  (live-end-stack var.live-end-stack))
       (cond
-	 (var.captured?
+	 (var.extern?
 	  'do-nothing)
-	 (var.imported?
+	 (var.captured?
 	  'do-nothing)
 	 (var.free?
 	  'do-nothing)
@@ -81,7 +78,7 @@
 			(s-end shorted-this))
 		(cond
 		   ((null? s-begin)
-		    (error #f "Must not happen: liveness" '()))
+		    (error 'liveness "Internal error: liveness" '()))
 		   ((eq? (cdr s-begin) (cdr s-end))
 		    ;; this even works for 'if/then/else'
 		    ;; although it isn't optimal.
@@ -107,7 +104,7 @@
    (let ((var this.var))
       (if var.live-begin
 	  (error "Decl-rev-liveness"
-		 "Recursive nodes or 2 Decls for one var: "
+		 "Internal error. Recursive nodes or 2 Decls for one var: "
 		 var.id))
       (if var.live-begin-stack
 	  (let* ((begin-node (car var.live-begin-stack))

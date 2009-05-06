@@ -11,12 +11,23 @@ to display partial documents.
 
 === Client ===
 
+  (tab-open arg ...)
   (window-open arg ...)
-  (window-close win)
+  (window-close [win])
   (window-raise win)
   (window-resize win width height)
   (window-iconify win)
   (window-maximize win)
+  (window-x win)
+  (window-x-set! win int)
+  (window-y win)
+  (window-y-set! win int)
+  (window-width win)
+  (window-width-set! win int)
+  (window-height win)
+  (window-height-set! win int)
+  (window-title win)
+  (window-title-set! win title)
 
 === Requirements ===
 
@@ -31,10 +42,20 @@ must include in their header, the following statement:
 
 == Examples ==
 
-<example>window</example>
+<example>window, tab</example>
 
 == Client Definitions ==
 <client>
+
+=== ++(tab-open src)++ ===
+<procedure> tab-open
+<arguments>
+^  arguments  ^   type    ^   description                                   ^
+| :src         |   obj     | the content material.                          |
+</arguments>
+
+This function creates a new browser tab.
+</procedure>
 
 === ++(window-open :id :src :parent :title :class ...)++ ===
 <procedure> window-open
@@ -50,7 +71,7 @@ must include in their header, the following statement:
 | :height     |  integer  | the optional height.                            |
 | :left       |  integer  | the optional X coordinate.                      |
 | :top        |  integer  | the optional Y coordinate.                      |
-| :background |  color    | an optional background color.                   |
+| :background  |  color    | an optional background color.                   |
 | :toolbar    |  bool     | shows a toolbar.                                |
 | :scrollbars  |  bool     | shows scrollbars.                              |
 | :status     |  bool     | shows a status bar.                             |
@@ -58,6 +79,7 @@ must include in their header, the following statement:
 | :resizable  |  bool     | enables resize.                                 |
 | :titlebar   |  bool     | shows a title bar.                              |
 | :location   |  bool     | shows location information.                     |
+| :clip       |  bool     | clip inner windows.                             |
 | :prop       |  string   | a window property.                              |
 </arguments>
 
@@ -87,6 +109,18 @@ behaviors:
   * ++resizable++: a boolean that controls whether a window can be resized
  using GUI events.
 
+The inner windows react to the following events:
+
+    * ++iconify++: an event raised when an inner window is about to be iconified.
+    * ++maximize++: an event raised when an inner window is about to be maximized.
+    * ++close++: an event raised when an inner window is about to be closed.
+    * ++raise++: an event raised when an inner window is about to be raised.
+    * ++resize++: an event raised when an inner window has been resized.
+    * ++drag++: an event raised when an inner window has been dragged.
+
+If the listener associated to ++iconify++, ++maximize++, ++close++,
+and ++raise++ prevent propagation, the default action is not executed.
+
 
 ==== Native Windows ====
 
@@ -101,12 +135,12 @@ that is the string value argument following the ++:prop++ keyword is append,
 
 </procedure>
 
-=== ++(window-close obj)++ ===
+=== ++(window-close [obj])++ ===
 <procedure> window-close
 
 <arguments>
 ^  arguments  ^   type    ^   description                                   ^
-| obj         |   obj     | A window identifier or a window itself.         |
+| obj         |   obj     | A window identifier or a window.                |
 </arguments>
 
 ~~
@@ -115,12 +149,12 @@ This client-side procedure closes a //window//.
 </procedure>
 <client>
 
-=== ++(window-raise obj)++ ===
+=== ++(window-raise [obj])++ ===
 <procedure> window-raise
 
 <arguments>
 ^  arguments  ^   type    ^   description                                   ^
-| obj         |   obj     | A window identifier or a window itself.         |
+| obj         |   obj     | A window identifier or a window.                |
 </arguments>
 
 ~~
@@ -129,12 +163,12 @@ This client-side procedure raises a //window//.
 </procedure>
 <client>
 
-=== ++(window-iconify obj)++ ===
+=== ++(window-iconify [obj])++ ===
 <procedure> window-iconify
 
 <arguments>
 ^  arguments  ^   type    ^   description                                   ^
-| obj         |   obj     | A window identifier or a window itself.         |
+| obj         |   obj     | A window identifier or a window.                |
 </arguments>
 
 ~~
@@ -148,7 +182,7 @@ This client-side procedure iconifies a //window//.
 
 <arguments>
 ^  arguments  ^   type      ^   description                              ^
-| obj         |   obj       | A window identifier or a window itself.    |
+| obj         |   obj       | A window identifier or a window.           |
 | width       |  dimension  | new window width.                          |
 | height      |  dimension  | new window height.                         |
 </arguments>
@@ -159,17 +193,65 @@ This client-side procedure resizes a //window//.
 </procedure>
 <client>
 
-=== ++(window-maximize obj)++ ===
+=== ++(window-maximize [obj])++ ===
 <procedure> window-maximize
 
 <arguments>
 ^  arguments  ^   type    ^   description                                   ^
-| obj         |   obj     | A window identifier or a window itself.         |
+| obj         |   obj     | A window identifier or a window.                |
 </arguments>
 
 ~~
 This client-side procedure maximizes a //window//.
 
+</procedure>
+<client>
+
+=== ++(window-x win)++ ===
+=== ++(window-x-set! win x)++ ===
+=== ++(window-y win)++ ===
+=== ++(window-y-set! win y)++ ===
+=== ++(window-width win)++ ===
+=== ++(window-width-set! win width)++ ===
+=== ++(window-height win)++ ===
+=== ++(window-height-set! win height)++ ===
+<procedure> window-x
+<procedure> window-x-set!
+<procedure> window-y
+<procedure> window-y-set!
+<procedure> window-width
+<procedure> window-width-set!
+<procedure> window-height
+<procedure> window-height-set!
+<arguments>
+^  arguments  ^   type    ^   description                                   ^
+| win         |   obj     | A window identifier or a window.                |
+</arguments>
+
+The arguments ++x++, ++y++, ++width++, and ++height++ are dimensions.
+</procedure>
+</procedure>
+</procedure>
+</procedure>
+</procedure>
+</procedure>
+</procedure>
+</procedure>
+
+=== ++(window-title win)++ ===
+=== ++(window-title-set! win title)++ ===
+<procedure> window-title
+<procedure> window-title-set!
+
+<arguments>
+^  arguments  ^   type    ^   description                                   ^
+| win         |   obj     | A window identifier or a window.                |
+</arguments>
+
+~~
+This client-side gets (respec. sets) the //window// title.
+
+</procedure>
 </procedure>
 <client>
 

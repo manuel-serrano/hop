@@ -1,0 +1,28 @@
+<doc> TEST -- A test suite for client-side execution
+
+== Description ==
+
+[[test|TEST]] allows easy testing of HOP's facilities supported by the
+client-side browser.
+
+~~
+,(<TABLE> :class "weblet-facts"
+  (<TR> (<TD> :rowspan 5 :class "logo"
+            (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png")))
+        (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
+  (<TR> (<TH> "Hop min version") (<TD> "@MINHOP@"))
+  (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
+  (<TR> (<TH> "Date") (<TD> "@DATE@"))
+  (<TR> (<TH> "Category") (<TD> "@CATEGORY@")))
+
+
+== Services ==
+
+TEST defines one service:
+
+  - ++[[test]]++: This is the main entry point of the 
+ TEST weblet.
+
+
+</doc>
+

@@ -1,11 +1,11 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/configure                               */
+#*    serrano/prgm/project/hop/2.0.x/configure                         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Nov  8 08:27:47 2007 (serrano)                */
-#*    Copyright   :  2004-07 Manuel Serrano                            */
+#*    Last change :  Tue May  5 17:18:36 2009 (serrano)                */
+#*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -25,27 +25,39 @@ flashcc=mtasc
 fflags="-main -version 9 -cp std8 -swf"
 backend=native
 unzip=unzip
+gzip="gzip -9"
+install="install -m a+r,u+r"
 jar="jar cfm"
 
 debug=no
 
-bcflags="-fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
+bcflags="-O2 -fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
 
+bcflagsdev=""
 bcflagsdbg="-copt -g"
 bcflagsdbg2="-g -O2 -cg"
-bcflagsbmem="-g2 -O2"
+bcflagspmem="-pmem -O2 -fno-user-inlining"
+bcflagspmem2="-pmem2 -O2 -fno-user-inlining"
 bcflagsopt="-unsafe -O3"
+bcflagsprofile="-O3 -pg -L \$(BUILDLIBDIR)"
+
+bcflagsrts="-unsafe -safee"
+bscm2jsflags="-unsafe"
 
 blflags="-copt \$(CPICFLAGS) -L \$(BUILDLIBDIR)"
 
 mimetypes=/etc/mime.types
 jsmimetype="text/javascript"
+cssmimetype="text/css"
 
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="1.8.0"
-devel=rc
+version="2.0.0"
+devel=pre
+
+branch="`echo $version | sed 's/[0-9][0-9]*$/x/'`"
+date=`date +"%d %B %Y"`
 
 url="http://hop.inria.fr/"
 
@@ -53,6 +65,7 @@ etcdir=$prefix/etc
 bindir=$prefix/bin
 libdir=$prefix/lib
 sharedir=$prefix/share/hop
+mandir=$prefix/man/man1
 webletsdir=
 contribsdir=$prefix/share/hop/contribs
 buildlibdir=$PWD/lib
@@ -60,14 +73,12 @@ buildsharedir=$PWD/share
 distribdir=$HOME/prgm/distrib
 buildbindir=$PWD/bin
 
-repository=$HOME/prgm/project/hop/devel/repository
-
-bigloorequired=3.0c
+bigloorequired=3.2b
 bigloourl=http://www.inria.fr/mimosa/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop
 
-if [ $USER = "serrano" ]; then
+if [ "$USER " = "serrano " ]; then
   distribdir=$HOME/prgm/distrib
 else
   distribdir=.
@@ -78,7 +89,19 @@ ssl="no"
 locevent="true"
 threads=""
 
+hopsrfis=""
+
+rts="hop-dom.js hop-event.js hop-serialize.js base64.js hop-request.js hop-lib.js hop-history.js hopscheme.js"
+
+hopservicebase="/hop"
 hopjs='"hop.js"'
+hopjsfiles='"hop-autoconf.js" "runtime.js"'
+ 
+for p in $rts; do
+  hopjsfiles="$hopjsfiles \"$p\""; 
+done
+
+arch=noarch
 
 # Argument parsing
 while : ; do
@@ -91,6 +114,7 @@ while : ; do
       bindir=$prefix/bin;
       libdir=$prefix/lib;
       sharedir=$prefix/share/hop;
+      mandir=$prefix/man/man1;
       etcdir=$prefix/etc;
       contribsdir=$prefix/share/hop/contribs;;
 
@@ -106,6 +130,9 @@ while : ; do
     --sharedir=*)
       sharedir="`echo $1 | sed 's/^[^=]*=//'`";;
 
+    --mandir=*)
+      mandir="`echo $1 | sed 's/^[^=]*=//'`";;
+
     --webletsdir=*)
       webletsdir="`echo $1 | sed 's/^[^=]*=//'`";;
 
@@ -120,6 +147,9 @@ while : ; do
 
     --jsmimetype=*)
       jsmimetype="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --cssmimetype=*)
+      cssmimetype="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --bigloo=*)
       bigloo="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -145,6 +175,9 @@ while : ; do
     --bcflags=*)
       bcflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
+    --extra-bcflags=*)
+      bcflags="$bcflags $(echo $1 | sed 's/^[-a-z]*=//')";;
+
     --blflags=*)
       blflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
@@ -154,28 +187,53 @@ while : ; do
     --brflags=*)
       brflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
+    --bcflagsdev=*)
+      bcflagsdev="`echo $1 | sed 's/^[-a-z]*=//'`";;
+
     --ccflags=*)
       ccflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
+    --devel)
+      bcflagsrts=;
+      bcflagsdev=-cg;
+      bscm2jsflags=;;
+
     --debug)
       debug=yes;
+      bcflagsrts=;
+      bscm2jsflags=;
       bcflags="$bcflags $bcflagsdbg";;
 
     --debug2)
       debug=yes;
+      bcflagsrts=;
+      bscm2jsflags=;
       bcflags="$bcflags $bcflagsdbg2";;
 
-    --bmem)
-      bcflags="$bcflags $bcflagsbmem";;
+    --pmem)
+      bcflags="$bcflags $bcflagspmem";;
+
+    --pmem2)
+      bcflags="$bcflags $bcflagspmem2";;
 
     --optimize)
       bcflags="$bcflags $bcflagsopt";;
+
+    --profile)
+      bscm2jsflags=;
+      bcflags="$bcflagsprofile";;
 
     --enable-ssl)
       ssl=yes;;
 
     --disable-ssl)
       ssl=no;;
+
+    --gzip=*)
+      gzip="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --install=*)
+      install="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --enable-locevent)
       locevent=true;;
@@ -189,6 +247,12 @@ while : ; do
     --disable-threads)
       threads=no;;
 
+    --srfi=*)
+      hopsrfis="$hopsrfis `echo $1 | sed 's/^[^=]*=//'`";;
+
+    --macosx-bundle|--macosx)
+      arch=macosx;;
+
     -*)
       echo "*** Configure error, unknown option $1" >&2;
       echo >&2;
@@ -198,24 +262,31 @@ while : ; do
       echo "   --bindir=dir.......... alternative Hop bin directory" >&2;
       echo "   --libdir=dir.......... alternative Hop lib directory" >&2;
       echo "   --sharedir=dir........ alternative Hop share directory" >&2;
+      echo "   --mandir=dir.......... alternative Hop man directory" >&2;
       echo "   --webletsdir=dir...... alternative Hop weblets directory" >&2;
       echo "   --contribsdir=dir..... alternative Hop contribs directory" >&2;
       echo "   --mimetypes=file...... default mime.types file" >&2;
       echo "   --jsmimetype=type..... default 'text/javascript'" >&2;
-      echo "   --bigloo=comp......... The Bigloo compiler" >&2;
+      echo "   --cssmimetype=type.... default 'text/css'" >&2;
+      echo "   --bigloo=comp......... The Bigloo compiler ($bigloo)" >&2;
       echo "   --backend=backend..... The execution platform [native,jvm,dotnet]" >&2;
       echo "   --cigloo=comp......... The Cigloo compiler" >&2;
       echo "   --afile=afile......... The Bigloo afile tool" >&2;
       echo "   --btags=btags......... The Bigloo btags tool" >&2;
       echo "   --bdepend=bdepend..... The Bigloo dependence tool" >&2;
-      echo "   --ccs=cc.............. The C compiler" >&2;
+      echo "   --gzip................ The GNU zipper ($gzip)" >&2;
+      echo "   --install............. The installer ($install)" >&2;
+      echo "   --cc=cc............... The C compiler" >&2;
       echo "   --bcflags=args........ The compilation options" >&2;
+      echo "   --bcflagsdev=args..... The devel Bigloo options" >&2;
       echo "   --blflags=args........ The link options" >&2;
       echo "   --bhflags=args........ The heap options" >&2;
       echo "   --brflags=args........ The heap options" >&2;
       echo "   --ccflags=args........ The heap options" >&2;
+      echo "   --devel............... Enables devel mode (safe but not debug)" >&2;
       echo "   --debug[2]............ Enables Bigloo debug mode" >&2;
-      echo "   --bmem................ Enables Bigloo bmem mode" >&2;
+      echo "   --pmem[2]............. Enables memory profiling mode" >&2;
+      echo "   --profile............. Enables Bigloo profiling mode" >&2;
       echo "   --optimize............ Enables Bigloo optimization mode (default)" >&2;
       echo "   --enable-ssl.......... Enables SSL support" >&2;
       echo "   --disable-ssl......... Disables SSL support (default)" >&2;
@@ -223,6 +294,8 @@ while : ; do
       echo "   --disable-locevent.... Disables location event support" >&2;
       echo "   --enable-threads...... Enables multi-threading support (default)" >&2;
       echo "   --disable-threads..... Disables multi-threading support" >&2;
+      echo "   --srfi=sym............ Activate this srfi (during compilation and runtime)" >&2;
+      echo "   --macosx.............. Prepare the production of a MacOSX bundle" >&2;
       exit -1;
   esac
   shift
@@ -288,7 +361,7 @@ if [ "$ssl " = " " ]; then
 fi
 
 if [ "$ssl" = "yes" ]; then
-  bcflags="$bcflags -srfi enable-ssl"
+  hopsrfis="$hopsrfis enable-ssl"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -312,7 +385,7 @@ if [ "$threads" = "yes" ]; then
     echo "or re-configure and re-install your Bigloo compiler."
     exit 1;
   fi
-  bcflags="$bcflags -srfi enable-threads"
+  hopsrfis="$hopsrfis enable-threads"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -340,7 +413,7 @@ case $backend in
   "jvm")
      etcdir=/resource/etc
      libdir=/resource/lib
-     webletsdir=/resource/share/weblets
+     webletsdir=/resource/lib/weblets
      contribsdir=/resource/share/contribs
      sharedir=/resource/share
      break;;
@@ -356,7 +429,7 @@ esac
 #*    Weblets dir                                                      */
 #*---------------------------------------------------------------------*/
 if [ "$webletsdir " = " " ]; then
-  webletsdir=$sharedir/weblets;
+  webletsdir=$libdir/hop/$version/weblets;
 fi
 
 #*---------------------------------------------------------------------*/
@@ -390,7 +463,7 @@ for p in scheme2js hopscheme hop; do
 done
 
 # Bigloo libraries
-for p in web multimedia sqlite ssl calendar; do
+for p in web multimedia sqlite ssl calendar mail; do
   elib="$bigloolibdir/bigloo$p"_e-$bglversion.zip;
   slib="$bigloolibdir/bigloo$p"_s-$bglversion.zip;
   jvmziplibs="$elib $slib $jvmziplibs";
@@ -406,6 +479,13 @@ jvminits="$bigloolibdir/pthread.init $jvminits";
 slib="$bigloolibdir/bigloo_s.zip";
 jvmziplibs="$slib $jvmziplibs";
 jvminits="$bigloolibdir/pthread.init $jvminits";
+
+#*---------------------------------------------------------------------*/
+#*    Srfis                                                            */
+#*---------------------------------------------------------------------*/
+for srfi in $hopsrfis; do
+    bcflags="$bcflags -srfi $srfi";
+done
 
 #*---------------------------------------------------------------------*/
 #*    Makefile.hopconfig                                               */
@@ -433,6 +513,8 @@ echo "#* Automatically generated file (don't edit) */" > $mkmf
 
 cat $mkmf.in \
     | sed -e "s|@RELEASE@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
+          -e "s|@DATE@|$date|" \
           -e "s|@DEVEL@|$devel|" \
           -e "s|@DEBUG@|$debug|" \
           -e "s|@BIGLOO@|$bigloo|" \
@@ -446,64 +528,99 @@ cat $mkmf.in \
           -e "s|@CC@|$cc|" \
           -e "s|@FLASHCC@|$flashcc|" \
           -e "s|@UNZIP@|$unzip|" \
+          -e "s|@GZIP@|$gzip|" \
+          -e "s|@INSTALL@|$install|" \
           -e "s|@JAR@|$jar|" \
           -e "s|@BCFLAGS@|$bcflags|" \
+          -e "s|@BCFLAGSRTS@|$bcflagsrts|" \
+          -e "s|@BSCM2JSFLAGS@|$bscm2jsflags|" \
           -e "s|@BLFLAGS@|$blflags|" \
           -e "s|@FFLAGS@|$fflags|" \
           -e "s|@JVMZIPLIBS@|$jvmziplibs|" \
           -e "s|@JVMINITS@|$jvminits|" \
           -e "s|@CCFLAGS@|$ccflags|" \
+          -e "s|@BCFLAGSDEV@|$bcflagsdev|" \
           -e "s|@BUILDLIBDIR@|$PWD/lib|" \
           -e "s|@BUILDETCDIR@|$PWD/etc|" \
           -e "s|@BUILDBINDIR@|$PWD/bin|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir|" \
+          -e "s|@MANDIR@|$mandir|" \
+          -e "s|@PREFIX@|$prefix|" \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
           -e "s|@DISTRIBDIR@|$distribdir|" \
           -e "s|@HOPSVN@|$svn|" \
-          -e "s|@HOPREPOSITORY@|$repository|" \
           -e "s|@HOPDISTRIBDIR@|$distribdir|" \
           -e "s|@BIGLOOSSLLIB@|$bigloossllib|" \
           -e "s|@BIGLOOPTHLIB@|$bigloopthlib|" \
+          -e "s|@RTSCONFIG@|$rts|" \
     >> $mkmf
 
-# src/configure.scm
-configure=runtime/configure.scm
-rm -f $configure 2> /dev/null
-echo ";* Automatically generated file (don't edit) */" > $configure
-
-cat etc/configure.scm.in \
-    | sed -e "s|@VERSION@|$version|" \
-          -e "s|@BACKEND@|$backend|" \
-          -e "s|@URL@|$url|" \
-          -e "s|@BINDIR@|$bindir|" \
-          -e "s|@LIBDIR@|$libdir|" \
-          -e "s|@SHAREDIR@|$sharedir|" \
-          -e "s|@ETCDIR@|$etcdir|" \
-          -e "s|@WEBLETSDIR@|$webletsdir|" \
-          -e "s|@CONTRIBSDIR@|$contribsdir|" \
-          -e "s|@MIMETYPES@|$mimetypes|" \
-          -e "s|@JSMIMETYPE@|$jsmimetype|" \
-          -e "s|@HOPJS@|$hopjs|" \
-    >> $configure
+# runtime/configure.scm
+for p in configure.scm configure-noarch.sch configure-macosx.sch; do
+  configure=runtime/$p
+  rm -f $configure 2> /dev/null
+  echo ";* Automatically generated file (don't edit) */" > $configure
+  cat etc/$p.in \
+      | sed -e "s|@VERSION@|$version|" \
+            -e "s|@BIGLOOVERSION@|$bglversion|" \
+            -e "s|@BRANCH@|$branch|" \
+            -e "s|@BACKEND@|$backend|" \
+            -e "s|@URL@|$url|" \
+            -e "s|@BINDIR@|$bindir|" \
+            -e "s|@LIBDIR@|$libdir|" \
+            -e "s|@LIBPATH@|$libdir/hop/$version|" \
+            -e "s|@SHAREDIR@|$sharedir|" \
+            -e "s|@ETCDIR@|$etcdir|" \
+            -e "s|@WEBLETSDIR@|$webletsdir|" \
+            -e "s|@CONTRIBSDIR@|$contribsdir|" \
+            -e "s|@MIMETYPES@|$mimetypes|" \
+            -e "s|@JSMIMETYPE@|$jsmimetype|" \
+            -e "s|@CSSMIMETYPE@|$cssmimetype|" \
+            -e "s|@HOPJS@|$hopjs|" \
+            -e "s|@HOPJSFILES@|$hopjsfiles|" \
+            -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
+            -e "s|@HOPSRFIS@|$hopsrfis|" \
+            -e "s|@HOPARCH@|$arch|" \
+      >> $configure
+done
 
 # etc/hoprc.hop
 hoprc=etc/hoprc.hop
 rm -f $hoprc 2> /dev/null
 cat etc/hoprc.hop.in \
     | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir|" \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@MIMETYPES@|$mimetypes|" \
     >> $hoprc
+
+# etc/hopshrc.hop
+hopshrc=etc/hopshrc.hop
+rm -f $hopshrc 2> /dev/null
+cat etc/hopshrc.hop.in \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
+          -e "s|@BINDIR@|$bindir|" \
+          -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@LIBPATH@|$libdir/hop/$version|" \
+          -e "s|@SHAREDIR@|$sharedir|" \
+          -e "s|@ETCDIR@|$etcdir|" \
+          -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@CONTRIBSDIR@|$contribsdir|" \
+          -e "s|@MIMETYPES@|$mimetypes|" \
+    >> $hopshrc
 
 # lib/hop.init
 init=lib/hop.init
@@ -513,15 +630,19 @@ echo ";* Automatically generated file (don't edit) */" > $init
 
 cat etc/hop.init.in \
     | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
           -e "s|@BIGLOOSSL@|$bigloossl|" \
           -e "s|@BIGLOOPTH@|$bigloopth|" \
     >> $init
 echo "" >> $init
 
-echo "(cond-expand ((not hop)" >> $init
+echo "(cond-expand ((not hop-eval)" >> $init
+echo "(register-eval-srfi! 'hop-eval)" >> $init
 cat runtime/xml-expd.sch >> $init
 echo "" >> $init
 cat runtime/param-expd.sch >> $init
+echo "" >> $init
+cat runtime/hss-expd.sch >> $init
 echo "" >> $init
 cat runtime/prefs-expd.sch >> $init
 echo "" >> $init
@@ -535,11 +656,14 @@ chmod a-w $init
 # lib/scheme2js.init
 init=lib/scheme2js.init
 mkdir -p lib
+mkdir -p scheme2js/o
+
 rm -f $init 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $init
 
 cat etc/scheme2js.init.in \
     | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
     >> $init
 echo "" >> $init
 chmod a-w $init
@@ -547,23 +671,14 @@ chmod a-w $init
 # lib/hopscheme.init
 init=lib/hopscheme.init
 mkdir -p lib
+mkdir -p hopscheme/o
+
 rm -f $init 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $init
 
 cat etc/hopscheme.init.in \
     | sed -e "s|@VERSION@|$version|" \
-    >> $init
-echo "" >> $init
-chmod a-w $init
-
-# lib/hopwiki.init
-init=lib/hopwiki.init
-mkdir -p lib
-rm -f $init 2> /dev/null
-echo ";* Automatically generated file (don't edit) */" > $init
-
-cat etc/hopwiki.init.in \
-    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
     >> $init
 echo "" >> $init
 chmod a-w $init
@@ -575,38 +690,72 @@ rm -f $init 2> /dev/null
 echo "/* Automatically generated file (don't edit) */" > $init
 
 cat etc/hop-autoconf.js.in \
-    | sed -e "s|@BINDIR@|$bindir|" \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
+          -e "s|@BACKEND@|$backend|" \
+          -e "s|@URL@|$url|" \
+          -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir|" \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@LOCEVENT@|$locevent|" \
+          -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
     >> $init
 echo "" >> $init
 chmod a-w $init
 
+for p in etc/hop.man etc/hopsh.man etc/hopreplay.man; do
+  cat $p.in \
+      | sed -e "s|@RELEASE@|$version|" \
+            -e "s|@BRANCH@|$branch|" \
+            -e "s|@DATE@|$date|" \
+            -e "s|@DEVEL@|$devel|" \
+            -e "s|@DEBUG@|$debug|" \
+            -e "s|@BIGLOO@|$bigloo|" \
+            -e "s|@BACKEND@|$backend|" \
+      > $p
+done
+
 #*---------------------------------------------------------------------*/
 #*    Summary                                                          */
 #*---------------------------------------------------------------------*/
+if [ ! -x .hoprelease ]; then
+  cat > .hoprelease <<EOF
+#!/bin/sh
+major=$version
+state=
+minor=
+EOF
+  chmod a+rx .hoprelease
+fi
+
+. ./.hoprelease
+
 echo "** Configuration summary **"
 echo 
 echo "Release:"
-echo "  hop release number.................... $version"
+echo "  hop release number.................... $version $state$minor"
 echo "  bigloo................................ $bigloo ($bglversion)"
 echo "  backend............................... $backend"
 echo "  bigloo compilation flags.............. $bcflags"
+echo "  runtime compilation flags............. $bcflagsrts"
 echo
 echo "Directories where Hop will be installed:"
 echo "  etc directory......................... $etcdir"
 echo "  binaries.............................. $bindir"
 echo "  libraries............................. $libdir"
 echo "  share directory....................... $sharedir"
+echo "  man directory......................... $mandir"
 echo "  weblets directory..................... $webletsdir"
 echo "  contribs directory.................... $contribsdir"
 echo 
 echo "Internals:"
 echo "  mime types............................ $mimetypes"
 echo "  default JavaScript mime type.......... $jsmimetype"
-echo "  multi threading....................... $threads"
+echo "  default CSS mime type................. $cssmimetype"
+echo "  multi-threading....................... $threads"
 echo "  https support......................... $ssl"
+

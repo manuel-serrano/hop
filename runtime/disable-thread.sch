@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/disable-thread.sch              */
+;*    serrano/prgm/project/hop/1.9.x/runtime/disable-thread.sch        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 23 10:29:32 2007                          */
-;*    Last change :  Wed Sep 26 13:52:11 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Sat Feb 23 06:35:05 2008 (serrano)                */
+;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The __hop_thread module directives when threads are              */
 ;*    disabled. It also complements the module with fake thread        */
@@ -19,11 +19,12 @@
    (extern  (macro fork::int () "fork"))
    
    (static  (class pooled-thread::%thread
-	       (thunk::procedure (default (lambda () #f)))
+	       (proc::procedure (default (lambda (t) #f)))
 	       (condv::condvar read-only)
 	       (mutex::mutex read-only)
 	       (data (default #unspecified))
-	       (pool (default #unspecified)))
+	       (pool (default #unspecified))
+	       (info (default #unspecified)))
 	    
 	    (class eager-pool::pool)
 	    
@@ -35,6 +36,10 @@
 	       (body::procedure read-only)
 	       (cleanup::procedure (default (lambda (t) #unspecified)))
 	       (specific::obj (default #unspecified)))
+
+	    (class hop-thread
+	       (data (default #unspecified))
+	       (info (default #unspecified)))
 
 	    (current-thread)
 	    (inline thread? ::obj)

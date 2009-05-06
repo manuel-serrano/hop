@@ -1,116 +1,100 @@
 (module tail
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   nodes
+   (import nodes
+	   export-desc
+	   walk
 	   verbose)
-   (export (tail-exprs tree::pobject intermediate-nodes-are-tail?::bool)))
+   (export (wide-class Tail-Call::Call))
+   (static (wide-class Tail-Label::Label))
+   (export (tail-calls tree::Module)))
 
 ;; might be called only after Node-elimination.
 ;; but then anytime. so don't assume nodes exist or not.
-(define (tail-exprs tree intermediate-nodes-are-tail?)
+(define (tail-calls tree)
    (verbose "tail")
-   (overload traverse clean (Node)
-	     (tree.traverse))
-   (overload traverse tail (Node
-			    Program
-			    (Module Inter-tail)
-			    (Const Value-tail)
-			    (Var-ref Value-tail)
-			    (Scope Inter-tail)
-			    Lambda
-			    If
-			    Case
-			    Clause
-			    (Set! Enclosing-tail)
-			    Begin
-			    (Call Enclosing-tail)
-			    (Tail-rec Inter-tail)
-			    (While Inter-tail)
-			    (Tail-rec-call Value-tail)
-			    Return
-			    (Closure-alloc Value-tail)
-			    Closure-use
-			    (Closure-ref Value-tail)
-			    Labelled
-			    Break
-			    (Pragma Value-tail))
-	     (tree.traverse #f intermediate-nodes-are-tail?)))
+   (tail tree #f #f))
 
-(define-pmethod (Node-clean)
-   (delete! this.tail?)
-   (this.traverse0))
+(define-nmethod (Node.tail tail?)
+   (default-walk this #f)) ;; be conservative here.
 
-(define-pmethod (Node-tail tail? inter-tail?)
-   (error #f "tail. forgot node-type" this))
+(define-nmethod (Module.tail tail?)
+   (default-walk this #t))
 
-(define-pmethod (Value-tail tail? inter-tail?)
-   (set! this.tail? tail?))
-   
-(define-pmethod (Inter-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (this.traverse2 tail? inter-tail?))
+(define-nmethod (Lambda.tail tail?)
+   (default-walk this #t))
 
-(define-pmethod (Enclosing-tail tail? inter-tail?)
-   (set! this.tail? tail?)
-   (this.traverse2 #f inter-tail?))
+(define-nmethod (If.tail tail?)
+   (with-access::If this (test then else)
+      (walk test #f)
+      (walk then tail?)
+      (walk else tail?)))
 
-(define-pmethod (Program-tail tail? inter-tail?)
-   (set! this.tail? #t)
-   ;; program's content is tail
-   (this.traverse2 #t inter-tail?))
+(define-nmethod (Case.tail tail?)
+   (with-access::Case this (key clauses)
+      (walk key #f)
+      (for-each (lambda (clause)
+		   (walk clause tail?))
+		clauses)))
 
-(define-pmethod (Lambda-tail tail? inter-tail?)
-   (set! this.tail? tail?)
-   ;; function's content is tail.
-   (this.traverse2 #t inter-tail?))
+(define-nmethod (Clause.tail tail?)
+   ;; default-walk is fine. (Consts do nothing with 'tail?')
+   (default-walk this tail?))
 
-(define-pmethod (If-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (this.test.traverse #f inter-tail?)
-   (this.then.traverse tail? inter-tail?)
-   (this.else.traverse tail? inter-tail?))
+(define-nmethod (Set!.tail tail?)
+   (default-walk this #f))
 
-(define-pmethod (Case-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (this.key.traverse #f inter-tail?)
-   (for-each (lambda (clause)
-		(clause.traverse tail? inter-tail?))
-	     this.clauses))
+(define-nmethod (Let.tail tail?)
+   (with-access::Let this (bindings body)
+      (for-each (lambda (n) (walk n #f)) bindings)
+      (walk body tail?)))
 
-(define-pmethod (Clause-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (for-each (lambda (const)
-		(const.traverse #f inter-tail?))
-	     this.consts)
-   (this.expr.traverse tail? inter-tail?))
+(define-nmethod (Begin.tail tail?)
+   (with-access::Begin this (exprs)
+      (let loop ((exprs exprs))
+	 (cond
+	    ((null? exprs) 'do-nothing)
+	    ((null? (cdr exprs))
+	     (walk (car exprs) tail?))
+	    (else
+	     (walk (car exprs) #f)
+	     (loop (cdr exprs)))))))
 
-(define-pmethod (Begin-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (let loop ((exprs this.exprs))
+(define-nmethod (Call.tail tail?)
+   (cond
+      (tail?
+       (widen!::Tail-Call this))
+      ((Tail-Call? this)
+       (shrink! this)))
+   (default-walk this #f))
+
+(define-nmethod (Frame-alloc.tail tail?)
+   (default-walk this tail?))
+
+(define-nmethod (Return.tail tail?)
+   (default-walk this #t))
+
+(define-nmethod (Labeled.tail tail?)
+   (with-access::Labeled this (label)
       (cond
-	 ((null? exprs) 'do-nothing)
-	 ((null? (cdr exprs))
-	  ((car exprs).traverse tail? inter-tail?))
-	 (else
-	  ((car exprs).traverse #f inter-tail?)
-	  (loop (cdr exprs))))))
+	 (tail?
+	  (widen!::Tail-Label label))
+	 ((Tail-Label? label)
+	  (shrink! label))))
+   (default-walk this tail?))
 
-(define-pmethod (Return-tail tail? inter-tail?)
-   (set! this.tail? tail?)
-   (this.val.traverse #t inter-tail?))
+(define-nmethod (Break.tail tail?)
+   (with-access::Break this (label val)
+      (if (Tail-Label? label)
+	  (walk val #t)
+	  (walk val #f))))
 
-(define-pmethod (Closure-use-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (this.body.traverse tail? inter-tail?))
+(define-nmethod (Tail-rec.tail tail?)
+   (with-access::Tail-rec this (inits body label)
+      (for-each (lambda (init) (walk init #f)) inits)
+      (when (Tail-Label? label) (shrink! label))
+      (walk body tail?)))
+   
+(define-nmethod (Tail-rec-Call.tail tail?)
+   (default-walk this #f))
 
-(define-pmethod (Labelled-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (set! this.break-tail? tail?)
-   (this.traverse2 tail? inter-tail?)
-   (delete! this.break-tail?))
-
-(define-pmethod (Break-tail tail? inter-tail?)
-   (set! this.tail? tail?)
-   (this.val.traverse this.labelled.break-tail? inter-tail?))
+(define-nmethod (While.tail tail?)
+   (default-walk this #f))

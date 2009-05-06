@@ -1,0 +1,102 @@
+<doc> Advanced Encryption Standard (AES)
+
+
+== Description ==
+Encrypt/Decrypt texts using the AES algorithm (also known as Rijndael) in
+@emph{Counter} mode.
+
+
+== Synopsis ==
+
+=== Server & Client ===
+
+  (sha1sum obj)
+  (sha1sum-string string)
+
+
+=== Requirements ===
+
+Client code using //AES// facilities needs to load the scripts
+++aes.js++ **and** ++sha1.js++. Hence, documents using //AES// must
+include in their header, the following statement:
+
+  (<HEAD> :include "sha1" "aes")
+
+
+== Server & Client Definitions ==
+
+=== ++(aes-ctr-encrypt obj password (nbits 128))++ ===
+<procedure> aes-ctr-encrypt
+<function> aes-ctr-encrypt
+
+<arguments>
+^  arguments  ^   type   ^   description  ^
+| obj  |    _     | The text to be encrypted.    |
+| password  |    _     | The password, a string.    |
+| nbits    |    _     | The key length (128, 192, or 256).  |
+</arguments>
+
+The function ++aes-ctr-encrypt++ encrypts a text that can be decrypted
+using the ++aes-ctr-decrypt++ function. On the client-side this
+function can only be passed //strings// arguments. On the server-side,
+it can be passed //string//, //input ports//, or //mmap// (memory
+mapped area).  
+
+</function> 
+</procedure>
+
+=== ++(aes-ctr-encrypt-string string)++ ===
+<procedure> aes-ctr-encrypt-string
+<function> aes-ctr-encrypt-string
+
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| string      |  string  | The string for which the chesum is computed.    |
+| password  |    _     | The password, a string.    |
+| nbits    |    _     | The key length (128, 192, or 256).  |
+</arguments>
+
+Encrypt the text contained in the characters string //string//.
+</function>
+</procedure>
+
+=== ++(aes-ctr-decrypt obj password (nbits 128))++ ===
+<procedure> aes-ctr-decrypt
+<function> aes-ctr-decrypt
+
+<arguments>
+^  arguments  ^   type   ^   description  ^
+| obj  |    _     | The text to be decrypted.    |
+| password  |    _     | The password, a string.    |
+| nbits    |    _     | The key length (128, 192, or 256).  |
+</arguments>
+
+The function ++aes-ctr-decrypt++ decrypts a text that can be decrypted
+using the ++aes-ctr-decrypt++ function. On the client-side this
+function can only be passed //strings// arguments. On the server-side,
+it can be passed //string//, //input ports//, or //mmap// (memory
+mapped area).  
+
+</function> 
+</procedure>
+
+=== ++(aes-ctr-decrypt-string string)++ ===
+<procedure> aes-ctr-decrypt-string
+<function> aes-ctr-decrypt-string
+
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| string      |  string  | The string for which the chesum is computed.    |
+| password  |    _     | The password, a string.    |
+| nbits    |    _     | The key length (128, 192, or 256).  |
+</arguments>
+
+Decrypt the text contained in the characters string //string//.
+</function>
+</procedure>
+
+== See also ==
+
+<see-also>aes-ctr-decrypt</see-also>
+
+</doc>

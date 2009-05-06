@@ -1,0 +1,41 @@
+;; the module declaration for the config file
+(module @HZ@_config
+   (export (@HZ@-version::bstring)
+	   (@HZ@-date::bstring)
+	   (@HZ@-author::bstring)
+	   (@HZ@-dir::bstring)
+	   (@HZ@-rc-directory::bstring)
+	   (@HZ@-table-size::int)
+	   (@HZ@-table-size-set! ::int)
+	   (@HZ@-table-align::symbol)
+	   (@HZ@-table-align-set! ::symbol)
+	   (@HZ@-table-border::bool)
+	   (@HZ@-table-border-set! ::bool)
+	   
+	   (@HZ@-preferences-edit . obj)
+	   (@HZ@-preferences-save file)))
+
+(define (@HZ@-version)
+   "@@VERSION@@")
+(define (@HZ@-date)
+   "@@DATE@@")
+(define (@HZ@-author)
+   "@@AUTHOR@@")
+
+(define _dir (dirname (the-loading-file)))
+(define (@HZ@-dir)
+   _dir)
+(define (@HZ@-rc-directory)
+   (make-file-name (hop-rc-directory) "@HZ@"))
+
+(define-parameter @HZ@-table-size
+   3)
+(define-parameter @HZ@-table-align
+   'center)
+(define-parameter @HZ@-table-border
+   #t)
+
+(define-preferences @HZ@-preferences
+   ("Example table size" integer @HZ@-table-size)
+   ("Example table alignment" (enum left center right) @HZ@-table-align)
+   ("Example table border" bool @HZ@-table-border))

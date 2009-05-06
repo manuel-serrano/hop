@@ -1,287 +1,160 @@
 (module scheme2js
    (option (set! *dlopen-init* "scheme2js_s"))
-   (option (loadq "protobject-eval.sch"))
    (include "version.sch")
    (import config
-	   compile
-	   pobject-conv
-	   js-interface
+	   nodes
+	   srfi0
+	   export-desc
+	   module-system
 	   expand
 	   expanders
+	   runtime-expander
 	   dot-expand
+	   pobject-conv
 	   symbol
-	   side
-	   tail-rec
-	   hack-encapsulation
-	   statements
+	   letrec-expansion
+	   encapsulation
 	   node-elimination
-	   traverse
 	   inline
-	   loop-hoist
-	   constant-propagation
-	   var-propagation
-	   while
-	   trampoline
-	   capture
-	   protobject
-	   liveness
 	   rm-unused-vars
-	   locations
-	   callcc
+	   tail-rec
+	   constant-propagation
+	   constants
+	   scope
+	   while
+	   propagation
+	   statements
+	   rm-tail-breaks
+	   out
+	   scm-out
 	   verbose
-	   check)
-   (main my-main)
-   (export (scheme2js top-level::pair-nil js-interface::pair-nil config p)
-	   (scheme2js-compile-files! in-files::pair
-				     out-file::bstring
-				     js-interface::pair-nil
-				     config
-				     #!key (reader read))
-	   (default-scheme2js-config)))
+	   callcc
+	   trampoline)
+   ;; see module.scm for information on module-headers.
+   (export (scheme2js-compile-expr expr
+				   out-p
+				   module-headers::pair-nil
+				   configuration)
+	   (scheme2js-compile-file in-file::bstring
+				   out-file::bstring
+				   module-headers::pair-nil
+				   configuration
+				   #!key (reader read))))
 
-(define (default-scheme2js-config)
-   (let ((ht (make-hashtable)))
-      (for-each (lambda (p)
-		   (hashtable-put! ht (car p) (cadr p)))
-		'((direct-js-object-access #t)
-		  (procedures-provide-js-this? #f)
-		  (unresolved=JS #f)
-		  (optimize-tail-rec #t)
-		  (do-inlining #t)
-		  (loop-hoist #t)
-		  (inline-globals #f)
-		  (constant-propagation #t)
-		  (var-propagation #t)
-		  (while #f)
-		  (correct-modulo #f)
-		  (optimize-calls #t)
-		  (optimize-var-number #f)
-		  (optimize-boolify #t)
-		  (optimize-set! #t)
-		  (encapsulate-modules #f)
-		  (trampoline #f)
-		  (print-locations #f)
-		  (return #f)
-		  (call/cc #f)))
-      ht))
+(define-macro (pass name . Lrest)
+   `(begin
+       ,@Lrest
+       (when (eq? debug-stage ,name)
+	  (scm-out tree p))))
 
-(define (read-rev-port in-port read)
-   (with-input-from-port in-port
-      (lambda ()
-	 (let loop ((sexp (read (current-input-port) #t))
-		    (rev-res '()))
-	    (if (eof-object? sexp)
-		rev-res
-		(loop (read (current-input-port) #t) (cons sexp rev-res)))))))
-   
-;; just read all expressions we can get
-(define (read-files files read)
-   (let loop ((files files)
-	      (rev-top-level '()))
-      (if (null? files)
-	  (reverse! rev-top-level)
-	  (let ((file (car files)))
-	     (verbose "reading: " (if (string=? file "-")
-				      "std-in"
-				      file))
-	     (let ((rev-sexps (if (string=? file "-")
-				  (read-rev-port (current-input-port) read)
-				  (let ((port (open-input-file file)))
-				     (if port
-					 (let ((res (read-rev-port port read)))
-					    (close-input-port port)
-					    res)
-					 (error "read-files"
-						"couldn't open: "
-						file))))))
-		(loop (cdr files)
-		      (append! rev-sexps rev-top-level)))))))
+(define (scheme2js module p)
+   (let* ((debug-stage (config 'debug-stage))
+	  (top-level-e (my-expand `(begin ,@(Compilation-Unit-top-level module))
+				  (Compilation-Unit-macros module)))
+	  (dummy1 (when (eq? debug-stage 'expand)
+		     (pp top-level-e p)))
+	  (top-level-runtime-e (runtime-expand! top-level-e))
+	  (dummy2 (when (eq? debug-stage 'runtime-expand)
+		     (pp top-level-runtime-e p)))
+	  (tree (pobject-conv top-level-runtime-e)))
 
-(define (dot-out p tree)
-   (with-output-to-port p
-      (lambda ()
-	 (pobject-dot-out tree (lambda (id)
-				  (not (memq id
-					     '(imported traverse traverse0
-							traverse1 traverse2
-							traverse3
-							traverse0! traverse1!
-							traverse2! traverse3!
-							clone
-							deep-clone
-							already-defined?
-							single-value
-							target
-			;				var
-   ))))))))
+      ;;we could do the letrec-expansion in list-form too.
+      (pass 'letrec      (letrec-expansion! tree))
 
-(define *out-file* #f)
-(define *in-files* '())
+      (pass 'symbol      (symbol-resolution tree
+					    (Compilation-Unit-imports module)
+					    (Compilation-Unit-exports module)))
+      (pass 'encapsulation  (encapsulation! tree))
+      (pass 'node-elim1     (node-elimination! tree))
+      (pass 'tail-rec       (tail-rec! tree))
+      (pass 'node-elim2     (node-elimination! tree))
+      (pass 'inline         (inline! tree #t))
+      (pass 'tail-rec2      (tail-rec! tree))
+      (pass 'inline2        (inline! tree #f)) ;; a second faster inlining.
+      (pass 'constant       (constant-propagation! tree))
+      (pass 'rm-unused      (rm-unused-vars! tree))
+      (pass 'node-elim3     (node-elimination! tree))
+      (pass 'call/cc-early  (call/cc-early! tree))
+      (pass 'trampoline     (trampoline tree))
+      (pass 'scope          (scope-resolution! tree))
+      (pass 'constants      (constants! tree))
+      (pass 'while          (tail-rec->while! tree))
+      (pass 'propagation    (propagation! tree))
+      ;(var-elimination! tree)
+      (pass 'rm-unused2     (rm-unused-vars! tree))
+      (pass 'call/cc-middle (call/cc-middle tree))
+      (pass 'flatten        (scope-flattening! tree))
+      (pass 'stmts          (statements! tree))
+      (pass 'while-optim    (optimize-while! tree))
+      (pass 'node-elim4     (node-elimination! tree))
+      (pass 'rm-breaks      (rm-tail-breaks! tree))
+      (pass 'node-elim5     (node-elimination! tree))
+      (pass 'call/cc-late   (call/cc-late! tree))
+      ;(locations tree)
+      (if debug-stage
+	  (let ((tmp (open-output-string)))
+	     (out tree tmp)
+	     (close-output-port tmp))
+	  (out tree p))
+      (verbose "--- compiled")))
 
-(define (handle-args args config-ht)
-   (args-parse (cdr args)
-      (section "Help")
-      (("?")
-       (args-parse-usage #f))
-      ((("-h" "--help") (help "?,-h,--help" "This help message"))
-       (args-parse-usage #f))
-      (section "Misc")
-      ((("--version") (help "Version number"))
-       (print *version*))
-      ((("-v" "--verbose") (help "Verbose output"))
-       (hashtable-put! config-ht 'verbose #t))
-      (("-o" ?file (help "The output file. '-' prints to stdout."))
-       (set! *out-file* file))
-      (section "Compile-flags")
-      (("--no-js-dot-notation"
-	(help "disallows the access of JS-fields with dots."))
-       (hashtable-put! config-ht 'direct-js-object-access #f))
-      (("--mutable-strings"
-	(help "use mutable strings."))
-       (hashtable-put! config-ht 'mutable-strings #t))
-      (("--encapsulate-modules"
-	(help "encapsulates modules, so they don't flood the surrounding scope with local vars."))
-       (hashtable-put! config-ht 'encapsulate-modules #t))
-      (("--optimize-var-number"
-	(help "reduce used variables by reusing existing vars."))
-       (hashtable-put! config-ht 'optimize-var-number #t))
-      (("--optimize-while"
-	(help "while-optimization"))
-       (hashtable-put! config-ht 'while #t))
-      (("--no-inlining"
-	(help "don't inline at all"))
-       (hashtable-put! config-ht 'do-inlining #f))
-      (("--inline-globals"
-	(help "inline global constants."))
-       (hashtable-put! config-ht 'inline-globals #t))
-      (("--unresolved-is-js"
-	(help "unresolved vars are supposed to be js-vars."))
-       (hashtable-put! config-ht 'unresolved=JS #t))
-      (("--js-this"
-	(help "procedures may use Javascript's 'this' variable."))
-       (hashtable-put! config-ht 'procedures-provide-js-this #t))
-      (("--js-return"
-	(help "adds the special-form 'return!'."))
-       (hashtable-put! config-ht 'return #t))
-      (("--no-tailrec"
-	(help "don't optimize tail-recs."))
-       (hashtable-put! config-ht 'optimize-tail-rec #f))
-      (("--with-closures"
-	(help "use the 'with'-keyword to implement closures"))
-       (hashtable-put! config-ht 'with-closures #t))
-      (("--trampoline"
-	(help "add trampolines around tail-recursive calls"))
-       (hashtable-put! config-ht 'trampoline #t))
-      (("--max-tail-depth"
-	?depth
-	(help (string-append "maximum tail-call depth before "
-			     "the trampoline is used. Default: "
-			     (number->string (default-max-tail-call-depth)))))
-       (let ((new-depth (string->number depth)))
-	  (if (not new-depth)
-	      (error #f
-		     "--max-tail-depth requires a number as argument"
-		     depth))
-	  (hashtable-put! config-ht 'max-tail-depth new-depth)))
-      (("--call/cc" (help "allow call/cc"))
-       (hashtable-put! config-ht 'call/cc #t))
-      (("--no-constant-propagation"
-	(help "don't propagate constants."))
-       (hashtable-put! config-ht 'constant-propagation #f))
-      (("--correct-modulo"
-	(help "(module -13 4) will return R5RS's 3 instead of faster -1."))
-       (hashtable-put! config-ht 'correct-modulo #t))
-      (("--no-optimize-calls"
-	(help "don't inline simple runtime-functions."))
-       (hashtable-put! config-ht 'optimize-calls #f))
-      (("--no-optimize-consts"
-	(help "don't factor constants, but recreate them at every use."))
-       (hashtable-put! config-ht 'optimize-consts #f))
-      (("--no-optimize-boolify"
-	(help "always test against false. Even if the test is a bool."))
-       (hashtable-put! config-ht 'optimize-boolify #f))
-      ((("-l" "--print-locations") (help "print locations"))
-       (hashtable-put! config-ht 'print-locations #t))
-      (("-d" ?stage (help "debug compiler-stage"))
-       (hashtable-put! config-ht 'debug-stage (string->symbol stage)))
-      (else
-       (set! *in-files* (cons else *in-files*)))))
+(define (scheme2js-compile-expr expr out-p
+				module-headers
+				configuration)
+   (let ((old-configs (configs-backup)))
+      (unwind-protect
+	 (begin
+	    (config-init! configuration)
+	    (let* ((module (create-module-from-expr expr module-headers)))
+	       (scheme2js module out-p)))
+	 (configs-restore! old-configs))))
 
-(define (scheme2js top-level js-interface config-ht p)
-   (config-init! config-ht)
-   (let* ((tmp (extract-js-interface top-level js-interface))
-	  (top-level-s (cons 'begin (car tmp))) ;; top-level-s plitted
-	  (extended-js-interface (cdr tmp))
-	  (top-level-e (my-expand top-level-s))
-	  (dummy (if (eq? (config 'debug-stage) 'expand)
-		     (pp top-level-e)))
-	  (tree (pobject-conv top-level-e)))
-      (if (eq? (config 'debug-stage) 'tree) (dot-out p tree))
-      (symbol-resolution tree extended-js-interface)
-      (if (eq? (config 'debug-stage) 'symbol) (dot-out p tree))
-      (node-elimination! tree)
-      (if (eq? (config 'debug-stage) 'node-elim1) (dot-out p tree))
-      (callcc-early tree)
-      (if (eq? (config 'debug-stage) 'call/cc-early) (dot-out p tree))
-      (tail-rec! tree)
-      (if (eq? (config 'debug-stage) 'tail) (dot-out p tree))
-      (inline! tree)
-      (if (eq? (config 'debug-stage) 'inline) (dot-out p tree))
-      (constant-propagation! tree)
-      (if (eq? (config 'debug-stage) 'constant-propagation) (dot-out p tree))
-      (var-propagation! tree)
-      (if (eq? (config 'debug-stage) 'var-propagation) (dot-out p tree))
-      (rm-unused-vars! tree)
-      (if (eq? (config 'debug-stage) 'rm-unused-vars) (dot-out p tree))
-      (loop-hoist! tree)
-      (if (eq? (config 'debug-stage) 'loop-hoist) (dot-out p tree))
-      (capture! tree)
-      (if (eq? (config 'debug-stage) 'capture) (dot-out p tree))
-      (node-elimination! tree)
-      (if (eq? (config 'debug-stage) 'node-elim2) (dot-out p tree))
-      (while! tree)
-      (if (eq? (config 'debug-stage) 'while) (dot-out p tree))
-      (trampoline tree)
-      (if (eq? (config 'debug-stage) 'trampoline) (dot-out p tree))
-
-      (hack-encapsulation! tree)
-
-      (callcc-check-points tree)
-      (if (eq? (config 'debug-stage) 'call/cc-cp) (dot-out p tree))
-      (statements! tree)
-      (if (eq? (config 'debug-stage) 'statements) (dot-out p tree))
-      (node-elimination! tree)
-      (if (eq? (config 'debug-stage) 'node-elim3) (dot-out p tree))
-      (callcc-late tree)
-      (if (eq? (config 'debug-stage) 'call/cc-late) (dot-out p tree))
-      ;(check tree)
-      ;(if (eq? (config 'debug-stage) 'check) (dot-out p tree))
-      (locations tree)
-      (if (eq? (config 'debug-stage) 'locations) (dot-out p tree))
-      (let* ((out-p (if (config 'debug-stage)
-			(open-output-string)
-			p))
-	     (compiled (compile tree out-p)))
-	 (if (config 'debug-stage) (close-output-port out-p))
-	 (if (eq? (config 'debug-stage) 'compiled) (dot-out p tree))
-	 (verbose "--- compiled")
-	 )))
-
-(define (scheme2js-compile-files! in-files out-file js-interface config-ht
-				  #!key (reader read))
-   ;; we need this for "verbose" outputs.
-   (config-init! config-ht)
-   (let ((top-level (read-files (reverse! in-files) reader))
-	 (out-port (if (string=? "-" out-file)
-		       (current-output-port)
-		       (open-output-file out-file))))
-      (scheme2js top-level js-interface config-ht out-port)))
-
-(define (my-main args)
-   (let ((config-ht (default-scheme2js-config)))
-      (handle-args args config-ht)
-      (if (or (null? *in-files*)
-	      (not *out-file*))
-	  (error #f "missing in or output-file. Use --help to see the usage." #f))
-      
-      (scheme2js-compile-files! *in-files* *out-file* '() config-ht)))
+(define (scheme2js-compile-file in-file out-file
+				module-headers ;; list (module-clause . kind)
+				;; kind: provide/replace/merge-first/merge-last
+				configuration
+				#!key (reader read))
+   (let ((old-configs (configs-backup)))
+      (unwind-protect
+	 (let ((actual-file? (not (string=? "-" out-file))))
+	    ;; we need this for "verbose" outputs.
+	    (config-init! configuration)
+	    (with-handler
+	       ;; delete unfinished file, so that we don't give impression that
+	       ;; compilation was successful (for tools like 'make'...).
+	       ;; note: the port was already closed before.
+	       (lambda (e)
+		  ;; when debugging we usually want the
+		  ;; output even (or especially) if there was an error.
+		  (unless (or (config 'debug-stage)
+			      (not actual-file?))
+		     (delete-file out-file))
+		  (raise e))
+	       (let ((module (create-module-from-file in-file
+						      module-headers
+						      reader)))
+		  
+		  ;; set the global-seed to the input-file's name (which is the
+		  ;; same as the module's name, if any was given).
+		  (unless (or (config 'statics-suffix)
+			      (string=? "-" in-file))
+		     (config-set! 'statics-suffix
+				  (string-append "_"
+						 (prefix (basename in-file)))))
+		  
+		  (with-access::Compilation-Unit module (declared-module?)
+		     (when (eq? (config 'export-globals) 'module)
+			(config-set! 'export-globals
+				     (not declared-module?)))
+		     
+		     (when (eq? (config 'unresolved=JS) 'module)
+			(config-set! 'unresolved=JS
+				     (not declared-module?))))
+		  
+		  (let ((out-p (if actual-file?
+				   (open-output-file out-file)
+				   (current-output-port))))
+		     (unwind-protect
+			(scheme2js module out-p)
+			(when actual-file? (close-output-port out-p)))))))
+	 (configs-restore! old-configs))))

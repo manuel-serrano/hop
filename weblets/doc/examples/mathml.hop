@@ -10,8 +10,7 @@
 
 (<HTML>
    (<IFRAME> :style "border: 0; width: 600px; height: 400px;"
-      :src (make-hop-service-url
-	    (service ()
+      :src ((service ()
 	       (instantiate::http-response-hop
 		  (backend (duplicate::xml-backend (hop-get-xml-backend 'xhtml)
 			      (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1 plus MathML 2.0//EN\" \"http://www.w3.org/Math/DTD/mathml2/xhtml-math11-f.dtd\">")))
