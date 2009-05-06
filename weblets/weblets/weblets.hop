@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Wed Apr 22 08:51:48 2009 (serrano)                */
+;*    Last change :  Wed May  6 11:47:59 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets distribution weblet.                                 */
@@ -87,25 +87,77 @@
 	 (<WEBLETS> (current-request) "all"))))
 
 ;*---------------------------------------------------------------------*/
+;*    weblets/download ...                                             */
+;*    -------------------------------------------------------------    */
+;*    We use a keyworded argument for WEBLETS/DOWNLOAD in order        */
+;*    to allow Hop to generate a nice url. This is required by         */
+;*    HZ that would otherwise be confused by the package name.         */
+;*---------------------------------------------------------------------*/
+(define-service (weblets/download #!key weblet)
+   (let ((path (make-file-name (weblets-repository) weblet))
+	 (req (current-request)))
+      (cond
+	 ((not (authorized-path? req path))
+	  (user-access-denied req))
+	 ((not (file-exists? path))
+	  (http-file-not-found weblet))
+	 (else
+	  (instantiate::http-response-file
+	     (file path))))))
+
+;*---------------------------------------------------------------------*/
+;*    update-alist! ...                                                */
+;*---------------------------------------------------------------------*/
+(define (update-alist! key val l)
+   (let ((c (assq key l)))
+      (if (pair? c)
+	  (begin
+	     (set-car! (cdr c) val)
+	     l)
+	  (cons (list key val) l))))
+
+;*---------------------------------------------------------------------*/
+;*    add-alist ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (add-alist key val l)
+   (let ((c (assq key l)))
+      (if (pair? c)
+	  l
+	  (cons (list key val) l))))
+
+;*---------------------------------------------------------------------*/
+;*    make-download-url ...                                            */
+;*---------------------------------------------------------------------*/
+(define (make-download-url req p)
+   (with-access::http-request req (scheme host port)
+      (format "~a://~a:~a~a"
+	      (if (eq? scheme '*) "http" scheme)
+	      host
+	      port
+	      (weblets/download :weblet (basename p)))))
+
+;*---------------------------------------------------------------------*/
 ;*    weblets/synclist ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-service (weblets/synclist #!optional url)
-   (let ((req (current-request))
-	 (url (if (not (string? url)) (weblets-repository))))
-      (if (authorized-path? req url)
+   (let* ((req (current-request))
+	  (repo (if (not (string? url)) (weblets-repository))))
+      (if (authorized-path? req repo)
 	  (instantiate::http-response-procedure
 	     (proc (lambda (op)
 		      (display "(\n" op)
 		      (for-each (lambda (p)
 				   (let ((l (with-input-from-string
 						  (package-info p)
-					       read)))
+					       read))
+					 (url (make-download-url req p)))
 				      (when (pair? l)
-					 (write
-					  (append! l `((md5 ,(md5sum p))))
-					  op)
+					 (let ((l (add-alist 'url url l)))
+					    (write
+					     (append! l `((md5 ,(md5sum p))))
+					     op))
 					 (newline op))))
-				(get-weblets url))
+				(get-weblets repo))
 		      (display ")\n" op))))
 	  (user-access-denied req))))
 

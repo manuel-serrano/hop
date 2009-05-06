@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Apr 30 18:10:56 2009 (serrano)                */
+;*    Last change :  Wed May  6 11:55:27 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -40,7 +40,8 @@
 	    (get-all-services ::http-request)
 	    (get-service-url::bstring #!optional (prefix ""))
 	    (hop-service-path? ::bstring)
-	    (hop-apply-url::bstring ::bstring ::obj)
+	    (hop-apply-nice-url::bstring ::bstring ::pair-nil)
+	    (hop-apply-url::bstring ::bstring ::pair-nil)
 	    (service-funcall-url::bstring ::hop-service . o)
 	    (hop-request-service-name::bstring ::http-request)
 	    (procedure->service::procedure ::procedure)
@@ -140,6 +141,46 @@
 	    (else
 	     (loop (+fx i 1)))))))
 
+;*---------------------------------------------------------------------*/
+;*    hop-apply-nice-url ...                                           */
+;*    -------------------------------------------------------------    */
+;*    This is used for fix arity function in order to build nice URLS. */
+;*    When at least an argument is not a string, it falls back to      */
+;*    hop-apply-url.                                                   */
+;*---------------------------------------------------------------------*/
+(define (hop-apply-nice-url base vals)
+   
+   (define (all-keyword-string? vals)
+      (cond
+	 ((null? vals)
+	  #t)
+	 ((null? (cdr vals))
+	  #f)
+	 ((and (keyword? (car vals)) (string? (cadr vals)))
+	  (all-keyword-string? (cddr vals)))
+	 (else
+	  #f)))
+   
+   (cond
+      ((null? vals)
+       base)
+      ((all-keyword-string? vals)
+       (let loop ((vals vals)
+		  (sep "?")
+		  (strs '()))
+	  (if (null? vals)
+	      (apply string-append base strs)
+	      (loop (cddr vals)
+		    "&"
+		    (let ((str (string-append
+				sep
+				(keyword->string (car vals))
+				"="
+				(url-path-encode (cadr vals)))))
+		       (cons str strs))))))
+      (else
+       (hop-apply-url base vals))))
+       
 ;*---------------------------------------------------------------------*/
 ;*    hop-apply-url ...                                                */
 ;*---------------------------------------------------------------------*/

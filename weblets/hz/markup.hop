@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/weblets/hz/markup.hop            */
+;*    serrano/prgm/project/hop/2.0.x/weblets/hz/markup.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Thu Jan 15 18:26:55 2009 (serrano)                */
+;*    Last change :  Wed May  6 10:39:43 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ markups set                                                   */
@@ -245,35 +245,45 @@
 ;*    <HZ:SYNC> ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (<HZ:SYNC>)
-   (let ((install (service (url)
-		     (let ((errs (with-handler
-				    (lambda (e)
-				       (list (cons url (&error-msg e))))
-				    (begin
-				       (hz-install-url url)
-				       '()))))
-			(<HZ:SYNC-UPDATE> errs)))))
+   (let ((install (service (url auth)
+		     (let ((o (hz-install-url url :auth auth)))
+			(if (weblet? o)
+			    (<DIV> (<TT> url) " successfully installed")
+			    o)))))
       (<DIV>
-       (<TABLE> :class "hz-direct-install"
-	  (<TR>
-	     (<TH> "Weblet URL: "
-		   (<INPUT> :size 70
-		      :name "url" :class "direct-url" :id "install-url"
-		      :type "text"
-		      :onchange ~(with-hop ($install this.value)
-				    (lambda (h)
-				       (innerHTML-set! "update" h)))
-		      :value ""))
-	     (<TD> :class "install-button"
-		(<BUTTON> :class "install"
-		   :title "Install weblet from ULR"
-		   :onclick ~(let ((e (dom-get-element-by-id "install-url")))
-				(with-hop ($install e.value)
-				   (lambda (h)
-				      (innerHTML-set! "update" h))))
-		   "Install"))))
-       (<DIV> :id "update"
-	  (<HZ:SYNC-UPDATE> '())))))
+	 
+	 ~(define (install-callback h)
+	     (if (pair? h)
+		 (if (eq? (car h) 401)
+		     (let ((url (cadr h)))
+			(login-panel
+			 :message (<DIV> :class "authenticate-message"
+				     "Authentication required for " (<SPAN> url))
+			 :onlogin (lambda (e)
+				     (with-hop ($install url (cons e.user e.password))
+					install-callback))))
+		     (apply error h))
+		 (innerHTML-set! "update" h)))
+
+	 (<TABLE> :class "hz-direct-install"
+	    (<TR>
+	       (<TH> "Weblet URL: "
+		     (<INPUT> :size 70
+			:name "url" :class "direct-url" :id "install-url"
+			:type "text"
+			:onkeyup ~(when (= event.keyCode 13)
+				     (with-hop ($install this.value #f)
+					install-callback))
+			:value ""))
+	       (<TD> :class "install-button"
+		  (<BUTTON> :class "install"
+		     :title "Install weblet from ULR"
+		     :onclick ~(let ((e (dom-get-element-by-id "install-url")))
+				  (with-hop ($install e.value #f)
+				     install-callback))
+		     "Install"))))
+	 (<DIV> :id "update"
+	    (<HZ:SYNC-UPDATE> '())))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:SYNC-UPDATE> ...                                             */
@@ -457,7 +467,7 @@
 	 (<VBOX-SEPARATOR>)
 	 (<VBOX-BLOCK>
 	    (<TABLE> :class "weblet"
-	       (<TR> (<TD> "By " author))
+	       (<TR> (<TD> :class "author" "By " author))
 	       (unless (or (not (string? home)) (string=? home ""))
 		  (<TR> (<TD> :class "homepage" 
 			   (<A> :href home :title home (<TT> home)))))
@@ -554,7 +564,7 @@
 					      $(weblet-category w))
 			      (lambda (h)
 				 (innerHTML-set! $id h)))
-	    :title "Install the weblet"
+	    :title (format "Install the weblet from ~a" (weblet-url w))
 	    "Install"))))
 
 ;*---------------------------------------------------------------------*/
