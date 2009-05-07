@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/hop-svg.scm              */
+;*    serrano/prgm/project/hop/2.0.x/runtime/hop-svg.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Tue Jan 13 18:26:06 2009 (serrano)                */
+;*    Last change :  Thu May  7 10:21:48 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -492,7 +492,7 @@
 			  style1))))
 	  (<DIV> :style style2 :class class
 	     (instantiate::xml-svg
-		(markup 'dummy)
-		(id 'dummy)
+		(markup 'svg:img)
+		(id (gensym 'svg:img))
 		(attributes '())
 		(body (list img))))))))
