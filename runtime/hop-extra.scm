@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon May  4 17:32:08 2009 (serrano)                */
+;*    Last change :  Wed May 13 15:38:10 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -469,7 +469,7 @@ function hop_weblets_directory() { return \"" (hop-weblets-directory) "\"; }")))
 		 ((string? src)
 		  (if (string=? (dirname src) ".")
 		      (format "~a/buttons/~a"
-			      (url-encode (hop-share-directory))
+			      (url-path-encode (hop-share-directory))
 			      src)
 		      src))
 		 (else
