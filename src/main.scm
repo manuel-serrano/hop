@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon May  4 18:05:21 2009 (serrano)                */
+;*    Last change :  Wed May 13 15:18:22 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -71,8 +71,6 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
-   ;; set the hop process owner
-   (set-hop-owner! (hop-user))
    ;; catch critical signals
    (signal-init!)
    ;; set the Hop cond-expand identification
@@ -97,6 +95,9 @@
 	    (make-directory c))))
    ;; parse the command line
    (parse-args args)
+   ;; set the hop process owner
+   (set-hop-owner! (hop-user))
+   ;; hello world
    (hop-verb 1 "Starting hop (v" (hop-version)
 	     ", " (hop-backend)
 	     (cond-expand
