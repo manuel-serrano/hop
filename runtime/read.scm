@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Apr 29 14:02:26 2009 (serrano)                */
+;*    Last change :  Wed May 13 16:53:07 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -662,7 +662,7 @@
 	      (loc (list 'at name pos))
 	      (item (cset (the-substring 0 (-fx (the-length) 1)))))
 	  (econs item '() loc)))
-      ((: (* (out ",[\\")) ",]")
+      ((: (* (out ",[]\\")) ",]")
        (let* ((port (the-port))
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
