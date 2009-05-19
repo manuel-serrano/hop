@@ -1,7 +1,7 @@
 (module __hopscheme_tilde-escape
    (library scheme2js)
-   (export (compile-scheme-expression e ::obj)
-	   (compile-hop-client e #!optional (env '()))
+   (export (compile-scheme-expression e ::obj ::obj)
+	   (compile-hop-client e #!optional (env '()) (menv #f))
 	   (JS-expression::bstring t::pair)
 	   (JS-statement::bstring t::pair)
 	   (JS-return::bstring t::pair))
@@ -11,7 +11,7 @@
 ;; this function is called during parsing. It returns an expression that is
 ;; supposed to take the place of a tilde expression. We therefore return a
 ;; quotted 'cons (instead of a pair).
-(define (compile-scheme-expression e env)
+(define (compile-scheme-expression e env menv)
    (let ((s-port (open-output-string))
 	 (assig-var (gensym 'result)))
       (with-handler
@@ -47,9 +47,9 @@
        "{ " e "\n"
        "return " assig-var-str "; }")))
 
-(define (compile-hop-client e #!optional (env '()))
+(define (compile-hop-client e #!optional (env '()) (menv #f))
    ;; This function is used from weblets, don't remove it!
-   (let ((ce (compile-scheme-expression e env)))
+   (let ((ce (compile-scheme-expression e env menv)))
       (match-case ce
 	 ((cons ((kwote quote) ?var) ?expr)
 	  (JS-expression (cons var expr)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Mon May  4 13:43:42 2009 (serrano)                */
+;*    Last change :  Tue May 19 08:27:23 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -334,6 +334,7 @@
    (define (compile-rule o)
       (with-access::css-ruleset o (selector+ declaration*)
 	 (let ((hc (hss-find-compiler (car (last-pair (car selector+)))))
+;* 	       (ndeclaration* (append-map hss-compile declaration*)))  */
 	       (ndeclaration* (map hss-compile declaration*)))
 	    (if hc
 		(let ((nselector (hss-compile-selector* (car selector+))))
@@ -361,6 +362,17 @@
 	  (compile-rule o))))
 
 ;*---------------------------------------------------------------------*/
+;*    hss-compile ::css-declaration ...                                */
+;*---------------------------------------------------------------------*/
+;* (define-method (hss-compile o::css-declaration)                     */
+;*    (tprint "hss-compile ::css-declaration " o)                      */
+;*    (with-access::css-declaration o (property expr prio)             */
+;*       (let ((comp (find-property-compiler property)))               */
+;* 	 (cond                                                         */
+;* 	    (comp => (comp property expr prio))                        */
+;* 	    (else (list o))))))                                        */
+   
+;*---------------------------------------------------------------------*/
 ;*    hss-compile-selector* ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (hss-compile-selector* lst)
@@ -376,7 +388,7 @@
 		       (element (hss-compile element))))))))
    
    (map! compile lst))
-		 
+
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile ::css-selector-name ...                              */
 ;*---------------------------------------------------------------------*/
@@ -429,7 +441,7 @@
 (hop-hss-type! "window" "table.hop-window td.hop-window-content")
 
 ;*---------------------------------------------------------------------*/
-;*    Example a hss compiler                                           */
+;*    Example of a hss compiler                                        */
 ;*---------------------------------------------------------------------*/
 ;; (hss-register-compiler!
 ;; "gauge"
@@ -455,3 +467,31 @@
 ;*      margin-right: auto;                                            */
 ;*    }                                                                */
 ;*---------------------------------------------------------------------*/
+
+;*---------------------------------------------------------------------*/
+;*    hss-list->css-declaration ...                                    */
+;*---------------------------------------------------------------------*/
+;* (define (hss-list->css-declaration id lst)                          */
+;*    (if (not (list? lst))                                            */
+;*        (error id "Illegal attribute values" lst)                    */
+;*        (map (lambda (v)                                             */
+;* 	       (match-case v                                           */
+;* 		  (((and ?ident (? symbol?)) ?expr)                    */
+;* 		   (instantiate::css-declaration                       */
+;* 		      (property ident)                                 */
+;* 		      (expr (list expr))                               */
+;* 		      (prio p)))                                       */
+;* 		  (((and ?ident (? symbol?)) ?expr ?prio)              */
+;* 		   (instantiate::css-declaration                       */
+;* 		      (property ident)                                 */
+;* 		      (expr (list expr))                               */
+;* 		      (prio prio)))                                    */
+;* 		  (else                                                */
+;* 		   (error id "Illegal declaration" v))))               */
+;* 	    lst)))                                                     */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    store-hss-property-compiler! ...                                 *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (store-hss-property-compiler! env property comp)            */
+;*    (hashtable-put! env property comp))                              */

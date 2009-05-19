@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Mon May  4 13:43:29 2009 (serrano)                */
+;*    Last change :  Tue May 19 13:17:29 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -37,13 +37,14 @@
 	       (filec::procedure read-only)
 	       (expressionc::procedure read-only)
 	       (modulec::procedure read-only)
+	       (macroc::procedure read-only)
 	       (JS-expression::procedure read-only)
 	       (JS-statement::procedure read-only)
 	       (JS-return::procedure read-only))
 
 	    (init-clientc-compiler! #!key
-				    filec expressionc modulec JS-expression
-				    JS-statement JS-return)
+				    filec expressionc modulec macroc
+				    JS-expression JS-statement JS-return)
 	    (clientc-url ::bstring)
 	    (clientc-response::%http-response ::http-request ::bstring)
 	    (get-clientc-compiled-file ::bstring)))
@@ -61,8 +62,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    init-clientc-compiler! ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (init-clientc-compiler! #!key filec expressionc modulec JS-expression
-				JS-statement JS-return)
+(define (init-clientc-compiler! #!key filec expressionc modulec macroc
+				JS-expression JS-statement JS-return)
    ;; prepare the client-code compiler cache
    (set! clientc-cache
 	 (instantiate::cache-disk
@@ -78,6 +79,7 @@
 		 (filec file env)))
        (expressionc expressionc)
        (modulec modulec)
+       (macroc macroc)
        (JS-expression JS-expression)
        (JS-statement JS-statement)
        (JS-return JS-return))))

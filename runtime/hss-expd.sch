@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr  3 15:32:27 2009                          */
-;*    Last change :  Fri Apr  3 15:54:42 2009 (serrano)                */
+;*    Last change :  Mon May 18 17:51:44 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HSS expander                                                     */
@@ -42,3 +42,19 @@
 	  (e `(hss-register-compiler! (symbol->string id) ,cmp) e)))
       (else
        (error 'define-hss-rule "Illegal form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    expand-define-hss-property ...                                   */
+;*---------------------------------------------------------------------*/
+;* (define (expand-define-hss-property x e)                            */
+;*                                                                     */
+;*    (match-case x                                                    */
+;*       ((define-hss-property ((and ?property ?symbol)                */
+;* 			     (and ?expr ?symbol)                       */
+;* 			     (and ?prio ?symbol)) . ?body)             */
+;*        `(store-hss-property-compiler! hss-property-global-env ',id  */
+;*           (lambda (,expr ,prio)				       */
+;* 	     (list->css-declaration-list ',id ,@body))))               */
+;*       (else                                                         */
+;*        (error 'define-hss-property "Illegal property compiler" x)))) */
+	  

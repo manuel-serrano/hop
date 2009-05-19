@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 07:05:30 2008                          */
-/*    Last change :  Mon Mar 23 09:00:02 2009 (serrano)                */
+/*    Last change :  Thu May 14 12:09:23 2009 (serrano)                */
 /*    Copyright   :  2008-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side support for url browsers.                            */
@@ -278,7 +278,7 @@ function hop_filechooser_begin_drag( event, id, url ) {
 			   "mouseup",
 			   hop_filechooser_abort_drag );
 			   
-   hop_stop_propagation( event, false );
+   hop_stop_propagation( event, true );
 }
 
 /*---------------------------------------------------------------------*/
@@ -314,8 +314,8 @@ function hop_filechooser_run( event, id ) {
 /*---------------------------------------------------------------------*/
 /*    hop_filechooser_key ...                                          */
 /*---------------------------------------------------------------------*/
-function hop_filechooser_key( table, id ) {
-/*    alert( "id=" + id );                                             */
+function hop_filechooser_key( table, event, id, pep, pid, nep, nid ) {
+   alert( "key=" + event.keyCode );
 }
 
 /*---------------------------------------------------------------------*/

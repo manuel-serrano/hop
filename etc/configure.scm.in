@@ -155,4 +155,4 @@
 ;*    hop-srfis ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-srfis) 
-   (list-copy '(@HOPSRFIS@ hop-@BRANCH@ hop-@VERSION@)))
+   (list-copy '(@HOPSRFIS@ hop hop-@BRANCH@ hop-@VERSION@)))
