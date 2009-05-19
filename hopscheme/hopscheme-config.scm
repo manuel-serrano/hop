@@ -70,6 +70,9 @@
 	  (conf-module (add-suffix-clause conf-verbose)))
       conf-module))
 
+(define expand-once-expander
+   (lambda (x e) (e (expand-once x) e)))
+
 ;;
 (define (init-hopscheme! #!key reader share path verbose eval postprocess features expanders)
    (set! *hop-reader* reader)
@@ -79,5 +82,7 @@
    (set! *hop-postprocess* postprocess)
    (for-each srfi0-declare! features)
    (for-each (lambda (expd)
-		(install-expander! (car expd) (cadr expd)))
+		(if (pair? expd)
+		    (install-expander! (car expd) (cdr expd))
+		    (install-expander! expd expand-once-expander)))
 	     expanders))

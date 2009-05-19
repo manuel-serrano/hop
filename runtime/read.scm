@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue May 19 12:13:37 2009 (serrano)                */
+;*    Last change :  Tue May 19 13:50:51 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -37,9 +37,11 @@
 	    
 	    (hop-read #!optional
 		      (iport::input-port (current-input-port))
-		      (charset (hop-locale)))
+		      (charset (hop-locale))
+		      (menv #f))
 	    (hop-load ::bstring #!key
 		      (env (interaction-environment))
+		      (menv #f)
 		      (mode 'load)
 		      (charset (hop-locale))
 		      (abase #t))
@@ -47,11 +49,13 @@
 	    (hop-load-once ::bstring
 			   #!key
 			   (env (interaction-environment))
+			   (menv #f)
 			   (charset (hop-locale))
 			   (abase #t))
 	    (hop-load-modified ::bstring
 			       #!key
 			       (env (interaction-environment))
+			       (menv #f)
 			       (charset (hop-locale))
 			       (abase #t))
 	    (hop-load-once-unmark! ::bstring)
@@ -337,7 +341,7 @@
 		     (kid      (or digit letter kspecial))
 		     (blank    (in #\Space #\Tab #a012 #a013))
 		     
-		     cycles par-open bra-open par-poses bra-poses cset)
+		     cycles par-open bra-open par-poses bra-poses cset menv)
       
       ;; newlines
       ((+ #\Newline)
@@ -503,7 +507,7 @@
       (#\[
        (let ((exp (read/rp *text-grammar* (the-port)
 			   cycles par-open bra-open par-poses bra-poses
-			   cset)))
+			   cset menv)))
 	  (if (and (pair? exp) (null? (cdr exp)))
 	      (car exp)
 	      (list 'quasiquote exp))))
@@ -577,7 +581,7 @@
 	      (args (list ((clientc-expressionc (hop-clientc))
 			   expr
 			   (current-module-clientc-import)
-			   #f)
+			   menv)
 			  :src `',expr)))
 	  (econs '<TILDE> args loc)))
       
@@ -654,7 +658,7 @@
 ;*    The grammar that parses texts (the [...] forms).                 */
 ;*---------------------------------------------------------------------*/
 (define *text-grammar*
-   (regular-grammar (cycles par-open bra-open par-poses bra-poses cset)
+   (regular-grammar (cycles par-open bra-open par-poses bra-poses cset menv)
 
       ((: (* (out ",[]\\")) #\])
        (let* ((port (the-port))
@@ -686,7 +690,7 @@
 	      (item (cset (the-substring 0 (-fx (the-length) 1))))
 	      (sexp (read/rp *hop-grammar* (the-port)
 			     cycles par-open bra-open
-			     par-poses bra-poses cset))
+			     par-poses bra-poses cset menv))
 	      (rest (ignore)))
 	  (if (string=? item "")
 	      (cons (list 'unquote sexp) rest)
@@ -734,13 +738,15 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-read #!optional
 		  (iport::input-port (current-input-port))
-		  (charset (hop-locale)))
+		  (charset (hop-locale))
+		  (menv #f))
    (if (closed-input-port? iport)
        (error 'hop-read "Illegal closed input port" iport)
        (begin
 	  ((hop-read-pre-hook) iport)
 	  (let* ((cset (charset-converter! charset (hop-charset)))
-		 (e (read/rp *hop-grammar* iport '() 0 0 '() '() cset)))
+		 (menv (or menv ((clientc-macroe (hop-clientc)))))
+		 (e (read/rp *hop-grammar* iport '() 0 0 '() '() cset menv)))
 	     ((hop-read-post-hook) iport)
 	     e))))
 
@@ -827,6 +833,7 @@
 (define (hop-load file-name
 		  #!key
 		  (env (interaction-environment))
+		  (menv #f)
 		  (mode 'load)
 		  (charset (hop-locale))
 		  (abase #t))
@@ -834,7 +841,8 @@
 	 (apath (cond
 		   ((string? abase) abase)
 		   (abase (dirname file-name))
-		   (else "."))))
+		   (else ".")))
+	 (menv (or memv ((clientc-macroe (hop-clientc))))))
       (if (not (string? path))
 	  (raise (instantiate::&io-file-not-found-error
 		    (proc 'hop-load)
@@ -852,7 +860,7 @@
 			  (case mode
 			     ((load)
 			      (let loop ((last #unspecified))
-				 (let ((sexp (hop-read port charset)))
+				 (let ((sexp (hop-read port charset menv)))
 				    (if (eof-object? sexp)
 					last
 					(let ((val (eval! sexp env)))
@@ -865,7 +873,7 @@
 					   (loop val))))))
 			     ((include)
 			      (let loop ((res '()))
-				 (let ((sexp (hop-read port charset)))
+				 (let ((sexp (hop-read port charset menv)))
 				    (if (eof-object? sexp)
 					(reverse! res)
 					(let ((val (eval! sexp env)))
@@ -898,7 +906,7 @@
 ;*    is #t and if the file has changed since the last load, it is     */
 ;*    reloaded.                                                        */
 ;*---------------------------------------------------------------------*/
-(define (%hop-load-once file env charset modifiedp abase)
+(define (%hop-load-once file env menv charset modifiedp abase)
    (with-trace 1 '%hop-load-once
       (trace-item "file=" file)
       (trace-item "env=" (if (evmodule? env) (evmodule-name env) ""))
@@ -946,6 +954,7 @@
 			 (hop-load f
 				   :mode 'load
 				   :env env
+				   :menv menv
 				   :charset charset
 				   :abase abase))
 		      (mutex-lock! *load-once-mutex*)
@@ -959,9 +968,10 @@
 (define (hop-load-once file
 		       #!key
 		       (env (interaction-environment))
+		       (menv #f)
 		       (charset (hop-locale))
 		       (abase #t))
-   (%hop-load-once file env charset #f abase))
+   (%hop-load-once file env menv charset #f abase))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-modified ...                                            */
@@ -969,9 +979,10 @@
 (define (hop-load-modified file
 			   #!key
 			   (env (interaction-environment))
+			   (menv #f)
 			   (charset (hop-locale))
 			   (abase #t))
-   (%hop-load-once file env charset #t abase))
+   (%hop-load-once file env menv charset #t abase))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-once-unmark! ...                                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue May 19 12:10:55 2009 (serrano)                */
+;*    Last change :  Tue May 19 13:53:59 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -233,11 +233,10 @@
 	 :features `(hop
 		     ,(string->symbol (format "hop-~a" (hop-branch)))
 		     ,(string->symbol (format "hop-~a" (hop-version))))
-	 :expanders `((labels ,(lambda (x e) (e (expand-once x) e)))
-		      (match-case ,(lambda (x e) (e (expand-once x) e)))))
+	 :expanders '(labels match-case))
       (init-clientc-compiler! :modulec compile-scheme-module
 	 :expressionc compile-scheme-expression
-	 :macroc (lambda (form env) env)
+	 :macroe (lambda () (cons 'to-be 'implemented))
 	 :filec compile-scheme-file
 	 :JS-expression JS-expression
 	 :JS-statement JS-statement
