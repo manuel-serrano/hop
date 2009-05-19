@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Wed May  6 14:07:24 2009 (serrano)                */
+/*    Last change :  Tue May 19 17:26:40 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
@@ -21,6 +21,8 @@ var hop_dashboard_container = false;
 var hop_dashboard_icon_size = 32;
 var hop_dashboard_interval = false;
 var hop_dashboard_opacity = "0.70";
+var hop_dashboard_panel_background = "#eee";
+var hop_dashboard_panel_opacity = "0.70";
 
 /*---------------------------------------------------------------------*/
 /*    hop_dashboard_start_applet ...                                   */
@@ -288,10 +290,10 @@ function hop_dashboard_control_panel_init() {
    node_style_set( div2, "position", "fixed" );
    node_style_set( div2, "display", "block" );
    node_style_set( div2, "z-index", "10000" );
-   node_style_set( div2, "background", "#eeeeee" );
-   node_style_set( div2, "-moz-opacity", hop_dashboard_opacity );
-   node_style_set( div2, "-webkit-opacity", hop_dashboard_opacity );
-   node_style_set( div2, "opacity", hop_dashboard_opacity );
+   node_style_set( div2, "background", hop_dashboard_panel_background );
+   node_style_set( div2, "-moz-opacity", hop_dashboard_panel_opacity );
+   node_style_set( div2, "-webkit-opacity", hop_dashboard_panel_opacity );
+   node_style_set( div2, "opacity", hop_dashboard_panel_opacity );
 
    div.onmouseover = function() {
       node_style_set( hop_dashboard_container, "-moz-opacity", "1" )
