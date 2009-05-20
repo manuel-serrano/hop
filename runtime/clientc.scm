@@ -70,7 +70,8 @@
 	    (path (make-file-path (hop-cache-directory)
 				  (string-append "clientc-"
 						 (integer->string (hop-port)))))
-	    (out (lambda (o p) (with-output-to-port p (lambda () (print o)))))))
+	    (out (lambda (o p) (with-output-to-port p (lambda () (print
+								  o)))))))
    ;; hook the client-code compiler
    (hop-clientc-set!
     (instantiate::clientc

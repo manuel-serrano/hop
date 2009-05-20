@@ -32,7 +32,22 @@
 				      #!key
 				      (bigloo-modules? #t)
 				      (store-exports-in-ht? #f)
-				      (store-exported-macros-in-ht? #f))))
+				      (store-exported-macros-in-ht? #f))
+	   (module-exported-macro-add! m::Compilation-Unit macro::pair)))
+
+(define (module-exported-macro-add! m::Compilation-Unit macro::pair)
+   (with-access::Compilation-Unit m (exported-macros)
+      (cond
+	 ((or (null? exported-macros)
+	      (pair? exported-macros))
+	  ;; inefficient...
+	  (set! exported-macros (append exported-macros (list macro))))
+	 ((hashtable? exported-macros)
+	  (add-macro-to-ht macro exported-macros))
+	 (else
+	  (error "scheme2js-module module-exported-macro-add!"
+		 "bad Compilation-Unit"
+		 exported-macros)))))
 
 ;; uses config 'module-resolver (if given). Should be a procedure that, given a
 ;; module name, returns a list of potential files that could contain the

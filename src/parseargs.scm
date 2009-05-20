@@ -236,7 +236,7 @@
 	 :expanders '(labels match-case))
       (init-clientc-compiler! :modulec compile-scheme-module
 	 :expressionc compile-scheme-expression
-	 :macroe (lambda () (cons 'to-be 'implemented))
+	 :macroe create-empty-hopscheme-macro-environment
 	 :filec compile-scheme-file
 	 :JS-expression JS-expression
 	 :JS-statement JS-statement

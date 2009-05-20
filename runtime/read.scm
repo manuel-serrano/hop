@@ -842,7 +842,7 @@
 		   ((string? abase) abase)
 		   (abase (dirname file-name))
 		   (else ".")))
-	 (menv (or memv ((clientc-macroe (hop-clientc))))))
+	 (menv (or menv ((clientc-macroe (hop-clientc))))))
       (if (not (string? path))
 	  (raise (instantiate::&io-file-not-found-error
 		    (proc 'hop-load)
