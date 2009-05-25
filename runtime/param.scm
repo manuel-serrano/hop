@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri May 15 10:47:06 2009 (serrano)                */
+;*    Last change :  Mon May 25 15:06:05 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -73,6 +73,9 @@
 	    
 	    (hop-restore-disk-cache::bool)
 	    (hop-restore-disk-cache-set! ::bool)
+
+	    (hop-svg-img-cache-size::int)
+	    (hop-svg-img-cache-size-set! ::int)
 	    
 	    (hop-http-request-error::obj)
 	    (hop-http-request-error-set! ::obj)
@@ -406,6 +409,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-restore-disk-cache
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-svg-img-cache-size ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-svg-img-cache-size
+   32)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-max-file-size-cache ...                                      */
