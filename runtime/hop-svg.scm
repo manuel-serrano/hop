@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Mon May 25 15:09:15 2009 (serrano)                */
+;*    Last change :  Mon May 25 15:12:19 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -65,7 +65,7 @@
 	 (set! svg-img-tree-cache
 	       (instantiate::cache-memory
 		  (max-entries (hop-svg-img-cache-size))
-		  (max-file-size (hop-max-file-size-cache)))))))
+		  (max-file-size (hop-svg-img-max-file-size-cache)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    svg-img-cache-put! ...                                           */

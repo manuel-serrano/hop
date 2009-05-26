@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon May 25 15:06:05 2009 (serrano)                */
+;*    Last change :  Mon May 25 15:12:03 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -76,6 +76,9 @@
 
 	    (hop-svg-img-cache-size::int)
 	    (hop-svg-img-cache-size-set! ::int)
+	    
+	    (hop-svg-img-max-file-size-cache::elong)
+	    (hop-svg-img-max-file-size-cache-set! ::elong)
 	    
 	    (hop-http-request-error::obj)
 	    (hop-http-request-error-set! ::obj)
@@ -411,12 +414,6 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
-;*    hop-svg-img-cache-size ...                                       */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-svg-img-cache-size
-   32)
-
-;*---------------------------------------------------------------------*/
 ;*    hop-max-file-size-cache ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-max-file-size-cache
@@ -427,6 +424,18 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-max-file-entry-cache
    16)
+
+;*---------------------------------------------------------------------*/
+;*    hop-svg-img-cache-size ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-svg-img-cache-size
+   32)
+
+;*---------------------------------------------------------------------*/
+;*    hop-svg-img-max-file-size-cache ...                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-svg-img-max-file-size-cache
+   #e8192)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-request-error ...                                       */

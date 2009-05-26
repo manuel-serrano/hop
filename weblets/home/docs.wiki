@@ -11,10 +11,12 @@
 
   * ,(<A> :href (make-file-name (home-dir) "articles/hop-lang/article.html")
           "Hop, a langage for programming the Web"), May 2006
-  * ,(<A> :href (make-file-name (home-dir) "articles/scheme2js/article.html")
-          "Compiling HOP client side code, 2007"), July 2007
   * ,(<A> :href (make-file-name (home-dir) "articles/hop-kit/article.html")
           "The Hop development kit, 2006"), June 2006
+  * ,(<A> :href (make-file-name (home-dir) "articles/scheme2js/article.html")
+          "Compiling HOP client side code, 2007"), July 2007
   * ,(<A> :href (make-file-name (home-dir) "articles/hop-multimedia/article.html")
           "Programming Web Multimedia Applications with the Hop development kit"), October 2007
+  * ,(<A> :href (make-file-name (home-dir) "articles/hop-perfs/article.html")
+          "Hop, a Fast Server for the Diffuse Web"), May 2009
 
