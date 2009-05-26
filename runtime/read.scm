@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Jan 14 10:30:51 2009 (serrano)                */
+;*    Last change :  Tue May 26 09:21:36 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -804,7 +804,11 @@
 					    (symbol? (car a))
 					    (every? string? (cdr a)))
 				       (let ((fs (map! add-dir (cdr a))))
-					  (evmodule-add-access! (car a) fs))))
+					  (cond-expand
+					     ((or bigloo3.1a bigloo3.1b bigloo3.2a)
+					      (evmodule-add-access! (car a) fs))
+					     (else
+					      (module-add-access! (car a) fs dir))))))
 				exp))))))))
 
 ;*---------------------------------------------------------------------*/

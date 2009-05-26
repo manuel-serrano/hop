@@ -1,0 +1,2207 @@
+<!-- 95% W3C COMPLIANT, 95% CSS FREE, RAW HTML -->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=ISO-8859-1">
+<title>Hop, a Fast Server for the Diffuse Web</title>
+ <style type="text/css">
+  <!--
+  pre { font-family: monospace }
+  tt { font-family: monospace }
+  code { font-family: monospace }
+  p.flushright { text-align: right }
+  p.flushleft { text-align: left }
+  span.sc { font-variant: small-caps }
+  span.sf { font-family: sans-serif }
+  span.skribetitle { font-family: sans-serif; font-weight: bolder; font-size: x-large; }
+  span.refscreen { }
+  span.refprint { display: none; }
+/*=====================================================================*/
+/*    serrano/diffusion/article/scmpkg/css/article.css                 */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Fri Jun 10 09:15:18 2005                          */
+/*    Last change :  Mon Mar 19 09:42:51 2007 (serrano)                */
+/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    Mail Article CSS                                                 */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    Default settngs                                                 */
+/*---------------------------------------------------------------------*/
+body {
+  display: block;
+  width: 45em;
+  margin: auto;
+  font-family: PostAntiqua;
+}
+
+p {
+  text-align: justify;
+}
+
+ul {
+  text-align: justify;
+}
+
+ol {
+  text-align: justify;
+}
+
+div.section {
+  margin-bottom: 1em;
+}
+
+tt {
+  font-family: Bitstream Vera Sans Mono, Andale Mono, monospace;
+  font-size: 95%;
+}
+
+div.abstract {
+  margin: 1em;
+  padding: 1px 10px 1px 10px;
+  background: #eef;
+  font-size: medium;
+  font-family: Trebuchet ms;
+  font-style: italic;
+  border: 1px dotted black;
+}
+
+div.footnote {
+  font-size: small;
+}
+
+div.skribesectiontitle {
+  padding-top: 0;
+  padding-bottom: 0em;
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+
+div.section-atitle h3 {
+  border-top: thin solid black;
+  border-bottom: thin solid black;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+div.document-title {
+  font-family: PostAntiqua;
+}
+
+div.document-title-title {
+  text-align: right;
+  font-weight: bold;
+  font-size: 30pt;
+  border-top: thin solid black;
+  border-bottom: medium solid black;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  margin-top: 10px;
+  padding-top: 10px;
+
+}
+
+div.document-title-authors {
+  margin-bottom: 2em;
+}
+
+span.document-author {
+  display: block;
+  text-align: right;
+  margin-bottom: 1em;
+}
+
+span.document-author span {
+  font-style: italic;
+}
+
+span.document-author span.document-author-name {
+  font-weight: bold;
+  font-size: large;
+  font-style: normal;
+  display: block;
+}
+
+span.document-author span.document-author-url {
+  font-style: normal;
+  display: block;
+}
+
+span.document-author span.document-author-email {
+  font-style: normal;
+  display: block;
+}
+
+div.prog-border {
+  border: 1px solid #aaa;
+}
+
+pre.scheme {
+  background-color: #ffffee;
+  border: thin dashed black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.uscheme {
+  background-color: #eeffee;
+  border: thin dashed black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.repl {
+  background-color: #eff;
+  border: thin dashed black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.c {
+  background-color: #eeffff;
+  border: thin solid black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.display {
+  background-color: #ffeeee;
+  border: thin solid black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+center.show {
+  background-color: #ffeeff;
+  border: thin solid black;
+  padding: 2pt;
+  margin: 0;
+  font-style: normal;
+  text-align: left;
+}
+
+center.show ul {
+  padding: 2pt;
+  padding-left: 14pt;
+  margin: 0;
+}
+
+div.references table {
+  font-size: small;
+}
+
+div.references table td {
+  font-size: small;
+}
+
+div.references table th {
+  font-size: small;
+}
+
+table.api-table {
+  border: none;
+  background-color: #ffe;
+}
+
+tr.api-table-prototype {
+   background-color: #ffc;
+}
+
+tr.api-table-header {
+   background-color: #fcf;
+}
+
+div.section#appendix p {
+   margin-left: 5%;
+}
+
+div.plan {
+  border: 1px dotted red;
+  margin-left: 10px;
+  margin-right: 10px;
+  padding: 5px;
+  color: #d00;
+  font-family: sans-serif;
+  font-style: italic;
+  font-size: small;
+  background: #eee;
+}
+
+/*---------------------------------------------------------------------*/
+/*    prgm ...                                                         */
+/*---------------------------------------------------------------------*/
+pre {
+  padding-left: 2px;
+  margin: 0;
+}
+
+pre.bigloo {
+  background-color: #dff;
+}
+
+pre.lhtml {
+  background-color: #fdf;
+}
+
+pre.hop {
+  background-color: #ffc;
+}
+
+pre.algo {
+  background-color: #efe;
+}
+
+pre.html {
+  background-color: #ccf;
+}
+
+pre.server {
+  background-color: #eee;
+  color: #007;
+}
+
+pre.client {
+  background-color: #eee;
+  color: #033;
+}
+
+pre.syntax {
+  background-color: #dfd;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Printing configuration                                           */
+/*---------------------------------------------------------------------*/
+@media print {
+/*--- Markup configuration --------------------------------------------*/
+pre {
+  font-size: 8pt;
+  font-family: courier;
+  line-height: 95%;
+}
+
+div.prog-border {
+  border: 0;
+}
+
+pre.prog {
+  font-size: 6pt;
+  line-height: 100%;
+}
+
+center.break-page-before {
+  page-break-before: always;
+}
+
+table.api-table {
+  border: 1px solid black;
+  padding: 10px;
+}
+
+table.api-table tr.api td {
+  padding-top: 5px;
+}
+
+table.api-table th {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+table.api-table td {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.api-table-prototype {
+  display: none;
+}
+
+.api-table-header {
+  display: none;
+}
+
+span.refscreen {
+  display: none;
+}
+
+span.refprint {
+  display: inline;
+}
+
+div.abstract {
+  border: none;
+  line-height: 100%;
+}
+
+div.section#Table-of-contents {
+  display: none;
+}
+
+div.section#Postscript-download {
+  display: none;
+}
+
+span.document-author span.document-author-name {
+  font-size: 13pt;
+  font-family: sans-serif;
+  font-weight: normal;
+}
+
+a {
+  text-decoration: none;
+}
+
+pre.scheme {
+  background-color: #ffffee;
+  border: none;
+}
+
+pre.uscheme {
+  background-color: #eeffee;
+  border: none;
+}
+
+pre.repl {
+  background-color: #eff;
+  border: none;
+}
+
+div.skribe-ending {
+  display: none;
+}
+
+div.print-plan {
+  display: none;
+}
+
+div.section-atitle h3 {
+  border-top: 0;
+  border-bottom: 0;
+}
+}
+/*=====================================================================*/
+/*    serrano/diffusion/article/hop-lang/css/sigplan.css               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Dec  1 11:00:10 2005                          */
+/*    Last change :  Wed Dec 14 13:46:49 2005 (serrano)                */
+/*    Copyright   :  2005 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    The SIGPLAN CSS                                                  */
+/*=====================================================================*/
+
+@media print {
+  div.document-title {
+    font-family: Palatino;
+/*     -moz-column-count: 1;                                           */
+    width: 100%;
+    text-align: center;
+  }
+
+  div.document-title-title {
+/*     width: 42pc;                                                    */
+    font-weight: bold;
+    font-size: 20pt;
+    text-align: center;
+    line-height: 120%;
+    border: 0;
+  }
+
+  div.document-title-authors {
+    display: table;
+/*     width: 42pc;                                                    */
+    text-align: center;
+    margin-bottom: 1.8cm;
+  }
+
+  div.document-authors {
+    width: 100%;
+    display: table-row;
+    text-align: center;
+  }
+
+  span.document-author {
+    text-align: center;
+    display: table-cell;
+    width: 50%;
+  }
+
+  span.document-author span.document-author-name {
+    font-size: large;
+    font-family: Palatino;
+    padding-bottom: 0.5em;
+  }
+
+  span.document-author span.document-author-affiliation {
+    font-style: normal;
+  }
+
+  span.document-author tt {
+    font-family: mono, sans-serif;
+    font-size: 8pt;
+  }
+
+  div.skribe-body {
+/*     -moz-column-count: 2;                                           */
+/*     -moz-column-rule: none;                                         */
+/*     -moz-column-gap: 2pc;                                           */
+/*     width: 42pc;                                                    */
+  }
+ 
+  body, div.abstract {
+    font-size: 9pt;
+    line-height: 110%;
+    font-family: Palatino;
+    font-style: normal;
+    padding: 0;
+    margin-top: 1in;
+    margin-left: .70in;
+    margin-right: .70in;
+    margin-bottom: 1in;
+  }
+
+  div.abstract {
+    font-size: 9pt;
+    line-height: 110%;
+    font-family: Palatino;
+    font-style: normal;
+    padding: 0;
+    margin-top: 1in;
+/*     margin-left: .70in;                                             */
+/*     margin-right: .70in;                                            */
+  }
+
+  div.abstract {
+    margin: 0;
+  }
+
+  div.section#References {
+/*     font-size: x-small;                                             */
+  }
+  
+  div.section#References table {
+    font-size: inherit;
+  }
+
+  @page { 
+    size: 8.5in 11in; 
+    margin-bottom: 5cm;
+  }
+}
+  -->
+ </style>
+</head>
+
+<body class="document">
+<div id="Hop-a-Fast-Server-for-the-Diffuse-Web-title" class="document-title">
+<div id="Hop-a-Fast-Server-for-the-Diffuse-Web-title" class="document-title-title">
+Hop, a Fast Server for the Diffuse Web</div>
+<div id="Hop-a-Fast-Server-for-the-Diffuse-Web-title" class="document-title-authors">
+<div class="document-authors">
+<span id="author1226" class="document-author">
+<span class="document-author-name" id="author1226">Manuel Serrano</span>
+<span class="document-author-affiliation" id="author1226">Inria Sophia Antipolis</span>
+<span class="document-author-address" id="author1226">INRIA Sophia Antipolis
+2004 route des Lucioles - BP 93
+F-06902 Sophia Antipolis, Cedex, 
+France
+</span>
+<span class="document-author-email" id="author1226"><a href="http://www.inria.fr/mimosa/Manuel.Serrano" class="http">http://www.inria.fr/mimosa/Manuel.Serrano</a></span>
+</span
+</div></div>
+</div>
+<div class="skribe-body">
+<div class="section" id="Abstract"><!-- Abstract -->
+<a name="Abstract"></a>
+<div class="section-atitle"><h3><font color="black">Abstract</font>
+</h3></div><div class="section">
+<p id='paragraph1765'
+><center id='center1764'
+><p id='paragraph1228'
+>The <em id='emph1227'
+>diffuse</em> Web is an alternative way of using the Web
+2.0 infrastructure for building personal diffuse applications.
+Systems that let users tune the temperature of their house with a
+cell-phone, check that the shutters are closed with a PDA, or select
+the music to be played on a Hi-Fi system with a PC are
+examples of the targeted applications.</p><p id='paragraph1231'
+>Diffuse Web applications have similarities with Web 2.0
+applications: <em id='emph1229'
+>i)</em> they rely on fast bi-directional
+interactions between servers and clients, and <em id='emph1230'
+>ii)</em> they make
+extensive use of non-cachable dynamic contents. On the other hand,
+diffuse applications have also an important difference with respect to
+traditional Web applications: they generally do not need to deal with
+a huge number of simultaneous users. That is, diffuse Web applications
+are built on top of standard technologies but they use it
+differently. Therefore they demand different optimizations and
+tunings.</p><p id='paragraph1234'
+>Hop (<tt id='tt1232'
+>http://hop.inria.fr</tt>) is a platform designed for
+building and running diffuse Web applications. Its software
+development kit contains two compilers, one interpreter, and a <em id='emph1233'
+>bootstrapped</em> Web server. That is, the Hop Web server is
+implemented in Hop. This paper shows that this implementation
+strategy allows Hop to dramatically outperform the popular
+mainstream Web servers for delivering dynamic contents. Contrary to
+most servers, Hop delivers static and dynamic contents at a
+comparable pace. The paper details the implementation of the Hop
+Web server.</p></center>
+</p></div><br>
+</div>
+<div class="section" id="Table-of-contents"><!-- Table of contents -->
+<a name="Table-of-contents"></a>
+<div class="section-atitle"><h3><font color="black">Table of contents</font>
+</h3></div><div class="section">
+<table cellspacing="1" cellpadding="1" width="100%" class="toc">
+<tbody>
+ <tr><td valign="top" align="left">1</td><td colspan="4" width="100%"><a href="article.html#Introduction">Introduction</a></td></tr>
+ <tr><td></td><td valign="top" align="left">1.1</td><td colspan="3" width="100%"><a href="article.html#The-context">The context</a></td></tr>
+ <tr><td></td><td valign="top" align="left">1.2</td><td colspan="3" width="100%"><a href="article.html#Organization-of-the-paper">Organization of the paper</a></td></tr>
+ <tr><td valign="top" align="left">2</td><td colspan="4" width="100%"><a href="article.html#The-implementation-of-the-HOP-Web-server">The implementation of the HOP Web server</a></td></tr>
+ <tr><td></td><td valign="top" align="left">2.1</td><td colspan="3" width="100%"><a href="article.html#The-HOP-programming-language-and-its-implementation">The HOP programming language and its implementation</a></td></tr>
+ <tr><td></td><td valign="top" align="left">2.2</td><td colspan="3" width="100%"><a href="article.html#The-overall-HOP-Web-server-architecture">The overall HOP Web server architecture</a></td></tr>
+ <tr><td></td><td valign="top" align="left">2.3</td><td colspan="3" width="100%"><a href="article.html#HOP-concurrency">HOP concurrency</a></td></tr>
+ <tr><td></td><td valign="top" align="left">2.4</td><td colspan="3" width="100%"><a href="article.html#Hop-pipeline-scheduler">Hop pipeline scheduler</a></td></tr>
+ <tr><td valign="top" align="left">3</td><td colspan="4" width="100%"><a href="article.html#Optimizations">Optimizations</a></td></tr>
+ <tr><td></td><td valign="top" align="left">3.1</td><td colspan="3" width="100%"><a href="article.html#Limiting-the-memory-allocation">Limiting the memory allocation</a></td></tr>
+ <tr><td></td><td valign="top" align="left">3.2</td><td colspan="3" width="100%"><a href="article.html#Persistent-connections">Persistent connections</a></td></tr>
+ <tr><td></td><td valign="top" align="left">3.3</td><td colspan="3" width="100%"><a href="article.html#Operating-system-interface">Operating system interface</a></td></tr>
+ <tr><td valign="top" align="left">4</td><td colspan="4" width="100%"><a href="article.html#Performance-study">Performance study</a></td></tr>
+ <tr><td></td><td valign="top" align="left">4.1</td><td colspan="3" width="100%"><a href="article.html#Performance-evaluation-caveat">Performance evaluation caveat</a></td></tr>
+ <tr><td></td><td valign="top" align="left">4.2</td><td colspan="3" width="100%"><a href="article.html#Experimental-Environment">Experimental Environment</a></td></tr>
+ <tr><td></td><td valign="top" align="left">4.3</td><td colspan="3" width="100%"><a href="article.html#Hop-vs-other-Web-servers">Hop vs other Web servers</a></td></tr>
+ <tr><td valign="top" align="left">5</td><td colspan="4" width="100%"><a href="article.html#Related-work">Related work</a></td></tr>
+ <tr><td valign="top" align="left">6</td><td colspan="4" width="100%"><a href="article.html#Conclusion">Conclusion</a></td></tr>
+ <tr><td valign="top" align="left">7</td><td colspan="4" width="100%"><a href="article.html#References">References</a></td></tr>
+</tbody>
+</table>
+</div><br>
+</div>
+<div class="section" id="Introduction"><!-- Introduction -->
+<a name="Introduction"></a>
+<div class="section-atitle"><h3><font color="black">1 Introduction</font>
+</h3></div><div class="section">
+<p id='paragraph1236'
+>The Web is the new ubiquitous platform where applications of
+tomorrow will be deployed. Though already wide, the Web will
+eventually become even wider when it connects all the appliances that
+surround us. The Web has already produced amazing new applications
+such as Google Map but a radically new way of thinking will be required.</p><p id='paragraph1237'
+>Our answer to the challenge of programming ubiquitous
+Web applications relies on a small number of principles [<a href="article.html#sgl:dls06" class="inbound">31</a>]. A Web application is not a federation of dynamic pages
+but a single, coherent program with multiple projections on servers or
+(perhaps roaming) clients. A typical application syndicates multiple
+data sources and, at the same time, is driven by multiple event
+streams.</p><p id='paragraph1238'
+>Managing home appliances and organizing multimedia streams are typical
+targets for these new Web applications. Building these applications
+requires appropriate programming languages whose semantics,
+compilation process and runtime environment must fit the technologies
+offered by the Web. This paper focuses on this latter aspect.</p><p id='paragraph1240'
+>Hop is a platform for programming ubiquitous, or <em id='emph1239'
+>diffuse</em>, Web applications [<a href="article.html#sgl:dls06" class="inbound">31</a>,<a href="article.html#serrano:mm07" class="inbound">33</a>,<a href="article.html#serrano:mmcn09" class="inbound">34</a>].  Its development kit contains two compilers, one
+interpreter, and one Web server. The first compiler is in charge of
+generating the native code executed by the server-side of the
+application. The second compiler produces JavaScript code executed by
+the client-side. The interpreter, which resides on the server, is used
+for fast prototyping. It has poor speed performance but since it may
+call compiled code and vice versa without any overhead, its speed is
+generally not a performance bottleneck.</p><p id='paragraph1242'
+>The Hop Web server has been specially designed and tuned for
+serving efficiently the HTTP requests needed by diffuse
+applications. This paper focuses on studying its performance.  It will
+be shown that using a <em id='emph1241'
+>bootstrapped</em> software
+architecture where the server is implemented and executed in the same
+runtime environment as that used to execute user programs, may lead to a
+major speed improvement in comparison to mainstream Web servers that
+rely on CGI or FastCGI protocols. More precisely, it will be shown
+that for serving dynamic contents, Hop outperforms traditional
+generalist Web servers by a factor that increases with the number of
+dynamic responses. The paper presents the software architecture and
+the implementation techniques deployed in Hop.</p><!-- The context -->
+<a name="The-context"></a>
+<div class="subsection-atitle"><h3>1.1 The context</h3></div><div class="subsection">
+<p id='paragraph1243'
+>The diffuse applications targeted by Hop use the Web
+differently than traditional Web 1.0 and 2.0 applications. They mostly
+use HTTP as a general purpose communication channel and they merely
+consider HTML and JavaScript as intermediate languages such as the
+ones used by compilers. The most important characteristics of diffuse
+Web applications are as follows.</p><ul class="itemize" id='itemize1249'
+><li>Most devices involved in the execution of a diffuse
+application may both act as server and as client. For instance, in a
+multimedia application, a PDA can be used to control the music being
+played as it can serve music files itself. That is, diffuse Web applications
+do not strictly implement a client-server architecture. They share some
+similarities with a peer-to-peer application.</li>
+<li>The applications frequently involve server-to-server,
+server-to-client, and client-to-server communications. For instance, a
+multimedia application playing music uses these communications for
+updating the state of all the GUIs controlling the music being played
+back.</li>
+<li>Programs are associated with URLs. Programs start when a
+Web browser requests such an URL. This generally loads a GUI on that
+browser. Apart from that initial transfer, most other communications
+will involve <em id='emph1246'
+>dynamic contents</em> which can either be dynamic
+HTML documents or serialized data structures.</li>
+<li>The number of simultaneous concurrent requests is small
+because in general, only one user raises the temperature of the
+heating system or raises the volume of the Hi-Fi system. Hence dealing
+efficiently with a large number of connections is not a topmost
+priority for the servers considered here.</li>
+</ul><p id='paragraph1250'
+>These characteristics have consequences on the implementation
+strategy a diffuse Web server should use. For instance, the first one,
+requires servers to have a small enough memory footprint to be
+embeddable inside small devices such as mobile phones. The second one
+requires servers to handle persistent connections efficiently. The
+third one demands short response times for dynamic documents. The
+fourth one impacts the concurrency model that should be deployed.
+Therefore, although diffuse Web applications probably have workloads
+that resemble those of Web 2.0 applications [<a href="article.html#nagpurkar:isowc08" class="inbound">25</a>], they demand dedicated implementation
+strategies. In practice, general purpose Web servers that are mostly
+optimized for dealing with a large number of simultaneous connections
+are not suitable for most diffuse applications.</p><p id='paragraph1253'
+>The vast majority of studies concerning the performance of
+Web servers concentrate on one crucial problem as old as the Web
+itself: sustaining the maximal throughput under heavy loads. This
+problem has been mostly addressed from a network/system programming
+perspective. For instance, a paper by Nahum <em id='emph1251'
+>et al.</em> [<a href="article.html#hbk:ton02" class="inbound">26</a>] surveys the impact on the performance of using
+various system services combinations. Another paper by Brech <em id='emph1252'
+>et
+al.</em> explores and compares the different ways to accept new
+connections on a socket [<a href="article.html#bpg:usenix04" class="inbound">6</a>].  The seminal 
+events-versus-threads dispute is more active than ever [<a href="article.html#ahtbd:usenix02" class="inbound">1</a>,<a href="article.html#bcb:hotos03" class="inbound">40</a>] and no clear consensus emerges. Hop
+is agnostic with respect to the concurrency model. Its software
+architecture supports various models that can be selected on demand.</p><p id='paragraph1255'
+>The long debated question regarding kernel-space servers
+versus user-space servers seems to be now over. Initially it has been
+observed that kernel-space servers outperformed user-space servers
+[<a href="article.html#jkrnt:usenix2001" class="inbound">13</a>], independently of the hosting operating
+systems. Adding zero-copy functions in the system API, such as the
+<tt id='tt1254'
+>sendfile</tt>, has changed the conclusion [<a href="article.html#pariag:sigops07" class="inbound">29</a>]. In addition, another study [<a href="article.html#shukla:cascon04" class="inbound">35</a>] has shown that the gap between kernel-space and
+user-space that prevailed in older implementations unsurprisingly
+becomes less significant when the percentage of requests concerning
+dynamically generated content increases. Since Hop is designed
+mainly for serving dynamic contents, this study is of premium
+importance.</p></div>
+<!-- Organization of the paper -->
+<a name="Organization-of-the-paper"></a>
+<div class="subsection-atitle"><h3>1.2 Organization of the paper</h3></div><div class="subsection">
+<p id='paragraph1260'
+>Section <strong id='bold1256'
+><a href="article.html#The-implementation-of-the-HOP-Web-server" class="inbound"><span class="refscreen">The implementation of the HOP Web server</span><span class="refprint">2</span></a></strong> presents the general Hop's software
+architecture. Then Section <strong id='bold1257'
+><a href="article.html#Optimizations" class="inbound"><span class="refscreen">Optimizations</span><span class="refprint">3</span></a></strong> shows
+how the architecture is actually implemented. Section <strong id='bold1258'
+><a href="article.html#Performance-study" class="inbound"><span class="refscreen">Performance study</span><span class="refprint">4</span></a></strong> presents the overall performance
+evaluation of the Hop Web server and compares it to other Web
+servers. It shows that Hop is significantly faster than all
+mainstream Web servers for serving dynamic documents. Section
+<strong id='bold1259'
+><a href="article.html#Related-work" class="inbound"><span class="refscreen">Related work</span><span class="refprint">5</span></a></strong> presents related work.</p></div>
+</div><br>
+</div>
+<div class="section" id="The-implementation-of-the-HOP-Web-server"><!-- The implementation of the HOP Web server -->
+<a name="The-implementation-of-the-HOP-Web-server"></a>
+<div class="section-atitle"><h3><font color="black">2 The implementation of the HOP Web server</font>
+</h3></div><div class="section">
+<p id='paragraph1261'
+>This section presents the general implementation of the Hop
+Web server. It first briefly sketches the Hop programming language
+and its execution model. Then, it shows the general architecture of
+the server.</p><!-- The HOP programming language and its implementation -->
+<a name="The-HOP-programming-language-and-its-implementation"></a>
+<div class="subsection-atitle"><h3>2.1 The HOP programming language and its implementation</h3></div><div class="subsection">
+<p id='paragraph1263'
+>Since the Hop programming language has already been
+presented in a previous paper [<a href="article.html#sgl:dls06" class="inbound">31</a>], only its main
+features are exposed here. Hop shares many characteristics with
+JavaScript. It belongs to the functional languages family. It relies
+on a garbage collector for automatically reclaiming unused allocated
+memory. It checks types dynamically at runtime. It is fully polymorphic
+(i.e., the <em id='emph1262'
+>universal</em> identity function can be implemented).
+Hop has also several differences with JavaScript, the most
+striking one being its parenthetical syntax closer to HTML than to C-like
+languages. Hop is a full-fledged programming language so it offers
+an extensive set of libraries. It advocates a CLOS-like object oriented
+programming [<a href="article.html#bdgkkm:sign88" class="inbound">5</a>]. Finally, it fosters a model
+where a Web application is conceived as a whole. For that, it relies
+on a single formalism that embraces simultaneously server-side and
+client-side of the applications. Both sides communicate by means of
+function calls and signal notifications. Each Hop program is
+automatically associated with an unique URL that is used to start the
+program on the server. The general execution pattern of a Hop
+program is as follows:</p><ul class="itemize" id='itemize1271'
+><li>When an URL is intercepted by a server for the first time,
+the server <em id='emph1264'
+>automatically</em> loads the associated program
+and the libraries it depends on.</li>
+<li>Programs first authenticate the user they are to be
+executed on behalf of and they check the permissions of that user.</li>
+<li>In order to <em id='emph1267'
+>load</em> or <em id='emph1268'
+>install</em> the
+program on the client side, the server elaborates an abstract syntax
+tree (AST) and compiles it on the fly to generate a HTML document that
+is sent to the client.</li>
+<li>The server side of the execution can be either executed
+by natively compiled code or by the server-side interpreter. If performance
+matters compiled code has to be preferred. However, for most applications, 
+interpreted code turns out to be fast enough.</li>
+</ul><p id='paragraph1272'
+>Here is an example of a simple Hop program.</p><DIV class='prog-border'><pre class="hop" id='prog1278'
+>(<font color="#6959cf"><strong id='bold1766'
+>define-service</strong></font><font color="#6959cf"><strong id='bold1768'
+> </strong></font>(<font color="#6959cf"><strong id='bold1770'
+>hello</strong></font>)
+   (<font color="#1919af"><strong id='bold1772'
+>&lt;HTML&gt;</strong></font> (<font color="#1919af"><strong id='bold1774'
+>&lt;DIV&gt;</strong></font> <strong id='bold1776'
+>:onclick</strong> ~(alert <font color="red">&quot;world!&quot;</font>) <font color="red">&quot;Hello&quot;</font>)))
+</pre>
+</DIV><p id='paragraph1291'
+>Provided a Hop server running on the local host,
+browsing the URL <tt id='tt1279'
+>http://localhost:8080/hop/hello</tt> loads 
+the program and executes the <font color="blue"><tt id='tt1280'
+>hello</tt></font> service. Contrary to
+HTML, Hop's markups (i.e., <font color="blue"><tt id='tt1282'
+>&lt;HTML&gt;</tt></font> and <font color="blue"><tt id='tt1284'
+>&lt;DIV&gt;</tt></font>) are
+node <em id='emph1286'
+>constructors</em>.  That is, the service <font color="blue"><tt id='tt1287'
+>hello</tt></font>
+<em id='emph1289'
+>elaborates</em> an AST that is compiled on-the-fly into HTML when the
+result is transmitted to the client. It must be emphasized here, that
+a two phased evaluation process is strongly different from embedded
+scripting language such as PHP. The AST representing the GUI exists on
+the client as well as on the server. This brings flexibility  because it
+gives the server opportunities to deploy optimized strategies for
+building and manipulating the ASTs. For instance, in order to avoid
+allocating an new AST each time a <tt id='tt1290'
+>hello</tt> request is intercepted
+by the server, the AST can be elaborated at load-time and stored in a
+global variable that is reused for each reply.</p><DIV class='prog-border'><pre class="hop" id='prog1299'
+>(<font color="#6959cf"><strong id='bold1780'
+>define</strong></font><font color="#6959cf"><strong id='bold1782'
+> </strong></font><font color="#6959cf"><strong id='bold1784'
+>hello-ast</strong></font>
+  (<font color="#1919af"><strong id='bold1786'
+>&lt;HTML&gt;</strong></font> (<font color="#1919af"><strong id='bold1788'
+>&lt;DIV&gt;</strong></font> <strong id='bold1790'
+>:onclick</strong> ~(alert <font color="red">&quot;world!&quot;</font>) <font color="red">&quot;Hello&quot;</font>)))
+
+(<font color="#6959cf"><strong id='bold1794'
+>define-service</strong></font><font color="#6959cf"><strong id='bold1796'
+> </strong></font>(<font color="#6959cf"><strong id='bold1798'
+>hello</strong></font>) hello-ast)
+</pre>
+</DIV></div>
+<!-- The overall HOP Web server architecture -->
+<a name="The-overall-HOP-Web-server-architecture"></a>
+<div class="subsection-atitle"><h3>2.2 The overall HOP Web server architecture</h3></div><div class="subsection">
+<p id='paragraph1302'
+>As most servers, when Hop intercepts a request it builds a
+reifying data structure which contains general informations such as
+the requested URL, the IP address of the client, and the date of the
+connection. In addition, Hop also proceeds to an early request
+authentication. That is, using the optional HTTP <tt id='tt1300'
+>authorization</tt>
+field, it automatically searches in its database of declared users one
+whose login matches. If this query fails, a default 
+<em id='emph1301'
+>anonymous</em> user is associated with the request. This allows Hop to
+handle all requests on behalf of one particular user. Permissions to
+access the file system and to execute programs are granted
+individually, user by user.</p><p id='paragraph1303'
+>Once users are authenticated and the
+request fully reified Hop builds a response object. This
+transformation is accomplished by a Hop program that can be changed
+as needed by users [<a href="article.html#serrano:sfp06" class="inbound">32</a>]. This gives flexibility
+to Hop that can therefore be used in various contexts such as smart
+proxies, application servers, load balancers, etc.  It also strongly
+constraints its implementation because it forbids some classical
+optimizations. For instance it prevents Hop from re-using already
+allocated objects for representing requests because since these
+objects are used by user-defined programs they have dynamic extent.</p><p id='paragraph1304'
+>Hop uses a traditional pipeline for processing HTTP requests,
+whose graphical representation is given in Figure <a href="article.html#pipeline" class="inbound">1</a>. The advantages of using such an architecture for
+implementing Web servers have been deeply studied and are now well
+understood [<a href="article.html#wcb:sosp01" class="inbound">42</a>,<a href="article.html#yzj:sigops02" class="inbound">44</a>,<a href="article.html#cked:www05" class="inbound">9</a>].  This
+Section presents the Hop pipeline without addressing yet the problem
+of scheduling its execution flow. In particular, it
+is not assumed here any sequential or parallel execution of the
+various stages. The scheduling strategies will be described in
+Sections <a href="article.html#HOP-concurrency" class="inbound"><span class="refscreen">HOP concurrency</span><span class="refprint">2.3</span></a> and <a href="article.html#Hop-pipeline-scheduler" class="inbound"><span class="refscreen">Hop pipeline scheduler</span><span class="refprint">2.4</span></a>.</p><center id='center1307'
+><br class="figure" id='pipeline'
+><a name="pipeline"></a>
+<img src="pipeline.jpg" border="0" alt="" width="80%"><br>
+<center><small><strong>Fig. 1:</strong> <em id='it1305'
+>The 4-stage HOP's pipeline. </em></small></center><br></center>
+<p id='paragraph1308'
+>In the Hop's pipeline, the first stage ("Accept"), establishes
+connections with clients. The second stage ("Request"), parses
+HTTP requests and builds the data structure reifying the authenticated
+requests. The stage "Response" elaborates responses to the
+requests. As suggested by the work on SEDA [<a href="article.html#wcb:sosp01" class="inbound">42</a>],
+provision is taken to let the Hop scheduler handle static replies
+and dynamic replies differently. This is reflected by the pipeline
+fork after the "Response" stages. Persistent connections are
+handled by looping backward in the pipeline after the "Reply" stages.
+In order to avoid cluttering the next pipeline figures, keep-alive 
+connections will be no longer presented.</p><p id='paragraph1317'
+>The last two stages of the pipeline spawn user Hop programs
+executions. Services, such as <font color="blue"><tt id='tt1309'
+>hello</tt></font> defined in Section 
+<a href="article.html#The-HOP-programming-language-and-its-implementation" class="inbound"><span class="refscreen">The HOP programming language and its implementation</span><span class="refprint">2.1</span></a>,
+are executed during the "Response" stage. For instance, when the
+server handles the request <tt id='tt1311'
+>http://localhost:8080/hop/hello</tt> the
+"Response" stage establishes the connection between the absolute
+path of the request URL, namely <tt id='tt1312'
+>/hop/hello</tt>, and the defined
+service <font color="blue"><tt id='tt1313'
+>hello</tt></font>. It then invokes the latter. In this
+particular case, this service returns an AST representing a HTML tree.
+The "Response" stage wraps the values returned by services into
+<font color="blue"><tt id='tt1315'
+>response</tt></font> objects that are used by the final "Reply"
+stages. The "Static reply" stage handles static files or constant
+strings. It simply sends the characters composing the response to the
+clients. The "Dynamic reply" stage handles all other cases. When
+a dynamic response is an AST, this stage traverses the structure for
+compiling it on the fly into a regular HTML or XHTML document. That
+traversal can be controlled by user programs. The AST is represented
+by an object hierarchy that can be extended by user programs and the
+methods that implement the traversal can be overridden.</p><p id='paragraph1318'
+>Server side executions can either involve compiled codes or
+interpreted codes. Server-side interpreted code has not been optimized
+for performance but for flexibility. Hence the performance ratio
+between the two execution modes is strongly in favor of the former.</p><p id='paragraph1320'
+>Flexibility is the main motivation for separating the
+elaboration of an AST and its compilation into a final document.  As
+already mentioned in Section <a href="article.html#The-HOP-programming-language-and-its-implementation" class="inbound"><span class="refscreen">The HOP programming language and its implementation</span><span class="refprint">2.1</span></a> this gives users the opportunity to
+<em id='emph1319'
+>cache</em> ASTs. It also allows programs to re-use the same tree in
+different contexts. For instance, a same tree can be once compiled to HTML
+4.01 and once to XHTML 1.0, depending on the capacities of the requesters
+that are identified in the HTTP request header.</p></div>
+<!-- HOP concurrency -->
+<a name="HOP-concurrency"></a>
+<div class="subsection-atitle"><h3>2.3 HOP concurrency</h3></div><div class="subsection">
+<p id='paragraph1321'
+>Hop aims at alleviating as much as possible the complexity
+of programming diffuse applications on the Web. This motivation has
+deeply impacted the overall design of the language.  For instance, the
+language relies on a garbage collector, higher order functions, full
+polymorphism, and transparent serialization for function calls that
+traverse the network, because all these features make programs easier
+to write and to maintain. Obviously, the concurrency model is also
+another fundamental aspect of the language which has been impacted by
+the general Hop's philosophy. The concurrency model has been mainly
+designed with expressiveness and simplicity of programming in mind,
+more than runtime speed.</p><p id='paragraph1322'
+>In Hop, responses to HTTP requests are all produced by user
+defined programs. This characteristic allows users to change the whole
+behavior of the server. This also deeply impacts its implementation
+because the concurrency model has to accommodate the spawning of user
+programs from various pipeline stages.  Since running these programs
+may be unpredictably long, provisions have to be taken to execute them
+without blocking the entire server. That is, the server must still be
+able to answer other requests while executing user programs. This
+requires the server to be able to process multiple requests in
+parallel.</p><p id='paragraph1323'
+>Although some previous studies might lead us to think that
+avoiding processes and threads by using an event-driven model can increase
+the speed [<a href="article.html#pdz:usenix99" class="inbound">28</a>,<a href="article.html#wcb:sosp01" class="inbound">42</a>], this form or
+concurrency forces programs to adopt a discipline that consists in
+splitting execution into a list of small call-backs that are scheduled
+by an event loop. Each of these call-backs must be as fast and
+short as possible in order to avoid monopolizing the CPU for too
+long. We have considered that organizing user programs into a well
+balanced list of call-backs was an unacceptable burden for the
+programmers. Hence, in spite of any performance considerations, we have
+decided to give up with pure event-driven models for Hop.</p><p id='paragraph1327'
+>Currently Hop relies on a preemptive multi-threaded execution
+for user programs. However, the server and more precisely, the
+pipeline scheduler, is <em id='emph1324'
+>independent</em> of the concurrency model
+of user programs, as long as they are executed in parallel with the
+stages of the pipeline. Hence, alternative concurrency models such as
+<em id='emph1325'
+>cooperative threads</em> or <em id='emph1326'
+>software memory
+transactions</em> could be used in Hop. This independence also allows
+many Web architectures to be used for scheduling the Hop
+pipeline. For instance, Hop may use multi-processes, multi-threads,
+pipeline [<a href="article.html#yzj:sigops02" class="inbound">44</a>,<a href="article.html#cked:www05" class="inbound">9</a>], AMPED [<a href="article.html#pdz:usenix99" class="inbound">28</a>] or SYMPED [<a href="article.html#pariag:sigops07" class="inbound">29</a>], or a mix of
+all of them.  In order to avoid early decisions, we have extracted the
+Hop scheduler from the core implementation of the server. That is,
+when the server is spawned, the administrator can select his scheduler
+amongst a set of predefined schedulers or provide his
+own. Hop pipeline schedulers are actually regular Hop user
+programs because the API that connects the scheduler to the server is
+part of the standard Hop library. The rest of this section
+emphasizes the simplicity of developing and prototyping new
+schedulers.  In particular, it will be shown that adding a new
+scheduler is generally as simple as defining a new class and a
+couple of new methods. Using the server interpreter this can even
+been tested without any recompilation.</p></div>
+<!-- Hop pipeline scheduler -->
+<a name="Hop-pipeline-scheduler"></a>
+<div class="subsection-atitle"><h3>2.4 Hop pipeline scheduler</h3></div><div class="subsection">
+<p id='paragraph1338'
+>The Hop pipeline scheduler is implemented using a class
+hierarchy whose root is an abstract class named <font color="blue"><tt id='tt1328'
+>scheduler</tt></font>.
+Three methods <font color="blue"><tt id='tt1330'
+>accept</tt></font>, <font color="blue"><tt id='tt1332'
+>spawn</tt></font>, and <font color="blue"><tt id='tt1334'
+>stage</tt></font>
+implement the pipeline machinery. The Hop Web server provides
+several concrete subclasses of <font color="blue"><tt id='tt1336'
+>scheduler</tt></font> that can be
+selected using command line switches or by user programs. Extra user
+implementations can also be provided to Hop on startup. This feature
+might be used to easily test new scheduling strategies.</p><DIV class='prog-border'><pre class="hop" id='prog1348'
+>(abstract-class scheduler)
+
+(<font color="#6959cf"><strong id='bold1800'
+>define-generic</strong></font><font color="#6959cf"><strong id='bold1802'
+> </strong></font>(<font color="#6959cf"><strong id='bold1804'
+>accept</strong></font> s<font color="#00cf00"><strong id='bold1806'
+>::scheduler</strong></font> socket))
+(<font color="#6959cf"><strong id='bold1808'
+>define-generic</strong></font><font color="#6959cf"><strong id='bold1810'
+> </strong></font>(<font color="#6959cf"><strong id='bold1812'
+>spawn</strong></font> s<font color="#00cf00"><strong id='bold1814'
+>::scheduler</strong></font> proc . o))
+(<font color="#6959cf"><strong id='bold1816'
+>define-generic</strong></font><font color="#6959cf"><strong id='bold1818'
+> </strong></font>(<font color="#6959cf"><strong id='bold1820'
+>stage</strong></font> s<font color="#00cf00"><strong id='bold1822'
+>::scheduler</strong></font> th proc . o))
+</pre>
+</DIV><p id='paragraph1349'
+>In this section, the general pipeline implementation is
+presented, followed by several concrete schedulers. For the sake of
+simplicity many details of the actual implementation are eluded. 
+Exception handling is amongst them.</p><!-- The pipeline implementation -->
+<a name="The-pipeline-implementation"></a>
+<div class="subsubsection-atitle"><h4>2.4.1 The pipeline implementation</h4></div><div class="subsubsection">
+<p id='paragraph1352'
+>When the Hop Web server is started, it first creates a
+socket that listens to new connections. The function <font color="blue"><tt id='tt1350'
+>make-server-socket</tt></font> of the Hop standard API takes one mandatory
+argument, a port number, and one optional argument, a backlog size:</p><DIV class='prog-border'><pre class="hop" id='prog1356'
+>(define-parameter port 8080)
+(define-parameter somaxconn 128)
+
+(<font color="#6959cf"><strong id='bold1824'
+>define</strong></font><font color="#6959cf"><strong id='bold1826'
+> </strong></font><font color="#6959cf"><strong id='bold1828'
+>socket-server</strong></font> (make-server-socket (port) <strong id='bold1830'
+>:backlog</strong> (somaxconn)))
+</pre>
+</DIV><p id='paragraph1358'
+>Once the command line is parsed and the <em id='emph1357'
+>Runtime Command</em> file
+loaded, the pipeline scheduler is created by instantiating the
+class corresponding to the selected scheduler.</p><DIV class='prog-border'><pre class="hop" id='prog1368'
+>(define-parameter scheduling-strategy 'pool)
+(define-parameter max-threads 20)
+
+(<font color="#6959cf"><strong id='bold1832'
+>define</strong></font><font color="#6959cf"><strong id='bold1834'
+> </strong></font><font color="#6959cf"><strong id='bold1836'
+>pipeline-scheduler</strong></font>
+   (<strong id='bold1838'
+>case</strong> (scheduling-strategy)
+      ((nothread) (<strong id='bold1839'
+>instantiate</strong><font color="#00cf00"><strong id='bold1840'
+>::nothread-scheduler</strong></font>))
+      ((one-to-one) (<strong id='bold1842'
+>instantiate</strong><font color="#00cf00"><strong id='bold1843'
+>::one-to-one-scheduler</strong></font>))
+      ((pool) (<strong id='bold1845'
+>instantiate</strong><font color="#00cf00"><strong id='bold1846'
+>::pool-scheduler</strong></font> (size (max-threads))))
+      ...))
+</pre>
+</DIV><p id='paragraph1369'
+>The main server loop is entered with:</p><DIV class='prog-border'><pre class="hop" id='prog1370'
+>(accept pipeline-scheduler socket-server)
+</pre>
+</DIV><p id='paragraph1377'
+>The function <font color="blue"><tt id='tt1371'
+>accept</tt></font> is a <em id='emph1373'
+>generic
+function</em> function [<a href="article.html#bdgkkm:sign88" class="inbound">5</a>]. That is, a function
+whose default implementation might be overridden by <em id='emph1374'
+>methods</em>. When a generic function is called, the actual
+implementation, i.e., the method to be executed, is chosen according
+to the dynamic types of the arguments of the call. The default
+implementation of <font color="blue"><tt id='tt1375'
+>accept</tt></font> is as follows:</p><DIV class='prog-border'><pre class="hop" id='prog1383'
+><em id='it1848'
+>1: </em>(<font color="#6959cf"><strong id='bold1849'
+>define-generic</strong></font><font color="#6959cf"><strong id='bold1851'
+> </strong></font>(<font color="#6959cf"><strong id='bold1853'
+>accept</strong></font> S<font color="#00cf00"><strong id='bold1855'
+>::scheduler</strong></font> serv)
+<em id='it1857'
+>2: </em>   (<strong id='bold1858'
+>let</strong> loop ()
+<em id='it1859'
+>3: </em><a name="3" class="mark"></a>      (<strong id='bold1860'
+>let</strong> ((sock (socket-accept serv))) 
+<em id='it1861'
+>4: </em><a name="4" class="mark"></a>         (spawn S stage-request sock 0) 
+<em id='it1862'
+>5: </em>         (loop))))
+</pre>
+</DIV><p id='paragraph1388'
+>On line <em id='it1384'
+><i id='line-ref'
+><a href="article.html#3" class="inbound">3</a></i></em>, a new connection is established. The
+request starts to be processed on line <em id='it1385'
+><i id='line-ref'
+><a href="article.html#4" class="inbound">4</a></i></em>. The function 
+<font color="blue"><tt id='tt1386'
+>spawn</tt></font> being also a generic function, its actual implementation
+depends on the dynamic type of the scheduler.</p><p id='paragraph1407'
+>The <font color="blue"><tt id='tt1389'
+>spawn</tt></font> function requires at least two
+parameters: a scheduler (<font color="blue"><tt id='tt1391'
+>S</tt></font>) and a function (<font color="blue"><tt id='tt1393'
+>stage-request</tt></font>) which can be considered as a <em id='emph1395'
+>continuation</em>.
+The function <font color="blue"><tt id='tt1396'
+>spawn</tt></font> starts an <em id='emph1398'
+>engine</em> which calls
+the function with the scheduler <font color="blue"><tt id='tt1399'
+>S</tt></font>, the engine itself, and
+all the other optional parameters <font color="blue"><tt id='tt1401'
+>spawn</tt></font> has received. As it
+will be presented in the next sections, the concurrency model used
+for executing the pipeline entirely depends on the actual
+implementation of the scheduler which may override the definition of
+<font color="blue"><tt id='tt1403'
+>spawn</tt></font>. This gives the freedom to each scheduler to use an
+implementation of its own for <em id='emph1405'
+>creating</em> and <em id='emph1406'
+>spawning</em> new engines. That is, one scheduler may implement its
+engine with sequential functional calls, another one may implement it
+with threads, and a third one could implement it with processes.</p><p id='paragraph1410'
+>The function <font color="blue"><tt id='tt1408'
+>stage-request</tt></font> implements the second
+stage of the pipeline. It parses the HTTP header and body in order to
+create the object denoting the HTTP request.</p><DIV class='prog-border'><pre class="hop" id='prog1414'
+><em id='it1863'
+>1: </em>(<font color="#6959cf"><strong id='bold1864'
+>define</strong></font><font color="#6959cf"><strong id='bold1866'
+> </strong></font>(<font color="#6959cf"><strong id='bold1868'
+>stage-request</strong></font> S th sock tmt)
+<em id='it1870'
+>2: </em><a name="2" class="mark"></a>  (<strong id='bold1871'
+>let</strong> ((req (http-parse-request sock tmt)))
+<em id='it1872'
+>3: </em>    (stage S th stage-response req)))
+</pre>
+</DIV><p id='paragraph1435'
+>The request is parsed on line <em id='it1415'
+><i id='line-ref'
+><a href="article.html#2" class="inbound">2</a></i></em>. The function
+<font color="blue"><tt id='tt1416'
+>http-parse-request</tt></font> reads the characters available on the
+socket <font color="blue"><tt id='tt1418'
+>sock</tt></font> with a timeout <font color="blue"><tt id='tt1420'
+>tmt</tt></font>. A value of <tt id='tt1422'
+>0</tt> means no timeout at all. Parsing the request may raise an error
+that will be caught by an exception handler associated with the running
+thread. This handler is in charge of aborting the pipeline. Once the
+<em id='emph1423'
+>request</em> object is created and bound to the variable <font color="blue"><tt id='tt1424'
+>req</tt></font> (see on line <em id='it1426'
+><i id='line-ref'
+><a href="article.html#2" class="inbound">2</a></i></em>), the third stage of the pipeline is
+entered. The function <font color="blue"><tt id='tt1427'
+>stage</tt></font> is the last generic function
+defined by the <tt id='tt1429'
+>scheduler</tt> class. Although its semantics is
+equivalent to that of <tt id='tt1430'
+>spawn</tt> there is a point in supporting two
+different functions. As it will be illustrated in the next sections,
+distinguishing <font color="blue"><tt id='tt1431'
+>spawn</tt></font> and <font color="blue"><tt id='tt1433'
+>stage</tt></font> is needed for
+enlarging the scope of possible scheduler implementations.</p><p id='paragraph1440'
+>The function <font color="blue"><tt id='tt1436'
+>stage-response</tt></font> creates a <em id='emph1438'
+>response</em>
+object from a <em id='emph1439'
+>request</em> object. It is implemented as:</p><DIV class='prog-border'><pre class="hop" id='prog1445'
+><em id='it1873'
+>1: </em>(<font color="#6959cf"><strong id='bold1874'
+>define</strong></font><font color="#6959cf"><strong id='bold1876'
+> </strong></font>(<font color="#6959cf"><strong id='bold1878'
+>stage-response</strong></font> S th req)
+<em id='it1880'
+>2: </em>  (<strong id='bold1881'
+>let*</strong> ((rep (request-&gt;response req))
+<em id='it1882'
+>3: </em>         (p (<strong id='bold1883'
+>if</strong> (http-response-static? rep)
+<em id='it1884'
+>4: </em>                stage-static-answer
+<em id='it1885'
+>5: </em>                stage-dynamic-answer)))
+<em id='it1886'
+>6: </em>    (stage S th p req rep)))
+</pre>
+</DIV><p id='paragraph1450'
+>The two functions <font color="blue"><tt id='tt1446'
+>stage-static-answer</tt></font> and 
+<font color="blue"><tt id='tt1448'
+>stage-dynamic-answer</tt></font> being similar only one is presented here:</p><DIV class='prog-border'><pre class="hop" id='prog1453'
+>(<font color="#6959cf"><strong id='bold1887'
+>define</strong></font><font color="#6959cf"><strong id='bold1889'
+> </strong></font>(<font color="#6959cf"><strong id='bold1891'
+>stage-static-answer</strong></font> S th req rep)
+   (stage-answer S th req rep))
+</pre>
+</DIV><p id='paragraph1454'
+>Using two functions instead of one gives the scheduler the
+opportunity to deploy different strategies for dealing with static and
+dynamic requests [<a href="article.html#wcb:sosp01" class="inbound">42</a>].</p><DIV class='prog-border'><pre class="hop" id='prog1460'
+>(<font color="#6959cf"><strong id='bold1893'
+>define</strong></font><font color="#6959cf"><strong id='bold1895'
+> </strong></font>(<font color="#6959cf"><strong id='bold1897'
+>stage-answer</strong></font> S th id req rep)
+  (<strong id='bold1899'
+>let*</strong> ((sock (http-request-socket req))
+         (conn (http-response rep sock)))
+     (<strong id='bold1900'
+>if</strong> (keep-alive? conn)
+         (<strong id='bold1901'
+>if</strong> (= (scheduler-load S) 100)
+             <font color="darkmagenta"><em id='it1902'
+>;; use a minimal timeout (1mus)</em></font>
+             (stage S th stage-request sock 1))
+             <font color="darkmagenta"><em id='it1904'
+>;; use the default timeout (3ms)</em></font>
+             (stage S th stage-request sock 3000))
+         (socket-close sock)))
+</pre>
+</DIV><p id='paragraph1461'
+>After this sketch of the pipeline implementation the next
+sections present several actual scheduler implementations.</p></div>
+<!-- The row pipeline scheduler -->
+<a name="The-row-pipeline-scheduler"></a>
+<div class="subsubsection-atitle"><h4>2.4.2 The row pipeline scheduler</h4></div><div class="subsubsection">
+<p id='paragraph1466'
+>Several Hop schedulers execute the stages of the pipeline
+sequentially, that is, they associate a new thread or a new process with
+each newly established connection that is used all along
+the pipeline. In order to alleviate the implementation of new schedulers
+that belong to this category, Hop provides a dedicated abstract
+class, namely <font color="blue"><tt id='tt1462'
+>row-scheduler</tt></font>, that overrides the <font color="blue"><tt id='tt1464'
+>stage</tt></font>
+generic function.</p><DIV class='prog-border'><pre class="hop" id='prog1472'
+>(abstract-class row-scheduler<font color="#00cf00"><strong id='bold1906'
+>::scheduler</strong></font>)
+
+(<font color="#6959cf"><strong id='bold1908'
+>define-method</strong></font><font color="#6959cf"><strong id='bold1910'
+> </strong></font>(<font color="#6959cf"><strong id='bold1912'
+>stage</strong></font> S<font color="#00cf00"><strong id='bold1914'
+>::row-scheduler</strong></font> t p . o) (<strong id='bold1916'
+>apply</strong> p S t o))
+</pre>
+</DIV><p id='paragraph1477'
+>When no threads are used, jumping from one stage to another
+is implemented as a traditional function call. Hence, the implementation
+of the <font color="blue"><tt id='tt1473'
+>stage</tt></font> method of a <font color="blue"><tt id='tt1475'
+>row-scheduler</tt></font>, just consists
+in calling the function it has received as second argument.</p></div>
+<!-- The nothread pipeline scheduler -->
+<a name="The-nothread-pipeline-scheduler"></a>
+<div class="subsubsection-atitle"><h4>2.4.3 The nothread pipeline scheduler</h4></div><div class="subsubsection">
+<p id='paragraph1480'
+>The simplest form of scheduler implements no parallelism at
+all. Within an infinite loop, the <font color="blue"><tt id='tt1478'
+>nothread</tt></font> scheduler waits
+for a new connection to be established, it then executes in sequence
+all the stages of the pipeline and it loops back, waiting for new
+connections (see Figure <a href="article.html#nothread-pipeline" class="inbound">2</a>).</p><center id='center1483'
+><br class="figure" id='nothread-pipeline'
+><a name="nothread-pipeline"></a>
+<img src="nothread.jpg" border="0" alt="" width="60%"><br>
+<center><small><strong>Fig. 2:</strong> <em id='it1481'
+>The nothread pipeline scheduler. </em></small></center><br></center>
+<p id='paragraph1488'
+>Implementing the <font color="blue"><tt id='tt1484'
+>nothread</tt></font> scheduler is
+straightforward because it only requires to override the 
+generic function <font color="blue"><tt id='tt1486'
+>spawn</tt></font> with a method that merely 
+calls the procedure it receives with the optional arguments and
+a dummy thread that is created by the scheduler. This thread is never
+used but it is required for the sake of compatibility with the other
+schedulers.</p><DIV class='prog-border'><pre class="hop" id='prog1501'
+>(<strong id='bold1917'
+>class</strong> nothread-scheduler<font color="#00cf00"><strong id='bold1918'
+>::row-scheduler</strong></font>)
+
+(<font color="#6959cf"><strong id='bold1920'
+>define</strong></font><font color="#6959cf"><strong id='bold1922'
+> </strong></font><font color="#6959cf"><strong id='bold1924'
+>*dummy*</strong></font> #f)
+(<font color="#6959cf"><strong id='bold1926'
+>define-method</strong></font><font color="#6959cf"><strong id='bold1928'
+> </strong></font>(<font color="#6959cf"><strong id='bold1930'
+>spawn</strong></font> S<font color="#00cf00"><strong id='bold1932'
+>::nothread-scheduler</strong></font> p . o)
+   (unless (<font color="#ad4386"><strong id='bold1934'
+>thread?</strong></font> *dummy*) (<strong id='bold1936'
+>set!</strong> *dummy* (<strong id='bold1937'
+>instantiate</strong><font color="#00cf00"><strong id='bold1938'
+>::hopthread</strong></font>)))
+   (<strong id='bold1940'
+>apply</strong> stage S *dummy* p o))
+</pre>
+</DIV><p id='paragraph1504'
+>The <font color="blue"><tt id='tt1502'
+>nothread</tt></font> scheduler is fast but unrealistic
+since it cannot handle more than one request at a time. Using such a
+scheduler would prevent Hop from being used for serving long
+lasting requests such as music broadcasting.</p></div>
+<!-- The one-to-one scheduler -->
+<a name="The-one-to-one-scheduler"></a>
+<div class="subsubsection-atitle"><h4>2.4.4 The one-to-one scheduler</h4></div><div class="subsubsection">
+<p id='paragraph1507'
+>The <font color="blue"><tt id='tt1505'
+>one-to-one</tt></font> scheduler creates one new thread
+per connection (see Figure <a href="article.html#one-to-one-pipeline" class="inbound">3</a>). Within an infinite loop it waits for
+connections. As soon as such a connection is established, it creates a
+new thread for processing the request. The main loop starts this new
+thread and waits for a new socket again.</p><center id='center1510'
+><br class="figure" id='one-to-one-pipeline'
+><a name="one-to-one-pipeline"></a>
+<img src="one-to-one.jpg" border="0" alt="" width="60%"><br>
+<center><small><strong>Fig. 3:</strong> <em id='it1508'
+>The one-to-one pipeline scheduler. </em></small></center><br></center>
+<p id='paragraph1517'
+>Implementing the <font color="blue"><tt id='tt1511'
+>one-to-one</tt></font> scheduler is as simple as
+implementing the <font color="blue"><tt id='tt1513'
+>nothread</tt></font> scheduler. It only requires to
+override the <font color="blue"><tt id='tt1515'
+>spawn</tt></font> generic function.</p><DIV class='prog-border'><pre class="hop" id='prog1529'
+>(<strong id='bold1941'
+>class</strong> one-to-one-scheduler<font color="#00cf00"><strong id='bold1942'
+>::row-scheduler</strong></font>)
+
+(<font color="#6959cf"><strong id='bold1944'
+>define-method</strong></font><font color="#6959cf"><strong id='bold1946'
+> </strong></font>(<font color="#6959cf"><strong id='bold1948'
+>spawn</strong></font> S<font color="#00cf00"><strong id='bold1950'
+>::one-to-one-scheduler</strong></font> p . o)
+   (<strong id='bold1952'
+>letrec</strong> ((th (<strong id='bold1953'
+>instantiate</strong><font color="#00cf00"><strong id='bold1954'
+>::hopthread</strong></font>
+                   (body (<strong id='bold1956'
+>lambda</strong> () (<strong id='bold1957'
+>apply</strong> p S th o))))))
+      (<font color="#ad4386"><strong id='bold1958'
+>thread-start!</strong></font> th)))
+</pre>
+</DIV><p id='paragraph1535'
+>The <font color="blue"><tt id='tt1530'
+>one-to-one</tt></font> scheduler supports parallel
+execution for requests so it overcomes the major drawback of the <tt id='tt1532'
+>nothread</tt> scheduler. It is easy to implement persistent HTTP
+connections using this scheduler because after a response is sent to
+the client, the same thread can check if new requests are pending on
+the socket. However, in spite of this progress, the <font color="blue"><tt id='tt1533'
+>one-to-one</tt></font> scheduler is still inefficient because the system
+operations involved in creating and freeing threads are
+expensive.</p></div>
+<!-- The thread-pool scheduler -->
+<a name="The-thread-pool-scheduler"></a>
+<div class="subsubsection-atitle"><h4>2.4.5 The thread-pool scheduler</h4></div><div class="subsubsection">
+<p id='paragraph1545'
+>To eliminates the costs associated with the thread creation
+of the <font color="blue"><tt id='tt1536'
+>one-to-one</tt></font> scheduler, the <font color="blue"><tt id='tt1538'
+>thread-pool</tt></font>
+scheduler has been implemented. It is almost identical to the <font color="blue"><tt id='tt1540'
+>one-to-one</tt></font> scheduler with two noticeable differences: <em id='emph1542'
+>i)</em>
+it uses a pool of early created threads, and <em id='emph1543'
+>ii)</em> the <em id='emph1544'
+>accept loop</em> is implemented inside each thread loop. That is, all
+the threads implement the same loop that executes all the stages of
+the pipeline (see Figure <a href="article.html#thread-pool-pipeline" class="inbound">4</a>).
+Persistent connections are handled inside the same thread as the
+initial request. In scenarios where HTTP requests are sent to the
+server in sequence, this scheduler is able to avoid all context
+switches because a single thread executes the entire pipeline, from
+the "Accept" stage to the "Reply" stage. Context switches
+only occur when several requests are accepted in parallel.</p><center id='center1548'
+><br class="figure" id='thread-pool-pipeline'
+><a name="thread-pool-pipeline"></a>
+<img src="pool.jpg" border="0" alt="" width="60%"><br>
+<center><small><strong>Fig. 4:</strong> <em id='it1546'
+>The thread-pool pipeline scheduler. </em></small></center><br></center>
+<p id='paragraph1551'
+>The bookkeeping needed to manage the pool of threads makes
+the implementation of the <font color="blue"><tt id='tt1549'
+>thread-pool</tt></font> scheduler obviously
+more complex than the previous ones. As this is a classical
+problem of concurrent programming it is probably not useful to present
+it here. Therefore all the details that are not strictly specific to Hop
+are therefore omitted.</p><p id='paragraph1556'
+>The <font color="blue"><tt id='tt1552'
+>pool-scheduler</tt></font> class inherits from the <font color="blue"><tt id='tt1554'
+>row-scheduler</tt></font> class which it extends with two fields for holding the
+threads of the pool.</p><DIV class='prog-border'><pre class="hop" id='prog1561'
+>(<strong id='bold1960'
+>class</strong> pool-scheduler<font color="#00cf00"><strong id='bold1961'
+>::row-scheduler</strong></font>
+  (threads<font color="#00cf00"><strong id='bold1963'
+>::list</strong></font> read-only)
+  (size<font color="#00cf00"><strong id='bold1965'
+>::int</strong></font> read-only))
+</pre>
+</DIV><p id='paragraph1567'
+>Each thread in the pool executes an infinite loop. When
+its action is completed a thread goes to <tt id='tt1562'
+>sleep</tt> state. It will be
+awaken by the scheduler when a new connection will be assigned to
+this sleeping thread.  Two functions implement this interface:
+<font color="blue"><tt id='tt1563'
+>get-thread-pool</tt></font> and <font color="blue"><tt id='tt1565'
+>resume-thread-pool</tt></font>.</p><DIV class='prog-border'><pre class="hop" id='prog1576'
+>(<font color="#6959cf"><strong id='bold1967'
+>define-method</strong></font><font color="#6959cf"><strong id='bold1969'
+> </strong></font>(<font color="#6959cf"><strong id='bold1971'
+>spawn</strong></font> S<font color="#00cf00"><strong id='bold1973'
+>::pool-scheduler</strong></font> p . o)
+  <font color="darkmagenta"><em id='it1975'
+>;; get a free thread from the pool (may wait)</em></font>
+  (<strong id='bold1977'
+>let</strong> ((th (get-thread-pool S)))
+    (<strong id='bold1978'
+>with-access</strong><font color="#00cf00"><strong id='bold1979'
+>::hopthread</strong></font> th (proc)
+      <font color="darkmagenta"><em id='it1981'
+>;; assign the new task to the thread</em></font>
+      (<strong id='bold1983'
+>set!</strong> proc (<strong id='bold1984'
+>lambda</strong> (S t) (stage S t p o)))
+      <font color="darkmagenta"><em id='it1985'
+>;; awake the sleeping thread</em></font>
+      (resume-thread-pool! th)
+      th)))
+</pre>
+</DIV><p id='paragraph1583'
+>Contrary to other schedulers, the call to <font color="blue"><tt id='tt1577'
+>socket-accept</tt></font> that waits for new connections is not invoked from
+the server main loop but inside each thread started by the
+scheduler. This is implemented by overriding the generic function
+<font color="blue"><tt id='tt1579'
+>accept</tt></font> for the <font color="blue"><tt id='tt1581'
+>pool-scheduler</tt></font> class and by
+creating an new function for implementing the "Accept" stage.</p><DIV class='prog-border'><pre class="hop" id='prog1591'
+>(<font color="#6959cf"><strong id='bold1987'
+>define-method</strong></font><font color="#6959cf"><strong id='bold1989'
+> </strong></font>(<font color="#6959cf"><strong id='bold1991'
+>accept</strong></font> S<font color="#00cf00"><strong id='bold1993'
+>::pool-scheduler</strong></font> serv)
+  (for (i 0 (pool-scheduler-size S))
+     (spawn S stage-accept)))
+
+(<font color="#6959cf"><strong id='bold1995'
+>define</strong></font><font color="#6959cf"><strong id='bold1997'
+> </strong></font>(<font color="#6959cf"><strong id='bold1999'
+>stage-accept</strong></font> S th)
+   (<strong id='bold2001'
+>let</strong> loop ()
+      (<strong id='bold2002'
+>let</strong> ((sock (socket-accept serv)))
+         (stage S th stage-request sock 0)
+         (loop))))
+</pre>
+</DIV></div>
+<!-- Other schedulers -->
+<a name="Other-schedulers"></a>
+<div class="subsubsection-atitle"><h4>2.4.6 Other schedulers</h4></div><div class="subsubsection">
+<p id='paragraph1598'
+>Other schedulers have been implemented inside Hop.  In
+particular we have tried a scheduler inspired by the <font color="blue"><tt id='tt1592'
+>cohort</tt></font>
+scheduling [<a href="article.html#lp:usenix02" class="inbound">16</a>] (see Figure 
+<a href="article.html#cohort-pipeline" class="inbound">5</a>), a scheduler using an <font color="blue"><tt id='tt1594'
+>accept-many</tt></font> strategy [<a href="article.html#bpg:usenix04" class="inbound">6</a>], and a scheduler
+using a queue of waiting tasks. Early observations
+yield us to think that none performs faster than the <font color="blue"><tt id='tt1596'
+>thread-pool</tt></font> scheduler for our targeted application field.</p><center id='center1601'
+><br class="figure" id='cohort-pipeline'
+><a name="cohort-pipeline"></a>
+<img src="cohort.jpg" border="0" alt="" width="60%"><br>
+<center><small><strong>Fig. 5:</strong> <em id='it1599'
+>The cohort pipeline scheduler. </em></small></center><br></center>
+<p id='paragraph1602'
+>The cohort scheduling experienced in Hop consists in
+grouping threads by tasks rather than by requests. It is hard to
+implement and even harder to optimize so up to now we have not been
+able to achieve good performance with it.</p><p id='paragraph1604'
+>The <em id='emph1603'
+>queue</em> strategy consists in associating stages
+of the pipeline to tasks. When a task must be executed, one thread is
+extracted from the pool.  When the task completes, the thread goes
+back to the pool. A straightforward optimization of this scheduler
+removes superfluous queue operations and allows this scheduler to
+handle request in a row. When a thread should go back to the queue, if
+first checks if is queue of available threads is empty or not. If not
+empty, the same thread is used to execute the next stage of the
+pipeline.</p><p id='paragraph1614'
+>The <em id='emph1605'
+>accept-many</em> strategy consists in modifying the
+<font color="blue"><tt id='tt1606'
+>accept</tt></font> stage of the <font color="blue"><tt id='tt1608'
+>thread-pool</tt></font> scheduler in order
+to accept many connections at a time for purging as quickly as
+possible the socket backlog. All the connections that are established
+at a time are then processed by a pool of threads as the <font color="blue"><tt id='tt1610'
+>thread-pool</tt></font> scheduler does. Although the authors of the <font color="blue"><tt id='tt1612'
+>accept-many</tt></font> technique report significant speed acceleration when
+deploying this strategy in mainstream Web servers, it fails at
+accelerating Hop. The reason for this different behavior is
+probably to be searched in the application field targeted by
+Hop where massively parallel requests burst are rare.</p></div>
+</div>
+</div><br>
+</div>
+<div class="section" id="Optimizations"><!-- Optimizations -->
+<a name="Optimizations"></a>
+<div class="section-atitle"><h3><font color="black">3 Optimizations</font>
+</h3></div><div class="section">
+<p id='paragraph1622'
+>The online paper <em id='emph1615'
+>Server Design</em> [<a href="article.html#darcy:server02" class="inbound">10</a>] highlights three major reasons for a Web server to
+behave inefficiently: <em class="em" id='emph1616'
+>i)</em> data copies, <em class="em" id='emph1617'
+>ii)</em> memory
+allocations, and <em class="em" id='emph1618'
+>iii)</em> context switches. According to this
+paper, an ideal server would be a server that avoids them all. Of
+course, this is not practically feasible but still, working as hard as
+possible on these issues improves the chances of success in the quest
+of a fast server. Section <a href="article.html#Hop-pipeline-scheduler" class="inbound"><span class="refscreen">Hop pipeline scheduler</span><span class="refprint">2.4</span></a>
+has shown that some Hop schedulers are able to <em id='emph1619'
+>accept</em>,
+<em id='emph1620'
+>parse</em>, and <em id='emph1621'
+>reply</em> to requests without any context
+switch. Section <a href="article.html#The-thread-pool-scheduler" class="inbound"><span class="refscreen">The thread-pool scheduler</span><span class="refprint">2.4.5</span></a> has
+presented an example of such a scheduler. This section shows how
+Hop addresses the two other points.</p><!-- Limiting the memory allocation -->
+<a name="Limiting-the-memory-allocation"></a>
+<div class="subsection-atitle"><h3>3.1 Limiting the memory allocation</h3></div><div class="subsection">
+<p id='paragraph1623'
+>High level programming languages such as Hop help
+programmers by supporting constructions that abstract low level
+mechanisms involved at runtime. Providing high level powerful forms
+alleviates programmers from tedious tasks but it also generally comes
+with a price: it makes writing efficient programs more difficult. A
+major reason for this inefficiency is excessive memory allocations.</p><p id='paragraph1626'
+>Excessive memory allocation dramatically limits the performance
+for two main reasons: <em id='emph1624'
+>i)</em> programs spend a significant
+percentage of their execution to allocate and free memory chunks and,
+<em id='emph1625'
+>ii)</em> it introduces additional context switches for parallel
+executions that run in shared-memory environments. When the heap is a
+shared resource, allocating and freeing memory require some sort of
+synchronization. In general this is implemented with locks that
+eventually conduct to context switches. Hence, polishing a
+thread scheduling strategy can be pointless if, at the same time,
+memory allocation is not tamed.</p><p id='paragraph1627'
+>Version 1.8.7 of Hop allocates 47.5MB for serving 10,000
+times a file of 512 bytes. The same test run on the version
+1.10.0-pre3 allocates only 4.3MB, that is 457 bytes per request. This
+section presents the two transformations that have lead us to shrink
+memory by more than 10 times.</p><!-- BglMem -->
+<a name="BglMem"></a>
+<div class="subsubsection-atitle"><h4>3.1.1 BglMem</h4></div><div class="subsubsection">
+<p id='paragraph1629'
+>Contrary to a popular belief, garbage collectors generally used
+in high level languages impose no or minor runtime overhead [<a href="article.html#zorn:spe93" class="inbound">45</a>]. The inefficiency of high level languages is more to
+be searched in the <em id='emph1628'
+>implicit</em> memory allocations that are
+potentially hidden everywhere in the programs. For instance, calling a
+function might allocate lists if it accepts a variable number of
+arguments, declaring a function might yield to creating a closure if it
+makes use of free variables, opening a file or a socket might allocate
+inadequate buffers, etc.</p><p id='paragraph1634'
+>In order to help programmers tame memory allocations, the
+Hop development kit provides an exact memory profiler. A dynamic
+tool keeps trace of the exact call graph at each allocation points.
+An offline tool produces histograms that, for each function of
+the programs, show: <em id='emph1630'
+>i)</em> the number of data structures that
+have been allocated <em id='emph1631'
+>by this function</em> and the overall size in
+bytes these allocations represent, and <em id='emph1632'
+>ii)</em> the number of
+data structures and the size in bytes for all the functions the function
+dynamically calls. Using BglMem, we have, for instance, easily discovered
+that during a Hop test consisting in replying to 10,000 requests,
+the Hop function <tt id='tt1633'
+>http-parse-method-request</tt> has allocated
+60,006 pairs for a total of 468KB and 30,003 strings for a total of
+654KB.  In addition, the histograms produced by BglMem show that one
+of the children of this function has allocated 10,000 data structures
+representing the HTTP requests for a total size of 976KB.</p><p id='paragraph1635'
+>The next sessions shows how BglMem has been used to reduce
+the Hop allocation and memory footprint.</p></div>
+<!-- One transformation -->
+<a name="One-transformation"></a>
+<div class="subsubsection-atitle"><h4>3.1.2 One transformation</h4></div><div class="subsubsection">
+<p id='paragraph1636'
+>Because of the size constraint of the paper, it is not
+possible to present the exhaustive list of optimizations that have
+been applied to Hop to reduce its memory allocation. Hence only one
+exemplar transformations is presented here. It gets rid of implicit memory
+allocations that, once spotted are straightforward to eliminate.</p><p id='paragraph1642'
+><strong id='bold1637'
+>Optimizing IO buffers: </strong> The function <tt id='tt1638'
+>socket-accept</tt> waits for new connections on a socket. Once
+established the connection is associated with an input port for
+reading incoming characters and an output port for writing outgoing
+characters. BglMem reported that with Hop 1.8.7, <tt id='tt1639'
+>socket-accept</tt> was responsible for allocating about 10MB of strings
+of characters! These 10MB came from the default configuration of <tt id='tt1640'
+>socket-accept</tt> that creates a buffer of 1024 bytes for the
+input port associated with a connection. Removing these buffers has saved
+<em id='it1641'
+>10000 * 1024</em> bytes of memory.</p><p id='paragraph1645'
+>Hop uses sockets in a way that allows it to use its own
+memory management algorithm which is more efficient than any general
+purpose memory manager. Hop needs exactly as many buffers as there
+are simultaneous threads parsing HTTP requests. Hence, the obvious
+idea is to associate one buffer per thread not by socket. This can be
+implemented more or less efficiently depending on the nature of the
+scheduler. Some schedulers such as the <tt id='tt1643'
+>nothread-scheduler</tt> or
+<tt id='tt1644'
+>pool-scheduler</tt> (see Section <a href="article.html#The-nothread-pipeline-scheduler" class="inbound"><span class="refscreen">The nothread pipeline scheduler</span><span class="refprint">2.4.3</span></a> and Section <a href="article.html#The-thread-pool-scheduler" class="inbound"><span class="refscreen">The thread-pool scheduler</span><span class="refprint">2.4.5</span></a>) accept an optimal solution that totally eliminates the
+need to allocate buffers when the server is ready to accept
+requests. It consists in allocating one buffer per thread when the
+scheduler is initialized. These buffers are then simply reset
+each time the thread they are associated with is about to parse
+characters. The modification in the source code is minor. It only
+requires one additional line of code:</p><DIV class='prog-border'><pre class="hop" id='prog1653'
+>(<font color="#6959cf"><strong id='bold2003'
+>define-method</strong></font><font color="#6959cf"><strong id='bold2005'
+> </strong></font>(<font color="#6959cf"><strong id='bold2007'
+>accept</strong></font> S<font color="#00cf00"><strong id='bold2009'
+>::nothread-scheduler</strong></font> serv)
+ <font color="darkmagenta"><em id='it2011'
+>;; create a buffer before the thread loop</em></font>
+ (<strong id='bold2013'
+>let</strong> ((buf (make-string 1024)))
+   (<strong id='bold2014'
+>let</strong> loop ()
+     <font color="darkmagenta"><em id='it2015'
+>;; reuse buffer for each connection</em></font>
+<a name="6" class="mark"></a>     (<strong id='bold2017'
+>let</strong> ((sock (socket-accept serv <strong id='bold2018'
+>:inbuf</strong> buf))) 
+<a name="7" class="mark"></a>       (spawn S stage-request sock 0) 
+       (loop)))))
+</pre>
+</DIV></div>
+<!-- Wrap up -->
+<a name="Wrap-up"></a>
+<div class="subsubsection-atitle"><h4>3.1.3 Wrap up</h4></div><div class="subsubsection">
+<p id='paragraph1657'
+>Memory allocation has been measured on a test that consists
+in serving 10,000 a 512 bytes long file, without persistent
+connection. Each HTTP request of this memory test contained 93
+bytes. Parsing each request produces a data structure made of strings
+(for denoting the path of the request, the client hostname,
+etc.), lists (for holding the optional lines of the HTTP header),
+symbols (for the HTTP version, the transfer encoding,
+the mime type, etc.) and an instance of the class <font color="blue"><tt id='tt1654'
+>http-request</tt></font> for packaging the parsed values plus some extra values
+such as a time stamp, an authenticated user, etc. In the test this
+structure uses the whole 457 bytes allocated per request. That is,
+applying the optimizations described in this section has successfully
+removed <em id='emph1656'
+>all</em> the memory allocations not strictly needed for
+representing the HTTP requests. In particular, all the hidden
+allocations that can take place in high level languages such as Hop
+have been eliminated. The current version of Hop is then close
+to optimal regarding memory allocation.</p></div>
+</div>
+<!-- Persistent connections -->
+<a name="Persistent-connections"></a>
+<div class="subsection-atitle"><h3>3.2 Persistent connections</h3></div><div class="subsection">
+<p id='paragraph1660'
+>Persistent connections have been one of the main reasons of the
+creation of HTTP/1.1. Two early papers 
+ report that significant accelerations can be expected from
+implementing persistent connections [<a href="article.html#mogul:sigcomm95" class="inbound">21</a>,<a href="article.html#nielsen:sigcomm97" class="inbound">27</a>].  A client has two means for discovering that it has
+received the full body of a response: <em id='emph1658'
+>i)</em> the connection is
+closed by the server or, <em id='emph1659'
+>ii)</em> the length of the response to be read
+is explicitly provided by the server. Persistent connections, of
+course, can only use the second method.</p><p id='paragraph1663'
+>Providing the length of a static response, i.e, a file or a
+string of characters, is straightforward (although some Web servers,
+such as Lighttpd, implement caches to eliminate repetitive calls to
+the expensive <font color="blue"><tt id='tt1661'
+>fstat</tt></font> system operation). Providing the size of
+a dynamic response is more challenging. One solution consists in
+writing the response in an auxiliary buffer first, then getting the
+length of that buffer and then writing the length and the buffer to
+the socket holding the connection. This technique is generally
+inefficient because it is likely to entail data copies. The characters
+have to be written to the buffer first which might need to be expanded if
+the response is large. Then, this buffer has to be flushed out to the
+socket, which is also likely to use a buffer of its own.</p><p id='paragraph1666'
+>Hop uses a solution that avoids auxiliary buffers. It relies
+on <em id='emph1664'
+>chunked</em> HTTP responses that break the response body in a
+number of chunks, each prefixed with its size. Using chunked responses
+in Hop is possible because of a dedicated facility provided by its
+runtime system. The Hop I/O system allows programs to associate
+<em id='emph1665'
+>flush hooks</em> with input and output ports. Output flush hooks
+are functions accepting two arguments: the port that is to be flushed
+and the number of characters that are to be flushed out. The values
+produced by calling these hooks are directly written out to the physical
+file associated with the port before the characters to be flushed out.</p><p id='paragraph1667'
+>Using output flush hook, chunked responses can be implemented as:</p><DIV class='prog-border'><pre class="hop" id='prog1670'
+>(<font color="#6959cf"><strong id='bold2020'
+>define</strong></font><font color="#6959cf"><strong id='bold2022'
+> </strong></font>(<font color="#6959cf"><strong id='bold2024'
+>chunked-flush-hook</strong></font> port size)
+  (format &quot;\r\n~x\r\n&quot; size))
+</pre>
+</DIV><p id='paragraph1672'
+>Using output port flush hooks is efficient because it imposes
+no overhead to the I/O system. The written characters are stored in a
+buffer associated with the output port, <em id='emph1671'
+>as usual</em>. When the
+buffer is flushed out, the chunk size is written by the hook. Writing
+the chunk size is the only extra operation that has been added to
+answering responses. It is thus extremely lightweight and it allows
+persistent connections to be implemented efficiently (i.e., without
+extra copy nor extra memory allocation) for dynamic documents as well.
+Chunked HTTP responses have probably been designed for enabling this
+kinds of optimization but we have found no trace of equivalent
+techniques in the literature.</p></div>
+<!-- Operating system interface -->
+<a name="Operating-system-interface"></a>
+<div class="subsection-atitle"><h3>3.3 Operating system interface</h3></div><div class="subsection">
+<p id='paragraph1673'
+>Implementing fast I/Os with sockets requires some operating
+system tunings and optimizations. This section presents two of them.</p><!-- Non-copying output -->
+<a name="Non-copying-output"></a>
+<div class="subsubsection-atitle"><h4>3.3.1 Non-copying output</h4></div><div class="subsubsection">
+<p id='paragraph1680'
+>Several studies have measured the benefit to be expected
+from using <em id='emph1674'
+>non-copying</em> output functions such as the Linux
+<font color="blue"><tt id='tt1675'
+>sendfile</tt></font> facility [<a href="article.html#hbk:ton02" class="inbound">26</a>,<a href="article.html#pariag:sigops07" class="inbound">29</a>]. This system service is supported by Hop. In
+addition to be fast because it avoids data copies and
+user-space/kernel-space traversals, it also simplifies the
+implementation of servers because it makes memory caches useless for
+serving static files. As in a previous study [<a href="article.html#pariag:sigops07" class="inbound">29</a>], we have noticed no acceleration when using memory
+cache for serving files instead of using a pure <tt id='tt1677'
+>sendfile</tt>-based
+implementation.  Using <tt id='tt1678'
+>sendfile</tt> or a similar function actually
+<em id='emph1679'
+>delegates</em> the caching to the operating system which is
+likely to perform more efficiently than a user-land application.</p></div>
+<!-- Network programming -->
+<a name="Network-programming"></a>
+<div class="subsubsection-atitle"><h4>3.3.2 Network programming</h4></div><div class="subsubsection">
+<p id='paragraph1683'
+>The default setting of sockets uses the Nagle algorithm
+[<a href="article.html#nagle:ietf84" class="inbound">24</a>] that is aimed at avoiding TCP packets
+congestion. We know from previous studies that this algorithm combined
+with the acknowledgment strategy used by TCP may cause an extra 200ms
+or 500ms delay for delivering the last packet of a connection [<a href="article.html#heidemann:accr97" class="inbound">12</a>]. This is called the <em id='emph1681'
+>OF+SFS</em> effect
+that has been identified to be due to the <em id='emph1682'
+>buffer tearing</em>
+problem [<a href="article.html#mm:sigcomm01" class="inbound">22</a>]. Persistent HTTP connections are
+particularly keen to exhibit this problem and thus it is recommended
+to disable the Nagle algorithm for implementing more efficiently Web
+servers that support persistent HTTP connections [<a href="article.html#nielsen:sigcomm97" class="inbound">27</a>]. Therefore, Hop supports configuration flags
+that can enable or disable the Nagle algorithm.</p><p id='paragraph1686'
+>The <tt id='tt1684'
+>TCP_CORK</tt> hybrid solution (or a <em id='emph1685'
+>super-Nagle</em> algorithm) is supported by some operating
+systems. However, as reported by Mogul &amp; Mingall [<a href="article.html#mm:sigcomm01" class="inbound">22</a>] this socket option does not solve the OF+SFS problem in
+presence of HTTP persistent connections. We confirm this result
+because in spite of several attempts we have failed to eliminate the
+200ms delay it sometimes imposes (in between 8 and 20% of the
+responses according to Mogul &amp; Mingall, much more according to our
+tests) between two persistent connections.  Hence, we gave up on using
+it.</p><p id='paragraph1689'
+>Other configurations impact the overall performance of
+socket based applications. For instance, previous studies have suggested
+that an adequate calibration on the backlog of a listen socket
+(controlled by the system limit <tt id='tt1687'
+>somaxconn</tt>) may improve
+significantly the performance [<a href="article.html#bd:usenix97" class="inbound">4</a>]. For the
+workloads used to test Hop we have found that mid-range
+values (such as <tt id='tt1688'
+>128</tt>) yield better results.</p></div>
+</div>
+</div><br>
+</div>
+<div class="section" id="Performance-study"><!-- Performance study -->
+<a name="Performance-study"></a>
+<div class="section-atitle"><h3><font color="black">4 Performance study</font>
+</h3></div><div class="section">
+<p id='paragraph1691'
+>Although most HTTP requests involved in diffuse applications
+address dynamic contents, they also use static file transfers for
+cascading style sheets, images, and client-side libraries. Hence a
+fast server for the diffuse Web should be able to deliver efficiently
+dynamic <em id='emph1690'
+>and</em> static documents. In this section we compare
+Hop to other Web servers for serving the two kinds of requests.</p><!-- Performance evaluation caveat -->
+<a name="Performance-evaluation-caveat"></a>
+<div class="subsection-atitle"><h3>4.1 Performance evaluation caveat</h3></div><div class="subsection">
+<p id='paragraph1692'
+>This paper focuses on the performance evaluation of the Hop
+Web server, which is not to be confused with a performance evaluation
+of the Hop server-side programming language. Hop relies on the
+Bigloo compiler for generating server-side native code. It has already
+been shown that this compiler delivers native code whose performance
+is only 1.5 to 2 times slower than corresponding C code
+[<a href="article.html#ss:icfp02" class="inbound">30</a>]. That is, the Hop server-side compiled code
+significantly outperforms the popular scripting languages such as PHP,
+Ruby, Python, as well as bytecode interpreted languages such as Java. In order
+to avoid overemphasizing the performance of the Hop programming
+language against PHP, Ruby, Java, or even C, we have only used
+simplistic generated documents that require minimalist
+computations. Our typical generated documents only require a few 
+"prints" to be produced. Restricting to simple documents 
+minimizes the performance penalty imposed by slow scripting languages
+implementations and allows us to focus on the evaluation of the
+mechanisms used by the server for running user programs on 
+the server-side of the application.</p></div>
+<!-- Experimental Environment -->
+<a name="Experimental-Environment"></a>
+<div class="subsection-atitle"><h3>4.2 Experimental Environment</h3></div><div class="subsection">
+<p id='paragraph1697'
+>Our experimental environment consists of three computers
+connected to a LAN: <em id='emph1693'
+>i)</em> a server made of a bi-processor Intel
+PIV Xeon, 3Ghz with 1GB of RAM running Linux-2.6.27, <em id='emph1694'
+>ii)</em> a
+first client running Linux-2.6.27 executed by an Intel Core 2 Duo ULV
+1.06Ghz with 1.5GB of RAM, and <em id='emph1695'
+>iii)</em> a second client running
+Linux-2.6.27 executed by an Intel Code 2 Duo 2.0Ghz with 2GB of
+RAM. The network traffic is ensured by a Cisco Gigabit ethernet router
+Catalyst 3750G. Using the Unix tool <tt id='tt1696'
+>iperf</tt> we have
+experimentally verified that this setting indeed permits ethernet
+frames to be transferred at the pace of one gigabit per second.</p><p id='paragraph1700'
+>In this paper, the workloads used for our tests are generated
+by <a href="http://www.hpl.hp.com/research/linux/httperf/" class="http"><font color="blue"><tt id='tt1698'
+>httperf</tt></font></a> [<a href="article.html#mj:wisp98" class="inbound">23</a>] version 0.9.0, a tool dedicated
+to measuring the performance of Web servers.</p><p id='paragraph1702'
+>Before concentrating on the actual performance of the servers,
+we have measured the requests rate our setting can sustain. Following
+the protocol suggested by Titchkosky <em id='emph1701'
+>et al</em> [<a href="article.html#taw:sigmetrics03" class="inbound">38</a>], we have observed that our clients can sustain a
+combined workload of more than 6,000 requests per second, which is
+enough to saturate the tested servers.</p></div>
+<!-- Hop vs other Web servers -->
+<a name="Hop-vs-other-Web-servers"></a>
+<div class="subsection-atitle"><h3>4.3 Hop vs other Web servers</h3></div><div class="subsection">
+<p id='paragraph1705'
+>There are so many Web servers in vicinity that it is impossible
+to test them all<a href="#footnote-footnote1704"><sup><small>1</small></sup></a>. Hence,
+we have tried to select a representative subset of existing servers.
+We have used two mainstream servers implemented in C, one
+mainstream server implemented in Java, and two servers implemented
+in functional languages:</p><br class="figure" id='performance-static'
+><a name="performance-static"></a>
+<center id='center1710'
+><img src="static.png" border="0" alt="" width="95%"></center>
+<br>
+<center><small><strong>Fig. 6:</strong> <em id='it1707'
+>Server performance. These tests measure
+the throughput a web server can sustain when delivering 984 bytes long static
+files. Each session consists in 5 consecutive requests that are sent
+using a single persistent connection.</em></small></center><br><br class="figure" id='performance-dynamic'
+><a name="performance-dynamic"></a>
+<center id='center1712'
+><img src="dynamic.png" border="0" alt="" width="95%"></center>
+<br>
+<center><small><strong>Fig. 7:</strong> <em id='it1706'
+>Server performance. These tests measure
+the throughput a web server can sustain when delivering dynamic
+contents. Each session consists in 5 consecutive requests that are
+sent using a single persistent connection.</em></small></center><br><ul class="itemize" id='itemize1725'
+><li><strong id='bold1713'
+>Apache-2.2.10</strong>, a popular Web server implemented
+in C.  For producing dynamic documents with Apache, we have measured
+the performance of <strong id='bold1714'
+>mod_perl-2.0.4</strong> and <strong id='bold1715'
+>mod_php5</strong>,
+which both rely on the FastCGI protocol.</li>
+<li><strong id='bold1717'
+>Lighttpd-1.4.20</strong>, another popular Web server implemented 
+in C. It is frequently used as a replacement of Apache on embedded devices such
+as routers and NASes.</li>
+<li><strong id='bold1719'
+>Tomcat-5.5.27</strong>, the popular Web server implemented in Java
+that relies on JSP for producing dynamic documents.</li>
+<li><strong id='bold1721'
+>Yaws-1.77</strong>, a small server implemented in Erlang 
+[<a href="article.html#armstrong:yaws03" class="inbound">3</a>].</li>
+<li><strong id='bold1723'
+>PLT Web server-4.1.2</strong>, a web server implemented in 
+PLT-Scheme [<a href="article.html#krishnamurthi:padl03" class="inbound">14</a>,<a href="article.html#khmgpf:hosc07" class="inbound">15</a>,<a href="article.html#wg:icfp07" class="inbound">43</a>].</li>
+</ul><p id='paragraph1733'
+>For this experiment all servers are used with their default
+configuration except for logging that has been disabled when
+possible. The Hop default configuration is as follows: <em id='emph1726'
+>i)</em>
+use the <tt id='tt1727'
+>thread-pool</tt> pipeline scheduler with 20
+threads, <em id='emph1728'
+>ii)</em> <tt id='tt1729'
+>somaxconn</tt> = 128, <em id='emph1730'
+>iii)</em> initial heap
+size = 4MB, <em id='emph1731'
+>iv)</em> keep-alive timeout = 5 seconds, <em id='emph1732'
+>v)</em>
+the socket send buffer size is 12KB (as recommended by [<a href="article.html#nielsen:sigcomm97" class="inbound">27</a>]).</p><p id='paragraph1735'
+>As much as possible we have tried to write comparable versions
+of the dynamic test. That is for each of the tested languages, namely
+PHP, Perl, JSP, Erlang, Scheme, and Hop, we have tried to write a
+<em id='emph1734'
+>fair</em> version of the test, that is a version as equivalent as
+possible to the version of the other languages.</p><p id='paragraph1736'
+>Figures <a href="article.html#performance-static" class="inbound">6</a> and 
+<a href="article.html#performance-dynamic" class="inbound">7</a> presents the performance
+evaluation which calls for several observations:</p><p id='paragraph1738'
+><strong id='bold1737'
+>Observation 1: </strong> In the considered application context
+where only a small number of users simultaneously connect to the
+server, Hop is one of the fastest server for delivering static
+content. In particular, it is as fast as C servers such as Apache and
+Lighttpd. The test presented in the paper involves serving a file of
+about 1KB. We have conducted a second test that involves a file of
+64KB. This second test confirms the results presented in Figure <a href="article.html#performance-static" class="inbound">6</a>. The speed hierarchy of Web servers for serving
+a 64KB file is roughly the same as the one found when serving the 1KB
+file.</p><p id='paragraph1740'
+><strong id='bold1739'
+>Observation 2: </strong> Hop is the fastest server for
+delivering dynamic content.</p><p id='paragraph1742'
+><strong id='bold1741'
+>Observation 3: </strong> Hop and Yaws are the only two
+servers that deliver static content and dynamic content at
+approximately the same speed.</p><p id='paragraph1744'
+><strong id='bold1743'
+>Observation 4: </strong> Yaws runs remarkably steady.  In
+particular, its performance seems hardly impacted when the server load
+increases. Further investigation would be needed but this early result
+seems to demonstrate that the advantage claimed by the Erlang programming
+language [<a href="article.html#avww:erlang96" class="inbound">2</a>] for dealing with massively
+concurrent applications is also observable for Web servers. Those
+concerned by overloaded servers should probably consider using message
+passing as fostered by Erlang.</p><p id='paragraph1746'
+><strong id='bold1745'
+>Observation 5:</strong> PHP and Perl present comparable performance.
+They are both significantly slower than Hop.</p><p id='paragraph1747'
+>Tomcat performance drops dramatically around 4000 requests per
+second because its memory footprint becomes too large (more than
+700MB), which forces the operating system to start swapping the main
+memory.  It should be noticed here that none of the servers is stopped
+and restarted when the load increases. Hence if a Web server leaks
+memory its performance will continuously slow down. The PLT Scheme
+server suffers from the same problem as Tomcat. Its memory footprint
+rapidly approaches 1GB of memory. Hence, very soon it is not able to
+do anything useful because it is swapped out. Tomcat and PLT show how
+important it is to restrain memory allocation. An excessive memory
+allocation dramatically reduces the performance of a server.</p><p id='paragraph1748'
+>From these observations, we can draw some conclusions. The
+experiment emphasizes persistent connections even for dynamic content
+delivery because each client emits consecutively 5 requests using the
+same connection. This corresponds to a real use-case for the targeted
+applications but it strongly penalizes all the systems that are not
+able to implement them efficiently. This might explain the poor
+performance of Apache and Lighttpd servers.</p><p id='paragraph1749'
+>The file 984 bytes long file used for testing static delivery
+is exactly the file that gets generated by the dynamic content
+test. Hence, the static delivery and the dynamic delivery end up with
+the same characters written to the socket. The only difference between
+the two tests is the way these characters are obtained: from a static
+file in the first case, from an in-memory computation in the second.
+Hop and Yaws are the two fastest servers for delivering dynamic contents.
+They are both bootstrapped. This might be considered as an indication 
+that bootstrapped Web servers should outperform other servers for delivering
+dynamic content. Tomcat is bootstrapped too but since its performance is 
+deeply impacted by its excessively large memory footprint, no conclusion
+can be drawn from studying its performance.</p></div>
+</div><br>
+</div>
+<div class="section" id="Related-work"><!-- Related work -->
+<a name="Related-work"></a>
+<div class="section-atitle"><h3><font color="black">5 Related work</font>
+</h3></div><div class="section">
+<p id='paragraph1751'
+>Many high level languages have been used to implement Web
+servers but actually only a few of them can be compared to Hop.
+Functional languages have a long standing tradition of implementing
+Web servers, probably pioneered by Common Lisp that, as early as 1994,
+was already concerned by generating dynamic HTML content [<a href="article.html#mallery:www94" class="inbound">18</a>]! Today, Haskell seems very active with HWS [<a href="article.html#marlow:hw00" class="inbound">19</a>], Wash/CGI [<a href="article.html#thieman:padl02" class="inbound">37</a>], and HSP [<a href="article.html#broberg:hw05" class="inbound">7</a>]. HWS is a server that uses a four-stages pipeline
+and a <tt id='tt1750'
+>one-to-one</tt> scheduler. It relies on user-threads instead
+of system-threads for handling each requests.  User-threads work well
+as long as no user program can be spawn from the stages of the
+pipeline. This probably explains why HWS is not able to serve dynamic
+content. HSP is a Haskell framework for writing CGI scripts. It used
+to be implemented as an Apache module [<a href="article.html#mv:hw00" class="inbound">20</a>] and but it
+is now hosted by a dedicated server HSP(r) based on HWS. Unfortunately
+HSP(r), as well as Wash/CGI, is incompatible with the currently
+released version of GHC, the Haskell compiler. Hence we have not been
+able to test any of them.</p><p id='paragraph1752'
+>Smalltalk has Seaside which is one of the precursors in using
+continuations for modeling Web interactions [<a href="article.html#ducasse:esug04" class="inbound">11</a>]. It would have been interesting to measure its
+performance because Smalltalk, as Hop is a dynamic programming
+language but unfortunately it was not possible to install it on our
+Linux setting.</p><p id='paragraph1753'
+>The impact of the concurrency model on the performance of the
+servers has been largely studied and debated but no clear consensus
+prevails yet. Some pretend that an event-based model is superior to a
+thread model. Some pretend the contrary. A third group claims that
+blending the two models should be preferred [<a href="article.html#welsh:berkeley00" class="inbound">41</a>]! Hence, the idea of proposing system independent
+models of the concurrency has emerged. Jaws is an adaptive Web
+server framework that allows programmers to implement their own Web
+server using on-the-shelf components [<a href="article.html#sh:acs98" class="inbound">36</a>]. This
+framework provides elementary blocks that can manage a pipeline,
+normalize URLs, support various styles of I/Os, etc. Combining these
+components simplifies the development of a server without penalizing
+its performance.</p><p id='paragraph1754'
+>Flux [<a href="article.html#bgkebc:usenix06" class="inbound">8</a>] and Aspen [<a href="article.html#upm:ppopp07" class="inbound">39</a>] are two programming languages that allow programmers to
+choose, at compile-time, the concurrent model used at run-time. Flux
+consists in a set of syntactic extensions to C/C++ that are expanded,
+at compile-time, into regular C/C++ programs. Aspen like Erlang
+[<a href="article.html#armstrong:yaws03" class="inbound">3</a>], eschews shared memory in favor of
+message passing. The parallel structure of an Aspen program is
+specified independently of its computational logic and, at run-time,
+Aspen dynamically allocates threads according to the dynamic workload
+of the server. Prototypical Web servers have been implemented in Flux
+and Aspen that show performance not significantly better than
+Apache for static and dynamic contents.</p><p id='paragraph1755'
+>Saburo is an Aspect Oriented framework for generating concurrent
+programs [<a href="article.html#loyaute:phd08" class="inbound">17</a>]. The PhD thesis introducing Saburo
+focuses on the performance of Web servers. Contrary to Hop that
+relies on a dynamic selection of the concurrency model (implemented by
+means of classes and late binding), Saburo as Flux and Aspen
+relies on a static model. In theory these systems should then be able
+to perform faster than Hop because they have opportunities to
+optimize the implementation of the concurrency model at
+compile-time. In practice, the Hop implementation of the late
+binding used in the pipeline scheduler is fast enough not to impact
+the overall performance of the server.</p></div><br>
+</div>
+<div class="section" id="Conclusion"><!-- Conclusion -->
+<a name="Conclusion"></a>
+<div class="section-atitle"><h3><font color="black">6 Conclusion</font>
+</h3></div><div class="section">
+<p id='paragraph1756'
+>This paper presents the Hop server that is mainly designed
+for running diffuse applications on the Web. The paper presents its
+versatile architecture that supports various concurrent programming models
+as well as significant parts of its implementation.</p><p id='paragraph1759'
+>The paper shows that programming an efficient server for the
+diffuse Web is not only a problem of good system and network
+practices, although these still have a large impact on the overall
+performance. The new problem is to <em id='emph1757'
+>combine</em>, fast network and
+system programming <em id='emph1758'
+>and</em> fast interactions between the server
+main loop that deals with HTTP requests and the user helper programs
+that produce responses.</p><p id='paragraph1761'
+>The solution supported by Hop consists in merging, inside a
+single runtime environment, the server main loop and the user
+programs. This can be build by using the same programming language for
+implementing the server itself and the user programs. Such a <em id='emph1760'
+>bootstrapped</em> Web server can eliminate all communication costs
+between the server main loop and user programs.  Hence, it can
+outperform traditional general purpose Web servers that handle user
+programs as external processes. The Hop Web server that delivers
+dynamic documents significantly faster than all the other tested
+servers shows this can achieved using high level dynamic programming
+languages.</p></div><br>
+</div>
+
+
+<div class="section" id="References"><!-- References -->
+<a name="References"></a>
+<div class="section-atitle"><h3><font color="black">7 References</font>
+</h3></div><div class="section">
+<font size="-1"><table><tbody>
+<tr><td id="ahtbd:usenix02" align="right" valign="top"><a name="ahtbd:usenix02">[1]</a></td><td id="ahtbd:usenix02" align="left" valign="top">Adya, A. <em id='emph2026'
+> et al.</em> -- <strong id='bold2027'
+>Cooperative Task Management without Manual Stack Management or Event-driven Programming is Not the Opposite of Tthreaded Programming</strong> -- Proceedings of the Usenix Annual Technical Conference, Monterey, CA, USA, Jun, 2002, pp. 289--302.</td></tr>
+<tr><td id="avww:erlang96" align="right" valign="top"><a name="avww:erlang96">[2]</a></td><td id="avww:erlang96" align="left" valign="top">Armstrong, J. <em id='emph2028'
+> et al.</em> -- <strong id='bold2029'
+>Concurrent Programming in ERLANG</strong> -- <em id='it2030'
+>Prentice Hall</em>, 1996.</td></tr>
+<tr><td id="armstrong:yaws03" align="right" valign="top"><a name="armstrong:yaws03">[3]</a></td><td id="armstrong:yaws03" align="left" valign="top">Armstrong, J.  -- <a href="http://www.guug.de/veranstaltungen/ffg2003/papers/ffg2003-armstrong.pdf" class="http"><strong id='bold2031'
+>Concurrency Oriented Programming in Erlang</strong></a> -- Invited talk of the FFG conference, 2003.</td></tr>
+<tr><td id="bd:usenix97" align="right" valign="top"><a name="bd:usenix97">[4]</a></td><td id="bd:usenix97" align="left" valign="top">Banga, G.  and Druschel, P.  -- <a href="http://citeseer.ist.psu.edu/banga97measuring.html" class="http"><strong id='bold2032'
+>Measuring the Capacity of a Web Server</strong></a> -- USENIX Symposium on Internet Technologies and Systems, 1997.</td></tr>
+<tr><td id="bdgkkm:sign88" align="right" valign="top"><a name="bdgkkm:sign88">[5]</a></td><td id="bdgkkm:sign88" align="left" valign="top">Bobrow, D. <em id='emph2033'
+> et al.</em> -- <a href="http://www-2.cs.cmu.edu/afs/cs.cmu.edu/project/ai-repository/ai/html/cltl/cltl2.html" class="http"><strong id='bold2034'
+>Common lisp object system specification</strong></a> -- special issue,  Notices, (23), Sep, 1988.</td></tr>
+<tr><td id="bpg:usenix04" align="right" valign="top"><a name="bpg:usenix04">[6]</a></td><td id="bpg:usenix04" align="left" valign="top">Brech, T.  and Pariag, D.  and Gammo, L.  -- <strong id='bold2035'
+>accept()able Strategies for Improving Web Server Performance</strong> -- Proceedings of the USENIX 2004 Annual Technical Conference, Boston, MA, USA, Jun, 2004.</td></tr>
+<tr><td id="broberg:hw05" align="right" valign="top"><a name="broberg:hw05">[7]</a></td><td id="broberg:hw05" align="left" valign="top">Broberg, N.  -- <strong id='bold2036'
+>Haskell Server Pages through Dynamic Loading</strong> -- Haskell '05: Proceedings of the 2005 ACM SIGPLAN workshop on Haskell, Tallinn, Estonia, 2005, pp. 39--48.</td></tr>
+<tr><td id="bgkebc:usenix06" align="right" valign="top"><a name="bgkebc:usenix06">[8]</a></td><td id="bgkebc:usenix06" align="left" valign="top">Burns, B. <em id='emph2037'
+> et al.</em> -- <strong id='bold2038'
+>Flux: A Language for Programming High-Performance Servers</strong> -- In Proceedings of USENIX Annual Technical Conference, 2006, pp. 129--142.</td></tr>
+<tr><td id="cked:www05" align="right" valign="top"><a name="cked:www05">[9]</a></td><td id="cked:www05" align="left" valign="top">Choi, G. S. <em id='emph2039'
+> et al.</em> -- <a href="http://doi.acm.org/10.1145/1060745.1060851" class="http"><strong id='bold2040'
+>A Multi-Threaded PIPELINED Web Server Architecture for SMP/SoC Machines</strong></a> -- WWW '05: Proceedings of the 14th international conference on World Wide Web, Chiba, Japan, 2005, pp. 730--739.</td></tr>
+<tr><td id="darcy:server02" align="right" valign="top"><a name="darcy:server02">[10]</a></td><td id="darcy:server02" align="left" valign="top">Darcy, J.  -- <a href="http://pl.atyp.us/content/tech/servers.html" class="http"><strong id='bold2041'
+>Server Design</strong></a> -- <a href="http://pl.atyp.us/content/tech/servers.html" class="http"><strong id='bold2042'
+>http://pl.atyp.us/content/tech/servers.html</strong></a>, Aug, 2002.</td></tr>
+<tr><td id="ducasse:esug04" align="right" valign="top"><a name="ducasse:esug04">[11]</a></td><td id="ducasse:esug04" align="left" valign="top">Ducasse, S.  and Lienhard, A.  and Renggli, L.  -- <strong id='bold2043'
+>Seaside - a multiple control flow web application framework</strong> -- Proceedings of the ESUG Research Track, 2004.</td></tr>
+<tr><td id="heidemann:accr97" align="right" valign="top"><a name="heidemann:accr97">[12]</a></td><td id="heidemann:accr97" align="left" valign="top">Heidemann, J.  -- <a href="http://www.isi.edu/~johnh/PAPERS/Heidemann97a.html" class="http"><strong id='bold2044'
+>Performance Interactions Between P-HTTP and TCP Implementations</strong></a> -- ACM Computer Communication Review, 27(2), April, 1997, pp. 65--73.</td></tr>
+<tr><td id="jkrnt:usenix2001" align="right" valign="top"><a name="jkrnt:usenix2001">[13]</a></td><td id="jkrnt:usenix2001" align="left" valign="top">Joubert, P. <em id='emph2045'
+> et al.</em> -- <a href="citeseer.nj.nec.com/491170.html"><strong id='bold2046'
+>High-Performance Memory-Based Web Servers: Kernel and User-Space Performance</strong></a> -- Usenix, 2001, pp. 175--188.</td></tr>
+<tr><td id="krishnamurthi:padl03" align="right" valign="top"><a name="krishnamurthi:padl03">[14]</a></td><td id="krishnamurthi:padl03" align="left" valign="top">Krishnamurthi, S.  -- <strong id='bold2047'
+>The CONTINUE Server (or, How I Administrated PADL 2002 and 2003).</strong> -- Practical Aspects of Declarative Languages, New Orleans, LA, USA, Jan, 2003, pp. 2--16.</td></tr>
+<tr><td id="khmgpf:hosc07" align="right" valign="top"><a name="khmgpf:hosc07">[15]</a></td><td id="khmgpf:hosc07" align="left" valign="top">Krishnamurthi, S. <em id='emph2048'
+> et al.</em> -- <a href="http://www.cs.brown.edu/ sk/Publications/Papers/Published/khmgpf-impl-use-plt-web-server-journal/paper.pdf" class="http"><strong id='bold2049'
+>Implementation and Use of the PLT Scheme Web Server</strong></a> -- Higher Order and Symbolic Computation, 20(4), 2007, pp. 431--460.</td></tr>
+<tr><td id="lp:usenix02" align="right" valign="top"><a name="lp:usenix02">[16]</a></td><td id="lp:usenix02" align="left" valign="top">Larus, J.  and Parkes, M.  -- <strong id='bold2050'
+>Using Cohort Scheduling to Enhance Server Performance</strong> -- Proceedings of the Usenix Annual Technical Conference, Monterey, CA, USA, Jun, 2002, pp. 103--114.</td></tr>
+<tr><td id="loyaute:phd08" align="right" valign="top"><a name="loyaute:phd08">[17]</a></td><td id="loyaute:phd08" align="left" valign="top">Loyaute, G.  -- <strong id='bold2051'
+>Un modéle génératif pour le développement de serveurs internet</strong> -- Univeristé Paris-Est, Paris, France, Sep, 2008.</td></tr>
+<tr><td id="mallery:www94" align="right" valign="top"><a name="mallery:www94">[18]</a></td><td id="mallery:www94" align="left" valign="top">Mallery, J. C.  -- <a href="http://www.ai.mit.edu/projects/iiip/doc/cl-http/www94.ps" class="http"><strong id='bold2052'
+>A Common LISP Hypermedia Server</strong></a> -- In Proc. First International World-Wide Web Conference, 1994, pp. 239--247.</td></tr>
+<tr><td id="marlow:hw00" align="right" valign="top"><a name="marlow:hw00">[19]</a></td><td id="marlow:hw00" align="left" valign="top">Marlow, S.  -- <strong id='bold2053'
+>Writing High-Performance Server Applications in Haskell, Case Study: A Haskell Web Server</strong> -- Haskell '00: Proceedings of the ACM SIGPLAN Haskell Workshop, Montreal, Canada, Sep, 2000.</td></tr>
+<tr><td id="mv:hw00" align="right" valign="top"><a name="mv:hw00">[20]</a></td><td id="mv:hw00" align="left" valign="top">Meijer, E.  and Van Velzen, D.  -- <strong id='bold2054'
+> Haskell Server Pages -- Functional Programming and the Battle for the Middle Tier Abstract</strong> -- Haskell '00: Proceedings of the ACM SIGPLAN Haskell Workshop, Montreal, Canada, Sep, 2000.</td></tr>
+<tr><td id="mogul:sigcomm95" align="right" valign="top"><a name="mogul:sigcomm95">[21]</a></td><td id="mogul:sigcomm95" align="left" valign="top">Mogul, J. C.  -- <strong id='bold2055'
+>The case for persistent-connection HTTP</strong> -- SIGCOMM '95: Proceedings of the conference on Applications, technologies, architectures, and protocols for computer communication, Cambridge, Massachusetts, United States, 1995, pp. 299--313.</td></tr>
+<tr><td id="mm:sigcomm01" align="right" valign="top"><a name="mm:sigcomm01">[22]</a></td><td id="mm:sigcomm01" align="left" valign="top">Mogul, J. C.  and Minshall, G.  -- <strong id='bold2056'
+>Rethinking the TCP Nagle algorithm</strong> -- SIGCOMM Comput. Commun. Rev., 31(1), New York, NY, USA, 2001, pp. 6--20.</td></tr>
+<tr><td id="mj:wisp98" align="right" valign="top"><a name="mj:wisp98">[23]</a></td><td id="mj:wisp98" align="left" valign="top">Mosberger, D.  and Jin, T.  -- <strong id='bold2057'
+>httperf: A tool for Measuring Web Server Performance</strong> -- In First Workshop on Internet Server Performance, 1998, pp. 59--67.</td></tr>
+<tr><td id="nagle:ietf84" align="right" valign="top"><a name="nagle:ietf84">[24]</a></td><td id="nagle:ietf84" align="left" valign="top">Nagle, J.  -- <strong id='bold2058'
+>Congestion Control in IP/TCP Internetworks</strong> -- RFC 896, Internet Engineering Task Force, Jan, 1984.</td></tr>
+<tr><td id="nagpurkar:isowc08" align="right" valign="top"><a name="nagpurkar:isowc08">[25]</a></td><td id="nagpurkar:isowc08" align="left" valign="top">Nagpurkar, P. <em id='emph2059'
+> et al.</em> -- <a href="http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=4636096" class="http"><strong id='bold2060'
+>Workload Characterization of selected JEE-based Web 2.0 Applications</strong></a> -- Proceedings of the IISWC 2008. IEEE International Symposium on Workload Characterization, Sep, 2008, pp. 109--118.</td></tr>
+<tr><td id="hbk:ton02" align="right" valign="top"><a name="hbk:ton02">[26]</a></td><td id="hbk:ton02" align="left" valign="top">Nahum, E.  and Barzilai, T.  and Kandlur, D. D.  -- <strong id='bold2061'
+>Performance Issues in WWW Servers</strong> -- IEEE/ACM Transactions on Networking, 10(1), Feb, 2002.</td></tr>
+<tr><td id="nielsen:sigcomm97" align="right" valign="top"><a name="nielsen:sigcomm97">[27]</a></td><td id="nielsen:sigcomm97" align="left" valign="top">Nielsen, H. F. <em id='emph2062'
+> et al.</em> -- <strong id='bold2063'
+>Network Performance Eeffects of HTTP/1.1, CSS1, and PNG</strong> -- Proceedings of the ACM SIGCOMM'97 conference, Cannes, France, Sep, 1997.</td></tr>
+<tr><td id="pdz:usenix99" align="right" valign="top"><a name="pdz:usenix99">[28]</a></td><td id="pdz:usenix99" align="left" valign="top">Pai, V. S.  and Druschel, P.  and Zwaenepoel, W.  -- <strong id='bold2064'
+>Flash: An efficient and portable Web server</strong> -- Proceedings of the Usenix Annual Technical Conference, Monterey, CA, USA, Jun, 1999.</td></tr>
+<tr><td id="pariag:sigops07" align="right" valign="top"><a name="pariag:sigops07">[29]</a></td><td id="pariag:sigops07" align="left" valign="top">Pariag, D. <em id='emph2065'
+> et al.</em> -- <a href="http://www.cs.uwaterloo.ca/~brecht/papers/getpaper.php?file=eurosys-2007.pdf" class="http"><strong id='bold2066'
+>Comparing the Performance of Web Server Architectures</strong></a> -- SIGOPS Oper. Syst. Rev., 41(3), New York, NY, USA, 2007, pp. 231--243.</td></tr>
+<tr><td id="ss:icfp02" align="right" valign="top"><a name="ss:icfp02">[30]</a></td><td id="ss:icfp02" align="left" valign="top">Serpette, B.  and Serrano, M.  -- <a href="http://www.inria.fr/mimosa/Manuel.Serrano/publi/ss-icfp02.ps.gz" class="http"><strong id='bold2067'
+>Compiling Scheme to JVM bytecode: a performance study</strong></a> -- 7th  Sigplan Int'l Conference on Functional Programming (ICFP), Pittsburgh, Pensylvanie, USA, Oct, 2002.</td></tr>
+<tr><td id="sgl:dls06" align="right" valign="top"><a name="sgl:dls06">[31]</a></td><td id="sgl:dls06" align="left" valign="top">Serrano, M.  and Gallesio, E.  and Loitsch, F.  -- <a href="http://www.inria.fr/mimosa/Manuel.Serrano/publi/dls06/article.html" class="http"><strong id='bold2068'
+>HOP, a language for programming the Web 2.0</strong></a> -- Proceedings of the First Dynamic Languages Symposium, Portland, Oregon, USA, Oct, 2006.</td></tr>
+<tr><td id="serrano:sfp06" align="right" valign="top"><a name="serrano:sfp06">[32]</a></td><td id="serrano:sfp06" align="left" valign="top">Serrano, M.  -- <a href="http://www.inria.fr/mimosa/Manuel.Serrano/publi/sfp06/article.html" class="http"><strong id='bold2069'
+>The HOP Development Kit</strong></a> -- Invited paper of the Seventh ACM sigplan Workshop on Scheme and Functional Programming, Portland, Oregon, USA, Sep, 2006.</td></tr>
+<tr><td id="serrano:mm07" align="right" valign="top"><a name="serrano:mm07">[33]</a></td><td id="serrano:mm07" align="left" valign="top">Serrano, M.  -- <a href="http://www.inria.fr/mimosa/Manuel.Serrano/publi/serrano-acmmm07.pdf" class="http"><strong id='bold2070'
+>Programming Web Multimedia Applications with Hop</strong></a> -- Proceedings of the ACM Sigmm and ACM Siggraph conference on Multimedia, Best Open Source Software, Augsburg, Germany, Sep, 2007.</td></tr>
+<tr><td id="serrano:mmcn09" align="right" valign="top"><a name="serrano:mmcn09">[34]</a></td><td id="serrano:mmcn09" align="left" valign="top">Serrano, M.  -- <strong id='bold2071'
+>Anatomy of a Ubiquitous Media Center</strong> -- Proceedings of the Sixteenth Annual Multimedia Computing and Networking (MMCN'09), San Jose, CA, USA, Jan, 2009.</td></tr>
+<tr><td id="shukla:cascon04" align="right" valign="top"><a name="shukla:cascon04">[35]</a></td><td id="shukla:cascon04" align="left" valign="top">Shukla, A. <em id='emph2072'
+> et al.</em> -- <a href="http://www.cs.uwaterloo.ca/ brecht/papers/getpaper.php?file=cascon-2004.ps" class="http"><strong id='bold2073'
+>Evaluating the Performance of User-Space and Kernel-Space Web Servers</strong></a> -- CASCON '04: Proceedings of the 2004 conference of the Centre for Advanced Studies on Collaborative research, Markham, Ontario, Canada, 2004, pp. 189--201.</td></tr>
+<tr><td id="sh:acs98" align="right" valign="top"><a name="sh:acs98">[36]</a></td><td id="sh:acs98" align="left" valign="top">Smith, D. C.  and Hu, J. C.  -- <strong id='bold2074'
+>Developing Flexible and High-performance Web Servers with Frameworks and Patterns</strong> -- ACM Computing Surveys, 301998.</td></tr>
+<tr><td id="thieman:padl02" align="right" valign="top"><a name="thieman:padl02">[37]</a></td><td id="thieman:padl02" align="left" valign="top">Thiemann, P.  -- <strong id='bold2075'
+>WASH/CGI: Server-side Web Scripting with Sessions and Typed, Compositional Forms</strong> -- Practical Aspects of Declarative Languages, 2002.</td></tr>
+<tr><td id="taw:sigmetrics03" align="right" valign="top"><a name="taw:sigmetrics03">[38]</a></td><td id="taw:sigmetrics03" align="left" valign="top">Titchkosky, L.  and Arlitt, M.  and Williamson, C.  -- <strong id='bold2076'
+>A performance comparison of dynamic Web technologies</strong> -- SIGMETRICS Perform. Eval. Rev., 31(3), New York, NY, USA, Dec, 2003, pp. 2--11.</td></tr>
+<tr><td id="upm:ppopp07" align="right" valign="top"><a name="upm:ppopp07">[39]</a></td><td id="upm:ppopp07" align="left" valign="top">Upadhyaya, G.  and Pai, V. S.  and Midkiff, S. P.  -- <strong id='bold2077'
+>Expressing and Exploiting Concurrency in Networked Applications with Aspen</strong> -- PPoPP '07: Proceedings of the 12th ACM SIGPLAN symposium on Principles and practice of parallel programming, San Jose, California, USA, 2007, pp. 13--23.</td></tr>
+<tr><td id="bcb:hotos03" align="right" valign="top"><a name="bcb:hotos03">[40]</a></td><td id="bcb:hotos03" align="left" valign="top">Von Behren, R.  and Condit, J.  and Brewer, E.  -- <strong id='bold2078'
+>Why Events Are A Bad Idea (for higher-concurrency servers)</strong> -- Proc. of HotOSIX: the 9th Workshop on Hop Topics in Operating Systems, Lihue, Hawaii, USA, May, 2003.</td></tr>
+<tr><td id="welsh:berkeley00" align="right" valign="top"><a name="welsh:berkeley00">[41]</a></td><td id="welsh:berkeley00" align="left" valign="top">Welsh, M. <em id='emph2079'
+> et al.</em> -- <a href="http://techreports.lib.berkeley.edu/accessPages/CSD-00-1108.html" class="http"><strong id='bold2080'
+>A Design Framework for Highly Concurrent Systems</strong></a> -- Berkeley, CA, USA, 2000.</td></tr>
+<tr><td id="wcb:sosp01" align="right" valign="top"><a name="wcb:sosp01">[42]</a></td><td id="wcb:sosp01" align="left" valign="top">Welsh, M.  and Culler, D.  and Brewer, E.  -- <a href="http://citeseer.ist.psu.edu/welsh01seda.html" class="http"><strong id='bold2081'
+>SEDA: An Architecture for Well-Conditioned, Scalable Internet Services</strong></a> -- Symposium on Operating Systems Principles, 2001, pp. 230--243.</td></tr>
+<tr><td id="wg:icfp07" align="right" valign="top"><a name="wg:icfp07">[43]</a></td><td id="wg:icfp07" align="left" valign="top">Welsh, N.  and Gurnell, D.  -- <strong id='bold2082'
+>Experience report: Scheme in commercial Web application development</strong> -- ICFP '07: Proceedings of the 12th ACM SIGPLAN international conference on Functional programming, Freiburg, Germany, 2007, pp. 153--156.</td></tr>
+<tr><td id="yzj:sigops02" align="right" valign="top"><a name="yzj:sigops02">[44]</a></td><td id="yzj:sigops02" align="left" valign="top">Yao, N.  and Zheng, M.  and Ju, J.  -- <a href="http://doi.acm.org/10.1145/583800.583807" class="http"><strong id='bold2083'
+>Pipeline: A New Architecture of High Performance Servers</strong></a> -- SIGOPS Oper. Syst. Rev., 36(4), New York, NY, USA, 2002, pp. 55--64.</td></tr>
+<tr><td id="zorn:spe93" align="right" valign="top"><a name="zorn:spe93">[45]</a></td><td id="zorn:spe93" align="left" valign="top">Zorn, B.  -- <strong id='bold2084'
+>The Measured Cost of Conservative Garbage Collection</strong> -- Software --- Practice and Experience, 23(7), Jul, 1993, pp. 733--756.</td></tr>
+</tbody></table>
+</font></div><br>
+</div>
+<div class="footnotes" id="Hop-a-Fast-Server-for-the-Diffuse-Web-footnote"><div class="footnote"><br><br>
+<hr width='20%' size='2' align='left'>
+<a name="footnote-footnote1704"><sup><small>1</small></sup></a>: At the time this paper has been written,
+the wikipedia articles comparing Web servers described 68 general
+purpose servers and 79 lightweight Web servers! See <tt id='tt1703'
+><a href="http://en.wikipedia.org/wiki/Comparison_of_web_servers" class="http">http://en.wikipedia.org/wiki/Comparison_of_web_servers</a></tt>.
+<br>
+<div></div>
+</div>
+<div class="skribe-ending">
+<hr> 
+<p class="ending" id='paragraph2090'
+><font size="-1">
+This <span class="sc">Html</span> page has been produced by 
+<a href="http://www.inria.fr/mimosa/fp/Skribe" class="http">Skribe</a>.
+<br/>
+Last update <em id='it2088'
+>Tue May 26 08:49:58 2009</em>.</font></p></div>
+</body>
+</html>

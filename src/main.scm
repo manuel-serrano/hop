@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Jan  1 11:33:45 2009 (serrano)                */
+;*    Last change :  Tue May 26 09:27:19 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -77,6 +77,7 @@
    ;; set the Hop cond-expand identification
    (register-eval-srfi! 'hop)
    (register-eval-srfi! (string->symbol (format "hop-~a" (hop-version))))
+   (register-eval-srfi! 'hop-1.10.x)
    ;; set the library load path
    (let ((hop-path (make-file-path (hop-lib-directory) "hop" (hop-version))))
       (bigloo-library-path-set! (cons hop-path (bigloo-library-path))))
