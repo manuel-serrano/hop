@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Apr 16 08:54:18 2009 (serrano)                */
+;*    Last change :  Mon May 25 15:26:30 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -44,7 +44,7 @@
 	    (class xml
 	       (%xml-constructor))
 
-	    (class xml-verbatim
+	    (class xml-verbatim::xml
 	       (body::string read-only))
 	    
 	    (class css::xml)
