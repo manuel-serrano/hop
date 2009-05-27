@@ -143,8 +143,8 @@ The alternative is:
 
 HOP supports derivative conditional constructions:
 
-  <alternative-cond> := (cond ((<expression> <expression)+))
-  <alternative-case> := (case <expression> ((<atom>+ <expression)+))
+  <alternative-cond> := (cond ((<expression> <expression>)+))
+  <alternative-case> := (case <expression> ((<atom>+ <expression>)+))
 
 
 Local variables are introduced with the ++let++ constructions:
@@ -183,17 +183,42 @@ Anonymous services are introduced by the ++service++ form:
   <service> := (service [:ttl <integer>] [:timeout <integer>] [:url <string>] 
                   (<ident>*) <expression>)
 
+== Conditional compilation ==
 
-== Server Side core language ==
+Conditional compilation are managed in HOP by the ++cond-expand++ form:
 
-This section presents the HOP constructions that are only applicable to
-server-side programming.
+  <cond-expand> := (cond-expand (<cond-expand-set> <expression>)+)
+  <cond-expand-set> := else
+    | <cond-expand-feature>
+    | (not <cond-expand-set>)
+    | (or <cond-expand-set>+)
+    | (and <cond-expand-set>+)
+  <cond-expand-feature> := symbol
 
-=== Modules ===
-On the server side the ,(<APIREF> "weblets" "service.wiki") are organized into
-//modules//. Modules structure the program. A module //export// variables,
-functions, and classes. A module might //import// another module. In
-that case, it may access to the imported variables, functions, and classes.
+
+Hop defines the following features:
+
+  * bigloo
+  * hop
+  * hop-<version> (//i.e.//, hop-2.0.0)
+  * hop-<branch> (//i.e.//, hop-2.0.x)
+
+
+In addition, client-side defines additional features that allows source code
+to behave differently on the server and on the client:
+
+  * scheme2js
+
+
+See ,(<APIREF> (<I> "Conditional Compilation") "condexpand.wiki") for 
+additional details.
+
+== Modules ==
+
+Modules structure HOP weblet. Server and client codes may use
+modules. A module //export// variables, functions, and classes. A
+module might //import// another module. In that case, it may access to
+the imported variables, functions, and classes.
 
 ~~ The syntactic structure of a module is as follows:
 
@@ -206,11 +231,20 @@ A single file cannot contain more than one module. The syntax for the clauses
 is:
 
   <clause> := <import>
+     | <client-import>
+     | <server-import>
      | <library>
      | <export>
      | <static>
 
   <import> := (import <ident>+)
+     | <client-import>
+     | <server-import>
+
+  <client-import> := ~(import <ident>+) can only be used by server code
+
+  <server-import> := $(import <ident>+) can only be used by client code
+
   <library> := (library <ident>+)
 
   <export> := (export <class-or-binding>+)
@@ -244,6 +278,12 @@ function ++fun-foo++, the variable ++var-foo++, and the class ++class-foo++.
                 (x (default 0))
                 (y (default 0)))))
 </code>
+
+== Server Side core language ==
+
+This section presents the HOP constructions that are only applicable to
+server-side programming.
+
 
 === Classes and Objects === 
 

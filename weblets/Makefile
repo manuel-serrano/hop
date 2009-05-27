@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/weblets/Makefile                 */
+#*    serrano/prgm/project/hop/2.0.x/weblets/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Nov 28 11:01:39 2008 (serrano)                */
-#*    Copyright   :  2004-08 Manuel Serrano                            */
+#*    Last change :  Wed May 27 09:25:06 2009 (serrano)                */
+#*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
 #*=====================================================================*/
@@ -38,9 +38,11 @@ build:
 #*    clean                                                            */
 #*---------------------------------------------------------------------*/
 clean:
-	for p in $(POPDIRS); do \
-          ($(MAKE) -C $$p clean) || exit 1;\
-        done
+	if [ "$(HOPVERSION) " != " " ]; then \
+	  for p in $(POPDIRS); do \
+            ($(MAKE) -C $$p clean) || exit 1;\
+          done \
+        fi
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
