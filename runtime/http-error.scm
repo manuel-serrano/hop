@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue May  5 17:03:26 2009 (serrano)                */
+;*    Last change :  Tue May 26 10:24:00 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -120,6 +120,13 @@
 	       (make-file-name (hop-icons-directory) src))))
 
 ;*---------------------------------------------------------------------*/
+;*    <ESPAN> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <ESPAN> ((class #f)
+			      body)
+   (<SPAN> :class class body (html-string-encode (car body))))
+
+;*---------------------------------------------------------------------*/
 ;*    <ETD> ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <ETD> ((id #unspecified string)
@@ -219,7 +226,7 @@
 				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title" "Unknown Host"))
 				   (<TR> (<ETD> :class "msg"
-					    (<SPAN> :class "filenotfound"
+					    (<ESPAN> :class "filenotfound"
 					       host))))))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -246,7 +253,7 @@
 				   (<TR> (<ETD> :class "title"
 					    "File not found!"))
 				   (<TR> (<ETD> :class "msg"
-					    (<SPAN> :class "filenotfound"
+					    (<ESPAN> :class "filenotfound"
 					       file))))))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -275,7 +282,7 @@
 					       (format "~a service!"
 						       (string-capitalize key))))
 				      (<TR> (<ETD> :class "msg"
-					       (<SPAN> :class "filenotfound"
+					       (<ESPAN> :class "filenotfound"
 						  file)))
 				      (<TR> (<ETD> :class "dump"
 					       (<SPAN> msg))))))))))))))

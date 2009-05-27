@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Sun Mar 22 07:15:48 2009 (serrano)                */
+/*    Last change :  Tue May 26 11:14:00 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -23,10 +23,6 @@ function hop_error_html( fun, exc, msg ) {
    var el = document.createElement( 'div' );
    var emsg = false;
    
-   msg = msg.replace( /</g, "&lt;" );
-   msg = msg.replace( />/g, "&gt;" );
-   msg = msg.replace( /&quot;/g, "\"" );
-   
    if( exc ) {
       if( "message" in exc ) {
 	 emsg = exc.message;
@@ -39,6 +35,14 @@ function hop_error_html( fun, exc, msg ) {
       }
    }
 
+   msg = msg.replace( /</g, "&lt;" );
+   msg = msg.replace( />/g, "&gt;" );
+   msg = msg.replace( /&quot;/g, "\"" );
+   
+   emsg = emsg.replace( /</g, "&lt;" );
+   emsg = emsg.replace( />/g, "&gt;" );
+   emsg = emsg.replace( /&quot;/g, "\"" );
+   
    node_style_set( el, "overflow", "hidden" );
    node_style_set( el, "padding", "0" );
    node_style_set( el, "border", "1px solid #ccc" );
@@ -48,16 +52,16 @@ function hop_error_html( fun, exc, msg ) {
    node_style_set( el, "margin", "0" );
 
    el.innerHTML =
-      ("<table style='width: 100%; font-family: arial;'>"
-       + "<colgroup><col width='64px'><col></colgroup>"
-       + "<tr><td style='height: 64px; vertical-align: top; padding-top: 20px; padding-left: 10px; padding-right: 10px'><img src='" + hop_client_error + "' alt='Error'></td><td>"
-       + "<table style='width: 100%; font-size: 90%'><colgroup><col width='0*'></colgroup>"
-       + "  <tr><td colspan='2' style='text-align: left; width: 100%; border-bottom: 1px solid #777; font-size: x-large; font-weight: bold; color: red'>Internal Client Side Error</td></tr>"
+      ("<table style='width: 100%; font-family: arial;'>\n"
+       + "<colgroup><col width='64px'/><col/></colgroup>\n"
+       + "<tr><td style='height: 64px; vertical-align: top; padding-top: 20px; padding-left: 10px; padding-right: 10px'><img src='" + hop_client_error + "' alt='Error'/></td><td>\n"
+       + "<table style='width: 100%; font-size: 90%'><colgroup><col width='0*'/></colgroup>\n"
+       + "  <tr><td colspan='2' style='text-align: left; width: 100%; border-bottom: 1px solid #777; font-size: x-large; font-weight: bold; color: red'>Internal Client Side Error</td></tr>\n"
        + (emsg ? ("<tr><th style='text-align: left; vertical-align: top'>error:</th><td style='text-align: left'>" + emsg + "</td></tr>") : "")
-       + "  <tr><th style='text-align: left; vertical-align: top'>function:</th><td style='text-align: left'><tt>" + fun + "</tt></td></tr>"
-       + ((exc && "line" in exc ) ? "<tr><th style='text-align: left; vertical-align: top'>line:</th><td style='text-align: left'><tt>" + exc.line + "</tt></td></tr>" : "")
-       + "  <tr><td colspan='2' style='text-align: left; vertical-align: top; border-top: 1px solid #777'>"
-       + "   <div style='width: " + Math.round( (hop_current_window_width() * 0.75) - 100) + "px; overflow: auto; padding-top: 1em;'><pre style=' text-align: left; background: #ffe; border: 1px dotted #ccc;'>" + msg + "</pre></div>"
+       + "  <tr><th style='text-align: left; vertical-align: top'>function:</th><td style='text-align: left'><tt>" + fun + "</tt></td></tr>\n"
+       + ((exc && "line" in exc ) ? "<tr><th style='text-align: left; vertical-align: top'>line:</th><td style='text-align: left'><tt>" + exc.line + "</tt></td></tr>\n" : "")
+       + "  <tr><td colspan='2' style='text-align: left; vertical-align: top; border-top: 1px solid #777'>\n"
+       + "   <div style='width: " + Math.round( (hop_current_window_width() * 0.75) - 100) + "px; overflow: auto; padding-top: 1em;'><pre style=' text-align: left; background: #ffe; border: 1px dotted #ccc;'>" + msg + "</pre></div>\n"
        + "  </td></tr>"
        + "</table>"
        + "</td></tr></table>");

@@ -35,7 +35,7 @@
 ;; This is a special case (and thus slightly inconsistent with the rest.
 (define (compile-scheme-expression e env menv)
    (when (not (Compilation-Unit? menv))
-      (error #f "" #f))
+      (error 'compile-scheme-expression "Illegal macro environment" menv))
    (if (only-macros? e)
        (begin
 	  (add-macros! e menv)
@@ -92,11 +92,16 @@
 
 (define (compile-hop-client e #!optional (env '()) (menv #f))
    ;; This function is used from weblets, don't remove it!
-   (let ((ce (compile-scheme-expression e env menv)))
-      (match-case ce
-	 ((cons ((kwote quote) ?var) ?expr)
-	  (JS-expression (cons var expr)))
-	 (else
-	  (error 'compile-hop-client "Compilation failed" e)))))
+   (let ((unit (or menv (instantiate::Compilation-Unit
+			   (name (gensym 'macro))
+			   (top-level '())
+			   (exported-macros (create-hashtable :size 1))
+			   (exports '())))))
+      (let ((ce (compile-scheme-expression e env unit)))
+	 (match-case ce
+	    ((cons ((kwote quote) ?var) ?expr)
+	     (JS-expression (cons var expr)))
+	    (else
+	     (error 'compile-hop-client "Compilation failed" e))))))
        
    

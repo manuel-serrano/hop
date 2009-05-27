@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed May  6 14:13:43 2009 (serrano)                */
+/*    Last change :  Tue May 26 11:09:05 2009 (serrano)                */
 /*    Copyright   :  2004-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -306,7 +306,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 		  try {
 		     var ctype = hop_header_ctype( xhr );
 		     var expr;
-		     
+
 		     if( ctype === "application/x-javascript" ) {
 			/* ctype must match the value hop-json-mime-type */
 			/* which is defined in runtime/param.scm.        */

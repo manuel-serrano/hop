@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon May 25 15:26:30 2009 (serrano)                */
+;*    Last change :  Tue May 26 11:32:12 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -451,8 +451,11 @@
    (cond
       ((string? obj)
        (display obj p))
-      ((or (number? obj) (symbol? obj))
+      ((number? obj)
        (display obj p))
+      ((symbol? obj)
+       ;; don't display symbols otherwise inner defines generate HTML codes!
+       #unspecified)
       ((pair? obj)
        (for-each (lambda (o) (xml-write o p backend)) obj))
       ((date? obj)
