@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov  3 08:24:25 2007                          */
-;*    Last change :  Thu May 28 09:12:35 2009 (serrano)                */
+;*    Last change :  Thu May 28 12:25:54 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Canvas interface                                             */
@@ -77,11 +77,15 @@
 		 (set! ctx.font (cadr props))
 		 (set! ctx.mozTextStyle (cadr props)))
 		((:text-align)
-		 (set! ctx.textAlign (cadr props)))
+		 (let ((p (cadr props)))
+		    (set! ctx.textAlign (if (symbol? p) (symbol->string p) p))))
 		((:text-baseline)
-		 (set! ctx.textBaseLine (cadr props)))
+		 (let ((p (cadr props)))
+		 (set! ctx.textBaseLine (if (symbol? p) (symbol->string p) p))))
 		((:stroke-style)
-		 (set! ctx.strokeStyle (cadr props))))))
+		 (set! ctx.strokeStyle (cadr props)))
+		(else
+		 (error 'canvas-properties-set! "Illegal property" props)))))
 	 (loop (cddr props)))))
 
 ;*---------------------------------------------------------------------*/
@@ -280,7 +284,7 @@
    (if (null? rest)
        (ctx.drawImage image x y)
        (if (and (pair? rest) (pair? (cdr rest)))
-	   (if (null? (cdr rest))
+	   (if (null? (cddr rest))
 	       (ctx.drawImage image x y (car rest) (cadr rest))
 	       (let* ((sw (car rest))
 		      (sh (cadr rest))

@@ -40,8 +40,6 @@ office applications (web agendas, mail clients, ...), ubiquitous domotics, etc. 
 		 (canvas-begin-path ctx)
 		 (canvas-translate ctx 10 350)
 		 (canvas-path-text ctx "H O P")
-		 (canvas-stroke ctx)
-		 (canvas-fill ctx)
 		 (canvas-properties-set! ctx :fill-style "grey"
 					 :font "10pt sans serif")
 		 (canvas-text-along-path ctx hop #f)
