@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Thu May 14 12:12:54 2009 (serrano)                */
+;*    Last change :  Wed May 27 12:11:38 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -427,11 +427,12 @@
 	       (<TD> :class (if (is-directory? p)
 				"filechooser-icon filechooser-folder"
 				"filechooser-icon filechooser-file")
-		  ;; we use an input element to receive key events
-		  (<INPUT> :value (url-decode (basename p))
+		  ;; we should use an input element to receive key events
+		  #;(<INPUT> :value (url-decode (basename p))
 		     :type 'text
 		     :onkeydown (format "hop_filechooser_key( this, event, ~s, ~s, ~s, ~s, ~s )"
-					id prevep previd nextep nextid)))
+					id prevep previd nextep nextid))
+		  (<SPAN> (url-decode (basename p))))
 	       (<TD> :class "filechooser-modified"
 		  (file-date ep)))))
       
