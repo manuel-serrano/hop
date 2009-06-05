@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Fri Jun  5 14:10:25 2009 (serrano)                */
+;*    Last change :  Fri Jun  5 17:12:35 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debuggin facility (includes when Hop launched in     */
@@ -237,6 +237,7 @@
 		   (list url ", line " exc.line))
 		  (else
 		   url))))
+      
       (<EXCEPTION-FRAME>
 	 (<TABLE> :style "width: 100%; font-family: arial; font-size: 10pt; background: #FFFFF7; border-bottom: 1px solid #ccc"
 	    (<COLGROUP>
@@ -277,19 +278,22 @@
    (dom-append-child! document.body (<EXCEPTION> exc)))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-onerror-handler ...                                          */
+;*---------------------------------------------------------------------*/
+(define (hop-onerror-handler msg url line)
+   ;; build a dummy exception for reporting
+   (let ((exc (new Error)))
+      (set! exc.message msg)
+      (set! exc.fileName url)
+      (set! exc.lineNumber line)
+      ;; report the error
+      (hop-report-exception exc)
+      ;; don't propagate the error
+      (< (hop_debug) 2)))
+
+;*---------------------------------------------------------------------*/
 ;*    install the default error handler ...                            */
 ;*---------------------------------------------------------------------*/
 (when (> (hop_debug) 0)
    ;; on debug install the Hop error handler
-   (set! window.onerror
-	 (lambda (msg url line)
-	    ;; build a dummy exception for reporting
-	    (let ((exc (new Error)))
-	       (set! exc.message msg)
-	       (set! exc.url url)
-	       (set! exc.line line)
-	       (set! exc.stack '())
-	       ;; report the error
-	       (hop-report-exception exc)
-	       ;; don't propagate the error
-	       #t))))
+   (set! window.onerror hop-onerror-handler))

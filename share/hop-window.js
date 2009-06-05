@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/share/hop-window.js              */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-window.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Wed Jan 14 08:21:12 2009 (serrano)                */
+/*    Last change :  Fri Jun  5 16:14:02 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -577,10 +577,10 @@ function hop_iwindow_src_set( win, src, width, height ) {
       };
 
       if( typeof src == "function" ) {
-	 hop( src(), cb );
+	 with_hop( src(), cb );
       } else {
 	 if( (src instanceof String) || (typeof src == "string") ) {
-	    hop( src, cb );
+	    with_hop( src, cb );
 	 } else {
 	    alert( "*** Hop Error, Illegal `iwindow' content -- " + src
 		   + " (" + typeof src + ")" );

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Fri Jun  5 10:57:43 2009 (serrano)                */
+/*    Last change :  Fri Jun  5 17:27:40 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -162,14 +162,9 @@ function hop_cookie_set_value( name, val, path, domain, expires ) {
 var hop_load_frequency = 100;
 
 /*---------------------------------------------------------------------*/
-/*    HopLoadError ...                                                 */
+/*    hop_load_frequency ...                                           */
 /*---------------------------------------------------------------------*/
-function HopLoadError( file ) {
-   var e = new Error( "hop-load error" );
-   e.file = file;
-
-   return e;
-}
+var hop_load_frequency = 100;
 
 /*---------------------------------------------------------------------*/
 /*    hop_load ...                                                     */
@@ -184,8 +179,11 @@ function hop_load( src, timeout ) {
    if( !timeout || (timeout == undefined) ) timeout = -1;
 
    if( holder != null ) {
-      if( timeout != 0 ) script.onload = function( e ) { loaded = true; };
+      
+      if( timeout != 0 ) script.onload = function( e ) { loaded = true; }
+      
       holder[ 0 ].appendChild( script );
+
       if( timeout != 0 ) {
 	 var it;
 	 var p = function() {
@@ -196,7 +194,7 @@ function hop_load( src, timeout ) {
 		  timeout -= hop_load_frequency;
 		  if( timeout <= 0 ) {
 		     clearInterval( it );
-		     throw( new HopLoadError( src ) );
+		     sc_error( "hop_load", "Cannot load file", src );
 		  }
 	       }
 	    }
@@ -204,7 +202,7 @@ function hop_load( src, timeout ) {
 	 it = setInterval( p, hop_load_frequency );
       }
    } else {
-      sc_error( "hop-load", "Can't find HEAD element", document );
+      sc_error( "hop_load", "Can't find HEAD element", src );
    }
 }
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Jun  5 13:18:35 2009 (serrano)                */
+;*    Last change :  Fri Jun  5 16:18:09 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -74,11 +74,11 @@
 		  (<COLGROUP> (<COL> :width "0*"))
 		  (<TR>
 		     (<TD> :style ths "host:")
-		     (<TD> (<TT> :style "font-size: 11pt; font-weight: bold"
+		     (<TD> (<TT> :style "font-size: 10pt; font-weight: bold"
 			      (http-request-host req) ":" (http-request-port req))))
 		  (<TR>
 		     (<TD> :style ths "path:")
-		     (<TD> (<TT> :style "font-size: 11pt" (http-request-path req)))))))
+		     (<TD> (<TT> :style "font-size: 9pt" (http-request-path req)))))))
       (cond
 	 ((&io-unknown-host-error? e)
 	  (http-unknown-host (&error-obj e)))
