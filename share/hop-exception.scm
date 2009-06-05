@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Fri Jun  5 17:12:35 2009 (serrano)                */
+;*    Last change :  Fri Jun  5 18:33:56 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debuggin facility (includes when Hop launched in     */
@@ -281,15 +281,17 @@
 ;*    hop-onerror-handler ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hop-onerror-handler msg url line)
-   ;; build a dummy exception for reporting
-   (let ((exc (new Error)))
-      (set! exc.message msg)
-      (set! exc.fileName url)
-      (set! exc.lineNumber line)
-      ;; report the error
-      (hop-report-exception exc)
-      ;; don't propagate the error
-      (< (hop_debug) 2)))
+   (or (eq? url hop_config.filtered_error)
+       ;; build a dummy exception for reporting
+       (let ((exc (new Error)))
+	  (set! exc.message msg)
+	  (set! exc.fileName url)
+	  (set! exc.lineNumber line)
+	  (set! exc.hopStack (hop-get-stack 1))
+	  ;; report the error
+	  (hop-report-exception exc)
+	  ;; don't propagate the error
+	  (< (hop_debug) 2))))
 
 ;*---------------------------------------------------------------------*/
 ;*    install the default error handler ...                            */
