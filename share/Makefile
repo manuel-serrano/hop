@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Apr  9 06:59:56 2009 (serrano)                */
+#*    Last change :  Fri Jun  5 11:04:34 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -50,7 +50,7 @@ EXTRA		= hop-paned.css hop-sorttable.js hop-tree.js \
                   hop-video.js hop-video.hss \
                   hop-login.js hop-login.hss \
                   hop-box.scm hop-box.hss \
-                  hop-canvas.scm
+                  hop-canvas.scm hop-exception.scm
 
 ICONS_AUDIO	= mute.png pause.png playlist.png prefs.png stop.png \
 		  next.png play.png podcast.png prev.png unmute.png
@@ -81,7 +81,7 @@ ICONS		= important.png shadow-se.png \
 		  busy-anim-16.gif logo-bg.png shadow-sw.png \
 		  dashboard.png notfound.png source.png \
 		  resize-grip.png stop.png \
-		  error.png shadow-e.png timeout.png \
+		  error.png client-error.png shadow-e.png timeout.png \
 		  error2.png shadow-ne.png warning.png \
 		  hop-16x16.png hop-48x48.png hop-32x32.png hop-128x128.png \
                   hop-api-48x48.png hop-api-16x16.png \

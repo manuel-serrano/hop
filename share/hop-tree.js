@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.11.x/share/hop-tree.js                */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-tree.js                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Wed Jan 21 15:52:03 2009 (serrano)                */
+/*    Last change :  Fri Jun  5 11:37:06 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -146,13 +146,12 @@ function hop_tree_populate( tree ) {
 	 var proc = eval( xhr.responseText );
 	 if( proc ) proc( function() { return hop_tree_populate( tree ) } );
       } catch( e ) {
-	 hop_error( "*** Hop Tree, handler error failure: " + tree +
-		    ": " + e + " -- " +
-		    hop_responsetext_error( xhr ) );
+	 e.hopObject = hop_responsetext_error( xhr );
+	 throw( e );
       }
    }
 
-   return hop( tree.proc(), success, failure );
+   return with_hop( tree.proc(), success, failure );
 }
 
 /*---------------------------------------------------------------------*/

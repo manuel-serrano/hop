@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/share/hop-event.js               */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-event.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Nov 14 17:13:28 2008 (serrano)                */
-/*    Copyright   :  2007-08 Manuel Serrano                            */
+/*    Last change :  Fri Jun  5 10:32:14 2009 (serrano)                */
+/*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
 /*=====================================================================*/
@@ -305,7 +305,7 @@ function start_servevt_flash_proxy( key, host, port ) {
 /*    hop_servevt_onerror ...                                          */
 /*---------------------------------------------------------------------*/
 function hop_servevt_onerror( msg ) {
-   hop_error( "servevt", new Error( msg ), "internal server event error" );
+   sc_error( "servevt", msg, "internal server event error" );
 }
 
 /*---------------------------------------------------------------------*/
@@ -436,9 +436,8 @@ function hop_start_servevt_proxy() {
 			   try {
 			      start_servevt_flash_proxy( key, host, port );
 			   } catch( e ) {
-			      hop_error( "hop_start_servevt_proxy",
-					 e,
-					 "Cannot start flash proxy, port=" + port);
+			      e.hopObject = ("port=" + port);
+			      throw( e );
 			   }
 			} else {
 			   start_servevt_ajax_proxy( key );
@@ -482,14 +481,16 @@ function hop_trigger_servevt( id, text, value, json ) {
 	 try {
 	    p2.car( evt );
 	 } catch( exc ) {
-	    hop_error( "hop_trigger_servevt [event " + id + "]", exc, p2.car );
+	    exc.hopObject = ("event=" + id + ", val=" + p2.car );
+	    throw exc;
 	 }
 	 
 	 if( evt.isStopped ) break;
 	 p2 = p2.cdr;
       }
    } catch( exc ) {
-      hop_error( "hop_trigger_servevt [event " + id + "]", exc, value );
+      exc.hopObject = ("event=" + id + ", val=" + value );
+      throw exc;
    }
 }
 

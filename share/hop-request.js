@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue May 26 11:09:05 2009 (serrano)                */
+/*    Last change :  Fri Jun  5 14:06:47 2009 (serrano)                */
 /*    Copyright   :  2004-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -75,90 +75,42 @@ function hop_apply_url( service, args ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export #t)) */
 function hop_default_failure( xhr ) {
-   var div = document.getElementById( "hop_default_failure" );
-   var div2 = document.getElementById( "hop_default_failure_background" );
+   var div = document.createElement( "div" );
+   var hopstack = xhr.hopStack ? BgL_zc3EXCEPTIONzd2STACKze3zf2( xhr.hopStack ) : false;
+   var jsstack = xhr.jsStack ? BgL_zc3EXCEPTIONzd2JSSTACKze3zf2( xhr.jsStack ) : false;
 
-   var notify_error = function( d, xhr ) {
+   if( "exception" in xhr ) {
+      BgL_hopzd2reportzd2exceptionz00( xhr.exception );
+   } else {
       if( xhr.responseError ) {
-	 d.appendChild( xhr.responseError );
+	 div.appendChild( xhr.responseError );
       } else {
 	 var t = xhr.responseText;
 	 if( t ) {
-	    t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
-	    t = t.replace( /<head[^>]*>/g, "<div style='display: none;'>" );
-	    t = t.replace( /<\/head>/g, "</div>" );
-	    t = t.replace( /<(meta|link)[^>]*>/g, "<span style='display: none'></span>" );
-	    t = t.replace( /<html[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
-	    t = t.replace( /<\/html>/g, "</div>" );
-	    t = t.replace( /<body[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
-	    t = t.replace( /<\/body>/g, "</div>" );
-	    t = t.replace( /&quot;/g, "\"" );
-	    d.innerHTML = t;
+	    if( t.match( /<!DOCTYPE[^>]*>/) ) {
+	       /* we have received the complete document */
+	       t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
+	       t = t.replace( /<head[^>]*>/g, "<div style='display: none;'>" );
+	       t = t.replace( /<\/head>/g, "</div>" );
+	       t = t.replace( /<(meta|link)[^>]*>/g, "<span style='display: none'></span>" );
+	       t = t.replace( /<html[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
+	       t = t.replace( /<\/html>/g, "</div>" );
+	       t = t.replace( /<body[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
+	       t = t.replace( /<\/body>/g, "</div>" );
+	       t = t.replace( /&quot;/g, "\"" );
+	       div.innerHTML = t;
+	    } else {
+	       /* we have received a partial text */
+	       div.innerHTML = "foo: " + t;
+	    }
 	 } else {
-	    d.innerHTML = "Status: " + xhr.status + " -- " + xhr.statusText;
+	    div.innerHTML = "Status: " + xhr.status + " -- " + xhr.statusText;
 	 }
       }
+
+      document.body.appendChild(
+	 BgL_zc3EXCEPTIONzd2FRAMEze3zf2( div, hopstack, jsstack ) );
    }
-      
-   if( !div ) {
-      var w = (hop_current_window_width() / 8) + "px";
-      var ch = hop_current_window_height();
-      var t = (ch > 800 ? "50px" : "10px");
-
-      div = document.createElement( "div" );
-      div.id = "hop_default_failure";
-      div.align = "center";
-      node_style_set( div, "position", "fixed" );
-      node_style_set( div, "top",  t );
-      node_style_set( div, "bottom", t );
-      node_style_set( div, "left", w );
-      node_style_set( div, "right", w );
-      node_style_set( div, "text-align", "center" );
-      node_style_set( div, "border", "5px dashed #f87d0f" );
-      node_style_set( div, "z-index", "10000" );
-      node_style_set( div, "background", "#fff" );
-      node_style_set( div, "padding", "4px" );
-      node_style_set( div, "padding-bottom", "8px" );
-      node_style_set( div, "overflow", "hidden" );
-      node_style_set( div, "background", "#F0F2F2" );
-   } else {
-      div.innerHTML = "";
-   }
-
-   if( !div2 ) {
-      div2 = document.createElement( "div" );
-      div2.id = "hop_default_failure_background";
-      div2.align = "center";
-      node_style_set( div2, "position", "fixed" );
-      node_style_set( div2, "top", "0" );
-      node_style_set( div2, "bottom", "0" );
-      node_style_set( div2, "left", "0" );
-      node_style_set( div2, "right", "0" );
-      node_style_set( div2, "background", "#333" );
-      node_style_set( div2, "opacity", "0.9" );
-      node_style_set( div2, "overflow", "hidden" );
-      node_style_set( div2, "text-align", "center" );
-      node_style_set( div2, "z-index", "9999" );
-      node_style_set( div2, "text-align", "center" );
-
-      document.body.appendChild( div2 );
-   }
-
-   if( xhr.status >= 500 ) {
-      node_style_set( div, "border", "5px dashed red" );
-   } else {
-      node_style_set( div, "border", "5px dashed #f87d0f" );
-   }
-
-   notify_error( div, xhr );
-   div2.appendChild( div );
-   
-   node_style_set( div2, "display", "block" );
-   hop_add_event_listener( div2,
-			   "click",
-			   function() {
-			      node_style_set( div2, "display", "none" );
-			   } );
 }
 
 /*---------------------------------------------------------------------*/
@@ -261,13 +213,10 @@ function hop_anim( service, user_anim ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_responsetext_error ...                                       */
+/*    hop_default_success ...                                          */
 /*---------------------------------------------------------------------*/
-function hop_responsetext_error( xhr ) {
-   if( xhr.responseText.length > 80 )
-      return xhr.responseText.substring( 0, 80 );
-   else
-      return xhr.responseText;
+function hop_default_success( h, xhr ) {
+   return h;
 }
 
 /*---------------------------------------------------------------------*/
@@ -280,55 +229,53 @@ function hop_responsetext_error( xhr ) {
 /*---------------------------------------------------------------------*/
 function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
    var xhr = hop_make_xml_http_request();
-   /* MS, 20 Jun 08: I cannot understand why but sometime hop_error is */
+   /* MS, 20 Jun 08: I cannot understand why but sometime sc_error is  */
    /* unbound (at least in Firefox) when used inside a catch! Binding  */
    /* it to a local var elimintates this problem.                      */
-   var hop_err = hop_error;
-   var hop_err_html = hop_error_html;
-   var hop_reperror = hop_responsetext_error;
    var hop_header_ctype = hop_header_content_type;
-   var fail = (typeof failure == "function") ? failure : hop_default_failure;
-   
-   var err = function( exc, xhr, ctype ) {
-      var txt = hop_reperror( xhr );
-      var fun = ctype ? ("with-hop [content-type=" + ctype + "]") : "with-hop";
-      
-      return hop_err( fun, exc, txt, svc );
-   }
+   var succ = (typeof success === "function") ? success : hop_default_success;
+   var fail = (typeof failure === "function") ? failure : hop_default_failure;
+   var hstack = hop_debug() > 0 ? BgL_hopzd2getzd2stackz00( 1 ) : false;
 
    function onreadystatechange() {
       if( xhr.readyState == 4 ) {
 	 try {
 	    var status = xhr.status;
 
+	    xhr.hopStack = hstack;
+
 	    switch( status ) {
 	       case 200:
 		  try {
 		     var ctype = hop_header_ctype( xhr );
 		     var expr;
-
+		     
 		     if( ctype === "application/x-javascript" ) {
 			/* ctype must match the value hop-json-mime-type */
 			/* which is defined in runtime/param.scm.        */
 			try {
 			   expr = eval( xhr.responseText );
 			} catch( exc ) {
-			   xhr.responseError = hop_err_html( svc, exc, xhr.responseText );
+			   xhr.exception = exc;
+			   xhr.exception.hopStack = hstack;
+			   xhr.exception.hopService = svc;
 			   fail( xhr );
 			   expr = false;
 			}
 
-			return success( expr, xhr );
+			return succ( expr, xhr );
 		     } else if( (ctype === "text/html") ||
 				(ctype === "application/xhtml+xml") ) {
 			var el = hop_create_element( xhr.responseText );
 
-			return success( el, xhr );
+			return succ( el, xhr );
 		     } else {
-			return success( xhr.responseText, xhr );
+			return succ( xhr.responseText, xhr );
 		     }
 		  } catch( exc ) {
-		     xhr.responseError = hop_err_html( svc, exc, xhr.responseText );
+		     xhr.exception = exc;
+		     xhr.exception.hopStack = hstack;
+		     xhr.exception.hopService = svc;
 		     fail( xhr );
 		     return false;
 		  }
@@ -350,24 +297,22 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 		  return false;
 
 	       case 407:
-		  xhr.responseError = hop_err_html( svc, "Bad authentication", xhr.responseText );
 		  fail( xhr );
 		  return false;
 
 	       default:
 		  if( (typeof status == "number") &&
 		      (status > 200) && (status < 300) ) {
-		     if( success ) {
-			return success( xhr.responseText, xhr );
-		     }
+		     return succ( xhr.responseText, xhr );
 		  } else {
 		     fail( xhr );
 		     return false;
 		  }
 	    }
 	 } catch( exc ) {
-	    xhr.responseError = hop_err_html( svc, exc, xhr.responseText );
-
+	    xhr.exception = exc;
+	    xhr.exception.hopStack = hstack;
+	    xhr.exception.hopService = svc;
 	    fail( xhr );
 	    return false;
 	 } finally {
@@ -424,10 +369,9 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 	 if( xhr.readyState == 4 ) {
 	    onreadystatechange();
 	 } else {
-	    hop_error( "with-hop", 
-		       "synchronous call failed",
-		       "readyState: " + xhr.readyState,
-		       svc );
+	    sc_error( svc,
+		      "with-hop synchronous call failed",
+		      "readyState: " + xhr.readyState );
 	 }
       }
    } catch( e ) {
@@ -436,7 +380,8 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
       }
       hop_anim_service = false;
 
-      hop_error( "with-hop", e, "Cannot call server", svc );
+      e.hopObject = svc;
+      throw e;
    }
 
    return xhr;
@@ -447,9 +392,6 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export #t)) */
 function with_hop( svc, success, failure, sync, anim ) {
-   if( !success ) success = function( h ) { return h };
-   if( !failure ) failure = hop_default_failure;
-   
    return hop_send_request( svc, sync,
 			    success, failure,
 			    true, hop_serialize_request_env(), false );
@@ -521,27 +463,6 @@ function with_hop( svc, success, failure, sync, anim ) {
 	    (else
              (error 'with-hop "Illegal argument" rest))))))
 */
-
-/*---------------------------------------------------------------------*/
-/*    hop ...                                                          */
-/*    -------------------------------------------------------------    */
-/*    This is an old deprecated form that is only used in conjunction  */
-/*    with JavaScript client codes.  This function is not used by      */
-/*    WITH-HOP and it should be used from Hop client-side code.        */
-/*---------------------------------------------------------------------*/
-function hop( svc, success, failure, sync ) {
-   if( success == true ) {
-      location.href = svc;
-      return true;
-   }
-
-   if( !success ) success = function( h ) { return h; }
-   if( !failure ) failure = hop_default_failure;
-
-   return hop_send_request( svc, sync,
-			    success, failure,
-			    true, hop_serialize_request_env() );
-}
 
 /*---------------------------------------------------------------------*/
 /*    with_hop_callcc ...                                              */

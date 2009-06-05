@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.11.x/etc/hop-autoconf.js.in           */
+/*    serrano/prgm/project/hop/2.0.x/etc/hop-autoconf.js.in            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Jan 23 15:00:19 2009 (serrano)                */
+/*    Last change :  Fri Jun  5 09:20:15 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -494,7 +494,13 @@ try {
 if( hop_has_event20 ) {
    hop_add_native_event_listener = function( obj, event, proc, capture ) {
       if( "addEventListener" in obj ) {
-	 return obj.addEventListener( event, proc, capture );
+         var f = hop_callback( proc );
+         var i = "on" + event + "hdl";
+
+         if( !(i in obj ) ) obj[ i ] = [];
+         obj[ i ][ proc ] = f;
+
+	 return obj.addEventListener( event, f, capture );
       } else {
 	 throw new Error( "add-event-listener!: cannot add `" 
 			  + event + "' listener for object: "
@@ -504,7 +510,17 @@ if( hop_has_event20 ) {
 
    hop_remove_native_event_listener = function( obj, event, proc, capture ) {
       if( "removeEventListener" in obj ) {
-	 return obj.removeEventListener( event, proc, capture );
+	var i = "on" + event + "hdl";
+        var h = obj[ i ];
+
+        if( h !== undefined ) {
+	   var p = obj[ i ][ proc ];
+
+	   if( p !== undefined ) {
+	      h[ p ] = undefined;
+	      return obj.removeEventListener( event, p, capture );
+	   }
+	}
       } else {
 	 throw new Error( "remove-event-listener!: cannot remove `"
 			  + event + "' listener for object: "
@@ -519,7 +535,8 @@ if( hop_has_event20 ) {
    }
 } else {
    hop_add_native_event_listener = function( obj, event, proc, capture ) {
-      var p = function(_) { return proc( window.event ) };
+      var f = hop_callback( proc );
+      var p = function(_) { return f( window.event ) };
       var i = "on" + event + "hdl";
 
       if( obj[ i ] === undefined ) obj[ i ] = [];

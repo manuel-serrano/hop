@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed May  6 13:17:23 2009 (serrano)                */
+;*    Last change :  Fri Jun  5 13:38:09 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -534,6 +534,18 @@
       (bodyp (not (eq? (http-request-method req) 'HEAD)))
       (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
       (xml obj)))
+
+;*---------------------------------------------------------------------*/
+;*    scheme->response ::xml-tilde ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (scheme->response obj::xml-tilde req)
+   (instantiate::http-response-string
+      (content-type (hop-json-mime-type))
+      (charset (hop-charset))
+      (request req)
+      (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+      (bodyp (not (eq? (http-request-method req) 'HEAD)))
+      (body (xml-tilde->expression obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response-void ...                                           */

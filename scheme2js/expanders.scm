@@ -490,22 +490,39 @@
        (else
 	(scheme2js-error "with-handler" "Invalid 'with-handler' form" x x)))))
 
-(define (receive-expander x e)
-   (match-case x
-      ((?- ?vars ?producer ?expr . ?Lrest)
-       (e
-	`(,(runtime-ref 'call-with-values)
-	  ,producer
-	  (lambda ,vars
-	     ,expr
-	     ,@Lrest))
-	e))
-      (else
-       (scheme2js-error "receive/multiple-value-bind"
-	      "Invalid 'receive' form"
-	      x x))))
 
-(install-expander! 'receive receive-expander)
-(install-expander! 'multiple-value-bind receive-expander)
+
+(install-expander!
+ 'receive
+ (lambda (x e)
+    (match-case x
+       ((?- ?vars ?producer ?expr . ?Lrest)
+	(e
+	 `(,(runtime-ref 'call-with-values)
+	   ,producer
+	   (lambda ,vars
+	      ,expr
+	      ,@Lrest))
+	 e))
+       (else
+	(scheme2js-error "receive"
+			 "Invalid 'receive' form"
+			 x x)))))
+(install-expander!
+ 'multiple-value-bind
+ (lambda (x e)
+    (match-case x
+       ((?- ?vars ?producer ?expr . ?Lrest)
+	(e
+	 `(,(runtime-ref 'call-with-values)
+	   (lambda () ,producer)
+	   (lambda ,vars
+	      ,expr
+	      ,@Lrest))
+	 e))
+       (else
+	(scheme2js-error "multiple-value-bind"
+			 "Invalid 'multiple-value-bind' form"
+			 x x)))))
 
 (install-expander! '@ (lambda (x e) x))

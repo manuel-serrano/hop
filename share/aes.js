@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/aes.js                      */
+/*    serrano/prgm/project/hop/2.0.x/share/aes.js                      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Chris Veness                                      */
 /*    Creation    :  Mon Jun  9 08:21:51 2008                          */
-/*    Last change :  Thu Jun 12 15:07:30 2008 (serrano)                */
-/*    Copyright   :  2005-08 Chris Veness                              */
+/*    Last change :  Fri Jun  5 10:04:15 2009 (serrano)                */
+/*    Copyright   :  2005-09 Chris Veness                              */
 /*    -------------------------------------------------------------    */
 /*    AES Advanced Encryption Standard in 'Counter' mode operation.    */
 /*    -------------------------------------------------------------    */
@@ -201,7 +201,7 @@ function AESEncryptCtr(plaintext, password, nBits) {
       if(!nBits)
 	 nBits = 128;
       else
-	 hop_error("aes-encrypt-ctr", "Illegal bit keys", nbits);  // standard allows 128/192/256 bit keys
+	 sc_error("aes-encrypt-ctr", "Illegal bit keys", nbits);  // standard allows 128/192/256 bit keys
    }
 	
   // for this example script, generate the key by applying AESCipher to 1st 16/24/32 chars of password; 
@@ -279,7 +279,7 @@ function AESDecryptCtr(ciphertext, password, nBits) {
       if(!nBits)
 	 nBits = 128;
       else
-	 hop_error("aes-decrypt-ctr", "Illegal bit keys", nbits);  // standard allows 128/192/256 bit keys
+	 sc_error("aes-decrypt-ctr", "Illegal bit keys", nbits);  // standard allows 128/192/256 bit keys
    }
 
   var nBytes = nBits/8;  // no bytes in key
