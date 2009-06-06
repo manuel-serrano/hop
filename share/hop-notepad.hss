@@ -3,12 +3,26 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan 17 18:56:22 2005                          */
-/*    Last change :  Sat Jun  6 09:21:31 2009 (serrano)                */
+/*    Last change :  Sat Jun  6 18:53:16 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad CSS                                                  */
 /*=====================================================================*/
 
+/*---------------------------------------------------------------------*/
+/*    Hss declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type notepad "div.hop-notepad")
+$(define-hss-type notepad-tabs "td.hop-notepad-tabs")
+$(define-hss-type notepad-tabs-row "div.hop-notepad-tabs-row")
+$(define-hss-type notepad-body "td.hop-notepad-body")
+$(define-hss-type nphead "div.hop-nphead")
+$(define-hss-type nptab "span.hop-nptab")
+$(define-hss-type nptab-active "span.hop-nptab-active")
+$(define-hss-type nptab-inactive "span.hop-nptab-inactive")
+$(define-hss-type nptab-body "div.hop-notepad-tab-body")
+$(define-hss-type nptabhead "span.hop-nptab-head")
+    
 /*---------------------------------------------------------------------*/
 /*    <NOTEPAD>                                                        */
 /*    -------------------------------------------------------------    */

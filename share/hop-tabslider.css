@@ -1,17 +1,12 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-tabslider.css           */
+/*    serrano/prgm/project/hop/1.11.x/share/hop-tabslider.css          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Sep 14 09:25:00 2005                              */
-/*    Last change :  Sat Jun  6 09:07:37 2009 (serrano)                */
+/*    Last change :  Sun Feb 22 10:23:58 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tabslide CSS                                                 */
-/*    -------------------------------------------------------------    */
-/*    !!! WARNING !!! WARNING !!! WARNING !!! WARNING !!! WARNING !!!  */
-/*    -------------------------------------------------------------    */
-/*    If margin-bottom is changed (differs from 1), then the value     */
-/*    of margin_offset must be changed in hop-tabslider.js.            */
 /*=====================================================================*/
 
 div.hop-tabslider {
@@ -25,12 +20,12 @@ div.hop-tabslider span.hop-tabslider-head {
   display: block;
   background: #fff;
   cursor: pointer;
-  color: #ff9300;
+  color: darkorange;
   font-weight: bold;
-  font-size: 90%;
-  border-top: 1px solid #ff9300;
-  border-left: 1px solid #ff9300;
-  border-right: 1px solid #ff9300;
+  font-size: 80%;
+  border-top: 1px solid darkorange;
+  border-left: 1px solid darkorange;
+  border-right: 1px solid darkorange;
   border-bottom: 0;
   padding: 2px 10px 2px 10px;
   -moz-border-radius: 0.2em 0.2em 0 0.2em;
@@ -44,17 +39,16 @@ div.hop-tabslider span.hop-tabslider-head-inactive {
 }
 
 div.hop-tabslider span.hop-tabslider-head-inactive:hover {
-  color: #ff9300;
+  color: darkorange;
   background: #ffedb3;
 }
 
 div.hop-tabslider-content {
   overflow: hidden;
-  padding: 2px;
   background: #f7f7f7;
-  border-left: 1px solid #ff9300;
-  border-right: 1px solid #ff9300;
-  border-bottom: 1px solid #ff5e00;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #777;
   border-top: 0;
   -moz-border-radius: 0 0 0.2em 0;
   margin-bottom: 1px;
