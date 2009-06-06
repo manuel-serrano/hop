@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sat Jun  6 19:12:17 2009 (serrano)                */
+;*    Last change :  Sat Jun  6 19:22:02 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -65,10 +65,8 @@
 ;*    with hop < 2.0.x branch.                                         */
 ;*---------------------------------------------------------------------*/
 (define (hop-hss-type! old new)
-   (with-lock *hss-compiler-mutex*
-      (lambda ()
-	 (hss-bind-type-compiler! (string->symbol old) new '())
-	 "")))
+   (hss-bind-type-compiler! (string->symbol old) new '())
+   "")
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-bind-type-compiler! ...                                      */
