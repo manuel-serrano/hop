@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-foldlist.js                   */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-foldlist.js             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 11:56:02 2006                          */
-/*    Last change :  Fri Jul 20 11:28:22 2007 (serrano)                */
+/*    Last change :  Sat Jun  6 08:28:23 2009 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP fold-item implementation                                     */
 /*=====================================================================*/
@@ -54,7 +54,7 @@ function hop_fold_item_toggle_service( id, history, svc ) {
    if( el.style.display == "block" ) {
       hop_fold_item_close( el, imgo, imgc, history );
    } else {
-      hop( svc, function( h ) { hop_innerHTML_set( id, h ); } );
+      with_hop( svc, function( h ) { hop_innerHTML_set( id, h ); } );
       hop_fold_item_open( el, imgo, imgc, history );
    }
 }

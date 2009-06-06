@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Fri Jun  5 18:33:56 2009 (serrano)                */
+;*    Last change :  Sat Jun  6 09:51:21 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debuggin facility (includes when Hop launched in     */
@@ -24,14 +24,14 @@
     top: 0; left: 0; right: 0; bottom: 0;
     opacity: 0.8;
     background: #141111;
-    z-index: 1")
+    z-index: 10000000")
 
 (define (hop-exception-frame-style)
    "position: fixed;
     top: 60px; left: 150px; right: 150px; bottom: 60px;
     opacity: 0.97;
     background: white;
-    z-index: 2;
+    z-index: 10000001;
     border: 3px dashed red; padding: 4px")
 
 ;*---------------------------------------------------------------------*/
@@ -228,7 +228,11 @@
 		   (list message " -- " (obj->string exc.hopObject))
 		   message))
 	  (name (exception-name exc))
-	  (url (or exc.fileName document.location))
+	  (url (cond
+		  ((string? exc.fileName) exc.fileName)
+		  ((string? exc.sourceId) exc.sourceId)
+		  ((string? exc.sourceURL) exc.sourceURL)
+		  (else document.location)))
 	  (location (if (string? exc.hopLocation) exc.hopLocation "Client Error"))
 	  (src (cond
 		  ((and exc.lineNumber (not (eq? exc.lineNumber #unspecified)))

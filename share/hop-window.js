@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Fri Jun  5 16:14:02 2009 (serrano)                */
+/*    Last change :  Sat Jun  6 10:38:18 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -12,7 +12,16 @@
 /*---------------------------------------------------------------------*/
 /*    Dynamic load                                                     */
 /*---------------------------------------------------------------------*/
-dom_add_head_script( hop_share_directory() + "/hop-fx.js" );
+hop_load( hop_share_directory() + "/hop-fx.js" );
+
+/*---------------------------------------------------------------------*/
+/*    hop_window_constructor                                           */
+/*    -------------------------------------------------------------    */
+/*    Some browsers, e.g., webkit based browsers, lacks the Window     */
+/*    global object. Hence, Hop sets it if unbound and don't use       */
+/*    instanceof for checking window but the constructor slot.         */
+/*---------------------------------------------------------------------*/
+var hop_window_constructor = false;
 
 /*---------------------------------------------------------------------*/
 /*    HopWindowEvent ...                                               */
@@ -555,6 +564,7 @@ function make_hop_iwindow( id, klass, parent ) {
 /*    hop_iwindow_src_set ...                                          */
 /*---------------------------------------------------------------------*/
 function hop_iwindow_src_set( win, src, width, height ) {
+   node_style_set( win.el_content, "overflow", "hidden" );
    if( hop_is_html_element( src ) || sc_isPair( src ) ) {
       dom_set_child_node( win.el_content, src );
    } else {
@@ -710,6 +720,9 @@ function hop_window_open() {
 	 }
 
 	 var win = window.open( src, title, prop );
+	 
+	 hop_window_constructor = win.constructor;
+	 
 	 win.iconify = function( w ) { ; };
 	 win.maximize = function( w ) { ; };
 	 win.raise = function( w ) { ; };
@@ -909,7 +922,7 @@ function hop_is_iwindow( o ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window?)) */
 function hop_is_window( o ) {
-   return hop_is_iwindow( o ) || (win instanceof Window);
+   return hop_is_iwindow( o ) || (win.constructor === hop_window_constructor);
 }
 
 /*---------------------------------------------------------------------*/
@@ -917,7 +930,7 @@ function hop_is_window( o ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-x)) */
 function hop_window_x( win ) {
-   if( win instanceof Window ) {
+   if( win.constructor === hop_window_constructor ) {
       if( "left" in win ) return win.left;
       if( "screenX" in win ) return win.screenX;
       return 0;
@@ -931,7 +944,7 @@ function hop_window_x( win ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-x-set!)) */
 function hop_window_x_set( win, x ) {
-   if( win instanceof Window ) {
+   if( win.constructor === hop_window_constructor ) {
       if( "top" in win ) return win.moveTo( x, win.top );
       if( "screenY" in win ) return win.moveTo( x, win.screenY );
    } else {
@@ -948,7 +961,7 @@ function hop_window_x_set( win, x ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-y)) */
 function hop_window_y( win ) {
-   if( win instanceof Window ) {
+   if( win.constructor === hop_window_constructor ) {
       if( "top" in win ) return win.top;
       if( "screenY" in win ) return win.screenY;
       return 0;
@@ -962,7 +975,7 @@ function hop_window_y( win ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-y-set!)) */
 function hop_window_y_set( win, y ) {
-   if( win instanceof Window ) {
+   if( win.constructor === hop_window_constructor ) {
       if( "left" in win ) return win.moveTo( win.left, y );
       if( "screenX" in win ) return win.moveTo( win.screenX, y );
    } else {
@@ -980,7 +993,7 @@ function hop_window_y_set( win, y ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-width)) */
 function hop_window_width( win ) {
-   if( win instanceof Window ) {
+   if( win.constructor === hop_window_constructor ) {
       if( "outerWidth" in win ) return win.outerWidth;
       if( "innerWidth" in win ) return win.innerWidth;
       return 0;
@@ -994,7 +1007,7 @@ function hop_window_width( win ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-width-set!)) */
 function hop_window_width_set( win, width ) {
-   if( win instanceof Window ) {
+   if( win.constructor === hop_window_constructor ) {
       if( "outerHeight" in win ) return win.resizeTo( width, win.outerHeight );
       if( "innerHeight" in win ) return win.resizeTo( width, win.innerHeight );
       return 0;
@@ -1012,7 +1025,7 @@ function hop_window_width_set( win, width ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-height)) */
 function hop_window_height( win ) {
-   if( win instanceof Window ) {
+   if( win.constructor === hop_window_constructor ) {
       if( "outerHeight" in win ) return win.outerHeight;
       if( "innerHeight" in win ) return win.innerHeight;
       return 0;
@@ -1026,7 +1039,7 @@ function hop_window_height( win ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-height-set!)) */
 function hop_window_height_set( win, height ) {
-   if( win instanceof Window ) {
+   if( win.constructor === hop_window_constructor ) {
       if( "outerHeight" in win ) return win.resizeTo( win.outerWidth, height );
       if( "innerHeight" in win ) return win.resizeTo( win.innerWidth, height ); 
       return 0;
@@ -1044,7 +1057,7 @@ function hop_window_height_set( win, height ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-title)) */
 function hop_window_title( win ) {
-   if( win instanceof Window ) {
+   if( win.constructor === hop_window_constructor ) {
       return win.name;
    } else {
       return win.el_title.innerHTML;
@@ -1056,7 +1069,7 @@ function hop_window_title( win ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-title-set!)) */
 function hop_window_title_set( win, title ) {
-   if( win instanceof Window ) {
+   if( win.constructor === hop_window_constructor ) {
       try {
 	 return win.name = title;
       } catch( _ ) {
