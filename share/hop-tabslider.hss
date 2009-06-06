@@ -1,27 +1,32 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-tabslider.css           */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-tabslider.hss           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Sep 14 09:25:00 2005                              */
-/*    Last change :  Sat Jun  6 19:16:32 2009 (serrano)                */
+/*    Last change :  Sat Jun  6 19:17:33 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tabslide CSS                                                 */
 /*=====================================================================*/
 
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module hoptabslider_hss)
 
 /*---------------------------------------------------------------------*/
 /*    HSS declarations                                                 */
 /*---------------------------------------------------------------------*/
+$(define-hss-type tabslider "div.hop-tabslider")
 
-div.hop-tabslider {
+tabslider {
   width: 300px;
   height: 500px;
   overflow: auto;
   background: #fff;
 }
 
-div.hop-tabslider span.hop-tabslider-head {
+tabslider span.hop-tabslider-head {
   display: block;
   background: #fff;
   cursor: pointer;
@@ -36,14 +41,14 @@ div.hop-tabslider span.hop-tabslider-head {
   -hop-border-radius: 0.2em 0.2em 0 0.2em;
 }
 
-div.hop-tabslider span.hop-tabslider-head-inactive {
+tabslider span.hop-tabslider-head-inactive {
   border: 1px solid #ccc;
   color: #7381de;
   background: #f7f7f7;
   margin-bottom: 1px;
 }
 
-div.hop-tabslider span.hop-tabslider-head-inactive:hover {
+tabslider span.hop-tabslider-head-inactive:hover {
   color: darkorange;
   background: #ffedb3;
 }

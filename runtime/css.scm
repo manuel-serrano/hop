@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sat Jun  6 18:50:35 2009 (serrano)                */
+;*    Last change :  Sat Jun  6 19:12:17 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -55,19 +55,20 @@
 ;*    aliasing control ...                                             */
 ;*---------------------------------------------------------------------*/
 (define *hss-compiler-mutex* (make-mutex "hop-hss-type"))
-(define *hss-types* (make-hashtable))
-(define *hss-compilers* (make-hashtable))
 (define *hss-type-env* (make-hashtable))
 (define *hss-property-env* '())
 
 ;*---------------------------------------------------------------------*/
-;*    hss-register-compiler! ...                                       */
+;*    hop-hss-type! ...                                                */
+;*    -------------------------------------------------------------    */
+;*    This function is only here for ensuring backward compatility     */
+;*    with hop < 2.0.x branch.                                         */
 ;*---------------------------------------------------------------------*/
-(define (hss-register-compiler! element c)
+(define (hop-hss-type! old new)
    (with-lock *hss-compiler-mutex*
       (lambda ()
-	 (hashtable-put! *hss-compilers* (string-downcase element) c)
-	 (hashtable-put! *hss-compilers* (string-upcase element) c))))
+	 (hss-bind-type-compiler! (string->symbol old) new '())
+	 "")))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-bind-type-compiler! ...                                      */
@@ -229,35 +230,6 @@
 		 (loop (cdr decl) (cons (car decl) old) nrules)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    *hss-builtin-types* ...                                          */
-;*---------------------------------------------------------------------*/
-(define *hss-builtin-types*
-   '(;; notepad
-     ;; paned
-     ("paned" "div.hop-paned")
-     ;; sorttable
-     ("sorttable" "span.hop-sorttable table")
-     ;; audio
-     ("audio" "div.hop-audio-controls")
-     ;; filechooser
-     ("filechooser" "div.filechooser")
-     ;; prefs
-     ("prefs" "table.hop-prefs")
-     ("prlabel" "table.hop-prefs td.hop-prefs-label")
-     ("prsep" "table.hop-prefs td.hop-prefs-separator")
-     ("pr" "table.hop-prefs tr.hop-pr")
-     ("pr-name" "table.hop-prefs td.hop-pr-name")
-     ("pr-editor" "table.hop-prefs td.hop-pr-editor")
-     ("pr-editor-expr" "table.hop-prefs input.hop-pr-editor-expr")
-     ("pr-editor-bool" "table.hop-prefs table.hop-pr-editor-bool")
-     ("pr-editor-text" "table.hop-prefs textarea.hop-pr-editor-text")
-     ;; hop-login
-     ("hop-login-panel" "div.hop-login-panel")
-     ("hop-login" "div.hop-login-panel table.hop-login-main-table")
-     ("hop-login-message" "div.hop-login-panel td.hop-login-message")
-     ("hop-login-logo" "div.hop-login-panel div.hop-login-logo")))
-   
-;*---------------------------------------------------------------------*/
 ;*    hss-mutex ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define hss-mutex (make-mutex 'hss))
@@ -294,8 +266,6 @@
 ;*    init-hss-compiler! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (init-hss-compiler! port)
-   ;; builtin hss types
-;*    (for-each (lambda (t) (apply hop-hss-type! t)) *hss-builtin-types*) */
    ;; hss cache
    (set! hss-cache
 	 (instantiate::cache-disk
@@ -520,72 +490,7 @@
 		   (else #unspecified)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-hss-type! ...                                                */
-;*---------------------------------------------------------------------*/
-(define (hop-hss-type! old new)
-   (with-lock *hss-compiler-mutex*
-      (lambda ()
-	 (hashtable-put! *hss-types* (string-upcase old) new)
-	 (hashtable-put! *hss-types* (string-downcase old) new)
-	 "")))
-
-;*---------------------------------------------------------------------*/
-;*    default hss type ...                                             */
-;*---------------------------------------------------------------------*/
-(hop-hss-type! "window" "table.hop-window td.hop-window-content")
-
-;*---------------------------------------------------------------------*/
-;*    Example of a hss compiler                                        */
-;*---------------------------------------------------------------------*/
-;; (hss-register-compiler!
-;; "gauge"
-;;  (instantiate::hss-compiler
-;;    (element "span")
-;;    (properties '(("foo" ("span.foo" "bg") ("span.gee" "fg"))
-;; 		    ("gee" ("span.foo" "fg"))
-;;		    ("bar" ("span.foo span.bar" "fg"))))))
-
-
-;*---------------------------------------------------------------------*/
-;*    Modifier les compilateurs afin de pouvoir ecrire une expension   */
-;*    telle que :                                                      */
-;*                                                                     */
-;*    article-figure {                                                 */
-;*      align: center;                                                 */
-;*    }                                                                */
-;*                                                                     */
-;*      ==>                                                            */
-;*                                                                     */
-;*    div.article-figure-center table.article-figure {                 */
-;*      margin-left: auto;                                             */
-;*      margin-right: auto;                                            */
-;*    }                                                                */
-;*---------------------------------------------------------------------*/
-
-;*---------------------------------------------------------------------*/
-;*    hss-list->css-declaration ...                                    */
-;*---------------------------------------------------------------------*/
-;* (define (hss-list->css-declaration id lst)                          */
-;*    (if (not (list? lst))                                            */
-;*        (error id "Illegal attribute values" lst)                    */
-;*        (map (lambda (v)                                             */
-;* 	       (match-case v                                           */
-;* 		  (((and ?ident (? symbol?)) ?expr)                    */
-;* 		   (instantiate::css-declaration                       */
-;* 		      (property ident)                                 */
-;* 		      (expr (list expr))                               */
-;* 		      (prio p)))                                       */
-;* 		  (((and ?ident (? symbol?)) ?expr ?prio)              */
-;* 		   (instantiate::css-declaration                       */
-;* 		      (property ident)                                 */
-;* 		      (expr (list expr))                               */
-;* 		      (prio prio)))                                    */
-;* 		  (else                                                */
-;* 		   (error id "Illegal declaration" v))))               */
-;* 	    lst)))                                                     */
-;*                                                                     */
-;*---------------------------------------------------------------------*/
-;*    Initial compilers                                                */
+;*    HSS Global compilers ...                                         */
 ;*---------------------------------------------------------------------*/
 ;; -hop-border-radius
 (define-hss-property (-hop-border-radius v p)

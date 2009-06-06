@@ -1,13 +1,18 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-sorttable.css           */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-sorttable.hss           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan  9 13:43:05 2006                          */
-/*    Last change :  Mon Mar 31 11:22:43 2008 (serrano)                */
-/*    Copyright   :  2006-08 Manuel Serrano                            */
+/*    Last change :  Sat Jun  6 19:02:36 2009 (serrano)                */
+/*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop sorttable CSS                                                */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type sorttable "span.hop-sorttable table")
 
 span.hop-sorttable a.hop-sortheader {
   text-decoration: none;

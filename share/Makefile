@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sat Jun  6 18:52:02 2009 (serrano)                */
+#*    Last change :  Sat Jun  6 19:15:50 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -30,13 +30,14 @@ FLASHOPT	= player.swf swfobject.js
 
 RTS		= $(RTSCONFIG)
 
-EXTRA		= hop-paned.hss hop-sorttable.js hop-tree.js \
-		  hop-error.hss hop-paned.js hop.css \
-                  hop-fx.js \
+EXTRA		= hop-fx.js hop-error.hss hop.css \
+                  hop-paned.hss hop-paned.js \
+                  hop-sorttable.hss hop-sorttable.js \
                   md5.js sha1.js aes.js \
-		  hop-lframe.css hop-slider.css hop-tabslider.css \
-                  hop-notepad.hss hop-slider.js hop-tabslider.js \
-	 	  hop-notepad.js hop-sorttable.css hop-tree.css \
+		  hop-lframe.css hop-slider.css hop-tabslider.hss \
+                  hop-slider.js hop-tabslider.js \
+	 	  hop-notepad.hss hop-notepad.js \
+                  hop-tree.js hop-tree.css \
 		  hop-foldlist.js hop-foldlist.css \
                   hop-window.js hop-window.hss \
                   hop-editor.js hop-editor.css \

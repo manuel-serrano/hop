@@ -3,14 +3,14 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan 17 18:56:22 2005                          */
-/*    Last change :  Sat Jun  6 18:53:16 2009 (serrano)                */
+/*    Last change :  Sat Jun  6 18:57:53 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad CSS                                                  */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
-/*    Hss declarations                                                 */
+/*    HSS declarations                                                 */
 /*---------------------------------------------------------------------*/
 $(define-hss-type notepad "div.hop-notepad")
 $(define-hss-type notepad-tabs "td.hop-notepad-tabs")
