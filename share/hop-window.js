@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Fri Jun  5 16:14:02 2009 (serrano)                */
+/*    Last change :  Sun Jun  7 06:27:42 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -610,6 +610,7 @@ function hop_iwindow_open( id, src, title, klass, width, height, x, y, bg, resiz
       node_style_set( win.el_content, "background", bg );
    }
    node_style_set( win.el_content, "display", "none" );
+   node_style_set( win.el_content, "overflow", "hidden" );
 
    hop_iwindow_src_set( win, src, width, height );
    

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Jun  5 16:18:09 2009 (serrano)                */
+;*    Last change :  Mon Jun  8 14:19:46 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -117,20 +117,21 @@
 ;*    <EIMG> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<EIMG> #!key src req)
-   (<IMG> 
-      :src (if (http-proxy-request? req)
-	       (format "http://~a:~a~a"
-		       (hostname)
-		       (hop-port)
-		       (make-file-name (hop-icons-directory) src))
-	       (make-file-name (hop-icons-directory) src))))
+   (let ((path (make-file-name (hop-icons-directory) src)))
+      (<IMG> :src (img-base64-encode path)
+	 :alt src
+	 :onerror (format "this.src = ~s"
+			  (format "http://~a:~a~a"
+				  (hostname)
+				  (hop-port)
+				  path)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ESPAN> ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <ESPAN> ((class #f)
 			      body)
-   (<SPAN> :class class body (html-string-encode (car body))))
+   (<SPAN> :class class (html-string-encode (car body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ETD> ...                                                        */
@@ -220,7 +221,7 @@
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY>
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
@@ -246,7 +247,7 @@
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY>
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
@@ -274,7 +275,7 @@
 	    (content-type (xml-backend-mime-type (hop-xml-backend)))
 	    (xml (<HTML>
 		    (<EHEAD> (current-request))
-		    (<BODY>
+		    (<BODY> :style "background: #ccc; padding-top: 3ex"
 		       (<CENTER>
 			  (<ETABLE>
 			     (<TR>
@@ -375,7 +376,7 @@ a timeout which has now expired. The service is then no longer available."))
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY>
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<ERRTABLE>
 		       (<EIMG> :src (if (&io-timeout-error? e)
 					"timeout.png"
@@ -420,7 +421,7 @@ a timeout which has now expired. The service is then no longer available."))
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> req)
-		 (<BODY>
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
@@ -452,7 +453,7 @@ a timeout which has now expired. The service is then no longer available."))
       (charset (hop-charset))
       (xml (<HTML>
 	      (<EHEAD> req)
-	      (<BODY>
+	      (<BODY> :style "background: #ccc; padding-top: 3ex"
 		 (<CENTER>
 		    (<ETABLE>
 		       (<TR>
@@ -487,7 +488,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (charset (hop-charset))
       (xml (<HTML>
 	      (<EHEAD> req)
-	      (<BODY>
+	      (<BODY> :style "background: #ccc; padding-top: 3ex"
 		 (<CENTER>
 		    (<ETABLE>
 		       (<TR>
@@ -529,7 +530,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY>
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
@@ -560,7 +561,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY>
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
@@ -590,7 +591,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY>
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
@@ -621,7 +622,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY>
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>

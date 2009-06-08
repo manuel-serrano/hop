@@ -49,6 +49,7 @@ Safari
   (canvas-move-to ctx x y)
   (canvas-stroke-rect ctx x y w height)
   (canvas-fill-rect ctx x y w height)
+  (canvas-shadow-rect ctx x y w height)
   (canvas-clear-rect ctx x y w height)
   (canvas-fill ctx)
   (canvas-stroke ctx)
@@ -496,6 +497,21 @@ Clears the area defined by a rectangle.
 </arguments>
 
 Fills a rectangle.
+</procedure>
+
+=== ++(canvas-shadow-rect ctx width x y w h)++ ===
+<procedure> canvas-shadow-rect
+<arguments>
+^  arguments  ^   type     ^   description                                      ^
+| ctx        |  context   | A canvas context.                                  |
+| width      |  integer   | The shadow width.                                  |
+| x          |  integer   | The horizontal coordinate of the top-left corner.  |
+| y          |  integer   | The vertical coordinate of the top-left corner.    |
+| w          |  integer   | The width of the rectangle.     |
+| h          |  integer   | The height of the rectangle.    |
+</arguments>
+
+Draw a shadow-box on the right and bottom sides of the rectangle.
 </procedure>
 
 === ++(canvas-fill ctx)++ ===

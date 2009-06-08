@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Jun  5 11:05:00 2009 (serrano)                */
+;*    Last change :  Sun Jun  7 06:14:58 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -436,8 +436,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 			     (class "foot" string)
 			     (inline #f)
 			     body)
-   (<DIV>
-      :id (xml-make-id id 'FOOT)
+   (<DIV> :id (xml-make-id id 'FOOT)
       :class class
       (<DIV>
 	 :align "center"
@@ -459,8 +458,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 				    (path #f)
 				    (inline #f)
 				    (src #f))
-   (<A>
-      :class class
+   (<A> :class class
       :href href
       :title title
       (<IMG> :alt title
@@ -485,10 +483,10 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 				(onmouseout 0)
 				body)
    (<DIV> :id (xml-make-id id 'TOOLTIP)
-	  :class "hoptooltip"
-	  :onclick (format "~a; hop_tooltip_hide()" onclick)
-	  :onmouseout (format "~a; hop_tooltip_hide()" onmouseout)
-	  body))
+      :class "hoptooltip"
+      :onclick (format "~a; hop_tooltip_hide()" onclick)
+      :onmouseout (format "~a; hop_tooltip_hide()" onmouseout)
+      body))
 	  
 ;*---------------------------------------------------------------------*/
 ;*    <SORTTABLE> ...                                                  */
@@ -502,8 +500,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 	 (attr (map! (lambda (e)
 			(list (symbol->keyword (car e)) (cdr e)))
 		     attributes)))
-      (<SPAN>
-	 :id i 
+      (<SPAN> :id i 
 	 :class "hop-sorttable"
 	 (apply <TABLE> :id (if (string? id) id (xml-make-id 'SORTTABLE))
 		(append! attr body))

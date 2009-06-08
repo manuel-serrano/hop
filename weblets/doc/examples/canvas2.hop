@@ -44,5 +44,7 @@
 				     :shadow-offset-y 2
 				     :shadow-blur 3
 				     :shadow-color "#00ff00")
+	     (apply canvas-shadow-rect ctx 40
+		    (bounding-box->list (node-bounding-box "row2")))
 	     (apply canvas-stroke-rect ctx
 		    (bounding-box->list (node-bounding-box "row2")))))))

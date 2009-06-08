@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov  3 08:24:25 2007                          */
-;*    Last change :  Thu May 28 12:25:54 2009 (serrano)                */
+;*    Last change :  Mon Jun  8 15:11:06 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Canvas interface                                             */
@@ -253,6 +253,39 @@
 (define (canvas-stroke-rect ctx x0 y0 x1 y1)
    (ctx.strokeRect x0 y0 x1 y1))
 
+;*---------------------------------------------------------------------*/
+;*    canvas-shadow-rect ...                                           */
+;*---------------------------------------------------------------------*/
+(define (canvas-shadow-rect ctx shadow-width x y w h)
+   ;; create the gradients
+   (when (or (not (pair? ctx.shadowgradients))
+	     (not (= (car ctx.shadowgradients) shadow-width)))
+      (let* ((grad1 (ctx.createLinearGradient 0 0 shadow-width 0))
+	     (grad2 (ctx.createLinearGradient 0 0 0 shadow-width))
+	     (grad3 (ctx.createRadialGradient 0 0 0 0 0 shadow-width))
+	     (gradients (list grad1 grad2 grad3)))
+	 (for-each (lambda (g)
+		      (g.addColorStop 0 "rgba(0,0,0,0.7)")
+		      (g.addColorStop 0.5 "rgba(255,255,255,0)"))
+		   gradients)
+	 (set! ctx.shadowgradients (cons shadow-width gradients))))
+   ;; draw the gradients
+   (ctx.save)
+   (set! ctx.fillStyle (cadr ctx.shadowgradients))
+   (ctx.translate (+ x w) y)
+   (ctx.fillRect 0 4 shadow-width (- h 4))
+   (ctx.restore)
+   (ctx.save)
+   (set! ctx.fillStyle (caddr ctx.shadowgradients))
+   (ctx.translate x (+ y h))
+   (ctx.fillRect 4 0 (- w 4) shadow-width)
+   (ctx.restore)
+   (ctx.save)
+   (set! ctx.fillStyle (cadddr ctx.shadowgradients))
+   (ctx.translate (+ x w) (+ y h))
+   (ctx.fillRect 0 0 shadow-width shadow-width)
+   (ctx.restore))
+   
 ;*---------------------------------------------------------------------*/
 ;*    canvas-create-linear-gradient ...                                */
 ;*---------------------------------------------------------------------*/
