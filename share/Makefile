@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sat Jun  6 19:15:50 2009 (serrano)                */
+#*    Last change :  Wed Jun 10 09:09:55 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -34,7 +34,7 @@ EXTRA		= hop-fx.js hop-error.hss hop.css \
                   hop-paned.hss hop-paned.js \
                   hop-sorttable.hss hop-sorttable.js \
                   md5.js sha1.js aes.js \
-		  hop-lframe.css hop-slider.css hop-tabslider.hss \
+		  hop-slider.css hop-tabslider.hss \
                   hop-slider.js hop-tabslider.js \
 	 	  hop-notepad.hss hop-notepad.js \
                   hop-tree.js hop-tree.css \
@@ -51,6 +51,7 @@ EXTRA		= hop-fx.js hop-error.hss hop.css \
                   hop-video.js hop-video.hss \
                   hop-login.js hop-login.hss \
                   hop-box.scm hop-box.hss \
+                  hop-lframe.hss \
                   hop-canvas.scm hop-exception.scm
 
 ICONS_AUDIO	= mute.png pause.png playlist.png prefs.png stop.png \

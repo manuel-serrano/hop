@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Sep 14 09:25:00 2005                              */
-/*    Last change :  Sat Jun  6 19:18:32 2009 (serrano)                */
+/*    Last change :  Wed Jun 10 07:55:50 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tabslide CSS                                                 */
@@ -38,7 +38,7 @@ tabslider span.hop-tabslider-head {
   border-right: 1px solid darkorange;
   border-bottom: 0;
   padding: 2px 10px 2px 10px;
-  -hop-border-radius: 0.2em 0.2em 0 0.2em;
+  border-radius: 0.2em 0.2em 0 0.2em;
 }
 
 tabslider span.hop-tabslider-head-inactive {
@@ -62,5 +62,5 @@ div.hop-tabslider-content {
   border-top: 0;
   margin-bottom: 1px;
   padding: 2px;
-  -hop-border-radius: 0 0 0.2em 0;
+  border-radius: 0 0 0.2em 0;
 }

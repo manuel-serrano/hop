@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Mon Jun  8 13:31:48 2009 (serrano)                */
+;*    Last change :  Wed Jun 10 08:44:28 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -166,9 +166,6 @@
 	 (instantiate::css-selector
 	    (element (hss-compiler-element hc))
 	    (attr* attr*)))))
-;* 	    (attr* (cons (instantiate::css-selector-class              */
-;* 			    (name (format (format "__HSS_~a" el))))    */
-;* 			 attr*))))))                                   */
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile-declaration* ...                                     */
@@ -210,27 +207,41 @@
 		    ;; a local property
 		    (let liip ((rules (comp expr prio))
 			       (ndecl '())
+			       (old old)
 			       (nrules nrules))
 		       (if (null? rules)
 			   (loop (append ndecl (cdr decl)) old nrules)
-			   (with-access::css-ruleset (car rules)
-				 (selector+ declaration*)
+			   (with-access::css-ruleset (car rules) (selector+ declaration*)
 			      (if (empty-selector? selector+)
-				  (liip (cdr rules)
-					(append declaration* ndecl)
-					nrules)
+				  (let laap ((l declaration*)
+					     (ndecl ndecl)
+					     (old old))
+				     (cond
+					((null? l)
+					 (liip (cdr rules) ndecl old nrules))
+					((equal? property (css-declaration-property (car l)))
+					 (laap (cdr l) ndecl (cons (car l) old)))
+					(else
+					 (laap (cdr l) (cons (car l) ndecl) old))))
 				  (liip (cdr rules)
 					ndecl
-					(cons (compile-alias (car decl)
-							     (car rules))
-					      nrules))))))))
+					old
+					(cons (compile-alias (car decl) (car rules)) nrules))))))))
 		((find-property-compiler property penv)
 		 =>
 		 (lambda (comp)
-		    ;; a global property
-		    (let ((ndecls (comp expr prio)))
-		       ;; that have to be processes again
-		       (loop (append ndecls (cdr decl)) old nrules))))
+		    ;; A global property that have to be processes again
+		    ;; unless the generated property is the initial one
+		    (let liip ((l (comp expr prio))
+			       (decl (cdr decl))
+			       (old old))
+		       (cond
+			  ((null? l)
+			   (loop decl old nrules))
+			  ((equal? property (css-declaration-property (car l)))
+			   (liip (cdr l) decl (cons (car l) old)))
+			  (else
+			   (liip (cdr l) (cons (car l) decl) old))))))
 		(else
 		 (loop (cdr decl) (cons (car decl) old) nrules)))))))
 
@@ -385,7 +396,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (hss-compile r penv)
    (if (pair? r)
-       (map! (lambda (r) (hss-compile r penv)) r)
+       (map (lambda (r) (hss-compile r penv)) r)
        r))
 
 ;*---------------------------------------------------------------------*/
@@ -400,23 +411,27 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hss-compile o::css-ruleset penv)
 
+   (define (find-compiler selector)
+      (let ((hc (find-selector-compiler selector)))
+	 (when (and hc (pair? (hss-compiler-properties hc)))
+	    hc)))
+      
    (define (compile-rule o)
       (with-access::css-ruleset o (selector+ declaration*)
-	 (let ((hc (find-selector-compiler (car (last-pair (car selector+))))))
+	 (let ((hc (find-compiler (car (last-pair (car selector+))))))
 	    (if hc
 		(let* ((lenv (hss-compiler-properties hc))
 		       (nselector (hss-compile-selector* (car selector+))))
 		   (hss-compile-declaration* nselector declaration* lenv penv))
 		(let ((ndecl* (apply append (hss-compile declaration* penv))))
 		   (duplicate::css-ruleset o
-		      (selector+ (map! hss-compile-selector* selector+))
+		      (selector+ (map hss-compile-selector* selector+))
 		      (declaration* ndecl*)))))))
-   
+
    (with-access::css-ruleset o (selector+ declaration*)
       (if (and (pair? (cdr selector+))
 	       (any? (lambda (s)
-			(let ((hc (find-selector-compiler (car (last-pair s)))))
-			   (when hc (pair? (hss-compiler-properties hc)))))
+			(find-compiler (car (last-pair s))))
 		     selector+))
 	  ;; the ruleset is unfolded iff:
 	  ;;    it uses several selectors
@@ -437,9 +452,15 @@
    (with-access::css-declaration o (property expr prio)
       (let ((comp (find-property-compiler property penv)))
 	 (if comp
-	     ;; call hss-compile recursively because the compilation
-	     ;; might have generated unnormalized expressions.
-	     (append-map (lambda (o) (hss-compile o penv)) (comp expr prio))
+	     ;; Call hss-compile recursively because the compilation might
+	     ;; have generated unnormalized expressions. The recursion is
+	     ;; stopped is the generated property is the same as the initial
+	     ;; one.
+	     (append-map (lambda (o)
+			    (if (equal? property (css-declaration-property o))
+				(list o)
+				(hss-compile o penv)))
+			 (comp expr prio))
 	     (list o)))))
    
 ;*---------------------------------------------------------------------*/
@@ -461,7 +482,7 @@
 		   (else
 		    o))))))
    
-   (map! compile lst))
+   (map compile lst))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-unalias-selector-name ...                                    */
@@ -511,8 +532,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    HSS Global compilers ...                                         */
 ;*---------------------------------------------------------------------*/
-;; -hop-border-radius
-(define-hss-property (-hop-border-radius v p)
+;; border-radius
+(define-hss-property (border-radius v p)
    (match-case v
       ((?tl ?tr ?br ?bl)
        (format "border-top-left-radius: ~a;
@@ -529,33 +550,33 @@
        (format "border-radius: ~a;
   -moz-border-radius: ~a;
   -webkit-border-radius: ~a;" (car v) (car v) (car v)))))
-;; -hop-border-top-left-radius
-(define-hss-property (-hop-border-top-left-radius v p)
+;; border-top-left-radius
+(define-hss-property (border-top-left-radius v p)
    (format "border-top-left-radius: ~a;
   -moz-border-radius-topLeft: ~a;
   -webkit-border-top-left-radius: ~a;"
 	   (car v) (car v) (car v)))
-;; -hop-border-top-right-radius
-(define-hss-property (-hop-border-top-right-radius v p)
+;; border-top-right-radius
+(define-hss-property (border-top-right-radius v p)
    (format "border-top-right-radius: ~a;
   -moz-border-radius-topRight: ~a;
   -webkit-border-top-right-radius: ~a;"
 	   (car v) (car v) (car v)))
-;; -hop-border-bottom-right-radius
-(define-hss-property (-hop-border-bottom-right-radius v p)
+;; border-bottom-right-radius
+(define-hss-property (border-bottom-right-radius v p)
    (format "border-bottom-right-radius: ~a;
   -moz-border-radius-bottomRight: ~a;
   -webkit-border-bottom-right-radius: ~a;"
 	   (car v) (car v) (car v)))
-;; -hop-border-bottom-left-radius
-(define-hss-property (-hop-border-bottom-left-radius v p)
+;; border-bottom-left-radius
+(define-hss-property (border-bottom-left-radius v p)
    (format "border-bottom-left-radius: ~a;
   -moz-border-radius-bottomLeft: ~a;
   -webkit-border-bottom-left-radius: ~a;"
 	   (car v) (car v) (car v)))
 
-;; -hop-box-shadow
-(define-hss-property (-hop-box-shadow v p)
+;; -box-shadow
+(define-hss-property (box-shadow v p)
    (format "box-shadow: ~l;
   -moz-box-shadow: ~l;
   -webkit-box-shadow: ~l;"

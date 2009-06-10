@@ -1,0 +1,99 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.0.x/share/hop-lframe.hss              */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Jun 10 08:52:15 2009                          */
+/*    Last change :  Wed Jun 10 09:00:27 2009 (serrano)                */
+/*    Copyright   :  2009 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    LabelFrames                                                      */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module hoplframe_hss)
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type lframe "div[hssclass=hop-lframe]"
+    
+    (define-hss-property (-hop-label-border v)
+       (format "div[hssclass=hop-lfborder] { border: ~l; }" v))
+
+    (define-hss-property (-hop-label-margin v)
+       
+       (define (parse-dim2 dim odim)
+	  (let ((pdim (pregexp-match "([0-9]+)(.*)" dim))
+		(podim (pregexp-match "([0-9]+)(.*)" odim)))
+	     (if (and pdim
+		      podim
+		      (string=? (caddr pdim) (caddr podim)))
+		 (let ((n (string->integer (cadr pdim)))
+		       (m (string->integer (cadr podim))))
+		    (format "~a~a" (+ n m) (caddr pdim)))
+		 dim)))
+       
+       (match-case v
+          ((?top ?right ?bottom ?left)
+	   (format "div[hssclass=hop-lfborder] {
+                         top: ~a;
+                         left: ~a;
+                         margin-right: ~a;
+                         margin-bottom: ~a;
+                      }" top left
+		       (parse-dim2 right left) (parse-dim2 bottom top)))
+          ((?v)
+           (let* ((m (pregexp-match "([0-9]+)(.*)" v))
+		  (v2 (if m
+			  (let ((n (string->integer (car m))))
+			     (format "~a~a" (* 2 n) (caddr m)))
+			  m)))
+              (format "div[hssclass=hop-lfborder] {
+                         top: ~a;
+                         left: ~a;
+                         margin-right: ~a;
+                         margin-bottom: ~a;
+                      }" v v v2 v2)))))
+    
+    (define-hss-property (-hop-label-border-radius v)
+       (format "div[hssclass=hop-lfborder] { border-radius: ~l; }" v))
+    
+    (define-hss-property (-hop-label-align v)
+       (format "div[hssclass=hop-lfborder] { text-align: ~l; }" v))
+    
+    (define-hss-property (background v)
+       (list (format "background: ~a;" (car v))
+             (format "div[hssclass=hop-lflabel] > span { background: ~a; }" 
+                     (car v)))))
+
+/*---------------------------------------------------------------------*/
+/*    public declarations ...                                          */
+/*---------------------------------------------------------------------*/
+lframe {
+  background: #edeceb;
+  border: 1px solid black;
+  box-shadow: 5px 5px 5px #888;
+  -hop-label-border: 2px groove #ddd;
+  -hop-label-border-radius: 4px;
+  -hop-label-align: right;
+  -hop-label-margin: 10px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    private declarations ...                                         */
+/*---------------------------------------------------------------------*/
+lframe div[hssclass=hop-lfborder] {
+  position: relative;
+}
+
+lframe div[hssclass=hop-lflabel] {
+  position: relative;
+  top: -12px;
+  left: 10px;
+  margin-right: 20px;
+}
+
+      
+

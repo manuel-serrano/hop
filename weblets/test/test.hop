@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/test/test.hop             */
+;*    serrano/prgm/project/hop/2.0.x/weblets/test/test.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Jun 26 11:00:00 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Wed Jun 10 08:56:40 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client side testing                                          */
 ;*=====================================================================*/
@@ -16,6 +16,7 @@
    (import weblet_test-image
 	   weblet_test-withhop
 	   weblet_test-event
+	   weblet_test-hss
 	   weblet_test-fl
 	   weblet_test-tree
 	   weblet_test-tabslider
@@ -60,7 +61,8 @@
 	 (<UL>
 	    (<LI> (<A> :href test/images :target "_blank" "Images"))
 	    (<LI> (<A> :href test/withhop :target "_blank" "with-hop"))
-	    (<LI> (<A> :href test/events :target "_blank" "Events")))
+	    (<LI> (<A> :href test/events :target "_blank" "Events"))
+	    (<LI> (<A> :href test/hss :target "_blank" "HSS")))
 	 (<H4> "Hop Widget tests")
 	 (<UL>
 	    (<LI> (<A> :href test/fl :target "_blank" "Fold lists"))

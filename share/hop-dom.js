@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Mon May  4 14:02:06 2009 (serrano)                */
+/*    Last change :  Wed Jun 10 08:58:37 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -467,6 +467,14 @@ function dom_add_head_script( pathname, id ) {
 
 /*** META (define-macro (<HEAD> . args)
      `(hop_dom_create "head" ,@args)) */
+
+/*** META (define-macro (<LFRAME> . args)
+     `(hop_dom_create "div" :hssclass "hop-lframe"
+         (hop_dom_create "div" :hssclass "hop-lfborder" ,@args))) */
+
+/*** META (define-macro (<LFLABEL> . args)
+     `(hop_dom_create "div" :hssclass "hop-lflabel"
+         (hop_dom_create "span" ,@args))) */
 
 /* {*** META ((export <BASE>)) *}                                      */
 /* function dom_create_base() {                                        */
