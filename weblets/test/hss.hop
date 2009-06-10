@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Wed Jun 10 09:08:19 2009 (serrano)                */
+;*    Last change :  Wed Jun 10 19:59:30 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing hss                                                      */
@@ -20,17 +20,30 @@
 ;*    test/hss ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-service (test/hss)
-   (<TEST-HTML> :include "hop-lframe"
+   (<TEST-HTML> :include `("hop-lframe" ,(service-resource test/hss "hss.hss"))
       :source (service-resource test/hss "hss.hop")
       (<DIV> :class "comment"
 	 "This test checks HSS compilation.")
       (<LFRAME> :class "lframe-left"
 	 (<LFLABEL> "foo")
 	 "An lframe with a left label.")
+      (<BR>)
       (<LFRAME> :class "lframe-center"
 	 (<LFLABEL> "bar")
-	 "An lframe with a centered label and large margins.")
+	 "An lframe with a centered label and a large top margin.")
+      (<BR>)
       (<LFRAME> :class "lframe-right"
-	 (<LFLABEL> "bar")
-	 "An lframe with a right label an angular border.")))
+	 (<LFLABEL> "gee")
+	 (<DIV> :style "font-weight: 200; font-size: 80%; padding: 4px"
+	    "An lframe with a right label, angular borders, and a small font."))
+      (<BR>)
+      (let ((div (<DIV> "")))
+	 (list
+	  div
+	  ~(add-window-onload! (lambda ()
+				  (innerHTML-set! $div
+                                     (<LFRAME>
+				        (<LFLABEL> "dynamic")
+				        "A client-side created lframe"))))))))
+							 
       

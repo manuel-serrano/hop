@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue May 26 11:32:12 2009 (serrano)                */
+;*    Last change :  Wed Jun 10 17:15:17 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -391,17 +391,17 @@
 		   (not (xml-event-handler-attribute? (car a))))
 	      (loop (cddr a)
 		    attr
-		    (cons (cons (keyword->symbol (car a)) (cadr a))
-			  init)
+		    (cons (cons (keyword->symbol (car a)) (cadr a)) init)
 		    body
 		    id))
 	     (else
 	      (loop (cddr a)
-		    (cons (cons (keyword->string (car a)) (cadr a))
-			  attr)
+		    (cons (cons (keyword->string (car a)) (cadr a)) attr)
 		    init
 		    body
 		    id))))
+	 ((eq? (car a) #!key)
+	  (loop (cddr a) (append (cadr a) attr) init body id))
 	 ((null? (car a))
 	  (loop (cdr a) attr init body id))
 	 ((pair? (car a))

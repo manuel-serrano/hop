@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed Jun 10 09:05:13 2009 (serrano)                */
+#*    Last change :  Wed Jun 10 17:04:00 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the wizard weblet                                */
@@ -27,9 +27,9 @@ SOURCES		= test.hop \
                   fl.hop tree.hop notepad.hop paned.hop sorttable.hop \
                   tabslider.hop slider.hop canvas.hop \
                   busy.hop sound.hop audio.hop fselector.hop window.hop \
-                  xhtml.hop svg.hop mathml.hop \
+                  xhtml.hop svg.hop mathml.hop
 
-POPULATION	= Makefile test.hss \
+POPULATION	= Makefile test.hss hss.hss \
                   canvas-test.jpg sound-test.mp3 \
 		  etc/weblet.info.in etc/test.wiki.in \
                   etc/logo.png etc/favicon.png etc/kangaroo.svgz \

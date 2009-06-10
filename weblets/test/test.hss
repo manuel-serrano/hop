@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Jun 10 09:04:43 2009 (serrano)                */
+/*    Last change :  Wed Jun 10 17:01:35 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for the TEST weblet                                          */
@@ -90,21 +90,4 @@ pre {
   overflow: auto;
   border: 1px dotted #777;
   background: #ffe;
-}
-
-/*---------------------------------------------------------------------*/
-/*    Hss tests                                                        */
-/*---------------------------------------------------------------------*/
-lframe.lframe-left {
-  -hop-label-align: left;
-}
-
-lframe.lframe-center {
-  -hop-label-align: center;
-  -hop-label-margin: 20px 0 0 0;
-}
-
-lframe.lframe-right {
-  -hop-label-align: right;
-  -hop-label-border-radius: 0;
 }

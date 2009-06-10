@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Jun 10 08:58:48 2009 (serrano)                */
+;*    Last change :  Wed Jun 10 17:27:11 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -258,7 +258,17 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 		     (when (string? p)
 			(set! res (cons (css p inl) res))))))
 	 (if (null? res)
-	     (error '<HEAD> "Can't find include file" f)
+	     (if (file-exists? f)
+		 (cond
+		    ((or (is-suffix? f "hss")
+			 (is-suffix? f "css"))
+		     (list (css f inl)))
+		    ((or (is-suffix? f "scm")
+			 (is-suffix? f "hop")
+			 (is-suffix? f "js"))
+		     (list (script f inl)))
+		    (else
+		     (error '<HEAD> "Can't find include file" f))))
 	     res)))
 
    (let loop ((a args)
@@ -441,8 +451,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 			     body)
    (<DIV> :id (xml-make-id id 'FOOT)
       :class class
-      (<DIV>
-	 :align "center"
+      (<DIV> :align "center"
 	 :class "foot-buttons"
 	 (<FOOT-BUTTON>
 	    :href "http://hop.inria.fr"
@@ -655,16 +664,18 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 ;*---------------------------------------------------------------------*/
 ;*    <LFRAME> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (<LFRAME> . body)
+(define-xml-compound <LFRAME> ((attrs) body)
    (<DIV> :hssclass "hop-lframe"
+      #!key attrs
       (<DIV> :hssclass "hop-lfborder"
 	 body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <LFLABEL> ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (<LFLABEL> . body)
+(define-xml-compound <LFLABEL> ((attrs) body)
    (<DIV> :hssclass "hop-lflabel"
+      #!key attrs
       (<SPAN> body)))
 
 

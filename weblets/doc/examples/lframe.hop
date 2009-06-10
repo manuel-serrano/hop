@@ -1,0 +1,11 @@
+;; A simple //label frame//
+(<HTML>
+   (<HEAD> :include "hop-lframe")
+   (<BODY>
+      (<DIV> :style "padding: 50px; width: 400px"
+	 (<LFRAME>
+	    (<LFLABEL> "A Label")
+	    (<TABLE>
+	       (<TR> (map <TD> (iota 3)))
+	       (<TR> (map <TD> (iota 3 1)))
+	       (<TR> (map <TD> (iota 3 2))))))))

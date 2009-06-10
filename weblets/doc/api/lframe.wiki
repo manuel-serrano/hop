@@ -1,0 +1,76 @@
+<doc> LabelFrame widget
+
+== Description ==
+
+These markups implement //label frames// in HOP documents. A //label frame// 
+is a container with a label. It is built using the ++<LFRAME>++ constructor. A
+//label frame// contains a label (++<LFLABEL>++) and a body.
+
+
+== Synopsis ==
+
+=== Server & client ===
+
+  (<LFRAME> arg ...)
+  (<LFLABEL> arg ...)
+
+
+=== Requirements ===
+
+Client codes using //label frames// need to load the HSS ++hop-lframe.hss++.
+
+
+  (<HEAD> :include "hop-lframe")
+
+
+== Examples ==
+
+<example><LFRAME></example>
+
+== Server Definitions ==
+<server>
+
+=== ++<LFRAME>++ ===
+<markup> <LFRAME>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+This function creates a //label frame//. One of its children must be 
+++<LFLABEL>++. 
+
+</markup>
+
+=== ++<LFLABEL>++ ===
+<markup> <LFLABEL>
+
+<arguments>
+^  attributes  ^   type     ^   default    ^  short description                      ^
+| :id          |  string    |  //random//  | element identifier.                     |
+| body         |  element   |  empty       | the body of the label.                  |
+</arguments>
+
+This function creates the label of a ++<LFRAME>++.
+</markup>
+
+
+== Style ==
+<style>
+
+=== ++hop-lframe.hss++ ===
+
+The file ++hop-lframe.hss++ contains the default graphical configuration.
+It is defined as:
+
+,(<P>)
+<share-public>hop-lframe.hss</share-public>
+
+</style>
+
+== See also ==
+<see-also><LFRAME>, <LFLABEL></see-also>
+
+</doc>
