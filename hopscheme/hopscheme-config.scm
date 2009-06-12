@@ -71,7 +71,8 @@
       conf-module))
 
 (define expand-once-expander
-   (lambda (x e) (e (expand-once x) e)))
+   (lambda (x e)
+      (e (expand-once x) e)))
 
 ;;
 (define (init-hopscheme! #!key reader share path verbose eval postprocess features expanders)

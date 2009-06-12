@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Tue May 12 11:11:11 2009 (serrano)                */
+;*    Last change :  Fri Jun 12 20:24:42 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -495,8 +495,8 @@
 (define (dom-get-attribute node name)
    (when (xml-markup? node)
       (with-access::xml-markup node (attributes)
-	 (let ((c (assoc name attributes)))
-	    (and (pair? c) (cdr c))))))
+	 (let ((a (xml-get-attribute (string->keyword name) attributes)))
+	    (when a (xml-attribute-value a))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-has-attribute? ...                                           */
@@ -504,7 +504,7 @@
 (define (dom-has-attribute? node name)
    (when (xml-markup? node)
       (with-access::xml-markup node (attributes)
-	 (pair? (assq (string->symbol name) attributes)))))
+	 (pair? (xml-get-attribute (string->keyword name) attributes)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-remove-attribute! ...                                        */
@@ -512,9 +512,7 @@
 (define (dom-remove-attribute! node name)
    (when (xml-markup? node)
       (with-access::xml-markup node (attributes)
-	 (let ((c (assq (string->symbol name) attributes)))
-	    (when (pair? c)
-	       (set! attributes (remq! c attributes)))))))
+	 (xml-attribute-remove-from-name! (string->keyword name) attributes))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-set-attribute!...                                            */
@@ -522,10 +520,9 @@
 (define (dom-set-attribute! node name value)
    (when (xml-markup? node)
       (with-access::xml-markup node (attributes)
-	 (let ((c (assq (string->symbol name) attributes)))
-	    (if (pair? c)
-		(set-cdr! c value)
-		(set! attributes (cons (cons name value) attributes)))))))
+	 (let ((a (xml-get-attribute (string->keyword name) attributes)))
+	    (when a
+	       (xml-attribute-value-set! a value))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-node-element? ...                                            */

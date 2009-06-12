@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Mon May 25 15:12:19 2009 (serrano)                */
+;*    Last change :  Fri Jun 12 12:31:00 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -99,14 +99,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    Standards SVG elements                                           */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <SVG> ((id #unspecified string)
-			    (xmlns "http://www.w3.org/2000/svg" string)
-			    (attributes)
-			    body)
+(define-markup <SVG> ((id #unspecified string)
+		      (xmlns "http://www.w3.org/2000/svg" string)
+		      (attributes)
+		      body)
    (instantiate::xml-element
       (markup 'svg)
       (id (xml-make-id id 'svg))
-      (attributes (cons (cons 'xmlns xmlns) attributes))
+      (attributes `(:xmlns ,xmlns ,@attributes))
       (body body)))
 
 ;; misc
@@ -495,15 +495,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    SVG:IMG ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <SVG:IMG> ((id #unspecified)
-				(class #f)
-				(width #f)
-				(height #f)
-				(style "text-align: center" string)
-				(src #unspecified string)
-				(prefix #t boolean)
-				(display "-moz-inline-box; -moz-box-orient:vertical; display:inline-block")
-				(attrs))
+(define-markup <SVG:IMG> ((id #unspecified)
+			  (class #f)
+			  (width #f)
+			  (height #f)
+			  (style "text-align: center" string)
+			  (src #unspecified string)
+			  (prefix #t boolean)
+			  (display "-moz-inline-box; -moz-box-orient:vertical; display:inline-block")
+			  (attrs))
    (cond
       ((not (string? src))
        (error '<SVG-IMG> "Illegal image src" src))

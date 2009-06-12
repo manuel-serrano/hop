@@ -2,7 +2,9 @@
 
 == Description ==
 
-The //slider// widget enables graphical integer selection.
+The //slider// widget enables graphical integer selection. ++<SLIDER>++
+can be generally used instead of ++<SPINBUTTON>++ when the horizontal 
+space of the GUI permits.
 
 ~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
 The markups presented in this page are not yet supported on

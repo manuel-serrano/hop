@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Jun 10 17:27:11 2009 (serrano)                */
+;*    Last change :  Fri Jun 12 12:29:21 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -445,10 +445,10 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 ;*---------------------------------------------------------------------*/
 ;*    <FOOT> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <FOOT> ((id #unspecified string)
-			     (class "foot" string)
-			     (inline #f)
-			     body)
+(define-markup <FOOT> ((id #unspecified string)
+		       (class "foot" string)
+		       (inline #f)
+		       body)
    (<DIV> :id (xml-make-id id 'FOOT)
       :class class
       (<DIV> :align "center"
@@ -463,13 +463,13 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 ;*---------------------------------------------------------------------*/
 ;*    <FOOT-BUTTON> ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <FOOT-BUTTON> ((id #unspecified string)
-				    (class "foot-button")
-				    (href #f string)
-				    (title #f string)
-				    (path #f)
-				    (inline #f)
-				    (src #f))
+(define-markup <FOOT-BUTTON> ((id #unspecified string)
+			      (class "foot-button")
+			      (href #f string)
+			      (title #f string)
+			      (path #f)
+			      (inline #f)
+			      (src #f))
    (<A> :class class
       :href href
       :title title
@@ -490,10 +490,10 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 ;*---------------------------------------------------------------------*/
 ;*    <TOOLTIP> ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <TOOLTIP> ((id #unspecified string)
-				(onclick 0)
-				(onmouseout 0)
-				body)
+(define-markup <TOOLTIP> ((id #unspecified string)
+			  (onclick 0)
+			  (onmouseout 0)
+			  body)
    (<DIV> :id (xml-make-id id 'TOOLTIP)
       :class "hoptooltip"
       :onclick (format "~a; hop_tooltip_hide()" onclick)
@@ -505,27 +505,24 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 ;*    -------------------------------------------------------------    */
 ;*    See __hop_css for HSS type.                                      */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <SORTTABLE> ((id #unspecified string)
-				  (attributes)
-				  body)
-   (let ((i (xml-make-id))
-	 (attr (map! (lambda (e)
-			(list (symbol->keyword (car e)) (cdr e)))
-		     attributes)))
+(define-markup <SORTTABLE> ((id #unspecified string)
+			    (attributes)
+			    body)
+   (let ((i (xml-make-id)))
       (<SPAN> :id i 
 	 :class "hop-sorttable"
-	 (apply <TABLE> :id (if (string? id) id (xml-make-id 'SORTTABLE))
-		(append! attr body))
+	 (<TABLE> :id (if (string? id) id (xml-make-id 'SORTTABLE))
+	    attributes body)
 	 (<SCRIPT> (format "hop_sorttable( '~a' )" i)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    LINK ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <LINK> ((id #unspecified string)
-			     (inline #f boolean)
-			     (href #f string)
-			     (attributes)
-			     body)
+(define-markup <LINK> ((id #unspecified string)
+		       (inline #f boolean)
+		       (href #f string)
+		       (attributes)
+		       body)
    
    (define (default href)
       (when (and (string? href) inline)
@@ -533,25 +530,21 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
       (instantiate::xml-element
 	 (markup 'link)
 	 (id (xml-make-id id 'link))
-	 (attributes (cons `(href . ,href) attributes))
+	 (attributes `(:href ,href ,@attributes))
 	 (body '())))
    
    (define (inl body)
-      (let ((c (assq 'rel attributes)))
-	 (if (not (pair? c))
+      (let ((c (xml-get-attribute :rel attributes)))
+	 (if (not c)
 	     (default href)
 	     (cond
-		((string=? (cdr c) "stylesheet")
-		 (apply <STYLE> "\n" body
-			(append-map (lambda (x)
-				       (list (symbol->keyword (car x)) (cdr x)))
-				    (remq c attributes))))
-		((string=? (cdr c) "shortcut icon")
+		((string=? (xml-attribute-value c) "stylesheet")
+		 (apply <STYLE> "\n" body (xml-attribute-remove c attributes)))
+		((string=? (xml-attribute-value c) "shortcut icon")
 		 (instantiate::xml-element
 		    (markup 'link)
 		    (id (xml-make-id id 'link))
-		    (attributes (cons `(href . ,(img-base64-encode href))
-				      attributes))
+		    (attributes `(:href ,(img-base64-encode href) ,@attributes))
 		    (body '())))
 		(else
 		 (default href))))))
@@ -581,12 +574,12 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 ;*---------------------------------------------------------------------*/
 ;*    SCRIPT ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <SCRIPT> ((inline #f boolean)
-			       (src #unspecified string)
-			       (type (hop-javascript-mime-type) string)
-			       (attributes)
-			       body)
-
+(define-markup <SCRIPT> ((inline #f boolean)
+			 (src #unspecified string)
+			 (type (hop-javascript-mime-type) string)
+			 (attributes)
+			 body)
+   
    (define (default src)
       (if (string? src)
 	  (let ((src (if (member (suffix src) (hop-client-script-suffixes))
@@ -595,11 +588,11 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 	     (when inline (warning '<SCRIPT> "Cannot inline file -- " src))
 	     (instantiate::xml-cdata
 		(markup 'script)
-		(attributes (cons* `(src . ,src) `(type . ,type) attributes))
+		(attributes `(:src ,src type: ,type ,@attributes))
 		(body body)))
 	  (instantiate::xml-cdata
 	     (markup 'script)
-	     (attributes (cons `(type . ,type) attributes))
+	     (attributes `(:type ,type ,@attributes))
 	     (body body))))
    
    (define (inl src)
@@ -609,10 +602,10 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 	 (if body
 	     (instantiate::xml-cdata
 		(markup 'script)
-		(attributes (cons `(type . ,type) attributes))
+		(attributes `(:type ,type ,@attributes))
 		(body (list "\n" body)))
 	     (default src))))
-
+   
    (if (and inline (string? src))
        (if (file-exists? src)
 	   (inl src)
@@ -622,21 +615,21 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 ;*---------------------------------------------------------------------*/
 ;*    <STYLE> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <STYLE> ((type (hop-configure-css-mime-type) string)
-			      (attributes)
-			      body)
+(define-markup <STYLE> ((type (hop-configure-css-mime-type) string)
+			(attributes)
+			body)
    (instantiate::xml-cdata
       (markup 'style)
-      (attributes (cons `(type . ,type) attributes))
+      (attributes `(:type ,type ,@attributes))
       (body body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <INPUT> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <INPUT> ((id #unspecified string)
-			      (type 'text)
-			      (onkeydown #f)
-			      (attributes))
+(define-markup <INPUT> ((id #unspecified string)
+			(type 'text)
+			(onkeydown #f)
+			(attributes))
    (if (or (eq? type 'url) (equal? type "url"))
        (let* ((id (xml-make-id id 'input))
 	      (comp "hop_inputurl_keydown( this, event )")
@@ -649,34 +642,29 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 	  (instantiate::xml-empty-element
 	     (markup 'input)
 	     (id id)
-	     (attributes `((type . text)
-			   (onkeydown . ,onkeydown)
-			   ,@attributes))
+	     (attributes `(:type ,type :onkeydown ,onkeydown ,@attributes))
 	     (body '())))
        (instantiate::xml-empty-element
 	  (markup 'input)
 	  (id (xml-make-id id 'input))
-	  (attributes `((type . ,type)
-			,@(if onkeydown `((onkeydown . ,onkeydown)) '())
-			,@attributes))
+	  (attributes `(type: ,type
+			      ,@(if onkeydown `(onkeydown: ,onkeydown) '())
+			      ,@attributes))
 	  (body '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <LFRAME> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <LFRAME> ((attrs) body)
+(define-markup <LFRAME> ((attrs) body)
    (<DIV> :hssclass "hop-lframe"
-      #!key attrs
+      attrs
       (<DIV> :hssclass "hop-lfborder"
 	 body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <LFLABEL> ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <LFLABEL> ((attrs) body)
+(define-markup <LFLABEL> ((attrs) body)
    (<DIV> :hssclass "hop-lflabel"
-      #!key attrs
+      attrs
       (<SPAN> body)))
-
-
-

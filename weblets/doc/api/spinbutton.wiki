@@ -1,0 +1,102 @@
+<doc> SpinButton widget
+
+== Description ==
+
+The markup ++<SPINBUTTON>++ implements //spin buttons// which are range bounded
+integer selector. These buttons are be created on server-side //and// 
+client-side. ++<SPINBUTTON>++ can be used when there is not sufficient
+space for using a ++<SLIDER>++.
+
+
+== Synopsis ==
+
+=== Server & client ===
+
+  (<SPINBUTTON> arg ...)
+
+
+=== client ===
+
+  (hop-spinbutton-set! spin val)
+
+
+=== Requirements ===
+
+Client codes using //spin buttons// need to load the client-side
+code ++hop-spinbutton++.
+
+
+  (<HEAD> :include "hop-spinbutton")
+
+
+== Examples ==
+
+<example><SPINBUTTON></example>
+
+== Server & Client Definitions ==
+<server>
+<client>
+
+=== ++<SPINBUTTON>++ ===
+<markup> <SPINBUTTON>
+
+<arguments>
+^  attributes  ^   type      ^   default    ^  short description         ^
+| :id          |  string     |  //random//  | element identifier.        |
+| :min         |  integer    |  0           | the range lowest bound.    |
+| :max         |  integer    |  100         | the range lowest bound.    |
+| :value       |  integer    |  0           | the initial value.         |
+| :onchange    |  procedure  |  _           | a procedure to invoke on value changes.         |
+</arguments>
+
+This function creates a //spin button//.
+
+~~ When the ++onchange++ is invoked, the ++this++ value points to the spinbutton
+button itself whose value can be retrieve via its ++value++ slot.
+
+</markup>
+
+</client>
+</server>
+
+== Client Definitions ==
+<client>
+
+=== ++(spinbutton-set! spin val)++ ===
+<procedure> notepad-selection
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| spinbutton  |  spinbutton or string   | the spin button.       |
+| val         |  integer                | the new spin button value.  |
+</arguments>
+
+This function sets a new value to a //spin button//.
+
+Example:
+
+  (let ((but (<SPINBUTTON> :max 10 :min -10 :onchange ~(alert this.value))))
+    (<BUTTON> :onclick ~(spinbutton-set! $but 0) "Reset"))
+
+
+</procedure>
+
+</client>
+
+== Style ==
+<style>
+
+=== ++hop-spinbutton.hss++ ===
+
+The file ++hop-spinbutton.hss++ contains the default graphical configuration.
+It is defined as:
+
+,(<P>)
+<share-public>hop-spinbutton.hss</share-public>
+
+</style>
+
+== See also ==
+<see-also><SPINBUTTON></see-also>
+
+</doc>

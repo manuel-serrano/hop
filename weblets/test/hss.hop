@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Wed Jun 10 19:59:30 2009 (serrano)                */
+;*    Last change :  Thu Jun 11 06:32:12 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing hss                                                      */
@@ -24,19 +24,16 @@
       :source (service-resource test/hss "hss.hop")
       (<DIV> :class "comment"
 	 "This test checks HSS compilation.")
-      (<LFRAME> :class "lframe-left"
+      (<LFRAME> :class "lframe-left" :style "margin-bottom: 2ex"
 	 (<LFLABEL> "foo")
 	 "An lframe with a left label.")
-      (<BR>)
-      (<LFRAME> :class "lframe-center"
+      (<LFRAME> :class "lframe-center" :style "margin-bottom: 2ex"
 	 (<LFLABEL> "bar")
 	 "An lframe with a centered label and a large top margin.")
-      (<BR>)
-      (<LFRAME> :class "lframe-right"
+      (<LFRAME> :class "lframe-right" :style "margin-bottom: 2ex"
 	 (<LFLABEL> "gee")
 	 (<DIV> :style "font-weight: 200; font-size: 80%; padding: 4px"
 	    "An lframe with a right label, angular borders, and a small font."))
-      (<BR>)
       (let ((div (<DIV> "")))
 	 (list
 	  div

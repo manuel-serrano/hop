@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Jun 10 20:02:56 2009 (serrano)                */
+/*    Last change :  Fri Jun 12 20:12:08 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -126,6 +126,9 @@ function dom_create( tag, args ) {
 		  }
 	       } else {
 		  el.setAttribute( prop, at + "" );
+		  try {
+		     el[ prop ] = at;
+		  } catch( _ ) { ; }
 	       }
 	    }
 	    i += 2;
@@ -524,6 +527,9 @@ function hop_create_lflabel( attrs, body ) {
 
 /*** META (define-macro (<LFLABEL> . args)
      `(hop_dom_create_custom hop_create_lflabel ,@args)) */
+
+/*** META (define-macro (<SPINBUTTON> . args)
+     `(hop_dom_create_custom hop_create_spinbutton ,@args)) */
 
 /*---------------------------------------------------------------------*/
 /*    Server side constructors                                         */

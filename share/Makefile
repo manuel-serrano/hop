@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Jun 10 09:09:55 2009 (serrano)                */
+#*    Last change :  Thu Jun 11 19:09:39 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -51,6 +51,7 @@ EXTRA		= hop-fx.js hop-error.hss hop.css \
                   hop-video.js hop-video.hss \
                   hop-login.js hop-login.hss \
                   hop-box.scm hop-box.hss \
+		  hop-spinbutton.scm hop-spinbutton.hss \
                   hop-lframe.hss \
                   hop-canvas.scm hop-exception.scm
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Mon Jun  8 14:11:41 2009 (serrano)                */
+;*    Last change :  Fri Jun 12 12:29:00 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -107,46 +107,43 @@
 ;*---------------------------------------------------------------------*/
 ;*    IMG ...                                                          */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <IMG> ((id #unspecified string)
-			    (inline #f boolean)
-			    (alt #f)
-			    (src #unspecified)
-			    (attributes)
-			    body)
+(define-markup <IMG> ((id #unspecified string)
+		      (inline #f boolean)
+		      (alt #f)
+		      (src #unspecified)
+		      (attributes)
+		      body)
    
    (define (plain-img src cssrc)
       (instantiate::xml-empty-element
 	 (markup 'img)
 	 (id (xml-make-id id 'img))
-	 (attributes (cons* `(src . ,cssrc)
-			    `(alt . ,(or alt (basename src)))
-			    attributes))
+	 (attributes `(:src ,cssrc :alt ,(or alt (basename src)) ,@attributes))
 	 (body '())))
    
    (define (onerror-img attributes src)
       (let* ((val (format "if( !this.onhoperror ) { this.onhoperror = true; hop_deinline_image(this, ~s) }" src))
-	     (onerror (when (pair? attributes) (assq 'onerror attributes)))
-	     (oval (when (pair? onerror) (cdr onerror))))
+	     (onerror (xml-get-attribute :onerror attributes))
+	     (oval (when onerror (xml-attribute-value onerror))))
 	 (cond
 	    ((string? oval)
-	     (set-cdr! onerror (string-append oval "; " val))
-	     attributes)
+	     (let ((nval (string-append oval "; " val)))
+		(xml-attribute-value-set! onerror nval)
+		attributes))
 	    ((xml-tilde? oval)
-	     (set-cdr! onerror (string-append (xml-tilde->statement oval)
-					      "\n"
-					      val))
-	     attributes)
+	     (let ((nval (string-append (xml-tilde->statement oval) "\n" val)))
+		(xml-attribute-value-set! onerror nval)
+		attributes))
 	    (else
-	     (cons `(onerror . ,val) attributes)))))
+	     `(:onerror ,val ,@attributes)))))
    
    (define (inline-img src cssrc isrc)
       (if isrc
 	  (instantiate::xml-empty-element
 	     (markup 'img)
 	     (id (xml-make-id id 'img))
-	     (attributes (cons* `(src . ,isrc)
-				`(alt . ,(or alt (basename src)))
-				(onerror-img attributes src)))
+	     (attributes `(:src ,isrc :alt ,(or alt (basename src))
+				,@(onerror-img attributes src)))
 	     (body '()))
 	  (plain-img src cssrc)))
    
@@ -155,8 +152,8 @@
        (instantiate::xml-empty-element
 	  (markup 'img)
 	  (id (xml-make-id id 'img))
-	  (attributes (cons `(alt . ,alt) attributes))
-	  (initializations (list (cons 'src src)))
+	  (attributes `(:alt ,alt ,@attributes))
+	  (initializations `(:src ,src))
 	  (body '())))
       ((string? src)
        (let ((cssrc (charset-convert src (hop-locale) (hop-charset))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Jun 10 17:15:17 2009 (serrano)                */
+;*    Last change :  Fri Jun 12 20:24:59 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -93,6 +93,13 @@
 	    (xml-markup-is? ::obj ::symbol)
 
 	    (xml-make-id::bstring #!optional id (markup 'HOP))
+
+	    (xml-get-attribute ::keyword ::pair-nil)
+	    (xml-attribute-value ::obj)
+	    (xml-attribute-value-set! ::pair ::obj)
+	    (xml-attribute-remove ::pair ::pair)
+	    (xml-attribute-remove! ::pair ::pair)
+	    (xml-attribute-remove-from-name! ::keyword ::pair)
 
 	    (xml-event-handler-attribute?::bool ::keyword)
 	    
@@ -243,14 +250,17 @@
 ;*    hop-xhtml-xmlns ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-xhtml-xmlns
-   '((xmlns . "http://www.w3.org/1999/xhtml")
-     (xmlns:svg . "http://www.w3.org/2000/svg"))
+   '(:xmlns "http://www.w3.org/1999/xhtml"
+     :xmlns:svg "http://www.w3.org/2000/svg")
    (lambda (v)
-      (if (every? (lambda (x)
-		     (and (pair? x) (symbol? (car x)) (string? (cdr x))))
-		  v)
-	  v
-	  (error 'hop-xhtml-xmlns "Illegal namespaces" v))))
+      (let loop ((l v))
+	 (cond
+	    ((null? l)
+	     v)
+	    ((and (keyword? (car l)) (pair? (cdr l)) (string? (cadr l)))
+	     (loop (cddr l)))
+	    (else
+	     (error 'hop-xhtml-xmlns "Illegal namespaces" v))))))
 				   
 ;*---------------------------------------------------------------------*/
 ;*    *html-backend* ...                                               */
@@ -370,9 +380,7 @@
       (cond
 	 ((null? a)
 	  (instantiate::xml-element
-	     (markup (string->symbol
-		      (string-downcase
-		       (symbol->string el))))
+	     (markup (string->symbol (string-downcase (symbol->string el))))
 	     (attributes (reverse! attr))
 	     (initializations (reverse! init))
 	     (id (xml-make-id id el))
@@ -391,17 +399,15 @@
 		   (not (xml-event-handler-attribute? (car a))))
 	      (loop (cddr a)
 		    attr
-		    (cons (cons (keyword->symbol (car a)) (cadr a)) init)
+		    (cons* (cadr a) (car a) init)
 		    body
 		    id))
 	     (else
 	      (loop (cddr a)
-		    (cons (cons (keyword->string (car a)) (cadr a)) attr)
+		    (cons* (cadr a) (car a) attr)
 		    init
 		    body
 		    id))))
-	 ((eq? (car a) #!key)
-	  (loop (cddr a) (append (cadr a) attr) init body id))
 	 ((null? (car a))
 	  (loop (cdr a) attr init body id))
 	 ((pair? (car a))
@@ -434,6 +440,63 @@
    (if (string? id)
        id
        (if-debug (symbol->string (gensym markup)) (symbol->string (gensym)))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-get-attribute ...                                            */
+;*---------------------------------------------------------------------*/
+(define (xml-get-attribute attr attributes)
+   (memq attr attributes))
+
+;*---------------------------------------------------------------------*/
+;*    xml-attribute-value ...                                          */
+;*---------------------------------------------------------------------*/
+(define (xml-attribute-value attr)
+   (when (and (pair? attr) (pair? (cdr attr)))
+      (cadr attr)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-attribute-value-set! ...                                     */
+;*---------------------------------------------------------------------*/
+(define (xml-attribute-value-set! attr val)
+   (set-car! (cdr attr) val))
+
+;*---------------------------------------------------------------------*/
+;*    xml-attribute-remove ...                                         */
+;*---------------------------------------------------------------------*/
+(define (xml-attribute-remove attr attributes)
+   (let loop ((attrs attributes))
+      (cond
+	 ((null? attrs) '())
+	 ((eq? attrs attr) (loop (cddr attrs)))
+	 (else (cons* (car attrs) (cadr attrs) (loop (cddr attrs)))))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-attribute-remove! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (xml-attribute-remove! attr attributes)
+   (let loop ((attrs attributes))
+      (cond
+	 ((null? attrs)
+	  '())
+	 ((eq? attrs attr)
+	  (loop (cddr attrs)))
+	 (else
+	  (set-cdr! (cdr attrs) (loop (cddr attrs)))
+	  attrs))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-attribute-remove-from-name! ...                              */
+;*---------------------------------------------------------------------*/
+(define (xml-attribute-remove-from-name! name attributes)
+   (let loop ((attrs attributes))
+      (cond
+	 ((null? attrs)
+	  '())
+	 ((eq? (car attrs) name)
+	  (loop (cddr attrs)))
+	 (else
+	  (set-cdr! (cdr attrs) (loop (cddr attrs)))
+	  attrs))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-event-handler-attribute? ...                                 */
@@ -634,10 +697,17 @@
       (with-access::xml-html obj (markup attributes body)
 	 (display "<" p)
 	 (display markup p)
-	 (xml-write-attributes (filter (lambda (h)
-					  (not (assq (car h) attributes)))
-				       html-attributes)
-			       p)
+	 (let ((hattr (let loop ((hattr html-attributes))
+			 (cond
+			    ((null? hattr)
+			     '())
+			    ((xml-get-attribute (car hattr) attributes)
+			     (loop (cddr hattr)))
+			    (else
+			     (cons* (car hattr)
+				    (cadr hattr)
+				    (loop (cddr hattr))))))))
+	    (xml-write-attributes hattr p))
 	 (xml-write-attributes attributes p)
 	 (display ">\n" p)
 	 (for-each (lambda (b) (xml-write b p backend)) body)
@@ -649,10 +719,11 @@
 ;*    xml-write-attributes ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (xml-write-attributes attr p)
-   (for-each (lambda (a)
-		(display " " p)
-		(xml-write-attribute (cdr a) (car a) p))
-	     attr))
+   (let loop ((attr attr))
+      (when (pair? attr)
+	 (display " " p)
+	 (xml-write-attribute (cadr attr) (car attr) p)
+	 (loop (cddr attr)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::obj ...                                    */
@@ -660,12 +731,12 @@
 (define-generic (xml-write-attribute attr::obj id p)
    ;; boolean false attribute has no value
    (when attr
-      (display id p)
+      (display (keyword->string! id) p)
       ;; boolean true attribute has no value
       (display "='" p)
       (cond
 	 ((eq? attr #t)
-	  (display id p))
+	  (display (keyword->string! id) p))
 	 ((procedure? attr)
 	  (if (hop-service? (procedure-attr attr))
 	      (display (hop-service-path (procedure-attr attr)) p)
@@ -680,7 +751,7 @@
 (define-method (xml-write-attribute attr::xml-tilde id p)
    ;; this case should no longer appears since service are now
    ;; nested inside functions
-   (display id p)
+   (display (keyword->string! id) p)
    (display "='" p)
    (display (xml-tilde->attribute attr) p)
    (display "'" p))
@@ -689,7 +760,7 @@
 ;*    xml-write-attribute ::hop-service ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-attribute attr::hop-service id p)
-   (display id p)
+   (display (keyword->string! id) p)
    (display "='" p)
    (display (hop-service-path attr) p)
    (display "'" p))
@@ -711,23 +782,24 @@
 	       (display id p)
 	       (display "\" );" p)
 	       (when cdata-start (display cdata-start p))
-	       (for-each (lambda (a)
-			    (xml-write-initialization (cdr a) (car a) var p)
-			    (newline p))
-			 initializations)
+	       (let loop ((inits initializations))
+		  (when (pair? inits)
+		     (xml-write-initialization (car inits) (cadr inits) var p)
+		     (newline p)
+		     (loop (cddr inits))))
 	       (when cdata-stop (display cdata-stop p))
 	       (display "</script>\n" p))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-initialization ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (xml-write-initialization tilde id var p)
-   (if (eq? id 'style)
+(define (xml-write-initialization id tilde var p)
+   (if (eq? id :style)
        (xml-write-style-initialization tilde var p)
        (begin
 	  (display var p)
 	  (display "[\"" p)
-	  (display (if (eq? id 'class) "className" id) p)
+	  (display (if (eq? id :class) "className" (keyword->string! id)) p)
 	  (display "\"]=" p)
 	  (xml-write-expression tilde p)
 	  (display ";" p))))
@@ -941,34 +1013,33 @@
 ;*---------------------------------------------------------------------*/
 ;*    <FORM> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <FORM> ((id #unspecified string)
-			     (onsubmit #f)
-			     (onreset #f)
-			     (action #f)
-			     (attrs)
-			     body)
+(define-markup <FORM> ((id #unspecified string)
+		       (onsubmit #f)
+		       (onreset #f)
+		       (action #f)
+		       (attrs)
+		       body)
    (let* ((attrs (cond
 		    ((xml-tilde? onsubmit)
-		     (cons (cons 'onsubmit (xml-tilde->return onsubmit)) attrs))
+		     `(:onsubmit ,(xml-tilde->return onsubmit) ,@attrs))
 		    (onsubmit
-		     (cons (cons 'onsubmit onsubmit) attrs))
+		     `(:onsubmit ,onsubmit ,@attrs))
 		    (else
 		     attrs)))
 	  (attrs (cond
 		    ((xml-tilde? onreset)
-		     (cons (cons 'onreset (xml-tilde->return onreset)) attrs))
+		     `(:onreset ,(xml-tilde->return onreset) ,@attrs))
 		    (onreset
-		     (cons (cons 'onreset onreset) attrs))
+		     `(:onreset ,onreset ,@attrs))
 		    (else
 		     attrs)))
 	  (attrs (cond
 		    ((xml-tilde? action)
-		     (cons (cons 'action
-				 (format "javascript: ~a"
-					 (xml-tilde->statement action)))
-			   attrs))
+		     `(:action ,(format "javascript: ~a"
+					(xml-tilde->statement action))
+			       ,@attrs))
 		    (action
-		     (cons (cons 'action action) attrs))
+		     `(:action ,action ,@attrs))
 		    (else
 		     attrs))))
       (instantiate::xml-element
@@ -988,8 +1059,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    <DELAY> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <DELAY> ((id #unspecified string)
-			      body)
+(define-markup <DELAY> ((id #unspecified string)
+			body)
    (if (and (pair? body)
 	    (procedure? (car body))
 	    (correct-arity? (car body) 0))

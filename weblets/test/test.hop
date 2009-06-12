@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Jun 10 19:53:26 2009 (serrano)                */
+;*    Last change :  Thu Jun 11 18:55:32 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client side testing                                          */
@@ -32,7 +32,8 @@
 	   weblet_test-audio
 	   weblet_test-xhtml
 	   weblet_test-svg
-	   weblet_test-mathml)
+	   weblet_test-mathml
+	   weblet_test-spinbutton)
    (export (<TEST-HTML> . args)))
 
 ;*---------------------------------------------------------------------*/
@@ -75,7 +76,8 @@
 	    (<LI> (<A> :href test/canvas :target "_blank" "Canvas"))
 	    (<LI> (<A> :href test/window :target "_blank" "Windows"))
 	    (<LI> (<A> :href test/fselector :target "_blank" "File Selector"))
-	    (<LI> (<A> :href test/hss :target "_blank" "lframe")))
+	    (<LI> (<A> :href test/hss :target "_blank" "Label Frame"))
+	    (<LI> (<A> :href test/spinbutton :target "_blank" "SpinButton")))
 	 (<H4> "XML and HTML")
 	 (<UL>
 	    (<LI> (<A> :href test/xhtml :target "_blank" "XHTML"))

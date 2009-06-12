@@ -17,7 +17,8 @@ is a container with a label. It is built using the ++<LFRAME>++ constructor. A
 
 === Requirements ===
 
-Client codes using //label frames// need to load the HSS ++hop-lframe.hss++.
+Client codes using //label frames// need to load the ++hop-lframe++ client-side
+code. 
 
 
   (<HEAD> :include "hop-lframe")
@@ -27,8 +28,9 @@ Client codes using //label frames// need to load the HSS ++hop-lframe.hss++.
 
 <example><LFRAME></example>
 
-== Server Definitions ==
+== Server & Client Definitions ==
 <server>
+<client>
 
 === ++<LFRAME>++ ===
 <markup> <LFRAME>
@@ -55,7 +57,8 @@ This function creates a //label frame//. One of its children must be
 
 This function creates the label of a ++<LFRAME>++.
 </markup>
-
+</client>
+</server>
 
 == Style ==
 <style>
