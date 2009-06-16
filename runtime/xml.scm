@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Jun 15 16:58:21 2009 (serrano)                */
+;*    Last change :  Tue Jun 16 15:03:50 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -62,7 +62,6 @@
 	    (class xml-markup::xml
 	       (markup::symbol read-only)
 	       (attributes::pair-nil (default '()))
-	       (initializations::pair-nil (default '()))
 	       body::pair-nil)
 
 	    (class xml-html::xml-markup)
@@ -226,7 +225,7 @@
 ;*    thus be display as is.                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (object-print o::xml-element p print-slot)
-   (with-access::xml-element o (markup attributes initializations body id)
+   (with-access::xml-element o (markup attributes body id)
       (display "#|xml-element markup=" p)
       (print-slot markup p)
       (display " id=" p)
@@ -234,8 +233,6 @@
       (display " parent=..." p)
       (display " attributes=" p)
       (print-slot attributes p)
-      (display " initializations=" p)
-      (print-slot initializations p)
       (display " body=" p)
       (print-slot body p)
       (display "|" p)))
@@ -374,7 +371,6 @@
 (define (%make-xml-element el args)
    (let loop ((a args)
 	      (attr '())
-	      (init '())
 	      (body '())
 	      (id #unspecified))
       (cond
@@ -382,7 +378,6 @@
 	  (instantiate::xml-element
 	     (markup (string->symbol (string-downcase (symbol->string el))))
 	     (attributes (reverse! attr))
-	     (initializations (reverse! init))
 	     (id (xml-make-id id el))
 	     (body (reverse! body))))
 	 ((keyword? (car a))
@@ -393,31 +388,20 @@
 		     (car a)))
 	     ((eq? (car a) :id)
 	      (if (string? (cadr a))
-		  (loop (cddr a) attr init body (cadr a))
+		  (loop (cddr a) attr body (cadr a))
 		  (bigloo-type-error el "string" (cadr a))))
-	     ((and (xml-tilde? (cadr a))
-		   (not (xml-event-handler-attribute? (car a))))
-	      (loop (cddr a)
-		    attr
-		    (cons* (cadr a) (car a) init)
-		    body
-		    id))
 	     (else
-	      (loop (cddr a)
-		    (cons* (cadr a) (car a) attr)
-		    init
-		    body
-		    id))))
+	      (loop (cddr a) (cons* (cadr a) (car a) attr) body id))))
 	 ((null? (car a))
-	  (loop (cdr a) attr init body id))
+	  (loop (cdr a) attr body id))
 	 ((pair? (car a))
 	  (if (not (and (or (null? (cdr a)) (pair? (cdr a))) (list? (car a))))
 	      (error (symbol-append '< el '>)
 		     "Illegal arguments"
 		     `(,(symbol-append '< el '>) ,@args))
-	      (loop (append (car a) (cdr a)) attr init body id)))
+	      (loop (append (car a) (cdr a)) attr body id)))
 	 (else
-	  (loop (cdr a) attr init (cons (car a) body) id)))))
+	  (loop (cdr a) attr (cons (car a) body) id)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-markup-is? ...                                               */
@@ -729,8 +713,10 @@
 ;*    xml-write-attribute ::obj ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-generic (xml-write-attribute attr::obj id p)
-   ;; boolean false attribute has no value
-   (when attr
+   ;; boolean false attribute has no value, xml-tilde are initialized
+   (when (and attr
+	      (or (not (xml-tilde? attr))
+		  (xml-event-handler-attribute? id)))
       (display (keyword->string! id) p)
       ;; boolean true attribute has no value
       (display "='" p)
@@ -769,26 +755,34 @@
 ;*    xml-write-initializations ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (xml-write-initializations obj p backend)
-   (with-access::xml-element obj (id initializations)
-      (when (pair? initializations)
-	 (with-access::xml-backend backend (cdata-start cdata-stop)
-	    (display "<script type='" p)
-	    (display (hop-javascript-mime-type) p)
-	    (display "'>" p)
-	    (let ((var (gensym)))
-	       (display "var " p)
-	       (display var p)
-	       (display " = document.getElementById( \"" p)
-	       (display id p)
-	       (display "\" );" p)
-	       (when cdata-start (display cdata-start p))
-	       (let loop ((inits initializations))
-		  (when (pair? inits)
-		     (xml-write-initialization (car inits) (cadr inits) var p)
-		     (newline p)
-		     (loop (cddr inits))))
-	       (when cdata-stop (display cdata-stop p))
-	       (display "</script>\n" p))))))
+   (with-access::xml-element obj (id attributes)
+      (with-access::xml-backend backend (cdata-start cdata-stop)
+	 (let loop ((attrs attributes)
+		    (var #f))
+	    (cond
+	       ((null? attrs)
+		(when var
+		   (when cdata-stop (display cdata-stop p))
+		   (display "</script>\n" p)))
+	       ((and (xml-tilde? (cadr attrs))
+		     (not (xml-event-handler-attribute? (car attrs))))
+		(if var
+		    (begin
+		       (xml-write-initialization (car attrs) (cadr attrs) var p)
+		       (newline p)
+		       (loop (cddr attrs) var))
+		    (let ((var (gensym)))
+		       (display "<script type='" p)
+		       (display (hop-javascript-mime-type) p)
+		       (display "'>" p)
+		       (display "var " p)
+		       (display var p)
+		       (display " = document.getElementById( \"" p)
+		       (display id p)
+		       (display "\" );" p)
+		       (loop attrs var))))
+	       (else
+		(loop (cddr attrs) var)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-initialization ...                                     */

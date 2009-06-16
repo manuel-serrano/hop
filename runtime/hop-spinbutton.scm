@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun 11 18:49:09 2009                          */
-;*    Last change :  Fri Jun 12 19:24:35 2009 (serrano)                */
+;*    Last change :  Tue Jun 16 15:12:28 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Spin Buttons server side implementation                          */
@@ -31,9 +31,9 @@
 ;*    <SPINBUTTON> ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <SPINBUTTON> ((id #unspecified string)
-				   (min 0 integer)
-				   (max 100 integer)
-				   (value 0 integer)
+				   (min 0)
+				   (max 100)
+				   (value 0)
 				   (onchange #f)
 				   (attrs)
 				   body)
@@ -59,24 +59,23 @@
 			      :type 'text
 			      :style (format "width: ~aem" w)
 			      :onchange (format "hop_spinbutton_set(~s,this.value)" id)
-			      :value (integer->string value)))
+			      :value value))
 			(<TD> :class "hop-spinbutton-button hop-spinbutton-button-top"
 			   :onmousedown (format "hop_spinbutton_inc(~s)" id)
 			   (<DIV> "&#9650;")))
 		     (<TR> 
 			(<TD> :class "hop-spinbutton-button hop-spinbutton-button-bottom"
 			   :onmousedown (format "hop_spinbutton_dec(~s)" id)
-			   (<DIV> "&#9660;")))))
-	      (init `(:value ,value
-		      :minvalue ,min
-		      :maxvalue ,max)))
+			   (<DIV> "&#9660;"))))))
 	  (instantiate::xml-element
 	     (markup 'table)
 	     (id id)
 	     (attributes `(:cellspacing  "0"
-			   :cellpadding "0"
+                           :cellpadding "0"
 			   :hssclass "hop-spinbutton"
- 			   :onchange ,onchange
+			   :onchange ,onchange
+			   :value ,value
+			   :minvalue ,min
+			   :maxvalue ,max
 			   ,@attrs))
-	     (initializations init)
 	     (body body)))))

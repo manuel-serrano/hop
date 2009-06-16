@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Fri Jun 12 12:29:00 2009 (serrano)                */
+;*    Last change :  Tue Jun 16 15:11:14 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -152,8 +152,7 @@
        (instantiate::xml-empty-element
 	  (markup 'img)
 	  (id (xml-make-id id 'img))
-	  (attributes `(:alt ,alt ,@attributes))
-	  (initializations `(:src ,src))
+	  (attributes `(:src ,src :alt ,alt ,@attributes))
 	  (body '())))
       ((string? src)
        (let ((cssrc (charset-convert src (hop-locale) (hop-charset))))

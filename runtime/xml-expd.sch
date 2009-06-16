@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Mon Jun 15 16:47:56 2009 (serrano)                */
+;*    Last change :  Tue Jun 16 15:07:54 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -16,41 +16,26 @@
    `(define (,name . args)
        (let loop ((args args)
 		  (attr ',attr)
-		  (init '())
 		  (body '()))
 	  (cond
 	     ((null? args)
-	      (let ((attr (reverse attr))
-		    (initializations (reverse! init)))
+	      (let ((attr (reverse attr)))
 		 ,(if (null? exp)
 		      `(,(symbol-append 'instantiate:: type)
 			(markup ',el)
 			(attributes attr)
-			(initializations init)
 			(body (reverse! body)))
 		      `(begin ,@exp))))
 	     ((keyword? (car args))
-	      (cond
-		 ((null? (cdr args))
-		  (loop '() attr
-			(cons* #t (car args) init)
-			body))
-		 ((and (xml-tilde? (cadr args))
-		       (not (xml-event-handler-attribute? (car args))))
-		  (loop (cddr args)
-			attr
-			(cons* (cadr args) (car args) init)
-			body))
-		 (else
-		  (loop (cddr args)
-			(cons* (cadr args) (car args) attr)
-			init body))))
+	      (if (null? (cdr args))
+		  (loop '() (cons* #t (car args) attr) body)
+		  (loop (cddr args) (cons* (cadr args) (car args) attr) body)))
 	     ((null? (car args))
-	      (loop (cdr args) attr init body))
+	      (loop (cdr args) attr body))
 	     ((pair? (car args))
-	      (loop (append (car args) (cdr args)) attr init body))
+	      (loop (append (car args) (cdr args)) attr body))
 	     (else
-	      (loop (cdr args) attr init (cons (car args) body)))))))
+	      (loop (cdr args) attr (cons (car args) body)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    define-xml-constructor-with-id ...                               */
@@ -59,7 +44,6 @@
    `(define (,name . args)
        (let loop ((args args)
 		  (attr ',attr)
-		  (init '())
 		  (body '())
 		  (id   #unspecified))
 	  (cond
@@ -69,7 +53,6 @@
 		     (markup ',el)
 		     (id (xml-make-id id ',el))
 		     (attributes (reverse! attr))
-		     (initializations (reverse! init))
 		     (body (reverse! body)))
 		   `(begin ,@exp)))
 	     ((keyword? (car args))
@@ -77,28 +60,19 @@
 		 ((null? (cdr args))
 		  (if (eq? (car args) :id)
 		      (error ',name ":id value missing" (car args))
-		      (loop '() attr
-			    (cons* #t (car args) init)
-			    body id)))
+		      (loop '() (cons* #t (car args) attr) body id)))
 		 ((eq? (car args) :id)
 		  (if (string? (cadr args))
-		      (loop (cddr args) attr init body (cadr args))
+		      (loop (cddr args) attr body (cadr args))
 		      (bigloo-type-error ',name "string" (cadr args))))
-		 ((and (xml-tilde? (cadr args))
-		       (not (xml-event-handler-attribute? (car args))))
-		  (loop (cddr args) attr
-			(cons* (cadr args) (car args) init)
-			body id))
 		 (else
-		  (loop (cddr args)
-			(cons* (cadr args) (car args) attr)
-			init body id))))
+		  (loop (cddr args) (cons* (cadr args) (car args) attr) body id))))
 	     ((null? (car args))
-	      (loop (cdr args) attr init body id))
+	      (loop (cdr args) attr body id))
 	     ((pair? (car args))
-	      (loop (append (car args) (cdr args)) attr init body id))
+	      (loop (append (car args) (cdr args)) attr body id))
 	     (else
-	      (loop (cdr args) attr init (cons (car args) body) id))))))
+	      (loop (cdr args) attr (cons (car args) body) id))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-define-xml ...                                            */

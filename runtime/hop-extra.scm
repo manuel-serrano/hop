@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon Jun 15 16:48:27 2009 (serrano)                */
+;*    Last change :  Tue Jun 16 15:11:29 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -80,7 +80,6 @@
       (instantiate::xml-html
 	 (markup 'html)
 	 (attributes attr)
-	 (initializations init)
 	 (body nbody))))
  
 ;*---------------------------------------------------------------------*/

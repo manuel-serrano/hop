@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:04:10 2005                          */
-/*    Last change :  Tue Jun 16 12:06:24 2009 (serrano)                */
+/*    Last change :  Tue Jun 16 12:15:27 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider CSS                                                   */
@@ -23,7 +23,22 @@ $(define-hss-type slider "table[hssclass=hop-slider]"
        (format "div.lineleft { background: ~l; }" v))
 
     (define-hss-property (line-right-color v)
-       (format "div.lineright { background: ~l; }" v)))
+       (format "div.lineright { background: ~l; }" v))
+
+    (define-hss-property (cursor-color v)
+       (format "div.cursor { background: ~l; }" v))
+
+    (define-hss-property (caption-color v)
+       (format "td.caption { color: ~l; }" v))
+
+    (define-hss-property (caption-font-size v)
+       (format "td.caption { font-size: ~l; }" v))
+ 
+    (define-hss-property (caption-font-family v)
+       (format "td.caption { font-family: ~l; }" v))
+
+    (define-hss-property (caption-font-weight v)
+       (format "td.caption { font-size: ~l; }" v)))
 
 /*---------------------------------------------------------------------*/
 /*    public declarations                                              */
@@ -32,6 +47,11 @@ $(define-hss-type slider "table[hssclass=hop-slider]"
 slider {
   line-left-color: #68f;
   line-right-color: #ccc;
+  cursor-color: rgb(150,150,150);
+  caption-color: black;
+  caption-font-size: 8px;
+  caption-font-family: Arial, Helvetica, sans-serif;
+  caption-font-weight: bold;
 }
 /* </public> */
 
@@ -86,7 +106,6 @@ slider div.cursor {
   background-image: url( "icons/hop-slider/cursor.png" );
   background-position: center center;
   background-repeat: repeat-y;
-  background-color: rgb(150,150,150);
   user-select: none;
 }
    
@@ -98,8 +117,5 @@ slider div.cursoroff {
 }
 
 slider td.caption {
-  font-family: Arial, Helvetica, sans-serif;
-  font-weight: bold; 
-  font-size: 8px;
   user-select: none;
 }

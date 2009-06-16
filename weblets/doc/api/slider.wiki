@@ -125,38 +125,13 @@ slider. The expression ++this.value++ returns the current value of the slider.
 This section describes the various CSS elements used to configure
 //Sliders//.
 
-=== ++table.hop-slider div.lineleft++ ===
-<css> table.hop-slider div.lineleft
-The left line of the slider.
-</css>
+=== ++hop-slider.hss++ ===
 
-=== ++table.hop-slider div.lineright++ ===
-<css> table.hop-slider div.lineright
-The right line of the slider.
-</css>
-
-=== ++table.hop-slider div.cursoron++ ===
-<css> table.hop-slider div.cursoron
-The active cursor.
-</css>
-
-=== ++table.hop-slider div.cursoroff++ ===
-<css> table.hop-slider div.cursoroff
-The inactive cursor.
-</css>
-
-=== ++table.hop-slider td.caption++ ===
-<css> table.hop-slider td.caption
-The cursor caption.
-</css>
-
-=== ++hop-slider.css++ ===
-
-The file ++hop-slider.css++ contains the default graphical configuration.
+The file ++hop-slider.hss++ contains the default graphical configuration.
 It is defined as:
 
 ,(<P>)
-<share-public>hop-slider.css</share-public>
+<share-public>hop-slider.hss</share-public>
 
 </style>
 
