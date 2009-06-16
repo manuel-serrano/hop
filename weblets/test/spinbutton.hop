@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Fri Jun 12 19:13:09 2009 (serrano)                */
+;*    Last change :  Tue Jun 16 11:33:42 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing SpinButtons                                              */
@@ -46,7 +46,7 @@
 	 (<BUTTON> :onclick ~(dom-append-child!
 			      document.body
 			      (<SPINBUTTON> :min -10 :max 10
-				 :onchange (alert this.value)))
+				 :onchange (alert (spinbutton-value this))))
 	    "Create a client-side SPINBUTTON")
 	 (<TABLE>
 	    (<TR> (<TD> color)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Jun 10 08:44:28 2009 (serrano)                */
+;*    Last change :  Tue Jun 16 12:05:43 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -78,7 +78,9 @@
 			    (element (instantiate::css-selector-name
 					(name element)))
 			    (properties properties))))
-	    (hashtable-put! *hss-type-env* (symbol->string type) compiler)))))
+	    (hashtable-put! *hss-type-env*
+			    (string-downcase (symbol->string type))
+			    compiler)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-selector-compiler ...                                       */
@@ -530,6 +532,15 @@
       (display (css-hash-color-value o) p)))
 
 ;*---------------------------------------------------------------------*/
+;*    object-display ::css-function ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (object-display o::css-function . port)
+   (with-access::css-function o (fun expr)
+      (let ((p (if (pair? port) (car port) (current-output-port))))
+	 (display fun p)
+	 (display expr p))))
+
+;*---------------------------------------------------------------------*/
 ;*    HSS Global compilers ...                                         */
 ;*---------------------------------------------------------------------*/
 ;; border-radius
@@ -575,9 +586,17 @@
   -webkit-border-bottom-left-radius: ~a;"
 	   (car v) (car v) (car v)))
 
-;; -box-shadow
+;; box-shadow
 (define-hss-property (box-shadow v p)
    (format "box-shadow: ~l;
   -moz-box-shadow: ~l;
   -webkit-box-shadow: ~l;"
 	   v v v))
+
+;; user-select
+(define-hss-property (user-select v p)
+   (format "user-select: ~l;
+  -moz-user-select: ~l;
+  -khtml-user-select: ~l;
+  -webkit-user-select: ~l;"
+	   v v v v))

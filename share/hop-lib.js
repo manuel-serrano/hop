@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Fri Jun  5 17:27:40 2009 (serrano)                */
+/*    Last change :  Tue Jun 16 08:58:20 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -14,13 +14,27 @@
 /*---------------------------------------------------------------------*/
 function hop_callback( proc ) {
    if( hop_debug() > 0 ) {
-      var hstack = BgL_hopzd2getzd2stackz00( 1 );
-      return function() {
-	 try {
-	    return proc.apply( this, arguments );
-	 } catch( e ) {
-	    e.hopStack = hstack;
-	    BgL_hopzd2reportzd2exceptionz00( e );
+      if( !(typeof proc === "function" ) ) {
+	 var hstack = BgL_hopzd2getzd2stackz00( 0 );
+	 e = new Error( "Handler is not a procedure: " + proc );
+	 
+	 e.hopStack = hstack;
+	 BgL_hopzd2reportzd2exceptionz00( e );
+
+	 return function( e ) {
+	    throw( e );
+	 }
+      } else {
+	 var hstack = BgL_hopzd2getzd2stackz00( 1 );
+	 return function( e ) {
+	    try {
+	       return proc.apply( this, arguments );
+	    } catch( e ) {
+	       e.hopStack = hstack;
+	       BgL_hopzd2reportzd2exceptionz00( e );
+	       
+	       if( hop_debug() >= 2 ) throw( e );
+	    }
 	 }
       }
    } else {

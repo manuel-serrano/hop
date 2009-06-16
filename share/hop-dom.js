@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Jun 12 20:12:08 2009 (serrano)                */
+/*    Last change :  Tue Jun 16 10:59:31 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -30,7 +30,7 @@ function dom_add_child( node, e ) {
 	    dom_add_child( node, e.cdr );
 	 } else {
 	    if( e ) {
-	       alert( "dom_add_child: illegal child node -- " + e );
+	       sc_error( "dom_add_child", "illegal child node", e );
 	    }
 	 }
       }
@@ -877,31 +877,26 @@ function hop_node_eval( node, text ) {
       return res;
    }
 
-   try {
-      /* some browsers (guess who) are supporting getElementsByTagName */
-      /* only for the entire document and not for individual nodes.    */
-      if( "getElementsByTagName" in node ) {
-	 var scripts = node.getElementsByTagName( "script" );
+   /* some browsers (guess who) are supporting getElementsByTagName */
+   /* only for the entire document and not for individual nodes.    */
+   if( "getElementsByTagName" in node ) {
+      var scripts = node.getElementsByTagName( "script" );
 
-	 if( scripts && scripts.length > 0 ) {
-	    for ( var j = 0; j < scripts.length; j++ ) {
-	       if( false && scripts[ j ].childNodes.length > 0 ) {
-		  res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
-	       } else {
-		  /* this is a buggy browser (Opera 8?) that does not */
-		  /* correctly implement script nodes                 */
-		  res = eval( scripts[ j ].innerHTML );
-	       }
+      if( scripts && scripts.length > 0 ) {
+	 for ( var j = 0; j < scripts.length; j++ ) {
+	    if( false && scripts[ j ].childNodes.length > 0 ) {
+	       res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
+	    } else {
+	       /* this is a buggy browser (Opera 8?) that does not */
+	       /* correctly implement script nodes                 */
+	       res = eval( scripts[ j ].innerHTML );
 	    }
-	 } else {
-	    return hop_node_eval_from_text( text );
 	 }
       } else {
 	 return hop_node_eval_from_text( text );
       }
-   } catch( e ) {
-      alert( e );
-      throw e;
+   } else {
+      return hop_node_eval_from_text( text );
    }
 
    return res;
@@ -962,12 +957,8 @@ function hop_create_element( html ) {
       tag = "div";
    }
 
-   try {
-      var el = document.createElement( tag );
-      el.innerHTML = html;
-   } catch( e ) {
-      alert( "Cannot create tag element: " + tag );
-   }
+   var el = document.createElement( tag );
+   el.innerHTML = html;
 
    return el.childNodes[ 0 ];
 }
@@ -990,13 +981,11 @@ function hop_innerHTML_set( nid, html ) {
       el = document.getElementById( nid );
 
       if( el == undefined ) {
-	 alert( "*** ERROR:innerHTML-set! -- cannot find element \""
-		+ nid + "\"");
-	 return;
+	 sc_error( "innerHTML-set!", "Cannot find element", nid );
       }
    } else {
       if( !nid ) {
-	 alert( "*** ERROR:innerHTML-set! -- illegal element \"" + nid + "\"");
+	 sc_error( "innerHTML-set!", "illegal element", nid );
 	 return;
       }
       el = nid;

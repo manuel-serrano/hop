@@ -51,8 +51,12 @@ code ++hop-spinbutton++.
 
 This function creates a //spin button//.
 
-~~ When the ++onchange++ is invoked, the ++this++ value points to the spinbutton
-button itself whose value can be retrieve via its ++value++ slot.
+~~ The argument :onchange is a script that is invoked each time the
+spinbutton is changed via the GUI. That is calling the function
+++spinbutton-value-set!++ **does not** invoke automatically :onchange. In
+the scope of that script, the variable ++this++ is bound to the
+//spinbutton// whose value can be retrieve by the means of the function
+++spinbutton-value++.
 
 </markup>
 
@@ -62,8 +66,10 @@ button itself whose value can be retrieve via its ++value++ slot.
 == Client Definitions ==
 <client>
 
-=== ++(spinbutton-set! spin val)++ ===
-<procedure> notepad-selection
+=== ++(spinbutton-value spin)++ ===
+=== ++(spinbutton-value-set! spin val)++ ===
+<procedure> spinbutton-value
+<procedure> spinbutton-value-set!
 
 <arguments>
 ^  arguments  ^   type               ^  short description     ^
@@ -71,14 +77,16 @@ button itself whose value can be retrieve via its ++value++ slot.
 | val         |  integer                | the new spin button value.  |
 </arguments>
 
-This function sets a new value to a //spin button//.
+These functions get and set the value of a //spin button//.
 
 Example:
 
-  (let ((but (<SPINBUTTON> :max 10 :min -10 :onchange ~(alert this.value))))
-    (<BUTTON> :onclick ~(spinbutton-set! $but 0) "Reset"))
+  (let ((but (<SPINBUTTON> :max 10 :min -10 
+                 :onchange ~(alert (spinbutton-value this)))))
+    (<BUTTON> :onclick ~(spinbutton-value-set! $but 0) "Reset"))
 
 
+</procedure>
 </procedure>
 
 </client>

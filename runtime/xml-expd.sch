@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Fri Jun 12 15:34:04 2009 (serrano)                */
+;*    Last change :  Mon Jun 15 16:47:56 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -20,13 +20,15 @@
 		  (body '()))
 	  (cond
 	     ((null? args)
-	      ,(if (null? exp)
-		   `(,(symbol-append 'instantiate:: type)
-		     (markup ',el)
-		     (attributes (reverse! attr))
-		     (initializations (reverse! init))
-		     (body (reverse! body)))
-		   `(begin ,@exp)))
+	      (let ((attr (reverse attr))
+		    (initializations (reverse! init)))
+		 ,(if (null? exp)
+		      `(,(symbol-append 'instantiate:: type)
+			(markup ',el)
+			(attributes attr)
+			(initializations init)
+			(body (reverse! body)))
+		      `(begin ,@exp))))
 	     ((keyword? (car args))
 	      (cond
 		 ((null? (cdr args))

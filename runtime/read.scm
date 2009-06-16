@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri May 29 13:19:44 2009 (serrano)                */
+;*    Last change :  Mon Jun 15 14:04:02 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -881,6 +881,7 @@
 			     (else
 			      (error 'hop-load "Illegal mode" mode))))
 		       (begin
+			  ($evmeaning-byte-code-set! (current-dynamic-env) #f)
 			  (close-input-port port)
 			  (eval-module-set! m)
 			  (loading-file-set! f))))

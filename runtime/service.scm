@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed May  6 11:55:27 2009 (serrano)                */
+;*    Last change :  Mon Jun 15 10:24:40 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -205,11 +205,17 @@
 (define (service-handler svc req)
    
    (define (invoke proc vals)
-      (if (correct-arity? proc (length vals))
-	  (apply proc vals)
+      (cond
+	 ((not vals)
+	  (error (hop-service-id svc)
+		 "Illegal service arguments encoding"
+		 `(,(hop-service-id svc) ,vals)))
+	 ((correct-arity? proc (length vals))
+	  (apply proc vals))
+	 (else
 	  (error (hop-service-id svc)
 		 "Wrong number of arguments"
-		 `(,(hop-service-id svc) ,@vals))))
+		 `(,(hop-service-id svc) ,@vals)))))
    
    (let* ((ca (http-request-cgi-args req))
 	  (enc (cgi-arg "hop-encoding" ca)))

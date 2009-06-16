@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-slider.js               */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-slider.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Tue Apr  8 11:10:43 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Tue Jun 16 11:55:02 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
 /*=====================================================================*/
@@ -14,6 +14,10 @@
 /*---------------------------------------------------------------------*/
 /*** META ((export slider-value-set!)) */
 function hop_slider_value_set( slider, value ) {
+   if( (slider instanceof String) || (typeof slider === "string") ) {
+      slider = document.getElementById( slider );
+   }
+   
    value = Math.round( value / slider.step ) * slider.step;
 
    if( (value < slider.min) || (value > slider.max) ) {
@@ -37,9 +41,6 @@ function hop_slider_value_set( slider, value ) {
 
       if( slider.cap )
 	 slider.cap.innerHTML = value;
-	 
-      if( slider.onchange != undefined )
-	 slider.onchange();
    }
 }
 
@@ -50,6 +51,8 @@ function hop_slider_mousemove( e, slider ) {
    var val = ((hop_event_mouse_x( e ) - hop_element_x( slider ))
 	      / slider.offsetWidth) * (slider.max - slider.min);
    hop_slider_value_set( slider, Math.round( val ) + slider.min );
+	 
+   if( slider.onchange != undefined ) slider.onchange();
 }
 
 /*---------------------------------------------------------------------*/
@@ -59,6 +62,9 @@ function hop_slider_mousemove( e, slider ) {
            (peephole (postfix ".value")))
 */
 function hop_slider_value_get( slider ) {
+   if( (slider instanceof String) || (typeof slider === "string") ) {
+      slider = document.getElementById( slider );
+   }
    return slider.value;
 }
 
@@ -67,7 +73,7 @@ function hop_slider_value_get( slider ) {
 /*---------------------------------------------------------------------*/
 function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    var doc = (parent == undefined ? document : parent.ownerDocument || parent.document);
-   var slider, tbody, tr, tr2;
+   var slider, tbody, tr, tr2 = false;
    var line1, line2, cursor;
    var td1, td3;
    var div;
@@ -77,6 +83,7 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    slider = doc.createElement( "table" );
    slider.className = klass;
    slider.id = id;
+   slider.setAttribute( "hssclass", "hop-slider" );
    
    slider.onchange = undefined;
    
@@ -94,13 +101,14 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    slider.appendChild( tbody );
    
    tr = doc.createElement( "tr" );
-   tr2 = doc.createElement( "tr" );
 
    if( cap == "top" ) {
+      tr2 = doc.createElement( "tr" );
       tbody.appendChild( tr2 );
       tbody.appendChild( tr );
    } else {
       if( cap == "bottom" ) {
+	 tr2 = doc.createElement( "tr" );
 	 tbody.appendChild( tr );
 	 tbody.appendChild( tr2 );
       } else {
@@ -141,10 +149,12 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 
       caption.innerHTML = "";
       slider.cap = caption;
-   
-      tr2.appendChild( td1 );
-      tr2.appendChild( caption );
-      tr2.appendChild( td3 );
+
+      if( tr2 ) {
+	 tr2.appendChild( td1 );
+	 tr2.appendChild( caption );
+	 tr2.appendChild( td3 );
+      } 
    } else {
       slider.cap = false;
    }
@@ -205,11 +215,13 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 
    slider.value = min - 1;
 
-   if( value != undefined )
+   if( value != undefined ) 
       hop_slider_value_set( slider, value );
    else
       hop_slider_value_set( slider, min );
 
+   if( slider.onchange != undefined ) slider.onchange();
+   
    return slider;
 }
 

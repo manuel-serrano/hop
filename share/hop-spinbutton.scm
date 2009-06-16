@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun 11 19:03:05 2009                          */
-;*    Last change :  Fri Jun 12 20:11:27 2009 (serrano)                */
+;*    Last change :  Tue Jun 16 11:49:52 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    SpinButton client side implementation                            */
@@ -58,9 +58,15 @@
 		   (<DIV> "codepoint(&#9660)")))))))
 
 ;*---------------------------------------------------------------------*/
-;*    spinbutton-set! ...                                              */
+;*    spinbutton-value ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (spinbutton-set! el val)
+(define (spinbutton-value el)
+   el.value)
+
+;*---------------------------------------------------------------------*/
+;*    spinbutton-value-set! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (spinbutton-value-set! el val)
    (let ((el (if (string? el) (dom-get-element-by-id el) el)))
       (when el
 	 (cond
@@ -75,15 +81,14 @@
 	     (set! el.value val)))
 	 (let ((inp (dom-get-element-by-id (string-append el.id "-entry"))))
 	    (unless (= el.value (number->string inp.value))
-	       (set! inp.value (number->string el.value))))
-	 (when (procedure? el.onchange)
-	    (el.onchange)))))
+	       (set! inp.value (number->string el.value)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop_spinbutton_set ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hop_spinbutton_set el val)
-   (spinbutton-set! el (string->number val)))
+   (spinbutton-value-set! el (string->number val))
+   (when (procedure? el.onchange) (el.onchange)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop_spinbutton_inc ...                                           */
@@ -92,7 +97,8 @@
    (let ((el (if (string? el)
 		 (dom-get-element-by-id el)
 		 el)))
-      (when el (spinbutton-set! el (+ el.value 1)))))
+      (when el (spinbutton-value-set! el (+ el.value 1)))
+      (when (procedure? el.onchange) (el.onchange))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop_spinbutton_dec ...                                           */
@@ -101,4 +107,5 @@
    (let ((el (if (string? el)
 		 (dom-get-element-by-id el)
 		 el)))
-      (when el (spinbutton-set! el (- el.value 1)))))
+      (when el (spinbutton-value-set! el (- el.value 1)))
+      (when (procedure? el.onchange) (el.onchange))))

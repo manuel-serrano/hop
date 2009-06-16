@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Fri Jun  5 18:33:56 2009 (serrano)                */
+;*    Last change :  Tue Jun 16 09:06:06 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debuggin facility (includes when Hop launched in     */
@@ -173,14 +173,24 @@
    
    (define (pp-js-stack stack)
       (map (lambda (f)
-	      (let ((i (string-index f #\@)))
-		 (list (if i (substring f (+ i 1) (string-length f)) f)
-		       "\n")))
+	      (let ((i (string-index f #\@))
+		    (l (string-length f)))
+		 (if i
+		     (list (substring f (+ i 1) l)
+			   ", "
+			   (<SPAN> :style "color: #777; font-family: monospace"
+			      (let ((j (if (> l 80) 30 (+ 30 (- 80 l)))))
+				 (if (< j i)
+				     (format "~a..." (substring f 0 j))
+				     (substring f 0 i))))
+			   "\n")
+		     f)))
 	   (string-split stack "\n")))
 
    (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px"
       (<DIV> :style "font-weight: bold" "JavaScript stack:")
-      (<PRE> :style "font-size: 9pt; padding-left: 1em" :onclick (stop-event-propagation event)
+      (<PRE> :style "font-size: 9pt; padding-left: 1em"
+	 :onclick (stop-event-propagation event)
 	 (pp-js-stack stack))))
 
 ;*---------------------------------------------------------------------*/

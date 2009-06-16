@@ -1,18 +1,44 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-slider.css              */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-slider.hss              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:04:10 2005                          */
-/*    Last change :  Sun Jun 14 12:21:45 2009 (serrano)                */
+/*    Last change :  Tue Jun 16 12:06:24 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider CSS                                                   */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module __hop_hop-slider-hss)
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type slider "table[hssclass=hop-slider]"
+
+    (define-hss-property (line-left-color v)
+       (format "div.lineleft { background: ~l; }" v))
+
+    (define-hss-property (line-right-color v)
+       (format "div.lineright { background: ~l; }" v)))
+
+/*---------------------------------------------------------------------*/
+/*    public declarations                                              */
+/*---------------------------------------------------------------------*/
+/* <public> */
+slider {
+  line-left-color: #68f;
+  line-right-color: #ccc;
+}
+/* </public> */
+
+/*---------------------------------------------------------------------*/
 /*    hop-slider                                                       */
 /*---------------------------------------------------------------------*/
-table.hop-slider {
+slider {
   border-collapse: collapse;
   user-select: none;
 } 
@@ -20,17 +46,16 @@ table.hop-slider {
 /*---------------------------------------------------------------------*/
 /*    Line configuration                                               */
 /*---------------------------------------------------------------------*/
-table.hop-slider div.lineleft {
+slider div.lineleft {
   height: 3px;
   border-right: 0;
   border-left: 1px solid #555;
   border-top: 1px solid #555;
   border-bottom: 1px solid #555;
-  background: #68f;
   user-select: none;
 }
   
-table.hop-slider div.lineright {
+slider div.lineright {
   height: 3px;
   border-left: 0;
   margin: 0;
@@ -44,7 +69,7 @@ table.hop-slider div.lineright {
 /*---------------------------------------------------------------------*/
 /*    Cursor configuration                                             */
 /*---------------------------------------------------------------------*/
-table.hop-slider td.cursor {
+slider td.cursor {
   margin: 0;
   padding: 0;
   width: 14px;
@@ -55,7 +80,7 @@ table.hop-slider td.cursor {
   user-select: none;
 }
 
-table.hop-slider div.cursor {
+slider div.cursor {
   width: 14px;
   height: 7px;
   background-image: url( "icons/hop-slider/cursor.png" );
@@ -65,14 +90,14 @@ table.hop-slider div.cursor {
   user-select: none;
 }
    
-table.hop-slider div.cursoron {
+slider div.cursoron {
 }
    
-table.hop-slider div.cursoroff {
+slider div.cursoroff {
   background-color: rgb(204,204,204);
 }
 
-table.hop-slider td.caption {
+slider td.caption {
   font-family: Arial, Helvetica, sans-serif;
   font-weight: bold; 
   font-size: 8px;
