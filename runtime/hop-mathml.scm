@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:24:08 2007                          */
-;*    Last change :  Fri Jun 12 12:38:41 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 05:28:45 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop MATHML support.                                              */
@@ -21,7 +21,8 @@
 	    __hop_xml
 	    __hop_misc
 	    __hop_js-lib
-	    __hop_service)
+	    __hop_service
+	    __hop_priv)
 
    (static (class xml-math::xml-element))
    
@@ -137,9 +138,9 @@
    (cond
       ((xml-markup-is? e 'mo)
        (with-access::xml-markup e (attributes)
-	  (let ((c (xml-get-attribute :stretchy attributes)))
+	  (let ((c (plist-assq :stretchy attributes)))
 	     (if c
-		 (xml-attribute-value-set! c "true")
+		 (set-car! (cdr c) "true")
 		 (set! attributes `(:stretchy "true" ,@attributes))))))
       ((xml-markup-is? e 'mrow)
        (for-each xml-stretch! (xml-markup-body e)))))
@@ -151,9 +152,9 @@
    (cond
       ((xml-markup-is? e 'mi)
        (with-access::xml-markup e (attributes)
-	  (let ((c (xml-get-attribute :fontweight attributes)))
+	  (let ((c (plist-assq :fontweight attributes)))
 	     (if c
-		 (xml-attribute-value-set! c "bold")
+		 (set-car! (cdr c) "bold")
 		 (set! attributes `(:fontweight "bold" ,@attributes))))))
       ((xml-markup-is? e 'mrow)
        (for-each xml-bold! (xml-markup-body e)))))
@@ -165,9 +166,9 @@
    (cond
       ((xml-markup-is? e 'mi)
        (with-access::xml-markup e (attributes)
-	  (let ((c (xml-get-attribute :class attributes)))
+	  (let ((c (plist-assq :class attributes)))
 	     (if c
-		 (xml-attribute-value-set! c " cal")
+		 (set-car! (cdr c) " cal")
 		 (set! attributes `(:class "cal" ,@attributes))))))
       ((xml-markup-is? e 'mrow)
        (for-each xml-cal! (xml-markup-body e)))))
@@ -416,9 +417,9 @@
 		 (read-expression port '() 'end-of-expression)
 		 (if (xml-markup-is? exp 'mi)
 		     (with-access::xml-markup exp (attributes)
-			(let ((c (xml-get-attribute :fontstyle attributes)))
+			(let ((c (plist-assq :fontstyle attributes)))
 			   (if c
-			       (xml-attribute-value-set! c "normal")
+			       (set-car! (cdr c) "normal")
 			       (set! attributes
 				     `(:fontstyle "normal" ,@attributes))))))
 		 (values exp stack))))))))

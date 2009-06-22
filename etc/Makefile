@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue May  5 09:58:31 2009 (serrano)                */
+#*    Last change :  Sat Jun 20 06:07:04 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -25,7 +25,8 @@ POPULATION	= Makefile Makefile.contrib Makefile.weblet \
                   configure-noarch.sch.in configure-macosx.sch.in \
                   hoprc.hop.in hopshrc.hop.in \
 		  hop.init.in scheme2js.init.in hopscheme.init.in \
-                  hopwiki.init.in hop.man.in hopsh.man.in hopreplay.man.in
+                  hopwiki.init.in hop.man.in hopsh.man.in hopreplay.man.in \
+                  hopc.sh.in
 
 install:
 	cp Makefile.hopconfig $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig

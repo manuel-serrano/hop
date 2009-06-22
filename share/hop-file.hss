@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 10:58:15 2008                          */
-/*    Last change :  Sat Jun  6 19:04:24 2009 (serrano)                */
+/*    Last change :  Sun Jun 21 06:47:54 2009 (serrano)                */
 /*    Copyright   :  2008-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopFile Hss                                                      */
@@ -41,9 +41,9 @@ $(define hopfile-hdd-icon "url( icons/hop-filechooser/hdd.png )")
 $(define hopfile-edit-add-icon "url( icons/hop-filechooser/edit-add.png )")
 $(define hopfile-edit-remove-icon "url( icons/hop-filechooser/edit-remove.png )")
 
-$(define hopfile-open-icon "url( icons/hop-filechooser/open.png )")
-$(define hopfile-cancel-icon "url( icons/hop-filechooser/cancel.png )")
-$(define hopfile-run-icon "url( icons/hop-filechooser/run.png )")
+$(define hopfile-open-icon "url( icons/actions/open.png )")
+$(define hopfile-cancel-icon "url( icons/actions/cancel.png )")
+$(define hopfile-run-icon "url( icons/actions/run.png )")
 
 /*---------------------------------------------------------------------*/
 /*    filechooser                                                      */

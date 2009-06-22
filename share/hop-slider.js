@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Tue Jun 16 11:55:02 2009 (serrano)                */
+/*    Last change :  Wed Jun 17 08:14:37 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
@@ -72,15 +72,18 @@ function hop_slider_value_get( slider ) {
 /*    hop_make_slider ...                                              */
 /*---------------------------------------------------------------------*/
 function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
-   var doc = (parent == undefined ? document : parent.ownerDocument || parent.document);
    var slider, tbody, tr, tr2 = false;
    var line1, line2, cursor;
    var td1, td3;
    var div;
    var caption;
 
+   if( !parent ) { sc_error( '<SLIDER>', "Illegal parent node", parent ); }
+   
+   var parent = parent.parentNode;
+
    // the slider
-   slider = doc.createElement( "table" );
+   slider = document.createElement( "table" );
    slider.className = klass;
    slider.id = id;
    slider.setAttribute( "hssclass", "hop-slider" );
@@ -92,23 +95,21 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    slider.rules = "none";
    slider.cellpadding = 0;
    slider.cellspacing = 0;
-   slider.border = 0;
-   node_style_set( slider, "border-collapse", "collapse" );
-   node_style_set( slider, "border-spacing", "0" )
+   slider.border = 1;
    parent.appendChild( slider );
 
-   tbody = doc.createElement( "tbody" );
+   tbody = document.createElement( "tbody" );
    slider.appendChild( tbody );
    
-   tr = doc.createElement( "tr" );
+   tr = document.createElement( "tr" );
 
    if( cap == "top" ) {
-      tr2 = doc.createElement( "tr" );
+      tr2 = document.createElement( "tr" );
       tbody.appendChild( tr2 );
       tbody.appendChild( tr );
    } else {
       if( cap == "bottom" ) {
-	 tr2 = doc.createElement( "tr" );
+	 tr2 = document.createElement( "tr" );
 	 tbody.appendChild( tr );
 	 tbody.appendChild( tr2 );
       } else {
@@ -117,11 +118,11 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    }
 
    // the two lines and the cursor
-   line1 = doc.createElement( "td" );
+   line1 = document.createElement( "td" );
    line1.className = "lineleft";
-   line2 = doc.createElement( "td" );
+   line2 = document.createElement( "td" );
    line2.className = "lineright";
-   cursor = doc.createElement( "td" );
+   cursor = document.createElement( "td" );
    cursor.className = "cursor";
 
    slider.line1 = line1;
@@ -140,12 +141,12 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    tr.appendChild( line2 );
 
    if( cap ) {
-      td1 = doc.createElement( "td" );
-      caption = doc.createElement( "td" );
+      td1 = document.createElement( "td" );
+      caption = document.createElement( "td" );
       caption.className = "caption";
       caption.align = "center";
 /*       caption.style.width = cursor.width + "%";                     */
-      td3 = doc.createElement( "td" );
+      td3 = document.createElement( "td" );
 
       caption.innerHTML = "";
       slider.cap = caption;
@@ -159,17 +160,17 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
       slider.cap = false;
    }
 
-   div = doc.createElement( "div" );
+   div = document.createElement( "div" );
    div.className = "lineleft";
    div.id = id + "-lineleft";
    line1.appendChild(div);
 
-   div = doc.createElement( "div" );
+   div = document.createElement( "div" );
    div.className = "lineright";
    div.id = id + "-lineright";
    line2.appendChild(div);
 
-   div = doc.createElement( "div" );
+   div = document.createElement( "div" );
    div.className = "cursor cursoroff";
    div.id = id + "-cursor";
    cursor.appendChild( div );
@@ -184,7 +185,7 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    };
 
    var delmousemove = function( e ) {
-      hop_remove_event_listener( doc, "mousemove", mousemove, true );
+      hop_remove_event_listener( document, "mousemove", mousemove, true );
    };
    
    var onmouseover = function( e ) {
@@ -196,9 +197,9 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    };
 
    var onmousedown = function( e ) {
-      hop_add_event_listener( doc, "mousemove", mousemove, true );
-      hop_add_event_listener( doc, "mouseup", delmousemove, true );
-      hop_add_event_listener( doc, "onblur", delmousemove, true );
+      hop_add_event_listener( document, "mousemove", mousemove, true );
+      hop_add_event_listener( document, "mouseup", delmousemove, true );
+      hop_add_event_listener( document, "onblur", delmousemove, true );
    }
 
    hop_add_event_listener( cursor, "mouseover", onmouseover );
@@ -221,7 +222,7 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
       hop_slider_value_set( slider, min );
 
    if( slider.onchange != undefined ) slider.onchange();
-   
+
    return slider;
 }
 

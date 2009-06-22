@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Tue Jun 16 15:11:14 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 05:28:06 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -28,7 +28,8 @@
 	    __hop_hop
 	    __hop_user
 	    __hop_cache
-	    __hop_charset)
+	    __hop_charset
+	    __hop_priv)
 
    (export  (<IMG> . ::obj)
 	    (img-base64-encode::bstring ::bstring)))
@@ -123,16 +124,16 @@
    
    (define (onerror-img attributes src)
       (let* ((val (format "if( !this.onhoperror ) { this.onhoperror = true; hop_deinline_image(this, ~s) }" src))
-	     (onerror (xml-get-attribute :onerror attributes))
-	     (oval (when onerror (xml-attribute-value onerror))))
+	     (onerror (plist-assq :onerror attributes))
+	     (oval (when onerror (cadr onerror))))
 	 (cond
 	    ((string? oval)
 	     (let ((nval (string-append oval "; " val)))
-		(xml-attribute-value-set! onerror nval)
+		(set-car! (cdr onerror) nval)
 		attributes))
 	    ((xml-tilde? oval)
 	     (let ((nval (string-append (xml-tilde->statement oval) "\n" val)))
-		(xml-attribute-value-set! onerror nval)
+		(set-car! (cdr onerror) nval)
 		attributes))
 	    (else
 	     `(:onerror ,val ,@attributes)))))

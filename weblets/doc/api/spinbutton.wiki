@@ -17,7 +17,8 @@ space for using a ++<SLIDER>++.
 
 === client ===
 
-  (hop-spinbutton-set! spin val)
+  (hop-spinbutton-value spin)
+  (hop-spinbutton-value-set! spin val)
 
 
 === Requirements ===

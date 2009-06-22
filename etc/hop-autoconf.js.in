@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Jun  5 18:33:07 2009 (serrano)                */
+/*    Last change :  Fri Jun 19 10:03:05 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -91,6 +91,9 @@ function hop_Config() {
   this.gpu_speed = 100;
   if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.gpu_speed = 30;
 
+  /* js speed */
+  this.js_speed = 50;
+
   /* pointing device */
   this.is_tablet = ( navigator.userAgent.indexOf( "Tablet" ) >= 0 );
 
@@ -103,10 +106,11 @@ function hop_Config() {
   this.flash_audio = false;
   this.flash_markup = "embed";
   this.inline_image = false;
-  this.filtered_error = false;
+  this.filtered_errors = [];
 
   /* navigator specific configuration */
   if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {
+     this.js_speed = 20;
      this.navigator_family = "msie";
      this.mouse_left_button = 1;
      this.flash_external_interface = true;
@@ -117,6 +121,7 @@ function hop_Config() {
 	hop_enable_location_event = false;
      }
   } else if( navigator.userAgent.indexOf( "Opera" ) >= 0 ) {
+     this.js_speed = 70;
      this.navigator_family = "opera";
      this.mouse_left_button = 0;
      this.flash_external_interface = false;
@@ -124,6 +129,7 @@ function hop_Config() {
      this.flash_markup = "embed";
      this.inline_image = true;
   } else if( navigator.userAgent.indexOf( "Safari" ) >= 0 ) {
+     this.js_speed = 80;
      this.navigator_family = "safari";
      this.mouse_left_button = 0;
      this.flash_external_interface = true;
@@ -132,6 +138,7 @@ function hop_Config() {
      this.inline_image = true;
   } else if( navigator.userAgent.indexOf( "WebKit" ) >= 0 ) {
      this.navigator_family = "webkit";
+     this.js_speed = 80;
      this.mouse_left_button = 0;
      this.flash_external_interface = true;
      this.flash_audio = false;
@@ -145,13 +152,14 @@ function hop_Config() {
      this.flash_markup = "embed";
      this.inline_image = true;
   } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
+     this.js_speed = 60;
      this.navigator_family = "mozilla";
      this.mouse_left_button = 0;
      this.flash_external_interface = true;
      this.flash_audio = true;
      this.flash_markup = "embed";
      this.inline_image = true;
-     this.filtered_error = "javascript:top.location+\"__flashplugin_unique__\"";
+     this.filtered_errors = ["javascript:top.location+\"__flashplugin_unique__\"" ];
   } else {
      alert( "Unknown navigator (" + navigator.userAgent +
 	    "), using default settings..." );

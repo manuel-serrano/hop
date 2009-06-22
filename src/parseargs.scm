@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Jun 15 16:58:29 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 09:02:34 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module hop_parseargs
 
-   (library scheme2js hopscheme hop web)
+   (library scheme2js hopscheme hop hopwidget web)
 
    (import  hop_param)
    
@@ -243,6 +243,7 @@
 	 :JS-statement JS-statement
 	 :JS-return JS-return)
       (init-hop-services!)
+      (init-hop-widgets!)
       
       ;; hoprc
       (when loadp (parseargs-loadrc rc-file (hop-rc-file)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Mon Jun 15 10:24:40 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 09:01:57 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -28,12 +28,10 @@
 	    __hop_cgi
 	    __hop_xml
 	    __hop_hop-extra
-	    __hop_hop-file
 	    __hop_prefs
 	    __hop_js-lib
 	    __hop_user
-	    __hop_weblets
-	    __hop_hop-audio)
+	    __hop_weblets)
    
    (export  (init-hop-services!)
 	    (inline service?::bool ::obj)
@@ -100,9 +98,7 @@
 ;*    Create the first HOP services.                                   */
 ;*---------------------------------------------------------------------*/
 (define (init-hop-services!)
-   (init-hop-file-services!)
-   (init-hop-prefs-services!)
-   (init-hop-audio-services!))
+   (init-hop-prefs-services!))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-service-url ...                                              */

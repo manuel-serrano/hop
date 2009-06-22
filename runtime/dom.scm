@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Fri Jun 12 20:24:42 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 05:26:44 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_dom
 
-   (import __hop_xml)
+   (import __hop_xml
+	   __hop_priv)
 
    (export (%make-xml-document ::xml-document)
 	   (dom-get-attributes::pair-nil ::obj)
@@ -495,8 +496,8 @@
 (define (dom-get-attribute node name)
    (when (xml-markup? node)
       (with-access::xml-markup node (attributes)
-	 (let ((a (xml-get-attribute (string->keyword name) attributes)))
-	    (when a (xml-attribute-value a))))))
+	 (let ((a (plist-assq (string->keyword name) attributes)))
+	    (when a (cadr a))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-has-attribute? ...                                           */
@@ -504,7 +505,7 @@
 (define (dom-has-attribute? node name)
    (when (xml-markup? node)
       (with-access::xml-markup node (attributes)
-	 (pair? (xml-get-attribute (string->keyword name) attributes)))))
+	 (pair? (plist-assq (string->keyword name) attributes)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-remove-attribute! ...                                        */
@@ -512,7 +513,8 @@
 (define (dom-remove-attribute! node name)
    (when (xml-markup? node)
       (with-access::xml-markup node (attributes)
-	 (xml-attribute-remove-from-name! (string->keyword name) attributes))))
+	 (set! attributes (plist-remq! (string->keyword name) attributes))
+	 attributes)))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-set-attribute!...                                            */
@@ -520,9 +522,9 @@
 (define (dom-set-attribute! node name value)
    (when (xml-markup? node)
       (with-access::xml-markup node (attributes)
-	 (let ((a (xml-get-attribute (string->keyword name) attributes)))
+	 (let ((a (plist-assq (string->keyword name) attributes)))
 	    (when a
-	       (xml-attribute-value-set! a value))))))
+	       (set-car! (cdr a) value))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-node-element? ...                                            */

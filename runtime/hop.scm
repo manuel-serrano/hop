@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed May  6 13:18:14 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 08:49:44 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -27,14 +27,8 @@
 	    __hop_http-error
 	    __hop_http-lib)
    
-   (with    __hop_hop-notepad
-	    __hop_hop-inline
-	    __hop_hop-paned
-	    __hop_hop-slider
-	    __hop_hop-tabslider
-	    __hop_hop-tree
+   (with    __hop_hop-inline
 	    __hop_hop-extra
-	    __hop_hop-foldlist
 	    __hop_event)
    
    (export  (generic thread-request ::obj)

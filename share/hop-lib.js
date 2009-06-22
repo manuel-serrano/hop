@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Tue Jun 16 08:58:20 2009 (serrano)                */
+/*    Last change :  Fri Jun 19 09:28:27 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -16,7 +16,7 @@ function hop_callback( proc ) {
    if( hop_debug() > 0 ) {
       if( !(typeof proc === "function" ) ) {
 	 var hstack = BgL_hopzd2getzd2stackz00( 0 );
-	 e = new Error( "Handler is not a procedure: " + proc );
+	 e = new Error( "handler not a procedure: " + proc );
 	 
 	 e.hopStack = hstack;
 	 BgL_hopzd2reportzd2exceptionz00( e );

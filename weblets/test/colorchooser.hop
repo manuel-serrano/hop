@@ -1,0 +1,36 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.0.x/weblets/test/colorchooser.hop     */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
+;*    Last change :  Sun Jun 21 07:12:52 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    Testing Colorchoosers                                            */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-colorchooser
+   (import weblet_test)
+   (export test/colorchooser))
+
+;*---------------------------------------------------------------------*/
+;*    test/colorchooser ...                                            */
+;*---------------------------------------------------------------------*/
+(define-service (test/colorchooser)
+   (<TEST-HTML> :include '("hop-spinbutton" "hop-slider" "hop-color")
+      :source (service-resource test/colorchooser "colorchooser.hop")
+      (<DIV> :class "comment"
+	 "This test checks Colorchoosers.")
+      (<DIV> :style "width: 64px; height: 32px; background: #ff0000; border: 1px solid black; margin: 20px"
+	 :id "color")
+      (<COLORCHOOSER> :onchange ~(let ((col (colorchooser-value this))
+				       (a (colorchooser-opacity this)))
+				    (node-style-set! "color" :background col)
+				    (node-style-set! "color" :opacity a))
+	 :onselect ~(alert (colorchooser-value this)))))
+						     
+
+      

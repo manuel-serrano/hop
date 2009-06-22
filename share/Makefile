@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Tue Jun 16 11:52:00 2009 (serrano)                */
+#*    Last change :  Sun Jun 21 06:57:53 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -52,6 +52,7 @@ EXTRA		= hop-fx.js hop-error.hss hop.css \
                   hop-login.js hop-login.hss \
                   hop-box.scm hop-box.hss \
 		  hop-spinbutton.scm hop-spinbutton.hss \
+		  hop-color.scm hop-color.hss \
                   hop-lframe.hss \
                   hop-canvas.scm hop-exception.scm
 
@@ -80,6 +81,10 @@ ICONS_FCHOOSER	= cancel.png open.png run.png \
                   keyboard.png drag.png \
                   edit-add.png edit-remove.png
 
+ICONS_COLOR	= transbg.png satval.png 
+
+ICONS_ACTIONS   = cancel.png ok.png run.png open.png
+
 ICONS		= important.png shadow-se.png \
 		  busy-anim-16.gif logo-bg.png shadow-sw.png \
 		  dashboard.png notfound.png source.png \
@@ -97,7 +102,9 @@ ICONS		= important.png shadow-se.png \
                   $(ICONS_TREE:%=hop-tree/%) \
                   $(ICONS_FOLDLIST:%=hop-foldlist/%) \
                   $(ICONS_LOGIN:%=hop-login/%) \
-                  $(ICONS_FCHOOSER:%=hop-filechooser/%)
+                  $(ICONS_FCHOOSER:%=hop-filechooser/%) \
+                  $(ICONS_COLOR:%=hop-color/%) \
+                  $(ICONS_ACTIONS:%=actions/%)
 
 BUTTONS		= cc.png firefox.png hop2.png inria.png opera.png \
 		  css.png freebsd.png html401.png inria2.png paypal.png \

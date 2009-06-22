@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Tue Jun 16 14:38:13 2009 (serrano)                */
+;*    Last change :  Fri Jun 19 10:06:12 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debuggin facility (includes when Hop launched in     */
@@ -179,10 +179,7 @@
 		     (list (substring f (+ i 1) l)
 			   ", "
 			   (<SPAN> :style "color: #777; font-family: monospace"
-			      (let ((j (if (> l 80) 30 (+ 30 (- 80 l)))))
-				 (if (< j i)
-				     (format "~a..." (substring f 0 j))
-				     (substring f 0 i))))
+			      (substring f 0 i))
 			   "\n")
 		     f)))
 	   (string-split stack "\n")))
@@ -247,7 +244,7 @@
 		   (list url ", line " exc.line))
 		  (else
 		   url))))
-      
+
       (<EXCEPTION-FRAME>
 	 (<TABLE> :style "width: 100%; font-family: arial; font-size: 10pt; background: #FFFFF7; border-bottom: 1px solid #ccc"
 	    (<COLGROUP>
@@ -285,13 +282,19 @@
 ;*    hop-report-exception ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hop-report-exception exc)
-   (dom-append-child! document.body (<EXCEPTION> exc)))
+   ;; the error might be raised before document.body is bound
+   (if (and document.body (not (null? document.body)))
+       (dom-append-child! document.body (<EXCEPTION> exc))
+       (hop_window_onload_add (lambda (e) (hop-report-exception exc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-onerror-handler ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hop-onerror-handler msg url line)
-   (or (eq? url hop_config.filtered_error)
+   (or (let loop ((i (- (vector-length hop_config.filtered_errors) 1)))
+	  (when (>= i 0)
+	     (or (eq? url (vector-ref hop_config.filtered_errors i))
+		 (loop (- i 1)))))
        ;; build a dummy exception for reporting
        (let ((exc (new Error)))
 	  (set! exc.message msg)

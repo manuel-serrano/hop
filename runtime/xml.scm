@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Jun 16 15:03:50 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 18:54:07 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -25,7 +25,8 @@
 	    __hop_param
 	    __hop_configure
 	    __hop_css
-	    __hop_clientc)
+	    __hop_clientc
+	    __hop_priv)
 
    (export  (class xml-backend
 	      (id::symbol read-only)
@@ -92,13 +93,6 @@
 	    (xml-markup-is? ::obj ::symbol)
 
 	    (xml-make-id::bstring #!optional id (markup 'HOP))
-
-	    (xml-get-attribute ::keyword ::pair-nil)
-	    (xml-attribute-value ::obj)
-	    (xml-attribute-value-set! ::pair ::obj)
-	    (xml-attribute-remove ::pair ::pair)
-	    (xml-attribute-remove! ::pair ::pair)
-	    (xml-attribute-remove-from-name! ::keyword ::pair)
 
 	    (xml-event-handler-attribute?::bool ::keyword)
 	    
@@ -426,63 +420,6 @@
        (if-debug (symbol->string (gensym markup)) (symbol->string (gensym)))))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-get-attribute ...                                            */
-;*---------------------------------------------------------------------*/
-(define (xml-get-attribute attr attributes)
-   (memq attr attributes))
-
-;*---------------------------------------------------------------------*/
-;*    xml-attribute-value ...                                          */
-;*---------------------------------------------------------------------*/
-(define (xml-attribute-value attr)
-   (when (and (pair? attr) (pair? (cdr attr)))
-      (cadr attr)))
-
-;*---------------------------------------------------------------------*/
-;*    xml-attribute-value-set! ...                                     */
-;*---------------------------------------------------------------------*/
-(define (xml-attribute-value-set! attr val)
-   (set-car! (cdr attr) val))
-
-;*---------------------------------------------------------------------*/
-;*    xml-attribute-remove ...                                         */
-;*---------------------------------------------------------------------*/
-(define (xml-attribute-remove attr attributes)
-   (let loop ((attrs attributes))
-      (cond
-	 ((null? attrs) '())
-	 ((eq? attrs attr) (loop (cddr attrs)))
-	 (else (cons* (car attrs) (cadr attrs) (loop (cddr attrs)))))))
-
-;*---------------------------------------------------------------------*/
-;*    xml-attribute-remove! ...                                        */
-;*---------------------------------------------------------------------*/
-(define (xml-attribute-remove! attr attributes)
-   (let loop ((attrs attributes))
-      (cond
-	 ((null? attrs)
-	  '())
-	 ((eq? attrs attr)
-	  (loop (cddr attrs)))
-	 (else
-	  (set-cdr! (cdr attrs) (loop (cddr attrs)))
-	  attrs))))
-
-;*---------------------------------------------------------------------*/
-;*    xml-attribute-remove-from-name! ...                              */
-;*---------------------------------------------------------------------*/
-(define (xml-attribute-remove-from-name! name attributes)
-   (let loop ((attrs attributes))
-      (cond
-	 ((null? attrs)
-	  '())
-	 ((eq? (car attrs) name)
-	  (loop (cddr attrs)))
-	 (else
-	  (set-cdr! (cdr attrs) (loop (cddr attrs)))
-	  attrs))))
-
-;*---------------------------------------------------------------------*/
 ;*    xml-event-handler-attribute? ...                                 */
 ;*    -------------------------------------------------------------    */
 ;*    This is a gross hack. Currently, we consider that all attributes */
@@ -685,7 +622,7 @@
 			 (cond
 			    ((null? hattr)
 			     '())
-			    ((xml-get-attribute (car hattr) attributes)
+			    ((plist-assq (car hattr) attributes)
 			     (loop (cddr hattr)))
 			    (else
 			     (cons* (car hattr)
@@ -714,9 +651,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (xml-write-attribute attr::obj id p)
    ;; boolean false attribute has no value, xml-tilde are initialized
-   (when (and attr
-	      (or (not (xml-tilde? attr))
-		  (xml-event-handler-attribute? id)))
+   (when (and attr)
       (display (keyword->string! id) p)
       ;; boolean true attribute has no value
       (display "='" p)
@@ -735,12 +670,11 @@
 ;*    xml-write-attribute ::xml-tilde ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-attribute attr::xml-tilde id p)
-   ;; this case should no longer appears since service are now
-   ;; nested inside functions
-   (display (keyword->string! id) p)
-   (display "='" p)
-   (display (xml-tilde->attribute attr) p)
-   (display "'" p))
+   (when (xml-event-handler-attribute? id)
+      (display (keyword->string! id) p)
+      (display "='" p)
+      (display (xml-tilde->attribute attr) p)
+      (display "'" p)))
    
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::hop-service ...                            */
@@ -775,6 +709,7 @@
 		       (display "<script type='" p)
 		       (display (hop-javascript-mime-type) p)
 		       (display "'>" p)
+		       (when cdata-start (display cdata-start p))
 		       (display "var " p)
 		       (display var p)
 		       (display " = document.getElementById( \"" p)

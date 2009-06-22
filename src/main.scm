@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri May 15 10:05:14 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 09:02:06 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -20,7 +20,7 @@
    (cond-expand
       (enable-ssl (library ssl)))
 
-   (library multimedia web hop hopscheme scheme2js)
+   (library multimedia web hop hopscheme hopwidget scheme2js)
 
    (import  hop_parseargs
 	    hop_param

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Jun  5 08:45:32 2009 (serrano)                */
+#*    Last change :  Mon Jun 22 09:23:11 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -518,6 +518,7 @@ cat $mkmf.in \
           -e "s|@DEVEL@|$devel|" \
           -e "s|@DEBUG@|$debug|" \
           -e "s|@BIGLOO@|$bigloo|" \
+          -e "s|@HOPC@|$PWD/bin/hopc|" \
           -e "s|@BACKEND@|$backend|" \
           -e "s|@BIGLOOLIBDIR@|$bigloolibdir|" \
           -e "s|@CIGLOO@|$cigloo|" \
@@ -540,6 +541,7 @@ cat $mkmf.in \
           -e "s|@JVMINITS@|$jvminits|" \
           -e "s|@CCFLAGS@|$ccflags|" \
           -e "s|@BCFLAGSDEV@|$bcflagsdev|" \
+          -e "s|@BUILDDIR@|$PWD|" \
           -e "s|@BUILDLIBDIR@|$PWD/lib|" \
           -e "s|@BUILDETCDIR@|$PWD/etc|" \
           -e "s|@BUILDBINDIR@|$PWD/bin|" \
@@ -653,6 +655,21 @@ echo "" >> $init
 echo "(hop-install-expanders!)) (else #unspecified))" >> $init
 chmod a-w $init
 
+# lib/hopwidget.init
+init=lib/hopwidget.init
+mkdir -p lib
+rm -f $init 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $init
+
+cat etc/hopwidget.init.in \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
+          -e "s|@BIGLOOSSL@|$bigloossl|" \
+          -e "s|@BIGLOOPTH@|$bigloopth|" \
+    >> $init
+echo "" >> $init
+
+
 # lib/scheme2js.init
 init=lib/scheme2js.init
 mkdir -p lib
@@ -707,6 +724,7 @@ cat etc/hop-autoconf.js.in \
 echo "" >> $init
 chmod a-w $init
 
+# man pages
 for p in etc/hop.man etc/hopsh.man etc/hopreplay.man; do
   cat $p.in \
       | sed -e "s|@RELEASE@|$version|" \

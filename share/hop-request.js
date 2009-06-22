@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Jun  5 14:06:47 2009 (serrano)                */
+/*    Last change :  Fri Jun 19 10:04:15 2009 (serrano)                */
 /*    Copyright   :  2004-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -75,6 +75,8 @@ function hop_apply_url( service, args ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export #t)) */
 function hop_default_failure( xhr ) {
+   if( !document ) return;
+
    var div = document.createElement( "div" );
    var hopstack = xhr.hopStack ? BgL_zc3EXCEPTIONzd2STACKze3zf2( xhr.hopStack ) : false;
    var jsstack = xhr.jsStack ? BgL_zc3EXCEPTIONzd2JSSTACKze3zf2( xhr.jsStack ) : false;

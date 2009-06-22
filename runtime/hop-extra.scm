@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Jun 16 15:11:29 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 18:34:55 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -29,8 +29,8 @@
 	    __hop_user
 	    __hop_css
 	    __hop_clientc
-	    __hop_hop-file
-	    __hop_hz)
+	    __hop_hz
+	    __hop_priv)
 
    (export  (<HTML> . ::obj)
 	    (<HEAD> . ::obj)
@@ -257,17 +257,18 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 		     (when (string? p)
 			(set! res (cons (css p inl) res))))))
 	 (if (null? res)
-	     (if (file-exists? f)
-		 (cond
-		    ((or (is-suffix? f "hss")
-			 (is-suffix? f "css"))
-		     (list (css f inl)))
-		    ((or (is-suffix? f "scm")
-			 (is-suffix? f "hop")
-			 (is-suffix? f "js"))
-		     (list (script f inl)))
-		    (else
-		     (error '<HEAD> "Can't find include file" f))))
+	     (cond
+		((not (file-exists? f))
+		 (error '<HEAD> "Can't find include file" f))
+		((or (is-suffix? f "hss")
+		     (is-suffix? f "css"))
+		 (list (css f inl)))
+		((or (is-suffix? f "scm")
+		     (is-suffix? f "hop")
+		     (is-suffix? f "js"))
+		 (list (script f inl)))
+		(else
+		 (error '<HEAD> "Can't find include file" f)))
 	     res)))
 
    (let loop ((a args)
@@ -533,13 +534,13 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 	 (body '())))
    
    (define (inl body)
-      (let ((c (xml-get-attribute :rel attributes)))
+      (let ((c (plist-assq :rel attributes)))
 	 (if (not c)
 	     (default href)
 	     (cond
-		((string=? (xml-attribute-value c) "stylesheet")
-		 (apply <STYLE> "\n" body (xml-attribute-remove c attributes)))
-		((string=? (xml-attribute-value c) "shortcut icon")
+		((string=? (cadr c) "stylesheet")
+		 (apply <STYLE> "\n" body (plist-remq :rel attributes)))
+		((string=? (cadr c) "shortcut icon")
 		 (instantiate::xml-element
 		    (markup 'link)
 		    (id (xml-make-id id 'link))

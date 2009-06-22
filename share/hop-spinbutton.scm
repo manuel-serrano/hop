@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun 11 19:03:05 2009                          */
-;*    Last change :  Tue Jun 16 11:49:52 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 18:30:53 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    SpinButton client side implementation                            */
@@ -25,21 +25,21 @@
    
    (if (pair? body)
        (error '<SPINBUTTON> "arguments ignored" body)
-       (let* ((minvalue (let ((l (memq :minvalue attrs)))
-			   (if (pair? l) (cadr l) 0)))
-	      (maxvalue (let ((l (memq :maxvalue attrs)))
-			   (if (pair? l) (cadr l) 100)))
+       (let* ((min (let ((l (memq :min attrs)))
+		      (if (pair? l) (cadr l) 0)))
+	      (max (let ((l (memq :max attrs)))
+		      (if (pair? l) (cadr l) 100)))
 	      (value (let ((l (memq :value attrs)))
 			(if (pair? l) (cadr l) 100)))
 	      (onchange (let ((l (memq :onchange attrs)))
 			   (when (pair? l) (cadr l))))
 	      (id (let ((l (memq :id attrs)))
 		     (if (pair? l) (cadr id) (symbol->string (gensym)))))
-	      (w (input-width minvalue maxvalue)))
+	      (w (input-width min max)))
 	  (<TABLE> :hssclass "hop-spinbutton"
 	     :id id
 	     :cellspacing 0 :cellpadding 0
-	     :value value :minvalue minvalue :maxvalue maxvalue
+	     :value value :min min :max max
 	     :onchange onchange
 	     (<TR>
 		(<TD> :class "hop-spinbutton-value" :rowspan 2
@@ -70,42 +70,53 @@
    (let ((el (if (string? el) (dom-get-element-by-id el) el)))
       (when el
 	 (cond
-	    ((<= val el.minvalue)
-	     (set! el.value el.minvalue)
+	    ((<= val el.min)
+	     (set! el.value el.min)
 	     (set! el.dir "min"))
-	    ((>= val el.maxvalue)
-	     (set! el.value el.maxvalue)
+	    ((>= val el.max)
+	     (set! el.value el.max)
 	     (set! el.dir "max"))
 	    (else
 	     (set! el.dir "")
 	     (set! el.value val)))
 	 (let ((inp (dom-get-element-by-id (string-append el.id "-entry"))))
-	    (unless (= el.value (number->string inp.value))
+	    (unless (= el.value (string->number inp.value))
 	       (set! inp.value (number->string el.value)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop_spinbutton_onchange ...                                      */
+;*---------------------------------------------------------------------*/
+(define (hop_spinbutton_onchange el)
+   (cond
+      ((procedure? el.onchange)
+       (el.onchange))
+      ((string? (el.getAttribute "onchange"))
+       (set! el.onchange
+	     (eval (string-append "function(event) {"
+				  (el.getAttribute "onchange")
+				  "}")))
+       (hop_spinbutton_onchange el))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop_spinbutton_set ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hop_spinbutton_set el val)
-   (spinbutton-value-set! el (string->number val))
-   (when (procedure? el.onchange) (el.onchange)))
+   (let ((el (dom-get-element-by-id el)))
+      (spinbutton-value-set! el (string->number val))
+      (hop_spinbutton_onchange el)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop_spinbutton_inc ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hop_spinbutton_inc el)
-   (let ((el (if (string? el)
-		 (dom-get-element-by-id el)
-		 el)))
+   (let ((el (dom-get-element-by-id el)))
       (when el (spinbutton-value-set! el (+ el.value 1)))
-      (when (procedure? el.onchange) (el.onchange))))
+      (hop_spinbutton_onchange el)))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop_spinbutton_dec ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hop_spinbutton_dec el)
-   (let ((el (if (string? el)
-		 (dom-get-element-by-id el)
-		 el)))
+   (let ((el (dom-get-element-by-id el)))
       (when el (spinbutton-value-set! el (- el.value 1)))
-      (when (procedure? el.onchange) (el.onchange))))
+      (hop_spinbutton_onchange el)))
