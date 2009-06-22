@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/weblets/hop/Makefile             */
+#*    serrano/prgm/project/hop/2.0.x/weblets/hop/Makefile              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Nov 27 07:51:44 2008 (serrano)                */
-#*    Copyright   :  2006-08 Manuel Serrano                            */
+#*    Last change :  Tue May  5 07:55:08 2009 (serrano)                */
+#*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
 #*=====================================================================*/
@@ -23,7 +23,7 @@ DATE = $(HOPDATE)
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
 SOURCES         = hop.hop config.hop hop.hss
-POPULATION	= Makefile .afile \
+POPULATION	= Makefile \
                   etc/weblet.info.in etc/hop.wiki.in \
                   etc/logo.png etc/favicon.png etc/dashboard.png \
                   etc/default.png \

@@ -57,11 +57,19 @@ function sc_typeof( x ) {
 
 /*** META ((export #t)) */
 function sc_error() {
-    var a = [sc_jsstring2symbol("*error*")];
-    for (var i = 0; i < arguments.length; i++) {
-	a[i+1] = arguments[i];
-    }
-    throw a;
+   var a = new Error("sc_error");
+
+   if (arguments.length >= 1) {
+      a.name = arguments[0];
+      if (arguments.length >= 2) {
+	 a.message = arguments[1];
+	 if (arguments.length >= 3) {
+	    a.hopObject = arguments[2];
+	 }
+      }
+   }
+
+   throw a;
 }
 
 /*** META ((export #t)

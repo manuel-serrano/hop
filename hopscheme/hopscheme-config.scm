@@ -2,7 +2,7 @@
    (library scheme2js)
    (import __hop_exports)
    (export (hopscheme-config compile-file?)
-	   (init-hopscheme! #!key reader share path verbose eval postprocess)
+	   (init-hopscheme! #!key reader share path verbose eval postprocess features expanders)
 	   *hop-reader*
 	   *hop-share-directory*
 	   *hop-eval*
@@ -37,7 +37,7 @@
 		   (return . #t)
 		   ;; include-path
 		   (include-paths . ,(list *hop-share-directory*))
-		   ;; currently we are still using scheme2js-modules
+		   ;; we are no longer using scheme2js-modules
 		   (bigloo-modules . #t)
 		   ;; compress the output
 		   (compress . #t)
@@ -70,10 +70,20 @@
 	  (conf-module (add-suffix-clause conf-verbose)))
       conf-module))
 
+(define expand-once-expander
+   (lambda (x e)
+      (e (expand-once x) e)))
+
 ;;
-(define (init-hopscheme! #!key reader share path verbose eval postprocess)
+(define (init-hopscheme! #!key reader share path verbose eval postprocess features expanders)
    (set! *hop-reader* reader)
    (set! *hop-share-directory* share)
    (set! *hop-verbose* verbose)
    (set! *hop-eval* eval)
-   (set! *hop-postprocess* postprocess))
+   (set! *hop-postprocess* postprocess)
+   (for-each srfi0-declare! features)
+   (for-each (lambda (expd)
+		(if (pair? expd)
+		    (install-expander! (car expd) (cdr expd))
+		    (install-expander! expd expand-once-expander)))
+	     expanders))

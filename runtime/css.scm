@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Tue Apr 14 09:25:00 2009 (serrano)                */
+;*    Last change :  Tue Jun 16 12:05:43 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -17,7 +17,8 @@
    (library web)
    
    (include "xml.sch"
-	    "service.sch")
+	    "service.sch"
+	    "hss.sch")
 
    (import  __hop_read
 	    __hop_param
@@ -35,9 +36,13 @@
 	       (ruleset+::pair read-only)))
    
    (export  (class hss-compiler
-	       (element::bstring read-only)
+	       (element::obj read-only)
 	       (properties::pair-nil read-only (default '())))
 	    (init-hss-compiler! ::int)
+	    (hss-bind-type-compiler! ::symbol ::bstring ::pair-nil)
+	    (hss-bind-property-compiler! ::symbol ::procedure)
+	    (hss-property->declaration-list::pair-nil ::bstring)
+	    (hss-properties->ruleset-list::pair-nil ::obj)
 	    (hss-response::%http-response ::http-request ::bstring)
 	    (hss->css ::bstring)
 	    (hss->css-url ::bstring)
@@ -45,33 +50,115 @@
 	    (hop-read-hss ::input-port)
 
 	    (hop-hss-type! ::bstring ::bstring)))
-
+  
 ;*---------------------------------------------------------------------*/
 ;*    aliasing control ...                                             */
 ;*---------------------------------------------------------------------*/
 (define *hss-compiler-mutex* (make-mutex "hop-hss-type"))
-(define *hss-types* (make-hashtable))
-(define *hss-compilers* (make-hashtable))
+(define *hss-type-env* (make-hashtable))
+(define *hss-property-env* '())
 
 ;*---------------------------------------------------------------------*/
-;*    hss-register-compiler! ...                                       */
+;*    hop-hss-type! ...                                                */
+;*    -------------------------------------------------------------    */
+;*    This function is only here for ensuring backward compatility     */
+;*    with hop < 2.0.x branch.                                         */
 ;*---------------------------------------------------------------------*/
-(define (hss-register-compiler! element c)
+(define (hop-hss-type! old new)
+   (hss-bind-type-compiler! (string->symbol old) new '())
+   "")
+
+;*---------------------------------------------------------------------*/
+;*    hss-bind-type-compiler! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (hss-bind-type-compiler! type element properties)
    (with-lock *hss-compiler-mutex*
       (lambda ()
-	 (hashtable-put! *hss-compilers* (string-downcase element) c)
-	 (hashtable-put! *hss-compilers* (string-upcase element) c))))
+	 (let ((compiler (instantiate::hss-compiler
+			    (element (instantiate::css-selector-name
+					(name element)))
+			    (properties properties))))
+	    (hashtable-put! *hss-type-env*
+			    (string-downcase (symbol->string type))
+			    compiler)))))
 
 ;*---------------------------------------------------------------------*/
-;*    hss-find-compiler ...                                            */
+;*    find-selector-compiler ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (hss-find-compiler o)
+(define (find-selector-compiler o)
    (with-access::css-selector o (element)
       (when element
 	 (with-access::css-selector-name element (name)
 	    (when (string? name)
-	       (hashtable-get *hss-compilers* name))))))
+	       (hashtable-get *hss-type-env* (string-downcase name)))))))
 
+;*---------------------------------------------------------------------*/
+;*    hss-bind-property-compiler! ...                                  */
+;*---------------------------------------------------------------------*/
+(define (hss-bind-property-compiler! id compiler)
+   (with-lock *hss-compiler-mutex*
+      (lambda ()
+	 (set! *hss-property-env*
+	       (cons (cons id compiler) *hss-property-env*)))))
+
+;*---------------------------------------------------------------------*/
+;*    find-property-compiler ...                                       */
+;*---------------------------------------------------------------------*/
+(define (find-property-compiler id penv)
+   (let ((cell (assq (string->symbol (string-downcase id)) penv)))
+      (when (pair? cell) (cdr cell))))
+
+;*---------------------------------------------------------------------*/
+;*    hss-parse-ruleset ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hss-parse-ruleset s)
+   (let ((p (open-input-string s)))
+      (unwind-protect
+	 (let ((ast (css->ast p :extension hss-extension)))
+	    (if (not (css-stylesheet? ast))
+		(error 'hss-string->rulset "Illegal declaration list" s)
+		(with-access::css-stylesheet ast (rule*)
+		   (if (not (and (pair? rule*) (null? (cdr rule*))))
+		       (error 'hss-string->rulset "Illegal declaration list" s)
+		       (caar rule*)))))
+	 (close-input-port p))))
+   
+;*---------------------------------------------------------------------*/
+;*    hss-property->declaration-list ...                               */
+;*---------------------------------------------------------------------*/
+(define (hss-property->declaration-list val)
+   (if (string? val)
+       (let ((str (string-append "f{" val "}")))
+	  (css-ruleset-declaration* (hss-parse-ruleset str)))
+       (bigloo-type-error 'hss-property->declaration-list "string" val)))
+
+;*---------------------------------------------------------------------*/
+;*    hss-properties->ruleset-list ...                                 */
+;*---------------------------------------------------------------------*/
+(define (hss-properties->ruleset-list val)
+   
+   (define (hss-string->ruleset val)
+      (if (string-index val #\{)
+	  (hss-parse-ruleset val)
+	  (let ((str (string-append "f{" val "}")))
+	     (duplicate::css-ruleset (hss-parse-ruleset str)
+		(selector+ (list
+			    (list
+			     (instantiate::css-selector
+				(element
+				 (instantiate::css-selector-name
+				    (name "")))))))))))
+
+   (cond
+      ((string? val)
+       (list (hss-string->ruleset val)))
+      ((and (list? val) (every? string? val))
+       (map hss-string->ruleset val))
+      (else
+       (bigloo-type-error 'hss-property->ruleset-list
+			  "string or string-list"
+			  val))))
+	       
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile-selector ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -80,91 +167,86 @@
       (let ((el (css-selector-name-name element)))
 	 (instantiate::css-selector
 	    (element (hss-compiler-element hc))
-	    (attr* (cons (instantiate::css-selector-class
-			    (name (format (format "__HSS_~a" el))))
-			 attr*))))))
+	    (attr* attr*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile-declaration* ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (hss-compile-declaration* selector decl hc)
+(define (hss-compile-declaration* selector decl lenv penv)
    
-   (define (compose-selectors selector sel)
-      (append selector
-	      (list 'childolf
-		    (instantiate::css-selector-name
-		       (name sel)))))
+   (define (compose-selectors selector sel+)
+      (append selector (cons 'childof (car sel+))))
    
    (define (compile-alias decl alias)
-      (let ((nsel (car alias))
-	    (ndecl (cadr alias)))
-	 (instantiate::css-ruleset
-	    (selector+ (list (compose-selectors selector nsel)))
-	    (declaration* (list (duplicate::css-declaration decl
-				   (property ndecl)))))))
-   
+      (let ((nsel (compose-selectors selector (css-ruleset-selector+ alias))))
+	 (hss-compile (duplicate::css-ruleset alias
+			 (selector+ (list nsel)))
+		      penv)))
+
+   (define (empty-selector? selector+)
+      (and (null? (cdr selector+))
+	   (css-selector-name? (car selector+))
+	   (string=? (css-selector-name-name (car selector+)) "")))
+
    (let loop ((decl decl)
 	      (old '())
 	      (nrules '()))
       (if (null? decl)
 	  (let ((orules (instantiate::css-ruleset
 			   (selector+ (list selector))
-			   (declaration* old))))
+			   (declaration* (reverse! old)))))
 	     (if (pair? nrules)
 		 ;; the compilation of the declarations has created
 		 ;; new rules, we have to unfold...
 		 (instantiate::css-ruleset-unfold
-		    (ruleset+ (list orules nrules)))
+		    (ruleset+ (list orules (reverse! nrules))))
 		 orules))
 	  (with-access::css-declaration (car decl) (property expr prio)
-	     (let ((cell (assoc property (hss-compiler-properties hc))))
-		(if (pair? cell)
-		    (let ((rules (map (lambda (alias)
-					 (compile-alias (car decl) alias))
-				      (cdr cell))))
-		       (loop (cdr decl) old (append rules nrules)))
-		    (loop (cdr decl) (cons (car decl) old) nrules)))))))
+	     (cond
+		((find-property-compiler property lenv)
+		 =>
+		 (lambda (comp)
+		    ;; a local property
+		    (let liip ((rules (comp expr prio))
+			       (ndecl '())
+			       (old old)
+			       (nrules nrules))
+		       (if (null? rules)
+			   (loop (append ndecl (cdr decl)) old nrules)
+			   (with-access::css-ruleset (car rules) (selector+ declaration*)
+			      (if (empty-selector? selector+)
+				  (let laap ((l declaration*)
+					     (ndecl ndecl)
+					     (old old))
+				     (cond
+					((null? l)
+					 (liip (cdr rules) ndecl old nrules))
+					((equal? property (css-declaration-property (car l)))
+					 (laap (cdr l) ndecl (cons (car l) old)))
+					(else
+					 (laap (cdr l) (cons (car l) ndecl) old))))
+				  (liip (cdr rules)
+					ndecl
+					old
+					(cons (compile-alias (car decl) (car rules)) nrules))))))))
+		((find-property-compiler property penv)
+		 =>
+		 (lambda (comp)
+		    ;; A global property that have to be processes again
+		    ;; unless the generated property is the initial one
+		    (let liip ((l (comp expr prio))
+			       (decl (cdr decl))
+			       (old old))
+		       (cond
+			  ((null? l)
+			   (loop decl old nrules))
+			  ((equal? property (css-declaration-property (car l)))
+			   (liip (cdr l) decl (cons (car l) old)))
+			  (else
+			   (liip (cdr l) (cons (car l) decl) old))))))
+		(else
+		 (loop (cdr decl) (cons (car decl) old) nrules)))))))
 
-;*---------------------------------------------------------------------*/
-;*    *hss-builtin-types* ...                                          */
-;*---------------------------------------------------------------------*/
-(define *hss-builtin-types*
-   '(;; notepad
-     ("notepad" "div.hop-notepad")
-     ("notepad" "div.hop-notepad")
-     ("notepad-tabs" "td.hop-notepad-tabs")
-     ("notepad-tabs-row" "div.hop-notepad-tabs-row")
-     ("notepad-body" "td.hop-notepad-body")
-     ("nphead" "div.hop-nphead")
-     ("nptab" "span.hop-nptab")
-     ("nptab-active" "span.hop-nptab-active")
-     ("nptab-inactive" "span.hop-nptab-inactive")
-     ("nptab-body" "div.hop-notepad-tab-body")
-     ("nptabhead" "span.hop-nptab-head")
-     ;; paned
-     ("paned" "div.hop-paned")
-     ;; sorttable
-     ("sorttable" "span.hop-sorttable table")
-     ;; audio
-     ("audio" "div.hop-audio-controls")
-     ;; filechooser
-     ("filechooser" "div.filechooser")
-     ;; prefs
-     ("prefs" "table.hop-prefs")
-     ("prlabel" "table.hop-prefs td.hop-prefs-label")
-     ("prsep" "table.hop-prefs td.hop-prefs-separator")
-     ("pr" "table.hop-prefs tr.hop-pr")
-     ("pr-name" "table.hop-prefs td.hop-pr-name")
-     ("pr-editor" "table.hop-prefs td.hop-pr-editor")
-     ("pr-editor-expr" "table.hop-prefs input.hop-pr-editor-expr")
-     ("pr-editor-bool" "table.hop-prefs table.hop-pr-editor-bool")
-     ("pr-editor-text" "table.hop-prefs textarea.hop-pr-editor-text")
-     ;; hop-login
-     ("hop-login-panel" "div.hop-login-panel")
-     ("hop-login" "div.hop-login-panel table.hop-login-main-table")
-     ("hop-login-message" "div.hop-login-panel td.hop-login-message")
-     ("hop-login-logo" "div.hop-login-panel div.hop-login-logo")))
-   
 ;*---------------------------------------------------------------------*/
 ;*    hss-mutex ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -202,8 +284,6 @@
 ;*    init-hss-compiler! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (init-hss-compiler! port)
-   ;; builtin hss types
-   (for-each (lambda (t) (apply hop-hss-type! t)) *hss-builtin-types*)
    ;; hss cache
    (set! hss-cache
 	 (instantiate::cache-disk
@@ -274,7 +354,6 @@
 		 (msg "file does not exist")
 		 (obj file)))))
 
-
 ;*---------------------------------------------------------------------*/
 ;*    hop-read-hss ...                                                 */
 ;*    -------------------------------------------------------------    */
@@ -310,44 +389,51 @@
 ;*---------------------------------------------------------------------*/
 (define (css-compile o::css-stylesheet)
    (duplicate::css-stylesheet o
-      (rule* (map hss-compile (css-stylesheet-rule* o)))))
+      (rule* (map (lambda (r)
+		     (hss-compile r *hss-property-env*))
+		  (css-stylesheet-rule* o)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-generic (hss-compile r)
+(define-generic (hss-compile r penv)
    (if (pair? r)
-       (map hss-compile r)
+       (map (lambda (r) (hss-compile r penv)) r)
        r))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile ::css-media ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (hss-compile o::css-media)
+(define-method (hss-compile o::css-media penv)
    (duplicate::css-media o
-      (ruleset* (map! hss-compile (css-media-ruleset* o)))))
+      (ruleset* (hss-compile (css-media-ruleset* o) penv))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile ::css-ruleset ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (hss-compile o::css-ruleset)
+(define-method (hss-compile o::css-ruleset penv)
 
+   (define (find-compiler selector)
+      (let ((hc (find-selector-compiler selector)))
+	 (when (and hc (pair? (hss-compiler-properties hc)))
+	    hc)))
+      
    (define (compile-rule o)
       (with-access::css-ruleset o (selector+ declaration*)
-	 (let ((hc (hss-find-compiler (car (last-pair (car selector+)))))
-	       (ndeclaration* (map hss-compile declaration*)))
+	 (let ((hc (find-compiler (car (last-pair (car selector+))))))
 	    (if hc
-		(let ((nselector (hss-compile-selector* (car selector+))))
-		   (hss-compile-declaration* nselector ndeclaration* hc))
-		(duplicate::css-ruleset o
-		   (selector+ (map! hss-compile-selector* selector+))
-		   (declaration* ndeclaration*))))))
-   
+		(let* ((lenv (hss-compiler-properties hc))
+		       (nselector (hss-compile-selector* (car selector+))))
+		   (hss-compile-declaration* nselector declaration* lenv penv))
+		(let ((ndecl* (apply append (hss-compile declaration* penv))))
+		   (duplicate::css-ruleset o
+		      (selector+ (map hss-compile-selector* selector+))
+		      (declaration* ndecl*)))))))
+
    (with-access::css-ruleset o (selector+ declaration*)
       (if (and (pair? (cdr selector+))
 	       (any? (lambda (s)
-			(let ((hc (hss-find-compiler (car (last-pair s)))))
-			   (when hc (pair? (hss-compiler-properties hc)))))
+			(find-compiler (car (last-pair s))))
 		     selector+))
 	  ;; the ruleset is unfolded iff:
 	  ;;    it uses several selectors
@@ -356,11 +442,29 @@
 	     (ruleset+ (map (lambda (s)
 			       (compile-rule
 				(instantiate::css-ruleset
-				   (selector+ (list (hss-compile s)))
+				   (selector+ (list (hss-compile s penv)))
 				   (declaration* declaration*))))
 			    selector+)))
 	  (compile-rule o))))
 
+;*---------------------------------------------------------------------*/
+;*    hss-compile ::css-declaration ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (hss-compile o::css-declaration penv)
+   (with-access::css-declaration o (property expr prio)
+      (let ((comp (find-property-compiler property penv)))
+	 (if comp
+	     ;; Call hss-compile recursively because the compilation might
+	     ;; have generated unnormalized expressions. The recursion is
+	     ;; stopped is the generated property is the same as the initial
+	     ;; one.
+	     (append-map (lambda (o)
+			    (if (equal? property (css-declaration-property o))
+				(list o)
+				(hss-compile o penv)))
+			 (comp expr prio))
+	     (list o)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile-selector* ...                                        */
 ;*---------------------------------------------------------------------*/
@@ -369,24 +473,29 @@
    (define (compile o)
       (if (symbol? o)
 	  o
-	  (let ((hc (hss-find-compiler o)))
+	  (let ((hc (find-selector-compiler o)))
 	     (with-access::css-selector o (element)
-		(if (hss-compiler? hc)
-		    (hss-compile-selector o hc)
+		(cond
+		   ((hss-compiler? hc)
+		    (hss-compile-selector o hc))
+		   ((css-selector-name? element)
 		    (duplicate::css-selector o
-		       (element (hss-compile element))))))))
+		       (element (hss-unalias-selector-name element))))
+		   (else
+		    o))))))
    
-   (map! compile lst))
-		 
+   (map compile lst))
+
 ;*---------------------------------------------------------------------*/
-;*    hss-compile ::css-selector-name ...                              */
+;*    hss-unalias-selector-name ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (hss-compile o::css-selector-name)
+(define (hss-unalias-selector-name o::css-selector-name)
    (with-access::css-selector-name o (name)
       (if (string? name)
-	  (let ((new (hashtable-get *hss-types* name)))
-	     (if new
-		 (instantiate::css-selector-name (name new))
+	  (let ((new (hashtable-get *hss-type-env* (string-downcase name))))
+	     (if (hss-compiler? new)
+		 (instantiate::css-selector-name
+		    (name (hss-compiler-element new)))
 		 o))
 	  o)))
 
@@ -415,44 +524,79 @@
 		   (else #unspecified)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-hss-type! ...                                                */
+;*    object-display ::css-hash-color ...                              */
 ;*---------------------------------------------------------------------*/
-(define (hop-hss-type! old new)
-   (with-lock *hss-compiler-mutex*
-      (lambda ()
-	 (hashtable-put! *hss-types* (string-upcase old) new)
-	 (hashtable-put! *hss-types* (string-downcase old) new)
-	 "")))
+(define-method (object-display o::css-hash-color . port)
+   (let ((p (if (pair? port) (car port) (current-output-port))))
+      (display "#" p)
+      (display (css-hash-color-value o) p)))
 
 ;*---------------------------------------------------------------------*/
-;*    default hss type ...                                             */
+;*    object-display ::css-function ...                                */
 ;*---------------------------------------------------------------------*/
-(hop-hss-type! "window" "table.hop-window td.hop-window-content")
+(define-method (object-display o::css-function . port)
+   (with-access::css-function o (fun expr)
+      (let ((p (if (pair? port) (car port) (current-output-port))))
+	 (display fun p)
+	 (display expr p))))
 
 ;*---------------------------------------------------------------------*/
-;*    Example a hss compiler                                           */
+;*    HSS Global compilers ...                                         */
 ;*---------------------------------------------------------------------*/
-;; (hss-register-compiler!
-;; "gauge"
-;;  (instantiate::hss-compiler
-;;    (element "span")
-;;    (properties '(("foo" ("span.foo" "bg") ("span.gee" "fg"))
-;; 		    ("gee" ("span.foo" "fg"))
-;;		    ("bar" ("span.foo span.bar" "fg"))))))
+;; border-radius
+(define-hss-property (border-radius v p)
+   (match-case v
+      ((?tl ?tr ?br ?bl)
+       (format "border-top-left-radius: ~a;
+  border-top-right-radius: ~a;
+  border-bottom-right-radius: ~a;
+  border-bottom-left-radius: ~a;
+  -moz-border-radius: ~a ~a ~a ~a;
+  -webkit-border-top-left-radius: ~a;
+  -webkit-border-top-right-radius: ~a;
+  -webkit-border-bottom-right-radius: ~a;
+  -webkit-border-bottom-left-radius: ~a;"
+	       tl tr br bl tl tr br bl tl tr br bl))
+      (else
+       (format "border-radius: ~a;
+  -moz-border-radius: ~a;
+  -webkit-border-radius: ~a;" (car v) (car v) (car v)))))
+;; border-top-left-radius
+(define-hss-property (border-top-left-radius v p)
+   (format "border-top-left-radius: ~a;
+  -moz-border-radius-topLeft: ~a;
+  -webkit-border-top-left-radius: ~a;"
+	   (car v) (car v) (car v)))
+;; border-top-right-radius
+(define-hss-property (border-top-right-radius v p)
+   (format "border-top-right-radius: ~a;
+  -moz-border-radius-topRight: ~a;
+  -webkit-border-top-right-radius: ~a;"
+	   (car v) (car v) (car v)))
+;; border-bottom-right-radius
+(define-hss-property (border-bottom-right-radius v p)
+   (format "border-bottom-right-radius: ~a;
+  -moz-border-radius-bottomRight: ~a;
+  -webkit-border-bottom-right-radius: ~a;"
+	   (car v) (car v) (car v)))
+;; border-bottom-left-radius
+(define-hss-property (border-bottom-left-radius v p)
+   (format "border-bottom-left-radius: ~a;
+  -moz-border-radius-bottomLeft: ~a;
+  -webkit-border-bottom-left-radius: ~a;"
+	   (car v) (car v) (car v)))
 
+;; box-shadow
+(define-hss-property (box-shadow v p)
+   (format "box-shadow: ~l;
+  -moz-box-shadow: ~l;
+  -webkit-box-shadow: ~l;"
+	   v v v))
 
-;*---------------------------------------------------------------------*/
-;*    Modifier les compilateurs afin de pouvoir ecrire une expension   */
-;*    telle que :                                                      */
-;*                                                                     */
-;*    article-figure {                                                 */
-;*      align: center;                                                 */
-;*    }                                                                */
-;*                                                                     */
-;*      ==>                                                            */
-;*                                                                     */
-;*    div.article-figure-center table.article-figure {                 */
-;*      margin-left: auto;                                             */
-;*      margin-right: auto;                                            */
-;*    }                                                                */
-;*---------------------------------------------------------------------*/
+;; user-select
+(define-hss-property (user-select v p)
+   (format "user-select: ~l;
+  -moz-user-select: ~l;
+  -khtml-user-select: ~l;
+  -webkit-user-select: ~l;"
+	   v v v v))

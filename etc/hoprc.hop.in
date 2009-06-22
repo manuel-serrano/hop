@@ -156,9 +156,7 @@ A good starting point is probably to copy the file
 to
 ,(<BR>)
 ,(<TT> :style "color: #ff881c"
-    (cond-expand
-       (macosx (make-file-path (hop-rc-directory) "Library" "Preferences" "hop" (hop-rc-file)))
-       (else (make-file-path (hop-rc-directory) ".config" "hop" (hop-rc-file)))))
+    (make-file-path (hop-rc-directory) (hop-rc-file)))
 ,(<BR>)
 and customize it for your own needs.])))))
 

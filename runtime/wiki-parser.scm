@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Thu Apr 16 08:38:35 2009 (serrano)                */
+;*    Last change :  Fri Jun 19 07:54:33 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -583,6 +583,8 @@
 
       ;; itemize/enumerate
       ((bol (: "  " (* " ") (in "*-")))
+       ;; this is a common mistake so we impose the paragraph ending.
+       (when (is-state? 'p) (pop-state!))
        (let* ((s (the-html-substring (-fx (the-length) 1) (the-length)))
 	      (c (string-ref s 0))
 	      (val (the-length))

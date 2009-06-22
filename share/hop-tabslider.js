@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.11.x/share/hop-tabslider.js           */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-tabslider.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio [eg@essi.fr]                       */
 /*    Creation    :  14-Sep-2005 09:24 (eg)                            */
-/*    Last change :  Mon Feb 23 07:12:17 2009 (serrano)                */
+/*    Last change :  Sat Jun  6 19:14:58 2009 (serrano)                */
 /*    Copyright   :  2006-09 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    HOP tabslider implementation                                     */
@@ -57,15 +57,15 @@ function hop_tabslider_select_inner( parent, item ) {
 	 selected = content;
 	 title.className = "hop-tabslider-head hop-tabslider-head-active";
 	 if( content.lang == "delay" ) {
-	    hop( selected.onkeyup()(),
-		 function( html ) {
-		    hop_innerHTML_set( selected, html );
-		    selected.style.display = "block";
+	    with_hop( selected.onkeyup()(),
+		      function( html ) {
+			 hop_innerHTML_set( selected, html );
+			 selected.style.display = "block";
 		    
-		    /* event handlers */
- 		    if( selected.onselect ) selected.onselect();
-		    if( parent.onchange ) parent.onchange( item );
-		 } );
+			 /* event handlers */
+			 if( selected.onselect ) selected.onselect();
+			 if( parent.onchange ) parent.onchange( item );
+		      } );
 	 } else {
 	    selected.style.display = "block";
 	    selected.style.height = "0px";
@@ -84,7 +84,7 @@ function hop_tabslider_select_inner( parent, item ) {
 
    /* Set the height of the selected item */
    var i = 0;
-   var height = (totalHeight - titlesHeight) - (parent.childNodes.length / 2);
+   var height = (totalHeight - titlesHeight) - (parent.childNodes.length + 2);
    
    if( old ) {
       old.style.display = "block";
@@ -120,7 +120,10 @@ function hop_tabslider_select_inner( parent, item ) {
 /*    hop_tabslider_update ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_tabslider_update() {
-   hop_tabslider_select_inner( this, this.tab_selected );
+   var item = this.tab_selected;
+   
+   this.tab_selected = false;
+   hop_tabslider_select_inner( this, item );
 }
 
 /*---------------------------------------------------------------------*/

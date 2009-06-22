@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Apr 17 10:06:45 2009 (serrano)                */
+;*    Last change :  Mon May 25 15:12:03 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -31,13 +31,8 @@
 	    (hop-var-directory::bstring)
 	    (hop-var-directory-set! ::bstring)
 
-	    (hop-flash-directory::bstring)
-
 	    (hop-cache-directory::bstring)
 	    (hop-cache-directory-set! ::bstring)
-
-	    (hop-user-weblets-directory::bstring)
-	    (hop-user-weblets-directory-set! ::bstring)
 
 	    (hop-load-preferences::bool)
 	    (hop-load-preferences-set! ::bool)
@@ -78,6 +73,12 @@
 	    
 	    (hop-restore-disk-cache::bool)
 	    (hop-restore-disk-cache-set! ::bool)
+
+	    (hop-svg-img-cache-size::int)
+	    (hop-svg-img-cache-size-set! ::int)
+	    
+	    (hop-svg-img-max-file-size-cache::elong)
+	    (hop-svg-img-max-file-size-cache-set! ::elong)
 	    
 	    (hop-http-request-error::obj)
 	    (hop-http-request-error-set! ::obj)
@@ -281,44 +282,18 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-api-cache
    (os-tmp))
-
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-directory ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-rc-directory
-   (let ((home (or (getenv "HOME") "/"))
-	 (host (hostname)))
-      (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
-	 (if (string? host)
-	     (let* ((host-prefix (cond-expand
-				    (macosx "/Library/Preferences/hop/")
-				    (else "/.config/hop.")))
-		    (home/host (string-append home host-prefix host)))
-		(if (and (file-exists? home/host) (directory? home/host))
-		    home/host
-		    (if (string=? (suffix host) "")
-			(let* ((std-pre (cond-expand
-					   (macosx "Library/Preferences/hop")
-					   (else ".config/hop")))
-			       (home/def (make-file-name home std-pre)))
-			   (cond
-			      ((and (file-exists? home/def)
-				    (directory? home/def))
-			       home/def)
-			      (else
-			       home)))
-			(loop (prefix host)))))))))
+   (hop-configure-rc-directory))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-var-directory ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-var-directory
-   (cond-expand
-      (macosx-bundle
-       (let ((home (or (getenv "HOME") "/")))
-	  (make-file-path home "Library" "Application Support" "hop")))
-      (else
-       (hop-rc-directory)))
+   (or (hop-configure-var-directory) (hop-rc-directory))
    (lambda (v)
       (hop-path-set! (cons v (hop-path)))
       v))
@@ -327,36 +302,17 @@
 ;*    hop-cache-directory ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-cache-directory
-   (cond-expand
-      (macosx-bundle
-       (let ((home (or (getenv "HOME") "/")))
-	  (make-file-path home "Library" "Caches" "hop")))
-      (else
-       (make-file-name (hop-rc-directory) "cache")))
+   (or (hop-configure-cache-directory)
+       (make-file-name (hop-rc-directory) "cache"))
    (lambda (v)
       (hop-path-set! (cons v (hop-path)))
       v))
-
-;*---------------------------------------------------------------------*/
-;*    hop-user-weblets-directory ...                                   */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-user-weblets-directory
-   (make-file-name (hop-var-directory) "weblets")
-   (lambda (v)
-      (hop-path-set! (cons v (hop-path)))
-      v))
-
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-file ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-rc-file
    "hoprc.hop")
-
-;*---------------------------------------------------------------------*/
-;*    hop-flash-directory ...                                          */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-flash-directory
-   (make-file-path (hop-share-directory) "flash"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-preferences ...                                         */
@@ -468,6 +424,18 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-max-file-entry-cache
    16)
+
+;*---------------------------------------------------------------------*/
+;*    hop-svg-img-cache-size ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-svg-img-cache-size
+   32)
+
+;*---------------------------------------------------------------------*/
+;*    hop-svg-img-max-file-size-cache ...                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-svg-img-max-file-size-cache
+   #e8192)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-request-error ...                                       */
@@ -659,17 +627,10 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-path
    (list "."
-	 (hop-cache-directory)
-	 (hop-var-directory)
+	 (make-file-name (hop-var-directory) "cache")
 	 (hop-share-directory)
-	 (hop-contribs-directory)
-	 ;; CARE: [flo, 2009.04.21]
-	 ;; the following ones are sub-directories of 'var'/'share'.
-	 ;; currently they do not need to be added.
-	 ;; (hop-flash-directory)
-	 ;; (hop-icons-directory)
-	 ;; (hop-user-weblets-directory)
-	 ))
+	 (hop-weblets-directory)
+	 (hop-contribs-directory)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-server-hostname ...                                          */

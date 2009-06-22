@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/hop-slider.scm           */
+;*    serrano/prgm/project/hop/2.0.x/runtime/hop-slider.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Oct 13 19:48:41 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Tue Jun 16 11:56:31 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
 ;*=====================================================================*/
@@ -49,9 +49,7 @@
 			       (caption "top"))
    (instantiate::html-slider
       (markup 'slider)
-      (klass (if (string? class)
-		 (string-append "hop-slider " class)
-		 "hop-slider"))
+      (klass (if (string? class) class "hop-slider"))
       (id (xml-make-id id 'SLIDER))
       (value value)
       (min min)

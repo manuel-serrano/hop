@@ -1,0 +1,280 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.0.x/share/hop-color.hss               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sun Jun 14 12:06:59 2009                          */
+/*    Last change :  Sun Jun 21 07:05:41 2009 (serrano)                */
+/*    Copyright   :  2009 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    CSS for color chooser.                                           */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module hop-colorchooser-hss)
+
+/*---------------------------------------------------------------------*/
+/*    constants                                                        */
+/*---------------------------------------------------------------------*/
+$(define hopcolor-hsv-size "170px")
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type colorchooser "table[hssclass=hop-colorchooser]")
+
+/*---------------------------------------------------------------------*/
+/*    Hop File config                                                  */
+/*---------------------------------------------------------------------*/
+$(define hopcolor-font "Bitstream Vera Sans, Andale")
+$(define hopcolor-button-border "1px outset #aaa")
+
+/*---------------------------------------------------------------------*/
+/*    Icons                                                            */
+/*---------------------------------------------------------------------*/
+$(define hopcolor-satval "url( icons/hop-color/satval.png )")
+$(define hopcolor-color "url( icons/hop-color/transbg.png )")
+$(define hopcolor-ok-icon "url( icons/actions/ok.png )")
+$(define hopcolor-cancel-icon "url( icons/actions/cancel.png )")
+
+/*---------------------------------------------------------------------*/
+/*    Public                                                           */
+/*---------------------------------------------------------------------*/
+/* <public> */
+colorchooser {
+  background: black;
+  padding: 2px;
+  margin: 0;
+  border-left: 1px solid #ccc;
+  border-top: 1px solid #ccc;
+  border-right: 1px solid #999;
+  border-bottom: 1px solid #999;
+}
+/* </public> */
+
+/*---------------------------------------------------------------------*/
+/*    Private declarations                                             */
+/*---------------------------------------------------------------------*/
+/* vertical alignment */
+colorchooser tr.hop-colorchooser-mainrow > td {
+  vertical-align: top;
+}
+
+colorchooser table.hop-colorchooser {
+  border: 0;
+  border-collapse: collapse;
+}
+
+/* satval */
+colorchooser div.hop-colorchooser-satval {
+  background-image: $hopcolor-satval;
+  background-color: #FF0000;
+  height: $hopcolor-hsv-size;
+  width: $hopcolor-hsv-size;
+  position: relative;
+  border: 1px dashed #777;
+  cursor: crosshair;
+  user-select: none;
+}
+
+colorchooser div.hop-colorchooser-satval div.hop-colorchooser-grid {
+  border-style: solid;
+  border-width: 1px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: transparent;
+  visibility: hidden;
+}
+
+colorchooser div.hop-colorchooser-satval div.hop-colorchooser-grid-tl {
+  border-color: transparent #ccc #ccc transparent;
+  left: -1px;
+  top: -1px;
+}
+
+colorchooser div.hop-colorchooser-satval div.hop-colorchooser-grid-br {
+  border-color: #ccc transparent transparent #ccc;
+  right: -1px;
+  bottom: -1px;
+}
+
+/* hmodel */
+colorchooser div.hop-colorchooser-hmodel {
+  border: 1px solid black;
+  height: $hopcolor-hsv-size;
+  width: 19px;
+  position: relative;
+  border: 1px dashed #777;
+  cursor: crosshair;
+  user-select: none;
+}
+
+colorchooser div.hop-colorchooser-hmodel-cursor {
+  border: 0;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #ccc;
+  left: 0;
+  top: 0;
+  width: 19px;
+  background: transparent;
+  position: absolute;
+}
+
+colorchooser div.hop-colorchooser-hmodel div.hop-colorchooser-hmodel-sample {
+  height: 1px;
+  width: 100%;
+  font-size: 1pt;
+  line-height: 1px;
+  margin: 0;
+  padding: 0;
+}
+
+/* color */
+colorchooser div.hop-colorchooser-color {
+  margin-top: 5px;
+  position: relative;
+  width: $hopcolor-hsv-size;
+  height: 16px;
+  border: 0;
+}
+
+colorchooser div.hop-colorchooser-color div {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: $hopcolor-hsv-size;
+  height: 16px;
+  cursor: none;
+  user-select: none;
+}
+
+colorchooser div.hop-colorchooser-color div.hop-colorchooser-color-fg {
+  border: 1px dashed #777;
+  background-color: #FF0000;
+  z-index: 2;
+  opacity: 1;
+}
+
+colorchooser div.hop-colorchooser-color div.hop-colorchooser-color-bg {
+  border: 1px solid transparent;
+  background-image: $hopcolor-color;
+  z-index: 1;
+}
+
+/* selectors */
+colorchooser table.hop-colorchooser-selectors {
+  width: 230px;
+}
+
+colorchooser table.hop-colorchooser-selectors th {
+  color: white;
+  font-size: 8pt;
+  font-family: monospace;
+}
+
+/* opacity */
+colorchooser table.hop-colorchooser-selectors td.hop-colorchooser-sep {
+  height: 5px;
+}
+
+slider {
+  line-left-color: rgb(250,192,0);
+}
+
+/* rgba */
+input.hop-colorchooser-rgb {
+  margin-top: 5px;
+  position: relative;
+  border: 1px dashed #777;
+  background: white;
+  color: black;
+  font-size: 8pt;
+  padding: 0px;
+  font-family: monospace;
+  width: $hopcolor-hsv-size;
+  height: 14px;
+  padding-top: 2px;
+}
+
+/* colorscale */
+div.hop-colorchooser-colorscale {
+  width: $hopcolor-hsv-size;
+  border: 1px dashed #777;
+  height: 10px;
+  position: relative;
+  cursor: crosshair;
+  user-select: none;
+}
+
+colorchooser div.hop-colorchooser-colorscale-cursor {
+  border: 0;
+  border-left-style: solid;
+  border-left-width: 1px;
+  border-left-color: #ccc;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: transparent;
+  position: absolute;
+}
+
+colorchooser span.hop-colorchooser-colorscale-sample {
+  display: inline-block;
+  border: 0;
+  width: 1px;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  float: left;
+}
+
+/*---------------------------------------------------------------------*/
+/*    okcancel                                                         */
+/*---------------------------------------------------------------------*/
+colorchooser td.hop-colorchooser-okcancel {
+  padding-top: 2ex;
+  text-align: right;
+}
+
+colorchooser td.hop-colorchooser-okcancel button:hover {
+  background: #f0f0f0;
+}
+
+colorchooser td.hop-colorchooser-okcancel button {
+  padding: 3px;
+  font-family: $hopcolor-font;
+  cursor: default;
+  width: 8em;
+  border: $hopcolor-button-border;
+  margin-left: 5px;
+  padding: 5px 0px 5px 20px;
+}
+
+colorchooser td.hop-colorchooser-okcancel button,
+colorchooser td.hop-colorchooser-okcancel button:hover {
+  background-repeat: no-repeat;
+  background-position: 20% center;
+}
+  
+colorchooser td.hop-colorchooser-okcancel button.hop-colorchooser-ok,
+colorchooser td.hop-colorchooser-okcancel button.hop-colorchooser-ok:hover {
+  background-image: $hopcolor-ok-icon;
+}
+
+colorchooser td.hop-colorchooser-okcancel button.hop-colorchooser-cancel,
+colorchooser td.hop-colorchooser-okcancel button.hop-colorchooser-cancel:hover {
+  background-image: $hopcolor-cancel-icon;
+}
+
+colorchooser span.hop-colorchooser-cancel:before {
+  content: "Cancel";
+}
+  
+colorchooser span.hop-colorchooser-ok:before {
+  content: "Ok";
+}
+

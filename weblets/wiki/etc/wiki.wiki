@@ -19,7 +19,11 @@ This simple weblet displays ,(<WIKIREF> "Wiki documents").
 
 WIKI defines one service:
 
-  - ++[[wiki]]++: This is the only entry point of the viewer.
+  - ++[[wiki]]++: This is the only entry point of the viewer. This service
+ accepts one optional named paraemter: :path. Hence, one may browse URLs such
+ as: 
+
+  http://localhost:8080/hop/wiki?path=/my/path/file.wiki++
 
 
 </doc>

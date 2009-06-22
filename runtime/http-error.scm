@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/http-error.scm           */
+;*    serrano/prgm/project/hop/2.0.x/runtime/http-error.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Dec 16 08:27:28 2008 (serrano)                */
-;*    Copyright   :  2004-08 Manuel Serrano                            */
+;*    Last change :  Mon Jun  8 14:19:46 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
 ;*=====================================================================*/
@@ -69,23 +69,16 @@
 ;*    http-error ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (http-error e::&error req::http-request)
-   (let ((msg (<TABLE>
-		 (<TR>
-		    (<TD> "An error occured while responding to"))
-		 (<TR>
-		    (<TD>
-		       :class "request-info"
-		       (<TABLE>
-			  (<COLGROUP> (<COL> :width "0*"))
-			  (<TR>
-			     (<TH> :align 'right "host:")
-			     (<TD> (<TT> (http-request-host req))))
-			  (<TR>
-			     (<TH> :align 'right "port:")
-			     (<TD> (<TT> (http-request-port req))))
-			  (<TR>
-			     (<TH> :align 'right "path:")
-			     (<TD> (<TT> (http-request-path req))))))))))
+   (let* ((ths "text-align: right; color: #777")
+	  (msg (<TABLE> :style "font-size: 12pt"
+		  (<COLGROUP> (<COL> :width "0*"))
+		  (<TR>
+		     (<TD> :style ths "host:")
+		     (<TD> (<TT> :style "font-size: 10pt; font-weight: bold"
+			      (http-request-host req) ":" (http-request-port req))))
+		  (<TR>
+		     (<TD> :style ths "path:")
+		     (<TD> (<TT> :style "font-size: 9pt" (http-request-path req)))))))
       (cond
 	 ((&io-unknown-host-error? e)
 	  (http-unknown-host (&error-obj e)))
@@ -96,6 +89,19 @@
 	 (else
 	  (http-internal-error e msg)))))
 
+;*---------------------------------------------------------------------*/
+;*    <ERRTABLE>                                                       */
+;*---------------------------------------------------------------------*/
+(define (<ERRTABLE> logo msg)
+   (<TABLE> :style "background: #FFFFF7; border-bottom: 1px solid #ccc; width: 100%; font-family: arial; font-size: 10pt"
+      (<TR>
+	 (<TD> :style "height: 64px; width: 64px; vertical-align: top; padding-top: 10px; text-align: center"
+	    logo)
+	 (<TD>
+	    (<TABLE> :style "width: 100%"
+	       (<TR> (<TD> :style "font-size: 20pt; font-weight: bold; color: red" "Server Error"))
+	       (<TR> (<TD> :class "msg" msg)))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    <EHEAD> ...                                                      */
 ;*---------------------------------------------------------------------*/
@@ -111,13 +117,21 @@
 ;*    <EIMG> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<EIMG> #!key src req)
-   (<IMG> :style "padding: 20px;"
-      :src (if (http-proxy-request? req)
-	       (format "http://~a:~a~a"
-		       (hostname)
-		       (hop-port)
-		       (make-file-name (hop-icons-directory) src))
-	       (make-file-name (hop-icons-directory) src))))
+   (let ((path (make-file-name (hop-icons-directory) src)))
+      (<IMG> :src (img-base64-encode path)
+	 :alt src
+	 :onerror (format "this.src = ~s"
+			  (format "http://~a:~a~a"
+				  (hostname)
+				  (hop-port)
+				  path)))))
+
+;*---------------------------------------------------------------------*/
+;*    <ESPAN> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <ESPAN> ((class #f)
+			      body)
+   (<SPAN> :class class (html-string-encode (car body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ETD> ...                                                        */
@@ -143,8 +157,6 @@
   margin-top: 20px;
   padding-bottom: 20px;
   padding-top: 20px;
-  border-bottom: 1px solid #bbb;
-  border-top: 1px solid #bbb;
   font-family: sans-serif;")
 		  ((string=? class "dump")
 		   "padding-top: 20px;")
@@ -209,7 +221,7 @@
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY>
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
@@ -219,7 +231,7 @@
 				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title" "Unknown Host"))
 				   (<TR> (<ETD> :class "msg"
-					    (<SPAN> :class "filenotfound"
+					    (<ESPAN> :class "filenotfound"
 					       host))))))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -235,7 +247,7 @@
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY>
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
@@ -246,7 +258,7 @@
 				   (<TR> (<ETD> :class "title"
 					    "File not found!"))
 				   (<TR> (<ETD> :class "msg"
-					    (<SPAN> :class "filenotfound"
+					    (<ESPAN> :class "filenotfound"
 					       file))))))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -263,7 +275,7 @@
 	    (content-type (xml-backend-mime-type (hop-xml-backend)))
 	    (xml (<HTML>
 		    (<EHEAD> (current-request))
-		    (<BODY>
+		    (<BODY> :style "background: #ccc; padding-top: 3ex"
 		       (<CENTER>
 			  (<ETABLE>
 			     (<TR>
@@ -275,7 +287,7 @@
 					       (format "~a service!"
 						       (string-capitalize key))))
 				      (<TR> (<ETD> :class "msg"
-					       (<SPAN> :class "filenotfound"
+					       (<ESPAN> :class "filenotfound"
 						  file)))
 				      (<TR> (<ETD> :class "dump"
 					       (<SPAN> msg))))))))))))))
@@ -364,31 +376,24 @@ a timeout which has now expired. The service is then no longer available."))
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY>
-		    (<CENTER>
-		       (<ETABLE>
-			  (<TR>
-			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src (if (&io-timeout-error? e)
-						 "timeout.png"
-						 "error.png")
-				   :req req))
-			     (<ETD>
-				(<TABLE> :width "100%"
-				   (<TR>
-				      (<ETD> :class "title" "Internal Error"))
-				   (<TR>
-				      (<ETD> :class "msg" msg))
-				   (<TR>
-				      (<ETD> :class "dump"
-					     (<PRE>
-						(html-string-encode s)))))))))))))))
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
+		    (<ERRTABLE>
+		       (<EIMG> :src (if (&io-timeout-error? e)
+					"timeout.png"
+					"error.png")
+			  :req req)
+		       msg)
+		    (<DIV> :style "font-family: arial; font-size: 10pt; overflow: auto; padding: 5px; background: white"
+		       (<DIV> :style "font-weight: bold" "Server message:")
+		       (<PRE> :style "padding-left: 1em; font-size: 9pt"
+			  (html-string-encode s)))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    http-service-error ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (http-service-error req service m)
-   (let ((info (<TABLE>
+   (let* ((ths "text-align: right; color: #777")
+	  (info (<TABLE>
 		  (<TR>
 		     (<ETD> "An error occured while responding to"))
 		  (<TR>
@@ -397,16 +402,16 @@ a timeout which has now expired. The service is then no longer available."))
 			(<TABLE> :width "100%"
 			   (<COLGROUP> (<COL> :width "0*"))
 			   (<TR>
-			      (<TH> :align 'right "host:")
+			      (<TD> :style ths "host:")
 			      (<ETD> (<TT> (http-request-host req))))
 			   (<TR>
-			      (<TH> :align 'right "port:")
+			      (<TD> :style ths "port:")
 			      (<ETD> (<TT> (http-request-port req))))
 			   (<TR>
-			      (<TH> :align 'right "service:")
+			      (<TH> :style ths "service:")
 			      (<ETD> (<TT> service)))
 			   (<TR>
-			      (<TH> :align 'right "filter:")
+			      (<TH> :style ths "filter:")
 			      (<ETD> (<TT> (hop-request-service-name req))))))))))
       (instantiate::http-response-hop
 	 (request req)
@@ -416,7 +421,7 @@ a timeout which has now expired. The service is then no longer available."))
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> req)
-		 (<BODY>
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
@@ -448,7 +453,7 @@ a timeout which has now expired. The service is then no longer available."))
       (charset (hop-charset))
       (xml (<HTML>
 	      (<EHEAD> req)
-	      (<BODY>
+	      (<BODY> :style "background: #ccc; padding-top: 3ex"
 		 (<CENTER>
 		    (<ETABLE>
 		       (<TR>
@@ -483,7 +488,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (charset (hop-charset))
       (xml (<HTML>
 	      (<EHEAD> req)
-	      (<BODY>
+	      (<BODY> :style "background: #ccc; padding-top: 3ex"
 		 (<CENTER>
 		    (<ETABLE>
 		       (<TR>
@@ -525,7 +530,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY>
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
@@ -556,7 +561,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY>
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
@@ -586,7 +591,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY>
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
@@ -617,7 +622,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY>
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>

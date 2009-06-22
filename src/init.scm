@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Wed Mar 25 14:43:31 2009 (serrano)                */
+;*    Last change :  Thu Jun 18 11:13:15 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -337,8 +337,8 @@
 	     (display "-" port))))
       ;; long version (add User-Agent and Referer)
       (when (>fx (hop-log) 1)
-	 (let ((agent (assoc :user-agent header))
-	       (referer (assoc :referer header)))
+	 (let ((agent (assq :user-agent header))
+	       (referer (assq :referer header)))
 	    (when (and (pair? agent) (pair? referer))
 	       (fprintf port " ~s ~s" (cdr referer) (cdr agent)))))
       (newline port)
@@ -385,8 +385,8 @@
       (display "-" port)
       ;; Long version (add User-Agent and Referer)
       (when (>fx (hop-log) 1)
-	 (let ((agent   (assoc :user-agent header))
-	       (referer (assoc :referer header)))
+	 (let ((agent   (assq :user-agent header))
+	       (referer (assq :referer header)))
 	    (when (and (pair? agent) (pair? referer))
 	       (fprintf port " ~s ~s" (cdr referer) (cdr agent)))))
       (newline port)

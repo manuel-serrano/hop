@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/hop-svg.scm              */
+;*    serrano/prgm/project/hop/2.0.x/runtime/hop-svg.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Tue Jan 13 18:26:06 2009 (serrano)                */
+;*    Last change :  Fri Jun 12 12:31:00 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -24,7 +24,8 @@
 	    __hop_misc
 	    __hop_charset
 	    __hop_js-lib
-	    __hop_service)
+	    __hop_service
+	    __hop_cache)
 
    (static (class xml-svg::xml-element)
 	   (class svg-img-markup
@@ -51,6 +52,39 @@
 	   (<SVG:IMG> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
+;*    svg-img-tree-cache ...                                           */
+;*---------------------------------------------------------------------*/
+(define svg-img-tree-cache #f)
+
+;*---------------------------------------------------------------------*/
+;*    init-svg-img-cache! ...                                          */
+;*---------------------------------------------------------------------*/
+(define (init-svg-img-cache!)
+   (unless svg-img-tree-cache
+      (when (>fx (hop-svg-img-cache-size) 0)
+	 (set! svg-img-tree-cache
+	       (instantiate::cache-memory
+		  (max-entries (hop-svg-img-cache-size))
+		  (max-file-size (hop-svg-img-max-file-size-cache)))))))
+
+;*---------------------------------------------------------------------*/
+;*    svg-img-cache-put! ...                                           */
+;*---------------------------------------------------------------------*/
+(define (svg-img-cache-put! name tree)
+   (when svg-img-tree-cache
+      (let ((size (cache-memory-max-file-size svg-img-tree-cache)))
+	 (when (and (file-exists? name) (<elong (file-size name) size))
+	    (cache-put! svg-img-tree-cache name tree))
+	 tree)))
+
+;*---------------------------------------------------------------------*/
+;*    svg-img-cache-get ...                                            */
+;*---------------------------------------------------------------------*/
+(define (svg-img-cache-get name)
+   (when svg-img-tree-cache
+      (cache-get svg-img-tree-cache name)))
+
+;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-svg ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-svg p backend)
@@ -65,14 +99,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    Standards SVG elements                                           */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <SVG> ((id #unspecified string)
-			    (xmlns "http://www.w3.org/2000/svg" string)
-			    (attributes)
-			    body)
+(define-markup <SVG> ((id #unspecified string)
+		      (xmlns "http://www.w3.org/2000/svg" string)
+		      (attributes)
+		      body)
    (instantiate::xml-element
       (markup 'svg)
       (id (xml-make-id id 'svg))
-      (attributes (cons (cons 'xmlns xmlns) attributes))
+      (attributes `(:xmlns ,xmlns ,@attributes))
       (body body)))
 
 ;; misc
@@ -246,7 +280,7 @@
 ;*    to avoid identifiers collisions when including several svg       */
 ;*    images inside a single xhtml document.                           */
 ;*---------------------------------------------------------------------*/
-(define (read-svg-img-prefix id uattributes p)
+(define (read-svg-img-prefix id uattributes p name)
    
    (define (dimension-value str)
       (let ((len (string-length str)))
@@ -280,13 +314,20 @@
 		   (set! attributes (cons (cons 'viewBox vb) attributes)))))
 	    (when (pair? uattributes)
 	       (set! attributes (append! attributes uattributes))))))
-   
+
+   (define (parse-and-cache-xml-tree port name)
+      (let ((tree (xml-parse port
+			     :content-length 0
+			     :encoding (hop-charset)
+			     :procedure create-svg-img-markup)))
+	 (svg-img-cache-put! name tree)))
+
+   (init-svg-img-cache!)
+
    (with-output-to-string
       (lambda ()
-	 (let ((tree (xml-parse (current-input-port)
-				:content-length 0
-				:encoding (hop-charset)
-				:procedure create-svg-img-markup)))
+	 (let ((tree (or (svg-img-cache-get name)
+			 (parse-and-cache-xml-tree p name))))
 
 	    ;; patch the svg element
 	    (let loop ((tree tree))
@@ -430,9 +471,9 @@
 ;*      5- it translates the iso-latin encoding into HOP-CHARSET       */
 ;*      6- it rebinds svg identifiers                                  */   
 ;*---------------------------------------------------------------------*/
-(define (read-svg-img id prefix attributes p)
+(define (read-svg-img id prefix attributes p name)
    (if prefix
-       (read-svg-img-prefix id attributes p)
+       (read-svg-img-prefix id attributes p name)
        (read-svg-img-brute id attributes p)))
 
 ;*---------------------------------------------------------------------*/
@@ -454,27 +495,26 @@
 ;*---------------------------------------------------------------------*/
 ;*    SVG:IMG ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <SVG:IMG> ((id #unspecified)
-				(class #f)
-				(width #f)
-				(height #f)
-				(style "text-align: center" string)
-				(src #unspecified string)
-				(prefix #t boolean)
-				(display "-moz-inline-box; -moz-box-orient:vertical; display:inline-block")
-				(attrs))
+(define-markup <SVG:IMG> ((id #unspecified)
+			  (class #f)
+			  (width #f)
+			  (height #f)
+			  (style "text-align: center" string)
+			  (src #unspecified string)
+			  (prefix #t boolean)
+			  (display "-moz-inline-box; -moz-box-orient:vertical; display:inline-block")
+			  (attrs))
    (cond
       ((not (string? src))
        (error '<SVG-IMG> "Illegal image src" src))
       ((not (file-exists? src))
        (error '<SVG-IMG> "Cannot find image" src))
       (else
-       (let* ((img (with-input-from-file
+       (let* ((img (call-with-input-file
 			 (if (string=? (suffix src) "svgz")
 			     (string-append "gzip:" src)
 			     src)
-		      (lambda ()
- 			 (read-svg-img id prefix attrs (current-input-port)))))
+		      (lambda (port) (read-svg-img id prefix attrs port src))))
 	      (style0 (format "display: ~a; position: relative; ~a" display style))
 	      (style1 (cond
 			 (width
@@ -492,7 +532,7 @@
 			  style1))))
 	  (<DIV> :style style2 :class class
 	     (instantiate::xml-svg
-		(markup 'dummy)
-		(id 'dummy)
+		(markup 'svg:img)
+		(id (gensym 'svg:img))
 		(attributes '())
 		(body (list img))))))))

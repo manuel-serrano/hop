@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Sat Apr 18 07:11:09 2009 (serrano)                */
+#*    Last change :  Tue May  5 11:20:10 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Generic Makefile to build Hop weblets.                           */
@@ -29,6 +29,7 @@ DASHBOARDPNG=@DASHBOARDPNG@
 
 FILES=$(SOURCES) \
   etc/logo.png etc/favicon.png etc/$(HZ).wiki.in etc/weblet.info.in \
+  etc/doc.png etc/prefs.png \
   etc/homepage/01-homepage.wiki etc/homepage/01-homepage.png \
   $(DASHBOARDPNG) \
   Makefile

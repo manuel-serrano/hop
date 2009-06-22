@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Mon Mar 23 11:59:11 2009 (serrano)                */
+;*    Last change :  Wed Jun 10 20:23:24 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -58,6 +58,7 @@
       ((<example>) <WIKI-EXAMPLE>)
       ((<code>) <WIKI-CODE>)
       ((<share>) <WIKI-SHARE>)
+      ((<share-public>) <WIKI-SHARE-PUBLIC>)
       ((<rc>) <WIKI-RC>)))
 
 ;*---------------------------------------------------------------------*/
@@ -246,10 +247,34 @@
 	    (<FLHEAD> file)
 	    (with-input-from-file path
 	       (lambda ()
-		  (<PRE>
-		     :class "source"
+		  (<PRE> :class "source"
 		     (html-string-encode
 		      (read-string (current-input-port))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <WIKI-SHARE-PUBLIC> ...                                          */
+;*---------------------------------------------------------------------*/
+(define (<WIKI-SHARE-PUBLIC> port file body)
+   (let ((path (make-file-name (hop-share-directory) file)))
+      (<FL>
+	 (<FLITEM>
+	    (<FLHEAD> file)
+	    (with-input-from-file path
+	       (lambda ()
+		  (let* ((r (read-string (current-input-port)))
+			 (p "/* <public> */\n")
+			 (i (string-contains r p)))
+		     (if (not i)
+			 (<PRE> :class "source" (html-string-encode r))
+			 (let* ((p2 "/* </public> */")
+				(j (string-contains r p2 i))
+				(s (substring r
+					      (+fx i (string-length p))
+					      (if (not j)
+						  (string-length r)
+						  (-fx j 1)))))
+			    (<PRE> :class "source"
+			       (html-string-encode s)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WIKI-RC> ...                                                    */

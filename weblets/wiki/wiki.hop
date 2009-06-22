@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Apr 17 09:33:06 2009 (serrano)                */
+;*    Last change :  Fri Jun 19 14:00:49 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -29,7 +29,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    wiki ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define-service (wiki #!optional path)
+(define-service (wiki #!key path)
    (let ((req (current-request)))
       (if (string? path)
 	  (if (authorized-path? req path)
@@ -370,4 +370,3 @@
 	       :onclick ~(with-hop $(wiki/edit/editor file editor))
 	       (basename editor))
 	    " ]")))
-   

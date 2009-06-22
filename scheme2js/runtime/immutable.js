@@ -266,6 +266,12 @@ function sc_isSubstring_at(s1, s2, i) {
     return s2 == s1.substring(i, i+ s2.length);
 }
 
+/*** META ((export substring=?))
+*/
+function sc_isSubstring(s1, s2) {
+    return s2 == s1.substring(0, s2.length);
+}
+
 /*** META ((export #t)
            (peephole (infix 0 #f "+" "''")))
 */
@@ -343,3 +349,48 @@ function sc_stringSplit(s, sep) {
 	return sc_vector2list(s.split(sep));
     return sc_vector2list(s.split(sc_pregexpCreateCharsetMatcher(sep)));
 }
+
+/*** META ((export #t)) */
+function sc_stringIndex(s, cset, start) {
+   var res;
+   if (!start) start = 0;
+
+   if (cset instanceof sc_Char) {
+      res = s.indexOf(sc_char2string(cset), start);
+      return res >= 0 ? res : false;
+   }
+   if (cset.length == 1) {
+      res = s.indexOf(cset, start);
+      return res >= 0 ? res : false;
+   } else {
+      for (var i = start; i < s.length; i++ ) {
+	 if (cset.indexOf(s.charAt(i)))
+	    return i;
+      }
+
+      return false;
+   }
+}
+
+/*** META ((export #t)) */
+function sc_stringIndexRight(s, cset, start) {
+   var res;
+   if (!start) start = s.length - 1;
+   
+   if (cset instanceof sc_Char) {
+      res = s.lastIndexof(sc_char2string(cset), start);
+      return res >= 0 ? res : false;
+   }
+   if (cset.length == 1) {
+      res = s.lastIndexOf(cset, start);
+      return res >= 0 ? res : false;
+   } else {
+      for (var i = start; i >= 0; i-- ) {
+	 if (cset.indexOf(s.charAt(i)))
+	    return i;
+      }
+
+      return false;
+   }
+}
+

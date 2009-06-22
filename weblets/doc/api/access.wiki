@@ -213,8 +213,8 @@ intercepted. Here are the meaning of its optional arguments:
 
   * :password - The user encrypted password. This encryption should
  be computed using the
- ,(<A> :href (format "http://localhost:~a/hop/password" (hop-port))
-       (<SPAN> :style "font-variant: small-caps" "Password")) weblet.
+ ,(<A> :href (format "http://localhost:~a/hop/epassword" (hop-port))
+       (<SPAN> :style "font-variant: small-caps" "EPassword")) weblet.
   * :groups - The list of groups the user belongs to.
   * :directories - The value of this option should either be:
     * ++#f++, no directory can be visited by this user.
@@ -269,7 +269,7 @@ This function returns a user named ++name++ whose encrypted password
 is ++password++. If such user is not found, the function returns ++#f++.
 
 ~~ Example:
-  
+
   (find-user "admin" "75874d556834ccb5361316184780089c")
 
 </function>

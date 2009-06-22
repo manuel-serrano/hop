@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-login.hss               */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-login.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Mar  9 16:52:54 2008                          */
-/*    Last change :  Tue Jun 10 05:55:52 2008 (serrano)                */
-/*    Copyright   :  2008 Manuel Serrano                               */
+/*    Last change :  Sat Jun  6 19:04:52 2009 (serrano)                */
+/*    Copyright   :  2008-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop login                                                        */
 /*=====================================================================*/
@@ -13,6 +13,14 @@
 /*    The module                                                       */
 /*---------------------------------------------------------------------*/
 $(module hoplogin_hss)
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type hop-login-panel "div.hop-login-panel")
+$(define-hss-type hop-login "div.hop-login-panel table.hop-login-main-table")
+$(define-hss-type hop-login-message "div.hop-login-panel td.hop-login-message")
+$(define-hss-type hop-login-logo "div.hop-login-panel div.hop-login-logo")
 
 /*---------------------------------------------------------------------*/
 /*    login                                                            */

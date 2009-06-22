@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Apr 21 11:52:04 2008                          */
-/*    Last change :  Sun Apr 19 07:31:31 2009 (serrano)                */
+/*    Last change :  Fri Jun  5 10:06:37 2009 (serrano)                */
 /*    Copyright   :  2008-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    PREFS client-side runtime.                                       */
@@ -90,7 +90,7 @@ function hop_prefs_valid( id ) {
 function hop_prefs_save( id, file ) {
    var el = hop_is_html_element( id ) ? id : document.getElementById( id );
 
-   if( !el ) hop_error( "preferences-save: cannot find element `" + id + "'" );
+   if( !el ) sc_error( "preferences-save", "cannot find element", id );
    
    if( hop_prefs_valid( el ) ||
        confirm( "Some values or not validated, save anyway?" ) ) {

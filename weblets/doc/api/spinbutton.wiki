@@ -1,0 +1,111 @@
+<doc> SpinButton widget
+
+== Description ==
+
+The markup ++<SPINBUTTON>++ implements //spin buttons// which are range bounded
+integer selector. These buttons are be created on server-side //and// 
+client-side. ++<SPINBUTTON>++ can be used when there is not sufficient
+space for using a ++<SLIDER>++.
+
+
+== Synopsis ==
+
+=== Server & client ===
+
+  (<SPINBUTTON> arg ...)
+
+
+=== client ===
+
+  (hop-spinbutton-value spin)
+  (hop-spinbutton-value-set! spin val)
+
+
+=== Requirements ===
+
+Client codes using //spin buttons// need to load the client-side
+code ++hop-spinbutton++.
+
+
+  (<HEAD> :include "hop-spinbutton")
+
+
+== Examples ==
+
+<example><SPINBUTTON></example>
+
+== Server & Client Definitions ==
+<server>
+<client>
+
+=== ++<SPINBUTTON>++ ===
+<markup> <SPINBUTTON>
+
+<arguments>
+^  attributes  ^   type      ^   default    ^  short description         ^
+| :id          |  string     |  //random//  | element identifier.        |
+| :min         |  integer    |  0           | the range lowest bound.    |
+| :max         |  integer    |  100         | the range lowest bound.    |
+| :value       |  integer    |  0           | the initial value.         |
+| :onchange    |  procedure  |  _           | a procedure to invoke on value changes.         |
+</arguments>
+
+This function creates a //spin button//.
+
+~~ The argument :onchange is a script that is invoked each time the
+spinbutton is changed via the GUI. That is calling the function
+++spinbutton-value-set!++ **does not** invoke automatically :onchange. In
+the scope of that script, the variable ++this++ is bound to the
+//spinbutton// whose value can be retrieve by the means of the function
+++spinbutton-value++.
+
+</markup>
+
+</client>
+</server>
+
+== Client Definitions ==
+<client>
+
+=== ++(spinbutton-value spin)++ ===
+=== ++(spinbutton-value-set! spin val)++ ===
+<procedure> spinbutton-value
+<procedure> spinbutton-value-set!
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| spinbutton  |  spinbutton or string   | the spin button.       |
+| val         |  integer                | the new spin button value.  |
+</arguments>
+
+These functions get and set the value of a //spin button//.
+
+Example:
+
+  (let ((but (<SPINBUTTON> :max 10 :min -10 
+                 :onchange ~(alert (spinbutton-value this)))))
+    (<BUTTON> :onclick ~(spinbutton-value-set! $but 0) "Reset"))
+
+
+</procedure>
+</procedure>
+
+</client>
+
+== Style ==
+<style>
+
+=== ++hop-spinbutton.hss++ ===
+
+The file ++hop-spinbutton.hss++ contains the default graphical configuration.
+It is defined as:
+
+,(<P>)
+<share-public>hop-spinbutton.hss</share-public>
+
+</style>
+
+== See also ==
+<see-also><SPINBUTTON></see-also>
+
+</doc>

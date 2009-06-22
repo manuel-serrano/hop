@@ -10,6 +10,9 @@ parsing URLs.
 === Server ===
 
   (url-encode url)
+  (url-path-encode url)
+  (url-decode url)
+  (url-decode! url)
   (url-parse url)
   (make-hop-url-name abspath)
 
@@ -41,13 +44,38 @@ is similar to the one used for encoding XML strings
 
 ~~ Example:
 
-  (url-encode "www.kernel.org?a0=val0&a1=val1&a2=val2")
+  (url-encode "http://www.kernel.org:80?a0=val0&a1=val1&a2=val2")
 ,(begin "&#8658;")
-,(<OBJ->STRING> (url-encode "www.kernel.org?a0=val0&a1=val1&a2=val2"))
+,(<OBJ->STRING> (url-encode "http://www.kernel.org:80?a0=val0&a1=val1&a2=val2"))
 
-  (url-encode "www.kernel.org \"foo\""
+  (url-encode "http://www.kernel.org/\"foo\""
 ,(begin "&#8658;")
-,(<OBJ->STRING> (url-encode "www.kernel.org \"foo\""))
+,(<OBJ->STRING> (url-encode "http://www.kernel.org/\"foo\""))
+</function>
+
+=== ++(url-path-encode url) ===
+<function> url-path-encode
+
+<arguments>
+^  arguments  ^   type          ^  short description             ^
+| url         |  string         | the URL.                       |
+</arguments>
+
+Encodes a URL path according to the HTTP conventions so that characters 
+are no longer interpreted as arguments delimiters. Since the encoding
+is similar to the one used for encoding XML strings 
+(see ++xml-string-encode++), encoded URLs can be decoded using
+++xml-string-decode++.
+
+~~ Example:
+
+  (url-path-encode "www.kernel.org?a0=val0&a1=val1&a2=val2")
+,(begin "&#8658;")
+,(<OBJ->STRING> (url-path-encode "www.kernel.org?a0=val0&a1=val1&a2=val2"))
+
+  (url-path-encode "www.kernel.org/\"foo\""
+,(begin "&#8658;")
+,(<OBJ->STRING> (url-path-encode "www.kernel.org/\"foo\""))
 </function>
 
 === ++(url-parse url) ===
@@ -78,6 +106,37 @@ value composed of:
      (url-parse "https://foo:bar@nowhere.org:4567/tmp/")
      (list proto uinfo host port path)))
 </function> 
+
+=== ++(url-decode url) ===
+=== ++(url-decode! url) ===
+<function> url-decode
+<function> url-decode!
+
+<arguments>
+^  arguments  ^   type          ^  short description             ^
+| url         |  string         | the URL.                       |
+</arguments>
+
+Decodes an encoded URL according to the HTTP conventions so that characters 
+are no longer interpreted as arguments delimiters. Since the encoding
+is similar to the one used for encoding XML strings 
+(see ++xml-string-encode++), encoded URLs can be decoded using
+++xml-string-decode++.
+
+~~ ++url-decode!++ modifies its argument while ++url-decode++ creates a new
+string.
+
+~~ Example:
+
+  (url-decode ,(url-encode "www.kernel.org?a0=val0&a1=val1&a2=val2"))
+,(begin "&#8658;")
+,(<OBJ->STRING> "www.kernel.org?a0=val0&a1=val1&a2=val2")
+
+  (url-encode ,(url-encode "www.kernel.org/\"foo\""))
+,(begin "&#8658;")
+,(<OBJ->STRING> "www.kernel.org/\"foo\"")
+</function>
+</function>
 
 === ++(make-hop-url-name abspath) ===
 <function> make-hop-url-name

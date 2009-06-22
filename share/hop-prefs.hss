@@ -1,13 +1,26 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-prefs.hss               */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-prefs.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Apr 21 11:33:24 2008                          */
-/*    Last change :  Fri Aug 15 14:26:47 2008 (serrano)                */
-/*    Copyright   :  2008 Manuel Serrano                               */
+/*    Last change :  Sat Jun  6 19:05:19 2009 (serrano)                */
+/*    Copyright   :  2008-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for <PREFS> markups                                          */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type prefs "table.hop-prefs")
+$(define-hss-type prlabel "table.hop-prefs td.hop-prefs-label")
+$(define-hss-type prsep "table.hop-prefs td.hop-prefs-separator")
+$(define-hss-type pr "table.hop-prefs tr.hop-pr")
+$(define-hss-type pr-name "table.hop-prefs td.hop-pr-name")
+$(define-hss-type pr-editor "table.hop-prefs td.hop-pr-editor")
+$(define-hss-type pr-editor-expr "table.hop-prefs input.hop-pr-editor-expr")
+$(define-hss-type pr-editor-bool "table.hop-prefs table.hop-pr-editor-bool")
+$(define-hss-type pr-editor-text "table.hop-prefs textarea.hop-pr-editor-text")
 
 /*---------------------------------------------------------------------*/
 /*    <PREFS>                                                          */

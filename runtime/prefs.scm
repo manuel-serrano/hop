@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Sun Apr 19 07:32:32 2009 (serrano)                */
+;*    Last change :  Wed May 27 12:10:48 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -181,6 +181,9 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    value->string ...                                                */
+;*    -------------------------------------------------------------    */
+;*    This function has to check the values type because ad manually   */
+;*    edited preference file may have corrupted types.                 */
 ;*---------------------------------------------------------------------*/
 (define (value->string type val)
    (let loop ((type type)
@@ -189,24 +192,40 @@
       (case type
 	 ((string path)
 	  (if kwote
-	      (if (eq? val #unspecified)
-		  "\"\""
+	      (cond
+		 ((eq? val #unspecified)
+		  "\"\"")
+		 ((string? val)
 		  (string-append "\"" (string-for-read val) "\"") )
-	      (if (eq? val #unspecified)
-		  ""
-		  val)))
+		 (else
+		  (bigloo-type-error 'preferences "string" val)))
+	      (cond
+		 ((eq? val #unspecified)
+		  "")
+		 ((string? val)
+		  val)
+		 (else
+		  (bigloo-type-error 'preferences "string" val)))))
 	 ((symbol)
-	  (if (eq? val #unspecified)
-	      '||
-	      val))
+	  (cond
+	     ((symbol? val)
+	      val)
+	     ((eq? val #unspecified)
+	      '||)
+	     (else
+	      (bigloo-type-error 'preferences "symbol" val))))
 	 ((expr quote)
 	  (let ((s (open-output-string)))
 	     (write val s)
 	     (close-output-port s)))
 	 ((number integer)
-	  (if (eq? val #unspecified)
-	      0
-	      (number->string val)))
+	  (cond
+	     ((eq? val #unspecified)
+	      0)
+	     ((number? val)
+	      (number->string val))
+	     (else
+	      (bigloo-type-error 'preferences "number" val))))
 	 ((bool)
 	  (if val "true" "false"))
 	 (else
@@ -229,9 +248,13 @@
 			       val)
 		     (close-output-port s))))
 	     ((enum  ?a . ?-)
-	      (if (eq? val #unspecified)
-		  (symbol->string a)
-		  (symbol->string val)))
+	      (cond
+		 ((eq? val #unspecified)
+		  (symbol->string a))
+		 ((symbol? val)
+		  (symbol->string val))
+		 (else
+		  (bigloo-type-error 'preferences "enum" val))))
 	     ((text ?- . ?-)
 	      val)
 	     (else

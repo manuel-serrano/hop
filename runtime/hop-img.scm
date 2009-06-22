@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/runtime/hop-img.scm              */
+;*    serrano/prgm/project/hop/2.0.x/runtime/hop-img.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Sun Mar  1 16:56:25 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 05:28:06 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -28,7 +28,8 @@
 	    __hop_hop
 	    __hop_user
 	    __hop_cache
-	    __hop_charset)
+	    __hop_charset
+	    __hop_priv)
 
    (export  (<IMG> . ::obj)
 	    (img-base64-encode::bstring ::bstring)))
@@ -107,46 +108,43 @@
 ;*---------------------------------------------------------------------*/
 ;*    IMG ...                                                          */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <IMG> ((id #unspecified string)
-			    (inline #f boolean)
-			    (alt #f)
-			    (src #unspecified)
-			    (attributes)
-			    body)
+(define-markup <IMG> ((id #unspecified string)
+		      (inline #f boolean)
+		      (alt #f)
+		      (src #unspecified)
+		      (attributes)
+		      body)
    
    (define (plain-img src cssrc)
       (instantiate::xml-empty-element
 	 (markup 'img)
 	 (id (xml-make-id id 'img))
-	 (attributes (cons* `(src . ,cssrc)
-			    `(alt . ,(or alt (basename src)))
-			    attributes))
+	 (attributes `(:src ,cssrc :alt ,(or alt (basename src)) ,@attributes))
 	 (body '())))
    
    (define (onerror-img attributes src)
       (let* ((val (format "if( !this.onhoperror ) { this.onhoperror = true; hop_deinline_image(this, ~s) }" src))
-	     (onerror (when (pair? attributes) (assq 'onerror attributes)))
-	     (oval (when (pair? onerror) (cdr onerror))))
+	     (onerror (plist-assq :onerror attributes))
+	     (oval (when onerror (cadr onerror))))
 	 (cond
 	    ((string? oval)
-	     (set-cdr! onerror (string-append oval "; " val))
-	     attributes)
+	     (let ((nval (string-append oval "; " val)))
+		(set-car! (cdr onerror) nval)
+		attributes))
 	    ((xml-tilde? oval)
-	     (set-cdr! onerror (string-append (xml-tilde->statement oval)
-					      "\n"
-					      val))
-	     attributes)
+	     (let ((nval (string-append (xml-tilde->statement oval) "\n" val)))
+		(set-car! (cdr onerror) nval)
+		attributes))
 	    (else
-	     (cons `(onerror . ,val) attributes)))))
+	     `(:onerror ,val ,@attributes)))))
    
    (define (inline-img src cssrc isrc)
       (if isrc
 	  (instantiate::xml-empty-element
 	     (markup 'img)
 	     (id (xml-make-id id 'img))
-	     (attributes (cons* `(src . ,isrc)
-				`(alt . ,(or alt (basename src)))
-				(onerror-img attributes src)))
+	     (attributes `(:src ,isrc :alt ,(or alt (basename src))
+				,@(onerror-img attributes src)))
 	     (body '()))
 	  (plain-img src cssrc)))
    
@@ -155,8 +153,7 @@
        (instantiate::xml-empty-element
 	  (markup 'img)
 	  (id (xml-make-id id 'img))
-	  (attributes (cons `(alt . ,alt) attributes))
-	  (initializations (list (cons 'src src)))
+	  (attributes `(:src ,src :alt ,alt ,@attributes))
 	  (body '())))
       ((string? src)
        (let ((cssrc (charset-convert src (hop-locale) (hop-charset))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Apr  8 17:44:11 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 08:49:44 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -27,14 +27,8 @@
 	    __hop_http-error
 	    __hop_http-lib)
    
-   (with    __hop_hop-notepad
-	    __hop_hop-inline
-	    __hop_hop-paned
-	    __hop_hop-slider
-	    __hop_hop-tabslider
-	    __hop_hop-tree
+   (with    __hop_hop-inline
 	    __hop_hop-extra
-	    __hop_hop-foldlist
 	    __hop_event)
    
    (export  (generic thread-request ::obj)
@@ -287,7 +281,7 @@
 			   (close-input-port p)
 			   (suc s))
 			(if (procedure? fail)
-			    (fail url #f)
+			    (fail url)
 			    (raise (instantiate::&io-error
 				      (proc 'with-url)
 				      (msg "Cannot open url")
@@ -338,6 +332,7 @@
 	     ": " path "\n")
    (with-trace 2 'with-hop
       (trace-item "host=" host " port=" port " path=" path " abspath=" abspath)
+      (trace-item "authorization=" authorization)
       (cond
 	 ((and (procedure? fail) (not (correct-arity? fail 1)))
 	  (error 'with-hop "Illegal fail handler" fail))
@@ -359,20 +354,21 @@
 		 (with-handler
 		    (lambda (e)
 		       (let* ((strerr (if (&error? e)
-					 (let ((op (open-output-string)))
-					    (with-error-to-port op
-					       (lambda ()
-						  (error-notify e)))
-					    (close-output-port op))
-					 "connection refused"))
+					  (let ((op (open-output-string)))
+					     (with-error-to-port op
+						(lambda ()
+						   (error-notify e)))
+					     (close-output-port op))
+					  "connection refused"))
 			      (ip (open-input-string strerr)))
 			  (fail (instantiate::xml-http-request
 				   (status 501)
 				   (header '())
 				   (input-port ip)))))
-		    (http-send-request req hdl))
-		 (http-send-request req hdl))))))
-   #unspecified)
+		    (let ((v (http-send-request req hdl)))
+		       (if sync v #unspecified)))
+		 (let ((v (http-send-request req hdl)))
+		    (if sync v #unspecified))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fail-or-raise ...                                                */

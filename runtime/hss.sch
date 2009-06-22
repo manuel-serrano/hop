@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr  3 15:33:01 2009                          */
-;*    Last change :  Fri Apr  3 15:34:23 2009 (serrano)                */
+;*    Last change :  Sat Jun  6 16:16:33 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the HSS macros                                 */
@@ -17,4 +17,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    define-hss-rule ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-expander define-hss-rule expand-define-hss-rule)
+#;(define-expander define-hss-rule expand-define-hss-rule)
+
+;*---------------------------------------------------------------------*/
+;*    define-hss-type ...                                              */
+;*---------------------------------------------------------------------*/
+(define-expander define-hss-type hop-define-hss-type-expander)
+
+;*---------------------------------------------------------------------*/
+;*    define-hss-property ...                                          */
+;*---------------------------------------------------------------------*/
+(define-expander define-hss-property hop-define-hss-property-expander)

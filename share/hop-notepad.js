@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-notepad.js              */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-notepad.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Sat May 31 06:53:55 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Fri Jun  5 12:00:21 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
 /*=====================================================================*/
@@ -46,19 +46,19 @@ function hop_notepad_inner_select( np, to, callback ) {
    /* invoke remote tab */
    if( tabs != undefined ) {
       if( tabs.childNodes[ to ].lang == "delay" ) {
-	 hop( np.onkeyup()( to ),
-	      function( html ) {
-		 hop_innerHTML_set( bodies.childNodes[ to ], html );
-		 hop_notepad_inner_toggle( np, to, tabs, bodies );
+	 with_hop( np.onkeyup()( to ),
+		   function( html ) {
+		      hop_innerHTML_set( bodies.childNodes[ to ], html );
+		      hop_notepad_inner_toggle( np, to, tabs, bodies );
 		 
-		 if( callback ) callback();
-		 /* the tab onselect handler */
-		 if( tabs.childNodes[ to ].onselect )
-		    tabs.childNodes[ to ].onselect();
-		 /* the global onchange handler */
-		 if( np.onchange )
-		    np.onchange( tabs.childNodes[ to ] );
-	      } );
+		      if( callback ) callback();
+		      /* the tab onselect handler */
+		      if( tabs.childNodes[ to ].onselect )
+			 tabs.childNodes[ to ].onselect();
+		      /* the global onchange handler */
+		      if( np.onchange )
+			 np.onchange( tabs.childNodes[ to ] );
+		   } );
       } else {
 	 hop_notepad_inner_toggle( np, to, tabs, bodies );
 	 

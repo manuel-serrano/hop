@@ -48,5 +48,8 @@
 		       rev-imports
 		       (cons header rev-others))))))))
 
+;; precompiles the given clauses, so they can be used as "module-header" for
+;; expressions that are then compiled by compile-scheme-expression.
+;; clauses should be something like '(import m1), etc.
 (define (compile-scheme-module clauses)
    (list (precompile-headers clauses)))

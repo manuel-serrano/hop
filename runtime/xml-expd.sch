@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/xml-expd.sch             */
+;*    serrano/prgm/project/hop/2.0.x/runtime/xml-expd.sch              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Tue Oct 28 08:59:46 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Tue Jun 16 15:07:54 2009 (serrano)                */
+;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
 ;*=====================================================================*/
@@ -16,43 +16,26 @@
    `(define (,name . args)
        (let loop ((args args)
 		  (attr ',attr)
-		  (init '())
 		  (body '()))
 	  (cond
 	     ((null? args)
-	      ,(if (null? exp)
-		   `(,(symbol-append 'instantiate:: type)
-		     (markup ',el)
-		     (attributes attr)
-		     (initializations init)
-		     (body (reverse! body)))
-		   `(begin ,@exp)))
+	      (let ((attr (reverse attr)))
+		 ,(if (null? exp)
+		      `(,(symbol-append 'instantiate:: type)
+			(markup ',el)
+			(attributes attr)
+			(body (reverse! body)))
+		      `(begin ,@exp))))
 	     ((keyword? (car args))
-	      (cond
-		 ((null? (cdr args))
-		  (loop '()
-			attr
-			(cons (cons (keyword->symbol (car args)) #t) init)
-			body))
-		 ((and (xml-tilde? (cadr args))
-		       (not (xml-event-handler-attribute? (car args))))
-		  (loop (cddr args)
-			attr
-			(cons (cons (keyword->symbol (car args)) (cadr args))
-			      init)
-			body))
-		 (else
-		  (loop (cddr args)
-			(cons (cons (keyword->symbol (car args)) (cadr args))
-			      attr)
-			init
-			body))))
+	      (if (null? (cdr args))
+		  (loop '() (cons* #t (car args) attr) body)
+		  (loop (cddr args) (cons* (cadr args) (car args) attr) body)))
 	     ((null? (car args))
-	      (loop (cdr args) attr init body))
+	      (loop (cdr args) attr body))
 	     ((pair? (car args))
-	      (loop (append (car args) (cdr args)) attr init body))
+	      (loop (append (car args) (cdr args)) attr body))
 	     (else
-	      (loop (cdr args) attr init (cons (car args) body)))))))
+	      (loop (cdr args) attr (cons (car args) body)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    define-xml-constructor-with-id ...                               */
@@ -61,7 +44,6 @@
    `(define (,name . args)
        (let loop ((args args)
 		  (attr ',attr)
-		  (init '())
 		  (body '())
 		  (id   #unspecified))
 	  (cond
@@ -70,8 +52,7 @@
 		   `(,(symbol-append 'instantiate:: type)
 		     (markup ',el)
 		     (id (xml-make-id id ',el))
-		     (attributes attr)
-		     (initializations init)
+		     (attributes (reverse! attr))
 		     (body (reverse! body)))
 		   `(begin ,@exp)))
 	     ((keyword? (car args))
@@ -79,36 +60,19 @@
 		 ((null? (cdr args))
 		  (if (eq? (car args) :id)
 		      (error ',name ":id value missing" (car args))
-		      (loop '()
-			    attr
-			    (cons (cons (keyword->symbol (car args)) #t) init)
-			    body
-			    id)))
+		      (loop '() (cons* #t (car args) attr) body id)))
 		 ((eq? (car args) :id)
 		  (if (string? (cadr args))
-		      (loop (cddr args) attr init body (cadr args))
+		      (loop (cddr args) attr body (cadr args))
 		      (bigloo-type-error ',name "string" (cadr args))))
-		 ((and (xml-tilde? (cadr args))
-		       (not (xml-event-handler-attribute? (car args))))
-		  (loop (cddr args)
-			attr
-			(cons (cons (keyword->symbol (car args)) (cadr args))
-			      init)
-			body
-			id))
 		 (else
-		  (loop (cddr args)
-			(cons (cons (keyword->symbol (car args)) (cadr args))
-			      attr)
-			init
-			body
-			id))))
+		  (loop (cddr args) (cons* (cadr args) (car args) attr) body id))))
 	     ((null? (car args))
-	      (loop (cdr args) attr init body id))
+	      (loop (cdr args) attr body id))
 	     ((pair? (car args))
-	      (loop (append (car args) (cdr args)) attr init body id))
+	      (loop (append (car args) (cdr args)) attr body id))
 	     (else
-	      (loop (cdr args) attr init (cons (car args) body) id))))))
+	      (loop (cdr args) attr (cons (car args) body) id))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-define-xml ...                                            */
@@ -308,11 +272,7 @@
 					    (set! ,id #t)
 					    (,loop '()))
 					 (begin
-					    (set! ,id
-						  (cons (cons
-							 (keyword->symbol
-							  (car ,args))
-							 (cadr ,args)) ,id))
+					    (set! ,id (cons* (cadr ,args) (car ,args) ,id))
 					    (,loop (cddr ,args))))))
 				  ((? symbol?)
 				   `((not (keyword? (car ,args)))
@@ -322,11 +282,10 @@
 				     (,loop (cdr ,args))))
 				  (else
 				   `((pair? (car ,args))
-				     (,loop
-				      (append (car ,args) (cdr ,args)))))))
+				     (,loop (append (car ,args) (cdr ,args)))))))
 			    bindings)
 		     (else
-		      (error ',m "Illegal argument" (car ,args)))))))))   
+		      (error ',m "Illegal argument" (car ,args)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-define-xml-compound ...                                   */
@@ -355,4 +314,45 @@
    (match-case x
       ((?- ?id ?bindings . ?body)
        (e (evepairify (expand-define-xml-compound id bindings body) x) e))
-      (error 'define-xml-compound "Illegal form" x)))
+      (else
+       (error 'define-xml-compound "Illegal form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    expand-define-markup ...                                         */
+;*---------------------------------------------------------------------*/
+(define (expand-define-markup id bindings body)
+   (let ((s (symbol->string id)))
+      (if (and (>fx (string-length s) 2)
+	       (char=? (string-ref s 0) #\<)
+	       (char=? (string-ref s (-fx (string-length s) 1)) #\>))
+	  (let ((el (string->symbol (substring s 1 (-fx (string-length s) 1)))))
+	     (define-compound id el bindings body))
+	  (error 'define-markup "Illegal identifier" id))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-server-define-markup ...                                     */
+;*---------------------------------------------------------------------*/
+(define (hop-server-define-markup x e)
+   (match-case x
+      ((?- ?id ?bindings . ?body)
+       (e (evepairify (expand-define-markup id bindings body) x) e))
+      (else
+       (error 'define-markup "Illegal form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-client-define-markup ...                                     */
+;*---------------------------------------------------------------------*/
+(define (hop-client-define-markup x e)
+   (match-case x
+      ((?- ?id ?bindings . ?body)
+       (let* ((id2 (symbol-append '< id '>))
+	      (nf (expand-define-markup id2 bindings body))
+	      (nm `(define-macro (,id . args)
+		      (list 'quasiquote
+			    (,id2 ,(list 'unquote-splicing 'args)))))
+	      (nx `(begin ,nf ,nm))
+	      (nx nm))
+	  (pp nx)
+	  (e (evepairify nx x) e)))
+      (else
+       (error 'define-markup "Illegal form" x))))

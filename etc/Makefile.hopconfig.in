@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/etc/Makefile.hopconfig.in        */
+#*    serrano/prgm/project/hop/2.0.x/etc/Makefile.hopconfig.in         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Fri Nov 28 10:40:12 2008 (serrano)                */
-#*    Copyright   :  2004-08 Manuel Serrano                            */
+#*    Last change :  Mon Jun 22 09:29:30 2009 (serrano)                */
+#*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
 #*=====================================================================*/
@@ -22,6 +22,8 @@ HOPDATE		= @DATE@
 #*---------------------------------------------------------------------*/
 # the Bigloo compiler
 BIGLOO          = @BIGLOO@
+HOPC		= @HOPC@
+HFLAGS		= --bigloo=$(BIGLOO) --
 BACKEND         = @BACKEND@
 BIGLOOLIBDIR	= @BIGLOOLIBDIR@
 CIGLOO		= @CIGLOO@
@@ -159,6 +161,16 @@ ifneq (,$(findstring s,$(MAKEFLAGS)))
 compile3 = echo "$($(1)) $($(2)) $($(3)) $($(4)) $(5)"; $($(1)) $($(2)) $($(3)) $($(4)) $(5)
 else
 compile3 = if [ "$$TERM" = "rxvt" ]; then echo "$$""$(1) $$""$(2) $$""$(3) $$""$(4) [0m[1;30m$(5)[0m"; else echo "$($(1)) $($(2)) $($(3)) $($(4)) $(5)"; fi; $($(1)) $($(2)) $($(3)) $($(4)) $(5)
+endif
+endif
+
+ifeq ($(findstring -n,$(filter-out --no-print-directory,$(MAKEFLAGS))),-n)
+compile3b = $($(1)) $(5) $($(2)) $($(3)) $($(4))
+else
+ifneq (,$(findstring s,$(MAKEFLAGS)))
+compile3b = echo "$($(1)) $(5) $($(2)) $($(3)) $($(4))"; $($(1)) $(5) $($(2)) $($(3)) $($(4)) 
+else
+compile3b = if [ "$$TERM" = "rxvt" ]; then echo "$$""$(1) [0m[1;30m$(5)[0m $$""$(2) $$""$(3) $$""$(4)"; else echo "$($(1)) $(5) $($(2)) $($(3)) $($(4))"; fi; $($(1)) $(5) $($(2)) $($(3)) $($(4)) 
 endif
 endif
 

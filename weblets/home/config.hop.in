@@ -59,7 +59,7 @@
 (define-parameter home-hop-devel-version
    (let ((fname (make-file-name (hop-rc-directory) "DEVEL.version")))
       (when (file-exists? fname)
-	 (with-input-from-file fname read-string))))
+	 (with-input-from-file fname read-line))))
 
 ;*---------------------------------------------------------------------*/
 ;*    home-articles-url-base ...                                       */

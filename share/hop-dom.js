@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.11.x/share/hop-dom.js                 */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-dom.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Mar 10 12:10:41 2009 (serrano)                */
+/*    Last change :  Tue Jun 16 10:59:31 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -30,7 +30,7 @@ function dom_add_child( node, e ) {
 	    dom_add_child( node, e.cdr );
 	 } else {
 	    if( e ) {
-	       alert( "dom_add_child: illegal child node -- " + e );
+	       sc_error( "dom_add_child", "illegal child node", e );
 	    }
 	 }
       }
@@ -126,6 +126,9 @@ function dom_create( tag, args ) {
 		  }
 	       } else {
 		  el.setAttribute( prop, at + "" );
+		  try {
+		     el[ prop ] = at;
+		  } catch( _ ) { ; }
 	       }
 	    }
 	    i += 2;
@@ -138,6 +141,39 @@ function dom_create( tag, args ) {
 
    return el;
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_dom_create_custom                                            */
+/*---------------------------------------------------------------------*/
+/*** META (define-macro (hop_dom_create_custom kons . args)
+	     (let loop ((args args)
+			(attrs '())
+			(body '())
+			(listeners '()))
+		(cond
+		   ((null? args)
+		    (let ((v (gensym)))
+		       `(let ((,v (,kons (list ,@(reverse! attrs))
+		                         (list ,@(reverse! body)))))
+			   ,@(map (lambda (listener)
+				     `(add-event-listener! ,v ,@listener))
+				  listeners)
+			   ,v)))
+		   ((or (null? (cdr args)) (not (keyword? (car args))))
+		    (loop (cdr args) attrs (cons (car args) body) listeners))
+		   ((string-prefix? "on" (keyword->string (car args)))
+		    (let ((s (keyword->string (car args))))
+		       (loop (cddr args)
+			     attrs
+			     body
+			     (cons (list (substring s 2 (string-length s))
+					 `(lambda (event) ,(cadr args)))
+				   listeners))))
+		   (else
+		    (loop (cddr args)
+			  (cons* (cadr args) (car args) attrs)
+			  body
+			  listeners))))) */
 
 /*---------------------------------------------------------------------*/
 /*    hop_dom_create                                                   */
@@ -181,6 +217,24 @@ function dom_add_head_script( pathname, id ) {
    if( id != undefined ) script.id = id;
    
    head.appendChild( script );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_create_lframe ...                                            */
+/*---------------------------------------------------------------------*/
+function hop_create_lframe( attrs, body ) {
+   var hc = sc_jsstring2keyword( "hssclass" );
+   var bd = dom_create( "div", hc, "hop-lfborder", body );
+   return dom_create( "div", hc, "hop-lframe", bd );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_create_lflabel ...                                           */
+/*---------------------------------------------------------------------*/
+function hop_create_lflabel( attrs, body ) {
+   var hc = sc_jsstring2keyword( "hssclass" );
+   var ct = dom_create( "span", body );
+   return dom_create( "div", hc, "hop-lflabel", ct );
 }
 
 /*---------------------------------------------------------------------*/
@@ -468,350 +522,14 @@ function dom_add_head_script( pathname, id ) {
 /*** META (define-macro (<HEAD> . args)
      `(hop_dom_create "head" ,@args)) */
 
-/* {*** META ((export <BASE>)) *}                                      */
-/* function dom_create_base() {                                        */
-/*    return dom_create( "base", arguments );                          */
-/* }                                                                   */
-/* {*** META ((export <BASEFONT>)) *}                                  */
-/* function dom_create_basefont() {                                    */
-/*    return dom_create( "basefont", arguments );                      */
-/* }                                                                   */
-/* {*** META ((export <BDO>)) *}                                       */
-/* function dom_create_bdo() {                                         */
-/*    return dom_create( "bdo", arguments );                           */
-/* }                                                                   */
-/* {*** META ((export <BIG>)) *}                                       */
-/* function dom_create_big() {                                         */
-/*    return dom_create( "big", arguments );                           */
-/* }                                                                   */
-/* {*** META ((export <BLOCKQUOTE>)) *}                                */
-/* function dom_create_blockquote() {                                  */
-/*    return dom_create( "blockquote", arguments );                    */
-/* }                                                                   */
-/* {*** META ((export <BODY>)) *}                                      */
-/* function dom_create_body() {                                        */
-/*    return dom_create( "body", arguments );                          */
-/* }                                                                   */
-/* {*** META ((export <BR>)) *}                                        */
-/* function dom_create_br() {                                          */
-/*    return dom_create( "br", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <BUTTON>)) *}                                    */
-/* function dom_create_button() {                                      */
-/*    return dom_create( "button", arguments );                        */
-/* }                                                                   */
-/* {*** META ((export <CANVAS>)) *}                                    */
-/* function dom_create_canvas() {                                      */
-/*    return dom_create( "canvas", arguments );                        */
-/* }                                                                   */
-/* {*** META ((export <CAPTION>)) *}                                   */
-/* function dom_create_caption() {                                     */
-/*    return dom_create( "caption", arguments );                       */
-/* }                                                                   */
-/* {*** META ((export <CENTER>)) *}                                    */
-/* function dom_create_center() {                                      */
-/*    return dom_create( "center", arguments );                        */
-/* }                                                                   */
-/* {*** META ((export <CITE>)) *}                                      */
-/* function dom_create_cite() {                                        */
-/*    return dom_create( "cite", arguments );                          */
-/* }                                                                   */
-/* {*** META ((export <CODE>)) *}                                      */
-/* function dom_create_code() {                                        */
-/*    return dom_create( "code", arguments );                          */
-/* }                                                                   */
-/* {*** META ((export <COL>)) *}                                       */
-/* function dom_create_col() {                                         */
-/*    return dom_create( "col", arguments );                           */
-/* }                                                                   */
-/* {*** META ((export <COLGROUP>)) *}                                  */
-/* function dom_create_colgroup() {                                    */
-/*    return dom_create( "colgroup", arguments );                      */
-/* }                                                                   */
-/* {*** META ((export <DD>)) *}                                        */
-/* function dom_create_dd() {                                          */
-/*    return dom_create( "dd", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <DEL>)) *}                                       */
-/* function dom_create_del() {                                         */
-/*    return dom_create( "del", arguments );                           */
-/* }                                                                   */
-/* {*** META ((export <DFN>)) *}                                       */
-/* function dom_create_dfn() {                                         */
-/*    return dom_create( "dfn", arguments );                           */
-/* }                                                                   */
-/* {*** META ((export <DIR>)) *}                                       */
-/* function dom_create_dir() {                                         */
-/*    return dom_create( "dir", arguments );                           */
-/* }                                                                   */
-/*                                                                     */
-/* function dom_create_div() {                                         */
-/*    return dom_create( "div", arguments );                           */
-/* }                                                                   */
-/* {*** META ((export <DL>)) *}                                        */
-/* function dom_create_dl() {                                          */
-/*    return dom_create( "dl", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <DT>)) *}                                        */
-/* function dom_create_dt() {                                          */
-/*    return dom_create( "dt", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <EM>)) *}                                        */
-/* function dom_create_em() {                                          */
-/*    return dom_create( "em", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <FIELDSET>)) *}                                  */
-/* function dom_create_fieldset() {                                    */
-/*    return dom_create( "fieldset", arguments );                      */
-/* }                                                                   */
-/* {*** META ((export <FONT>)) *}                                      */
-/* function dom_create_font() {                                        */
-/*    return dom_create( "font", arguments );                          */
-/* }                                                                   */
-/* {*** META ((export <FORM>)) *}                                      */
-/* function dom_create_form() {                                        */
-/*    return dom_create( "form", arguments );                          */
-/* }                                                                   */
-/* {*** META ((export <FRAME>)) *}                                     */
-/* function dom_create_frame() {                                       */
-/*    return dom_create( "frame", arguments );                         */
-/* }                                                                   */
-/* {*** META ((export <FRAMESET>)) *}                                  */
-/* function dom_create_frameset() {                                    */
-/*    return dom_create( "frameset", arguments );                      */
-/* }                                                                   */
-/* {*** META ((export <H1>)) *}                                        */
-/* function dom_create_h1() {                                          */
-/*    return dom_create( "h1", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <H2>)) *}                                        */
-/* function dom_create_h2() {                                          */
-/*    return dom_create( "h2", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <H3>)) *}                                        */
-/* function dom_create_h3() {                                          */
-/*    return dom_create( "h3", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <H4>)) *}                                        */
-/* function dom_create_h4() {                                          */
-/*    return dom_create( "h4", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <H5>)) *}                                        */
-/* function dom_create_h5() {                                          */
-/*    return dom_create( "h5", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <H6>)) *}                                        */
-/* function dom_create_h6() {                                          */
-/*    return dom_create( "h6", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <HR>)) *}                                        */
-/* function dom_create_hr() {                                          */
-/*    return dom_create( "hr", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <HTML>)) *}                                      */
-/* function dom_create_html() {                                        */
-/*    return dom_create( "html", arguments );                          */
-/* }                                                                   */
-/* {*** META ((export <I>)) *}                                         */
-/* function dom_create_i() {                                           */
-/*    return dom_create( "i", arguments );                             */
-/* }                                                                   */
-/* {*** META ((export <IFRAME>)) *}                                    */
-/* function dom_create_iframe() {                                      */
-/*    return dom_create( "iframe", arguments );                        */
-/* }                                                                   */
-/* {*** META ((export <INPUT>)) *}                                     */
-/* function dom_create_input() {                                       */
-/*    return dom_create( "input", arguments );                         */
-/* }                                                                   */
-/* {*** META ((export <INS>)) *}                                       */
-/* function dom_create_ins() {                                         */
-/*    return dom_create( "ins", arguments );                           */
-/* }                                                                   */
-/* {*** META ((export <ISINDEX>)) *}                                   */
-/* function dom_create_isindex() {                                     */
-/*    return dom_create( "isindex", arguments );                       */
-/* }                                                                   */
-/* {*** META ((export <KBD>)) *}                                       */
-/* function dom_create_kbd() {                                         */
-/*    return dom_create( "kbd", arguments );                           */
-/* }                                                                   */
-/* {*** META ((export <LABEL>)) *}                                     */
-/* function dom_create_label() {                                       */
-/*    return dom_create( "label", arguments );                         */
-/* }                                                                   */
-/* {*** META ((export <LEGEND>)) *}                                    */
-/* function dom_create_legend() {                                      */
-/*    return dom_create( "legend", arguments );                        */
-/* }                                                                   */
-/* {*** META ((export <LI>)) *}                                        */
-/* function dom_create_li() {                                          */
-/*    return dom_create( "li", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <LINK>)) *}                                      */
-/* function dom_create_link() {                                        */
-/*    return dom_create( "link", arguments );                          */
-/* }                                                                   */
-/* {*** META ((export <MAP>)) *}                                       */
-/* function dom_create_map() {                                         */
-/*    return dom_create( "map", arguments );                           */
-/* }                                                                   */
-/* {*** META ((export <MARQUEE>)) *}                                   */
-/* function dom_create_marquee() {                                     */
-/*    return dom_create( "marquee", arguments );                       */
-/* }                                                                   */
-/* {*** META ((export <MENU>)) *}                                      */
-/* function dom_create_menu() {                                        */
-/*    return dom_create( "menu", arguments );                          */
-/* }                                                                   */
-/* {*** META ((export <META>)) *}                                      */
-/* function dom_create_meta() {                                        */
-/*    return dom_create( "meta", arguments );                          */
-/* }                                                                   */
-/* {*** META ((export <NOFRAMES>)) *}                                  */
-/* function dom_create_noframes() {                                    */
-/*    return dom_create( "noframes", arguments );                      */
-/* }                                                                   */
-/* {*** META ((export <NOSCRIPT>)) *}                                  */
-/* function dom_create_noscript() {                                    */
-/*    return dom_create( "noscript", arguments );                      */
-/* }                                                                   */
-/* {*** META ((export <OBJECT>)) *}                                    */
-/* function dom_create_object() {                                      */
-/*    return dom_create( "object", arguments );                        */
-/* }                                                                   */
-/* {*** META ((export <OL>)) *}                                        */
-/* function dom_create_ol() {                                          */
-/*    return dom_create( "ol", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <OPTGROUP>)) *}                                  */
-/* function dom_create_optgroup() {                                    */
-/*    return dom_create( "optgroup", arguments );                      */
-/* }                                                                   */
-/* {*** META ((export <OPTION>)) *}                                    */
-/* function dom_create_option() {                                      */
-/*    return dom_create( "option", arguments );                        */
-/* }                                                                   */
-/* {*** META ((export <P>)) *}                                         */
-/* function dom_create_p() {                                           */
-/*    return dom_create( "p", arguments );                             */
-/* }                                                                   */
-/* {*** META ((export <PARAM>)) *}                                     */
-/* function dom_create_param() {                                       */
-/*    return dom_create( "param", arguments );                         */
-/* }                                                                   */
-/* {*** META ((export <PRE>)) *}                                       */
-/* function dom_create_pre() {                                         */
-/*    return dom_create( "pre", arguments );                           */
-/* }                                                                   */
-/* {*** META ((export <Q>)) *}                                         */
-/* function dom_create_q() {                                           */
-/*    return dom_create( "q", arguments );                             */
-/* }                                                                   */
-/* {*** META ((export <S>)) *}                                         */
-/* function dom_create_s() {                                           */
-/*    return dom_create( "s", arguments );                             */
-/* }                                                                   */
-/* {*** META ((export <SAMP>)) *}                                      */
-/* function dom_create_samp() {                                        */
-/*    return dom_create( "samp", arguments );                          */
-/* }                                                                   */
-/* {*** META ((export <SCRIPT>)) *}                                    */
-/* function dom_create_script() {                                      */
-/*    return dom_create( "script", arguments );                        */
-/* }                                                                   */
-/* {*** META ((export <SELECT>)) *}                                    */
-/* function dom_create_select() {                                      */
-/*    return dom_create( "select", arguments );                        */
-/* }                                                                   */
-/* {*** META ((export <SMALL>)) *}                                     */
-/* function dom_create_small() {                                       */
-/*    return dom_create( "small", arguments );                         */
-/* }                                                                   */
-/* {*** META ((export <SPAN>)) *}                                      */
-/* function dom_create_span() {                                        */
-/*    return dom_create( "span", arguments );                          */
-/* }                                                                   */
-/* {*** META ((export <STRIKE>)) *}                                    */
-/* function dom_create_strike() {                                      */
-/*    return dom_create( "strike", arguments );                        */
-/* }                                                                   */
-/* {*** META ((export <STRONG>)) *}                                    */
-/* function dom_create_strong() {                                      */
-/*    return dom_create( "strong", arguments );                        */
-/* }                                                                   */
-/* {*** META ((export <STYLE>)) *}                                     */
-/* function dom_create_style() {                                       */
-/*    return dom_create( "style", arguments );                         */
-/* }                                                                   */
-/* {*** META ((export <SUB>)) *}                                       */
-/* function dom_create_sub() {                                         */
-/*    return dom_create( "sub", arguments );                           */
-/* }                                                                   */
-/* {*** META ((export <SUP>)) *}                                       */
-/* function dom_create_sup() {                                         */
-/*    return dom_create( "sup", arguments );                           */
-/* }                                                                   */
-/* {*** META ((export <TABLE>)) *}                                     */
-/* function dom_create_table() {                                       */
-/*    return dom_create( "table", arguments );                         */
-/* }                                                                   */
-/* {*** META ((export <TBODY>)) *}                                     */
-/* function dom_create_tbody() {                                       */
-/*    return dom_create( "tbody", arguments );                         */
-/* }                                                                   */
-/* {*** META ((export <TD>)) *}                                        */
-/* function dom_create_td() {                                          */
-/*    return dom_create( "td", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <TEXTAREA>)) *}                                  */
-/* function dom_create_textarea() {                                    */
-/*    return dom_create( "textarea", arguments );                      */
-/* }                                                                   */
-/* {*** META ((export <TFOOT>)) *}                                     */
-/* function dom_create_tfoot() {                                       */
-/*    return dom_create( "tfoot", arguments );                         */
-/* }                                                                   */
-/* {*** META ((export <TH>)) *}                                        */
-/* function dom_create_th() {                                          */
-/*    return dom_create( "th", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <THEAD>)) *}                                     */
-/* function dom_create_thead() {                                       */
-/*    return dom_create( "thead", arguments );                         */
-/* }                                                                   */
-/* {*** META ((export <TITLE>)) *}                                     */
-/* function dom_create_title() {                                       */
-/*    return dom_create( "title", arguments );                         */
-/* }                                                                   */
-/* {*** META ((export <TR>)) *}                                        */
-/* function dom_create_tr() {                                          */
-/*    return dom_create( "tr", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <TT>)) *}                                        */
-/* function dom_create_tt() {                                          */
-/*    return dom_create( "tt", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <U>)) *}                                         */
-/* function dom_create_u() {                                           */
-/*    return dom_create( "u", arguments );                             */
-/* }                                                                   */
-/* {*** META ((export <UL>)) *}                                        */
-/* function dom_create_ul() {                                          */
-/*    return dom_create( "ul", arguments );                            */
-/* }                                                                   */
-/* {*** META ((export <VAR>)) *}                                       */
-/* function dom_create_var() {                                         */
-/*    return dom_create( "var", arguments );                           */
-/* }                                                                   */
-/* {*** META ((export <IMG>)) *}                                       */
-/* function dom_create_img() {                                         */
-/*    return dom_create( "img", arguments );                           */
-/* }                                                                   */
-/* {*** META ((export <HEAD>)) *}                                      */
-/* function dom_create_head() {                                        */
-/*    return dom_create( "head", arguments );                          */
-/* }                                                                   */
+/*** META (define-macro (<LFRAME> . args)
+     `(hop_dom_create_custom hop_create_lframe ,@args)) */
+
+/*** META (define-macro (<LFLABEL> . args)
+     `(hop_dom_create_custom hop_create_lflabel ,@args)) */
+
+/*** META (define-macro (<SPINBUTTON> . args)
+     `(hop_dom_create_custom hop_create_spinbutton ,@args)) */
 
 /*---------------------------------------------------------------------*/
 /*    Server side constructors                                         */
@@ -1159,31 +877,26 @@ function hop_node_eval( node, text ) {
       return res;
    }
 
-   try {
-      /* some browsers (guess who) are supporting getElementsByTagName */
-      /* only for the entire document and not for individual nodes.    */
-      if( "getElementsByTagName" in node ) {
-	 var scripts = node.getElementsByTagName( "script" );
+   /* some browsers (guess who) are supporting getElementsByTagName */
+   /* only for the entire document and not for individual nodes.    */
+   if( "getElementsByTagName" in node ) {
+      var scripts = node.getElementsByTagName( "script" );
 
-	 if( scripts && scripts.length > 0 ) {
-	    for ( var j = 0; j < scripts.length; j++ ) {
-	       if( false && scripts[ j ].childNodes.length > 0 ) {
-		  res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
-	       } else {
-		  /* this is a buggy browser (Opera 8?) that does not */
-		  /* correctly implement script nodes                 */
-		  res = eval( scripts[ j ].innerHTML );
-	       }
+      if( scripts && scripts.length > 0 ) {
+	 for ( var j = 0; j < scripts.length; j++ ) {
+	    if( false && scripts[ j ].childNodes.length > 0 ) {
+	       res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
+	    } else {
+	       /* this is a buggy browser (Opera 8?) that does not */
+	       /* correctly implement script nodes                 */
+	       res = eval( scripts[ j ].innerHTML );
 	    }
-	 } else {
-	    return hop_node_eval_from_text( text );
 	 }
       } else {
 	 return hop_node_eval_from_text( text );
       }
-   } catch( e ) {
-      alert( e );
-      throw e;
+   } else {
+      return hop_node_eval_from_text( text );
    }
 
    return res;
@@ -1244,12 +957,8 @@ function hop_create_element( html ) {
       tag = "div";
    }
 
-   try {
-      var el = document.createElement( tag );
-      el.innerHTML = html;
-   } catch( e ) {
-      alert( "Cannot create tag element: " + tag );
-   }
+   var el = document.createElement( tag );
+   el.innerHTML = html;
 
    return el.childNodes[ 0 ];
 }
@@ -1272,13 +981,11 @@ function hop_innerHTML_set( nid, html ) {
       el = document.getElementById( nid );
 
       if( el == undefined ) {
-	 alert( "*** ERROR:innerHTML-set! -- cannot find element \""
-		+ nid + "\"");
-	 return;
+	 sc_error( "innerHTML-set!", "Cannot find element", nid );
       }
    } else {
       if( !nid ) {
-	 alert( "*** ERROR:innerHTML-set! -- illegal element \"" + nid + "\"");
+	 sc_error( "innerHTML-set!", "illegal element", nid );
 	 return;
       }
       el = nid;

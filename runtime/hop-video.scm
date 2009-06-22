@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/hop-video.scm            */
+;*    serrano/prgm/project/hop/2.0.x/runtime/hop-video.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Thu Jan  8 11:09:20 2009 (serrano)                */
+;*    Last change :  Thu May  7 10:56:03 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Video support.                                               */
@@ -57,7 +57,7 @@
 	 (<SCRIPT> :type "text/javascript"
 	    (format "var ~a = new SWFObject('~a','~a','~a','~a','9','#FFFFFF');"
 		    tmp
-		    (make-file-path (hop-flash-directory) "flash" "player.swf")
+		    (make-file-path (hop-share-directory) "flash" "player.swf")
 		    (xml-make-id id 'video)
 		    width height src)
 	    (format "~a.addParam('allowfullscreen','true');" tmp)

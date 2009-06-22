@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/share/hop-canvas.scm                    */
+;*    serrano/prgm/project/hop/2.0.x/share/hop-canvas.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov  3 08:24:25 2007                          */
-;*    Last change :  Fri Nov  9 15:48:09 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Mon Jun  8 15:11:06 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Canvas interface                                             */
 ;*=====================================================================*/
@@ -19,18 +19,24 @@
 ;*    canvas-properties ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (canvas-properties ctx)
-   `(:fill-style ,ctx.fillStyle
-		 :global-alpha ,ctx.globalAlpha
-		 :global-composite-operation ,ctx.globalCompositeOperation
-		 :line-cap ,ctx.lineCap
-		 :line-join ,ctx.lineJoin
-		 :line-width ,ctx.lineWidth
-		 :miter-limit ,ctx.miterLimit
-		 :shadow-blur ,ctx.shadowBlue
-		 :shadow-color ,ctx.shadowColor
-		 :shadow-offset-x ,ctx.shadowOffsetX
-		 :shadow-offset-y ,ctx.shadowOffsetY
-		 :stroke-style  ,ctx.strokeStyle))
+   (let ((font (cond
+		  ((string? ctx.font) ctx.font)
+		  (else ctx.mozTextStyle))))
+      `(:fill-style ,ctx.fillStyle
+		    :global-alpha ,ctx.globalAlpha
+		    :global-composite-operation ,ctx.globalCompositeOperation
+		    :line-cap ,ctx.lineCap
+		    :line-join ,ctx.lineJoin
+		    :line-width ,ctx.lineWidth
+		    :miter-limit ,ctx.miterLimit
+		    :shadow-blur ,ctx.shadowBlue
+		    :shadow-color ,ctx.shadowColor
+		    :shadow-offset-x ,ctx.shadowOffsetX
+		    :shadow-offset-y ,ctx.shadowOffsetY
+		    :stroke-style  ,ctx.strokeStyle
+		    :text-align ,ctx.textAlign
+		    :text-baseline ,ctx.textBaseLine
+		    :font ,font)))
 		 
 ;*---------------------------------------------------------------------*/
 ;*    canvas-properties-set! ...                                       */
@@ -67,8 +73,19 @@
 		 (set! ctx.shadowOffsetX (cadr props)))
 		((:shadow-offset-y)
 		 (set! ctx.shadowOffsetY (cadr props)))
+		((:font)
+		 (set! ctx.font (cadr props))
+		 (set! ctx.mozTextStyle (cadr props)))
+		((:text-align)
+		 (let ((p (cadr props)))
+		    (set! ctx.textAlign (if (symbol? p) (symbol->string p) p))))
+		((:text-baseline)
+		 (let ((p (cadr props)))
+		 (set! ctx.textBaseLine (if (symbol? p) (symbol->string p) p))))
 		((:stroke-style)
-		 (set! ctx.strokeStyle (cadr props))))))
+		 (set! ctx.strokeStyle (cadr props)))
+		(else
+		 (error 'canvas-properties-set! "Illegal property" props)))))
 	 (loop (cddr props)))))
 
 ;*---------------------------------------------------------------------*/
@@ -237,6 +254,39 @@
    (ctx.strokeRect x0 y0 x1 y1))
 
 ;*---------------------------------------------------------------------*/
+;*    canvas-shadow-rect ...                                           */
+;*---------------------------------------------------------------------*/
+(define (canvas-shadow-rect ctx shadow-width x y w h)
+   ;; create the gradients
+   (when (or (not (pair? ctx.shadowgradients))
+	     (not (= (car ctx.shadowgradients) shadow-width)))
+      (let* ((grad1 (ctx.createLinearGradient 0 0 shadow-width 0))
+	     (grad2 (ctx.createLinearGradient 0 0 0 shadow-width))
+	     (grad3 (ctx.createRadialGradient 0 0 0 0 0 shadow-width))
+	     (gradients (list grad1 grad2 grad3)))
+	 (for-each (lambda (g)
+		      (g.addColorStop 0 "rgba(0,0,0,0.7)")
+		      (g.addColorStop 0.5 "rgba(255,255,255,0)"))
+		   gradients)
+	 (set! ctx.shadowgradients (cons shadow-width gradients))))
+   ;; draw the gradients
+   (ctx.save)
+   (set! ctx.fillStyle (cadr ctx.shadowgradients))
+   (ctx.translate (+ x w) y)
+   (ctx.fillRect 0 4 shadow-width (- h 4))
+   (ctx.restore)
+   (ctx.save)
+   (set! ctx.fillStyle (caddr ctx.shadowgradients))
+   (ctx.translate x (+ y h))
+   (ctx.fillRect 4 0 (- w 4) shadow-width)
+   (ctx.restore)
+   (ctx.save)
+   (set! ctx.fillStyle (cadddr ctx.shadowgradients))
+   (ctx.translate (+ x w) (+ y h))
+   (ctx.fillRect 0 0 shadow-width shadow-width)
+   (ctx.restore))
+   
+;*---------------------------------------------------------------------*/
 ;*    canvas-create-linear-gradient ...                                */
 ;*---------------------------------------------------------------------*/
 (define (canvas-create-linear-gradient ctx x1 y1 x2 y2)
@@ -267,7 +317,7 @@
    (if (null? rest)
        (ctx.drawImage image x y)
        (if (and (pair? rest) (pair? (cdr rest)))
-	   (if (null? (cdr rest))
+	   (if (null? (cddr rest))
 	       (ctx.drawImage image x y (car rest) (cadr rest))
 	       (let* ((sw (car rest))
 		      (sh (cadr rest))
@@ -416,7 +466,62 @@
 	    (ctx.lineTo x0b y0b)
 	    (ctx.closePath)
 	    (ctx.fill)))))
-      
+
+;*---------------------------------------------------------------------*/
+;*    canvas-fill-text ...                                             */
+;*---------------------------------------------------------------------*/
+(define (canvas-fill-text ctx text x y . rest)
+   (cond
+      ((procedure? ctx.fillText)
+       (apply ctx.fillText x y rest))
+      ((procedure? ctx.mozDrawText)
+       (ctx.save)
+       (ctx.translate x y)
+       (ctx.mozDrawText text)
+       (ctx.restore))))
+
+;*---------------------------------------------------------------------*/
+;*    canvas-stroke-text ...                                           */
+;*---------------------------------------------------------------------*/
+(define (canvas-stroke-text ctx text x y . rest)
+   (cond
+      ((procedure? ctx.strokeText)
+       (apply ctx.strokeText x y rest))
+      ((procedure? ctx.mozPathText)
+       (ctx.save)
+       (ctx.translate x y)
+       (set! ctx.fillStyle "yellow")
+       (ctx.beginPath)
+       (ctx.mozPathText text)
+       (ctx.closePath)
+       (ctx.stroke)
+       (ctx.restore))
+      (else
+       (apply canvas-fill-text ctx text x y rest))))
+
+;*---------------------------------------------------------------------*/
+;*    canvas-measure-text ...                                          */
+;*---------------------------------------------------------------------*/
+(define (canvas-measure-text ctx text)
+   (cond
+      ((procedure? ctx.measureText) (ctx.measureText text))
+      ((procedure? ctx.mozMeasureText) (ctx.mozMeasureText text))
+      (else 0)))
+
+;*---------------------------------------------------------------------*/
+;*    canvas-path-text ...                                             */
+;*---------------------------------------------------------------------*/
+(define (canvas-path-text ctx text)
+   (when (procedure? ctx.mozPathText)
+      (ctx.mozPathText text)))
+
+;*---------------------------------------------------------------------*/
+;*    canvas-text-along-path ...                                       */
+;*---------------------------------------------------------------------*/
+(define (canvas-text-along-path ctx text stroke)
+   (when (procedure? ctx.mozTextAlongPath)
+      (ctx.mozTextAlongPath text stroke)))
+
 ;*---------------------------------------------------------------------*/
 ;*    Internet Explorer 7 Canvas support                               */
 ;*    -------------------------------------------------------------    */

@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.11.x/weblets/home/Makefile            */
+#*    serrano/prgm/project/hop/2.0.x/weblets/home/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Jan 30 04:05:04 2009 (serrano)                */
+#*    Last change :  Tue May  5 07:54:54 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -23,13 +23,13 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-SOURCES         = home.hop config.hop widgets.hop demo.hop wiki.hop
+SOURCES         = home.hop widgets.hop demo.hop wiki.hop
 HOP_POP		= presentation.wiki docs.wiki license.wiki faq.wiki \
                   download.wiki weblets.wiki install.wiki install-jvm.wiki \
                   community.wiki videos.wiki
 VIDEOS		= hopx10.flv
 TALKS		= hopdiffuse.xhtml.gz
-POPULATION	= Makefile .afile home.hss tips.hss \
+POPULATION	= Makefile home.hss tips.hss \
                   demos etc/icons articles etc/weblet.info.in etc/home.wiki.in \
                   etc/logo.png etc/favicon.png etc/video.png \
                   $(VIDEOS:%=videos/%) \

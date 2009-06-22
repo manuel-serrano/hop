@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.11.x/etc/hop-autoconf.js.in           */
+/*    serrano/prgm/project/hop/2.0.x/etc/hop-autoconf.js.in            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Jan 23 15:00:19 2009 (serrano)                */
+/*    Last change :  Fri Jun 19 10:03:05 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -38,21 +38,6 @@ function hop_backend() {
 function hop_url() {
    return "@URL@";
 }
-
-/*---------------------------------------------------------------------*/
-/*    Hop server directories ...                                       */
-/*  -----------------------------------------------------------------  */
-/* They might be variable (in the case of MacOsX-bundles and therefore */
-/* defined in a separate file which is built at runtime.               */
-/*---------------------------------------------------------------------*/
-/*** META ((export hop-etc-directory) (JS hop_etc_directory)) */
-/*** META ((export hop-bin-directory) (JS hop_bin_directory)) */
-/*** META ((export hop-lib-directory) (JS hop_lib_directory))) */
-/*** META ((export hop-share-directory) (JS hop_share_directory)) */
-/*** META ((export hop-contribs-directory) (JS hop_contribs_directory)) */
-/*** META ((export hop-weblets-directory) (JS hop_weblets_directory)) */
-/*** META ((export hop-user-weblets-directory) (JS hop_user_weblets_directory)) */
-/*** META ((export hop-var-directory) (JS hop_var_directory)) */
 
 /*---------------------------------------------------------------------*/
 /*    Hop configuration                                                */
@@ -106,6 +91,9 @@ function hop_Config() {
   this.gpu_speed = 100;
   if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.gpu_speed = 30;
 
+  /* js speed */
+  this.js_speed = 50;
+
   /* pointing device */
   this.is_tablet = ( navigator.userAgent.indexOf( "Tablet" ) >= 0 );
 
@@ -118,9 +106,11 @@ function hop_Config() {
   this.flash_audio = false;
   this.flash_markup = "embed";
   this.inline_image = false;
+  this.filtered_errors = [];
 
   /* navigator specific configuration */
   if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {
+     this.js_speed = 20;
      this.navigator_family = "msie";
      this.mouse_left_button = 1;
      this.flash_external_interface = true;
@@ -131,6 +121,7 @@ function hop_Config() {
 	hop_enable_location_event = false;
      }
   } else if( navigator.userAgent.indexOf( "Opera" ) >= 0 ) {
+     this.js_speed = 70;
      this.navigator_family = "opera";
      this.mouse_left_button = 0;
      this.flash_external_interface = false;
@@ -138,6 +129,7 @@ function hop_Config() {
      this.flash_markup = "embed";
      this.inline_image = true;
   } else if( navigator.userAgent.indexOf( "Safari" ) >= 0 ) {
+     this.js_speed = 80;
      this.navigator_family = "safari";
      this.mouse_left_button = 0;
      this.flash_external_interface = true;
@@ -146,6 +138,7 @@ function hop_Config() {
      this.inline_image = true;
   } else if( navigator.userAgent.indexOf( "WebKit" ) >= 0 ) {
      this.navigator_family = "webkit";
+     this.js_speed = 80;
      this.mouse_left_button = 0;
      this.flash_external_interface = true;
      this.flash_audio = false;
@@ -159,12 +152,14 @@ function hop_Config() {
      this.flash_markup = "embed";
      this.inline_image = true;
   } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
+     this.js_speed = 60;
      this.navigator_family = "mozilla";
      this.mouse_left_button = 0;
      this.flash_external_interface = true;
      this.flash_audio = true;
      this.flash_markup = "embed";
      this.inline_image = true;
+     this.filtered_errors = ["javascript:top.location+\"__flashplugin_unique__\"" ];
   } else {
      alert( "Unknown navigator (" + navigator.userAgent +
 	    "), using default settings..." );
@@ -427,13 +422,16 @@ function node_style_set_native( obj, prop, value ) {
    
    if( !(value instanceof String) && (typeof value !== "string") ) {
       if( !value && (value != 0) ) {
-	 throw new Error( "node-style-set: illegal \"" + prop + "\" value: "
-			  + value + " obj: " + obj );
+	 sc_error( "node-style-set!", "Illegal \"" + prop + "\" value", value );
       } else {
 	 value = value.toString();
       }
    }
 
+   if( !obj ) 
+      sc_error( "node-style-set!",
+		"Illegal null object",
+		"prop=" + prop + " value=" + value );
    obj.style.setProperty( prop, value, "" );
 }
 
@@ -446,8 +444,7 @@ function node_style_set_array( obj, prop, value ) {
    
    if( !(value instanceof String) && (typeof value !== "string") ) {
       if( !value && (value != 0) ) {
-	 throw new Error( "node-style-set: illegal \"" + prop + "\" value: "
-			  + value + " obj: " + obj );
+	 sc_error( "node-style-set!", "Illegal \"" + prop + "\" value", value );
       } else {
 	 value = value.toString();
       }
@@ -509,7 +506,13 @@ try {
 if( hop_has_event20 ) {
    hop_add_native_event_listener = function( obj, event, proc, capture ) {
       if( "addEventListener" in obj ) {
-	 return obj.addEventListener( event, proc, capture );
+         var f = hop_callback( proc );
+         var i = "on" + event + "hdl";
+
+         if( !(i in obj ) ) obj[ i ] = [];
+         obj[ i ][ proc ] = f;
+
+	 return obj.addEventListener( event, f, capture );
       } else {
 	 throw new Error( "add-event-listener!: cannot add `" 
 			  + event + "' listener for object: "
@@ -519,7 +522,17 @@ if( hop_has_event20 ) {
 
    hop_remove_native_event_listener = function( obj, event, proc, capture ) {
       if( "removeEventListener" in obj ) {
-	 return obj.removeEventListener( event, proc, capture );
+	var i = "on" + event + "hdl";
+        var h = obj[ i ];
+
+        if( h !== undefined ) {
+	   var p = obj[ i ][ proc ];
+
+	   if( p !== undefined ) {
+	      h[ p ] = undefined;
+	      return obj.removeEventListener( event, p, capture );
+	   }
+	}
       } else {
 	 throw new Error( "remove-event-listener!: cannot remove `"
 			  + event + "' listener for object: "
@@ -534,7 +547,8 @@ if( hop_has_event20 ) {
    }
 } else {
    hop_add_native_event_listener = function( obj, event, proc, capture ) {
-      var p = function(_) { return proc( window.event ) };
+      var f = hop_callback( proc );
+      var p = function(_) { return f( window.event ) };
       var i = "on" + event + "hdl";
 
       if( obj[ i ] === undefined ) obj[ i ] = [];

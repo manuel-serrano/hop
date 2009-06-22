@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec  7 07:29:36 2007                          */
-;*    Last change :  Thu Mar 26 10:53:30 2009 (serrano)                */
+;*    Last change :  Wed May  6 10:22:19 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The service that dynamically creates weblets homagepage.         */
@@ -33,7 +33,7 @@
 (define-service (weblets/homepage #!key weblet)
    ;; check if the weblet exists
    (if (not weblet)
-       (http-bad-request "/hop/weblets/homage -- parameter `weblet' should be provided")
+       (http-bad-request "/hop/weblets/homepage -- parameter `weblet' should be provided")
        (let ((hzs (get-weblets (weblets-repository) weblet)))
 	  (if (null? hzs)
 	      (http-file-not-found weblet)

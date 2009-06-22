@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Wed Apr  8 14:07:23 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 08:57:35 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -44,19 +44,9 @@
 	   __hop_http-error
 	   __hop_hop-extra
 	   __hop_hop-inline
-	   __hop_hop-paned
-	   __hop_hop-tabslider
-	   __hop_hop-notepad
-	   __hop_hop-slider
-	   __hop_hop-tree
-	   __hop_hop-foldlist
-	   __hop_hop-editor
-	   __hop_hop-file
 	   __hop_hop-box
 	   __hop_hop-sym
 	   __hop_hop-rss
-	   __hop_hop-audio
-	   __hop_hop-video
 	   __hop_hop-svg
 	   __hop_hop-mathml
 	   __hop_event
@@ -117,6 +107,4 @@
 	   
 	   (class cache-entry)
 
-  	   (class wiki-syntax)
-
-	   (class hop-audio-player)))
+  	   (class wiki-syntax)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Apr 19 06:35:31 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 09:02:06 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -20,7 +20,7 @@
    (cond-expand
       (enable-ssl (library ssl)))
 
-   (library multimedia web hop hopscheme scheme2js)
+   (library multimedia web hop hopscheme hopwidget scheme2js)
 
    (import  hop_parseargs
 	    hop_param
@@ -34,6 +34,7 @@
 	    hop_scheduler-accept-many)
 
    (main    main))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    signal-init! ...                                                 */
@@ -67,48 +68,15 @@
        (make-server-socket (hop-port) :backlog (hop-somaxconn))))
 
 ;*---------------------------------------------------------------------*/
-;*    create-var-setup ...                                             */
-;*    -------------------------------------------------------------    */
-;*    Create the Hop server socket according to user options.          */
-;*---------------------------------------------------------------------*/
-(define (create-var-setup)
-   (let* ((var-dir (hop-var-directory))
-	  (f (make-file-path var-dir "hop-setup.js")))
-      (unless (directory? var-dir)
-	 ;; try to create it. maybe it was just never used before
-	 (make-directories var-dir)
-	 (when (not (directory? var-dir))
-	    (error 'hop
-		   "could not create var directory"
-		   var-dir)))
-      (with-output-to-file f
-	 (lambda ()
-	    (print
-"function hop_etc_directory()     { return \"" (hop-etc-directory) "\"; }
-function hop_bin_directory()      { return \"" (hop-bin-directory) "\"; }
-function hop_lib_directory()      { return \"" (hop-lib-directory) "\"; }
-function hop_share_directory()    { return \"" (hop-share-directory) "\"; }
-function hop_contribs_directory() { return \"" (hop-contribs-directory) "\"; }
-function hop_weblets_directory()      { return \"" (hop-weblets-directory) "\"; }
-function hop_user_weblets_directory() { return \"" (hop-user-weblets-directory) "\"; }
-function hop_var_directory()          { return \"" (hop-var-directory) "\"; }")))))
-
-;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
-   ;; set the hop process owner
-   (set-hop-owner! (hop-user))
    ;; catch critical signals
    (signal-init!)
    ;; set the Hop cond-expand identification
-   (for-each register-eval-srfi! (hop-autoconf-srfis))
+   (for-each register-eval-srfi! (hop-srfis))
    ;; set the library load path
-   (cond-expand
-      (macosx-bundle
-       (bigloo-library-path-set! (cons (bundle-bigloo-lib-path) (bigloo-library-path)))))
-   (let ((hop-path (make-file-path (hop-lib-directory) "hop" (hop-version))))
-      (bigloo-library-path-set! (cons hop-path (bigloo-library-path))))
+   (bigloo-library-path-set! (hop-library-path))
    ;; preload the hop libraries
    (for-each (lambda (l)
 		(eval `(library-load ',l)))
@@ -127,7 +95,9 @@ function hop_var_directory()          { return \"" (hop-var-directory) "\"; }"))
 	    (make-directory c))))
    ;; parse the command line
    (parse-args args)
-   (create-var-setup)
+   ;; set the hop process owner
+   (set-hop-owner! (hop-user))
+   ;; hello world
    (hop-verb 1 "Starting hop (v" (hop-version)
 	     ", " (hop-backend)
 	     (cond-expand
@@ -219,7 +189,7 @@ function hop_var_directory()          { return \"" (hop-var-directory) "\"; }"))
 			    (autoload-filter req))))
 		   (hop-preload-services))
 	 ;; start the main loop
-	 (scheduler-accept-loop (hop-scheduler) serv))))
+	 (scheduler-accept-loop (hop-scheduler) serv #t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    set-hop-owner! ...                                               */
@@ -284,4 +254,4 @@ function hop_var_directory()          { return \"" (hop-var-directory) "\"; }"))
        ;; run in a separate thread
        (hop-event-init! (hop-fast-server-event-port))
        (let ((serv (make-server-socket (hop-fast-server-event-port))))
-	  (scheduler-accept-loop scd serv)))))
+	  (scheduler-accept-loop scd serv #f)))))

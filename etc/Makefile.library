@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Wed Mar 25 18:06:30 2009 (serrano)                */
+#*    Last change :  Mon Jun 22 09:27:17 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -26,7 +26,7 @@ DOTNET_OBJ_EDIR	= o/dotnet_e
 #*    Suffixes                                                         */
 #*---------------------------------------------------------------------*/
 .SUFFIXES:
-.SUFFIXES: .scm .class .java .o .cs .obj
+.SUFFIXES: .scm .class .java .o .cs .obj .hop
 
 #*---------------------------------------------------------------------*/
 #*    The implicit rules                                               */
@@ -34,17 +34,32 @@ DOTNET_OBJ_EDIR	= o/dotnet_e
 o/%.o: %.scm
 	@ $(call compile2,BIGLOO,BCFLAGS,BLFLAGS,$< -o $@ -c)
 
+o/%.o: %.hop
+	@ $(call compile3b,HOPC,HFLAGS,BCFLAGS,BLFLAGS,$< -o $@ -c)
+
 $(CLASS_DIR)/%.class: %.scm
 	@ $(call compile2,BIGLOO,BJVMFLAGS,BLFLAGS,$< -o $@ -c)
 
 $(CLASS_EDIR)/%.class: %.scm
 	@ $(call compile2,BIGLOO,BJVMFLAGS,BLJVMFLAGS,$< -o $@ -c)
 
+$(CLASS_DIR)/%.class: %.hop
+	@ $(call compile3,HOPC,HFLAGS,BJVMFLAGS,BLFLAGS,$< -o $@ -c)
+
+$(CLASS_EDIR)/%.class: %.hop
+	@ $(call compile3,HOPC,HFLAGS,BJVMFLAGS,BLJVMFLAGS,$< -o $@ -c)
+
 $(DOTNET_OBJ_DIR)/%.obj: %.scm
 	@ $(call compile2,BIGLOO,BDOTNETFLAGS,BLFLAGS,$< -o $@ -c)
 
 $(DOTNET_OBJ_EDIR)/%.obj: %.scm
 	@ $(call compile2,BIGLOO,BDOTNETFLAGS,BLDOTNETFLAGS,$< -o $@ -c)
+
+$(DOTNET_OBJ_DIR)/%.obj: %.hop
+	@ $(call compile3,HOPC,HFLAGS,BDOTNETFLAGS,BLFLAGS,$< -o $@ -c)
+
+$(DOTNET_OBJ_EDIR)/%.obj: %.hop
+	@ $(call compile3,HOPC,HFLAGS,BDOTNETFLAGS,BLDOTNETFLAGS,$< -o $@ -c)
 
 #*---------------------------------------------------------------------*/
 #*    The heap construction                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Mar 26 05:25:27 2009 (serrano)                */
+;*    Last change :  Fri Jun  5 13:38:09 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -213,9 +213,9 @@
 	    (flush-output-port p)
 	    ;; for chunked, write the last 0 chunk
 	    (when chunked
-		   (output-port-flush-hook-set! p #unspecified)
-		   (http-write-line p "\r\n0\r\n")
-		   (flush-output-port p))
+	       (output-port-flush-hook-set! p #unspecified)
+	       (http-write-line p "\r\n0\r\n")
+	       (flush-output-port p))
 	    connection))))
 
 ;*---------------------------------------------------------------------*/
@@ -536,6 +536,18 @@
       (xml obj)))
 
 ;*---------------------------------------------------------------------*/
+;*    scheme->response ::xml-tilde ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (scheme->response obj::xml-tilde req)
+   (instantiate::http-response-string
+      (content-type (hop-json-mime-type))
+      (charset (hop-charset))
+      (request req)
+      (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+      (bodyp (not (eq? (http-request-method req) 'HEAD)))
+      (body (xml-tilde->expression obj))))
+
+;*---------------------------------------------------------------------*/
 ;*    http-response-void ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (http-response-void req)
@@ -548,48 +560,51 @@
 ;*    http-send-request ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-send-request req::http-request proc::procedure)
-   (with-access::http-request req (scheme method path (httpv http) host port header socket userinfo timeout)
-      (let ((ssl (eq? scheme 'https)))
-	 (let loop ((host host)
-		    (port port)
-		    (user userinfo)
-		    (path path))
-	    (let* ((sock (if (and (not ssl) (hop-use-proxy))
-			     (make-proxy-socket (hop-use-proxy) timeout)
-			     (make-client-socket/timeout host port
-							 timeout req ssl)))
-		   (out (socket-output sock))
-		   (in (socket-input sock)))
-	       (when (> timeout 0)
-		  (output-port-timeout-set! out timeout)
-		  (input-port-timeout-set! in timeout))
-	       (with-handler
-		  (lambda (e)
-		     (if (&http-redirection? e)
-			 (multiple-value-bind (rhost rport ruser rpath)
-			    (redirect e)
-			    (loop (or rhost host)
-				  (or rport port)
-				  (or ruser user)
-				  (if rhost
-				      (make-file-name (dirname path) rpath)
-				      rpath)))
-			 (raise e)))
-		  (http :in in :out out
-		     :protocol scheme :method method :http-version httpv
-		     :host host :port port :path path :header header
-		     :authorization (if (and (http-server-request? req)
-					     (http-server-request-authorization req))
-					(http-server-request-authorization req)
-					(let ((auth (assq :authorization header)))
-					   (when (pair? auth) (cdr auth))))
-		     :timeout timeout
-		     :login user
-		     :body socket
-		     :proxy (hop-use-proxy))
-		  (unwind-protect
-		     (http-parse-response in out proc)
-		     (socket-close sock))))))))
+   (with-trace 3 'http-send-request
+      (with-access::http-request req (scheme method path (httpv http) host port header socket userinfo timeout)
+	 (let ((ssl (eq? scheme 'https)))
+	    (let loop ((host host)
+		       (port port)
+		       (user userinfo)
+		       (path path))
+	       (trace-item "scheme=" scheme " host=" host " port=" port)
+	       (trace-item "method=" method " path=" path)
+	       (let* ((sock (if (and (not ssl) (hop-use-proxy))
+				(make-proxy-socket (hop-use-proxy) timeout)
+				(make-client-socket/timeout host port
+							    timeout req ssl)))
+		      (out (socket-output sock))
+		      (in (socket-input sock)))
+		  (when (> timeout 0)
+		     (output-port-timeout-set! out timeout)
+		     (input-port-timeout-set! in timeout))
+		  (with-handler
+		     (lambda (e)
+			(if (&http-redirection? e)
+			    (multiple-value-bind (rhost rport ruser rpath)
+			       (redirect e)
+			       (loop (or rhost host)
+				     (or rport port)
+				     (or ruser user)
+				     (if rhost
+					 (make-file-name (dirname path) rpath)
+					 rpath)))
+			    (raise e)))
+		     (http :in in :out out
+			:protocol scheme :method method :http-version httpv
+			:host host :port port :path path :header header
+			:authorization (if (and (http-server-request? req)
+						(http-server-request-authorization req))
+					   (http-server-request-authorization req)
+					   (let ((auth (assq :authorization header)))
+					      (when (pair? auth) (cdr auth))))
+			:timeout timeout
+			:login user
+			:body socket
+			:proxy (hop-use-proxy))
+		     (unwind-protect
+			(http-parse-response in out proc)
+			(socket-close sock)))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    redirect ...                                                     */

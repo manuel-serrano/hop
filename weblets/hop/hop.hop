@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Thu Apr  2 07:06:59 2009 (serrano)                */
+;*    Last change :  Sat Jun  6 10:50:52 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -165,7 +165,7 @@
 			    ~(set! document.location $url)))
 	       (<IMG> :class "logo"
 		  :inline #t
-		  :title (format "~a -- ~a" hz title)
+		  :title (if title (format "~a -- ~a" hz title) hz)
 		  :alt title
 		  :width width
 		  :height height
@@ -264,10 +264,11 @@
    (<HTML>
       (<HEAD> :css (format "~a/hop.hss" (hop-dir))
          :include "hop-window")
-      (<BODY> :class "hop-dashboard-panel"
-         (hop-panel :width 16 :height 16
-            :showtitle #f
-            :icons `("favicon.png"
-                     "logo.png"
-                     ,(string-append (hop-dir) "/etc/default.png"))))))
+      (<BODY> :class "hop-dashboard-panel" :style "background: #eee"
+	 (<DIV> :style "border: 1px solid #aaa; position: absolute; top: 3px; bottom: 2px; left: 5px; right: 5px; background: white; -moz-border-radius: 0.2em; -webkit-border-radius: 0.2em; padding: 2px"
+	    (hop-panel :width 16 :height 16
+	       :showtitle #f
+	       :icons `("favicon.png"
+			"logo.png"
+			,(string-append (hop-dir) "/etc/default.png")))))))
    

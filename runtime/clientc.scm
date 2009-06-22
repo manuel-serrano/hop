@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Wed Apr  1 19:54:01 2009 (serrano)                */
+;*    Last change :  Mon Jun 15 16:57:56 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -37,13 +37,14 @@
 	       (filec::procedure read-only)
 	       (expressionc::procedure read-only)
 	       (modulec::procedure read-only)
+	       (macroe::procedure read-only)
 	       (JS-expression::procedure read-only)
 	       (JS-statement::procedure read-only)
 	       (JS-return::procedure read-only))
 
 	    (init-clientc-compiler! #!key
-				    filec expressionc modulec JS-expression
-				    JS-statement JS-return)
+				    filec expressionc modulec macroe
+				    JS-expression JS-statement JS-return)
 	    (clientc-url ::bstring)
 	    (clientc-response::%http-response ::http-request ::bstring)
 	    (get-clientc-compiled-file ::bstring)))
@@ -61,15 +62,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    init-clientc-compiler! ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (init-clientc-compiler! #!key filec expressionc modulec JS-expression
-				JS-statement JS-return)
+(define (init-clientc-compiler! #!key filec expressionc modulec macroe
+				JS-expression JS-statement JS-return)
    ;; prepare the client-code compiler cache
    (set! clientc-cache
 	 (instantiate::cache-disk
 	    (path (make-file-path (hop-cache-directory)
 				  (string-append "clientc-"
 						 (integer->string (hop-port)))))
-	    (out (lambda (o p) (with-output-to-port p (lambda () (print o)))))))
+	    (out (lambda (o p) (with-output-to-port p (lambda () (print
+								  o)))))))
    ;; hook the client-code compiler
    (hop-clientc-set!
     (instantiate::clientc
@@ -78,6 +80,7 @@
 		 (filec file env)))
        (expressionc expressionc)
        (modulec modulec)
+       (macroe macroe)
        (JS-expression JS-expression)
        (JS-statement JS-statement)
        (JS-return JS-return))))

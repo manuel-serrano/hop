@@ -10,9 +10,9 @@ weblets and let them been spawned by a simple click.
   (<TR> (<TD> :rowspan 5 :class "logo"
             (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png")))
         (<TH> (string-capitalize "") " version") (<TD> "1.1.1"))
-  (<TR> (<TH> "Hop min version") (<TD> "1.10.0 "))
+  (<TR> (<TH> "Hop min version") (<TD> "2.0.0 "))
   (<TR> (<TH> "Hop max version") (<TD> ""))
-  (<TR> (<TH> "Date") (<TD> "27 November 2008"))
+  (<TR> (<TH> "Date") (<TD> "05 May 2009"))
   (<TR> (<TH> "Category") (<TD> "hop")))
 
 </doc>

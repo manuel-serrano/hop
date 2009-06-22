@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Apr  3 17:41:11 2009 (serrano)                */
+#*    Last change :  Sat Jun 20 08:57:03 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -31,7 +31,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_OBJECTS = param misc types \
+_OBJECTS = param misc priv types \
            xml charset dom read module \
            read-js css clientc js-lib cgi \
            hop service \
@@ -40,17 +40,16 @@ _OBJECTS = param misc types \
            http-lib http-request \
            http-response http-shoutcast http-remote http-webdav \
            http-error http-filter \
-           hop-img hop-extra hop-notepad hop-tree hop-slider \
-           hop-paned hop-tabslider hop-inline hop-foldlist \
-           hop-editor hop-file hop-rss hop-sym hop-box \
-           hop-audio hop-video \
+           hop-img hop-extra hop-inline \
+           hop-rss hop-sym hop-box \
            hop-svg hop-mathml \
            event color weblets prefs expanders
 
 OBJECTS = $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS = o/make-lib.o
 
-BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class) $(CLASS_DIR)/configure.class
+BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class) \
+              $(CLASS_DIR)/configure.class
 BGL_ECLASSES = $(CLASS_EDIR)/make-lib.class
 
 BGL_DOTNET_OBJ = $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
@@ -94,10 +93,10 @@ ude:
 	@ $(MAKE) dep
 
 .afile: $(SOURCES) configure.scm
-	@ $(AFILE) -o .afile $(SOURCES) configure.scm
+	@ $(AFILE) -suffix hop -o .afile $(SOURCES) configure.scm
 
 .jfile: $(SOURCES) configure.scm
-	@ $(JFILE) -o .jfile \
+	@ $(JFILE) -suffix hop -o .jfile \
                    -pbase $(PBASE) $(SOURCES) configure.scm make-lib.scm
 
 .etags: $(SOURCES)
@@ -118,7 +117,6 @@ o/thread.o thread.class: enable-thread.sch disable-thread.sch
 o/hop-audio.o hop-audio.class: xml.sch service.sch 
 o/hop-svg.o hop-svg.class: xml.sch 
 o/param.o param.class: param.sch 
-o/hop-foldlist.o hop-foldlist.class: xml.sch 
 o/scm.o scm.class: xml.sch service.sch 
 o/http-response.o ./http-response.class: http-lib.sch 
 o/hop-wiki.o hop-wiki.class: xml.sch 
@@ -154,7 +152,6 @@ o/xml.o xml.class: param.sch xml.sch
 o/hop-extra.o hop-extra.class: xml.sch 
 o/css.o ./css.class: xml.sch service.sch 
 o/hop-rss.o hop-rss.class: xml.sch 
-o/hop-tabslider.o hop-tabslider.class: xml.sch 
 o/hop-notepad.o hop-notepad.class: xml.sch 
 o/http-remote.o ./http-remote.class: http-lib.sch 
 o/http-error.o ./http-error.class: xml.sch 

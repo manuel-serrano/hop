@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Apr 20 08:46:47 2009 (serrano)                */
+#*    Last change :  Mon Jun 22 09:23:11 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -100,6 +100,8 @@ hopjsfiles='"hop-autoconf.js" "runtime.js"'
 for p in $rts; do
   hopjsfiles="$hopjsfiles \"$p\""; 
 done
+
+arch=noarch
 
 # Argument parsing
 while : ; do
@@ -248,6 +250,9 @@ while : ; do
     --srfi=*)
       hopsrfis="$hopsrfis `echo $1 | sed 's/^[^=]*=//'`";;
 
+    --macosx-bundle|--macosx)
+      arch=macosx;;
+
     -*)
       echo "*** Configure error, unknown option $1" >&2;
       echo >&2;
@@ -290,6 +295,7 @@ while : ; do
       echo "   --enable-threads...... Enables multi-threading support (default)" >&2;
       echo "   --disable-threads..... Disables multi-threading support" >&2;
       echo "   --srfi=sym............ Activate this srfi (during compilation and runtime)" >&2;
+      echo "   --macosx.............. Prepare the production of a MacOSX bundle" >&2;
       exit -1;
   esac
   shift
@@ -512,6 +518,7 @@ cat $mkmf.in \
           -e "s|@DEVEL@|$devel|" \
           -e "s|@DEBUG@|$debug|" \
           -e "s|@BIGLOO@|$bigloo|" \
+          -e "s|@HOPC@|$PWD/bin/hopc|" \
           -e "s|@BACKEND@|$backend|" \
           -e "s|@BIGLOOLIBDIR@|$bigloolibdir|" \
           -e "s|@CIGLOO@|$cigloo|" \
@@ -534,11 +541,13 @@ cat $mkmf.in \
           -e "s|@JVMINITS@|$jvminits|" \
           -e "s|@CCFLAGS@|$ccflags|" \
           -e "s|@BCFLAGSDEV@|$bcflagsdev|" \
+          -e "s|@BUILDDIR@|$PWD|" \
           -e "s|@BUILDLIBDIR@|$PWD/lib|" \
           -e "s|@BUILDETCDIR@|$PWD/etc|" \
           -e "s|@BUILDBINDIR@|$PWD/bin|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir|" \
           -e "s|@MANDIR@|$mandir|" \
           -e "s|@PREFIX@|$prefix|" \
@@ -555,30 +564,33 @@ cat $mkmf.in \
     >> $mkmf
 
 # runtime/configure.scm
-configure=runtime/configure.scm
-rm -f $configure 2> /dev/null
-echo ";* Automatically generated file (don't edit) */" > $configure
-
-cat etc/configure.scm.in \
-    | sed -e "s|@VERSION@|$version|" \
-          -e "s|@BIGLOOVERSION@|$bglversion|" \
-          -e "s|@BRANCH@|$branch|" \
-          -e "s|@BACKEND@|$backend|" \
-          -e "s|@URL@|$url|" \
-          -e "s|@BINDIR@|$bindir|" \
-          -e "s|@LIBDIR@|$libdir|" \
-          -e "s|@SHAREDIR@|$sharedir|" \
-          -e "s|@ETCDIR@|$etcdir|" \
-          -e "s|@WEBLETSDIR@|$webletsdir|" \
-          -e "s|@CONTRIBSDIR@|$contribsdir|" \
-          -e "s|@MIMETYPES@|$mimetypes|" \
-          -e "s|@JSMIMETYPE@|$jsmimetype|" \
-          -e "s|@CSSMIMETYPE@|$cssmimetype|" \
-          -e "s|@HOPJS@|$hopjs|" \
-          -e "s|@HOPJSFILES@|$hopjsfiles|" \
-          -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
-          -e "s|@HOPSRFIS@|$hopsrfis|" \
-    >> $configure
+for p in configure.scm configure-noarch.sch configure-macosx.sch; do
+  configure=runtime/$p
+  rm -f $configure 2> /dev/null
+  echo ";* Automatically generated file (don't edit) */" > $configure
+  cat etc/$p.in \
+      | sed -e "s|@VERSION@|$version|" \
+            -e "s|@BIGLOOVERSION@|$bglversion|" \
+            -e "s|@BRANCH@|$branch|" \
+            -e "s|@BACKEND@|$backend|" \
+            -e "s|@URL@|$url|" \
+            -e "s|@BINDIR@|$bindir|" \
+            -e "s|@LIBDIR@|$libdir|" \
+            -e "s|@LIBPATH@|$libdir/hop/$version|" \
+            -e "s|@SHAREDIR@|$sharedir|" \
+            -e "s|@ETCDIR@|$etcdir|" \
+            -e "s|@WEBLETSDIR@|$webletsdir|" \
+            -e "s|@CONTRIBSDIR@|$contribsdir|" \
+            -e "s|@MIMETYPES@|$mimetypes|" \
+            -e "s|@JSMIMETYPE@|$jsmimetype|" \
+            -e "s|@CSSMIMETYPE@|$cssmimetype|" \
+            -e "s|@HOPJS@|$hopjs|" \
+            -e "s|@HOPJSFILES@|$hopjsfiles|" \
+            -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
+            -e "s|@HOPSRFIS@|$hopsrfis|" \
+            -e "s|@HOPARCH@|$arch|" \
+      >> $configure
+done
 
 # etc/hoprc.hop
 hoprc=etc/hoprc.hop
@@ -588,6 +600,7 @@ cat etc/hoprc.hop.in \
           -e "s|@BRANCH@|$branch|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir|" \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
@@ -603,6 +616,7 @@ cat etc/hopshrc.hop.in \
           -e "s|@BRANCH@|$branch|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir|" \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
@@ -640,6 +654,21 @@ cat runtime/expanders.sch >> $init
 echo "" >> $init
 echo "(hop-install-expanders!)) (else #unspecified))" >> $init
 chmod a-w $init
+
+# lib/hopwidget.init
+init=lib/hopwidget.init
+mkdir -p lib
+rm -f $init 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $init
+
+cat etc/hopwidget.init.in \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
+          -e "s|@BIGLOOSSL@|$bigloossl|" \
+          -e "s|@BIGLOOPTH@|$bigloopth|" \
+    >> $init
+echo "" >> $init
+
 
 # lib/scheme2js.init
 init=lib/scheme2js.init
@@ -684,6 +713,7 @@ cat etc/hop-autoconf.js.in \
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir|" \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
@@ -694,6 +724,7 @@ cat etc/hop-autoconf.js.in \
 echo "" >> $init
 chmod a-w $init
 
+# man pages
 for p in etc/hop.man etc/hopsh.man etc/hopreplay.man; do
   cat $p.in \
       | sed -e "s|@RELEASE@|$version|" \

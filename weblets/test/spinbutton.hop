@@ -1,0 +1,57 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.0.x/weblets/test/spinbutton.hop       */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
+;*    Last change :  Tue Jun 16 11:33:42 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    Testing SpinButtons                                              */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-spinbutton
+   (import weblet_test)
+   (export test/spinbutton))
+
+;*---------------------------------------------------------------------*/
+;*    test/spinbutton ...                                              */
+;*---------------------------------------------------------------------*/
+(define-service (test/spinbutton)
+   (<TEST-HTML> :include "hop-spinbutton"
+      :source (service-resource test/spinbutton "spinbutton.hop")
+      (<DIV> :class "comment"
+	 "This test checks SpinButtons.")
+      (<TEST-SPINBUTTON>)))
+
+;*---------------------------------------------------------------------*/
+;*    <TEST-SPINBUTTON> ...                                            */
+;*---------------------------------------------------------------------*/
+(define (<TEST-SPINBUTTON>)
+   (let ((color (<DIV> :style "width: 100px; height: 100px; border: 1px solid black"))
+	 (red (<SPINBUTTON> :min 0 :max 255 :value 100 :onchange ~(update-color!)
+		 :onmouseover ~(node-style-set! this :color "#f00")
+		 :onmouseout ~(node-style-set! this :color "inherit")))
+	 (green (<SPINBUTTON> :min 0 :max 255 :value 100 :onchange ~(update-color!)))
+	 (blue (<SPINBUTTON> :min 0 :max 255 :value 100 :onchange ~(update-color!))))
+      (<DIV> :style "background: #edeceb; width: 400px; height: 200px; padding: 10px"
+	 ~(define (update-color!)
+	     (node-style-set! $color :background
+			      (format "rgb(~a,~a,~a)"
+				      $red.value $green.value $blue.value)))
+	 ~(add-window-onload! (lambda () (update-color!)))
+
+	 (<BUTTON> :onclick ~(dom-append-child!
+			      document.body
+			      (<SPINBUTTON> :min -10 :max 10
+				 :onchange (alert (spinbutton-value this))))
+	    "Create a client-side SPINBUTTON")
+	 (<TABLE>
+	    (<TR> (<TD> color)
+		  (<TD> (<TABLE>
+			   (<TR> (<TH> "red") (<TD> red))
+			   (<TR> (<TH> "green") (<TD> green))
+			   (<TR> (<TH> "blue") (<TD> blue)))))))))
+      

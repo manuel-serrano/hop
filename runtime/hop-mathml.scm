@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:24:08 2007                          */
-;*    Last change :  Tue Apr 14 07:04:41 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 05:28:45 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop MATHML support.                                              */
@@ -21,7 +21,8 @@
 	    __hop_xml
 	    __hop_misc
 	    __hop_js-lib
-	    __hop_service)
+	    __hop_service
+	    __hop_priv)
 
    (static (class xml-math::xml-element))
    
@@ -53,14 +54,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    Standards MATH elements                                          */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <MATH> ((id #unspecified string)
-			    (xmlns "http://www.w3.org/1998/Math/MathML" string)
-			    (attributes)
-			    body)
+(define-markup <MATH> ((id #unspecified string)
+		       (xmlns "http://www.w3.org/1998/Math/MathML" string)
+		       (attributes)
+		       body)
    (instantiate::xml-element
       (markup 'math)
       (id (xml-make-id id 'math))
-      (attributes (cons (cons 'xmlns xmlns) attributes))
+      (attributes `(:xmlns ,xmlns ,@attributes))
       (body body)))
 
 ;*---------------------------------------------------------------------*/
@@ -137,11 +138,10 @@
    (cond
       ((xml-markup-is? e 'mo)
        (with-access::xml-markup e (attributes)
-	  (let ((c (assq 'stretchy attributes)))
-	     (if (pair? c)
-		 (set-cdr! c "true")
-		 (set! attributes (cons (cons 'stretchy "true")
-					attributes))))))
+	  (let ((c (plist-assq :stretchy attributes)))
+	     (if c
+		 (set-car! (cdr c) "true")
+		 (set! attributes `(:stretchy "true" ,@attributes))))))
       ((xml-markup-is? e 'mrow)
        (for-each xml-stretch! (xml-markup-body e)))))
 
@@ -152,11 +152,10 @@
    (cond
       ((xml-markup-is? e 'mi)
        (with-access::xml-markup e (attributes)
-	  (let ((c (assq 'fontweight attributes)))
-	     (if (pair? c)
-		 (set-cdr! c "bold")
-		 (set! attributes (cons (cons 'fontweight "bold")
-					attributes))))))
+	  (let ((c (plist-assq :fontweight attributes)))
+	     (if c
+		 (set-car! (cdr c) "bold")
+		 (set! attributes `(:fontweight "bold" ,@attributes))))))
       ((xml-markup-is? e 'mrow)
        (for-each xml-bold! (xml-markup-body e)))))
 
@@ -167,11 +166,10 @@
    (cond
       ((xml-markup-is? e 'mi)
        (with-access::xml-markup e (attributes)
-	  (let ((c (assq 'class attributes)))
-	     (if (pair? c)
-		 (set-cdr! c (string-append (cdr c) " cal"))
-		 (set! attributes (cons (cons 'class "cal")
-					attributes))))))
+	  (let ((c (plist-assq :class attributes)))
+	     (if c
+		 (set-car! (cdr c) " cal")
+		 (set! attributes `(:class "cal" ,@attributes))))))
       ((xml-markup-is? e 'mrow)
        (for-each xml-cal! (xml-markup-body e)))))
 
@@ -419,12 +417,11 @@
 		 (read-expression port '() 'end-of-expression)
 		 (if (xml-markup-is? exp 'mi)
 		     (with-access::xml-markup exp (attributes)
-			(let ((c (assq 'fontstyle attributes)))
-			   (if (pair? c)
-			       (set-cdr! c "normal")
+			(let ((c (plist-assq :fontstyle attributes)))
+			   (if c
+			       (set-car! (cdr c) "normal")
 			       (set! attributes
-				     (cons (cons 'fontstyle "normal")
-					   attributes))))))
+				     `(:fontstyle "normal" ,@attributes))))))
 		 (values exp stack))))))))
 
 ;*---------------------------------------------------------------------*/

@@ -1,14 +1,28 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-notepad.hss             */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-notepad.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan 17 18:56:22 2005                          */
-/*    Last change :  Sat May 31 06:39:18 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Sat Jun  6 18:57:53 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad CSS                                                  */
 /*=====================================================================*/
 
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type notepad "div.hop-notepad")
+$(define-hss-type notepad-tabs "td.hop-notepad-tabs")
+$(define-hss-type notepad-tabs-row "div.hop-notepad-tabs-row")
+$(define-hss-type notepad-body "td.hop-notepad-body")
+$(define-hss-type nphead "div.hop-nphead")
+$(define-hss-type nptab "span.hop-nptab")
+$(define-hss-type nptab-active "span.hop-nptab-active")
+$(define-hss-type nptab-inactive "span.hop-nptab-inactive")
+$(define-hss-type nptab-body "div.hop-notepad-tab-body")
+$(define-hss-type nptabhead "span.hop-nptab-head")
+    
 /*---------------------------------------------------------------------*/
 /*    <NOTEPAD>                                                        */
 /*    -------------------------------------------------------------    */
@@ -96,6 +110,8 @@ nptab {
 nptab {
   -moz-border-radius-topRight: 0.3em;
   -moz-border-radius-topLeft: 0.3em;
+  -webkit-border-top-right-radius: 0.3em;
+  -webkit-border-top-left-radius: 0.3em;
 }
 
 nptab-active {

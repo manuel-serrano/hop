@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/hop-notepad.scm           */
+;*    serrano/prgm/project/hop/2.0.x/runtime/hop-notepad.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed May 21 11:48:11 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Fri Jun 12 12:16:27 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
 ;*=====================================================================*/
@@ -41,12 +41,12 @@
 ;*    -------------------------------------------------------------    */
 ;*    See __hop_css for HSS types.                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <NOTEPAD> ((id #unspecified string)
-				(class #unspecified string)
-				(history #unspecified)
-				(onchange #f)
-				(attrs)
-				body)
+(define-markup <NOTEPAD> ((id #unspecified string)
+			  (class #unspecified string)
+			  (history #unspecified)
+			  (onchange #f)
+			  (attrs)
+			  body)
    (let ((id (xml-make-id id 'NOTEPAD))
 	 (history (if (boolean? history) history (not (eq? id #unspecified))))
 	 head)
@@ -95,16 +95,15 @@
 	 (let ((click (format "hop_notepad_select( '~a', '~a', ~a )"
 			      id idt (if history "true" "false"))))
 	    (set! attributes
-		  (cons* (cons "onclick" click)
-			 (cons "class" (string-append
-					klass
-					(if (=fx i 0)
-					    " hop-nptab-active"
-					    " hop-nptab-inactive")))
-			 attributes)))
+		  `(:onclick ,click
+		    :class ,(string-append klass
+					   (if (=fx i 0)
+					       " hop-nptab-active"
+					       " hop-nptab-inactive"))
+		    ,@attributes)))
 	 (when (and (xml-delay? (car (xml-element-body tab)))
 		    (null? (cdr (xml-element-body tab))))
-	    (set! attributes (cons (cons "lang" "delay") attributes)))
+	    (set! attributes `(:lang "delay" ,@attributes)))
 	 (<DIV> :class "hop-notepad-tab-body"
 	    :style (if (=fx i 0) "display: block" "display: none")
 	    :id (string-append id "-notepad-tab-body")
@@ -144,26 +143,26 @@
 ;*---------------------------------------------------------------------*/
 ;*    <NPHEAD> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <NPHEAD> ((id #unspecified string)
-			       (class #unspecified string)
-			       (attr)
-			       body)
+(define-markup <NPHEAD> ((id #unspecified string)
+			 (class #unspecified string)
+			 (attr)
+			 body)
    (let ((cla (make-class-name "hop-nphead " class)))
       (instantiate::xml-nphead-element
 	 (markup 'div)
 	 (id (xml-make-id id 'NPHEAD))
-	 (attributes (cons (cons "class" cla) attr))
+	 (attributes `(:class ,cla ,@attr))
 	 (body body))))
    
 ;*---------------------------------------------------------------------*/
 ;*    <NPTAB> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <NPTAB> ((id #unspecified string)
-			      (class #unspecified string)
-			      (selected #f)
-			      (onselect #f)
-			      (attr)
-			      body)
+(define-markup <NPTAB> ((id #unspecified string)
+			(class #unspecified string)
+			(selected #f)
+			(onselect #f)
+			(attr)
+			body)
    
    (cond
       ((null? body)
@@ -184,15 +183,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    <NPTABHEAD> ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <NPTABHEAD> ((id #unspecified string)
-				  (class #unspecified string)
-				  (attr)
-				  body)
+(define-markup <NPTABHEAD> ((id #unspecified string)
+			    (class #unspecified string)
+			    (attr)
+			    body)
    (let ((cla (make-class-name "hop-nptab-head" class)))
       (instantiate::xml-nptabhead-element
 	 (markup 'span)
 	 (id (xml-make-id id 'NPTABHEAD))
-	 (attributes (cons (cons "class" cla) attr))
+	 (attributes `(:class ,cla ,@attr))
 	 (body body))))
    
 ;*---------------------------------------------------------------------*/

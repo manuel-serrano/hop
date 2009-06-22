@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Apr 17 16:04:01 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 18:34:55 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -29,8 +29,8 @@
 	    __hop_user
 	    __hop_css
 	    __hop_clientc
-	    __hop_hop-file
-	    __hop_hz)
+	    __hop_hz
+	    __hop_priv)
 
    (export  (<HTML> . ::obj)
 	    (<HEAD> . ::obj)
@@ -44,7 +44,10 @@
 	    (<INPUT> . ::obj)
 	    
 	    (<TOOLTIP> . ::obj)
-	    (<SORTTABLE> . ::obj)))
+	    (<SORTTABLE> . ::obj)
+
+	    (<LFRAME> . ::obj)
+	    (<LFLABEL> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    head-runtime-system-packed ...                                   */
@@ -77,8 +80,22 @@
       (instantiate::xml-html
 	 (markup 'html)
 	 (attributes attr)
-	 (initializations init)
 	 (body nbody))))
+ 
+;*---------------------------------------------------------------------*/
+;*    <HOP-SETUP> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<HOP-SETUP>)
+   (<SCRIPT> :type (hop-configure-javascript-mime-type)
+      (string-append
+       "function hop_etc_directory() { return \"" (hop-etc-directory) "\"; }
+function hop_bin_directory() { return \"" (hop-bin-directory) "\"; }
+function hop_lib_directory() { return \"" (hop-lib-directory) "\"; }
+function hop_share_directory() { return \"" (hop-share-directory) "\"; }
+function hop_var_directory() { return \"" (hop-var-directory) "\"; }
+function hop_contribs_directory() { return \"" (hop-contribs-directory) "\"; }
+function hop_weblets_directory() { return \"" (hop-weblets-directory) "\"; }
+function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-extra! ...                                                  */
@@ -86,63 +103,49 @@
 (define (init-extra!)
    ;; this is used for non-inlined header on common regular browsers
    (unless head-runtime-system-packed
-      (set! head-runtime-system-packed 
-	    `(,(let ((p (make-file-name (hop-share-directory) "hop.css")))
-		  (<LINK> :inline #f
-		     :rel "stylesheet"
-		     :type (hop-configure-css-mime-type) 
-		     :href p))
-	      ,@(map (lambda (f)
-			(let ((p (make-file-name (hop-var-directory) f)))
-			   (<SCRIPT> :inline #f
-			      :type (hop-configure-javascript-mime-type)
-			      :src p)))
-		     (hop-var-runtime-system))
-	      ,@(map (lambda (f)
-			(let ((p (make-file-name (hop-share-directory) f)))
-			   (<SCRIPT> :inline #f
-			      :type (hop-configure-javascript-mime-type)
-			      :src p)))
-		     (hop-runtime-system))))
-      ;; this is used for non-inlined header for browsers that restrict
-      ;; size of javascript files (e.g., IE6 on WinCE)
-      (set! head-runtime-system-unpacked
-	    `(,(let ((p (make-file-name (hop-share-directory) "hop.css")))
-		  (<LINK> :inline #f
-		     :rel "stylesheet"
-		     :type (hop-configure-css-mime-type) 
-		     :href p))
-	      ,@(map (lambda (f)
-			(let ((p (make-file-name (hop-var-directory) f)))
-			   (<SCRIPT> :inline #f
-			      :type (hop-configure-javascript-mime-type)
-			      :src p)))
-		     (hop-var-runtime-system))
-	      ,@(map (lambda (f)
-			(let ((p (make-file-name (hop-share-directory) f)))
-			   (<SCRIPT> :inline #f
-			      :type (hop-configure-javascript-mime-type)
-			      :src p)))
-		     (hop-runtime-system-files))))
-      ;; this is used for inlined headers
-      (set! head-runtime-system-inline
-	    `(,(let ((p (make-file-name (hop-share-directory) "hop.css")))
-		  (<LINK> :inline #t
-		     :rel "stylesheet"
-		     :type (hop-configure-css-mime-type) 
-		     :href p))
-	      ,@(map (lambda (f)
-			(let ((p (make-file-name (hop-var-directory) f)))
-			   (<SCRIPT> :inline #t
-			      :type (hop-configure-javascript-mime-type)
-			      :src p)))
-		     (hop-var-runtime-system))
-	      ,@(map (lambda (f)
-			(let ((p (make-file-name (hop-share-directory) f)))
-			   (<SCRIPT> :inline #t
-			      :type (hop-configure-javascript-mime-type)
-			      :src p)))
-		     (hop-runtime-system))))))
+      (let ((hopcss (make-file-name (hop-share-directory) "hop.css")))
+	 (set! head-runtime-system-packed 
+	       (cons* (<LINK> :inline #f
+			 :rel "stylesheet"
+			 :type (hop-configure-css-mime-type) 
+			 :href hopcss)
+		      (<HOP-SETUP>)
+		      (map (lambda (f)
+			      (let ((p (make-file-name (hop-share-directory) f)))
+				 (<SCRIPT> :inline #f
+				    :type (hop-configure-javascript-mime-type)
+				    :src p)))
+			   (append (hop-runtime-system)
+				   (list "hop-exception.scm")))))
+	 ;; this is used for non-inlined header for browsers that restrict
+	 ;; size of javascript files (e.g., IE6 on WinCE)
+	 (set! head-runtime-system-unpacked
+	       (cons* (<LINK> :inline #f
+			 :rel "stylesheet"
+			 :type (hop-configure-css-mime-type) 
+			 :href hopcss)
+		      (<HOP-SETUP>)
+		      (map (lambda (f)
+			      (let ((p (make-file-name (hop-share-directory) f)))
+				 (<SCRIPT> :inline #f
+				    :type (hop-configure-javascript-mime-type)
+				    :src p)))
+			   (append (hop-runtime-system-files)
+				   (list "hop-exception.scm")))))
+	 ;; this is used for inlined headers
+	 (set! head-runtime-system-inline
+	       (cons* (<LINK> :inline #t
+			 :rel "stylesheet"
+			 :type (hop-configure-css-mime-type) 
+			 :href hopcss)
+		      (<HOP-SETUP>)
+		      (map (lambda (f)
+			      (let ((p (make-file-name (hop-share-directory) f)))
+				 (<SCRIPT> :inline #t
+				    :type (hop-configure-javascript-mime-type)
+				    :src p)))
+			   (append (hop-runtime-system)
+				   (list "hop-exception.scm"))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    head-parse ...                                                   */
@@ -254,7 +257,18 @@
 		     (when (string? p)
 			(set! res (cons (css p inl) res))))))
 	 (if (null? res)
-	     (error '<HEAD> "Can't find include file" f)
+	     (cond
+		((not (file-exists? f))
+		 (error '<HEAD> "Can't find include file" f))
+		((or (is-suffix? f "hss")
+		     (is-suffix? f "css"))
+		 (list (css f inl)))
+		((or (is-suffix? f "scm")
+		     (is-suffix? f "hop")
+		     (is-suffix? f "js"))
+		 (list (script f inl)))
+		(else
+		 (error '<HEAD> "Can't find include file" f)))
 	     res)))
 
    (let loop ((a args)
@@ -431,15 +445,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    <FOOT> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <FOOT> ((id #unspecified string)
-			     (class "foot" string)
-			     (inline #f)
-			     body)
-   (<DIV>
-      :id (xml-make-id id 'FOOT)
+(define-markup <FOOT> ((id #unspecified string)
+		       (class "foot" string)
+		       (inline #f)
+		       body)
+   (<DIV> :id (xml-make-id id 'FOOT)
       :class class
-      (<DIV>
-	 :align "center"
+      (<DIV> :align "center"
 	 :class "foot-buttons"
 	 (<FOOT-BUTTON>
 	    :href "http://hop.inria.fr"
@@ -451,15 +463,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    <FOOT-BUTTON> ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <FOOT-BUTTON> ((id #unspecified string)
-				    (class "foot-button")
-				    (href #f string)
-				    (title #f string)
-				    (path #f)
-				    (inline #f)
-				    (src #f))
-   (<A>
-      :class class
+(define-markup <FOOT-BUTTON> ((id #unspecified string)
+			      (class "foot-button")
+			      (href #f string)
+			      (title #f string)
+			      (path #f)
+			      (inline #f)
+			      (src #f))
+   (<A> :class class
       :href href
       :title title
       (<IMG> :alt title
@@ -470,7 +481,7 @@
 		 ((string? src)
 		  (if (string=? (dirname src) ".")
 		      (format "~a/buttons/~a"
-			      (url-encode (hop-share-directory))
+			      (url-path-encode (hop-share-directory))
 			      src)
 		      src))
 		 (else
@@ -479,43 +490,39 @@
 ;*---------------------------------------------------------------------*/
 ;*    <TOOLTIP> ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <TOOLTIP> ((id #unspecified string)
-				(onclick 0)
-				(onmouseout 0)
-				body)
+(define-markup <TOOLTIP> ((id #unspecified string)
+			  (onclick 0)
+			  (onmouseout 0)
+			  body)
    (<DIV> :id (xml-make-id id 'TOOLTIP)
-	  :class "hoptooltip"
-	  :onclick (format "~a; hop_tooltip_hide()" onclick)
-	  :onmouseout (format "~a; hop_tooltip_hide()" onmouseout)
-	  body))
+      :class "hoptooltip"
+      :onclick (format "~a; hop_tooltip_hide()" onclick)
+      :onmouseout (format "~a; hop_tooltip_hide()" onmouseout)
+      body))
 	  
 ;*---------------------------------------------------------------------*/
 ;*    <SORTTABLE> ...                                                  */
 ;*    -------------------------------------------------------------    */
 ;*    See __hop_css for HSS type.                                      */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <SORTTABLE> ((id #unspecified string)
-				  (attributes)
-				  body)
-   (let ((i (xml-make-id))
-	 (attr (map! (lambda (e)
-			(list (symbol->keyword (car e)) (cdr e)))
-		     attributes)))
-      (<SPAN>
-	 :id i 
+(define-markup <SORTTABLE> ((id #unspecified string)
+			    (attributes)
+			    body)
+   (let ((i (xml-make-id)))
+      (<SPAN> :id i 
 	 :class "hop-sorttable"
-	 (apply <TABLE> :id (if (string? id) id (xml-make-id 'SORTTABLE))
-		(append! attr body))
+	 (<TABLE> :id (if (string? id) id (xml-make-id 'SORTTABLE))
+	    attributes body)
 	 (<SCRIPT> (format "hop_sorttable( '~a' )" i)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    LINK ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <LINK> ((id #unspecified string)
-			     (inline #f boolean)
-			     (href #f string)
-			     (attributes)
-			     body)
+(define-markup <LINK> ((id #unspecified string)
+		       (inline #f boolean)
+		       (href #f string)
+		       (attributes)
+		       body)
    
    (define (default href)
       (when (and (string? href) inline)
@@ -523,25 +530,21 @@
       (instantiate::xml-element
 	 (markup 'link)
 	 (id (xml-make-id id 'link))
-	 (attributes (cons `(href . ,href) attributes))
+	 (attributes `(:href ,href ,@attributes))
 	 (body '())))
    
    (define (inl body)
-      (let ((c (assq 'rel attributes)))
-	 (if (not (pair? c))
+      (let ((c (plist-assq :rel attributes)))
+	 (if (not c)
 	     (default href)
 	     (cond
-		((string=? (cdr c) "stylesheet")
-		 (apply <STYLE> "\n" body
-			(append-map (lambda (x)
-				       (list (symbol->keyword (car x)) (cdr x)))
-				    (remq c attributes))))
-		((string=? (cdr c) "shortcut icon")
+		((string=? (cadr c) "stylesheet")
+		 (apply <STYLE> "\n" body (plist-remq :rel attributes)))
+		((string=? (cadr c) "shortcut icon")
 		 (instantiate::xml-element
 		    (markup 'link)
 		    (id (xml-make-id id 'link))
-		    (attributes (cons `(href . ,(img-base64-encode href))
-				      attributes))
+		    (attributes `(:href ,(img-base64-encode href) ,@attributes))
 		    (body '())))
 		(else
 		 (default href))))))
@@ -571,12 +574,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    SCRIPT ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <SCRIPT> ((inline #f boolean)
-			       (src #unspecified string)
-			       (type (hop-javascript-mime-type) string)
-			       (attributes)
-			       body)
-
+(define-markup <SCRIPT> ((inline #f boolean)
+			 (src #unspecified string)
+			 (type (hop-javascript-mime-type) string)
+			 (attributes)
+			 body)
+   
    (define (default src)
       (if (string? src)
 	  (let ((src (if (member (suffix src) (hop-client-script-suffixes))
@@ -585,11 +588,11 @@
 	     (when inline (warning '<SCRIPT> "Cannot inline file -- " src))
 	     (instantiate::xml-cdata
 		(markup 'script)
-		(attributes (cons* `(src . ,src) `(type . ,type) attributes))
+		(attributes `(:src ,src type: ,type ,@attributes))
 		(body body)))
 	  (instantiate::xml-cdata
 	     (markup 'script)
-	     (attributes (cons `(type . ,type) attributes))
+	     (attributes `(:type ,type ,@attributes))
 	     (body body))))
    
    (define (inl src)
@@ -599,10 +602,10 @@
 	 (if body
 	     (instantiate::xml-cdata
 		(markup 'script)
-		(attributes (cons `(type . ,type) attributes))
+		(attributes `(:type ,type ,@attributes))
 		(body (list "\n" body)))
 	     (default src))))
-
+   
    (if (and inline (string? src))
        (if (file-exists? src)
 	   (inl src)
@@ -612,21 +615,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    <STYLE> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <STYLE> ((type (hop-configure-css-mime-type) string)
-			      (attributes)
-			      body)
+(define-markup <STYLE> ((type (hop-configure-css-mime-type) string)
+			(attributes)
+			body)
    (instantiate::xml-cdata
       (markup 'style)
-      (attributes (cons `(type . ,type) attributes))
+      (attributes `(:type ,type ,@attributes))
       (body body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <INPUT> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <INPUT> ((id #unspecified string)
-			      (type 'text)
-			      (onkeydown #f)
-			      (attributes))
+(define-markup <INPUT> ((id #unspecified string)
+			(type 'text)
+			(onkeydown #f)
+			(attributes))
    (if (or (eq? type 'url) (equal? type "url"))
        (let* ((id (xml-make-id id 'input))
 	      (comp "hop_inputurl_keydown( this, event )")
@@ -639,14 +642,29 @@
 	  (instantiate::xml-empty-element
 	     (markup 'input)
 	     (id id)
-	     (attributes `((type . text)
-			   (onkeydown . ,onkeydown)
-			   ,@attributes))
+	     (attributes `(:type ,type :onkeydown ,onkeydown ,@attributes))
 	     (body '())))
        (instantiate::xml-empty-element
 	  (markup 'input)
 	  (id (xml-make-id id 'input))
-	  (attributes `((type . ,type)
-			,@(if onkeydown `((onkeydown . ,onkeydown)) '())
-			,@attributes))
+	  (attributes `(type: ,type
+			      ,@(if onkeydown `(onkeydown: ,onkeydown) '())
+			      ,@attributes))
 	  (body '()))))
+
+;*---------------------------------------------------------------------*/
+;*    <LFRAME> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-markup <LFRAME> ((attrs) body)
+   (<DIV> :hssclass "hop-lframe"
+      attrs
+      (<DIV> :hssclass "hop-lfborder"
+	 body)))
+
+;*---------------------------------------------------------------------*/
+;*    <LFLABEL> ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-markup <LFLABEL> ((attrs) body)
+   (<DIV> :hssclass "hop-lflabel"
+      attrs
+      (<SPAN> body)))

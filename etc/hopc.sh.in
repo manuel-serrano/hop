@@ -1,0 +1,39 @@
+#*=====================================================================*/
+#*    serrano/prgm/project/hop/2.0.x/etc/hopc.sh.in                    */
+#*    -------------------------------------------------------------    */
+#*    Author      :  Manuel Serrano                                    */
+#*    Creation    :  Sat Jun 20 06:00:04 2009                          */
+#*    Last change :  Sat Jun 20 06:33:12 2009 (serrano)                */
+#*    Copyright   :  2009 Manuel Serrano                               */
+#*    -------------------------------------------------------------    */
+#*    Driver for .hop compilation                                      */
+#*=====================================================================*/
+
+bindir=@BUILDDIR@/bin
+libdir=@BUILDDIR@/lib
+bigloo=@BIGLOO@
+
+bglargs=
+src=
+bgl=no
+
+while : ; do
+  case $1 in
+    "")
+      break;;
+    --bigloo)
+      shift;
+      bigloo=$1;;
+    *.hop)
+      src=$1;;
+    *)
+      bglargs="$bglargs $1";;
+  esac
+  shift;
+done
+
+export LD_LIBRARY_PATH=$libdir:$LD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH=$libdir:$DYLD_LIBRARY_PATH;
+
+echo "$bindir/hopc $src | $bigloo $bglargs -"
+$bindir/hopc $src | $bigloo $bglargs -

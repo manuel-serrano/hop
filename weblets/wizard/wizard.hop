@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Apr 22 07:22:20 2009 (serrano)                */
+;*    Last change :  Wed May 20 14:45:36 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -18,11 +18,7 @@
 ;*    hoprc-dir ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hoprc-dir
-   (cond-expand
-      (macosx
-       (make-file-path (getenv "HOME") "Library" "Preferences" "hop"))
-      (else
-       (make-file-path (getenv "HOME") ".config" "hop"))))
+   (hop-rc-directory))
    
 ;*---------------------------------------------------------------------*/
 ;*    wizard ...                                                       */
@@ -61,7 +57,7 @@
 			       #f))
 		    (cguest (if (and (> (string-length gname) 0)
 				     (> (string-length gpasswd) 0))
-				(crypt uname upasswd)
+				(crypt gname gpasswd)
 				#f))
 		    (proxy (dom-get-element-by-id document "proxy").value)
 		    (proxyu (dom-get-element-by-id document "uproxy").checked)

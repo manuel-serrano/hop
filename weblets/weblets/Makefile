@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/weblets/weblets/Makefile         */
+#*    serrano/prgm/project/hop/2.0.x/weblets/weblets/Makefile          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Sep 29 09:41:06 2008 (serrano)                */
-#*    Copyright   :  2006-08 Manuel Serrano                            */
+#*    Last change :  Tue May  5 07:55:35 2009 (serrano)                */
+#*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Weblet Makefile                                                  */
 #*=====================================================================*/
@@ -30,7 +30,7 @@ POPULATION	= $(SOURCES) \
                   weblets.hss weblets-homepage.hss config.hop \
                   LICENSE \
                   etc/logo.png etc/favicon.png \
-                  etc/weblet.info.in etc/weblets.wiki.in .afile
+                  etc/weblet.info.in etc/weblets.wiki.in
 
 #*---------------------------------------------------------------------*/
 #*    Targets                                                          */

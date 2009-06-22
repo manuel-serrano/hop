@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Mon Mar 23 09:06:22 2009 (serrano)                */
+;*    Last change :  Wed May 27 12:11:38 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -251,7 +251,8 @@
 	 :onclick (format "hop_filechooser_button_push( this, ~s, ~s )" id url)
 	 :onmousedown (format "hop_filechooser_begin_drag( event, ~s, ~s )"
 			      id url)
-	 dir))
+	 dir
+	 (<SPAN> :style "display: none" (string (file-separator)))))
    
    (define (initial-url scheme user host port)
       (cond
@@ -386,50 +387,74 @@
 			   (if (>= y 2000)
 			       (2digits (remainder y 2000))
 			       y)))))))
-	 
+      
+      (define (get-sorted-files url)
+	 (sort (lambda (f1 f2)
+		  (cond
+		     ((is-directory? f1)
+		      (or (not (is-directory? f2))
+			  (<fx (string-natural-compare3 f1 f2) 0)))
+		     ((is-directory? f2)
+		      #f)
+		     (else
+		      (<fx (string-natural-compare3 f1 f2) 0))))
+	       (filter (lambda (p)
+			  (let ((b (basename p)))
+			     (and (or (not (char=? (string-ref b 0) #\.))
+				      (not hidden))
+				  (or (is-directory? p)
+				      (pregexp-match regexp (basename p))))))
+		       (if (webdav? url)
+			   (with-handler
+			      (lambda (e)
+				 '())
+			      (map! url-encode
+				    (webdav-directory->path-list
+				     (url-encode url))))
+			   (directory->path-list url)))))
+      
+      (define (<tr> ep eid class prevep previd nextep nextid)
+	 (let ((p ((hop-locale->charset) ep)))
+	    (<TR> :class class 
+	       :onclick (format "hop_filechooser_select( this, event, ~s, ~s )" id p)
+	       :ondblclick (if (is-directory? p)
+			       (format "hop_filechooser_open( ~s, ~s )"
+				       id p)
+			       (format "hop_filechooser_ok( event, ~s )"
+				       id))
+	       :onmousedown (format "hop_filechooser_begin_drag( event, ~s, ~s )"
+				    id p)
+	       (<TD> :class (if (is-directory? p)
+				"filechooser-icon filechooser-folder"
+				"filechooser-icon filechooser-file")
+		  ;; we should use an input element to receive key events
+		  #;(<INPUT> :value (url-decode (basename p))
+		     :type 'text
+		     :onkeydown (format "hop_filechooser_key( this, event, ~s, ~s, ~s, ~s, ~s )"
+					id prevep previd nextep nextid))
+		  (<SPAN> (url-decode (basename p))))
+	       (<TD> :class "filechooser-modified"
+		  (file-date ep)))))
+      
       (<TABLE> :class "filechooser-files" :cellspacing 0 :cellpadding 0
 	 (<COLGROUP> (<COL>) (<COL> :width "0*"))
 	 (<TR> (<TH> "Name") (<TH> :class "filechooser-modified" "Modified"))
-	 (map (lambda (ep)
-		 (set! odd (not odd))
-		 (let ((p ((hop-locale->charset) ep)))
-		    (<TR> :class (if odd "odd" "even")
-		       :onkeydown (format "hop_filechooser_key( this, ~s )" id)
-		       :onclick (format "hop_filechooser_select( this, event, ~s, ~s )" id p)
-		       :ondblclick (if (is-directory? p)
-				       (format "hop_filechooser_open( ~s, ~s )"
-					       id p)
-				       (format "hop_filechooser_ok( event, ~s )"
-					       id))
-		       :onmousedown (format "hop_filechooser_begin_drag( event, ~s, ~s )"
-					    id p)
-		       (<TD> :class (if (is-directory? p)
-					"filechooser-icon filechooser-folder"
-					"filechooser-icon filechooser-file")
-			  (url-decode (basename p)))
-		       (<TD> :class "filechooser-modified" (file-date ep)))))
-	      (sort (lambda (f1 f2)
-		       (cond
-			  ((is-directory? f1)
-			   (or (not (is-directory? f2)) (string<? f1 f2)))
-			  ((is-directory? f2)
-			   #f)
-			  (else
-			   (string<? f1 f2))))
-		    (filter (lambda (p)
-			       (let ((b (basename p)))
-				  (and (or (not (char=? (string-ref b 0) #\.))
-					   (not hidden))
-				       (or (is-directory? p)
-					   (pregexp-match regexp (basename p))))))
-			    (if (webdav? url)
-				(with-handler
-				   (lambda (e)
-				      '())
-				   (map! url-encode
-					 (webdav-directory->path-list
-					  (url-encode url))))
-				(directory->path-list url))))))))
+	 (let ((epaths (get-sorted-files url)))
+	    (if (null? epaths)
+		'()
+		(let loop ((epaths epaths)
+			   (ids (map (lambda (ep) (xml-make-id 'path)) epaths))
+			   (classes (let ((cla (list "odd" "even")))
+				       (set-cdr! (last-pair cla) cla)
+				       cla))
+			   (pep "")
+			   (pid ""))
+		   (let ((ep (car epaths))
+			 (id (car ids)))
+		      (if (null? (cdr epaths))
+			  (list (<tr> ep id (car classes) pep pid "" ""))
+			  (cons (<tr> ep id (car classes) pep pid (cadr epaths) (cadr ids))
+				(loop (cdr epaths) (cdr ids) (cdr classes) ep id))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <FILECHOOSER:BUTTONS> ...                                        */

@@ -1,0 +1,128 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.0.x/share/hop-slider.hss              */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Aug 10 11:04:10 2005                          */
+/*    Last change :  Wed Jun 17 11:58:34 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    HOP slider CSS                                                   */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module __hop_hop-slider-hss)
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type slider "table[hssclass=hop-slider]"
+
+    (define-hss-property (line-left-color v)
+       (format "div.lineleft { background: ~l; }" v))
+
+    (define-hss-property (line-right-color v)
+       (format "div.lineright { background: ~l; }" v))
+
+    (define-hss-property (cursor-color v)
+       (format "div.cursor { background: ~l; }" v))
+
+    (define-hss-property (caption-color v)
+       (format "td.caption { color: ~l; }" v))
+
+    (define-hss-property (caption-font-size v)
+       (format "td.caption { font-size: ~l; }" v))
+ 
+    (define-hss-property (caption-font-family v)
+       (format "td.caption { font-family: ~l; }" v))
+
+    (define-hss-property (caption-font-weight v)
+       (format "td.caption { font-size: ~l; }" v)))
+
+/*---------------------------------------------------------------------*/
+/*    public declarations                                              */
+/*---------------------------------------------------------------------*/
+/* <public> */
+slider {
+  line-left-color: #68f;
+  line-right-color: #ccc;
+  cursor-color: rgb(150,150,150);
+  caption-color: black;
+  caption-font-size: 8px;
+  caption-font-family: Arial, Helvetica, sans-serif;
+  caption-font-weight: bold;
+  border: 0;
+}
+/* </public> */
+
+/*---------------------------------------------------------------------*/
+/*    hop-slider                                                       */
+/*---------------------------------------------------------------------*/
+slider {
+  border-collapse: collapse;
+  border-spacing: 0;
+  user-select: none;
+} 
+
+/*---------------------------------------------------------------------*/
+/*    Line configuration                                               */
+/*---------------------------------------------------------------------*/
+slider td {
+  height: 7px;
+  vertical-align: middle;
+}
+
+slider div.lineleft {
+  height: 3px;
+  border-right: 0;
+  border-left: 1px solid #555;
+  border-top: 1px solid #555;
+  border-bottom: 1px solid #555;
+  user-select: none;
+}
+  
+slider div.lineright {
+  height: 3px;
+  border-left: 0;
+  margin: 0;
+  border-top: 1px solid #aaa;
+  border-right: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
+  background: #ccc;
+  user-select: none;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Cursor configuration                                             */
+/*---------------------------------------------------------------------*/
+slider td.cursor {
+  margin: 0;
+  padding: 0;
+  width: 14px;
+  border-left: 1px outset #aaa;
+  border-top: 1px outset #aaa;
+  border-right: 1px outset #555;
+  border-bottom: 1px outset #555;
+  user-select: none;
+}
+
+slider div.cursor {
+  width: 14px;
+  height: 7px;
+  background-image: url( "icons/hop-slider/cursor.png" );
+  background-position: center center;
+  background-repeat: repeat-y;
+  user-select: none;
+}
+   
+slider div.cursoron {
+}
+   
+slider div.cursoroff {
+  background-color: rgb(204,204,204);
+}
+
+slider td.caption {
+  user-select: none;
+}

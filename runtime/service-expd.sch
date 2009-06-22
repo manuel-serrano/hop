@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Wed Apr  8 16:26:26 2009 (serrano)                */
+;*    Last change :  Wed May  6 11:48:43 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -58,25 +58,31 @@
 	     (loop (cdr args) 'plain))
 	    ((eq? (car args) #!rest)
 	     (list (cadr args))))))
-   
-   (let ((proc (if (symbol? wid) (symbol-append wid '-proc) 'proc))
-	 (hdl (if (symbol? wid) (symbol-append wid '-handler) 'hdl))
-	 (svc (if (symbol? wid) (symbol-append wid '-svc) 'svc))
-	 (errid (if (symbol? wid) `',wid wid))
-	 (id (if (symbol? id) `',id `(string->symbol ,url)))
-	 (path (gensym 'path))
-	 (fun (gensym 'fun))
-	 (file (gensym 'file)))
+
+   (let* ((proc (if (symbol? wid) (symbol-append wid '-proc) 'proc))
+	  (hdl (if (symbol? wid) (symbol-append wid '-handler) 'hdl))
+	  (svc (if (symbol? wid) (symbol-append wid '-svc) 'svc))
+	  (errid (if (symbol? wid) `',wid wid))
+	  (id (if (symbol? id) `',id `(string->symbol ,url)))
+	  (path (gensym 'path))
+	  (fun (gensym 'fun))
+	  (file (gensym 'file))
+	  (actuals (call args))
+	  (mkurl (if (and (pair? args)
+			  (list? args)
+			  (eq? (car args) #!key)
+			  (every? symbol? (cdr args)))
+		     `(hop-apply-nice-url ,path (list ,@actuals))
+		     `(hop-apply-url ,path (list ,@actuals)))))
       `(let* ((,path ,url)
 	      (,file (the-loading-file))
-	      (,fun (lambda ,args
-		       (hop-apply-url ,path (list ,@(call args)))))
+	      (,fun (lambda ,args ,mkurl))
 	      (,proc ,(if (pair? body)
 			  `(lambda ,args ,@body)
 			  `(lambda ,args
 			      (instantiate::http-response-remote
 				 (port (hop-port))
-				 (path (hop-apply-url ,path (list ,@(call args))))))))
+				 (path ,mkurl)))))
 	      (,svc (instantiate::hop-service
 		       (wid ,(if (symbol? wid) `',wid wid))
 		       (id ,id)
@@ -178,8 +184,8 @@
 		       ,failure
 		       ,auth))
 
-   (define (with-hop-remote svc args success failure opts)
-      `(with-hop-remote (,svc ,@args) ,success ,failure ,@(reverse! args)))
+   (define (with-hop-remote svc args success fail opts)
+      `(with-hop-remote (,svc ,@args) ,success ,fail ,@(reverse! opts)))
    
    (match-case x
       ((?- (?svc . ?a) . ?opts)
@@ -187,29 +193,30 @@
        (let loop ((opts opts)
 		  (args '())
 		  (success #f)
-		  (failure #f)
+		  (fail #f)
 		  (host #f)
+		  (port #f)
 		  (sync #f)
 		  (auth #f))
 	  (cond
 	     ((null? opts)
-	      (let ((nx (if (not host)
+	      (let ((nx (if (and (not host) (not port))
 			    ;; a local call
-			    (let ((wh (with-hop-local svc a success failure auth)))
+			    (let ((wh (with-hop-local svc a success fail auth)))
 			       (if sync
 				   (let ((v (gensym)))
 				      `(let ((,v ,wh))
 					  (if ,sync ,v #unspecified)))
 				   `(begin ,wh #unspecified)))
 			    ;; a remote call
-			    (with-hop-remote svc a success failure args))))
+			    (with-hop-remote svc a success fail args))))
 		 (e (evepairify nx x) e)))
 	     ((not (keyword? (car opts)))
 	      (cond
 		 ((not success)
-		  (loop (cdr opts) args (car opts) failure host sync auth))
-		 ((not failure)
-		  (loop (cdr opts) args success (car opts) host sync auth))
+		  (loop (cdr opts) args (car opts) fail host port sync auth))
+		 ((not fail)
+		  (loop (cdr opts) args success (car opts) host port sync auth))
 		 (else
 		  (error 'with-hop
 			 (format "Illegal optional argument: ~a" (car opts))
@@ -222,26 +229,34 @@
 	     ((eq? (car opts) :host)
 	      (loop (cddr opts)
 		    (cons* (cadr opts) (car opts) args)
-		    success failure
+		    success fail
+		    (cadr opts)
+		    port
+		    sync auth))
+	     ((eq? (car opts) :port)
+	      (loop (cddr opts)
+		    (cons* (cadr opts) (car opts) args)
+		    success fail
+		    host
 		    (cadr opts)
 		    sync auth))
 	     ((eq? (car opts) :sync)
 	      (loop (cddr opts)
 		    (cons* (cadr opts) (car opts) args)
-		    success failure
-		    host
+		    success fail
+		    host port
 		    (cadr opts)
 		    auth))
 	     ((eq? (car opts) :authorization)
 	      (loop (cddr opts)
 		    (cons* (cadr opts) (car opts) args)
-		    success failure
-		    host sync
+		    success fail
+		    host port sync
 		    (cadr opts)))
 	     (else
 	      (loop (cddr opts)
 		    (cons* (cadr opts) (car opts) args)
-		    success failure host sync auth)))))
+		    success fail host port sync auth)))))
       (else
        (error 'with-hop "Illegal form" x))))
    

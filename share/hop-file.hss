@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.11.x/share/hop-file.hss               */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-file.hss                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 10:58:15 2008                          */
-/*    Last change :  Sun Feb  8 18:07:52 2009 (serrano)                */
+/*    Last change :  Sun Jun 21 06:47:54 2009 (serrano)                */
 /*    Copyright   :  2008-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopFile Hss                                                      */
@@ -13,6 +13,11 @@
 /*    The module                                                       */
 /*---------------------------------------------------------------------*/
 $(module hopfile_hss)
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type filechooser "div.filechooser")
 
 /*---------------------------------------------------------------------*/
 /*    Hop File config                                                  */
@@ -36,9 +41,9 @@ $(define hopfile-hdd-icon "url( icons/hop-filechooser/hdd.png )")
 $(define hopfile-edit-add-icon "url( icons/hop-filechooser/edit-add.png )")
 $(define hopfile-edit-remove-icon "url( icons/hop-filechooser/edit-remove.png )")
 
-$(define hopfile-open-icon "url( icons/hop-filechooser/open.png )")
-$(define hopfile-cancel-icon "url( icons/hop-filechooser/cancel.png )")
-$(define hopfile-run-icon "url( icons/hop-filechooser/run.png )")
+$(define hopfile-open-icon "url( icons/actions/open.png )")
+$(define hopfile-cancel-icon "url( icons/actions/cancel.png )")
+$(define hopfile-run-icon "url( icons/actions/run.png )")
 
 /*---------------------------------------------------------------------*/
 /*    filechooser                                                      */
@@ -189,6 +194,15 @@ filechooser table.filechooser-files td.filechooser-icon {
   padding: 3px 0px 3px 20px;
   background-repeat: no-repeat;
   background-position: 2px center;
+}
+
+filechooser table.filechooser-files td.filechooser-icon input {
+  width: 100%;
+  border: 0;
+  background-color: inherit;
+  font-size: inherit;
+  font-family: inherit;
+  cursor: default;
 }
 
 filechooser table.filechooser-files td.filechooser-file {

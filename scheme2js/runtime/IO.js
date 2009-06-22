@@ -982,7 +982,7 @@ function sc_format(s) {
 	  case 88:
 	  case 120:
 	      // x
-	      p.appendJSString(arguments[j].toString(6));
+	      p.appendJSString(arguments[j].toString(16));
 	      j++;
 	      break;
 

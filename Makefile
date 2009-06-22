@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.11.x/Makefile                         */
+#*    serrano/prgm/project/hop/2.0.x/Makefile                          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Jan 29 18:27:08 2009 (serrano)                */
+#*    Last change :  Sat Jun 20 08:36:30 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -24,15 +24,15 @@ do: build
 POPULATION	= Makefile LICENSE README INSTALL INSTALL.jvm \
                   configure .hoprelease
 POPDIRS		= runtime hopscheme scheme2js src hopsh hopreplay \
-                  etc share \
+                  etc share arch \
                   weblets # contribs
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-.PHONY: bindir libdir lib share weblets bin
+.PHONY: bindir libdir lib widget-lib share weblets bin
 
-build: showflags bindir libdir lib share weblets bin $(BUILD-SPECIFIC)
+build: showflags bindir libdir lib share weblets widget bin $(BUILD-SPECIFIC)
 
 bindir:
 	mkdir -p bin
@@ -40,7 +40,10 @@ bindir:
 libdir:
 	mkdir -p lib
 
-bin: bindir src-bin hopsh-bin hopreplay-bin
+bin: bindir hopc-bin src-bin hopsh-bin hopreplay-bin
+
+hopc-bin: share lib
+	(cd hopc && $(MAKE) build)
 
 src-bin: share lib
 	(cd src && $(MAKE) build)
@@ -51,10 +54,13 @@ hopsh-bin: lib
 hopreplay-bin: lib
 	(cd hopreplay && $(MAKE) build)
 
-lib: libdir share
+lib: libdir share 
 	(cd scheme2js && $(MAKE) build)
 	(cd hopscheme && $(MAKE) build)
 	(cd runtime && $(MAKE) build)
+
+widget: libdir hopc-bin
+	(cd widget && $(MAKE) build)
 
 share:
 	(cd share && $(MAKE) build)
@@ -105,6 +111,7 @@ install-weblets:
 
 install-quick: hop-dirs install-init
 	(cd runtime && $(MAKE) install) && \
+	(cd widget && $(MAKE) install) && \
 	(cd scheme2js && $(MAKE) install) && \
 	(cd hopscheme && $(MAKE) install) && \
 	(cd src && $(MAKE) install) && \
@@ -114,6 +121,8 @@ install-quick: hop-dirs install-init
 install-init: hop-dirs
 	$(INSTALL) $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init;
+	$(INSTALL) $(BUILDLIBDIR)/hopwidget.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopwidget.init && \
+        chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopwidget.init;
 	$(INSTALL) $(BUILDLIBDIR)/scheme2js.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/scheme2js.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/scheme2js.init;
 	$(INSTALL) $(BUILDLIBDIR)/hopscheme.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init && \
@@ -141,6 +150,7 @@ uninstall:
 	(cd src; $(MAKE) uninstall)
 	(cd hopsh; $(MAKE) uninstall)
 	(cd runtime; $(MAKE) uninstall)
+	(cd widget; $(MAKE) uninstall)
 	(cd scheme2js; $(MAKE) uninstall)
 	(cd hopscheme; $(MAKE) uninstall)
 	/bin/rm -rf $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)

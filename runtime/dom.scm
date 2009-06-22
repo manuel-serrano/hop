@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/runtime/dom.scm                  */
+;*    serrano/prgm/project/hop/2.0.x/runtime/dom.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Tue Mar 10 14:33:29 2009 (serrano)                */
+;*    Last change :  Sat Jun 20 05:26:44 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_dom
 
-   (import __hop_xml)
+   (import __hop_xml
+	   __hop_priv)
 
    (export (%make-xml-document ::xml-document)
 	   (dom-get-attributes::pair-nil ::obj)
@@ -495,8 +496,8 @@
 (define (dom-get-attribute node name)
    (when (xml-markup? node)
       (with-access::xml-markup node (attributes)
-	 (let ((c (assoc name attributes)))
-	    (and (pair? c) (cdr c))))))
+	 (let ((a (plist-assq (string->keyword name) attributes)))
+	    (when a (cadr a))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-has-attribute? ...                                           */
@@ -504,7 +505,7 @@
 (define (dom-has-attribute? node name)
    (when (xml-markup? node)
       (with-access::xml-markup node (attributes)
-	 (pair? (assq (string->symbol name) attributes)))))
+	 (pair? (plist-assq (string->keyword name) attributes)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-remove-attribute! ...                                        */
@@ -512,9 +513,8 @@
 (define (dom-remove-attribute! node name)
    (when (xml-markup? node)
       (with-access::xml-markup node (attributes)
-	 (let ((c (assq (string->symbol name) attributes)))
-	    (when (pair? c)
-	       (set! attributes (remq! c attributes)))))))
+	 (set! attributes (plist-remq! (string->keyword name) attributes))
+	 attributes)))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-set-attribute!...                                            */
@@ -522,10 +522,9 @@
 (define (dom-set-attribute! node name value)
    (when (xml-markup? node)
       (with-access::xml-markup node (attributes)
-	 (let ((c (assq (string->symbol name) attributes)))
-	    (if (pair? c)
-		(set-cdr! c value)
-		(set! attributes (cons (cons name value) attributes)))))))
+	 (let ((a (plist-assq (string->keyword name) attributes)))
+	    (when a
+	       (set-car! (cdr a) value))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-node-element? ...                                            */
