@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sun Jun 21 06:57:53 2009 (serrano)                */
+#*    Last change :  Mon Jun 22 10:12:15 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -76,8 +76,7 @@ ICONS_FOLDLIST	= triangle-down.png triangle-right.png
 
 ICONS_LOGIN	= login.png
 
-ICONS_FCHOOSER	= cancel.png open.png run.png \
-                  folder-close.png file.png home.png hdd.png desktop.png \
+ICONS_FCHOOSER	= folder-close.png file.png home.png hdd.png desktop.png \
                   keyboard.png drag.png \
                   edit-add.png edit-remove.png
 
