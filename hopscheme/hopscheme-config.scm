@@ -67,8 +67,11 @@
 	  (conf-verbose (if (>fx *hop-verbose* 10)
 			    (extend-config config 'verbose #t)
 			    conf-indent))
-	  (conf-module (add-suffix-clause conf-verbose)))
-      conf-module))
+	  (conf-module (add-suffix-clause conf-verbose))
+	  (conf-debug (if (>fx (bigloo-debug) 0)
+			  (extend-config config 'debug #t)
+			  conf-module)))
+      conf-debug))
 
 (define expand-once-expander
    (lambda (x e)
