@@ -360,7 +360,6 @@ function sc_stringIndex(s, cset, start) {
       return res >= 0 ? res : false;
    }
    if (cset.length == 1) {
-      alert( "cset=" + res  );
       res = s.indexOf(cset, start);
       return res >= 0 ? res : false;
    } else {
