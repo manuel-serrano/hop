@@ -1,16 +1,6 @@
 (module hophome_demos-music
    (export (home/demos/music)))
 
-(define podcast-list
-   '(("http://radiofrance-podcast.net/podcast/rss_10053.xml"
-      "France Musique")
-     ("http://radiofrance-podcast.net/podcast/rss_20000.xml"
-      "FIP")
-     ("http://radiofrance-podcast.net/podcast/rss_16256.xml"
-      "Continent sciences")
-     ("http://radiofrance-podcast.net/podcast/rss_10334.xml"
-      "Le Mouv'")))
-
 (define (rss->podcast-mp3 url)
    (with-url url
       (lambda (p)
@@ -24,7 +14,11 @@
 	       #f)))))
 
 (define-service (home/demos/music)
-   (let ((audio (<AUDIO> :controls #t)))
+   (let ((audio (<AUDIO> :controls #t))
+	 (input (<INPUT> :name "podcast" :id "podcast" :type 'text
+		   :size 50
+		   :value "http://radiofrance-podcast.net/podcast09/rss_10060.xml"
+		   :onchange ~(load-url this.value)))) 
       (<HTML>
 	 (<HEAD>
 	    :title "Podcast demo"
@@ -36,17 +30,22 @@
 		(if (string=? url "")
 		    (set! snd #f)
 		    (set! snd (make-sound url :stream #t))))
+	    ~(define (load-url podcast)
+		(with-hop ($(service (rss)
+			       (with-handler
+				  (lambda (e)
+				     (cons 'error rss))
+				  (rss->podcast-mp3 rss)))
+			    podcast)
+		   (lambda (path)
+		      (if (string? path)
+			  (audio-load $audio path #t)
+			  (alert "Cannot download podcast: " (cdr path))))))
 	    (<H3> "Podcast demonstration")
 	    audio
 	    (<BR>)
-	    (<SELECT> :name "podcast" :id "podcast" :size 1
-	       :onchange ~(audio-load $audio this.value #t)
-	       (<OPTION> :value "" "Select a podcast")
-	       (filter-map (lambda (podcast)
-			      (let* ((rss (car podcast))
-				     (name (cadr podcast))
-				     (url (rss->podcast-mp3 (car podcast))))
-				 (when url
-				    (<OPTION> :value url name))))
-			   podcast-list))))))
+	    (<DIV> "Enter a podcast URL")
+	    input
+	    (<BR>)
+	    (<BUTTON> "load" :onclick ~(load-url $input.value))))))
 	       
