@@ -24,10 +24,10 @@ users to select graphically colors.
 === Requirements ===
 
 Client codes using //color choosers// need to load the following client-side
-libaries: ++hop-color++, ++hop-spinbutton++, and ++hop-slider++.
+library ++hop-color++.
 
 
-  (<HEAD> :include "hop-slider" "hop-spinbutton" "hop-color")
+  (<HEAD> :include "hop-color")
 
 
 == Examples ==
