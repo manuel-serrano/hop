@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sat Jun 20 18:34:55 2009 (serrano)                */
+;*    Last change :  Mon Jun 22 10:36:18 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -171,6 +171,16 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
    (define (script p inl)
       (<SCRIPT> :type (hop-javascript-mime-type) :inline inl :src p))
    
+   (define (hopscript p inl)
+      (when (file-exists? p)
+	 (with-handler
+	    (lambda (e) #f)
+	    (let ((hd (with-input-from-file p read)))
+	       (match-case hd
+		  ((<HEAD> . ?head)
+		   (tprint "HEAD..." head))))))
+      (<SCRIPT> :type (hop-javascript-mime-type) :inline inl :src p))
+   
    (define (favicon p inl)
       (<LINK> :rel "shortcut icon" :href p :inline inl))
    
@@ -223,7 +233,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 	 (when hss
 	    (set! res (cons (css hss inl) res)))
 	 (when jscript1
-	    (set! res (cons (script jscript1 inl) res)))
+	    (set! res (cons (hopscript jscript1 inl) res)))
 	 (when jscript2
 	    (set! res (cons (script jscript2 inl) res)))
 	 res))
@@ -245,11 +255,11 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 		       (set! res (cons (script p inl) res)))))
 	     (scm (let ((p (find-file/path (string-append f ".scm") path)))
 		     (when (string? p)
-			(set! res (cons (script p inl) res)))))
+			(set! res (cons (hopscript p inl) res)))))
 	     (hop (unless scm
 		     (let ((p (find-file/path (string-append f ".hop") path)))
 			(when (string? p)
-			   (set! res (cons (script p inl) res))))))
+			   (set! res (cons (hopscript p inl) res))))))
 	     (ss (let ((p (find-file/path (string-append f ".css") path)))
 		    (when (string? p)
 		       (set! res (cons (css p inl) res)))))
@@ -263,9 +273,9 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 		((or (is-suffix? f "hss")
 		     (is-suffix? f "css"))
 		 (list (css f inl)))
-		((or (is-suffix? f "scm")
-		     (is-suffix? f "hop")
-		     (is-suffix? f "js"))
+		((or (is-suffix? f "scm") (is-suffix? f "hop"))
+		 (list (hopscript f inl)))
+		((is-suffix? f "js")
 		 (list (script f inl)))
 		(else
 		 (error '<HEAD> "Can't find include file" f)))
@@ -341,8 +351,8 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 		 ((:include)
 		  (cond
 		     ((string? (cadr a))
-		      ;; automatic detection of hz package (it is really
-		      ;; a good idea since there is the special :hz keyword)
+		      ;; automatic detection of hz package (is it really
+		      ;; a good idea since there is the special :hz keyword?)
 		      (if (hz-package-filename? (cadr a))
 			  (loop (cddr a) :include rts dir path inl packed
 				(append (hz (cadr a) inl) els))

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sat Jun 20 08:36:30 2009 (serrano)                */
+#*    Last change :  Tue Jun 23 05:08:14 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -23,7 +23,7 @@ do: build
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile LICENSE README INSTALL INSTALL.jvm \
                   configure .hoprelease
-POPDIRS		= runtime hopscheme scheme2js src hopsh hopreplay \
+POPDIRS		= runtime hopscheme scheme2js src hopc hopsh hopreplay \
                   etc share arch \
                   weblets # contribs
 
