@@ -1,0 +1,33 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.0.x/etc/hopwidget.init.in             */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Sat Jun 20 07:32:05 2009                          */
+;*    Last change :  Sat Jun 20 07:54:50 2009 (serrano)                */
+;*    Copyright   :  2009 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The HOPWIDGET lib init file.                                     */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The library                                                      */
+;*---------------------------------------------------------------------*/
+(declare-library! 'hopwidget
+		  :version "@VERSION@"
+                  :module-init '__hopwidget-init
+		  :module-eval '__hopwidget-makelib)
+
+;*---------------------------------------------------------------------*/
+;*    Link option                                                      */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (bigloo-compile
+    ;; required libraries for HOPWIDGETS
+    (set! *additional-bigloo-libraries*
+	  (cons* 'bigloomultimedia
+		 'biglooweb
+		 'hop
+                 @BIGLOOSSL@
+		 *additional-bigloo-libraries*)))
+   (bigloo-eval
+    #unspecified))
