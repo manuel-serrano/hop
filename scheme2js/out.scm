@@ -28,6 +28,7 @@
 	      suspend-resume?::bool
 	      call/cc?::bool
 	      optimize-calls?::bool
+	      debug?::bool
 
 	      pp?::bool
 	      pragmas       ;; ::Pragmas or #f
@@ -84,6 +85,7 @@
 		 (suspend-resume? (and (config 'suspend-resume) #t))
 		 (call/cc? (and (config 'call/cc) #t))
 		 (optimize-calls? (and (config 'optimize-calls) #t))
+		 (debug? (and (config 'debug) #t))
 
 		 (pp? (and (config 'pp) #t))
 		 (pragmas pragmas)
@@ -507,7 +509,8 @@
 			(car rev))))))
    
    (with-access::Out-Lambda this (lvalue declared-vars body vaarg? formals
-					 call/cc? contains-trampoline-call?)
+					 call/cc? contains-trampoline-call?
+					 location)
       (receive (formals-w/o-vaarg vaarg)
 	 (split-formals/vaarg)
 
@@ -546,11 +549,18 @@
 		(needs-parenthesis? (or (and stmt?
 					     (not lvalue))
 					(and (not stmt?)
-					     lvalue))))
+					     lvalue)
+					(Out-Env-debug? env))))
 
 	    (template-display p env
 	       (?@ stmt? "~@;\n")
 	       (?@ needs-parenthesis? "(~@)")
+	       (?@ (Out-Env-debug? env)
+		   "~a = ~@, ~a.name = \"~e\", ~a.location = \"~a\", ~a"
+		   *tmp-var* *tmp-var* (if lvalue (walk lvalue p #f) "")
+		   *tmp-var* (with-output-to-string (lambda ()
+						       (display location)))
+		   *tmp-var*)
 	       (?@ lvalue "~e = ~@" (walk lvalue p #f))
 	       (?@ #t "function(~e) {\n ~e ~@ }" ;; always.
 		   (separated ","
