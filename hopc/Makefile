@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sat Jun 20 06:07:15 2009 (serrano)                */
+#*    Last change :  Tue Jun 23 05:09:40 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hopc                                    */
 #*=====================================================================*/
@@ -40,7 +40,7 @@ COLOR		= 32
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION 	= $(INCLUDES) $(SOURCES) hopc.sh Makefile
+POPULATION 	= $(INCLUDES) $(SOURCES) Makefile
 
 #*---------------------------------------------------------------------*/
 #*    The roost executable                                             */
@@ -189,7 +189,6 @@ clean:
 	/bin/rm -rf META-INF
 
 devclean: clean
-	/bin/rm hopc.sh
 
 cleanall: devclean
 
