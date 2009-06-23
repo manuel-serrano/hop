@@ -130,7 +130,7 @@
 	    ((or (not (pair? (car h)))
 		 (not (symbol? (car (car h)))))
 	     (scheme2js-error "module"
-			      "invalide module-clause"
+			      "invalid module-clause"
 			      (car h)
 			      h))
 	    (else
