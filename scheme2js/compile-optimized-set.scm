@@ -1,5 +1,7 @@
 (module compile-optimized-set
-   (export (compile-set! p env compile::procedure node::Node))
+   (export
+    (compile-unoptimized-set! p env compile::procedure n::Node)
+    (compile-set! p env compile::procedure node::Node))
    (import config
 	   tools
 	   template-display

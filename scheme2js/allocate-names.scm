@@ -7,8 +7,15 @@
 	   verbose
 	   gen-js)
    (static (class Name-Env
+	      compress?::bool
 	      suffix
-	      (counter::bint (default 0)))
+
+	      ;; non-compressed
+	      (counter::bint (default 0))
+
+	      ;; compressed
+	      (last-generated-id::bstring (default ""))
+	      )
 	   (wide-class Global-Var::Var))
    (export (wide-class Named-Var::Var
 	      (js-id::bstring read-only)))
@@ -31,6 +38,7 @@
    (verbose "  generating names for vars")
    (find-free tree #f #f '()) ;; local version
    (let ((env (instantiate::Name-Env
+		 (compress? (and (config 'compress) #t))
 		 (suffix (and (config 'statics-suffix)
 			      (suffix-mangle (config 'statics-suffix)))))))
       (name-gen tree env #f)))
@@ -124,13 +132,89 @@
       (with-access::Var v (kind)
 	 (let ((kind (if (Global-Var? v)
 			 'global
-			 kind)))
+			 kind))
+	       (compress? (Name-Env-compress? env)))
 	    (case kind
-	       ((local)             (allocate-local-name v env used-ht))
-	       ((this)              (allocate-this-name v used-ht))
-	       ((imported exported) (allocate-exported-name v env used-ht))
-	       ((global)            (allocate-global-name v env used-ht)))))))
-	     
+	       ((local)  (if compress?
+			     (allocate-compressed-local-name v env used-ht)
+			     (allocate-local-name v env used-ht)))
+	       ((global) (if compress?
+			     (allocate-compressed-global-name v env used-ht)
+			     (allocate-global-name v env used-ht)))
+	       ((this)    (allocate-this-name v used-ht))
+	       ((imported exported)
+		(allocate-exported-name v env used-ht)))))))
+
+;; call to reset the last-generated-id.
+;; Too often and the id-generation will slow down.
+;; Not often enough and the ids will not be as short as possible.
+(define (reset-compressed-id! env)
+   (with-access::Name-Env env (last-generated-id)
+      (set! last-generated-id "")))
+
+(define (generate-compressed-id env used-ht suffix)
+   (define (increment-char c)
+      (cond
+	 ((char=? #\z c) #\A)
+	 ((char=? #\Z c) #\0)
+	 (else (integer->char (+fx 1 (char->integer c))))))
+	  
+   (define (increment-buffer buffer)
+      (cond
+	 ((string-null? buffer)
+	  (string-append "a"))
+	 (else
+	  (let* ((last-pos (-fx (string-length buffer) 1))
+		 (last-c (string-ref buffer last-pos)))
+	     (cond
+		((char=? #\9 last-c)
+		 (string-set! buffer last-pos #\a)
+		 (let loop ((i (-fx last-pos 1)))
+		    (cond
+		       ((<fx i 0) ;; buffer was 99999...
+			(increment-buffer (string-append "a" buffer)))
+		       ((char=? #\9 (string-ref buffer i))
+			(string-set! buffer i #\a)
+			(loop (-fx i 1)))
+		       (else
+			(string-set! buffer i
+				     (increment-char (string-ref buffer i)))
+			buffer))))
+		(else
+		 (string-set! buffer last-pos (increment-char last-c))
+		 buffer))))))
+
+   (with-access::Name-Env env (last-generated-id)
+      ;; we need to do a copy of the last-generated-id as increment-buffer
+      ;; will modify it.
+      (let ((big-buff #f)
+	    (buffer (string-copy last-generated-id))
+	    (suf-len (if suffix (string-length suffix) 0)))
+	 (let loop ((new-generated (increment-buffer buffer)))
+	    (let* ((new-len (string-length new-generated))
+		   (new-id (cond
+			     ((not suffix) new-generated)
+			     ((or (not big-buff)
+				  (not (=fx (+fx new-len suf-len)
+					    (string-length big-buff))))
+			      (let ((t (string-append new-generated suffix)))
+				 (set! big-buff t)
+				 t))
+			     (else
+			      (blit-string! new-generated 0 big-buff 0 new-len)
+			      (blit-string! suffix 0 big-buff new-len suf-len)
+			      big-buff))))
+	       (if (and (valid? new-id)
+			(not (dangerous? new-id))
+			(not (used? new-id used-ht)))
+		   (begin
+		      (set! last-generated-id new-generated)
+		      new-id)
+		   (loop (increment-buffer new-generated))))))))
+
+(define (allocate-compressed-local-name v::Var env used-ht)
+   (widen!::Named-Var v (js-id (generate-compressed-id env used-ht ""))))
+
 (define (allocate-local-name v::Var env used-ht)
    ;; generate ids
    (with-access::Var v (escapes? id)
@@ -168,12 +252,16 @@
 	 (widen!::Named-Var v (js-id js-id))
 	 (hashtable-put! used-ht js-id #t))))
 
+(define (allocate-compressed-global-name v::Var env used-ht)
+   (with-access::Name-Env env (suffix)
+      (widen!::Named-Var v
+	 (js-id (generate-compressed-id env used-ht (or suffix ""))))))
+
 (define (allocate-global-name v::Var env used-ht)
    (with-access::Name-Env env (suffix)
       (if (not suffix)
 	  (begin ;; no suffix -> treat it, as if it was a local var.
-	     (shrink! v)
-	     (allocate-name v env used-ht))
+	     (allocate-local-name v env used-ht))
 	  (with-access::Var v (id escapes?)
 	     (let* ((short (string-append (nice-mangle (symbol->string id))
 					  suffix)))
@@ -189,6 +277,7 @@
 
 (define-nmethod (Module.name-gen used-ht)
    (let ((used-ht (make-hashtable)))
+      (reset-compressed-id! env)
       (with-access::Module this (runtime-vars imported-vars declared-vars
 					      this-var)
 	 (for-each (lambda (var)
@@ -205,6 +294,7 @@
 		      (unless (eq? (Var-kind var) 'local)
 			 (allocate-name var env used-ht)))
 		   declared-vars)
+	 (reset-compressed-id! env)
 	 ;; now that the Exported vars have been handled we can assign the
 	 ;; names to the global vars.
 	 (for-each (lambda (var)
@@ -217,6 +307,7 @@
 
 (define-nmethod (Lambda.name-gen used-ht)
    (with-access::Lambda this (scope-vars declared-vars this-var free-vars)
+      (reset-compressed-id! env)
       (let ((lambda-used-ht (make-hashtable)))
 	 (for-each (lambda (var)
 		      (hashtable-put! lambda-used-ht
