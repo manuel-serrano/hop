@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Fri Jun 19 07:54:33 2009 (serrano)                */
+;*    Last change :  Tue Jun 23 14:23:37 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -866,7 +866,7 @@
 			    :charset charset))))))
 	  (ignore)))
 
-      ;; anchorts
+      ;; anchors
       ((: "##" (+ (or (out #\]) (: #\] (out #\])))) "##")
        (let* ((s (the-substring 2 -2))
 	      (i (string-index s "|"))
@@ -874,11 +874,11 @@
 	  (add-expr!
 	   (if (not i)
 	       (let ((href (link-val s)))
-		  (<A> :name href href))
+		  (<A> :name href))
 	       (let ((s2 (substring s (+fx i 1) (string-length s))))
 		  (let ((href (link-val (substring s 0 i)))
 			(title (substring s (+fx i 1) (string-length s))))
-		     (<A> :name href title)))))
+		     (<A> :name href :title title)))))
 	  (ignore)))
 
       ;; images

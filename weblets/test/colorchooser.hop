@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Sun Jun 21 07:12:52 2009 (serrano)                */
+;*    Last change :  Tue Jun 23 05:49:33 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing Colorchoosers                                            */
@@ -20,7 +20,7 @@
 ;*    test/colorchooser ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-service (test/colorchooser)
-   (<TEST-HTML> :include '("hop-spinbutton" "hop-slider" "hop-color")
+   (<TEST-HTML> :include "hop-color"
       :source (service-resource test/colorchooser "colorchooser.hop")
       (<DIV> :class "comment"
 	 "This test checks Colorchoosers.")

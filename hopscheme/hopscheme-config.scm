@@ -61,7 +61,7 @@
 				(number->string *module-counter*)))))))
 
    (let* ((config (get-cached-config))
-	  (conf-indent (if (>fx *hop-verbose* 0)
+	  (conf-indent (if (>fx (bigloo-debug) 0)
 			   (extend-config config 'compress #f)
 			   config))
 	  (conf-verbose (if (>fx *hop-verbose* 10)

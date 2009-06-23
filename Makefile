@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Jun 23 05:08:14 2009 (serrano)                */
+#*    Last change :  Tue Jun 23 14:32:56 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -25,7 +25,7 @@ POPULATION	= Makefile LICENSE README INSTALL INSTALL.jvm \
                   configure .hoprelease
 POPDIRS		= runtime hopscheme scheme2js src hopc hopsh hopreplay \
                   etc share arch \
-                  weblets # contribs
+                  weblets widget # contribs
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
@@ -283,8 +283,8 @@ distrib-sans-version:
 	   $(MAKE) changelog > ChangeLog && \
 	   $(RM) -rf $(HOPTMPDIR)/hop-$$distrib/weblets/home/talks && \
 	   $(RM) -rf $(HOPTMPDIR)/hop-$$distrib/weblets/home/videos && \
-           /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.jar && \
-           mv bin/hop.jar $(HOPDISTRIBDIR)/hop-$$distrib.jar) && \
+           /bin/rm -f $(HOPDISTRIBDIR)/java/hop-$(HOPRELEASE)*.jar && \
+           mv bin/hop.jar $(HOPDISTRIBDIR)/java/hop-$$distrib.jar) && \
           $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \
         fi
 

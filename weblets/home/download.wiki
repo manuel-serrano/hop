@@ -80,7 +80,7 @@ used without downloading and installing the source code manually:
 
 In order to install HOP from the source (for significantly improving
 performance), the ,(<A> :href (home-bigloo-url) "Bigloo") compiler has
-first to be installed. Bigloo version **3.1b** or higher is required for
+first to be installed. Bigloo version **3.2c** or higher is required for
 compiling HOP.
 
 ~~ Bigloo versions may be downloaded
@@ -93,4 +93,4 @@ The HOP source code may be browsed
 
 == License ==
 
-##license.wiki##
+<include>license.wiki</include>
