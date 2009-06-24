@@ -16,6 +16,7 @@
 	   encapsulation
 	   node-elimination
 	   inline
+	   call-check
 	   rm-unused-vars
 	   tail-rec
 	   constant-propagation
@@ -69,6 +70,7 @@
       (pass 'tail-rec       (tail-rec! tree))
       (pass 'node-elim2     (node-elimination! tree))
       (pass 'inline         (inline! tree #t))
+      (pass 'call-check     (call-check tree))
       (pass 'tail-rec2      (tail-rec! tree))
       (pass 'inline2        (inline! tree #f)) ;; a second faster inlining.
       (pass 'constant       (constant-propagation! tree))

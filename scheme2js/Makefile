@@ -40,7 +40,7 @@ _BGL_OBJECTS = main scheme2js srfi0 \
         symbol symbol-table gen-js mapping1 mapping2 \
         letrec-expansion encapsulation node-elimination mark-statements \
 	inline deep-clone side use-count nested-closures captured-vars \
-          free-vars fun-size transform-util \
+          free-vars fun-size transform-util call-check \
         rm-unused-vars \
         tail-rec tail loop-updates var-ref-util \
         constant-propagation constants scope while \

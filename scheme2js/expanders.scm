@@ -24,7 +24,29 @@
 	   "not a list"
 	   orig-L
 	   orig-L)))))
-     
+
+(define-macro (loc-attach LL . attachments)
+   (let ((kvote (car LL)))
+      (define (inner L ats)
+	 (cond
+	    ((and (null? L) (null? ats))
+	     ''())
+	    ((or (null? L) (null? ats))
+	     (error 'e-attach
+		    "Internal error. Bad e-attach"
+		    (list LL attachments)))
+	    (else
+	     (let ((t (gensym 't))
+		   (t2 (gensym 't)))
+		`(let ((,t ,(car ats))
+		       (,t2 ,(inner (cdr L) (cdr ats))))
+		    (if (epair? ,t)
+			(econs (,kvote ,(car L))
+			       ,t2
+			       (cer ,t))
+			(cons (,kvote ,(car L)) ,t2)))))))
+      (inner (cadr LL) attachments)))
+
 ;; don't go into quotes.
 (install-expander! 'quote identity-expander)
 
@@ -96,10 +118,15 @@
 		      (match-case x
 			 ((?- (?fun . ?formals) . ?body)
 			  (e
-			   `(define ,fun (lambda ,formals ,@body))
+			   ;; keep the location...
+			   (loc-attach
+			    `(define ,fun (lambda ,formals ,@body))
+			    x (cadr x) (cadr x))
 			   e))
 			 ((?- ?var ?val)
-			  `(define ,(e var e) ,(e val e)))
+			  (loc-attach
+			   `(define ,(e var e) ,(e val e))
+			   x (cdr x) (cddr x)))
 			 (else
 			  (scheme2js-error "define-expand"
 					   "Invalid 'define'-form"
@@ -161,16 +188,11 @@
 	(let ((loop (gensym 'doloop)))
 	   (e `(let ,loop ,(emap1 (lambda (binding)
 				     (cond
-					((and (epair? binding)
-					      (epair? (cdr binding)))
-					 (econs (car binding)
-						(econs (cadr binding)
-						       '()
-						       (cer (cdr binding)))
-						(cer binding)))
 					((and (pair? binding)
 					      (pair? (cdr binding)))
-					 (list (car binding) (cadr binding)))
+					 (loc-attach
+					  `(,(car binding) ,(cadr binding))
+					  binding (cdr binding)))
 					(else
 					 (scheme2js-error
 					  "do-expand"

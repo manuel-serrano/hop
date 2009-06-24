@@ -680,7 +680,8 @@ function sc_toWriteString(o) {
 	return "#f";
     else if (o === undefined)
 	return "#unspecified";
-    else if (o === window)
+    // window is only declared inside browsers. Otherwise this.window should be undefined
+    else if (o === this.window)
         return "window";
     else if (typeof o === 'function')
         return "#<procedure " + (o.name ? o.name : "anonymous") + " " + (o.location != "#f" ? o.location : "") + ":" + sc_hash(o) + ">";
@@ -743,7 +744,8 @@ function sc_toDisplayString(o) {
 	return "#f";
     else if (o === undefined)
 	return "#unspecified";
-    else if (o === window)
+    // window is only declared inside browsers. Otherwise this.window should be undefined
+    else if (o === this.window)
         return "window";
     else if (typeof o === 'function')
         return "#<procedure " + (o.name ? o.name : "anonymous") + " " + (o.location != "#f" ? o.location : "") + ":" + sc_hash(o) + ">";

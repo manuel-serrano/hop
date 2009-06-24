@@ -202,8 +202,10 @@
 		 'extern-always-call/cc)))
        (update-conf 'extern-always-call/cc (not invert-flag?)))
       (section "Debug")
-      ((("-l" "--print-locations") (help "print locations"))
-       (update-conf 'print-locations #t))
+;      ((("-l" "--print-locations") (help "print locations"))
+;       (update-conf 'print-locations #t))
+      (("-g" (help "add debugging information"))
+       (update-conf 'debug (not invert-flag?)))
       (("-d" ?stage (help "debug compiler-stage"))
        (update-conf 'debug-stage (string->symbol stage)))
       (else

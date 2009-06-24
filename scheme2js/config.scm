@@ -164,6 +164,7 @@
 	     (bigloo-modules . #t)
 	     (pp . #t)
 	     (compress . #f)
+	     (call-check . #t)
 	     (debug . #f))
 	   *O1*))
 (define (default-config-alist)

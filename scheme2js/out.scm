@@ -556,10 +556,18 @@
 	       (?@ stmt? "~@;\n")
 	       (?@ needs-parenthesis? "(~@)")
 	       (?@ (Out-Env-debug? env)
-		   "~a = ~@, ~a.name = \"~e\", ~a.location = \"~a\", ~a"
-		   *tmp-var* *tmp-var* (if lvalue (walk lvalue p #f) "")
-		   *tmp-var* (with-output-to-string (lambda ()
-						       (display location)))
+		   "~a=~@,~a.name=\"~a\",~a.location=\"~a\",~a.sc_arity=~a,~a"
+		   *tmp-var*
+		   *tmp-var* (cond
+				((Ref? lvalue) (Var-id (Ref-var lvalue)))
+				(lvalue        (let ((op (open-output-string)))
+						  (walk lvalue op #f)
+						  (close-output-port op)))
+				(else          ""))
+		   *tmp-var* location
+		   *tmp-var* (if vaarg?
+				 (negfx (length formals))
+				 (length formals))
 		   *tmp-var*)
 	       (?@ lvalue "~e = ~@" (walk lvalue p #f))
 	       (?@ #t "function(~e) {\n ~e ~@ }" ;; always.
@@ -720,9 +728,9 @@
 			exprs))))))
 
 (define-nmethod (Call/cc-Resume.compile p stmt?)
-  (template-display p env
-     (?@ stmt? "~@;\n")
-     "sc_callCcIndex = 0"))
+   (template-display p env
+      (?@ stmt? "~@;\n")
+      "sc_callCcIndex = 0"))
 
 (define-nmethod (Call.compile p stmt?)
    (define (compile-operator)
@@ -776,7 +784,7 @@
 	       "               : sc_tailTmp)))"))))
 
    (with-access::Call this (operator operands call/cc? call/cc-index
-				     trampoline?)
+				     trampoline? location)
       (template-display p env
 	 (?@ stmt? "~@;\n")
 	 (?@ (not stmt?) "(~@)") ;; just for now. better than nothing.
@@ -789,6 +797,19 @@
 	     'do-nothing) ;; already printed
 	    (trampoline?
 	     (compile-trampoline-call))
+	    ((and (Out-Env-debug? env)
+		  (not (Out-Env-call/cc? env)))
+	     (let ((len (length operands)))
+		(template-display p env
+		   "~a=~e," *tmp-var* (compile-operator)
+		   "~a.sc_arity!==undefined?" *tmp-var*
+		   "  ((~a.sc_arity>=0&&~a.sc_arity===~a)||"
+		   *tmp-var* *tmp-var* len
+		   "   (~a.sc_arity<0&&(1-~a.sc_arity)<=~a)?"
+		   *tmp-var* *tmp-var* len
+		   "    'ok': sc_error('arity-check', 'Bad arity','~a')):'ok',"
+		   location
+		   "(0,~a)(~e)" *tmp-var* (compile-operands))))
 	    (else
 	     (template-display p env
 		"~e(~e)" (compile-operator) (compile-operands)))))))

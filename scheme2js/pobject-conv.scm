@@ -18,8 +18,12 @@
    (list 'runtime-ref id (lambda () 'runtime-ref)))
 
 (define (location s-expr)
-   (and (epair? s-expr)
-	(cer s-expr)))
+   (or (and (epair? s-expr)
+	    (cer s-expr))
+       ;; not "really" correct, but an approximate location is better than
+       ;; nothing.
+       (and (pair? s-expr)
+	    (location (car s-expr)))))
 
 (define (scheme->pobject-map l)
    (let loop ((l l)
