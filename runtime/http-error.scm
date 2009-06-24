@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Jun  8 14:19:46 2009 (serrano)                */
+;*    Last change :  Wed Jun 24 15:31:33 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -383,7 +383,7 @@ a timeout which has now expired. The service is then no longer available."))
 					"error.png")
 			  :req req)
 		       msg)
-		    (<DIV> :style "font-family: arial; font-size: 10pt; overflow: auto; padding: 5px; background: white"
+		    (<DIV> :style "font-family: arial; font-size: 10pt; overflow: visible; padding: 5px; background: white"
 		       (<DIV> :style "font-weight: bold" "Server message:")
 		       (<PRE> :style "padding-left: 1em; font-size: 9pt"
 			  (html-string-encode s)))))))))
