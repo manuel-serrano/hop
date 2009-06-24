@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sat Jun 20 07:48:34 2009 (serrano)                */
+;*    Last change :  Wed Jun 24 08:16:54 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -578,9 +578,7 @@
 			 (input-port-name (the-port))
 			 (input-port-position (the-port))))
 	      (expr (ignore))
-	      (src (if (> (bigloo-debug) 0)
-		       (tree-copy expr)
-		       #unspecified))
+	      (src (tree-copy expr))
 	      (args (list ((clientc-expressionc (hop-clientc))
 			   expr
 			   (current-module-clientc-import)
