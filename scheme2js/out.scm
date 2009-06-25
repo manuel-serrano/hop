@@ -801,15 +801,8 @@
 		  (not (Out-Env-call/cc? env)))
 	     (let ((len (length operands)))
 		(template-display p env
-		   "~a=~e," *tmp-var* (compile-operator)
-		   "~a.sc_arity!==undefined?" *tmp-var*
-		   "  ((~a.sc_arity>=0&&~a.sc_arity===~a)||"
-		   *tmp-var* *tmp-var* len
-		   "   (~a.sc_arity<0&&(-1-~a.sc_arity)<=~a)?"
-		   *tmp-var* *tmp-var* len
-		   "    'ok': sc_error('arity-check', 'Bad arity','~a')):'ok',"
-		   location
-		   "(0,~a)(~e)" *tmp-var* (compile-operands))))
+		   "sc_arity_check(~e, ~a)(~e)"
+		   (compile-operator) len (compile-operands))))
 	    (else
 	     (template-display p env
 		"~e(~e)" (compile-operator) (compile-operands)))))))
