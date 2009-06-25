@@ -805,7 +805,7 @@
 		   "~a.sc_arity!==undefined?" *tmp-var*
 		   "  ((~a.sc_arity>=0&&~a.sc_arity===~a)||"
 		   *tmp-var* *tmp-var* len
-		   "   (~a.sc_arity<0&&(1-~a.sc_arity)<=~a)?"
+		   "   (~a.sc_arity<0&&(-1-~a.sc_arity)<=~a)?"
 		   *tmp-var* *tmp-var* len
 		   "    'ok': sc_error('arity-check', 'Bad arity','~a')):'ok',"
 		   location

@@ -53,7 +53,7 @@ function hop_apply_form_url( service, args ) {
 /*---------------------------------------------------------------------*/
 /*    hop_apply_url ...                                                */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function hop_apply_url( service, args ) {
    if( sc_isPair( args ) ) {
       return service
@@ -73,7 +73,7 @@ function hop_apply_url( service, args ) {
 /*---------------------------------------------------------------------*/
 /*    hop_default_failure ...                                          */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function hop_default_failure( xhr ) {
    if( !document ) return;
 
@@ -160,7 +160,7 @@ var hop_default_anim = hop_anim_16_16;
 /*---------------------------------------------------------------------*/
 /*    hop_default_anim_set ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export with-hop-default-anim-set!)) */
+/*** META ((export with-hop-default-anim-set!) (arity #t)) */
 function hop_default_anim_set( anim ) {
    var old = hop_default_anim;
    hop_default_anim = anim;
@@ -170,7 +170,7 @@ function hop_default_anim_set( anim ) {
 /*---------------------------------------------------------------------*/
 /*    hop_default_anim_get ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export with-hop-default-anim)) */
+/*** META ((export with-hop-default-anim) (arity #t)) */
 function hop_default_anim_get( ) {
    return hop_default_anim;
 }
@@ -233,7 +233,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
    var xhr = hop_make_xml_http_request();
    /* MS, 20 Jun 08: I cannot understand why but sometime sc_error is  */
    /* unbound (at least in Firefox) when used inside a catch! Binding  */
-   /* it to a local var elimintates this problem.                      */
+   /* it to a local var eliminates this problem.                       */
    var hop_header_ctype = hop_header_content_type;
    var succ = (typeof success === "function") ? success : hop_default_success;
    var fail = (typeof failure === "function") ? failure : hop_default_failure;
@@ -392,7 +392,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 /*---------------------------------------------------------------------*/
 /*    with_hop ...                                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function with_hop( svc, success, failure, sync, anim ) {
    return hop_send_request( svc, sync,
 			    success, failure,
@@ -554,7 +554,7 @@ function hop_request_reset() {
 /*---------------------------------------------------------------------*/
 /*    hop_request_set ...                                              */
 /*---------------------------------------------------------------------*/
-/*** META ((export request-set!)) */
+/*** META ((export request-set!) (arity #t)) */
 function hop_request_set( key, val ) {
    hop_request_env_invalid = true;
    hop_request_env[ key ] = val;
@@ -565,7 +565,9 @@ function hop_request_set( key, val ) {
 /*    hop_request_get ...                                              */
 /*---------------------------------------------------------------------*/
 /*** META ((export request-get)
-           (peephole: (hole 1 "hop_request[" key"]"))) */
+           (arity #t)
+           (peephole (hole 1 "hop_request[" key"]")))
+*/
 function hop_request_get( key ) {
    return hop_request[ key ];
 }

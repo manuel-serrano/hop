@@ -87,7 +87,7 @@
 			:onclick ~(preferences-save
 				   "wiki-configure"
 				   (make-file-name (hop-rc-directory)
-						   "wikirc.hop") string)
+						   "wikirc.hop"))
 			"Save Configuration")
 		     (wiki-preferences-edit :id "wiki-configure"))))))))
 

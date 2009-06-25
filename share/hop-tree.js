@@ -65,7 +65,7 @@ function hop_tree_root( tree ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_close ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export tree-close)) */
+/*** META ((export tree-close) (arity #t)) */
 function hop_tree_close( tree ) {
    if( tree.openp ) {
       tree.openp = false;
@@ -100,7 +100,7 @@ function hop_tree_close( tree ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_open ...                                                */
 /*---------------------------------------------------------------------*/
-/*** META ((export tree-open)) */
+/*** META ((export tree-open) (arity #t)) */
 function hop_tree_open( tree ) {
    if( tree.proc ) hop_tree_populate( tree );
    
@@ -304,6 +304,7 @@ function hop_tree_row_set_select_all( tree, select ) {
 /*    hop_tree_row_select_all ...                                      */
 /*---------------------------------------------------------------------*/
 /*** META ((export tree-select-all!)
+           (arity #t)
            (peehole (hole 1 "hop_tree_row_set_select_all(" tree ", true)")))
 */
 function hop_tree_row_select_all( tree ) {
@@ -330,7 +331,7 @@ function hop_tree_row_toggle_selected( event, tree, row ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_row_select_next ...                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export tree-select-next!)) */
+/*** META ((export tree-select-next!) (arity #t)) */
 function hop_tree_row_select_next( tree ) {
    var root = hop_tree_root( tree );
 
@@ -377,7 +378,7 @@ function hop_tree_row_select_next( tree ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_row_select_previous ...                                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export tree-select-previous!)) */
+/*** META ((export tree-select-previous!) (arity #t)) */
 function hop_tree_row_select_previous( tree ) {
    var root = hop_tree_root( tree );
 
@@ -716,7 +717,7 @@ function hop_make_tree_leaf( tree, klass, content, value, icon, iconerr ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_reset ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export tree-reset!)) */
+/*** META ((export tree-reset!) (arity #t)) */
 function hop_tree_reset( tree ) {
    if( !tree ) {
       return false;
@@ -754,7 +755,7 @@ function hop_tree_id_reset( id ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_selection ...                                           */
 /*---------------------------------------------------------------------*/
-/*** META ((export tree-selection)) */
+/*** META ((export tree-selection) (arity #t)) */
 function hop_tree_selection( tree ) {
    var sel = tree.selections;
    var len = sel.length;

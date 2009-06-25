@@ -21,7 +21,7 @@ function hop_fx_repeat( proc, timeout ) {
 /*---------------------------------------------------------------------*/
 /*    hop_fx_fade_background ...                                       */
 /*---------------------------------------------------------------------*/
-/*** META ((export hop-fx-fade-background)) */
+/*** META ((export hop-fx-fade-background) (arity #t)) */
 function hop_fx_fade_background( obj, delay, step, colors ) {
    var it;
    var i = 0;

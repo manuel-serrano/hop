@@ -64,7 +64,7 @@ function hop_prefs_editor_bool( event, inp, name, parse, type, key ) {
 /*---------------------------------------------------------------------*/
 /*    hop_prefs_valid ...                                              */
 /*---------------------------------------------------------------------*/
-/*** META ((export preferences-valid?)) */
+/*** META ((export preferences-valid?) (arity #t)) */
 function hop_prefs_valid( id ) {
    
    function loop( node ) {
@@ -86,7 +86,7 @@ function hop_prefs_valid( id ) {
 /*---------------------------------------------------------------------*/
 /*    hop_prefs_save ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export preferences-save)) */
+/*** META ((export preferences-save) (arity #t)) */
 function hop_prefs_save( id, file ) {
    var el = hop_is_html_element( id ) ? id : document.getElementById( id );
 

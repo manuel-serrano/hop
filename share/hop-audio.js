@@ -432,7 +432,7 @@ function hop_audio_flash_init( id, src, stream, player ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_player_set ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-player-set!)) */
+/*** META ((export audio-player-set!) (arity #t)) */
 function hop_audio_player_set( audio, player, name ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    
@@ -466,7 +466,7 @@ function hop_audio_player_set( audio, player, name ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_player ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-player)) */
+/*** META ((export audio-player) (arity #t)) */
 function hop_audio_player( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.player;
@@ -536,7 +536,7 @@ function hop_audio_onended_callback( id ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_load ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-load)) */
+/*** META ((export audio-load) (arity #t)) */
 function hop_audio_load( audio, src, stream ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
 
@@ -557,8 +557,7 @@ function hop_audio_load( audio, src, stream ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_state ...                                              */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-state)
-           (peephole (postfix ".state"))) */
+/*** META ((export audio-state) (arity #t)) */
 function hop_audio_state( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.state;
@@ -567,7 +566,7 @@ function hop_audio_state( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_playlist_set ...                                       */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-playlist-set!)) */
+/*** META ((export audio-playlist-set!) (arity #t)) */
 function hop_audio_playlist_set( audio, playlist, autorun ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
 
@@ -578,7 +577,7 @@ function hop_audio_playlist_set( audio, playlist, autorun ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_playlist_get ...                                       */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-playlist)) */
+/*** META ((export audio-playlist) (arity #t)) */
 function hop_audio_playlist_get( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.proxy.playlist_get();
@@ -587,7 +586,7 @@ function hop_audio_playlist_get( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_playlist_index ...                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-playlist-index)) */
+/*** META ((export audio-playlist-index) (arity #t)) */
 function hop_audio_playlist_index( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.proxy.playlist_index_get();
@@ -596,7 +595,7 @@ function hop_audio_playlist_index( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_playlist_play ...                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-playlist-play)) */
+/*** META ((export audio-playlist-play) (arity #t)) */
 function hop_audio_playlist_play( audio, i ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    var pl = hop_audio_playlist_get( audio );
@@ -617,7 +616,7 @@ function hop_audio_playlist_play( audio, i ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_playlist_prev ...                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-playlist-prev)) */
+/*** META ((export audio-playlist-prev) (arity #t)) */
 function hop_audio_playlist_prev( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    var pl = hop_audio_playlist_get( audio );
@@ -641,7 +640,7 @@ function hop_audio_playlist_prev( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_playlist_next ...                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-playlist-next)) */
+/*** META ((export audio-playlist-next) (arity #t)) */
 function hop_audio_playlist_next( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    var pl = hop_audio_playlist_get( audio );
@@ -657,7 +656,7 @@ function hop_audio_playlist_next( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_play ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-play audio-start)) */
+/*** META ((export audio-play audio-start) (arity #t)) */
 function hop_audio_play( audio, start ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    
@@ -670,7 +669,7 @@ function hop_audio_play( audio, start ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_close ...                                              */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-close)) */
+/*** META ((export audio-close) (arity #t)) */
 function hop_audio_close( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    
@@ -690,7 +689,7 @@ function hop_audio_close( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_stop ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-stop)) */
+/*** META ((export audio-stop) (arity #t)) */
 function hop_audio_stop( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    audio.proxy.stop();
@@ -699,7 +698,7 @@ function hop_audio_stop( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_pause ...                                              */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-pause)) */
+/*** META ((export audio-pause) (arity #t)) */
 function hop_audio_pause( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    audio.paused = !audio.paused;
@@ -710,8 +709,7 @@ function hop_audio_pause( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_volume ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-volume)
-           (peephole (postfix ".proxy.volume_get()"))) */
+/*** META ((export audio-volume) (arity #t)) */
 function hop_audio_volume( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.proxy.volume_get();
@@ -720,7 +718,7 @@ function hop_audio_volume( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_volume_set ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-volume-set!)) */
+/*** META ((export audio-volume-set!) (arity #t)) */
 function hop_audio_volume_set( audio, vol ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    if( hop_audio_volume( audio ) != vol )
@@ -730,7 +728,7 @@ function hop_audio_volume_set( audio, vol ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_mute ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-mute)) */
+/*** META ((export audio-mute) (arity #t)) */
 function hop_audio_mute( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    var img = document.getElementById( audio.id + "-hop-audio-button-mute" );
@@ -750,8 +748,7 @@ function hop_audio_mute( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_pan ...                                                */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-pan)
-           (peephole (postfix ".proxy.pan_get()"))) */
+/*** META ((export audio-pan) (arity #t)) */
 function hop_audio_pan( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.proxy.pan_get();
@@ -760,7 +757,7 @@ function hop_audio_pan( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_pan_set ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-pan-set!)) */
+/*** META ((export audio-pan-set!) (arity #t)) */
 function hop_audio_pan_set( audio, pan ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.proxy.pan_set( pan );
@@ -769,7 +766,7 @@ function hop_audio_pan_set( audio, pan ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_duration ...                                           */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-duration)) */
+/*** META ((export audio-duration) (arity #t)) */
 function hop_audio_duration( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.proxy.duration_get();
@@ -778,7 +775,7 @@ function hop_audio_duration( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_current_time ...                                       */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-current-time)) */
+/*** META ((export audio-current-time) (arity #t)) */
 function hop_audio_current_time( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.proxy.position_get();
@@ -787,7 +784,7 @@ function hop_audio_current_time( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_seek ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-seek)) */
+/*** META ((export audio-seek) (arity #t)) */
 function hop_audio_seek( audio, pos ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    
@@ -801,8 +798,7 @@ function hop_audio_seek( audio, pos ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_metadata ...                                           */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-metadata)
-           (peephole (postfix ".proxy.metadata_get()"))) */
+/*** META ((export audio-metadata) (arity #t)) */
 function hop_audio_metadata( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    return audio.proxy.metadata_get();
@@ -811,7 +807,7 @@ function hop_audio_metadata( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_metadata_set ...                                       */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-metadata-set!)) */
+/*** META ((export audio-metadata-set!) (arity #t)) */
 function hop_audio_metadata_set( audio, metadata ) {
 }
 

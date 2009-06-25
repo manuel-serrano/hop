@@ -40,7 +40,7 @@ function dom_add_child( node, e ) {
 /*---------------------------------------------------------------------*/
 /*    dom_set_child_node ...                                           */
 /*---------------------------------------------------------------------*/
-/*** META ((export dom-set-child-node!)) */
+/*** META ((export dom-set-child-node!) (arity #t)) */
 function dom_set_child_node( parent, node ) {
    var childs = parent.childNodes;
 
@@ -54,7 +54,10 @@ function dom_set_child_node( parent, node ) {
 /*---------------------------------------------------------------------*/
 /*    dom_node_elementp ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export dom-node-element?) (peephole (postfix ".nodeType == 1"))) */
+/*** META ((export dom-node-element?)
+           (peephole (postfix ".nodeType == 1"))
+           (arity #t))
+*/
 function dom_node_elementp( node ) {
    return node.nodeType == 1;
 }
@@ -62,7 +65,10 @@ function dom_node_elementp( node ) {
 /*---------------------------------------------------------------------*/
 /*    dom_node_textp ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export dom-node-text?)) */
+/*** META ((export dom-node-text?)
+           (peephole (postfix ".nodeType == 3"))
+           (arity #t))
+*/
 function dom_node_textp( node ) {
    return node.nodeType == 3;
 }
@@ -70,7 +76,10 @@ function dom_node_textp( node ) {
 /*---------------------------------------------------------------------*/
 /*    dom_node_documentp ...                                           */
 /*---------------------------------------------------------------------*/
-/*** META ((export dom-node-document?)) */
+/*** META ((export dom-node-document?)
+           (peephole (postfix ".nodeType == 9"))
+           (arity #t))
+*/
 function dom_node_documentp( node ) {
    return node.nodeType == 9;
 }
@@ -78,7 +87,10 @@ function dom_node_documentp( node ) {
 /*---------------------------------------------------------------------*/
 /*    dom_node_commentp ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export dom-node-comment?)) */
+/*** META ((export dom-node-comment?)
+           (peephole (postfix ".nodeType == 8"))
+           (arity #t))
+*/
 function dom_node_commentp( node ) {
    return node.nodeType == 8;
 }
@@ -86,7 +98,10 @@ function dom_node_commentp( node ) {
 /*---------------------------------------------------------------------*/
 /*    dom_node_document_fragmentp ...                                  */
 /*---------------------------------------------------------------------*/
-/*** META ((export dom-node-document-fragment?)) */
+/*** META ((export dom-node-document-fragment?)
+           (peephole (postfix ".nodeType == 11"))
+           (arity #t))
+*/
 function dom_node_document_fragmentp( node ) {
    return node.nodeType == 11;
 }
@@ -94,7 +109,10 @@ function dom_node_document_fragmentp( node ) {
 /*---------------------------------------------------------------------*/
 /*    dom_node_document_attrp ...                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export dom-node-attr?)) */
+/*** META ((export dom-node-attr?)
+           (peephole (postfix ".nodeType == 2"))
+           (arity #t))
+*/
 function dom_node_document_attrp( node ) {
    return node.nodeType == 2;
 }
@@ -579,6 +597,7 @@ function dom_create_sorttable() {
 /*    DOM functional interface ...                                     */
 /*---------------------------------------------------------------------*/
 /*** META ((export dom-has-attributes?)
+           (arity #t)
            (type bool)
            (peephole (postfix ".hasAttributes()")))
 */
@@ -586,12 +605,14 @@ function dom_has_attributes( node ) {
    return node.hasAttributes();
 }
 /*** META ((export #t)
+           (arity #t)
            (peephole (hole 1 "sc_vector2list(" node ".getAttributes())")))
 */
 function dom_get_attributes( node ) {
    return sc_vector2list( node.getAttributes() );
 }
 /*** META ((export dom-has-attribute?)
+           (arity #t)
            (type bool)
            (peephole (hole 2 node ".hasAttribute(" string ")")))
 */
@@ -599,30 +620,35 @@ function dom_has_attribute( node, string ) {
    return node.hasAttribute( string );
 }
 /*** META ((export #t)
+           (arity #t)
            (peephole (hole 2 node ".getAttribute(" string ")")))
 */
 function dom_get_attribute( node, string ) {
    return node.getAttribute( string );
 }
 /*** META ((export dom-remove-attribute!)
+           (arity #t)
            (peephole (hole 2 node ".removeAttribute(" string ")")))
 */
 function dom_remove_attribute( node, string ) {
    return node.removeAttribute( string );
 }
 /*** META ((export dom-set-attribute! dom-attribute-set!)
+           (arity #t)
            (peephole (hole 3 node ".setAttribute(" string ", " value ")")))
 */
 function dom_set_attribute( node, string, value ) {
    return node.setAttribute( string, value );
 }
 /*** META ((export #t)
+           (arity #t)
            (peephole (postfix ".ownerDocument()")))
 */
 function dom_owner_document( node ) {
    return node.ownerDocument();
 }
 /*** META ((export dom-has-child-nodes?)
+           (arity #t)
            (type bool)
            (peephole (postfix ".hasChildNodes()")))
 */
@@ -630,54 +656,62 @@ function dom_has_child_nodes( node ) {
    return node.hasChildNodes();
 }
 /*** META ((export #t)
+           (arity #t)
            (peephole (hole 1 "sc_vector2list(" node ".childNodes)")))
 */
 function dom_child_nodes( node ) {
    return sc_vector2list( node.childNodes );
 }
 /*** META ((export #t)
+           (arity #t)
            (peephole (postfix ".firstChild")))
 */
 function dom_first_child( node ) {
    return node.firstChild;
 }
 /*** META ((export #t)
+           (arity #t)
            (peephole (postfix ".lastChild")))
 */
 function dom_last_child( node ) {
    return node.lastChild;
 }
 /*** META ((export #t)
+           (arity #t)
            (peephole (postfix ".nextSibling")))
 */
 function dom_next_sibling( node ) {
    return node.nextSibling;
 }
 /*** META ((export #t)
+           (arity #t)
            (peephole (postfix ".previousSibling")))
 */
 function dom_previous_sibling( node ) {
    return node.previousSibling;
 }
 /*** META ((export #t)
+           (arity #t)
            (peephole (postfix ".nodeName")))
 */
 function dom_node_name( node ) {
    return node.nodeName;
 }
 /*** META ((export #t)
+           (arity #t)
            (peephole (postfix ".nodeType")))
 */
 function dom_node_type( node ) {
    return node.nodeType;
 }
 /*** META ((export #t)
+           (arity #t)
            (peephole (postfix ".parentNode")))
 */
 function dom_parent_node( node ) {
    return node.parentNode;
 }
-/*** META ((export dom-append-child!)) */
+/*** META ((export dom-append-child!) (arity #t)) */
 function dom_append_child( node, n ) {
    if( (n instanceof String) ||
        (typeof n == "string") ||
@@ -688,30 +722,34 @@ function dom_append_child( node, n ) {
    }
 }
 /*** META ((export dom-remove-child!)
+           (arity #t)
            (peephole (hole 2 node ".removeChild(" n ")")))
 */
 function dom_remove_child( node, n ) {
    return node.removeChild( n );
 }
 /*** META ((export #t)
+           (arity #t)
            (peephole (hole 2 node ".cloneNode(" b ")")))
 */
 function dom_clone_node( node, b ) {
    return node.cloneNode( b );
 }
 /*** META ((export dom-insert-before!)
+           (arity #t)
            (peephole (hole 3 node ".insertBefore(" n ", " r ")")))
 */
 function dom_insert_before( node, n, r ) {
    return node.insertBefore( n, r );
 }
 /*** META ((export dom-replace-child!)
+           (arity #t)
            (peephole (hole 3 node ".replaceChild(" n ", " r ")")))
 */
 function dom_replace_child( node, n, r ) {
    return node.replaceChild( n, r );
 }
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function dom_get_element_by_id( doc, id ) {
    if( (doc instanceof String) || (typeof doc === "string") ) {
       var res = document.getElementById( doc );
@@ -728,7 +766,7 @@ function dom_get_element_by_id( doc, id ) {
 	 return res;
    }
 }
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function dom_get_elements_by_tag_name( doc, name ) {
    if( (doc instanceof String) || (typeof doc === "string") ) {
       return sc_vector2list( document.getElementsByTagName( doc ) );
@@ -737,7 +775,7 @@ function dom_get_elements_by_tag_name( doc, name ) {
    }
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function dom_get_elements_by_name( doc, name ) {
    if( (doc instanceof String) || (typeof doc === "string") ) {
       return sc_vector2list( document.getElementsByName( doc ) );
@@ -749,7 +787,7 @@ function dom_get_elements_by_name( doc, name ) {
 /*---------------------------------------------------------------------*/
 /*    hop_css_add_style_sheet ...                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export css-add-style-sheet!)) */
+/*** META ((export css-add-style-sheet!) (arity #t)) */
 function hop_css_add_style_sheet( document, rules ) {
    try {
       var els = document.getElementsByTagName( "head" );
@@ -767,7 +805,7 @@ function hop_css_add_style_sheet( document, rules ) {
 /*---------------------------------------------------------------------*/
 /*    hop_load_css ...                                                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function hop_load_css( url ) {
    try {
       var els = document.getElementsByTagName( "head" );
@@ -793,7 +831,7 @@ function hop_load_css( url ) {
 /*---------------------------------------------------------------------*/
 /*    hop_load_jscript ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function hop_load_jscript( url ) {
    try {
       var els = document.getElementsByTagName( "head" );
@@ -812,7 +850,7 @@ function hop_load_jscript( url ) {
 /*---------------------------------------------------------------------*/
 /*    dom_get_element_by_class ...                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function dom_get_elements_by_class( doc, name ) {
    var res = new Array();
    var n = 0;
@@ -853,7 +891,7 @@ document.getElementsByClass = function( className ) {
 /*---------------------------------------------------------------------*/
 /*    hop_node_eval ...                                                */
 /*---------------------------------------------------------------------*/
-/*** META ((export dom-node-eval)) */
+/*** META ((export dom-node-eval) (arity #t)) */
 function hop_node_eval( node, text ) {
    var res;
 
@@ -905,7 +943,7 @@ function hop_node_eval( node, text ) {
 /*---------------------------------------------------------------------*/
 /*    node_style_get ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export node-style-get node-style)) */
+/*** META ((export node-style-get node-style) (arity #t)) */
 function node_style_get( obj, prop ) {
    if( (obj instanceof String) || (typeof obj === "string") )
       obj = document.getElementById( obj );
@@ -920,7 +958,9 @@ function node_style_get( obj, prop ) {
 /*---------------------------------------------------------------------*/
 /*    node_computed_style_get ...                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export node-computed-style-get node-computed-style)) */
+/*** META ((export node-computed-style-get node-computed-style)
+           (arity #t))
+*/
 function node_computed_style_get( obj, prop ) {
    if( (obj instanceof String) || (typeof obj === "string") )
       obj = document.getElementById( obj );
@@ -973,7 +1013,7 @@ function hop_create_encoded_element( html ) {
 /*---------------------------------------------------------------------*/
 /*    hop_innerHTML_set ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export innerHTML-set!)) */
+/*** META ((export innerHTML-set!) (arity #t)) */
 function hop_innerHTML_set( nid, html ) {
    var el;
 
@@ -1054,7 +1094,7 @@ function hop_element_y( obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_bounding_box ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export node-bounding-box)) */
+/*** META ((export node-bounding-box) (arity -2)) */
 function hop_bounding_box( e, m ) {
    var n;
    
@@ -1073,7 +1113,7 @@ function hop_bounding_box( e, m ) {
 /*---------------------------------------------------------------------*/
 /*    hop_bounding_box_to_list ...                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export bounding-box->list)) */
+/*** META ((export bounding-box->list) (arity #t)) */
 function hop_bounding_box_to_list( bbox ) {
    return sc_vector2list( bbox );
 }
@@ -1081,7 +1121,7 @@ function hop_bounding_box_to_list( bbox ) {
 /*---------------------------------------------------------------------*/
 /*    hop_bounding_box_x ...                                           */
 /*---------------------------------------------------------------------*/
-/*** META ((export bounding-box-x)) */
+/*** META ((export bounding-box-x) (arity -2)) */
 function hop_bounding_box_x( bbox, loc ) {
    if( arguments.length == 1 )
       return bbox[ 0 ];
@@ -1097,7 +1137,7 @@ function hop_bounding_box_x( bbox, loc ) {
 /*---------------------------------------------------------------------*/
 /*    hop_bounding_box_y ...                                           */
 /*---------------------------------------------------------------------*/
-/*** META ((export bounding-box-y)) */
+/*** META ((export bounding-box-y) (arity -2)) */
 function hop_bounding_box_y( bbox, loc ) {
    if( arguments.length == 1 )
       return bbox[ 1 ];

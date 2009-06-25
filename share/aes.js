@@ -195,7 +195,7 @@ function AESPassword2key(password, nBits) {
 /*      - outputblock = cipher(counter, key)                           */
 /*      - cipherblock = plaintext xor outputblock                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export aes-ctr-encrypt-string)) */
+/*** META ((export aes-ctr-encrypt-string) (arity #t)) */
 function AESEncryptCtr(plaintext, password, nBits) {
    if (!(nBits==128 || nBits==192 || nBits==256)) {
       if(!nBits)
@@ -258,7 +258,7 @@ function AESEncryptCtr(plaintext, password, nBits) {
 /*---------------------------------------------------------------------*/
 /*    AESEncryptCtrObj ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export aes-ctr-encrypt)) */
+/*** META ((export aes-ctr-encrypt) (arity #t)) */
 function AESEncryptCtrObj(plaintext, password, nBits) {
    return AESEncryptCtr(plaintext, password, nBits);
 }
@@ -273,7 +273,7 @@ function AESEncryptCtrObj(plaintext, password, nBits) {
 /*      - outputblock = cipher(counter, key)                           */
 /*      - cipherblock = plaintext xor outputblock                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export aes-ctr-decrypt-string)) */
+/*** META ((export aes-ctr-decrypt-string) (arity #t)) */
 function AESDecryptCtr(ciphertext, password, nBits) {
    if (!(nBits==128 || nBits==192 || nBits==256)) {
       if(!nBits)
@@ -324,7 +324,7 @@ function AESDecryptCtr(ciphertext, password, nBits) {
 /*---------------------------------------------------------------------*/
 /*    AESDecryptCtrObj ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export aes-ctr-decrypt)) */
+/*** META ((export aes-ctr-decrypt) (arity #t)) */
 function AESDecryptCtrObj(plaintext, password, nBits) {
    return AESDecryptCtr(plaintext, password, nBits);
 }

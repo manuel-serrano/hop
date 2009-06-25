@@ -436,21 +436,21 @@ sc_Reader.prototype.read = function() {
     }
 };
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -1)) */
 function sc_read(port) {
     if (port === undefined) // we assume the port hasn't been given.
 	port = SC_DEFAULT_IN; // THREAD: shared var...
     var reader = new sc_Reader(new sc_Tokenizer(port));
     return reader.read();
 }
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -1)) */
 function sc_readChar(port) {
     if (port === undefined) // we assume the port hasn't been given.
 	port = SC_DEFAULT_IN; // THREAD: shared var...
     var t = port.readChar();
     return t === SC_EOF_OBJECT? t: new sc_Char(t);
 }
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -1)) */
 function sc_peekChar(port) {
     if (port === undefined) // we assume the port hasn't been given.
 	port = SC_DEFAULT_IN; // THREAD: shared var...
@@ -458,6 +458,7 @@ function sc_peekChar(port) {
     return t === SC_EOF_OBJECT? t: new sc_Char(t);
 }    
 /*** META ((export #t)
+           (arity -1)
            (type bool))
 */
 function sc_isCharReady(port) {
@@ -466,6 +467,7 @@ function sc_isCharReady(port) {
     return port.isCharReady();
 }
 /*** META ((export #t)
+           (arity #t)
            (peephole (postfix ".close()")))
 */
 function sc_closeInputPort(p) {
@@ -473,6 +475,7 @@ function sc_closeInputPort(p) {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (type bool)
            (peephole (postfix " instanceof sc_InputPort")))
 */
@@ -481,6 +484,7 @@ function sc_isInputPort(o) {
 }
 
 /*** META ((export eof-object?)
+           (arity #t)
            (type bool)
            (peephole (postfix " === SC_EOF_OBJECT")))
 */
@@ -489,6 +493,7 @@ function sc_isEOFObject(o) {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (hole 0 "SC_DEFAULT_IN")))
 */
 function sc_currentInputPort() {
@@ -496,38 +501,38 @@ function sc_currentInputPort() {
 }
 
 /* ------------ file operations are not supported -----------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_callWithInputFile(s, proc) {
     throw "can't open " + s;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_callWithOutputFile(s, proc) {
     throw "can't open " + s;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_withInputFromFile(s, thunk) {
     throw "can't open " + s;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_withOutputToFile(s, thunk) {
     throw "can't open " + s;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_openInputFile(s) {
     throw "can't open " + s;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_openOutputFile(s) {
     throw "can't open " + s;
 }
 
 /* ----------------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_basename(p) {
    var i = p.lastIndexOf('/');
 
@@ -537,7 +542,7 @@ function sc_basename(p) {
       return '';
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_dirname(p) {
    var i = p.lastIndexOf('/');
 
@@ -549,7 +554,7 @@ function sc_dirname(p) {
 
 /* ----------------------------------------------------------------------------*/
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_withInputFromPort(p, thunk) {
     try {
 	var tmp = SC_DEFAULT_IN; // THREAD: shared var.
@@ -560,12 +565,12 @@ function sc_withInputFromPort(p, thunk) {
     }
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_withInputFromString(s, thunk) {
     return sc_withInputFromPort(new sc_StringInputPort(sc_string2jsstring(s)), thunk);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_withOutputToPort(p, thunk) {
     try {
 	var tmp = SC_DEFAULT_OUT; // THREAD: shared var.
@@ -576,27 +581,28 @@ function sc_withOutputToPort(p, thunk) {
     }
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_withOutputToString(thunk) {
     var p = new sc_StringOutputPort();
     sc_withOutputToPort(p, thunk);
     return p.close();
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_withOutputToProcedure(proc, thunk) {
     var t = function(s) { proc(sc_jsstring2string(s)); };
     return sc_withOutputToPort(new sc_GenericOutputPort(t), thunk);
 }
 
 /*** META ((export #t)
+           (arity #t)           
            (peephole (hole 0 "new sc_StringOutputPort()")))
 */
 function sc_openOutputString() {
     return new sc_StringOutputPort();
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_openInputString(str) {
     return new sc_StringInputPort(sc_string2jsstring(str));
 }
@@ -624,7 +630,7 @@ sc_StringOutputPort.prototype.close = function() {
     return sc_jsstring2string(this.res);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_getOutputString(sp) {
     return sc_jsstring2string(sp.res);
 }
@@ -648,7 +654,8 @@ function sc_GenericOutputPort(appendJSString, close) {
 sc_GenericOutputPort.prototype = new sc_OutputPort();
 
 /*** META ((export #t)
-           (type bool)
+           (arity #t)
+	   (type bool)
            (peephole (postfix " instanceof sc_OutputPort")))
 */
 function sc_isOutputPort(o) {
@@ -656,6 +663,7 @@ function sc_isOutputPort(o) {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (postfix ".close()")))
 */
 function sc_closeOutputPort(p) {
@@ -664,7 +672,7 @@ function sc_closeOutputPort(p) {
 
 /* ------------------ write ---------------------------------------------------*/
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function sc_write(o, p) {
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
@@ -728,7 +736,7 @@ function sc_escapeWriteString(s) {
 
 /* ------------------ display ---------------------------------------------------*/
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function sc_display(o, p) {
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
@@ -757,7 +765,7 @@ function sc_toDisplayString(o) {
 
 /* ------------------ newline ---------------------------------------------------*/
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -1)) */
 function sc_newline(p) {
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
@@ -766,7 +774,7 @@ function sc_newline(p) {
     
 /* ------------------ write-char ---------------------------------------------------*/
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function sc_writeChar(c, p) {
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
@@ -775,14 +783,14 @@ function sc_writeChar(c, p) {
 
 /* ------------------ write/display-circle -----------------------------------------*/
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function sc_writeCircle(o, p) {
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
     p.appendJSString(sc_toCircleString(o, sc_toWriteString));
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function sc_displayCircle(o, p) {
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
@@ -903,7 +911,7 @@ sc_Vector.prototype.sc_toCircleString = function(symb, writeOrDisplay) {
 
 /* ------------------ print ---------------------------------------------------*/
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -1)) */
 function sc_print(s) {
     if (arguments.length === 1) {
 	sc_display(s);
@@ -917,7 +925,7 @@ function sc_print(s) {
 }
 
 /* ------------------ format ---------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function sc_format(s) {
    var len = s.length;
    var p = new sc_StringOutputPort();

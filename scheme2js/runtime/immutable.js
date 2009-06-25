@@ -1,41 +1,41 @@
 var sc_SYMBOL_PREFIX = "\uEBAC";
 var sc_KEYWORD_PREFIX = "\uEBAD";
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (id))) */
 function sc_jsstring2string(s) {
     return s;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (prefix "'\\uEBAC' +")))
 */
 function sc_jsstring2symbol(s) {
     return sc_SYMBOL_PREFIX + s;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (id)))
 */
 function sc_string2jsstring(s) {
     return s;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (symbol2jsstring_immutable)))
 */
 function sc_symbol2jsstring(s) {
     return s.slice(1);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".slice(1)")))
 */
 function sc_keyword2jsstring(k) {
     return k.slice(1);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (prefix "'\\uEBAD' +")))
 */
 function sc_jsstring2keyword(s) {
@@ -43,6 +43,7 @@ function sc_jsstring2keyword(s) {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (type bool))
 */
 function sc_isKeyword(s) {
@@ -51,7 +52,7 @@ function sc_isKeyword(s) {
 }
 
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -1)) */
 var sc_gensym = function() {
     var counter = 1000;
     return function(sym) {
@@ -63,6 +64,7 @@ var sc_gensym = function() {
 
 
 /*** META ((export #t)
+           (arity #t)
            (type bool))
 */
 function sc_isEqual(o1, o2) {
@@ -73,23 +75,24 @@ function sc_isEqual(o1, o2) {
 	     && sc_isVectorEqual(o1, o2, sc_isEqual)));
 }
 
-/*** META ((export number->symbol integer->symbol)) */
+/*** META ((export number->symbol integer->symbol) (arity -2)) */
 function sc_number2symbol(x, radix) {
     return sc_SYMBOL_PREFIX + sc_number2jsstring(x, radix);
 }
     
-/*** META ((export number->string integer->string)) */
+/*** META ((export number->string integer->string) (arity -2)) */
 var sc_number2string = sc_number2jsstring;
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function sc_symbol2number(s, radix) {
     return sc_jsstring2number(s.slice(1), radix);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 var sc_string2number = sc_jsstring2number;
 
 /*** META ((export #t)
+           (arity -2)
            (peephole (prefix "+" s)))
            ;; peephole will only apply if no radix is given.
 */
@@ -99,6 +102,7 @@ function sc_string2integer(s, radix) {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (prefix "+")))
 */
 function sc_string2real(s) {
@@ -107,6 +111,7 @@ function sc_string2real(s) {
 
 
 /*** META ((export #t)
+           (arity #t)
            (type bool))
 */
 function sc_isSymbol(s) {
@@ -115,6 +120,7 @@ function sc_isSymbol(s) {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (symbol2string_immutable)))
 */
 function sc_symbol2string(s) {
@@ -122,6 +128,7 @@ function sc_symbol2string(s) {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (prefix "'\\uEBAC' +")))
 */
 function sc_string2symbol(s) {
@@ -129,6 +136,7 @@ function sc_string2symbol(s) {
 }
 
 /*** META ((export symbol-append)
+           (arity -1)
            (peephole (symbolAppend_immutable)))
 */
 function sc_symbolAppend() {
@@ -139,16 +147,19 @@ function sc_symbolAppend() {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (postfix ".val")))
 */
 function sc_char2string(c) { return c.val; }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (hole 1 "'\\uEBAC' + " c ".val")))
 */
 function sc_char2symbol(c) { return sc_SYMBOL_PREFIX + c.val; }
 
 /*** META ((export #t)
+           (arity #t)
            (type bool))
 */
 function sc_isString(s) {
@@ -156,11 +167,11 @@ function sc_isString(s) {
 	(s.charAt(0) !== sc_SYMBOL_PREFIX);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 var sc_makeString = sc_makejsString;
 
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -1)) */
 function sc_string() {
     for (var i = 0; i < arguments.length; i++)
 	arguments[i] = arguments[i].val;
@@ -168,11 +179,12 @@ function sc_string() {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (postfix ".length")))
 */
 function sc_stringLength(s) { return s.length; }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_stringRef(s, k) {
     return new sc_Char(s.charAt(k));
 }
@@ -183,6 +195,7 @@ function sc_stringSet(s, k, c)
 
 
 /*** META ((export string=?)
+           (arity #t)
 	   (type bool)
            (peephole (hole 2 str1 " === " str2)))
 */
@@ -190,6 +203,7 @@ function sc_isStringEqual(s1, s2) {
     return s1 === s2;
 }
 /*** META ((export string<?)
+           (arity #t)
 	   (type bool)
            (peephole (hole 2 str1 " < " str2)))
 */
@@ -197,6 +211,7 @@ function sc_isStringLess(s1, s2) {
     return s1 < s2;
 }
 /*** META ((export string>?)
+           (arity #t)
 	   (type bool)
            (peephole (hole 2 str1 " > " str2)))
 */
@@ -204,6 +219,7 @@ function sc_isStringGreater(s1, s2) {
     return s1 > s2;
 }
 /*** META ((export string<=?)
+           (arity #t)
 	   (type bool)
            (peephole (hole 2 str1 " <= " str2)))
 */
@@ -211,6 +227,7 @@ function sc_isStringLessEqual(s1, s2) {
     return s1 <= s2;
 }
 /*** META ((export string>=?)
+           (arity #t)
 	   (type bool)
            (peephole (hole 2 str1 " >= " str2)))
 */
@@ -218,6 +235,7 @@ function sc_isStringGreaterEqual(s1, s2) {
     return s1 >= s2;
 }
 /*** META ((export string-ci=?)
+           (arity #t)
 	   (type bool)
            (peephole (hole 2 str1 ".toLowerCase() === " str2 ".toLowerCase()")))
 */
@@ -225,6 +243,7 @@ function sc_isStringCIEqual(s1, s2) {
     return s1.toLowerCase() === s2.toLowerCase();
 }
 /*** META ((export string-ci<?)
+           (arity #t)
 	   (type bool)
            (peephole (hole 2 str1 ".toLowerCase() < " str2 ".toLowerCase()")))
 */
@@ -232,6 +251,7 @@ function sc_isStringCILess(s1, s2) {
     return s1.toLowerCase() < s2.toLowerCase();
 }
 /*** META ((export string-ci>?)
+           (arity #t)
 	   (type bool)
            (peephole (hole 2 str1 ".toLowerCase() > " str2 ".toLowerCase()")))
 */
@@ -239,6 +259,7 @@ function sc_isStringCIGreater(s1, s2) {
     return s1.toLowerCase() > s2.toLowerCase();
 }
 /*** META ((export string-ci<=?)
+           (arity #t)
 	   (type bool)
            (peephole (hole 2 str1 ".toLowerCase() <= " str2 ".toLowerCase()")))
 */
@@ -246,6 +267,7 @@ function sc_isStringCILessEqual(s1, s2) {
     return s1.toLowerCase() <= s2.toLowerCase();
 }
 /*** META ((export string-ci>=?)
+           (arity #t)
 	   (type bool)
            (peephole (hole 2 str1 ".toLowerCase() >= " str2 ".toLowerCase()")))
 */
@@ -254,38 +276,47 @@ function sc_isStringCIGreaterEqual(s1, s2) {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (hole 3 s ".substring(" start ", " end ")")))
 */
 function sc_substring(s, start, end) {
     return s.substring(start, end);
 }
 
-/*** META ((export #t))
+/*** META ((export #t) (arity -4))
 */
-function sc_isSubstring_at(s1, s2, i) {
+function sc_isSubstring_at(str1, str2, i, len) {
+    if (!len) len = str2.length;
+    else if (str2.length < len) return false;
+    if (str1.length < len + i) return false;
+    return str2.substring(0, len) == str1.substring(i, i+len);
     return s2 == s1.substring(i, i+ s2.length);
 }
 
-/*** META ((export substring=?))
+/*** META ((export substring=?) (arity #t))
 */
-function sc_isSubstring(s1, s2) {
-    return s2 == s1.substring(0, s2.length);
+function sc_isSubstring(s1, s2, len) {
+    if (s1.length < len) return false;
+    if (s2.length < len) return false;
+    return s2.substring(0, len) == s1.substring(0, len);
 }
 
 /*** META ((export #t)
+           (arity -1)
            (peephole (infix 0 #f "+" "''")))
 */
 function sc_stringAppend() {
     return "".concat.apply("", arguments);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity 1)) */
 var sc_string2list = sc_jsstring2list;
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity 1)) */
 var sc_list2string = sc_list2jsstring;
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (id)))
 */
 function sc_stringCopy(s) {
@@ -297,6 +328,7 @@ function sc_stringFill(s, c)
 */
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (postfix ".slice(1)")))
 */
 function sc_keyword2string(o) {
@@ -304,6 +336,7 @@ function sc_keyword2string(o) {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (prefix "'\\uEBAD' +")))
 */
 function sc_string2keyword(o) {
@@ -331,26 +364,27 @@ String.prototype.sc_toWriteString = function() {
 };
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (hole 2 1 ".indexOf(" 0 ") === 0")))
 */
 function sc_isStringPrefix(cs1, cs2) {
     return cs2.indexOf(cs1) === 0;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_isStringSuffix(cs1, cs2) {
     var tmp = cs2.lastIndexOf(cs1);
     return tmp !== false && tmp >= 0 && tmp === cs2.length - cs1.length;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_stringSplit(s, sep) {
     if (sep.length === 1)
 	return sc_vector2list(s.split(sep));
     return sc_vector2list(s.split(sc_pregexpCreateCharsetMatcher(sep)));
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -3)) */
 function sc_stringIndex(s, cset, start) {
    var res;
    if (!start) start = 0;
@@ -372,7 +406,7 @@ function sc_stringIndex(s, cset, start) {
    }
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -3)) */
 function sc_stringIndexRight(s, cset, start) {
    var res;
    if (!start) start = s.length - 1;

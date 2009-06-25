@@ -45,7 +45,7 @@ function hop_callback( proc ) {
 /*---------------------------------------------------------------------*/
 /*    hop_trace ...                                                    */
 /*---------------------------------------------------------------------*/
-/*** META ((export trace)) */
+/*** META ((export trace) (arity -1)) */
 function hop_trace() {
    if( hop_debug() > 0 ) {
       var svc = hop_apply_url( hop_service_base() + "/trace",
@@ -117,7 +117,7 @@ function hop_set_cookie( http ) {
 /*---------------------------------------------------------------------*/
 /*    hop_cookie_remove ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export cookie-remove!)) */
+/*** META ((export cookie-remove!) (arity #t)) */
 function hop_cookie_remove( name, path, domain ) {
    if( hop_cookie_get_value( name ) ) {
       hop_cookie_set_value( name, "", path, domain );
@@ -127,7 +127,7 @@ function hop_cookie_remove( name, path, domain ) {
 /*---------------------------------------------------------------------*/
 /*    hop_cookie_get_value ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export cookie-get)) */
+/*** META ((export cookie-get) (arity #t)) */
 function hop_cookie_get_value( name ) {
    var cookies = document.cookie;
    var i = cookies.indexOf( name + "=" );
@@ -145,7 +145,7 @@ function hop_cookie_get_value( name ) {
 /*---------------------------------------------------------------------*/
 /*    hop_cookie_set_value ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export cookie-set!)) */
+/*** META ((export cookie-set!) (arity -3)) */
 function hop_cookie_set_value( name, val, path, domain, expires ) {
    var cookie = name + "=" + val;
 
@@ -183,7 +183,7 @@ var hop_load_frequency = 100;
 /*---------------------------------------------------------------------*/
 /*    hop_load ...                                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function hop_load( src, timeout ) {
    var script = document.createElement( "script" );
    script.src = src;
@@ -223,7 +223,7 @@ function hop_load( src, timeout ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_onload_add ...                                        */
 /*---------------------------------------------------------------------*/
-/*** META ((export add-window-onload!)) */
+/*** META ((export add-window-onload!) (arity 1)) */
 var hop_window_onload_add = function( proc ) {
    var oldonload = window.onload;
 
@@ -246,7 +246,7 @@ hop_window_onload_add( function( e ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_onload_cons ...                                       */
 /*---------------------------------------------------------------------*/
-/*** META ((export add-window-onload-first!)) */
+/*** META ((export add-window-onload-first!) (arity #t)) */
 function hop_window_onload_cons( proc ) {
    var oldonload = window.onload;
 
@@ -263,7 +263,7 @@ function hop_window_onload_cons( proc ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_onunload_add ...                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export add-window-onunload!)) */
+/*** META ((export add-window-onunload!) (arity #t)) */
 function hop_window_onunload_add( proc ) {
    if( typeof( window.onunload ) != 'function' ) {
       window.onunload = proc;
@@ -302,7 +302,7 @@ function hop_update( node ) {
 /*    -------------------------------------------------------------    */
 /*    A wrapper for using typeof as a function in Hop.                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export find-runtime-type)) */
+/*** META ((export find-runtime-type) (arity #t)) */
 function hop_find_runtime_type( obj ) {
    if( obj instanceof Object ) {
       if( obj instanceof Date ) {
@@ -335,7 +335,7 @@ function hop_find_runtime_type( obj ) {
 /*---------------------------------------------------------------------*/
 /*    after ...                                                        */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function after( timeout, proc ) {
    var tm = sc_isNumber( timeout ) ? timeout : 1;
    var wproc = hop_callback( proc );
@@ -347,7 +347,7 @@ function after( timeout, proc ) {
 /*---------------------------------------------------------------------*/
 /*    timeout ...                                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function timeout( tm, proc ) {
    var wproc = hop_callback( proc );
    
@@ -357,7 +357,7 @@ function timeout( tm, proc ) {
 /*---------------------------------------------------------------------*/
 /*    url-decode ...                                                   */
 /*---------------------------------------------------------------------*/
-/*** META ((export url-decode)) */
+/*** META ((export url-decode) (arity #t)) */
 function url_decode( s ) {
    try {
       return decodeURI( s );
@@ -369,7 +369,7 @@ function url_decode( s ) {
 /*---------------------------------------------------------------------*/
 /*    url-encode ...                                                   */
 /*---------------------------------------------------------------------*/
-/*** META ((export url-encode)) */
+/*** META ((export url-encode) (arity #t)) */
 function url_encode( s ) {
    return encodeURI( s );
 }
@@ -377,7 +377,7 @@ function url_encode( s ) {
 /*---------------------------------------------------------------------*/
 /*    string-hex-extern ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export string-hex-extern)) */
+/*** META ((export string-hex-extern) (arity #t)) */
 function string_hex_extern( str ) {
   var res = "";
   var l = str.length;
@@ -393,7 +393,7 @@ function string_hex_extern( str ) {
 /*---------------------------------------------------------------------*/
 /*    string-hex-intern ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export string-hex-intern)) */
+/*** META ((export string-hex-intern) (arity #t)) */
 function string_hex_intern( s ) {
    var res = "";
    var l = s.length;
@@ -426,7 +426,7 @@ function string_hex_intern( s ) {
 /*---------------------------------------------------------------------*/
 /*    date-year ...                                                    */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function date_year( d ) {
    return d.getYear();
 }
@@ -434,7 +434,7 @@ function date_year( d ) {
 /*---------------------------------------------------------------------*/
 /*    date-month ...                                                   */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function date_month( d ) {
    return d.getMonth();
 }
@@ -442,7 +442,7 @@ function date_month( d ) {
 /*---------------------------------------------------------------------*/
 /*    date-day ...                                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function date_day( d ) {
    return d.getDay();
 }
@@ -450,7 +450,7 @@ function date_day( d ) {
 /*---------------------------------------------------------------------*/
 /*    date-hour ...                                                    */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function date_hour( d ) {
    return d.getHours();
 }
@@ -458,7 +458,7 @@ function date_hour( d ) {
 /*---------------------------------------------------------------------*/
 /*    date-minute ...                                                  */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function date_minute( d ) {
    return d.getMinutes();
 }   
@@ -466,7 +466,7 @@ function date_minute( d ) {
 /*---------------------------------------------------------------------*/
 /*    date-second ...                                                  */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function date_second( d ) {
    return d.getSeconds();
 }   

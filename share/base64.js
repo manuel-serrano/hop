@@ -18,7 +18,7 @@ var keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 /*---------------------------------------------------------------------*/
 /*    base64_encode ...                                                */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function base64_encode( input ) {
    var output = "";
    var chr1, chr2, chr3;
@@ -87,7 +87,7 @@ function utf8_decode( input ) {
 /*    function                                                         */
 /*    base64_decode ...                                                */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function base64_decode( input ) {
    var output = "";
    var chr1, chr2, chr3;

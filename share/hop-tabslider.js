@@ -12,7 +12,7 @@
 /*---------------------------------------------------------------------*/
 /*    hop_tabslider_user_select ...                                    */
 /*---------------------------------------------------------------------*/
-/*** META ((export tabslider-select)) ***/
+/*** META ((export tabslider-select) (arity #t)) ***/
 function hop_tabslider_user_select( id1, id2 ) {
    var tab = hop_is_html_element( id2 ) ? id2 : document.getElementById( id2 );
    var tshead = tab.previousSibling;

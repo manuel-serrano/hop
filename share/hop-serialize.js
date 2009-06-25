@@ -148,7 +148,7 @@ function hop_serialize_word( word ) {
 /*---------------------------------------------------------------------*/
 /*    ucs2_to_utf8 ...                                                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export ucs2-string->utf8-string)) */
+/*** META ((export ucs2-string->utf8-string) (arity #t)) */
 function ucs2_to_utf8( s ) {
    var len = s.length;
 
@@ -289,7 +289,7 @@ function hop_serialize_html( item ) {
 /*---------------------------------------------------------------------*/
 /*    hop_obj_to_string ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export obj->string)) */
+/*** META ((export obj->string) (arity #t)) */
 function hop_obj_to_string( item ) {
    return decodeURIComponent( hop_bigloo_serialize( item ) );
 }
@@ -297,7 +297,7 @@ function hop_obj_to_string( item ) {
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_unserialize ...                                       */
 /*---------------------------------------------------------------------*/
-/*** META ((export string->obj)) */
+/*** META ((export string->obj) (arity #t)) */
 function hop_string_to_obj( s ) {
    var pointer = 0;
    var definitions = [];

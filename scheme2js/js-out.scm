@@ -711,15 +711,19 @@
 (define-method (expr-out this::Access in-for-init? stmt-begin?
 			 indent p compress?)
    (with-access::Access this (obj field)
-      (nested-expr-out obj member-expr? in-for-init? stmt-begin?
-		       indent p compress?)
       (if (and (String? field)
 	       (valid-js-id? (String-val field) :strip-delimiters? #t))
 	  (let ((str (String-val field)))
+	     (when (Number? obj) (display "(" p))
+	     (nested-expr-out obj member-expr? in-for-init? stmt-begin?
+			      indent p compress?)
+	     (when (Number? obj) (display ")" p))
 	     (display #\. p)
 	     ;; strip delimiters
 	     (display (substring str 1 (-fx (string-length str) 1)) p))
 	  (begin
+	     (nested-expr-out obj member-expr? in-for-init? stmt-begin?
+			      indent p compress?)
 	     (display #\[ p)
 	     (nested-expr-out field expr? #f #f (indent++ indent) p compress?)
 	     (display #\] p)))))
@@ -727,8 +731,10 @@
 (define-method (expr-out this::Dot in-for-init? stmt-begin?
 			 indent p compress?)
    (with-access::Dot this (obj field)
+      (when (Number? obj) (display "(" p))
       (nested-expr-out obj member-expr? in-for-init? stmt-begin?
 		       indent p compress?)
+      (when (Number? obj) (display ")" p))
       (display #\. p)
       (display field p)))
 

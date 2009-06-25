@@ -1,6 +1,7 @@
 (module exporter
    (main my-main))
 
+;; (export #t) will search its name from the exported Js-function.
 ;; unmarshalling recognizes the following patterns:
 ;; is-XX, has-YY, ZZ-bang which are converted to XX?, YY? and ZZ!
 ;;
@@ -17,6 +18,8 @@
 ;; --constant-functions will only add the (constant #f) clause to
 ;; functions. This is purely syntactic. var f = function() {}; will _not_ be
 ;; exported as (constant #t). but function f() {}; will.
+;;
+;; (arity #t) will search the arity from the function.
 
 (define *ignored-prefixes* '())
 (define *out-file* #f)
@@ -125,7 +128,12 @@
    (hashtable-for-each macros-ht
 		       (lambda (ignored macro)
 			  (pp macro))))
-   
+
+(define (fixup-arity! meta js-arity)
+   (let ((t (assq 'arity meta)))
+      (when (and t (eq? (cadr t) #t))
+	 (set-car! (cdr t) js-arity))))
+
 (define (print-module-clause metas)
    (let ((exports-ht (make-hashtable))
 	 (macros-ht (make-hashtable)))
@@ -135,6 +143,8 @@
 	  (let ((var (car var/kind/meta))
 		(kind (cadr var/kind/meta))
 		(meta (caddr var/kind/meta)))
+	     (when (eq? kind 'function)
+		(fixup-arity! meta (cadddr var/kind/meta)))
 	     (cond
 		((eq? kind 'macro)
 		 (hashtable-put! macros-ht (caadr meta) meta))

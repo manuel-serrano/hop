@@ -35,7 +35,7 @@
 	   (null? (cdr operands))
 	   (begin
 	      (template-display p env
-		 "(~e~a)"
+		 "((~e)~a)"
 		 (compile (car operands) p #f)
 		 postfix-operator)
 	      #t))))

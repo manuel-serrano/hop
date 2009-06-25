@@ -12,7 +12,7 @@
 /*---------------------------------------------------------------------*/
 /*    hop_debug_reset ...                                              */
 /*---------------------------------------------------------------------*/
-/*** META ((export debug-reset!)) */
+/*** META ((export debug-reset!) (arity #t)) */
 function hop_debug_reset() {
    var pre = document.getElementById( "hop_debug_content" );
 
@@ -56,7 +56,7 @@ function hop_debug_get_container() {
 /*---------------------------------------------------------------------*/
 /*    hop_debug ...                                                    */
 /*---------------------------------------------------------------------*/
-/*** META ((export debug)) */
+/*** META ((export debug) (arity -1)) */
 function hop_debug() {
    var pre = hop_debug_get_container();
    var i;

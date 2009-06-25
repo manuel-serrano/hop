@@ -19,22 +19,22 @@ var undefined;
 /*---------------------------------------------------------------------*/
 /*    Name and version                                                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export hop-name)) */
+/*** META ((export hop-name) (arity #t)) */
 function hop_name() {
    return "Hop";
 }
 
-/*** META ((export hop-version)) */
+/*** META ((export hop-version) (arity #t)) */
 function hop_version() {
    return "@VERSION@";
 }
 
-/*** META ((export hop-backend)) */
+/*** META ((export hop-backend) (arity #t)) */
 function hop_backend() {
    return "@BACKEND@";
 }
 
-/*** META ((export hop-url)) */
+/*** META ((export hop-url) (arity #t)) */
 function hop_url() {
    return "@URL@";
 }
@@ -49,7 +49,7 @@ var hop_enable_location_event = @LOCEVENT@;
 /*    -------------------------------------------------------------    */
 /*    The prefix of all HOP weblets.                                   */
 /*---------------------------------------------------------------------*/
-/*** META ((export hop-service-base)) */
+/*** META ((export hop-service-base) (arity #t)) */
 function hop_service_base() {
    return "@HOPSERVICEBASE@";
 }
@@ -255,7 +255,7 @@ function hop_properties_values_to_string( obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_is_html_element ...                                          */
 /*---------------------------------------------------------------------*/
-/*** META ((export html-element?)) */
+/*** META ((export html-element?) (arity 1)) */
 var hop_is_html_element;
 
 if( !("HTMLElement" in window) ) {
@@ -453,7 +453,7 @@ function node_style_set_array( obj, prop, value ) {
    obj.style[ prop ] = value;
 }
 
-/*** META ((export node-style-set!)) */
+/*** META ((export node-style-set!) (arity 3)) */
 var node_style_set = function( obj, property, value ) {
    if( (obj instanceof String) || (typeof obj === "string") )
       obj = document.getElementById( obj );
@@ -493,7 +493,7 @@ try {
 /*---------------------------------------------------------------------*/
 var hop_add_native_event_listener = undefined;
 var hop_remove_native_event_listener = undefined;
-/*** META ((export stop-event-propagation)) */
+/*** META ((export stop-event-propagation) (arity -2)) */
 var hop_stop_propagation = undefined;
 var hop_has_event20 = false;
 
@@ -598,18 +598,20 @@ function hop_deinline_image( el, src ) {
 /*---------------------------------------------------------------------*/
 /*    mouse coords ...                                                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export event-mouse-x)) */
+/*** META ((export event-mouse-x) (arity 1)) */
 var hop_event_mouse_x = undefined;
-/*** META ((export event-mouse-y)) */
+/*** META ((export event-mouse-y) (arity 1)) */
 var hop_event_mouse_y = undefined;
-/*** META ((export event-mouse-button)) */
+/*** META ((export event-mouse-button) (arity 1)) */
 var hop_event_mouse_button = undefined;
-/*** META ((export event-key-code)) */
+/*** META ((export event-key-code) (arity 1)) */
 var hop_event_key_code = undefined;
 /*** META ((export event-value)
+           (arity #t)
            (peephole: (postfix ".value"))) */
 function hop_event_value( evt ) { return evt.value; }
 /*** META ((export event-response-text)
+           (arity #t)
            (peephole: (postfix ".responseText"))) */
 function hop_event_response_text( evt ) { return evt.responseText; }
 
@@ -665,9 +667,9 @@ switch( hop_config.mouse_left_button ) {
 /*---------------------------------------------------------------------*/
 /*    hop_current_window_width/height ...                              */
 /*---------------------------------------------------------------------*/
-/*** META ((export current-window-width)) */
+/*** META ((export current-window-width) (arity 0)) */
 var hop_current_window_width = undefined;
-/*** META ((export current-window-height)) */
+/*** META ((export current-window-height) (arity 0)) */
 var hop_current_window_height = undefined;
 
 if( isNaN( window.innerWidth ) ) {
@@ -689,7 +691,7 @@ if( isNaN( window.innerWidth ) ) {
 /*---------------------------------------------------------------------*/
 /*    hop_iframe_scroll_height ...                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export iframe-scroll-height)) */
+/*** META ((export iframe-scroll-height) (arity #t)) */
 function hop_iframe_scroll_height( e ) {
    if( "contentDocument" in e ) {
       return e.contentDocument.body.scrollHeight;
@@ -705,7 +707,7 @@ function hop_iframe_scroll_height( e ) {
 /*---------------------------------------------------------------------*/
 /*    hop_iframe_scroll_width ...                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export iframe-scroll-width)) */
+/*** META ((export iframe-scroll-width) (arity #t)) */
 function hop_iframe_scroll_width( e ) {
    if( "contentDocument" in e ) {
       return e.contentDocument.body.scrollWidth;
@@ -721,7 +723,7 @@ function hop_iframe_scroll_width( e ) {
 /*---------------------------------------------------------------------*/
 /*    hop_get_selection                                                */
 /*---------------------------------------------------------------------*/
-/*** META ((export get-selection)) */
+/*** META ((export get-selection) (arity 0)) */
 var hop_get_selection;
 
 if( window.getSelection ) {

@@ -662,7 +662,7 @@ var Kclip = sc_jsstring2keyword( "clip" );
 /*---------------------------------------------------------------------*/
 /*    hop_window_open ...                                              */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-open)) */
+/*** META ((export window-open) (arity -1)) */
 function hop_window_open() {
    var title = "Hop", id, parent, src, klass, width, height, left, top;
    var background, resizable = true;
@@ -836,7 +836,7 @@ function hop_window_open() {
 /*---------------------------------------------------------------------*/
 /*    hop_tab_open ...                                                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export tab-open)) */
+/*** META ((export tab-open) (arity -1)) */
 function hop_tab_open() {
    var src;
    var i = 0, l = arguments.length;
@@ -858,7 +858,7 @@ function hop_tab_open() {
 /*---------------------------------------------------------------------*/
 /*    hop_window_iconify ...                                           */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-iconify)) */
+/*** META ((export window-iconify) (arity #t)) */
 function hop_window_iconify( o ) {
    return hop_get_window( o ).iconify();
 }
@@ -866,7 +866,7 @@ function hop_window_iconify( o ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_close ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-close)) */
+/*** META ((export window-close) (arity #t)) */
 function hop_window_close( o ) {
    return hop_get_window( o ).close();
 }
@@ -895,7 +895,7 @@ function hop_window_resize( o, w, h ) {
 /*---------------------------------------------------------------------*/
 /*    hop_is_iwindow ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export iwindow?)) */
+/*** META ((export iwindow?) (arity #t)) */
 function hop_is_iwindow( o ) {
    return o.hop_add_event_listener == hop_iwindow_add_event_listener;
 }
@@ -903,7 +903,7 @@ function hop_is_iwindow( o ) {
 /*---------------------------------------------------------------------*/
 /*    hop_is_window ...                                                */
 /*---------------------------------------------------------------------*/
-/*** META ((export window?)) */
+/*** META ((export window?) (arity #t)) */
 function hop_is_window( o ) {
    return hop_is_iwindow( o ) || (win instanceof Window);
 }
@@ -911,7 +911,7 @@ function hop_is_window( o ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_x ...                                                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-x)) */
+/*** META ((export window-x) (arity #t)) */
 function hop_window_x( win ) {
    if( win instanceof Window ) {
       if( "left" in win ) return win.left;
@@ -925,7 +925,7 @@ function hop_window_x( win ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_x_set ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-x-set!)) */
+/*** META ((export window-x-set!) (arity #t)) */
 function hop_window_x_set( win, x ) {
    if( win instanceof Window ) {
       if( "top" in win ) return win.moveTo( x, win.top );
@@ -942,7 +942,7 @@ function hop_window_x_set( win, x ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_y ...                                                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-y)) */
+/*** META ((export window-y) (arity #t)) */
 function hop_window_y( win ) {
    if( win instanceof Window ) {
       if( "top" in win ) return win.top;
@@ -956,7 +956,7 @@ function hop_window_y( win ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_y_set ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-y-set!)) */
+/*** META ((export window-y-set!) (arity #t)) */
 function hop_window_y_set( win, y ) {
    if( win instanceof Window ) {
       if( "left" in win ) return win.moveTo( win.left, y );
@@ -974,7 +974,7 @@ function hop_window_y_set( win, y ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_width ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-width)) */
+/*** META ((export window-width) (arity #t)) */
 function hop_window_width( win ) {
    if( win instanceof Window ) {
       if( "outerWidth" in win ) return win.outerWidth;
@@ -988,7 +988,7 @@ function hop_window_width( win ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_width_set ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-width-set!)) */
+/*** META ((export window-width-set!) (arity #t)) */
 function hop_window_width_set( win, width ) {
    if( win instanceof Window ) {
       if( "outerHeight" in win ) return win.resizeTo( width, win.outerHeight );
@@ -1006,7 +1006,7 @@ function hop_window_width_set( win, width ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_height ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-height)) */
+/*** META ((export window-height) (arity #t)) */
 function hop_window_height( win ) {
    if( win instanceof Window ) {
       if( "outerHeight" in win ) return win.outerHeight;
@@ -1020,7 +1020,7 @@ function hop_window_height( win ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_height_set ...                                        */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-height-set!)) */
+/*** META ((export window-height-set!) (arity #t)) */
 function hop_window_height_set( win, height ) {
    if( win instanceof Window ) {
       if( "outerHeight" in win ) return win.resizeTo( win.outerWidth, height );
@@ -1038,7 +1038,7 @@ function hop_window_height_set( win, height ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_title ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-title)) */
+/*** META ((export window-title) (arity #t)) */
 function hop_window_title( win ) {
    if( win instanceof Window ) {
       return win.name;
@@ -1050,7 +1050,7 @@ function hop_window_title( win ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_title_set ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-title-set!)) */
+/*** META ((export window-title-set!) (arity #t)) */
 function hop_window_title_set( win, title ) {
    if( win instanceof Window ) {
       try {
@@ -1066,7 +1066,7 @@ function hop_window_title_set( win, title ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_style_get ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-style-get)) */
+/*** META ((export window-style-get) (arity #t)) */
 function hop_window_style_get( win, prop ) {
    return node_style_get( win.el_win, prop );
 }
@@ -1074,7 +1074,7 @@ function hop_window_style_get( win, prop ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_style_set ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-style-set!)) */
+/*** META ((export window-style-set!) (arity #t)) */
 function hop_window_style_set( win, prop, val ) {
    return node_style_set( win.el_win, prop, val );
 }

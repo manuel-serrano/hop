@@ -11,7 +11,8 @@
        (peephole       (default #f) read-only)
        (higher?::bool  (default #f) read-only)
        (higher-params  (default #f) read-only) 
-       (return-type    (default #f) read-only))
+       (return-type    (default #f) read-only)
+       (arity          (default #f) read-only))
     (create-Export-Desc::Export-Desc info module-name runtime?::bool)))
 
 
@@ -84,7 +85,8 @@
 	  (higher? (entry-val 'call/cc? normalized))
 	  (higher-params (entry-val 'call/cc-params normalized))
 	  (return-type (entry-val 'type normalized))
-	  (exported-as-const? (or (entry-val 'constant? normalized))))
+	  (exported-as-const? (or (entry-val 'constant? normalized)))
+	  (arity (entry-val 'arity normalized)))
       (instantiate::Export-Desc
 	 (id scheme-sym)
 	 (js-id js-id)
@@ -93,4 +95,5 @@
 	 (peephole peephole)
 	 (higher? higher?)
 	 (higher-params higher-params)
-	 (return-type return-type))))
+	 (return-type return-type)
+	 (arity arity))))

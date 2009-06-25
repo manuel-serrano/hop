@@ -37,7 +37,8 @@ var sc_JS_GLOBALS = this;
 var __sc_LINE=-1;
 var __sc_FILE="";
 
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity -1)) */
 function sc_alert() {
    var len = arguments.length;
    var s = "";
@@ -50,12 +51,13 @@ function sc_alert() {
    return alert( s );
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_typeof( x ) {
    return typeof x;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity -1)) */
 function sc_error() {
    var a = new Error("sc_error");
 
@@ -72,14 +74,14 @@ function sc_error() {
    throw a;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (prefix "throw ")))
 */
 function sc_raise(obj) {
     throw obj;
 }
 
-/*** META ((export with-handler-lambda)) */
+/*** META ((export with-handler-lambda) (arity #t)) */
 function sc_withHandlerLambda(handler, body) {
     try {
 	return body();
@@ -93,7 +95,7 @@ function sc_withHandlerLambda(handler, body) {
 
 var sc_properties = new Object();
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_putpropBang(sym, key, val) {
     var ht = sc_properties[sym];
     if (!ht) {
@@ -103,7 +105,7 @@ function sc_putpropBang(sym, key, val) {
     ht[key] = val;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_getprop(sym, key) {
     var ht = sc_properties[sym];
     if (ht) {
@@ -115,19 +117,19 @@ function sc_getprop(sym, key) {
 	return false;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_rempropBang(sym, key) {
     var ht = sc_properties[sym];
     if (ht)
 	delete ht[key];
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_any2String(o) {
     return jsstring2string(sc_toDisplayString(o));
 }    
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (infix 2 2 "==="))
            (type bool))
 */
@@ -135,7 +137,7 @@ function sc_isEqv(o1, o2) {
     return (o1 === o2);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (infix 2 2 "==="))
            (type bool))
 */
@@ -143,42 +145,42 @@ function sc_isEq(o1, o2) {
     return (o1 === o2);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool))
 */
 function sc_isNumber(n) {
     return (typeof n === "number");
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool))
 */
 function sc_isComplex(n) {
     return sc_isNumber(n);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool))
 */
 function sc_isReal(n) {
     return sc_isNumber(n);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool))
 */
 function sc_isRational(n) {
     return sc_isReal(n);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool))
 */
 function sc_isInteger(n) {
     return (parseInt(n) === n);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool)
            (peephole (postfix ", false")))
 */
@@ -187,7 +189,7 @@ function sc_isExact(n) {
     return false;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ", true"))
 	   (type bool))
 */
@@ -197,7 +199,8 @@ function sc_isInexact(n) {
 
 /*** META ((export = =fx =fl)
            (type bool)
-           (peephole (infix 2 2 "===")))
+           (peephole (infix 2 2 "==="))
+           (arity -3))
 */
 function sc_equal(x) {
     for (var i = 1; i < arguments.length; i++)
@@ -208,7 +211,8 @@ function sc_equal(x) {
 
 /*** META ((export < <fx <fl)
            (type bool)
-           (peephole (infix 2 2 "<")))
+           (peephole (infix 2 2 "<"))
+           (arity -3))
 */
 function sc_less(x) {
     for (var i = 1; i < arguments.length; i++) {
@@ -221,7 +225,8 @@ function sc_less(x) {
 
 /*** META ((export > >fx >fl)
            (type bool)
-           (peephole (infix 2 2 ">")))
+           (peephole (infix 2 2 ">"))
+           (arity -3))
 */
 function sc_greater(x, y) {
     for (var i = 1; i < arguments.length; i++) {
@@ -234,7 +239,8 @@ function sc_greater(x, y) {
 
 /*** META ((export <= <=fx <=fl)
            (type bool)
-           (peephole (infix 2 2 "<=")))
+           (peephole (infix 2 2 "<="))
+           (arity -3))
 */
 function sc_lessEqual(x, y) {
     for (var i = 1; i < arguments.length; i++) {
@@ -247,7 +253,8 @@ function sc_lessEqual(x, y) {
 
 /*** META ((export >= >=fl >=fx)
            (type bool)
-           (peephole (infix 2 2 ">=")))
+           (peephole (infix 2 2 ">="))
+           (arity -3))
 */
 function sc_greaterEqual(x, y) {
     for (var i = 1; i < arguments.length; i++) {
@@ -258,7 +265,7 @@ function sc_greaterEqual(x, y) {
     return true;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool)
            (peephole (postfix "=== 0")))
 */
@@ -266,7 +273,7 @@ function sc_isZero(x) {
     return (x === 0);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool)
            (peephole (postfix "> 0")))
 */
@@ -274,7 +281,7 @@ function sc_isPositive(x) {
     return (x > 0);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool)
            (peephole (postfix "< 0")))
 */
@@ -282,7 +289,7 @@ function sc_isNegative(x) {
     return (x < 0);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool)
            (peephole (postfix "%2===1")))
 */
@@ -290,7 +297,7 @@ function sc_isOdd(x) {
     return (x % 2 === 1);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool)
            (peephole (postfix "%2===0")))
 */
@@ -298,13 +305,16 @@ function sc_isEven(x) {
     return (x % 2 === 0);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity -2)) */
 var sc_max = Math.max;
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity -2)) */
 var sc_min = Math.min;
 
 /*** META ((export + +fx +fl)
-           (peephole (infix 0 #f "+" "0")))
+           (peephole (infix 0 #f "+" "0"))
+           (arity -1))
 */
 function sc_plus() {
     var sum = 0;
@@ -314,7 +324,8 @@ function sc_plus() {
 }
 
 /*** META ((export * *fx *fl)
-           (peephole (infix 0 #f "*" "1")))
+           (peephole (infix 0 #f "*" "1"))
+           (arity -1))
 */
 function sc_multi() {
     var product = 1;
@@ -324,7 +335,8 @@ function sc_multi() {
 }
 
 /*** META ((export - -fx -fl)
-           (peephole (minus)))
+           (peephole (minus))
+           (arity -2))
 */
 function sc_minus(x) {
     if (arguments.length === 1)
@@ -338,7 +350,8 @@ function sc_minus(x) {
 }
 
 /*** META ((export / /fl)
-           (peephole (div)))
+           (peephole (div))
+           (arity -2))
 */
 function sc_div(x) {
     if (arguments.length === 1)
@@ -351,24 +364,26 @@ function sc_div(x) {
     }
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity 1))
+*/
 var sc_abs = Math.abs;
 
-/*** META ((export quotient /fx)
+/*** META ((export quotient /fx) (arity #t)
            (peephole (hole 2 "parseInt(" x "/" y ")")))
 */
 function sc_quotient(x, y) {
     return parseInt(x / y);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (infix 2 2 "%")))
 */
 function sc_remainder(x, y) {
     return x % y;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (modulo)))
 */
 function sc_modulo(x, y) {
@@ -396,7 +411,9 @@ function sc_euclid_gcd(a, b) {
     return b;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity -1))
+*/
 function sc_gcd() {
     var gcd = 0;
     for (var i = 0; i < arguments.length; i++)
@@ -404,7 +421,9 @@ function sc_gcd() {
     return gcd;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity -1))
+*/
 function sc_lcm() {
     var lcm = 1;
     for (var i = 0; i < arguments.length; i++) {
@@ -427,37 +446,65 @@ function sc_lcm() {
 //     return Math.round(SC_MAX_DECIMALS / sc_euclid_gcd(rounded, SC_MAX_DECIMALS));
 // }
 
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity 1))
+*/
 var sc_floor = Math.floor;
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity 1))
+*/
 var sc_ceiling = Math.ceil;
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity 1))
+*/
 var sc_truncate = parseInt;
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity 1))
+*/
 var sc_round = Math.round;
 
 // LIMITATION: sc_rationalize doesn't make sense in a floating point world.
 
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity 1))
+*/
 var sc_exp = Math.exp;
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity 1))
+*/
 var sc_log = Math.log;
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity 1))
+*/
 var sc_sin = Math.sin;
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity 1))
+*/
 var sc_cos = Math.cos;
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity 1))
+*/
 var sc_tan = Math.tan;
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity 1))
+*/
 var sc_asin = Math.asin;
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity 1))
+*/
 var sc_acos = Math.acos;
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity -2))
+*/
 var sc_atan = Math.atan;
 
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity 1))
+*/
 var sc_sqrt = Math.sqrt;
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity 2))
+*/
 var sc_expt = Math.pow;
 
 // LIMITATION: we don't have complex numbers.
@@ -465,14 +512,14 @@ var sc_expt = Math.pow;
 // LIMITATION: make-rectangular, make-polar, real-part, imag-part, magnitude, angle
 // LIMITATION: 2 argument atan
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (id)))
 */
 function sc_exact2inexact(x) {
     return x;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix "<< 0")))
 */
 function sc_inexact2exact(x) {
@@ -509,7 +556,7 @@ function sc_jsstring2number(s, radix) {
     }
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool)
            (peephole (not)))
 */
@@ -517,7 +564,7 @@ function sc_not(b) {
     return b === false;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool))
 */
 function sc_isBoolean(b) {
@@ -561,7 +608,7 @@ sc_Pair.prototype.sc_toWriteString = function() {
 };
 // sc_Pair.prototype.sc_toWriteCircleString in IO.js
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool)
            (peephole (postfix " instanceof sc_Pair")))
 */
@@ -573,14 +620,16 @@ function sc_isPairEqual(p1, p2, comp) {
     return (comp(p1.car, p2.car) && comp(p1.cdr, p2.cdr));
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (hole 2 "new sc_Pair(" car ", " cdr ")")))
 */
 function sc_cons(car, cdr) {
     return new sc_Pair(car, cdr);
 }
 
-/*** META ((export cons*)) */
+/*** META ((export cons*)
+           (arity -2))
+*/
 function sc_consStar() {
     var res = arguments[arguments.length - 1];
     for (var i = arguments.length-2; i >= 0; i--)
@@ -588,148 +637,148 @@ function sc_consStar() {
     return res;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".car")))
 */
 function sc_car(p) {
     return p.car;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".cdr")))
 */
 function sc_cdr(p) {
     return p.cdr;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (hole 2 p ".car = " val)))
 */
 function sc_setCarBang(p, val) {
     p.car = val;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (hole 2 p ".cdr = " val)))
 */
 function sc_setCdrBang(p, val) {
     p.cdr = val;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".car.car")))
 */
 function sc_caar(p) { return p.car.car; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".cdr.car")))
 */
 function sc_cadr(p) { return p.cdr.car; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".car.cdr")))
 */
 function sc_cdar(p) { return p.car.cdr; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".cdr.cdr")))
 */
 function sc_cddr(p) { return p.cdr.cdr; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".car.car.car")))
 */
 function sc_caaar(p) { return p.car.car.car; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".car.cdr.car")))
 */
 function sc_cadar(p) { return p.car.cdr.car; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".cdr.car.car")))
 */
 function sc_caadr(p) { return p.cdr.car.car; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".cdr.cdr.car")))
 */
 function sc_caddr(p) { return p.cdr.cdr.car; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".car.car.cdr")))
 */
 function sc_cdaar(p) { return p.car.car.cdr; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".cdr.car.cdr")))
 */
 function sc_cdadr(p) { return p.cdr.car.cdr; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".car.cdr.cdr")))
 */
 function sc_cddar(p) { return p.car.cdr.cdr; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".cdr.cdr.cdr")))
 */
 function sc_cdddr(p) { return p.cdr.cdr.cdr; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".car.car.car.car")))
 */
 function sc_caaaar(p) { return p.car.car.car.car; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".car.cdr.car.car")))
 */
 function sc_caadar(p) { return p.car.cdr.car.car; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".cdr.car.car.car")))
 */
 function sc_caaadr(p) { return p.cdr.car.car.car; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".cdr.cdr.car.car")))
 */
 function sc_caaddr(p) { return p.cdr.cdr.car.car; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".car.car.car.cdr")))
 */
 function sc_cdaaar(p) { return p.car.car.car.cdr; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".car.cdr.car.cdr")))
 */
 function sc_cdadar(p) { return p.car.cdr.car.cdr; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".cdr.car.car.cdr")))
 */
 function sc_cdaadr(p) { return p.cdr.car.car.cdr; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".cdr.cdr.car.cdr")))
 */
 function sc_cdaddr(p) { return p.cdr.cdr.car.cdr; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".car.car.cdr.car")))
 */
 function sc_cadaar(p) { return p.car.car.cdr.car; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".car.cdr.cdr.car")))
 */
 function sc_caddar(p) { return p.car.cdr.cdr.car; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".cdr.car.cdr.car")))
 */
 function sc_cadadr(p) { return p.cdr.car.cdr.car; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".cdr.cdr.cdr.car")))
 */
 function sc_cadddr(p) { return p.cdr.cdr.cdr.car; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".car.car.cdr.cdr")))
 */
 function sc_cddaar(p) { return p.car.car.cdr.cdr; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".car.cdr.cdr.cdr")))
 */
 function sc_cdddar(p) { return p.car.cdr.cdr.cdr; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".cdr.car.cdr.cdr")))
 */
 function sc_cddadr(p) { return p.cdr.car.cdr.cdr; }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".cdr.cdr.cdr.cdr")))
 */
 function sc_cddddr(p) { return p.cdr.cdr.cdr.cdr; }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_lastPair(l) {
     if (!sc_isPair(l)) sc_error("sc_lastPair: pair expected");
     var res = l;
@@ -741,7 +790,7 @@ function sc_lastPair(l) {
     return res;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool)
            (peephole (postfix " === null")))
 */
@@ -749,7 +798,7 @@ function sc_isNull(o) {
     return (o === null);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool))
 */
 function sc_isList(o) {
@@ -772,7 +821,9 @@ function sc_isList(o) {
    }
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity -1))
+ */
 function sc_list() {
     var res = null;
     var a = arguments;
@@ -781,7 +832,9 @@ function sc_list() {
     return res;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity -2))
+*/
 function sc_iota(num, init) {
    var res = null;
    if (!init) init = 0;
@@ -790,7 +843,9 @@ function sc_iota(num, init) {
    return res;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity -2))
+*/
 function sc_makeList(nbEls, fill) {
     var res = null;
     for (var i = 0; i < nbEls; i++)
@@ -798,7 +853,7 @@ function sc_makeList(nbEls, fill) {
     return res;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_length(l) {
     var res = 0;
     while (l !== null) {
@@ -808,7 +863,7 @@ function sc_length(l) {
     return res;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_remq(o, l) {
     var dummy = { cdr : null };
     var tail = dummy;
@@ -822,7 +877,7 @@ function sc_remq(o, l) {
     return dummy.cdr;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_remqBang(o, l) {
     var dummy = { cdr : null };
     var tail = dummy;
@@ -843,7 +898,7 @@ function sc_remqBang(o, l) {
     return dummy.cdr;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_delete(o, l) {
     var dummy = { cdr : null };
     var tail = dummy;
@@ -857,7 +912,7 @@ function sc_delete(o, l) {
     return dummy.cdr;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_deleteBang(o, l) {
     var dummy = { cdr : null };
     var tail = dummy;
@@ -896,7 +951,9 @@ function sc_dualAppend(l1, l2) {
     return sc_reverseAppendBang(rev, l2);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity -1))
+*/
 function sc_append() {
     if (arguments.length === 0)
 	return null;
@@ -915,7 +972,9 @@ function sc_dualAppendBang(l1, l2) {
     return l1;
 }
     
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity -1))
+*/
 function sc_appendBang() {
     var res = null;
     for (var i = 0; i < arguments.length; i++)
@@ -923,7 +982,7 @@ function sc_appendBang() {
     return res;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_reverse(l1) {
     var res = null;
     while (l1 !== null) {
@@ -933,12 +992,12 @@ function sc_reverse(l1) {
     return res;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_reverseBang(l) {
     return sc_reverseAppendBang(l, null);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_listTail(l, k) {
     var res = l;
     for (var i = 0; i < k; i++) {
@@ -947,7 +1006,7 @@ function sc_listTail(l, k) {
     return res;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_listRef(l, k) {
     return sc_listTail(l, k).car;
 }
@@ -967,7 +1026,7 @@ function sc_member(o, l) { return sc_memX(o, l, sc_isEqual); }
 */
 
 /* optimized versions */
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_memq(o, l) {
     while (l !== null) {
 	if (l.car === o)
@@ -976,7 +1035,7 @@ function sc_memq(o, l) {
     }
     return false;
 }
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_memv(o, l) {
     while (l !== null) {
 	if (l.car === o)
@@ -985,7 +1044,7 @@ function sc_memv(o, l) {
     }
     return false;
 }
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_member(o, l) {
     while (l !== null) {
 	if (sc_isEqual(l.car,o))
@@ -1009,7 +1068,7 @@ function sc_assv(o, al) { return sc_assX(o, al, sc_isEqv); }
 function sc_assoc(o, al) { return sc_assX(o, al, sc_isEqual); }
 */
 // optimized versions
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_assq(o, al) {
     while (al !== null) {
 	if (al.car.car === o)
@@ -1018,7 +1077,7 @@ function sc_assq(o, al) {
     }
     return false;
 }
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_assv(o, al) {
     while (al !== null) {
 	if (al.car.car === o)
@@ -1027,7 +1086,7 @@ function sc_assv(o, al) {
     }
     return false;
 }
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_assoc(o, al) {
     while (al !== null) {
 	if (sc_isEqual(al.car.car, o))
@@ -1164,7 +1223,7 @@ sc_Char.prototype.sc_toWriteString = function() {
 	return "#\\" + this.val;
 };
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool)
            (peephole (postfix "instanceof sc_Char")))
 */
@@ -1173,51 +1232,61 @@ function sc_isChar(c) {
 }
 
 /*** META ((export char=?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 c1 ".val === " c2 ".val")))
 */
 var sc_isCharEqual = sc_isCharStringEqual;
 /*** META ((export char<?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 c1 ".val < " c2 ".val")))
 */
 var sc_isCharLess = sc_isCharStringLess;
 /*** META ((export char>?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 c1 ".val > " c2 ".val")))
 */
 var sc_isCharGreater = sc_isCharStringGreater;
 /*** META ((export char<=?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 c1 ".val <= " c2 ".val")))
 */
 var sc_isCharLessEqual = sc_isCharStringLessEqual;
 /*** META ((export char>=?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 c1 ".val >= " c2 ".val")))
 */
 var sc_isCharGreaterEqual = sc_isCharStringGreaterEqual;
 /*** META ((export char-ci=?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 c1 ".val.toLowerCase() === " c2 ".val.toLowerCase()")))
 */
 var sc_isCharCIEqual = sc_isCharStringCIEqual;
 /*** META ((export char-ci<?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 c1 ".val.toLowerCase() < " c2 ".val.toLowerCase()")))
 */
 var sc_isCharCILess = sc_isCharStringCILess;
 /*** META ((export char-ci>?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 c1 ".val.toLowerCase() > " c2 ".val.toLowerCase()")))
 */
 var sc_isCharCIGreater = sc_isCharStringCIGreater;
 /*** META ((export char-ci<=?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 c1 ".val.toLowerCase() <= " c2 ".val.toLowerCase()")))
 */
 var sc_isCharCILessEqual = sc_isCharStringCILessEqual;
 /*** META ((export char-ci>=?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 c1 ".val.toLowerCase() >= " c2 ".val.toLowerCase()")))
 */
@@ -1229,55 +1298,55 @@ var SC_LOWER_CLASS = 'abcdefghijklmnopqrstuvwxyz';
 var SC_UPPER_CLASS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 function sc_isCharOfClass(c, cl) { return (cl.indexOf(c) != -1); }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool))
 */
 function sc_isCharAlphabetic(c)
     { return sc_isCharOfClass(c.val, SC_LOWER_CLASS) ||
 	  sc_isCharOfClass(c.val, SC_UPPER_CLASS); }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool)
            (peephole (hole 1 "SC_NUMBER_CLASS.indexOf(" c ".val) != -1")))
 */
 function sc_isCharNumeric(c)
     { return sc_isCharOfClass(c.val, SC_NUMBER_CLASS); }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool))
 */
 function sc_isCharWhitespace(c) {
     var tmp = c.val;
     return tmp === " " || tmp === "\r" || tmp === "\n" || tmp === "\t" || tmp === "\f";
 }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool)
            (peephole (hole 1 "SC_UPPER_CLASS.indexOf(" c ".val) != -1")))
 */
 function sc_isCharUpperCase(c)
     { return sc_isCharOfClass(c.val, SC_UPPER_CLASS); }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool)
            (peephole (hole 1 "SC_LOWER_CLASS.indexOf(" c ".val) != -1")))
 */
 function sc_isCharLowerCase(c)
     { return sc_isCharOfClass(c.val, SC_LOWER_CLASS); }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix ".val.charCodeAt(0)")))
 */
 function sc_char2integer(c)
     { return c.val.charCodeAt(0); }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (hole 1 "new sc_Char(String.fromCharCode(" n "))")))
 */
 function sc_integer2char(n)
     { return new sc_Char(String.fromCharCode(n)); }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (hole 1 "new sc_Char(" c ".val.toUpperCase())")))
 */
 function sc_charUpcase(c)
     { return new sc_Char(c.val.toUpperCase()); }
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (hole 1 "new sc_Char(" c ".val.toLowerCase())")))
 */
 function sc_charDowncase(c)
@@ -1344,7 +1413,7 @@ sc_Vector.prototype.sc_toWriteString = function() {
     return this.sc_toWriteOrDisplayString(sc_toWriteString);
 };
 
-/*** META ((export vector? array?)
+/*** META ((export vector? array?) (arity #t)
            (type bool)
            (peephole (postfix " instanceof sc_Vector")))
 */
@@ -1360,7 +1429,9 @@ function sc_isVectorEqual(v1, v2, comp) {
     return true;
 }
 
-/*** META ((export make-vector make-array)) */
+/*** META ((export make-vector make-array)
+           (arity -2))
+*/
 function sc_makeVector(size, fill) {
     var a = new sc_Vector(size);
     if (fill !== undefined)
@@ -1369,6 +1440,7 @@ function sc_makeVector(size, fill) {
 }
 
 /*** META ((export vector array)
+           (arity -1)
            (peephole (vector)))
 */
 function sc_vector() {
@@ -1378,28 +1450,28 @@ function sc_vector() {
     return a;
 }
 
-/*** META ((export vector-length array-length)
+/*** META ((export vector-length array-length) (arity #t)
            (peephole (postfix ".length")))
 */
 function sc_vectorLength(v) {
     return v.length;
 }
 
-/*** META ((export vector-ref array-ref)
+/*** META ((export vector-ref array-ref) (arity #t)
            (peephole (hole 2 v "[" pos "]")))
 */
 function sc_vectorRef(v, pos) {
     return v[pos];
 }
 
-/*** META ((export vector-set! array-set!)
+/*** META ((export vector-set! array-set!) (arity #t)
            (peephole (hole 3 v "[" pos "] = " val)))
 */
 function sc_vectorSetBang(v, pos, val) {
     v[pos] = val;
 }
 
-/*** META ((export vector->list array->list)) */
+/*** META ((export vector->list array->list) (arity #t)) */
 function sc_vector2list(a) {
     var res = null;
     for (var i = a.length-1; i >= 0; i--)
@@ -1407,7 +1479,7 @@ function sc_vector2list(a) {
     return res;
 }
 
-/*** META ((export list->vector list->array)) */
+/*** META ((export list->vector list->array) (arity #t)) */
 function sc_list2vector(l) {
     var a = new sc_Vector();
     while(l !== null) {
@@ -1417,14 +1489,14 @@ function sc_list2vector(l) {
     return a;
 }
 
-/*** META ((export vector-fill! array-fill!)) */
+/*** META ((export vector-fill! array-fill!) (arity #t)) */
 function sc_vectorFillBang(a, fill) {
     for (var i = 0; i < a.length; i++)
 	a[i] = fill;
 }
 
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_copyVector(a, len) {
     if (len <= a.length)
 	return a.slice(0, len);
@@ -1435,14 +1507,14 @@ function sc_copyVector(a, len) {
     }
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity -2)
            (peephole (hole 3 a ".slice(" start "," end ")")))
 */
 function sc_vectorCopy(a, start, end) {
     return a.slice(start, end);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -4)) */
 function sc_vectorCopyBang(target, tstart, source, sstart, send) {
     if (!sstart) sstart = 0;
     if (!send) send = source.length;
@@ -1463,7 +1535,7 @@ function sc_vectorCopyBang(target, tstart, source, sstart, send) {
     return target;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool)
            (peephole (hole 1 "typeof " o " === 'function'")))
 */
@@ -1471,7 +1543,7 @@ function sc_isProcedure(o) {
     return (typeof o === "function");
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -3)) */
 function sc_apply(proc) {
     var args = new Array();
     // first part of arguments are not in list-form.
@@ -1485,7 +1557,7 @@ function sc_apply(proc) {
     return proc.apply(null, args);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function sc_map(proc, l1) {
     if (l1 === undefined)
 	return null;
@@ -1503,7 +1575,7 @@ function sc_map(proc, l1) {
     return sc_reverseAppendBang(revres, null);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function sc_mapBang(proc, l1) {
     if (l1 === undefined)
 	return null;
@@ -1522,7 +1594,7 @@ function sc_mapBang(proc, l1) {
     return l1_orig;
 }
      
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function sc_forEach(proc, l1) {
     if (l1 === undefined)
 	return undefined;
@@ -1540,7 +1612,7 @@ function sc_forEach(proc, l1) {
     return undefined;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_filter(proc, l1) {
     var dummy = { cdr : null };
     var tail = dummy;
@@ -1554,7 +1626,7 @@ function sc_filter(proc, l1) {
     return dummy.cdr;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_filterBang(proc, l1) {
     var head = sc_cons("dummy", l1);
     var it = head;
@@ -1590,7 +1662,7 @@ function sc_filterMap2(proc, l1, l2) {
     return sc_reverseAppendBang(revres, null);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function sc_filterMap(proc, l1, l2, l3) {
     if (l2 === undefined)
 	return sc_filterMap1(proc, l1);
@@ -1611,8 +1683,7 @@ function sc_filterMap(proc, l1, l2, l3) {
     return sc_reverseAppendBang(revres, null);
 }
 
-/*** META ((export #t)) */
-function sc_any(proc, l) {
+function sc_any1(proc, l) {
     var revres = null;
     while (l !== null) {
         var tmp = proc(l.car);
@@ -1622,15 +1693,35 @@ function sc_any(proc, l) {
     return false;
 }
 
-/*** META ((export any?)
+/*** META ((export #t) (arity -2)) */
+function sc_any(proc, l1, l2) {
+    if (l1 === undefined)
+	return false;
+    if (l2 === undefined)
+	return sc_any1(proc, l1);
+    // else
+    var nbApplyArgs = arguments.length - 1;
+    var applyArgs = new Array(nbApplyArgs);
+    while (l1 !== null) {
+	for (var i = 0; i < nbApplyArgs; i++) {
+	    applyArgs[i] = arguments[i + 1].car;
+	    arguments[i + 1] = arguments[i + 1].cdr;
+	}
+	var tmp =  proc.apply(null, applyArgs);
+	if (tmp !== false) return tmp;
+    }
+    return false;
+}
+
+/*** META ((export any?) (arity -2)
            (peephole (hole 2 "sc_any(" proc "," l ") !== false")))
 */
 function sc_anyPred(proc, l) {
-    return sc_any(proc, l)!== false;
+    return sc_any(proc, l) !== false;
 }
 
-/*** META ((export #t)) */
-function sc_every(proc, l) {
+
+function sc_every1(proc, l) {
     var revres = null;
     var tmp = true;
     while (l !== null) {
@@ -1641,7 +1732,28 @@ function sc_every(proc, l) {
     return tmp;
 }
 
-/*** META ((export every?)
+/*** META ((export #t) (arity -2)) */
+function sc_every(proc, l1, l2) {
+    if (l1 === undefined)
+	return true;
+    if (l2 === undefined)
+	return sc_every1(proc, l1);
+    // else
+    var nbApplyArgs = arguments.length - 1;
+    var applyArgs = new Array(nbApplyArgs);
+    var tmp = true;
+    while (l1 !== null) {
+	for (var i = 0; i < nbApplyArgs; i++) {
+	    applyArgs[i] = arguments[i + 1].car;
+	    arguments[i + 1] = arguments[i + 1].cdr;
+	}
+	var tmp = proc.apply(null, applyArgs);
+	if (tmp === false) return false;
+    }
+    return tmp;
+}
+
+/*** META ((export every?) (arity -2)
            (peephole (hole 2 "sc_every(" proc "," l ") !== false")))
 */
 function sc_everyPred(proc, l) {
@@ -1650,14 +1762,14 @@ function sc_everyPred(proc, l) {
     return false;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (postfix "()")))
 */
 function sc_force(o) {
     return o();
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_makePromise(proc) {
     var isResultReady = false;
     var result = undefined;
@@ -1677,7 +1789,7 @@ function sc_Values(values) {
     this.values = values;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity -1)
            (peephole (values)))
 */
 function sc_values() {
@@ -1687,7 +1799,7 @@ function sc_values() {
 	return new sc_Values(arguments);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_callWithValues(producer, consumer) {
     var produced = producer();
     if (produced instanceof sc_Values)
@@ -1696,7 +1808,7 @@ function sc_callWithValues(producer, consumer) {
 	return consumer(produced);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_dynamicWind(before, thunk, after) {
     before();
     try {
@@ -1722,14 +1834,14 @@ sc_Struct.prototype.sc_toDisplayString = function() {
 };
 sc_Struct.prototype.sc_toWriteString = sc_Struct.prototype.sc_toDisplayString;
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (hole 1 "new sc_Struct(" name ")")))
 */
 function sc_makeStruct(name) {
     return new sc_Struct(name);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity 1)
            (type bool)
            (peephole (postfix " instanceof sc_Struct")))
 */
@@ -1737,7 +1849,7 @@ function sc_isStruct(o) {
     return (o instanceof sc_Struct);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (type bool)
            (peephole (hole 2 "(" 1 " instanceof sc_Struct) && ( " 1 ".name === " 0 ")")))
 */
@@ -1745,70 +1857,70 @@ function sc_isStructNamed(name, s) {
     return ((s instanceof sc_Struct) && (s.name === name));
 }
 
-/*** META ((export struct-field)
+/*** META ((export struct-field) (arity #t)
            (peephole (hole 3 0 "[" 2 "]")))
 */
 function sc_getStructField(s, name, field) {
     return s[field];
 }
 
-/*** META ((export struct-field-set!)
+/*** META ((export struct-field-set!) (arity #t)
            (peephole (hole 4 0 "[" 2 "] = " 3)))
 */
 function sc_setStructFieldBang(s, name, field, val) {
     s[field] = val;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (prefix "~")))
 */
 function sc_bitNot(x) {
     return ~x;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (infix 2 2 "&")))
 */
 function sc_bitAnd(x, y) {
     return x & y;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (infix 2 2 "|")))
 */
 function sc_bitOr(x, y) {
     return x | y;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (infix 2 2 "^")))
 */
 function sc_bitXor(x, y) {
     return x ^ y;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (infix 2 2 "<<")))
 */
 function sc_bitLsh(x, y) {
     return x << y;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (infix 2 2 ">>")))
 */
 function sc_bitRsh(x, y) {
     return x >> y;
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (infix 2 2 ">>>")))
 */
 function sc_bitUrsh(x, y) {
     return x >>> y;
 }
 
-/*** META ((export js-field js-property)
+/*** META ((export js-field js-property) (arity #t)
            (peephole (hole 2 o "[" field "]")))
 */
 function sc_jsField(o, field) {
@@ -1816,6 +1928,7 @@ function sc_jsField(o, field) {
 }
 
 /*** META ((export js-field-set! js-property-set!)
+           (arity #t)
            (peephole (hole 3 o "[" field "] = " val)))
 */
 function sc_setJsFieldBang(o, field, val) {
@@ -1823,6 +1936,7 @@ function sc_setJsFieldBang(o, field, val) {
 }
 
 /*** META ((export js-field-delete! js-property-delete!)
+           (arity #t)
            (peephole (hole 2 "delete" o "[" field "]")))
 */
 function sc_deleteJsFieldBang(o, field) {
@@ -1830,6 +1944,7 @@ function sc_deleteJsFieldBang(o, field) {
 }
 
 /*** META ((export #t)
+           (arity -3)
            (peephole (jsCall)))
 */
 function sc_jsCall(o, fun) {
@@ -1840,6 +1955,7 @@ function sc_jsCall(o, fun) {
 }
 
 /*** META ((export #t)
+           (arity -3)
            (peephole (jsMethodCall)))
 */
 function sc_jsMethodCall(o, field) {
@@ -1850,6 +1966,7 @@ function sc_jsMethodCall(o, field) {
 }
 
 /*** META ((export new js-new)
+           (arity -2)
            (peephole (jsNew)))
 */
 function sc_jsNew(c) {
@@ -1862,12 +1979,12 @@ function sc_jsNew(c) {
 }    
 
 // ======================== RegExp ====================
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_pregexp(re) {
     return new RegExp(sc_string2jsstring(re));
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_pregexpMatch(re, s) {
     var reg = (re instanceof RegExp) ? re : sc_pregexp(re);
     var tmp = reg.exec(sc_string2jsstring(s));
@@ -1885,7 +2002,7 @@ function sc_pregexpMatch(re, s) {
     return res;
 }
    
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_pregexpReplace(re, s1, s2) {
    var reg;
    var jss1 = sc_string2jsstring(s1);
@@ -1903,7 +2020,7 @@ function sc_pregexpReplace(re, s1, s2) {
    return jss1.replace(reg, jss2);
 }
    
-/*** META ((export pregexp-replace*)) */
+/*** META ((export pregexp-replace*) (arity #t)) */
 function sc_pregexpReplaceAll(re, s1, s2) {
    var reg;
    var jss1 = sc_string2jsstring(s1);
@@ -1921,7 +2038,7 @@ function sc_pregexpReplaceAll(re, s1, s2) {
    return jss1.replace(reg, jss2);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_pregexpSplit(re, s) {
    var reg = ((re instanceof RegExp) ?
 	      re :
@@ -1956,14 +2073,14 @@ function sc_pregexpCreateCharsetMatcher(set) {
 /* Other library stuff */
 /* =========================================================================== */
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (hole 1 "Math.floor(Math.random()*" 'n ")")))
 */
 function sc_random(n) {
     return Math.floor(Math.random()*n);
 }
 
-/*** META ((export current-date)
+/*** META ((export current-date) (arity #t)
            (peephole (hole 0 "new Date()")))
 */
 function sc_currentDate() {
@@ -1982,6 +2099,8 @@ function sc_HashtableElement(key, val) {
     this.val = val;
 }
 
+// the arity of make-hashtable inside Bigloo is -1. However we don't use it
+// here. So for now simply don't give the arity...
 /*** META ((export #t)
            (peephole (hole 0 "new sc_Hashtable()")))
 */
@@ -1989,13 +2108,13 @@ function sc_makeHashtable() {
     return new sc_Hashtable();
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_hashtablePutBang(ht, key, val) {
     var hash = sc_hash(key);
     ht[hash] = new sc_HashtableElement(key, val);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_hashtableGet(ht, key) {
     var hash = sc_hash(key);
     if (hash in ht)
@@ -2004,7 +2123,7 @@ function sc_hashtableGet(ht, key) {
 	return false;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_hashtableForEach(ht, f) {
     for (var v in ht) {
 	if (ht[v] instanceof sc_HashtableElement)
@@ -2013,6 +2132,7 @@ function sc_hashtableForEach(ht, f) {
 }
 
 /*** META ((export hashtable-contains?)
+           (arity #t)
            (peephole (hole 2 "sc_hash(" 1 ") in " 0)))
 */
 function sc_hashtableContains(ht, key) {
@@ -2063,7 +2183,7 @@ sc_Trampoline.prototype.restart = function() {
     }
 }
 
-/*** META ((export bind-exit-lambda)) */
+/*** META ((export bind-exit-lambda) (arity #t)) */
 function sc_bindExitLambda(proc) {
     var escape_obj = new sc_BindExitException();
     var escape = function(res) {

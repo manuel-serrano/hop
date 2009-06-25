@@ -12,7 +12,7 @@
 /*---------------------------------------------------------------------*/
 /*    hop_slider_value_set ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export slider-value-set!)) */
+/*** META ((export slider-value-set!) (arity #t)) */
 function hop_slider_value_set( slider, value ) {
    if( (slider instanceof String) || (typeof slider === "string") ) {
       slider = document.getElementById( slider );
@@ -59,7 +59,7 @@ function hop_slider_mousemove( e, slider ) {
 /*    hop_slider_value_get ...                                         */
 /*---------------------------------------------------------------------*/
 /*** META ((export slider-value)
-           (peephole (postfix ".value")))
+           (arity #t))
 */
 function hop_slider_value_get( slider ) {
    if( (slider instanceof String) || (typeof slider === "string") ) {
@@ -230,6 +230,7 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 /*    hop_slider_onchange_get ...                                      */
 /*---------------------------------------------------------------------*/
 /*** META ((export slider-onchange)
+           (arity #t)
            (peephole: (hole 1 "(" slider ").onchange")))
 */
 function hop_slider_onchange_get( slider ) {
@@ -240,6 +241,7 @@ function hop_slider_onchange_get( slider ) {
 /*    hop_slider_onchange_set ...                                      */
 /*---------------------------------------------------------------------*/
 /*** META ((export slider-onchange-set!)
+           (arity #t)
            (peephole (hole 2 "(" slider ").onchange = " onchange)))
 */
 function hop_slider_onchange_set( slider, onchange ) {

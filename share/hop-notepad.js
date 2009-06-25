@@ -77,7 +77,7 @@ function hop_notepad_inner_select( np, to, callback ) {
 /*    This is a user function that might be invoked with NOTEPAD       */
 /*    and PAN or IDENTs.                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export notepad-select)) */
+/*** META ((export notepad-select) (arity -3)) */
 function hop_notepad_select( id1, id2, history, callback ) {
    var np = hop_is_html_element( id1 ) ? id1 : document.getElementById( id1 );
    var tab = hop_is_html_element( id2 ) ? id2 : document.getElementById( id2 );
@@ -100,7 +100,7 @@ function hop_notepad_select( id1, id2, history, callback ) {
 /*---------------------------------------------------------------------*/
 /*    hop_notepad_selection ...                                        */
 /*---------------------------------------------------------------------*/
-/*** META ((export notepad-selection)) */
+/*** META ((export notepad-selection) (arity #t)) */
 function hop_notepad_selection( id ) {
    var np = hop_is_html_element( id ) ? id : document.getElementById( id );
    var tabs = document.getElementById( np.id + "-tabs" );

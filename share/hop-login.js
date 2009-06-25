@@ -76,8 +76,8 @@ function hop_make_login_panel( id, user, pass, klass ) {
 /*---------------------------------------------------------------------*/
 /*    hop_login_panel ...                                              */
 /*---------------------------------------------------------------------*/
-/*** META ((export login-panel)) */
-function hop_login_panel( args ) {
+/*** META ((export login-panel) (arity -1)) */
+function hop_login_panel() {
    var id = hop_login_gensym++;
    var login;
    var klass = false;

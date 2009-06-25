@@ -122,7 +122,7 @@ function hop_hpaned_mousemove( e, paned ) {
 /*---------------------------------------------------------------------*/
 /*    hop_paned_fraction_set ...                                       */
 /*---------------------------------------------------------------------*/
-/*** META ((export paned-fraction-set!)) */
+/*** META ((export paned-fraction-set!) (arity #t)) */
 function hop_paned_fraction_set( paned, fraction ) {
    if( (paned instanceof String) || (typeof paned == "string") ) {
       paned = document.getElementById( paned );
@@ -138,7 +138,8 @@ function hop_paned_fraction_set( paned, fraction ) {
 /*    hop_paned_fraction_get ...                                       */
 /*---------------------------------------------------------------------*/
 /*** META ((export paned-fraction)
-           (peephole: (hole 1 "(" paned ").fraction")))
+           (arity #t)
+           (peephole (postfix ".fraction")))
 */
 function hop_paned_fraction_get( paned ) {
    return paned.fraction;
@@ -147,8 +148,10 @@ function hop_paned_fraction_get( paned ) {
 /*---------------------------------------------------------------------*/
 /*    hop_paned_onresize_get ...                                       */
 /*---------------------------------------------------------------------*/
-/*** META ((export paned-onresize)) */
-/// peephole: (hole 1 "(" paned ").onresize")
+/*** META ((export paned-onresize)
+           (arity #t)
+           (peephole (postfix ".onresize")))
+*/
 function hop_paned_onresize_get( paned ) {
    return paned.onresize;
 }
@@ -156,7 +159,7 @@ function hop_paned_onresize_get( paned ) {
 /*---------------------------------------------------------------------*/
 /*    hop_paned_onresize_set ...                                       */
 /*---------------------------------------------------------------------*/
-/*** META ((export paned-onresize-set!)) */
+/*** META ((export paned-onresize-set!) (arity #t)) */
 function hop_paned_onresize_set( paned, onresize ) {
    paned.onresize = onresize;
    paned.onresize();

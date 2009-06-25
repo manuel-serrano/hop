@@ -12,7 +12,7 @@
 /*---------------------------------------------------------------------*/
 /*    hop_add_event_listener ...                                       */
 /*---------------------------------------------------------------------*/
-/*** META ((export add-event-listener!)) */
+/*** META ((export add-event-listener!) (arity -4))) */
 function hop_add_event_listener( obj, event, proc, capture ) {
    if( event === "location" )
       return hop_add_active_location_listener( obj, proc );
@@ -39,7 +39,7 @@ function hop_add_event_listener( obj, event, proc, capture ) {
 /*---------------------------------------------------------------------*/
 /*    hop_remove_event_listener ...                                    */
 /*---------------------------------------------------------------------*/
-/*** META ((export remove-event-listener!)) */
+/*** META ((export remove-event-listener!) (arity #t)) */
 function hop_remove_event_listener( obj, event, proc, capture ) {
    if( event === "location" )
       return hop_remove_active_location_listener( obj, proc );
