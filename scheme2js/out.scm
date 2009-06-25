@@ -797,17 +797,18 @@
 	     'do-nothing) ;; already printed
 	    (trampoline?
 	     (compile-trampoline-call))
-	    ((and (Out-Env-debug? env)
+	    ((and #f ;; CARE, MS: xhtml incompabible
+		  (Out-Env-debug? env)
 		  (not (Out-Env-call/cc? env)))
 	     (let ((len (length operands)))
 		(template-display p env
 		   "~a=~e," *tmp-var* (compile-operator)
 		   "~a.sc_arity!==undefined?" *tmp-var*
-		   "  ((~a.sc_arity>=0&&~a.sc_arity===~a)||"
+		   "  ((~a.sc_arity>=0?(~a.sc_arity===~a):false)||"
 		   *tmp-var* *tmp-var* len
-		   "   (~a.sc_arity<0&&(1-~a.sc_arity)<=~a)?"
+		   "   (~a.sc_arity<0?((1-~a.sc_arity)<=~a):false)?"
 		   *tmp-var* *tmp-var* len
-		   "    'ok': sc_error('arity-check', 'Bad arity','~a')):'ok',"
+		   "    \"ok\": sc_error(\"arity-check\", \"Bad arity\",\"~a\")):\"ok\","
 		   location
 		   "(0,~a)(~e)" *tmp-var* (compile-operands))))
 	    (else
@@ -821,7 +822,7 @@
 	       (counter (call/cc-counter-name
 			 (While-call/cc-counter-nb this))))
 	    (template-display p env
-	       "if (sc_callCcState.~a === ~a && sc_callCcState[~a]) {\n"
+	       "if (sc_callCcState.~a === ~a ? sc_callCcState[~a] : false) {\n"
 	       ;; state.counter === counter && state.frame
 	       counter counter frame-name
 	       "  ~e"

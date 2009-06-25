@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 14 12:01:13 2009                          */
-;*    Last change :  Mon Jun 22 14:43:20 2009 (serrano)                */
+;*    Last change :  Thu Jun 25 09:50:17 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Color Chooser implementation                                     */
@@ -155,13 +155,15 @@
 				     :value ~0
 				     :onchange ~(update-blue! $cc (spinbutton-value this)))))
 			    (<TR> (<TD> :class "hop-colorchooser-sep" :colspan 3 ""))
-			    (<TD> (<TD> :class "hop-colorchooser-okcancel" :colspan 3
-				     (<BUTTON> :class "hop-colorchooser-cancel"
-					:onclick ~(hop-colorchooser-oncancel (dom-get-element-by-id $cc))
-					(<SPAN> :class "hop-colorchooser-cancel" " "))
-				     (<BUTTON> :class "hop-colorchooser-ok"
-					:onclick ~(hop-colorchooser-onselect (dom-get-element-by-id $cc))
-					(<SPAN> :class "hop-colorchooser-ok" " ")))))))))))
+			    (<TR> (if (null? body)
+				      (<TD> :class "hop-colorchooser-okcancel" :colspan 3
+					 (<BUTTON> :class "hop-colorchooser-cancel"
+					    :onclick ~(hop-colorchooser-oncancel (dom-get-element-by-id $cc))
+					    (<SPAN> :class "hop-colorchooser-cancel" " "))
+					 (<BUTTON> :class "hop-colorchooser-ok"
+					    :onclick ~(hop-colorchooser-onselect (dom-get-element-by-id $cc))
+					    (<SPAN> :class "hop-colorchooser-ok" " ")))
+				      (<TD> :class "hop-colorchooser-body" :colspan 3 body))))))))))
        ~(add-window-onload!
 	 (lambda ()
 	    ;; init the colorchooser object
@@ -203,7 +205,8 @@
 	       (init-colorscale (dom-get-element-by-id $red))
 	       (init-colorscale (dom-get-element-by-id $green))
 	       (init-colorscale (dom-get-element-by-id $blue))
-	       (update-colorscales! cc)))))))
+	       (update-colorscales! cc)
+	       #t))))))
     
 ;*---------------------------------------------------------------------*/
 ;*    obj->proc ...                                                    */

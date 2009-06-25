@@ -3,10 +3,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Wed Jun 24 08:54:42 2009 (serrano)                */
+;*    Last change :  Thu Jun 25 12:03:49 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
-;*    Client-side debuggin facility (includes when Hop launched in     */
+;*    Client-side debugging facility (includes when Hop launched in    */
 ;*    debug mode).                                                     */
 ;*=====================================================================*/
 
@@ -32,7 +32,8 @@
     opacity: 0.97;
     background: white;
     z-index: 2;
-    border: 3px dashed red; padding: 4px")
+    border: 3px dashed red; padding: 4px;
+    overflow: hidden")
 
 ;*---------------------------------------------------------------------*/
 ;*    bigloo-mangled? ...                                              */
@@ -142,7 +143,8 @@
 ;*---------------------------------------------------------------------*/
 (define (<EXCEPTION-FRAME> . args)
    (let ((mask (<DIV> :style (hop-exception-mask-style) ""))
-	 (frame (<DIV> :style (hop-exception-frame-style) args)))
+	 (frame (<DIV> :style (hop-exception-frame-style)
+		   (<DIV> :style "overflow: auto" args))))
       (<DIV> :onclick (dom-remove-child! (dom-parent-node this) this)
 	 mask frame)))
 
@@ -150,20 +152,43 @@
 ;*    obj->string ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (obj->string o)
-   (if (string? o)
-       o
-       (with-output-to-string (lambda () (write o)))))
+   (cond
+      ((procedure? o)
+       (let ((name (cond
+		      ((not (string? o.name))
+		       (with-output-to-string (lambda () (write o))))
+		      ((> (string-length o.name) 0)
+		       o.name)
+		      (else
+		       (<I> "anonymous")))))
+	  (if (string? o.location)
+	      (let ((m (pregexp-match "[(]at ([^ ]+) ([^ ]+)[)]" o.location)))
+		 (if m
+		     (list
+		      (<SPAN> :style "color: #777" 
+			 (<A> :style "color: inherit"
+			    :href (cadr m) (cadr m) "!" (caddr m))
+			 ", ")
+		      name)
+		     name))
+	      name)))
+      ((string? o)
+       o)
+      (else
+       (with-output-to-string (lambda () (write o))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <EXCEPTION-STACK> ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (<EXCEPTION-STACK> stack)
    (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px"
-      (<DIV> :style "font-weight: bold" "Hop client stack:")
-      (<TABLE> :style "width: 100%; font-size: 9pt; overflow: hidden; padding-left: 1em"
+      (<DIV> :style "font-weight: bold; margin-bttom: 1ex;" "Hop client stack:")
+      (<TABLE> :style "width: 100%; font-size: 9pt; overflow: visible; padding-left: 1em; font-family: monospace"
+	 :cellspacing 0 :cellpadding: 0
 	 :onclick (stop-event-propagation event)
 	 (map (lambda (frame)
-		 (<TR> (<TD> :style "text-align: left" (<TT> (obj->string (car frame))))))
+		 (<TR> (<TD> :style "text-align: left"
+			  (<TT> (obj->string (car frame))))))
 	      stack))))
 
 ;*---------------------------------------------------------------------*/
@@ -176,11 +201,13 @@
 	      (let ((i (string-index f #\@))
 		    (l (string-length f)))
 		 (if i
-		     (list (substring f (+ i 1) l)
-			   ", "
-			   (<SPAN> :style "color: #777; font-family: monospace"
-			      (substring f 0 i))
-			   "\n")
+		     (let ((href (substring f (+ i 1) l)))
+			(list
+			 (<SPAN> :style "color: #777"
+			    (<A> :style "color: inherit" :href href href)
+			    ", ")
+			 (substring f 0 i)
+			 "\n"))
 		     f)))
 	   (string-split stack "\n")))
 
@@ -231,8 +258,8 @@
 	  "unknwown error")))
    
    (let* ((message (exception-message exc))
-	  (msg (if (and exc.hopObject (not (eq? exc.hopObject #unspecified)))
-		   (list message " -- " (obj->string exc.hopObject))
+	  (msg (if (and exc.scObject (not (eq? exc.scObject #unspecified)))
+		   (list message " -- " (obj->string exc.scObject))
 		   message))
 	  (name (exception-name exc))
 	  (url (or exc.fileName document.location))
@@ -246,7 +273,7 @@
 		   url))))
 
       (<EXCEPTION-FRAME>
-	 (<TABLE> :style "width: 100%; font-family: arial; font-size: 10pt; background: #FFFFF7; border-bottom: 1px solid #ccc"
+	 (<TABLE> :style "width: 100%; font-family: arial; font-size: 10pt; background: #FFFFF7; border-bottom: 1px solid #ccc; overflow: visible"
 	    (<COLGROUP>
 	       (<COL> :width "64px"))
 	    (<TR>
@@ -259,11 +286,11 @@
 		     (<TR> (<TD> :style "font-size: 14pt" (<SPAN> :style "color: #777; font-weight: bold" name) ": " msg))
 		     (<TR> (<TD> :style "font-family: monospace; font-size: 11pt" src))
 		     (<TR> (<TD> :style "font-family: monospace; color: #777" (hop_properties_to_string exc)))))))
-	 (<DIV> :style "font-family: arial; font-size: 10pt; overflow: auto"
+	 (<DIV> :style "font-family: arial; font-size: 10pt; overflow: visible"
 	    (when (and exc.hopService (not (eq? exc.hopService #unspecified)))
 	       (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px"
 		  (<DIV> :style "font-weight: bold" "Service:")
-		  (<TABLE> :style "width: 100%; font-size: 9pt; overflow: hidden; padding-left: 1em"
+		  (<TABLE> :style "width: 100%; font-size: 9pt; overflow: visible; padding-left: 1em"
 		     (<TR> (<TD> :style "font-size: 11pt"
 			      (obj->string exc.hopService))))))
 	    (when (pair? exc.hopStack)
@@ -311,4 +338,8 @@
 ;*---------------------------------------------------------------------*/
 (when (> (hop_debug) 0)
    ;; on debug install the Hop error handler
+   (error-hook-set!
+    (lambda (exc _)
+       (set! exc.hopStack (hop-get-stack 2))
+       exc))
    (set! window.onerror hop-onerror-handler))

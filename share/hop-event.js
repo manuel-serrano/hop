@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Jun  5 10:32:14 2009 (serrano)                */
+/*    Last change :  Thu Jun 25 11:01:35 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -436,7 +436,7 @@ function hop_start_servevt_proxy() {
 			   try {
 			      start_servevt_flash_proxy( key, host, port );
 			   } catch( e ) {
-			      e.hopObject = ("port=" + port);
+			      e.scObject = ("port=" + port);
 			      throw( e );
 			   }
 			} else {
@@ -481,7 +481,7 @@ function hop_trigger_servevt( id, text, value, json ) {
 	 try {
 	    p2.car( evt );
 	 } catch( exc ) {
-	    exc.hopObject = ("event=" + id + ", val=" + p2.car );
+	    exc.scObject = ("event=" + id + ", val=" + p2.car );
 	    throw exc;
 	 }
 	 
@@ -489,7 +489,7 @@ function hop_trigger_servevt( id, text, value, json ) {
 	 p2 = p2.cdr;
       }
    } catch( exc ) {
-      exc.hopObject = ("event=" + id + ", val=" + value );
+      exc.scObject = ("event=" + id + ", val=" + value );
       throw exc;
    }
 }

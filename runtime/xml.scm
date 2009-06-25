@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sat Jun 20 18:54:07 2009 (serrano)                */
+;*    Last change :  Thu Jun 25 12:12:10 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -108,9 +108,9 @@
 	    (hop-xml-backend-set! ::obj)
 
  	    (generic xml-write ::obj ::output-port ::xml-backend)
-	    (generic xml-write-attribute ::obj ::obj ::output-port)
+	    (generic xml-write-attribute ::obj ::obj ::output-port ::xml-backend)
 	    (generic xml-write-expression ::obj ::output-port)
-	    (xml-write-attributes ::pair-nil ::output-port)
+	    (xml-write-attributes ::pair-nil ::output-port ::xml-backend)
 
 	    (xml->string ::obj ::xml-backend)
 	    
@@ -479,7 +479,7 @@
       (with-access::xml-backend backend (cdata-start cdata-stop)
 	 (display "<" p)
 	 (display markup p)
-	 (xml-write-attributes attributes p)
+	 (xml-write-attributes attributes p backend)
 	 (display ">" p)
 	 (unless (or (not body) (null? body))
 	    (when cdata-start (display cdata-start p))
@@ -519,7 +519,7 @@
    (with-access::xml-markup obj (markup attributes body)
       (display "<" p)
       (display markup p)
-      (xml-write-attributes attributes p)
+      (xml-write-attributes attributes p backend)
       (cond
 	 ((or (pair? body) (eq? markup 'script))
 	  (display ">" p)
@@ -539,7 +539,7 @@
    (with-access::xml-meta obj (markup attributes body)
       (display "<" p)
       (display markup p)
-      (xml-write-attributes attributes p)
+      (xml-write-attributes attributes p backend)
       (with-access::xml-backend backend (meta-format mime-type)
 	 (fprintf p meta-format mime-type (hop-charset)))
       (newline p)))
@@ -568,7 +568,7 @@
 	  (display " id='" p)
 	  (display id p)
 	  (display "'" p)
-	  (xml-write-attributes attributes p)
+	  (xml-write-attributes attributes p backend)
 	  (cond
 	     ((xml-backend-abbrev-emptyp backend)
 	      (display "/>" p))
@@ -585,7 +585,7 @@
 	  (display " id='" p)
 	  (display id p)
 	  (display "'" p)
-	  (xml-write-attributes attributes p)
+	  (xml-write-attributes attributes p backend)
 	  (display ">" p)
 	  (for-each (lambda (b) (xml-write b p backend)) body)
 	  (display "</" p)
@@ -603,7 +603,7 @@
       (display " id='" p)
       (display id p)
       (display "'" p)
-      (xml-write-attributes attributes p)
+      (xml-write-attributes attributes p backend)
       (display "/>" p)
       (xml-write-initializations obj p backend)))
 
@@ -628,8 +628,8 @@
 			     (cons* (car hattr)
 				    (cadr hattr)
 				    (loop (cddr hattr))))))))
-	    (xml-write-attributes hattr p))
-	 (xml-write-attributes attributes p)
+	    (xml-write-attributes hattr p backend))
+	 (xml-write-attributes attributes p backend)
 	 (display ">\n" p)
 	 (for-each (lambda (b) (xml-write b p backend)) body)
 	 (display "</" p)
@@ -639,17 +639,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attributes ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (xml-write-attributes attr p)
+(define (xml-write-attributes attr p backend)
    (let loop ((attr attr))
       (when (pair? attr)
 	 (display " " p)
-	 (xml-write-attribute (cadr attr) (car attr) p)
+	 (xml-write-attribute (cadr attr) (car attr) p backend)
 	 (loop (cddr attr)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::obj ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-generic (xml-write-attribute attr::obj id p)
+(define-generic (xml-write-attribute attr::obj id p backend)
    ;; boolean false attribute has no value, xml-tilde are initialized
    (when (and attr)
       (display (keyword->string! id) p)
@@ -669,7 +669,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::xml-tilde ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write-attribute attr::xml-tilde id p)
+(define-method (xml-write-attribute attr::xml-tilde id p backend)
    (when (xml-event-handler-attribute? id)
       (display (keyword->string! id) p)
       (display "='" p)
@@ -679,7 +679,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::hop-service ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write-attribute attr::hop-service id p)
+(define-method (xml-write-attribute attr::hop-service id p backend)
    (display (keyword->string! id) p)
    (display "='" p)
    (display (hop-service-path attr) p)

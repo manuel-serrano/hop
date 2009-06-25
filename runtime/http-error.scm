@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Jun 24 15:31:33 2009 (serrano)                */
+;*    Last change :  Wed Jun 24 17:09:10 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -376,14 +376,14 @@ a timeout which has now expired. The service is then no longer available."))
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY> :style "background: #ccc; padding-top: 3ex"
+		 (<BODY> :style "background: #ccc; padding-top: 3ex; overflow: auto"
 		    (<ERRTABLE>
 		       (<EIMG> :src (if (&io-timeout-error? e)
 					"timeout.png"
 					"error.png")
 			  :req req)
 		       msg)
-		    (<DIV> :style "font-family: arial; font-size: 10pt; overflow: visible; padding: 5px; background: white"
+		    (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px; background: white; overflow: visible"
 		       (<DIV> :style "font-weight: bold" "Server message:")
 		       (<PRE> :style "padding-left: 1em; font-size: 9pt"
 			  (html-string-encode s)))))))))

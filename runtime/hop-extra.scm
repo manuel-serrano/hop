@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Jun 23 08:22:56 2009 (serrano)                */
+;*    Last change :  Thu Jun 25 08:54:57 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -382,7 +382,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 			 (iels (incl (car a) inl path)))
 		     (loop (cdr a) mode rts dir path inl packed
 			   nincs
-			   (append hels iels els))))))
+			   (append iels (reverse! hels) els))))))
 	     ((:hz :include-hz)
 	      (multiple-value-bind (zels hds)
 		 (hz (car a) inl)
@@ -391,7 +391,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 		    (loop (cdr a)
 			  (if (eq? mode :hz) :hz :include)
 			  rts dir path inl packed incs
-			  (append hels zels els)))))
+			  (append zels (reverse! hels) els)))))
 	     (else
 	      (loop (cdr a) #f rts dir path inl packed incs
 		    (cons (car a) els)))))

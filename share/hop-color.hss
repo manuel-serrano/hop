@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jun 14 12:06:59 2009                          */
-/*    Last change :  Sun Jun 21 07:05:41 2009 (serrano)                */
+/*    Last change :  Thu Jun 25 09:06:34 2009 (serrano)                */
 /*    Copyright   :  2009 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    CSS for color chooser.                                           */
@@ -64,6 +64,7 @@ colorchooser tr.hop-colorchooser-mainrow > td {
 colorchooser table.hop-colorchooser {
   border: 0;
   border-collapse: collapse;
+  font-size: 8pt;
 }
 
 /* satval */
@@ -238,6 +239,8 @@ colorchooser span.hop-colorchooser-colorscale-sample {
 colorchooser td.hop-colorchooser-okcancel {
   padding-top: 2ex;
   text-align: right;
+  white-space: nowrap;
+  font-size: 8pt;
 }
 
 colorchooser td.hop-colorchooser-okcancel button:hover {
@@ -251,7 +254,8 @@ colorchooser td.hop-colorchooser-okcancel button {
   width: 8em;
   border: $hopcolor-button-border;
   margin-left: 5px;
-  padding: 5px 0px 5px 20px;
+  font-size: 8pt;
+  padding: 3px 0px 3px 17px;
 }
 
 colorchooser td.hop-colorchooser-okcancel button,
