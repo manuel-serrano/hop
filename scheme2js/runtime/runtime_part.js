@@ -56,22 +56,31 @@ function sc_typeof( x ) {
    return typeof x;
 }
 
-/*** META ((export #t)
-           (arity -1)) */
+/*** META ((export error-hook-set!) (arity #t)) */
+function sc_errorHookSet( h ) {
+   __sc_errorHook = h;
+}
+
+/*** META ((export error-hook) (arity #t)) */
+function sc_errorHook() {
+   return __sc_errorHook;
+}
+
+/*** META ((export #t) (arity -1)) */
 function sc_error() {
-   var a = new Error("sc_error");
+   var e = new Error("sc_error");
 
    if (arguments.length >= 1) {
-      a.name = arguments[0];
+      e.name = arguments[0];
       if (arguments.length >= 2) {
-	 a.message = arguments[1];
+	 e.message = arguments[1];
 	 if (arguments.length >= 3) {
-	    a.hopObject = arguments[2];
+	    e.scObject = arguments[2];
 	 }
       }
    }
 
-   throw a;
+   throw __sc_errorHook ? __sc_errorHook( e, arguments ) : e;
 }
 
 

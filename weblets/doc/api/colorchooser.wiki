@@ -47,6 +47,7 @@ library ++hop-color++.
 | :onchange    |  procedure  |  _           | a procedure to invoke on value changes.         |
 | :onselect    |  procedure  |  _           | a procedure to invoke on //ok// clicks.         | 
 | :oncancel    |  procedure  |  _           | a procedure to invoke on //cancel// clicks.         | 
+| body        |  xml  |  _           | the body of the color chooser.         | 
 </arguments>
 
 This function creates a //color chooser//.
@@ -58,6 +59,9 @@ the scope of that script, the variable ++this++ is bound to the
 //colorchooser// whose value can be retrieve by the means of the function
 ++colorchooser-value++. The opacity can be retrieved and set with 
 ++colorchooser-opacity++ and ++colorchooser-opacity-set!++.
+
+~~ If no body is provided one "cancel" and one "ok" buttons are automatically
+inserted.
 
 </markup>
 

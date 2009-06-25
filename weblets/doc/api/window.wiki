@@ -42,7 +42,7 @@ must include in their header, the following statement:
 
 == Examples ==
 
-<example>window, tab</example>
+<example>window</example>
 
 == Client Definitions ==
 <client>

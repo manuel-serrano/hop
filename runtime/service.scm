@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Jun 20 09:01:57 2009 (serrano)                */
+;*    Last change :  Wed Jun 24 14:51:54 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -201,6 +201,11 @@
 (define (service-handler svc req)
    
    (define (invoke proc vals)
+      (hop-verb 2 (hop-color req req " INVOKE.svc")
+		" "
+		(with-output-to-string
+		   (lambda () (write (cons (hop-service-id svc) vals))))
+		"\n")
       (cond
 	 ((not vals)
 	  (error (hop-service-id svc)

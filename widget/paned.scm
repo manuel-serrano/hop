@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Jun 20 08:51:25 2009 (serrano)                */
+;*    Last change :  Thu Jun 25 12:06:45 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -173,7 +173,7 @@
 	 (display " " p)
 	 (display klass p))
       (display "' " p)
-      (xml-write-attributes attributes p)
+      (xml-write-attributes attributes p backend)
       (display ">" p)
       (xml-write body p backend)
       (display "</div>" p)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Jun 20 08:50:39 2009 (serrano)                */
+;*    Last change :  Thu Jun 25 12:06:39 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -194,7 +194,7 @@
       (display "<span id='" p)
       (display id p)
       (display "'" p)
-      (xml-write-attributes attributes p)
+      (xml-write-attributes attributes p backend)
       (display ">" p)
       (when onselect
 	 (display "<script>" p)

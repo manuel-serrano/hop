@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Tue Jun 23 05:52:42 2009 (serrano)                */
+/*    Last change :  Thu Jun 25 10:25:30 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -112,7 +112,7 @@ function hop_iwindow_close( win ) {
 
    hop_iwindow_invoke_listener( win.onclose, evt );
 
-   if( !evt.isStopped ) node_style_set( win, "display", "none" );
+   if( !evt.isStopped ) win.parentNode.removeChild( win );
 }
 
 /*---------------------------------------------------------------------*/
@@ -458,8 +458,8 @@ function make_hop_iwindow( id, klass, parent ) {
 <table id='" + id + "-handle' class='hop-window-handle' width='100%'\n\
        cellpadding='0' cellspacing='0' border='0'>\n\
   <tr class='hop-window-handle'>\n\
-    <td class='hop-window-iconify' align='left' onclick='hop_iwindow_iconify( document.getElementById( \"" + id + "\") )'>&#160;</td>\n\
-    <td class='hop-window-maximize' align='left' onclick='hop_iwindow_maximize( document.getElementById( \"" + id + "\") )'>&#160;</td>\n\
+    <td class='hop-window-iconify' align='left' onclick='hop_stop_propagation( event, true ); hop_iwindow_iconify( document.getElementById( \"" + id + "\") )'>&#160;</td>\n\
+    <td class='hop-window-maximize' align='left' onclick='hop_stop_propagation( event, true ); hop_iwindow_maximize( document.getElementById( \"" + id + "\") )'>&#160;</td>\n\
     <td class='hop-window-up-title'>\n\
       <table class='hop-window-title' width='100%' border='0' cellspacing='0' cellpadding='0'>\n\
         <tr>\n\
@@ -469,7 +469,7 @@ function make_hop_iwindow( id, klass, parent ) {
         </tr>\n\
       </table>\n\
     </td> \n\
-    <td class='hop-window-close' align='right' onclick='hop_iwindow_close( document.getElementById( \"" + id + "\" ) )'>&#160;</td>\n\
+    <td class='hop-window-close' align='right' onclick='hop_stop_propagation( event, true ); hop_iwindow_close( document.getElementById( \"" + id + "\" ) )'>&#160;</td>\n\
   </tr>\n\
 </table>\n";
 
@@ -523,22 +523,38 @@ function make_hop_iwindow( id, klass, parent ) {
    hop_add_event_listener(
       win.el_handle,
       "mousedown",
-      function( event ) { hop_iwindow_drag( event, win ) } );
+      function( event ) {
+	 hop_stop_propagation( event, true );
+	 hop_iwindow_drag( event, win )
+      } );
 
    hop_add_event_listener(
       win.el_resize_middle,
       "mousedown",
-      function( event ) { hop_iwindow_evresize( event, win, false, true ) } );
+      function( event ) {
+	 hop_stop_propagation( event, true );
+	 hop_iwindow_evresize( event, win, false, true )
+      } );
 
    hop_add_event_listener(
       win.el_resize_right,
       "mousedown",
-      function( event ) { hop_iwindow_evresize( event, win, true, true ) } );
+      function( event ) {
+	 hop_stop_propagation( event, true );
+	 hop_iwindow_evresize( event, win, true, true )
+      } );
 
    hop_add_event_listener(
       win.el_resize_left,
       "mousedown",
-      function( event ) { hop_iwindow_evresize( event, win, false, false ) } );
+      function( event ) {
+	 hop_stop_propagation( event, true );
+	 hop_iwindow_evresize( event, win, false, false )
+      } );
+   hop_add_event_listener(
+      win,
+      "click",
+      function( event ) { hop_stop_propagation( event, true ); } );
 
    win.hop_add_event_listener = hop_iwindow_add_event_listener;
    win.hop_remove_event_listener = hop_iwindow_remove_event_listener;

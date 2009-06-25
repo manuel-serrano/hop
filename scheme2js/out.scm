@@ -814,7 +814,7 @@
 	       (counter (call/cc-counter-name
 			 (While-call/cc-counter-nb this))))
 	    (template-display p env
-	       "if (sc_callCcState.~a === ~a && sc_callCcState[~a]) {\n"
+	       "if (sc_callCcState.~a === ~a ? sc_callCcState[~a] : false) {\n"
 	       ;; state.counter === counter && state.frame
 	       counter counter frame-name
 	       "  ~e"
