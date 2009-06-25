@@ -15,17 +15,17 @@
 function hop_callback( proc ) {
    if( hop_debug() > 0 ) {
       if( !(typeof proc === "function" ) ) {
-	 var hstack = BgL_hopzd2getzd2stackz00( 1 );
+	 var hstack = hop_get_stack( 1 );
 	 e = new Error( "handler not a procedure: " + proc );
 	 
 	 e.hopStack = hstack;
-	 BgL_hopzd2reportzd2exceptionz00( e );
+	 hop_report_exception( e );
 
 	 return function( e ) {
 	    throw( e );
 	 }
       } else {
-	 var hstack = BgL_hopzd2getzd2stackz00( 2 );
+	 var hstack = hop_get_stack( 2 );
 	 return function( e ) {
 	    try {
 	       return proc.apply( this, arguments );
@@ -35,7 +35,7 @@ function hop_callback( proc ) {
 	       else
 		  e.hopStack = hstack;
 
-	       BgL_hopzd2reportzd2exceptionz00( e );
+	       hop_report_exception( e );
 	       
 	       if( hop_debug() >= 2 ) throw( e );
 	    }

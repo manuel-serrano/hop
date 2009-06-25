@@ -56,6 +56,8 @@ function sc_typeof( x ) {
    return typeof x;
 }
 
+var __sc_errorHook = false;
+
 /*** META ((export error-hook-set!) (arity #t)) */
 function sc_errorHookSet( h ) {
    __sc_errorHook = h;
@@ -86,7 +88,7 @@ function sc_error() {
 
 function sc_arity_check(fun, nbArgs) {
     var fun_arity = fun.sc_arity;
-    if (! fun_arity) return fun;
+    if (fun_arity === undefined || fun_arity === false) return fun;
     if (fun_arity >= 0 && nbArgs == fun_arity) return fun;
     if (fun_arity < 0 && nbArgs >= -1-fun_arity) return fun;
     var errorMsg = "Wrong number of arguments: " + fun_arity + " expected, " +

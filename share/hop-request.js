@@ -78,11 +78,11 @@ function hop_default_failure( xhr ) {
    if( !document ) return;
 
    var div = document.createElement( "div" );
-   var hopstack = xhr.hopStack ? BgL_zc3EXCEPTIONzd2STACKze3zf2( xhr.hopStack ) : false;
-   var jsstack = xhr.jsStack ? BgL_zc3EXCEPTIONzd2JSSTACKze3zf2( xhr.jsStack ) : false;
+   var hopstack = xhr.hopStack ? make_EXCEPTION_STACK( xhr.hopStack ) : false;
+   var jsstack = xhr.jsStack ? make_EXCEPTION_STACK( xhr.jsStack ) : false;
 
    if( "exception" in xhr ) {
-      BgL_hopzd2reportzd2exceptionz00( xhr.exception );
+      hop_report_exception( xhr.exception );
    } else {
       if( xhr.responseError ) {
 	 div.appendChild( xhr.responseError );
@@ -111,7 +111,7 @@ function hop_default_failure( xhr ) {
       }
 
       document.body.appendChild(
-	 BgL_zc3EXCEPTIONzd2FRAMEze3zf2( div, hopstack, jsstack ) );
+	 make_EXCEPTION_FRAME( div, hopstack, jsstack ) );
    }
 }
 
@@ -237,7 +237,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
    var hop_header_ctype = hop_header_content_type;
    var succ = (typeof success === "function") ? success : hop_default_success;
    var fail = (typeof failure === "function") ? failure : hop_default_failure;
-   var hstack = hop_debug() > 0 ? BgL_hopzd2getzd2stackz00( 1 ) : false;
+   var hstack = hop_debug() > 0 ? hop_get_stack( 1 ) : false;
 
    function onreadystatechange() {
       if( xhr.readyState == 4 ) {

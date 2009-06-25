@@ -10,6 +10,22 @@
 ;*    debug mode).                                                     */
 ;*=====================================================================*/
 
+(module hop-exception
+   (export
+    (hop-get-stack offset . depth)
+    (hop-report-exception exc)
+    (<EXCEPTION-STACK> stack)
+    (<EXCEPTION-FRAME> . args))
+   (scheme2js-pragma
+    (hop-get-stack
+     (JS "hop_get_stack"))
+    (hop-report-exception
+     (JS "hop_report_exception"))
+    (<EXCEPTION-STACK>
+       (JS "make_EXCEPTION_STACK"))
+    (<EXCEPTION_FRAME>
+       (JS "make_EXCEPTION_FRAME"))))
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-error-icon ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -121,7 +137,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-get-stack offset . depth)
    ;; skip offset frames of the stack
-   (let loop ((proc arguments.callee)
+   (let loop ((proc (@ arguments _).callee)
 	      (offset offset))
       (cond
 	 ((= offset 0)
@@ -285,7 +301,7 @@
 			      (<SPAN> :style "color: red; font-weight: bold" location)))
 		     (<TR> (<TD> :style "font-size: 14pt" (<SPAN> :style "color: #777; font-weight: bold" name) ": " msg))
 		     (<TR> (<TD> :style "font-family: monospace; font-size: 11pt" src))
-		     (<TR> (<TD> :style "font-family: monospace; color: #777" (hop_properties_to_string exc)))))))
+		     (<TR> (<TD> :style "font-family: monospace; color: #777" (@ hop_properties_to_string _) exc)))))))
 	 (<DIV> :style "font-family: arial; font-size: 10pt; overflow: visible"
 	    (when (and exc.hopService (not (eq? exc.hopService #unspecified)))
 	       (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px"
@@ -312,18 +328,18 @@
    ;; the error might be raised before document.body is bound
    (if (and document.body (not (null? document.body)))
        (dom-append-child! document.body (<EXCEPTION> exc))
-       (hop_window_onload_add (lambda (e) (hop-report-exception exc)))))
+       (add-window-onload! (lambda (e) (hop-report-exception exc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-onerror-handler ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hop-onerror-handler msg url line)
-   (or (let loop ((i (- (vector-length hop_config.filtered_errors) 1)))
+   (or (let loop ((i (- (vector-length (@ hop_config _).filtered_errors) 1)))
 	  (when (>= i 0)
-	     (or (eq? url (vector-ref hop_config.filtered_errors i))
+	     (or (eq? url (vector-ref (@ hop_config _).filtered_errors i))
 		 (loop (- i 1)))))
        ;; build a dummy exception for reporting
-       (let ((exc (new Error)))
+       (let ((exc (new (@ Error _))))
 	  (set! exc.message msg)
 	  (set! exc.fileName url)
 	  (set! exc.lineNumber line)
@@ -331,15 +347,15 @@
 	  ;; report the error
 	  (hop-report-exception exc)
 	  ;; don't propagate the error
-	  (< (hop_debug) 2))))
+	  (< (debug) 2))))
 
 ;*---------------------------------------------------------------------*/
 ;*    install the default error handler ...                            */
 ;*---------------------------------------------------------------------*/
-(when (> (hop_debug) 0)
+(when (> (debug) 0)
    ;; on debug install the Hop error handler
    (error-hook-set!
     (lambda (exc _)
        (set! exc.hopStack (hop-get-stack 2))
        exc))
-   (set! window.onerror hop-onerror-handler))
+   (set! (@ window _).onerror hop-onerror-handler))
