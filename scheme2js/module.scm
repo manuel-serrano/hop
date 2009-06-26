@@ -1,3 +1,15 @@
+;*=====================================================================*/
+;*    Author      :  Florian Loitsch                                   */
+;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    -------------------------------------------------------------    */
+;*    This file is part of Scheme2Js.                                  */
+;*                                                                     */
+;*   Scheme2Js is distributed in the hope that it will be useful,      */
+;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
+;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
+;*   LICENSE file for more details.                                    */
+;*=====================================================================*/
+
 (module module-system
    (import verbose
 	   error
@@ -689,19 +701,33 @@
 	 (let ((pragma-info (assq v pragmas)))
 	    (or pragma-info v))))
 
+   (define (analyze-arity L)
+      (let loop ((L L)
+		 (res 0))
+	 (cond
+	    ((null? L) res)
+	    ((pair? L) (loop (cdr L) (+fx res 1)))
+	    (else (negfx (+fx res 1))))))
+
+   (define (analyze-fun f)
+      (receive (name type)
+	 (untype (car f))
+	 (values name type (analyze-arity (cdr f)))))
+
    (define (normalize-fun f pragmas)
-      (receive (v type)
-	 (untype (car f)) ;; the fun-name
-	 (let ((pragma-info (assq v pragmas)))
+      (receive (fun-name type arity)
+	 (analyze-fun f)
+	 (let ((pragma-info (assq fun-name pragmas)))
 	    (when pragma-info (check-pragma pragma-info))
 	    (cond
 	       ((and (not pragma-info)
 		     type)
-		(list v `(type ,type) '(constant? #t)))
+		`(,fun-name (type ,type) (arity ,arity) (constant? #t)))
 	       ((not pragma-info)
-		(list v '(constant? #t)))
+		`(,fun-name (arity ,arity) (constant? #t)))
 	       (else
 		(let ((pragma-type (assq 'type (cdr pragma-info)))
+		      (pragma-arity (assq 'arity (cdr pragma-info)))
 		      (pragma-constant? (assq 'constant?
 					      (cdr pragma-info))))
 		   (cond
@@ -715,8 +741,13 @@
 		       (error "scheme2js-module"
 			      "exported functions must be constant"
 			      f))
-		      ((or (and pragma-type pragma-constant?)
-			   (and pragma-constant? (not type)))
+		      ((and pragma-arity
+			    (not (eq? arity (cadr pragma-arity))))
+		       (error "scheme2js-module"
+			      "variable exported with two different arities"
+			      f))
+		      ((or (and pragma-constant? pragma-arity pragma-type)
+			   (and pragma-constant? pragma-arity (not type)))
 		       pragma-info)
 		      (else
 		       (let* ((without-name (cdr pragma-info))
@@ -727,8 +758,12 @@
 			      (with-constant? (if pragma-constant?
 						  with-type
 						  (cons '(constant? #t)
-							with-type))))
-			  (cons v with-constant?))))))))))
+							with-type)))
+			      (with-arity (if pragma-arity
+					      with-constant?
+					      (cons `(arity ,arity)
+						    with-constant?))))
+			  (cons fun-name with-arity))))))))))
 
    (define (find-macros new-macros)
       (let loop ((new-macros new-macros)

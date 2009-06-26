@@ -1,3 +1,15 @@
+/*=====================================================================*/
+/*    Author      :  Florian Loitsch                                   */
+/*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+/*    -------------------------------------------------------------    */
+/*    This file is part of Scheme2Js.                                  */
+/*                                                                     */
+/*   Scheme2Js is distributed in the hope that it will be useful,      */
+/*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
+/*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
+/*   LICENSE file for more details.                                    */
+/*=====================================================================*/
+
 /*
  * To use write/prints/... the default-output port has to be set first.
  * Simply setting SC_DEFAULT_OUT and SC_ERROR_OUT to the desired values
@@ -975,7 +987,7 @@ function sc_dualAppend(l1, l2) {
     return sc_reverseAppendBang(rev, l2);
 }
 
-/*** META ((export #t)
+/*** META ((export append eappend) ;; we want eappend for the quasiquotes.
            (arity -1))
 */
 function sc_append() {
