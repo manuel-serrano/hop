@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Feb  2 15:42:45 2006                          */
-;*    Last change :  Wed Jun 24 11:33:09 2009 (serrano)                */
+;*    Last change :  Thu Jun 25 18:12:15 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple color tools                                               */
@@ -38,7 +38,7 @@
       (lambda (e) color)
       (multiple-value-bind (r g b)
 	 (parse-hex-color color)
-	 (change-luminance r g b (/fl coef (fixnum->flonum 10))))))
+	 (change-luminance r g b (/fl (fixnum->flonum coef) 10.)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    color-darker ...                                                 */

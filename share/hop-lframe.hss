@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jun 10 08:52:15 2009                          */
-/*    Last change :  Sun Jun 14 12:08:27 2009 (serrano)                */
+/*    Last change :  Fri Jun 26 10:33:28 2009 (serrano)                */
 /*    Copyright   :  2009 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Label Frames                                                     */
@@ -19,6 +19,8 @@ $(module __hop_hop-lframe-hss)
 /*---------------------------------------------------------------------*/
 $(define-hss-type lframe "div[hssclass=hop-lframe]"
     
+    :body "div[hssclass=hop-lfbody]"
+
     (define-hss-property (-hop-label-border v)
        (format "div[hssclass=hop-lfborder] { border: ~l; }" v))
 
@@ -77,6 +79,8 @@ $(define-hss-type lframe "div[hssclass=hop-lframe]"
              (format "div[hssclass=hop-lflabel] > span { background: ~a; }" 
                      (car v)))))
 
+$(define-hss-type lflabel "div[hssclass=hop-lframe] div[hssclass=hop-lflabel] span")
+
 /*---------------------------------------------------------------------*/
 /*    public declarations ...                                          */
 /*---------------------------------------------------------------------*/
@@ -90,16 +94,20 @@ lframe {
   -hop-label-align: left;
   -hop-label-margin: 10px;
 }
+
+lflabel {
+  font-style: roman;
+}
 /* </public> */
 
 /*---------------------------------------------------------------------*/
 /*    private declarations ...                                         */
 /*---------------------------------------------------------------------*/
-lframe div[hssclass=hop-lfborder] {
+div[hssclass=hop-lframe] div[hssclass=hop-lfborder] {
   position: relative;
 }
 
-lframe div[hssclass=hop-lflabel] {
+div[hssclass=hop-lframe] div[hssclass=hop-lflabel] {
   position: relative;
   top: -12px;
   left: 10px;

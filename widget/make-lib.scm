@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sat Jun 20 19:09:47 2009 (serrano)                */
+;*    Last change :  Fri Jun 26 07:22:21 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOPWIDGET heap file.                */
@@ -28,7 +28,8 @@
 	   __hopwidget-audio
 	   __hopwidget-video
 	   __hopwidget-colorchooser
-	   __hopwidget-spinbutton)
+	   __hopwidget-spinbutton
+	   __hopwidget-lframe)
 
    (eval   (export-all)
 
