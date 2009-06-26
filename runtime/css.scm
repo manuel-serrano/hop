@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Tue Jun 16 12:05:43 2009 (serrano)                */
+;*    Last change :  Fri Jun 26 12:10:17 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_css
 
-   (library web)
+   (library web multimedia)
    
    (include "xml.sch"
 	    "service.sch"
@@ -37,10 +37,12 @@
    
    (export  (class hss-compiler
 	       (element::obj read-only)
+	       (body::obj read-only)
 	       (properties::pair-nil read-only (default '())))
 	    (init-hss-compiler! ::int)
-	    (hss-bind-type-compiler! ::symbol ::bstring ::pair-nil)
+	    (hss-bind-type-compiler! ::symbol ::bstring ::obj ::pair-nil)
 	    (hss-bind-property-compiler! ::symbol ::procedure)
+	    (hss-bind-function-compiler! ::bstring ::procedure)
 	    (hss-property->declaration-list::pair-nil ::bstring)
 	    (hss-properties->ruleset-list::pair-nil ::obj)
 	    (hss-response::%http-response ::http-request ::bstring)
@@ -57,6 +59,7 @@
 (define *hss-compiler-mutex* (make-mutex "hop-hss-type"))
 (define *hss-type-env* (make-hashtable))
 (define *hss-property-env* '())
+(define *hss-function-env* (make-hashtable))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-hss-type! ...                                                */
@@ -65,18 +68,19 @@
 ;*    with hop < 2.0.x branch.                                         */
 ;*---------------------------------------------------------------------*/
 (define (hop-hss-type! old new)
-   (hss-bind-type-compiler! (string->symbol old) new '())
+   (hss-bind-type-compiler! (string->symbol old) new #f '())
    "")
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-bind-type-compiler! ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (hss-bind-type-compiler! type element properties)
+(define (hss-bind-type-compiler! type element body properties)
    (with-lock *hss-compiler-mutex*
       (lambda ()
 	 (let ((compiler (instantiate::hss-compiler
 			    (element (instantiate::css-selector-name
 					(name element)))
+			    (body body)
 			    (properties properties))))
 	    (hashtable-put! *hss-type-env*
 			    (string-downcase (symbol->string type))
@@ -100,6 +104,14 @@
       (lambda ()
 	 (set! *hss-property-env*
 	       (cons (cons id compiler) *hss-property-env*)))))
+
+;*---------------------------------------------------------------------*/
+;*    hss-bind-function-compiler! ...                                  */
+;*---------------------------------------------------------------------*/
+(define (hss-bind-function-compiler! id compiler)
+   (with-lock *hss-compiler-mutex*
+      (lambda ()
+	 (hashtable-put! *hss-function-env* id compiler))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-property-compiler ...                                       */
@@ -160,16 +172,6 @@
 			  val))))
 	       
 ;*---------------------------------------------------------------------*/
-;*    hss-compile-selector ...                                         */
-;*---------------------------------------------------------------------*/
-(define (hss-compile-selector o hc)
-   (with-access::css-selector o (element attr*)
-      (let ((el (css-selector-name-name element)))
-	 (instantiate::css-selector
-	    (element (hss-compiler-element hc))
-	    (attr* attr*)))))
-
-;*---------------------------------------------------------------------*/
 ;*    hss-compile-declaration* ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (hss-compile-declaration* selector decl lenv penv)
@@ -199,7 +201,9 @@
 		 ;; the compilation of the declarations has created
 		 ;; new rules, we have to unfold...
 		 (instantiate::css-ruleset-unfold
-		    (ruleset+ (list orules (reverse! nrules))))
+		    (ruleset+ (if (pair? old)
+				  (list orules (reverse! nrules))
+				  (reverse! nrules))))
 		 orules))
 	  (with-access::css-declaration (car decl) (property expr prio)
 	     (cond
@@ -454,37 +458,113 @@
    (with-access::css-declaration o (property expr prio)
       (let ((comp (find-property-compiler property penv)))
 	 (if comp
-	     ;; Call hss-compile recursively because the compilation might
+	     ;; call hss-compile recursively because the compilation might
 	     ;; have generated unnormalized expressions. The recursion is
 	     ;; stopped is the generated property is the same as the initial
 	     ;; one.
 	     (append-map (lambda (o)
 			    (if (equal? property (css-declaration-property o))
-				(list o)
+				(list
+				 (duplicate::css-declaration o
+				    (expr (hss-compile expr penv))))
 				(hss-compile o penv)))
 			 (comp expr prio))
-	     (list o)))))
+	     (list
+	      (duplicate::css-declaration o
+		 (expr (hss-compile expr penv))))))))
    
+;*---------------------------------------------------------------------*/
+;*    hss-compile-selector ...                                         */
+;*---------------------------------------------------------------------*/
+(define (hss-compile-selector::pair o hc bodyp)
+   
+   (define (pseudo-attr? a)
+      (and (css-selector-pseudo? a)
+	   (not (css-selector-pseudo-fun a))
+	   (member (css-selector-pseudo-expr a)
+		   '("first-child" "first-line" "first-letter"))))
+   
+   (with-access::css-selector o (element attr*)
+      (let ((el (css-selector-name-name element)))
+	 (if (and (hss-compiler-body hc) (or bodyp (any? pseudo-attr? attr*)))
+	     (list
+	      (instantiate::css-selector
+		 (element (hss-compiler-element hc))
+		 (attr* (filter (lambda (a) (not (pseudo-attr? a))) attr*)))
+	      'childof
+	      (instantiate::css-selector
+		 (element (hss-compiler-body hc))
+		 (attr* (filter pseudo-attr? attr*))))
+	     (list
+	      (instantiate::css-selector
+		 (element (hss-compiler-element hc))
+		 (attr* attr*)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hss-parse-function ...                                           */
+;*---------------------------------------------------------------------*/
+(define (hss-parse-function fun s)
+   (define (err)
+      (error 'hss-function "Illegal function compiler" fun))
+   (let ((p (open-input-string (format "* {x:~a;}" s))))
+      (unwind-protect
+	 (let ((ast (css->ast p :extension hss-extension)))
+	    (if (not (css-stylesheet? ast))
+		(err)
+		(with-access::css-stylesheet ast (rule*)
+		   (if (not (and (pair? rule*) (null? (cdr rule*))))
+		       (err)
+		       (with-access::css-ruleset (caar rule*) (declaration*)
+			  (if (not (and (pair? declaration*)
+					(null? (cdr declaration*))))
+			      (err)
+			      (with-access::css-declaration (car declaration*)
+				    (expr)
+				 (match-case expr
+				    (((and ?fun (? css-function?))) fun)
+				    (else (err))))))))))
+	 (close-input-port p))))
+   
+;*---------------------------------------------------------------------*/
+;*    hss-compile ::css-function ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (hss-compile o::css-function penv)
+   (with-access::css-function o (fun expr)
+      (let ((comp (with-lock *hss-compiler-mutex*
+		     (lambda ()
+			(hashtable-get *hss-function-env* fun))))
+	    (nexpr (hss-compile expr penv)))
+	 (if comp
+	     (let ((args (filter (lambda (o) (not (equal? o ","))) nexpr)))
+		(hss-parse-function fun (apply comp args)))
+	     (duplicate::css-function nexpr)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile-selector* ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (hss-compile-selector* lst)
-   
-   (define (compile o)
-      (if (symbol? o)
-	  o
-	  (let ((hc (find-selector-compiler o)))
-	     (with-access::css-selector o (element)
-		(cond
-		   ((hss-compiler? hc)
-		    (hss-compile-selector o hc))
-		   ((css-selector-name? element)
-		    (duplicate::css-selector o
-		       (element (hss-unalias-selector-name element))))
-		   (else
-		    o))))))
-   
-   (map compile lst))
+   (cond
+      ((null? lst)
+       '())
+      ((symbol? (car lst))
+       (cons (car lst) (hss-compile-selector* (cdr lst))))
+      (else
+       (let* ((o (car lst))
+	      (hc (find-selector-compiler o)))
+	  (with-access::css-selector o (element attr*)
+	     (cond
+		((hss-compiler? hc)
+		 (let ((use-body (and (pair? (cdr lst))
+				      (symbol? (cadr lst))
+				      (not (eq? (cadr lst) '+)))))
+		    (append (hss-compile-selector o hc use-body)
+			    (hss-compile-selector* (cdr lst)))))
+		((css-selector-name? element)
+		 (cons (duplicate::css-selector o
+			  (element (hss-unalias-selector-name element)))
+		       (hss-compile-selector* (cdr lst))))
+		(else
+		 (cons o (hss-compile-selector* (cdr lst))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-unalias-selector-name ...                                    */
@@ -600,3 +680,9 @@
   -khtml-user-select: ~l;
   -webkit-user-select: ~l;"
 	   v v v v))
+
+;; hsv
+(define-hss-function (hsv h s v)
+   (multiple-value-bind (r g b)
+      (hsv->rgb (string->integer h) (string->integer s) (string->integer v))
+      (format "rgb(~a,~a,~a)" r g b)))

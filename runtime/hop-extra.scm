@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Jun 25 08:54:57 2009 (serrano)                */
+;*    Last change :  Fri Jun 26 07:22:00 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -45,10 +45,7 @@
 	    (<INPUT> . ::obj)
 	    
 	    (<TOOLTIP> . ::obj)
-	    (<SORTTABLE> . ::obj)
-
-	    (<LFRAME> . ::obj)
-	    (<LFLABEL> . ::obj)))
+	    (<SORTTABLE> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    head-runtime-system-packed ...                                   */
@@ -636,20 +633,3 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 			      ,@(if onkeydown `(onkeydown: ,onkeydown) '())
 			      ,@attributes))
 	  (body '()))))
-
-;*---------------------------------------------------------------------*/
-;*    <LFRAME> ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-markup <LFRAME> ((attrs) body)
-   (<DIV> :hssclass "hop-lframe"
-      attrs
-      (<DIV> :hssclass "hop-lfborder"
-	 body)))
-
-;*---------------------------------------------------------------------*/
-;*    <LFLABEL> ...                                                    */
-;*---------------------------------------------------------------------*/
-(define-markup <LFLABEL> ((attrs) body)
-   (<DIV> :hssclass "hop-lflabel"
-      attrs
-      (<SPAN> body)))
