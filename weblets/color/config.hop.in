@@ -1,0 +1,43 @@
+;*=====================================================================*/
+;*    .../prgm/project/hop/1.10.x/weblets/color/config.hop.in          */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Tue Jun 10 07:34:38 2008                          */
+;*    Last change :  Mon Sep 29 11:16:11 2008 (serrano)                */
+;*    Copyright   :  2008 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Color configuration                                              */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module ...                                                   */
+;*---------------------------------------------------------------------*/
+(module color_config
+ 
+   (import color)
+   
+   (export (color-version::bstring)
+           (color-date::bstring)
+           (color-author::bstring)
+	   (color-dir::bstring)
+           (color-rc-directory::bstring)))
+
+;*---------------------------------------------------------------------*/
+;*    Version                                                          */
+;*---------------------------------------------------------------------*/
+(define (color-version) "@VERSION@")
+(define (color-date) "@DATE@")
+(define (color-author) "M. Serrano")
+
+;*---------------------------------------------------------------------*/
+;*    color-dir                                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter color-dir
+   (dirname (the-loading-file)))
+
+;*---------------------------------------------------------------------*/
+;*    color-rc-directory ...                                           */
+;*---------------------------------------------------------------------*/
+(define-parameter color-rc-directory 
+   (make-file-name (hop-rc-directory) "color"))
+

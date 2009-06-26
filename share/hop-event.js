@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Thu Jun 25 11:01:35 2009 (serrano)                */
+/*    Last change :  Fri Jun 26 13:26:57 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -39,7 +39,7 @@ function hop_add_event_listener( obj, event, proc, capture ) {
 /*---------------------------------------------------------------------*/
 /*    hop_remove_event_listener ...                                    */
 /*---------------------------------------------------------------------*/
-/*** META ((export remove-event-listener!) (arity #t)) */
+/*** META ((export remove-event-listener!) (arity -4)) */
 function hop_remove_event_listener( obj, event, proc, capture ) {
    if( event === "location" )
       return hop_remove_active_location_listener( obj, proc );

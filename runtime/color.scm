@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Feb  2 15:42:45 2006                          */
-;*    Last change :  Thu Jun 25 18:12:15 2009 (serrano)                */
+;*    Last change :  Fri Jun 26 14:44:00 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple color tools                                               */
@@ -37,7 +37,7 @@
    (with-handler
       (lambda (e) color)
       (multiple-value-bind (r g b)
-	 (parse-hex-color color)
+	 (parse-web-color color)
 	 (change-luminance r g b (/fl (fixnum->flonum coef) 10.)))))
    
 ;*---------------------------------------------------------------------*/
@@ -47,5 +47,5 @@
    (with-handler
       (lambda (e) color)
       (multiple-value-bind (r g b)
-	 (parse-hex-color color)
+	 (parse-web-color color)
 	 (change-luminance r g b (negfl (/fl (fixnum->flonum coef) 10.))))))

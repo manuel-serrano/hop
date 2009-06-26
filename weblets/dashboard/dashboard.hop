@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/1.9.x/weblets/dashboard/dashboard.hop       */
+;*    .../prgm/project/hop/2.0.x/weblets/dashboard/dashboard.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jun 20 10:35:06 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Fri Jun 26 13:57:44 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP dashboard                                                    */
 ;*=====================================================================*/
@@ -25,7 +25,7 @@
 	  (url (format "/hop/doc/weblet?weblet=~a" file)))
       (instantiate::http-response-string
 	 (start-line "HTTP/1.0 301 Moved Permanently")
-	 (header (list (cons 'location: dashboard-doc-url))))))
+	 (header (list (cons 'location: url))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dashboard ...                                                    */

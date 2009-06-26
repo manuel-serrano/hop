@@ -1,0 +1,156 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.0.x/weblets/color/color.hop           */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
+;*    Last change :  Fri Jun 26 15:09:41 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    HOP color                                                        */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module color
+   (import color_config)
+   (export color
+	   color/documentation
+	   color/populate))
+
+;*---------------------------------------------------------------------*/
+;*    color/documentation ...                                          */
+;*---------------------------------------------------------------------*/
+(define-service (color/documentation)
+   (let* ((file (service-resource color/documentation "etc/color.wiki"))
+	  (url (format "/hop/doc/weblet?weblet=~a" file)))
+      (instantiate::http-response-string
+	 (start-line "HTTP/1.0 301 Moved Permanently")
+	 (header (list (cons 'location: url))))))
+
+;*---------------------------------------------------------------------*/
+;*    color ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-service (color)
+   (let* ((req (current-request))
+	  (user (http-request-user req))
+	  (uname (user-name user)))
+      (<HTML>
+	 (<HEAD> :title "Color"
+	    :favicon (service-resource color "etc/favicon.png")
+	    :base (service-base-url color (current-request))
+	    :include "hop-color"
+	    :css "color.hss")
+	 (<BODY>
+	    (<DIV> :align 'center
+	       (<TABLE> :class "main"
+		  (<COLGROUP> (<COL> :width "0*"))
+		  (<TR>
+		     (<TD> (<IMG> :class "logo" :src "etc/logo.png")
+			   (<DIV> :class "version"
+			      (<DIV> "Color v " (color-version))
+			      (<DIV> (color-date)))
+			   (<DIV> :class "buttons"
+			      (<DIV> :class "button doc"
+				 (<A> :title "Documentation"
+				    :class "doc"
+				    :href "documentation"
+				    :onclick ~(set! this.href ($color/documentation))
+				    :target "_blank"
+				    :title "Color documentation"
+				    (<IMG> :class "doc"
+				       :inline #t
+				       :src (service-resource color "etc/doc.png"))
+				    "Help"))))
+		     (<TD>
+			(<TABLE> :class "body"
+			   (<TR> (<TD> :id "title"
+				    "Color  - a Hop Color Chooser"))
+			   (<TR> (<TD> (<COLORCHOOSER>))))))))
+	    (<FOOT>)))))
+
+;*---------------------------------------------------------------------*/
+;*    color/dashboard ...                                              */
+;*---------------------------------------------------------------------*/
+(define-service (color/dashboard)
+   (let ((id (symbol->string (gensym))))
+      ~(begin
+	  (define color-element #f)
+	  (add-event-listener! $id
+			       "server"
+			       (lambda (e)
+				  (tprint "e=" e.value)
+				  (cond
+				     ((eq? e.value 'install-onclick)
+				      (add-event-listener!
+				       document.body
+				       "click"
+				       (lambda (e)
+					  (remove-event-listener!
+					   document.body
+					   "click"
+					   arguments.callee)
+					  (set! color-element e.target)
+					  (stop-event-propagation e #f))))
+				     (color-element
+				      (node-style-set! color-element
+						       (car e.value)
+						       (cdr e.value))))))
+	  (window-open :id "color/dashboard"
+	     :title "Color Chooser"
+	     :parent document.body
+	     :width 465
+	     :height 320
+	     :left (/ (- (current-window-width) 400) 2)
+	     :top (- (current-window-height) 370)
+	     :src (<IFRAME> :src ($color/dashboard-panel $id) :class "hop"
+		     :style "border: 0; width: 100%; height: 100%; padding: 0; background: black")))))
+
+;*---------------------------------------------------------------------*/
+;*    color/dashboard-panel ...                                        */
+;*---------------------------------------------------------------------*/
+(define-service (color/dashboard-panel id)
+   (<HTML> :class "dashboard"
+      (<HEAD> :include "hop-color"
+	 :base (service-base-url color (current-request))
+	 :css "color.hss")
+      (<BODY>
+	 
+	 ~(define cs :background)
+
+	 ~(define (signal val)
+	     (with-hop ($(service (id v)
+			    (tprint "v=" v)
+			    (hop-event-signal! id v)) $id val)))
+	 
+	 (<COLORCHOOSER> :class "dashboard"
+	    :onchange ~(signal (cons cs (colorchooser-value this)))
+	    (<TABLE> :class "colorchooser-element"
+	       (<TR>
+		  (<TD> :class "main"
+		     (<BUTTON> :onclick ~(signal 'install-onclick)
+			:class "grab"
+			(<IMG> :inline #t :src "etc/grab.png")))
+		  (<TD> :class "main"
+		     (<TABLE>
+			(<TR>
+			   (<TD> (<INPUT> :type 'radio
+				    :name "color"
+				    :value "bg"
+				    :checked ~(eq? cs :background)
+				    :onclick ~(set! cs :background)))
+			   (<TD> "background"))
+			(<TR>
+			   (<TD> (<INPUT> :type 'radio
+				    :name "color"
+				    :value "fg"
+				    :checked ~(eq? cs :color)
+				    :onclick ~(set! cs :color)))
+			   (<TD> "foreground"))
+			(<TR>
+			   (<TD> (<INPUT> :type 'radio
+				    :name "color"
+				    :value "border"
+				    :checked ~(eq? cs :border-color)
+				    :onclick ~(set! cs :border-color)))
+			   (<TD> "border"))))))))))

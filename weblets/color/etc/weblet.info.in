@@ -1,0 +1,5 @@
+((name "color")
+ (author "M. Serrano")
+ (version "@VERSION@")
+ (date "@DATE@")
+ (title "The Hop Color editor"))

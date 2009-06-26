@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed May 27 09:25:06 2009 (serrano)                */
+#*    Last change :  Fri Jun 26 13:31:04 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
@@ -24,7 +24,7 @@ POPULATION	= Makefile
 #*    weblets                                                          */
 #*---------------------------------------------------------------------*/
 POPDIRS	= hop epassword hz info webfilter doc home hopsh wizard test \
-          dashboard wiki trace shutdown weblets hzbuilder
+          dashboard color wiki trace shutdown weblets hzbuilder
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Fri Jun 26 12:10:17 2009 (serrano)                */
+;*    Last change :  Fri Jun 26 13:23:17 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -537,7 +537,8 @@
 	 (if comp
 	     (let ((args (filter (lambda (o) (not (equal? o ","))) nexpr)))
 		(hss-parse-function fun (apply comp args)))
-	     (duplicate::css-function nexpr)))))
+	     (duplicate::css-function o
+		(expr nexpr))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile-selector* ...                                        */
