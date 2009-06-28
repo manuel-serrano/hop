@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jun 22 14:43:10 2009 (serrano)                */
+;*    Last change :  Fri Jun 26 20:38:44 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -46,10 +46,10 @@
    (for-each register-eval-srfi! (hop-srfis))
    ;; set the library load path
    (bigloo-library-path-set! (hop-library-path))
-   ;; preload the hop library
-   (eval `(library-load 'hop))
    ;; parse the command line
    (parse-args args)
+   ;; preload the hop library
+   (eval `(library-load 'hop))
    ;; setup the client-side compiler
    (setup-client-compiler!)
    ;; turn on debug to get line information
