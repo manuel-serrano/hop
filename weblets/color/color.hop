@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jun 26 15:09:41 2009 (serrano)                */
+;*    Last change :  Mon Jun 29 16:22:18 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP color                                                        */
@@ -76,26 +76,44 @@
    (let ((id (symbol->string (gensym))))
       ~(begin
 	  (define color-element #f)
-	  (add-event-listener! $id
-			       "server"
-			       (lambda (e)
-				  (tprint "e=" e.value)
-				  (cond
-				     ((eq? e.value 'install-onclick)
-				      (add-event-listener!
-				       document.body
-				       "click"
-				       (lambda (e)
-					  (remove-event-listener!
-					   document.body
-					   "click"
-					   arguments.callee)
-					  (set! color-element e.target)
-					  (stop-event-propagation e #f))))
-				     (color-element
-				      (node-style-set! color-element
-						       (car e.value)
-						       (cdr e.value))))))
+	  
+	  (define colors
+	     '#("#fffd6b"
+		"#ffff6f"
+		"#ffff8f"
+		"#ffffaf"
+		"#ffffdf"
+		"#ffffe7"
+		"#fffff0"))
+	  
+	  (define (color-event-listener e)
+	     (cond
+		((eq? e.value 'install-onclick)
+		 (add-event-listener!
+		  document.body
+		  "click"
+		  (lambda (e)
+		     (let* ((el e.target)
+			    (bg (node-style-get el :background))
+			    (i 0))
+			(timeout
+			 60
+			 (lambda ()
+			    (cond
+			       ((< i 7)
+				(node-style-set! el :background (vector-ref colors i))
+				(set! i (+ i 1))
+				#t)
+			       (else
+				(node-style-set! el :background bg)
+				#f))))
+			(remove-event-listener! document.body "click" arguments.callee)
+			(set! color-element el)
+			(stop-event-propagation e #f)))))
+		(color-element
+		 (node-style-set! color-element (car e.value) (cdr e.value)))))
+	  
+	  (add-event-listener! $id "server" color-event-listener)
 	  (window-open :id "color/dashboard"
 	     :title "Color Chooser"
 	     :parent document.body
@@ -120,7 +138,6 @@
 
 	 ~(define (signal val)
 	     (with-hop ($(service (id v)
-			    (tprint "v=" v)
 			    (hop-event-signal! id v)) $id val)))
 	 
 	 (<COLORCHOOSER> :class "dashboard"

@@ -3,28 +3,25 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Thu Jun 25 12:03:49 2009 (serrano)                */
+;*    Last change :  Mon Jun 29 16:00:13 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
 ;*    debug mode).                                                     */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module hop-exception
-   (export
-    (hop-get-stack offset . depth)
-    (hop-report-exception exc)
-    (<EXCEPTION-STACK> stack)
-    (<EXCEPTION-FRAME> . args))
-   (scheme2js-pragma
-    (hop-get-stack
-     (JS "hop_get_stack"))
-    (hop-report-exception
-     (JS "hop_report_exception"))
-    (<EXCEPTION-STACK>
-       (JS "make_EXCEPTION_STACK"))
-    (<EXCEPTION_FRAME>
-       (JS "make_EXCEPTION_FRAME"))))
+   (export (hop-get-stack offset . depth)
+	   (hop-report-exception exc)
+	   (<EXCEPTION-STACK> stack)
+	   (<EXCEPTION-FRAME> . args))
+   (scheme2js-pragma (hop-get-stack (JS "hop_get_stack"))
+		     (hop-report-exception (JS "hop_report_exception"))
+		     (<EXCEPTION-STACK> (JS "hop_make_exception_stack"))
+		     (<EXCEPTION_FRAME> (JS "hop_make_exception_frame"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-error-icon ...                                               */
@@ -301,7 +298,7 @@
 			      (<SPAN> :style "color: red; font-weight: bold" location)))
 		     (<TR> (<TD> :style "font-size: 14pt" (<SPAN> :style "color: #777; font-weight: bold" name) ": " msg))
 		     (<TR> (<TD> :style "font-family: monospace; font-size: 11pt" src))
-		     (<TR> (<TD> :style "font-family: monospace; color: #777" (@ hop_properties_to_string _) exc)))))))
+		     (<TR> (<TD> :style "font-family: monospace; color: #777" ((@ hop_properties_to_string _) exc)))))))
 	 (<DIV> :style "font-family: arial; font-size: 10pt; overflow: visible"
 	    (when (and exc.hopService (not (eq? exc.hopService #unspecified)))
 	       (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px"
@@ -327,8 +324,26 @@
 (define (hop-report-exception exc)
    ;; the error might be raised before document.body is bound
    (if (and document.body (not (null? document.body)))
-       (dom-append-child! document.body (<EXCEPTION> exc))
+       (let ((e (<EXCEPTION> exc)))
+	  (dom-append-child! document.body (<EXCEPTION> exc)))
        (add-window-onload! (lambda (e) (hop-report-exception exc)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-last-exception ...                                           */
+;*---------------------------------------------------------------------*/
+(define hop-last-exception #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-get-exception ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hop-get-exception msg url line)
+   (if (and hop-last-exception (string=? hop-last-exception.message msg))
+       hop-last-exception
+       (let ((exc (new (@ Error _))))
+	  (set! exc.message msg)
+	  (set! exc.fileName url)
+	  (set! exc.lineNumber line)
+	  exc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-onerror-handler ...                                          */
@@ -339,10 +354,7 @@
 	     (or (eq? url (vector-ref (@ hop_config _).filtered_errors i))
 		 (loop (- i 1)))))
        ;; build a dummy exception for reporting
-       (let ((exc (new (@ Error _))))
-	  (set! exc.message msg)
-	  (set! exc.fileName url)
-	  (set! exc.lineNumber line)
+       (let ((exc (hop-get-exception msg url line)))
 	  (set! exc.hopStack (hop-get-stack 1))
 	  ;; report the error
 	  (hop-report-exception exc)
@@ -356,6 +368,7 @@
    ;; on debug install the Hop error handler
    (error-hook-set!
     (lambda (exc _)
+       (set! hop-last-exception exc)
        (set! exc.hopStack (hop-get-stack 2))
        exc))
    (set! (@ window _).onerror hop-onerror-handler))

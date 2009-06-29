@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Jun 22 09:57:43 2009 (serrano)                */
+;*    Last change :  Fri Jun 26 20:37:55 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -49,6 +49,8 @@
 	     (set! rc-file file))
 	    (("--rc-dir" ?dir (help "Set rc directory"))
 	     (hop-rc-directory-set! dir))
+	    (("-L" ?dir (help "Add Hop library path"))
+	     (bigloo-library-path-set! (cons dir (bigloo-library-path))))
 	    (("-v?level" (help "Increase or set verbosity level (-v0 crystal silence)"))
 	     (if (string=? level "")
 		 (hop-verbose-set! (+fx 1 (hop-verbose)))

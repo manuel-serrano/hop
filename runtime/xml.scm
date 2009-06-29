@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Jun 25 12:12:10 2009 (serrano)                */
+;*    Last change :  Mon Jun 29 10:22:39 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -640,11 +640,13 @@
 ;*    xml-write-attributes ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (xml-write-attributes attr p backend)
-   (let loop ((attr attr))
-      (when (pair? attr)
+   (let loop ((a attr))
+      (when (pair? a)
 	 (display " " p)
-	 (xml-write-attribute (cadr attr) (car attr) p backend)
-	 (loop (cddr attr)))))
+	 (unless (pair? (cdr a))
+	    (error 'xml-write-attributes "Illegal attributes" attr))
+	 (xml-write-attribute (cadr a) (car a) p backend)
+	 (loop (cddr a)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::obj ...                                    */
