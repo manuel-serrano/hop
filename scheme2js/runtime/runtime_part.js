@@ -91,15 +91,14 @@ function sc_arity_check(fun, nbArgs) {
     if (fun_arity === undefined || fun_arity === false) return fun;
     if (fun_arity >= 0 && nbArgs == fun_arity) return fun;
     if (fun_arity < 0 && nbArgs >= -1-fun_arity) return fun;
+
     var errorMsg = "Wrong number of arguments: " + fun_arity + " expected, " +
 	           nbArgs + " provided";
     sc_error('arity-check', errorMsg, fun); // will not return.
     return undefined; // some browsers want a return here...
 }
 
-/*** META ((export #t) (arity #t)
-           (peephole (prefix "throw ")))
-*/
+/*** META ((export #t) (arity #t)) */
 function sc_raise(obj) {
     throw obj;
 }
