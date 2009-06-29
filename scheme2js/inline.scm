@@ -57,6 +57,12 @@
 		       (not called-inline-funs?))
 		(inline-funs! tree))))))
 
+(define (lambda-can-be-inlined? l::Lambda)
+   (with-access::Lambda l (closure? this-var)
+      (and (not closure?)
+	   ;; do not inline functions that access 'this'
+	   (zero? (Var-uses this-var)))))
+      
 (define (can-be-inlined? var::Var)
    (define (imported-var? v)
       (eq? (Var-kind v) 'imported))
@@ -69,10 +75,7 @@
 	   (not (imported-var? var))
 	   (not (exported-as-mutable? var))
 	   (Lambda? value)
-	   (with-access::Lambda value (closure? this-var)
-	      (and (not closure?)
-		   ;; do not inline functions that access 'this'
-		   (zero? (Var-uses this-var)))))))
+	   (lambda-can-be-inlined? value))))
 
 ;; can we move a function from its definition to its use?
 (define (can-be-moved? var::Var)
@@ -184,7 +187,8 @@
 
 (define-nmethod (Call.absorb! label)
    (with-access::Call this (operator operands)
-      (if (Lambda? operator)
+      (if (and (Lambda? operator)
+	       (lambda-can-be-inlined? operator))
 	  (with-access::Lambda operator (formals vaarg? body)
 	     ;; body must be a Return.
 	     ;; no need to include it...

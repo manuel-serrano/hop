@@ -223,6 +223,4 @@
 			 (lambda (set)
 			    (hop ($(service (set)
 					 (set-submit player game set))
-				   set)))
-			 (lambda ()
-			    (hop ($(service () (update-scores game))))))))))
+				   set))))))))

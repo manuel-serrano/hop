@@ -12,6 +12,7 @@
 
 (module expanders
    (import expand
+	   config
 	   error
 	   (runtime-ref pobject-conv)))
 
@@ -256,9 +257,16 @@
        (e
 	`(,(runtime-ref 'with-handler-lambda)
 	  ,handler
-	  (lambda ()
-	     ,expr
-	     ,@Lrest))
+	  ,(if (config 'procedures-provide-js-this)
+	       (let ((th (gensym 'this)))
+		  `(let ((,th this))
+		      (lambda ()
+			 (let ((this ,th))
+			    ,expr
+			    ,@Lrest))))
+	       `(lambda ()
+		   ,expr
+		   ,@Lrest)))
 	e))
       (else
        (scheme2js-error "with-handler" "Invalid 'with-handler' form" x x))))

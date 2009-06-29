@@ -563,7 +563,6 @@
 					(and (not stmt?)
 					     lvalue)
 					(Out-Env-debug? env))))
-
 	    (template-display p env
 	       (?@ stmt? "~@;\n")
 	       (?@ needs-parenthesis? "(~@)")
@@ -799,7 +798,7 @@
 				     trampoline? location)
       (template-display p env
 	 (?@ stmt? "~@;\n")
-	 (?@ (not stmt?) "(~@)") ;; just for now. better than nothing.
+	 (?@ #t "(~@)") ;;  was (not stmt?). now always. even for stmt.
 	 (?@ (and call/cc? call/cc-index)
 	     "sc_callCcIndex = ~a, ~@" call/cc-index)
 	 "~e"

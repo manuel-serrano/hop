@@ -109,9 +109,7 @@ function sc_arity_check(fun, nbArgs) {
     return undefined; // some browsers want a return here...
 }
 
-/*** META ((export #t) (arity #t)
-           (peephole (prefix "throw ")))
-*/
+/*** META ((export #t) (arity #t)) */
 function sc_raise(obj) {
     throw obj;
 }
