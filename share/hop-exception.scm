@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Mon Jun 29 14:23:56 2009 (serrano)                */
+;*    Last change :  Mon Jun 29 16:00:13 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -337,7 +337,7 @@
 ;*    hop-get-exception ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hop-get-exception msg url line)
-   (if (and hop-last-exception (string=? hop-last-exception.message msg) #f)
+   (if (and hop-last-exception (string=? hop-last-exception.message msg))
        hop-last-exception
        (let ((exc (new (@ Error _))))
 	  (set! exc.message msg)
