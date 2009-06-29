@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Sun Jun 28 17:25:24 2009 (serrano)                */
+;*    Last change :  Mon Jun 29 08:08:56 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -20,8 +20,8 @@
 	   (<EXCEPTION-FRAME> . args))
    (scheme2js-pragma (hop-get-stack (JS "hop_get_stack"))
 		     (hop-report-exception (JS "hop_report_exception"))
-		     (<EXCEPTION-STACK> (JS "make_EXCEPTION_STACK"))
-		     (<EXCEPTION_FRAME> (JS "make_EXCEPTION_FRAME"))))
+		     (<EXCEPTION-STACK> (JS "hop_make_exception_stack"))
+		     (<EXCEPTION_FRAME> (JS "hop_make_exception_frame"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-error-icon ...                                               */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Jun 25 11:34:41 2009 (serrano)                */
+/*    Last change :  Mon Jun 29 08:10:07 2009 (serrano)                */
 /*    Copyright   :  2004-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -78,8 +78,8 @@ function hop_default_failure( xhr ) {
    if( !document ) return;
 
    var div = document.createElement( "div" );
-   var hopstack = xhr.hopStack ? make_EXCEPTION_STACK( xhr.hopStack ) : false;
-   var jsstack = xhr.jsStack ? make_EXCEPTION_STACK( xhr.jsStack ) : false;
+   var hstack = xhr.hopStack ? hop_make_exception_stack( xhr.hopStack ) : false;
+   var jsstack = xhr.jsStack ? hop_make_exception_stack( xhr.jsStack ) : false;
 
    if( "exception" in xhr ) {
       hop_report_exception( xhr.exception );
@@ -111,7 +111,7 @@ function hop_default_failure( xhr ) {
       }
 
       document.body.appendChild(
-	 make_EXCEPTION_FRAME( div, hopstack, jsstack ) );
+	 hop_make_exception_frame( div, hstack, jsstack ) );
    }
 }
 
