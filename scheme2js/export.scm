@@ -80,7 +80,7 @@
 		   (cadr clause))))
       (cond
 	 ((symbol? id)
-	  (symbol->string id))
+	  (mangle-JS-sym id))
 	 ((string? id)
 	  id)
 	 (else 

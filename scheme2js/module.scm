@@ -645,14 +645,33 @@
 		    imports))))))
 
 (define (normalize-JS-imports! m)
+   (define (JS-import-error js)
+      (error "scheme2js module"
+	     "JS clauses must be symbol, string or of form (scheme-sym sym/str)"
+	     js))
+   
    (with-access::WIP-Unit m (header imports)
       (let* ((direct-JS-imports (module-entries header 'JS))
 	     (descs (map (lambda (js)
-			    (when (not (symbol? js))
-			       (error "scheme2js module"
-				      "JS clauses can only contain symbols"
-				      js))
-			    (create-Export-Desc js #f #f))
+			    (match-case js
+			       ((?scheme-id ?js-id)
+				(when (not (symbol? scheme-id))
+				   (JS-import-error js))
+				(when (not (or (symbol? js-id)
+					       (string? js-id)))
+				   (JS-import-error js))
+				;; '(sym sym/str)
+				(create-Export-Desc
+				 `(,scheme-id
+				   (JS ,js-id)) #f #f))
+			       ((? symbol?)
+				(create-Export-Desc js #f #f))
+			       ((? string?)
+				(create-Export-Desc
+				 `(,(string->symbol js)
+				   (JS ,js)) #f #f))
+			       (else
+				(JS-import-error js))))
 			 direct-JS-imports)))
 	 (unless (null? descs)
 	    (set! imports
