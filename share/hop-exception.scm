@@ -18,6 +18,10 @@
 	   (hop-report-exception exc)
 	   (<EXCEPTION-STACK> stack)
 	   (<EXCEPTION-FRAME> . args))
+   (JS (properties->string hop_properties_to_string))
+   (JS "Error"
+       "window"
+       (hop-config hop_config))
    (scheme2js-pragma (hop-get-stack (JS "hop_get_stack"))
 		     (hop-report-exception (JS "hop_report_exception"))
 		     (<EXCEPTION-STACK> (JS "hop_make_exception_stack"))
@@ -298,7 +302,7 @@
 			      (<SPAN> :style "color: red; font-weight: bold" location)))
 		     (<TR> (<TD> :style "font-size: 14pt" (<SPAN> :style "color: #777; font-weight: bold" name) ": " msg))
 		     (<TR> (<TD> :style "font-family: monospace; font-size: 11pt" src))
-		     (<TR> (<TD> :style "font-family: monospace; color: #777" ((@ hop_properties_to_string _) exc)))))))
+		     (<TR> (<TD> :style "font-family: monospace; color: #777" (properties->string exc)))))))
 	 (<DIV> :style "font-family: arial; font-size: 10pt; overflow: visible"
 	    (when (and exc.hopService (not (eq? exc.hopService #unspecified)))
 	       (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px"
@@ -339,7 +343,7 @@
 (define (hop-get-exception msg url line)
    (if (and hop-last-exception (string=? hop-last-exception.message msg))
        hop-last-exception
-       (let ((exc (new (@ Error _))))
+       (let ((exc (new Error)))
 	  (set! exc.message msg)
 	  (set! exc.fileName url)
 	  (set! exc.lineNumber line)
@@ -349,9 +353,9 @@
 ;*    hop-onerror-handler ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hop-onerror-handler msg url line)
-   (or (let loop ((i (- (vector-length (@ hop_config _).filtered_errors) 1)))
+   (or (let loop ((i (- (vector-length hop-config.filtered_errors) 1)))
 	  (when (>= i 0)
-	     (or (eq? url (vector-ref (@ hop_config _).filtered_errors i))
+	     (or (eq? url (vector-ref hop-config.filtered_errors i))
 		 (loop (- i 1)))))
        ;; build a dummy exception for reporting
        (let ((exc (hop-get-exception msg url line)))
@@ -371,4 +375,4 @@
        (set! hop-last-exception exc)
        (set! exc.hopStack (hop-get-stack 2))
        exc))
-   (set! (@ window _).onerror hop-onerror-handler))
+   (set! window.onerror hop-onerror-handler))
