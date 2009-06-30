@@ -200,6 +200,9 @@ o/callcc_checkpoint.o classes/mimosa/inria/scheme2js/callcc_checkpoint.class: \
 o/push-declarations.o classes/mimosa/inria/scheme2js/push-declarations.class: \
       mco/verbose.mco mco/tools.mco mco/walk.mco mco/config.mco          \
       mco/export.mco mco/nodes.mco 
+o/call-check.o classes/mimosa/inria/scheme2js/call-check.class:          \
+      mco/verbose.mco mco/side.mco mco/walk.mco mco/export.mco           \
+      mco/nodes.mco mco/error.mco mco/config.mco 
 o/rm-tail-breaks.o classes/mimosa/inria/scheme2js/rm-tail-breaks.class:  \
       mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco          \
       mco/tools.mco mco/config.mco 
@@ -250,7 +253,7 @@ o/allocate-names.o classes/mimosa/inria/scheme2js/allocate-names.class:  \
 o/module.o classes/mimosa/inria/scheme2js/module.class: mco/config.mco   \
       mco/infotron.mco mco/module-resolver.mco mco/export.mco            \
       mco/expand.mco mco/tools.mco mco/srfi0.mco mco/error.mco           \
-      mco/verbose.mco 
+      mco/gen-js.mco mco/verbose.mco 
 o/loop-updates.o classes/mimosa/inria/scheme2js/loop-updates.class:      \
       mco/verbose.mco mco/var-ref-util.mco mco/walk.mco mco/export.mco   \
       mco/nodes.mco mco/tools.mco mco/config.mco 
@@ -292,7 +295,7 @@ o/rm-tail-breaks.o classes/mimosa/inria/scheme2js/rm-tail-breaks.class:  \
 o/export.o classes/mimosa/inria/scheme2js/export.class: mco/error.mco    \
       mco/gen-js.mco 
 o/expanders.o classes/mimosa/inria/scheme2js/expanders.class:            \
-      mco/pobject-conv.mco mco/error.mco mco/expand.mco 
+      mco/pobject-conv.mco mco/error.mco mco/config.mco mco/expand.mco 
 o/letrec-expansion.o classes/mimosa/inria/scheme2js/letrec-expansion.class: \
       mco/gen-js.mco mco/verbose.mco mco/walk.mco mco/export.mco         \
       mco/pobject-conv.mco mco/nodes.mco mco/config.mco 
@@ -332,7 +335,7 @@ o/symbol.o classes/mimosa/inria/scheme2js/symbol.class:                  \
 o/module.o classes/mimosa/inria/scheme2js/module.class: mco/config.mco   \
       mco/infotron.mco mco/module-resolver.mco mco/export.mco            \
       mco/expand.mco mco/tools.mco mco/srfi0.mco mco/error.mco           \
-      mco/verbose.mco 
+      mco/gen-js.mco mco/verbose.mco 
 o/while.o classes/mimosa/inria/scheme2js/while.class: mco/verbose.mco    \
       mco/loop-updates.mco mco/symbol.mco mco/walk.mco mco/export.mco    \
       mco/nodes.mco mco/tools.mco mco/config.mco 
@@ -362,11 +365,14 @@ o/scope.o classes/mimosa/inria/scheme2js/scope.class:                    \
       mco/walk.mco mco/export.mco mco/nodes.mco mco/tools.mco            \
       mco/config.mco 
 o/expanders.o classes/mimosa/inria/scheme2js/expanders.class:            \
-      mco/pobject-conv.mco mco/error.mco mco/expand.mco 
+      mco/pobject-conv.mco mco/error.mco mco/config.mco mco/expand.mco 
 o/tail.o classes/mimosa/inria/scheme2js/tail.class: mco/verbose.mco      \
       mco/walk.mco mco/export.mco mco/nodes.mco 
 o/template-display.o classes/mimosa/inria/scheme2js/template-display.class: \
       mco/tools.mco 
+o/call-check.o classes/mimosa/inria/scheme2js/call-check.class:          \
+      mco/verbose.mco mco/side.mco mco/walk.mco mco/export.mco           \
+      mco/nodes.mco mco/error.mco mco/config.mco 
 o/infotron.o classes/mimosa/inria/scheme2js/infotron.class:              \
       mco/config.mco mco/mutable-strings.mco mco/module.mco              \
       mco/error.mco mco/verbose.mco 
@@ -459,11 +465,12 @@ o/scheme2js.o classes/mimosa/inria/scheme2js/scheme2js.class:            \
       mco/out.mco mco/rm-tail-breaks.mco mco/statements.mco              \
       mco/propagation.mco mco/while.mco mco/scope.mco mco/constants.mco  \
       mco/constant-propagation.mco mco/tail-rec.mco                      \
-      mco/rm-unused-vars.mco mco/inline.mco mco/node-elimination.mco     \
-      mco/encapsulation.mco mco/letrec-expansion.mco mco/symbol.mco      \
-      mco/pobject-conv.mco mco/dot-expand.mco mco/runtime-expander.mco   \
-      mco/expanders.mco mco/expand.mco mco/module.mco mco/export.mco     \
-      mco/srfi0.mco mco/nodes.mco mco/config.mco version.sch 
+      mco/rm-unused-vars.mco mco/call-check.mco mco/inline.mco           \
+      mco/node-elimination.mco mco/encapsulation.mco                     \
+      mco/letrec-expansion.mco mco/symbol.mco mco/pobject-conv.mco       \
+      mco/dot-expand.mco mco/runtime-expander.mco mco/expanders.mco      \
+      mco/expand.mco mco/module.mco mco/export.mco mco/srfi0.mco         \
+      mco/nodes.mco mco/config.mco version.sch 
 o/callcc_anormalform.o classes/mimosa/inria/scheme2js/callcc_anormalform.class: \
       mco/tools.mco mco/side.mco mco/verbose.mco                         \
       mco/callcc_locations.mco mco/walk.mco mco/export.mco mco/nodes.mco \
@@ -529,11 +536,12 @@ o/scheme2js.o classes/mimosa/inria/scheme2js/scheme2js.class:            \
       mco/out.mco mco/rm-tail-breaks.mco mco/statements.mco              \
       mco/propagation.mco mco/while.mco mco/scope.mco mco/constants.mco  \
       mco/constant-propagation.mco mco/tail-rec.mco                      \
-      mco/rm-unused-vars.mco mco/inline.mco mco/node-elimination.mco     \
-      mco/encapsulation.mco mco/letrec-expansion.mco mco/symbol.mco      \
-      mco/pobject-conv.mco mco/dot-expand.mco mco/runtime-expander.mco   \
-      mco/expanders.mco mco/expand.mco mco/module.mco mco/export.mco     \
-      mco/srfi0.mco mco/nodes.mco mco/config.mco version.sch 
+      mco/rm-unused-vars.mco mco/call-check.mco mco/inline.mco           \
+      mco/node-elimination.mco mco/encapsulation.mco                     \
+      mco/letrec-expansion.mco mco/symbol.mco mco/pobject-conv.mco       \
+      mco/dot-expand.mco mco/runtime-expander.mco mco/expanders.mco      \
+      mco/expand.mco mco/module.mco mco/export.mco mco/srfi0.mco         \
+      mco/nodes.mco mco/config.mco version.sch 
 o/callcc_locations.o classes/mimosa/inria/scheme2js/callcc_locations.class: \
       mco/tools.mco mco/verbose.mco mco/var-ref-util.mco                 \
       mco/free-vars.mco mco/side.mco mco/export.mco mco/walk.mco         \

@@ -79,8 +79,7 @@
 		   (pair? (cdr clause))
 		   (cadr clause))))
       (cond
-	 ((symbol? id)
-	  (mangle-JS-sym id))
+	 ((symbol? id) (symbol->string id))
 	 ((string? id)
 	  id)
 	 (else 

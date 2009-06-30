@@ -12,6 +12,7 @@
 
 (module module-system
    (import verbose
+	   gen-js
 	   error
 	   srfi0
 	   tools
@@ -665,7 +666,8 @@
 				 `(,scheme-id
 				   (JS ,js-id)) #f #f))
 			       ((? symbol?)
-				(create-Export-Desc js #f #f))
+				(create-Export-Desc
+				 `(,js (JS ,(mangle-JS-sym js))) #f #f))
 			       ((? string?)
 				(create-Export-Desc
 				 `(,(string->symbol js)
