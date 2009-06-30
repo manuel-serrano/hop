@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Wed Apr  8 17:45:25 2009 (serrano)                */
+;*    Last change :  Tue Jun 30 05:47:56 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -19,7 +19,8 @@
    (import  __hop_param
 	    __hop_types
 	    __hop_xml
-	    __hop_service)
+	    __hop_service
+	    __hop_charset)
 
    (export  (json-string-encode::bstring ::bstring ::bool)
 	    (generic hop->json ::obj ::bool ::bool)
@@ -227,11 +228,10 @@
 ;*    hop->json ::xml-markup ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->json obj::xml-markup isrep isflash)
-   (with-access::xml-markup obj (markup)
-      (let ((s (with-output-to-string
-		  (lambda ()
-		     (xml-write obj (current-output-port) (hop-xml-backend))))))
-	 (format "hop_create_encoded_element( \"~a\" )" (url-path-encode s)))))
+   (let ((s (with-output-to-string
+	       (lambda ()
+		  (xml-write obj (current-output-port) (hop-xml-backend))))))
+      (format "hop_create_encoded_element( \"~a\" )" (url-path-encode s))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::xml-element ...                                      */

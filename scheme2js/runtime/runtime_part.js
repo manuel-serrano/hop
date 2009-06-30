@@ -94,7 +94,11 @@ function sc_arity_check(fun, nbArgs) {
 
     var errorMsg = "Wrong number of arguments: " + fun_arity + " expected, " +
 	           nbArgs + " provided";
-    sc_error('arity-check', errorMsg, fun); // will not return.
+    var where = ("callee" in arguments && "caller" in arguments.callee ?
+		 ("name" in arguments.callee.caller ?
+		    arguments.callee.caller.name : arguments.callee.caller)
+		 : "arity-check");
+    sc_error(where, errorMsg, fun); // will not return.
     return undefined; // some browsers want a return here...
 }
 
