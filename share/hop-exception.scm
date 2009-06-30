@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Mon Jun 29 16:00:13 2009 (serrano)                */
+;*    Last change :  Tue Jun 30 08:35:51 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -18,8 +18,8 @@
 	   (hop-report-exception exc)
 	   (<EXCEPTION-STACK> stack)
 	   (<EXCEPTION-FRAME> . args))
-   (JS (properties->string hop_properties_to_string))
-   (JS "Error"
+   (JS (properties->string hop_properties_to_string)
+       "Error"
        "window"
        (hop-config hop_config))
    (scheme2js-pragma (hop-get-stack (JS "hop_get_stack"))
@@ -168,7 +168,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    obj->string ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (obj->string o)
+(define (obj->string o longp)
    (cond
       ((procedure? o)
        (let ((name (cond
@@ -178,7 +178,7 @@
 		       o.name)
 		      (else
 		       (<I> "anonymous")))))
-	  (if (string? o.location)
+	  (if (and longp (string? o.location))
 	      (let ((m (pregexp-match "[(]at ([^ ]+) ([^ ]+)[)]" o.location)))
 		 (if m
 		     (list
@@ -186,9 +186,11 @@
 			 (<A> :style "color: inherit"
 			    :href (cadr m) (cadr m) "!" (caddr m))
 			 ", ")
-		      name)
-		     name))
-	      name)))
+		      "(" name " ...)")
+		     (list "(" name " ...)")))
+	      (if longp
+		  (list "(" name " ...)")
+		  name))))
       ((string? o)
        o)
       (else
@@ -200,12 +202,10 @@
 (define (<EXCEPTION-STACK> stack)
    (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px"
       (<DIV> :style "font-weight: bold; margin-bttom: 1ex;" "Hop client stack:")
-      (<TABLE> :style "width: 100%; font-size: 9pt; overflow: visible; padding-left: 1em; font-family: monospace"
-	 :cellspacing 0 :cellpadding: 0
+      (<PRE> :style "font-size: 9pt; padding-left: 1em"
 	 :onclick (stop-event-propagation event)
 	 (map (lambda (frame)
-		 (<TR> (<TD> :style "text-align: left"
-			  (<TT> (obj->string (car frame))))))
+		 (list (obj->string (car frame) #t) "\n"))
 	      stack))))
 
 ;*---------------------------------------------------------------------*/
@@ -249,7 +249,7 @@
       (cond
 	 ((string? exc.name) exc.name)
 	 ((eq? exc.name #unspecified) "HopClientSideError")
-	 (else (obj->string exc.name))))
+	 (else (obj->string exc.name #f))))
 
    (define (exception-message exc)
       (cond
@@ -265,7 +265,7 @@
 	 ((number? exc.message)
 	  exc.message)
 	 ((not (eq? exc.message #unspecified))
-	  (obj->string exc.message))
+	  (obj->string exc.message #f))
 	 ((string? exc.description)
 	  (apply string-append
 		 (map (lambda (s)
@@ -276,7 +276,7 @@
    
    (let* ((message (exception-message exc))
 	  (msg (if (and exc.scObject (not (eq? exc.scObject #unspecified)))
-		   (list message " -- " (obj->string exc.scObject))
+		   (list message " -- " (obj->string exc.scObject #f))
 		   message))
 	  (name (exception-name exc))
 	  (url (or exc.fileName document.location))
@@ -309,7 +309,7 @@
 		  (<DIV> :style "font-weight: bold" "Service:")
 		  (<TABLE> :style "width: 100%; font-size: 9pt; overflow: visible; padding-left: 1em"
 		     (<TR> (<TD> :style "font-size: 11pt"
-			      (obj->string exc.hopService))))))
+			      (obj->string exc.hopService #f))))))
 	    (when (pair? exc.hopStack)
 	       (<DIV> :style (if (and exc.hopService (not (eq? exc.hopService #unspecified)))
 				 "border-top: 1px dashed #ccc; margin-top: 2ex"
@@ -347,6 +347,7 @@
 	  (set! exc.message msg)
 	  (set! exc.fileName url)
 	  (set! exc.lineNumber line)
+	  (set! exc.hopStack (hop-get-stack 2))
 	  exc)))
 
 ;*---------------------------------------------------------------------*/
@@ -359,7 +360,6 @@
 		 (loop (- i 1)))))
        ;; build a dummy exception for reporting
        (let ((exc (hop-get-exception msg url line)))
-	  (set! exc.hopStack (hop-get-stack 1))
 	  ;; report the error
 	  (hop-report-exception exc)
 	  ;; don't propagate the error
@@ -373,6 +373,6 @@
    (error-hook-set!
     (lambda (exc _)
        (set! hop-last-exception exc)
-       (set! exc.hopStack (hop-get-stack 2))
+       (set! exc.hopStack (hop-get-stack 3))
        exc))
    (set! window.onerror hop-onerror-handler))

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/share/hop-serialize.js           */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-serialize.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sun Dec 14 19:53:10 2008 (serrano)                */
-/*    Copyright   :  2007-08 Manuel Serrano                            */
+/*    Last change :  Tue Jun 30 05:21:13 2009 (serrano)                */
+/*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
