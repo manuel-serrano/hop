@@ -32,8 +32,8 @@
 
 	      (repl-var (default #f)))
 	      
-	   (class Frame-Env
-	      call/cc?::bool))
+	   (class Main-Env
+	      suspend/resume?::bool))
    (export (scope-resolution! tree::Module)
 	   (scope-flattening! tree::Module)))
 
@@ -441,7 +441,7 @@
 
 ;; assigns the predicates for each variable
 (define (main-predicates tree)
-   (main tree #f))
+   (main tree (make-Main-Env (config 'suspend/resume))))
 
 (define-nmethod (Node.main)
    (default-walk this))
@@ -452,7 +452,7 @@
    (with-access::Scope-Var var (needs-boxing? needs-frame? needs-uniquization?)
       (or needs-boxing? needs-frame? needs-uniquization?)))
 
-(define (compute-predicates var::Var)
+(define (compute-predicates var::Var suspend-resume?)
    (with-access::Scope-Var var (constant? escapes? captured? inside-loop?
 					  call/cc-when-alive?
 					  modified-after-call/cc?
@@ -474,7 +474,8 @@
       ;; need to be boxed (or put into a scope again) if they escape (and if
       ;; there is a call/cc inside their scope)
       ;; If a var needs to be boxed it is marked with .needs-boxing?
-      (set! needs-boxing? (and (not constant?)
+      (set! needs-boxing? (and suspend-resume?
+			       (not constant?)
 			       escapes?
 			       (or mutated-outside-local?
 				   modified-after-call/cc?)))
@@ -489,22 +490,25 @@
 			       modified-after-call/cc?))))
 
 (define-nmethod (Module.main)
-   (with-access::Module this (scope-vars runtime-vars imported-vars this-var)
-      (for-each compute-predicates scope-vars)
-      (for-each compute-predicates runtime-vars)
-      (for-each compute-predicates imported-vars)
-      (compute-predicates this-var))
+   (let ((sr? (Main-Env-suspend/resume? env)))
+      (with-access::Module this (scope-vars runtime-vars imported-vars this-var)
+	 (for-each (lambda (v) (compute-predicates v sr?)) scope-vars)
+	 (for-each (lambda (v) (compute-predicates v sr?)) runtime-vars)
+	 (for-each (lambda (v) (compute-predicates v sr?)) imported-vars)
+	 (compute-predicates this-var sr?)))
    (default-walk this))
 
 (define-nmethod (Lambda.main)
-   (with-access::Lambda this (scope-vars this-var)
-      (for-each compute-predicates scope-vars)
-      (compute-predicates this-var))
-      (default-walk this))
+   (let ((sr? (Main-Env-suspend/resume? env)))
+      (with-access::Lambda this (scope-vars this-var)
+	 (for-each (lambda (v) (compute-predicates v sr?)) scope-vars)
+	 (compute-predicates this-var sr?)))
+   (default-walk this))
    
 (define-nmethod (Scope.main)
-   (with-access::Scope this (scope-vars)
-      (for-each compute-predicates scope-vars))
+   (let ((sr? (Main-Env-suspend/resume? env)))
+      (with-access::Scope this (scope-vars)
+	 (for-each (lambda (v) (compute-predicates v sr?)) scope-vars)))
    (default-walk this))
 
 

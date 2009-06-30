@@ -314,7 +314,7 @@
       (shrink! m)
       m))
 
-;; header must be #f or of form (module sym ...)
+;; header must be of form (module sym ...)
 (define (module-entries header type)
    (let ((tmp (assq type (cddr header))))
       (if tmp
