@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Jun 22 10:13:18 2009 (serrano)                */
+#*    Last change :  Tue Jun 30 13:57:21 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -55,6 +55,8 @@ cssmimetype="text/css"
 #*---------------------------------------------------------------------*/
 version="2.0.0"
 devel=pre
+
+hopc=$PWD/bin/hopc
 
 branch="`echo $version | sed 's/[0-9][0-9]*$/x/'`"
 date=`date +"%d %B %Y"`
@@ -416,6 +418,7 @@ case $backend in
      webletsdir=/resource/lib/weblets
      contribsdir=/resource/share/contribs
      sharedir=/resource/share
+     hopc="java -jar $PWD/bin/hopc.jar"
      break;;
   "dotnet")
      break;;
@@ -518,7 +521,7 @@ cat $mkmf.in \
           -e "s|@DEVEL@|$devel|" \
           -e "s|@DEBUG@|$debug|" \
           -e "s|@BIGLOO@|$bigloo|" \
-          -e "s|@HOPC@|$PWD/bin/hopc|" \
+          -e "s|@HOPC@|$hopc|" \
           -e "s|@BACKEND@|$backend|" \
           -e "s|@BIGLOOLIBDIR@|$bigloolibdir|" \
           -e "s|@CIGLOO@|$cigloo|" \
