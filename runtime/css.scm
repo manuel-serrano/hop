@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Fri Jun 26 13:23:17 2009 (serrano)                */
+;*    Last change :  Wed Jul  1 07:32:41 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -491,7 +491,7 @@
 	      (instantiate::css-selector
 		 (element (hss-compiler-element hc))
 		 (attr* (filter (lambda (a) (not (pseudo-attr? a))) attr*)))
-	      'childof
+	      '| |
 	      (instantiate::css-selector
 		 (element (hss-compiler-body hc))
 		 (attr* (filter pseudo-attr? attr*))))

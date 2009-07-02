@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Chris Veness                                      */
 /*    Creation    :  Mon Jun  9 08:21:51 2008                          */
-/*    Last change :  Fri Jun  5 10:04:15 2009 (serrano)                */
+/*    Last change :  Tue Jun 30 21:33:04 2009 (serrano)                */
 /*    Copyright   :  2005-09 Chris Veness                              */
 /*    -------------------------------------------------------------    */
 /*    AES Advanced Encryption Standard in 'Counter' mode operation.    */
@@ -195,7 +195,7 @@ function AESPassword2key(password, nBits) {
 /*      - outputblock = cipher(counter, key)                           */
 /*      - cipherblock = plaintext xor outputblock                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export aes-ctr-encrypt-string) (arity #t)) */
+/*** META ((export aes-ctr-encrypt-string) (arity -3)) */
 function AESEncryptCtr(plaintext, password, nBits) {
    if (!(nBits==128 || nBits==192 || nBits==256)) {
       if(!nBits)
@@ -258,7 +258,7 @@ function AESEncryptCtr(plaintext, password, nBits) {
 /*---------------------------------------------------------------------*/
 /*    AESEncryptCtrObj ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export aes-ctr-encrypt) (arity #t)) */
+/*** META ((export aes-ctr-encrypt) (arity -3)) */
 function AESEncryptCtrObj(plaintext, password, nBits) {
    return AESEncryptCtr(plaintext, password, nBits);
 }
@@ -273,7 +273,7 @@ function AESEncryptCtrObj(plaintext, password, nBits) {
 /*      - outputblock = cipher(counter, key)                           */
 /*      - cipherblock = plaintext xor outputblock                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export aes-ctr-decrypt-string) (arity #t)) */
+/*** META ((export aes-ctr-decrypt-string) (arity -3)) */
 function AESDecryptCtr(ciphertext, password, nBits) {
    if (!(nBits==128 || nBits==192 || nBits==256)) {
       if(!nBits)
@@ -324,7 +324,7 @@ function AESDecryptCtr(ciphertext, password, nBits) {
 /*---------------------------------------------------------------------*/
 /*    AESDecryptCtrObj ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export aes-ctr-decrypt) (arity #t)) */
+/*** META ((export aes-ctr-decrypt) (arity -3)) */
 function AESDecryptCtrObj(plaintext, password, nBits) {
    return AESDecryptCtr(plaintext, password, nBits);
 }
