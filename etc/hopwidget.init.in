@@ -15,7 +15,9 @@
 (declare-library! 'hopwidget
 		  :version "@VERSION@"
                   :module-init '__hopwidget-init
-		  :module-eval '__hopwidget-makelib)
+		  :module-eval '__hopwidget-makelib
+		  :class-init "bigloo.hop.init"
+		  :class-eval "bigloo.hop.make-lib")
 
 ;*---------------------------------------------------------------------*/
 ;*    Link option                                                      */
