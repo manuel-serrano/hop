@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -276,7 +276,7 @@
       ((?- ?vars ?producer ?expr . ?Lrest)
        (e
 	`(,(runtime-ref 'call-with-values)
-	  ,producer
+	  (lambda () ,producer)
 	  (lambda ,vars
 	     ,expr
 	     ,@Lrest))
@@ -291,7 +291,7 @@
       ((?- ?vars ?producer ?expr . ?Lrest)
        (e
 	`(,(runtime-ref 'call-with-values)
-	  ,producer
+	  (lambda () ,producer)
 	  (lambda ,vars
 	     ,expr
 	     ,@Lrest))

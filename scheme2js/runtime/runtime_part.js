@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+/*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -1839,6 +1839,9 @@ function sc_values() {
 
 /*** META ((export #t) (arity #t)) */
 function sc_callWithValues(producer, consumer) {
+   if( !sc_isProcedure(producer) )
+      sc_error( "callWithValue", "producer not a procedure", producer );
+      
     var produced = producer();
     if (produced instanceof sc_Values)
 	return consumer.apply(null, produced.values);
