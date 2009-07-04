@@ -100,7 +100,7 @@ function hop_Config() {
   /* flash version */
   this.flash_version = hop_get_flash_version();
 
-  /* default navigator setting (firefox settings) */
+  /* default navigator setting */
   this.mouse_left_button = 0;
   this.flash_external_interface = false;
   this.flash_audio = false;
@@ -152,7 +152,16 @@ function hop_Config() {
      this.flash_markup = "embed";
      this.inline_image = true;
   } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
-     this.js_speed = 60;
+     if( navigator.userAgent.match( /3.5[^ ]*$/ ) ) {
+        /* Firefox 3.5 */
+        this.js_speed = 75;	    
+     } else if( navigator.userAgent.match( /3.0[^ ]*$/ ) ) {
+        /* Firefox 3.0, 3.1 */
+        this.js_speed = 60;	    
+     } else {
+        this.js_speed = 50;
+     }
+
      this.navigator_family = "mozilla";
      this.mouse_left_button = 0;
      this.flash_external_interface = true;
