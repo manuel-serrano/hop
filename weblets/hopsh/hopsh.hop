@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun Mar 22 06:46:40 2009 (serrano)                */
+;*    Last change :  Mon Jul  6 11:14:32 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hopsh weblet                                                 */
@@ -95,7 +95,7 @@
 				 :colspan 2
 				 :align 'left
 				 (<BUTTON> :onclick
-				    ~(with-hop ($hopsh/string $i.value)
+				    ~(with-hop ($hopsh/string :exp $i.value)
 					(lambda (h)
 					   (innerHTML-set! $r h)))
 				    "Evaluate")))
