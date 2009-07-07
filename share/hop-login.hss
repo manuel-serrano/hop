@@ -64,7 +64,7 @@ hop-login-panel div.hop-login-panel-background {
 
 hop-login-panel div.hop-login-panel-background-fast-gpu {
   background-color: #000;
-  -moz-opacity: 0.7;
+  opacity: 0.7;
 }
 
 hop-login-panel div.hop-login-panel-background-slow-gpu {
@@ -89,7 +89,7 @@ hop-login-panel div.hop-login-main {
 }
 
 hop-login-panel div.hop-login-main-fast-gpu {
-  -moz-opacity: 0.90;
+  opacity: 0.90;
   background-color: #fff;
 }
 
