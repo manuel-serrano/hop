@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Thu Jun 25 10:25:30 2009 (serrano)                */
+/*    Last change :  Wed Jul  8 09:24:15 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -143,34 +143,16 @@ function hop_iwindow_maximize( win ) {
 	 if( win.user_parent ) {
 	    var p = win.parentNode;
 
-	    if( win.el_shadow_box != null ) {
-	       node_style_set( win.el_win, "width",
-			       (p.offsetWidth - win.el_shadow_box.offsetWidth) +
-			       "px" );
-	       node_style_set( win.el_win, "height",
-			       (p.offsetHeight - win.el_shadow_box.offsetHeight) +
-			       "px" );
-	    } else {
-	       node_style_set( win.el_win, "width", p.offsetWidth + "px" );
-	       node_style_set( win.el_win, "height", p.offsetHeight + "px" );
-	    }
+	    node_style_set( win.el_win, "width", p.offsetWidth + "px" );
+	    node_style_set( win.el_win, "height", p.offsetHeight + "px" );
 
 	    node_style_set( win, "top", (hop_element_y( p ) + 1) + "px" );
 	    node_style_set( win, "left", (hop_element_x( p ) + 1) + "px" );
 	 } else {
-	    if( win.el_shadow_box != null ) {
-	       node_style_set( win.el_win, "width",
-			       window.innerWidth -
-			       (win.el_shadow_box.offsetWidth - 2) + "px" );
-	       node_style_set( win.el_win, "height",
-			       window.innerHeight -
-			       (win.el_shadow_box.offsetHeight - 2) + "px" );
-	    } else {
-	       node_style_set( win.el_win, "width",
-			       (window.innerWidth - 2) + "px" );
-	       node_style_set( win.el_win, "height",
-			       (window.innerHeight - 2) + "px" );
-	    }
+	    node_style_set( win.el_win, "width",
+			    (window.innerWidth - 2) + "px" );
+	    node_style_set( win.el_win, "height",
+			    (window.innerHeight - 2) + "px" );
 
 	    node_style_set( win, "top", 0 );
 	    node_style_set( win, "left", 0 );
@@ -489,7 +471,7 @@ function make_hop_iwindow( id, klass, parent ) {
   <div class='hop-window-foot'>" + foot + "</div>\n\
 </div>";
 
-   win.innerHTML = hop_fx_make_shadow( 'hop-window-shadow', t );
+   win.innerHTML = hop_fx_make_shadow( t );
 
    if( parent ) {
       if( (parent instanceof String) || (typeof parent === "string") )
@@ -513,7 +495,6 @@ function make_hop_iwindow( id, klass, parent ) {
    win.el_title = document.getElementById( id + "-title" );
 
    win.el_shadow = win.childNodes[ 0 ];
-   win.el_shadow_box = document.getElementById( id + "-shadow-box" );
    win.resizable = true;
    win.iconifiedp = false;
    win.oniconify = false;

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-fx.js                         */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-fx.js                   */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May  4 16:34:59 2006                          */
-/*    Last change :  Tue Oct 30 06:47:28 2007 (serrano)                */
-/*    Copyright   :  2006-07 Manuel Serrano                            */
+/*    Last change :  Wed Jul  8 09:11:50 2009 (serrano)                */
+/*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP graphical effects library                                    */
 /*=====================================================================*/
@@ -42,9 +42,12 @@ function hop_fx_fade_background( obj, delay, step, colors ) {
 /*---------------------------------------------------------------------*/
 /*    hop_fx_make_shadow ...                                           */
 /*---------------------------------------------------------------------*/
-function hop_fx_make_shadow( cla, obj ) {
+function hop_fx_make_shadow( obj ) {
+   if( hop_config.css > 2.1 )
+      return obj;
+
    return "\n\
-<table class='" + cla + "' cellspacing='0' cellpadding='0' border='0'>\n\
+<table class='hop-fx-shadow' cellspacing='0' cellpadding='0' border='0'>\n\
   <tr>\n\
     <td class='hop-window-shadow-nw' rowspan='2' colspan='2'>\n" +
    (((obj instanceof String) || (typeof obj == "string")) ? obj : obj.innerHTML) +

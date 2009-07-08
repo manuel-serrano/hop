@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/weblets/test/window.hop          */
+;*    serrano/prgm/project/hop/2.0.x/weblets/test/window.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jul  7 08:33:34 2007                          */
-;*    Last change :  Mon Feb 16 09:52:07 2009 (serrano)                */
+;*    Last change :  Wed Jul  8 08:14:51 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing window                                                   */
@@ -20,8 +20,7 @@
 ;*    test/window ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-service (test/window)
-   (<TEST-HTML>
-      :include "hop-window"
+   (<TEST-HTML> :include `("hop-window" ,(service-resource test/window "window.hss"))
       :source (service-resource test/window "window.hop")
       (test-window-inner)))
 
@@ -57,10 +56,10 @@
       (<H2> "Inner windows")
       (<H3> "Plain inner window")
       (<BUTTON> "open" :onclick ~(window-open :src $test/window/inner
+				    :class "inner1"
 				    :width 300
 				    :height 200
 				    :top (- (event-mouse-y event) 150)
 				    :left (- (event-mouse-x event) 100)
 				    :parent document.body
-				    :background "#ccc"
 				    :title (format "inner window ~a" (gensym))))))
