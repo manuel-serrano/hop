@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Wed Jul  8 09:26:23 2009 (serrano)                */
+/*    Last change :  Thu Jul  9 07:10:26 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP WINDOW CSS                                                   */
@@ -17,7 +17,7 @@ $(module __hss-window)
 /*---------------------------------------------------------------------*/
 /*    HSS declarations                                                 */
 /*---------------------------------------------------------------------*/
-$(define-hss-type window "div.hop-window"
+$(define-hss-type window "div[hssclass=hop-window]"
 
    :body "div.hop-window-content"
 
@@ -50,7 +50,13 @@ $(define-hss-type window "div.hop-window"
    (define-hss-property (margin-bottom v)
       (format "div.hop-window-content { margin-bottom: ~a; }" (car v)))
    (define-hss-property (margin-left v)
-      (format "div.hop-window-content { margin-left: ~a; }" (car v))))
+      (format "div.hop-window-content { margin-left: ~a; }" (car v)))
+
+   (define-hss-property (box-shadow v)
+      (if (and (pair? v) (null? (cdr v)) (string=? (car v) "none"))
+          (list (format "table.hop-fx-shadow td.hop-shadow{ visibility: hidden; background-image: none; border: 0;}")
+                "box-shadow: none;")
+          (format "box-shadow: ~l;" v))))
 
 /*---------------------------------------------------------------------*/
 /*    url ...                                                          */
@@ -87,19 +93,19 @@ window {
 /*---------------------------------------------------------------------*/
 /*    main frame                                                       */
 /*---------------------------------------------------------------------*/
-div.hop-window {
+div[hssclass=hop-window] {
   position: absolute;
   background: none;
 }
 
-div.hop-window-inner {
+div[hssclass=hop-window]div.hop-window-inner {
   border: 1px solid black;
 }  
 
 /*---------------------------------------------------------------------*/
 /*    handle                                                           */
 /*---------------------------------------------------------------------*/
-div.hop-window div.hop-window-handle {
+div[hssclass=hop-window] div.hop-window-handle {
   position: absolute;
   height: 13px;
   top: 0;
@@ -107,7 +113,7 @@ div.hop-window div.hop-window-handle {
   right: 0;
 }
 
-div.hop-window table.hop-window-handle {
+div[hssclass=hop-window] table.hop-window-handle {
   border-left: 1px solid black;
   border-right: 1px solid black;
   border-top: 1px solid #555;
@@ -118,7 +124,7 @@ div.hop-window table.hop-window-handle {
   cursor: default;
 }
 
-div.hop-window td.hop-window-iconify {
+div[hssclass=hop-window] td.hop-window-iconify {
   background-image: $(url "icons/hop-window/icon.png");
   background-repeat: no-repeat;
   background-position: left;
@@ -127,7 +133,7 @@ div.hop-window td.hop-window-iconify {
   width: 13px;
 }
 
-div.hop-window td.hop-window-maximize {
+div[hssclass=hop-window] td.hop-window-maximize {
   background-image: $(url "icons/hop-window/maximize.png");
   background-repeat: no-repeat;
   background-position: left;
@@ -136,7 +142,7 @@ div.hop-window td.hop-window-maximize {
   width: 13px;
 }
 
-div.hop-window td.hop-window-close {
+div[hssclass=hop-window] td.hop-window-close {
   background-image: $(url "icons/hop-window/close.png");
   background-repeat: no-repeat;
   background-position: right;
@@ -146,18 +152,18 @@ div.hop-window td.hop-window-close {
 }
 
 /*--- The title -------------------------------------------------------*/
-div.hop-window td.hop-window-up-title {
+div[hssclass=hop-window] td.hop-window-up-title {
   vertical-align: middle;
 }
 
-div.hop-window td.hop-window-up-title table {
+div[hssclass=hop-window] td.hop-window-up-title table {
   font-size: 11px;
   font-weight: bold;
   font-family: arial;
   color: #ff9f1a;
 }
 
-div.hop-window td.hop-window-up-title td.hop-window-title-left {
+div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-left {
   background-image: $(url "icons/hop-window/title-left.png");
   background-repeat: no-repeat;
   background-position: left;
@@ -166,7 +172,7 @@ div.hop-window td.hop-window-up-title td.hop-window-title-left {
   width: 10px;
 }
 
-div.hop-window td.hop-window-up-title td.hop-window-title-middle {
+div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-middle {
   background-image: $(url "icons/hop-window/title.png");
   background-repeat: repeat;
   background-position: center;
@@ -174,7 +180,7 @@ div.hop-window td.hop-window-up-title td.hop-window-title-middle {
   text-align: center;
 }
 
-div.hop-window td.hop-window-up-title td.hop-window-title-right {
+div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-right {
   background-image: $(url "icons/hop-window/title-right.png");
   background-repeat: no-repeat;
   background-position: right;
@@ -186,7 +192,7 @@ div.hop-window td.hop-window-up-title td.hop-window-title-right {
 /*---------------------------------------------------------------------*/
 /*    content                                                          */
 /*---------------------------------------------------------------------*/
-div.hop-window div.hop-window-content {
+div[hssclass=hop-window] div.hop-window-content {
   position: absolute;
   top: 17px; 
   padding-top: 2px;
@@ -202,7 +208,7 @@ div.hop-window div.hop-window-content {
 /*---------------------------------------------------------------------*/
 /*    bottom line                                                      */
 /*---------------------------------------------------------------------*/
-div.hop-window div.hop-window-foot {
+div[hssclass=hop-window] div.hop-window-foot {
   position: absolute;
   height: 4px;
   bottom: 0px;
@@ -210,24 +216,24 @@ div.hop-window div.hop-window-foot {
   right: 0;
 }
 
-div.hop-window div.hop-window-foot table {
+div[hssclass=hop-window] div.hop-window-foot table {
   font-size: 2pt;
 }
 
-div.hop-window td.hop-window-bottom-left {
+div[hssclass=hop-window] td.hop-window-bottom-left {
   width: 25px;
   background-image: $(url "icons/hop-window/bottom-left.png" );
   background-repeat: no-repeat;
   cursor: sw-resize;
 }
 
-div.hop-window td.hop-window-bottom-middle {
+div[hssclass=hop-window] td.hop-window-bottom-middle {
   background-image: $(url "icons/hop-window/bottom-middle.png");
   background-repeat: repeat-x;
   cursor: s-resize;
 }
 
-div.hop-window td.hop-window-bottom-right {
+div[hssclass=hop-window] td.hop-window-bottom-right {
   width: 25px;
   background-image: $(url "icons/hop-window/bottom-right.png");
   background-repeat: no-repeat;
@@ -237,18 +243,16 @@ div.hop-window td.hop-window-bottom-right {
 /*---------------------------------------------------------------------*/
 /*    Shadow adjustements                                              */
 /*---------------------------------------------------------------------*/
-div.hop-window table.hop-fx-shadow div.hop-window-handle {
+div[hssclass=hop-window] table.hop-fx-shadow div.hop-window-handle {
   right: 8px;
 }
 
-div.hop-window table.hop-fx-shadow div.hop-window-content {
+div[hssclass=hop-window] table.hop-fx-shadow div.hop-window-content {
   bottom: 12px;
   right: 9px;
 }
 
-div.hop-window table.hop-fx-shadow div.hop-window-foot {
+div[hssclass=hop-window] table.hop-fx-shadow div.hop-window-foot {
   bottom: 8px;
   right: 8px;
 }
-
-

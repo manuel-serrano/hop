@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May  4 16:34:59 2006                          */
-/*    Last change :  Wed Jul  8 09:11:50 2009 (serrano)                */
+/*    Last change :  Thu Jul  9 07:03:28 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP graphical effects library                                    */
@@ -52,15 +52,15 @@ function hop_fx_make_shadow( obj ) {
     <td class='hop-window-shadow-nw' rowspan='2' colspan='2'>\n" +
    (((obj instanceof String) || (typeof obj == "string")) ? obj : obj.innerHTML) +
    "</td>\n\
-    <td class='hop-shadow-ne'>&#160;</td>\n\
+    <td class='hop-shadow hop-shadow-ne'>&#160;</td>\n\
   </tr>\n\
   <tr>\n\
-    <td class='hop-shadow-e'>&#160;</td>\n\
+    <td class='hop-shadow hop-shadow-e'>&#160;</td>\n\
   </tr>\n\
   <tr>\n\
-    <td class='hop-shadow-sw'>&#160;</td>\n\
-    <td class='hop-shadow-s'>&#160;</td>\n\
-    <td class='hop-shadow-se'>&#160;</td>\n\
+    <td class='hop-shadow hop-shadow-sw'>&#160;</td>\n\
+    <td class='hop-shadow hop-shadow-s'>&#160;</td>\n\
+    <td class='hop-shadow hop-shadow-se'>&#160;</td>\n\
   </tr>\n\
 </table>";
 }

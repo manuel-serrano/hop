@@ -3,15 +3,24 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jul  8 08:04:01 2009                          */
-/*    Last change :  Wed Jul  8 08:52:00 2009 (serrano)                */
+/*    Last change :  Thu Jul  9 06:58:59 2009 (serrano)                */
 /*    Copyright   :  2009 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hss for the window test                                          */
 /*=====================================================================*/
 
-window.inner1 {
+window {
   padding: 10px;
-  color: red;
   background: #eaf4dc;
+}
+
+window.shadow {
+  color: red;
   opacity: 0.8;
 }
+
+window.noshadow {
+  box-shadow: none;
+  color: blue;
+}
+

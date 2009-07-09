@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Wed Jul  8 09:24:15 2009 (serrano)                */
+/*    Last change :  Thu Jul  9 06:57:07 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -431,10 +431,10 @@ function hop_iwindow_evresize( event, win, widthp, heightp ) {
 /*---------------------------------------------------------------------*/
 function make_hop_iwindow( id, klass, parent ) {
    var win = document.createElement( "div" );
-   var cla = (klass == "hop-window" ? klass : "hop-window " + klass);
    win.id = id;
-   win.className = cla;
-   win.name = "hop-window";
+   if( klass ) win.className = klass;
+   
+   win.setAttribute( "hssclass", "hop-window" );
 
    var handle = "\
 <table id='" + id + "-handle' class='hop-window-handle' width='100%'\n\

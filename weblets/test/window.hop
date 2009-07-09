@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jul  7 08:33:34 2007                          */
-;*    Last change :  Wed Jul  8 08:14:51 2009 (serrano)                */
+;*    Last change :  Thu Jul  9 06:40:27 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing window                                                   */
@@ -55,11 +55,23 @@
 				    :resizable #t :titlebar #t))
       (<H2> "Inner windows")
       (<H3> "Plain inner window")
-      (<BUTTON> "open" :onclick ~(window-open :src $test/window/inner
-				    :class "inner1"
+      (<BUTTON> 
+	 :onclick ~(window-open :src $test/window/inner
+				    :class "shadow"
 				    :width 300
 				    :height 200
 				    :top (- (event-mouse-y event) 150)
 				    :left (- (event-mouse-x event) 100)
 				    :parent document.body
-				    :title (format "inner window ~a" (gensym))))))
+				    :title (format "inner window ~a" (gensym)))
+	 "inner shadowed window")
+      (<BUTTON> 
+	 :onclick ~(window-open :src $test/window/inner
+				    :class "noshadow"
+				    :width 300
+				    :height 200
+				    :top (- (event-mouse-y event) 150)
+				    :left (- (event-mouse-x event) 100)
+				    :parent document.body
+				    :title (format "inner window ~a" (gensym)))
+	 "inner no shadow window")))
