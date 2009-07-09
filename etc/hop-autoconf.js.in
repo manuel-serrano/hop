@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Mon Jun 29 14:57:58 2009 (serrano)                */
+/*    Last change :  Thu Jul  9 14:44:43 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -171,7 +171,7 @@ function hop_Config() {
      this.flash_audio = true;
      this.flash_markup = "embed";
      this.inline_image = true;
-     this.filtered_errors = ["javascript:top.location+\"__flashplugin_unique__\"" ];
+     this.filtered_errors = ["javascript:top.location+\"__flashplugin_unique__\"" "tipElement.ownerDocument is null"];
   } else {
      alert( "Unknown navigator (" + navigator.userAgent +
 	    "), using default settings..." );
