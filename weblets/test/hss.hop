@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Fri Jun 26 11:28:22 2009 (serrano)                */
+;*    Last change :  Thu Jul 16 11:52:12 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing hss                                                      */
@@ -26,7 +26,7 @@
 	 "This test checks HSS compilation and Label Frames.")
       (<LFRAME> :class "lframe-left" :style "margin-bottom: 2ex"
 	 (<LFLABEL> "foo")
-	 "An lframe with a left label.")
+	 "A lframe with a left label.")
       (<LFRAME> :class "lframe-center" :style "margin-bottom: 2ex"
 	 (<LFLABEL> "bar")
 	 "An lframe with a centered label and a large top margin.")
@@ -34,15 +34,6 @@
 	 (<LFLABEL> "gee")
 	 (<DIV> :style "font-weight: 200; font-size: 80%; padding: 4px"
 	    "An lframe with a right label, angular borders, and a small font."))
-      (<LFRAME> :class "lframe-sub" :style "margin-bottom: 2ex"
-	 (<LFLABEL> "hux")
-	 [This frame contains two paragraphs which are used to test
-pseudo css elements. That is, the HSS file used for this test uses pseudo
-elements such as ,(<TT> ":first-child"), ,(<TT> ":first-line"), and
-,(<TT> ":first-letter").]
-	 (<DIV> [This is the second paragraph. The HSS file also contains rules
-such as ,(<TT> "lframe > p") and ,(<TT> "lframe p"). This paragraph should
-have a orange (hsv(46,100,100)) dashed border.]))
       (<DIV> "This is a separation div that should have a red dotted border.")
       (let ((div (<DIV> "")))
 	 (list

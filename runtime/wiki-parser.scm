@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue Jun 23 14:23:37 2009 (serrano)                */
+;*    Last change :  Thu Jul 16 10:26:33 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -583,31 +583,38 @@
 
       ;; itemize/enumerate
       ((bol (: "  " (* " ") (in "*-")))
-       ;; this is a common mistake so we impose the paragraph ending.
-       (when (is-state? 'p) (pop-state!))
-       (let* ((s (the-html-substring (-fx (the-length) 1) (the-length)))
-	      (c (string-ref s 0))
-	      (val (the-length))
-	      (id (if (char=? c #\*) 'ul 'ol))
-	      (st (in-state (lambda (s n)
-			       (with-access::state s (markup value)
-				  (and (eq? markup 'li)
-				       (=fx value val)
-				       (eq? (state-markup (car n)) id)))))))
-	  (if st
-	      (unwind-state! st)
-	      (let ((st (in-bottom-up-state
-			 (lambda (s n)
-			    (when (pair? n)
-			       (with-access::state (car n) (markup value)
-				  (when (and (eq? markup 'li)
-					     (>=fx value val))
-				     s)))))))
-		 (when st (unwind-state! st))
-		 (if (char=? c #\*)
-		     (enter-block! id (wiki-syntax-ul syn) #f #f)
-		     (enter-block! id (wiki-syntax-ol syn) #f #f))))
-	  (enter-block! 'li (wiki-syntax-li syn) val #t))
+       ;; if we are in a pre, just add the entire line
+       (if (is-state? 'pre)
+	   (begin
+	      (add-expr! (the-html-substring 2 (the-length)))
+	      (add-expr! (html-string-encode (read-line (the-port))))
+	      (add-expr! "\n"))
+ 	   (begin
+              ;; this is a common mistake so we impose the paragraph ending.
+	      (when (is-state? 'p) (pop-state!))
+	      (let* ((s (the-html-substring (-fx (the-length) 1) (the-length)))
+		     (c (string-ref s 0))
+		     (val (the-length))
+		     (id (if (char=? c #\*) 'ul 'ol))
+		     (st (in-state (lambda (s n)
+				      (with-access::state s (markup value)
+					 (and (eq? markup 'li)
+					      (=fx value val)
+					      (eq? (state-markup (car n)) id)))))))
+		 (if st
+		     (unwind-state! st)
+		     (let ((st (in-bottom-up-state
+				(lambda (s n)
+				   (when (pair? n)
+				      (with-access::state (car n) (markup value)
+					 (when (and (eq? markup 'li)
+						    (>=fx value val))
+					    s)))))))
+			(when st (unwind-state! st))
+			(if (char=? c #\*)
+			    (enter-block! id (wiki-syntax-ul syn) #f #f)
+			    (enter-block! id (wiki-syntax-ol syn) #f #f))))
+		 (enter-block! 'li (wiki-syntax-li syn) val #t))))
        (ignore))
 
       ;; comments

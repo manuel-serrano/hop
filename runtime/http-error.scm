@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Jun 24 17:09:10 2009 (serrano)                */
+;*    Last change :  Wed Jul 15 17:00:20 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -170,7 +170,7 @@
 (define (<ETABLE> . args)
    (apply <TABLE>
 	  :class "error"
-	  :style "width: 50em; border: 1px solid #bbb; background: #fff; -moz-border-radius: 0.5em"
+	  :style "width: 50em; border: 1px solid #bbb; background: #fff; -moz-border-radius: 0.5em; border-radius: 0.5em"
 	  (<COLGROUP> (<COL> :width "0*"))
 	  args))
 
