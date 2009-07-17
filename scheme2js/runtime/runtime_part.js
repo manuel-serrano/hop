@@ -2149,6 +2149,12 @@ function sc_makeHashtable() {
     return new sc_Hashtable();
 }
 
+/*** META ((export #t) (arity #t)
+           (type bool)) */
+function sc_isHashtable(o) {
+    return o instanceof sc_Hashtable;
+}
+
 /*** META ((export #t) (arity #t)) */
 function sc_hashtablePutBang(ht, key, val) {
     var hash = sc_hash(key);
