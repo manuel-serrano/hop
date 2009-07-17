@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Jun 26 07:22:00 2009 (serrano)                */
+;*    Last change :  Fri Jul 17 15:53:38 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -131,6 +131,18 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 			   (append (hop-runtime-system-files)
 				   (list "hop-exception.scm")))))
 	 ;; this is used for inlined headers
+	 (<LINK> :inline #t
+			 :rel "stylesheet"
+			 :type (hop-configure-css-mime-type) 
+			 :href hopcss)
+	 (<HOP-SETUP>)
+	 (map (lambda (f)
+			      (let ((p (make-file-name (hop-share-directory) f)))
+				 (<SCRIPT> :inline #t
+				    :type (hop-configure-javascript-mime-type)
+				    :src p)))
+			   (append (hop-runtime-system)
+				   (list "hop-exception.scm")))
 	 (set! head-runtime-system-inline
 	       (cons* (<LINK> :inline #t
 			 :rel "stylesheet"

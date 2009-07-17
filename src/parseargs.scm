@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Jun 20 09:02:34 2009 (serrano)                */
+;*    Last change :  Fri Jul 17 16:00:32 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -276,30 +276,18 @@
       (when autoloadp (install-autoload-weblets! (hop-autoload-directories)))
       
       (for-each (lambda (l) (eval `(library-load ',l))) libraries)
-      
-      (for-each (lambda (f)
-		   (let ((path (cond
-				  ((string-index f ":")
-				   f)
-				  ((and (>fx (string-length f) 0)
-					(char=? (string-ref f 0)
-						(file-separator)))
-				   f)
-				  (else
-				   (file-name-canonicalize!
-				    (make-file-name (pwd) f))))))
-		      (cond
-			 ((string-suffix? ".hz" path)
-			  ;; this is a weblet
-			  (hop-load-hz path))
-			 ((directory? path)
-			  ;; load a directory
-			  (let ((src (string-append (basename path) ".hop")))
-			     (hop-load-weblet (make-file-name path src))))
-			 (else
-			  ;; this is a plain file
-			  (hop-load-weblet path)))))
-		(reverse! files))
+
+      (when (pair? files)
+	 (let ((req (instantiate::http-server-request
+		       (host "localhost")
+		       (port (hop-port))
+		       (user (anonymous-user)))))
+	    ;; set a dummy request
+	    (thread-request-set! #unspecified req)
+	    ;; preload the user files
+	    (for-each load-weblet (reverse! files))
+	    ;; unset the dummy request
+	    (thread-request-set! #unspecified #unspecified)))
 
       ;; write the process key
       (hop-process-key-write (hop-process-key) (hop-port))
@@ -307,8 +295,33 @@
 				  (hop-process-key-delete (hop-port))
 				  ret))
       
-      (reverse! files)))
+      #unspecified))
 
+;*---------------------------------------------------------------------*/
+;*    load-weblet ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (load-weblet f)
+   (let ((path (cond
+		  ((string-index f ":")
+		   f)
+		  ((and (>fx (string-length f) 0)
+			(char=? (string-ref f 0) (file-separator)))
+		   f)
+		  (else
+		   (file-name-canonicalize!
+		    (make-file-name (pwd) f))))))
+      (cond
+	 ((string-suffix? ".hz" path)
+	  ;; this is a weblet
+	  (hop-load-hz path))
+	 ((directory? path)
+	  ;; load a directory
+	  (let ((src (string-append (basename path) ".hop")))
+	     (hop-load-weblet (make-file-name path src))))
+	 (else
+	  ;; this is a plain file
+	  (hop-load-weblet path)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    usage ...                                                        */
 ;*---------------------------------------------------------------------*/
