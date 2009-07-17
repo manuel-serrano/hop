@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Mon Jun 29 14:57:58 2009 (serrano)                */
+/*    Last change :  Thu Jul  9 14:44:43 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -100,13 +100,14 @@ function hop_Config() {
   /* flash version */
   this.flash_version = hop_get_flash_version();
 
-  /* default navigator setting (firefox settings) */
+  /* default navigator setting */
   this.mouse_left_button = 0;
   this.flash_external_interface = false;
   this.flash_audio = false;
   this.flash_markup = "embed";
   this.inline_image = false;
   this.filtered_errors = [];
+  this.css = 2.1;
 
   /* navigator specific configuration */
   if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {
@@ -144,6 +145,7 @@ function hop_Config() {
      this.flash_audio = false;
      this.flash_markup = "embed";
      this.inline_image = true;
+     this.css = 3;
   } else if( navigator.userAgent.indexOf( "KHTML" ) >= 0 ) {
      this.navigator_family = "khtml";
      this.mouse_left_button = 1;
@@ -152,14 +154,24 @@ function hop_Config() {
      this.flash_markup = "embed";
      this.inline_image = true;
   } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
-     this.js_speed = 60;
+     if( navigator.userAgent.match( /3.5[^ ]*$/ ) ) {
+        /* Firefox 3.5 */
+        this.js_speed = 75;	    
+        this.css = 3;
+     } else if( navigator.userAgent.match( /3.0[^ ]*$/ ) ) {
+        /* Firefox 3.0, 3.1 */
+        this.js_speed = 60;	    
+     } else {
+        this.js_speed = 50;
+     }
+
      this.navigator_family = "mozilla";
      this.mouse_left_button = 0;
      this.flash_external_interface = true;
      this.flash_audio = true;
      this.flash_markup = "embed";
      this.inline_image = true;
-     this.filtered_errors = ["javascript:top.location+\"__flashplugin_unique__\"" ];
+     this.filtered_errors = ["javascript:top.location+\"__flashplugin_unique__\"", "tipElement.ownerDocument is null"];
   } else {
      alert( "Unknown navigator (" + navigator.userAgent +
 	    "), using default settings..." );

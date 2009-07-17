@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 14 11:31:04 2009                          */
-;*    Last change :  Mon Jun 22 10:23:28 2009 (serrano)                */
+;*    Last change :  Wed Jul  8 10:11:32 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client side support for color selectors.                         */
@@ -651,11 +651,11 @@
 	     (apply update-rgb! cc
 		    (map (lambda (i) (string->number i 16))
 			 (cdr m)))))
-	 ((pregexp-match "rgb([ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*)" val)
+	 ((pregexp-match "rgb[(][ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*[)]" val)
 	  =>
 	  (lambda (m)
 	     (apply update-rgb! cc (map string->number (cdr m)))))
-	 ((pregexp-match "rgb([ ]*([0-9]+)%[ ]*,[ ]*([0-9]+)%[ ]*,[ ]*([0-9]+)%[ ]*)" val)
+	 ((pregexp-match "rgb[(][ ]*([0-9]+)%[ ]*,[ ]*([0-9]+)%[ ]*,[ ]*([0-9]+)%[ ]*[)]" val)
 	  =>
 	  (lambda (m)
 	     (apply update-rgb! cc

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Sun Apr 19 06:29:45 2009 (serrano)                */
+;*    Last change :  Sat Jul  4 06:56:07 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -270,24 +270,27 @@
 (define (scheduler-error-handler e t)
    (with-access::hopthread t (onerror error-args-length error-args)
       (if (procedure? onerror)
-	  (with-handler
-	     scheduler-default-handler
-	     (case error-args-length
-		((0)
-		 (onerror e))
-		((1)
-		 (onerror e (vector-ref error-args 0)))
-		((2)
-		 (onerror e
-			  (vector-ref error-args 0)
-			  (vector-ref error-args 1)))
-		((3)
-		 (onerror e
-			  (vector-ref error-args 0)
-			  (vector-ref error-args 1)
-			  (vector-ref error-args 2)))
-		(else
-		 (onerror e))))
+	  (let ((onerr onerror))
+	     (set! onerror #f)
+	     (with-handler
+		scheduler-default-handler
+		(case error-args-length
+		   ((0)
+		    (onerr e))
+		   ((1)
+		    (onerr e
+			   (vector-ref error-args 0)))
+		   ((2)
+		    (onerr e
+			   (vector-ref error-args 0)
+			   (vector-ref error-args 1)))
+		   ((3)
+		    (onerr e
+			   (vector-ref error-args 0)
+			   (vector-ref error-args 1)
+			   (vector-ref error-args 2)))
+		   (else
+		    (onerr e)))))
 	  (scheduler-default-handler e))))
 
 ;*---------------------------------------------------------------------*/

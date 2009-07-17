@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 10 06:46:43 2007                          */
-;*    Last change :  Thu Apr 23 09:21:35 2009 (serrano)                */
+;*    Last change :  Wed Jul 15 10:40:24 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with charset.                              */
@@ -105,7 +105,9 @@
 		 (else
 		  (lambda (x) x))))	  
 	     (else
-	      (lambda (x) x))))))
+	      (if (eq? cset2 'UTF-8)
+		  8859->utf8
+		  (lambda (x) x)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    charset-converter ...                                            */

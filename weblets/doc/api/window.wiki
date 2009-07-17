@@ -271,7 +271,7 @@ The file ++hop-window.hss++ contains the default graphical configuration.
 It is defined as:
 
 ~~
-<share>hop-window.hss</share>
+<share-public>hop-window.hss</share-public>
 </style>
 
 == See also ==

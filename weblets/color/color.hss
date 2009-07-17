@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Jun 26 14:27:42 2009 (serrano)                */
+/*    Last change :  Thu Jul 16 10:39:17 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    COLOR's CSS                                                      */
@@ -57,7 +57,7 @@ td#title {
   padding-bottom: 1px;
 }
 
-table.main td {
+table.main td.main {
   vertical-align: top;
 }
   

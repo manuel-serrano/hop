@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Jun 26 11:30:11 2009 (serrano)                */
+/*    Last change :  Thu Jul 16 11:52:39 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for the HSS TEST                                             */
@@ -11,6 +11,9 @@
 
 lframe.lframe-left {
   -hop-label-align: left;
+}
+
+lframe.lframe-left lflabel {
   color: red;
 }
 
@@ -24,28 +27,4 @@ lframe.lframe-right {
   -hop-label-border-radius: 0;
   -hop-label-border: 2px ridge green;
   font-weight: bold;
-}
-
-lframe.lframe-sub:first-child {
-  font-style: italic;
-}
-
-lframe.lframe-sub:first-line {
-  color: blue;
-}
-
-lframe.lframe-sub:first-letter {
-  font-weight: bold;
-  font-size: 120%;
-}
-
-lframe.lframe-sub + div {
-  border: 1px dotted red;
-  margin-bottom: 2ex;
-}
-
-lframe.lframe-sub > div {
-  border: 1px dashed hsv(46,100,100);
-  margin-top: 1ex;
-  margin-bottom: 1ex;
 }

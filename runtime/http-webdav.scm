@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/http-webdav.scm          */
+;*    serrano/prgm/project/hop/2.0.x/runtime/http-webdav.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Wed Oct 15 12:36:50 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Thu Jul 16 13:56:14 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
 ;*    This module implements a WebDAV server as specified              */
@@ -29,7 +29,8 @@
 	    __hop_user
 	    __hop_misc
             __hop_xml
-	    __hop_http-error)
+	    __hop_http-error
+	    __hop_priv)
 
    (export  (webdav-propfind ::http-request)
 	    (webdav-proppatch ::http-request)
@@ -68,12 +69,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    webdav elements                                                  */
 ;*---------------------------------------------------------------------*/
-(define-xml xml-webdav #t <DAV> :attributes ((xmlns . "DAV:")))
-
+(define-xml xml-webdav #t <DAV> :attributes (:xmlns "DAV:"))
+ 
 (define-xmldav <DAV:MULTISTATUS> :markup D:multistatus
-   :attributes ((xmlns:D . "DAV:")))
+   :attributes (:xmlns:D "DAV:"))
 (define-xmldav <DAV:RESPONSE> :markup D:response
-   :attributes ((xmlns:D . "DAV:")))
+   :attributes (:xmlns:D "DAV:"))
 (define-xmldav <DAV:PROPSTAT> :markup D:propstat)
 (define-xmldav <DAV:PROP> :markup D:prop)
 (define-xmldav <DAV:RESOURCETYPE> :markup D:resourcetype)
@@ -200,9 +201,9 @@
 		       ((creationdate)
 			<CREATIONDATE>)
 		       (else
-			(let ((xmlns (assq 'xmlns attrs)))
+			(let ((xmlns (plist-assq 'xmlns attrs)))
 			   (when (and (pair? xmlns)
-				      (string=? (cdr xmlns) "DAV:"))
+				      (string=? (cadr xmlns) "DAV:"))
 			      (instantiate::xml-element
 				 (markup (symbol-append '|D:| m))
 				 (id (symbol->string (gensym)))

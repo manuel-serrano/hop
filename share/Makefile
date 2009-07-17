@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Tue Jun 23 05:54:18 2009 (serrano)                */
+#*    Last change :  Wed Jul  8 08:48:42 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -30,7 +30,8 @@ FLASHOPT	= player.swf swfobject.js
 
 RTS		= $(RTSCONFIG)
 
-EXTRA		= hop-fx.js hop-error.hss hop.css \
+EXTRA		= hop-error.hss hop.css \
+                  hop-fx.js hop-fx.hss \
                   hop-paned.hss hop-paned.js \
                   hop-sorttable.hss hop-sorttable.js \
                   md5.js sha1.js aes.js \
@@ -63,10 +64,13 @@ ICONS_PANED	= hcursor.png vcursor.png
 
 ICONS_SLIDER	= cursor.png
 
-ICONS_WINDOW	= bottom-left.png close.png shadow-e.png shadow-se.png \
-                  title-left.png bottom-middle.png icon.png shadow-ne.png \
-                  shadow-sw.png title.png bottom-right.png maximize.png \
-                  shadow-s.png title-right.png
+ICONS_WINDOW	= bottom-left.png close.png \
+                  title-left.png bottom-middle.png icon.png \
+                  title.png bottom-right.png maximize.png \
+                  title-right.png
+
+ICONS_FX	= shadow-e.png shadow-se.png shadow-ne.png \
+                  shadow-sw.png shadow-s.png
 
 ICONS_TREE	= device.png folder-close.png joinbottom.png plus.png \
 		  empty.png folder-open.png minus.png plusbottom.png \
@@ -98,6 +102,7 @@ ICONS		= important.png shadow-se.png \
                   $(ICONS_PANED:%=hop-paned/%) \
                   $(ICONS_SLIDER:%=hop-slider/%) \
                   $(ICONS_WINDOW:%=hop-window/%) \
+                  $(ICONS_FX:%=hop-fx/%) \
                   $(ICONS_TREE:%=hop-tree/%) \
                   $(ICONS_FOLDLIST:%=hop-foldlist/%) \
                   $(ICONS_LOGIN:%=hop-login/%) \

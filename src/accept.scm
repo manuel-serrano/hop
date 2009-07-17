@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Wed Apr 29 14:07:40 2009 (serrano)                */
+;*    Last change :  Sat Jul  4 07:00:50 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -150,6 +150,19 @@
 		(set! idcount v)
 		(mutex-unlock! idmutex)
 		v))))
+
+   (define (scheduler-load-add! scd inc)
+      (mutex-lock! (pool-scheduler-mutex scd))
+      (with-access::pool-scheduler scd (naccept)
+	 (set! naccept (+fx naccept inc)))
+      (mutex-unlock! (pool-scheduler-mutex scd)))
+
+   (define (accept-error-handler e scd)
+      (hop-verb 2 (hop-color -1 -1 " CONNECTION FAILED"))
+      (hop-verb 2 ": " (&error-obj e) "\n")
+      (scheduler-load-add! scd -1)
+      (exception-notify e)
+      (raise (instantiate::&ignore-exception)))
    
    (define (connect-stage scd thread)
       ;; We need to install our own handler (in addition to the one
@@ -158,28 +171,26 @@
       (with-handler
 	 (make-scheduler-error-handler thread)
 	 (let loop ()
-	    (with-access::pool-scheduler scd (naccept)
-	       (mutex-lock! (pool-scheduler-mutex scd))
-	       (set! naccept (+fx naccept 1))
-	       (mutex-unlock! (pool-scheduler-mutex scd)))
-	    (let* ((sock (socket-accept serv
-					:inbuf (hopthread-inbuf thread)
-					:outbuf (hopthread-outbuf thread)))
-		   (id  (get-next-id))
-		   (fbuf (hopthread-flushbuf thread)))
-	       (output-port-flush-buffer-set! (socket-output sock) fbuf)
-	       (with-access::pool-scheduler scd (naccept)
-		  (mutex-lock! (pool-scheduler-mutex scd))
-		  (set! naccept (-fx naccept 1))
-		  (mutex-unlock! (pool-scheduler-mutex scd)))
-	       (hop-verb 2 (hop-color id id " ACCEPT")
-			 (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
-			 ": " (socket-hostname sock) " [" (current-date) "]\n")
-	       ;; tune the socket
-	       (tune-socket! sock)
-	       ;; process the request
-	       (stage scd thread stage-request id sock 'connect (hop-read-timeout))
-	       (loop))))
+	    (scheduler-load-add! scd 1)
+	    (with-stage-handler
+	       accept-error-handler (scd)
+	       (let* ((sock (socket-accept serv
+					   :inbuf (hopthread-inbuf thread)
+					   :outbuf (hopthread-outbuf thread)))
+		      (id  (get-next-id))
+		      (fbuf (hopthread-flushbuf thread)))
+		  (scheduler-load-add! scd -1)
+		  (output-port-flush-buffer-set! (socket-output sock) fbuf)
+		  (hop-verb 2 (hop-color id id " ACCEPT")
+			    (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
+			    ": " (socket-hostname sock)
+			    " [" (current-date) "]\n")
+		  ;; tune the socket
+		  (tune-socket! sock)
+		  ;; process the request
+		  (stage scd thread stage-request id sock 'connect (hop-read-timeout))
+		  ;; go back to the accept stage
+		  (loop)))))
       (connect-stage scd thread))
    
    (let loop ((i nbthreads))
@@ -238,19 +249,21 @@
 (define-method (scheduler-accept-loop scd::nothread-scheduler serv::socket w)
    (letrec ((thread (nothread-scheduler-get-fake-thread
 		     (lambda ()
-			(with-handler
-			   (make-scheduler-error-handler thread)
-			   (let loop ((id 1))
-			      (let ((s (socket-accept
-					serv
-					:inbuf (hopthread-inbuf thread)
-					:outbuf (hopthread-outbuf thread))))
-				 ;; tune the socket
-				 (tune-socket! s)
-				 ;; process the request
-				 (spawn scd stage-request id s
-					'connect (hop-read-timeout))
-				 (loop (+fx id 1)))))))))
+			(let loop ()
+			   (with-handler
+			      (make-scheduler-error-handler thread)
+			      (let loop ((id 1))
+				 (let ((s (socket-accept
+					   serv
+					   :inbuf (hopthread-inbuf thread)
+					   :outbuf (hopthread-outbuf thread))))
+				    ;; tune the socket
+				    (tune-socket! s)
+				    ;; process the request
+				    (spawn scd stage-request id s
+					   'connect (hop-read-timeout))
+				    (loop (+fx id 1)))))
+			   (loop))))))
       (if w
 	  (thread-join! (thread-start-joinable! thread))
 	  (thread-start! thread))))

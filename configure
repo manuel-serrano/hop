@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Jul  2 17:43:26 2009 (serrano)                */
+#*    Last change :  Thu Jul  9 15:11:18 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -67,7 +67,8 @@ etcdir=$prefix/etc
 bindir=$prefix/bin
 libdir=$prefix/lib
 sharedir=$prefix/share/hop
-mandir=$prefix/man/man1
+mansec=man1
+mandir=$prefix/man/$mansec
 webletsdir=
 contribsdir=$prefix/share/hop/contribs
 buildlibdir=$PWD/lib
@@ -116,7 +117,7 @@ while : ; do
       bindir=$prefix/bin;
       libdir=$prefix/lib;
       sharedir=$prefix/share/hop;
-      mandir=$prefix/man/man1;
+      mandir=$prefix/man/$mansec;
       etcdir=$prefix/etc;
       contribsdir=$prefix/share/hop/contribs;;
 
@@ -133,7 +134,7 @@ while : ; do
       sharedir="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --mandir=*)
-      mandir="`echo $1 | sed 's/^[^=]*=//'`";;
+      mandir="`echo $1 | sed 's/^[^=]*=//'`"/$mansec;;
 
     --webletsdir=*)
       webletsdir="`echo $1 | sed 's/^[^=]*=//'`";;

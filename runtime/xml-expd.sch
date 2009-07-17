@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Tue Jun 16 15:07:54 2009 (serrano)                */
+;*    Last change :  Thu Jul 16 14:10:07 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -43,7 +43,7 @@
 (define (define-xml-constructor-with-id type name attr el exp)
    `(define (,name . args)
        (let loop ((args args)
-		  (attr ',attr)
+		  (attr ',(reverse attr))
 		  (body '())
 		  (id   #unspecified))
 	  (cond
@@ -52,7 +52,7 @@
 		   `(,(symbol-append 'instantiate:: type)
 		     (markup ',el)
 		     (id (xml-make-id id ',el))
-		     (attributes (reverse! attr))
+		     (attributes (reverse attr))
 		     (body (reverse! body)))
 		   `(begin ,@exp)))
 	     ((keyword? (car args))

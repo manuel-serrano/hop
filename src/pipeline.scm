@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Wed Apr 29 14:18:50 2009 (serrano)                */
+;*    Last change :  Sat Jul  4 07:01:12 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -209,25 +209,26 @@
 ;*    response-error-handler ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (response-error-handler e scd req)
-   (with-handler
-      (lambda (e)
-	 ;; there is nothing we can do but aborting the request
-	 (socket-close (http-request-socket req))
-	 (raise (instantiate::&ignore-exception)))
-      (begin
-	 ;; when the error is a response, we transmit it to the next stage
-	 (cond
-	    ((&io-sigpipe-error? e)
-	     (response-sigpipe-error-handler e scd req))
-	    ((&exception? e)
-	     (response-exception-error-handler e scd req))
-	    (else
-	     (raise e))))))
+   ;; when the error is a response, we transmit it to the next stage
+   (cond
+      ((&io-error? e)
+       (response-io-error-handler e scd req)
+       (raise e))
+      ((&exception? e)
+       (with-handler
+	  (lambda (e)
+	     ;; there is nothing we can do but aborting the request
+	     (socket-close (http-request-socket req))
+	     (raise (instantiate::&ignore-exception)))
+	  (response-exception-error-handler e scd req)))
+      (else
+       (socket-close (http-request-socket req))
+       (raise e))))
 
 ;*---------------------------------------------------------------------*/
-;*    response-sigpipe-error-handler ...                               */
+;*    response-io-error-handler ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (response-sigpipe-error-handler e scd req)
+(define (response-io-error-handler e scd req)
    ;; signal the error
    (hop-verb 2 (hop-color req req " INTERRUPTED"))
    (hop-verb 2 ": " (&error-obj e) "\n")
@@ -300,18 +301,18 @@
 ;*    stage-static-answer ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (stage-static-answer scd thread id req resp)
-   (stage-answer scd thread id req resp))
+   (stage-exec scd thread id req resp))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-dynamic-answer ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (stage-dynamic-answer scd thread id req resp)
-   (stage-answer scd thread id req resp))
+   (stage-exec scd thread id req resp))
 
 ;*---------------------------------------------------------------------*/
-;*    stage-answer-verb ...                                            */
+;*    stage-exec-verb ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (stage-answer-verb scd thread req resp connection mode)
+(define (stage-exec-verb scd thread req resp connection mode)
    (hop-verb 3 (hop-color req req mode)
 	     (format " ~a" thread)
 	     " load=" (scheduler-load scd)
@@ -326,9 +327,9 @@
 	     "\n"))
 
 ;*---------------------------------------------------------------------*/
-;*    stage-answer ...                                                 */
+;*    stage-exec ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (stage-answer scd thread id req resp)
+(define (stage-exec scd thread id req resp)
    (current-request-set! thread req)
    ;; log
    (hop-verb 3 (hop-color req req " EXEC")
@@ -355,7 +356,7 @@
 	 (case connection
 	    ((persistent)
 	     (when (>=fx (hop-verbose) 3)
-		(stage-answer-verb scd thread req resp connection
+		(stage-exec-verb scd thread req resp connection
 				   " PERSISTENT"))
 	     #unspecified)
 	    ((keep-alive)
@@ -364,22 +365,22 @@
 		   ((or (>=fx (keep-alive) (hop-keep-alive-threshold))
 			(=fx load 100))
 		    (when (>=fx (hop-verbose) 3)
-		       (stage-answer-verb scd thread req resp connection
+		       (stage-exec-verb scd thread req resp connection
 					  " END"))
 		    (socket-close sock))
 		   ((>=fx load 80)
 		    (when (>=fx (hop-verbose) 3)
-		       (stage-answer-verb scd thread req resp connection
+		       (stage-exec-verb scd thread req resp connection
 					  " KEEP-ALIVE"))
 		    (keep-alive++)
 		    (stage scd thread stage-request id sock 'keep-alive 1))
 		   (else
 		    (when (>=fx (hop-verbose) 3)
-		       (stage-answer-verb scd thread req resp connection
+		       (stage-exec-verb scd thread req resp connection
 					  " KEEP-ALIVE"))
 		    (keep-alive++)
 		    (stage scd thread stage-request id sock 'keep-alive (hop-keep-alive-timeout))))))
 	    (else
 	     (when (>=fx (hop-verbose) 3)
-		(stage-answer-verb scd thread req resp connection " END"))
+		(stage-exec-verb scd thread req resp connection " END"))
 	     (socket-close sock))))))
