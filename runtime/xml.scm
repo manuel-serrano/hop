@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Jun 29 10:22:39 2009 (serrano)                */
+;*    Last change :  Mon Jul 20 11:53:42 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -495,13 +495,13 @@
 (define-method (xml-write obj::xml-tilde p backend)
    (with-access::xml-tilde obj (body parent)
       (if (and (xml-markup? parent) (eq? (xml-markup-markup parent) 'script))
-	  (xml-write ((clientc-JS-statement (hop-clientc)) body) p backend)
+	  (xml-write (xml-tilde->statement obj) p backend)
 	  (with-access::xml-backend backend (cdata-start cdata-stop)
 	     (display "<script type='" p)
 	     (display (hop-javascript-mime-type) p)
 	     (display "'>" p)
 	     (when cdata-start (display cdata-start p))
-	     (xml-write ((clientc-JS-statement (hop-clientc)) body) p backend)
+	     (xml-write (xml-tilde->statement obj) p backend)
 	     (when cdata-stop (display cdata-stop p))
 	     (display "</script>\n" p)))))
       

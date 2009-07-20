@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Jun 20 08:51:07 2009 (serrano)                */
+;*    Last change :  Mon Jul 20 11:44:42 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -339,6 +339,7 @@
 			    ((%http-response? b)
 			     (return b))
 			    ((xml-tilde? b)
+			     (tprint "b=" (find-runtime-type b))
 			     (return
 			      (instantiate::http-response-js
 				 (start-line "HTTP/1.0 501 Internal Server Error")

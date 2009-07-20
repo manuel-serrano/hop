@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Jun 24 14:51:54 2009 (serrano)                */
+;*    Last change :  Mon Jul 20 11:40:02 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -378,7 +378,10 @@
 			  #f)
 			 ((or (authorized-service? req wid)
 			      (authorized-service? req id))
-			  (scheme->response (service-handler svc req) req))
+			  (let ((v (service-handler svc req)))
+			  (tprint "WID=" wid " ID=" id " v=" (find-runtime-type v))
+			  #;(scheme->response (service-handler svc req) req)
+			  (scheme->response v req)))
 			 (else
 			  (user-service-denied req user id)))))
 		  (else
