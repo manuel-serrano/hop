@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-history.js                    */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-history.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:59:42 2007                          */
-/*    Last change :  Mon Oct 29 14:40:03 2007 (serrano)                */
-/*    Copyright   :  2007 Manuel Serrano                               */
+/*    Last change :  Fri Jul 24 17:52:41 2009 (serrano)                */
+/*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP history manager.                                             */
 /*=====================================================================*/
@@ -14,6 +14,7 @@
 /*---------------------------------------------------------------------*/
 var hop_current_state_history = undefined;
 var hop_state_history_handler = {};
+var hop_location_event_initp = false;
 
 /*---------------------------------------------------------------------*/
 /*    hop_state_history_register_handler ...                           */
@@ -391,7 +392,10 @@ function hop_history_add( history, id, val ) {
 /*    Install the location event listener                              */
 /*---------------------------------------------------------------------*/
 if( hop_enable_location_event ) {
-   hop_window_onload_add( function( e ) {
-      hop_add_event_listener( document, "location", hop_eval_history_state );
-   } );
+   if( !hop_location_event_initp ) {
+      hop_location_event_initp = true;
+      hop_window_onload_add( function( e ) {
+	hop_add_event_listener( document, "location", hop_eval_history_state );
+      } );
+   }
 }
