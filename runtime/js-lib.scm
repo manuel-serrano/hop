@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Tue Jun 30 05:47:56 2009 (serrano)                */
+;*    Last change :  Mon Jul 20 11:49:42 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -245,7 +245,7 @@
 ;*    hop->json ::xml-tilde ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->json obj::xml-tilde isrep isflash)
-   (xml-tilde->statement obj))
+   (xml-tilde->expression obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ...                                                    */

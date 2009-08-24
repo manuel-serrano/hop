@@ -80,7 +80,9 @@
        ".call(this)")))
 
 (define (JS-statement t)
-   (cdr t))
+   (if (>fx (bigloo-debug) 0)
+       (string-append "{ " (cdr t) "\n undefined; }" )
+       (cdr t)))
 
 (define (JS-return t)
    (let* ((assig-var (car t))

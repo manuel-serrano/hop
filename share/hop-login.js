@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.11.x/share/hop-login.js               */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-login.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Mar  9 16:20:17 2008                          */
-/*    Last change :  Mon Mar  9 17:32:58 2009 (serrano)                */
+/*    Last change :  Mon Jul 20 10:30:05 2009 (serrano)                */
 /*    Copyright   :  2008-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop login panel                                                  */

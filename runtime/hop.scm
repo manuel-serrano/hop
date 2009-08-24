@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sat Jun 20 08:49:44 2009 (serrano)                */
+;*    Last change :  Mon Jul 20 08:23:24 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -248,6 +248,14 @@
 (define hop-to-hop-id -1)
 
 ;*---------------------------------------------------------------------*/
+;*    scheme-default-port ...                                          */
+;*---------------------------------------------------------------------*/
+(define (scheme-default-port scheme)
+   (case scheme
+      ((https) 443)
+      (else 80)))
+   
+;*---------------------------------------------------------------------*/
 ;*    with-url  ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (with-url url success #!key fail (header '()) (timeout 0))
@@ -287,13 +295,14 @@
 				      (msg "Cannot open url")
 				      (obj url)))))))
 		(else
-		 (let* ((r (instantiate::http-server-request
+		 (let* ((s (string->symbol scheme))
+			(r (instantiate::http-server-request
 			      (user (anonymous-user))
-			      (scheme (string->symbol scheme))
+			      (scheme s)
 			      (id hop-to-hop-id)
 			      (userinfo userinfo)
 			      (host (or host path))
-			      (port (or port 80))
+			      (port (or port (scheme-default-port s)))
 			      (header header)
 			      (timeout timeout)
 			      (path (if host path "/"))))
