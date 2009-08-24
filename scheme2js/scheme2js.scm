@@ -52,7 +52,14 @@
 				   out-file::bstring
 				   module-headers::pair-nil
 				   configuration
-				   #!key (reader read))))
+				   #!key (reader read))
+	   (precompile-imported-module-file name::symbol file::bstring
+					    reader::procedure
+					    configuration
+					    #!key
+					    (bigloo-modules? #t)
+					    (store-exports-in-ht? #f)
+					    (store-exported-macros-in-ht? #f))))
 
 (define-macro (pass name . Lrest)
    `(begin
@@ -171,4 +178,23 @@
 		     (unwind-protect
 			(scheme2js module out-p)
 			(when actual-file? (close-output-port out-p)))))))
+	 (configs-restore! old-configs))))
+
+(define (precompile-imported-module-file name::symbol file::bstring
+					 reader::procedure
+					 configuration
+					 #!key
+					 (bigloo-modules? #t)
+					 (store-exports-in-ht? #f)
+					 (store-exported-macros-in-ht? #f))
+   (let ((old-configs (configs-backup)))
+      (unwind-protect
+	 (begin
+	    (config-init! configuration)
+	    (read-imported-module-file name file reader
+				       :bigloo-modules? bigloo-modules?
+				       :store-exports-in-ht?
+				       store-exports-in-ht?
+				       :store-exported-macros-in-ht?
+				       store-exported-macros-in-ht?))
 	 (configs-restore! old-configs))))

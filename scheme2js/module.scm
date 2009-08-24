@@ -549,8 +549,12 @@
 				(name module-name)
 				(top-level #f)
 				(exports '())
-				(exported-macros '()))))
+				(exported-macros '())))
+			 (module-preprocessor (config 'module-preprocessor))
+			 (module-postprocessor (config 'module-postprocessor)))
 		      (widen!::WIP-Unit im (header module-clause))
+		      (when module-preprocessor
+			 (module-preprocessor im))
 		      (cond-expand-headers! im)
 		      (normalize-module-header! im)
 		      ;; normalize-exports might need the 'ip' in
@@ -573,6 +577,8 @@
 					    (add-macro-to-ht def-macro ht))
 					 exported-macros)
 			       (set! exported-macros ht))))
+		      (when module-postprocessor
+			 (module-postprocessor im))
 		      im))))
 	    (close-input-port ip)))))
 

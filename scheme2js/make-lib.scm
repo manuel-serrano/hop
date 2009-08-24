@@ -25,7 +25,7 @@
 	   (mangle-qualified-var gen-js)
 	   expand
 	   export-desc
-	   (read-imported-module-file Compilation-Unit WIP-Unit module-exported-macro-add!
+	   (Compilation-Unit WIP-Unit module-exported-macro-add!
 	    module-system)
 	   (srfi0-declare! srfi0-declared? srfi0))
 
