@@ -146,6 +146,24 @@
 
    (smaller? l 5))
 
+(define (my-string-for-read str)
+   (let loop ((i 0)
+	      (rev-str '()))
+      (cond
+	 ((= i (string-length str))
+	  (apply string (reverse! rev-str)))
+	 (else
+	  (case (string-ref str i)
+	     ((#\\ #\")
+	      (loop (+fx i 1)
+		    (cons* (string-ref str i) #\\ rev-str)))
+	     ((#\return)  (loop (+fx i 1) (cons* #\r #\\ rev-str)))
+	     ((#\newline) (loop (+fx i 1) (cons* #\n #\\ rev-str)))
+	     ((#\null)    (loop (+fx i 1) (cons* #\0 #\0 #\0 #\0 #\u rev-str)))
+	     (else
+	      (loop (+fx i 1)
+		    (cons (string-ref str i) rev-str))))))))
+
 (define (compile-const const p env)
    (cond
       ((null? const) (template-display p env "null"))
@@ -158,7 +176,7 @@
 	  const))
       ((char? const)
        (template-display p env
-	  "(new sc_Char(\"~a\"))" (string-for-read (string const))))
+	  "(new sc_Char(\"~a\"))" (my-string-for-read (string const))))
       ((number? const)
        ;; CARE: initially I had "($const)" here. and I suppose there was a
        ;; reason I put the parenthesis around. this will probably come back and
@@ -169,9 +187,9 @@
       ((string? const)
        (if (use-mutable-strings?)
 	   (template-display p env
-	      "(new sc_String(\"~a\"))" (string-for-read const))
+	      "(new sc_String(\"~a\"))" (my-string-for-read const))
 	   (template-display p env
-	      "\"~a\"" (string-for-read const))))
+	      "\"~a\"" (my-string-for-read const))))
       ((vector? const)
        (template-display p env
 	  "[~e]"
