@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Thu Jul  9 07:10:26 2009 (serrano)                */
+/*    Last change :  Sun Aug  9 17:04:14 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP WINDOW CSS                                                   */
@@ -98,7 +98,7 @@ div[hssclass=hop-window] {
   background: none;
 }
 
-div[hssclass=hop-window]div.hop-window-inner {
+div[hssclass=hop-window] div.hop-window-inner {
   border: 1px solid black;
 }  
 
@@ -201,7 +201,6 @@ div[hssclass=hop-window] div.hop-window-content {
   right: 1px;
   border-top: 0;
   border-bottom: 0;
-  background: inherit;
   overflow: auto;
 }
 

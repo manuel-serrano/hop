@@ -446,7 +446,11 @@ function node_style_set_native( obj, prop, value ) {
                 obj + ", " + prop + ": " + value );
    }
 
-   obj.style.setProperty( prop, value, "" );
+   if( prop in obj.style ) {
+      obj.style[ prop ] =  value;
+   } else {
+      obj.style.setProperty( prop, value, "" );
+   }
 }
 
 function node_style_set_array( obj, prop, value ) {

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Thu Jun 18 11:13:15 2009 (serrano)                */
+;*    Last change :  Fri Jul 31 11:49:31 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -268,7 +268,7 @@
 ;*    http-options ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (http-options req)
-   (let ((options '((allow: . "GET, HEAD, POST, OPTIONS"))))
+   (let ((options '((allow: . "GET, HEAD, POST, PUT, OPTIONS"))))
       (when (hop-enable-webdav)
 	 (set! options (add-options! options (webdav-options))))
       (instantiate::http-response-string

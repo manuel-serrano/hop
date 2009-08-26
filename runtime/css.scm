@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Jul  1 07:32:41 2009 (serrano)                */
+;*    Last change :  Wed Aug 19 15:07:47 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -344,7 +344,12 @@
 		 (begin
 		    ;; each hss file is read inside a dummy empty module
 		    (eval `(module ,(gensym)))
-		    (css-compile (hop-read-hss p)))
+		    (with-handler
+		       (lambda (e)
+			  (with-error-to-string
+			     (lambda ()
+				(error-notify e))))
+		       (css-compile (hop-read-hss p))))
 		 (begin
 		    (when mod (eval-module-set! mod))
 		    (close-input-port p)
@@ -411,6 +416,26 @@
 (define-method (hss-compile o::css-media penv)
    (duplicate::css-media o
       (ruleset* (hss-compile (css-media-ruleset* o) penv))))
+
+;*---------------------------------------------------------------------*/
+;*    hss-compile ::css-page ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (hss-compile o::css-page penv)
+   (duplicate::css-page o
+      (declaration* (hss-compile (css-page-declaration* o) penv))))
+
+;*---------------------------------------------------------------------*/
+;*    hss-compile ::css-fontface ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (hss-compile o::css-fontface penv)
+   (duplicate::css-fontface o
+      (declaration* (hss-compile (css-fontface-declaration* o) penv))))
+
+;*---------------------------------------------------------------------*/
+;*    hss-compile ::css-pseudopage ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (hss-compile o::css-pseudopage penv)
+   (duplicate::css-pseudopage o))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile ::css-ruleset ...                                    */
@@ -680,6 +705,28 @@
   -moz-user-select: ~l;
   -khtml-user-select: ~l;
   -webkit-user-select: ~l;"
+	   v v v v))
+
+;; multi-column
+(define-hss-property (column-width v p)
+   (format "column-width: ~l;
+  -moz-column-width: ~l;
+  -khtml-column-width: ~l;
+  -webkit-column-width: ~l;"
+	   v v v v))
+
+(define-hss-property (column-count v p)
+   (format "column-count: ~l;
+  -moz-column-count: ~l;
+  -khtml-column-count: ~l;
+  -webkit-column-count: ~l;"
+	   v v v v))
+
+(define-hss-property (column-rule v p)
+   (format "column-rule: ~l;
+  -moz-column-rule: ~l;
+  -khtml-column-rule: ~l;
+  -webkit-column-rule: ~l;"
 	   v v v v))
 
 ;; hsv

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Thu Jul  9 06:57:07 2009 (serrano)                */
+/*    Last change :  Sun Aug  9 17:24:41 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -346,8 +346,8 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
    var obg = node_style_get( win.el_win, "background" );
    var wx0 = hop_element_x( win );
    var wy0 = hop_element_y( win );
-   var pow = hop_element_x( win.parentNode ) + win.parentNode.offsetWidth - 8;
-   var poh = hop_element_y( win.parentNode) + win.parentNode.offsetHeight - 8;
+   var pow = (win.parentNode == document.body) ? -1 : hop_element_x( win.parentNode ) + win.parentNode.offsetWidth - 8;
+   var poh = (win.parentNode == document.body) ? -1 : hop_element_y( win.parentNode) + win.parentNode.offsetHeight - 8;
    var mousemove;
 
    node_style_set( win.el_content, "border", "0" );
@@ -360,8 +360,8 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
 	 var nw = (w0 + (hop_event_mouse_x( event ) - x0));
 	 var nh = (h0 + (hop_event_mouse_y( event ) - y0));
 
-	 if( (nw > 0) && ((nw + wx0) < pow) &&
-	     (nh > 0) && ((nh + wy0) < poh) ) {
+	 if( ((pow <= 0) || ((nw > 0) && ((nw + wx0) < pow))) &&
+	     ((poh <= 0) || ((nh > 0) && ((nh + wy0) < poh))) ) {
 	    node_style_set( win.el_win, "width", nw + "px" );
 	    node_style_set( win.el_win, "height", nh + "px" );
 	 }
@@ -372,7 +372,7 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
 	 mousemove = function( event ) {
 	    var nw = (w0 + (hop_event_mouse_x( event ) - x0));
 
-	    if( (nw > 0) && ((nw + wx0) < pow) )
+	    if( (pow <= 0) || ((nw > 0) && ((nw + wx0) < pow)) )
 	       node_style_set( win.el_win, "width", nw + "px" );
 	 };
 	 hop_add_event_listener( document, "mousemove", mousemove );
@@ -380,8 +380,7 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
 	 if( heightp ) {
 	    mousemove = function( event ) {
 	       var nh = (h0 + (hop_event_mouse_y( event ) - y0));
-
-	       if( (nh > 0) && ((nh + wy0) < poh) )
+	       if( (poh <= 0) || ((nh > 0) && ((nh + wy0) < poh)) )
 		  node_style_set( win.el_win, "height", nh + "px" );
 	    };
 	    hop_add_event_listener( document, "mousemove", mousemove );
@@ -394,6 +393,7 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
 	       node_style_set( win.el_win, "width", w + "px" );
 	       node_style_set( win.el_win, "height", (h0 + (hop_event_mouse_y( event ) - y0)) + "px" );
 	    }
+
 	    hop_add_event_listener( document, "mousemove", mousemove );
 	 }
       }

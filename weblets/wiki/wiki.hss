@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Mar 30 11:20:22 2009 (serrano)                */
+/*    Last change :  Fri Jul 31 09:17:04 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for the WIKI weblet                                          */
@@ -282,6 +282,17 @@ span.wiki-note {
   
   body.wiki {
     font-size: 11pt;
+    background: transparent;
+  }
+
+  table.wiki {
+    width: 100%;
+    border: 0;
+    background: transparent;
+  }
+
+  table.wiki td.wiki-compiled {
+    padding: 0;
   }
 
   tt {

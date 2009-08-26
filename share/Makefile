@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Jul  8 08:48:42 2009 (serrano)                */
+#*    Last change :  Sat Aug 22 15:42:57 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -48,14 +48,15 @@ EXTRA		= hop-error.hss hop.css \
                   hop-prefs.js hop-prefs.hss \
                   hop-debug.js hop-debug.css \
 		  hop-sound.js hop-sound.scm \
-                  hop-audio.js hop-audio.hss \
+                  hop-audio.js hop-audio.scm hop-audio.hss \
                   hop-video.js hop-video.hss \
                   hop-login.js hop-login.hss \
                   hop-box.scm hop-box.hss \
 		  hop-spinbutton.scm hop-spinbutton.hss \
 		  hop-color.scm hop-color.hss \
                   hop-lframe.hss \
-                  hop-canvas.scm hop-exception.scm
+                  hop-canvas.scm hop-exception.scm \
+                  hop-spage.scm hop-spage.hss
 
 ICONS_AUDIO	= mute.png pause.png playlist.png prefs.png stop.png \
 		  next.png play.png podcast.png prev.png unmute.png

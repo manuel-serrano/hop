@@ -1,0 +1,63 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.0.x/widget/spage.hop                  */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
+;*    Last change :  Wed Aug 19 15:41:24 2009 (serrano)                */
+;*    Copyright   :  2009 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    SlidePage server-side implementation                             */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module __hopwidget-spage
+
+   (library hop)
+
+   (export  (<SPAGE> . ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    <SPAGE> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <SPAGE> ((id (xml-make-id 'SPAGE) string)
+			      (parent #f)
+			      (title #f)
+			      (attrs)
+			      body)
+   (cond
+      ((not title)
+       (error '<SPAGE> "\"title\" missing" id))
+      (parent
+       (let ((svc (service ()
+		     (make-spage (xml-make-id) attrs title body parent))))
+	  (<SPAN> :hssclass "hop-spage-link" :id id
+	     attrs
+	     :onclick ~(spage-push $parent $svc)
+	     title)))
+      (else
+       (make-spage id attrs title body #f))))
+
+;*---------------------------------------------------------------------*/
+;*    make-spage ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (make-spage id attrs title body parent)
+   (<DIV> :id id :hssclass "hop-spage"
+      :title title
+      (<DIV> :hssclass "hop-spage-head"
+	 (if parent
+	     (<SPAN> :hssclass "hop-spage-prev"
+		:onclick ~(spage-pop (dom-parent-node (dom-parent-node this)))
+		"")
+	     (let ((svc (service ()
+			   (make-spage id attrs title body parent))))
+		(<SPAN> :hssclass "hop-spage-update"
+		   :onclick ~(spage-update $id $svc)
+		   :title title
+		   "")))
+	 (<SPAN> :hsslcass "hop-spage-title"
+	    title))
+      (<DIV> :hssclass "hop-spage-body"
+	 attrs
+	 body)))

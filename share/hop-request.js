@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Jul  6 11:13:31 2009 (serrano)                */
+/*    Last change :  Fri Jul 31 11:31:51 2009 (serrano)                */
 /*    Copyright   :  2004-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -336,7 +336,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
       xhr.onreadystatechange = onreadystatechange;
    }
 
-   xhr.open( "GET", svc, (sync != true) );
+   xhr.open( "PUT", svc, (sync != true) );
 
    if( hop_config.navigator_family != "safari" &&
        hop_config.navigator_family != "webkit" )

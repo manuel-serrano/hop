@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Jul 23 12:11:46 2009 (serrano)                */
+;*    Last change :  Sun Aug  9 17:43:22 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -218,12 +218,11 @@
 		 "Wrong number of arguments"
 		 `(,(hop-service-id svc) ,@vals)))))
    
-   (let* ((ca (http-request-cgi-args req))
-	  (enc (cgi-arg "hop-encoding" ca)))
+   (let* ((ca (http-request-cgi-args req)))
       (cond
 	 ((null? (cdr ca))
 	  (invoke (hop-service-proc svc) '()))
-	 ((and (string? enc) (string=? enc "hop"))
+	 ((equal? (cgi-arg "hop-encoding" ca) "hop")
 	  (http-request-charset-set! req 'UTF-8)
 	  (invoke (hop-service-proc svc) (serialized-cgi-arg "vals" ca)))
 	 (else

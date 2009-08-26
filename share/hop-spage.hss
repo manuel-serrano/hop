@@ -1,0 +1,148 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.0.x/share/hop-spage.hss               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sat Aug 15 16:47:08 2009                          */
+/*    Last change :  Tue Aug 25 09:34:30 2009 (serrano)                */
+/*    Copyright   :  2009 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Slide Pages                                                      */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module __hss-spage)
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type spage "div[hssclass=hop-spage]"
+
+  :body "div[hssclass=hop-spage-body]"
+
+  (define-hss-property (padding v)
+     (format "spbody { padding: ~l; }" v))
+  (define-hss-property (margin v)
+     (format "spbody { margin: ~l; }" v))
+  (define-hss-property (effect v)
+     (cond
+        ((string=? (car v) "slide") (format "content: left;"))
+        ((string=? (car v) "fade") (format "content: fade;"))
+        ((string=? (car v) "none") (format "content: none;"))
+        (else (format "content: left;")))))
+
+$(define-hss-type sphead "div[hssclass=hop-spage-head]")
+$(define-hss-type spbody "div[hssclass=hop-spage-body]")
+$(define-hss-type splink "span[hssclass=hop-spage-link]")
+$(define-hss-type spprevbutton "span[hssclass=hop-spage-prev]")
+$(define-hss-type spupdatebutton "span[hssclass=hop-spage-update]")
+
+$(define border-color "#ccc")
+$(define border (format "1px solid ~a" border-color))
+$(define font-family "Tahoma, Verdana")
+
+/*---------------------------------------------------------------------*/
+/*    public declarations                                              */
+/*---------------------------------------------------------------------*/
+/* <public> */
+spage {
+  overflow: hidden;
+  width: 300px;
+  height: 400px;
+  background: #fff;
+  position: relative;
+  border: 1px solid darkorange;
+  padding: 2px;
+  font-size: 12px;
+  border-radius: 0.2em;
+  effect: slide;
+}
+
+spbody {
+  height: 94%;
+  overflow: auto;
+}
+
+sphead {
+  border-bottom: $border;
+  font-family: $font-family;
+  font-weight: bold;
+  white-space: nospace;
+  color: darkorange;
+  background: #f7f7f7;
+}
+
+spprevbutton,
+spupdatebutton {
+  color: black;
+  background: #ddd;
+  border-right: $border;
+  padding-left: 10px;
+  padding-right: 12px;
+  cursor: default;
+  margin-right: 2px;
+  user-select: none;
+}
+
+spprevbutton:hover,
+spupdatebutton:hover {
+  background: #ffedb3;
+  color: darkmagenta;
+}
+
+spprevbutton:before,
+spupdatebutton:before {
+  font-size: 80%;
+  vertical-align: top;
+}
+
+spprevbutton:before {
+  content: "\25c2";
+}
+
+spupdatebutton:before {
+  content: "\25be";
+}
+
+splink {
+  white-space: nowrap;
+  cursor: default;
+  font-weight: bold;
+  font-family: $font-family;
+  color: #6547FF;
+}
+
+splink:hover {
+  color: darkorange;
+}
+
+splink:before {
+  content: "\25b8";
+  color: #555;
+  font-size: 80%;
+  vertical-align: top;
+  margin-right: 4px;
+}
+  
+/* </public> */
+
+/*---------------------------------------------------------------------*/
+/*    private declarations                                             */
+/*---------------------------------------------------------------------*/
+div[hssclass=hop-spage] div[hssclass=hop-spage] {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  border: 0;
+}
+
+div[hssclass=hop-spage] div[hssclass=hop-spage] spbody {
+  border-left: 4px solid darkorange;
+}
+
+sphead spprevbutton {
+  width: 2em;
+}
+  

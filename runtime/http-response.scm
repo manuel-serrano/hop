@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Jul 20 11:51:03 2009 (serrano)                */
+;*    Last change :  Sat Aug 15 18:55:40 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -539,7 +539,6 @@
 ;*    scheme->response ::xml-tilde ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (scheme->response obj::xml-tilde req)
-   (tprint "scheme->response obj=" obj)
    (instantiate::http-response-string
       (content-type (hop-json-mime-type))
       (charset (hop-charset))

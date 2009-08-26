@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -144,8 +144,8 @@
 		 (not (symbol? (car (car h)))))
 	     (scheme2js-error "module"
 			      "invalid module-clause"
-			      (car h)
-			      h))
+			      h
+			      (car h)))
 	    (else
 	     (let* ((clause (car h))
 		    (acc (assq (car clause) rev-res)))

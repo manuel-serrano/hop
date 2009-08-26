@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Jun 25 12:06:39 2009 (serrano)                */
+;*    Last change :  Sun Aug 23 09:09:48 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -93,7 +93,8 @@
 					       " hop-nptab-active"
 					       " hop-nptab-inactive"))
 		    ,@attributes)))
-	 (when (and (xml-delay? (car (xml-element-body tab)))
+	 (when (and (pair? (xml-element-body tab))
+		    (xml-delay? (car (xml-element-body tab)))
 		    (null? (cdr (xml-element-body tab))))
 	    (set! attributes `(:lang "delay" ,@attributes)))
 	 (<DIV> :class "hop-notepad-tab-body"
