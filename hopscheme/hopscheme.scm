@@ -10,10 +10,11 @@
 (define (precompile-module m)
    (let* ((files ((bigloo-module-resolver) m '*))
 	  (compiled (any (lambda (f)
-			    (read-imported-module-file
+			    (precompile-imported-module-file
 			     m
 			     f
 			     *hop-reader*
+			     (hopscheme-config #f)
 			     :bigloo-modules? #t
 			     :store-exports-in-ht? #t
 			     :store-exported-macros-in-ht? #t))

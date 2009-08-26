@@ -16,13 +16,12 @@
    (when (not *cached-config*)
       (set! *cached-config*
 	    (extend-config* (hopscheme-config #t)
-			    `((dollar-eval . #t) ;; do an 'eval' on $s.
-			      ;; allow $(import xyz) ...
-			      (module-preprocessor . ,(dollar-modules-adder))))))
+			    `((dollar-eval . #t))))) ;; do an 'eval' on $s.
    *cached-config*)
        
 ;*---------------------------------------------------------------------*/
 (define (compile-scheme-file file env)
+   (tprint "file")
    (with-output-to-string
       (lambda ()
 	 (scheme2js-compile-file file              ;; input-files
