@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-error.hss                     */
+/*    serrano/prgm/project/hop/2.0.x/share/hop-error.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jan 18 15:46:42 2006                          */
-/*    Last change :  Fri Nov 10 14:13:53 2006 (serrano)                */
-/*    Copyright   :  2006 Manuel Serrano                               */
+/*    Last change :  Wed Aug 26 17:58:05 2009 (serrano)                */
+/*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The CSS for showing errors.                                      */
 /*=====================================================================*/
@@ -14,6 +14,7 @@ $(define border-color "#bbb")
 body {
   background: #dfdfdf;
   font-family: arial;
+  color: black;
 }
 
 img {
@@ -26,6 +27,7 @@ table.error {
   padding: 10px;
   border: 1px solid $border-color;
   background: white;
+  color: black;
   -moz-border-radius: 0.5em;
 }
 

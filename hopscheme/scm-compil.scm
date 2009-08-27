@@ -18,10 +18,10 @@
 	    (extend-config* (hopscheme-config #t)
 			    `((dollar-eval . #t))))) ;; do an 'eval' on $s.
    *cached-config*)
-       
+
 ;*---------------------------------------------------------------------*/
 (define (compile-scheme-file file env)
-   (tprint "file")
+   (set-abase! file)
    (with-output-to-string
       (lambda ()
 	 (scheme2js-compile-file file              ;; input-files
@@ -35,3 +35,11 @@
 						   ((bigloo-module-resolver)
 						    mod (module-abase))))
 				 :reader *hop-reader*))))
+
+(define (set-abase! file)
+   (let loop ((dir (dirname file)))
+      (if (file-exists? (make-file-name dir ".afile"))
+	  (module-abase-set! dir)
+	  (let ((ndir (dirname dir)))
+	     (unless (string=? dir ndir)
+		(loop ndir))))))

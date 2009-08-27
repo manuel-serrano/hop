@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -240,7 +240,9 @@
 				     (location (cdr exp))))
 	      (val (scheme->pobject expr (location (cddr exp))))))
 	  ((pragma ?str)
-	   (instantiate::Pragma (str str)))
+	   (if (string? str)
+	       (instantiate::Pragma (str str))
+	       (scheme2js-error #f "bad pragma-form" exp exp)))
 	  ((runtime-ref ?id (? procedure?))
 	   (instantiate::Runtime-Ref
 	      (id id)))
