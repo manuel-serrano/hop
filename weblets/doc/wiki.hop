@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Wed Jun 10 20:23:24 2009 (serrano)                */
+;*    Last change :  Tue Sep  1 06:48:57 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -298,8 +298,12 @@
 (define (doc-page page syntax)
    (define (err src)
       (<SPAN> :class "parse-error" (html-string-encode src)))
-   (if (or (not page) (not (file-exists? page)))
-       (http-file-not-found page)
+   (cond
+      ((not page)
+       (http-service-error (current-request) 'doc "Service not found"))
+      ((not (file-exists? page))
+       (http-file-not-found page))
+      (else
        (let ((iport (open-input-file page)))
 	  (if (not (input-port? iport))
 	      (http-permission-denied path)
@@ -315,7 +319,7 @@
 			  (wiki-input-port->hop iport :syntax syntax))
 		       (begin
 			  (eval-module-set! m2)
-			  (close-input-port iport)))))))))
+			  (close-input-port iport))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-tt-parser ...                                               */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Thu Aug 27 17:25:47 2009 (serrano)                */
+;*    Last change :  Tue Sep  1 10:47:02 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
@@ -83,6 +83,8 @@
    (let ((dir (hz-download-to-cache url)))
       ;; resolve the module
       (let ((afile (make-file-path dir ".afile")))
-	 (when (file-exists? afile) (module-load-access-file afile))
+	 (when (file-exists? afile)
+	    (module-load-access-file afile)
+	    (module-abase-set! dir))
 	 ((bigloo-module-resolver) module dir))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Jul 17 15:56:22 2009 (serrano)                */
+;*    Last change :  Tue Sep  1 12:17:06 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -29,6 +29,7 @@
 	       (data::obj (default #unspecified)))
 
 	   (class &hop-method-error::&io-parse-error)
+	   (class &hop-autoload-error::&io-error)
 	   
            (abstract-class %http-message
 	      (seconds::elong read-only (default (current-seconds)))

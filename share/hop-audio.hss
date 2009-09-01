@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 28 06:23:39 2007                          */
-/*    Last change :  Sat Jun  6 19:05:38 2009 (serrano)                */
+/*    Last change :  Sun Aug 30 12:04:55 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Audio's cascade style sheet.                                 */
@@ -98,19 +98,67 @@ audio img.hop-audio-button {
   $hopaudio-button-border;
 }
 
-audio img.hop-audio-button:hover {
-  background: $(color-lighter hopaudio-button-background);
+audio div.hop-audio-button {
+  display: inline-block;
+  background: $hopaudio-button-background;
+  width: 14px;
+  height: 14px;
+  padding: 1px 4px 1px 4px;
+  cursor: default;
+  background-repeat: no-repeat;
+  background-position: center center;
+  $hopaudio-button-border;
 }
 
-audio img.hop-audio-button-playlist {
+audio div.hop-audio-button.hop-audio-button-prev {
+  background-image: share( "icons/hop-audio/prev.png" );
+}
+
+audio div.hop-audio-button.hop-audio-button-play {
+  background-image: share( "icons/hop-audio/play.png" );
+}
+
+audio div.hop-audio-button.hop-audio-button-pause {
+  background-image: share( "icons/hop-audio/pause.png" );
+}
+
+audio div.hop-audio-button.hop-audio-button-stop {
+  background-image: share( "icons/hop-audio/stop.png" );
+}
+
+audio div.hop-audio-button.hop-audio-button-next {
+  background-image: share( "icons/hop-audio/next.png" );
+}
+
+audio div.hop-audio-button.hop-audio-button-playlist {
+  background-image: share( "icons/hop-audio/playlist.png" );
+}
+
+audio div.hop-audio-button.hop-audio-button-mute {
+  background-image: share( "icons/hop-audio/mute.png" );
+}
+
+audio div.hop-audio-button.hop-audio-button-prefs {
+  background-image: share( "icons/hop-audio/prefs.png" );
+}
+
+audio div.hop-audio-button.hop-audio-button-podcast {
+  background-image: share( "icons/hop-audio/podcast.png" );
+}
+
+audio div.hop-audio-button:hover {
+  background-color: $(color-lighter hopaudio-button-background);
+}
+
+audio div.hop-audio-button-playlist {
   margin-left: 15px;
 }
 
-audio img.hop-audio-button-mute {
+audio div.hop-audio-button-mute {
   margin-left: 20px;
 }
 
-audio img.hop-audio-button-prefs {
+audio div.hop-audio-button-prefs {
   margin-left: 50px;
 }
 
@@ -135,9 +183,23 @@ audio div.hop-audio-info-status {
   $hopaudio-gui-radius;
 }
 
-audio img.hop-audio-info-status-img {
+audio div.hop-audio-info-status-img {
+  display: inline-block;
   padding-left: 8px;
   padding-right: 4px;
+  background-image: share( "icons/hop-audio/stop.png" );
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+audio div.hop-audio-info-status-img.hop-audio-info-status-stop {
+  background-image: share( "icons/hop-audio/stop.png" );
+}
+audio div.hop-audio-info-status-img.hop-audio-info-status-play {
+  background-image: share( "icons/hop-audio/play.png" );
+}
+audio div.hop-audio-info-status-img.hop-audio-info-status-pause {
+  background-image: share( "icons/hop-audio/pause.png" );
 }
 
 audio span.hop-audio-info-status-position {
@@ -215,6 +277,7 @@ div.hop-audio-panel-metadata-error {
 
 div.hop-audio-panel-metadata-player {
   color: #2d2;
+  font-size: 90%;
 }
 
 div.hop-audio-panel-metadata-close {
@@ -268,24 +331,4 @@ audio table.hop-audio-panel-pan {
 
 table.hop-audio-panel-pan div.lineleft {
   background: #ccc;
-  border-left: 1px solid #aaa;
-  border-top: 1px solid #aaa;
-  border-bottom: 1px solid #aaa;
 }
-
-/*---------------------------------------------------------------------*/
-/*    slider                                                           */
-/*---------------------------------------------------------------------*/
-/* table.hop-slider div.lineleft {                                     */
-/*   height: 5px;                                                      */
-/* }                                                                   */
-/*                                                                     */
-/* table.hop-slider div.lineright {                                    */
-/*   height: 5px;                                                      */
-/* }                                                                   */
-/*                                                                     */
-/* table.hop-slider div.cursor {                                       */
-/*   height: 8px;                                                      */
-/* }                                                                   */
-
-

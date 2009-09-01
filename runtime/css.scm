@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Aug 19 15:07:47 2009 (serrano)                */
+;*    Last change :  Tue Sep  1 05:10:49 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -22,7 +22,9 @@
 
    (import  __hop_read
 	    __hop_param
-	    __hop_cache)
+	    __hop_cache
+	    __hop_configure
+	    __hop_http-error)
 
    (use	    __hop_user
 	    __hop_hop
@@ -300,40 +302,48 @@
 ;*---------------------------------------------------------------------*/
 (define (hss-response req path)
    (if (authorized-path? req path)
-       (with-lock hss-mutex
-	  (lambda ()
-	     (let ((cache (cache-get hss-cache path))
-		   (mime (mime-type path "text/css"))
-		   (method (http-request-method req)))
-		(if (string? cache)
-		    (instantiate::http-response-file
-		       (request req)
-		       (charset (hop-locale))
-		       (content-type mime)
-		       (bodyp (eq? method 'GET))
-		       (file cache))
-		    (let* ((hss (hop-load-hss path))
-			   (cache (cache-put! hss-cache path hss)))
-		       (if (string? cache)
-			   (instantiate::http-response-file
-			      (request req)
-			      (charset (hop-locale))
-			      (content-type mime)
-			      (bodyp (eq? method 'GET))
-			      (file cache))
-			   (instantiate::http-response-procedure
-			      (request req)
-			      (charset (hop-locale))
-			      (content-type mime)
-			      (bodyp (eq? method 'GET))
-			      (proc (lambda (p)
-				       (css-write hss p))))))))))
+       (let ((hss (hop-load-hss path))
+	     (mime (mime-type path "text/css"))
+	     (method (http-request-method req)))
+	  (cond
+	     ((string? hss)
+	      (instantiate::http-response-file
+		 (request req)
+		 (charset (hop-locale))
+		 (content-type mime)
+		 (bodyp (eq? method 'GET))
+		 (file hss)))
+	     (hss
+	      (instantiate::http-response-procedure
+		 (request req)
+		 (charset (hop-locale))
+		 (content-type mime)
+		 (bodyp (eq? method 'GET))
+		 (proc (lambda (p)
+			  (css-write hss p)))))
+	     (else
+	      (http-file-not-found path))))
        (user-access-denied req)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-hss ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (hop-load-hss file)
+(define (hop-load-hss path)
+   (with-lock hss-mutex
+      (lambda ()
+	 (let ((cache (cache-get hss-cache path)))
+	    (if (string? cache)
+		cache
+		(let* ((hss (%hop-load-hss path))
+		       (cache (cache-put! hss-cache path hss)))
+		   (if (string? cache)
+		       cache
+		       hss)))))))
+
+;*---------------------------------------------------------------------*/
+;*    %hop-load-hss ...                                                */
+;*---------------------------------------------------------------------*/
+(define (%hop-load-hss file)
    (if (file-exists? file)
        (let ((p (open-input-file file))
 	     (mod (eval-module))
@@ -529,25 +539,27 @@
 ;*    hss-parse-function ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hss-parse-function fun s)
-   (define (err)
-      (error 'hss-function "Illegal function compiler" fun))
+   (define (err msg)
+      (error fun msg s))
    (let ((p (open-input-string (format "* {x:~a;}" s))))
       (unwind-protect
 	 (let ((ast (css->ast p :extension hss-extension)))
 	    (if (not (css-stylesheet? ast))
-		(err)
+		(err "result of HSS function not a stylesheet")
 		(with-access::css-stylesheet ast (rule*)
 		   (if (not (and (pair? rule*) (null? (cdr rule*))))
-		       (err)
+		       (if (pair? rule*)
+			   (err "result contains more than one rule")
+			   (err "result contains not rule"))
 		       (with-access::css-ruleset (caar rule*) (declaration*)
 			  (if (not (and (pair? declaration*)
 					(null? (cdr declaration*))))
-			      (err)
+			      (if (pair? declaration*)
+				  (err "result contains more than one declaration")
+				  (err "result contains no declaration"))
 			      (with-access::css-declaration (car declaration*)
 				    (expr)
-				 (match-case expr
-				    (((and ?fun (? css-function?))) fun)
-				    (else (err))))))))))
+				 expr)))))))
 	 (close-input-port p))))
    
 ;*---------------------------------------------------------------------*/
@@ -734,3 +746,36 @@
    (multiple-value-bind (r g b)
       (hsv->rgb (string->integer h) (string->integer s) (string->integer v))
       (format "rgb(~a,~a,~a)" r g b)))
+
+;; share
+(define-hss-function (share file)
+   
+   (define (normalize-file file)
+      (let ((len (string-length file)))
+	 (if (=fx len 0)
+	     file
+	     (let ((c0 (string-ref file 0))
+		   (c1 (string-ref file (-fx len 1))))
+		(cond
+		   ((and (or (char=? c0 #\") (char=? c0 #\'))
+			 (or (char=? c1 #\") (char=? c1 #\')))
+		    (substring file 1 (-fx len 1)))
+		   ((and (or (char=? c0 #\") (char=? c0 #\')))
+		    (substring file 1 len))
+		   ((and (or (char=? c1 #\") (char=? c1 #\')))
+		    (substring file 0 (-fx len 1)))
+		   (else
+		    file))))))
+   
+   (let ((fname (make-file-name (hop-share-directory) (normalize-file file)))
+	 (enable-image-inlining #f))
+      (if (and enable-image-inlining (file-exists? fname))
+	  (let ((p (open-input-file fname)))
+	     (if (input-port? p)
+		 (unwind-protect
+		    (format "url( \"data:~a;base64,~a\" )"
+			    (mime-type file (format "image/~a" (suffix file)))
+			    (base64-encode (read-string p) 0))
+		    (close-input-port p))
+		 (format "url( ~s )" fname)))
+	  (format "url( ~s )" fname))))

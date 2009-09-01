@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:04:10 2005                          */
-/*    Last change :  Wed Jun 17 11:58:34 2009 (serrano)                */
+/*    Last change :  Sun Aug 30 07:35:30 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider CSS                                                   */
@@ -52,16 +52,16 @@ slider {
   caption-font-size: 8px;
   caption-font-family: Arial, Helvetica, sans-serif;
   caption-font-weight: bold;
-  border: 0;
 }
 /* </public> */
 
 /*---------------------------------------------------------------------*/
-/*    hop-slider                                                       */
+/*    private declarations                                             */
 /*---------------------------------------------------------------------*/
 slider {
   border-collapse: collapse;
   border-spacing: 0;
+  border: 1px solid transparent;
   user-select: none;
 } 
 
@@ -71,6 +71,7 @@ slider {
 slider td {
   height: 7px;
   vertical-align: middle;
+  border: 1px solid transparent;
 }
 
 slider div.lineleft {
@@ -100,11 +101,12 @@ slider td.cursor {
   margin: 0;
   padding: 0;
   width: 14px;
-  border-left: 1px outset #aaa;
-  border-top: 1px outset #aaa;
-  border-right: 1px outset #555;
-  border-bottom: 1px outset #555;
+  border-left: 1px solid #aaa;
+  border-top: 1px solid #aaa;
+  border-right: 1px solid #555;
+  border-bottom: 1px solid #555;
   user-select: none;
+  vertical-align: middle;
 }
 
 slider div.cursor {

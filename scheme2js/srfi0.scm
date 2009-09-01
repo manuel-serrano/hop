@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -22,7 +22,7 @@
    `(scheme2js srfi0 ,(string->symbol (format "scheme2js-~a" *version*))))
 
 (define (srfi0-declare! sym)
-   (cons sym *scheme2js-features*))
+   (set! *scheme2js-features* (cons sym *scheme2js-features*)))
 
 (define (srfi0-declared? sym)
    (memq sym *scheme2js-features*))

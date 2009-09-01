@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Jul 24 17:52:03 2009 (serrano)                */
+;*    Last change :  Tue Sep  1 10:25:05 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -96,12 +96,37 @@ function hop_weblets_directory() { return \"" (hop-weblets-directory) "\"; }
 function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 
 ;*---------------------------------------------------------------------*/
+;*    preload-css ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (preload-css p base)
+   
+   (define (preload-http p)
+      (with-access::http-request (current-request) (scheme host port)
+	 (let ((pref (format "~a://~a:~a"
+			     (if (eq? scheme '*) "http" scheme)
+			     host port)))
+	    (when (substring-at? p pref 0)
+	       (preload-css
+		(substring p (string-length pref) (string-length p)) #f)))))
+      
+   (cond
+      ((and (http-request? (current-request))
+	    (or (substring-at? p "http://" 0) (substring-at? p "https://" 0)))
+       (preload-http p))
+      ((file-exists? p)
+       (hop-load-hss p))
+      ((and base (>fx (string-length p) 0) (not (char=? (string-ref p 0) #\/)))
+       (preload-css (string-append base p) #f))))
+
+;*---------------------------------------------------------------------*/
 ;*    init-extra! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (init-extra!)
    ;; this is used for non-inlined header on common regular browsers
    (unless head-runtime-system-packed
       (let ((hopcss (make-file-name (hop-share-directory) "hop.css")))
+	 ;; force loading to evaluate hop hss types
+	 (preload-css hopcss #f)
 	 (set! head-runtime-system-packed 
 	       (cons* (<LINK> :inline #f
 			 :rel "stylesheet"
@@ -179,8 +204,11 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
    
    (define (favicon p inl)
       (<LINK> :rel "shortcut icon" :href p :inline inl))
-   
-   (define (css p inl)
+
+   (define (css p base inl)
+      ;; force pre-loading the hss file in to force
+      ;; pre-evaluating hss type declarations.
+      (preload-css p base)
       (<LINK> :inline inl
 	 :rel "stylesheet"
 	 :type (hop-configure-css-mime-type)
@@ -225,7 +253,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 	     (jscript2 (hz->client path "js" read-file))
 	     (res '()))
 	 (when hss
-	    (set! res (cons (css hss inl) res)))
+	    (set! res (cons (css hss #f inl) res)))
 	 (when jscript1
 	    (set! res (cons (script jscript1 inl) res)))
 	 (when jscript2
@@ -266,17 +294,17 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 			   (set! res (cons (script p inl) res))))))
 	     (ss (let ((p (find-file/path (string-append f ".css") path)))
 		    (when (string? p)
-		       (set! res (cons (css p inl) res)))))
+		       (set! res (cons (css p #f inl) res)))))
 	     (hss (let ((p (find-file/path (string-append f ".hss") path)))
 		     (when (string? p)
-			(set! res (cons (css p inl) res))))))
+			(set! res (cons (css p #f inl) res))))))
 	 (if (null? res)
 	     (cond
 		((not (file-exists? f))
 		 (error '<HEAD> "Can't find include file" f))
 		((or (is-suffix? f "hss")
 		     (is-suffix? f "css"))
-		 (list (css f inl)))
+		 (list (css f #f inl)))
 		((or (is-suffix? f "scm") (is-suffix? f "hop"))
 		 (list (script f inl)))
 		((is-suffix? f "js")
@@ -290,6 +318,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 	      (rts #t)
 	      (dir #f)
 	      (path '())
+	      (base #f)
 	      (inl #f)
 	      (packed #t)
 	      (incs '())
@@ -306,51 +335,51 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 		 body)))
 	 ((pair? (car a))
 	  (loop (append (car a) (cdr a))
-		mode rts dir path inl packed incs els))
+		mode rts dir path base inl packed incs els))
 	 ((null? (car a))
-	  (loop (cdr a) mode rts dir path inl packed incs els))
+	  (loop (cdr a) mode rts dir path base inl packed incs els))
 	 ((keyword? (car a))
 	  (if (null? (cdr a))
 	      (error '<HEAD> (format "Missing ~a value" (car a)) a)
 	      (case (car a)
 		 ((:css :jscript :include :hz)
-		  (loop (cdr a) (car a) rts dir path inl packed incs els))
+		  (loop (cdr a) (car a) rts dir path base inl packed incs els))
 		 ((:favicon)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts dir path inl packed incs
+		      (loop (cddr a) #f rts dir path base inl packed incs
 			    (cons (favicon (absolute-path (cadr a) dir) inl)
 				  els))
 		      (error '<HEAD> "Illegal :favicon" (cadr a))))
 		 ((:rts)
 		  (if (boolean? (cadr a))
-		      (loop (cddr a) #f (cadr a) dir path inl packed incs els)
+		      (loop (cddr a) #f (cadr a) dir path base inl packed incs els)
 		      (error '<HEAD> "Illegal :rts" (cadr a))))
 		 ((:title)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts dir path inl packed incs
+		      (loop (cddr a) #f rts dir path base inl packed incs
 			    (cons (<TITLE> (cadr a)) els))
 		      (error '<HEAD> "Illegal :title" (cadr a))))
 		 ((:base)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts dir path inl packed incs
+		      (loop (cddr a) #f rts dir path (cadr a) inl packed incs
 			    (cons (<BASE> :href (cadr a)) els))
 		      (error '<HEAD> "Illegal :base" (cadr a))))
 		 ((:dir)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts (cadr a) path inl packed incs els)
+		      (loop (cddr a) #f rts (cadr a) path base inl packed incs els)
 		      (error '<HEAD> "Illegal :dir" (cadr a))))
 		 ((:path)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts dir (append! path (list (cadr a)))
+		      (loop (cddr a) #f rts dir (append! path (list (cadr a))) base
 			    inl packed incs els)
 		      (error '<HEAD> "Illegal :path" (cadr a))))
 		 ((:inline)
 		  (if (or (boolean? (cadr a)) (symbol? (cadr a)))
-		      (loop (cddr a) #f rts dir path (cadr a) packed incs els)
+		      (loop (cddr a) #f rts dir path base (cadr a) packed incs els)
 		      (error '<HEAD> "Illegal :inline" (cadr a))))
 		 ((:packed)
 		  (if (or (boolean? (cadr a)) (symbol? (cadr a)))
-		      (loop (cddr a) #f rts dir path inl (cadr a) incs els)
+		      (loop (cddr a) #f rts dir path base inl (cadr a) incs els)
 		      (error '<HEAD> "Illegal :inline" (cadr a))))
 		 (else
 		  (error '<HEAD>
@@ -359,46 +388,46 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 	 ((string? (car a))
 	  (case mode
 	     ((:css)
-	      (loop (cdr a) mode rts dir path inl packed incs
-		    (cons (css (absolute-path (car a) dir) inl) els)))
+	      (loop (cdr a) mode rts dir path base inl packed incs
+		    (cons (css (absolute-path (car a) dir) base inl) els)))
 	     ((:jscript)
-	      (loop (cdr a) mode rts dir path inl packed incs
+	      (loop (cdr a) mode rts dir path base inl packed incs
 		    (cons (script (absolute-path (car a) dir) inl) els)))
 	     ((:include)
 	      (cond
 		 ((member (car a) incs)
-		  (loop (cdr a) mode rts dir path inl packed incs els))
+		  (loop (cdr a) mode rts dir path base inl packed incs els))
 		 ((hz-package-filename? (car a))
 		  ;; automatic detection of hz package (is it really a
 		  ;; good idea since there is the special :hz keyword?)
-		  (loop a :include-hz rts dir path inl packed incs els))
+		  (loop a :include-hz rts dir path base inl packed incs els))
 		 (else
 		  (let* ((heads (find-incl-dep (car a) path))
 			 (nincs (cons (car a) incs))
-			 (hels (loop heads #f #f dir path inl packed nincs '()))
+			 (hels (loop heads #f #f dir path base inl packed nincs '()))
 			 (iels (incl (car a) inl path)))
-		     (loop (cdr a) mode rts dir path inl packed
+		     (loop (cdr a) mode rts dir path base inl packed
 			   nincs
 			   (append iels (reverse! hels) els))))))
 	     ((:hz :include-hz)
 	      (multiple-value-bind (zels hds)
 		 (hz (car a) inl)
 		 (let* ((nincs (cons (car a) incs))
-			(hels (loop hds #f #f dir path inl packed nincs '())))
+			(hels (loop hds #f #f dir path base inl packed nincs '())))
 		    (loop (cdr a)
 			  (if (eq? mode :hz) :hz :include)
-			  rts dir path inl packed incs
+			  rts dir path base inl packed incs
 			  (append zels (reverse! hels) els)))))
 	     (else
-	      (loop (cdr a) #f rts dir path inl packed incs
+	      (loop (cdr a) #f rts dir path base inl packed incs
 		    (cons (car a) els)))))
 	 ((xml-tilde? (car a))
-	  (loop (cdr a) :jscript rts dir path inl packed incs
+	  (loop (cdr a) :jscript rts dir path base inl packed incs
 		(cons (car a) els)))
 	 ((not (car a))
-	  (loop (cdr a) #f rts dir path inl packed incs els))
+	  (loop (cdr a) #f rts dir path base inl packed incs els))
 	 (else
-	  (loop (cdr a) #f rts dir path inl packed incs (cons (car a) els))))))
+	  (loop (cdr a) #f rts dir path base inl packed incs (cons (car a) els))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HEAD> ...                                                       */

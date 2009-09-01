@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Jun 24 08:16:54 2009 (serrano)                */
+;*    Last change :  Mon Aug 31 15:06:21 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -917,6 +917,7 @@
 	 (mutex-lock! *load-once-mutex*)
 	 (let loop ((info (hashtable-get *load-once-table* f))
 		    (t (file-modification-time f)))
+	    (trace-item "info=" info " mtime=" t)
 	    (if (pair? info)
 		(case (car info)
 		   ((error)

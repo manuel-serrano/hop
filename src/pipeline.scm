@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Sat Jul  4 07:01:12 2009 (serrano)                */
+;*    Last change :  Tue Sep  1 12:18:13 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -211,6 +211,14 @@
 (define (response-error-handler e scd req)
    ;; when the error is a response, we transmit it to the next stage
    (cond
+      ((&hop-autoload-error? e)
+       (with-handler
+	  (lambda (e)
+	     ;; there is nothing we can do but aborting the request
+	     (socket-close (http-request-socket req))
+	     (raise (instantiate::&ignore-exception)))
+	  (let ((e (&hop-autoload-error-obj e)))
+	     (response-exception-error-handler e scd req))))
       ((&io-error? e)
        (response-io-error-handler e scd req)
        (raise e))

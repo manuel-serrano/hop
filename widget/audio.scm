@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sat Jun 20 09:04:32 2009 (serrano)                */
+;*    Last change :  Sun Aug 30 10:03:44 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -256,10 +256,9 @@
 		  id action action)))
    
    (define (<BUT> #!key (class "") title id src onclick)
-      (<IMG> :class (string-append "hop-audio-button " class)
+      (<DIV> :class (string-append "hop-audio-button " class)
 	 :id (or id (xml-make-id "hopaudio-but"))
 	 :title title :alt title :inline #t
-	 :src (make-file-path (hop-icons-directory) "hop-audio" src)
 	 :onclick onclick))
 
    (<DIV> :id (string-append id "-controls") :class "hop-audio-controls"
@@ -292,53 +291,53 @@
       (<DIV> :class "hop-audio-separator")
       ;; the button line
       (<DIV> :class "hop-audio-buttons"
-	 (<BUT> :title "Previous" :src "prev.png"
+	 (<BUT> :title "Previous"
 	    :class "hop-audio-button-prev"
 	    :onclick (if (eq? onprevclick #unspecified)
 			 (format "hop_audio_playlist_prev(document.getElementById(~s))"
 				 id)
 			 onprevclick))
-	 (<BUT> :title "Play" :src "play.png"
+	 (<BUT> :title "Play"
 	    :id (string-append id "-hop-audio-button-play")
 	    :class "hop-audio-button-play"
 	    :onclick (if (eq? onplayclick #unspecified)
 			 (format "hop_audio_playlist_play(document.getElementById(~s), 0)"
 				 id)
 			 onplayclick))
-	 (<BUT> :title "Pause" :src "pause.png"
+	 (<BUT> :title "Pause"
 	    :id (string-append id "-hop-audio-button-pause")
 	    :class "hop-audio-button-pause"
 	    :onclick (if (eq? onpauseclick #unspecified)
 			 (format "hop_audio_pause(document.getElementById(~s))"
 				 id)
 			 onpauseclick))
-	 (<BUT> :title "Stop" :src "stop.png"
+	 (<BUT> :title "Stop"
 	    :id (string-append id "-hop-audio-button-stop")
 	    :class "hop-audio-button-stop"
 	    :onclick (if (eq? onstopclick #unspecified)
 			 (format "hop_audio_stop(document.getElementById(~s))"
 				 id)
 			 onstopclick))
-	 (<BUT> :title "Next" :src "next.png"
+	 (<BUT> :title "Next"
 	    :class "hop-audio-button-next"
 	    :onclick (if (eq? onnextclick #unspecified)
 			 (format "hop_audio_playlist_next(document.getElementById(~s))"
 				 id)
 			 onnextclick))
-	 (<BUT> :title "Playlist" :src "playlist.png"
+	 (<BUT> :title "Playlist"
 	    :class "hop-audio-button-playlist"
 	    :onclick onloadclick)
 	 (<BUT> :title "Podcast" :src "podcast.png"
 	    :class "hop-audio-button-podcast"
 	    :onclick onpodcastclick)
-	 (<BUT> :title "Mute" :src "mute.png"
+	 (<BUT> :title "Mute"
 	    :id (string-append id "-hop-audio-button-mute")
 	    :class "hop-audio-button-mute"
 	    :onclick (if (eq? onmuteclick #unspecified)
 			 (format "hop_audio_mute(document.getElementById(~s))"
 				 id)
 			 onmuteclick))
-	 (<BUT> :title "Preferences" :src "prefs.png"
+	 (<BUT> :title "Preferences"
 	    :id (string-append id "-hop-audio-button-prefs")
 	    :class "hop-audio-button-prefs"
 	    :onclick onprefsclick))))
@@ -350,9 +349,9 @@
    (<DIV> :class "hop-audio-info-status"
       :id (string-append id "-controls-status")
       (<DIV>
-	 (<IMG> :class "hop-audio-info-status-img"
+	 (<DIV> :class "hop-audio-info-status-img hop-audio-info-status-stop"
 	    :id (string-append id "-controls-status-img")
-	    :src (make-file-path (hop-icons-directory) "hop-audio" "stop.png"))
+	    "&nbsp;")
 	 (<SPAN> :class "hop-audio-info-status-position"
 	    :id (string-append id "-controls-status-position")
 	    "88:88"))

@@ -82,6 +82,17 @@ service.
 being bound, you can directly go to the URL [[http://localhost:8080/hop/hello]]
 in your browser.
 
+,(<SPAN> :style { color: red; font-weight: bold } "Note:") For the
+sake of security, the default Hop setting disables services
+re-definition. Hence, a module loaded afterward cannot change the
+definition of services already existing. As a consequence, the
+examples of the documentation that define services can only be
+executed once (//i.e.,,// the "Run" button can only be clicked
+once). This behavior can be changed when spawning Hop. Invoking Hop
+with either the ++-g++ (debug) or ++-allow-service-override++ will
+enable multiple service definitions.
+
+
 == Storing the service on a file ==
 
 There is three main ways for storing and loading services on
@@ -223,7 +234,7 @@ refer to a image.
          :dir (service-resource hello)
          :css "hello.hss")
        (<BODY>
-         (<IMG> :href (service-resource hello "hello.jpg"))))) 
+         (<IMG> :src (service-resource hello "hello.jpg"))))) 
 </code>
 
 </doc>

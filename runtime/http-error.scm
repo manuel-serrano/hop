@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Jul 15 17:00:20 2009 (serrano)                */
+;*    Last change :  Tue Sep  1 12:16:45 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -131,7 +131,10 @@
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <ESPAN> ((class #f)
 			      body)
-   (<SPAN> :class class (html-string-encode (car body))))
+   (<SPAN> :class class
+      (if (and (pair? body) (string? (car body)))
+	  (html-string-encode (car body))
+	  "")))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ETD> ...                                                        */
@@ -310,8 +313,8 @@ a timeout which has now expired. The service is then no longer available."))
 	  (illegal-service "invalidated"
 			   (illegal-service-message "invalidated")))
 	 (else
-	  (illegal-service "unknown"
-			   (illegal-service-message "unknown"))))))
+	  (illegal-service "unbound"
+			   "You are trying to execute an unknown service!")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-permission-denied ...                                       */

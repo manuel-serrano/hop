@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Fri Apr 10 09:11:47 2009 (serrano)                */
+;*    Last change :  Tue Sep  1 12:17:47 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -289,7 +289,14 @@
 	 (unless loaded
 	    (hop-verb 1 (hop-color req req " AUTOLOADING") ": " path "\n")
 	    ;; load the autoloaded file
-	    (hop-load-modified path)
+	    (with-handler
+	       (lambda (e)
+		  (raise
+		   (instantiate::&hop-autoload-error
+		      (proc 'autoload-loadq!)
+		      (msg "Cannot autoload")
+		      (obj e))))
+	       (hop-load-modified path))
 	    ;; execute the hooks
 	    (for-each (lambda (h) (h req)) hooks)
 	    (set! loaded #t))

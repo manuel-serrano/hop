@@ -164,7 +164,7 @@ This returns a vector that is displayed in the ++show++ ++<DIV>++ element.
   (module tutorial-ajax
      (import tutorial-ajax-database))
 
-  (define (tutorial-ajax)
+  (define (tutorial)
      (<HTML>
         (<HEAD>)
         (let ((show (<DIV> "")))
@@ -176,7 +176,10 @@ This returns a vector that is displayed in the ++show++ ++<DIV>++ element.
               (<DIV> "Results...")
               show))))
 
-  (tutorial-ajax)
+  (define-service (tutorial-ajax)
+     (tutorial))
+
+  (tutorial)
 </example>
 
 == Version 2 ==
@@ -226,7 +229,7 @@ the server to the client.
   (module tutorial-ajax-v2
      (import tutorial-ajax-database-v2))
 
-  (define (tutorial-ajax-v2)
+  (define (tutorial-v2)
      (<HTML>
         (<HEAD>)
         (let ((show (<DIV> "")))
@@ -244,7 +247,8 @@ the server to the client.
               (<DIV> "Results...")
               show))))
 
-  (tutorial-ajax-v2)
+  (define-service (tutorial-ajax-v2) 
+     (tutorial-v2))
 </example>
 
 </doc>

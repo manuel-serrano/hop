@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Sun Mar 22 06:59:35 2009 (serrano)                */
+/*    Last change :  Sun Aug 30 12:04:38 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -991,7 +991,6 @@ function hop_audio_controls_onclose( evt ) {
    var min = document.getElementById( id + "-controls-status-length-min" );
    var sec = document.getElementById( id + "-controls-status-length-sec" );
    var status = document.getElementById( id + "-controls-status-img" );
-   var stopbut = document.getElementById( id + "-hop-audio-button-stop" );
    var track = document.getElementById( id + "-controls-status-track" );
 
    min.innerHTML = "  ";
@@ -1001,7 +1000,7 @@ function hop_audio_controls_onclose( evt ) {
    hop_audio_time_interval_clear( audio );
    hop_audio_controls_metadata( audio, true );
    
-   status.src = stopbut.src;
+   status.className = "hop-audio-info-status-img hop-audio-info-status-stop";
    if( tl.className === "hop-audio-panel-metadata-error" ) {
       var ab = document.getElementById( audio.id + "-controls-metadata-album" );
       ab.innerHTML = (evt.value ? evt.value : "player closed...");
@@ -1018,14 +1017,13 @@ function hop_audio_controls_onplay( evt ) {
    var audio = evt.audio;
    var id = audio.id;
    var status = document.getElementById( id + "-controls-status-img" );
-   var playbut = document.getElementById( id + "-hop-audio-button-play" );
    var track = document.getElementById( id + "-controls-status-track" );
    var min = document.getElementById( id + "-controls-status-length-min" );
    var sec = document.getElementById( id + "-controls-status-length-sec" );
    var alen = hop_audio_duration( audio );
    var plen = sc_length( hop_audio_playlist_get( audio ) );
 
-   status.src = playbut.src;
+   status.className = "hop-audio-info-status-img hop-audio-info-status-play";
 
    track.className = "hop-audio-info-status-track-on-play";
    if( plen > 0 ) {
@@ -1049,13 +1047,12 @@ function hop_audio_controls_onpause( evt ) {
    var audio = evt.audio;
    var id = audio.id;
    var status = document.getElementById( id + "-controls-status-img" );
-   var pausebut = document.getElementById( id + "-hop-audio-button-pause" );
 
    if( audio.paused ) {
-      audio.status_old_src = status.src;
-      status.src = pausebut.src;
+      audio.old_className = status.className;
+      status.className = "hop-audio-info-status-img hop-audio-info-status-pause";
    } else {
-      status.src = audio.status_old_src;
+      status.className = audio.old_className;
    }
 }
 
@@ -1066,7 +1063,6 @@ function hop_audio_controls_onstop( evt ) {
    var audio = evt.audio;
    var id = audio.id;
    var status = document.getElementById( id + "-controls-status-img" );
-   var stopbut = document.getElementById( id + "-hop-audio-button-stop" );
    var track = document.getElementById( id + "-controls-status-track" );
    var min = document.getElementById( id + "-controls-status-length-min" );
    var sec = document.getElementById( id + "-controls-status-length-sec" );
@@ -1077,10 +1073,11 @@ function hop_audio_controls_onstop( evt ) {
 
    min.innerHTML = "  ";
    sec.innerHTML = "  ";
+   tl.innerHTML = "";
 
    hop_audio_time_interval_clear( audio );
    hop_audio_controls_metadata( audio, true );
-   status.src = stopbut.src;
+   status.className = "hop-audio-info-status-img hop-audio-info-status-stop";
 }
 
 /*---------------------------------------------------------------------*/
@@ -1090,7 +1087,6 @@ function hop_audio_controls_onplayer( evt ) {
    var audio = evt.audio;
    var id = audio.id;
    var status = document.getElementById( id + "-controls-status-img" );
-   var stopbut = document.getElementById( id + "-hop-audio-button-stop" );
    var track = document.getElementById( id + "-controls-status-track" );
    var min = document.getElementById( id + "-controls-status-length-min" );
    var sec = document.getElementById( id + "-controls-status-length-sec" );
@@ -1107,10 +1103,10 @@ function hop_audio_controls_onplayer( evt ) {
 
    tl.className = "hop-audio-panel-metadata-player";
    tl.innerHTML = evt.value ?
-      evt.value + " ready..." :
+      evt.value + " player ready..." :
       "Player ready...";
 
-   status.src = stopbut.src;
+   status.className = "hop-audio-info-status-img hop-audio-info-status-stop";
 }
 
 /*---------------------------------------------------------------------*/

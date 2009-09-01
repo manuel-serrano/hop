@@ -237,9 +237,12 @@ is:
      | <export>
      | <static>
 
-  <import> := (import <ident>+)
+  <import> := (import <import-module>+)
      | <client-import>
      | <server-import>
+
+  <import-module> := <ident>
+     | (<ident> <string>)
 
   <client-import> := ~(import <ident>+) can only be used by server code
 
@@ -263,7 +266,7 @@ is:
      | (default <expression>)
 
 
-Here is an example of a module named ++foo++ that uses the library
+~~ Here is an example of a module named ++foo++ that uses the library
 ++ssl++, that imports the module named ++bar++, and that exports the 
 function ++fun-foo++, the variable ++var-foo++, and the class ++class-foo++.
 
@@ -278,6 +281,97 @@ function ++fun-foo++, the variable ++var-foo++, and the class ++class-foo++.
                 (x (default 0))
                 (y (default 0)))))
 </code>
+
+
+=== Module Access File ===
+
+~~ Hop is different from languages such as C where a module is defined by a
+file. For Hop, the module name is not necessarily the name of the file
+where the text of the module is written and modules can even be split across
+several files.
+
+~~ Since modules are defined independently of files, it is necessary to make a
+link between a module and its files and there are two ways of doing this.
+Choosing an import clause where the file-names are specified or creating a
+"module access file". Such a file must contain only one ++list++, each
+element of the list being of the form:
+
+  (module-name "file-name" ... "file-name")
+
+
+~~ By default Hop checks if a file named ++.afile++ exists. If it
+exists it is loaded as a module access file.
+
+~~ Note: The Bigloo distribution contains a tool, ++bglafile++,
+that can automatically build a "module access file". See the manpage for
+++bglafile++ for details.
+
+=== Mixer server and client modules ===
+
+~~ Since Hop-2.0.x, servers and clients may mutually import
+modules. That is, server modules may import client modules to access
+to client functions and variables when producing a HTML
+tree. Respectively, client modules may import server modules, for
+instance, for accessing services from client code. The following
+example illustrate this mutual imports.
+
+~~ The following server module defines a weblet drawing chart:
+
+  (module foo-server
+     (import (gchart "http://localhost:8080/hop/weblets/download?weblet=gchart-api-1.0.0.hz"))
+     (export img pre)
+     ~(import foo-client))
+
+  (define types '(bhs bvs bhg bvg p p3 pc chp v s r rs))
+  (define tnum 0)
+  
+  (define (new-url)
+    (let ((len (length types)))
+          (set! tnum (+fx tnum 1))
+          (if (>=fx tnum len) (set! tnum 0))
+      (google-chart
+         :colors '("a25cff" "f72f2b" 
+                   "253c81" "c62f6d"
+                   "522e81" "f79326"
+                   "f7d93a" "aef742"
+                   "69f7ab" "3df7ec")
+         :type (list-ref types tnum)
+         :data (map (lambda (l) (cons (symbol->string l) (random 100)))
+                    types))))
+
+  (define url (new-url))
+  (define img (<IMG> :id "img" :src url :title "An image"))
+  (define pre (<PRE> :id "pre" :style "font-size: 70%" url))
+  
+  (define-service (foo)
+     (<HTML>
+        (<HEAD> :jscript (service-resource foo "foo.scm"))
+        (<BODY>
+         (<BUTTON> :onclick ~(with-hop ($(service () (new-url))) update)
+              "New barchart")
+           (<DIV> :style "margin-top: 2ex"
+              img
+              pre))))
+
+
+The server modules imports the client module named ++client++ defined as:
+
+  (module foo-client
+     $(import f00pserver)
+     (export (update)))
+
+  (define (update src)
+     (innerHTML-set! $pre src)
+     (set! $img.src src))
+
+
+These modules assume a "module access file" the ++.afile++ defined as:
+
+  (
+    (server "foo.hop")
+    (client "foo.scm")
+  )
+
 
 == Server Side core language ==
 
