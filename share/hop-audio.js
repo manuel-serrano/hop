@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Sun Aug 30 12:04:38 2009 (serrano)                */
+/*    Last change :  Wed Sep  2 10:06:47 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -89,23 +89,23 @@ function hop_audio_run_hooks( audio, evname, value ) {
 /*---------------------------------------------------------------------*/
 function HopAudioServerProxy( a, u ) {
    var proxy = this;
-   this.url = u;
-   this.audio = a;
+   proxy.url = u;
+   proxy.audio = a;
    
-   this.current_duration = false;
-   this.current_position = 0;
-   this.current_volume = 0;
-   this.current_pan = 0;
-   this.current_metadata = false;
-   this.playlist = null;
-   this.playlist_index = -1;
+   proxy.current_duration = false;
+   proxy.current_position = 0;
+   proxy.current_volume = 0;
+   proxy.current_pan = 0;
+   proxy.current_metadata = false;
+   proxy.playlist = null;
+   proxy.playlist_index = -1;
 
-   this.err = function( h ) {
-      if( !h ) hop_audio_run_hooks( this.audio, "error" );
+   proxy.err = function( h ) {
+      if( !h ) hop_audio_run_hooks( proxy.audio, "error" );
    };
    
    // install the server listener...
-   hop_add_event_listener( this.url, "server", function( evt ) {
+   hop_add_event_listener( proxy.url, "server", function( evt ) {
 	 proxy.event_listener( evt );
       } );
    hop_add_event_listener( document, "serverclose", function( evt ) {
