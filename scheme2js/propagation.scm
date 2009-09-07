@@ -364,8 +364,16 @@
    (default-walk! this (make-List-Box '())))
 
 (define-nmethod (Lambda.propagate! var/vals)
-   ;; no need to add formals.
-   (default-walk! this (make-List-Box '())))
+   (with-access::Lambda this (formals)
+      (for-each (lambda (formal)
+		   (with-access::Ref formal (var)
+		      (with-access::Prop-Var var (current)
+			 (set! current 'unknown))))
+		formals)
+      (let ((lb (make-List-Box (map (lambda (formal)
+				       (cons (Ref-var formal) 'unknown))
+				    formals))))
+	 (default-walk! this lb))))
 
 (define-nmethod (If.propagate! var/vals)
    (with-access::If this (test then else)
