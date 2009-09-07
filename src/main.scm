@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Sep  1 15:34:13 2009 (serrano)                */
+;*    Last change :  Mon Sep  7 11:04:29 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -163,8 +163,10 @@
 	 (when (>fx (hop-max-threads) 1)
 	    (job-start-scheduler!))
 	 ;; when needed, start the HOP repl
-	 (when (and (hop-enable-repl) (>fx (hop-max-threads) 1))
-	    (hop-repl (hop-scheduler)))
+	 (when (hop-enable-repl)
+	    (if (>fx (hop-max-threads) 1)
+		(hop-repl (hop-scheduler))
+		(error 'hop "No thread available for the REPL" "aborting.")))
 	 ;; when needed, start a loop for server events
 	 (hop-event-server (hop-scheduler))
 	 ;; execute the script file
