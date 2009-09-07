@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -56,13 +56,13 @@
    (verbose "Compiling")
    (gen-var-names tree)
    (push-var-declarations tree)
+   (cond-expand
+      ((not enable-threads)
+       (config-set! 'pp #f)
+       (when (>=fx (bigloo-debug) 1)
+	  (warning "pretty-printing/compression only works when pthreads are enabled"))))
    (if (config 'pp)
-       (cond-expand
-	  (enable-threads (pp-gen-code tree p))
-	  (else
-	   (when (> (bigloo-debug) 1)
-	      (warning "pretty-printing/compression only works when pthreads are enabled"))
-	   (gen-code tree p #f)))
+       (pp-gen-code tree p)
        (gen-code tree p #f)))
 
 (define (pp-gen-code tree p)
