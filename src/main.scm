@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Sep  7 11:04:29 2009 (serrano)                */
+;*    Last change :  Mon Sep  7 16:18:22 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -71,6 +71,7 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
+   (tprint "HTML=" (html-string-encode (car args)))
    ;; catch critical signals
    (signal-init!)
    ;; set the Hop cond-expand identification
