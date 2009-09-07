@@ -58,14 +58,20 @@ In this example, we define a ,(<APIREF> "service" "service.wiki") named
 ,(<APIREF> "define-service" "service.wiki") special form. 
 
 <example>
-  (define-service (hello)
+  (define-service (hello/world)
      (<HTML>
         (<BODY>
            "Hello World!")))
 
-  (<HTML>
-    (<BODY>
-       (<A> :href "/hop/hello" "click me")))
+  (define (say-hello)
+     (<HTML>
+        (<BODY>
+           (<A> :href "/hop/hello/world" "click me"))))
+
+  (define-service (hello)
+     (say-hello))
+
+  (say-hello)
 </example>
 
 This automatically binds the URL ++/hop/hello++ to the service. The prefix

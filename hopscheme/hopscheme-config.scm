@@ -76,7 +76,7 @@
 			  conf-module)))
       conf-debug))
 
-(define expand-once-expander
+(define once-expander
    (lambda (x e)
       (e (expand-once x) e)))
 
@@ -91,5 +91,5 @@
    (for-each (lambda (expd)
 		(if (pair? expd)
 		    (install-expander! (car expd) (cdr expd))
-		    (install-expander! expd expand-once-expander)))
+		    (install-expander! expd once-expander)))
 	     expanders))
