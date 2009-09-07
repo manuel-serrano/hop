@@ -11,7 +11,8 @@
 ;*=====================================================================*/
 
 (module out
-   (library pthread)
+   (cond-expand
+      (enable-threads (library pthread)))
    (import config
 	   tools
 	   nodes
@@ -56,7 +57,12 @@
    (gen-var-names tree)
    (push-var-declarations tree)
    (if (config 'pp)
-       (pp-gen-code tree p)
+       (cond-expand
+	  (enable-threads (pp-gen-code tree p))
+	  (else
+	   (when (> (bigloo-debug) 1)
+	      (warning "pretty-printing/compression only works when pthreads are enabled"))
+	   (gen-code tree p #f)))
        (gen-code tree p #f)))
 
 (define (pp-gen-code tree p)

@@ -11,7 +11,8 @@
 ;*=====================================================================*/
 
 (module scheme2js-main
-   (library pthread)
+   (cond-expand
+      (enable-threads (library pthread)))
    (import scheme2js
 	   config)
    (include "version.sch")

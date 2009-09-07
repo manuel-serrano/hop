@@ -11,7 +11,8 @@
 ;*=====================================================================*/
 
 (module pipe-port
-   (library pthread)
+   (cond-expand
+      (enable-threads (library pthread)))
    (export (open-pipe-port)))
 
 (define *INITIAL-BUFFER-SIZE* 128)
