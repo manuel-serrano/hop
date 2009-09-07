@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.0.x/etc/configure-macos-bundle.sch        */
+;*    serrano/prgm/project/hop/2.0.x/etc/configure-macosx.sch.in       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Tue May  5 09:55:48 2009 (serrano)                */
+;*    Last change :  Mon Sep  7 19:14:37 2009 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration (tuned for MacOSX bundle)                      */
 ;*=====================================================================*/
@@ -67,7 +67,11 @@
    (make-file-path *macosx-bundle-dir* "@LIBPATH@"))
 
 (define (hop-library-path)
-   (cons* %bigloo-lib-path %hop-lib-path (hop-lib-directory) (bigloo-library-path)))
+   (cond-expand
+      (bigloo-jvm
+       (cons* "resource/bigloo" %bigloo-lib-path %hop-lib-path (hop-lib-directory) (bigloo-library-path)))
+      (else
+       (cons* %bigloo-lib-path %hop-lib-path (hop-lib-directory) (bigloo-library-path)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-rc-directory ...                                   */

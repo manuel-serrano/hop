@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  5 09:54:10 2009                          */
-;*    Last change :  Tue May  5 09:55:41 2009 (serrano)                */
+;*    Last change :  Mon Sep  7 19:14:03 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Common arch HOP configuration                                    */
@@ -23,7 +23,11 @@
 ;*    hop-library-path ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (hop-library-path)
-   (cons "@LIBPATH@" (bigloo-library-path)))
+   (cond-expand
+      (bigloo-jvm
+       (cons* "/resource/bigloo" "@LIBPATH@" (bigloo-library-path)))
+      (else
+       (cons "@LIBPATH@" (bigloo-library-path)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-rc-directory ...                                   */
