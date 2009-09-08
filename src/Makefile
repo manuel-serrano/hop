@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/src/Makefile                     */
+#*    serrano/prgm/project/hop/2.0.x/src/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Fri Nov 28 11:08:22 2008 (serrano)                */
+#*    Last change :  Tue Sep  8 09:55:34 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -108,7 +108,7 @@ jvm-list:
 jvm-lib: o/class_s/lib/hop/$(HOPRELEASE)
 	cp -r ../weblets o/class_s/lib
 	$(MAKE) -s jvm-list SRC=.. DIR=weblets DEST=o/class_s/lib
-	touch $</foo.init && $(RM) $</*.init && cp $(BUILDLIBDIR)/*.init $<
+	cp -f $(BUILDLIBDIR)/*.init $<
 
 META-INF/MANIFEST.MF: META-INF
 	echo "Manifest-Version: 1.0" > $@

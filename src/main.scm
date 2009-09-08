@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Sep  7 16:35:12 2009 (serrano)                */
+;*    Last change :  Tue Sep  8 08:57:56 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -71,7 +71,6 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
-   (tprint "PATH=" (hop-library-path))
    ;; catch critical signals
    (signal-init!)
    ;; set the Hop cond-expand identification
