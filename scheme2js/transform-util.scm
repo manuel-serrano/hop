@@ -76,7 +76,7 @@
 	 ((and (null? opnds)
 	       (not (null? formals)))
 	  (scheme2js-error #f "not enough arguments"
-			   (if (Ref (car formals))
+			   (if (Ref? (car formals))
 			       (Var-id (Ref-var (car formals)))
 			       '())
 			   (car formals)))
