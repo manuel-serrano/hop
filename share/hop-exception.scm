@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Wed Aug 26 17:59:26 2009 (serrano)                */
+;*    Last change :  Wed Sep  9 10:06:17 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -16,6 +16,8 @@
 (module hop-exception
    (export (hop-get-stack offset . depth)
 	   (hop-report-exception exc)
+	   (bigloo-mangled? str)
+	   (bigloo-demangle str)
 	   (<EXCEPTION-STACK> stack)
 	   (<EXCEPTION-FRAME> . args))
    (JS (properties->string hop_properties_to_string)
@@ -24,6 +26,8 @@
        (hop-config hop_config))
    (scheme2js-pragma (hop-get-stack (JS "hop_get_stack"))
 		     (hop-report-exception (JS "hop_report_exception"))
+		     (bigloo-mangled? (JS "hop_mangledp"))
+		     (bigloo-demangle (JS "hop_demangle"))
 		     (<EXCEPTION-STACK> (JS "hop_make_exception_stack"))
 		     (<EXCEPTION-FRAME> (JS "hop_make_exception_frame"))))
 

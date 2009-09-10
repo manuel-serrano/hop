@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Wed Aug 19 15:41:24 2009 (serrano)                */
+;*    Last change :  Wed Sep  9 16:02:10 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -31,10 +31,10 @@
        (error '<SPAGE> "\"title\" missing" id))
       (parent
        (let ((svc (service ()
-		     (make-spage (xml-make-id) attrs title body parent))))
+		     (make-spage id attrs title body parent))))
 	  (<SPAN> :hssclass "hop-spage-link" :id id
 	     attrs
-	     :onclick ~(spage-push $parent $svc)
+	     :onclick ~(spage-push this $parent $svc)
 	     title)))
       (else
        (make-spage id attrs title body #f))))
@@ -48,12 +48,14 @@
       (<DIV> :hssclass "hop-spage-head"
 	 (if parent
 	     (<SPAN> :hssclass "hop-spage-prev"
-		:onclick ~(spage-pop (dom-parent-node (dom-parent-node this)))
+		:onclick ~(spage-pop $id)
 		"")
 	     (let ((svc (service ()
 			   (make-spage id attrs title body parent))))
 		(<SPAN> :hssclass "hop-spage-update"
-		   :onclick ~(spage-update $id $svc)
+		   :onclick ~(let ((el (dom-get-element-by-id $id)))
+				(set! el.svc $svc)
+				(spage-update el))
 		   :title title
 		   "")))
 	 (<SPAN> :hsslcass "hop-spage-title"

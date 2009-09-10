@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Wed May 27 12:11:38 2009 (serrano)                */
+;*    Last change :  Wed Sep  9 18:25:47 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -112,9 +112,13 @@
 ;*    url-completion ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (url-completion req path)
-   (if (webdav? path)
-       (webdav-completion req path)
-       (abspath-completion req path)))
+   (cond
+      ((=fx (string-length path) 0)
+       '#())
+      ((webdav? path)
+       (webdav-completion req path))
+      (else
+       (abspath-completion req path))))
 
 ;*---------------------------------------------------------------------*/
 ;*    abspath-completion ...                                           */
