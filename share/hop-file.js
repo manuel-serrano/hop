@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 07:05:30 2008                          */
-/*    Last change :  Wed May 27 12:05:46 2009 (serrano)                */
+/*    Last change :  Wed Sep  9 19:43:25 2009 (serrano)                */
 /*    Copyright   :  2008-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side support for url browsers.                            */
@@ -27,10 +27,10 @@ function hop_inputurl_keydown( obj, event ) {
 	    obj.completion_count = 0;
 	 }
       } else {
-	 var c = node_style_get( obj, "background" );
-	 node_style_set( obj, "background", "black" );
+	 var c = obj.className;
+	 obj.className = c + " hop_inputurl_flash";
 	 setInterval( function() {
-	       node_style_set( obj, "background", c ? c : "white" );
+	       obj.className = c;
 	    }, 100 );
       }
    };
@@ -315,7 +315,6 @@ function hop_filechooser_run( event, id ) {
 /*    hop_filechooser_key ...                                          */
 /*---------------------------------------------------------------------*/
 function hop_filechooser_key( table, event, id, pep, pid, nep, nid ) {
-   alert( "key=" + event.keyCode );
 }
 
 /*---------------------------------------------------------------------*/

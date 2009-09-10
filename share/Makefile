@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sat Aug 22 15:42:57 2009 (serrano)                */
+#*    Last change :  Wed Sep  9 18:17:19 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -42,7 +42,7 @@ EXTRA		= hop-error.hss hop.css \
 		  hop-foldlist.js hop-foldlist.css \
                   hop-window.scm hop-window.js hop-window.hss \
                   hop-editor.js hop-editor.css \
-                  hop-file.js hop-file.hss \
+                  hop-file.js hop-file.scm hop-file.hss \
                   hop-fileselect.js hop-fileselect.css \
                   hop-tooltip.js hop-dashboard.js \
                   hop-prefs.js hop-prefs.hss \

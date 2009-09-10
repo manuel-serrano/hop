@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:20:41 2009                          */
-;*    Last change :  Tue Aug 25 12:11:56 2009 (serrano)                */
+;*    Last change :  Wed Sep  9 16:05:45 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage client-side implementation                             */
@@ -99,6 +99,8 @@
 		       ((integer? z) (+ 1 z))
 		       ((string? z) (+ 1 (string->number z)))
 		       (else 1))))
+	    ;; the service is store in the node for update
+	    (set! node.svc svc)
 	    (node-style-set! node :zIndex nz)
 	    (node-style-set! node :visibility "hidden")
 	    (node-style-set! node :overflow "hidden")
@@ -110,28 +112,39 @@
 ;*---------------------------------------------------------------------*/
 ;*    spage-push ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (spage-push el svc)
-   (let ((parent (if (string? el) (dom-get-element-by-id el) el)))
+(define (spage-push el parent svc)
+   (let ((parent (if (string? parent) (dom-get-element-by-id parent) parent)))
       (let* ((n (dom-first-child parent))
 	     (title (if (string=? (dom-get-attribute n "hssclass") "hop-spage-head")
 			(let ((c (dom-first-child n)))
 			   c.title)
 			(let ((c (cadr (dom-child-nodes (dom-first-child n)))))
 			   c.innerHTML))))
+	 ;; el must be renamed because it is only allowd one id
+	 ;; element at a time
+	 (set! el.id (string-append el.id "-splink"))
 	 (spage-show parent svc title))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-pop ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (spage-pop el)
-   (let ((el (if (string? el) (dom-get-element-by-id el) el)))
-      (spage-effect el el.offsetWidth 20)))
+   (let ((el (if (string? el) (dom-get-element-by-id el) el))
+	 (id (if (string? el) el el.id)))
+      ;; restore the ide of the associated link element
+      (let* ((oid (string-append id "-splink"))
+	     (spel (dom-get-element-by-id oid)))
+	 (set! spel.id id)
+	 (set! el.id (string-append id "-body")))
+      ;; graphical effect
+      (spage-effect el el.offsetWidth 20))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-update ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (spage-update el svc)
-   (let ((el (if (string? el) (dom-get-element-by-id el) el)))
+(define (spage-update el)
+   (let* ((el (if (string? el) (dom-get-element-by-id el) el))
+	  (svc el.svc))
       (with-hop (svc)
 	 (lambda (node)
 	    (innerHTML-set! el "")
