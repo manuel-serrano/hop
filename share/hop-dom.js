@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Sep 11 10:31:14 2009 (serrano)                */
+/*    Last change :  Fri Sep 11 18:13:57 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -120,7 +120,7 @@ function dom_node_document_attrp( node ) {
 /*---------------------------------------------------------------------*/
 /*    dom_create ...                                                   */
 /*---------------------------------------------------------------------*/
-function dom_create( tag, args ) {
+function dom_create( tag, _ ) {
    var el = document.createElement( tag );
    var l = arguments.length;
    var i = 1;
@@ -164,11 +164,12 @@ function dom_create( tag, args ) {
    return el;
 }
 
-;*---------------------------------------------------------------------*/
-;*    hop_dom_create_msie_radio ...                                    */
-;*---------------------------------------------------------------------*/
-function hop_dom_create_msie_radio( name, args ) {
-   return dom_create( "<INPUT name='" + name + "'>", args );
+/*---------------------------------------------------------------------*/
+/*    hop_dom_create_msie_radio ...                                    */
+/*---------------------------------------------------------------------*/
+function hop_dom_create_msie_radio( name, _ ) {
+   arguments[ 0 ] = "<INPUT name='" + name + "'>";
+   return dom_create.apply( null, arguments );
 }
 
 /*---------------------------------------------------------------------*/
@@ -405,18 +406,19 @@ function hop_create_lflabel( attrs, body ) {
      (let ((k (memq :type args)))
          (if (and (pair? k) (pair? (cdr k)))
 	     (cond
-	        ((or (eq? (cadr k) 'url) (equal? (cadr k) "url"))
+	        ((or (equal? (cadr k) '(quote url)) (equal? (cadr k) "url"))
 	         `(hop_dom_create "input" :onkeydown (hop_inputurl_keydown this event)
       		                  ,@args))
-	        ((and (or (eq? (cadr k) 'radio) (equal? (cadr k) "radio"))
-		      (string=? hop_config.navigator_family "msie"))
+	        ((or (equal? (cadr k) '(quote radio)) (equal? (cadr k) "radio"))
 		 (let ((n (memq :name args)))
-		    (if (and (pair? k) (pair? (cdr k)))
-			`(hop_dom_create_msie_radio ,(cadr k) ,@args)
+		    (if (and (pair? n) (pair? (cdr n)))
+			`(if (string=? hop_config.navigator_family "msie")
+			     (hop_dom_create_msie_radio ,(cadr n) ,@args)
+			     (hop_dom_create "input" ,@args))
 			`(hop_dom_create "input" ,@args))))
 		(else
 		 `(hop_dom_create "input" ,@args)))
-	     `(hop_dom_create "input" ,@args)))) */
+	     `(hop_dom_create "input" ,@args)))) )*/
 
 /*** META (define-macro (<INS> . args)
      `(hop_dom_create "ins" ,@args)) */
