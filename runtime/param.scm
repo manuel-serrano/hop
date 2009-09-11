@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon May 25 15:12:03 2009 (serrano)                */
+;*    Last change :  Fri Sep 11 09:18:45 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -1011,7 +1011,7 @@
 	 ((not (procedure? v))
 	  (error 'hop-path-access-control-set!
 		 (bigloo-type-error-msg "Type"
-					'procedure
+					"procedure"
 					(find-runtime-type v))
 		 v))
 	 ((not (correct-arity? v 2))
@@ -1038,7 +1038,7 @@
 	 ((not (procedure? v))
 	  (error 'hop-path-access-control-set!
 		 (bigloo-type-error-msg "Type"
-					'procedure
+					"procedure"
 					(find-runtime-type v))
 		 v))
 	 ((not (correct-arity? v 2))

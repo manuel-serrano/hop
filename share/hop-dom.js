@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Sep  1 10:28:53 2009 (serrano)                */
+/*    Last change :  Fri Sep 11 10:31:14 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -162,6 +162,13 @@ function dom_create( tag, args ) {
    }
 
    return el;
+}
+
+;*---------------------------------------------------------------------*/
+;*    hop_dom_create_msie_radio ...                                    */
+;*---------------------------------------------------------------------*/
+function hop_dom_create_msie_radio( name, args ) {
+   return dom_create( "<INPUT name='" + name + "'>", args );
 }
 
 /*---------------------------------------------------------------------*/
@@ -396,11 +403,19 @@ function hop_create_lflabel( attrs, body ) {
 
 /*** META (define-macro (<INPUT> . args)
      (let ((k (memq :type args)))
-         (if (and (pair? k) (pair? (cdr k))
-		  (or (eq? (cadr k) 'url))
-		  (or (equal? (cadr k) "url")))
-	     `(hop_dom_create "input" :onkeydown (hop_inputurl_keydown this event)
-			     ,@args)
+         (if (and (pair? k) (pair? (cdr k)))
+	     (cond
+	        ((or (eq? (cadr k) 'url) (equal? (cadr k) "url"))
+	         `(hop_dom_create "input" :onkeydown (hop_inputurl_keydown this event)
+      		                  ,@args))
+	        ((and (or (eq? (cadr k) 'radio) (equal? (cadr k) "radio"))
+		      (string=? hop_config.navigator_family "msie"))
+		 (let ((n (memq :name args)))
+		    (if (and (pair? k) (pair? (cdr k)))
+			`(hop_dom_create_msie_radio ,(cadr k) ,@args)
+			`(hop_dom_create "input" ,@args))))
+		(else
+		 `(hop_dom_create "input" ,@args)))
 	     `(hop_dom_create "input" ,@args)))) */
 
 /*** META (define-macro (<INS> . args)
