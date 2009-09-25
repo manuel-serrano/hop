@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sat Aug 15 16:53:52 2009 (serrano)                */
+;*    Last change :  Mon Sep 14 11:32:04 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOPWIDGET heap file.                */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopwidget-makelib
 
-   (library hop)
+   (library hop multimedia)
    
    (import __hopwidget-init
 	   __hopwidget-foldlist

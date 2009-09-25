@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:20:41 2009                          */
-;*    Last change :  Wed Sep  9 16:05:45 2009 (serrano)                */
+;*    Last change :  Sat Sep 19 15:39:49 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage client-side implementation                             */
@@ -17,10 +17,11 @@
        (begin
 	  (node-style-set! node :left (format "~apx" width))
 	  (node-style-set! node :overflow "auto")
+	  (node-style-set! node :overflow "hidden")
 	  (node-style-set! node :visibility "visible"))
        (node-style-set! node :overflow "hidden"))
    (let ((w (if (> step 0) 0 width)))
-      (timeout 10
+      (timeout 100
 	       (lambda ()
 		  (set! w (+ w step))
 		  (if (if (> step 0) (< w width) (>= w 0))
@@ -120,8 +121,7 @@
 			   c.title)
 			(let ((c (cadr (dom-child-nodes (dom-first-child n)))))
 			   c.innerHTML))))
-	 ;; el must be renamed because it is only allowd one id
-	 ;; element at a time
+	 ;; el must be renamed because only one id element at a time is allowed
 	 (set! el.id (string-append el.id "-splink"))
 	 (spage-show parent svc title))))
 

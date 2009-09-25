@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Wed Sep  2 10:06:47 2009 (serrano)                */
+/*    Last change :  Mon Sep 14 12:56:46 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -1103,7 +1103,7 @@ function hop_audio_controls_onplayer( evt ) {
 
    tl.className = "hop-audio-panel-metadata-player";
    tl.innerHTML = evt.value ?
-      evt.value + " player ready..." :
+      evt.value + " ready..." :
       "Player ready...";
 
    status.className = "hop-audio-info-status-img hop-audio-info-status-stop";

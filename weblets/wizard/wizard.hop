@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed May 20 14:45:36 2009 (serrano)                */
+;*    Last change :  Fri Sep 25 16:47:49 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -18,8 +18,11 @@
 ;*    hoprc-dir ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hoprc-dir
-   (hop-rc-directory))
-   
+   (let ((d (hop-configure-rc-directory)))
+      (unless (directory? d)
+	 (make-directories d))
+      d))
+
 ;*---------------------------------------------------------------------*/
 ;*    wizard ...                                                       */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jun 20 08:37:21 2009                          */
-;*    Last change :  Sat Jun 20 09:03:59 2009 (serrano)                */
+;*    Last change :  Mon Sep 14 11:32:25 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    main module for the hopwidget library                            */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopwidget-init
    
-   (library hop)
+   (library hop multimedia)
    
    (with    __hopwidget-foldlist
 	    __hopwidget-paned

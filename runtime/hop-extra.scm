@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Sep  1 10:25:05 2009 (serrano)                */
+;*    Last change :  Fri Sep 25 13:46:42 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -206,7 +206,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
       (<LINK> :rel "shortcut icon" :href p :inline inl))
 
    (define (css p base inl)
-      ;; force pre-loading the hss file in to force
+      ;; force pre-loading the hss file in order to force
       ;; pre-evaluating hss type declarations.
       (preload-css p base)
       (<LINK> :inline inl
@@ -297,13 +297,16 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 		       (set! res (cons (css p #f inl) res)))))
 	     (hss (let ((p (find-file/path (string-append f ".hss") path)))
 		     (when (string? p)
-			(set! res (cons (css p #f inl) res))))))
+			(set! res (cons (css p #f inl) res)))))
+	     (uhss (let* ((n (string-append (basename f) ".hss"))
+			  (p (make-file-path (hop-rc-directory) "hss" n)))
+		      (when (file-exists? p)
+			 (set! res (cons (css p #f inl) res))))))
 	 (if (null? res)
 	     (cond
 		((not (file-exists? f))
 		 (error '<HEAD> "Can't find include file" f))
-		((or (is-suffix? f "hss")
-		     (is-suffix? f "css"))
+		((or (is-suffix? f "hss") (is-suffix? f "css"))
 		 (list (css f #f inl)))
 		((or (is-suffix? f "scm") (is-suffix? f "hop"))
 		 (list (script f inl)))
@@ -434,7 +437,11 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 ;*---------------------------------------------------------------------*/
 (define (<HEAD> . args)
    (init-extra!)
-   (let* ((body0 (head-parse args))
+   (let* ((hss (make-file-path (hop-rc-directory) "hss" "hop.hss"))
+	  (args (if (file-exists? hss)
+		    (append args `(:css ,hss))
+		    args))
+	  (body0 (head-parse args))
 	  (ubase (filter (lambda (x)
 			    (xml-markup-is? x 'base))
 			 body0))

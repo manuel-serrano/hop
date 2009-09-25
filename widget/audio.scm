@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sun Aug 30 10:03:44 2009 (serrano)                */
+;*    Last change :  Mon Sep 14 16:02:07 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -26,22 +26,18 @@
 
 	    (<AUDIO> . args)
 	    
-	    (class hop-audio-player
-	       (hop-audio-player-init)
+	    (class hop-audio-player::music
 	       (engine read-only)
 	       (name read-only (default #f))
 	       (ident read-only (default (gensym 'hop-audio)))
+	       (%hmutex (default (make-mutex)))
 	       (%thread (default #f))
 	       (%service (default #unspecified))
 	       (%event (default #unspecified))
-	       (%mutex (default (make-mutex 'hop-audio-player)))
 	       (%errcount::int (default 0))
-	       (%status::symbol (default 'init))
+	       (%state::symbol (default 'init))
 	       (%log::pair-nil (default '())))
 	    
-	    (generic hop-audio-player-init ::hop-audio-player)
-	    (generic hop-audio-player-close ::hop-audio-player)
-
 	    (hop-audio-player-json ::hop-audio-player)))
 
 ;*---------------------------------------------------------------------*/
@@ -76,14 +72,14 @@
 			    res))
 		res))))
    
-   (with-access::hop-audio-player p (name %status %mutex %log ident)
-      (with-lock %mutex
+   (with-access::hop-audio-player p (name %state %hmutex %log ident)
+      (with-lock %hmutex
 	 (lambda ()
 	    (<TABLE> :style "border: 2px solid red; width: 100%"
 	       (<COLGROUP> (<COL> :width "0*"))
 	       (<TR> (<TH> :colspan 2 :style "text-align: left" "Player " name))
 	       (<TR> (<TD> "ident: " (<TD> (<TT> ident))))
-	       (<TR> (<TD> "status:") (<TD> (<TT> %status)))
+	       (<TR> (<TD> "status:") (<TD> (<TT> %state)))
 	       (<TR> (<TD> "log:" :style "vertical-align: top")
 		     (<TD> :style "vertical-align: top"
 			(<log> %log))))))))
@@ -513,7 +509,7 @@
 (define (make-audio-thread player)
    
    (define (audio-thread-trace player)
-      (with-access::hop-audio-player player (%event %status %mutex engine %thread)
+      (with-access::hop-audio-player player (%event %state %hmutex engine %thread)
 	 (let ((th (current-thread)))
 	    ;; debug
 	    (tprint ">>> AUDIO-LOOP STARTED, e=" (find-runtime-type engine))
@@ -524,7 +520,7 @@
 		   (if err
 		       (hop-event-broadcast! %event (list 'abort err))
 		       (begin
-			  (set! %status 'closed)
+			  (set! %state 'closed)
 			  (hop-event-broadcast! %event (list 'close)))))
 		(tprint "<<< AUDIO-LOOP THREAD ENDED, e=" (find-runtime-type engine))
 		(set! %thread #f))))))
@@ -533,7 +529,7 @@
     (make-thread
      (lambda ()
 	(audio-thread-trace player)
-	(with-access::hop-audio-player player (engine %event %errcount %status)
+	(with-access::hop-audio-player player (engine %event %errcount %state)
 	   (let ((onstate (audio-onstate %event engine player))
 		 (onerror (audio-onerror %event engine))
 		 (onvolume (audio-onvolume %event engine))
@@ -544,9 +540,9 @@
 		    (let ((msg (with-error-to-string
 				  (lambda ()
 				     (exception-notify e)))))
-		       (set! %status 'error)
+		       (set! %state 'error)
 		       (onerror msg)))
-		 (set! %status 'running)
+		 (set! %state 'running)
 		 (music-event-loop engine
 				   :onstate onstate
 				   :onerror onerror
@@ -570,43 +566,43 @@
 ;*    debug-log ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (debug-log player a0 a1)
-   (with-access::hop-audio-player player (%log %mutex)
-      (mutex-lock! %mutex)
+   (with-access::hop-audio-player player (%log %hmutex)
+      (mutex-lock! %hmutex)
       (let ((loge (car %log)))
 	 (logentry-command-set! loge a0)
 	 (logentry-args-set! loge a1)
 	 (logentry-complete-set! loge #f)
-      (mutex-unlock! %mutex))))
+      (mutex-unlock! %hmutex))))
 
 ;*---------------------------------------------------------------------*/
 ;*    debug-log-complete ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (debug-log-complete player a0 a1)
-   (with-access::hop-audio-player player (%log %mutex)
-      (mutex-lock! %mutex)
+   (with-access::hop-audio-player player (%log %hmutex)
+      (mutex-lock! %hmutex)
       (let ((loge (car %log)))
 	 (logentry-complete-set! loge #t)
 	 (set! %log (cdr %log)))
-      (mutex-unlock! %mutex)))
+      (mutex-unlock! %hmutex)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-audio-player-init ...                                        */
+;*    music-init ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-generic (hop-audio-player-init player::hop-audio-player)
+(define-method (music-init player::hop-audio-player)
 
    (define (hop-audio-player-event-loop-start player)
-      (with-access::hop-audio-player player (%thread %mutex %status %log engine)
-	 (mutex-lock! %mutex)
+      (with-access::hop-audio-player player (%thread %hmutex %state %log engine)
+	 (mutex-lock! %hmutex)
 	 (if (thread? %thread)
 	     (begin
-		(set! %status 'reset-event-loop)
-		(mutex-unlock! %mutex)
+		(set! %state 'reset-event-loop)
+		(mutex-unlock! %hmutex)
 		(music-event-loop-reset! engine))
 	     (unwind-protect
 		(begin
-		   (set! %status 'start-event-loop)
+		   (set! %state 'start-event-loop)
 		   (set! %thread (make-audio-thread player)))
-		(mutex-unlock! %mutex)))))
+		(mutex-unlock! %hmutex)))))
 
    (mutex-lock! debug-mutex)
    (set! debug-players-list (cons player debug-players-list))
@@ -645,7 +641,7 @@
 				  ((volume)
 				   (music-volume-set! engine a1))
 				  ((close)
-				   (hop-audio-player-close player)))
+				   (music-close player)))
 			       (debug-log-complete player a0 a1)
 			       #t)))
 	  (set! %event (service-path %service))
@@ -656,13 +652,13 @@
 	      "Re-configure HOP with multi-threading enabled"))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-audio-player-close ...                                       */
+;*    music-close ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-generic (hop-audio-player-close audio::hop-audio-player)
-   (with-access::hop-audio-player audio (%mutex %thread %status engine)
-      (with-lock %mutex
+(define-method (music-close audio::hop-audio-player)
+   (with-access::hop-audio-player audio (%hmutex %thread %state engine)
+      (with-lock %hmutex
 	 (lambda ()
-	    (set! %status 'close)
+	    (set! %state 'close)
 	    (when (thread? %thread)
 	       (music-close engine)
 	       (set! %thread #f)
@@ -670,6 +666,155 @@
 	       (set! debug-players-list (remq! audio debug-players-list))
 	       (mutex-unlock! debug-mutex))))))
 
+;*---------------------------------------------------------------------*/
+;*    music-closed? ::hop-audio-player ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (music-closed? audio::hop-audio-player)
+   (with-access::hop-audio-player audio (%state %hmutex)
+      (with-lock %hmutex
+	 (lambda ()
+	    (eq? %state 'close)))))
+
+;*---------------------------------------------------------------------*/
+;*    music-reset! ::hop-audio-player ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (music-reset! audio::hop-audio-player)
+   (with-access::hop-audio-player audio (engine)
+      (music-reset! engine)))
+
+;*---------------------------------------------------------------------*/
+;*    music-playlist-get ::hop-audio-player ...                        */
+;*---------------------------------------------------------------------*/
+(define-method (music-playlist-get audio::hop-audio-player)
+   (with-access::hop-audio-player audio (engine)
+      (music-playlist-get engine)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-playlist-add! ::hop-audio-player ...                       */
+;*---------------------------------------------------------------------*/
+(define-method (music-playlist-add! audio::hop-audio-player song)
+   (with-access::hop-audio-player audio (engine)
+      (music-playlist-add! engine song)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-playlist-delete! ::hop-audio-player ...                    */
+;*---------------------------------------------------------------------*/
+(define-method (music-playlist-delete! audio::hop-audio-player num)
+   (with-access::hop-audio-player audio (engine)
+      (music-playlist-delete! engine num)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-playlist-clear! ::hop-audio-player ...                     */
+;*---------------------------------------------------------------------*/
+(define-method (music-playlist-clear! audio::hop-audio-player)
+   (with-access::hop-audio-player audio (engine)
+      (music-playlist-clear! engine)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-play ::hop-audio-player ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (music-play audio::hop-audio-player . song)
+   (with-access::hop-audio-player audio (engine)
+      (apply music-play engine song)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-seek ::hop-audio-player ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (music-seek audio::hop-audio-player obj . song)
+   (with-access::hop-audio-player audio (engine)
+      (apply music-seek engine obj song)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-stop ::hop-audio-player ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (music-stop audio::hop-audio-player)
+   (with-access::hop-audio-player audio (engine)
+      (music-stop engine)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-pause ::hop-audio-player ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (music-pause audio::hop-audio-player)
+   (with-access::hop-audio-player audio (engine)
+      (music-pause engine)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-next ::hop-audio-player ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (music-next audio::hop-audio-player)
+   (with-access::hop-audio-player audio (engine)
+      (music-next engine)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-prev ::hop-audio-player ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (music-prev audio::hop-audio-player)
+   (with-access::hop-audio-player audio (engine)
+      (music-next engine)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-crossfade ::hop-audio-player ...                           */
+;*---------------------------------------------------------------------*/
+(define-method (music-crossfade audio::hop-audio-player i)
+   (with-access::hop-audio-player audio (engine)
+      (music-crossfade engine i)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-random-set! ::hop-audio-player ...                         */
+;*---------------------------------------------------------------------*/
+(define-method (music-random-set! audio::hop-audio-player b)
+   (with-access::hop-audio-player audio (engine)
+      (music-random-set! engine b)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-repeat-set! ::hop-audio-player ...                         */
+;*---------------------------------------------------------------------*/
+(define-method (music-repeat-set! audio::hop-audio-player b)
+   (with-access::hop-audio-player audio (engine)
+      (music-repeat-set! engine b)))
+
+;*---------------------------------------------------------------------*/
+;*    music-reset-error! ::hop-audio-player ...                        */
+;*---------------------------------------------------------------------*/
+(define-method (music-reset-error! audio::hop-audio-player)
+   (with-access::hop-audio-player audio (engine)
+      (music-reset-error! engine)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-status ::hop-audio-player ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (music-status audio::hop-audio-player)
+   (with-access::hop-audio-player audio (engine)
+      (music-status engine)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-update-status! ::hop-audio-player ...                      */
+;*---------------------------------------------------------------------*/
+(define-method (music-update-status! audio::hop-audio-player status)
+   (with-access::hop-audio-player audio (engine)
+      (music-update-status! engine status)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-song ::hop-audio-player ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (music-song audio::hop-audio-player)
+   (with-access::hop-audio-player audio (engine)
+      (music-song engine)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-songpos ::hop-audio-player ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (music-songpos audio::hop-audio-player)
+   (with-access::hop-audio-player audio (engine)
+      (music-songpos engine)))
+   
+;*---------------------------------------------------------------------*/
+;*    music-meta ::hop-audio-player ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (music-meta audio::hop-audio-player)
+   (with-access::hop-audio-player audio (engine)
+      (music-meta engine)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-audio-player-json ...                                        */
 ;*---------------------------------------------------------------------*/

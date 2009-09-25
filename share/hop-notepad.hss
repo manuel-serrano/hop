@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan 17 18:56:22 2005                          */
-/*    Last change :  Sat Jun  6 18:57:53 2009 (serrano)                */
+/*    Last change :  Fri Sep 18 12:30:43 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad CSS                                                  */
@@ -52,6 +52,7 @@ notepad-tabs {
   padding-left: 10px;
   white-space: nowrap;
   overflow: hidden;
+  vertical-align: top;
 }
 
 /*--- body ------------------------------------------------------------*/
@@ -63,6 +64,7 @@ notepad-body {
   margin: 0;
   background: #dedeff;
   padding: 10px;
+  vertical-align: top;
 }
 
 /*---------------------------------------------------------------------*/
@@ -88,6 +90,7 @@ nphead {
 /*    The span that contains the tab material (e.g., the tab label).   */
 /*---------------------------------------------------------------------*/
 nptabhead {
+  user-select: none;
 }
 
 /*---------------------------------------------------------------------*/

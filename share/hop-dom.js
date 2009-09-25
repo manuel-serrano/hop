@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Sep 11 18:13:57 2009 (serrano)                */
+/*    Last change :  Fri Sep 18 12:05:51 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -12,6 +12,7 @@
 /*=====================================================================*/
 
 /*** META ((export document) (JS document)) */
+/*** META ((export window) (JS window)) */
 
 /*---------------------------------------------------------------------*/
 /*    dom_add_child ...                                                */
@@ -166,6 +167,9 @@ function dom_create( tag, _ ) {
 
 /*---------------------------------------------------------------------*/
 /*    hop_dom_create_msie_radio ...                                    */
+/*    -------------------------------------------------------------    */
+/*    MSIE input names are immutable! That is, they cannot be set      */
+/*    as other attributes.                                             */
 /*---------------------------------------------------------------------*/
 function hop_dom_create_msie_radio( name, _ ) {
    arguments[ 0 ] = "<INPUT name='" + name + "'>";

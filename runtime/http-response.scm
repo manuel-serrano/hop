@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sat Aug 15 18:55:40 2009 (serrano)                */
+;*    Last change :  Thu Sep 17 17:44:56 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -547,6 +547,20 @@
       (bodyp (not (eq? (http-request-method req) 'HEAD)))
       (body (xml-tilde->expression obj))))
 
+;*---------------------------------------------------------------------*/
+;*    scheme->response ::xml-http-request ...                          */
+;*    -------------------------------------------------------------    */
+;*    This is used to forward the response of a remote WITH-HOP        */
+;*    to clients.                                                      */
+;*---------------------------------------------------------------------*/
+(define-method (scheme->response obj::xml-http-request req)
+   (instantiate::http-response-procedure
+      (request req)
+      (start-line (format "HTTP/1.1 ~a" (xml-http-request-status obj)))
+      (header (xml-http-request-header obj))
+      (proc (lambda (op)
+	       (display (read-string (xml-http-request-input-port obj)) op)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    http-response-void ...                                           */
 ;*---------------------------------------------------------------------*/

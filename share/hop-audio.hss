@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 28 06:23:39 2007                          */
-/*    Last change :  Sun Aug 30 12:04:55 2009 (serrano)                */
+/*    Last change :  Sat Sep 19 17:57:47 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Audio's cascade style sheet.                                 */
@@ -87,15 +87,6 @@ audio div.hop-audio-buttons {
   padding-top: 1ex;
   width: 100%;
   overflow: hidden;
-}
-
-audio img.hop-audio-button {
-  background: $hopaudio-button-background;
-  width: 14px;
-  height: 14px;
-  padding: 1px 4px 1px 4px;
-  cursor: default;
-  $hopaudio-button-border;
 }
 
 audio div.hop-audio-button {
