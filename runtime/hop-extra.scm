@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Sep 25 13:46:42 2009 (serrano)                */
+;*    Last change :  Fri Sep 25 16:55:52 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -299,7 +299,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 		     (when (string? p)
 			(set! res (cons (css p #f inl) res)))))
 	     (uhss (let* ((n (string-append (basename f) ".hss"))
-			  (p (make-file-path (hop-rc-directory) "hss" n)))
+			  (p (make-file-path (hop-rc-directory) (hop-hss-theme) n)))
 		      (when (file-exists? p)
 			 (set! res (cons (css p #f inl) res))))))
 	 (if (null? res)
@@ -437,7 +437,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 ;*---------------------------------------------------------------------*/
 (define (<HEAD> . args)
    (init-extra!)
-   (let* ((hss (make-file-path (hop-rc-directory) "hss" "hop.hss"))
+   (let* ((hss (make-file-path (hop-rc-directory) (hop-hss-theme) "hop.hss"))
 	  (args (if (file-exists? hss)
 		    (append args `(:css ,hss))
 		    args))

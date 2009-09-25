@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Sep 25 16:45:19 2009 (serrano)                */
+;*    Last change :  Fri Sep 25 16:55:12 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -124,6 +124,9 @@
 
 	    (hop-initial-weblet::bstring)
 	    (hop-initial-weblet-set! ::bstring)
+
+	    (hop-hss-theme::bstring)
+	    (hop-hss-theme-set! ::bstring)
 
 	    (hop-enable-proxing::bool)
 	    (hop-enable-proxing-set! ::bool)
@@ -677,6 +680,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-initial-weblet
    "hop")
+
+;*---------------------------------------------------------------------*/
+;*    hop-hss-theme ...                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hss-theme
+   "hss")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-service-weblet-weblet-name ...                               */
