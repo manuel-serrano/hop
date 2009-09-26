@@ -80,6 +80,8 @@
       ((and (pair? x)
 	    (or (eq? (car x) 'quote)
 		(eq? (car x) 'quasiquote)))
+       ;; should the quasiquote contain unescaped elements, then the expansion
+       ;; will reinvoke this expander.
        x)
       ;(let loop (bindings) ...)
       ((and (pair? x)
