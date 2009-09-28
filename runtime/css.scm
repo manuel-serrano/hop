@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Tue Sep  1 05:10:49 2009 (serrano)                */
+;*    Last change :  Sun Sep 27 06:05:56 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -150,10 +150,10 @@
 ;*    hss-properties->ruleset-list ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (hss-properties->ruleset-list val)
-   
+
    (define (hss-string->ruleset val)
-      (if (string-index val #\{)
-	  (hss-parse-ruleset val)
+      (cond
+	 ((not (string-index val #\{))
 	  (let ((str (string-append "f{" val "}")))
 	     (duplicate::css-ruleset (hss-parse-ruleset str)
 		(selector+ (list
@@ -161,7 +161,14 @@
 			     (instantiate::css-selector
 				(element
 				 (instantiate::css-selector-name
-				    (name "")))))))))))
+				    (name ""))))))))))
+	 ((or (substring-at? val "+ " 0) (substring-at? val "> " 0))
+	  (let* ((str (string-append "f " val))
+		 (rs (hss-parse-ruleset str)))
+	     (duplicate::css-ruleset rs
+		(selector+ (list (cdr (car (css-ruleset-selector+ rs))))))))
+	 (else
+	  (hss-parse-ruleset val))))
 
    (cond
       ((string? val)
@@ -179,7 +186,9 @@
 (define (hss-compile-declaration* selector decl lenv penv)
    
    (define (compose-selectors selector sel+)
-      (append selector (cons 'childof (car sel+))))
+      (if (symbol? (caar sel+))
+	  (append selector (car sel+))
+	  (append selector (cons 'childof (car sel+)))))
    
    (define (compile-alias decl alias)
       (let ((nsel (compose-selectors selector (css-ruleset-selector+ alias))))
@@ -356,6 +365,8 @@
 		    (eval `(module ,(gensym)))
 		    (with-handler
 		       (lambda (e)
+			  (when (&exception? e)
+			     (exception-notify e))
 			  (with-error-to-string
 			     (lambda ()
 				(error-notify e))))
