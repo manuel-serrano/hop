@@ -11,22 +11,18 @@
 (define (dollar-modules! m::WIP-Unit)
    (with-access::WIP-Unit m (header)
       (when (and (pair? header)
-		 (pair? (cdr header)))
+		 (pair? (cdr header))
+		 (list? header))
 	 (let loop ((hdr (cddr header))
 		    (rev-dollar-clauses '()))
 	    (cond
-	       ((or (not (pair? hdr))
-		    (and (not (pair? (cdr hdr)))
-			 (not (null? (cdr hdr)))))
-		;; not a list or empty list.
-		'do-nothing)
 	       ((or (not hdr)
 		    (null? hdr)
 		    (null? (cdr hdr)))
 		(unless (null? rev-dollar-clauses)
 		   ;; remove the clauses from the header.
-		   (let liip ((h header)
-			      (rev-copied '()))
+		   (let liip ((h (cddr header))
+			      (rev-copied (list (cadr header) (car header))))
 		      (cond
 			 ((null? h)
 			  (set! header (reverse! rev-copied)))
