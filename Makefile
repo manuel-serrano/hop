@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Sep 29 18:56:40 2009 (serrano)                */
+#*    Last change :  Tue Sep 29 18:59:58 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -298,4 +298,5 @@ distrib-sans-version:
 .PHONY: predistrib
 
 predistrib:
+	$(MAKE)
 	$(MAKE) -C widget predistrib
