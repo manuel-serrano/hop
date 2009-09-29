@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:20:41 2009                          */
-;*    Last change :  Sat Sep 19 15:39:49 2009 (serrano)                */
+;*    Last change :  Tue Sep 29 09:22:38 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage client-side implementation                             */
@@ -69,7 +69,9 @@
 ;*---------------------------------------------------------------------*/
 (define (spage-none node step)
    (if (> step 0)
-       (node-style-set! node :visible "visible")
+       (begin
+	  (node-style-set! node :opacity 1.0)
+	  (node-style-set! node :visibility "visible"))
        (dom-remove-child! (dom-parent-node node) node)))
 
 ;*---------------------------------------------------------------------*/
@@ -77,16 +79,20 @@
 ;*---------------------------------------------------------------------*/
 (define (spage-effect node width step)
    (cond
-      (#t
+      (#f
        (spage-fade node (if (> step 0) -0.3 0.2)))
       (#f
        (spage-slide node width step))
       (#t
-       (if (< width 600)
-	   (spage-slide node width step)
-	   (spage-fade node (if (> step 0) -0.3 0.25))))
+       (cond
+	  ((< hop_config.cpu_speed 60)
+	   (spage-none node (- step)))
+	  ((and #f (< width 600))
+	   (spage-slide node width step))
+	  (else
+	   (spage-fade node (if (> step 0) -0.3 0.25)))))
       (else
-       (spage-none node step))))
+       (spage-none node (- step)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-show ...                                                   */

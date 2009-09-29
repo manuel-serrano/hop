@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Jun 26 13:31:04 2009 (serrano)                */
+#*    Last change :  Tue Sep 29 13:48:36 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
@@ -12,8 +12,8 @@
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../etc/Makefile.hopconfig
-include ../etc/Makefile.version
+-include ../etc/Makefile.hopconfig
+-include ../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
@@ -38,11 +38,9 @@ build:
 #*    clean                                                            */
 #*---------------------------------------------------------------------*/
 clean:
-	if [ "$(HOPVERSION) " != " " ]; then \
-	  for p in $(POPDIRS); do \
-            ($(MAKE) -C $$p clean) || exit 1;\
-          done \
-        fi
+	for p in $(POPDIRS); do \
+          ($(MAKE) -C $$p clean) || exit 1;\
+        done
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
