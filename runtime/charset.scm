@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 10 06:46:43 2007                          */
-;*    Last change :  Wed Jul 15 10:40:24 2009 (serrano)                */
+;*    Last change :  Tue Sep 29 15:53:59 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with charset.                              */
@@ -23,10 +23,16 @@
 ;*---------------------------------------------------------------------*/
 (define (charset-alias charset)
    (case charset
-      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1 ISO-8869-1 ISO8859-1)
+      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1 ISO-8869-1 ISO8859-1
+        iso-8859-1 iso-8859-2 iso-8859-15 iso-latin-1 iso-8869-1 iso8859-1)
        'ISO-8859-1)
-      ((WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258)
+      ((WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258
+        windows-1250 windows-1252 windows-1256 windows-1258)
        'CP1252)
+      ((utf-8)
+       'UTF-8)
+      ((ucs-2)
+       'UCS-2)
       (else
        charset)))
 

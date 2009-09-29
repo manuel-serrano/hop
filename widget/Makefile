@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Aug 14 08:24:06 2009 (serrano)                */
+#*    Last change :  Tue Sep 29 18:52:36 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -60,7 +60,7 @@ include ../etc/Makefile.library
 #*---------------------------------------------------------------------*/
 #*    all                                                              */
 #*---------------------------------------------------------------------*/
-.PHONY: build native jvm dotnet
+.PHONY: build native jvm dotnet distrib distrib-clean
 
 build: 
 	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
@@ -95,6 +95,14 @@ ude:
 
 getsources:
 	@ echo $(SOURCES)
+
+#*---------------------------------------------------------------------*/
+#*    predistrib                                                       */
+#*---------------------------------------------------------------------*/
+predistrib: $(SOURCES:%.hop=%.scm)
+
+predistrib-clean:
+	/bin/rm -f $(patsubst %.hop,%.scm,$(filter %hop, $(SOURCES)))
 
 #*---------------------------------------------------------------------*/
 #*    Explicit dependencies                                            */

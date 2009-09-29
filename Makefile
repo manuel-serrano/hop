@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Jul 17 11:09:20 2009 (serrano)                */
+#*    Last change :  Tue Sep 29 18:53:14 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -266,6 +266,10 @@ distrib-sans-version:
 	  $(RM) -rf $(HOPTMPDIR)/hop-tmp/weblets/home/talks && \
 	  $(RM) -rf $(HOPTMPDIR)/hop-tmp/weblets/home/videos && \
           mv $(HOPTMPDIR)/hop-tmp $(HOPTMPDIR)/hop-$$distrib && \
+          (cd $(HOPTMPDIR)/hop-$$distrib && \
+           ./configure && \
+           $(MAKE) predistrib && \
+           $(MAKE) clean); \
           tar cvfz hop-$$distrib.tar.gz --exclude .hg -C $(HOPTMPDIR) hop-$$distrib && \
           $(RM) -rf $(HOPTMPDIR)/hop-$$distrib && \
           if [ $(HOPDISTRIBDIR) != "." ]; then \
@@ -288,3 +292,10 @@ distrib-sans-version:
           $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \
         fi
 
+#*---------------------------------------------------------------------*/
+#*    predistrib:                                                      */
+#*---------------------------------------------------------------------*/
+.PHONY: predistrib
+
+predistrib:
+	$(MAKE) -c widget predistrib

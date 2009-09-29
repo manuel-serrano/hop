@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Sep 25 16:55:12 2009 (serrano)                */
+;*    Last change :  Tue Sep 29 18:25:46 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -648,7 +648,10 @@
 ;*    hop-server-hostip ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-server-hostip
-   (host (hop-server-hostname)))
+   (with-handler
+      (lambda (e)
+	 "127.0.0.1")
+      (host (hop-server-hostname))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-scm-compile-suffix ...                                       */
