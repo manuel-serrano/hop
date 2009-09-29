@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Sep 29 18:59:58 2009 (serrano)                */
+#*    Last change :  Tue Sep 29 19:08:32 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -164,6 +164,7 @@ clean-quick:
 	(cd hopsh; $(MAKE) clean)
 	(cd hopreplay; $(MAKE) clean)
 	(cd weblets; $(MAKE) clean)
+	(cd widget; $(MAKE) clean)
 
 clean:
 	(cd runtime; $(MAKE) clean)
@@ -174,12 +175,14 @@ clean:
 	(cd hopreplay; $(MAKE) clean)
 	(cd etc; $(MAKE) clean)
 	(cd weblets; $(MAKE) clean)
+	(cd widget; $(MAKE) clean)
 
 devclean:
 	(cd runtime; $(MAKE) devclean)
 	(cd src; $(MAKE) devclean)
 	(cd hopsh; $(MAKE) devclean)
 	(cd hopreplay; $(MAKE) devclean)
+	(cd widget; $(MAKE) devclean)
 
 distclean: clean devclean
 	/bin/rm -f etc/Makefile.hopconfig
@@ -268,8 +271,7 @@ distrib-sans-version:
           mv $(HOPTMPDIR)/hop-tmp $(HOPTMPDIR)/hop-$$distrib && \
           (cd $(HOPTMPDIR)/hop-$$distrib && \
            ./configure && \
-           $(MAKE) predistrib && \
-           $(MAKE) clean); \
+           $(MAKE) predistrib) \
           tar cvfz hop-$$distrib.tar.gz --exclude .hg -C $(HOPTMPDIR) hop-$$distrib && \
           $(RM) -rf $(HOPTMPDIR)/hop-$$distrib && \
           if [ $(HOPDISTRIBDIR) != "." ]; then \
@@ -300,3 +302,4 @@ distrib-sans-version:
 predistrib:
 	$(MAKE)
 	$(MAKE) -C widget predistrib
+	$(MAKE) distclean
