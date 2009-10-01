@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Sep  1 05:54:29 2009 (serrano)                */
+;*    Last change :  Thu Oct  1 15:53:48 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -212,7 +212,9 @@
 		 "Illegal service arguments encoding"
 		 `(,(hop-service-id svc) ,vals)))
 	 ((correct-arity? proc (length vals))
-	  (apply proc vals))
+	  (with-handler
+	     exception-notify
+	     (apply proc vals)))
 	 (else
 	  (error (hop-service-id svc)
 		 "Wrong number of arguments"

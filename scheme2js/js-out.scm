@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -212,7 +212,8 @@
 (define (expr? n)
    (cond-expand
       (bigloo-debug (unless (or (assig-expr? n)
-				(Sequence? n))
+				(Sequence? n)
+				(Pragma? n))
 		       (error "expr?"
 			      "forgot an expression"
 			      (class-name (object-class n))))
