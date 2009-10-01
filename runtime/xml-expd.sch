@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Thu Jul 16 14:10:07 2009 (serrano)                */
+;*    Last change :  Thu Oct  1 07:18:15 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -256,7 +256,7 @@
 		      (let () ,@body))
 		     ,@(map (lambda (b)
 			       (match-case b
-				  (((and (? symbol?) ?id) ?init . ?-)
+				  (((and (? symbol?) ?id) ?- . ?-)
 				   `((eq? (car ,args) ,(symbol->keyword id))
 				     (if (null? (cdr ,args))
 					 (begin

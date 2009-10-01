@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:04:10 2005                          */
-/*    Last change :  Sun Aug 30 07:35:30 2009 (serrano)                */
+/*    Last change :  Thu Oct  1 07:00:22 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider CSS                                                   */
@@ -38,7 +38,18 @@ $(define-hss-type slider "table[hssclass=hop-slider]"
        (format "td.caption { font-family: ~l; }" v))
 
     (define-hss-property (caption-font-weight v)
-       (format "td.caption { font-size: ~l; }" v)))
+       (format "td.caption { font-size: ~l; }" v))
+
+    (define-hss-property (line-height v)
+       (format "div.line { height: ~l; }" v))
+
+    (define-hss-property (cursor-height v)
+       (list (format "td { height: ~l; }" v)
+             (format "div.cursor { height: ~l; }" v)))
+
+    (define-hss-property (cursor-width v)
+       (list (format "td.cursor { width: ~l; }" v)
+             (format "div.cursor { width: ~l; }" v))))
 
 /*---------------------------------------------------------------------*/
 /*    public declarations                                              */
@@ -47,6 +58,9 @@ $(define-hss-type slider "table[hssclass=hop-slider]"
 slider {
   line-left-color: #68f;
   line-right-color: #ccc;
+  line-height: 3px;
+  cursor-height: 7px;
+  cursor-width: 14px;
   cursor-color: rgb(150,150,150);
   caption-color: black;
   caption-font-size: 8px;
@@ -69,29 +83,26 @@ slider {
 /*    Line configuration                                               */
 /*---------------------------------------------------------------------*/
 slider td {
-  height: 7px;
   vertical-align: middle;
   border: 1px solid transparent;
 }
 
-slider div.lineleft {
+slider div.line {
   height: 3px;
-  border-right: 0;
-  border-left: 1px solid #555;
   border-top: 1px solid #555;
   border-bottom: 1px solid #555;
   user-select: none;
+  margin: 0;
+}
+
+slider div.lineleft {
+  border-right: 0;
+  border-left: 1px solid #555;
 }
   
 slider div.lineright {
-  height: 3px;
   border-left: 0;
-  margin: 0;
-  border-top: 1px solid #aaa;
   border-right: 1px solid #aaa;
-  border-bottom: 1px solid #aaa;
-  background: #ccc;
-  user-select: none;
 }
 
 /*---------------------------------------------------------------------*/
@@ -100,7 +111,6 @@ slider div.lineright {
 slider td.cursor {
   margin: 0;
   padding: 0;
-  width: 14px;
   border-left: 1px solid #aaa;
   border-top: 1px solid #aaa;
   border-right: 1px solid #555;
@@ -110,8 +120,6 @@ slider td.cursor {
 }
 
 slider div.cursor {
-  width: 14px;
-  height: 7px;
   background-image: url( "icons/hop-slider/cursor.png" );
   background-position: center center;
   background-repeat: repeat-y;

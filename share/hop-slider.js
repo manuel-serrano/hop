@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Wed Jun 17 08:14:37 2009 (serrano)                */
+/*    Last change :  Thu Oct  1 06:53:57 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
@@ -161,12 +161,12 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    }
 
    div = document.createElement( "div" );
-   div.className = "lineleft";
+   div.className = "line lineleft";
    div.id = id + "-lineleft";
    line1.appendChild(div);
 
    div = document.createElement( "div" );
-   div.className = "lineright";
+   div.className = "line lineright";
    div.id = id + "-lineright";
    line2.appendChild(div);
 

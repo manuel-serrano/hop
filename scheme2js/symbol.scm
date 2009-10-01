@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -303,7 +303,7 @@
 	    this))))
 
 (define-nmethod (Ref.resolve! symbol-table)
-   (with-access::Ref this (id var)
+   (with-access::Ref this (id var location)
       (let ((v (any (lambda (scope)
 		       (symbol-var scope id))
 		    symbol-table)))
@@ -314,7 +314,11 @@
 	     (verbose "Unresolved symbol '" id "' assumed to be a JS-var")
 	     (ncall resolve! this symbol-table)) ;; try again.
 	    (else
-	     (error #f "Unresolved symbol: " id)))))
+	     (match-case location
+		((at ?file ?char)
+		 (error/location #f "unbound variable" id file char))
+		(else
+		 (error #f "unbound variable" id)))))))
    this)
 
 ;; runtime-var-ref directly queries the js-var-scope (short-cutting the
