@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Sep 18 12:05:51 2009 (serrano)                */
+/*    Last change :  Fri Oct  2 10:13:08 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1129,6 +1129,7 @@ function hop_bounding_box( e, m ) {
       n = e;
    }
 
+   if( n == undefined ) sc_error( "bounding-box", "illegal node", e );
    if( !m ) m = 0;
 
    return [ hop_element_x( n ) - m, hop_element_y( n ) - m,

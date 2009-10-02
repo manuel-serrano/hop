@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Sep  9 18:17:19 2009 (serrano)                */
+#*    Last change :  Fri Oct  2 09:03:09 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -89,8 +89,8 @@ ICONS_COLOR	= transbg.png satval.png
 
 ICONS_ACTIONS   = cancel.png ok.png run.png open.png
 
-ICONS		= important.png shadow-se.png \
-		  busy-anim-16.gif logo-bg.png shadow-sw.png \
+ICONS		= important.png shadow-se.png shadow-sw.png \
+		  busy-anim-16.gif busy-anim-32.gif logo-bg.png \
 		  dashboard.png notfound.png source.png \
 		  resize-grip.png stop.png \
 		  error.png client-error.png shadow-e.png timeout.png \
