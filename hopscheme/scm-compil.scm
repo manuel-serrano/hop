@@ -4,7 +4,7 @@
    
    (import __hopscheme_config
 	   __dollar_scheme2js_module
-	   __hop_exports)
+	   __hopscheme_hop_runtime)
 
    (export (compile-scheme-file file::bstring ::obj)))
    
@@ -27,7 +27,7 @@
 	 (scheme2js-compile-file file              ;; input-files
 				 "-"               ;; output-file
 				 `(                ;; headers-overrides
-				   (merge-first (import ,(hop-runtime-module)))
+				   (merge-first (import ,@(hop-runtime-modules)))
 				   ,@env)
 				 (extend-config (get-cached-config)
 						'module-resolver

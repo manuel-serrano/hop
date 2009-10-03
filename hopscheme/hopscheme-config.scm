@@ -1,6 +1,6 @@
 (module __hopscheme_config
    (library scheme2js)
-   (import __hop_exports
+   (import __hopscheme_hop_runtime
 	   __dollar_scheme2js_module)
    (export (hopscheme-config compile-file?)
 	   (init-hopscheme! #!key reader share path verbose eval postprocess features expanders)
