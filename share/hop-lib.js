@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Mon Jul 20 10:18:17 2009 (serrano)                */
+/*    Last change :  Sun Oct  4 19:36:13 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -428,11 +428,122 @@ function string_hex_intern( s ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    make_date ...                                                    */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity -1)) */
+function make_date() {
+   var l = arguments.length, i = 0;
+   var year = 1970;
+   var month = 1;
+   var day = 1;
+   var hours = 1;
+   var minutes = 1;
+   var seconds = 1;
+
+   while( i < l ) {
+      var k = arguments[ i++ ];
+      
+      if( sc_isKeyword( k ) ) {
+	 var prop = sc_keyword2jsstring( k );
+	 if( prop === "year" ) year = arguments[ i++ ]; 
+	 else if( prop === "month" ) month = (arguments[ i++ ] - 1); 
+	 else if( prop === "day" ) day = arguments[ i++ ]; 
+	 else if( prop === "hours" ) hours = arguments[ i++ ]; 
+	 else if( prop === "minutes" ) minutes = arguments[ i++ ]; 
+	 else if( prop === "seconds" ) seconds = arguments[ i++ ]; 
+	 else i++;
+      }
+   }
+
+   return new Date( year, month, day, hours, minutes, seconds );
+}
+
+/*---------------------------------------------------------------------*/
+/*    date_copy ...                                                    */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity -2)) */
+function date_copy() {
+   var l = arguments.length, i = 1;
+   var date = arguments[ 0 ];
+   var year = date.getFullYear();
+   var month = date.getMonth();
+   var day = date.getDate();
+   var hours = date.getHours();
+   var minutes = date.getMinutes();
+   var seconds = date.getSeconds();
+
+   while( i < l ) {
+      var k = arguments[ i++ ];
+      
+      if( sc_isKeyword( k ) ) {
+	 var prop = sc_keyword2jsstring( k );
+	 if( prop === "year" ) year = arguments[ i++ ]; 
+	 else if( prop === "month" ) month = (arguments[ i++ ] - 1);  
+	 else if( prop === "day" ) day = arguments[ i++ ]; 
+	 else if( prop === "hours" ) hours = arguments[ i++ ]; 
+	 else if( prop === "minutes" ) minutes = arguments[ i++ ]; 
+	 else if( prop === "seconds" ) seconds = arguments[ i++ ]; 
+	 else i++;
+      }
+   }
+
+   return new Date( year, month, day, hours, minutes, seconds );
+}
+
+/*---------------------------------------------------------------------*/
+/*    date->seconds ...                                                */
+/*---------------------------------------------------------------------*/
+/*** META ((export date->seconds) (arity #t)) */
+function date_seconds( d ) {
+   return d.getTime() / 1000;
+}
+
+/*---------------------------------------------------------------------*/
+/*    seconds_date ...                                                 */
+/*---------------------------------------------------------------------*/
+/*** META ((export seconds->date) (arity #t)) */
+function seconds_date( d ) {
+   return new Date( d * 1000 );
+}
+
+/*---------------------------------------------------------------------*/
+/*    date_to_rfc2822 ...                                              */
+/*---------------------------------------------------------------------*/
+/*** META ((export date->rfc282-date) (arity #t)) */
+function date_to_rfc2822( d ) {
+   return d.toTimeString();
+}
+
+/*---------------------------------------------------------------------*/
+/*    date_from_rfc2822 ...                                            */
+/*---------------------------------------------------------------------*/
+/*** META ((export rfc282-date->date) (arity #t)) */
+function date_from_rfc2822( s ) {
+   return new Date( s );
+}
+
+/*---------------------------------------------------------------------*/
+/*    date_from_rfc2822 ...                                            */
+/*---------------------------------------------------------------------*/
+/*** META ((export rfc282-date->date) (arity #t)) */
+function date_from_rfc2822( s ) {
+   return new Date( s );
+}
+
+/*---------------------------------------------------------------------*/
+/*    day_seconds ...                                                  */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity #t)) */
+function day_seconds() {
+   return 86400;
+}
+
+/*---------------------------------------------------------------------*/
 /*    date-year ...                                                    */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)) */
 function date_year( d ) {
-   return d.getYear();
+   return d.getFullYear();
 }
 
 /*---------------------------------------------------------------------*/
@@ -449,6 +560,26 @@ function date_month( d ) {
 /*** META ((export #t) (arity #t)) */
 function date_day( d ) {
    return d.getDay();
+}
+
+/*---------------------------------------------------------------------*/
+/*    date-yday ...                                                    */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity #t)) */
+function date_yday( d ) {
+   var d0 = new Date( d.getFullYear(), 0, 1,
+		      d.getHours(), d.getMinutes(),
+		      d.getSeconds(), d.getMilliseconds() );
+
+   return Math.round(((d.getTime() - d0.getTime()) / 1000) / day_seconds()) + 1;
+}
+
+/*---------------------------------------------------------------------*/
+/*    date-wday ...                                                    */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity #t)) */
+function date_wday( d ) {
+   return d.getDay() + 1;
 }
 
 /*---------------------------------------------------------------------*/
