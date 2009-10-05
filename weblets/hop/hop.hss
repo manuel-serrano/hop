@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/weblets/hop/hop.hss              */
+/*    serrano/prgm/project/hop/2.0.x/weblets/hop/hop.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Nov 28 10:28:49 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Mon Oct  5 08:56:35 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -89,6 +89,7 @@ div.weblets-title {
 body.hop-dashboard-panel div.weblets-title {
   margin-top: 0;
   margin-bottom: 2ex;
+  color: #999;
 }
 
 /*--- weblet ----------------------------------------------------------*/
@@ -111,6 +112,11 @@ table.weblet td.logo:hover {
   border-radius: 0.2em;
 }
 
+body.hop-dashboard-panel table.weblet td.logo:hover {
+  background-color: #464444;
+  border: 1px solid #777;
+}
+
 table.weblet td.legend {
   font-size: small;
   font-weight: bold;
@@ -126,9 +132,9 @@ table.hop {
   padding: 10px;
   border: 1px solid $border-color;
   background-color: white;
-  -moz-border-radius: 0.5em;
-  -webkit-border-radius: 0.5em;
-  border-radius: 0.5em;
+  -moz-border-radius: 0.4em;
+  -webkit-border-radius: 0.4em;
+  border-radius: 0.4em;
 }
 
 div#title {

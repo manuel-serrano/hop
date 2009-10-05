@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Sat Jun  6 10:50:52 2009 (serrano)                */
+;*    Last change :  Mon Oct  5 09:08:12 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -247,15 +247,47 @@
 ;*    hop/dashboard ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-service (hop/dashboard)
-   ~(window-open :id "hop/dashboard"
-       :title "Hop"
-       :parent document.body
-       :width 400
-       :height 300
-       :left (/ (- (current-window-width) 400) 2)
-       :top (- (current-window-height) 370)
-       :src (<IFRAME> :src ($hop/dashboard-panel) :class "hop"
-	       :style "border: 0; width: 100%; height: 100%; padding: 0")))
+   ~(let* ((horiz (cond
+		     ((> (current-window-width) 800)
+		      "100")
+		     ((> (current-window-width) 600)
+		      "50")
+		     (else
+		      "10")))
+	   (vert (cond
+		    ((> (current-window-height) 800)
+		     "200")
+		    ((> (current-window-height) 600)
+		     "100")
+		    (else
+		     "10")))
+	   (padding (cond
+		       ((> (current-window-height) 800)
+			"50")
+		       ((> (current-window-height) 600)
+			"20")
+		       (else
+			"4")))
+	   (style (format "border: 1px outset #777; -moz-border-radius: 1em; -webkit-border-radius: 1em; border-radius: 1em; top: ~apx; right: ~apx; bottom: ~apx; left: ~apx; padding: ~apx" vert horiz vert horiz padding))
+	   (id1 (symbol->string (gensym)))
+	   (id2 (symbol->string (gensym))))
+       ;; mask
+       (dom-append-child!
+	document.body
+	(<DIV> :style (string-append "position: fixed; opacity: 0.8; background-color: #242222; z-index: 9998;  " style)
+	   :id id1
+	   ""))
+       ;; frame
+       (dom-append-child!
+	document.body
+	(<DIV> :style (string-append "position: fixed; opacity: 1.0; background-color: transparent; z-index: 9999;  " style)
+	   :id id2
+	   :onclick (let ((el1 (dom-get-element-by-id id1))
+			  (el2 (dom-get-element-by-id id2)))
+		       (dom-remove-child! document.body el1)
+		       (dom-remove-child! document.body el2))
+	   (<IFRAME> :src ($hop/dashboard-panel)
+	      :style "border: 0; width: 100%; height: 100%; background-color: transparent;")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop/dashboard-panel ...                                          */
@@ -264,11 +296,9 @@
    (<HTML>
       (<HEAD> :css (format "~a/hop.hss" (hop-dir))
          :include "hop-window")
-      (<BODY> :class "hop-dashboard-panel" :style "background: #eee"
-	 (<DIV> :style "border: 1px solid #aaa; position: absolute; top: 3px; bottom: 2px; left: 5px; right: 5px; background: white; -moz-border-radius: 0.2em; -webkit-border-radius: 0.2em; padding: 2px"
-	    (hop-panel :width 16 :height 16
+      (<BODY> :class "hop-dashboard-panel" :style "background: transparent; opacity: 1.0"
+	 (<DIV> :style "border: 0; position: absolute; top: 0; bottom: 0; left: 0; right: 0;"
+	    (hop-panel
 	       :showtitle #f
-	       :icons `("favicon.png"
-			"logo.png"
-			,(string-append (hop-dir) "/etc/default.png")))))))
+	       :icons `("logo.png" ,(string-append (hop-dir) "/etc/default.png")))))))
    
