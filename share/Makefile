@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Oct  2 09:03:09 2009 (serrano)                */
+#*    Last change :  Mon Oct  5 18:13:35 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -218,7 +218,7 @@ EXPORTED_RT_JS = $(RTS) $(filter %.js,$(EXTRA)) hop-autoconf.js
 SCHEME2JS_RUNTIME = ../scheme2js/runtime
 -include $(SCHEME2JS_RUNTIME)/Makefile.include
 EXPORTER = $(SCHEME2JS_RUNTIME)/exporter
-EXPORTER_FLAGS = --module "hop" --constant
+EXPORTER_FLAGS = --module "__hop" --constant
 
 hop-runtime.sch: $(EXPORTER) $(EXPORTED_RT_JS)
 	@ $(EXPORTER) $(EXPORTER_FLAGS) -o $@ $(EXPORTED_RT_JS)

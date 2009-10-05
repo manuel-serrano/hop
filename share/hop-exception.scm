@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Fri Oct  2 10:30:46 2009 (serrano)                */
+;*    Last change :  Mon Oct  5 18:15:32 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -13,7 +13,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module hop-exception
+(module __hop-exception
    (export (hop-get-stack offset . depth)
 	   (hop-report-exception exc)
 	   (bigloo-mangled? str)

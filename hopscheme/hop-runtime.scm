@@ -7,12 +7,12 @@
 ;; afile is supposed do be in share-directory (which don't yet know)
 (define *hop-runtime-afile* ".afile")
 
-(define *hop-runtime-modules* '(hop))
+(define *hop-runtime-modules* '(__hop __hop-canvas))
 
 (define (runtime-resolver)
    (let* ((afile (make-file-path *hop-share-directory* *hop-runtime-afile*))
 	  (a-list (with-input-from-file afile read)))
-      (lambda (m)
+      (lambda (m _)
 	 (let ((t (assq m a-list)))
 	    (when (not t)
 	       (error 'hop-runtime

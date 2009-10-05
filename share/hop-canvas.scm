@@ -3,12 +3,25 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov  3 08:24:25 2007                          */
-;*    Last change :  Mon Jun  8 15:11:06 2009 (serrano)                */
+;*    Last change :  Mon Oct  5 18:18:25 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Canvas interface                                             */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module __hop-canvas
+   (export (canvas-get-context canvas context)
+	   (canvas-properties ctx)
+	   (canvas-properties-set! ctx . props)
+	   (canvas-begin-path ctx)
+	   
+	   canvas-quadratic-curve
+	   canvas-stroke
+	   canvas-arrow-to))
+   
 ;*---------------------------------------------------------------------*/
 ;*    canvas-get-context ...                                           */
 ;*---------------------------------------------------------------------*/
