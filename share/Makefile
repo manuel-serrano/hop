@@ -129,7 +129,7 @@ POPULATION	= $(RTS) $(EXTRA) \
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-build: hop.js $(FLASHSRC:%.as=flash/%.swf) hop-runtime.js $(BACKEND)
+build: .afile hop.js $(FLASHSRC:%.as=flash/%.swf) $(BACKEND)
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
@@ -137,6 +137,8 @@ build: hop.js $(FLASHSRC:%.as=flash/%.swf) hop-runtime.js $(BACKEND)
 install:
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR) && \
         chmod $(BMASK) $(DESTDIR)$(HOPSHAREDIR) && \
+	$(INSTALL) $(BUILDSHAREDIR)/.afile $(DESTDIR)$(HOPSHAREDIR)/.afile && \
+	$(INSTALL) $(BUILDSHAREDIR)/hop-runtime.sch $(DESTDIR)$(HOPSHAREDIR)/hop-runtime.sch && \
         for p in hop.js hop-autoconf.js $(RTS); do \
 	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
 	  $(GZIP) $(BUILDSHAREDIR)/$$p -c > $(DESTDIR)$(HOPSHAREDIR)/$$p.gz 2> /dev/null; \
@@ -178,6 +180,7 @@ install:
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
+	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/.afile && \
 	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/icons && \
 	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/flash && \
 	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/buttons && \
@@ -191,11 +194,8 @@ uninstall:
         done
 
 #*---------------------------------------------------------------------*/
-#*    hop.js hop-runtime.js ...                                        */
+#*    hop.js ...                                                       */
 #*---------------------------------------------------------------------*/
-SCHEME2JS_RUNTIME = ../scheme2js/runtime
-include $(SCHEME2JS_RUNTIME)/Makefile.include
-
 hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js $(RTS)
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* " >> $@
@@ -210,10 +210,27 @@ hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js $(RTS)
 	  cat $^ >> $@; \
         fi
 
-# needed for hopscheme.
-EXPORTED_RTS = $(RTS) $(filter %.js,$(EXTRA)) hop-autoconf.js
-hop-runtime.js: $(EXPORTED_RTS)
-	cat $^ > $@
+#*---------------------------------------------------------------------*/
+#*    hop-runtime.sch ...                                              */
+#*---------------------------------------------------------------------*/
+EXPORTED_RT_JS = $(RTS) $(filter %.js,$(EXTRA)) hop-autoconf.js
+
+SCHEME2JS_RUNTIME = ../scheme2js/runtime
+-include $(SCHEME2JS_RUNTIME)/Makefile.include
+EXPORTER = $(SCHEME2JS_RUNTIME)/exporter
+EXPORTER_FLAGS = --module "hop" --constant
+
+hop-runtime.sch: $(EXPORTER) $(EXPORTED_RT_JS)
+	@ $(EXPORTER) $(EXPORTER_FLAGS) -o $@ $(EXPORTED_RT_JS)
+
+#*---------------------------------------------------------------------*/
+#*    .afile ...                                                       */
+#*---------------------------------------------------------------------*/
+EXPORTED_RT_SCM = hop-runtime.sch $(filter %.scm,$(EXTRA)) \
+                                    $(filter %.sch,$(EXTRA))
+
+.afile: $(EXPORTED_RT_SCM)
+	@ $(AFILE) -o $@ $^
 
 #*---------------------------------------------------------------------*/
 #*    Flash compilation                                                */

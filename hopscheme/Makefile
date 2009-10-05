@@ -33,8 +33,8 @@ BLIBFLAGS = $(BSCM2JSFLAGS)
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
 _BGL_OBJECTS = hopscheme scm-compil dollar-escape \
-	       tilde-escape hopscheme-config hop-exports \
-	       dollar-scheme2js-module
+	       tilde-escape hopscheme-config hop-runtime \
+	       dollar-scheme2js-module precompilation
 
 _OBJECTS = $(_BGL_OBJECTS)
 
@@ -57,26 +57,6 @@ INCLUDES =
 POPULATION = $(SOURCES) $(INCLUDES) make-lib.scm Makefile
 
 include ../etc/Makefile.library
-
-#*---------------------------------------------------------------------*/
-#*    hop-runtime.sch ...                                              */
-#*---------------------------------------------------------------------*/
-HOP_SHARE = ../share
-HOP_RUNTIME_JS = $(HOP_SHARE)/hop-runtime.js
-
-SCHEME2JS_RUNTIME = ../scheme2js/runtime
-include $(SCHEME2JS_RUNTIME)/Makefile.include
-EXPORTER = $(SCHEME2JS_RUNTIME)/exporter
-EXPORTER_FLAGS = --module "hop-runtime" --scheme2js-modules --constant
-
-hop-runtime.sch: $(EXPORTER) $(HOP_RUNTIME_JS)
-	$(EXPORTER) $(EXPORTER_FLAGS) -o $@ $(HOP_RUNTIME_JS)
-
-#*---------------------------------------------------------------------*/
-#*    additional dependency                                            */
-#*---------------------------------------------------------------------*/
-o/hop-exports.o: hop-runtime.sch
-o/class_s/bigloo/hopscheme/hop-exports.class: hop-runtime.sch
 
 #*---------------------------------------------------------------------*/
 #*    all                                                              */

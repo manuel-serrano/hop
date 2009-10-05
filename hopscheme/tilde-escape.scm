@@ -7,7 +7,7 @@
 	   (JS-return::bstring t::pair)
 	   (create-empty-hopscheme-macro-environment))
    (import __hopscheme_config
-	   __hop_exports))
+	   __hopscheme_hop_runtime))
 
 (define (create-empty-hopscheme-macro-environment)
    (instantiate::Compilation-Unit
@@ -64,7 +64,7 @@
 	  e              ;; top-level
 	  s-port         ;; out-port
 	  `(             ;; override-headers
-	    (merge-first (import ,(hop-runtime-module)))
+	    (merge-first (import ,@(hop-runtime-modules)))
 	    (merge-last (import ,menv))
 	    ,@env)
 	  (extend-config (hopscheme-config #f) 'module-result-var assig-var)) ;; config
