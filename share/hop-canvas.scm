@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov  3 08:24:25 2007                          */
-;*    Last change :  Mon Oct  5 18:18:25 2009 (serrano)                */
+;*    Last change :  Mon Oct  5 21:53:11 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Canvas interface                                             */
@@ -17,10 +17,43 @@
 	   (canvas-properties ctx)
 	   (canvas-properties-set! ctx . props)
 	   (canvas-begin-path ctx)
-	   
-	   canvas-quadratic-curve
-	   canvas-stroke
-	   canvas-arrow-to))
+	   (canvas-restore ctx)
+	   (canvas-save ctx)
+	   (canvas-rotate ctx angle)
+	   (canvas-scale ctx sx sy)
+	   (canvas-translate ctx tx ty)
+	   (canvas-arc ctx x y radius sa ea clockwise)
+	   (canvas-arc-to ctx x0 y0 x1 y1 radius)
+	   (canvas-begin-path ctx)
+	   (canvas-close-path ctx)
+	   (canvas-stroke ctx)
+	   (canvas-fill ctx)
+	   (canvas-clip ctx)
+	   (canvas-line ctx x0 y0 . rest)
+	   (canvas-line-to ctx x y)
+	   (canvas-move-to ctx x y)
+	   (canvas-fill ctx)
+	   (canvas-move-to ctx x y)
+	   (canvas-bezier-curve-to ctx x0 y0 x1 y1 x y)
+	   (canvas-bezier-curve ctx x0 y0 . rest)
+	   (canvas-quadratic-curve-to ctx x0 y0 x1 y1)
+	   (canvas-quadratic-curve ctx x0 y0 . rest)
+	   (canvas-clear-rect ctx x0 y0 x1 y1)
+	   (canvas-fill-rect ctx x0 y0 x1 y1)
+	   (canvas-stroke-rect ctx x0 y0 x1 y1)
+	   (canvas-shadow-rect ctx shadow-width x y w h)
+	   (canvas-create-linear-gradient ctx x1 y1 x2 y2)
+	   (canvas-create-radial-gradient ctx x1 y1 r1 x2 y2 r2)
+	   (canvas-add-color-stop gradient position color)
+	   (canvas-create-pattern ctx img type)
+	   (canvas-draw-image ctx image x y . rest)
+	   (canvas-arrow-to ctx x0 y0 x1 y1 . args)
+	   (canvas-quadratic-arrow-to ctx x0 y0 cpx cpy x1 y1 . args)
+	   (canvas-fill-text ctx text x y . rest)
+	   (canvas-stroke-text ctx text x y . rest)
+	   (canvas-measure-text ctx text)
+	   (canvas-path-text ctx text)
+	   (canvas-text-along-path ctx text stroke)))
    
 ;*---------------------------------------------------------------------*/
 ;*    canvas-get-context ...                                           */

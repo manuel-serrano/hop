@@ -7,7 +7,7 @@
 ;; afile is supposed do be in share-directory (which don't yet know)
 (define *hop-runtime-afile* ".afile")
 
-(define *hop-runtime-modules* '(__hop __hop-canvas))
+(define *hop-runtime-modules* '(__hop __hop-canvas __hop-spage))
 
 (define (runtime-resolver)
    (let* ((afile (make-file-path *hop-share-directory* *hop-runtime-afile*))

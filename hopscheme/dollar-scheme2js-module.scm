@@ -32,8 +32,10 @@
 			  (liip (cddr h) rev-copied))
 			 (else
 			  (liip (cdr h)
-				(cons (car h) rev-copied))))))
-		(eval (cons* 'module (gensym) (reverse! rev-dollar-clauses))))
+				(cons (car h) rev-copied)))))
+		   ;; evaluate the server side module
+		   (eval (cons* 'module (gensym 'module)
+				(reverse! rev-dollar-clauses)))))
 	       ((eq? (car hdr) '$)
 		(loop (cddr hdr)
 		      (cons (cadr hdr) rev-dollar-clauses)))

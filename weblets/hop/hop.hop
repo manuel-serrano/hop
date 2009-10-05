@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon Oct  5 09:08:12 2009 (serrano)                */
+;*    Last change :  Mon Oct  5 21:48:03 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -297,6 +297,7 @@
       (<HEAD> :css (format "~a/hop.hss" (hop-dir))
          :include "hop-window")
       (<BODY> :class "hop-dashboard-panel" :style "background: transparent; opacity: 1.0"
+	 :onclick ~(document.close)
 	 (<DIV> :style "border: 0; position: absolute; top: 0; bottom: 0; left: 0; right: 0;"
 	    (hop-panel
 	       :showtitle #f
