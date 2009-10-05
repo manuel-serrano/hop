@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Oct  5 09:09:22 2009 (serrano)                */
+#*    Last change :  Mon Oct  5 09:21:02 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -748,13 +748,25 @@ if [ ! -x .hoprelease ]; then
   cat > .hoprelease <<EOF
 #!/bin/sh
 major=$version
-state=
+state=$devel
 minor=
 EOF
   chmod a+rx .hoprelease
 fi
 
 . ./.hoprelease
+
+if [ "$state " != "$devel " ]; then
+  state=$devel
+  minor=1
+  cat > .hoprelease <<EOF
+#!/bin/sh
+major=$version
+state=$devel
+minor=
+EOF
+  chmod a+rx .hoprelease
+fi
 
 echo "** Configuration summary **"
 echo 
