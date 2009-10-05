@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Oct  5 09:21:02 2009 (serrano)                */
+#*    Last change :  Mon Oct  5 12:09:55 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -763,7 +763,7 @@ if [ "$state " != "$devel " ]; then
 #!/bin/sh
 major=$version
 state=$devel
-minor=
+minor=1
 EOF
   chmod a+rx .hoprelease
 fi
