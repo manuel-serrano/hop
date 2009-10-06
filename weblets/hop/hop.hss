@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Oct  5 08:56:35 2009 (serrano)                */
+/*    Last change :  Tue Oct  6 07:13:59 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -115,6 +115,9 @@ table.weblet td.logo:hover {
 body.hop-dashboard-panel table.weblet td.logo:hover {
   background-color: #464444;
   border: 1px solid #777;
+  -moz-border-radius: 0.3em;
+  -webkit-border-radius: 0.3em;
+  border-radius: 0.3em;
 }
 
 table.weblet td.legend {

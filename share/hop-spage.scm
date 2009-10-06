@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:20:41 2009                          */
-;*    Last change :  Mon Oct  5 20:50:34 2009 (serrano)                */
+;*    Last change :  Tue Oct  6 07:20:21 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage client-side implementation                             */
@@ -93,7 +93,7 @@
        (spage-slide node width step))
       (#t
        (cond
-	  ((< hop_config.cpu_speed 60)
+	  ((< (hop-config :cpu_speed) 60)
 	   (spage-none node (- step)))
 	  ((and #f (< width 600))
 	   (spage-slide node width step))
