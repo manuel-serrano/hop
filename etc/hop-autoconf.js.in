@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Thu Jul  9 14:44:43 2009 (serrano)                */
+/*    Last change :  Tue Oct  6 08:31:15 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -182,6 +182,27 @@ function hop_Config() {
 /*    hop_config ...                                                   */
 /*---------------------------------------------------------------------*/
 var hop_config = new hop_Config();
+
+/*---------------------------------------------------------------------*/
+/*    hop_config_get ...                                               */
+/*---------------------------------------------------------------------*/
+/*** META ((export hop-config) (arity #f)) */
+function hop_config_get( key ) {
+   if( arguments.length == 0 ) {
+      var l = null;
+      
+      for( var p in hop_config ) {
+	 var c = new sc_Pair( sc_jsstring2symbol( p ), hop_config[ p ]);
+	 l = new sc_Pair( c, l );
+      }
+      
+      return l;
+   } else if( !sc_isSymbol ) {
+      return false;
+   } else {
+      return hop_config[ sc_symbol2jsstring( key ) ];
+   }
+}
 
 /*---------------------------------------------------------------------*/
 /*    hop_flash_minversion_set ...                                     */
