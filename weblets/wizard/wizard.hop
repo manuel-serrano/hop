@@ -340,8 +340,6 @@ of computers that are allowed to use this Hop as proxy.])))))
 	 (force
 	  (save (hoprc-dir) rc wd apasswd uname upasswd gname gpasswd
 		proxy user-proxy anonymous-proxy remote-proxy proxy-mask))
-	 ((file-exists? (hoprc-dir))
-	  (list 'query (format "File exists ~a" (hoprc-dir))))
 	 ((file-exists? rc)
 	  (list 'query (format "File exists ~a" rc)))
 	 ((file-exists? wd)
