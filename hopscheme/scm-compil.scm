@@ -16,7 +16,8 @@
    (when (not *cached-config*)
       (set! *cached-config*
 	    (extend-config* (hopscheme-config #t)
-			    `((dollar-eval . #t))))) ;; do an 'eval' on $s.
+			    ;; do an 'eval' on $s and 'eval' new module clause
+			    `((hop-module-compilation . #t)))))
    *cached-config*)
 
 ;*---------------------------------------------------------------------*/
