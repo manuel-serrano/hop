@@ -33,7 +33,7 @@
       ((and (eq? (car l) '$)
 	    (pair? (cdr l))
 	    (pair? (cadr l)))
-       (if (scheme2js-config 'hop-module-compilation)
+       (if (scheme2js-config 'dollar-eval)
 	   (let ((val (dollar-eval (cadr l))))
 	      (if (eq? val #unspecified)
 		  (unhop-list! (cddr l)) ;; skip '$ and (...)
@@ -62,11 +62,11 @@
        (let* ((symstr (symbol->string x))
 	      (first-dot (string-index symstr ".")))
 	  (if (or (not first-dot) (<fx first-dot 0))
-	      `(pragma ,(if (scheme2js-config 'hop-module-compilation)
+	      `(pragma ,(if (scheme2js-config 'dollar-eval)
 			    (dollar-eval (strip-dollar x))
 			    symstr))
 	      `(begin
-		  (pragma ,(if (scheme2js-config 'hop-module-compilation)
+		  (pragma ,(if (scheme2js-config 'dollar-eval)
 			       (dollar-eval
 				(string->symbol (substring symstr
 							   1 ;; discard $

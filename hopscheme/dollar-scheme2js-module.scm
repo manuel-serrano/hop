@@ -9,40 +9,39 @@
 ;; This module adds support for $(import XYZ) inside Scheme2Js-module headers.
 
 (define (dollar-modules! m::WIP-Unit)
-   (when (scheme2js-config 'hop-module-compilation)
-      (with-access::WIP-Unit m (header)
-	 (when (and (pair? header)
-		    (pair? (cdr header))
-		    (list? header))
-	    (let loop ((hdr (cddr header))
-		       (rev-dollar-clauses '()))
-	       (cond
-		  ((or (not hdr)
-		       (null? hdr)
-		       (null? (cdr hdr)))
-		   (unless (null? rev-dollar-clauses)
-		      ;; remove the clauses from the header.
-		      (let liip ((h (cddr header))
-				 (rev-copied (list (cadr header) (car header))))
-			 (cond
-			    ((null? h)
-			     (set! header (reverse! rev-copied)))
-			    ((null? (cdr h))
-			     (liip '() (cons (car h) rev-copied)))
-			    ((eq? (car h) '$)
-			     (liip (cddr h) rev-copied))
-			    (else
-			     (liip (cdr h)
-				   (cons (car h) rev-copied))))))
+   (with-access::WIP-Unit m (header)
+      (when (and (pair? header)
+		 (pair? (cdr header))
+		 (list? header))
+	 (let loop ((hdr (cddr header))
+		    (rev-dollar-clauses '()))
+	    (cond
+	       ((or (not hdr)
+		    (null? hdr)
+		    (null? (cdr hdr)))
+		(unless (null? rev-dollar-clauses)
+		   ;; remove the clauses from the header.
+		   (let liip ((h (cddr header))
+			      (rev-copied (list (cadr header) (car header))))
+		      (cond
+			 ((null? h)
+			  (set! header (reverse! rev-copied)))
+			 ((null? (cdr h))
+			  (liip '() (cons (car h) rev-copied)))
+			 ((eq? (car h) '$)
+			  (liip (cddr h) rev-copied))
+			 (else
+			  (liip (cdr h)
+				(cons (car h) rev-copied)))))
 		   ;; evaluate the server side module
 		   (eval (cons* 'module (gensym 'module)
-				(reverse! rev-dollar-clauses))))
-		  ((eq? (car hdr) '$)
-		   (loop (cddr hdr)
-			 (cons (cadr hdr) rev-dollar-clauses)))
-		  (else
-		   (loop (cdr hdr)
-			 rev-dollar-clauses))))))))
+				(reverse! rev-dollar-clauses)))))
+	       ((eq? (car hdr) '$)
+		(loop (cddr hdr)
+		      (cons (cadr hdr) rev-dollar-clauses)))
+	       (else
+		(loop (cdr hdr)
+		      rev-dollar-clauses)))))))
 
 (define (dollar-modules-adder)
    dollar-modules!)

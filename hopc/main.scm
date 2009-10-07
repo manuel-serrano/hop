@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Jun 26 20:38:44 2009 (serrano)                */
+;*    Last change :  Wed Oct  7 05:44:57 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -62,7 +62,7 @@
 ;*---------------------------------------------------------------------*/
 (define (setup-client-compiler!)
    (init-hopscheme! :reader (lambda (p v) (hop-read p))
-      :share (hop-share-directory)
+      :share (hopc-share-directory)
       :verbose (hop-verbose)
       :eval (lambda (e) (hop->json (eval e) #f #f))
       :postprocess (lambda (s)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Jun 22 08:21:41 2009 (serrano)                */
+;*    Last change :  Wed Oct  7 05:44:19 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -30,7 +30,10 @@
 	    (hopc-sources::pair-nil)
 	    (hopc-sources-set! ::pair-nil)
 	    (hopc-destination::obj)
-	    (hopc-destination-set! ::obj))
+	    (hopc-destination-set! ::obj)
+
+	    (hopc-share-directory::bstring)
+	    (hopc-share-directory-set! ::bstring))
    
    (eval    (export-exports)))
 
@@ -69,3 +72,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-destination
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-share-directory ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-share-directory
+   (hop-share-directory))

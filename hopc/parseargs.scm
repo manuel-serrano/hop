@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jun 26 20:37:55 2009 (serrano)                */
+;*    Last change :  Wed Oct  7 05:44:51 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -51,6 +51,8 @@
 	     (hop-rc-directory-set! dir))
 	    (("-L" ?dir (help "Add Hop library path"))
 	     (bigloo-library-path-set! (cons dir (bigloo-library-path))))
+	    (("--share-dir" ?dir (help "Set hopc share directory"))
+	     (hopc-share-directory-set! dir))
 	    (("-v?level" (help "Increase or set verbosity level (-v0 crystal silence)"))
 	     (if (string=? level "")
 		 (hop-verbose-set! (+fx 1 (hop-verbose)))
