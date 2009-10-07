@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Thu Oct  1 10:47:46 2009 (serrano)                */
+/*    Last change :  Wed Oct  7 10:11:42 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP WINDOW CSS                                                   */
@@ -85,7 +85,7 @@ $(define (url file)
 /*---------------------------------------------------------------------*/
 /* <public> */
 window {
-  box-shadow: 5px 5px 5px #555;
+  box-shadow: 5px 5px 10px #333;
   background: white;
 }
 /* </public> */
