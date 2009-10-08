@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Mon Oct  5 18:26:06 2009 (serrano)                */
+/*    Last change :  Thu Oct  8 14:48:30 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -13,6 +13,7 @@
 /*    Standard JS library                                              */
 /*---------------------------------------------------------------------*/
 /*** META ((export Math) (JS Math)) */
+/*** META ((export eval) (JS eval)) */
 
 /*---------------------------------------------------------------------*/
 /*    hop_callback ...                                                 */

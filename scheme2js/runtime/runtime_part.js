@@ -97,20 +97,28 @@ function sc_error() {
    throw __sc_errorHook ? __sc_errorHook( e, arguments ) : e;
 }
 
-
 function sc_arity_check(fun, nbArgs) {
-    var fun_arity = fun.sc_arity;
-    if (fun_arity === undefined || fun_arity === false) return fun;
-    if (fun_arity >= 0 && nbArgs == fun_arity) return fun;
-    if (fun_arity < 0 && nbArgs >= -1-fun_arity) return fun;
-    var errorMsg = "Wrong number of arguments: " + fun_arity + " expected, " +
-	           nbArgs + " provided";
-    var where = ("callee" in arguments && "caller" in arguments.callee ?
-		 ("name" in arguments.callee.caller ?
-		    arguments.callee.caller.name : arguments.callee.caller)
-		 : "arity-check");
-    sc_error(where, errorMsg, fun); // will not return.
-    return undefined; // some browsers want a return here...
+   function err( args, msg, obj ) {
+      var where= ("callee" in args && "caller" in args.callee ?
+		  ("name" in args.callee.caller ?
+		   args.callee.caller.name : args.callee.caller)
+		  : "arity-check");
+      sc_error(where, msg, obj);
+      return undefined;
+   }
+
+   if (typeof fun !== "function") {
+      return err(arguments, "not a function", fun);
+   }
+       
+   var fun_arity = fun.sc_arity;
+
+   if (fun_arity === undefined || fun_arity === false) return fun;
+   if (fun_arity >= 0 && nbArgs == fun_arity) return fun;
+   if (fun_arity < 0 && nbArgs >= -1-fun_arity) return fun;
+   var errorMsg = "Wrong number of arguments: " + fun_arity + " expected, " +
+      nbArgs + " provided";
+   return err( arguments, errorMsg, fun);
 }
 
 /*** META ((export #t) (arity #t)) */

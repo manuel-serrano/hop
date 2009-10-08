@@ -43,7 +43,7 @@
 		      (cons (cadr hdr) rev-dollar-clauses)))
 	       (else
 		(loop (cdr hdr)
-		      rev-dollar-clauses))))))))
+		      rev-dollar-clauses)))))))
 
 (define (dollar-modules-adder)
    dollar-modules!)

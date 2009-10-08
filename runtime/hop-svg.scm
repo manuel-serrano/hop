@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Fri Jun 12 12:31:00 2009 (serrano)                */
+;*    Last change :  Thu Oct  8 19:32:51 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -333,7 +333,8 @@
 	    (let loop ((tree tree))
 	       (cond
 		  ((and (svg-img-markup? tree)
-			(eq? (svg-img-markup-name tree) 'svg))
+			(or (eq? (svg-img-markup-name tree) 'svg)
+			    (eq? (svg-img-markup-name tree) 'svg:svg)))
 		   (tune-svg! tree)
 		   #t)
 		  ((and (pair? tree) (not (symbol? (car tree))))
