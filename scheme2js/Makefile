@@ -1,6 +1,4 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/scheme2js/Makefile               */
-#*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
 #*    Last change :  Fri Nov 28 10:55:54 2008 (serrano)                */

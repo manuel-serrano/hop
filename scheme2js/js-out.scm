@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -215,7 +215,7 @@
 				(Sequence? n)
 				(Pragma? n))
 		       (error "expr?"
-			      "forgot an expression"
+			      "Internal error: forgot an expression"
 			      (class-name (object-class n))))
 		    #t)
       (else #t)))
@@ -232,7 +232,7 @@
 (define-generic (expr-out this::Node in-for-init? stmt-begin?
 				indent port compress?)
    (error "expr-out"
-	  "forgot node-type"
+	  "Internal error: forgot node-type"
 	  (class-name (object-class this))))
 
 (define (nested-expr-out this::Node of-required-type?::procedure
@@ -648,7 +648,7 @@
 			((&&) and-expr?)
 			((OR) or-expr?)
 			(else (error "lhs-req"
-				     "missed an op"
+				     "Internal Error: missed an op"
 				     op))))
 	    ;; in most cases where there is a comment we deviate from the spec.
 	    ;; this should yield less parenthesis.
@@ -671,7 +671,7 @@
 			((&&) and-expr?) ;; x&&(y&&z) <=> (x&&y)&&z
 			((OR) or-expr?) ;; x||(y||z) <=> (x||y)||z
 			(else (error "rhs-req"
-				     "missed an op"
+				     "Internal Error: missed an op"
 				     op)))))
 	 (nested-expr-out lhs lhs-req in-for-init? stmt-begin?
 			  indent p compress?)
@@ -758,7 +758,7 @@
 (define-method (expr-out this::Literal in-for-init? stmt-begin?
 			 indent p compress?)
    (with-access::Literal this (val)
-      (error "Literal-out" "forgot literal type" val)))
+      (error "Literal-out" "Internal Error: forgot literal type" val)))
 
 (define-method (expr-out this::Undefined in-for-init? stmt-begin?
 			 indent p compress?)

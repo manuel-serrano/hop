@@ -969,7 +969,7 @@
 	    (when (null? (cdr pragmas))
 	       ;; should never happen
 	       (error "out"
-		      "consume-pragma call without pragma"
+		      "Internal Error: consume-pragma call without pragma"
 		      #f))
 	    (let ((res (cadr pragmas)))
 	       (set! pragmas (cdr pragmas))
