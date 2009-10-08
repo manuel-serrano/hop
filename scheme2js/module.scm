@@ -331,7 +331,7 @@
 	  (module-resolver (or (config 'module-resolver)
 			       (extension-resolver include-paths))))
       (when module-preprocessor
-	 (module-preprocessor m))
+	 (module-preprocessor m #f))
       (merge-headers! m override-headers)
       (set-name! m)
       (with-access::WIP-Unit m (header)
@@ -345,7 +345,7 @@
       (when (config 'infotron)
 	 (module->infotron! m))
       (when module-postprocessor
-	 (module-postprocessor m))))
+	 (module-postprocessor m #f))))
 
 (define (check-override-headers o-headers)
    (define valid-kinds '(module-replace module-provide merge-first merge-last))
@@ -554,7 +554,7 @@
 			 (module-postprocessor (config 'module-postprocessor)))
 		      (widen!::WIP-Unit im (header module-clause))
 		      (when module-preprocessor
-			 (module-preprocessor im))
+			 (module-preprocessor im #t))
 		      (cond-expand-headers! im)
 		      (normalize-module-header! im)
 		      ;; normalize-exports might need the 'ip' in
@@ -578,7 +578,7 @@
 					 exported-macros)
 			       (set! exported-macros ht))))
 		      (when module-postprocessor
-			 (module-postprocessor im))
+			 (module-postprocessor im #t))
 		      im))))
 	    (close-input-port ip)))))
 

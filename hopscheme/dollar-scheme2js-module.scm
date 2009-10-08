@@ -8,7 +8,7 @@
 
 ;; This module adds support for $(import XYZ) inside Scheme2Js-module headers.
 
-(define (dollar-modules! m::WIP-Unit)
+(define (dollar-modules! m::WIP-Unit imported?)
    (with-access::WIP-Unit m (header)
       (when (and (pair? header)
 		 (pair? (cdr header))
@@ -32,8 +32,10 @@
 			  (liip (cddr h) rev-copied))
 			 (else
 			  (liip (cdr h)
-				(cons (car h) rev-copied)))))
-		   ;; evaluate the server side module
+				(cons (car h) rev-copied))))))
+		;; evaluate the server side module
+		(when (and (not imported?)
+			   (scheme2js-config 'hop-module-compilation))
 		   (eval (cons* 'module (gensym 'module)
 				(reverse! rev-dollar-clauses)))))
 	       ((eq? (car hdr) '$)
@@ -41,7 +43,7 @@
 		      (cons (cadr hdr) rev-dollar-clauses)))
 	       (else
 		(loop (cdr hdr)
-		      rev-dollar-clauses)))))))
+		      rev-dollar-clauses))))))))
 
 (define (dollar-modules-adder)
    dollar-modules!)
