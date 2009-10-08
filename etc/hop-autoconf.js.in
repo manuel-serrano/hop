@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue Oct  6 08:31:15 2009 (serrano)                */
+/*    Last change :  Thu Oct  8 08:36:22 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -108,6 +108,7 @@ function hop_Config() {
   this.inline_image = false;
   this.filtered_errors = [];
   this.css = 2.1;
+  this.xhr_multipart = false; // see hop_make_xml_http_request conf
 
   /* navigator specific configuration */
   if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {
@@ -176,6 +177,9 @@ function hop_Config() {
      alert( "Unknown navigator (" + navigator.userAgent +
 	    "), using default settings..." );
   }
+
+  this.version = hop_version();
+  this.backend = hop_backend();
 }
 
 /*---------------------------------------------------------------------*/
@@ -374,6 +378,9 @@ if( "XMLHttpRequest" in window ) {
       hop_make_xml_http_request = function hop_make_xml_http_request() {
 	 return new XMLHttpRequest();
       }
+   }
+   if( "multipart" in req && "onload" in req ) {
+      hop_config.xhr_multipart = true;
    }
 } else {
    if( "ActiveXObject" in window ) {

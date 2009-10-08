@@ -3,12 +3,24 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun 11 19:03:05 2009                          */
-;*    Last change :  Mon Jun 22 14:37:25 2009 (serrano)                */
+;*    Last change :  Thu Oct  8 14:51:00 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    SpinButton client side implementation                            */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module __hop-spinbutton
+   (export (hop_create_spinbutton attrs body)
+	   (spinbutton-value el)
+	   (spinbutton-value-set! el val)
+	   (spinbutton-inc! el)
+	   (spinbutton-dec! el))
+   (scheme2js-pragma
+           (hop_create_spinbutton (JS hop_create_spinbutton) (arity 2))))
+	   
 ;*---------------------------------------------------------------------*/
 ;*    hop_create_spinbutton ...                                        */
 ;*---------------------------------------------------------------------*/
@@ -34,7 +46,7 @@
 	      (onchange (let ((l (memq :onchange attrs)))
 			   (when (pair? l) (cadr l))))
 	      (id (let ((l (memq :id attrs)))
-		     (if (pair? l) (cadr id) (symbol->string (gensym)))))
+		     (if (pair? l) (cadr l) (symbol->string (gensym)))))
 	      (w (input-width min max)))
 	  (<TABLE> :hssclass "hop-spinbutton"
 	     :id id
@@ -50,11 +62,11 @@
 		      :onchange (hop_spinbutton_set id this.value)
 		      :value (integer->string value)))
 		(<TD> :class "hop-spinbutton-button hop-spinbutton-button-top"
-		   :onmousedown (hop_spinbutton_inc id)
+		   :onmousedown (spinbutton-inc! id)
 		   (<DIV> "codepoint(#u25b2)")))
 	     (<TR> 
 		(<TD> :class "hop-spinbutton-button hop-spinbutton-button-bottom"
-		   :onmousedown (hop_spinbutton_dec id)
+		   :onmousedown (spinbutton-dec! id)
 		   (<DIV> "codepoint(&#9660)")))))))
 
 ;*---------------------------------------------------------------------*/
@@ -106,17 +118,17 @@
       (hop_spinbutton_onchange el)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop_spinbutton_inc ...                                           */
+;*    spinbutton-inc! ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (hop_spinbutton_inc el)
+(define (spinbutton-inc! el)
    (let ((el (dom-get-element-by-id el)))
       (when el (spinbutton-value-set! el (+ el.value 1)))
       (hop_spinbutton_onchange el)))
    
 ;*---------------------------------------------------------------------*/
-;*    hop_spinbutton_dec ...                                           */
+;*    spinbutton-dec! ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (hop_spinbutton_dec el)
+(define (spinbutton-dec! el)
    (let ((el (dom-get-element-by-id el)))
       (when el (spinbutton-value-set! el (- el.value 1)))
       (hop_spinbutton_onchange el)))

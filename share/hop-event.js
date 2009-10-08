@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Jun 26 13:26:57 2009 (serrano)                */
+/*    Last change :  Thu Oct  8 08:36:38 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -147,6 +147,87 @@ var hop_servevt_ctable = {};
 var hop_servevt_dlist = null;
 
 /*---------------------------------------------------------------------*/
+/*    start_servevt_xhr_multipart_proxy ...                            */
+/*---------------------------------------------------------------------*/
+function start_servevt_xhr_multipart_proxy( key ) {
+   if( !hop_servevt_proxy.httpreq ) {
+      var xhr_error_ttl = 6 * 3;
+      var server_ready = false;
+      
+      var register = function( id ) {
+	 var svc = hop_service_base() +
+	    "/server-event/register?event=" + id +
+	    "&key=" + key  + "&mode=xhr-multipart";
+
+	 var success = function( val, xhr ) {
+	    if( !server_ready ) {
+	       server_ready = true;
+	       hop_trigger_serverready_event( new HopServerReadyEvent() );
+	    }
+
+	    alert( "multipart success val=" + val + " xhr=" + xhr.responseText );
+	 }
+
+	 var failure = function( xhr ) {
+	    if( !xhr.status &&
+		(xhr_error_ttl > 0) &&
+		!xhr.getAllResponseHeaders() ) {
+	       // mark the connection timeout error in order to avoid
+	       // falling into an infinit loop when the server has crashed.
+	       xhr_error_ttl--;
+	       // we have reached a timeout, we just re-register
+	       register( id );
+	    } else {
+	       hop_servevt_onclose();
+	    }
+	 }
+
+	 var req = hop_make_xml_http_request();
+	 req.multipart = true;
+	 req.onload = function( e ) { alert( "onload: " + e ); };
+	 
+	 hop_servevt_proxy.httpreq = hop_send_request( svc,
+						       // asynchronous call
+						       false,
+						       // success callback
+						       success,
+						       // failure callback
+						       failure,
+						       // no anim
+						       false,
+						       // no environment
+						       [],
+						       // xhr request
+	                                               req );
+
+      }
+
+      var unregister = function( id ) {
+	 hop_servevt_proxy.httpreq.abort();
+
+	 var svc = hop_service_base() +
+	    "/server-event/unregister?event=" + id +
+   	    "&key=" + hop_servevt_proxy.key;
+	 
+	 hop_servevt_proxy.httpreq = hop_send_request( svc, false,
+						       function() { ; }, false,
+						       false, [] );
+      };
+
+      // complete the proxy definition
+      hop_servevt_proxy.register = register;
+      hop_servevt_proxy.unregister = unregister;
+
+      // register the unitialized events
+      for( var p in hop_servevt_table ) {
+	 if( hop_servevt_table[ p ].hop_servevt ) {
+	    register( p );
+	 }
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    start_servevt_ajax_proxy ...                                     */
 /*---------------------------------------------------------------------*/
 function start_servevt_ajax_proxy( key ) {
@@ -157,7 +238,7 @@ function start_servevt_ajax_proxy( key ) {
       var register = function( id ) {
 	 var svc = hop_service_base() +
 	    "/server-event/register?event=" + id +
-	    "&key=" + key;
+	    "&key=" + key  + "&mode=ajax";
 
 	 var success = function( val, xhr ) {
 	    if( !server_ready ) {
@@ -354,7 +435,7 @@ function hop_servevt_proxy_flash_init() {
 
    var register = function( id ) {
       var svc = hop_service_base() + "/server-event/register?event=" + id
-         + "&key=" + hop_servevt_proxy.key + "&flash=true";
+         + "&key=" + hop_servevt_proxy.key + "&mode=flash";
       
       var success = function( e ) {
 	 if( pending_events > 0 ) {
@@ -408,6 +489,13 @@ function hop_servevt_proxy_flash_init() {
 }
 
 /*---------------------------------------------------------------------*/
+/*    servevt_xhr_multipartp ...                                       */
+/*---------------------------------------------------------------------*/
+function servevt_xhr_multipartp() {
+   return false && hop_config.xhr_multipart;
+}
+      
+/*---------------------------------------------------------------------*/
 /*    servevt_flashp ...                                               */
 /*---------------------------------------------------------------------*/
 function servevt_flashp( port ) {
@@ -432,7 +520,9 @@ function hop_start_servevt_proxy() {
 			var port = v[ 1 ];
 			var key = v[ 2 ];
 
-			if( servevt_flashp( port ) ) {
+			if( servevt_xhr_multipartp() ) {
+			   start_servevt_xhr_multipart_proxy( key );
+			} else if( servevt_flashp( port ) ) {
 			   try {
 			      start_servevt_flash_proxy( key, host, port );
 			   } catch( e ) {
@@ -564,7 +654,7 @@ function hop_add_server_listener( obj, proc, capture ) {
       hop_servevt_dlist = sc_cons( proc, hop_servevt_dlist );
    } else {
       if( !document.body ) {
-	 // delay until the document is fulled built
+	 // delay until the document is fully built
 	 hop_window_onload_add( function( e ) {
 	       hop_add_server_listener( obj, proc, capture );
 	    } );

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat Mar 21 18:01:02 2009 (serrano)                */
+;*    Last change :  Thu Oct  8 08:25:09 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -354,8 +354,8 @@
 		     (server-event-unregister event key)))
 	    
 	    (set! *register-service*
-		  (service :name "server-event/register" (#!key event key flash)
-		     (server-event-register event key flash)))))))
+		  (service :name "server-event/register" (#!key event key mode)
+		     (server-event-register event key mode)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dump-ajax-table ...                                              */
@@ -443,7 +443,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    server-event-register ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (server-event-register event key flash)
+(define (server-event-register event key mode)
    
    (define (ajax-register-event! req name key)
       (tprint "***** ajax-register-event, name=" name " key=" key)
@@ -488,10 +488,16 @@
 		(output-timeout-set! (socket-output (http-request-socket req))
 				     (hop-connection-timeout))
 		;; register the client
-		(let ((r (if flash
+		(let ((r (cond
+			    ((string=? mode "flash")
 			     (let ((req (cadr (assq key *flash-request-list*))))
-				(flash-register-event! req event))
-			     (ajax-register-event! req event key))))
+				(flash-register-event! req event)))
+			    ((string=? mode "xhr-multipart")
+			     (instantiate::http-response-string
+				(content-type (format "multipart/x-mixed-replace; boundary=~a" key))
+				(body (format "--~a\r\nContent-type: text/plain\r\n\r\nGLOP" key))))
+			    (else
+			     (ajax-register-event! req event key)))))
 		   ;; cleanup the current connections
 		   (server-event-gc)
 		   r))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Oct  2 11:15:36 2009 (serrano)                */
+/*    Last change :  Wed Oct  7 20:52:41 2009 (serrano)                */
 /*    Copyright   :  2004-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -260,8 +260,9 @@ function hop_default_success( h, xhr ) {
 /*    -------------------------------------------------------------    */
 /*    This function DOES NOT evaluates its result.                     */
 /*---------------------------------------------------------------------*/
-function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
-   var xhr = hop_make_xml_http_request();
+function hop_send_request( svc, sync, success, failure, anim, henv, auth, x ) {
+   if( x ) { alert( "x=" + x ); }
+   var xhr = x ? x : hop_make_xml_http_request();
    /* MS, 20 Jun 08: I cannot understand why but sometime sc_error is  */
    /* unbound (at least in Firefox) when used inside a catch! Binding  */
    /* it to a local var eliminates this problem.                       */
@@ -373,8 +374,6 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
        hop_config.navigator_family != "webkit" )
       xhr.setRequestHeader( 'Connection', 'close' );
    xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
-   // to force the response to be interpreted as latin-1:
-   // xhr.overrideMimeType( 'text/html; charset=ISO-8859-1' );
    
    if( henv.length > 0 ) {
       xhr.setRequestHeader( 'Hop-Env', hop_serialize_request_env() );
