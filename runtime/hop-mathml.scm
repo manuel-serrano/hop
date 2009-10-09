@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:24:08 2007                          */
-;*    Last change :  Sat Jun 20 05:28:45 2009 (serrano)                */
+;*    Last change :  Fri Oct  9 18:05:21 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop MATHML support.                                              */
@@ -355,7 +355,14 @@
 		 (read-expression port '() 'end-of-expression)
 		 (multiple-value-bind (exp2 _)
 		    (read-expression port '() 'end-of-expression)
-		    (values (<MATH:MFRAC> exp1 exp2) stack))))
+		    (values (case (cdr token)
+			       ((frac)
+				(<MATH:MFRAC> exp1 exp2))
+			       ((stackrel)
+				(<MATH:MOVER> exp2 exp1))
+			       (else
+				(list exp1 exp2)))
+			    stack))))
 	     ((OVER)
 	      (if (null? stack)
 		  (parse-tex-error "missing left argument" "\\over")
@@ -623,9 +630,9 @@
 					(: (or float (+ digit))
 					   (in "eE")
 					   (? (in "+-")) (+ digit))))))
-		     (ident (: alpha (* (or alpha digit #\')))))
+		     (ident (: alpha (* (or alpha digit #\' #\.)))))
       ;; separator
-      ((in " \t\n")
+      ((+ (in " \t\n"))
        (ignore))
       ;; bra
       ((or #\{ #\})
@@ -637,8 +644,10 @@
       (ident
        (cons 'IDENT (the-string)))
       ;; operators
-      ((or (in "+-*/=,") ":=")
+      ((+ (in "+-*/=,!:?"))
        (cons 'OPERATOR (the-string)))
+      ("\\|"
+       (cons 'OPERATOR "&Verbar;"))
       (#\<
        (cons 'OPERATOR "&lt;"))
       (#\>
@@ -652,12 +661,6 @@
        (cons 'NONSTRETCHY "}"))
       ("|"
        (cons 'NONSTRETCHY "|"))
-      ("\\|"
-       (cons 'OPERATOR "&Verbar;"))
-      ("!"
-       (cons 'OPERATOR "!"))
-      (":"
-       (cons 'OPERATOR ":"))
       ("&"
        (list '&))
       ("\\cr"
@@ -689,6 +692,8 @@
 				       (cons 'PREFIX 'sqrt))
 				      ((string=? s "frac")
 				       (cons 'PREFIX2 'frac))
+				      ((string=? s "stackrel")
+				       (cons 'PREFIX2 'stackrel))
 				      ((string=? s "over")
 				       (list 'OVER))
 				      ((string=? s "choose")
@@ -755,7 +760,7 @@
       ("\\;"
        (cons 'IDENT "&ensp;&ensp;"))
       ;; prims
-      ((+ #\')
+      ((+ (in "'."))
        (cons 'IDENT (the-string)))
       ;; default
       (else
