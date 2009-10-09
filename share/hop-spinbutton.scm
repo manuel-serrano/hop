@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun 11 19:03:05 2009                          */
-;*    Last change :  Thu Oct  8 14:51:00 2009 (serrano)                */
+;*    Last change :  Fri Oct  9 15:06:39 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    SpinButton client side implementation                            */
