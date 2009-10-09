@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun 11 18:49:09 2009                          */
-;*    Last change :  Thu Oct  8 14:50:09 2009 (serrano)                */
+;*    Last change :  Fri Oct  9 05:45:13 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Spin Buttons server side implementation                          */
@@ -49,7 +49,7 @@
 			      :id (string-append id "-entry")
 			      :type 'text
 			      :style (format "width: ~aem" w)
-			      :onchange ~(spinbutton-set! $id this.value)
+			      :onchange ~(spinbutton-value-set! $id this.value)
 			      :value value))
 			(<TD> :class "hop-spinbutton-button hop-spinbutton-button-top"
 			   :onmousedown ~(spinbutton-inc! $id)

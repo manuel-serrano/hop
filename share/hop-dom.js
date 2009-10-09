@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Oct  2 10:13:08 2009 (serrano)                */
+/*    Last change :  Fri Oct  9 05:52:54 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1083,6 +1083,7 @@ function hop_style_attribute_set( obj, val ) {
 /*---------------------------------------------------------------------*/
 /*    hop_element_x ...                                                */
 /*---------------------------------------------------------------------*/
+/*** META ((export node-bounding-box-x) (arity 1)) */
 function hop_element_x( obj ) {
    var res = 0;
 
@@ -1101,6 +1102,7 @@ function hop_element_x( obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_element_y ...                                                */
 /*---------------------------------------------------------------------*/
+/*** META ((export node-bounding-box-y) (arity 1)) */
 function hop_element_y( obj ) {
    var res = 0;
 

@@ -3,11 +3,44 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 14 11:31:04 2009                          */
-;*    Last change :  Wed Jul  8 10:11:32 2009 (serrano)                */
+;*    Last change :  Fri Oct  9 07:39:00 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client side support for color selectors.                         */
 ;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module __hop-color
+   
+   (export (hsv->rgb h s v)
+	   (rgb->hsv r g b)
+	   (colorchooser-reset-mousemove! cc)
+	   (colorchooser-init-hmodel hmodel)
+	   (colorchooser-init-colorscale scale)
+	   (colorchooser-satval-mousedown event cc)
+	   (colorchooser-hue-mousedown event cc)
+	   (colorchooser-saturation-mousedown event cc)
+	   (colorchooser-value-mousedown event cc)
+	   (colorchooser-red-mousedown event cc)
+	   (colorchooser-green-mousedown event cc)
+	   (colorchooser-blue-mousedown event cc)
+	   (colorchooser-hmodel-mousedown event cc)
+	   (colorchooser-update-colorscales! cc)
+	   (colorchooser-update-hue! cc h)
+	   (colorchooser-update-saturation! cc s)
+	   (colorchooser-update-value! cc v)
+	   (colorchooser-update-red! cc r)
+	   (colorchooser-update-green! cc g)
+	   (colorchooser-update-blue! cc b)
+	   (hop-colorchooser-onchange cc)
+	   (hop-colorchooser-oncancel cc)
+	   (hop-colorchooser-onselect cc)
+	   (colorchooser-value el)
+	   (colorchooser-value-set! el val)
+	   (colorchooser-opacity el)
+	   (colorchooser-opacity-set! el a)))
 
 ;*---------------------------------------------------------------------*/
 ;*    head (for client-side dependencies)                              */
@@ -47,8 +80,8 @@
 ;*    hopcolor-followmouse ...                                         */
 ;*---------------------------------------------------------------------*/
 (define hopcolor-followmouse
-   (and (>= hop_config.cpu_speed 80)
-	(>= hop_config.js_speed 80)))
+   (and (>= (hop-config 'cpu_speed) 80)
+	(>= (hop-config 'js_speed) 80)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hsv->rgb ...                                                     */
@@ -120,25 +153,27 @@
 ;*---------------------------------------------------------------------*/
 (define (add-mousemove-listener! cc proc)
    (let ((listener (if hopcolor-followmouse
-		       (lambda (e) (proc e) (update-colorscales! cc))
+		       (lambda (e)
+			  (proc e)
+			  (colorchooser-update-colorscales! cc))
 		       proc)))
-      (remove-mousemove-listener! cc)
+      (colorchooser-reset-mousemove! cc)
       (add-event-listener! document "mousemove" listener)
       (set! hopcolor-mousemove-listener listener)))
 
 ;*---------------------------------------------------------------------*/
-;*    remove-mousemove-listener! ...                                   */
+;*    colorchooser-reset-mousemove! ...                                */
 ;*---------------------------------------------------------------------*/
-(define (remove-mousemove-listener! cc)
-   (update-colorscales! cc)
+(define (colorchooser-reset-mousemove! cc)
+   (colorchooser-update-colorscales! cc)
    (when hopcolor-mousemove-listener
       (remove-event-listener! document "mousemove" hopcolor-mousemove-listener)
       (set! hopcolor-mousemove-listener #f)))
 
 ;*---------------------------------------------------------------------*/
-;*    init-hmodel ...                                                  */
+;*    colorchooser-init-hmodel ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (init-hmodel hmodel)
+(define (colorchooser-init-hmodel hmodel)
    (let* ((hSV hopcolor-hsv-size)
 	  (360/hSV (/ 360 hSV))
 	  (cursor (<DIV> :class "hop-colorchooser-hmodel-cursor")))
@@ -155,9 +190,9 @@
 		   (loop (+ i 1) (cons d l))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    init-colorscale ...                                              */
+;*    colorchooser-init-colorscale ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (init-colorscale scale)
+(define (colorchooser-init-colorscale scale)
    (let* ((hSV hopcolor-hsv-size)
 	  (360/hSV (/ 360 hSV))
 	  (cursor (<DIV> :class "hop-colorchooser-colorscale-cursor")))
@@ -206,9 +241,9 @@
        (inexact->exact (* cc.saturation (/ hopcolor-hsv-size 100))))))
 
 ;*---------------------------------------------------------------------*/
-;*    satval-mousedown ...                                             */
+;*    colorchooser-satval-mousedown ...                                */
 ;*---------------------------------------------------------------------*/
-(define (satval-mousedown event cc)
+(define (colorchooser-satval-mousedown event cc)
    (let* ((cc (dom-get-element-by-id cc))
 	  (satval cc.satval))
       (satval-start-drag! event cc)
@@ -227,23 +262,25 @@
 (define (satval-start-drag! event cc)
 
    (define (handler event)
-      (let ((ex (event-mouse-x event))
-	    (ey (event-mouse-y event))
-	    (satval cc.satval))
+      (let* ((ex (event-mouse-x event))
+	     (ey (event-mouse-y event))
+	     (satval cc.satval)
+	     (satvalx (node-bounding-box-x satval))
+	     (satvaly (node-bounding-box-y satval)))
 	 (cond
-	    ((< ex (+ (hop_element_x satval) 1))
-	     (set! ex (+ (hop_element_x satval) 1)))
-	    ((> ex (+ (hop_element_x satval) satval.clientWidth))
-	     (set! ex (+ (hop_element_x satval) satval.clientWidth))))
+	    ((< ex (+ satvalx 1))
+	     (set! ex (+ satvalx 1)))
+	    ((> ex (+ satvalx satval.clientWidth))
+	     (set! ex (+ satvalx satval.clientWidth))))
 	 (cond
-	    ((< ey (+ (hop_element_y satval) 1))
-	     (set! ey (+ (hop_element_y satval) 1)))
-	    ((> ey (+ (hop_element_y satval) satval.clientHeight))
-	     (set! ey (+ (hop_element_y satval) satval.clientHeight))))
-	 (let ((v (range 100 hopcolor-hsv-size (- ex (hop_element_x satval) 1)))
-	       (s (- 100 (range 100 hopcolor-hsv-size (- ey (hop_element_y satval) 1))))
-	       (x (- ex (hop_element_x satval) 1))
-	       (y (- ey (hop_element_y satval) 1)))
+	    ((< ey (+ satvaly 1))
+	     (set! ey (+ satvaly 1)))
+	    ((> ey (+ satvaly satval.clientHeight))
+	     (set! ey (+ satvaly satval.clientHeight))))
+	 (let ((v (range 100 hopcolor-hsv-size (- ex satvalx 1)))
+	       (s (- 100 (range 100 hopcolor-hsv-size (- ey satvaly 1))))
+	       (x (- ex satvalx 1))
+	       (y (- ey satvaly 1)))
 	    (update-color! cc cc.hue s v)
 	    (satval-grid-position-set! satval x y))))
    
@@ -251,13 +288,13 @@
    (handler event))
 
 ;*---------------------------------------------------------------------*/
-;*    hue-mousedown ...                                                */
+;*    colorchooser-hue-mousedown ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (hue-mousedown event cc)
+(define (colorchooser-hue-mousedown event cc)
    (let* ((cc (dom-get-element-by-id cc))
 	  (satval cc.satval)
 	  (proc (lambda (x cc)
-		   (let* ((vx (hop_element_x cc.valcolorscale))
+		   (let* ((vx (node-bounding-box-x cc.valcolorscale))
 			  (v (range 360 hopcolor-hsv-size (- x vx 1))))
 		      (set! cc.hue v)
 		      (update-hsv! cc)
@@ -267,13 +304,13 @@
       (node-style-set! satval.grid2 :visibility "visible")))
 
 ;*---------------------------------------------------------------------*/
-;*    saturation-mousedown ...                                         */
+;*    colorchooser-saturation-mousedown ...                            */
 ;*---------------------------------------------------------------------*/
-(define (saturation-mousedown event cc)
+(define (colorchooser-saturation-mousedown event cc)
    (let* ((cc (dom-get-element-by-id cc))
 	  (satval cc.satval)
 	  (proc (lambda (x cc)
-		   (let* ((vx (hop_element_x cc.valcolorscale))
+		   (let* ((vx (node-bounding-box-x cc.valcolorscale))
 			  (v (range 100 hopcolor-hsv-size (- x vx 1))))
 		      (set! cc.saturation v)
 		      (update-satval-grid! cc)))))
@@ -282,13 +319,13 @@
       (node-style-set! satval.grid2 :visibility "visible")))
 
 ;*---------------------------------------------------------------------*/
-;*    value-mousedown ...                                              */
+;*    colorchooser-value-mousedown ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (value-mousedown event cc)
+(define (colorchooser-value-mousedown event cc)
    (let* ((cc (dom-get-element-by-id cc))
 	  (satval cc.satval)
 	  (proc (lambda (x cc)
-		   (let* ((vx (hop_element_x cc.valcolorscale))
+		   (let* ((vx (node-bounding-box-x cc.valcolorscale))
 			  (v (range 100 hopcolor-hsv-size (- x vx 1))))
 		      (set! cc.value v)
 		      (update-satval-grid! cc)))))
@@ -297,13 +334,13 @@
       (node-style-set! satval.grid2 :visibility "visible")))
 
 ;*---------------------------------------------------------------------*/
-;*    red-mousedown ...                                                */
+;*    colorchooser-red-mousedown ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (red-mousedown event cc)
+(define (colorchooser-red-mousedown event cc)
    (let* ((cc (dom-get-element-by-id cc))
 	  (satval cc.satval)
 	  (proc (lambda (x cc)
-		   (let* ((vx (hop_element_x cc.valcolorscale))
+		   (let* ((vx (node-bounding-box-x cc.valcolorscale))
 			  (r (range 255 hopcolor-hsv-size (- x vx 1))))
 		      (multiple-value-bind (_ g b)
 			 (hsv->rgb cc.hue cc.saturation cc.value)
@@ -318,13 +355,13 @@
       (node-style-set! satval.grid2 :visibility "visible")))
 
 ;*---------------------------------------------------------------------*/
-;*    green-mousedown ...                                              */
+;*    colorchooser-green-mousedown ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (green-mousedown event cc)
+(define (colorchooser-green-mousedown event cc)
    (let* ((cc (dom-get-element-by-id cc))
 	  (satval cc.satval)
 	  (proc (lambda (x cc)
-		   (let* ((vx (hop_element_x cc.valcolorscale))
+		   (let* ((vx (node-bounding-box-x cc.valcolorscale))
 			  (g (range 255 hopcolor-hsv-size (- x vx 1))))
 		      (multiple-value-bind (r _ b)
 			 (hsv->rgb cc.hue cc.saturation cc.value)
@@ -339,13 +376,13 @@
       (node-style-set! satval.grid2 :visibility "visible")))
 
 ;*---------------------------------------------------------------------*/
-;*    blue-mousedown ...                                               */
+;*    colorchooser-blue-mousedown ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (blue-mousedown event cc)
+(define (colorchooser-blue-mousedown event cc)
    (let* ((cc (dom-get-element-by-id cc))
 	  (satval cc.satval)
 	  (proc (lambda (x cc)
-		   (let* ((vx (hop_element_x cc.valcolorscale))
+		   (let* ((vx (node-bounding-box-x cc.valcolorscale))
 			  (b (range 255 hopcolor-hsv-size (- x vx 1))))
 		      (multiple-value-bind (r g _)
 			 (hsv->rgb cc.hue cc.saturation cc.value)
@@ -365,27 +402,31 @@
 (define (colorspace-start-drag! event cc proc)
    
    (define (handler event)
-      (let ((ex (event-mouse-x event))
-	    (ey (event-mouse-y event))
-	    (satval cc.satval)
-	    (value cc.valcolorscale))
+      (let* ((ex (event-mouse-x event))
+	     (ey (event-mouse-y event))
+	     (satval cc.satval)
+	     (satvalx (node-bounding-box-x satval))
+	     (satvaly (node-bounding-box-y satval))
+	     (value cc.valcolorscale)
+	     (valuex (node-bounding-box-x value))
+	     (valuey (node-bounding-box-y value)))
 	 (cond
-	    ((< ex (+ (hop_element_x value) 1))
-	     (set! ex (+ (hop_element_x value) 1)))
-	    ((> ex (+ (hop_element_x value) value.clientWidth))
-	     (set! ex (+ (hop_element_x value) value.clientWidth))))
-	 (let ((x (- ex (hop_element_x satval) 1))
-	       (y (- ey (hop_element_y satval) 1)))
+	    ((< ex (+ valuex 1))
+	     (set! ex (+ valuex 1)))
+	    ((> ex (+ valuex value.clientWidth))
+	     (set! ex (+ valuex value.clientWidth))))
+	 (let ((x (- ex satvalx 1))
+	       (y (- ey satvaly 1)))
 	    (proc ex cc)
 	    (update-color! cc cc.hue cc.saturation cc.value))))
-
+   
    (add-mousemove-listener! cc handler)
    (handler event))
 
 ;*---------------------------------------------------------------------*/
-;*    hmodel-mousedown ...                                             */
+;*    colorchooser-hmodel-mousedown ...                                */
 ;*---------------------------------------------------------------------*/
-(define (hmodel-mousedown event cc)
+(define (colorchooser-hmodel-mousedown event cc)
    (let ((cc (dom-get-element-by-id cc)))
       (hmodel-start-drag! event cc)))
 
@@ -398,12 +439,12 @@
       (let* ((hmodel cc.hmodel)
 	     (ey (event-mouse-y event))
 	     (360/hSV (/ 360 hopcolor-hsv-size))
-	     (y (hop_element_y hmodel)))
+	     (y (node-bounding-box-y hmodel)))
 	 (cond
-	    ((< ey (+ (hop_element_y hmodel) 1))
-	     (set! ey (+ (hop_element_y hmodel) 1)))
-	    ((> ey (+ (hop_element_y hmodel) hmodel.clientHeight))
-	     (set! ey (+ (hop_element_y hmodel) hmodel.clientHeight))))
+	    ((< ey (+ (node-bounding-box-y hmodel) 1))
+	     (set! ey (+ (node-bounding-box-y hmodel) 1)))
+	    ((> ey (+ (node-bounding-box-y hmodel) hmodel.clientHeight))
+	     (set! ey (+ (node-bounding-box-y hmodel) hmodel.clientHeight))))
 	 (let* ((i (- hopcolor-hsv-size (- ey y)))
 		(h (round (* i 360/hSV))))
 	    (update-color! cc h cc.saturation cc.value)
@@ -422,9 +463,9 @@
       (node-style-set! cc.satval :background-color (format "rgb(~a,~a,~a)" r g b))))
 
 ;*---------------------------------------------------------------------*/
-;*    update-colorscales! ...                                          */
+;*    colorchooser-update-colorscales! ...                             */
 ;*---------------------------------------------------------------------*/
-(define (update-colorscales! cc)
+(define (colorchooser-update-colorscales! cc)
    (update-colorscale! cc.huecolorscale
 		       (round (* (/ cc.hue 360) hopcolor-hsv-size))
 		       (lambda (i)
@@ -473,32 +514,32 @@
       (node-style-set! cc.hmodel.cursor :top top)))
 
 ;*---------------------------------------------------------------------*/
-;*    update-hue! ...                                                  */
+;*    colorchooser-update-hue! ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (update-hue! cc h)
+(define (colorchooser-update-hue! cc h)
    (let ((cc (dom-get-element-by-id cc)))
       (update-color! cc h cc.saturation cc.value)
       (update-hmodel! cc)
       (update-hsv! cc)
-      (update-colorscales! cc h cc.value cc.saturation)))
+      (colorchooser-update-colorscales! cc)))
 
 ;*---------------------------------------------------------------------*/
-;*    update-saturation! ...                                           */
+;*    colorchooser-update-saturation! ...                              */
 ;*---------------------------------------------------------------------*/
-(define (update-saturation! cc s)
+(define (colorchooser-update-saturation! cc s)
    (let ((cc (dom-get-element-by-id cc)))
       (update-color! cc cc.hue s cc.value)
       (update-satval-grid! cc)
-      (update-colorscales! cc cc.hue s cc.value)))
+      (colorchooser-update-colorscales! cc)))
 
 ;*---------------------------------------------------------------------*/
-;*    update-value! ...                                                */
+;*    colorchooser-update-value! ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (update-value! cc v)
+(define (colorchooser-update-value! cc v)
    (let ((cc (dom-get-element-by-id cc)))
       (update-color! cc cc.hue cc.saturation v)
       (update-satval-grid! cc)
-      (update-colorscales! cc cc.hue cc.saturation v)))
+      (colorchooser-update-colorscales! cc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    update-rgb! ...                                                  */
@@ -510,33 +551,33 @@
       (update-hmodel! cc)
       (update-hsv! cc)
       (update-hmodel! cc)
-      (update-colorscales! cc h cc.value cc.saturation)
+      (colorchooser-update-colorscales! cc)
       (node-style-set! cc.satval.grid1 :visibility "visible")
       (node-style-set! cc.satval.grid2 :visibility "visible")
       (update-satval-grid! cc)))
 
 ;*---------------------------------------------------------------------*/
-;*    update-red! ...                                                  */
+;*    colorchooser-update-red! ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (update-red! cc r)
+(define (colorchooser-update-red! cc r)
    (let ((cc (dom-get-element-by-id cc)))
       (multiple-value-bind (_ g b)
 	 (hsv->rgb cc.hue cc.saturation cc.value)
 	 (update-rgb! cc r g b))))
    
 ;*---------------------------------------------------------------------*/
-;*    update-green! ...                                                */
+;*    colorchooser-update-green! ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (update-green! cc g)
+(define (colorchooser-update-green! cc g)
    (let ((cc (dom-get-element-by-id cc)))
       (multiple-value-bind (r _ b)
 	 (hsv->rgb cc.hue cc.saturation cc.value)
 	 (update-rgb! cc r g b))))
    
 ;*---------------------------------------------------------------------*/
-;*    update-blue! ...                                                 */
+;*    colorchooser-update-blue! ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (update-blue! cc b)
+(define (colorchooser-update-blue! cc b)
    (let ((cc (dom-get-element-by-id cc)))
       (multiple-value-bind (r g _)
 	 (hsv->rgb cc.hue cc.saturation cc.value)
@@ -598,13 +639,11 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-colorchooser-onselect cc)
    (cond
-      ((procedure? cc.onselect)
-       (cc.onselect))
-      ((string? (cc.getAttribute "onselect"))
-       (set! cc.onselect
-	     (eval (string-append "function(event) {"
-				  (cc.getAttribute "onselect")
-				  "}")))
+      ((procedure? cc.oncolorselect)
+       (cc.oncolorselect))
+      ((string? (cc.getAttribute "oncolorselect"))
+       (set! cc.oncolorselect (lambda (event)
+				 (eval (cc.getAttribute "oncolorselect"))))
        (hop-colorchooser-onselect cc))))
 
 ;*---------------------------------------------------------------------*/
@@ -614,23 +653,6 @@
    (let ((cc (if (string? el) (dom-get-element-by-id el) el)))
       cc.rgb.value))
 
-;*---------------------------------------------------------------------*/
-;*    colorchooser-opacity ...                                         */
-;*---------------------------------------------------------------------*/
-(define (colorchooser-opacity el)
-   (let ((cc (if (string? el) (dom-get-element-by-id el) el)))
-      (/ (spinbutton-value cc.spinbuttonopacity) 255)))
-   
-;*---------------------------------------------------------------------*/
-;*    colorchooser-opacity-set! ...                                    */
-;*---------------------------------------------------------------------*/
-(define (colorchooser-opacity-set! el a)
-   (let ((cc (if (string? el) (dom-get-element-by-id el) el))
-	 (v (* a 255)))
-      (spinbutton-value-set! cc.spinbuttonopacity v)
-      (slider-value-set! cc.slideropacity v)
-      (node-style-set! cc.color :opacity v)))
-   
 ;*---------------------------------------------------------------------*/
 ;*    colorchooser-value-set! ...                                      */
 ;*---------------------------------------------------------------------*/
@@ -666,3 +688,20 @@
 	  =>
 	  (lambda (v) (apply update-rgb! cc v))))))
 
+;*---------------------------------------------------------------------*/
+;*    colorchooser-opacity ...                                         */
+;*---------------------------------------------------------------------*/
+(define (colorchooser-opacity el)
+   (let ((cc (if (string? el) (dom-get-element-by-id el) el)))
+      (/ (spinbutton-value cc.spinbuttonopacity) 255)))
+   
+;*---------------------------------------------------------------------*/
+;*    colorchooser-opacity-set! ...                                    */
+;*---------------------------------------------------------------------*/
+(define (colorchooser-opacity-set! el a)
+   (let ((cc (if (string? el) (dom-get-element-by-id el) el))
+	 (v (* a 255)))
+      (spinbutton-value-set! cc.spinbuttonopacity v)
+      (slider-value-set! cc.slideropacity v)
+      (node-style-set! cc.color :opacity v)))
+   

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 14 12:01:13 2009                          */
-;*    Last change :  Wed Jul  8 10:10:25 2009 (serrano)                */
+;*    Last change :  Fri Oct  9 07:38:21 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Color Chooser implementation                                     */
@@ -25,6 +25,7 @@
 ;*    <COLORCHOOSER> ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-markup <COLORCHOOSER> ((id #unspecified string)
+			       (onselect #f)
 			       (attributes)
 			       body)
    (let ((cc (xml-make-id id 'colorchooser))
@@ -51,7 +52,8 @@
       (list
        (<TABLE> :hssclass "hop-colorchooser" :class "hop-colorchooser"
 	  :id cc
-	  :onmouseup ~(remove-mousemove-listener! (dom-get-element-by-id $cc))
+	  :onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))
+	  :oncolorselect (xml-tilde->statement onselect)
 	  attributes
 	  (<TR> :class "hop-colorchooser-mainrow"
 	     (<TD>
@@ -59,8 +61,8 @@
 		   (<TR>
 		      (<TD>
 			 (<DIV> :class "hop-colorchooser-satval" :id satval
-			    :onmousedown ~(satval-mousedown event $cc)
-			    :onmouseup ~(remove-mousemove-listener! (dom-get-element-by-id $cc))
+			    :onmousedown ~(colorchooser-satval-mousedown event $cc)
+			    :onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))
 			    grid1
 			    grid2)))
 		   (<TR>
@@ -75,8 +77,8 @@
 			    :onchange ~(colorchooser-value-set! $cc this.value))))))
 	     (<TD>
 		(<DIV> :class "hop-colorchooser-hmodel" :id hmodel
-		   :onmousedown ~(hmodel-mousedown event $cc)
-		   :onmouseup ~(remove-mousemove-listener! (dom-get-element-by-id $cc))))
+		   :onmousedown ~(colorchooser-hmodel-mousedown event $cc)
+		   :onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))))
 	     (<TD>
 		(<TABLE> :class "hop-colorchooser"
 		   (<TR>
@@ -102,58 +104,58 @@
 			    (<TR>
 			       (<TH> "H")
 			       (<TD> (<DIV> :class "hop-colorchooser-colorscale" :id hue
-					:onmousedown ~(hue-mousedown event $cc)
-					:onmouseup ~(remove-mousemove-listener! (dom-get-element-by-id $cc))))
+					:onmousedown ~(colorchooser-hue-mousedown event $cc)
+					:onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))))
 			       (<TD>
 				  (<SPINBUTTON> :id huespinbutton :min 0 :max 360
 				     :value ~360
-				     :onchange ~(update-hue! $cc (spinbutton-value this)))))
+				     :onchange ~(colorchooser-update-hue! $cc (spinbutton-value this)))))
 			    (<TR>
 			       (<TH> "S")
 			       (<TD> (<DIV> :class "hop-colorchooser-colorscale" :id sat
-					:onmousedown ~(saturation-mousedown event $cc)
-					:onmouseup ~(remove-mousemove-listener! (dom-get-element-by-id $cc))))
+					:onmousedown ~(colorchooser-saturation-mousedown event $cc)
+					:onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))))
 			       (<TD>
 				  (<SPINBUTTON> :id satspinbutton :min 0 :max 100
 				     :value ~100
-				     :onchange ~(update-saturation! $cc (spinbutton-value this)))))
+				     :onchange ~(colorchooser-update-saturation! $cc (spinbutton-value this)))))
 			    (<TR>
 			       (<TH> "V")
 			       (<TD> (<DIV> :class "hop-colorchooser-colorscale" :id val
-					:onmousedown ~(value-mousedown event $cc)
-					:onmouseup ~(remove-mousemove-listener! (dom-get-element-by-id $cc))))
+					:onmousedown ~(colorchooser-value-mousedown event $cc)
+					:onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))))
 			       (<TD>
 				  (<SPINBUTTON> :id valspinbutton :min 0 :max 100
 				     :value ~100
-				     :onchange ~(update-value! $cc (spinbutton-value this)))))
+				     :onchange ~(colorchooser-update-value! $cc (spinbutton-value this)))))
 			    (<TR> (<TD> :class "hop-colorchooser-sep" :colspan 3 ""))
 			    (<TR>
 			       (<TH> "R")
 			       (<TD> (<DIV> :class "hop-colorchooser-colorscale" :id red
-					:onmousedown ~(red-mousedown event $cc)
-					:onmouseup ~(remove-mousemove-listener! (dom-get-element-by-id $cc))))
+					:onmousedown ~(colorchooser-red-mousedown event $cc)
+					:onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))))
 			       (<TD>
 				  (<SPINBUTTON> :id redspinbutton :min 0 :max 255
 				     :value ~255
-				     :onchange ~(update-red! $cc (spinbutton-value this)))))
+				     :onchange ~(colorchooser-update-red! $cc (spinbutton-value this)))))
 			    (<TR>
 			       (<TH> "G")
 			       (<TD> (<DIV> :class "hop-colorchooser-colorscale" :id green
-					:onmousedown ~(green-mousedown event $cc)
-					:onmouseup ~(remove-mousemove-listener! (dom-get-element-by-id $cc))))
+					:onmousedown ~(colorchooser-green-mousedown event $cc)
+					:onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))))
 			       (<TD>
 				  (<SPINBUTTON> :id greenspinbutton :min 0 :max 255
 				     :value ~0
-				     :onchange ~(update-green! $cc (spinbutton-value this)))))
+				     :onchange ~(colorchooser-update-green! $cc (spinbutton-value this)))))
 			    (<TR>
 			       (<TH> "B")
 			       (<TD> (<DIV> :class "hop-colorchooser-colorscale" :id blue
-					:onmousedown ~(blue-mousedown event $cc)
-					:onmouseup ~(remove-mousemove-listener! (dom-get-element-by-id $cc))))
+					:onmousedown ~(colorchooser-blue-mousedown event $cc)
+					:onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))))
 			       (<TD>
 				  (<SPINBUTTON> :id bluespinbutton :min 0 :max 255
 				     :value ~0
-				     :onchange ~(update-blue! $cc (spinbutton-value this)))))
+				     :onchange ~(colorchooser-update-blue! $cc (spinbutton-value this)))))
 			    (<TR> (<TD> :class "hop-colorchooser-sep" :colspan 3 ""))
 			    (<TR> (if (null? body)
 				      (<TD> :class "hop-colorchooser-okcancel" :colspan 3
@@ -196,16 +198,16 @@
 		  (set! cc.satval satval))
 	       ;; hmodel init
 	       (let ((hmodel (dom-get-element-by-id $hmodel)))
-		  (init-hmodel hmodel)
+		  (colorchooser-init-hmodel hmodel)
 		  (set! cc.hmodel hmodel))
 	       ;; colorscale init
-	       (init-colorscale (dom-get-element-by-id $hue))
-	       (init-colorscale (dom-get-element-by-id $sat))
-	       (init-colorscale (dom-get-element-by-id $val))
-	       (init-colorscale (dom-get-element-by-id $red))
-	       (init-colorscale (dom-get-element-by-id $green))
-	       (init-colorscale (dom-get-element-by-id $blue))
-	       (update-colorscales! cc)
+	       (colorchooser-init-colorscale (dom-get-element-by-id $hue))
+	       (colorchooser-init-colorscale (dom-get-element-by-id $sat))
+	       (colorchooser-init-colorscale (dom-get-element-by-id $val))
+	       (colorchooser-init-colorscale (dom-get-element-by-id $red))
+	       (colorchooser-init-colorscale (dom-get-element-by-id $green))
+	       (colorchooser-init-colorscale (dom-get-element-by-id $blue))
+	       (colorchooser-update-colorscales! cc)
 	       #t))))))
     
 ;*---------------------------------------------------------------------*/

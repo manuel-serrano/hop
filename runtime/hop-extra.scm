@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Sep 25 16:55:52 2009 (serrano)                */
+;*    Last change :  Fri Oct  9 07:06:05 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -197,10 +197,13 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
    (define (find-head p)
       (with-handler
 	 (lambda (e) '())
-	 (let ((hd (with-input-from-file p hop-read)))
-	    (match-case hd
-	       ((<HEAD> . ?head) head)
-	       (else '())))))
+	 (call-with-input-file p
+	    (lambda (in)
+	       (let loop ((hd (hop-read in)))
+		  (match-case hd
+		     ((<HEAD> . ?head) head)
+		     ((module (? symbol?) . ?-) (loop (hop-read in)))
+		     (else '())))))))
    
    (define (favicon p inl)
       (<LINK> :rel "shortcut icon" :href p :inline inl))
