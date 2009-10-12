@@ -1978,7 +1978,7 @@ function sc_setJsFieldBang(o, field, val) {
 
 /*** META ((export js-field-delete! js-property-delete!)
            (arity #t)
-           (peephole (hole 2 "delete" o "[" field "]")))
+           (peephole (hole 2 "delete " o "[" field "]")))
 */
 function sc_deleteJsFieldBang(o, field) {
     delete o[field];

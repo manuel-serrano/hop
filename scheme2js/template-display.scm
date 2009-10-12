@@ -12,18 +12,8 @@
 
 (module template-display
    (import tools)
-   (export (class Display-Env
-	      (indent::bint (default 0))
-	      (indent-str::bstring (default ""))
-	      (indent-level::bint (default 0))
-	      
-	      (after-NL? (default #t))))
    (export (macro template-display)
-	   (macro p-display))
-   (export (indent env::Display-Env)
-	   (indent++ env::Display-Env)
-	   (indent-- env::Display-Env)
-	   (--indent env::Display-Env)))
+	   (macro p-display)))
 
 (define-macro (p-display p . Largs)
    `(begin
@@ -31,52 +21,7 @@
 		 `(display ,arg ,p))
 	      Largs)))
 
-(define *indent-max* 80)
-(define *indent-vec*
-   (let ((vec (make-vector (+fx *indent-max* 1))))
-      (for i 0 *indent-max*
-	   (vector-set! vec i (make-string i #\space)))
-      vec))
-      
-(define (indent env)
-   (with-access::Display-Env env (indent-str)
-      indent-str))
-
-(define (indent++ env)
-   (with-access::Display-Env env (indent indent-level indent-str)
-      (if (zerofx? indent)
-	  ""
-	  (let ((old-indent indent-str))
-	     (set! indent-level (+fx indent-level indent))
-	     (if (<fx indent-level *indent-max*)
-		 (set! indent-str (vector-ref *indent-vec* indent-level))
-		 (set! indent-str (vector-ref *indent-vec* *indent-max*)))
-	     old-indent))))
-
-(define (--indent env)
-   (with-access::Display-Env env (indent indent-level indent-str)
-      (if (zerofx? indent)
-	  ""
-	  (begin
-	     (set! indent-level (-fx indent-level indent))
-	     (if (<fx indent-level *indent-max*)
-		 (set! indent-str (vector-ref *indent-vec* indent-level))
-		 (set! indent-str (vector-ref *indent-vec* *indent-max*)))
-	     indent-str))))
-
-(define (indent-- env)
-   (with-access::Display-Env env (indent indent-level indent-str)
-      (if (zerofx? indent)
-	  ""
-	  (let ((old-indent indent-str))
-	     (set! indent-level (-fx indent-level indent))
-	     (if (<fx indent-level *indent-max*)
-		 (set! indent-str (vector-ref *indent-vec* indent-level))
-		 (set! indent-str (vector-ref *indent-vec* *indent-max*)))
-	     old-indent))))
-
-
-(define-macro (template-display p env . Largs)
+(define-macro (template-display p . Largs)
    (define (my-error msg val)
       (let ((loc (if (epair? Largs) (cer Largs) #f)))
 	 (my-error2 msg val loc)))
@@ -86,12 +31,6 @@
 	  (error/location "template-display" msg val fname loc))
 	 (else
 	  (error "template-display" msg val))))
-
-   (define (nl-disp expr)
-      `(begin (when (Display-Env-after-NL? ,env)
-		 (display (indent env) ,p)
-		 (Display-Env-after-NL?-set! ,env #f))
-	      (display ,expr ,p)))
 
    (define (ltrim str)
       (let loop ((i 0))
@@ -190,6 +129,17 @@
 				 (cdr patterns))
 			  args
 			  hole)))
+		 ((string-contains pattern "~x")
+		  =>
+		  (lambda (hex-pos)
+		     (aux (cons* `(,pattern-type ,(substring pattern 0 hex-pos))
+				 '(__HEX_P_DISPLAY__)
+				 `(rem-pattern
+				   ,(substring pattern (+fx hex-pos 2)
+					       (string-length pattern)))
+				 (cdr patterns))
+			  args
+			  hole)))
 		 ((string-contains pattern "~?")
 		  =>
 		  (lambda (maybe-pos)
@@ -232,34 +182,8 @@
 		 ((string-null? pattern)
 		  (aux (cdr patterns) args hole))
 		 (else ;; pattern-type == 'rem-pattern
-		  (let loop ((chars (string->list pattern))
-			     (rev-non-special '()))
-		     (cond
-			((and (null? chars)
-			      (null? rev-non-special))
-			 (aux (cdr patterns) args hole))
-			((null? chars)
-			 `(,(nl-disp (list->string (reverse! rev-non-special)))
-			   ,@(aux (cdr patterns) args hole)))
-			((char=? (car chars) #\{)
-			 `(,(nl-disp (list->string
-				      (reverse! (cons #\{ rev-non-special))))
-			   (indent++ ,env)
-			   ,@(loop (cdr chars) '())))
-			((char=? (car chars) #\})
-			 `((indent-- ,env)
-			   ,(nl-disp (list->string
-				      (reverse! (cons #\} rev-non-special))))
-			   ,@(loop (cdr chars) '())))
-			((char=? (car chars) #\newline)
-			 `(,(nl-disp (list->string
-				      (reverse! (cons #\newline
-						      rev-non-special))))
-			   (Display-Env-after-NL?-set! ,env #t)
-			   ,@(loop (cdr chars) '())))
-			(else
-			 (loop (cdr chars)
-			       (cons (car chars) rev-non-special))))))))
+		  `((display ,pattern ,p)
+		    ,@(aux (cdr patterns) args hole)))))
 	     ((__HOLE_P_DISPLAY__)
 	      (when (not hole)
 		 (my-error "~@ without surrounding ?@ (or more than one ~@)" Largs))
@@ -283,9 +207,8 @@
 			  (for-each (lambda ,formals
 				       (if ,tmp
 					   (set! ,tmp #f)
-					   ,(nl-disp separator))
-				       (template-display ,p ,env
-					  ,@disp-body))
+					   (display ,separator ,p))
+				       (template-display ,p ,@disp-body))
 				    ,@lists))
 		       ,@(aux (cdr patterns) (cdr args) hole))))
 		 ((separated-e ?separator ?fun . ?lists)
@@ -297,17 +220,15 @@
 			  (for-each (lambda ,formals
 				       (if ,tmp
 					   (set! ,tmp #f)
-					   ,(nl-disp separator))
-				       (template-display ,p ,env
-					  "~e" (,fun ,@formals)))
+					   (display ,separator ,p))
+				       (template-display ,p "~e" (,fun ,@formals)))
 				    ,@lists))
 		       ,@(aux (cdr patterns) (cdr args) hole))))
 		 ((each (lambda ?formals
 			   . ?disp-body)
 			. ?lists)
 		  `((for-each (lambda ,formals
-				 (template-display ,p ,env
-				    ,@disp-body))
+				 (template-display ,p ,@disp-body))
 			      ,@lists)
 		    ,@(aux (cdr patterns) (cdr args) hole)))
 		 ((each-a ?fun . ?lists)
@@ -315,7 +236,7 @@
 					 (string->symbol (format "arg~a" i))
 					 (iota (length lists))))))
 		     `((for-each (lambda ,formals
-				    (template-display ,p ,env
+				    (template-display ,p
 				       "~a" (,fun ,@formals)))
 				 ,@lists)
 		       ,@(aux (cdr patterns) (cdr args) hole))))
@@ -325,7 +246,12 @@
 	     ((__VALUE_P_DISPLAY__)
 	      (when (null? args)
 		 (my-error "not enough arguments (~a or $)" Largs))
-	      `(,(nl-disp (car args))
+	      `((display ,(car args) ,p)
+		,@(aux (cdr patterns) (cdr args) hole)))
+	     ((__HEX_P_DISPLAY__)
+	      (when (null? args)
+		 (my-error "not enough arguments (~x)" Largs))
+	      `((fprintf ,p "~x" ,(car args))
 		,@(aux (cdr patterns) (cdr args) hole)))
 	     ((__MAYBE_P_DISPLAY__)
 	      (when (null? args)
@@ -333,7 +259,7 @@
 	      (let ((tmp (gensym 'tmp)))
 		 `((let ((,tmp ,(car args)))
 		      (when ,tmp
-			 ,(nl-disp tmp))
+			 (display ,tmp ,p))
 		      ,@(aux (cdr patterns) (cdr args) hole)))))
 	     (else
 	      (my-error2 "bad pattern" (car patterns)
