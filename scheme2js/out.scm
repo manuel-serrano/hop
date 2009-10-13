@@ -175,13 +175,13 @@
 		      (ucs2-numeric? c)))
 	     (template-display p "~a" (ucs2->char c)))
 	    ((<=fx i #xF)
-	     (template-display p "\u000~x" i))
+	     (template-display p "\\u000~x" i))
 	    ((<=fx i #xFF)
-	     (template-display p "\u00~x" i))
+	     (template-display p "\\u00~x" i))
 	    ((<=fx i #xFFF)
-	     (template-display p "\u0~x" i))
+	     (template-display p "\\u0~x" i))
 	    (else
-	     (template-display p "\u~x" i)))))
+	     (template-display p "\\u~x" i)))))
 	     
    (cond
       ((null? const) (template-display p "null"))
