@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/1.11.x/weblets/shutdown/shutdown.hop        */
+;*    serrano/prgm/project/hop/2.0.x/weblets/shutdown/shutdown.hop     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Apr 22 07:32:08 2009 (serrano)                */
+;*    Last change :  Sat Oct 10 09:18:47 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
@@ -30,7 +30,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    shutdown/kill ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-service (shutdown/kill key)
+(define-service (shutdown/kill #!key key)
    (when (and (equal? key (hop-process-key)) (hop-accept-kill))
       (hop-verb 1 "shutdown/kill...\n")
       (exit 0)))

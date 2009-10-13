@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Thu Oct  8 14:48:30 2009 (serrano)                */
+/*    Last change :  Mon Oct 12 08:07:12 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -360,8 +360,11 @@ function after( timeout, proc ) {
 /*** META ((export #t) (arity #t)) */
 function timeout( tm, proc ) {
    var wproc = hop_callback( proc );
-   
-   var i = setInterval( function() { if( !wproc() ) clearInterval( i )}, tm );
+
+   if( wproc() ) {
+      var i = setInterval(
+	 function() { if( !wproc() ) clearInterval( i )}, tm );
+   }
 }
 
 /*---------------------------------------------------------------------*/

@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+/*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -440,3 +440,18 @@ function sc_stringIndexRight(s, cset, start) {
    }
 }
 
+/*** META ((export #t) (arity 1)) */
+function sc_string_downcase(s) {
+   return s.toLowercase();
+}
+
+/*** META ((export #t) (arity 1)) */
+function sc_string_upcase(s) {
+   return s.toUppercase();
+}
+
+/*** META ((export #t) (arity 1)) */
+function sc_string_capitalize(s) {
+   // MS, 2009-10-12: TODO
+   return s;
+}

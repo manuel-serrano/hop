@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Mon Jun 29 10:34:39 2009 (serrano)                */
+;*    Last change :  Mon Oct 12 11:55:01 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -560,7 +560,7 @@
 	  (values y n))
 	 ((bool (and (? symbol?) ?y) (and (? symbol?) ?n))
 	  (values (symbol->string y) (symbol->string n))))
-      (let ((name (symbol->string (gensym))))
+      (let ((name (symbol->string name)))
 	 (<TABLE> :class "hop-pr-editor-bool"
 	    (<COLGROUP>
 	       (<COL> :span 2 :width "1*"))
@@ -586,7 +586,7 @@
 ;*    pr-editor-enum ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (pr-editor-enum name type value title parse key)
-   (let* ((name (symbol->string (gensym)))
+   (let* ((name (symbol->string name))
 	  (enum (cdr type))
 	  (len (length enum)))
       (<TABLE> :class "hop-pr-editor-enum"

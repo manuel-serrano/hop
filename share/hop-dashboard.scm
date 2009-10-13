@@ -1,20 +1,15 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/share/hop-window.scm              */
+;*    serrano/prgm/project/hop/2.0.x/share/hop-dashboard.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
-;*    Creation    :  Tue Jun 23 05:52:16 2009                          */
-;*    Last change :  Tue Oct 13 08:42:03 2009 (serrano)                */
+;*    Creation    :  Mon Oct 12 10:56:55 2009                          */
+;*    Last change :  Mon Oct 12 10:57:04 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
-;*    HOP Window client-side library declaration                       */
+;*    The HOP declaration for the dashboard.                           */
 ;*=====================================================================*/
-
-;*---------------------------------------------------------------------*/
-;*    The module                                                       */
-;*---------------------------------------------------------------------*/
-(module __hop-window)
 
 ;*---------------------------------------------------------------------*/
 ;*    The head                                                         */
 ;*---------------------------------------------------------------------*/
-(<HEAD> :include "hop-fx")
+(<HEAD> :include "hop-window")

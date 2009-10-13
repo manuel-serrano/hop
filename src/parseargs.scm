@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jul 17 16:00:32 2009 (serrano)                */
+;*    Last change :  Sat Oct 10 09:28:11 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -39,7 +39,8 @@
 	 (exprs '())
 	 (log-file #f)
 	 (be #f)
-	 (files '()))
+	 (files '())
+	 (killp #f))
       
       (bigloo-debug-set! 0)
       
@@ -146,12 +147,7 @@
 	 (("--no-accept-kill" (help "Forbidden remote kill commands"))
 	  (hop-accept-kill-set! #f))
 	 ((("-k" "--kill") (help "Kill the running local HOP and exit"))
-	  (hop-verb 2 "Kill HOP process " (key-filepath p) "...\n")
-	  (let ((key (hop-process-key-read p)))
-	     (if (string? key)
-		 (http :port p :path (format "/hop/shutdown/kill?key=~a" key))
-		 (error 'hop-kill "Cannot find process key" (key-filepath p)))
-	     (exit 0)))
+	  (set! killp #t))
 	 
 	 ;; Paths
 	 (section "Paths")
@@ -247,6 +243,15 @@
       
       ;; hoprc
       (when loadp (parseargs-loadrc rc-file (hop-rc-file)))
+
+      ;; kill
+      (when killp
+	 (hop-verb 2 "Kill HOP process " (key-filepath p) "...\n")
+	 (let ((key (hop-process-key-read p)))
+	    (if (string? key)
+		(http :port p :path (format "/hop/shutdown/kill?key=~a" key))
+		(error 'hop-kill "Cannot find process key" (key-filepath p)))
+	    (exit 0)))
       
       ;; default backend
       (when (string? be) (hop-xml-backend-set! (string->symbol be)))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Fri Jun  5 17:28:25 2009 (serrano)                */
+/*    Last change :  Mon Oct 12 11:45:16 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
@@ -37,10 +37,17 @@ function hop_dashboard_start_applet( name, svc ) {
       if( (obj instanceof String) || (typeof obj === "string") ) {
 	 return alert( obj );
       }
+
+      // fallback
+      window.open( sc_dirname( svc ), name );
    }
 
-   function failure( obj, xhr ) {
-      window.open( sc_dirname( svc ), name );
+   function failure( xhr ) {
+      if( xhr.exception ) {
+	 hop_report_exception( xhr.exception );
+      } else {
+	 sc_error( svc, "Cannot open dashboard", xhr.responseText );
+      }
    }
 
    if( (svc.indexOf( "http://" ) === 0) || (svc.indexOf( "https://" ) === 0) )
@@ -233,6 +240,7 @@ function hop_dashboard_button_init() {
    node_style_set( but, "-webkit-opacity", hop_dashboard_opacity );
    node_style_set( but, "opacity", hop_dashboard_opacity );
    node_style_set( but, "border-radius", "2px" );
+   node_style_set( but, "user-select", "none" );
 
    var icon = document.createElement( "img" );
    

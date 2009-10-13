@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Oct  5 18:13:35 2009 (serrano)                */
+#*    Last change :  Tue Oct 13 08:45:52 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -22,8 +22,7 @@ do: build
 #*    FLASHOBJS                                                        */
 #*---------------------------------------------------------------------*/
 FLASHOBJS	= HopServevt.swf HopAudio.swf HopVideo.swf \
-                  JavaScriptFlashGateway.swf JavaScriptFlashGateway.js \
-                  hop-sound.swf 
+                  JavaScriptFlashGateway.swf JavaScriptFlashGateway.js
 FLASHSRC	= HopServevt.as HopAudio.as HopVideo.as
 FLASH		= $(FLASHOBJS) $(FLASHSRC)
 FLASHOPT	= player.swf swfobject.js
@@ -44,10 +43,10 @@ EXTRA		= hop-error.hss hop.css \
                   hop-editor.js hop-editor.css \
                   hop-file.js hop-file.scm hop-file.hss \
                   hop-fileselect.js hop-fileselect.css \
-                  hop-tooltip.js hop-dashboard.js \
+                  hop-tooltip.js \
+                  hop-dashboard.js hop-dashboard.scm \
                   hop-prefs.js hop-prefs.hss \
                   hop-debug.js hop-debug.css \
-		  hop-sound.js hop-sound.scm \
                   hop-audio.js hop-audio.scm hop-audio.hss \
                   hop-video.js hop-video.hss \
                   hop-login.js hop-login.hss \
