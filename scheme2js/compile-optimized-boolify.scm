@@ -12,7 +12,6 @@
 
 (module compile-optimized-boolify
    (export (compile-boolified p
-			      env
 			      compile::procedure
 			      node::Node))
    (import config
@@ -22,18 +21,18 @@
 	   template-display
 	   verbose))
 
-(define (compile-optimized-if-boolify p env compile n)
+(define (compile-optimized-if-boolify p compile n)
    (with-access::If n (test then else)
       (if (and (Const? else)
 	       (with-access::Const else (value)
 		  (not value)))
-	  (template-display p env
+	  (template-display p
 	     "(~e&&~e)"
 	     (compile test p #f)
-	     (compile-optimized-boolify p env compile then))
-	  (compile-unoptimized-boolify p env compile n))))
+	     (compile-optimized-boolify p compile then))
+	  (compile-unoptimized-boolify p compile n))))
 
-(define (compile-optimized-boolify p env compile n)
+(define (compile-optimized-boolify p compile n)
    (cond
       ((Call? n)
        (with-access::Call n (operator operands)
@@ -46,25 +45,25 @@
 			     (eq? (Export-Desc-return-type export-desc)
 				  'bool))
 			(compile n p #f)
-			(compile-unoptimized-boolify p env compile n))))
-	      (compile-unoptimized-boolify p env compile n))))
+			(compile-unoptimized-boolify p compile n))))
+	      (compile-unoptimized-boolify p compile n))))
       ((If? n)
-       (compile-optimized-if-boolify p env compile n))
+       (compile-optimized-if-boolify p compile n))
       ((Const? n)
        (with-access::Const n (value)
-	  (template-display p env
+	  (template-display p
 	     "~a" (if value "true" "false"))))
       (else
-       (compile-unoptimized-boolify p env compile n))))
+       (compile-unoptimized-boolify p compile n))))
 
-(define (compile-unoptimized-boolify p env compile node)
-   (template-display p env
+(define (compile-unoptimized-boolify p compile node)
+   (template-display p
       "(~e !== false)"
       (compile node p #f)))
    
-(define (compile-boolified p env compile node)
+(define (compile-boolified p compile node)
    ;; TODO: get rid of '(config ... )
    (if (config 'optimize-boolify)
-       (compile-optimized-boolify p env compile node)
-       (compile-unoptimized-boolify p env compile node)))
+       (compile-optimized-boolify p compile node)
+       (compile-unoptimized-boolify p compile node)))
 
