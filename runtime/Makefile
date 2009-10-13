@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sat Jun 20 08:57:03 2009 (serrano)                */
+#*    Last change :  Tue Oct 13 08:53:44 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -41,7 +41,7 @@ _OBJECTS = param misc priv types \
            http-response http-shoutcast http-remote http-webdav \
            http-error http-filter \
            hop-img hop-extra hop-inline \
-           hop-rss hop-sym hop-box \
+           hop-rss hop-sym \
            hop-svg hop-mathml \
            event color weblets prefs expanders
 

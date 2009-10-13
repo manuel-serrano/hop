@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sat Jun 20 08:57:35 2009 (serrano)                */
+;*    Last change :  Tue Oct 13 08:53:50 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -44,7 +44,6 @@
 	   __hop_http-error
 	   __hop_hop-extra
 	   __hop_hop-inline
-	   __hop_hop-box
 	   __hop_hop-sym
 	   __hop_hop-rss
 	   __hop_hop-svg

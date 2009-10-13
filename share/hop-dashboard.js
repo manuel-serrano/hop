@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Mon Oct 12 11:45:16 2009 (serrano)                */
+/*    Last change :  Tue Oct 13 09:12:02 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
@@ -43,10 +43,14 @@ function hop_dashboard_start_applet( name, svc ) {
    }
 
    function failure( xhr ) {
-      if( xhr.exception ) {
-	 hop_report_exception( xhr.exception );
+      if( xhr.status == 404 ) {
+	 window.open( sc_dirname( svc ), name );
       } else {
-	 sc_error( svc, "Cannot open dashboard", xhr.responseText );
+	 if( xhr.exception ) {
+	    hop_report_exception( xhr.exception );
+	 } else {
+	    sc_error( svc, "Cannot open dashboard", xhr.responseText );
+	 }
       }
    }
 

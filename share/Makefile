@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Tue Oct 13 08:45:52 2009 (serrano)                */
+#*    Last change :  Tue Oct 13 08:53:39 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -50,7 +50,6 @@ EXTRA		= hop-error.hss hop.css \
                   hop-audio.js hop-audio.scm hop-audio.hss \
                   hop-video.js hop-video.hss \
                   hop-login.js hop-login.hss \
-                  hop-box.scm hop-box.hss \
 		  hop-spinbutton.scm hop-spinbutton.hss \
 		  hop-color.scm hop-color.hss \
                   hop-lframe.hss \

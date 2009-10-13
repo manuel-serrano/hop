@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Oct  2 09:38:38 2009 (serrano)                */
+;*    Last change :  Tue Oct 13 09:10:49 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -358,7 +358,7 @@
 ;*---------------------------------------------------------------------*/
 (define (service-filter req)
    (when (http-server-request? req)
-      (with-access::http-server-request req (abspath user service)
+      (with-access::http-server-request req (abspath user service method)
 	 (when (hop-service-path? abspath)
 	    (mutex-lock! *service-mutex*)
 	    (let loop ((svc (hashtable-get *service-table* abspath))
@@ -376,7 +376,7 @@
 		      (cond
 			 ((service-expired? svc)
 			  (mark-service-path-expired! path)
-			  #f)
+			  (http-invalidated-service-error req))
 			 ((or (authorized-service? req wid)
 			      (authorized-service? req id))
 			  (scheme->response (service-handler svc req) req))
@@ -399,12 +399,12 @@
 			  ;; the initial weblet
 			  'hop-resume)
 			 (armed
-			  #f)
+			  (http-service-not-found abspath))
 			 ((autoload-filter req)
 			  (mutex-lock! *service-mutex*)
 			  (loop (hashtable-get *service-table* abspath) #t))
 			 (else
-			  #f))))))))))
+			  (http-service-not-found abspath)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-service! ...                                            */
