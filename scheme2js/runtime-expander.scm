@@ -185,11 +185,10 @@
 		(cons (f (car L))
 		      rev-res)))
 	 (else
-	  (scheme2js-error
-	   "expander"
-	   "not a list"
-	   orig-L
-	   orig-L)))))
+	  (scheme2js-error  "expander"
+			    "not a list"
+			    orig-L
+			    orig-L)))))
 
 (define (emap2 f orig-L)
    (let loop ((L orig-L)
@@ -207,11 +206,10 @@
 		(cons (f (car L) #f)
 		      rev-res)))
 	 (else
-	  (scheme2js-error
-	   "expander"
-	   "not a list"
-	   orig-L
-	   orig-L)))))
+	  (scheme2js-error "expander"
+			   "not a list"
+			   orig-L
+			   orig-L)))))
 
 ;; be careful: expansion is already finished. So do not add bad constructs that
 ;; should be macro-expanded...

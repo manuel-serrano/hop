@@ -85,6 +85,13 @@
 		  (doc-page
 		   (make-file-name (doc-core-dir) "core.wiki")
 		   (make-wiki-request-syntax (doc-api-syntax)))))
+
+	    (<NPTAB> :id "doc-js"
+	       (<NPTABHEAD> "JavaScript Interface")
+	       (<DIV> :class "js doc-tab"
+		  (doc-page
+		   (make-file-name (doc-js-dir) "js-interface.wiki")
+		   (make-wiki-request-syntax (doc-api-syntax)))))
 	    
 	    (<NPTAB> :id "doc-libraries"
 	       (<NPTABHEAD> "Libraries")

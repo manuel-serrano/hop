@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -20,7 +20,8 @@
 	   walk
 	   verbose
 	   gen-js
-	   pobject-conv)
+	   pobject-conv
+	   error)
    (export (symbol-resolution tree::Module
 			      imports::pair-nil
 			      exports::pair-nil)
@@ -35,7 +36,7 @@
 	      (runtime-scope (default #f))
 	      (unbound-add! (default #f)))))
 
-(define *scheme2js-runtime-vars* '(list js-call not))
+(define *scheme2js-compilation-runtime-vars* '(list js-call not))
 
 (define (runtime-reference id)
    (var-reference ((thread-parameter '*runtime-id->var*) id)))
@@ -43,8 +44,8 @@
 (define (runtime-reference-init! f)
    (thread-parameter-set! '*runtime-id->var*
 			  (lambda (sym)
-			     [assert (*scheme2js-runtime-vars* sym)
-				     (memq sym *scheme2js-runtime-vars*)]
+			     [assert (*scheme2js-compilation-runtime-vars* sym)
+				     (memq sym *scheme2js-compilation-runtime-vars*)]
 			     (f sym))))
 
 ;; selects runtime imported from 'runtime_mapping.sch'
@@ -176,7 +177,7 @@
       (for-each (lambda (id)
 		   ;; simply searching for the variable will mark it as used.
 		   (symbol-var runtime-scope id))
-		*scheme2js-runtime-vars*)
+		*scheme2js-compilation-runtime-vars*)
       
       ;; insert exported variables
       (for-each (lambda (meta) (js-symbol-add! module-scope meta #f))
@@ -192,9 +193,10 @@
        env
        (lambda (id)
 	  (if (pair? id) ;; qualified
-	      (error "symbol-resolution"
-		     "could not resolve qualified variable"
-		     (cons '@ id))
+	      (scheme2js-error "symbol-resolution"
+			       "could not resolve qualified variable"
+			       (cons '@ id)
+			       id)
 	      (let ((js-str (mangle-JS-sym id)))
 		 (js-symbol-add! imported-scope
 				 (instantiate::Export-Desc
@@ -252,9 +254,10 @@
       (let ((v (symbol-var scope id)))
 	 (if v
 	     ;; already declared
-	     (error "symbol-resolution"
-		    "Variable already declared"
-		    id)
+	     (scheme2js-error "symbol-resolution"
+			      "Variable already declared"
+			      id
+			      decl)
 	     (let ((new-var (instantiate::Var
 			       (id id)
 			       (kind 'local))))
@@ -303,7 +306,7 @@
 	    this))))
 
 (define-nmethod (Ref.resolve! symbol-table)
-   (with-access::Ref this (id var location)
+   (with-access::Ref this (id var)
       (let ((v (any (lambda (scope)
 		       (symbol-var scope id))
 		    symbol-table)))
@@ -314,11 +317,7 @@
 	     (verbose "Unresolved symbol '" id "' assumed to be a JS-var")
 	     (ncall resolve! this symbol-table)) ;; try again.
 	    (else
-	     (match-case location
-		((at ?file ?char)
-		 (error/location #f "unbound variable" id file char))
-		(else
-		 (error #f "unbound variable" id)))))))
+	     (scheme2js-error #f "Unresolved symbol: " id this)))))
    this)
 
 ;; runtime-var-ref directly queries the js-var-scope (short-cutting the
@@ -328,7 +327,7 @@
       (let ((v (symbol-var (Env-runtime-scope env) id)))
 	 ;; error should never happen (programming error)
 	 (when (not v) (error "Runtime-Var-Ref.resolve!"
-			      "Runtime-variable not found"
+			      "Internal Error: Runtime-variable not found"
 			      id))
 	 (set! var v)))
    (shrink! this)
@@ -339,9 +338,10 @@
 (define-nmethod (Define.resolve! symbol-table)
    (with-access::Define this (lvalue)
       (with-access::Ref lvalue (id)
-	 (error "symbol-resolution"
-		"Define at bad location"
-		id))))
+	 (scheme2js-error "symbol-resolution"
+			  "Define at bad location"
+			  id
+			  this))))
 
 (define (find-globals env n module-scope)
    (cond

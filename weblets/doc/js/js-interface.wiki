@@ -1,0 +1,267 @@
+<doc> HOP JavaScript interface
+
+== Presentation ==
+
+This document describes the HOP - JavaScript interface. It explains how to
+interface HOP's client-side code with existing JavaScript code.
+
+~~ HOP's JavaScript interface is complete. Any program that could be written
+in JavaScript can be written with HOP. However it is often necessary
+(or simply convenient) to interface with existing JavaScript code. HOP provides
+some facilities to ease such an integration.
+
+== JavaScript Objects ==
+HOP provides several means to use JavaScript objects efficiently inside HOP
+code.
+
+~~ HOP provides dot-access for JavaScript objects. One can thus simply write
+++o.x++ to access the property (field) ++x++ of object ++o++. This dot-access
+is a shortcut for ++(js-property o "x")++. The latter form could be convenient
+when the property-name is not known at compile-time. In a similar vein there
+exist the functions ++js-property-set!++, ++js-property-delete!++, 
+++js-method-call++, and ++js-new++.
+
+<code>
+  (define (foo) (set! this.x 42) #unspecified)
+  (let ((o (js-new foo)))
+    (alert o.x) ;; => 42
+    (js-property-delete! o "x")
+    (alert o.x) ;; => undefined
+    (js-property-set! o "x" 3.1415)
+    (alert o.x) ;; => 3.1415
+    (set! o.f (lambda () (alert this.x)))
+    (o.f) ;; => 3.1415
+    (js-method-call o "f")) ;; => 3.1415
+</code>
+
+
+~~ Remark: for most DOM-manipulations there exist library-functions. So you
+should not need to manipulate DOM properties this way. I.e. instead of
+writing ++(set! x.innerHTML ...)++ one should rather use
+++(innerHTML-set! x ...)++; or instead of ++(node.replaceChild n r)++
+rather use ++(dom-replace-child node n r)++.
+
+
+~~ Note that functions that are used as constructors (i.e. with ++js-new++)
+must pay attention not to return an object. Indeed, the JavaScript
+specification states that in such a case the returned object is used.
+
+<code>
+  (define (bar) (set! this.x '#(1 2)))
+  (let ((o (js-new bar)))
+     (alert o)) ;; => #(1 2) and not [object Object]
+
+;; corrected version:
+(define (correct-bar) (set! this.x '#(1 2)) #unspecified)
+</code>
+
+~~ In order to avoid this mistake it is best to declare classes using the
+following macro:
+
+<code>
+  (define-macro (define-class sig . Lbody)
+    `(define ,sig ,@(append Lbody '(#unspecified))))
+
+  (define-class (bar) (set! this.x '#(1 2)))
+  (let ((o (js-new bar)))
+     (alert o)) ;; => [object Object]
+</code>
+
+~~ Another macro is convenient for "named" JavaScript function calls. A common
+idiom is to pass arguments inside an object:
+
+<code>
+  openTip({ color: "blue", position: "top", length: 3 });
+</code>
+
+The following macro creates a wrapper-function that can then be used with
+keywords. It is not very sophisticated but might serve as a good
+starting-point for more involved macros:
+
+<code>
+  (define-macro (keywordify scm-name js-name)
+     `(define (,scm-name . orig-args)
+         (define (empty-object) #unspecified)
+         (let ((o (js-new empty-object)))
+	    (let loop ((args orig-args))
+	       (cond
+		  ((null? args) (,js-name o))
+                  ((or (null? (cdr args))
+		       (not (keyword? (car args))))
+		      (error "named-args"
+			     "bad argument-list"
+			     orig-args))
+		  (else
+		     (js-property-set! o (keyword->string (car args)) (cadr args))
+		     (loop (cddr args))))))))
+</code>
+
+<code>
+  (keywordify open-tip openTip)
+
+  (open-tip :color "blue" :position "top" :length 3)
+</code>
+
+== Implicit Import ==
+
+~~ JavaScript variables are implicitly imported for every HOP expression that
+is not inside a module. These are the tilde (~) expressions as well as
+separate files without a module clause:
+
+<code> ~(alert foo) </code>
+
+<code>
+  ;; contents of file bar.scm
+(alert bar)
+</code>
+
+~~ In the first case ++foo++ is unbound and thus assumed to be a JavaScript
+variable. Similarly, in the latter case ++bar++ is unbound and thus sought for
+in the JavaScript namespace.
+
+~~ Note that HOP expressions might define JavaScript variables by
+themselves. For instance the expression ++~(define foo 5)++ will define the
+JavaScript variable ++foo++.
+
+~~ HOP will mangle all unbound variables that are invalid JavaScript
+identifiers. This mangling is deterministic and as a consequence different HOP
+parts might communicate through such JavaScript variables:
+
+<code>
+  ~(define invalid+js-id 3)
+~(alert invalid+js-id)
+</code>
+
+~~ If these variables should be accessible by JavaScript code, then valid
+JS-identifiers should be used instead.
+
+<code>
+  ;; in HOP:
+~(define valid_js_id 5)
+</code>
+<code>
+  // in JavaScript
+alert(valid_js_id);
+</code>
+
+~~ It is clear that not all valid JavaScript identifiers can be defined this
+way. For instance the JavaScript identifier ++begin++ or ++lambda++ can not be
+defined as this would yield a syntax error. In the following sections different
+ways of interfacing will be described that allow to use these identifiers as
+well.
+
+== the ++JS++ clause ==
+
+~~ The ++JS++ clause is an easy way of importing JavaScript
+variables into HOP. Its syntax is
+
+  <js-clause> := (JS <js-field>+)
+  <js-field>  := <string>)
+                | <symbol>
+                | (<symbol> <symbol>
+                | (<symbol> <string>
+
+
+~~ When ++<js-field>++ is a
+
+
+  * string, then the JavaScript variable is imported as is. For instance the
+clause ++(JS "foo_bar")++ will import the JavaScript variable ++foo_bar++
+under the name of ++foo_bar++.
+  * symbol, then the JavaScript variable is assumed to have been created in
+tilde code (or separate code without the module clause).
+++(JS foo-bar)++ will import the mangled ++foo-bar++ variable under the
+name ++foo-bar++.
+  * pair (with the cadr either a symbol or a string) will import the variable
+under the specified name. The clause ++(JS (color-set! "setColor"))++ will
+import the JavaScript variable ++setColor++ under the name of
+++color-set!++.
+
+
+~~ ++JS++ clauses may be in two locations:
+
+  * Inside a module-clause of a separate HOP client module, or
+  * inside a server module-clause prefixed by a tilde.
+
+<code>
+  ;; separate HOP client file
+  (module client-module
+    (JS (color-set! "setColor")))
+
+(color-set! ...)
+</code>
+
+<code>
+  ;; server HOP module
+  (define server-module
+    ~(JS (foo-bar? "is_foo_bar")))
+
+(define-service (foo)
+  (<HTML> ... ~(alert (foo-bar? ...)) ...))
+</code>
+
+== Qualified JavaScript Access==
+HOP allows direct access to JavaScript identifiers using a qualified access
+with ++_++ as module identifier:
+
+<code>
+  ~(alert (@ js_identifier _))
+</code>
+
+== Scheme2Js Pragmas ==
+Scheme2Js pragmas are the most involved form of adding information to
+exported variables. They not only allow to define its identifier but
+also other properties (like a function's arity).
+
+
+  <js2scheme-pragma> := (scheme2js-pragma <pragma-clause>+)
+  <pragma-clause> := <js-pragma-clause>
+                     | <type-clause>
+                     | <constant-clause>
+                     | <arity-clause>
+                     | ...
+  <js-pragma-clause> := (JS <string>) | (JS <symbol>)
+  <type-clause>       := (type <symbol>)
+  <constant-clause>  := (constant? <bool>)
+  <arity-clause>      := (arity <int>)
+
+
+~~ One typically uses this form when creating dedicated interface
+modules that serve as JavaScript library facades. That is, if one has
+a JavaScript library then one typically writes a module (which can
+then later be imported by other HOP modules) containing the ++JS++
+clauses and maybe some wrapper functions.
+
+<code>
+  ;; interface with some library
+  (module some
+    (export foo bar ...)
+    (js2scheme-pragma
+       (foo (constant #t) (JS js_foo) (arity -2))
+       (bar (constant #f) (JS js_bar))))
+</code>
+     
+
+~~ The ++<js-pragma-clause>++ allows to fix a variable's JavaScript
+identifier. If a symbol is given HOP will simply invoke ++symbol->string++ on
+the identifier. It will _not_ mangle the symbol.
+
+
+~~ The ++<arity-clause>++ exports a function's arity. If the given
+number is negative then it is of variable arity. For instance, the
+procedure ++(define (foo (x . L) ...))++ has arity -2.
+
+
+~~ Have a look at HOP's runtime module clause
+(++share-directory/hop-runtime.sch++) for examples of pragma clauses.
+
+<code>
+  ;; example copied from hop-runtime.sch
+  (js2scheme-pragma
+    (dom-has-child-nodes?
+      (constant? #t)
+      (JS dom_has_child_nodes)
+      (arity 1)
+      (type bool)
+      (peephole (postfix ".hasChildNodes()"))))
+</code>
