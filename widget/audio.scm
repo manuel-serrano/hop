@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Oct 14 11:04:24 2009 (serrano)                */
+;*    Last change :  Wed Oct 14 17:03:05 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -628,34 +628,39 @@
        (with-access::hop-audio-player player (%service %event engine)
 	  (set! %service (service :name (get-service-url "hop-audio") (a0 a1)
 			    (debug-log player a0 a1)
-			    (with-handler
-			       (lambda (e)
-				  (error-notify e)
-				  #f)
-			       (case a0
-				  ((ready)
-				   (hop-audio-player-event-loop-start player)
-				   #unspecified)
-				  ((load)
-				   (music-playlist-clear! engine)
-				   (hop-music-playlist-add! engine a1))
-				  ((pause)
-				   (music-pause engine))
-				  ((play)
-				   (music-play engine a1)
-				   #unspecified)
-				  ((stop)
-				   (music-stop engine))
-				  ((position)
-				   (music-seek engine a1))
-				  ((playlist)
-				   (music-playlist-set! engine a1))
-				  ((volume)
-				   (music-volume-set! engine a1))
-				  ((close)
-				   (music-close player)))
-			       (debug-log-complete player a0 a1)
-			       #t)))
+			    (with-trace 2 'hop-audio
+			       (trace-item "a0=" a0)
+			       (trace-item "a1=" a1)
+			       (trace-item "engine=" (find-runtime-type engine))
+			       (trace-item "player=" (find-runtime-type player))
+			       (with-handler
+				  (lambda (e)
+				     (error-notify e)
+				     #f)
+				  (case a0
+				     ((ready)
+				      (hop-audio-player-event-loop-start player)
+				      #unspecified)
+				     ((load)
+				      (music-playlist-clear! engine)
+				      (hop-music-playlist-add! engine a1))
+				     ((pause)
+				      (music-pause engine))
+				     ((play)
+				      (music-play engine a1)
+				      #unspecified)
+				     ((stop)
+				      (music-stop engine))
+				     ((position)
+				      (music-seek engine a1))
+				     ((playlist)
+				      (music-playlist-set! engine a1))
+				     ((volume)
+				      (music-volume-set! engine a1))
+				     ((close)
+				      (music-close player)))
+				  (debug-log-complete player a0 a1)
+				  #t))))
 	  (set! %event (service-path %service))
 	  player))
       (else
