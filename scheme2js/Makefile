@@ -50,7 +50,8 @@ _BGL_OBJECTS = main scheme2js srfi0 \
         callcc callcc_anormalform callcc_resume_push callcc_locations callcc_checkpoint \
 	trampoline \
 	pipe-port \
-	js-pp js-lexer js-parser js-nodes js-out
+	js-pp js-lexer js-parser js-nodes js-out \
+	pragma
 
 _OBJECTS = $(_BGL_OBJECTS)
 

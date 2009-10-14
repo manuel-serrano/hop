@@ -161,7 +161,7 @@
    (append '((infotron . #f)
 	     (direct-js-object-access . #t)
 	     (procedures-provide-js-this . #f)
-	     (unresolved=JS . module)
+	     (allow-unresolved . module)
 	     (export-globals . module)
 	     (encapsulate-modules . #f)
 	     (trampoline . #f)

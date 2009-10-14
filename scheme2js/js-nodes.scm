@@ -115,9 +115,6 @@
     (final-class Access::Node
        obj::Node
        field::Node)
-    (final-class Dot::Node
-       obj::Node
-       field::symbol)
     (final-class Call::Node
        fun::Node
        args::pair-nil)

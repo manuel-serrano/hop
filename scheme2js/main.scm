@@ -81,8 +81,8 @@
        (update-conf 'export-globals (not invert-flag?)))
       (("--allow-unresolved"
 	(help (default-str "Unresolved vars are supposed to be js-vars."
-		 'unresolved=JS)))
-       (update-conf 'unresolved=JS (not invert-flag?)))
+		 'allow-unresolved)))
+       (update-conf 'allow-unresolved (not invert-flag?)))
       (("--js-this"
 	(help (default-str "Procedures may use Javascript's 'this' variable."
 		 'procedures-provide-js-this)))

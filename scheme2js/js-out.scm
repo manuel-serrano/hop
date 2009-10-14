@@ -113,21 +113,19 @@
        (Array? n)
        (Obj-Init? n)))
 
-(define (member-expr? n)
-   (or (primary-expr? n)
-       (Fun? n)
-       (Named-Fun? n)
-       (Access? n)
-       (Dot? n)
-       (New? n)))
-
 ;; we merge NewExpressions and MemberExpressions
 ;; in other words we will not print 'new's without parenthesis.
 ;; we could readd them by adding an additional flag to the expr-outs
 
-(define (lhs-expr? n)
-   (or (member-expr? n)
+(define (call-expr? n)
+   (or (primary-expr? n)
+       (Fun? n)
+       (Named-Fun? n)
+       (Access? n)
+       (New? n)
        (Call? n)))
+
+(define (lhs-expr? n) (call-expr? n))
 
 (define (unary-expr? n)
    (or (lhs-expr? n)
@@ -245,7 +243,8 @@
 				  (and stmt-begin?
 				       (or (Obj-Init? this)
 					   (Named-Fun? this)
-					   (Fun? this)))))
+					   (Fun? this)
+					   (Pragma? this)))))
 	  ;; if we are inside parenthesis we don't care for the 'for' anymore.
 	  (new-in-for-init? (and in-for-init? (not needs-parentheses?)))
 	  ;; nor are we at the beginning of a stmt anymore.
@@ -708,7 +707,7 @@
       (display "new " p)
       ;; the requirement is much simpler as one could expect from the spec as
       ;; we are always printing the parenthesis of 'new's.
-      (nested-expr-out class member-expr? #f #f (+fx indent 4) p compress?)
+      (nested-expr-out class call-expr? #f #f (+fx indent 4) p compress?)
       (display #\( p)
       (unless (null? args)
 	 (nested-expr-out (car args) assig-expr? #f #f
@@ -725,31 +724,21 @@
 			 indent p compress?)
    (with-access::Access this (obj field)
       (if (and (String? field)
-	       (valid-js-id? (String-val field) :strip-delimiters? #t))
+	       (valid-js-id? (String-val field) :strip-delimiters? #t)
+	       (not (Number? obj))
+	       (not (Pragma? obj)))
 	  (let ((str (String-val field)))
-	     (when (Number? obj) (display "(" p))
-	     (nested-expr-out obj member-expr? in-for-init? stmt-begin?
+	     (nested-expr-out obj call-expr? in-for-init? stmt-begin?
 			      indent p compress?)
-	     (when (Number? obj) (display ")" p))
 	     (display #\. p)
 	     ;; strip delimiters
 	     (display (substring str 1 (-fx (string-length str) 1)) p))
 	  (begin
-	     (nested-expr-out obj member-expr? in-for-init? stmt-begin?
+	     (nested-expr-out obj call-expr? in-for-init? stmt-begin?
 			      indent p compress?)
 	     (display #\[ p)
 	     (nested-expr-out field expr? #f #f (indent++ indent) p compress?)
 	     (display #\] p)))))
-
-(define-method (expr-out this::Dot in-for-init? stmt-begin?
-			 indent p compress?)
-   (with-access::Dot this (obj field)
-      (when (Number? obj) (display "(" p))
-      (nested-expr-out obj member-expr? in-for-init? stmt-begin?
-		       indent p compress?)
-      (when (Number? obj) (display ")" p))
-      (display #\. p)
-      (display field p)))
 
 (define-method (expr-out this::This in-for-init? stmt-begin?
 			 indent p compress?)

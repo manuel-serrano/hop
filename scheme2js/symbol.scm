@@ -34,7 +34,8 @@
 	      export-globals
 	      ;; following entries will be set in Module-resolve
 	      (runtime-scope (default #f))
-	      (unbound-add! (default #f)))))
+	      (allow-unresolved?::procedure (default (lambda (id loc) #f)))
+	      (unbound-add!::procedure (default (lambda (id) #f))))))
 
 (define *scheme2js-compilation-runtime-vars* '(list js-call not))
 
@@ -187,8 +188,23 @@
       ;; a function allowing access to them.
       (runtime-reference-init! (lambda (id::symbol)
 				  (symbol-var runtime-scope id)))
-      
+
       (Env-runtime-scope-set! env runtime-scope)
+      (Env-allow-unresolved?-set!
+       env
+       (case (config 'allow-unresolved)
+	  ((#t module) (lambda (id loc) #t))
+	  ((#f) (lambda (id loc) #f))
+	  ((ask) (let ((oracle (config 'allow-unresolved-oracle)))
+		    (when (not (procedure? oracle))
+		       (error 'symbol-resolution
+			      "allow-unresolved-oracle not a procedure"
+			      oracle))
+		    (lambda (id loc)
+		       (oracle id (scheme2js-error-location loc)))))
+	  (else (error 'symbol-resolution
+		       "invalid 'allow-unresolved' configuration"
+		       (config 'allow-unresolved)))))
       (Env-unbound-add!-set!
        env
        (lambda (id)
@@ -312,7 +328,7 @@
 		    symbol-table)))
 	 (cond
 	    (v (set! var v))
-	    ((config 'unresolved=JS)
+	    (((Env-allow-unresolved? env) id this)
 	     ((Env-unbound-add! env) id)
 	     (verbose "Unresolved symbol '" id "' assumed to be a JS-var")
 	     (ncall resolve! this symbol-table)) ;; try again.

@@ -95,7 +95,6 @@
 		      (replacement (duplicate-Local var))))
 		scope-vars)
       (do-clone this)))
-   
 
 (define-method (clone this::Labeled)
    (with-access::Labeled this (label)
@@ -118,6 +117,11 @@
 	  "Internal Error. clone on Call/cc-Resume should never happen."
 	  ;; had the message 'Change method!'. no idea why... [flo]
 	  #f))
+
+(define-method (clone this::Pragma)
+   ;; duplicated Pragmas will be (later) hoisted to the top-level so they are
+   ;; only used once.
+   this)
 
 ;; define-do-clone clones the given class, but calls 'clone' on the fields.
 (define-macro (define-do-clone class . fields)
@@ -154,7 +158,6 @@
 (define-do-clone Labeled label body)
 (define-do-clone Break val label)
 (define-do-clone Continue label)
-(define-do-clone Pragma)
 (define-do-clone Tail-rec (scope-vars) (inits) body label)
 (define-do-clone Tail-rec-Call (updates) label)
 

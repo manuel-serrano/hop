@@ -28,6 +28,7 @@
 	   encapsulation
 	   node-elimination
 	   inline
+	   pragma
 	   call-check
 	   rm-unused-vars
 	   tail-rec
@@ -93,6 +94,7 @@
       (pass 'tail-rec2      (tail-rec! tree))
       (pass 'inline2        (inline! tree #f)) ;; a second faster inlining.
       (pass 'constant       (constant-propagation! tree))
+      (pass 'pragmas        (pragmas! tree))
       (pass 'rm-unused      (rm-unused-vars! tree))
       (pass 'node-elim3     (node-elimination! tree))
       (pass 'call/cc-early  (call/cc-early! tree))
@@ -168,8 +170,8 @@
 			(config-set! 'export-globals
 				     (not declared-module?)))
 		     
-		     (when (eq? (config 'unresolved=JS) 'module)
-			(config-set! 'unresolved=JS
+		     (when (eq? (config 'allow-unresolved) 'module)
+			(config-set! 'allow-unresolved
 				     (not declared-module?))))
 		  
 		  (let ((out-p (if actual-file?
