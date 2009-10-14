@@ -7,7 +7,8 @@
 	   (JS-return::bstring t::pair)
 	   (create-empty-hopscheme-macro-environment))
    (import __hopscheme_config
-	   __hopscheme_hop_runtime))
+	   __hopscheme_hop_runtime
+	   __hopscheme_dollar-escape))
 
 (define (create-empty-hopscheme-macro-environment)
    (instantiate::Compilation-Unit
@@ -55,20 +56,30 @@
 
 (define (compile-expression e env menv)
    (let ((s-port (open-output-string))
-	 (assig-var (gensym 'result)))
-      (with-handler
-	 (lambda (e)
-	    (close-output-port s-port)
-	    (raise e))
-	 (scheme2js-compile-expr
-	  e              ;; top-level
-	  s-port         ;; out-port
-	  `(             ;; override-headers
-	    (merge-first (import ,@(hop-runtime-modules)))
-	    (merge-last (import ,menv))
-	    ,@env)
-	  (extend-config (hopscheme-config #f) 'module-result-var assig-var)) ;; config
-	 `(cons ',assig-var ,(*hop-postprocess* (close-output-port s-port))))))
+	 (assig-var (gensym 'result))
+	 (backup (dollars-backup)))
+      (dollars-reset!)
+      (unwind-protect
+	 (begin
+	    (scheme2js-compile-expr
+	     e              ;; top-level
+	     s-port         ;; out-port
+	     `(             ;; override-headers
+	       (merge-first (import ,@(hop-runtime-modules)))
+	       (merge-last (import ,menv))
+	       ,@env)
+	     (extend-config (hopscheme-config #f)
+			    'module-result-var assig-var)) ;; config
+	    (let ((dollars (dollar-mapping))
+		  (js-code (close-output-port s-port)))
+	       (if (null? dollars)
+		   `(cons ',assig-var ,(*hop-postprocess* js-code))
+		   `(cons ',assig-var
+			  (let ,dollars
+			     ,(*hop-postprocess* js-code))))))
+	 (begin
+	    (dollars-restore! backup)
+	    (close-output-port s-port)))))
 
 (define (JS-expression t)
    (let* ((assig-var (car t))

@@ -205,8 +205,8 @@
 	  ((quote ?datum) (instantiate::Const (value datum)))
 	  ((lambda ?formals . ?body) (lambda->pobject formals body))
 	  ((if ?test ?then)
-	   ;(scheme->pobject `(if ,test ,then #unspecified)))
-	   (set-cdr! (cddr exp) '(#unspecified))
+	   ;(scheme->pobject `(if ,test ,then #f))
+	   (set-cdr! (cddr exp) '(#f))
 	   (scheme->pobject-no-loc exp))
 	  ((if ?test ?then ?else)
 	   (instantiate::If
