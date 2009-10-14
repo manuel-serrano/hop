@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Sep 14 16:02:07 2009 (serrano)                */
+;*    Last change :  Wed Oct 14 11:04:24 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -425,13 +425,15 @@
 ;*---------------------------------------------------------------------*/
 (define (audio-onstate %event engine player)
    (lambda (status)
-      (with-access::musicstatus status (state song songpos songlength volume)
-	 (let ((ev (list state songlength songpos volume song)))
-	    (tprint "audio signal state: event=" ev
-		    " engine=" (find-runtime-type engine)
-		    " state=" state " songlength=" songlength)
-	    (hop-audio-player-%errcount-set! player 0)
-	    (hop-event-broadcast! %event ev)))))
+      (with-trace 3 "audio-onstate"
+	 (trace-item "engine=" (find-runtime-type engine))
+	 (trace-item "player=" (find-runtime-type player))
+	 (with-access::musicstatus status (state song songpos songlength volume)
+	    (let ((ev (list state songlength songpos volume song)))
+	       (trace-item "state=" state)
+	       (trace-item "songlength=" songlength)
+	       (hop-audio-player-%errcount-set! player 0)
+	       (hop-event-broadcast! %event ev))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-onmeta ...                                                 */
@@ -467,9 +469,8 @@
 		  (else
 		   s)))
 	    (plist (map convert-file plist)))
-	 (tprint "signal meta s=" (if (string? s) s (find-runtime-type s))
-		 " plist.length=" (length plist)
-		 " engine=" (find-runtime-type engine))
+	 (trace-item "s=" (if (string? s) s (find-runtime-type s)))
+	 (trace-item "pl length=" (length plist))
 	 (hop-event-broadcast! %event (list 'meta s plist))))
    
    (define (audio-onfile-name meta plist)
@@ -477,31 +478,38 @@
 	 (signal-meta url plist)))
    
    (lambda (meta playlist)
-      (hop-audio-player-%errcount-set! player 0)
-      (if (string? meta)
-	  ;; this is a file name (a url)
-	  (let ((file (charset-convert meta 'UTF-8 (hop-locale))))
-	     (if (not (file-exists? file))
-		 (audio-onfile-name file playlist)
-		 (let ((id3 (mp3-id3 file)))
-		    (if (not id3)
-			(audio-onfile-name file playlist)
-			(signal-meta id3 playlist)))))
-	  (signal-meta #f playlist))))
+      (with-trace 3 "audio-onmeta"
+	 (trace-item "engine=" (find-runtime-type engine))
+	 (trace-item "player=" (find-runtime-type player))
+	 (hop-audio-player-%errcount-set! player 0)
+	 (if (string? meta)
+	     ;; this is a file name (a url)
+	     (let ((file (charset-convert meta 'UTF-8 (hop-locale))))
+		(if (not (file-exists? file))
+		    (audio-onfile-name file playlist)
+		    (let ((id3 (mp3-id3 file)))
+		       (if (not id3)
+			   (audio-onfile-name file playlist)
+			   (signal-meta id3 playlist)))))
+	     (signal-meta #f playlist)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-onerror ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (audio-onerror %event engine)
    (lambda (error)
-      (hop-event-broadcast! %event (list 'error error))))
+      (with-trace 3 "audio-onerror"
+	 (trace-item "engine=" (find-runtime-type engine))
+	 (hop-event-broadcast! %event (list 'error error)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-onvolume ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (audio-onvolume %event engine)
    (lambda (vol)
-      (hop-event-broadcast! %event (list 'volume vol))))
+      (with-trace 3 "audio-onvolume"
+	 (trace-item "engine=" (find-runtime-type engine))
+	 (hop-event-broadcast! %event (list 'volume vol)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-audio-thread ...                                            */
@@ -512,18 +520,22 @@
       (with-access::hop-audio-player player (%event %state %hmutex engine %thread)
 	 (let ((th (current-thread)))
 	    ;; debug
-	    (tprint ">>> AUDIO-LOOP STARTED, e=" (find-runtime-type engine))
-	    (thread-cleanup-set!
-	     th
-	     (lambda (_)
-		(with-access::musicstatus (music-%status engine) (err)
-		   (if err
-		       (hop-event-broadcast! %event (list 'abort err))
-		       (begin
-			  (set! %state 'closed)
-			  (hop-event-broadcast! %event (list 'close)))))
-		(tprint "<<< AUDIO-LOOP THREAD ENDED, e=" (find-runtime-type engine))
-		(set! %thread #f))))))
+	    (with-trace 2 'make-audio-thread
+	       (trace-item "player=" (find-runtime-type player))
+	       (trace-item "engine=" (find-runtime-type engine))
+	       (trace-item "thread=" thread)
+	       (thread-cleanup-set!
+		th
+		(lambda (_)
+		   (with-trace 2 'audio-thread-cleanup
+		      (trace-item "thread=" thread)
+		      (with-access::musicstatus (music-%status engine) (err)
+			 (if err
+			     (hop-event-broadcast! %event (list 'abort err))
+			     (begin
+				(set! %state 'closed)
+				(hop-event-broadcast! %event (list 'close))))))
+		   (set! %thread #f)))))))
    
    (thread-start!
     (make-thread
