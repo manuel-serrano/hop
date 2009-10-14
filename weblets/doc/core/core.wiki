@@ -65,21 +65,21 @@ An atom is a syntactic elements described by the following grammar:
 Hop supports //texts//. A text is made of a list of strings. A text
 is actually a syntactic shorthand for building list of strings.
 
-  <text> := <angle-text>
-     | <bracket-text>
+  <text> := <square-text>
+     | <curly-text>
 
-  <angle-text> := [ ... ]
+  <square-text> := [ ... ]
 
-  <bracket-text> := { ... }
+  <curly-text> := { ... }
 
 
-Inside <angle-text> all characters are left as is with two exceptions:
+Inside <square-text> all characters are left as is with two exceptions:
   * the character ,(begin "]") must escaped as ,(begin "\\]"),
   * the sequence ,(begin ",(") is an escape operator. It introduce an 
  Hop expression inside a text.
 
 
-Inside <bracket-text> all characters are left as is with two exceptions:
+Inside <curly-text> all characters are left as is with two exceptions:
   * the characters ,(begin "{") and ,(begin "}") that are included in the text
  but must be balanced. The text is ended when the parse reads a closing 
  bracket matching the one that has opened the text construction.
