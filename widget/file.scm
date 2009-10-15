@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Sun Jun 21 06:37:16 2009 (serrano)                */
+;*    Last change :  Thu Oct 15 10:50:34 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -347,18 +347,23 @@
 ;*---------------------------------------------------------------------*/
 (define (<FILECHOOSER:FILES> id url regexp hidden)
    (let ((odd #t)
+	 (dnow (current-date))
 	 (now (current-seconds)))
       
       (define (file-date path)
 	 (let* ((sec (file-modification-time path))
 		(dt (seconds->date sec)))
 	    (cond
-	       ((<elong (-elong now sec) (day-seconds))
+	       ((=fx (date-yday dt) (date-yday dnow))
 		;; today date
 		(format "Today at ~a:~a"
 			(2digits (date-hour dt))
 			(2digits (date-minute dt))))
-	       ((<elong (-elong now sec) (*elong #e2 (day-seconds)))
+	       ((or (=fx (+fx (date-yday dt) 1) (date-yday dnow))
+		    (and (=fx (date-yday dnow) 1)
+			 (=fx (+fx (date-year dt) 1) (date-year dnow))
+			 (=fx (date-month dt) 12)
+			 (=fx (date-day dt) 31)))
 		;; yesterday date
 		(format "Yesterday at ~a:~a"
 			(2digits (date-hour dt))
