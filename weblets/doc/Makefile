@@ -41,6 +41,7 @@ API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
                   charset.wiki svg.wiki mathml.wiki canvas.wiki login.wiki \
                   condexpand.wiki lframe.wiki spinbutton.wiki colorchooser.wiki
 CORE_POP	= core.wiki
+JS_POP		= js-interface.wiki
 EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   canvas.hop canvas2.hop canvas3.hop canvas4.hop canvas5.hop \
                   filebrowse.hop filebrowse2.hop \
@@ -78,6 +79,7 @@ POPULATION	= Makefile doc.hss doc.scm \
                   $(SOURCES) \
 		  $(API_POP:%=api/%) \
 		  $(CORE_POP:%=core/%) \
+		  $(JS_POP:%=js/%) \
 		  $(EXAMPLES_POP:%=examples/%) \
 		  $(WEBLETS_POP:%=weblets/%) \
 		  $(WIKI_POP:%=wiki/%) \
