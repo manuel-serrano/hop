@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Oct  7 20:52:41 2009 (serrano)                */
+/*    Last change :  Sat Oct 17 08:34:52 2009 (serrano)                */
 /*    Copyright   :  2004-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -261,7 +261,6 @@ function hop_default_success( h, xhr ) {
 /*    This function DOES NOT evaluates its result.                     */
 /*---------------------------------------------------------------------*/
 function hop_send_request( svc, sync, success, failure, anim, henv, auth, x ) {
-   if( x ) { alert( "x=" + x ); }
    var xhr = x ? x : hop_make_xml_http_request();
    /* MS, 20 Jun 08: I cannot understand why but sometime sc_error is  */
    /* unbound (at least in Firefox) when used inside a catch! Binding  */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Sep  1 12:17:06 2009 (serrano)                */
+;*    Last change :  Sat Oct 17 18:13:20 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -130,7 +130,8 @@
 	   (class http-response-cgi::%http-response-local
 	      (cgibin::bstring read-only))
 
-	   (class http-response-persistent::%http-response)
+	   (class http-response-persistent::%http-response
+	      (body (default #f)))
 	   
 	   (class http-response-put::%http-response-local
 	      (uri::bstring read-only))

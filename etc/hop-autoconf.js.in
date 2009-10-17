@@ -379,7 +379,7 @@ if( "XMLHttpRequest" in window ) {
 	 return new XMLHttpRequest();
       }
    }
-   if( "multipart" in req && "onload" in req ) {
+   if( "multipart" in req ) {
       hop_config.xhr_multipart = true;
    }
 } else {

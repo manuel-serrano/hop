@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Thu Oct  8 08:36:38 2009 (serrano)                */
+/*    Last change :  Sat Oct 17 20:56:53 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -146,6 +146,11 @@ var hop_servevt_table = {};
 var hop_servevt_ctable = {};
 var hop_servevt_dlist = null;
 
+var hop_servevt_multipart_re =
+   new RegExp( "^<([rsxifj]) name='([^']+)'>((?:.|[\n])*)</[rsxifj]>$" );
+var hop_servevt_multipart_cdata_re =
+   new RegExp( "^<!\\[CDATA\\[((?:.|[\n])*)\\]\\]>$" );
+				     
 /*---------------------------------------------------------------------*/
 /*    start_servevt_xhr_multipart_proxy ...                            */
 /*---------------------------------------------------------------------*/
@@ -160,12 +165,32 @@ function start_servevt_xhr_multipart_proxy( key ) {
 	    "&key=" + key  + "&mode=xhr-multipart";
 
 	 var success = function( val, xhr ) {
-	    if( !server_ready ) {
-	       server_ready = true;
-	       hop_trigger_serverready_event( new HopServerReadyEvent() );
-	    }
+	    var m = val.match( hop_servevt_multipart_re );
 
-	    alert( "multipart success val=" + val + " xhr=" + xhr.responseText );
+	    if( m != null ) {
+	       var k = m [ 1 ];
+	       var id = m[ 2 ];
+	       var text = m[ 3 ];
+
+	       if( k === "i" ) {
+		  hop_trigger_servevt( id, text, parseInt( text ), false );
+	       } else if( k == "f" ) {
+		  hop_trigger_servevt( id, text, parseFloat( text ), false );
+	       } else if( k == "s" ) {
+		  hop_trigger_servevt( id, text, text, false );
+	       } else if( k == "x" ) {
+		  hop_trigger_servevt( id, text, hop_create_element( text ), false );
+	       } else if( k == "j" ) {
+		  var t = text.match( hop_servevt_multipart_cdata_re );
+		  if( t ) 
+		     hop_trigger_servevt( id, t[ 1 ], t[ 1 ], true );
+	       } else if( k == "r" ) {
+		  if( !server_ready ) {
+		     server_ready = true;
+		     hop_trigger_serverready_event( new HopServerReadyEvent() );
+		  }
+	       }
+	    }
 	 }
 
 	 var failure = function( xhr ) {
@@ -178,13 +203,12 @@ function start_servevt_xhr_multipart_proxy( key ) {
 	       // we have reached a timeout, we just re-register
 	       register( id );
 	    } else {
-	       hop_servevt_onclose();
+	       if( "hop_servevt_onclose" in window ) hop_servevt_onclose();
 	    }
 	 }
 
 	 var req = hop_make_xml_http_request();
 	 req.multipart = true;
-	 req.onload = function( e ) { alert( "onload: " + e ); };
 	 
 	 hop_servevt_proxy.httpreq = hop_send_request( svc,
 						       // asynchronous call
@@ -197,6 +221,8 @@ function start_servevt_xhr_multipart_proxy( key ) {
 						       false,
 						       // no environment
 						       [],
+						       // no authentication
+						       false,
 						       // xhr request
 	                                               req );
 
@@ -492,7 +518,7 @@ function hop_servevt_proxy_flash_init() {
 /*    servevt_xhr_multipartp ...                                       */
 /*---------------------------------------------------------------------*/
 function servevt_xhr_multipartp() {
-   return false && hop_config.xhr_multipart;
+   return hop_config.xhr_multipart;
 }
       
 /*---------------------------------------------------------------------*/

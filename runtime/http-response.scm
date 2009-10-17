@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Oct 14 10:48:41 2009 (serrano)                */
+;*    Last change :  Sat Oct 17 18:15:44 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -477,7 +477,13 @@
 ;*    http-response ::http-response-persistent ...                     */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-persistent socket)
-   'persistent)
+   (with-trace 3 'http-response::http-response-persistent
+      (with-access::http-response-persistent r (body)
+	 (when (string? body)
+	    (let ((p (socket-output socket)))
+	       (display body p)
+	       (flush-output-port p))))
+      'persistent))
 
 ;*---------------------------------------------------------------------*/
 ;*    response-is-xml? ...                                             */

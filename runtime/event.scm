@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Oct  8 08:25:09 2009 (serrano)                */
+;*    Last change :  Sat Oct 17 20:57:23 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -65,6 +65,11 @@
 ;*    *event-mutex* ...                                                */
 ;*---------------------------------------------------------------------*/
 (define *event-mutex* (make-mutex "hop-event"))
+
+;*---------------------------------------------------------------------*/
+;*    hop-multipart-key ...                                            */
+;*---------------------------------------------------------------------*/
+(define hop-multipart-key "hop-multipart")
 
 ;*---------------------------------------------------------------------*/
 ;*    event services ...                                               */
@@ -381,6 +386,7 @@
 	 `((*clients-number* ,*clients-number*)
 	   (*flash-request-list* ,*flash-request-list*)
 	   (*flash-socket-table* ,*flash-socket-table*)
+	   (*multipart-socket-table* ,*multipart-socket-table*)
 	   (*ajax-connection-key-table* ,(dump-ajax-table *ajax-connection-key-table*))))))
 
 ;*---------------------------------------------------------------------*/
@@ -472,11 +478,23 @@
 		   (request req))))))
    
    (define (flash-register-event! req name)
+      (tprint "***** flash-register-event, name=" name)
       (hashtable-update! *flash-socket-table*
 			 name
 			 (lambda (l) (cons req l))
 			 (list req))
       (instantiate::http-response-string
+	 (request req)))
+
+   (define (multipart-register-event! req name)
+      (tprint "***** multipart-register-event, name=" name)
+      (hashtable-update! *multipart-socket-table*
+			 name
+			 (lambda (l) (cons req l))
+			 (list req))
+      (instantiate::http-response-persistent
+	 (body (format "HTTP/1.1 200 Ok\r\nContent-type: multipart/x-mixed-replace; boundary=\"~a\"\n\n--~a\nContent-type: text/xml\n\n<r name='~a'></r>\n--~a\n"
+		       hop-multipart-key hop-multipart-key name hop-multipart-key))
 	 (request req)))
 
    (with-lock *event-mutex*
@@ -489,13 +507,11 @@
 				     (hop-connection-timeout))
 		;; register the client
 		(let ((r (cond
+			    ((string=? mode "xhr-multipart")
+			     (multipart-register-event! req event))
 			    ((string=? mode "flash")
 			     (let ((req (cadr (assq key *flash-request-list*))))
 				(flash-register-event! req event)))
-			    ((string=? mode "xhr-multipart")
-			     (instantiate::http-response-string
-				(content-type (format "multipart/x-mixed-replace; boundary=~a" key))
-				(body (format "--~a\r\nContent-type: text/plain\r\n\r\nGLOP" key))))
 			    (else
 			     (ajax-register-event! req event key)))))
 		   ;; cleanup the current connections
@@ -525,9 +541,23 @@
 	       ;; no longer exists, an error will be raised and the client
 	       ;; will be removed from the tables.
 	       (flash-signal-value req *ping* #unspecified)))))
+
+   (define (unregister-multipart-event! event key)
+      (let ((c (assq (string->symbol key) *multipart-request-list*)))
+	 (when (pair? c)
+	    (let ((req (cadr c)))
+	       (hashtable-update! *multipart-socket-table*
+				  event
+				  (lambda (l) (delete! req l))
+				  '())
+	       ;; Ping the client to check it still exists. If the client
+	       ;; no longer exists, an error will be raised and the client
+	       ;; will be removed from the tables.
+	       (multipart-signal-value req (multipart-value *ping* #unspecified))))))
    
    (with-lock *event-mutex*
       (lambda ()
+	 (unregister-multipart-event! event key)
 	 (unregister-ajax-event! event key)
 	 (unregister-flash-event! event key)
 	 #f)))
@@ -553,13 +583,41 @@
    (hashtable-filter! *flash-socket-table* (lambda (k l) (pair? l))))
    
 ;*---------------------------------------------------------------------*/
+;*    multipart-close-request! ...                                     */
+;*    -------------------------------------------------------------    */
+;*    This assumes that the event-mutex has been acquired.             */
+;*---------------------------------------------------------------------*/
+(define (multipart-close-request! req)
+   ;; close the socket
+   (socket-close (http-request-socket req))
+   ;; remove the request from the *multipart-request-list*
+   (set! *multipart-request-list*
+	 (filter! (lambda (e) (not (eq? (cadr e) req))) *multipart-request-list*))
+   ;; remove the request from the *multipart-socket-table*
+   (hashtable-for-each *multipart-socket-table*
+		       (lambda (k l)
+			  (hashtable-update! *multipart-socket-table*
+					     k
+					     (lambda (l) (delete! req l))
+					     '())))
+   (hashtable-filter! *multipart-socket-table* (lambda (k l) (pair? l))))
+   
+;*---------------------------------------------------------------------*/
 ;*    hop-event-client-ready? ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (hop-event-client-ready? name)
    
    (define (ajax-event-client-ready? name)
       (pair? (ajax-find-connections-by-name name)))
-
+   
+   (define (multipart-event-client-ready? name)
+      (let ((l (hashtable-get *multipart-socket-table* name)))
+	 (and (pair? l)
+	      (any? (lambda (req)
+		       (let ((s (http-request-socket req)))
+			  (not (socket-down? s))))
+		    l))))
+   
    (define (flash-event-client-ready? name)
       (let ((l (hashtable-get *flash-socket-table* name)))
 	 (and (pair? l)
@@ -567,8 +625,9 @@
 		       (let ((s (http-request-socket req)))
 			  (not (socket-down? s))))
 		    l))))
-
-   (or (ajax-event-client-ready? name)
+   
+   (or (multipart-event-client-ready? name)
+       (ajax-event-client-ready? name)
        (flash-event-client-ready? name)))
 
 ;*---------------------------------------------------------------------*/
@@ -576,6 +635,12 @@
 ;*---------------------------------------------------------------------*/
 (define *flash-socket-table* (make-hashtable))
 (define *flash-request-list* '())
+
+;*---------------------------------------------------------------------*/
+;*    *multipart-socket-table*                                         */
+;*---------------------------------------------------------------------*/
+(define *multipart-socket-table* (make-hashtable))
+(define *multipart-request-list* '())
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-event ...                          */
@@ -632,9 +697,44 @@
 	    (flush-output-port p)))))
 
 ;*---------------------------------------------------------------------*/
-;*    flash-make-signal-value ...                                      */
+;*    multipart-signal-value ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (flash-make-signal-value value)
+(define (multipart-signal-value req value)
+   (let* ((s (http-request-socket req))
+	  (p (socket-output s)))
+      (with-handler
+	 (lambda (e)
+	    (if (&io-timeout-error? e)
+		(begin
+		   (set! *clients-number* (-fx *clients-number* 1))
+		   (multipart-close-request! req))
+		(raise e)))
+	 (begin
+	    (fprintf p "Content-type: text/xml\n\n")
+	    (display value p)
+	    (fprintf p "\n--~a\n" hop-multipart-key p)
+	    (flush-output-port p)))))
+
+;*---------------------------------------------------------------------*/
+;*    multipart-value ...                                              */
+;*---------------------------------------------------------------------*/
+(define (multipart-value name value)
+   (cond
+      ((xml? value)
+       (format "<x name='~a'>~a</x>" name (xml->string value (hop-xml-backend))))
+      ((string? value)
+       (format "<s name='~a'>~a</s>" name value))
+      ((integer? value)
+       (format "<i name='~a'>~a</i>" name value))
+      ((real? value)
+       (format "<f name='~a'>~a</f>" name value))
+      (else
+       (format "<j name='~a'><![CDATA[~a]]></j>" name (hop->json value #f #t)))))
+   
+;*---------------------------------------------------------------------*/
+;*    json-make-signal-value ...                                       */
+;*---------------------------------------------------------------------*/
+(define (json-make-signal-value value)
    (cond
       ((xml? value)
        (xml->string value (hop-xml-backend)))
@@ -702,9 +802,19 @@
        name
        (lambda (l)
 	  (when (pair? l)
-		(let ((val (flash-make-signal-value value)))
+		(let ((val (json-make-signal-value value)))
 		   (flash-signal-value (car l) name val)
 		   #t)))))
+
+   (define (multipart-event-signal! name value)
+      (for-each-socket
+       *multipart-socket-table*
+       name
+       (lambda (l)
+	  (when (pair? l)
+	     (let ((val (multipart-value name value)))
+		(multipart-signal-value (car l) val)
+		#t)))))
 
    (set! hop-signal-id (-fx hop-signal-id 1))
    (hop-verb 2 (hop-color hop-signal-id hop-signal-id " SIGNAL")
@@ -713,9 +823,21 @@
    (hop-verb 2 "\n")
    (mutex-lock! *event-mutex*)
    (unwind-protect
-      (unless (flash-event-signal! name value)
-	 (ajax-event-signal! name value))
+      (case (random 3)
+	 ((0)
+	  (unless (multipart-event-signal! name value)
+	     (unless (flash-event-signal! name value)
+		(ajax-event-signal! name value))))
+	 ((1)
+	  (unless (flash-event-signal! name value)
+	     (unless (ajax-event-signal! name value)
+		(multipart-event-signal! name value))))
+	 ((2)
+	  (unless (ajax-event-signal! name value)
+	     (unless (multipart-event-signal! name value)
+		(flash-event-signal! name value)))))
       (mutex-unlock! *event-mutex*))
+	 
    #unspecified)
 
 ;*---------------------------------------------------------------------*/
@@ -749,9 +871,20 @@
        name
        (lambda (l)
 	  (when (pair? l)
-	     (let ((val (flash-make-signal-value value)))
+	     (let ((val (json-make-signal-value value)))
 		(for-each (lambda (req)
 			     (flash-signal-value req name val))
+			  l))))))
+
+   (define (multipart-event-broadcast! name value)
+      (for-each-socket
+       *multipart-socket-table*
+       name
+       (lambda (l)
+	  (when (pair? l)
+	     (let ((val (multipart-value name value)))
+		(for-each (lambda (req)
+			     (multipart-signal-value req val))
 			  l))))))
 
    (set! hop-broadcast-id (-fx hop-broadcast-id 1))
@@ -763,6 +896,7 @@
    (unwind-protect
       (begin
 	 (ajax-event-broadcast! name value)
+	 (multipart-event-broadcast! name value)
 	 (flash-event-broadcast! name value))
       (mutex-unlock! *event-mutex*))
    #unspecified)
