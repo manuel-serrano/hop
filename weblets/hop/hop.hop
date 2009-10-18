@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Tue Oct  6 07:09:18 2009 (serrano)                */
+;*    Last change :  Sun Oct 18 07:09:28 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -244,6 +244,12 @@
 			(string<? namea nameb))))))
 
 ;*---------------------------------------------------------------------*/
+;*    panel-event ...                                                  */
+;*---------------------------------------------------------------------*/
+(define panel-event
+   (symbol->string (gensym)))
+
+;*---------------------------------------------------------------------*/
 ;*    hop/dashboard ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-service (hop/dashboard)
@@ -271,6 +277,12 @@
 	   (style (format "border: 1px outset #777; -moz-border-radius: 1em; -webkit-border-radius: 1em; border-radius: 1em; top: ~apx; right: ~apx; bottom: ~apx; left: ~apx; padding: ~apx" vert horiz vert horiz padding))
 	   (id1 (symbol->string (gensym)))
 	   (id2 (symbol->string (gensym))))
+       (define (remove-hop-dashboard! e)
+	  (let ((el1 (dom-get-element-by-id id1))
+		(el2 (dom-get-element-by-id id2)))
+	     (dom-remove-child! document.body el1)
+	     (dom-remove-child! document.body el2)
+	     (remove-event-listener! $panel-event "server" remove-event-listener!)))
        ;; mask
        (dom-append-child!
 	document.body
@@ -282,15 +294,14 @@
 	document.body
 	(<DIV> :style (string-append "position: fixed; opacity: 1.0; background-color: transparent; z-index: 9998; cursor: default;" style)
 	   :id id2
-	   :onclick (let ((el1 (dom-get-element-by-id id1))
-			  (el2 (dom-get-element-by-id id2)))
-		       (dom-remove-child! document.body el1)
-		       (dom-remove-child! document.body el2))
+	   :onclick (remove-hop-dashboard! event)
 	   (<IFRAME> :src ($hop/dashboard-panel)
-	      :style "border: 0; width: 100%; height: 100%; background-color: transparent;")
+	      :style "border: 0; width: 100%; height: 100%; background-color: transparent; display: none;"
+	      :onload (node-style-set! this :display "block"))
 	   (<DIV> :style
 	      (format "color: #ccc; font-size: 60%; position: fixed; bottom: ~apx; text-align: center; left: 0; right: 0; z-index: 9999;" (+ 4 vert))
-	      "Click here to remove...")))))
+	      "Click here to remove...")
+	   (add-event-listener! $panel-event "server" remove-hop-dashboard!)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop/dashboard-panel ...                                          */
@@ -300,6 +311,7 @@
       (<HEAD> :css (format "~a/hop.hss" (hop-dir))
          :include "hop-window")
       (<BODY> :class "hop-dashboard-panel" :style "background: transparent; opacity: 1.0"
+	 :onclick ~(with-hop ($(service () (hop-event-signal! panel-event #t))))
 	 (<DIV> :style "border: 0; position: absolute; top: 0; bottom: 0; left: 0; right: 0;"
 	    (hop-panel
 	       :showtitle #f
