@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Jun  8 13:44:35 2009 (serrano)                */
+;*    Last change :  Tue Oct 20 09:19:33 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -209,7 +209,7 @@
 	  (user (anonymous-user)))
        (raise (instantiate::&hop-method-error
 		 (proc 'request-line-grammar)
-		 (msg "Method not implemented")
+		 (msg "policy file request not understood")
 		 (obj string)))))
 
 ;*---------------------------------------------------------------------*/

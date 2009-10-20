@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Sep 30 09:52:12 2009 (serrano)                */
+#*    Last change :  Mon Oct 19 17:09:05 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -129,10 +129,14 @@ install-init: hop-dirs
         chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init;
 
 hop-dirs:
-	mkdir -p $(DESTDIR)$(HOPBINDIR)
-	mkdir -p $(DESTDIR)$(HOPLIBDIR)
-	mkdir -p $(DESTDIR)$(HOPSHAREDIR)
-	mkdir -p $(DESTDIR)$(HOPETCDIR)
+	mkdir -p $(DESTDIR)$(HOPBINDIR) \
+         && chmod $(BMASK) $(DESTDIR)$(HOPBINDIR)
+	mkdir -p $(DESTDIR)$(HOPLIBDIR) \
+         && chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)
+	mkdir -p $(DESTDIR)$(HOPSHAREDIR) \
+         && chmod $(BMASK) $(DESTDIR)$(HOPSHAREDIR)
+	mkdir -p $(DESTDIR)$(HOPETCDIR) \
+         && chmod $(BMASK) $(DESTDIR)$(HOPETCDIR)
 	mkdir -p $(DESTDIR)$(HOPLIBDIR)/hop \
          && chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/hop
 	mkdir -p $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \

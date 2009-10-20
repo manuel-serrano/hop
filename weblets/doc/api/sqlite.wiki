@@ -11,11 +11,13 @@ This document describes the HOP supports for SQL queries using the
 === Server ===
 
   (class sqlite ...)
+  (class sqltiny ...)
   (sqlite-close db)
   (sqlite-format string arg ...)
   (sqlite-exec db string arg ...)
   (sqlite-eval db procedure string arg ...)
   (sqlite-map db procedure string arg ...)
+  (sqlite-name-of-tables db)
   (sqlite-last-insert-rowid db)
 
 
@@ -54,6 +56,17 @@ Example:
 
   (define db1 (instantiate::sqlite (path "/tmp/foo.db")))
   (define db2 (instantiate::sqlite))
+</class>
+
+=== ++(class sqltiny ...)++===
+<class> sqltiny
+
+<fields>
+^  fields  ^   access  ^   type      ^  default value     ^  short description           ^
+| path     |    r      |   string    |  ++":memory:"++    | the path of the dababase.    |
+</fields>
+
+A lightweight and portable simplified version of SQLite.
 </class>
 
 === ++(sqlite-close db)++ ===
@@ -205,6 +218,22 @@ Examples:
     (lambda (s1 s2) (+ (string->integer s1) (string->integer s2))) 
     "SELECT * FROM foo")
      &#8658; (0 2 6 12 20 30 42 56 72 90)
+
+</function>
+
+=== ++(sqlite-name-of-tables db) ===
+<function> sqlite-name-of-tables db
+<arguments>
+^  arguments       ^   type          ^  short description              ^
+| db               |  ::sqlite       | the database.                   |
+</arguments>
+
+Returns the list name of the tables of the database. This is equivalent
+to:
+
+  (sqlite-map db
+     (lambda (x) x)
+     "SELECT name FROM sqlite_master WHERE type='table'")
 
 </function>
 

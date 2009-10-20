@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed Oct 14 11:40:50 2009 (serrano)                */
+#*    Last change :  Mon Oct 19 05:35:47 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -56,7 +56,7 @@ EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   wiki.hop wiki2.hop window.hop history-1.hop history-2.hop \
                   cookie.hop webdav.hop svg.hop svg2.hop svg3.hop mathml.hop \
                   login.hop json.hop busyanim.hop musicplay.hop form.hop \
-                  lframe.hop spinbutton.hop colorchooser.hop
+                  lframe.hop spinbutton.hop colorchooser.hop S3.hop
 WEBLETS_POP	= .keep
 WIKI_POP	= basic.wiki hop.wiki link.wiki lists.wiki misc.wiki \
                   paragraph.wiki plugin.wiki section.wiki syntax.wiki \
@@ -65,7 +65,7 @@ WIKI_POP	= basic.wiki hop.wiki link.wiki lists.wiki misc.wiki \
 TUTORIAL_POP	= 00-hello.wiki 01-ajax.wiki 02-hss.wiki 03-proxy.wiki \
 		  04-authentication.wiki 05-rss.wiki 06-hz.wiki \
                   07-hoprc.wiki 08-history.wiki 09-resource.wiki \
-                  10-javascript.wiki
+                  10-javascript.wiki 11-rest.wiki
 
 POPULATION	= Makefile doc.hss doc.scm \
                   examples api core wiki tutorials etc/weblet.info.in \

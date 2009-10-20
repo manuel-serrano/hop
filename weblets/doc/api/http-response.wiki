@@ -26,6 +26,7 @@ in the documentation for the ++with-hop++ form.
   (class http-response-file::%http-response-local ...)
   (class http-response-shoutcast::http-response-file ...)
   (class http-response-string::%http-response-local ...)
+  (class http-response-error::%http-response-string ...)
   (class http-response-js::%http-response-local ...)
   (class http-response-cgi::%http-response-local ...)
   (class http-response-persistent::%http-response ...)
@@ -258,6 +259,14 @@ client according to the [[http://www.shoutcast.com/|shoutcast]] protocol.
 ^  fields              ^   access  ^       type        ^  default value        ^  short description                          ^
 | ...                  |    ...    |        ...        |     ...               | fields from ::%http-response-local          |
 | string               |    r      |       string      |      _                | the body.                                   |
+</fields>
+
+</class>
+
+=== ++(class http-response-error::http-response-string ...)++ ===
+<class> http-response-error
+
+<fields>
 </fields>
 
 </class>

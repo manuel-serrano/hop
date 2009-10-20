@@ -1,0 +1,129 @@
+;; a REST Simple Storage Service (Amazon like). Must be included in hoprc.hop
+;; the module (just to be sure that we do not interfer with other programs)
+(module hop-S3
+   (library sqlite))
+
+;; the database
+(define s3-db (instantiate::sqltiny))
+
+;; logging
+(define (S3-log req)
+   (with-access::http-request req (abspath method)
+      (tprint "LOG S3, " (current-date) ": " method " " abspath)))
+
+;; S3 GET
+(define (S3-get path req)
+   (let ((dir (dirname path))
+	 (base (basename path)))
+      (if (string=? dir ".")
+	  ;; returns the bucket list
+	  (if (string=? base "")
+	      (instantiate::http-response-string
+		 (content-type "text/plain")
+		 (body (format "~l" (sqlite-name-of-tables s3-db))))
+	      ;; returns a whole bucket
+	      (instantiate::http-response-string
+		 (content-type "text/plain")
+		 (body (format "~l" (sqlite-exec s3-db "SELECT name FROM ~a" dir)))))
+	  (let ((l (sqlite-map s3-db list "SELECT val FROM ~a WHERE" base)))
+	     (if (pair? l)
+		 (instantiate::http-response-string
+		    (content-type "text/plain")
+		    (body (car l)))
+		 (instantiate::http-response-error
+		    (start-line "404 not Found")
+		    (request req)
+		    (body path)))))))
+
+;; S3 HEAD
+(define (S3-head path req)
+   (let ((dir (dirname path))
+	 (base (basename path)))
+      (if (string=? base "")
+	  (instantiate::http-response-string
+	     (start-line "406 Not Acceptable")
+	     (request req)
+	     (body path))
+	  (let ((l (sqlite-exec s3-db "SELECT meta FROM ~a WHERE id=~a" dir base)))
+	     (cond
+		((null? l)
+		 (instantiate::http-response-string
+		    (content-type "text/plain")
+		    (body "")))
+		((pair? l)
+		 (instantiate::http-response-string
+		    (content-type "text/plain")
+		    (body (format "~l" (map car l)))))
+		(else
+		 (instantiate::http-response-error
+		    (start-line "404 not Found")
+		    (request req)
+		    (body path))))))))
+
+;; S3 PUT
+(define (S3-put path req)
+   (let ((dir (dirname path))
+	 (base (basename path)))
+      (if (string=? base "")
+	  (instantiate::http-response-error
+	     (start-line "400 Bad Request"))
+	  (begin
+	     (sqlite-exec s3-db "CREATE TABLE ~a (id, val, meta)" base)
+	     (instantiate::http-response-string
+		(request req)
+		(content-type "text/plain")
+		(body base))))))
+
+;; S3 POST
+(define (S3-post path req)
+   (let ((dir (basename (dirname path)))
+	 (base (basename path)))
+      (if (string=? base "")
+	  (instantiate::http-response-error
+	     (start-line "400 Bad Request"))
+	  (let* ((args (http-request-cgi-args req))
+		 (content (assoc "content" (cdr args)))
+		 (val (when (pair? content)
+			 (let ((data (memq :data content)))
+			    (cadr data)))))
+	     (sqlite-exec s3-db "INSERT TABLE ~a (~a, ~a, ~a)"
+			  dir base val "")
+	     (instantiate::http-response-string
+		(start-line "200 Ok")
+		(request base))))))
+
+;; S3 DELETE
+(define (S3-delete path req)
+   (let ((dir (dirname path))
+	 (base (basename path)))
+      (if (string=? base "")
+	  (sqlite-exec s3-db "DROP TABLE ~a" dir)
+	  (sqlite-exec s3-db "DELETE FROM ~a WHERE id=~a" dir base))
+      ;; always succeed
+      (instantiate::http-response-string
+	 (request req)
+	 (body path))))
+
+;; S3 prefix
+(define S3-path "/S3")
+(define S3-prefix (string-append S3-path "/"))
+
+;; the S3-filter
+(define (S3-filter req)
+   (with-access::http-request req (abspath method)
+      (when (or (string-prefix? S3-prefix abspath)
+		(string=? abspath S3-path))
+	 ;; this is something for us, first log the request
+	 (S3-log req)
+	 ;; now generate a response
+	 (let ((path (substring abspath (string-length S3-path))))
+	    (case method
+	       ((GET) (S3-get path req))
+	       ((PUT) (S3-put path req))
+	       ((HEAD) (S3-head path req))
+	       ((POST) (S3-post path req))
+	       ((DELETE) (S3-delete path req)))))))
+
+;; install the S3 filter
+(hop-filter-add! S3-filter)
+
