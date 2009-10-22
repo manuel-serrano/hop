@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sat Oct 17 20:56:53 2009 (serrano)                */
+/*    Last change :  Thu Oct 22 14:21:52 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -156,7 +156,6 @@ var hop_servevt_multipart_cdata_re =
 /*---------------------------------------------------------------------*/
 function start_servevt_xhr_multipart_proxy( key ) {
    if( !hop_servevt_proxy.httpreq ) {
-      var xhr_error_ttl = 6 * 3;
       var server_ready = false;
       
       var register = function( id ) {
@@ -167,6 +166,7 @@ function start_servevt_xhr_multipart_proxy( key ) {
 	 var success = function( val, xhr ) {
 	    var m = val.match( hop_servevt_multipart_re );
 
+	    alert( "event success: [" + val + "]" );
 	    if( m != null ) {
 	       var k = m [ 1 ];
 	       var id = m[ 2 ];
@@ -194,12 +194,9 @@ function start_servevt_xhr_multipart_proxy( key ) {
 	 }
 
 	 var failure = function( xhr ) {
+	    alert( "event FAILURE: [" + xhr.responseText + "]" );
 	    if( !xhr.status &&
-		(xhr_error_ttl > 0) &&
 		!xhr.getAllResponseHeaders() ) {
-	       // mark the connection timeout error in order to avoid
-	       // falling into an infinit loop when the server has crashed.
-	       xhr_error_ttl--;
 	       // we have reached a timeout, we just re-register
 	       register( id );
 	    } else {
@@ -561,7 +558,7 @@ function hop_start_servevt_proxy() {
 		     },
 		     // failure callback
 		     function( v ) {
-			throw new Error( "Cannot get server event port number" );
+			throw new Error( "No event server acknowledge" );
 		     },
 		     // run the anim during the call
 		     true,

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Sat Jul  4 07:00:50 2009 (serrano)                */
+;*    Last change :  Thu Oct 22 16:46:08 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -77,7 +77,10 @@
    (let loop ((id 1))
       (let ((sock (socket-accept serv)))
 	 (hop-verb 2 (hop-color id id " ACCEPT")
-		   ": " (socket-hostname sock) " [" (current-date) "]\n")
+		   ": " (if (>=fx (hop-verbose) 3)
+			    (socket-hostname sock)
+			    (socket-host-address sock))
+		   " [" (current-date) "]\n")
 	 ;; tune the socket
 	 (tune-socket! sock)
 	 ;; process the request
@@ -121,7 +124,9 @@
 		   (let ((sock (vector-ref socks i))
 			 (nid (+fx id i)))
 		      (hop-verb 2 (hop-color nid nid " ACCEPT")
-				": " (socket-hostname sock)
+				": " (if (>=fx (hop-verbose) 3)
+					 (socket-hostname sock)
+					 (socket-host-address sock))
 				" [" (current-date) "]\n")
 		      ;; tune the socket
 		      (tune-socket! sock)
@@ -183,7 +188,9 @@
 		  (output-port-flush-buffer-set! (socket-output sock) fbuf)
 		  (hop-verb 2 (hop-color id id " ACCEPT")
 			    (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
-			    ": " (socket-hostname sock)
+			    ": " (if (>=fx (hop-verbose) 3)
+				     (socket-hostname sock)
+				     (socket-host-address sock))
 			    " [" (current-date) "]\n")
 		  ;; tune the socket
 		  (tune-socket! sock)
@@ -216,7 +223,10 @@
 		(if (>=fx (hop-verbose) 3)
 		    (format " ~a, ~a accept" thread n)
 		    "")
-		": " (socket-hostname sock) " [" (current-date) "]\n")
+		": " (if (>=fx (hop-verbose) 3)
+			 (socket-hostname sock)
+			 (socket-host-address sock))
+		" [" (current-date) "]\n")
       ;; tune the socket
       (tune-socket! sock)
       ;; prepare the socket buffers
