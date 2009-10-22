@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Thu Oct 22 16:48:21 2009 (serrano)                */
+;*    Last change :  Thu Oct 22 17:30:09 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -135,7 +135,7 @@
       (hop-verb 1 (hop-color id id " CONNECT")
 		(if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
 		(if (>=fx (hop-verbose) 2) (scheduler-stat scd) "")
-		": " (if (>=fx (hop-verbose) 3)
+		": " (if (>=fx (hop-verbose) 2)
 			 (socket-hostname sock)
 			 (socket-host-address sock))
 		" [" (current-date) "]\n"))
@@ -149,7 +149,7 @@
 	 ;; debug info
 	 (debug-thread-info-set! thread
 				 (format "request parsed for ~a, ~a ~a"
-					 (if (>=fx (hop-verbose) 3)
+					 (if (>=fx (hop-verbose) 2)
 					     (socket-hostname sock)
 					     (socket-host-address sock))
 					 (http-request-method req)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Thu Oct 22 16:46:08 2009 (serrano)                */
+;*    Last change :  Thu Oct 22 17:30:45 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -77,9 +77,7 @@
    (let loop ((id 1))
       (let ((sock (socket-accept serv)))
 	 (hop-verb 2 (hop-color id id " ACCEPT")
-		   ": " (if (>=fx (hop-verbose) 3)
-			    (socket-hostname sock)
-			    (socket-host-address sock))
+		   ": " (socket-hostname sock)
 		   " [" (current-date) "]\n")
 	 ;; tune the socket
 	 (tune-socket! sock)
@@ -124,9 +122,7 @@
 		   (let ((sock (vector-ref socks i))
 			 (nid (+fx id i)))
 		      (hop-verb 2 (hop-color nid nid " ACCEPT")
-				": " (if (>=fx (hop-verbose) 3)
-					 (socket-hostname sock)
-					 (socket-host-address sock))
+				": " (socket-hostname sock)
 				" [" (current-date) "]\n")
 		      ;; tune the socket
 		      (tune-socket! sock)
@@ -188,9 +184,7 @@
 		  (output-port-flush-buffer-set! (socket-output sock) fbuf)
 		  (hop-verb 2 (hop-color id id " ACCEPT")
 			    (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
-			    ": " (if (>=fx (hop-verbose) 3)
-				     (socket-hostname sock)
-				     (socket-host-address sock))
+			    ": " (socket-hostname sock)
 			    " [" (current-date) "]\n")
 		  ;; tune the socket
 		  (tune-socket! sock)
@@ -223,9 +217,7 @@
 		(if (>=fx (hop-verbose) 3)
 		    (format " ~a, ~a accept" thread n)
 		    "")
-		": " (if (>=fx (hop-verbose) 3)
-			 (socket-hostname sock)
-			 (socket-host-address sock))
+		": " (socket-hostname sock)
 		" [" (current-date) "]\n")
       ;; tune the socket
       (tune-socket! sock)
