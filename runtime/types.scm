@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Oct 17 18:13:20 2009 (serrano)                */
+;*    Last change :  Fri Oct 23 11:33:23 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -30,6 +30,9 @@
 
 	   (class &hop-method-error::&io-parse-error)
 	   (class &hop-autoload-error::&io-error)
+	   (class &hop-security-error::&exception
+	      (obj read-only))
+	   (class &hop-injection-error::&hop-security-error)
 	   
            (abstract-class %http-message
 	      (seconds::elong read-only (default (current-seconds)))

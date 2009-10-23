@@ -252,9 +252,7 @@
       (let ((v (symbol-var scope id)))
 	 (if v
 	     ;; already declared
-	     (error "symbol-resolution"
-		    "Variable already declared"
-		    id)
+	     (err/node decl "symbol-resolution" "Variable already declared" id)
 	     (let ((new-var (instantiate::Var
 			       (id id)
 			       (kind 'local))))
@@ -303,7 +301,7 @@
 	    this))))
 
 (define-nmethod (Ref.resolve! symbol-table)
-   (with-access::Ref this (id var location)
+   (with-access::Ref this (id var)
       (let ((v (any (lambda (scope)
 		       (symbol-var scope id))
 		    symbol-table)))
@@ -314,11 +312,7 @@
 	     (verbose "Unresolved symbol '" id "' assumed to be a JS-var")
 	     (ncall resolve! this symbol-table)) ;; try again.
 	    (else
-	     (match-case location
-		((at ?file ?char)
-		 (error/location #f "unbound variable" id file char))
-		(else
-		 (error #f "unbound variable" id)))))))
+	     (err/node this #f "unbound variable" id)))))
    this)
 
 ;; runtime-var-ref directly queries the js-var-scope (short-cutting the
@@ -327,9 +321,11 @@
    (with-access::Runtime-Ref this (id var)
       (let ((v (symbol-var (Env-runtime-scope env) id)))
 	 ;; error should never happen (programming error)
-	 (when (not v) (error "Runtime-Var-Ref.resolve!"
-			      "Runtime-variable not found"
-			      id))
+	 (unless v
+	    (err/node this
+		      "Runtime-Var-Ref.resolve!"
+		      "Runtime-variable not found"
+		      id))
 	 (set! var v)))
    (shrink! this)
    this)
@@ -339,9 +335,7 @@
 (define-nmethod (Define.resolve! symbol-table)
    (with-access::Define this (lvalue)
       (with-access::Ref lvalue (id)
-	 (error "symbol-resolution"
-		"Define at bad location"
-		id))))
+	 (err/node this "symbol-resolution" "Define at bad location" id))))
 
 (define (find-globals env n module-scope)
    (cond
@@ -353,6 +347,11 @@
        (shrink! n)
        (with-access::Set! n (lvalue)
 	  (with-access::Ref lvalue (id)
+	     (unless (symbol? id)
+		(let ((name (match-case id
+			       ((js-field ?v ?f) (format "~a.~a" v f))
+			       (else id))))
+		   (err/node n 'define "Illegal identifier" name)))
 	     (let ((var (symbol-var module-scope id)))
 		(cond
 		   (var
@@ -374,3 +373,11 @@
 				      (kind 'local))))
 		       (symbol-var-set! module-scope id new-var))))))))
       (else 'do-nothing)))
+
+(define (err/node node proc msg obj)
+   (with-access::Node node (location)
+      (match-case location
+	 ((at ?file ?char)
+	  (error/location proc msg obj file char))
+	 (else
+	  (error proc msg obj)))))

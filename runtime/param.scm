@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Sep 29 18:25:46 2009 (serrano)                */
+;*    Last change :  Thu Oct 22 18:01:35 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -42,6 +42,9 @@
 	    %%*hop-verbose*
 	    (inline hop-verbose::int)
 	    (hop-verbose-set! ::int)
+	    
+	    (hop-security::int)
+	    (hop-security-set! ::int)
 	    
 	    (hop-session::int)
 	    (hop-session-set! ::int)
@@ -233,9 +236,6 @@
 	    (hop-service-flush-pace::long)
 	    (hop-service-flush-pace-set! ::long)
 
-	    (hop-allow-service-override::bool)
-	    (hop-allow-service-override-set! ::bool)
-
 	    (hop-enable-dashboard::bool)
 	    (hop-enable-dashboard-set! ::bool)
 
@@ -257,6 +257,9 @@
 	    (hop-accept-kill::bool)
 	    (hop-accept-kill-set! ::bool)
 
+	    (hop-security-manager::obj)
+	    (hop-security-manager-set! ::obj)
+	    
 	    (hop-enable-proxy-sniffer::bool)
 	    (hop-enable-proxy-sniffer-set! ::bool)
 	    
@@ -339,6 +342,11 @@
 (define %%*hop-verbose* 0)
 (define-inline (hop-verbose) %%*hop-verbose*)
 (define (hop-verbose-set! v) (set! %%*hop-verbose* v))
+
+;*---------------------------------------------------------------------*/
+;*    hop-security ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-security 1)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-session ...                                                  */
@@ -1076,12 +1084,6 @@
    100)
 
 ;*---------------------------------------------------------------------*/
-;*    hop-allow-service-override ...                                   */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-allow-service-override
-   #f)
-
-;*---------------------------------------------------------------------*/
 ;*    hop-enable-dashboard ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-dashboard
@@ -1128,6 +1130,16 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-accept-kill
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-security-manager ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-security-manager
+   #f
+   (lambda (v)
+      (if (not *hop-filters-open*)
+	  (error 'hop-security-manager-set! "Security manager closed" #f)
+	  v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-proxy-sniffer ...                                     */

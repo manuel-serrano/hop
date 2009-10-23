@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Oct 13 09:10:49 2009 (serrano)                */
+;*    Last change :  Thu Oct 22 17:47:47 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -422,10 +422,10 @@
 	    (cond
 	       ((>fx (bigloo-debug) 0)
 		(warning 'register-service! "Service re-defined -- " id))
-	       ((not (hop-allow-service-override))
+	       ((>fx (hop-security) 0)
 		(error id
 		       "Service re-definition not permitted"
-		       "use `-g' or `--allow-service-override' options to enable re-definitions"))))
+		       "use `-g' or `-s0' options to enable re-definitions"))))
 	 (hashtable-put! *service-table* path svc)
 	 (unless (char=? #\/ (string-ref path (-fx (string-length path) 1)))
 	    (hashtable-put! *service-table* (string-append path "/") svc))

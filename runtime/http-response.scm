@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sat Oct 17 18:15:44 2009 (serrano)                */
+;*    Last change :  Thu Oct 22 18:06:27 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -30,7 +30,8 @@
 	    __hop_http-filter
 	    __hop_js-lib
 	    __hop_user
-	    __hop_cache)
+	    __hop_cache
+	    __hop_security)
 
    (export  (generic http-response::symbol ::%http-response ::socket)
 	    (generic scheme->response ::obj ::http-request)
@@ -173,6 +174,15 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-hop socket)
    (with-trace 3 'http-response::http-response-hop
+      (if (<fx (hop-security) 2)
+	  (http-response-hop-unsecure r socket)
+	  (http-response-hop-secure r socket))))
+
+;*---------------------------------------------------------------------*/
+;*    http-response-hop-unsecure ...                                   */
+;*---------------------------------------------------------------------*/
+(define (http-response-hop-unsecure r socket)
+   (with-trace 3 'http-response-hop-unsecure
       (with-access::http-response-hop r (request
 					 start-line header
 					 content-type charset server backend
@@ -216,6 +226,38 @@
 	       (output-port-flush-hook-set! p #unspecified)
 	       (http-write-line p "\r\n0\r\n")
 	       (flush-output-port p))
+	    connection))))
+
+;*---------------------------------------------------------------------*/
+;*    http-response-hop-secure ...                                     */
+;*---------------------------------------------------------------------*/
+(define (http-response-hop-secure r socket)
+   (with-trace 3 'http-response-hop-unsecure
+      (with-access::http-response-hop r (request
+					 start-line header
+					 content-type charset server backend
+					 content-length
+					 xml bodyp timeout)
+	 (let ((connection (http-request-connection request))
+	       (p (socket-output socket))
+	       (str (security-manager r)))
+	    (output-timeout-set! p timeout)
+	    (http-write-line-string p start-line)
+	    (http-write-header p header)
+	    (http-write-line p "Content-Length: " (string-length str))
+	    (http-write-line p "Connection: " connection)
+	    (let ((ctype (or content-type (xml-backend-mime-type backend))))
+	       (http-write-content-type p ctype charset))
+	    (when server
+	       (http-write-line-string p "Server: " server))
+	    (http-write-line-string p "Hhop: true")
+	    (http-write-line p "hop-security: " (hop-security))
+	    (http-write-line p)
+	    ;; the body
+	    (with-trace 4 'http-response-hop
+	       (when bodyp
+		  (display str p)))
+	    (flush-output-port p)
 	    connection))))
 
 ;*---------------------------------------------------------------------*/

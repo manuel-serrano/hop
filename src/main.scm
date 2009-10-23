@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Sep  8 08:57:56 2009 (serrano)                */
+;*    Last change :  Thu Oct 22 18:11:57 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -98,7 +98,7 @@
    ;; set the hop process owner
    (set-hop-owner! (hop-user))
    ;; hello world
-   (hop-verb 1 "Starting hop (v" (hop-version)
+   (hop-verb 1 "Hop (v" (hop-version)
 	     ", " (hop-backend)
 	     (cond-expand
 		(enable-threads
@@ -110,8 +110,9 @@
 		 (format "https (~a):" (hop-https-protocol)) "http:")
 	     (hop-port)
 	     (if (hop-enable-fast-server-event)
-		 (format ", server-events:~a" (hop-fast-server-event-port))
+		 (format ", comet-port:~a" (hop-fast-server-event-port))
 		 "")
+	     ", security:" (hop-security)
 	     "\n")
    ;; install the builtin filters
    (hop-filter-add! service-filter)

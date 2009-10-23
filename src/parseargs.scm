@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Oct 10 09:28:11 2009 (serrano)                */
+;*    Last change :  Thu Oct 22 17:45:46 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -109,12 +109,16 @@
           (if (string=? level "")
 	      (bigloo-warning-set! (+fx 1 (bigloo-warning)))
 	      (bigloo-warning-set! (string->integer level))))
+	 (("-s?level" (help "Increase/set security level (-s0 no security enforcement)"))
+          (if (string=? level "")
+	      (hop-security-set! (+fx 1 (hop-security)))
+	      (hop-security-set! (string->integer level))))
 	 (("--no-color" (help "Disable colored traces"))
 	  (bigloo-trace-color-set! #f))
 	 (("--log-file" ?file (help "Use <FILE> as log file"))
 	  (set! log-file file))
-	 (("--allow-service-override" (help "Allow service overriding"))
-	  (hop-allow-service-override-set! #t))
+	 (("--allow-service-override" (help "Allow service overriding (see -s)"))
+	  (hop-security-set! 0))
 	 
 	 ;; Run
 	 (section "Run")
@@ -122,7 +126,7 @@
 	  (set! p (string->integer port)))
 	 (("--fast-server-event-port" ?port (help (format "Fast Server event Port number [~s]" p)))
 	  (set! ep (string->integer port)))
-	 ((("-s" "--enable-https") (help (format "Enable HTTPS")))
+	 (("--enable-https" (help (format "Enable HTTPS")))
 	  (hop-enable-https-set! #t))
 	 (("--disable-https" (help (format "Disable HTTPS")))
 	  (hop-enable-https-set! #f))

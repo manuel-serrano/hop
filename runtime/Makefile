@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Oct 13 08:53:44 2009 (serrano)                */
+#*    Last change :  Thu Oct 22 18:05:07 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -43,7 +43,7 @@ _OBJECTS = param misc priv types \
            hop-img hop-extra hop-inline \
            hop-rss hop-sym \
            hop-svg hop-mathml \
-           event color weblets prefs expanders
+           event color weblets prefs expanders security
 
 OBJECTS = $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS = o/make-lib.o

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Jul 20 11:53:42 2009 (serrano)                */
+;*    Last change :  Thu Oct 22 18:19:56 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -757,28 +757,42 @@
 	 (xml-write obj (current-output-port) backend))))
 
 ;*---------------------------------------------------------------------*/
+;*    eval-markup ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (eval-markup constr attributes body)
+   (case constr
+      ((<HEAD>)
+       ;; The Hop head constructor is special because it implicitly introduces
+       ;; the Hop rts. In order to avoid this here, head is explicitly created.
+       (instantiate::xml-markup
+	  (markup 'head)
+	  (attributes attributes)
+	  (body body)))
+      (else
+       (let ((a (append-map (lambda (a)
+			       (list (symbol->keyword (car a)) (cdr a)))
+			    attributes))
+	     (constr (eval constr)))
+	  (if (procedure? constr)
+	      (apply constr (append a body))
+	      (error 'string->xml "Illegal markup" constr))))))
+
+;*---------------------------------------------------------------------*/
 ;*    string->html ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (string->html h)
    (with-input-from-string h
       (lambda ()
-	 (car (html-parse
-	       (current-input-port)
-	       :content-length
-	       0
-	       :procedure
-	       (lambda (markup attributes body)
-		  (let* ((m (string->symbol
-			     (string-append
-			      "<"
-			      (string-upcase (symbol->string markup))
-			      ">")))
-			 (a (append-map (lambda (a)
-					   (list (symbol->keyword (car a))
-						 (cdr a)))
-					attributes))
-			 (e `(,m ,@a ,@body)))
-		     (eval e))))))))
+	 (html-parse
+	  (current-input-port)
+	  :content-length 0
+	  :procedure (lambda (markup attributes body)
+			(let ((constr (string->symbol
+				       (string-append
+					"<"
+					(string-upcase (symbol->string markup))
+					">"))))
+			   (eval-markup constr attributes body)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string->xml ...                                                  */
@@ -786,23 +800,16 @@
 (define (string->xml h)
    (with-input-from-string h
       (lambda ()
-	 (car (xml-parse
-	       (current-input-port)
-	       :content-length
-	       0
-	       :procedure
-	       (lambda (markup attributes body)
-		  (let* ((m (string->symbol
-			     (string-append
-			      "<"
-			      (string-upcase (symbol->string markup))
-			      ">")))
-			 (a (append-map (lambda (a)
-					   (list (symbol->keyword (car a))
-						 (cdr a)))
-					attributes))
-			 (e `(,m ,@a ,@body)))
-		     (eval e))))))))
+	 (xml-parse
+	  (current-input-port)
+	  :content-length 0
+	  :procedure (lambda (markup attributes body)
+			(let ((constr (string->symbol
+				       (string-append
+					"<"
+					(string-upcase (symbol->string markup))
+					">"))))
+			   (eval-markup constr attributes body)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-tilde->statement ...                                         */
