@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Thu Oct  8 19:32:51 2009 (serrano)                */
+;*    Last change :  Fri Oct 23 18:22:13 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -185,7 +185,7 @@
        (cond
 	  ((or (eq? (car o) 'xml-decl) (eq? (car o) 'instruction))
 	   #unspecified)
-	  ((eq? (car o) 'declaration)
+	  ((memq (car o) '(declaration comment))
 	   ;; ms: 13 jan 2009
  	   ;; (display (cdr o))
 	   #unspecified)
