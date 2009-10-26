@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Oct 14 17:03:05 2009 (serrano)                */
+;*    Last change :  Mon Oct 26 07:35:55 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -347,18 +347,18 @@
       (<DIV>
 	 (<DIV> :class "hop-audio-info-status-img hop-audio-info-status-stop"
 	    :id (string-append id "-controls-status-img")
-	    "&nbsp;")
+	    " ")
 	 (<SPAN> :class "hop-audio-info-status-position"
 	    :id (string-append id "-controls-status-position")
 	    "88:88"))
       (<DIV> :class "hop-audio-info-status-length"
 	 (<SPAN> :class "hop-audio-info-status-length"
 	    :id (string-append id "-controls-status-length-min")
-	    "&nbsp;&nbsp;")
+	    "  ")
 	 (<SPAN> :class "hop-audio-info-status-length-label" "min")
 	 (<SPAN> :class "hop-audio-info-status-length"
 	    :id (string-append id "-controls-status-length-sec")
-	    "&nbsp;&nbsp;")
+	    "  ")
 	 (<SPAN> :class "hop-audio-info-status-length-label" "sec"))
       (<DIV> :class "hop-audio-info-status-track"
 	 (<SPAN> :class "hop-audio-info-status-track-label" "track")
@@ -413,12 +413,12 @@
 		  :class "hop-audio-panel-volume"
 		  :min 0 :max 100 :step 1 :value 100 :caption #f
 		  :onchange (on "volume_set")))
-	    (<TH> "&nbsp;L")
+	    (<TH> :class "hop-audio-panel-left" "L")
 	    (<TD> (<SLIDER> :id (string-append id "-controls-pan")
 		     :class "hop-audio-panel-pan"
 		     :min -100 :max 100 :step 1 :value 0 :caption #f
 		     :onchange (on "pan_set")))
-	    (<TH> "R")))))
+	    (<TH> :class "hop-audio-panel-right" "R")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-onstate ...                                                */

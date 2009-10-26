@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sun Sep 27 06:05:56 2009 (serrano)                */
+;*    Last change :  Mon Oct 26 11:16:07 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -743,6 +743,13 @@
   -moz-column-count: ~l;
   -khtml-column-count: ~l;
   -webkit-column-count: ~l;"
+	   v v v v))
+
+(define-hss-property (column-gap v p)
+   (format "column-gap: ~l;
+  -moz-column-gap: ~l;
+  -khtml-column-gap: ~l;
+  -webkit-column-gap: ~l;"
 	   v v v v))
 
 (define-hss-property (column-rule v p)

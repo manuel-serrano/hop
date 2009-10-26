@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Oct 22 18:19:56 2009 (serrano)                */
+;*    Last change :  Mon Oct 26 08:00:05 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -46,7 +46,7 @@
 	       (%xml-constructor))
 
 	    (class xml-verbatim::xml
-	       (body::string read-only))
+	       (body::bstring read-only))
 	    
 	    (class css::xml)
 	    
@@ -501,7 +501,7 @@
 	     (display (hop-javascript-mime-type) p)
 	     (display "'>" p)
 	     (when cdata-start (display cdata-start p))
-	     (xml-write (xml-tilde->statement obj) p backend)
+	     (display (xml-tilde->statement obj) p)
 	     (when cdata-stop (display cdata-stop p))
 	     (display "</script>\n" p)))))
       
@@ -814,7 +814,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-tilde->statement ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (xml-tilde->statement obj)
+(define (xml-tilde->statement::bstring obj)
    (with-access::xml-tilde obj (%js-statement)
       (if (string? %js-statement)
 	  %js-statement
@@ -826,7 +826,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-tilde->expression ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (xml-tilde->expression obj)
+(define (xml-tilde->expression::bstring obj)
    (with-access::xml-tilde obj (%js-expression)
       (if (string? %js-expression)
 	  %js-expression
@@ -838,7 +838,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-tilde->return ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (xml-tilde->return obj)
+(define (xml-tilde->return::bstring obj)
    (with-access::xml-tilde obj (%js-return)
       (if (string? %js-return)
 	  %js-return

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 28 06:23:39 2007                          */
-/*    Last change :  Sat Sep 19 17:57:47 2009 (serrano)                */
+/*    Last change :  Mon Oct 26 07:37:36 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Audio's cascade style sheet.                                 */
@@ -176,8 +176,13 @@ audio div.hop-audio-info-status {
 
 audio div.hop-audio-info-status-img {
   display: inline-block;
-  padding-left: 8px;
-  padding-right: 4px;
+  color: transparent;
+  height: 12px;
+  min-height: 12px;
+  width: 16px;
+  min-width: 16px;
+  padding-left: 2px;
+  padding-right: 2px;
   background-image: share( "icons/hop-audio/stop.png" );
   background-repeat: no-repeat;
   background-position: center center;
@@ -310,6 +315,10 @@ audio div.hop-audio-panel-sound th {
   vertical-align: top;
   font-weight: 100;
   color: black;
+}
+
+audio div.hop-audio-panel-sound th.hop-audio-panel-left {
+  padding-left: 10px;
 }
 
 audio table.hop-audio-panel-volume {

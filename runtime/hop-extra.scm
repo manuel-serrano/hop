@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Oct  9 07:06:05 2009 (serrano)                */
+;*    Last change :  Mon Oct 26 09:28:17 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -43,6 +43,8 @@
 	    (<SCRIPT> . ::obj)
 	    (<STYLE> . ::obj)
 	    (<INPUT> . ::obj)
+
+	    (<PRAGMA> . ::obj)
 	    
 	    (<TOOLTIP> . ::obj)
 	    (<SORTTABLE> . ::obj)))
@@ -672,3 +674,15 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 			      ,@(if onkeydown `(onkeydown: ,onkeydown) '())
 			      ,@attributes))
 	  (body '()))))
+
+;*---------------------------------------------------------------------*/
+;*    <PRAGMA> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<PRAGMA> . obj)
+   (cond
+      ((and (pair? obj) (null? (cdr obj)) (string? (car obj)))
+       (instantiate::xml-verbatim (body (car obj))))
+      ((every? string? obj)
+       (instantiate::xml-verbatim (body (apply string-append obj))))
+      (else
+       (error '<PRAGMA> "Illegal arguments" obj))))

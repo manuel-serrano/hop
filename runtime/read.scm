@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Sep 18 02:21:35 2009 (serrano)                */
+;*    Last change :  Mon Oct 26 08:12:48 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -17,6 +17,8 @@
 
    (cond-expand
       (enable-threads (library pthread)))
+
+   (library web)
 
    (import  __hop_param
 	    __hop_read-js
@@ -654,6 +656,14 @@
 				   (input-port-position (the-port))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    text->html-string ...                                            */
+;*---------------------------------------------------------------------*/
+(define (text->html-string str)
+   (if (string-index str "<>&")
+       (html-string-encode str)
+       str))
+
+;*---------------------------------------------------------------------*/
 ;*    *text-grammar* ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    The grammar that parses texts (the [...] forms).                 */
@@ -667,14 +677,14 @@
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
 	      (item (cset (the-substring 0 (-fx (the-length) 1)))))
-	  (econs item '() loc)))
+	  (econs (text->html-string item) '() loc)))
       ((: (* (out ",[]\\")) ",]")
        (let* ((port (the-port))
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
 	      (item (cset (the-substring 0 (-fx (the-length) 1)))))
-	  (econs item '() loc)))
+	  (econs (text->html-string item) '() loc)))
       ((: (* (out ",[]\\")) #\, (out #\( #\] #\,))
        (let* ((port (the-port))
 	      (name (input-port-name port))
@@ -682,7 +692,7 @@
 	      (loc (list 'at name pos))
 	      (item (cset (the-string)))
 	      (rest (ignore)))
-	  (econs item rest loc)))
+	  (econs (text->html-string item) rest loc)))
       ((: (* (out ",[]\\")) #\,)
        (let* ((port (the-port))
 	      (name (input-port-name port))
@@ -695,7 +705,8 @@
 	      (rest (ignore)))
 	  (if (string=? item "")
 	      (cons (list 'unquote sexp) rest)
-	      (econs item (cons (list 'unquote sexp) rest) loc))))
+	      (econs (text->html-string item)
+		     (cons (list 'unquote sexp) rest) loc))))
       ((or (+ (out ",[]\\"))
 	   (+ #\Newline)
 	   (: (* (out ",[]\\")) #\, (out "([]\\")))
@@ -705,19 +716,11 @@
 	      (loc (list 'at name pos))
 	      (item (cset (the-string)))
 	      (rest (ignore)))
-	  (econs item rest loc)))
-;*       ("\\\\"                                                       */
-;*        (cons "\\" (ignore)))                                        */
-;*       ("\\n"                                                        */
-;*        (cons "\n" (ignore)))                                        */
-;*       ("\\t"                                                        */
-;*        (cons "\t" (ignore)))                                        */
+	  (econs (text->html-string item) rest loc)))
       ("\\]"
        (cons "]" (ignore)))
       ("\\["
        (cons "[" (ignore)))
-;*       ("\\,"                                                        */
-;*        (cons "," (ignore)))                                         */
       (#\\
        (cons "\\" (ignore)))
       (else

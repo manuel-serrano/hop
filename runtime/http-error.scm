@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Oct 22 19:10:12 2009 (serrano)                */
+;*    Last change :  Mon Oct 26 08:29:25 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -283,7 +283,7 @@
 			  (<ETABLE>
 			     (<TR>
 				(<ETD> :class "logo" :valign 'top
-				   (<EIMG> :src "warning.png" :req req))
+				   (<EIMG> :src "error.png" :req req))
 				(<ETD>
 				   (<TABLE> :width "100%"
 				      (<TR> (<ETD> :class "title"
