@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/src/pool-scheduler.scm           */
+;*    serrano/prgm/project/hop/2.0.x/src/pool-scheduler.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Thu Nov 20 17:33:39 2008 (serrano)                */
-;*    Copyright   :  2008 Manuel Serrano                               */
+;*    Last change :  Tue Oct 27 14:13:47 2009 (serrano)                */
+;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
 ;*    -------------------------------------------------------------    */

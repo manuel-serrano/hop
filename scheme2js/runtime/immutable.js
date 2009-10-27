@@ -287,6 +287,22 @@ function sc_isStringCIGreaterEqual(s1, s2) {
     return s1.toLowerCase() >= s2.toLowerCase();
 }
 
+/*** META ((export string-contains)
+           (arity -3)
+	   (type bool))
+*/
+function sc_stringContains(s1,s2,start) {
+   return s1.indexOf(s2,start ? start : 0) >= 0;
+}
+
+/*** META ((export string-contains-ci)
+           (arity -3)
+	   (type bool))
+*/
+function sc_stringCIContains(s1,s2,start) {
+   return s1.toLowerCase.indexOf(s2.toLowerCase,start ? start : 0) >= 0;
+}
+
 /*** META ((export #t)
            (arity #t)
            (peephole (hole 3 s ".substring(" start ", " end ")")))

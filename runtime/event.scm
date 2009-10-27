@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat Oct 17 20:57:23 2009 (serrano)                */
+;*    Last change :  Tue Oct 27 14:19:28 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -656,10 +656,12 @@
 ;*    get-ajax-key ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (get-ajax-key port)
+   (tprint ">>> get-ajax-key: " (mutex-state *event-mutex*))
    (mutex-lock! *event-mutex*)
    (set! *client-key* (+fx 1 *client-key*))
    (let ((key (format "~a:~a://~a" (hostname) port *client-key*)))
       (mutex-unlock! *event-mutex*)
+      (tprint "<<< get-ajax-key: " (mutex-state *event-mutex*))
       key))
 
 ;*---------------------------------------------------------------------*/
@@ -669,7 +671,7 @@
    (let ((s (http-request-socket req)))
       (with-handler
 	 (lambda (e)
-	    (unless (&io-timeout-error? e)
+	    (unless (or (&io-timeout-error? e) (&io-sigpipe-error? e))
 	       (raise e))
 	    #f)
 	 (http-response resp s)
@@ -684,7 +686,7 @@
 	  (p (socket-output s)))
       (with-handler
 	 (lambda (e)
-	    (if (&io-timeout-error? e)
+	    (if (or (&io-timeout-error? e) (&io-sigpipe-error? e))
 		(begin
 		   (set! *clients-number* (-fx *clients-number* 1))
 		   (flash-close-request! req))
@@ -704,7 +706,7 @@
 	  (p (socket-output s)))
       (with-handler
 	 (lambda (e)
-	    (if (&io-timeout-error? e)
+	    (if (or (&io-timeout-error? e) (&io-sigpipe-error? e))
 		(begin
 		   (set! *clients-number* (-fx *clients-number* 1))
 		   (multipart-close-request! req))
@@ -892,13 +894,21 @@
 	     ": " name)
    (hop-verb 3 " value=" (with-output-to-string (lambda () (write-circle value))))
    (hop-verb 2 "\n")
+   (tprint ">>> broadcast: " (mutex-state *event-mutex*))
    (mutex-lock! *event-mutex*)
    (unwind-protect
       (begin
-	 (ajax-event-broadcast! name value)
-	 (multipart-event-broadcast! name value)
-	 (flash-event-broadcast! name value))
+	 (with-handler
+	    (lambda (e)
+	       (tprint "ERROR: " e)
+	       (dump-trace-stack (current-error-port) 10)
+	       (raise e))
+	    (begin
+	       (ajax-event-broadcast! name value)
+	       (multipart-event-broadcast! name value)
+	       (flash-event-broadcast! name value))))
       (mutex-unlock! *event-mutex*))
+   (tprint "<<< broadcast: " (mutex-state *event-mutex*))
    #unspecified)
 
 ;*---------------------------------------------------------------------*/

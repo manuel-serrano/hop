@@ -309,6 +309,30 @@ var sc_isStringCILessEqual = sc_isCharStringCILessEqual;
 var sc_isStringCIGreaterEqual = sc_isCharStringCIGreaterEqual;
 
 
+/*** META ((export string-contains)
+           (arity -3)
+	   (type bool))
+*/
+function sc_stringContains(s1,s2,start) {
+   return s1.val.indexOf(s2.val,start ? start : 0) >= 0;
+}
+
+/*** META ((export string-contains-ci)
+           (arity -3)
+	   (type bool))
+*/
+function sc_stringCIContains(s1,s2,start) {
+   return s1.val.toLowerCase.indexOf(s2.val.toLowerCase,start ? start : 0) >= 0;
+}
+
+/*** META ((export #t)
+           (arity #t)
+           (peephole (hole 3 s ".substring(" start ", " end ")")))
+*/
+function sc_substring(s, start, end) {
+    return s.substring(start, end);
+}
+
 /*** META ((export #t)
            (arity #t)
            (peephole (hole 3 "new sc_String(" s ".val.substring(" start ", " end "))")))
