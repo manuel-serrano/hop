@@ -45,3 +45,4 @@ etc/hopreplay.man
 etc/hopsh.man
 etc/hopshrc.hop
 hopscheme/hop-runtime.sch
+config.status
