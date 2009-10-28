@@ -653,11 +653,12 @@
 				    (obj expr)
 				    (field field)))))
 	    ((DOT) (let* ((ignore (consume-any!))
-			  (field (consume! 'ID)))
-		      (loop (instantiate::Dot
+			  (field (consume! 'ID))
+			  (field-str (format "'~a'" field)))
+		      (loop (instantiate::Access
 			       (obj expr)
-			       (field field)))))
-	    
+			       (field (instantiate::String
+					 (val field-str)))))))
 	    ((LPAREN) (if call-allowed?
 			  (loop (instantiate::Call
 				   (fun expr)

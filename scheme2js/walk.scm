@@ -36,17 +36,9 @@
 ;;      (optim! n env x y))
 ;;   BODY)
 (define-macro (define-nmethod args . body)
-   (define (my-error msg val)
-      (let ((loc (if (epair? args) (cer meta) #f)))
-	 (match-case loc
-	    ((at ?fname ?loc)
-	     (error/location "walk" msg val fname loc))
-	    (else
-	     (error "walk" msg val)))))
-
    (define (without-type sym)
       (if (not (symbol? sym))
-	  (my-error "bad define-nmethod (expected symbol)" args)
+	  (scheme2js-error "bad define-nmethod (expected symbol)" args args)
 	  (let* ((str (symbol->string sym))
 		 (pos (string-contains str "::")))
 	     (if pos
@@ -59,7 +51,7 @@
 	  (str-len (string-length str-type.name))
 	  (dot-pos (string-index str-type.name #\.))
 	  (dummy (when (not dot-pos)
-		    (my-error "bad define-nmethod name" Type.name)))
+		    (scheme2js-error "bad define-nmethod name" Type.name Type.name)))
 	  (type (string->symbol (substring str-type.name 0 dot-pos)))
 	  (name (string->symbol (substring str-type.name
 					   (+fx dot-pos 1)

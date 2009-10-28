@@ -201,11 +201,10 @@
 	 ((pair? l) (loop (cdr l)
 			  (cons (car l) rev-res)))
 	 (else
-	  (scheme2js-error
-	   "module"
-	   "bad list"
-	   l
-	   in-l)))))
+	  (scheme2js-error "module"
+			   "bad list"
+			   l
+			   in-l)))))
    
 (define (cond-expand-headers! m::WIP-Unit)
    (with-access::WIP-Unit m (header)
@@ -366,11 +365,10 @@
 	  (let ((override (car o-headers)))
 	     (cond
 		((not (list? override))
-		 (scheme2js-error
-		  "scheme2js-module"
-		  "invalid override-header"
-		  override
-		  o-headers))
+		 (scheme2js-error "scheme2js-module"
+				  "invalid override-header"
+				  override
+				  o-headers))
 		((not (and (symbol? (car override))
 			   (memq (car override) valid-kinds)))
 		 (scheme2js-error
@@ -488,33 +486,37 @@
 		(cons (f (car L) #f)
 		      rev-res)))
 	 (else
-	  (scheme2js-error
-	   "module"
-	   "bad module clause"
-	   L
-	   L)))))
+	  (scheme2js-error "module"
+			   "bad module clause"
+			   L
+			   L)))))
 
 (define (read-includes! m::WIP-Unit include-paths reader)
    (define (read-file f loc)
       (unless (string? f)
-	 (scheme2js-error
-	  "scheme2js-module"
-	  "include-parameter must be a string"
-	  f
-	  loc))
+	 (scheme2js-error "scheme2js-module"
+			  "include-parameter must be a string"
+			  f
+			  loc))
       (let ((file (find-file/path f include-paths)))
 	 (unless file
 	    (scheme2js-error "scheme2js module"
 			     "can't find include-file"
 			     f
 			     loc))
-	 (with-input-from-file file
-	    (lambda ()
+	 (let ((p (open-input-file file)))
+	    (unless p
+	       (scheme2js-error "scheme2js module"
+				"can't open include-file"
+				f
+				loc))
+	    (unwind-protect
 	       (let loop ((rev-source '()))
-		  (let ((sexp (reader (current-input-port) #t)))
+		  (let ((sexp (reader p #t)))
 		     (if (eof-object? sexp)
 			 (reverse! rev-source)
-			 (loop (cons sexp rev-source)))))))))
+			 (loop (cons sexp rev-source)))))
+	       (close-input-port p)))))
       
    (with-access::WIP-Unit m (header top-level)
       (let* ((include-files (module-entries header 'include))
@@ -595,11 +597,12 @@
 			   (or (symbol? im)
 			       (Compilation-Unit? im)))
 			import-list)
-	    (error "scheme2js-module"
-		   ;; we allow compilation units too, but this should not
-		   ;; appear in error message.
-		   "only symbols are allowed in import-list"
-		   import-list))
+	    (scheme2js-error "scheme2js-module"
+			     ;; we allow compilation units too, but this should
+			     ;; not appear in error message.
+			     "only symbols are allowed in import-list"
+			     import-list
+			     header))
 	 import-list))
 
    (with-access::WIP-Unit m (header imports macros)
@@ -630,9 +633,10 @@
 		(let liip ((files module-files))
 		   (cond
 		      ((null? files)
-		       (error "scheme2js module"
-			      "can't find imported module"
-			      imported-module))
+		       (scheme2js-error "scheme2js module"
+					"can't find imported module"
+					imported-module
+					header))
 		      ((read-imported-module-file
 			imported-module
 			(car module-files)
@@ -647,17 +651,21 @@
 		      (else
 		       (liip (cdr files)))))))
 	    (else
-	     (error "scheme2js module"
-		    "bad import clause"
-		    imports))))))
+	     (scheme2js-error "scheme2js module"
+			      "bad import clause"
+			      imports
+			      (if (epair? (car imported-modules))
+				  (car imported-modules)
+				  header)))))))
 
 (define (normalize-JS-imports! m)
-   (define (JS-import-error js)
-      (error "scheme2js module"
-	     "JS clauses must be symbol, string or of form (scheme-sym sym/str)"
-	     js))
-   
    (with-access::WIP-Unit m (header imports)
+      (define (JS-import-error js)
+	 (scheme2js-error "scheme2js module"
+			  "JS clauses must be symbol, string or of form (scheme-sym sym/str)"
+			  js
+			  (if (epair? js) js header)))
+
       (let* ((direct-JS-imports (module-entries header 'JS))
 	     (descs (map (lambda (js)
 			    (match-case js
@@ -702,9 +710,10 @@
 			   (pair? p)
 			   (symbol? (car p)))
 			(cdr pragma)))
-      (error "scheme2js-module"
-	     "invalid pragma clause"
-	     pragma)))
+      (scheme2js-error "scheme2js-module"
+		       "invalid pragma clause"
+		       pragma
+		       pragma)))
 
 ;; the input-port is only used when macros are exported and the module has not
 ;; yet read its top-level.
@@ -718,13 +727,14 @@
 						(string-length str))))
 	     (values v #f))))
 	  
-   (define (normalize-var v pragmas)
-      (unless (symbol? v)
-	 (error "scheme2js-module"
-		"bad export-clause. expected symbol"
-		v))
+   (define (normalize-var v pragmas loc)
       (receive (v type)
 	 (untype v)
+	 (when (string=? "" (symbol->string v))
+	    (scheme2js-error "scheme2js-module"
+			     "bad export-variable"
+			     v
+			     loc))
 	 (let ((pragma-info (assq v pragmas)))
 	    (or pragma-info v))))
 
@@ -760,19 +770,22 @@
 		   (cond
 		      ((and pragma-type type
 			    (not (eq? type (cadr pragma-type))))
-		       (error "scheme2js-module"
-			      "variable exported with two different types"
-			      f))
+		       (scheme2js-error "scheme2js-module"
+					"variable exported with two different types"
+					f
+					f))
 		      ((and pragma-constant?
 			    (not (cadr pragma-constant?)))
-		       (error "scheme2js-module"
-			      "exported functions must be constant"
-			      f))
+		       (scheme2js-error "scheme2js-module"
+					"exported functions must be constant"
+					f
+					f))
 		      ((and pragma-arity
 			    (not (eq? arity (cadr pragma-arity))))
-		       (error "scheme2js-module"
-			      "variable exported with two different arities"
-			      f))
+		       (scheme2js-error "scheme2js-module"
+					"variable exported with two different arities"
+					f
+					f))
 		      ((or (and pragma-constant? pragma-arity pragma-type)
 			   (and pragma-constant? pragma-arity (not type)))
 		       pragma-info)
@@ -792,7 +805,7 @@
 						    with-constant?))))
 			  (cons fun-name with-arity))))))))))
 
-   (define (find-macros new-macros)
+   (define (find-macros new-macros loc)
       (let loop ((new-macros new-macros)
 		 (rev-res '()))
 	 (if (null? new-macros)
@@ -800,9 +813,10 @@
 	     (let ((e (reader input-p #t)))
 		(cond
 		   ((eof-object? e)
-		    (error "scheme2js-module"
-			   "could not find macro(s):"
-			   new-macros))
+		    (scheme2js-error "scheme2js-module"
+				     "could not find macro(s):"
+				     new-macros
+				     loc))
 		   ((and (pair? e)
 			 (eq? (car e) 'define-macro)
 			 (pair? (cdr e))
@@ -822,13 +836,13 @@
 	 (let loop ((entries new-exports)
 		    (new-macros '()))
 	    (if (null? entries)
-		(set! exported-macros (find-macros new-macros))
+		(set! exported-macros (find-macros new-macros header))
 		(let ((e (car entries)))
 		   (cond
 		      ((symbol? e)
 		       (set! exports
 			     (cons (create-Export-Desc
-				    (normalize-var e pragmas) name #f)
+				    (normalize-var e pragmas entries) name #f)
 				   exports))
 		       (loop (cdr entries) new-macros))
 		      ((not (pair? e))
@@ -858,9 +872,10 @@
 		    (cdr ex)))
        'ok)
       (else
-       (error "scheme2js-module"
-	      "bad export-clause"
-	      ex))))
+       (scheme2js-error "scheme2js-module"
+			"bad export-clause"
+			ex
+			ex))))
 
 (define (check-scheme2js-export-macro-clause ex)
    (unless (and (pair? ex)
@@ -868,9 +883,10 @@
 		(pair? (cdr ex))
 		(pair? (cadr ex))
 		(symbol? (car (cadr ex))))
-      (error "scheme2js-module"
-	     "bad macro-export-clause"
-	     ex)))
+      (scheme2js-error "scheme2js-module"
+		       "bad macro-export-clause"
+		       ex
+		       ex)))
 
 (define (normalize-scheme2js-exports! m::WIP-Unit)
    (with-access::WIP-Unit m (header name exports exported-macros macros)

@@ -871,7 +871,11 @@
 					   (when (xml-tilde? val)
 					      (warning/location
 					       file-name
-					       (caddr (cer sexp))
+					       (and (epair? sexp)
+						    (match-case (cer sexp)
+						       ((?- ?- ?loc . ?-)
+							loc)
+						       (else #f)))
 					       'hop-load
 					       "Useless ~ expression"))
 					   (loop val))))))

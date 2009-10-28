@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -113,21 +113,19 @@
        (Array? n)
        (Obj-Init? n)))
 
-(define (member-expr? n)
-   (or (primary-expr? n)
-       (Fun? n)
-       (Named-Fun? n)
-       (Access? n)
-       (Dot? n)
-       (New? n)))
-
 ;; we merge NewExpressions and MemberExpressions
 ;; in other words we will not print 'new's without parenthesis.
 ;; we could readd them by adding an additional flag to the expr-outs
 
-(define (lhs-expr? n)
-   (or (member-expr? n)
+(define (call-expr? n)
+   (or (primary-expr? n)
+       (Fun? n)
+       (Named-Fun? n)
+       (Access? n)
+       (New? n)
        (Call? n)))
+
+(define (lhs-expr? n) (call-expr? n))
 
 (define (unary-expr? n)
    (or (lhs-expr? n)
@@ -215,7 +213,7 @@
 				(Sequence? n)
 				(Pragma? n))
 		       (error "expr?"
-			      "forgot an expression"
+			      "Internal error: forgot an expression"
 			      (class-name (object-class n))))
 		    #t)
       (else #t)))
@@ -232,7 +230,7 @@
 (define-generic (expr-out this::Node in-for-init? stmt-begin?
 				indent port compress?)
    (error "expr-out"
-	  "forgot node-type"
+	  "Internal error: forgot node-type"
 	  (class-name (object-class this))))
 
 (define (nested-expr-out this::Node of-required-type?::procedure
@@ -245,7 +243,8 @@
 				  (and stmt-begin?
 				       (or (Obj-Init? this)
 					   (Named-Fun? this)
-					   (Fun? this)))))
+					   (Fun? this)
+					   (Pragma? this)))))
 	  ;; if we are inside parenthesis we don't care for the 'for' anymore.
 	  (new-in-for-init? (and in-for-init? (not needs-parentheses?)))
 	  ;; nor are we at the beginning of a stmt anymore.
@@ -648,7 +647,7 @@
 			((&&) and-expr?)
 			((OR) or-expr?)
 			(else (error "lhs-req"
-				     "missed an op"
+				     "Internal Error: missed an op"
 				     op))))
 	    ;; in most cases where there is a comment we deviate from the spec.
 	    ;; this should yield less parenthesis.
@@ -671,7 +670,7 @@
 			((&&) and-expr?) ;; x&&(y&&z) <=> (x&&y)&&z
 			((OR) or-expr?) ;; x||(y||z) <=> (x||y)||z
 			(else (error "rhs-req"
-				     "missed an op"
+				     "Internal Error: missed an op"
 				     op)))))
 	 (nested-expr-out lhs lhs-req in-for-init? stmt-begin?
 			  indent p compress?)
@@ -708,7 +707,7 @@
       (display "new " p)
       ;; the requirement is much simpler as one could expect from the spec as
       ;; we are always printing the parenthesis of 'new's.
-      (nested-expr-out class member-expr? #f #f (+fx indent 4) p compress?)
+      (nested-expr-out class call-expr? #f #f (+fx indent 4) p compress?)
       (display #\( p)
       (unless (null? args)
 	 (nested-expr-out (car args) assig-expr? #f #f
@@ -725,31 +724,21 @@
 			 indent p compress?)
    (with-access::Access this (obj field)
       (if (and (String? field)
-	       (valid-js-id? (String-val field) :strip-delimiters? #t))
+	       (valid-js-id? (String-val field) :strip-delimiters? #t)
+	       (not (Number? obj))
+	       (not (Pragma? obj)))
 	  (let ((str (String-val field)))
-	     (when (Number? obj) (display "(" p))
-	     (nested-expr-out obj member-expr? in-for-init? stmt-begin?
+	     (nested-expr-out obj call-expr? in-for-init? stmt-begin?
 			      indent p compress?)
-	     (when (Number? obj) (display ")" p))
 	     (display #\. p)
 	     ;; strip delimiters
 	     (display (substring str 1 (-fx (string-length str) 1)) p))
 	  (begin
-	     (nested-expr-out obj member-expr? in-for-init? stmt-begin?
+	     (nested-expr-out obj call-expr? in-for-init? stmt-begin?
 			      indent p compress?)
 	     (display #\[ p)
 	     (nested-expr-out field expr? #f #f (indent++ indent) p compress?)
 	     (display #\] p)))))
-
-(define-method (expr-out this::Dot in-for-init? stmt-begin?
-			 indent p compress?)
-   (with-access::Dot this (obj field)
-      (when (Number? obj) (display "(" p))
-      (nested-expr-out obj member-expr? in-for-init? stmt-begin?
-		       indent p compress?)
-      (when (Number? obj) (display ")" p))
-      (display #\. p)
-      (display field p)))
 
 (define-method (expr-out this::This in-for-init? stmt-begin?
 			 indent p compress?)
@@ -758,7 +747,7 @@
 (define-method (expr-out this::Literal in-for-init? stmt-begin?
 			 indent p compress?)
    (with-access::Literal this (val)
-      (error "Literal-out" "forgot literal type" val)))
+      (error "Literal-out" "Internal Error: forgot literal type" val)))
 
 (define-method (expr-out this::Undefined in-for-init? stmt-begin?
 			 indent p compress?)

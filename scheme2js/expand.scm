@@ -284,11 +284,10 @@
 		(cons (f (car L))
 		      rev-res)))
 	 (else
-	  (scheme2js-error
-	   "expander"
-	   "not a list"
-	   orig-L
-	   orig-L)))))
+	  (scheme2js-error "expander"
+			   "not a list"
+			   orig-L
+			   orig-L)))))
 
 (define-macro (loc-attach LL . attachments)
    (let ((kvote (car LL)))

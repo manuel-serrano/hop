@@ -12,18 +12,23 @@
 
 (module error
    (import export-desc nodes)
-   (export (scheme2js-error proc msg obj loc)))
+   (export (scheme2js-error proc msg obj loc)
+	   (scheme2js-error-location loc)))
 
-(define (scheme2js-error proc msg obj loc)
+(define (scheme2js-error-location loc)
    (cond
       ((Node? loc)
        (with-access::Node loc (location)
-	  (scheme2js-error proc msg obj location)))
+	  (scheme2js-error-location location)))
       ((epair? loc)
-       (scheme2js-error proc msg obj (cer loc)))
+       (cer loc))
       (else
-       (match-case loc
-	  ((at ?fname ?loc)
-	   (error/location proc msg obj fname loc))
-	  (else
-	   (error proc msg obj))))))
+       loc)))
+   
+(define (scheme2js-error proc msg obj loc)
+   (let ((loc (scheme2js-error-location loc)))
+      (match-case loc
+	 ((at ?fname ?loc)
+	  (error/location proc msg obj fname loc))
+	 (else
+	  (error proc msg obj)))))

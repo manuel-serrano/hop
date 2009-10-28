@@ -357,7 +357,7 @@ example illustrate this mutual imports.
 The server modules imports the client module named ++client++ defined as:
 
   (module foo-client
-     $(import f00pserver)
+     $(import foo-server)
      (export (update)))
 
   (define (update src)

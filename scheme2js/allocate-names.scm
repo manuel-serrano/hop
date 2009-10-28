@@ -33,19 +33,6 @@
 	      (js-id::bstring read-only)))
    (export (gen-var-names tree)))
 
-(define *reserved-js* (make-hashtable))
-(for-each (lambda (str)
-	     (hashtable-put! *reserved-js* str #t))
-	  '("as" "break" "case" "catch" "class" "const" "continue" "default"
-		 "delete" "do" "else" "extends" "false" "finally" "for"
-		 "function" "if" "import" "in" "instanceof" "is" "namespace"
-		 "new" "null" "package" "private" "public" "return" "super"
-		 "switch" "this" "throw" "true" "try" "typeof" "use" "var"
-		 "void" "while" "with" "abstract" "debugger" "enum" "export"
-		 "goto" "implements" "interface" "native" "protected"
-		 "synchronized" "throws" "transient" "volatile" "Object"
-		 "undefined"))
-		 
 (define (gen-var-names tree)
    (verbose "  generating names for vars")
    (find-free tree #f #f '()) ;; local version

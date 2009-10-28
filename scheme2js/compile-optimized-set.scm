@@ -12,8 +12,8 @@
 
 (module compile-optimized-set
    (export
-    (compile-unoptimized-set! p env compile::procedure n::Node)
-    (compile-set! p env compile::procedure node::Node))
+    (compile-unoptimized-set! p compile::procedure n::Node)
+    (compile-set! p compile::procedure node::Node))
    (import config
 	   tools
 	   template-display
@@ -32,7 +32,7 @@
      ("sc_bitOr" "|")
      ("sc_bitXor" "^")))
 
-(define (compile-optimized-set! p env compile n)
+(define (compile-optimized-set! p compile n)
    (with-access::Set! n (lvalue val)
       (with-access::Ref lvalue (var)
 	 (if (Call? val)
@@ -59,28 +59,28 @@
 					(string=? (cadr entry) "-"))
 				    (Const? (cadr operands))
 				    (eq? 1 (Const-value (cadr operands))))
-			       (template-display p env
+			       (template-display p
 				  "(~a~a~a)"
 				  (cadr entry) (cadr entry) ;; ++ or --
 				  (Named-Var-js-id var))
 			       (with-access::Named-Var var (js-id)
-				  (template-display p env
+				  (template-display p
 				     "($js-id ~a= ~e)"
 				     (cadr entry)
 				     (compile (cadr operands) p #f))))
-			   (compile-unoptimized-set! p env compile n)))
-		    (compile-unoptimized-set! p env compile n)))
-	     (compile-unoptimized-set! p env compile n)))))
+			   (compile-unoptimized-set! p compile n)))
+		    (compile-unoptimized-set! p compile n)))
+	     (compile-unoptimized-set! p compile n)))))
 
-(define (compile-unoptimized-set! p env compile n)
+(define (compile-unoptimized-set! p compile n)
    (with-access::Set! n (lvalue val)
-      (template-display p env
+      (template-display p
 	 "~e = ~e"
 	 (compile lvalue p #f)
 	 (compile val p #f))))
 
-(define (compile-set! p env compile n)
+(define (compile-set! p compile n)
    ;; TODO: get rid of '(config ...)
    (if (config 'optimize-set!)
-       (compile-optimized-set! p env compile n)
-       (compile-unoptimized-set! p env compile n)))
+       (compile-optimized-set! p compile n)
+       (compile-unoptimized-set! p compile n)))

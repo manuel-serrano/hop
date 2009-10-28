@@ -26,9 +26,9 @@
 
 
 (define (configs-backup)
-   (thread-parameter '*config*))
+   (thread-parameter '*scheme2js-config*))
 (define (configs-restore! backuped-config)
-   (thread-parameter-set! '*config* backuped-config))
+   (thread-parameter-set! '*scheme2js-config* backuped-config))
 
 
 (define (extend-config c conf val)
@@ -44,19 +44,19 @@
 	   (cdr tmp))))
 
 (define (config-init! #!optional config)
-   (thread-parameter-set! '*config* (or config '())))
+   (thread-parameter-set! '*scheme2js-config* (or config '())))
 
 (define (config conf)
-   (read-config (thread-parameter '*config*) conf))
+   (read-config (thread-parameter '*scheme2js-config*) conf))
 (define scheme2js-config config)
 
 (define (config-set! conf val)
-   (let ((configuration (thread-parameter '*config*)))
+   (let ((configuration (thread-parameter '*scheme2js-config*)))
       (let ((tmp (assq conf configuration)))
 	 (unless (and tmp
 		      (equal? val (cdr tmp)))
 	    ;; thread-parameter-set! is expensive->only update when needed.
-	    (thread-parameter-set! '*config*
+	    (thread-parameter-set! '*scheme2js-config*
 				   (cons (cons conf val) configuration))))))
 
 (define *O0*
@@ -161,7 +161,7 @@
    (append '((infotron . #f)
 	     (direct-js-object-access . #t)
 	     (procedures-provide-js-this . #f)
-	     (unresolved=JS . module)
+	     (allow-unresolved . module)
 	     (export-globals . module)
 	     (encapsulate-modules . #f)
 	     (trampoline . #f)

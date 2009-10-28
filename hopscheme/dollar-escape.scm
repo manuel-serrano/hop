@@ -1,6 +1,28 @@
 (module __hopscheme_dollar-escape
    (library scheme2js)
-   (import __hopscheme_config))
+   (import __hopscheme_config)
+   (export (dollars-backup)
+	   (dollars-restore! backuped-dollars)
+	   (dollar-mapping)
+	   (dollars-reset!)))
+	   
+(define (dollars-backup)
+   (thread-parameter '*hopscheme-dollars*))
+(define (dollars-restore! backuped-dollars)
+   (thread-parameter-set! '*hopscheme-dollars* backuped-dollars))
+(define (dollars-reset!)
+   (thread-parameter-set! '*hopscheme-dollars* '()))
+(define (dollar-mapping)
+   (thread-parameter '*hopscheme-dollars*))
+
+(define (dollar-add! val)
+   (if (symbol? val)
+       val
+       (let ((id (gensym 'dollar))
+	     (dollars (thread-parameter '*hopscheme-dollars*)))
+	  (thread-parameter-set! '*hopscheme-dollars*
+				 (cons `(,id ,val) dollars))
+	  id)))
 
 ;; ===========================================================================
 ;; add scheme2js pre-expander, so we recognize '$'escapes.
@@ -42,10 +64,8 @@
 		     (set-cdr! l (unhop-list! (cddr l)))
 		     l)))
 	   (begin
-	      (set-car! l `(pragma ,(with-output-to-string
-				       (lambda ()
-					  (write '$)
-					  (write (cadr l))))))
+	      (set-car! l `(pragma ,(format "$~a"
+					    (dollar-add! (cadr l)))))
 	      (set-cdr! l (unhop-list! (cddr l)))
 	      l)))
       (else
