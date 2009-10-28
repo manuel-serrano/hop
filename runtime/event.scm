@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Oct 27 14:19:28 2009 (serrano)                */
+;*    Last change :  Tue Oct 27 18:26:18 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -671,8 +671,7 @@
    (let ((s (http-request-socket req)))
       (with-handler
 	 (lambda (e)
-	    (unless (or (&io-timeout-error? e) (&io-sigpipe-error? e))
-	       (raise e))
+	    (unless (&io-error? e) (raise e))
 	    #f)
 	 (http-response resp s)
 	 (socket-close s)
@@ -686,7 +685,7 @@
 	  (p (socket-output s)))
       (with-handler
 	 (lambda (e)
-	    (if (or (&io-timeout-error? e) (&io-sigpipe-error? e))
+	    (if (&io-error? e)
 		(begin
 		   (set! *clients-number* (-fx *clients-number* 1))
 		   (flash-close-request! req))
@@ -706,10 +705,8 @@
 	  (p (socket-output s)))
       (with-handler
 	 (lambda (e)
-	    (if (or (&io-timeout-error? e) (&io-sigpipe-error? e))
-		(begin
-		   (set! *clients-number* (-fx *clients-number* 1))
-		   (multipart-close-request! req))
+	    (if (&io-error? e)
+		(multipart-close-request! req)
 		(raise e)))
 	 (begin
 	    (fprintf p "Content-type: text/xml\n\n")

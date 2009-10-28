@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Mon Oct 26 07:21:37 2009 (serrano)                */
+/*    Last change :  Tue Oct 27 18:26:00 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -188,7 +188,11 @@ function start_servevt_xhr_multipart_proxy( key ) {
 		     server_ready = true;
 		     hop_trigger_serverready_event( new HopServerReadyEvent() );
 		  }
+	       } else {
+		  alert( "unknow event message: [" + xhr.responseText + "]" );
 	       }
+	    } else {
+	       alert( "unknow event message: [" + xhr.responseText + "]" );
 	    }
 	 }
 
