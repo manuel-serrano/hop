@@ -21,6 +21,7 @@
 	   (doc-weblets-dir)
 	   (doc-wiki-dir)
 	   (doc-core-dir)
+	   (doc-js-dir)
 	   (doc-hss-dir)
 	   (doc-tutorials-dir)
 	   (doc-rc-directory)
@@ -37,7 +38,7 @@
 ;*    Version                                                          */
 ;*---------------------------------------------------------------------*/
 (define (doc-version) "1.1.0")
-(define (doc-date) "19 October 2009")
+(define (doc-date) "28 October 2009")
 (define (doc-author) "M. Serrano")
 
 ;*---------------------------------------------------------------------*/
@@ -69,6 +70,11 @@
 ;*    doc-core-dir                                                     */
 ;*---------------------------------------------------------------------*/
 (define-parameter doc-core-dir (make-file-name (doc-dir) "core"))
+
+;*---------------------------------------------------------------------*/
+;*    doc-js-dir                                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter doc-js-dir (make-file-name (doc-dir) "js"))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc-hss-dir                                                      */

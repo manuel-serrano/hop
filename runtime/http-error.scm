@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Oct 26 08:29:25 2009 (serrano)                */
+;*    Last change :  Thu Oct 29 07:42:34 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -30,7 +30,7 @@
 	    __hop_hop)
    
    (export  (http-request-error::%http-response ::&error)
-	    (http-error::%http-response ::&error ::http-request)
+	    (http-error::%http-response ::obj ::http-request)
 	    (http-unknown-host host)
 	    (http-file-not-found file)
 	    (http-service-not-found file)
@@ -68,7 +68,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-error ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (http-error e::&error req::http-request)
+(define (http-error e::obj req::http-request)
    (let* ((ths "text-align: right; color: #777")
 	  (msg (<TABLE> :style "font-size: 12pt"
 		  (<COLGROUP> (<COL> :width "0*"))

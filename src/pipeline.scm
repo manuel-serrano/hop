@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Thu Oct 22 17:30:09 2009 (serrano)                */
+;*    Last change :  Thu Oct 29 07:46:01 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -227,16 +227,13 @@
       ((&io-error? e)
        (response-io-error-handler e scd req)
        (raise e))
-      ((&exception? e)
+      (else
        (with-handler
 	  (lambda (e)
 	     ;; there is nothing we can do but aborting the request
 	     (socket-close (http-request-socket req))
 	     (raise (instantiate::&ignore-exception)))
-	  (response-exception-error-handler e scd req)))
-      (else
-       (socket-close (http-request-socket req))
-       (raise e))))
+	  (response-exception-error-handler e scd req)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    response-io-error-handler ...                                    */
@@ -265,7 +262,9 @@
 		((&error? e)
 		 (error-notify (evmeaning-annotate-exception! e)))
 		((&warning? e)
-		 (warning-notify (evmeaning-annotate-exception! e))))
+		 (warning-notify (evmeaning-annotate-exception! e)))
+		(else
+		 (exception-notify e)))
 	     ;; generate a legal response for the next stage (although
 	     ;; this response denotes the error).
 	     (let ((resp ((or (hop-http-response-error) http-error) e req))
@@ -351,7 +350,6 @@
 	     (format " ~a" thread)
 	     ": " (find-runtime-type resp)
 	     " " (user-name (http-request-user req)) "\n")
-   
    (with-stage-handler
       response-error-handler (scd req)
       (let* ((sock (http-request-socket req))

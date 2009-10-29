@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Oct 27 18:26:18 2009 (serrano)                */
+;*    Last change :  Thu Oct 29 07:48:37 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -685,11 +685,10 @@
 	  (p (socket-output s)))
       (with-handler
 	 (lambda (e)
-	    (if (&io-error? e)
-		(begin
-		   (set! *clients-number* (-fx *clients-number* 1))
-		   (flash-close-request! req))
-		(raise e)))
+	    (when (&io-error? e)
+	       (set! *clients-number* (-fx *clients-number* 1))
+	       (flash-close-request! req))
+	    (raise e))
 	 (begin
 	    (fprintf p "<event name='~a'>" name)
 	    (display value p)
@@ -705,9 +704,10 @@
 	  (p (socket-output s)))
       (with-handler
 	 (lambda (e)
-	    (if (&io-error? e)
-		(multipart-close-request! req)
-		(raise e)))
+	    (when (&io-error? e)
+	       (set! *clients-number* (-fx *clients-number* 1))
+	       (multipart-close-request! req))
+	    (raise e))
 	 (begin
 	    (fprintf p "Content-type: text/xml\n\n")
 	    (display value p)
@@ -891,20 +891,22 @@
 	     ": " name)
    (hop-verb 3 " value=" (with-output-to-string (lambda () (write-circle value))))
    (hop-verb 2 "\n")
-   (tprint ">>> broadcast: " (mutex-state *event-mutex*))
+   (tprint ">>> broadcast: " (mutex-state *event-mutex*) " name=" name)
    (mutex-lock! *event-mutex*)
    (unwind-protect
       (begin
 	 (with-handler
 	    (lambda (e)
-	       (tprint "ERROR: " e)
+	       (tprint "!!! broadcast handler: " e " thread=" (current-thread))
 	       (dump-trace-stack (current-error-port) 10)
 	       (raise e))
 	    (begin
 	       (ajax-event-broadcast! name value)
 	       (multipart-event-broadcast! name value)
 	       (flash-event-broadcast! name value))))
-      (mutex-unlock! *event-mutex*))
+      (begin
+	 (tprint "~~~ broadcast unwind")
+	 (mutex-unlock! *event-mutex*)))
    (tprint "<<< broadcast: " (mutex-state *event-mutex*))
    #unspecified)
 
