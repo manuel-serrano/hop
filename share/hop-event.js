@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Tue Oct 27 18:26:00 2009 (serrano)                */
+/*    Last change :  Fri Oct 30 06:24:18 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -181,8 +181,9 @@ function start_servevt_xhr_multipart_proxy( key ) {
 		  hop_trigger_servevt( id, text, hop_create_element( text ), false );
 	       } else if( k == "j" ) {
 		  var t = text.match( hop_servevt_multipart_cdata_re );
-		  if( t ) 
+		  if( t ) {
 		     hop_trigger_servevt( id, t[ 1 ], t[ 1 ], true );
+		  }
 	       } else if( k == "r" ) {
 		  if( !server_ready ) {
 		     server_ready = true;
@@ -197,14 +198,11 @@ function start_servevt_xhr_multipart_proxy( key ) {
 	 }
 
 	 var failure = function( xhr ) {
-	    alert( "event FAILURE: [" + xhr.responseText + "]" );
-	    if( !xhr.status &&
-		!xhr.getAllResponseHeaders() ) {
-	       // we have reached a timeout, we just re-register
-	       register( id );
-	    } else {
-	       if( "hop_servevt_onclose" in window ) hop_servevt_onclose();
+	    if( xhr.exception ) {
+	       hop_report_exception( xhr.exception );
 	    }
+	    
+	    if( "hop_servevt_onclose" in window ) hop_servevt_onclose();
 	 }
 
 	 var req = hop_make_xml_http_request();

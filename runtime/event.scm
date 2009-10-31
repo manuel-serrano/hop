@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Oct 29 07:48:37 2009 (serrano)                */
+;*    Last change :  Sat Oct 31 06:21:23 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -430,7 +430,7 @@
       (hashtable-for-each *ajax-connection-key-table*
 			  (lambda (k conn)
 			     (when (ajax-connection-ping? conn)
-				(tprint "ping: " conn)
+				(tprint "*** ping: " conn)
 				(ajax-connection-ping! conn)))))
 
    (define (flash-connection-ping? e)
@@ -656,12 +656,10 @@
 ;*    get-ajax-key ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (get-ajax-key port)
-   (tprint ">>> get-ajax-key: " (mutex-state *event-mutex*))
    (mutex-lock! *event-mutex*)
    (set! *client-key* (+fx 1 *client-key*))
    (let ((key (format "~a:~a://~a" (hostname) port *client-key*)))
       (mutex-unlock! *event-mutex*)
-      (tprint "<<< get-ajax-key: " (mutex-state *event-mutex*))
       key))
 
 ;*---------------------------------------------------------------------*/
@@ -671,6 +669,7 @@
    (let ((s (http-request-socket req)))
       (with-handler
 	 (lambda (e)
+	    (tprint "AJAX EVENT ERROR: " e)
 	    (unless (&io-error? e) (raise e))
 	    #f)
 	 (http-response resp s)
@@ -685,10 +684,12 @@
 	  (p (socket-output s)))
       (with-handler
 	 (lambda (e)
-	    (when (&io-error? e)
-	       (set! *clients-number* (-fx *clients-number* 1))
-	       (flash-close-request! req))
-	    (raise e))
+	    (tprint "FLASH EVENT ERROR: " e " thread=" (current-thread))
+	    (if (&io-error? e)
+		(begin
+		   (set! *clients-number* (-fx *clients-number* 1))
+		   (flash-close-request! req))
+		(raise e)))
 	 (begin
 	    (fprintf p "<event name='~a'>" name)
 	    (display value p)
@@ -704,10 +705,12 @@
 	  (p (socket-output s)))
       (with-handler
 	 (lambda (e)
-	    (when (&io-error? e)
-	       (set! *clients-number* (-fx *clients-number* 1))
-	       (multipart-close-request! req))
-	    (raise e))
+	    (tprint "MULTIPART EVENT ERROR: " e " thread=" (current-thread))
+	    (if (&io-error? e)
+		(begin
+		   (set! *clients-number* (-fx *clients-number* 1))
+		   (multipart-close-request! req))
+		(raise e)))
 	 (begin
 	    (fprintf p "Content-type: text/xml\n\n")
 	    (display value p)
@@ -728,7 +731,7 @@
       ((real? value)
        (format "<f name='~a'>~a</f>" name value))
       (else
-       (format "<j name='~a'><![CDATA[~a]]></j>" name (hop->json value #f #t)))))
+       (format "<j name='~a'><![CDATA[~a]]></j>" name (hop->json value #f #f)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    json-make-signal-value ...                                       */
@@ -891,23 +894,13 @@
 	     ": " name)
    (hop-verb 3 " value=" (with-output-to-string (lambda () (write-circle value))))
    (hop-verb 2 "\n")
-   (tprint ">>> broadcast: " (mutex-state *event-mutex*) " name=" name)
    (mutex-lock! *event-mutex*)
    (unwind-protect
       (begin
-	 (with-handler
-	    (lambda (e)
-	       (tprint "!!! broadcast handler: " e " thread=" (current-thread))
-	       (dump-trace-stack (current-error-port) 10)
-	       (raise e))
-	    (begin
-	       (ajax-event-broadcast! name value)
-	       (multipart-event-broadcast! name value)
-	       (flash-event-broadcast! name value))))
-      (begin
-	 (tprint "~~~ broadcast unwind")
-	 (mutex-unlock! *event-mutex*)))
-   (tprint "<<< broadcast: " (mutex-state *event-mutex*))
+	 (ajax-event-broadcast! name value)
+	 (multipart-event-broadcast! name value)
+	 (flash-event-broadcast! name value))
+      (mutex-unlock! *event-mutex*))
    #unspecified)
 
 ;*---------------------------------------------------------------------*/
