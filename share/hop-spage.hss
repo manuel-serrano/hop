@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug 15 16:47:08 2009                          */
-/*    Last change :  Sat Sep 19 15:38:10 2009 (serrano)                */
+/*    Last change :  Sat Oct 31 12:22:27 2009 (serrano)                */
 /*    Copyright   :  2009 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Slide Pages                                                      */
@@ -27,10 +27,11 @@ $(define-hss-type spage "div[hssclass=hop-spage]"
      (format "spbody { margin: ~l; }" v))
   (define-hss-property (effect v)
      (cond
-        ((string=? (car v) "slide") (format "content: left;"))
-        ((string=? (car v) "fade") (format "content: fade;"))
-        ((string=? (car v) "none") (format "content: none;"))
-        (else (format "content: left;")))))
+        ((string=? (car v) "slide") (format "content: \"left\";"))
+        ((string=? (car v) "fade") (format "content: \"fade\";"))
+        ((string=? (car v) "none") (format "content: \"none\";"))
+        ((string=? (car v) "auto") (format "content: \"auto\";"))
+        (else (format "content: \"auto\";")))))
 
 $(define-hss-type sphead "div[hssclass=hop-spage-head]")
 $(define-hss-type spbody "div[hssclass=hop-spage-body]")
@@ -56,7 +57,7 @@ spage {
   padding: 2px;
   font-size: 12px;
   border-radius: 0.2em;
-  effect: slide;
+  effect: auto;
 }
 
 spbody {

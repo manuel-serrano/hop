@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:20:41 2009                          */
-;*    Last change :  Sat Oct 31 08:57:08 2009 (serrano)                */
+;*    Last change :  Sat Oct 31 12:25:21 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage client-side implementation                             */
@@ -86,21 +86,22 @@
 ;*    spage-effect ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (spage-effect node width step)
-   (cond
-      (#f
-       (spage-fade node (if (> step 0) -0.3 0.2)))
-      (#f
-       (spage-slide node width step))
-      (#t
-       (cond
-	  ((< (hop-config :cpu_speed) 60)
-	   (spage-none node (- step)))
-	  ((and #f (< width 600))
-	   (spage-slide node width step))
-	  (else
-	   (spage-fade node (if (> step 0) -0.3 0.25)))))
-      (else
-       (spage-none node (- step)))))
+   (let ((style (node-computed-style-get node "content")))
+      (cond
+	 ((string=? style "\"fade\"")
+	  (spage-fade node (if (> step 0) -0.3 0.2)))
+	 ((string=? style "\"slide\"")
+	  (spage-slide node width step))
+	 ((string=? style "\"auto\"")
+	  (cond
+	     ((< (hop-config :cpu_speed) 60)
+	      (spage-none node (- step)))
+	     ((and #f (< width 600))
+	      (spage-slide node width step))
+	     (else
+	      (spage-fade node (if (> step 0) -0.3 0.25)))))
+	 (else
+	  (spage-none node (- step))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-show ...                                                   */
