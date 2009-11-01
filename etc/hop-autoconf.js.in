@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Thu Oct  8 08:36:22 2009 (serrano)                */
+/*    Last change :  Sun Nov  1 09:10:08 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -178,6 +178,14 @@ function hop_Config() {
 	    "), using default settings..." );
   }
 
+  /* Screen Dimensions */
+  this.screen_width = screen.width;
+  this.screen_height = screen.height;
+  this.screen_available_width = screen.availWidth;
+  this.screen_available_height = screen.availHeight;
+  this.screen_color_depth = screen.colorDepth;
+  
+     
   this.version = hop_version();
   this.backend = hop_backend();
 }
@@ -708,62 +716,6 @@ switch( hop_config.mouse_left_button ) {
       hop_event_mouse_button = function hop_event_mouse_button( e ) {
 	 return e.button + (1 - hop_config.mouse_left_button);
       }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_current_window_width/height ...                              */
-/*---------------------------------------------------------------------*/
-/*** META ((export current-window-width) (arity 0)) */
-var hop_current_window_width = undefined;
-/*** META ((export current-window-height) (arity 0)) */
-var hop_current_window_height = undefined;
-
-if( isNaN( window.innerWidth ) ) {
-   hop_current_window_width = function hop_current_window_width() {
-      return document.documentElement.clientWidth;
-   }
-   hop_current_window_height = function hop_current_window_height() {
-      return document.documentElement.clientHeight;
-   }
-} else {
-   hop_current_window_width = function hop_current_window_width() {
-      return window.innerWidth;
-   }
-   hop_current_window_height = function hop_current_window_height() {
-      return window.innerHeight;
-   }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_iframe_scroll_height ...                                     */
-/*---------------------------------------------------------------------*/
-/*** META ((export iframe-scroll-height) (arity #t)) */
-function hop_iframe_scroll_height( e ) {
-   if( "contentDocument" in e ) {
-      return e.contentDocument.body.scrollHeight;
-   } else {
-      if( "document" in e ) {
-	 return e.document.body.scrollHeight;
-      } else {
-	 return iframe.height;
-      }
-   }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_iframe_scroll_width ...                                      */
-/*---------------------------------------------------------------------*/
-/*** META ((export iframe-scroll-width) (arity #t)) */
-function hop_iframe_scroll_width( e ) {
-   if( "contentDocument" in e ) {
-      return e.contentDocument.body.scrollWidth;
-   } else {
-      if( "document" in e ) {
-	 return e.document.body.scrollWidth;
-      } else {
-	 return iframe.width;
-      }
-   }
 }
 
 /*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Mon Oct 12 08:07:12 2009 (serrano)                */
+/*    Last change :  Sun Nov  1 08:55:08 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -88,6 +88,16 @@ function hop_tprint( file, pos, rest ) {
 	   `((@ hop_tprint _) #f #f (list ,@rest))))
        `((@ hop_tprint _) #f #f (list ,@rest))))
 */
+
+/*---------------------------------------------------------------------*/
+/*    hop_foreach_in ...                                               */
+/*---------------------------------------------------------------------*/
+/*** META ((export for-each-in) (arity #t)) */
+function hop_foreach_in( proc, obj ) {
+   for( var p in obj ) {
+      proc( p, obj[ p ] );
+   }
+}
 
 /*---------------------------------------------------------------------*/
 /*    hop_replace_inner ...                                            */

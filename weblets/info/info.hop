@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/weblets/info/info.hop            */
+;*    serrano/prgm/project/hop/2.0.x/weblets/info/info.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Oct  3 09:17:40 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Sun Nov  1 08:41:02 2009 (serrano)                */
+;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
 ;*=====================================================================*/
@@ -95,6 +95,16 @@
 						 (lambda ()
 						    (<CONFIG>))))
 					   (<NPTAB>
+					      (<NPTABHEAD> "Server")
+					      (<DELAY>
+						 (lambda ()
+						    (<CONFIG:SERVER>))))
+					   (<NPTAB>
+					      (<NPTABHEAD> "client")
+					      (<DELAY>
+						 (lambda ()
+						    (<CONFIG:CLIENT>))))
+					   (<NPTAB>
 					      (<NPTABHEAD> "Weblets")
 					      (<DELAY>
 						 (lambda ()
@@ -160,8 +170,7 @@
 ;*    <CONFIG> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (<CONFIG>)
-   (<TABLE>
-      :class "hop-info"
+   (<TABLE> :class "hop-info"
       (<TR>
 	 (<TH> :align 'right "Var directory")
 	 (<TD> :align 'left (hop-var-directory)))
@@ -193,6 +202,30 @@
 	 (<TH> :align 'right "Remote keep alive timeout")
 	 (<TD> :align 'left (hop-remote-keep-alive-timeout)))))
 
+;*---------------------------------------------------------------------*/
+;*    <CONFIG:SERVER> ...                                              */
+;*---------------------------------------------------------------------*/
+(define (<CONFIG:SERVER>)
+   (<TABLE> :class "hop-info"
+      (map (lambda (e)
+	      (<TR> (<TH> :align 'right (symbol->string (car e)))
+		    (<TD> :align 'left (with-output-to-string
+					  (lambda ()
+					     (display (cdr e)))))))
+	   (bigloo-configuration))))
+   
+;*---------------------------------------------------------------------*/
+;*    <CONFIG:CLIENT> ...                                              */
+;*---------------------------------------------------------------------*/
+(define (<CONFIG:CLIENT>)
+   ~(<TABLE> :class "hop-info"
+       (map (lambda (e)
+	       (<TR> (<TH> :align 'right (symbol->string (car e)))
+		     (<TD> :align 'left (with-output-to-string
+					   (lambda ()
+					      (display (cdr e)))))))
+	    (hop-config))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLETS> ...                                                    */
 ;*---------------------------------------------------------------------*/
