@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:20:41 2009                          */
-;*    Last change :  Sat Oct 31 12:25:21 2009 (serrano)                */
+;*    Last change :  Tue Nov  3 10:44:25 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage client-side implementation                             */
@@ -24,7 +24,6 @@
    (if (< step 0)
        (begin
 	  (node-style-set! node :left (format "~apx" width))
-	  (node-style-set! node :overflow "auto")
 	  (node-style-set! node :overflow "hidden")
 	  (node-style-set! node :visibility "visible"))
        (node-style-set! node :overflow "hidden"))
@@ -37,8 +36,8 @@
 			    (r (if (> step 0)
 				   (format "rect(0,0,0,~a)" w)
 				   (format "rect(0,~a,0,0)" (- width w)))))
-			 (node-style-set! node :clip r)
 			 (node-style-set! node :left s)
+			 (node-style-set! node :clip r)
 			 #t)
 		      (begin
 			 (node-style-set! node :clip "auto")
@@ -96,7 +95,7 @@
 	  (cond
 	     ((< (hop-config :cpu_speed) 60)
 	      (spage-none node (- step)))
-	     ((and #f (< width 600))
+	     ((< width 600)
 	      (spage-slide node width step))
 	     (else
 	      (spage-fade node (if (> step 0) -0.3 0.25)))))
