@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 28 06:23:39 2007                          */
-/*    Last change :  Mon Oct 26 07:37:36 2009 (serrano)                */
+/*    Last change :  Thu Nov 12 08:55:45 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Audio's cascade style sheet.                                 */
@@ -34,8 +34,8 @@ $(define hopaudio-button-radius hopaudio-gui-radius)
 /*   border-right: 1px solid #333;                                     */
 /*   border-bottom: 1px solid #333")                                   */
 /* $(define hopaudio-button-background "#ccc")                         */
-$(define hopaudio-font "Bitstream Vera Sans")
-$(define hopaudio-monospace "Bitstream Vera Sans Mono, Andale Mono, monospace")
+$(define hopaudio-font "Verdana, Bitstream Vera Sans")
+$(define hopaudio-monospace "DejaVu Sans Mono, Andale Mono, Bitstream Vera Sans Mono, monospace")
 $(define hopaudio-width 23)
 $(define hopaudio-height 90)
 
@@ -167,7 +167,7 @@ audio div.hop-audio-separator {
 audio div.hop-audio-info-status {
   background: #fff;
   width: 6em;
-  height: 6ex;
+/*   height: 6ex;                                                      */
   float: left;
   border: 1px solid $hopaudio-border-color;
   margin-bottom: 1ex;
@@ -231,6 +231,9 @@ audio span.hop-audio-info-status-track-on-play {
 audio div.hop-audio-info-status-length {
   font-size: 80%;
   font-family: $hopaudio-monospace;
+  border: 0;
+  margin: 0;
+  padding: 0;
 }
 
 audio span.hop-audio-info-status-length {

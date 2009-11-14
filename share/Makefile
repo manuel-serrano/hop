@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Tue Oct 13 08:53:39 2009 (serrano)                */
+#*    Last change :  Sat Nov 14 06:33:27 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -27,8 +27,16 @@ FLASHSRC	= HopServevt.as HopAudio.as HopVideo.as
 FLASH		= $(FLASHOBJS) $(FLASHSRC)
 FLASHOPT	= player.swf swfobject.js
 
+#*---------------------------------------------------------------------*/
+#*    Runtime                                                          */
+#*---------------------------------------------------------------------*/
 RTS		= $(RTSCONFIG)
 
+#*---------------------------------------------------------------------*/
+#*    Client-side runtime library                                      */
+#*    -------------------------------------------------------------    */
+#*    See hopscheme/hop-runtime.scm to add new modules.                */
+#*---------------------------------------------------------------------*/
 EXTRA		= hop-error.hss hop.css \
                   hop-fx.js hop-fx.hss \
                   hop-paned.hss hop-paned.js \
@@ -54,8 +62,12 @@ EXTRA		= hop-error.hss hop.css \
 		  hop-color.scm hop-color.hss \
                   hop-lframe.hss \
                   hop-canvas.scm hop-exception.scm \
-                  hop-spage.scm hop-spage.hss
+                  hop-spage.scm hop-spage.hss \
+                  hop-font.scm
 
+#*---------------------------------------------------------------------*/
+#*    AUDIO and ICONS                                                  */
+#*---------------------------------------------------------------------*/
 ICONS_AUDIO	= mute.png pause.png playlist.png prefs.png stop.png \
 		  next.png play.png podcast.png prev.png unmute.png
 

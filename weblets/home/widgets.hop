@@ -52,7 +52,7 @@
 			      obj)))))))
 	 (<DIV> :class "foot"
 	    (<FOOT-BUTTON>
-	       :href "http://www.inria.fr/mimosa"
+	       :href "http://www.inria.fr/indes"
 	       :title "INRIA"
 	       :inline #t
 	       :src "inria.png")

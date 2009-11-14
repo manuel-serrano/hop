@@ -9,7 +9,7 @@
 
 (define *hop-runtime-modules*
    '(__hop __hop-canvas __hop-spage __hop-spinbutton __hop-color __hop-window
-     __hop-dashboard __hop-audio __hop-file))
+     __hop-dashboard __hop-audio __hop-file __hop-font))
 
 (define (runtime-resolver)
    (let* ((afile (make-file-path *hop-share-directory* *hop-runtime-afile*))

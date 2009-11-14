@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat Oct 31 06:21:23 2009 (serrano)                */
+;*    Last change :  Fri Nov 13 05:12:03 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -386,6 +386,7 @@
 	 `((*clients-number* ,*clients-number*)
 	   (*flash-request-list* ,*flash-request-list*)
 	   (*flash-socket-table* ,*flash-socket-table*)
+	   (*multipart-request-list* ,*multipart-request-list*)
 	   (*multipart-socket-table* ,*multipart-socket-table*)
 	   (*ajax-connection-key-table* ,(dump-ajax-table *ajax-connection-key-table*))))))
 

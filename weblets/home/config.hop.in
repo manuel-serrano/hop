@@ -65,25 +65,25 @@
 ;*    home-articles-url-base ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter home-articles-url-base
-   "http://www.inria.fr/mimosa/Manuel.Serrano/publi")
+   "http://www.inria.fr/indes/Manuel.Serrano/publi")
 
 ;*---------------------------------------------------------------------*/
 ;*    home-ftp-hop-url ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-parameter home-ftp-hop-url
-   "ftp://ftp-sop.inria.fr/mimosa/fp/Hop")
+   "ftp://ftp-sop.inria.fr/indes/fp/Hop")
 
 ;*---------------------------------------------------------------------*/
 ;*    home-ftp-bigloo-url ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter home-ftp-bigloo-url
-   "ftp://ftp-sop.inria.fr/mimosa/fp/Bigloo")
+   "ftp://ftp-sop.inria.fr/indes/fp/Bigloo")
 
 ;*---------------------------------------------------------------------*/
 ;*    home-bigloo-url ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter home-bigloo-url
-   "http://www.inria.fr/mimosa/fp/Bigloo")
+   "http://www.inria.fr/indes/fp/Bigloo")
 
 ;*---------------------------------------------------------------------*/
 ;*    home-source-url ...                                              */

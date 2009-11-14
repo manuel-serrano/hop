@@ -458,12 +458,12 @@ function sc_stringIndexRight(s, cset, start) {
 
 /*** META ((export #t) (arity 1)) */
 function sc_string_downcase(s) {
-   return s.toLowercase();
+   return s.toLowerCase();
 }
 
 /*** META ((export #t) (arity 1)) */
 function sc_string_upcase(s) {
-   return s.toUppercase();
+   return s.toUpperCase();
 }
 
 /*** META ((export #t) (arity 1)) */

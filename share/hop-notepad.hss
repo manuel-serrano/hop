@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan 17 18:56:22 2005                          */
-/*    Last change :  Sat Oct 31 06:46:18 2009 (serrano)                */
+/*    Last change :  Thu Nov 12 08:36:26 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad CSS                                                  */
@@ -31,7 +31,7 @@ $(define-hss-type nptabhead "span.hop-nptab-head")
 /*---------------------------------------------------------------------*/
 notepad {
   font-size: 86%;
-  font-family: Verdana, Lucida;
+  font-family: sans-serif, sans serif, sans, Verdana, Lucida;
 }
 
 notepad table.hop-notepad {

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun Nov  1 08:41:02 2009 (serrano)                */
+;*    Last change :  Sat Nov 14 07:19:46 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -50,6 +50,82 @@
 (hop-http-response-remote-hook-add! traffic-hook)
 
 ;*---------------------------------------------------------------------*/
+;*    info-fonts ...                                                   */
+;*---------------------------------------------------------------------*/
+(define info-fonts
+   '("cmr10"
+     "cursive"
+     "monospace"
+     "serif"
+     "fantasy"
+     "default"
+     "Andale Mono"
+     "Arial"
+     "Arial Black"
+     "Arial Narrow"
+     "Arial Rounded MT Bold"
+     "Balker"
+     "Bitstream Charter"
+     "Bitstream Vera Sans"
+     "Bitstream Vera Sans Mono"
+     "Bitstream Vera Sans Serif"
+     "Bookman Old Style"
+     "Bradley Hand ITC"
+     "Century"
+     "Century Gothic"
+     "Charter"
+     "Clean"
+     "Comic Sans MS"
+     "Courier"
+     "Courier New"
+     "DejaVu Sans"
+     "DejaVu Sans Mono"
+     "DejaVu Serif"
+     "Dingbats"
+     "Georgia"
+     "Gentium"
+     "Engadget"
+     "Euclid"
+     "Fixed"
+     "FreeMono"
+     "FreeSans"
+     "FreeSerif"
+     "Garamond"
+     "Impact"
+     "jGaramond"
+     "King"
+     "Liberation Mono"
+     "Liberation Sans"
+     "Liberation Serif"
+     "Lucida"
+     "LucidaBright"
+     "Lucida Console"
+     "Lucida Typewriter"
+     "Luxi Mono"
+     "Luxi Sans"
+     "Luxi Serif"
+     "Mathematica1"
+     "Modena"
+     "Monotype Corsiva"
+     "Monospace"
+     "New Century Schoolbook"
+     "Papyrus"
+     "Penguin Attack"
+     "sans"
+     "sans serif"
+     "sans-serif"
+     "STIXGeneral"
+     "Tahoma"
+     "TeX"
+     "Times"
+     "Times New Roman"
+     "Trebuchet MS"
+     "Utopia"
+     "Verdana"
+     "Verona"
+     ))
+
+;*---------------------------------------------------------------------*/
 ;*    info weblet ...                                                  */
 ;*    -------------------------------------------------------------    */
 ;*    INFO falls into the admin tools, hence, in addition to be        */
@@ -63,7 +139,7 @@
 	     (<HEAD> :favicon (service-resource info "etc/favicon.png")
 		:title "Hop Info weblet"
 		:base (service-base-url info req)
-		:include "hop-notepad" "hop-sorttable"
+		:include "hop-notepad" "hop-sorttable" "hop-font"
 		:css "info.hss")
 	     (<BODY>
 		:onunload ~(with-hop ($(service ()
@@ -104,6 +180,11 @@
 					      (<DELAY>
 						 (lambda ()
 						    (<CONFIG:CLIENT>))))
+					   (<NPTAB>
+					      (<NPTABHEAD> "fonts")
+					      (<DELAY>
+						 (lambda ()
+						    (<CONFIG:FONT>))))
 					   (<NPTAB>
 					      (<NPTABHEAD> "Weblets")
 					      (<DELAY>
@@ -225,6 +306,63 @@
 					   (lambda ()
 					      (display (cdr e)))))))
 	    (hop-config))))
+
+;*---------------------------------------------------------------------*/
+;*    <CONFIG:FONT> ...                                                */
+;*---------------------------------------------------------------------*/
+(define (<CONFIG:FONT>)
+   ~(let ((odd #t))
+       
+       (define (sample-font-set!)
+	  (let* ((el (dom-get-element-by-id "info-font-entry"))
+		 (el2 (dom-get-element-by-id "info-font-size"))
+		 (size (if (string=? el2.value "") #f (string->number el2.value))))
+	     (node-style-set! "info-font-sample" :font-family
+			      (string-append el.value ", serif"))
+	     (innerHTML-set! "info-font-result"
+			     (format "\"~a~a\" ~a"
+				     el.value
+				     (if size (format ",~apt " size) " ")
+				     (if (font-exists? el.value size)
+					 "exists"
+					 "does not exists")))))
+       
+       (<DIV> :class "info-font"
+	  (<TABLE> :class "info-font-user"
+	     (<TR> (<TD> :style "width: 8em" "Font Family: ")
+		   (<TD> (<INPUT> :class "info-font" :id "info-font-entry"
+			    :onkeyup (when (memq event.which '(10 13))
+					(sample-font-set!))))
+		   (<TD> :style "width: 3em" "Size: ")
+		   (<TD> (<INPUT> :class "info-font" :id "info-font-size"
+			    :onkeyup (when (memq event.which '(10 13))
+					(sample-font-set!))
+			    ""))
+		   (<TD> :style "width: 3em"
+		      (<BUTTON> :onclick (sample-font-set!) "check")))
+	     (<TR> (<TD> :colspan 5 :id "info-font-result"
+		      ""))
+	     (<TR> (<TD> :colspan 5
+		      (<TEXTAREA> :id "info-font-sample"
+			 :style "font-family: serif"
+			 "ABCDEFGHIJKLMNOPQRSTUVWXYZ
+abcdefghijklmnopqrstuvwxyz
+0123456789 ~!@#$%^&*()_+=-,./<>?;':
+mmmmmmmmmmlil"))))
+	  (<TABLE> :class "info-font"
+	     (<TR> :class "info-font-header" (<TH> "Font Name") (<TH> "available"))
+	     (map (lambda (f)
+		     (set! odd (not odd))
+		     (let ((exist (font-exists? f)))
+			(<TR> :class (if odd "odd" "even")
+			   :style (if exist "color: black" "color: #bbb")
+			   (<TD> :class "font-name"
+			      :style (format "font-family: ~a, serif" f)
+			      f)
+			   (if exist
+			       (<TD> :class "font-result" "yes")
+			       (<TD> :class "font-result" "no")))))
+		  $info-fonts)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLETS> ...                                                    */
@@ -341,10 +479,16 @@
 ;*---------------------------------------------------------------------*/
 (define (<EVENTS>)
    (<TABLE> :class "events"
-      (<COLGROUP> (<COL> :span 2 :width "50%"))
-      (<TR> (<TD> :colspan 2 (<EVENT-CLIENTS>) " connected clients."))
-      (<TR> (<TH> :class "events" "Flash") (<TH> :class "events" "Ajax"))
-      (<TR> (<TD> (<EVENT-FLASH>)) (<TD> (<EVENT-AJAX>)))))
+      (<COLGROUP> (<COL> :span 3 :width "33%"))
+      (<TR> (<TD> :colspan 3 (<EVENT-CLIENTS>) " connected clients."))
+      (<TR> (<TH> :class "events" "Multipart")
+	    (<TH> :class "events" "Flash")
+	    (<TH> :class "events" "Ajax"))
+      (<TR> (<TD> (<EVENT-FLASH/MULTIPART>
+		     '*multipart-socket-table* '*multipart-request-list*))
+	    (<TD> (<EVENT-FLASH/MULTIPART>
+		     '*flash-socket-table* '*flash-request-list*))
+	    (<TD> (<EVENT-AJAX>)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <EVENT-CLIENTS> ...                                              */
@@ -354,9 +498,9 @@
       (<SPAN> :class "events-clients" (cadr (assq '*clients-number* tables)))))
    
 ;*---------------------------------------------------------------------*/
-;*    <EVENT-FLASH> ...                                                */
+;*    <EVENT-FLASH/MULTIPART> ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (<EVENT-FLASH>)
+(define (<EVENT-FLASH/MULTIPART> key1 key2)
    (let ((tables (hop-event-tables)))
       (<DIV> :class "dump-events"
 	 (<H1> "Request list")
@@ -370,11 +514,11 @@
 			     (<SPAN> (socket-hostname sock)
 				     ":"
 				     (socket-port-number sock))))))
-		 (cadr (assq '*flash-request-list* tables))))
+		 (cadr (assq key2 tables))))
 	 (<H1> "Socket table")
 	 (<TABLE> :class "dump-events"
 	    (hashtable-map
-	     (cadr (assq '*flash-socket-table* tables))
+	     (cadr (assq key1 tables))
 	     (lambda (k v)
 		(list
 		 (<TR> (<TH> k))

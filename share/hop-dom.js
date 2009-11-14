@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Oct  9 05:52:54 2009 (serrano)                */
+/*    Last change :  Fri Nov 13 07:21:21 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -134,7 +134,7 @@ function dom_create( tag, _ ) {
 	    var at = arguments[ i + 1 ];
 	    var prop = sc_keyword2jsstring( k );
 
-	    if( prop == "class" ) {
+	    if( prop === "class" ) {
 	       el.className = at;
 	    } else {
 	       if( (at instanceof String) || (typeof at == "string") ) {

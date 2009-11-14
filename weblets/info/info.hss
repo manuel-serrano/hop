@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/weblets/info/info.hss             */
+/*    serrano/prgm/project/hop/2.0.x/weblets/info/info.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Apr 16 10:47:18 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Sat Nov 14 07:14:00 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    INFO HOP CSS                                                     */
 /*=====================================================================*/
@@ -272,3 +272,75 @@ div.dump-events table.dump-events td.ajax-buffer:after {
   content: ": ";
 }
 
+/*---------------------------------------------------------------------*/
+/*    fonts                                                            */
+/*---------------------------------------------------------------------*/
+table.info-font {
+  border: 1px solid $border-color;
+  padding: 2px;
+  background: white;
+  width: 100%;
+  border-collapse: collapse;
+  font-family: serif;
+}
+
+table.info-font tr.info-font-header {
+  background: #eee;
+}
+
+table.info-font th {
+  color: #00a;
+  font-size: 12pt;
+  border-bottom: 1px dashed $border-color;
+}
+
+table.info-font tr.odd:hover,
+table.info-font tr.even:hover {
+  background-color: #ffffe7;
+}
+
+table.info-font tr.even {
+  background-color: #fafaff;
+}
+
+table.info-font td.font-name {
+  font-family: serif;
+  font-size: 11pt;
+  font-weight: 200;
+  padding-left: 5px;
+}
+
+table.info-font td.font-result {
+  font-family: serif;
+  font-weight: 200;
+}
+
+input.info-font {
+  width: 95%;
+  border: 1px solid $border-color;
+}
+
+textarea#info-font-sample {
+  border: 1px solid $border-color;
+  background: #ffffe7;
+  width: 100%;
+  height: 11ex;
+  font-size: 140%;
+}
+
+div.info-font button {
+  border: 1px solid $border-color;
+  background: #ddd;
+}
+
+div.info-font button:hover {
+  background: #eee;
+}
+
+table.info-font-user {
+  width: 100%;
+  border-bottom: 1px solid $border-color;
+  padding-bottom: 2ex;
+  margin-bottom: 2ex;
+  border-collapse: collapse;
+}

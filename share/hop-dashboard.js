@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Tue Oct 13 09:12:02 2009 (serrano)                */
+/*    Last change :  Sun Nov  8 10:47:57 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
@@ -21,8 +21,8 @@ var hop_dashboard_container = false;
 var hop_dashboard_icon_size = 32;
 var hop_dashboard_interval = false;
 var hop_dashboard_opacity = "0.70";
-var hop_dashboard_panel_background = "#eee";
-var hop_dashboard_panel_opacity = "0.70";
+var hop_dashboard_panel_background = "#ddd";
+var hop_dashboard_panel_opacity = "0.50";
 
 /*---------------------------------------------------------------------*/
 /*    hop_dashboard_start_applet ...                                   */
@@ -285,7 +285,9 @@ function hop_dashboard_control_panel_init() {
    node_style_set( div, "z-index", "10001" );
    node_style_set( div, "background", "transparent" );
    node_style_set( div, "border", "0" );
-   node_style_set( div, "opacity", "0.95" );
+   node_style_set( div, "opacity", hop_dashboard_opacity );
+   node_style_set( div, "-moz-opacity", hop_dashboard_opacity );
+   node_style_set( div, "-webkit-opacity", hop_dashboard_opacity );
    node_style_set( div, "border-left-width", "1px" );
    node_style_set( div, "border-left-style", "solid" );
    node_style_set( div, "border-left-color", "#ccc" );
@@ -308,7 +310,7 @@ function hop_dashboard_control_panel_init() {
    node_style_set( div2, "opacity", hop_dashboard_panel_opacity );
 
    div.onmouseover = function() {
-      node_style_set( hop_dashboard_container, "-moz-opacity", "1" )
+      node_style_set( hop_dashboard_container, "-webkit-opacity", "1" )
       node_style_set( hop_dashboard_container, "-moz-opacity", "1" )
       node_style_set( hop_dashboard_container, "opacity", "1" )
    };

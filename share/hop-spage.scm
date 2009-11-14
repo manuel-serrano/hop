@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:20:41 2009                          */
-;*    Last change :  Tue Nov  3 10:44:25 2009 (serrano)                */
+;*    Last change :  Tue Nov 10 08:17:31 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage client-side implementation                             */
@@ -28,7 +28,7 @@
 	  (node-style-set! node :visibility "visible"))
        (node-style-set! node :overflow "hidden"))
    (let ((w (if (> step 0) 0 width)))
-      (timeout 100
+      (timeout 10
 	       (lambda ()
 		  (set! w (+ w step))
 		  (if (if (> step 0) (< w width) (>= w 0))
@@ -85,17 +85,17 @@
 ;*    spage-effect ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (spage-effect node width step)
-   (let ((style (node-computed-style-get node "content")))
+   (let ((style (node-computed-style-get node :content)))
       (cond
 	 ((string=? style "\"fade\"")
 	  (spage-fade node (if (> step 0) -0.3 0.2)))
-	 ((string=? style "\"slide\"")
+	 ((or #t (string=? style "\"slide\""))
 	  (spage-slide node width step))
 	 ((string=? style "\"auto\"")
 	  (cond
 	     ((< (hop-config :cpu_speed) 60)
 	      (spage-none node (- step)))
-	     ((< width 600)
+	     ((< width 300)
 	      (spage-slide node width step))
 	     (else
 	      (spage-fade node (if (> step 0) -0.3 0.25)))))

@@ -41,7 +41,7 @@ $(define-hss-type spupdatebutton "span[hssclass=hop-spage-update]")
 
 $(define border-color "#ccc")
 $(define border (format "1px solid ~a" border-color))
-$(define font-family "Tahoma, Verdana")
+$(define font-family "sans-serif")
 
 /*---------------------------------------------------------------------*/
 /*    public declarations                                              */

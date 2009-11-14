@@ -37,7 +37,7 @@ In order to build and test HOP ++.hz++ file, you need:
   - the GNU [[http://www.gnu.org/software/tar/|tar]] utility.
   - if the application contains more than one source code, the
  ++bglafile++ tool (that comes with the installation of the
- [[http://www.inria.fr/mimosa/fp/Bigloo|Bigloo]] compiler).
+ [[http://www.inria.fr/indes/fp/Bigloo|Bigloo]] compiler).
 
 
 A package ++MYWEBLET.hz++ must, at least, contain:

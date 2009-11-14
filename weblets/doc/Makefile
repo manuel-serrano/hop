@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Oct 19 05:35:47 2009 (serrano)                */
+#*    Last change :  Sat Nov 14 07:03:35 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -39,7 +39,8 @@ API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
                   window.wiki xml.wiki symbol.wiki rss.wiki history.wiki \
                   regexp.wiki output.wiki webdav.wiki \
                   charset.wiki svg.wiki mathml.wiki canvas.wiki login.wiki \
-                  condexpand.wiki lframe.wiki spinbutton.wiki colorchooser.wiki
+                  condexpand.wiki lframe.wiki spinbutton.wiki \
+                  colorchooser.wiki font.wiki
 CORE_POP	= core.wiki
 JS_POP		= js-interface.wiki
 EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \

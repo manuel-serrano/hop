@@ -1,0 +1,59 @@
+<doc> Font facilities
+
+== Description ==
+
+Hop provides some facilities for dealing with fonts. In particular, it
+provides the client-side function ++font-exists?++ that checks the existence
+of a particular font on the client-side.
+
+
+== Synopsis ==
+
+=== client ===
+
+  (font-exists? family [size])
+
+
+=== Requirements ===
+
+Client codes using //fonts facilities// need to load the following client-side
+library ++hop-font++.
+
+
+  (<HEAD> :include "hop-font")
+
+
+== Examples ==
+
+<example>font-exists?</example>
+
+== Client Definitions ==
+<client>
+
+=== ++(font-exists? font-family [font-size])++ ===
+<procedure> font-exists?
+
+<arguments>
+^  arguments  ^   type     ^  short description     ^
+| font-family  |  string   | the font family name.       |
+| size         |  integer  | an optional font size.      |
+</arguments>
+
+This function checks if ++font-family++ exists on the client.
+If no ++size++ is given, the function checks if the font
+is available. If it is give, ++font-exists?++ checks if that
+font is available on the particular size.
+
+Example:
+
+  (font-exists? "Arial")
+  (font-exists? "Clean" 72)
+
+
+<client>
+== See also ==
+<see-also>font-exists?</see-also>
+
+</doc>
+
+
