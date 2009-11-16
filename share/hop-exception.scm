@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Mon Oct  5 18:15:32 2009 (serrano)                */
+;*    Last change :  Mon Nov 16 08:06:58 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -216,7 +216,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    <EXCEPTION-JSSTACK> ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (<EXCEPTION-JSSTACK> stack)
+(define (<EXCEPTION-JSSTACK> stack skip)
    
    (define (pp-js-stack stack)
       (map (lambda (f)
@@ -231,13 +231,21 @@
 			 (substring f 0 i)
 			 "\n"))
 		     f)))
-	   (string-split stack "\n")))
-
-   (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px"
-      (<DIV> :style "font-weight: bold" "JavaScript stack:")
-      (<PRE> :style "font-size: 9pt; padding-left: 1em"
-	 :onclick (stop-event-propagation event)
-	 (pp-js-stack stack))))
+	   stack))
+   
+   (let loop ((l (string-split stack "\n"))
+	      (s skip))
+      (cond
+	 ((null? l)
+	  "")
+	 ((= s 0)
+	  (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px"
+	     (<DIV> :style "font-weight: bold" "JavaScript stack:")
+	     (<PRE> :style "font-size: 9pt; padding-left: 1em"
+		:onclick (stop-event-propagation event)
+		(pp-js-stack l))))
+	 (else
+	  (loop (cdr l) (- s 1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <EXCEPTION> ...                                                  */
@@ -288,11 +296,11 @@
 	  (location (if (string? exc.hopLocation) exc.hopLocation "Client Error"))
 	  (src (cond
 		  ((and exc.lineNumber (not (eq? exc.lineNumber #unspecified)))
-		   (list url ", line " exc.lineNumber))
+		   (list (<A> :href url url) ", line " exc.lineNumber))
 		  ((and exc.line (not (eq? exc.line #unspecified)))
-		   (list url ", line " exc.line))
+		   (list (<A> :href url url) ", line " exc.line))
 		  (else
-		   url))))
+		   (<A> :href url)))))
 
       (<EXCEPTION-FRAME>
 	 (<TABLE> :style "width: 100%; font-family: arial; font-size: 10pt; background: #FFFFF7; border-bottom: 1px solid #ccc; overflow: visible"
@@ -306,14 +314,14 @@
 		     (<TR> (<TD> :style "font-size: 20pt; padding-bottom: 4px"
 			      (<SPAN> :style "color: red; font-weight: bold" location)))
 		     (<TR> (<TD> :style "font-size: 14pt" (<SPAN> :style "color: #777; font-weight: bold" name) ": " msg))
-		     (<TR> (<TD> :style "font-family: monospace; font-size: 11pt" src))
+		     (<TR> (<TD> :style "font-family: monospace; font-size: 10pt" src))
 		     (<TR> (<TD> :style "font-family: monospace; color: #777" (properties->string exc)))))))
 	 (<DIV> :style "font-family: arial; font-size: 10pt; overflow: visible"
 	    (when (and exc.hopService (not (eq? exc.hopService #unspecified)))
 	       (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px"
 		  (<DIV> :style "font-weight: bold" "Service:")
 		  (<TABLE> :style "width: 100%; font-size: 9pt; overflow: visible; padding-left: 1em"
-		     (<TR> (<TD> :style "font-size: 11pt"
+		     (<TR> (<TD> :style "font-size: 10pt"
 			      (obj->string exc.hopService #f))))))
 	    (when (pair? exc.hopStack)
 	       (<DIV> :style (if (and exc.hopService (not (eq? exc.hopService #unspecified)))
@@ -325,7 +333,7 @@
 				     (pair? exc.hopStack))
 				 "border-top: 1px dashed #ccc; margin-top: 2ex"
 				 "margin-top: 2ex")
-		  (<EXCEPTION-JSSTACK> exc.stack)))))))
+		  (<EXCEPTION-JSSTACK> exc.stack 2)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-report-exception ...                                         */
