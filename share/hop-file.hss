@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 10:58:15 2008                          */
-/*    Last change :  Wed Sep  9 19:11:22 2009 (serrano)                */
+/*    Last change :  Wed Nov 18 09:11:06 2009 (serrano)                */
 /*    Copyright   :  2008-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopFile Hss                                                      */
@@ -51,7 +51,7 @@ $(define hopfile-run-icon "url( icons/actions/run.png )")
 filechooser {
   font-size: 9pt;
   font-family: $hopfile-font-mono;
-  border: 1px outset black;
+  border: 1px outset #777;
   padding: 4px;
   background: #eee;
   width: 100%;

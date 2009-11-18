@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Mon Nov 16 08:06:58 2009 (serrano)                */
+;*    Last change :  Wed Nov 18 09:20:24 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -232,9 +232,9 @@
 			 "\n"))
 		     f)))
 	   stack))
-   
+
    (let loop ((l (string-split stack "\n"))
-	      (s skip))
+	      (s skip))p
       (cond
 	 ((null? l)
 	  "")
@@ -292,7 +292,7 @@
 		   (list message " -- " (obj->string exc.scObject #f))
 		   message))
 	  (name (exception-name exc))
-	  (url (or exc.fileName document.location))
+	  (url (if (string? exc.fileName) exc.fileName document.location))
 	  (location (if (string? exc.hopLocation) exc.hopLocation "Client Error"))
 	  (src (cond
 		  ((and exc.lineNumber (not (eq? exc.lineNumber #unspecified)))
@@ -301,6 +301,8 @@
 		   (list (<A> :href url url) ", line " exc.line))
 		  (else
 		   (<A> :href url)))))
+
+      (tprint "EXC URL=" url)
 
       (<EXCEPTION-FRAME>
 	 (<TABLE> :style "width: 100%; font-family: arial; font-size: 10pt; background: #FFFFF7; border-bottom: 1px solid #ccc; overflow: visible"

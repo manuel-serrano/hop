@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov  3 08:24:25 2007                          */
-;*    Last change :  Mon Oct  5 21:53:11 2009 (serrano)                */
+;*    Last change :  Tue Nov 17 07:35:54 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Canvas interface                                             */
@@ -360,18 +360,20 @@
 ;*    canvas-draw-image ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (canvas-draw-image ctx image x y . rest)
-   (if (null? rest)
-       (ctx.drawImage image x y)
-       (if (and (pair? rest) (pair? (cdr rest)))
-	   (if (null? (cddr rest))
-	       (ctx.drawImage image x y (car rest) (cadr rest))
-	       (let* ((sw (car rest))
-		      (sh (cadr rest))
-		      (rest (cddr rest)))
-		  (ctx.drawImage image x y sw sh
-				 (car rest) (cadr rest)
-				 (caddr rest) (cadddr rest))))
-	   (error 'canvas-draw-image "Illegal number of arguments"  rest))))
+   (cond
+      ((null? rest)
+       (ctx.drawImage image x y))
+      ((not (and (pair? rest) (pair? (cdr rest))))
+       (error 'canvas-draw-image "Illegal number of arguments"  rest))
+      ((null? (cddr rest))
+       (ctx.drawImage image x y (car rest) (cadr rest)))
+      (else
+       (let* ((sw (car rest))
+	      (sh (cadr rest))
+	      (rest (cddr rest)))
+	  (ctx.drawImage image x y sw sh
+			 (car rest) (cadr rest)
+			 (caddr rest) (cadddr rest))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    canvas-arrow-to ...                                              */

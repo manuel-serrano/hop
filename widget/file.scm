@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Thu Oct 15 10:50:34 2009 (serrano)                */
+;*    Last change :  Wed Nov 18 09:03:52 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -168,7 +168,7 @@
 			      body)
    (let ((id (xml-make-id id 'filechooser))
 	 (regexp (if (null? filters) ".*" (cadar filters))))
-      (<DIV> :id id
+     (<DIV> :id id
 	 :class (if (string? class)
 		    (string-append "filechooser " class)
 		    "filechooser")

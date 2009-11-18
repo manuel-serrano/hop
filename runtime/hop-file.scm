@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Wed Sep  9 18:25:47 2009 (serrano)                */
+;*    Last change :  Wed Nov 18 09:10:18 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
