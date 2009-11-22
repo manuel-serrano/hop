@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Wed Nov 18 09:46:39 2009 (serrano)                */
+/*    Last change :  Wed Nov 18 10:04:38 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -169,95 +169,86 @@ function hop_paned_onresize_set( paned, onresize ) {
 /*    hop_init_vpaned ...                                              */
 /*---------------------------------------------------------------------*/
 function hop_init_vpaned( id, pan1id, pan2id, fraction, onresize ) {
-   var init = function( e ) {
-      var paned = document.getElementById( id );
-      var cursor = document.getElementById( id + "-vpaned-cursor" );
-      var pan1 = document.getElementById( pan1id );
-      var pan2 = document.getElementById( pan2id );
-      var td1 = document.getElementById( id + "-vpaned-td1" );
-      var td2 = document.getElementById( id + "-vpaned-td2" );
+   var paned = document.getElementById( id );
+   var cursor = document.getElementById( id + "-vpaned-cursor" );
+   var pan1 = document.getElementById( pan1id );
+   var pan2 = document.getElementById( pan2id );
+   var td1 = document.getElementById( id + "-vpaned-td1" );
+   var td2 = document.getElementById( id + "-vpaned-td2" );
 
-      // cursor event handling
-      var mousemove = function( e ) {
-	 hop_vpaned_mousemove( e, paned );
-      };
+   // cursor event handling
+   var mousemove = function( e ) {
+      hop_vpaned_mousemove( e, paned );
+   };
 
-      var delmousemove = function( e ) {
-	 hop_remove_event_listener( document, "mousemove", mousemove, false );
-      };
+   var delmousemove = function( e ) {
+      hop_remove_event_listener( document, "mousemove", mousemove, false );
+   };
    
-      var mousedown = function( e ) {
-	 hop_add_event_listener( document, "mousemove", mousemove, false );
-	 hop_add_event_listener( document, "mouseup", delmousemove, false );
-	 hop_add_event_listener( document, "onblur", delmousemove, false );
+   var mousedown = function( e ) {
+      hop_add_event_listener( document, "mousemove", mousemove, false );
+      hop_add_event_listener( document, "mouseup", delmousemove, false );
+      hop_add_event_listener( document, "onblur", delmousemove, false );
       
-	 hop_stop_propagation( e );
-      }
-
-      hop_add_event_listener( cursor, "mousedown", mousedown );
-   
-      // quick access to the pan children
-      paned.td1 = td1;
-      paned.td2 = td2;
-      paned.cursor = cursor;
-      paned.pan1 = pan1;
-      paned.pan2 = pan2;
-
-      // Opera 8 is buggous (at least on PDA). Its does not properly
-      // recompute the parent height
-      var hpan = node_style_get( paned, "height" );
-      node_style_set( paned.parentNode, "height", hpan );
-
-      // setup the initial fraction
-      paned.fraction = -1;
-      hop_vpaned_fraction_set( paned, fraction );
-      hop_paned_onresize_set( paned, onresize );
-   
-      return paned;
+      hop_stop_propagation( e );
    }
 
-   hop_window_onload_add( init );
+   hop_add_event_listener( cursor, "mousedown", mousedown );
+   
+   // quick access to the pan children
+   paned.td1 = td1;
+   paned.td2 = td2;
+   paned.cursor = cursor;
+   paned.pan1 = pan1;
+   paned.pan2 = pan2;
+
+   // Opera 8 is buggous (at least on PDA). Its does not properly
+   // recompute the parent height
+   var hpan = node_style_get( paned, "height" );
+   node_style_set( paned.parentNode, "height", hpan );
+
+   // setup the initial fraction
+   paned.fraction = -1;
+   hop_vpaned_fraction_set( paned, fraction );
+   hop_paned_onresize_set( paned, onresize );
+   
+   return paned;
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_init_hpaned ...                                              */
 /*---------------------------------------------------------------------*/
 function hop_init_hpaned( id, pan1id, pan2id, fraction, onresize ) {
+   var paned = document.getElementById( id );
+   var cursor = document.getElementById( id + "-hpaned-cursor" );
+   var pan1 = document.getElementById( pan1id );
+   var pan2 = document.getElementById( pan2id );
+
+   paned.pan1 = pan1;
+   paned.pan2 = pan2;
+   paned.cursor = cursor;
    
-   var init = function( e ) {
-      var paned = document.getElementById( id );
-      var cursor = document.getElementById( id + "-hpaned-cursor" );
-      var pan1 = document.getElementById( pan1id );
-      var pan2 = document.getElementById( pan2id );
+   // cursor event handling
+   var mousemove = function( e ) {
+      hop_hpaned_mousemove( e, paned );
+   };
 
-      paned.pan1 = pan1;
-      paned.pan2 = pan2;
-      paned.cursor = cursor;
-   
-      // cursor event handling
-      var mousemove = function( e ) {
-	 hop_hpaned_mousemove( e, paned );
-      };
+   var delmousemove = function( e ) {
+      hop_remove_event_listener( document, "mousemove", mousemove, false );
+   };
 
-      var delmousemove = function( e ) {
-	 hop_remove_event_listener( document, "mousemove", mousemove, false );
-      };
-
-      var mousedown = function( e ) {
-	 hop_add_event_listener( document, "mousemove", mousemove, false );
-	 hop_add_event_listener( document, "mouseup", delmousemove, false );
-	 hop_add_event_listener( document, "onblur", delmousemove, false );
-      }
-
-      hop_add_event_listener( cursor, "mousedown", mousedown );
-   
-      paned.fraction = -1;
-      hop_hpaned_fraction_set( paned, fraction );
-      hop_paned_onresize_set( paned, onresize );
-      
-      return paned;
+   var mousedown = function( e ) {
+      hop_add_event_listener( document, "mousemove", mousemove, false );
+      hop_add_event_listener( document, "mouseup", delmousemove, false );
+      hop_add_event_listener( document, "onblur", delmousemove, false );
    }
+
+   hop_add_event_listener( cursor, "mousedown", mousedown );
    
-   hop_window_onload_add( init );
+   paned.fraction = -1;
+   hop_hpaned_fraction_set( paned, fraction );
+   hop_paned_onresize_set( paned, onresize );
+      
+   return paned;
 }
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Sat Oct 31 10:18:25 2009 (serrano)                */
+;*    Last change :  Fri Nov 20 15:44:02 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -33,7 +33,7 @@
        (let ((svc (service ()
 		     (make-spage id attrs title body parent))))
 	  (<SPAN> :hssclass "hop-spage-link" :id id
-	     attrs
+	     attrs 
 	     :onclick ~(spage-push this $parent $svc)
 	     title)))
       (else

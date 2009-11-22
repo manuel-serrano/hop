@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Nov 14 07:19:46 2009 (serrano)                */
+;*    Last change :  Sat Nov 21 19:48:10 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -91,6 +91,7 @@
      "FreeSans"
      "FreeSerif"
      "Garamond"
+     "Helvetica"
      "Impact"
      "jGaramond"
      "King"

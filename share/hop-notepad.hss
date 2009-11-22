@@ -31,7 +31,7 @@ $(define-hss-type nptabhead "span.hop-nptab-head")
 /*---------------------------------------------------------------------*/
 notepad {
   font-size: 86%;
-  font-family: sans-serif, sans serif, sans, Verdana, Lucida;
+  font-family: Arial, Verdana, sans-serif;
 }
 
 notepad table.hop-notepad {
@@ -79,7 +79,7 @@ nphead {
   border-width: 0;
   text-align: left;
   padding: 0 10px 20px 0;
-  font-family: sans-serif;
+  font-family: Arial, Verdana, sans-serif;
   font-style: italic;
   font-size: xx-large;
 }
@@ -100,7 +100,7 @@ nptabhead {
 /*    <NOTEPAD> row.                                                   */
 /*---------------------------------------------------------------------*/
 nptab {
-  font-family: Arial,Helvetica,sans-serif;
+  font-family: Arial, Verdana, sans-serif;
   font-weight: bold; 
   cursor: pointer;
   padding: 0px 10px 0px 10px;
