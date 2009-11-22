@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan 17 18:56:22 2005                          */
-/*    Last change :  Thu Nov 12 08:36:26 2009 (serrano)                */
+/*    Last change :  Sun Nov 22 09:36:44 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad CSS                                                  */
@@ -108,13 +108,8 @@ nptab {
   border: 1px solid #777;
   text-decoration: none;
   white-space: nowrap;
-}
-
-nptab {
-  -moz-border-radius-topRight: 0.3em;
-  -moz-border-radius-topLeft: 0.3em;
-  -webkit-border-top-right-radius: 0.3em;
-  -webkit-border-top-left-radius: 0.3em;
+  border-radius: 0.3em 0.3em 0 0;
+  overflow: hidden;
 }
 
 nptab-active {
