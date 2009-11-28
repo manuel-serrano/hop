@@ -172,7 +172,7 @@ function sc_rempropBang(sym, key) {
 
 /*** META ((export #t) (arity #t)) */
 function sc_any2String(o) {
-    return jsstring2string(sc_toDisplayString(o));
+    return sc_jsstring2string(sc_toDisplayString(o));
 }    
 
 /*** META ((export #t) (arity #t)

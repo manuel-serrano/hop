@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Sep 29 18:52:36 2009 (serrano)                */
+#*    Last change :  Sat Nov 28 06:54:00 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -102,7 +102,7 @@ getsources:
 predistrib: $(SOURCES:%.hop=%.scm)
 
 predistrib-clean:
-	/bin/rm -f $(patsubst %.hop,%.scm,$(filter %hop, $(SOURCES)))
+	$(RM) -f $(patsubst %.hop,%.scm,$(filter %hop, $(SOURCES)))
 
 #*---------------------------------------------------------------------*/
 #*    Explicit dependencies                                            */

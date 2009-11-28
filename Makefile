@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Oct 19 17:09:05 2009 (serrano)                */
+#*    Last change :  Sat Nov 28 06:56:20 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -32,7 +32,7 @@ POPDIRS		= runtime hopscheme scheme2js src hopc hopsh hopreplay \
 #*---------------------------------------------------------------------*/
 .PHONY: bindir libdir lib widget share weblets bin
 
-build: showflags bindir libdir lib share weblets widget bin $(BUILD-SPECIFIC)
+build: showflags bindir libdir lib weblets widget bin share $(BUILD-SPECIFIC)
 
 bindir:
 	mkdir -p bin
@@ -166,9 +166,11 @@ clean-quick:
 	(cd runtime; $(MAKE) clean)
 	(cd src; $(MAKE) clean)
 	(cd hopsh; $(MAKE) clean)
+	(cd hopc; $(MAKE) clean)
 	(cd hopreplay; $(MAKE) clean)
 	(cd weblets; $(MAKE) clean)
 	(cd widget; $(MAKE) clean)
+	(cd share; $(MAKE) clean)
 
 clean:
 	(cd runtime; $(MAKE) clean)
@@ -176,17 +178,21 @@ clean:
 	(cd hopscheme; $(MAKE) clean)
 	(cd src; $(MAKE) clean)
 	(cd hopsh; $(MAKE) clean)
+	(cd hopc; $(MAKE) clean)
 	(cd hopreplay; $(MAKE) clean)
 	(cd etc; $(MAKE) clean)
 	(cd weblets; $(MAKE) clean)
 	(cd widget; $(MAKE) clean)
+	(cd share; $(MAKE) clean)
 
 devclean:
 	(cd runtime; $(MAKE) devclean)
 	(cd src; $(MAKE) devclean)
+	(cd hopc; $(MAKE) devclean)
 	(cd hopsh; $(MAKE) devclean)
 	(cd hopreplay; $(MAKE) devclean)
 	(cd widget; $(MAKE) devclean)
+	(cd share; $(MAKE) devclean)
 
 distclean: clean devclean
 	/bin/rm -f etc/Makefile.hopconfig
@@ -307,3 +313,4 @@ distrib-sans-version:
 predistrib:
 	$(MAKE)
 	$(MAKE) -C widget predistrib
+	$(MAKE) -C share predistrib

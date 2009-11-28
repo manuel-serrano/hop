@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Nov 10 16:23:01 2009 (serrano)                */
+#*    Last change :  Sat Nov 28 07:17:02 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -94,7 +94,7 @@ threads=""
 
 hopsrfis=""
 
-rts="hop-dom.js hop-event.js hop-serialize.js base64.js hop-request.js hop-lib.js hop-history.js hopscheme.js"
+rts="hop-dom.js hop-event.js hop-serialize.js base64.js hop-exception.js hop-request.js hop-lib.js hop-history.js hopscheme.js"
 
 hopservicebase="/hop"
 hopjs='"hop.js"'
@@ -364,6 +364,15 @@ if [ "$ssl " = " " ]; then
 fi
 
 if [ "$ssl" = "yes" ]; then
+  if [ ! -f $bgllibdir/bigloo/$bglversion/ssl.heap ]; then
+    echo "*** ERROR:configure:bigloo ssl. Aborting"
+    echo ""
+    echo "This error is due to a bad Bigloo installation. It might be that"
+    echo "you have installed Bigloo without the SSL support. Please"
+    echo "check your Bigloo installation, or configure Hop without ssl."
+    exit 1;
+  fi
+
   hopsrfis="$hopsrfis enable-ssl"
 fi
 

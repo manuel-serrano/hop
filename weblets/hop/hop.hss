@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Tue Oct  6 07:13:59 2009 (serrano)                */
+/*    Last change :  Fri Nov 20 16:18:57 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -95,6 +95,7 @@ body.hop-dashboard-panel div.weblets-title {
 /*--- weblet ----------------------------------------------------------*/
 table.weblet {
   float: left;
+  overflow: hidden;
 }
 
 table.weblet td.logo {
@@ -126,6 +127,7 @@ table.weblet td.legend {
   font-family: $font-family;
   cursor: default;
   text-align: center;
+  max-width: 48px;
 }  
 
 /*--- <HOP> -----------------------------------------------------------*/

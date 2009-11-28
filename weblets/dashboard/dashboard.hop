@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jun 26 13:57:44 2009 (serrano)                */
+;*    Last change :  Tue Nov 24 10:24:04 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP dashboard                                                    */
@@ -65,7 +65,10 @@ further investigation.]))
 ;*---------------------------------------------------------------------*/
 (define (applets)
    (sort (lambda (s1 s2)
-	    (string<=? (car s1) (car s2)))
+	    (cond
+	       ((string=? (car s1) "hop") #t)
+	       ((string=? (car s2) "hop") #f)
+	       (else (string<=? (car s1) (car s2)))))
 	 (hop-dashboard-weblet-applets)))
 
 ;*---------------------------------------------------------------------*/

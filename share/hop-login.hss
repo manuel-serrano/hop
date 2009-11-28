@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Mar  9 16:52:54 2008                          */
-/*    Last change :  Wed Sep  9 15:00:56 2009 (serrano)                */
+/*    Last change :  Thu Nov 19 15:53:09 2009 (serrano)                */
 /*    Copyright   :  2008-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop login                                                        */
@@ -44,6 +44,10 @@ hop-login-panel {
 hop-login-panel td.hop-login-logo {
   width: 64px;
   height: 64px;
+}
+
+hop-login-message {
+  overflow: hidden;
 }
 
 hop-login-logo {

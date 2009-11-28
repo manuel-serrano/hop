@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Sun Nov  8 10:47:57 2009 (serrano)                */
+/*    Last change :  Tue Nov 24 10:46:40 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
@@ -129,7 +129,26 @@ function hop_dashboard_populate( proc ) {
    
    with_hop( "/hop/dashboard/populate", populate, permission_denied );
 }   
-   
+
+/*---------------------------------------------------------------------*/
+/*    hop_dashboard_key_prev ...                                       */
+/*---------------------------------------------------------------------*/
+var hop_dashboard_key_prev = 0;
+
+/*---------------------------------------------------------------------*/
+/*    hop_dashboard_key_listener ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_dashboard_key_listener( event ) {
+   var key = hop_event_key_code( event );
+   if( (key == 72) && (hop_dashboard_key_prev == 18) ) {
+      hop_stop_propagation( event, false );
+      hop_dashboard_key_prev = 0;
+      with_hop( "/hop/hop/dashboard", false, false );
+   } else {
+      hop_dashboard_key_prev = key;
+   }
+}
+
 /*---------------------------------------------------------------------*/
 /*    hop_dashboard_activate ...                                       */
 /*---------------------------------------------------------------------*/
@@ -257,7 +276,7 @@ function hop_dashboard_button_init() {
       node_style_set( but, "opacity", hop_dashboard_opacity )
    };
    but.onclick = hop_toggle_dashboard;
-   icon.title = "Toggle Hop Dashboard";
+   icon.title = "Toggle Hop Dashboard [alt-h]";
 
    if( hop_config.inline_image ) {
       icon.src = hop_dashboard_icon;
@@ -331,6 +350,8 @@ function hop_dashboard_init() {
    hop_dashboard_control_panel_init();
    hop_dashboard_button_init();
    hop_load( hop_share_directory() + "/hop-window.js" );
+   hop_add_native_event_listener( document, "keydown",
+				  hop_dashboard_key_listener, true );
 }
 
 /*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Wed Oct  7 05:46:14 2009 (serrano)                */
+#*    Last change :  Sat Nov 28 07:01:54 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -55,6 +55,7 @@ BEJVMFLAGS	= -jvm-jar
 BDOTNETFLAGS	= @BCFLAGS@ -dotnet -dotnet-mono-workaround -dotnet-pnet-workaround -dotnet-managed $(EFLAGS)
 BLDOTNETFLAGS   = @BLFLAGS@ 
 BHFLAGS		= -q -mkaddheap -mkaddlib $(EFLAGS)
+BJFLAGS		= -j
 CCFLAGS		= @CCFLAGS@
 
 BIGLOOPTHLIB	= @BIGLOOPTHLIB@

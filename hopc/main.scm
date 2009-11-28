@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Oct  7 05:44:57 2009 (serrano)                */
+;*    Last change :  Sat Nov 28 07:11:57 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -89,6 +89,10 @@
 ;*---------------------------------------------------------------------*/
 (define (compile-sources)
 
+   (define (compile-javascript p)
+      (let ((s (compile-scheme-file p '())))
+	 (call-with-output-file (hopc-destination) (lambda (p) (display s p)))))
+
    (define (generate-bigloo in)
       
       (define (generate out)
@@ -101,7 +105,7 @@
       (if (string? (hopc-destination))
 	  (call-with-output-file (hopc-destination) generate)
 	  (generate (current-output-port))))
-
+   
    (define (compile-bigloo in)
       (let* ((opts (hopc-bigloo-options))
 	     (opts (cond
@@ -131,9 +135,13 @@
       (if (eq? (hopc-pass) 'bigloo)
 	  (generate-bigloo in)
 	  (compile-bigloo in)))
-
-   (if (pair? (hopc-sources))
+   
+   (cond
+      ((eq? (hopc-pass) 'client-js)
+       (for-each compile-javascript (hopc-sources)))
+      ((pair? (hopc-sources))
        (for-each (lambda (s) (call-with-input-file s compile))
-		 (hopc-sources))
-       (compile (current-input-port))))
+		 (hopc-sources)))
+      (else
+       (compile (current-input-port)))))
 				 

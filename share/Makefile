@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sat Nov 14 06:33:27 2009 (serrano)                */
+#*    Last change :  Sat Nov 28 07:16:35 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -266,3 +266,23 @@ jvm-list:
           fi \
         done
 
+#*---------------------------------------------------------------------*/
+#*    hop-exception.js                                                 */
+#*---------------------------------------------------------------------*/
+hop-exception.js: hop-exception.scm
+	@ $(call compile3b,HOPC,BJFLAGS,HFLAGS,BLFLAGS,$< -o $@ -c)
+
+#*---------------------------------------------------------------------*/
+#*    cleaning                                                         */
+#*---------------------------------------------------------------------*/
+.PHONY: clean predistrib-clean devclean
+
+clean:
+	$(RM) hop.js
+
+predistrib-clean:
+	$(RM) hop-exception.js
+
+devclean: predistrib-clean
+
+distclean: clean

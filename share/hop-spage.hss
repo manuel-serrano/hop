@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug 15 16:47:08 2009                          */
-/*    Last change :  Tue Nov  3 10:26:44 2009 (serrano)                */
+/*    Last change :  Sat Nov 21 19:49:12 2009 (serrano)                */
 /*    Copyright   :  2009 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Slide Pages                                                      */
@@ -41,7 +41,7 @@ $(define-hss-type spupdatebutton "span[hssclass=hop-spage-update]")
 
 $(define border-color "#ccc")
 $(define border (format "1px solid ~a" border-color))
-$(define font-family "sans-serif")
+$(define font-family "Verdana, Arial, sans-serif")
 
 /*---------------------------------------------------------------------*/
 /*    public declarations                                              */

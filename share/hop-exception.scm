@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Wed Nov 18 09:20:24 2009 (serrano)                */
+;*    Last change :  Fri Nov 27 13:13:52 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -207,7 +207,7 @@
 (define (<EXCEPTION-STACK> stack)
    (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px"
       (<DIV> :style "font-weight: bold; margin-bttom: 1ex;" "Hop client stack:")
-      (<PRE> :style "font-size: 9pt; padding-left: 1em"
+      (<PRE> :style "font-size: 9pt; padding-left: 1em;"
 	 :onclick (stop-event-propagation event)
 	 (map (lambda (frame)
 		 (list (obj->string (car frame) #t) "\n"))
@@ -286,9 +286,9 @@
 		      (string-split exc.description "\n "))))
 	 (else
 	  "unknwown error")))
-   
+
    (let* ((message (exception-message exc))
-	  (msg (if (and exc.scObject (not (eq? exc.scObject #unspecified)))
+	  (msg (if (in? "scObject" exc)
 		   (list message " -- " (obj->string exc.scObject #f))
 		   message))
 	  (name (exception-name exc))
@@ -301,8 +301,6 @@
 		   (list (<A> :href url url) ", line " exc.line))
 		  (else
 		   (<A> :href url)))))
-
-      (tprint "EXC URL=" url)
 
       (<EXCEPTION-FRAME>
 	 (<TABLE> :style "width: 100%; font-family: arial; font-size: 10pt; background: #FFFFF7; border-bottom: 1px solid #ccc; overflow: visible"
@@ -343,8 +341,7 @@
 (define (hop-report-exception exc)
    ;; the error might be raised before document.body is bound
    (if (and document.body (not (null? document.body)))
-       (let ((e (<EXCEPTION> exc)))
-	  (dom-append-child! document.body (<EXCEPTION> exc)))
+       (dom-append-child! document.body (<EXCEPTION> exc))
        (add-window-onload! (lambda (e) (hop-report-exception exc)))))
 
 ;*---------------------------------------------------------------------*/

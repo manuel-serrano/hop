@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Oct 30 06:21:59 2009 (serrano)                */
+;*    Last change :  Fri Nov 27 18:19:24 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
