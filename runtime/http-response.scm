@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun Nov 29 18:36:09 2009 (serrano)                */
+;*    Last change :  Sun Nov 29 18:50:20 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -328,7 +328,7 @@
 	 (let ((dt (date->rfc2822-date (current-date))))
 	    (http-write-line p "Date: " dt)
 	    (http-write-line p "Last-Modified: " dt))
-;* 	 ;; content-length                                             */
+	 ;; content-length
 ;* 	 (display "Content-Length: " p)                                */
 ;* 	 (display-elong (+elong #e1 (-elong end beg)) p)               */
 ;* 	 (http-write-line p)                                           */
