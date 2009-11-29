@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sun Nov 29 07:58:48 2009 (serrano)                */
+#*    Last change :  Sun Nov 29 19:03:53 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -59,8 +59,11 @@ lib: libdir
 	(cd hopscheme && $(MAKE) build)
 	(cd runtime && $(MAKE) build)
 
-widget: libdir hopc-bin
+widget: libdir hopc-bin share-afile
 	(cd widget && $(MAKE) build)
+
+share-afile:
+	(cd share && $(MAKE) .afile)
 
 share: hopc-bin
 	(cd share && $(MAKE) build)
