@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sun Nov 29 08:39:18 2009 (serrano)                */
+#*    Last change :  Sun Nov 29 19:11:00 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -279,15 +279,20 @@ jvm-list:
         done
 
 #*---------------------------------------------------------------------*/
+#*    predistrib                                                       */
+#*---------------------------------------------------------------------*/
+predistrib: hop-exception.js
+
+predistrib-clean:
+	$(RM) hop-exception.js
+
+#*---------------------------------------------------------------------*/
 #*    cleaning                                                         */
 #*---------------------------------------------------------------------*/
 .PHONY: clean predistrib-clean devclean
 
 clean:
 	$(RM) hop.js
-
-predistrib-clean:
-	$(RM) hop-exception.js
 
 devclean: predistrib-clean
 
