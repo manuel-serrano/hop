@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sun Nov 29 16:37:56 2009 (serrano)                */
+;*    Last change :  Sun Nov 29 18:53:04 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -135,7 +135,6 @@
 			    ;; capture dumping
 			    (when (output-port? cp)
 			       (remote-header header cp r)
-			       (newline cp)
 			       (flush-output-port cp))
 			    (remote-body r socket remote))))))))))
 

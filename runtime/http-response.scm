@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun Nov 29 18:50:20 2009 (serrano)                */
+;*    Last change :  Sun Nov 29 18:52:50 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -375,7 +375,6 @@
 			    (fprintf cp ";; GET ~a range: bytes=~a-~a\n"
 				     file beg end)
 			    (response-header connection beg end size cp r)
-			    (newline cp)
 			    (flush-output-port cp)))
 		      ;; the body
 		      (with-trace 4 'http-response-file
