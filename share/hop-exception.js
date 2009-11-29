@@ -7,6 +7,7 @@ var hop_make_exception_frame;
 var hop_onerror_handler_hop_exception;
 var hop_last_exception_hop_exception;
 var BgL_sc_objzd2ze3string_1z31_hop_exception;
+var in_exception_report_hop_exception;
 var const_hop_exception;
 var BgL_sc_const_2z00_hop_exception;
 var BgL_sc_const_3z00_hop_exception;
@@ -54,20 +55,20 @@ BgL_sc_const_21z00_hop_exception = "font-family: arial; font-size: 10pt; padding
 BgL_sc_const_22z00_hop_exception = "color: #777; font-weight: bold";
 BgL_sc_const_23z00_hop_exception = "HopClientSideError";
 sc_tmp = hop_mangledp = function(string) {
+      var tmp1319;
       var tmp1318;
       var tmp1317;
-      var tmp1316;
       var len;
       len = string.length;
       if (len > 7) {
-        tmp1316 = sc_arity_check(sc_isSubstring, 3)(string, "BgL_", 4);
-        if ((tmp1316 !== false? tmp1316: sc_arity_check(sc_isSubstring, 3)(string, "BGl_", 4)) !== false) {
+        tmp1317 = sc_arity_check(sc_isSubstring, 3)(string, "BgL_", 4);
+        if ((tmp1317 !== false? tmp1317: sc_arity_check(sc_isSubstring, 3)(string, "BGl_", 4)) !== false) {
           if (sc_arity_check(sc_stringRef, 2)(string, len - 3).val === new sc_Char("z").val) {
-            tmp1317 = sc_arity_check(sc_isCharAlphabetic, 1)(sc_arity_check(sc_stringRef, 2)(string, len - 2));
-            if ((tmp1317 !== false? tmp1317: SC_NUMBER_CLASS.indexOf(sc_arity_check(sc_stringRef, 2)(string, len - 2).val) != -1) !== false) {
-              tmp1318 = sc_arity_check(sc_isCharAlphabetic, 1)(sc_arity_check(sc_stringRef, 2)(string, len - 1));
-              if (tmp1318 !== false) {
-                return tmp1318;
+            tmp1318 = sc_arity_check(sc_isCharAlphabetic, 1)(sc_arity_check(sc_stringRef, 2)(string, len - 2));
+            if ((tmp1318 !== false? tmp1318: SC_NUMBER_CLASS.indexOf(sc_arity_check(sc_stringRef, 2)(string, len - 2).val) != -1) !== false) {
+              tmp1319 = sc_arity_check(sc_isCharAlphabetic, 1)(sc_arity_check(sc_stringRef, 2)(string, len - 1));
+              if (tmp1319 !== false) {
+                return tmp1319;
               } else {
                 return SC_NUMBER_CLASS.indexOf(sc_arity_check(sc_stringRef, 2)(string, len - 1).val) != -1;
               }
@@ -114,12 +115,12 @@ sc_tmp = hop_demangle = function(string) {
       sc_tmp = subvector = function(vec, len) {
             var i;
             var l;
+            var g1321;
             var g1320;
-            var g1319;
-            g1319 = len - 1;
-            g1320 = null;
-            i = g1319;
-            l = g1320;
+            g1320 = len - 1;
+            g1321 = null;
+            i = g1320;
+            l = g1321;
             while (!(i === -1)) {
               l = new sc_Pair(vec[i], l);
               --i;
@@ -198,13 +199,13 @@ sc_tmp = hop_get_stack = function(offset) {
       var caller;
       var n;
       var stack;
+      var g1324;
       var g1323;
-      var g1322;
       var proc;
       var offset_2;
-      var g1321;
-      g1321 = arguments.callee;
-      proc = g1321;
+      var g1322;
+      g1322 = arguments.callee;
+      proc = g1322;
       offset_2 = offset;
       while (!(offset_2 === 0)) {
         if (proc !== false) {
@@ -215,14 +216,14 @@ sc_tmp = hop_get_stack = function(offset) {
         }
       }
       if (depth instanceof sc_Pair) {
-        g1322 = depth.car;
+        g1323 = depth.car;
       } else {
-        g1322 = 10;
+        g1323 = 10;
       }
-      g1323 = null;
+      g1324 = null;
       caller = proc;
-      n = g1322;
-      stack = g1323;
+      n = g1323;
+      stack = g1324;
       while (caller && n > 0) {
         frame = new sc_Pair(caller, sc_arity_check(sc_vector2list, 1)(caller.arguments));
         caller = caller.caller;
@@ -231,55 +232,57 @@ sc_tmp = hop_get_stack = function(offset) {
       }
       return sc_arity_check(sc_reverseBang, 1)(stack);
     }, sc_tmp.name = "hop-get-stack", sc_tmp.location = "(at hop-exception.scm 9657)", sc_tmp.sc_arity = -2, sc_tmp;
+in_exception_report_hop_exception = "\uEBACno";
 sc_tmp = hop_make_exception_frame = function() {
       var args = null;
       for (var sc_tmp = arguments.length - 1; sc_tmp >= 0; --sc_tmp) {
         args = sc_cons(arguments[sc_tmp], args);
       }
       var stmp;
-      var g1328;
-      var g1331;
       var g1329;
+      var g1332;
       var g1330;
+      var g1331;
       var mask;
-      g1328 = sc_arity_check(dom_create, 4)("div", "\uEBADstyle", BgL_sc_const_3z00_hop_exception, "");
-      mask = g1328;
-      g1330 = sc_arity_check(dom_create, 4)("div", "\uEBADstyle", "overflow: auto", args);
-      stmp = g1330;
-      g1329 = sc_arity_check(dom_create, 4)("div", "\uEBADstyle", BgL_sc_const_14z00_hop_exception, stmp);
-      g1331 = sc_arity_check(dom_create, 3)("div", mask, g1329);
-      sc_arity_check(hop_add_event_listener, 3)(g1331, "click", (sc_tmp = function(event) {
+      g1329 = sc_arity_check(dom_create, 4)("div", "\uEBADstyle", BgL_sc_const_3z00_hop_exception, "");
+      mask = g1329;
+      g1331 = sc_arity_check(dom_create, 4)("div", "\uEBADstyle", "overflow: auto", args);
+      stmp = g1331;
+      g1330 = sc_arity_check(dom_create, 4)("div", "\uEBADstyle", BgL_sc_const_14z00_hop_exception, stmp);
+      g1332 = sc_arity_check(dom_create, 3)("div", mask, g1330);
+      sc_arity_check(hop_add_event_listener, 3)(g1332, "click", (sc_tmp = function(event) {
+            in_exception_report_hop_exception = "\uEBACno";
             return this.parentNode.removeChild(this);
           }, sc_tmp.name = "", sc_tmp.location = "#f", sc_tmp.sc_arity = 1, sc_tmp));
-      return g1331;
-    }, sc_tmp.name = "<EXCEPTION-FRAME>", sc_tmp.location = "(at hop-exception.scm 10418)", sc_tmp.sc_arity = -1, sc_tmp;
+      return g1332;
+    }, sc_tmp.name = "<EXCEPTION-FRAME>", sc_tmp.location = "(at hop-exception.scm 10896)", sc_tmp.sc_arity = -1, sc_tmp;
 sc_tmp = BgL_sc_objzd2ze3string_1z31_hop_exception = function(o, longp) {
       var stmp;
-      var g1335;
-      var g1337;
+      var g1336;
+      var g1338;
       var m;
       var name;
-      var g1333;
+      var g1334;
       if (typeof o === 'function') {
         if (!sc_arity_check(sc_isString, 1)(o.name)) {
           name = sc_arity_check(sc_withOutputToString, 1)((sc_tmp = function() {
                   return sc_arity_check(sc_write, 1)(o);
-                }, sc_tmp.name = "", sc_tmp.location = "(at hop-exception.scm 11081)", sc_tmp.sc_arity = 0, sc_tmp));
+                }, sc_tmp.name = "", sc_tmp.location = "(at hop-exception.scm 11606)", sc_tmp.sc_arity = 0, sc_tmp));
         } else {
           if (o.name.length > 0) {
             name = o.name;
           } else {
-            g1333 = sc_arity_check(dom_create, 2)("i", "anonymous");
-            name = g1333;
+            g1334 = sc_arity_check(dom_create, 2)("i", "anonymous");
+            name = g1334;
           }
         }
         if (longp && sc_arity_check(sc_isString, 1)(o.location)) {
           m = sc_arity_check(sc_pregexpMatch, 2)(BgL_sc_const_11z00_hop_exception, o.location);
           if (m !== false) {
-            g1337 = sc_arity_check(dom_create, 8)("a", "\uEBADstyle", "color: inherit", "\uEBADhref", m.cdr.car, m.cdr.car, "!", m.cdr.cdr.car);
-            stmp = g1337;
-            g1335 = sc_arity_check(dom_create, 5)("span", "\uEBADstyle", "color: #777", stmp, ", ");
-            return sc_arity_check(sc_list, 4)(g1335, "(", name, " ...)");
+            g1338 = sc_arity_check(dom_create, 8)("a", "\uEBADstyle", "color: inherit", "\uEBADhref", m.cdr.car, m.cdr.car, "!", m.cdr.cdr.car);
+            stmp = g1338;
+            g1336 = sc_arity_check(dom_create, 5)("span", "\uEBADstyle", "color: #777", stmp, ", ");
+            return sc_arity_check(sc_list, 4)(g1336, "(", name, " ...)");
           } else {
             return sc_arity_check(sc_list, 3)("(", name, " ...)");
           }
@@ -296,43 +299,43 @@ sc_tmp = BgL_sc_objzd2ze3string_1z31_hop_exception = function(o, longp) {
         } else {
           return sc_arity_check(sc_withOutputToString, 1)((sc_tmp = function() {
                       return sc_arity_check(sc_write, 1)(o);
-                    }, sc_tmp.name = "", sc_tmp.location = "(at hop-exception.scm 11654)", sc_tmp.sc_arity = 0, sc_tmp));
+                    }, sc_tmp.name = "", sc_tmp.location = "(at hop-exception.scm 12179)", sc_tmp.sc_arity = 0, sc_tmp));
         }
       }
-    }, sc_tmp.name = "obj->string", sc_tmp.location = "(at hop-exception.scm 10919)", sc_tmp.sc_arity = 2, sc_tmp;
+    }, sc_tmp.name = "obj->string", sc_tmp.location = "(at hop-exception.scm 11444)", sc_tmp.sc_arity = 2, sc_tmp;
 sc_tmp = hop_make_exception_stack = function(stack) {
       var stmp;
       var stmp_3;
       var stmp_4;
       var stmp_5;
       var frame;
-      var tail1391;
-      var L1387;
-      var falseHead1390;
-      var g1341;
+      var tail1392;
+      var L1388;
+      var falseHead1391;
+      var g1342;
+      var g1340;
       var g1339;
-      var g1338;
-      falseHead1390 = new sc_Pair(null, null);
-      tail1391 = falseHead1390;
-      L1387 = stack;
-      while (!(L1387 === null)) {
-        frame = L1387.car;
+      falseHead1391 = new sc_Pair(null, null);
+      tail1392 = falseHead1391;
+      L1388 = stack;
+      while (!(L1388 === null)) {
+        frame = L1388.car;
         stmp_4 = new sc_Pair(sc_arity_check(sc_list, 2)(sc_arity_check(BgL_sc_objzd2ze3string_1z31_hop_exception, 2)(frame.car, true), "\n"), null);
-        tail1391.cdr = stmp_4;
-        tail1391 = tail1391.cdr;
-        L1387 = L1387.cdr;
+        tail1392.cdr = stmp_4;
+        tail1392 = tail1392.cdr;
+        L1388 = L1388.cdr;
       }
-      stmp_3 = falseHead1390.cdr;
-      g1341 = sc_arity_check(dom_create, 4)("pre", "\uEBADstyle", BgL_sc_const_10z00_hop_exception, stmp_3);
-      sc_arity_check(hop_add_event_listener, 3)(g1341, "click", (sc_tmp = function(event) {
+      stmp_3 = falseHead1391.cdr;
+      g1342 = sc_arity_check(dom_create, 4)("pre", "\uEBADstyle", BgL_sc_const_10z00_hop_exception, stmp_3);
+      sc_arity_check(hop_add_event_listener, 3)(g1342, "click", (sc_tmp = function(event) {
             return sc_arity_check(hop_stop_propagation, 1)(event);
           }, sc_tmp.name = "", sc_tmp.location = "#f", sc_tmp.sc_arity = 1, sc_tmp));
-      stmp = g1341;
-      g1339 = sc_arity_check(dom_create, 4)("div", "\uEBADstyle", BgL_sc_const_9z00_hop_exception, BgL_sc_const_17z00_hop_exception);
-      stmp_5 = g1339;
-      g1338 = sc_arity_check(dom_create, 5)("div", "\uEBADstyle", BgL_sc_const_21z00_hop_exception, stmp_5, stmp);
-      return g1338;
-    }, sc_tmp.name = "<EXCEPTION-STACK>", sc_tmp.location = "(at hop-exception.scm 11891)", sc_tmp.sc_arity = 1, sc_tmp;
+      stmp = g1342;
+      g1340 = sc_arity_check(dom_create, 4)("div", "\uEBADstyle", BgL_sc_const_9z00_hop_exception, BgL_sc_const_17z00_hop_exception);
+      stmp_5 = g1340;
+      g1339 = sc_arity_check(dom_create, 5)("div", "\uEBADstyle", BgL_sc_const_21z00_hop_exception, stmp_5, stmp);
+      return g1339;
+    }, sc_tmp.name = "<EXCEPTION-STACK>", sc_tmp.location = "(at hop-exception.scm 12416)", sc_tmp.sc_arity = 1, sc_tmp;
 sc_tmp = hop_report_exception = function(exc) {
       var stmp;
       var stmp_6;
@@ -373,309 +376,314 @@ sc_tmp = hop_report_exception = function(exc) {
       var stmp_41;
       var stmp_42;
       var stmp_43;
-      var g1342;
       var g1343;
+      var g1344;
       var href;
       var l;
       var i;
       var f;
-      var tail1396;
-      var L1392;
-      var falseHead1395;
+      var tail1397;
+      var L1393;
+      var falseHead1396;
+      var g1348;
       var g1347;
       var g1346;
-      var g1345;
       var l_44;
       var s;
       var s_45;
-      var tail1406;
-      var L1402;
+      var tail1407;
+      var L1403;
       var s_46;
-      var tail1401;
-      var L1397;
-      var g1375;
-      var g1382;
-      var g1344;
-      var stack;
-      var tmp1383;
-      var g1381;
+      var tail1402;
+      var L1398;
       var g1376;
-      var g1378;
+      var g1383;
+      var g1345;
+      var stack;
+      var tmp1384;
+      var g1382;
+      var g1377;
       var g1379;
       var g1380;
-      var g1377;
-      var g1352;
-      var g1358;
-      var g1363;
+      var g1381;
+      var g1378;
+      var g1353;
+      var g1359;
       var g1364;
-      var g1373;
+      var g1365;
       var g1374;
-      var g1371;
+      var g1375;
       var g1372;
-      var g1368;
+      var g1373;
       var g1369;
       var g1370;
-      var g1365;
+      var g1371;
       var g1366;
       var g1367;
-      var g1360;
-      var g1362;
-      var g1354;
-      var g1356;
+      var g1368;
+      var g1361;
+      var g1363;
+      var g1355;
+      var g1357;
       var src;
+      var g1351;
       var g1350;
       var g1349;
-      var g1348;
       var location;
       var url;
       var name;
       var msg;
       var message;
-      var L1402_47;
-      var falseHead1405;
-      var L1397_48;
-      var falseHead1400;
-      if (document.body && !(document.body === null)) {
-        if (sc_arity_check(sc_isString, 1)(exc.message)) {
-          falseHead1400 = new sc_Pair(null, null);
-          L1397_48 = sc_arity_check(sc_stringSplit, 2)(exc.message, "\n ");
-          tail1401 = falseHead1400;
-          L1397 = L1397_48;
-          while (!(L1397 === null)) {
-            s_46 = L1397.car;
-            stmp_43 = new sc_Pair(sc_arity_check(hop_demangle, 1)(s_46) + " ", null);
-            tail1401.cdr = stmp_43;
-            tail1401 = tail1401.cdr;
-            L1397 = L1397.cdr;
-          }
-          stmp_42 = falseHead1400.cdr;
-          message = sc_arity_check(sc_apply, 2)(sc_stringAppend, stmp_42);
-        } else {
-          if (sc_arity_check(sc_isSymbol, 1)(exc.message)) {
-            message = exc.message.slice(1);
+      var L1403_47;
+      var falseHead1406;
+      var L1398_48;
+      var falseHead1401;
+      if (in_exception_report_hop_exception === "\uEBACyes") {
+        return sc_arity_check(sc_raise, 1)(exc);
+      } else {
+        if (document.body && !(document.body === null)) {
+          in_exception_report_hop_exception = "\uEBACyes";
+          if (sc_arity_check(sc_isString, 1)(exc.message)) {
+            falseHead1401 = new sc_Pair(null, null);
+            L1398_48 = sc_arity_check(sc_stringSplit, 2)(exc.message, "\n ");
+            tail1402 = falseHead1401;
+            L1398 = L1398_48;
+            while (!(L1398 === null)) {
+              s_46 = L1398.car;
+              stmp_43 = new sc_Pair(sc_arity_check(hop_demangle, 1)(s_46) + " ", null);
+              tail1402.cdr = stmp_43;
+              tail1402 = tail1402.cdr;
+              L1398 = L1398.cdr;
+            }
+            stmp_42 = falseHead1401.cdr;
+            message = sc_arity_check(sc_apply, 2)(sc_stringAppend, stmp_42);
           } else {
-            if (sc_arity_check(sc_isKeyword, 1)(exc.message)) {
+            if (sc_arity_check(sc_isSymbol, 1)(exc.message)) {
               message = exc.message.slice(1);
             } else {
-              if (sc_arity_check(sc_isNumber, 1)(exc.message)) {
-                message = exc.message;
+              if (sc_arity_check(sc_isKeyword, 1)(exc.message)) {
+                message = exc.message.slice(1);
               } else {
-                if (!(exc.message === undefined)) {
-                  message = sc_arity_check(BgL_sc_objzd2ze3string_1z31_hop_exception, 2)(exc.message, false);
+                if (sc_arity_check(sc_isNumber, 1)(exc.message)) {
+                  message = exc.message;
                 } else {
-                  if (sc_arity_check(sc_isString, 1)(exc.description)) {
-                    falseHead1405 = new sc_Pair(null, null);
-                    L1402_47 = sc_arity_check(sc_stringSplit, 2)(exc.description, "\n ");
-                    tail1406 = falseHead1405;
-                    L1402 = L1402_47;
-                    while (!(L1402 === null)) {
-                      s_45 = L1402.car;
-                      stmp_41 = new sc_Pair(sc_arity_check(hop_demangle, 1)(s_45) + " ", null);
-                      tail1406.cdr = stmp_41;
-                      tail1406 = tail1406.cdr;
-                      L1402 = L1402.cdr;
+                  if (!(exc.message === undefined)) {
+                    message = sc_arity_check(BgL_sc_objzd2ze3string_1z31_hop_exception, 2)(exc.message, false);
+                  } else {
+                    if (sc_arity_check(sc_isString, 1)(exc.description)) {
+                      falseHead1406 = new sc_Pair(null, null);
+                      L1403_47 = sc_arity_check(sc_stringSplit, 2)(exc.description, "\n ");
+                      tail1407 = falseHead1406;
+                      L1403 = L1403_47;
+                      while (!(L1403 === null)) {
+                        s_45 = L1403.car;
+                        stmp_41 = new sc_Pair(sc_arity_check(hop_demangle, 1)(s_45) + " ", null);
+                        tail1407.cdr = stmp_41;
+                        tail1407 = tail1407.cdr;
+                        L1403 = L1403.cdr;
+                      }
+                      stmp_40 = falseHead1406.cdr;
+                      message = sc_arity_check(sc_apply, 2)(sc_stringAppend, stmp_40);
+                    } else {
+                      message = "unknwown error";
                     }
-                    stmp_40 = falseHead1405.cdr;
-                    message = sc_arity_check(sc_apply, 2)(sc_stringAppend, stmp_40);
-                  } else {
-                    message = "unknwown error";
                   }
                 }
               }
             }
           }
-        }
-        if ("scObject" in exc) {
-          msg = sc_arity_check(sc_list, 3)(message, " -- ", sc_arity_check(BgL_sc_objzd2ze3string_1z31_hop_exception, 2)(exc.scObject, false));
-        } else {
-          msg = message;
-        }
-        if (sc_arity_check(sc_isString, 1)(exc.name)) {
-          name = exc.name;
-        } else {
-          if (exc.name === undefined) {
-            name = BgL_sc_const_23z00_hop_exception;
+          if ("scObject" in exc) {
+            msg = sc_arity_check(sc_list, 3)(message, " -- ", sc_arity_check(BgL_sc_objzd2ze3string_1z31_hop_exception, 2)(exc.scObject, false));
           } else {
-            name = sc_arity_check(BgL_sc_objzd2ze3string_1z31_hop_exception, 2)(exc.name, false);
+            msg = message;
           }
-        }
-        if (sc_arity_check(sc_isString, 1)(exc.fileName)) {
-          url = exc.fileName;
-        } else {
-          url = document.location;
-        }
-        if (sc_arity_check(sc_isString, 1)(exc.hopLocation)) {
-          location = exc.hopLocation;
-        } else {
-          location = "Client Error";
-        }
-        if (exc.lineNumber && !(exc.lineNumber === undefined)) {
-          g1348 = sc_arity_check(dom_create, 4)("a", "\uEBADhref", url, url);
-          src = sc_arity_check(sc_list, 3)(g1348, ", line ", exc.lineNumber);
-        } else {
-          if (exc.line && !(exc.line === undefined)) {
+          if (sc_arity_check(sc_isString, 1)(exc.name)) {
+            name = exc.name;
+          } else {
+            if (exc.name === undefined) {
+              name = BgL_sc_const_23z00_hop_exception;
+            } else {
+              name = sc_arity_check(BgL_sc_objzd2ze3string_1z31_hop_exception, 2)(exc.name, false);
+            }
+          }
+          if (sc_arity_check(sc_isString, 1)(exc.fileName)) {
+            url = exc.fileName;
+          } else {
+            url = document.location.href;
+          }
+          if (sc_arity_check(sc_isString, 1)(exc.hopLocation)) {
+            location = exc.hopLocation;
+          } else {
+            location = "Client Error";
+          }
+          if (exc.lineNumber && !(exc.lineNumber === undefined)) {
             g1349 = sc_arity_check(dom_create, 4)("a", "\uEBADhref", url, url);
-            src = sc_arity_check(sc_list, 3)(g1349, ", line ", exc.line);
+            src = sc_arity_check(sc_list, 3)(g1349, ", line ", exc.lineNumber);
           } else {
-            g1350 = sc_arity_check(dom_create, 3)("a", "\uEBADhref", url);
-            src = g1350;
-          }
-        }
-        if (sc_arity_check(sc_isString, 1)(exc.stack)) {
-          stack = exc.stack;
-          g1344 = sc_arity_check(sc_stringSplit, 2)(stack, "\n");
-          BgL_whilezd2break1454zd2: {
-            l_44 = g1344;
-            s = 2;
-            while (!(l_44 === null)) {
-              if (s === 0) {
-                falseHead1395 = new sc_Pair(null, null);
-                tail1396 = falseHead1395;
-                L1392 = l_44;
-                while (!(L1392 === null)) {
-                  f = L1392.car;
-                  i = sc_arity_check(sc_stringIndex, 2)(f, new sc_Char("@"));
-                  l = f.length;
-                  if (i !== false) {
-                    href = f.substring(i + 1, l);
-                    g1343 = sc_arity_check(dom_create, 6)("a", "\uEBADstyle", "color: inherit", "\uEBADhref", href, href);
-                    stmp_13 = g1343;
-                    g1342 = sc_arity_check(dom_create, 5)("span", "\uEBADstyle", "color: #777", stmp_13, ", ");
-                    stmp_12 = sc_arity_check(sc_list, 3)(g1342, f.substring(0, i), "\n");
-                  } else {
-                    stmp_12 = f;
-                  }
-                  stmp_11 = new sc_Pair(stmp_12, null);
-                  tail1396.cdr = stmp_11;
-                  tail1396 = tail1396.cdr;
-                  L1392 = L1392.cdr;
-                }
-                stmp_10 = falseHead1395.cdr;
-                g1347 = sc_arity_check(dom_create, 4)("pre", "\uEBADstyle", BgL_sc_const_4z00_hop_exception, stmp_10);
-                sc_arity_check(hop_add_event_listener, 3)(g1347, "click", (sc_tmp = function(event) {
-                      return sc_arity_check(hop_stop_propagation, 1)(event);
-                    }, sc_tmp.name = "", sc_tmp.location = "#f", sc_tmp.sc_arity = 1, sc_tmp));
-                stmp_9 = g1347;
-                g1346 = sc_arity_check(dom_create, 4)("div", "\uEBADstyle", BgL_sc_const_6z00_hop_exception, BgL_sc_const_16z00_hop_exception);
-                stmp_14 = g1346;
-                g1345 = sc_arity_check(dom_create, 5)("div", "\uEBADstyle", BgL_sc_const_21z00_hop_exception, stmp_14, stmp_9);
-                {
-                  stmp_8 = g1345;
-                  break BgL_whilezd2break1454zd2;
-                }
-              } else {
-                l_44 = l_44.cdr;
-                --s;
-              }
+            if (exc.line && !(exc.line === undefined)) {
+              g1350 = sc_arity_check(dom_create, 4)("a", "\uEBADhref", url, url);
+              src = sc_arity_check(sc_list, 3)(g1350, ", line ", exc.line);
+            } else {
+              g1351 = sc_arity_check(dom_create, 3)("a", "\uEBADhref", url);
+              src = g1351;
             }
-            stmp_8 = "";
           }
-          if (exc.hopService !== false) {
-            tmp1383 = !(exc.hopService === undefined);
+          if (sc_arity_check(sc_isString, 1)(exc.stack)) {
+            stack = exc.stack;
+            g1345 = sc_arity_check(sc_stringSplit, 2)(stack, "\n");
+            BgL_whilezd2break1455zd2: {
+              l_44 = g1345;
+              s = 2;
+              while (!(l_44 === null)) {
+                if (s === 0) {
+                  falseHead1396 = new sc_Pair(null, null);
+                  tail1397 = falseHead1396;
+                  L1393 = l_44;
+                  while (!(L1393 === null)) {
+                    f = L1393.car;
+                    i = sc_arity_check(sc_stringIndex, 2)(f, new sc_Char("@"));
+                    l = f.length;
+                    if (i !== false) {
+                      href = f.substring(i + 1, l);
+                      g1344 = sc_arity_check(dom_create, 6)("a", "\uEBADstyle", "color: inherit", "\uEBADhref", href, href);
+                      stmp_13 = g1344;
+                      g1343 = sc_arity_check(dom_create, 5)("span", "\uEBADstyle", "color: #777", stmp_13, ", ");
+                      stmp_12 = sc_arity_check(sc_list, 3)(g1343, f.substring(0, i), "\n");
+                    } else {
+                      stmp_12 = f;
+                    }
+                    stmp_11 = new sc_Pair(stmp_12, null);
+                    tail1397.cdr = stmp_11;
+                    tail1397 = tail1397.cdr;
+                    L1393 = L1393.cdr;
+                  }
+                  stmp_10 = falseHead1396.cdr;
+                  g1348 = sc_arity_check(dom_create, 4)("pre", "\uEBADstyle", BgL_sc_const_4z00_hop_exception, stmp_10);
+                  sc_arity_check(hop_add_event_listener, 3)(g1348, "click", (sc_tmp = function(event) {
+                        return sc_arity_check(hop_stop_propagation, 1)(event);
+                      }, sc_tmp.name = "", sc_tmp.location = "#f", sc_tmp.sc_arity = 1, sc_tmp));
+                  stmp_9 = g1348;
+                  g1347 = sc_arity_check(dom_create, 4)("div", "\uEBADstyle", BgL_sc_const_6z00_hop_exception, BgL_sc_const_16z00_hop_exception);
+                  stmp_14 = g1347;
+                  g1346 = sc_arity_check(dom_create, 5)("div", "\uEBADstyle", BgL_sc_const_21z00_hop_exception, stmp_14, stmp_9);
+                  {
+                    stmp_8 = g1346;
+                    break BgL_whilezd2break1455zd2;
+                  }
+                } else {
+                  l_44 = l_44.cdr;
+                  --s;
+                }
+              }
+              stmp_8 = "";
+            }
+            if (exc.hopService !== false) {
+              tmp1384 = !(exc.hopService === undefined);
+            } else {
+              tmp1384 = false;
+            }
+            if ((tmp1384 !== false? tmp1384: exc.hopStack instanceof sc_Pair) !== false) {
+              stmp_15 = BgL_sc_const_8z00_hop_exception;
+            } else {
+              stmp_15 = "margin-top: 2ex";
+            }
+            g1383 = sc_arity_check(dom_create, 4)("div", "\uEBADstyle", stmp_15, stmp_8);
+            stmp_7 = g1383;
           } else {
-            tmp1383 = false;
+            stmp_7 = false;
           }
-          if ((tmp1383 !== false? tmp1383: exc.hopStack instanceof sc_Pair) !== false) {
-            stmp_15 = BgL_sc_const_8z00_hop_exception;
+          if (exc.hopStack instanceof sc_Pair) {
+            g1382 = sc_arity_check(dom_create, 4)("div", "\uEBADstyle", exc.hopService && !(exc.hopService === undefined)? BgL_sc_const_8z00_hop_exception: "margin-top: 2ex", sc_arity_check(hop_make_exception_stack, 1)(exc.hopStack));
+            stmp_17 = g1382;
           } else {
-            stmp_15 = "margin-top: 2ex";
+            stmp_17 = false;
           }
-          g1382 = sc_arity_check(dom_create, 4)("div", "\uEBADstyle", stmp_15, stmp_8);
-          stmp_7 = g1382;
+          if (exc.hopService && !(exc.hopService === undefined)) {
+            g1381 = sc_arity_check(dom_create, 4)("td", "\uEBADstyle", "font-size: 10pt", sc_arity_check(BgL_sc_objzd2ze3string_1z31_hop_exception, 2)(exc.hopService, false));
+            stmp_21 = g1381;
+            g1380 = sc_arity_check(dom_create, 2)("tr", stmp_21);
+            stmp_20 = g1380;
+            g1379 = sc_arity_check(dom_create, 4)("table", "\uEBADstyle", BgL_sc_const_12z00_hop_exception, stmp_20);
+            stmp_19 = g1379;
+            g1378 = sc_arity_check(dom_create, 4)("div", "\uEBADstyle", BgL_sc_const_6z00_hop_exception, "Service:");
+            stmp_22 = g1378;
+            g1377 = sc_arity_check(dom_create, 5)("div", "\uEBADstyle", BgL_sc_const_21z00_hop_exception, stmp_22, stmp_19);
+            stmp_18 = g1377;
+          } else {
+            stmp_18 = false;
+          }
+          g1376 = sc_arity_check(dom_create, 6)("div", "\uEBADstyle", const_hop_exception, stmp_18, stmp_17, stmp_7);
+          stmp_6 = g1376;
+          g1375 = sc_arity_check(dom_create, 4)("td", "\uEBADstyle", BgL_sc_const_2z00_hop_exception, sc_arity_check(hop_properties_to_string, 1)(exc));
+          stmp_27 = g1375;
+          g1374 = sc_arity_check(dom_create, 2)("tr", stmp_27);
+          stmp_26 = g1374;
+          g1373 = sc_arity_check(dom_create, 4)("td", "\uEBADstyle", BgL_sc_const_19z00_hop_exception, src);
+          stmp_29 = g1373;
+          g1372 = sc_arity_check(dom_create, 2)("tr", stmp_29);
+          stmp_28 = g1372;
+          g1371 = sc_arity_check(dom_create, 4)("span", "\uEBADstyle", BgL_sc_const_22z00_hop_exception, name);
+          stmp_32 = g1371;
+          g1370 = sc_arity_check(dom_create, 6)("td", "\uEBADstyle", "font-size: 14pt", stmp_32, ": ", msg);
+          stmp_31 = g1370;
+          g1369 = sc_arity_check(dom_create, 2)("tr", stmp_31);
+          stmp_30 = g1369;
+          g1368 = sc_arity_check(dom_create, 4)("span", "\uEBADstyle", BgL_sc_const_7z00_hop_exception, location);
+          stmp_35 = g1368;
+          g1367 = sc_arity_check(dom_create, 4)("td", "\uEBADstyle", BgL_sc_const_15z00_hop_exception, stmp_35);
+          stmp_34 = g1367;
+          g1366 = sc_arity_check(dom_create, 2)("tr", stmp_34);
+          stmp_33 = g1366;
+          g1365 = sc_arity_check(dom_create, 7)("table", "\uEBADstyle", "width: 100%", stmp_33, stmp_30, stmp_28, stmp_26);
+          stmp_25 = g1365;
+          g1364 = sc_arity_check(dom_create, 4)("td", "\uEBADstyle", BgL_sc_const_13z00_hop_exception, stmp_25);
+          stmp_24 = g1364;
+          g1363 = sc_arity_check(dom_create, 5)("img", "\uEBADsrc", BgL_sc_const_5z00_hop_exception, "\uEBADalt", "Error");
+          stmp_37 = g1363;
+          g1361 = sc_arity_check(dom_create, 4)("td", "\uEBADstyle", BgL_sc_const_20z00_hop_exception, stmp_37);
+          stmp_36 = g1361;
+          g1359 = sc_arity_check(dom_create, 3)("tr", stmp_36, stmp_24);
+          stmp_23 = g1359;
+          g1357 = sc_arity_check(dom_create, 3)("col", "\uEBADwidth", "64px");
+          stmp_39 = g1357;
+          g1355 = sc_arity_check(dom_create, 2)("colgroup", stmp_39);
+          stmp_38 = g1355;
+          g1353 = sc_arity_check(dom_create, 5)("table", "\uEBADstyle", BgL_sc_const_18z00_hop_exception, stmp_38, stmp_23);
+          stmp = sc_arity_check(hop_make_exception_frame, 2)(g1353, stmp_6);
+          return sc_arity_check(dom_append_child, 2)(document.body, stmp);
         } else {
-          stmp_7 = false;
+          return sc_arity_check(hop_window_onload_add, 1)((sc_tmp = function(e) {
+                      return sc_arity_check(hop_report_exception, 1)(exc);
+                    }, sc_tmp.name = "", sc_tmp.location = "(at hop-exception.scm 18167)", sc_tmp.sc_arity = 1, sc_tmp));
         }
-        if (exc.hopStack instanceof sc_Pair) {
-          g1381 = sc_arity_check(dom_create, 4)("div", "\uEBADstyle", exc.hopService && !(exc.hopService === undefined)? BgL_sc_const_8z00_hop_exception: "margin-top: 2ex", sc_arity_check(hop_make_exception_stack, 1)(exc.hopStack));
-          stmp_17 = g1381;
-        } else {
-          stmp_17 = false;
-        }
-        if (exc.hopService && !(exc.hopService === undefined)) {
-          g1380 = sc_arity_check(dom_create, 4)("td", "\uEBADstyle", "font-size: 10pt", sc_arity_check(BgL_sc_objzd2ze3string_1z31_hop_exception, 2)(exc.hopService, false));
-          stmp_21 = g1380;
-          g1379 = sc_arity_check(dom_create, 2)("tr", stmp_21);
-          stmp_20 = g1379;
-          g1378 = sc_arity_check(dom_create, 4)("table", "\uEBADstyle", BgL_sc_const_12z00_hop_exception, stmp_20);
-          stmp_19 = g1378;
-          g1377 = sc_arity_check(dom_create, 4)("div", "\uEBADstyle", BgL_sc_const_6z00_hop_exception, "Service:");
-          stmp_22 = g1377;
-          g1376 = sc_arity_check(dom_create, 5)("div", "\uEBADstyle", BgL_sc_const_21z00_hop_exception, stmp_22, stmp_19);
-          stmp_18 = g1376;
-        } else {
-          stmp_18 = false;
-        }
-        g1375 = sc_arity_check(dom_create, 6)("div", "\uEBADstyle", const_hop_exception, stmp_18, stmp_17, stmp_7);
-        stmp_6 = g1375;
-        g1374 = sc_arity_check(dom_create, 4)("td", "\uEBADstyle", BgL_sc_const_2z00_hop_exception, sc_arity_check(hop_properties_to_string, 1)(exc));
-        stmp_27 = g1374;
-        g1373 = sc_arity_check(dom_create, 2)("tr", stmp_27);
-        stmp_26 = g1373;
-        g1372 = sc_arity_check(dom_create, 4)("td", "\uEBADstyle", BgL_sc_const_19z00_hop_exception, src);
-        stmp_29 = g1372;
-        g1371 = sc_arity_check(dom_create, 2)("tr", stmp_29);
-        stmp_28 = g1371;
-        g1370 = sc_arity_check(dom_create, 4)("span", "\uEBADstyle", BgL_sc_const_22z00_hop_exception, name);
-        stmp_32 = g1370;
-        g1369 = sc_arity_check(dom_create, 6)("td", "\uEBADstyle", "font-size: 14pt", stmp_32, ": ", msg);
-        stmp_31 = g1369;
-        g1368 = sc_arity_check(dom_create, 2)("tr", stmp_31);
-        stmp_30 = g1368;
-        g1367 = sc_arity_check(dom_create, 4)("span", "\uEBADstyle", BgL_sc_const_7z00_hop_exception, location);
-        stmp_35 = g1367;
-        g1366 = sc_arity_check(dom_create, 4)("td", "\uEBADstyle", BgL_sc_const_15z00_hop_exception, stmp_35);
-        stmp_34 = g1366;
-        g1365 = sc_arity_check(dom_create, 2)("tr", stmp_34);
-        stmp_33 = g1365;
-        g1364 = sc_arity_check(dom_create, 7)("table", "\uEBADstyle", "width: 100%", stmp_33, stmp_30, stmp_28, stmp_26);
-        stmp_25 = g1364;
-        g1363 = sc_arity_check(dom_create, 4)("td", "\uEBADstyle", BgL_sc_const_13z00_hop_exception, stmp_25);
-        stmp_24 = g1363;
-        g1362 = sc_arity_check(dom_create, 5)("img", "\uEBADsrc", BgL_sc_const_5z00_hop_exception, "\uEBADalt", "Error");
-        stmp_37 = g1362;
-        g1360 = sc_arity_check(dom_create, 4)("td", "\uEBADstyle", BgL_sc_const_20z00_hop_exception, stmp_37);
-        stmp_36 = g1360;
-        g1358 = sc_arity_check(dom_create, 3)("tr", stmp_36, stmp_24);
-        stmp_23 = g1358;
-        g1356 = sc_arity_check(dom_create, 3)("col", "\uEBADwidth", "64px");
-        stmp_39 = g1356;
-        g1354 = sc_arity_check(dom_create, 2)("colgroup", stmp_39);
-        stmp_38 = g1354;
-        g1352 = sc_arity_check(dom_create, 5)("table", "\uEBADstyle", BgL_sc_const_18z00_hop_exception, stmp_38, stmp_23);
-        stmp = sc_arity_check(hop_make_exception_frame, 2)(g1352, stmp_6);
-        return sc_arity_check(dom_append_child, 2)(document.body, stmp);
-      } else {
-        return sc_arity_check(hop_window_onload_add, 1)((sc_tmp = function(e) {
-                    return sc_arity_check(hop_report_exception, 1)(exc);
-                  }, sc_tmp.name = "", sc_tmp.location = "(at hop-exception.scm 17440)", sc_tmp.sc_arity = 1, sc_tmp));
       }
-    }, sc_tmp.name = "hop-report-exception", sc_tmp.location = "(at hop-exception.scm 17172)", sc_tmp.sc_arity = 1, sc_tmp;
+    }, sc_tmp.name = "hop-report-exception", sc_tmp.location = "(at hop-exception.scm 17702)", sc_tmp.sc_arity = 1, sc_tmp;
 hop_last_exception_hop_exception = false;
 sc_tmp = hop_onerror_handler_hop_exception = function(msg, url, line) {
-      var tmp1386;
+      var tmp1387;
       var i;
-      var g1385;
+      var g1386;
       var exc;
       var exc_49;
-      var tmp1384;
-      g1385 = hop_config.filtered_errors.length - 1;
-      BgL_whilezd2break1455zd2: {
-        i = g1385;
+      var tmp1385;
+      g1386 = hop_config.filtered_errors.length - 1;
+      BgL_whilezd2break1456zd2: {
+        i = g1386;
         while (i >= 0) {
-          tmp1386 = url === hop_config.filtered_errors[i];
-          if (tmp1386 !== false) {
+          tmp1387 = url === hop_config.filtered_errors[i];
+          if (tmp1387 !== false) {
             {
-              tmp1384 = tmp1386;
-              break BgL_whilezd2break1455zd2;
+              tmp1385 = tmp1387;
+              break BgL_whilezd2break1456zd2;
             }
           } else {
             --i;
           }
         }
-        tmp1384 = false;
+        tmp1385 = false;
       }
-      if (tmp1384 !== false) {
-        return tmp1384;
+      if (tmp1385 !== false) {
+        return tmp1385;
       } else {
         if (hop_last_exception_hop_exception && hop_last_exception_hop_exception.message === msg) {
           exc = hop_last_exception_hop_exception;
@@ -690,12 +698,12 @@ sc_tmp = hop_onerror_handler_hop_exception = function(msg, url, line) {
         sc_arity_check(hop_report_exception, 1)(exc);
         return sc_arity_check(hop_debug, 0)() < 2;
       }
-    }, sc_tmp.name = "hop-onerror-handler", sc_tmp.location = "(at hop-exception.scm 18460)", sc_tmp.sc_arity = 3, sc_tmp;
+    }, sc_tmp.name = "hop-onerror-handler", sc_tmp.location = "(at hop-exception.scm 19188)", sc_tmp.sc_arity = 3, sc_tmp;
 if (sc_arity_check(hop_debug, 0)() > 0) {
   sc_arity_check(sc_errorHookSet, 1)((sc_tmp = function(exc, _) {
         hop_last_exception_hop_exception = exc;
         exc.hopStack = sc_arity_check(hop_get_stack, 1)(3);
         return exc;
-      }, sc_tmp.name = "", sc_tmp.location = "(at hop-exception.scm 19294)", sc_tmp.sc_arity = 2, sc_tmp));
+      }, sc_tmp.name = "", sc_tmp.location = "(at hop-exception.scm 20022)", sc_tmp.sc_arity = 2, sc_tmp));
   window.onerror = hop_onerror_handler_hop_exception;
 }

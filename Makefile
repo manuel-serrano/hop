@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sat Nov 28 06:56:20 2009 (serrano)                */
+#*    Last change :  Sun Nov 29 07:58:48 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -42,7 +42,7 @@ libdir:
 
 bin: bindir hopc-bin src-bin hopsh-bin hopreplay-bin
 
-hopc-bin: share lib
+hopc-bin: lib
 	(cd hopc && $(MAKE) build)
 
 src-bin: share lib widget
@@ -54,7 +54,7 @@ hopsh-bin: lib
 hopreplay-bin: lib
 	(cd hopreplay && $(MAKE) build)
 
-lib: libdir share 
+lib: libdir 
 	(cd scheme2js && $(MAKE) build)
 	(cd hopscheme && $(MAKE) build)
 	(cd runtime && $(MAKE) build)
@@ -62,7 +62,7 @@ lib: libdir share
 widget: libdir hopc-bin
 	(cd widget && $(MAKE) build)
 
-share:
+share: hopc-bin
 	(cd share && $(MAKE) build)
 
 weblets: lib

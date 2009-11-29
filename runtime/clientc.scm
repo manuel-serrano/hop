@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Fri Jul 17 15:41:41 2009 (serrano)                */
+;*    Last change :  Sun Nov 29 09:00:17 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -107,6 +107,7 @@
 	     (charset (hop-locale))
 	     (content-type mime)
 	     (bodyp (eq? method 'GET))
+	     (header '((accept-ranges: . "bytes")))
 	     (file cache))
 	  (let ((m (eval-module)))
 	     (unwind-protect
@@ -117,6 +118,7 @@
 		      (charset (hop-locale))
 		      (content-type mime)
 		      (bodyp (eq? method 'GET))
+		      (header '((accept-ranges: . "bytes")))
 		      (file cache)))
 		(eval-module-set! m))))))
 

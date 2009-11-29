@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Oct 22 17:45:46 2009 (serrano)                */
+;*    Last change :  Sun Nov 29 11:10:30 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -117,6 +117,8 @@
 	  (bigloo-trace-color-set! #f))
 	 (("--log-file" ?file (help "Use <FILE> as log file"))
 	  (set! log-file file))
+	 (("--capture-file" ?file (help "Use <FILE> as remote capture file"))
+	  (hop-capture-port-set! (open-output-file file)))
 	 (("--allow-service-override" (help "Allow service overriding (see -s)"))
 	  (hop-security-set! 0))
 	 

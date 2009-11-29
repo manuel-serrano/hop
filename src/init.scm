@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Jul 31 11:49:31 2009 (serrano)                */
+;*    Last change :  Sun Nov 29 15:05:30 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -133,7 +133,7 @@
 ;*    http-get-file-query ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (http-get-file-query req)
-   (with-access::http-request req (abspath query method timeout)
+   (with-access::http-request req (abspath query method timeout header)
       (cond
 	 ((string=? query (hop-scm-compile-suffix))
 	  (clientc-response req abspath))
@@ -146,6 +146,7 @@
 	     (charset (hop-locale))
 	     (content-type (mime-type abspath "text/plain"))
 	     (bodyp (eq? method 'GET))
+	     (header '((accept-ranges: . "bytes")))
 	     (file abspath))))))
    
 ;*---------------------------------------------------------------------*/
@@ -209,6 +210,7 @@
 	     (request req)
 	     (timeout -1)
 	     (start-line "ICY 200 OK")
+	     (header '((accept-ranges: . "bytes")))
 	     (bodyp bodyp)
 	     (file abspath)))
 	 ((and (string-suffix? ".gz" abspath) (accept-gzip? header))
@@ -217,9 +219,9 @@
 	  (instantiate::http-response-file
 	     (request req)
 	     (timeout timeout)
+	     (header '((content-encoding: . "gzip") (accept-ranges: . "bytes")))
 	     (content-type (mime-type (prefix abspath) "text/plain"))
 	     (charset (hop-locale))
-	     (header `((content-encoding: . "gzip")))
 	     (bodyp bodyp)
 	     (file abspath)))
 	 ((and (hop-gzipped-directory? abspath)
@@ -229,9 +231,9 @@
 	  (instantiate::http-response-file
 	     (request req)
 	     (timeout timeout)
+	     (header '((content-encoding: . "gzip") (accept-ranges: . "bytes")))
 	     (content-type (mime-type abspath "text/plain"))
 	     (charset (hop-locale))
-	     (header `((content-encoding: . "gzip")))
 	     (bodyp bodyp)
 	     (file (string-append abspath ".gz"))))
 	 (else
@@ -239,6 +241,7 @@
 	  (instantiate::http-response-file
 	     (request req)
 	     (timeout timeout)
+	     (header '((accept-ranges: . "bytes")))
 	     (content-type (mime-type abspath "text/plain"))
 	     (charset (hop-locale))
 	     (bodyp bodyp)

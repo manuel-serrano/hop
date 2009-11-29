@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Fri Nov 27 13:13:52 2009 (serrano)                */
+;*    Last change :  Sun Nov 29 07:42:39 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -161,13 +161,23 @@
 	  '()))))
 
 ;*---------------------------------------------------------------------*/
+;*    in-exception-report ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Use a symbol instead of a boolean to avoid confusion when        */
+;*    uninitialized.                                                   */
+;*---------------------------------------------------------------------*/
+(define in-exception-report 'no)
+
+;*---------------------------------------------------------------------*/
 ;*    <EXCEPTION-FRAME> ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (<EXCEPTION-FRAME> . args)
    (let ((mask (<DIV> :style (hop-exception-mask-style) ""))
 	 (frame (<DIV> :style (hop-exception-frame-style)
 		   (<DIV> :style "overflow: auto" args))))
-      (<DIV> :onclick (dom-remove-child! (dom-parent-node this) this)
+      (<DIV> :onclick (begin
+			 (set! in-exception-report 'no)
+			 (dom-remove-child! (dom-parent-node this) this))
 	 mask frame)))
 
 ;*---------------------------------------------------------------------*/
@@ -292,7 +302,7 @@
 		   (list message " -- " (obj->string exc.scObject #f))
 		   message))
 	  (name (exception-name exc))
-	  (url (if (string? exc.fileName) exc.fileName document.location))
+	  (url (if (string? exc.fileName) exc.fileName document.location.href))
 	  (location (if (string? exc.hopLocation) exc.hopLocation "Client Error"))
 	  (src (cond
 		  ((and exc.lineNumber (not (eq? exc.lineNumber #unspecified)))
@@ -339,10 +349,17 @@
 ;*    hop-report-exception ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hop-report-exception exc)
-   ;; the error might be raised before document.body is bound
-   (if (and document.body (not (null? document.body)))
-       (dom-append-child! document.body (<EXCEPTION> exc))
-       (add-window-onload! (lambda (e) (hop-report-exception exc)))))
+   (cond
+      ((eq? in-exception-report 'yes)
+       ;; we are already reporting an error
+       (raise exc))
+      ((and document.body (not (null? document.body)))
+       ;; regular report
+       (set! in-exception-report 'yes)
+       (dom-append-child! document.body (<EXCEPTION> exc)))
+      (else
+       ;; the error might be raised even before document.body is bound
+       (add-window-onload! (lambda (e) (hop-report-exception exc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-last-exception ...                                           */

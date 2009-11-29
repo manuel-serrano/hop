@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Oct 22 18:01:35 2009 (serrano)                */
+;*    Last change :  Sun Nov 29 07:54:14 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -67,6 +67,9 @@
 
 	    (hop-log::int)
 	    (hop-log-set! ::int)
+
+	    (hop-capture-port::obj)
+	    (hop-capture-port-set! ::obj)
 
 	    (hop-max-file-size-cache::elong)
 	    (hop-max-file-size-cache-set! ::elong)
@@ -420,6 +423,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-log
    0)
+
+;*---------------------------------------------------------------------*/
+;*    hop-capture-port ...                                             */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-capture-port
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-restore-disk-cache ...                                       */

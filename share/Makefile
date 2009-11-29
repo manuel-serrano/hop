@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sat Nov 28 07:16:35 2009 (serrano)                */
+#*    Last change :  Sun Nov 29 08:39:18 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -249,6 +249,18 @@ flash/%.swf: flash/%.as
 	(cd flash && $(FLASHCC) $(FFLAGS) $(@F) $(<F))
 
 #*---------------------------------------------------------------------*/
+#*    JavaScript compilation                                           */
+#*---------------------------------------------------------------------*/
+hop-exception.js: hop-exception.scm
+	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
+         export LD_LIBRARY_PATH; \
+         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
+         export DYLD_LIBRARY_PATH; \
+         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
+         export PATH; \
+	 $(call compile3b,HOPC,BJFLAGS,HFLAGS,BLFLAGS,$< -o $@ -c))
+
+#*---------------------------------------------------------------------*/
 #*    backends                                                         */
 #*---------------------------------------------------------------------*/
 .PHONY: native jvm
@@ -265,12 +277,6 @@ jvm-list:
             $(MAKE) jvm-list SRC=$(SRC)/$(DIR) DIR=$$p DEST=$(DEST)/$(DIR) || (echo "*** ERROR: $$p"; exit 1); \
           fi \
         done
-
-#*---------------------------------------------------------------------*/
-#*    hop-exception.js                                                 */
-#*---------------------------------------------------------------------*/
-hop-exception.js: hop-exception.scm
-	@ $(call compile3b,HOPC,BJFLAGS,HFLAGS,BLFLAGS,$< -o $@ -c)
 
 #*---------------------------------------------------------------------*/
 #*    cleaning                                                         */

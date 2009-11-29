@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Wed Apr  8 14:08:38 2009 (serrano)                */
+;*    Last change :  Sun Nov 29 16:37:56 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -119,28 +119,38 @@
 		  (with-trace 4 'http-response-header
 		     (trace-item "start-line: "
 				 (response-remote-start-line r))
-		     (http-write-line rp (response-remote-start-line r))
+		     (remote-header header rp r)
 		     ;; if a char is ready and is eof, it means that the
 		     ;; connection is closed
 		     (if (connection-down? remote)
 			 (begin
 			    (connection-close! remote)
 			    (loop))
-			 (begin
-			    (http-write-header
-			     rp (http-filter-proxy-header header))
-			    (when (hop-enable-remote-keep-alive)
-			       (let ((h (if (hop-use-proxy-host)
-					    "proxy-connection: keep-alive"
-					    "connection: keep-alive")))
-				  (http-write-line rp h)))
-			    (http-write-line rp)
+			 (let ((cp (hop-capture-port)))
 			    ;; the content of the request
 			    (when (>elong content-length #e0)
 			       (trace-item "send-chars.1 cl=" content-length)
 			       (send-chars sp rp content-length))
 			    (flush-output-port rp)
+			    ;; capture dumping
+			    (when (output-port? cp)
+			       (remote-header header cp r)
+			       (newline cp)
+			       (flush-output-port cp))
 			    (remote-body r socket remote))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    remote-header ...                                                */
+;*---------------------------------------------------------------------*/
+(define (remote-header header::pair-nil rp::output-port r::http-response-remote)
+   (http-write-line rp (response-remote-start-line r))
+   (http-write-header rp (http-filter-proxy-header header))
+   (when (hop-enable-remote-keep-alive)
+      (let ((h (if (hop-use-proxy-host)
+		   "proxy-connection: keep-alive"
+		   "connection: keep-alive")))
+	 (http-write-line rp h)))
+   (http-write-line rp))
 
 ;*---------------------------------------------------------------------*/
 ;*    remote-body ...                                                  */
