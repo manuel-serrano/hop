@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sun Nov 29 17:59:24 2009 (serrano)                */
+;*    Last change :  Mon Nov 30 08:44:33 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Video support.                                               */
@@ -27,8 +27,8 @@
 (define-xml-compound <VIDEO> ((id #unspecified string)
 			      (src #f)
 			      (img #f)
-			      (width 640)
-			      (height 480)
+			      (width "auto")
+			      (height "auto")
 			      (bg #f)
 			      (backend 'html5)
 			      (attr)
@@ -52,11 +52,22 @@
 	 (format "~a.write('~a'); }" tmp vid)))
    
    (define (source s)
-      (let ((t (mime-type s "video/ogg")))
-	 (instantiate::xml-empty-element
-	    (markup 'SOURCE)
-	    (attributes `(:src ,s :type ,t))
-	    (body '()))))
+      (match-case s
+	 ((? string?)
+	  (let ((t (mime-type s "video/ogg")))
+	     (instantiate::xml-empty-element
+		(id (symbol->string (gensym 'source)))
+		(markup 'SOURCE)
+		(attributes `(:src ,s :type ,t))
+		(body '()))))
+	 (((and ?s (? string?)) (and ?t (? string?)))
+	  (instantiate::xml-empty-element
+	     (id (symbol->string (gensym 'source)))
+	     (markup 'SOURCE)
+	     (attributes `(:src ,s :type ,t))
+	     (body '())))
+	 (else
+	  (error '<VIDEO> "Illegal :src value" s))))
    
    (let ((vid (symbol->string (gensym 'video-container))))
       (<DIV> :id vid
@@ -67,13 +78,13 @@
 	     (instantiate::xml-element
 		(id (xml-make-id id 'video))
 		(markup 'VIDEO)
-		(attributes attr)
+		(attributes `(:width ,width :height ,height ,@attr))
 		(body (append (map source src)
 			      (list (<flash> (gensym 'video_tmp) vid #f))))))
 	    (else
 	     (instantiate::xml-element
 		(id (xml-make-id id 'video))
 		(markup 'VIDEO)
-		(attributes `(:src ,src ,@attr))
+		(attributes `(:src ,src :width ,width :height ,height ,@attr))
 		(body (list (<flash> (gensym 'video_tmp) vid #f)))))))))
 

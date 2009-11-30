@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Nov 28 07:17:02 2009 (serrano)                */
+#*    Last change :  Mon Nov 30 08:31:25 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -94,7 +94,7 @@ threads=""
 
 hopsrfis=""
 
-rts="hop-dom.js hop-event.js hop-serialize.js base64.js hop-exception.js hop-request.js hop-lib.js hop-history.js hopscheme.js"
+rts="hop-dom.js hop-event.js hop-serialize.js base64.js hop-request.js hop-lib.js hop-history.js hopscheme.js"
 
 hopservicebase="/hop"
 hopjs='"hop.js"'

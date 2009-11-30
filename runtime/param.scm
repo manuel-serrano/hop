@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Nov 29 07:54:14 2009 (serrano)                */
+;*    Last change :  Mon Nov 30 09:12:08 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -760,6 +760,7 @@
      ("image/gif" "gif")
      ;; video
      ("video/mpeg" "avi")
+     ("video/ogg" "ogv")
      ("video/mpeg" "mpg")
      ("video/x-flv" "flv"))
    (lambda (v)

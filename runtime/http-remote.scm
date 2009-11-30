@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sun Nov 29 18:53:04 2009 (serrano)                */
+;*    Last change :  Mon Nov 30 09:17:27 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -134,6 +134,11 @@
 			    (flush-output-port rp)
 			    ;; capture dumping
 			    (when (output-port? cp)
+			       (display "----------------------------------------------------------\n" cp)
+			       (fprintf cp "http://~a:~a~a\n\n"
+					(http-request-host request)
+					(http-request-port request)
+					(http-request-path request))
 			       (remote-header header cp r)
 			       (flush-output-port cp))
 			    (remote-body r socket remote))))))))))

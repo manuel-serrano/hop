@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sun Nov 29 19:11:00 2009 (serrano)                */
+#*    Last change :  Mon Nov 30 08:32:06 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -206,7 +206,7 @@ uninstall:
 #*---------------------------------------------------------------------*/
 #*    hop.js ...                                                       */
 #*---------------------------------------------------------------------*/
-hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js $(RTS)
+hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js hop-exception.js $(RTS) 
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* " >> $@
 	date >> $@
@@ -236,10 +236,7 @@ hop-runtime.sch: $(EXPORTER) $(EXPORTED_RT_JS)
 #*---------------------------------------------------------------------*/
 #*    .afile ...                                                       */
 #*---------------------------------------------------------------------*/
-EXPORTED_RT_SCM = hop-runtime.sch $(filter %.scm,$(EXTRA)) \
-                                    $(filter %.sch,$(EXTRA))
-
-.afile: $(EXPORTED_RT_SCM)
+.afile: hop-runtime.sch $(filter %.scm,$(EXTRA)) $(filter %.sch,$(EXTRA))
 	@ $(AFILE) -o $@ $^
 
 #*---------------------------------------------------------------------*/

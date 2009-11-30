@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun Nov 29 18:52:50 2009 (serrano)                */
+;*    Last change :  Mon Nov 30 09:26:54 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -329,9 +329,9 @@
 	    (http-write-line p "Date: " dt)
 	    (http-write-line p "Last-Modified: " dt))
 	 ;; content-length
-;* 	 (display "Content-Length: " p)                                */
-;* 	 (display-elong (+elong #e1 (-elong end beg)) p)               */
-;* 	 (http-write-line p)                                           */
+	 (display "Content-Length: " p)
+	 (display-elong (+elong #e1 (-elong end beg)) p)
+	 (http-write-line p)
 	 ;; content-range
 	 (display "Content-Range: bytes " p)
 	 (display-elong beg p)
@@ -355,7 +355,7 @@
 		   (let* ((connection (http-request-connection request))
 			  (p (socket-output socket)))
 		      ;; fill the default arguments
-		      (unless end (set! end size))
+		      (unless end (set! end (-elong size #e1)))
 		      (unless beg (set! beg (-elong size end)))
 		      (when (>=elong end size)
 			 (set! end (-elong size 1)))
@@ -372,8 +372,11 @@
 		      ;; capture dumping
 		      (let ((cp (hop-capture-port)))
 			 (when (output-port? cp)
-			    (fprintf cp ";; GET ~a range: bytes=~a-~a\n"
-				     file beg end)
+			    (display "----------------------------------------------------------\n" cp)
+			    (fprintf cp "http://~a:~a~a\n\n"
+				     (http-request-host request)
+				     (http-request-port request)
+				     (http-request-path request))
 			    (response-header connection beg end size cp r)
 			    (flush-output-port cp)))
 		      ;; the body
