@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Dec  1 18:21:32 2009 (serrano)                */
+;*    Last change :  Tue Dec  1 20:22:47 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Video support.                                               */
@@ -66,37 +66,37 @@
 		  body))
    
    (let ((vid (symbol->string (gensym 'video-container))))
-	 (cond
-	    ((eq? backend 'flash)
-	     (<DIV> :id vid
-		(<flash> src vid #t)))
-	    ((eq? backend 'html5)
-	     (instantiate::xml-element
-		(id (xml-make-id id 'video))
-		(markup 'VIDEO)
-		(attributes `(:src ,src :width ,width :height ,height ,@attr))
-		(body body)))
-	    ((string? src)
-	     (if (is-suffix? src "flv")
-		 (<DIV> :id vid
-		    (<flash> src vid #t))
-		 (instantiate::xml-element
-		    (id (xml-make-id id 'video))
-		    (markup 'VIDEO)
-		    (attributes `(:src ,src :width ,width :height ,height ,@attr))
-		    (body body))))
-	    ((flv body)
-	     =>
-	     (lambda (els)
-		(instantiate::xml-element
-		   (id vid)
-		   (markup 'VIDEO)
-		   (attributes `(:width ,width :height ,height ,@attr))
-		   (body (append body (list (<flash> (car els) vid #f)))))))
-	    (else
+      (cond
+	 ((eq? backend 'flash)
+	  (<DIV> :id vid
+	     (<flash> src vid #t)))
+	 ((eq? backend 'html5)
+	  (instantiate::xml-element
+	     (id (xml-make-id id 'video))
+	     (markup 'VIDEO)
+	     (attributes `(:src ,src :width ,width :height ,height ,@attr))
+	     (body body)))
+	 ((string? src)
+	  (if (is-suffix? src "flv")
+	      (<DIV> :id vid
+		 (<flash> src vid #t))
+	      (instantiate::xml-element
+		 (id (xml-make-id id 'video))
+		 (markup 'VIDEO)
+		 (attributes `(:src ,src :width ,width :height ,height ,@attr))
+		 (body body))))
+	 ((flv body)
+	  =>
+	  (lambda (els)
 	     (instantiate::xml-element
 		(id vid)
 		(markup 'VIDEO)
 		(attributes `(:width ,width :height ,height ,@attr))
-		(body body)))))))
+		(body (append body (list (<flash> (car els) vid #f)))))))
+	 (else
+	  (instantiate::xml-element
+	     (id vid)
+	     (markup 'VIDEO)
+	     (attributes `(:width ,width :height ,height ,@attr))
+	     (body body))))))
 
