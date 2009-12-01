@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Nov 30 09:26:54 2009 (serrano)                */
+;*    Last change :  Tue Dec  1 18:35:16 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -267,7 +267,9 @@
    (with-trace 3 'http-response::http-response-procedure
       (with-access::http-response-procedure r (start-line header content-type charset server content-length proc bodyp timeout request)
 	 (let ((p (socket-output socket))
-	       (connection (http-request-connection request)))
+	       (connection (if (>elong content-length #e0)
+			       (http-request-connection request)
+			       'close)))
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	    (http-write-line-string p start-line)
 	    (http-write-header p header)

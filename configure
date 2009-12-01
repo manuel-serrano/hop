@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Nov 30 08:31:25 2009 (serrano)                */
+#*    Last change :  Tue Dec  1 15:16:07 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -76,7 +76,7 @@ buildsharedir=$PWD/share
 distribdir=$HOME/prgm/distrib
 buildbindir=$PWD/bin
 
-bigloorequired=3.2c
+bigloorequired=3.3a
 bigloourl=http://www.inria.fr/indes/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop
