@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Nov 30 08:29:05 2009 (serrano)                */
+#*    Last change :  Thu Dec  3 18:22:17 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -25,7 +25,7 @@ POPULATION	= Makefile LICENSE README INSTALL INSTALL.jvm \
                   configure .hoprelease .hgignore
 POPDIRS		= runtime hopscheme scheme2js src hopc hopsh hopreplay \
                   etc share arch \
-                  weblets widget # contribs
+                  weblets widget
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
@@ -146,8 +146,6 @@ hop-dirs:
          && chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)
 	mkdir -p $(DESTDIR)$(HOPWEBLETSDIR) \
 	 && chmod $(BMASK) $(DESTDIR)$(HOPWEBLETSDIR)
-	mkdir -p $(DESTDIR)$(HOPCONTRIBSDIR) \
-	 && chmod $(BMASK) $(DESTDIR)$(HOPCONTRIBSDIR) 
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
