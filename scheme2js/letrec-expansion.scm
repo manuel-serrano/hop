@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -12,6 +12,7 @@
 
 (module letrec-expansion
    (import config
+	   error
 	   nodes
 	   pobject-conv
 	   export-desc
@@ -162,6 +163,8 @@
 	 (cond
 	    ((null? exprs)
 	     rev-defines)
+	    ((not (pair? exprs))
+	     (scheme2js-error  'begin "Illegal form" bnode (Node-location bnode)))
 	    ((Begin? (car exprs))
 	     (loop (cdr exprs)
 		   (inner (car exprs)
