@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Tue Dec  8 11:09:02 2009 (serrano)                */
+#*    Last change :  Tue Dec  8 20:38:18 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -291,6 +291,6 @@ predistrib-clean:
 clean:
 	$(RM) hop.js
 
-devclean: predistrib-clean
+devclean:
 
 distclean: clean
