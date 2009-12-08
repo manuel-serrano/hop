@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Sun Dec  6 17:48:53 2009 (serrano)                */
+;*    Last change :  Tue Dec  8 08:07:54 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -261,6 +261,7 @@ components = free" catalogues catalogues (home-ftp-hop-url) distrib))))
 (define *devel-tar-url* #unspecified)
 (define *devel-jar-url* #unspecified)
 (define *stable-tar-gz* #unspecified)
+(define *stable-dmg* #unspecified)
 (define *stable-jar* #unspecified)
 (define *stable-tar-url* #unspecified)
 (define *stable-jar-url* #unspecified)
@@ -296,6 +297,11 @@ components = free" catalogues catalogues (home-ftp-hop-url) distrib))))
       (set! *stable-tar-gz*
 	    (if (string? (home-hop-stable-version))
 		(string-append "hop-" (home-hop-stable-version) ".tar.gz")
+		"not available"))
+      
+      (set! *stable-dmg*
+	    (if (string? (home-hop-stable-version))
+		(string-append "macosx/hop-" (home-hop-stable-version) ".dmg")
 		"not available"))
       
       (set! *stable-jar*

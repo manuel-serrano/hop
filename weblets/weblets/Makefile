@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed Oct 14 11:43:02 2009 (serrano)                */
+#*    Last change :  Tue Dec  8 08:42:29 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Weblet Makefile                                                  */
@@ -28,7 +28,6 @@ SOURCES		= weblets.hop package.hop config.hop markup.hop \
 POPULATION	= $(SOURCES) \
                   Makefile \
                   weblets.hss weblets-homepage.hss config.hop \
-                  LICENSE \
                   etc/logo.png etc/favicon.png \
                   etc/weblet.info.in etc/weblets.wiki.in
 

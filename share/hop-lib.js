@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Sat Dec  5 18:34:25 2009 (serrano)                */
+/*    Last change :  Tue Dec  8 08:37:18 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -260,61 +260,68 @@ function hop_load( src, timeout ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export add-window-onload!) (arity 1)) */
 var hop_window_onload_add = function( proc ) {
-   var oldonload = window.onload;
-   var wproc = hop_callback( proc );
-
-   if( typeof oldonload != 'function' ) {
-      window.onload = wproc;
-   } else {
-      window.onload = function( e ) {
-	 oldonload( e );
-	 wproc( e );
-      }
-   }
-}
-   
-hop_window_onload_add( function( e ) {
-      /* once the window is loaded, onload handlers */
-      /* must be invoked eargly                     */
-      hop_window_onload_add = function( proc ) { proc( e ); }
-   } );
-
-/*---------------------------------------------------------------------*/
-/*    hop_window_onload_cons ...                                       */
-/*---------------------------------------------------------------------*/
-/*** META ((export add-window-onload-first!) (arity #t)) */
-function hop_window_onload_cons( proc ) {
-   var oldonload = window.onload;
-   var wproc = hop_callback( proc );
-
-   if( typeof oldonload != 'function' ) {
-      window.onload = wproc;
-   } else {
-      window.onload = function( e ) {
-	 wproc( e );
-	 oldonload( e );
-      }
-   }
+   /* backward compatibility */
+   return hop_add_event_listener( window, "load", proc );
 }
 
+/*    var oldonload = window.onload;                                   */
+/*    var wproc = hop_callback( proc );                                */
+/*                                                                     */
+/*    if( typeof oldonload != 'function' ) {                           */
+/*       window.onload = wproc;                                        */
+/*    } else {                                                         */
+/*       window.onload = function( e ) {                               */
+/* 	 oldonload( e );                                               */
+/* 	 wproc( e );                                                   */
+/*       }                                                             */
+/*    }                                                                */
+/* }                                                                   */
+/*                                                                     */
+/* hop_window_onload_add( function( e ) {                              */
+/*       {* once the window is loaded, onload handlers *}              */
+/*       {* must be invoked eargly                     *}              */
+/*       hop_window_onload_add = function( proc ) { proc( e ); }       */
+/*    } );                                                             */
+/*                                                                     */
+/* {*---------------------------------------------------------------------*} */
+/* {*    hop_window_onload_cons ...                                       *} */
+/* {*---------------------------------------------------------------------*} */
+/* {*** META ((export add-window-onload-first!) (arity #t)) *}         */
+/* function hop_window_onload_cons( proc ) {                           */
+/*    var oldonload = window.onload;                                   */
+/*    var wproc = hop_callback( proc );                                */
+/*                                                                     */
+/*    if( typeof oldonload != 'function' ) {                           */
+/*       window.onload = wproc;                                        */
+/*    } else {                                                         */
+/*       window.onload = function( e ) {                               */
+/* 	 wproc( e );                                                   */
+/* 	 oldonload( e );                                               */
+/*       }                                                             */
+/*    }                                                                */
+/* }                                                                   */
+/*                                                                     */
 /*---------------------------------------------------------------------*/
 /*    hop_window_onunload_add ...                                      */
 /*---------------------------------------------------------------------*/
 /*** META ((export add-window-onunload!) (arity #t)) */
 function hop_window_onunload_add( proc ) {
-   var wproc = hop_callback( proc );
-   
-   if( typeof( window.onunload ) != 'function' ) {
-      window.onunload = wproc;
-   } else {
-      var oldonunload = window.onunload;
-
-      window.onunload = function( e ) {
-	 oldonunload( e );
-	 wproc( e );
-      }
-   }
+   /* backward compatibility */
+   return hop_add_event_listener( window, "unload", proc );
 }
+/*    var wproc = hop_callback( proc );                                */
+/*                                                                     */
+/*    if( typeof( window.onunload ) != 'function' ) {                  */
+/*       window.onunload = wproc;                                      */
+/*    } else {                                                         */
+/*       var oldonunload = window.onunload;                            */
+/*                                                                     */
+/*       window.onunload = function( e ) {                             */
+/* 	 oldonunload( e );                                             */
+/* 	 wproc( e );                                                   */
+/*       }                                                             */
+/*    }                                                                */
+/* }                                                                   */
 
 /*---------------------------------------------------------------------*/
 /*    hop_update ...                                                   */

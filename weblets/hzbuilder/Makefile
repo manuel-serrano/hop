@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed Oct 14 11:41:53 2009 (serrano)                */
+#*    Last change :  Tue Dec  8 08:42:20 2009 (serrano)                */
 #*    Copyright   :  2007-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Weblet Makefile                                                  */
@@ -31,7 +31,7 @@ POPULATION= $(SOURCES) \
   etc/skeleton/doc.wiki.in etc/skeleton/weblet.info.in \
   etc/skeleton/logo.png etc/skeleton/favicon.png etc/skeleton/dashboard.png \
   etc/skeleton/01-homepage.wiki \
-  Makefile LICENSE
+  Makefile
 
 #*---------------------------------------------------------------------*/
 #*    Targets                                                          */

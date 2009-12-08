@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Sun Dec  6 16:45:13 2009 (serrano)                */
+#*    Last change :  Tue Dec  8 08:17:33 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -32,7 +32,7 @@ TALKS		= hopdiffuse.xhtml.gz
 POPULATION	= Makefile home.hss tips.hss \
                   demos etc/icons articles etc/weblet.info.in etc/home.wiki.in \
                   etc/logo.png etc/favicon.png etc/video.png \
-                  etc/icons/maemo_install.png\
+                  etc/icons/maemo_install.png \
                   $(VIDEOS:%=videos/%) \
                   $(TALKS:%=talks/%) \
                   $(SOURCES) $(HOP_POP) config.hop.in

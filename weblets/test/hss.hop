@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Thu Jul 16 11:52:12 2009 (serrano)                */
+;*    Last change :  Tue Dec  8 08:32:16 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing hss                                                      */
@@ -38,10 +38,11 @@
       (let ((div (<DIV> "")))
 	 (list
 	  div
-	  ~(add-window-onload! (lambda ()
-				  (innerHTML-set! $div
-                                     (<LFRAME>
-				        (<LFLABEL> "dynamic")
-				        "A client-side created lframe"))))))))
+	  ~(add-event-listener! window "load"
+	      (lambda ()
+		 (innerHTML-set! $div
+				 (<LFRAME>
+				    (<LFLABEL> "dynamic")
+				    "A client-side created lframe"))))))))
 							 
       

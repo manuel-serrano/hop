@@ -17,6 +17,10 @@
         (<TH> "Linux")
         (<TD> :rowspan 2 :class "type"
            (<IMG> :inline #t
+             :src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")))
+        (<TH> "Maemo")
+        (<TD> :rowspan 2 :class "type"
+           (<IMG> :inline #t
              :src (make-file-path (home-dir) "etc" "icons" "macos.png")))
         (<TH> "MacOS X")
         (<TD> :rowspan 2 :class "type"
@@ -25,29 +29,9 @@
         (<TH> "Windows"))
      (<TR> 
          (<TD> (<A> :href *stable-tar-url* *stable-tar-gz*))
-         (<TD> (<A> :href *stable-tar-url* *stable-tar-gz*))
+         (<TD> (<A> :href *maemo-freemantle-url* "Fremantle"))
+         (<TD> (<A> :href *stable-dmg* (basename *stable-dmg*)))
          (<TD> (<A> :href *stable-jar-url* *stable-jar*)))))
-
-,(<DIV> :class "os-download" :align 'center
-  (<DIV> :class "download-header" "Maemo")
-  (<TABLE> :class "os-download os-download-maemo"
-     (<COLGROUP> 
-        (<COL>)
-        (<COL> :width "50%")
-        (<COL>)
-        (<COL> :width "50%"))
-     (<TR> 
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")))
-        (<TH> "OS2008")
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")))
-        (<TH> "Maemo5"))
-     (<TR> 
-         (<TD> (<A> :href *maemo-chinook-url* "Chinook"))
-         (<TD> (<A> :href *maemo-freemantle-url* "Freemantle")))))
 
 ,(<DIV> :class "os-download" :align 'center
   (<DIV> :class "download-header" "Unstable versions")
@@ -88,6 +72,32 @@ used without downloading and installing the source code manually:
 
   * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "arch-16x16.png")) [[http://aur.archlinux.org|Arch Linux]]
   * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "gentoo-16x16.png")) [[http://www.gentoo.org|Gentoo]]
+
+
+~~ We provide some pre-compiled packages for non-standard architectures:
+
+  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "maemo-16x16.png")) [[http://maemo.org|Maemo]]
+
+,(<DIV> :class "os-download" :align 'center
+  (<DIV> :class "download-header" "Maemo")
+  (<TABLE> :class "os-download os-download-maemo"
+     (<COLGROUP> 
+        (<COL>)
+        (<COL> :width "50%")
+        (<COL>)
+        (<COL> :width "50%"))
+     (<TR> 
+        (<TD> :rowspan 2 :class "type"
+           (<IMG> :inline #t
+             :src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")))
+        (<TH> "OS2008")
+        (<TD> :rowspan 2 :class "type"
+           (<IMG> :inline #t
+             :src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")))
+        (<TH> "Maemo5"))
+     (<TR> 
+         (<TD> (<A> :href *maemo-chinook-url* "Chinook"))
+         (<TD> (<A> :href *maemo-freemantle-url* "Freemantle")))))
 
 
 == Getting Bigloo ==

@@ -3,7 +3,7 @@
    (<HTML>
       (<HEAD> :include "hop-canvas")
       (<DIV> :align 'center can)
-      ~(add-window-onload!
+      ~(add-event-listener! "window"
 	(lambda ()
 	   (let ((ctx (canvas-get-context $can "2d")))
 	      ;; filling texts
