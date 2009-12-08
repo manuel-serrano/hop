@@ -723,28 +723,44 @@ switch( hop_config.mouse_left_button ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_current_window_width/height ...                              */
+/*    hop_window_width/height ...                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export current-window-width) (arity 0)) */
-var hop_current_window_width = undefined;
-/*** META ((export current-window-height) (arity 0)) */
-var hop_current_window_height = undefined;
+/*** META ((export main-window-width) (arity 0)) */
+var hop_main_window_width = undefined;
+/*** META ((export main-window-height) (arity 0)) */
+var hop_main_window_height = undefined;
+/*** META ((export main-window-orientation) (arity 0)) */
+var hop_main_window_orientation = undefined;
 
 if( isNaN( window.innerWidth ) ) {
-   hop_current_window_width = function hop_current_window_width() {
+   hop_main_window_width = function hop_main_window_width() {
       return document.documentElement.clientWidth;
    }
-   hop_current_window_height = function hop_current_window_height() {
+   hop_main_window_height = function hop_main_window_height() {
       return document.documentElement.clientHeight;
    }
 } else {
-   hop_current_window_width = function hop_current_window_width() {
+   hop_main_window_width = function hop_main_window_width() {
       return window.innerWidth;
    }
-   hop_current_window_height = function hop_current_window_height() {
+   hop_main_window_height = function hop_main_window_height() {
       return window.innerHeight;
    }
 }
+
+var hop_orientation = false;
+hop_main_window_orientation = function hop_main_window_orientation() {
+  if( !hop_orientation ) {
+     hop_orientation = sc_jsstring2symbol( "landscape" );
+  }
+  return hop_orientation;
+}
+
+/* backward compatibility */
+/*** META ((export current-window-width) (arity 0)) */
+var hop_current_window_width = hop_main_window_width;
+/*** META ((export current-window-height) (arity 0)) */
+var hop_current_window_height = hop_main_window_height;
 
 /*---------------------------------------------------------------------*/
 /*    hop_iframe_scroll_height ...                                     */

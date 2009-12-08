@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Tue Dec  8 08:37:18 2009 (serrano)                */
+/*    Last change :  Tue Dec  8 10:53:55 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -286,7 +286,7 @@ var hop_window_onload_add = function( proc ) {
 /* {*---------------------------------------------------------------------*} */
 /* {*    hop_window_onload_cons ...                                       *} */
 /* {*---------------------------------------------------------------------*} */
-/* {*** META ((export add-window-onload-first!) (arity #t)) *}         */
+/* {*** METAXXXX ((export add-window-onload-first!) (arity #t)) *}         */
 /* function hop_window_onload_cons( proc ) {                           */
 /*    var oldonload = window.onload;                                   */
 /*    var wproc = hop_callback( proc );                                */

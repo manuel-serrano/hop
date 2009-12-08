@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Nov 27 18:19:24 2009 (serrano)                */
+;*    Last change :  Tue Dec  8 10:56:59 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -214,8 +214,8 @@
 	      (if (string? src) (string-append "'" src "'") "false")
 	      (if autoplay "true" "false")
 	      (if player (hop->json player #f #f) "false"))
-      (format "hop_window_onload_cons(
-                function() {hop_audio_init( ~s, ~s, ~a, ~a, ~a, ~a, ~a, ~a, ~a, ~a , ~a, ~a, ~a, ~a );} );"
+      (format "hop_add_event_listener( window, 'load',
+                function(_) {hop_audio_init( ~s, ~s, ~a, ~a, ~a, ~a, ~a, ~a, ~a, ~a , ~a, ~a, ~a, ~a );} );"
 	      id
 	      start
 	      (if (string? src) (string-append "'" src "'") "false")
@@ -260,8 +260,8 @@
    (<DIV> :id (string-append id "-controls") :class "hop-audio-controls"
       ;; the controls callbacks
       (<SCRIPT>
-	 (format "hop_window_onload_cons(
-                   function() {var el=document.getElementById(~s);"
+	 (format "hop_add_event_listener( window, 'load', 
+                   function(_) {var el=document.getElementById(~s);"
 		 (string-append id "-controls"))
 	 "el.onload=hop_audio_controls_onload;"
 	 "el.onerror=hop_audio_controls_onerror;"

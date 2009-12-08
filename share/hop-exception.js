@@ -652,9 +652,9 @@ sc_tmp = hop_report_exception = function(exc) {
           stmp = sc_arity_check(hop_make_exception_frame, 2)(g1353, stmp_6);
           return sc_arity_check(dom_append_child, 2)(document.body, stmp);
         } else {
-          return sc_arity_check(hop_window_onload_add, 1)((sc_tmp = function(e) {
+          return sc_arity_check(hop_add_event_listener, 3)(window, "load", (sc_tmp = function(e) {
                       return sc_arity_check(hop_report_exception, 1)(exc);
-                    }, sc_tmp.name = "", sc_tmp.location = "(at hop-exception.scm 18167)", sc_tmp.sc_arity = 1, sc_tmp));
+                    }, sc_tmp.name = "", sc_tmp.location = "(at hop-exception.scm 18185)", sc_tmp.sc_arity = 1, sc_tmp));
         }
       }
     }, sc_tmp.name = "hop-report-exception", sc_tmp.location = "(at hop-exception.scm 17702)", sc_tmp.sc_arity = 1, sc_tmp;
@@ -698,12 +698,12 @@ sc_tmp = hop_onerror_handler_hop_exception = function(msg, url, line) {
         sc_arity_check(hop_report_exception, 1)(exc);
         return sc_arity_check(hop_debug, 0)() < 2;
       }
-    }, sc_tmp.name = "hop-onerror-handler", sc_tmp.location = "(at hop-exception.scm 19188)", sc_tmp.sc_arity = 3, sc_tmp;
+    }, sc_tmp.name = "hop-onerror-handler", sc_tmp.location = "(at hop-exception.scm 19206)", sc_tmp.sc_arity = 3, sc_tmp;
 if (sc_arity_check(hop_debug, 0)() > 0) {
   sc_arity_check(sc_errorHookSet, 1)((sc_tmp = function(exc, _) {
         hop_last_exception_hop_exception = exc;
         exc.hopStack = sc_arity_check(hop_get_stack, 1)(3);
         return exc;
-      }, sc_tmp.name = "", sc_tmp.location = "(at hop-exception.scm 20022)", sc_tmp.sc_arity = 2, sc_tmp));
+      }, sc_tmp.name = "", sc_tmp.location = "(at hop-exception.scm 20040)", sc_tmp.sc_arity = 2, sc_tmp));
   window.onerror = hop_onerror_handler_hop_exception;
 }

@@ -146,8 +146,8 @@ HopDashboard, the name ++hopcal/dashboard-panel++ could be freely changed).
          :parent document.body
          :width 220
          :height 170
-         :left (- (current-window-width) 240)
-         :top (- (current-window-height) 190)))
+         :left (- (main-window-width) 240)
+         :top (- (main-window-height) 190)))
 
   (define-service (hopcal/dashboard-panel)
      (let* ((req (current-request)))

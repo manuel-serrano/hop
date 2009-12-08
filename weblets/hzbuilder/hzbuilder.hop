@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Apr 18 07:13:09 2009 (serrano)                */
+;*    Last change :  Tue Dec  8 10:47:04 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZBUILDER weblet                                                 */
@@ -279,8 +279,8 @@
 		  (<TR>
 		     (<TD>
 			(<SPAN> :onclick
-			   ~(let ((w (current-window-width))
-				  (h (current-window-height)))
+			   ~(let ((w (main-window-width))
+				  (h (main-window-height)))
 			       (window-open :parent document.body
 				  :id "hzb-filebrowser"
 				  :width (max (/ w 2) 640)
@@ -456,8 +456,8 @@
 	       :title "Complete with [tab]"
 	       :value "/tmp")
 	    (<SPAN> :class "browse" :onclick
-	       ~(let ((w (current-window-width))
-		      (h (current-window-height)))
+	       ~(let ((w (main-window-width))
+		      (h (main-window-height)))
 		   (window-open :parent document.body
 		      :id "hzb-dirbrowser"
 		      :width (max (/ w 2) 640)

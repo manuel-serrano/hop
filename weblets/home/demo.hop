@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Fri Mar 20 14:12:21 2009 (serrano)                */
+;*    Last change :  Tue Dec  8 10:45:27 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -180,7 +180,7 @@ be used to access the whole source code of this playground.]))))
 	  (let* ((w (window-open :id $t
 		       :src frame
 		       :width $w :height $h
-		       :left (/ (- (current-window-width) $w) 2) :top 200
+		       :left (/ (- (main-window-width) $w) 2) :top 200
 		       :parent p))
 		 (i (<SPAN> :class "icon" $t)))
 	     (set! i.onmousedown

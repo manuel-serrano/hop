@@ -80,8 +80,8 @@ vectors.
 
 === client only ===
 
-  (current-window-height)
-  (current-window-width)
+  (main-window-height)
+  (main-window-width)
   (dom-node-eval node)
   (node-style-get node prop)
   (node-style-set! node prop value)
@@ -607,8 +607,8 @@ the tree. In general, it should not be directly called by user source code.
 == Client only Definitions ==
 <client>
 
-=== ++(current-window-height)++ ===
-<procedure> current-window-height
+=== ++(main-window-height)++ ===
+<procedure> main-window-height
 <arguments>
 ^  arguments       ^   type       ^  short description               ^
 </arguments>
@@ -619,8 +619,8 @@ use this function instead of fetching information from the global
 between Web browsers. 
 </procedure>
 
-=== ++(current-window-width)++ ===
-<procedure> current-window-width
+=== ++(main-window-width)++ ===
+<procedure> main-window-width
 <arguments>
 ^  arguments       ^   type       ^  short description               ^
 </arguments>

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/weblets/wiki/wiki.scm            */
+;*    serrano/prgm/project/hop/2.0.x/weblets/wiki/wiki.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 10 09:57:17 2009                          */
-;*    Last change :  Tue Mar 10 11:24:57 2009 (serrano)                */
+;*    Last change :  Tue Dec  8 10:33:42 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki runtime system                                              */
@@ -57,7 +57,7 @@
 ;*    wiki-show-toc-popup ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (wiki-show-toc-popup el)
-   (let ((m (format "~apx" (/ (current-window-height) 4))))
+   (let ((m (format "~apx" (/ (window-height) 4))))
       (node-style-set! el :left m)
       (node-style-set! el :right m)
       (let ((opacity (node-computed-style-get el :opacity)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Sun Oct 18 07:09:28 2009 (serrano)                */
+;*    Last change :  Tue Dec  8 10:46:21 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -254,23 +254,23 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hop/dashboard)
    ~(let* ((horiz (cond
-		     ((> (current-window-width) 800)
+		     ((> (main-window-width) 800)
 		      100)
-		     ((> (current-window-width) 600)
+		     ((> (main-window-width) 600)
 		      50)
 		     (else
 		      10)))
 	   (vert (cond
-		    ((> (current-window-height) 800)
+		    ((> (main-window-height) 800)
 		     200)
-		    ((> (current-window-height) 600)
+		    ((> (main-window-height) 600)
 		     100)
 		    (else
 		     10)))
 	   (padding (cond
-		       ((> (current-window-height) 800)
+		       ((> (main-window-height) 800)
 			50)
-		       ((> (current-window-height) 600)
+		       ((> (main-window-height) 600)
 			20)
 		       (else
 			4)))

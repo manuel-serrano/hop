@@ -120,5 +120,5 @@
        :parent document.body
        :width 375
        :height 160
-       :left (- (current-window-width) 390)
-       :top (- (current-window-height) 170)))
+       :left (- (main-window-width) 390)
+       :top (- (main-window-height) 170)))
