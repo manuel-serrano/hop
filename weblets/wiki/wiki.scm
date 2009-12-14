@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 10 09:57:17 2009                          */
-;*    Last change :  Tue Dec  8 10:33:42 2009 (serrano)                */
+;*    Last change :  Wed Dec  9 16:00:21 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki runtime system                                              */
@@ -57,7 +57,7 @@
 ;*    wiki-show-toc-popup ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (wiki-show-toc-popup el)
-   (let ((m (format "~apx" (/ (window-height) 4))))
+   (let ((m (format "~apx" (/ (main-window-height) 4))))
       (node-style-set! el :left m)
       (node-style-set! el :right m)
       (let ((opacity (node-computed-style-get el :opacity)))

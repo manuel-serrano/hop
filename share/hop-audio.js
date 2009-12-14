@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Mon Sep 14 12:56:46 2009 (serrano)                */
+/*    Last change :  Sun Dec 13 07:22:09 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -22,29 +22,17 @@ function HopAudioEvent( n, a, v ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    HopAudioProxy ...                                                */
+/*    HopAudioServerBackend ...                                        */
 /*---------------------------------------------------------------------*/
-function HopAudioProxy() {
+function HopAudioServerBackend( a, u ) {
+   var be = this;
+   this.url = u;
+   this.audio = a;
 }
 
-HopAudioProxy.prototype.toString = function() { return "[object HopAudioProxy]"; };
-HopAudioProxy.prototype.load = function( src, stream ) { return true; };
-HopAudioProxy.prototype.play = function( start ) { return true; };
-HopAudioProxy.prototype.playlist_play = function( index ) { return true; };
-HopAudioProxy.prototype.playlist_set = function( pl, autorun ) { return true; };
-HopAudioProxy.prototype.playlist_get = function() { return null; };
-HopAudioProxy.prototype.playlist_index_get = function() { return 0; }
-HopAudioProxy.prototype.stop = function() { return true; };
-HopAudioProxy.prototype.close = function() { return true; };
-HopAudioProxy.prototype.pause = function() { return true; };
-HopAudioProxy.prototype.position_get = function() { return 0; };
-HopAudioProxy.prototype.position_set = function() { return 0; };
-HopAudioProxy.prototype.pan_get = function() { return 0; };
-HopAudioProxy.prototype.pan_set = function() { return true; };
-HopAudioProxy.prototype.volume_get = function() { return 0; };
-HopAudioProxy.prototype.volume_set = function() { return 0; };
-HopAudioProxy.prototype.duration_get = function() { return 0; };
-HopAudioProxy.prototype.metadata_get = function() { return false; };
+HopAudioServerBackend.prototype.toString = function() {
+   return "[object HopAudioServerBackend]";
+};
 
 /*---------------------------------------------------------------------*/
 /*    pre-allocated symbols                                            */
@@ -65,233 +53,8 @@ var Splaylist = sc_jsstring2symbol( "playlist" );
 var Serror = sc_jsstring2symbol( "error" );
 var Sabort = sc_jsstring2symbol( "abort" );
 
-/*---------------------------------------------------------------------*/
-/*    hop_audio_run_hooks ...                                          */
-/*---------------------------------------------------------------------*/
-function hop_audio_run_hooks( audio, evname, value ) {
-   var evt = new HopAudioEvent( evname, audio, value );
-   var handler = "on" + evname;
-
-   if( (handler in audio) && (typeof( audio[ handler ] ) == "function") ) {
-      audio[ handler ]( evt );
-   }
-
-   if( !evt.isStopped
-       && audio.controls
-       && (handler in audio.controls)
-       && ((typeof audio.controls[ handler ]) == "function" ) ) {
-      audio.controls[ handler ]( evt );
-   }
-}
-   
-/*---------------------------------------------------------------------*/
-/*    HopAudioServerProxy ...                                          */
-/*---------------------------------------------------------------------*/
-function HopAudioServerProxy( a, u ) {
-   var proxy = this;
-   proxy.url = u;
-   proxy.audio = a;
-   
-   proxy.current_duration = false;
-   proxy.current_position = 0;
-   proxy.current_volume = 0;
-   proxy.current_pan = 0;
-   proxy.current_metadata = false;
-   proxy.playlist = null;
-   proxy.playlist_index = -1;
-
-   proxy.err = function( h ) {
-      if( !h ) hop_audio_run_hooks( proxy.audio, "error" );
-   };
-   
-   // install the server listener...
-   hop_add_event_listener( proxy.url, "server", function( evt ) {
-	 proxy.event_listener( evt );
-      } );
-   hop_add_event_listener( document, "serverclose", function( evt ) {
-	 hop_audio_onerror_callback( a.id, false, "Server closed connection!" );
-      } );
-
-   // ... and starts the server event notification
-   hop_add_event_listener( document, "serverready", function() {
-	 with_hop( hop_apply_url( u, [ Sready, false ] ) );
-      } );
-}
-
-HopAudioServerProxy.prototype = new HopAudioProxy();
-
-HopAudioProxy.prototype.toString = function() {
-   return "[object HopAudioServerProxy]";
-};
-
-HopAudioServerProxy.prototype.playlist_play = function( index ) {
-   with_hop( hop_apply_url( this.url, [ Splay, index ] ), this.err );
-};
-   
-HopAudioServerProxy.prototype.play = function( start ) {
-   with_hop( hop_apply_url( this.url, [ Splay, 0 ] ), this.err );
-};
-
-HopAudioServerProxy.prototype.stop = function() {
-   with_hop( hop_apply_url( this.url, [ Sstop, false ] ), this.err );
-};
-
-HopAudioServerProxy.prototype.close = function() {
-   with_hop( hop_apply_url( this.url, [ Sclose, false ] ), this.err );
-};
-
-HopAudioServerProxy.prototype.pause = function() {
-   with_hop( hop_apply_url( this.url, [ Spause, false ] ), this.err );
-};
-
-HopAudioServerProxy.prototype.load = function( l, s ) {
-   var err = this.err;
-   var url = this.url;
-
-   var success = function( h ) {
-      if( !h ) {
-	 err( h );
-      } else {
-	 if( s ) {
-	    with_hop( hop_apply_url( url, [ Splay, 0 ] ), err );
-	 }
-	 hop_audio_run_hooks( audio, "load" );
-      }
-   };
-      
-   with_hop( hop_apply_url( url, [ Sload, l ] ), success );
-};
-
-HopAudioServerProxy.prototype.position_get = function() {
-   return this.current_position;
-};
-
-HopAudioServerProxy.prototype.position_set = function( p ) {
-   with_hop( hop_apply_url( this.url, [ Sposition, p ] ), this.err );
-};
-
-HopAudioServerProxy.prototype.pan_get = function() {
-   return this.current_pan;
-};
-
-HopAudioServerProxy.prototype.pan_set = function( p ) {
-   with_hop( hop_apply_url( this.url, [ Span, p ] ), this.err );
-};
-
-HopAudioServerProxy.prototype.volume_get = function() {
-   return this.current_volume;
-};
-
-HopAudioServerProxy.prototype.volume_set = function( val ) {
-   with_hop( hop_apply_url( this.url, [ Svolume, val ] ), this.err );
-};
-
-HopAudioServerProxy.prototype.duration_get = function() {
-   return this.current_duration;
-};
-
-HopAudioServerProxy.prototype.metadata_get = function() {
-   return this.current_metadata;
-};
-
-HopAudioServerProxy.prototype.playlist_get = function() {
-   return this.playlist;
-};
-   
-HopAudioServerProxy.prototype.playlist_set = function( plist, autorun ) {
-   var o = this;
-   this.playlist = plist;
-   
-   with_hop( hop_apply_url( this.url, [ Splaylist, plist ] ),
-	     function( h ) {
-		hop_audio_run_hooks( o.audio, "load" );
-		if( autorun ) o.playlist_play( 0 );
-	     }, false );
-};
-
-HopAudioServerProxy.prototype.playlist_index_get = function() {
-   return this.playlist_index;
-};
-
-HopAudioServerProxy.prototype.event_listener = function( e ) {
-   if( sc_isPair( e.value ) ) {
-      var k = e.value.car;
-      var rest = e.value.cdr;
-
-      if( (k === Splay) || (k === Sstart) ) {
-	 // play
-	 this.audio.paused = false;
-	 this.audio.state = Splay;
-	 this.current_duration = rest.car;
-	 this.current_position = rest.cdr.car;
-	 this.current_volume = rest.cdr.cdr.car;
-	 this.playlist_index = rest.cdr.cdr.cdr.car;
-	    
-	 hop_audio_run_hooks( this.audio, "play" );
-	 hop_audio_run_hooks( this.audio, "volume" );
-      } else if( k == Spause ) {
-	 // pause
-	 this.audio.paused = true;
-	 this.audio.state = Spause;
-	 this.current_duration = rest.car;
-	 this.current_position = rest.cdr.car;
-	 this.current_volume = rest.cdr.cdr.car;
-	 this.playlist_index = rest.cdr.cdr.cdr.car;
-	    
-	 hop_audio_run_hooks( this.audio, "pause" );
-	 hop_audio_run_hooks( this.audio, "volume" );
-      } if( k == Sstop ) {
-	 // stop
-	 this.audio.paused = false;
-	 this.audio.state = Sstop;
-	 this.current_duration = rest.car;
-	 this.current_position = rest.cdr.car;
-	 this.current_volume = rest.cdr.cdr.car;
-	 this.playlist_index = rest.cdr.cdr.cdr.car;
-	    
-	 hop_audio_run_hooks( this.audio, "stop" );
-	 hop_audio_run_hooks( this.audio, "volume" );
-      } else if( k == Svolume ) {
-	 this.current_volume = rest.car;
-	    
-	 hop_audio_run_hooks( this.audio, "volume" );
-      } else if( k == Serror ) {
-	 // error
-	 hop_audio_run_hooks( this.audio, "error", rest.car );
-      } else if( k == Sabort ) {
-	 // abort
-	 hop_audio_run_hooks( this.audio, "error", rest.car );
-	 hop_audio_shutdown( this.audio );
-      } else if( k == Sclose ) {
-	 // close
-	 hop_audio_close( this.audio );
-	 hop_audio_run_hooks( this.audio, "close", false );
-      } else if( k == Smeta ) {
-	 // meta (and playlist)
-	 var val = rest.car;
-	 this.playlist = rest.cdr.car;
-
-	 if( typeof val === "string" ) {
-	    this.current_metadata = {
-	    title: sc_basename( val ),
-	    artist: sc_basename( sc_dirname( sc_dirname( val ) ) ),
-	    album: sc_basename( sc_dirname( val ) )
-	    };
-	 } else if( val ) {
-	    this.current_metadata = val;
-	 }
-	    
-	 hop_audio_run_hooks( this.audio, "metadata", this.current_metadata );
-      }
-   } else {
-      if( !e.value ) {
-	 // the server has closed the connection, act as a plain stop action
-	 hop_audio_run_hooks( this.audio, "stop" );
-      }
-   }
-      
-   return;
-}
+var Sclient = sc_jsstring2symbol( "client" );
+var Sserver = sc_jsstring2symbol( "server" );
 
 /*---------------------------------------------------------------------*/
 /*    hop_audio_add_event_listener ...                                 */
@@ -302,57 +65,325 @@ function hop_audio_add_event_listener( event, proc, capture ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_audio_init_obj ...                                           */
+/*    hop_audio_invoke_listeners ...                                   */
 /*---------------------------------------------------------------------*/
-function hop_audio_init_obj( audio ) {
-   if( !audio.obj ) {
-      var id = audio.id + "-" + hop_config.flash_markup;
-      audio.obj = document.getElementById( id );
+function hop_audio_invoke_listeners( audio, evname, value ) {
+   var evt = new HopAudioEvent( evname, audio, value );
+   var handler = "on" + evname;
+
+   /* the audio listener */
+   if( (handler in audio) && (typeof( audio[ handler ] ) == "function") ) {
+      audio[ handler ]( evt );
    }
 
-   return audio.obj;
+   /* the controller listener */
+   if( !evt.isStopped
+       && audio.controls
+       && (handler in audio.controls)
+       && ((typeof audio.controls[ handler ]) == "function" ) ) {
+      audio.controls[ handler ]( evt );
+   }
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_audio_init ...                                               */
+/*    hop_audio_controls_listeners_init ...                            */
+/*    -------------------------------------------------------------    */
+/*    Install the default listener of the controllers                  */
 /*---------------------------------------------------------------------*/
-function hop_audio_init( id, start, src, stream,
-			 onplay, onstop, onpause, onload, onerror,
-			 onended, onprogress,
-			 onloadedmetadata, onclose, onplayer ) {
-   var audio = document.getElementById( id );
+function hop_audio_controls_listeners_init( id ) {
+   var el = document.getElementById( id );
 
-   hop_audio_init_obj( audio );
+   el.onload = hop_audio_controls_onload;
+   el.onerror = hop_audio_controls_onerror;
+   el.onplay = hop_audio_controls_onplay;
+   el.onloadedmetadata = hop_audio_controls_onloadedmetadata;
+   el.onpause = hop_audio_controls_onpause;
+   el.onstop = hop_audio_controls_onstop;
+   el.onclose = hop_audio_controls_onclose;
+   el.onended = hop_audio_controls_onended;
+   el.onprogress = hop_audio_controls_onprogress;
+   el.onvolume = hop_audio_controls_onvolume;
+   el.onbackend = hop_audio_controls_onbackend;
 
-   audio.controls = document.getElementById( id + "-controls" );
+   return el;
+}
 
-   audio.playlist = null;
-   audio.start = start;
-   
-   audio.onplay = onplay;
-   audio.onstop = onstop;
-   audio.onpause = onpause;
-   audio.onload = onload;
-   audio.onerror = onerror;
-   audio.onended = onended;
-   audio.onprogress = onprogress;
-   audio.onmetadata = onloadedmetadata;
-   audio.initialized = true;
-   audio.onclose = onclose;
-   audio.onplayer = onplayer;
+/*---------------------------------------------------------------------*/
+/*    hop_audio_html5_init ...                                         */
+/*---------------------------------------------------------------------*/
+function hop_audio_html5_init( backend ) {
 
-   audio.hop_add_event_listener = hop_audio_add_event_listener;
-   audio.toString = function() { return "[object HopAudio]"; };
+   backend.playlistindex = -1;
+   backend.playlist = null;
+   backend.loadedurl = false;
+   backend.isstopped = false;
 
-   if( !("proxy" in audio) ) {
-      // create a proxy only if flash initialization has not occured yet
-      audio.proxy = new HopAudioProxy();
-      if( src )
-	 hop_audio_load( audio, src, stream );
-   } else {
-      // there is a proxy, add to the playlist
-      hop_audio_playlist_set( audio, sc_list( src ) );
+   var html5_canplay = function( o ) {
+      if( typeof o === "string" ) {
+	 return o;
+      }
+      if( !sc_isPair( o ) ) {
+	 return false;
+      }
+      while( sc_isPair( o ) ) {
+	 var e = o.car;
+
+	 if( typeof e === "string" ) {
+	    return e;
+	 }
+	 if( sc_isPair( e ) && sc_isPair( e.cdr ) ) {
+	    if( backend.canPlayType( e.car ) !== "" ) {
+	       return e.cdr.car;
+	    }
+	 }
+	 o = o.cdr;
+      }
+      return false;
    }
+   
+   backend.playurl = function( url, start ) {
+      backend.isStopped = false;
+      if( backend.loadedurl !== url ) {
+	 backend.loadedurl = false;
+	 backend.src = url;
+	 backend.autoplay = true;
+	 backend.load( url );
+      } else {
+	 backend.play();
+      }
+   }
+   backend.playlist_play = function( index ) {
+      backend.isStopped = false;
+      backend.playlistindex = index;
+
+      backend.playurl( sc_listRef( backend.playlist, index ), 0 );
+   }
+   backend.stop = function() {
+      backend.isStopped = true;
+      return backend.pause();
+   }
+   backend.close = function() {
+      backend.isStopped = true;
+      backend.pause();
+      hop_audio_invoke_listeners( backend.audio, "close" );
+   }
+   backend.volume_get = function() {
+      return Math.round( backend.volume * 100 );
+   }
+   backend.volume_set = function( v ) {
+      backend.volume = v / 100;
+      return v;
+   }
+   backend.duration_get = function() {
+      return backend.duration ? Math.round( backend.duration ) : 0;
+   }
+   backend.position_get = function() {
+      return backend.currentTime ? Math.round( backend.currentTime ) : 0;
+   }
+   backend.playlist_index_get = function() {
+      return backend.playlistindex;
+   }
+   backend.playlist_get = function() {
+      return backend.playlist;
+   }
+   backend.playlist_set = function( playlist, autorun ) {
+      backend.playlist = sc_filterMap1( html5_canplay, playlist );
+      if( autorun ) backend.playlist_play( 0 );
+   }
+   backend.metadata_get = function() {
+      if( typeof backend.loadedurl === "string" ) {
+	 var a = url_decode( backend.loadedurl ).split( "/" );
+
+	 if( a.length >= 3 ) {
+	    return { title: a[ a.length - 1 ],
+		     album: a[ a.length - 2 ],
+		     artist: a[ a.length - 3 ] };
+	 if( a.length >= 2 ) {
+	    return { title: a[ a.length - 1 ],
+		     album: a[ a.length - 2 ],
+		     artist: false };
+	 }
+	 if( a.length >= 1 )
+	    return { title: a[ a.length - 1 ],
+		     album: false,
+		     artist: false };
+	 }
+	 return { title: s,
+		  album: false,
+		  artist: false };
+      } else {
+	 return false;
+      }
+   }
+   
+   backend.addEventListener( "play", function( e ) {
+	 backend.state = Splay;
+	 hop_audio_invoke_listeners( backend.audio, "play" );
+      }, true, true );
+   backend.addEventListener( "pause", function( e ) {
+	 if( backend.isStopped ) {
+	    backend.state =  Sstop;
+	    hop_audio_invoke_listeners( backend.audio, "stop" );
+	 } else {
+	    backend.state = Spause;
+	    hop_audio_invoke_listeners( backend.audio, "pause" );
+	 }
+      }, true, true );
+   backend.addEventListener( "load", function( e ) {
+	 hop_audio_invoke_listeners( backend.audio, "load" );
+      }, true, true );
+   backend.addEventListener( "loadstart", function( e ) {
+	 backend.loadedurl = backend.src;
+	 hop_audio_invoke_listeners( backend.audio, "progress" );
+      }, true, true );
+   backend.addEventListener( "ended", function( e ) {
+	 var i = backend.playlistindex;
+	 backend.state = Sstop;
+	 hop_audio_invoke_listeners( backend.audio, "ended" );
+	 if( i >= 0 && (i < (sc_length( backend.playlist ) - 1)) )
+	    backend.playlist_play( i + 1 );
+      }, true, true );
+   backend.addEventListener( "loadedmetadata", function( e ) {
+	 hop_audio_invoke_listeners( backend.audio, "loadedmetadata" );
+      }, true, true );
+   backend.addEventListener( "error", function( e ) {
+	 hop_audio_invoke_listeners( backend.audio, "error" );
+      }, true, true );
+   
+   return backend;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_server_init ...                                        */
+/*---------------------------------------------------------------------*/
+function hop_audio_server_init( backend ) {
+   backend.current_duration = false;
+   backend.current_position = 0;
+   backend.current_volume = 0;
+   backend.current_pan = 0;
+   backend.current_metadata = false;
+   backend.playlist = null;
+   backend.playlistindex = -1;
+
+   var server_canplay = function( o ) {
+      var no = o;
+
+      /* find a string element, or return the first element of the list */
+      while( sc_isPair( no ) ) {
+	 var e = no.car;
+      
+	 if( typeof e === "string" ) {
+	    return e;
+	 }
+	 if( !sc_isPair( no ) ) {
+	    return o.car.cdr.car;
+	 }
+
+	 no = no.cdr;
+      }
+      
+      return false;
+   }
+   
+   backend.playurl = function( url, start ) {
+      if( !sc_isPair( backend.playlist ) ) {
+	 var success = function( h ) {
+	    with_hop( hop_apply_url( backend.url, [ Splay, 0 ] ), backend.err );
+	 }
+	 var url = backend.audio.src;
+	 with_hop( hop_apply_url( backend.url, [ Sload, url ] ), success );
+      } else {
+	 with_hop( hop_apply_url( backend.url, [ Splay, 0 ] ), backend.err );
+      }
+   };
+   backend.playlist_play = function( index ) {
+      with_hop( hop_apply_url( backend.url, [ Splay, index ] ), backend.err );
+   };
+   backend.stop = function() {
+      with_hop( hop_apply_url( backend.url, [ Sstop, false ] ), backend.err );
+   };
+   backend.close = function() {
+      backend.isStopped = true;
+      hop_audio_invoke_listeners( backend.audio, "close", false );
+      hop_remove_event_listener( audio.serverbackend.url,
+				 "server",
+				 audio.serverbackend.event_listener );
+      backend.audio.backend = backend.audio.clientbackend;
+
+      with_hop( hop_apply_url( backend.url, [ Sclose, false ] ) );
+   };
+   backend.pause = function() {
+      with_hop( hop_apply_url( backend.url, [ Spause, false ] ), backend.err );
+   };
+   backend.load = function( l, s ) {
+      var err = backend.err;
+      var url = backend.url;
+
+      var success = function( h ) {
+	 if( !h ) {
+	    err( h );
+	 } else {
+	    if( s ) {
+	       with_hop( hop_apply_url( url, [ Splay, 0 ] ), err );
+	    }
+	    hop_audio_invoke_listeners( audio, "load" );
+	 }
+      };
+      
+      with_hop( hop_apply_url( url, [ Sload, l ] ), success );
+   };
+   backend.position_get = function() {
+      return backend.current_position;
+   };
+   backend.position_set = function( p ) {
+      with_hop( hop_apply_url( backend.url, [ Sposition, p ] ), backend.err );
+   };
+   backend.pan_get = function() {
+      return backend.current_pan;
+   };
+   backend.pan_set = function( p ) {
+      with_hop( hop_apply_url( backend.url, [ Span, p ] ), backend.err );
+   };
+   backend.volume_get = function() {
+      return backend.current_volume;
+   };
+   backend.volume_set = function( val ) {
+      with_hop( hop_apply_url( backend.url, [ Svolume, val ] ), backend.err );
+   };
+   backend.duration_get = function() {
+      return backend.current_duration;
+   };
+   backend.metadata_get = function() {
+      return backend.current_metadata;
+   };
+   backend.playlist_get = function() {
+      return backend.playlist;
+   };
+   backend.playlist_set = function( plist, autorun ) {
+      var o = backend;
+      backend.playlist = sc_filterMap1( server_canplay, plist );
+
+      with_hop( hop_apply_url( backend.url, [ Splaylist, backend.playlist ] ),
+		function( h ) {
+		   hop_audio_invoke_listeners( o.audio, "load" );
+		   if( autorun ) o.playlist_play( 0 );
+		}, false );
+   };
+   backend.playlist_index_get = function() {
+      return backend.playlistindex;
+   };
+   
+   // install the server listener...
+   hop_add_event_listener( backend.url, "server", function( evt ) {
+	 if( backend.audio.backend === backend ) 
+	    return hop_audio_server_event_listener( evt, backend );
+      } );
+   hop_add_event_listener( document, "serverclose", function( evt ) {
+	 if( backend.audio.backend === backend && !backend.state === Sclose ) {
+	    hop_audio_close( backend.audio );
+	    hop_audio_invoke_listeners( backend.audio, "close", false );
+	 }
+      } );
 }
 
 /*---------------------------------------------------------------------*/
@@ -361,176 +392,269 @@ function hop_audio_init( id, start, src, stream,
 /*    This function is automatically invoked by the Flash script when  */
 /*    the builtin initialization completes.                            */
 /*---------------------------------------------------------------------*/
-function hop_audio_flash_init( id, src, stream, player ) {
-   /* we are now sure that at least version 8 of flash is running */
+function hop_audio_flash_init( backend ) {
+   
+   /* we are now sure that at least version 8 of flash is     */
+   /* running because this function has been called by flash  */
    hop_flash_minversion_set( 8 );
    hop_flash_audio_set( true );
 
-   var audio = document.getElementById( id );
-   var proxy = hop_audio_init_obj( audio );
+   backend.playlistindex = -1;
+   backend.playlist = null;
+   backend.loadedurl = false;
+   backend.isStopped = false;
 
-   audio.proxy = proxy;
-   audio.client_proxy = proxy;
-   audio.player = false;
+   var flash = document.getElementById( backend.id + "-" + hop_config.flash_markup );
 
-   proxy.playlist = null;
-   proxy.playlist_index = 0;
-
-   proxy.play = function( start ) {
-      if( audio.src ) {
-	 proxy.flash_play( start );
-	 hop_audio_run_hooks( audio, "play" );
+   var flash_canplay = function( o ) {
+      if( typeof o === "string" ) {
+	 return o;
+      }
+      if( !sc_isPair( o ) ) {
+	 return false;
+      }
+      while( sc_isPair( o ) ) {
+	 var e = o.car;
+	 if( typeof e === "string" ) {
+	    return e;
+	 }
+	 if( sc_isPair( e ) && sc_isPair( e.cdr ) ) {
+	    if( e.car === "audio/mpeg" ) {
+	       return e.cdr.car;
+	    }
+	 }
+	 o = o.cdr;
+      }
+      return false;
+   }
+   backend.playurl = function( url, start ) {
+      backend.isStopped = false;
+      if( backend.loadedurl !== url ) {
+	 backend.loadedurl = false;
+	 backend.src = url;
+	 flash.load( url, true );
+      } else {
+	 flash.flash_play( start );
       }
    }
-   proxy.stop = function() {
-      proxy.flash_stop();
-      hop_audio_run_hooks( audio, "stop" );
+   backend.playlist_play = function( index ) {
+      backend.isStopped = false;
+      backend.playlistindex = index;
+
+      backend.playurl( sc_listRef( backend.playlist, index ), 0 );
    }
-   proxy.close = function() {
-      proxy.flash_stop();
+   backend.stop = function() {
+      backend.isStopped = true;
+      flash.flash_stop();
+      hop_audio_invoke_listeners( backend.audio, "stop" );
    }
-   proxy.pause = function() {
-      proxy.flash_pause();
-      hop_audio_run_hooks( audio, "pause" );
+   backend.pause = function() {
+      flash.flash_pause();
+   }
+   backend.close = function() {
+      backend.isStopped = true;
+      flash.flash_stop();
+      hop_audio_invoke_listeners( backend.audio, "close" );
+   }
+   backend.duration_get = function() {
+      return flash.duration_get();
+   }
+   backend.position_get = function() {
+      return flash.position_get();
+   }
+   backend.position_set = function( v ) {
+      return flash.position_set( v );
+   }
+   backend.volume_get = function() {
+      return flash.volume_get();
+   }
+   backend.volume_set = function( v ) {
+      return flash.volume_get( v );
+   }
+   backend.playlist_index_get = function() {
+      return backend.playlistindex;
+   }
+   backend.playlist_get = function() {
+      return backend.playlist;
+   }
+   backend.playlist_set = function( playlist, autorun ) {
+      backend.playlist = sc_filterMap1( flash_canplay, playlist );
+      if( autorun ) backend.playlist_play( 0 );
+   }
+   backend.playlist_index_get = function() {
+      return backend.playlistindex;
    }
    
-   proxy.playlist_play = function( index ) {
-      proxy.playlist_index = index;
-      hop_audio_load( audio, sc_listRef( proxy.playlist, index ), true );
-   }
-   proxy.playlist_set = function( playlist, autorun ) {
-      proxy.playlist = playlist;
-      if( autorun ) proxy.playlist_play( 0 );
-   }
-   proxy.playlist_get = function() {
-      return proxy.playlist;
-   }
-   proxy.playlist_index_get = function() {
-      return proxy.playlist_index;
-   }
-   
-   proxy.onload_set( "hop_audio_onload_callback", id );
-   proxy.onerror_set( "hop_audio_onerror_callback", id );
-   proxy.onended_set( "hop_audio_onended_callback", id );
-   proxy.metadata_get = function() {
+   backend.metadata_get = function() {
       try {
-	 return eval( audio.proxy.id3_get() );
+	 return eval( flash.id3_get() );
       } catch( _ ) {
 	 return false;
       }
    }
 
-   if( player ) {
-      hop_audio_player_set( audio, player, "server" );
-   } else {
-      if( src && audio.initialized ) {
-	 hop_audio_load( audio, src, stream );
-      }
-   }
+   flash.onload_set( "hop_audio_flash_onload_callback", backend.id );
+   flash.onerror_set( "hop_audio_flash_onerror_callback", backend.id );
+   flash.onended_set( "hop_audio_flash_onended_callback", backend.id );
+
+   return backend;
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_audio_player_set ...                                         */
+/*    hop_audio_flash_onload_callback ...                              */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-player-set!) (arity #t)) */
-function hop_audio_player_set( audio, player, name ) {
-   if( typeof audio === "string" ) audio = document.getElementById( audio );
+function hop_audio_flash_onload_callback( id, play ) {
+   var backend = document.getElementById( id );
+   backend.state = Splay;
    
-   audio.player = player;
+   hop_audio_invoke_listeners( backend.audio, "load" );
+   hop_audio_invoke_listeners( backend.audio, "play" );
+}
 
-   /* cleanup the current proxy */
-   if( audio.server_proxy ) {
-      hop_remove_event_listener( audio.server_proxy.url,
-				 "server",
-				 audio.server_proxy.event_listener );
-   }
+/*---------------------------------------------------------------------*/
+/*    hop_audio_flash_onended_callback ...                             */
+/*---------------------------------------------------------------------*/
+function hop_audio_flash_onended_callback( id ) {
+   var backend = document.getElementById( id );
+   var i = backend.playlistindex;
 
-   /* install the new proxy */
-   if( !player ) {
-      if( "client_proxy" in audio ) {
-	 audio.proxy = audio.client_proxy;
-      } else {
-	 audio.proxy = new HopAudioProxy();
+   backend.state = Sstop;
+   hop_audio_invoke_listeners( backend.audio, "ended" );
+   if( i >= 0 && (i < (sc_length( backend.playlist ) - 1)) )
+      backend.playlist_play( i + 1 );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_flash_onerror_callback ...                             */
+/*---------------------------------------------------------------------*/
+function hop_audio_flash_onerror_callback( id, play, msg ) {
+   var backend = document.getElementById( id );
+
+   alert( "ERROR.3");
+   hop_audio_invoke_listeners( backend.audio, "error" );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_server_event_listener ...                              */
+/*---------------------------------------------------------------------*/
+function hop_audio_server_event_listener( e, backend ) {
+   if( sc_isPair( e.value ) ) {
+      var k = e.value.car;
+      var rest = e.value.cdr;
+
+      if( (k === Splay) || (k === Sstart) ) {
+	 // play
+	 backend.state = Splay;
+	 backend.current_duration = rest.car;
+	 backend.current_position = rest.cdr.car;
+	 backend.current_volume = rest.cdr.cdr.car;
+	 backend.playlistindex = rest.cdr.cdr.cdr.car;
+	    
+	 hop_audio_invoke_listeners( backend.audio, "play" );
+	 hop_audio_invoke_listeners( backend.audio, "volume" );
+      } else if( k == Spause ) {
+	 // pause
+	 backend.state = Spause;
+	 backend.current_duration = rest.car;
+	 backend.current_position = rest.cdr.car;
+	 backend.current_volume = rest.cdr.cdr.car;
+	 backend.playlistindex = rest.cdr.cdr.cdr.car;
+	    
+	 hop_audio_invoke_listeners( backend.audio, "pause" );
+	 hop_audio_invoke_listeners( backend.audio, "volume" );
+      } if( k == Sstop ) {
+	 // stop
+	 backend.state = Sstop;
+	 backend.current_duration = rest.car;
+	 backend.current_position = rest.cdr.car;
+	 backend.current_volume = rest.cdr.cdr.car;
+	 backend.playlistindex = rest.cdr.cdr.cdr.car;
+	    
+	 hop_audio_invoke_listeners( backend.audio, "stop" );
+	 hop_audio_invoke_listeners( backend.audio, "volume" );
+      } else if( k == Svolume ) {
+	 backend.current_volume = rest.car;
+	    
+	 hop_audio_invoke_listeners( backend.audio, "volume" );
+      } else if( k == Serror ) {
+	 // error
+	 alert( "ERROR.4");
+	 hop_audio_invoke_listeners( backend.audio, "error", rest.car );
+      } else if( k == Sabort ) {
+	 // abort
+	 hop_audio_close( backend.audio );
+	 alert( "ERROR.5");
+	 hop_audio_invoke_listeners( backend.audio, "error", rest.car );
+      } else if( k == Sclose ) {
+	 // close
+	 hop_audio_close( backend.audio );
+	 hop_audio_invoke_listeners( backend.audio, "close", false );
+      } else if( k == Smeta ) {
+	 // meta (and playlist)
+	 var val = rest.car;
+	 backend.playlist = rest.cdr.car;
+
+	 if( typeof val === "string" ) {
+	    backend.current_metadata = {
+	       title: sc_basename( val ),
+	       artist: sc_basename( sc_dirname( sc_dirname( val ) ) ),
+  	       album: sc_basename( sc_dirname( val ) )
+	    };
+	 } else if( val ) {
+	    backend.current_metadata = val;
+	 }
+	    
+	 hop_audio_invoke_listeners( backend.audio, "loadedmetadata",
+				     backend.current_metadata );
       }
-      
-      hop_audio_run_hooks( audio, "player", name );
    } else {
-      var proxy = new HopAudioServerProxy( audio, player );
-      audio.proxy = proxy;
-      audio.server_proxy = proxy;
-
-      hop_audio_run_hooks( audio, "player", name );
+      if( !e.value ) {
+	 // the server has closed the connection, act as a plain stop action
+	 hop_audio_invoke_listeners( backend.audio, "stop" );
+      }
    }
+      
+   return;
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_audio_player ...                                             */
+/*    hop_audio_backend ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-player) (arity #t)) */
-function hop_audio_player( audio ) {
+/*** META ((export audio-backend) (arity #t)) */
+function hop_audio_backend( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
-   return audio.player;
+
+   return ( audio.backend === audio.clientbackend ) ? Sclient : Sserver;
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_audio_onload_callback ...                                    */
+/*    hop_audio_backend_set ...                                        */
 /*---------------------------------------------------------------------*/
-function hop_audio_onload_callback( id, play ) {
-   var audio = document.getElementById( id );
-   var evt = new HopAudioEvent( "load", audio );
+/*** META ((export audio-backend-set!) (arity #t)) */
+function hop_audio_backend_set( audio, backend ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
 
-   if( audio.onload )
-      audio.onload( evt );
-   if( !evt.isStopped && play && audio.onplay )
-      audio.onplay( evt );
-   if( !evt.isStopped && audio.controls && audio.controls.onload )
-      audio.controls.onload( evt );
-   if( !evt.isStopped && play && audio.controls && audio.controls.onplay )
-      audio.controls.onplay( evt );
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_audio_shutdown ...                                           */
-/*    -------------------------------------------------------------    */
-/*    This internal function is closed to shutdown a proxy player      */
-/*    either after an error or a audio-close call.                     */
-/*---------------------------------------------------------------------*/
-function hop_audio_shutdown( audio ) {
-   audio.state = Sclose;
-   audio.proxy = new HopAudioProxy();
-   audio.player = false;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_audio_onerror_callback ...                                   */
-/*---------------------------------------------------------------------*/
-function hop_audio_onerror_callback( id, play, msg ) {
-   var audio = document.getElementById( id );
-   var evt = new HopAudioEvent( "error", audio, msg );
-
-   if( audio.onerror )
-      audio.onerror( evt );
-   if( !evt.isStopped && audio.controls && audio.controls.onerror )
-      audio.controls.onerror( evt );
-
-   hop_audio_shutdown( audio );
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_audio_onended_callback ...                                   */
-/*---------------------------------------------------------------------*/
-function hop_audio_onended_callback( id ) {
-   var audio = document.getElementById( id );
-   var evt = new HopAudioEvent( "ended", audio );
-
-   if( audio.onended )
-      audio.onended( evt );
-   if( !evt.isStopped && audio.controls && audio.controls.onended)
-      audio.controls.onended( evt );
-   if( !evt.isStopped &&
-       (hop_audio_playlist_index( audio ) ||
-	(hop_audio_playlist_index( audio ) == 0)) )
-      hop_audio_playlist_play( audio, hop_audio_playlist_index( audio ) + 1 );
+   if( backend === Sclient ) {
+      if( audio.clientbackend && audio.clientbackend !== audio.backend ) {
+	 if( audio.backend ) hop_audio_stop( audio );
+	 audio.backend = audio.clientbackend;
+      }
+      hop_audio_invoke_listeners( audio, "backend" );
+   } else {
+      if( audio.serverbackend ) {
+	 if( audio.backend !== audio.serverbackend ) {
+	    if( audio.backend ) hop_audio_stop( audio );
+	    audio.backend = audio.serverbackend;
+	 }
+	 audio.serverbackend.url = backend;
+	 hop_audio_invoke_listeners( audio, "backend" );
+      } else {
+	 backend = new HopAudioServerBackend( audio, backend );
+	 audio.serverbackend = backend;
+	 audio.backend = backend;
+	 hop_audio_server_init( backend );
+      }
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -541,16 +665,14 @@ function hop_audio_load( audio, src, stream ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
 
    audio.src = src;
-   audio.playlist_index = false;
-   audio.paused = false;
    
    if( src ) {
-      audio.state = stream ? Splay : Sstop;
-      hop_audio_run_hooks( audio, "progress" );
+      audio.backend.state = stream ? Splay : Sstop;
+      hop_audio_invoke_listeners( audio, "progress" );
 
       return audio.proxy.load( src, stream );
    } else {
-      audio.state = Sstop;
+      audio.backend.state = Sstop;
    }
 }
 
@@ -560,7 +682,7 @@ function hop_audio_load( audio, src, stream ) {
 /*** META ((export audio-state) (arity #t)) */
 function hop_audio_state( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
-   return audio.state;
+   return audio.backend.state;
 }
 
 /*---------------------------------------------------------------------*/
@@ -570,7 +692,7 @@ function hop_audio_state( audio ) {
 function hop_audio_playlist_set( audio, playlist, autorun ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
 
-   audio.proxy.playlist_set( playlist, autorun );
+   audio.backend.playlist_set( playlist, autorun );
    return;
 }
 
@@ -580,7 +702,7 @@ function hop_audio_playlist_set( audio, playlist, autorun ) {
 /*** META ((export audio-playlist) (arity #t)) */
 function hop_audio_playlist_get( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
-   return audio.proxy.playlist_get();
+   return audio.backend.playlist_get();
 }
 
 /*---------------------------------------------------------------------*/
@@ -589,7 +711,19 @@ function hop_audio_playlist_get( audio ) {
 /*** META ((export audio-playlist-index) (arity #t)) */
 function hop_audio_playlist_index( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
-   return audio.proxy.playlist_index_get();
+   return audio.backend.playlist_index_get();
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_play ...                                               */
+/*---------------------------------------------------------------------*/
+/*** META ((export audio-play audio-start) (arity #t)) */
+function hop_audio_play( audio, start ) {
+   if( typeof audio === "string" ) audio = document.getElementById( audio );
+
+   audio.backend.playurl( audio.src, start );
+
+   return true;
 }
 
 /*---------------------------------------------------------------------*/
@@ -598,15 +732,14 @@ function hop_audio_playlist_index( audio ) {
 /*** META ((export audio-playlist-play) (arity #t)) */
 function hop_audio_playlist_play( audio, i ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
+   
    var pl = hop_audio_playlist_get( audio );
 
    if( (i >= 0) && (i < sc_length( pl )) ) {
-      audio.proxy.playlist_play( i );
-      return i;
+      audio.backend.playlist_play( i );
    } else {
       if( (sc_length( pl ) == 0) && (i == 0) ) {
-	 /* play the src file */
-	 audio.proxy.play( true );
+	 audio.backend.playurl( audio.src, 0 );
       }
    }
 
@@ -624,9 +757,9 @@ function hop_audio_playlist_prev( audio ) {
 
    if( i > 0 ) {
       if( hop_audio_controls_time( audio ) <= 3 ) {
-	 return hop_audio_playlist_play( audio, i - 1 );
+	 audio.backend.playlist_play( i - 1 );
       } else {
-	 return hop_audio_seek( audio, 0 );
+	 audio.backend.playlist_play( i );
       }
    }
    
@@ -646,24 +779,13 @@ function hop_audio_playlist_next( audio ) {
    var pl = hop_audio_playlist_get( audio );
    var i = hop_audio_playlist_index( audio );
 
-   if( i < (sc_length( pl ) - 1)) {
-      return hop_audio_playlist_play( audio, i + 1 );
+   if( i < sc_length( pl ) - 1 ) {
+      audio.backend.playlist_play( i + 1 );
+   } else {
+      audio.backend.stop();
    }
 
    return false;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_audio_play ...                                               */
-/*---------------------------------------------------------------------*/
-/*** META ((export audio-play audio-start) (arity #t)) */
-function hop_audio_play( audio, start ) {
-   if( typeof audio === "string" ) audio = document.getElementById( audio );
-   
-   audio.playlist_index = false;
-   audio.paused = false;
-   audio.state = start ? Splay : Sstop;
-   audio.proxy.play( start ? start : audio.start );
 }
 
 /*---------------------------------------------------------------------*/
@@ -673,17 +795,7 @@ function hop_audio_play( audio, start ) {
 function hop_audio_close( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
    
-   /* cleanup the current proxy */
-   if( audio.server_proxy ) {
-      hop_remove_event_listener( audio.server_proxy.url,
-				 "server",
-				 audio.server_proxy.event_listener );
-   }
-
    audio.proxy.close();
-
-   /* shutdown the proxy */
-   hop_audio_shutdown( audio );
 }
 
 /*---------------------------------------------------------------------*/
@@ -692,7 +804,8 @@ function hop_audio_close( audio ) {
 /*** META ((export audio-stop) (arity #t)) */
 function hop_audio_stop( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
-   audio.proxy.stop();
+   
+   audio.backend.stop();
 }
 
 /*---------------------------------------------------------------------*/
@@ -701,9 +814,14 @@ function hop_audio_stop( audio ) {
 /*** META ((export audio-pause) (arity #t)) */
 function hop_audio_pause( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
-   audio.paused = !audio.paused;
-   audio.state = audio.paused ? Spause : Splay;
-   audio.proxy.pause();
+
+   if( audio.backend.state === Spause ) {
+      audio.backend.play();
+   } else if( audio.backend.state === Splay ) {
+      audio.backend.pause();
+   }
+   
+   hop_audio_invoke_listeners( audio, "pause" );
 }
 
 /*---------------------------------------------------------------------*/
@@ -712,7 +830,7 @@ function hop_audio_pause( audio ) {
 /*** META ((export audio-volume) (arity #t)) */
 function hop_audio_volume( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
-   return audio.proxy.volume_get();
+   return audio.backend.volume_get();
 }
 
 /*---------------------------------------------------------------------*/
@@ -721,8 +839,7 @@ function hop_audio_volume( audio ) {
 /*** META ((export audio-volume-set!) (arity #t)) */
 function hop_audio_volume_set( audio, vol ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
-   if( hop_audio_volume( audio ) != vol )
-      return audio.proxy.volume_set( vol );
+   return audio.backend.volume_set( vol );
 }
 
 /*---------------------------------------------------------------------*/
@@ -751,7 +868,7 @@ function hop_audio_mute( audio ) {
 /*** META ((export audio-pan) (arity #t)) */
 function hop_audio_pan( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
-   return audio.proxy.pan_get();
+   return audio.backend.pan_get();
 }
 
 /*---------------------------------------------------------------------*/
@@ -760,7 +877,7 @@ function hop_audio_pan( audio ) {
 /*** META ((export audio-pan-set!) (arity #t)) */
 function hop_audio_pan_set( audio, pan ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
-   return audio.proxy.pan_set( pan );
+   return audio.backend.pan_set( pan );
 }
 
 /*---------------------------------------------------------------------*/
@@ -769,7 +886,7 @@ function hop_audio_pan_set( audio, pan ) {
 /*** META ((export audio-duration) (arity #t)) */
 function hop_audio_duration( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
-   return audio.proxy.duration_get();
+   return audio.backend.duration_get();
 }
    
 /*---------------------------------------------------------------------*/
@@ -778,7 +895,7 @@ function hop_audio_duration( audio ) {
 /*** META ((export audio-current-time) (arity #t)) */
 function hop_audio_current_time( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
-   return audio.proxy.position_get();
+   return audio.backend.position_get();
 }
    
 /*---------------------------------------------------------------------*/
@@ -792,7 +909,7 @@ function hop_audio_seek( audio, pos ) {
    audio.sec = pos % 60;
    audio.ctime = pos;
    
-   return audio.proxy.position_set( pos );
+   return audio.backend.position_set( pos );
 }
    
 /*---------------------------------------------------------------------*/
@@ -801,7 +918,7 @@ function hop_audio_seek( audio, pos ) {
 /*** META ((export audio-metadata) (arity #t)) */
 function hop_audio_metadata( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
-   return audio.proxy.metadata_get();
+   return audio.backend.metadata_get();
 }
 
 /*---------------------------------------------------------------------*/
@@ -816,11 +933,10 @@ function hop_audio_metadata_set( audio, metadata ) {
 /*---------------------------------------------------------------------*/
 function hop_audio_controls_onload( evt ) {
    var audio = evt.audio;
-   var tl = document.getElementById( audio.id + "-controls-metadata-song" );
+   var id = audio.controls.id;
+   var tl = document.getElementById( id + "-controls-metadata-song" );
 
    hop_audio_controls_metadata( audio, true );
-   tl.className = "hop-audio-panel-metadata-song";
-   tl.innerHTML = "Ready...";
 }
 
 /*---------------------------------------------------------------------*/
@@ -828,9 +944,10 @@ function hop_audio_controls_onload( evt ) {
 /*---------------------------------------------------------------------*/
 function hop_audio_controls_onerror( evt ) {
    var audio = evt.audio;
-   var tl = document.getElementById( audio.id + "-controls-metadata-song" );
-   var min = document.getElementById( audio.id + "-controls-status-length-min" );
-   var sec = document.getElementById( audio.id + "-controls-status-length-sec" );
+   var id = audio.controls.id;
+   var tl = document.getElementById( id + "-controls-metadata-song" );
+   var min = document.getElementById( id + "-controls-status-length-min" );
+   var sec = document.getElementById( id + "-controls-status-length-sec" );
 
    tl.className = "hop-audio-panel-metadata-error";
    tl.innerHTML = evt.value ? evt.value : "Error";
@@ -843,7 +960,8 @@ function hop_audio_controls_onerror( evt ) {
 /*---------------------------------------------------------------------*/
 function hop_audio_controls_onprogress( evt ) {
    var audio = evt.audio;
-   var tl = document.getElementById( audio.id + "-controls-metadata-song" );
+   var id = audio.controls.id;
+   var tl = document.getElementById( id + "-controls-metadata-song" );
 
    hop_audio_controls_metadata( audio, true );
    tl.className = "hop-audio-panel-metadata-song";
@@ -874,7 +992,7 @@ function hop_audio_controls_time( audio ) {
 /*    hop_audio_time_interval_set ...                                  */
 /*---------------------------------------------------------------------*/
 function hop_audio_time_interval_set( audio ) {
-   var id = audio.id;
+   var id = audio.controls.id;
    var pos = document.getElementById( id + "-controls-status-position" );
    var ctime = hop_audio_current_time( audio );
    
@@ -884,9 +1002,9 @@ function hop_audio_time_interval_set( audio ) {
 
    hop_audio_time_interval_clear( audio );
    pos.innerHTML = int2( audio.min ) + ":" + int2( audio.sec );
-   
+
    audio.interval = setInterval( function() {
-	 if( !audio.paused ) {
+	 if( audio.backend.state === Splay ) {
 	    audio.ctime++;
 	    audio.sec++;
 	    if( audio.sec == 60 ) { audio.min++; audio.sec = 0 };
@@ -901,7 +1019,7 @@ function hop_audio_time_interval_set( audio ) {
 /*    hop_audio_time_interval_clear ...                                */
 /*---------------------------------------------------------------------*/
 function hop_audio_time_interval_clear( audio ) {
-   var id = audio.id;
+   var id = audio.controls.id;
    var pos = document.getElementById( id + "-controls-status-position" );
    pos.className = "hop-audio-info-status-position";
    pos.innerHTML = "88:88";
@@ -916,10 +1034,11 @@ function hop_audio_time_interval_clear( audio ) {
 /*    hop_audio_controls_metadata ...                                  */
 /*---------------------------------------------------------------------*/
 function hop_audio_controls_metadata( audio, reset ) {
-   var tl = document.getElementById( audio.id + "-controls-metadata-song" );
-   var ab = document.getElementById( audio.id + "-controls-metadata-album" );
-   var at = document.getElementById( audio.id + "-controls-metadata-artist" );
-   var ye = document.getElementById( audio.id + "-controls-metadata-year" );
+   var id = audio.controls.id;
+   var tl = document.getElementById( id + "-controls-metadata-song" );
+   var ab = document.getElementById( id + "-controls-metadata-album" );
+   var at = document.getElementById( id + "-controls-metadata-artist" );
+   var ye = document.getElementById( id + "-controls-metadata-year" );
 
    if( reset ) {
 //      tl.innerHTML = "";
@@ -927,7 +1046,7 @@ function hop_audio_controls_metadata( audio, reset ) {
       at.innerHTML = "";
       ye.innerHTML = "";
    } else {
-      var md = audio.proxy.metadata_get();
+      var md = audio.backend.metadata_get();
 
       if( md ) {
 	 tl.className = "hop-audio-panel-metadata-song";
@@ -954,11 +1073,11 @@ function hop_audio_controls_metadata( audio, reset ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_audio_controls_onmetadata ...                                */
+/*    hop_audio_controls_onloadedmetadata ...                          */
 /*---------------------------------------------------------------------*/
-function hop_audio_controls_onmetadata( evt ) {
+function hop_audio_controls_onloadedmetadata( evt ) {
    var audio = evt.audio;
-   var id = audio.id;
+   var id = audio.controls.id;
    var status = document.getElementById( id + "-controls-status-img" );
    var playbut = document.getElementById( id + "-hop-audio-button-play" );
    var track = document.getElementById( id + "-controls-status-track" );
@@ -986,7 +1105,7 @@ function hop_audio_controls_onmetadata( evt ) {
 /*---------------------------------------------------------------------*/
 function hop_audio_controls_onclose( evt ) {
    var audio = evt.audio;
-   var id = audio.id;
+   var id = audio.controls.id;
    var tl = document.getElementById( id + "-controls-metadata-song" );
    var min = document.getElementById( id + "-controls-status-length-min" );
    var sec = document.getElementById( id + "-controls-status-length-sec" );
@@ -1002,11 +1121,11 @@ function hop_audio_controls_onclose( evt ) {
    
    status.className = "hop-audio-info-status-img hop-audio-info-status-stop";
    if( tl.className === "hop-audio-panel-metadata-error" ) {
-      var ab = document.getElementById( audio.id + "-controls-metadata-album" );
-      ab.innerHTML = (evt.value ? evt.value : "player closed...");
+      var ab = document.getElementById( id + "-controls-metadata-album" );
+      ab.innerHTML = (evt.value ? evt.value : "backend closed...");
    } else {
       tl.className = "hop-audio-panel-metadata-close";
-      tl.innerHTML = evt.value ? evt.value + " closed..." : "Player closed...";
+      tl.innerHTML = evt.value ? evt.value + " closed..." : "Backend closed...";
    }
 }
 
@@ -1015,7 +1134,7 @@ function hop_audio_controls_onclose( evt ) {
 /*---------------------------------------------------------------------*/
 function hop_audio_controls_onplay( evt ) {
    var audio = evt.audio;
-   var id = audio.id;
+   var id = audio.controls.id;
    var status = document.getElementById( id + "-controls-status-img" );
    var track = document.getElementById( id + "-controls-status-track" );
    var min = document.getElementById( id + "-controls-status-length-min" );
@@ -1045,10 +1164,10 @@ function hop_audio_controls_onplay( evt ) {
 /*---------------------------------------------------------------------*/
 function hop_audio_controls_onpause( evt ) {
    var audio = evt.audio;
-   var id = audio.id;
+   var id = audio.controls.id;
    var status = document.getElementById( id + "-controls-status-img" );
 
-   if( audio.paused ) {
+   if( audio.backend.state === Splay ) {
       audio.old_className = status.className;
       status.className = "hop-audio-info-status-img hop-audio-info-status-pause";
    } else {
@@ -1061,7 +1180,7 @@ function hop_audio_controls_onpause( evt ) {
 /*---------------------------------------------------------------------*/
 function hop_audio_controls_onstop( evt ) {
    var audio = evt.audio;
-   var id = audio.id;
+   var id = audio.controls.id;
    var status = document.getElementById( id + "-controls-status-img" );
    var track = document.getElementById( id + "-controls-status-track" );
    var min = document.getElementById( id + "-controls-status-length-min" );
@@ -1081,11 +1200,11 @@ function hop_audio_controls_onstop( evt ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_audio_controls_onplayer ...                                  */
+/*    hop_audio_controls_onbackend ...                                  */
 /*---------------------------------------------------------------------*/
-function hop_audio_controls_onplayer( evt ) {
+function hop_audio_controls_onbackend( evt ) {
    var audio = evt.audio;
-   var id = audio.id;
+   var id = audio.controls.id;
    var status = document.getElementById( id + "-controls-status-img" );
    var track = document.getElementById( id + "-controls-status-track" );
    var min = document.getElementById( id + "-controls-status-length-min" );
@@ -1101,10 +1220,10 @@ function hop_audio_controls_onplayer( evt ) {
    hop_audio_time_interval_clear( audio );
    hop_audio_controls_metadata( audio, true );
 
-   tl.className = "hop-audio-panel-metadata-player";
+   tl.className = "hop-audio-panel-metadata-backend";
    tl.innerHTML = evt.value ?
       evt.value + " ready..." :
-      "Player ready...";
+      "Backend ready...";
 
    status.className = "hop-audio-info-status-img hop-audio-info-status-stop";
 }
@@ -1114,7 +1233,7 @@ function hop_audio_controls_onplayer( evt ) {
 /*---------------------------------------------------------------------*/
 function hop_audio_controls_onended( evt ) {
    var audio = evt.audio;
-   var id = audio.id;
+   var id = audio.controls.id;
    var min = document.getElementById( id + "-controls-status-length-min" );
    var sec = document.getElementById( id + "-controls-status-length-sec" );
 
@@ -1130,7 +1249,7 @@ function hop_audio_controls_onended( evt ) {
 /*---------------------------------------------------------------------*/
 function hop_audio_controls_onvolume( evt ) {
    var audio = evt.audio;
-   var id = audio.id;
+   var id = audio.controls.id;
    var slider = document.getElementById( id + "-controls-volume" );
 
    hop_slider_value_set( slider, hop_audio_volume( audio ) );

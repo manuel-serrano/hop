@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.11.x/share/flash/HopAudio.as          */
+/*    serrano/prgm/project/hop/2.0.x/share/flash/HopAudio.as           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Aug 23 16:16:58 2007                          */
-/*    Last change :  Sun Jan 18 16:55:53 2009 (serrano)                */
+/*    Last change :  Sun Dec 13 10:37:07 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopAudio flash support.                                          */

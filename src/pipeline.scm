@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Mon Nov 30 08:58:17 2009 (serrano)                */
+;*    Last change :  Mon Dec 14 05:23:05 2009 (serrano)                */
 ;*    Copyright   :  2008-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -117,12 +117,12 @@
 	 (hop-verb 2 (if (http-proxy-request? req)
 			 (hop-color req req
 				    (if (eq? mode 'keep-alive)
-					" EXEC.prox+"
-					" EXEC.prox"))
+					" REQUEST.prox+"
+					" REQUEST.prox"))
 			 (hop-color req req
 				    (if (eq? mode 'keep-alive)
-					" EXEC.serv+"
-					" EXEC.serv")))
+					" REQUEST.serv+"
+					" REQUEST.serv")))
 		   (format " ~a" thread)
 		   (scheduler-stat scd)
 		   ": " method " " scheme "://"
@@ -142,7 +142,7 @@
 
    ;; debug trace
    (debug-thread-info-set! thread "connection established with ~a")
-   
+
    (with-stage-handler
       stage-request-error-handler (id sock mode)
       (let ((req (with-time (http-parse-request sock id timeout) id "CONNECT")))

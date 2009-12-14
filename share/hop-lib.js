@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Tue Dec  8 10:53:55 2009 (serrano)                */
+/*    Last change :  Thu Dec 10 09:47:48 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -39,13 +39,15 @@ function hop_callback( proc ) {
 	    try {
 	       return proc.apply( this, arguments );
 	    } catch( exc ) {
-
 	       if( sc_isPair( exc.hopStack ) ) {
 		  exc.hopStack = sc_append( exc.hopStack, hstack );
 	       }
-	       else
-		  exc.hopStack = hstack;
-
+	       else {
+		  try {
+		     exc.hopStack = hstack;
+		  } catch( _ ) {
+		  }
+	       }
 
 	       hop_report_exception( exc );
 	    }

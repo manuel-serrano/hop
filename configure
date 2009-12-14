@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Dec  1 15:16:07 2009 (serrano)                */
+#*    Last change :  Sun Dec 13 19:35:24 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -21,8 +21,8 @@ jfile=bgljfile
 btags=bgltags
 bdepend=bgldepend
 cc=
-flashcc=mtasc
-fflags="-main -version 9 -cp std8 -swf"
+flashcc=/usr/bin/mtasc
+fflags="-main -version 9 -cp /usr/share/mtasc/std -cp /usr/share/mtasc/std8 -swf"
 backend=native
 unzip=unzip
 gzip="gzip -9"

@@ -213,7 +213,7 @@ function hop_config_get( key ) {
       }
       
       return l;
-   } else if( !sc_isSymbol ) {
+   } else if( !sc_isSymbol( key ) ) {
       return false;
    } else {
       return hop_config[ sc_symbol2jsstring( key ) ];

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Tue Oct 13 09:02:22 2009 (serrano)                */
+;*    Last change :  Mon Dec 14 05:10:59 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
@@ -185,11 +185,12 @@
 		 :procedure
 		 (lambda (m attrs children)
 		    (case m
+		       ((propfind)
+			(return (car children)))
 		       ((prop)
-			(return (filter (lambda (p)
-					   (or (procedure? p)
-					       (xml-element? p)))
-					children)))
+			(filter (lambda (p)
+				   (or (procedure? p) (xml-element? p)))
+				children))
 		       ((getcontentlength)
 			<GETCONTENTLENGTH>)
 		       ((getcontenttype)
@@ -304,7 +305,7 @@
 			(<DAV:STATUS> "HTTP/1.1 200 OK"))
 		     (<DAV:PROPSTAT>
 			(<DAV:PROP> (reverse! errp))
-			(<DAV:STATUS> "HTTP/1.1 404 Not.1 Found"))))
+			(<DAV:STATUS> "HTTP/1.1 404 Not Found"))))
 		   ((pair? okp)
 		    (<DAV:PROPSTAT>
 		       (<DAV:PROP> (reverse! okp))
@@ -312,7 +313,7 @@
 		   ((pair? errp)
 		    (<DAV:PROPSTAT>
 		       (<DAV:PROP> (reverse! errp))
-		       (<DAV:STATUS> "HTTP/1.1 404 Not.2 Found")))
+		       (<DAV:STATUS> "HTTP/1.1 404 Not Found")))
 		   (else
 		    (<DAV:PROPSTAT>
 		       (<DAV:STATUS> "HTTP/1.1 200 OK"))))

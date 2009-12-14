@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat Dec  5 08:05:31 2009 (serrano)                */
+/*    Last change :  Fri Dec 11 14:53:36 2009 (serrano)                */
 /*    Copyright   :  2004-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -87,7 +87,7 @@ function hop_default_failure( xhr ) {
    var div = document.createElement( "div" );
    var hstack = xhr.hopStack ? hop_make_exception_stack( xhr.hopStack ) : false;
    var jsstack = xhr.jsStack ? hop_make_exception_stack( xhr.jsStack ) : false;
-
+   
    if( "exception" in xhr ) {
       hop_report_exception( xhr.exception );
    } else {
@@ -301,6 +301,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, x ) {
 			   xhr.exception = exc;
 			   xhr.exception.hopStack = hstack;
 			   xhr.exception.hopService = svc;
+			   xhr.exception.message = xhr.responseText;
 			   fail( xhr );
 			   expr = false;
 			}

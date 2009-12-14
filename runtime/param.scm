@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Nov 30 09:12:08 2009 (serrano)                */
+;*    Last change :  Mon Dec 14 05:22:30 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -752,7 +752,7 @@
      ("audio/aac" "aac")
      ("audio/ac3" "ac3")
      ("audio/mpeg" "mp3")
-     ("audio/x-ogg" "ogg")
+     ("audio/ogg" "ogg")
      ("audio/flac" "flac")
      ;; images
      ("image/png" "png")
@@ -935,11 +935,11 @@
 
 (define-parameter hop-connection-timeout
    ;; a number of milli-seconds before a connection fails
-   20000)
+   (*fx 20 1000))
 
 (define-parameter hop-read-timeout
    ;; the number of milli-seconds to wait for parsing http headers
-   60000)
+   (*fx 60 1000))
 
 (define-parameter hop-enable-keep-alive
    ;; does hop support keep-alive connection
@@ -960,15 +960,15 @@
    
 (define-parameter hop-keep-alive-timeout
    ;; the number of milli-seconds to wait for keep-alive connections
-   ;; Don't change this value, it is an optimal value that it in phase
+   ;; Don't change this value, it is an optimal value that is in phase
    ;; with browsers value. There is a tradeoff here, higher value raises
    ;; the number of re-use connections but it also increases the cost
    ;; of abandonned keep-alive connections.
-   5000)
+   (*fx 5 1000))
 
 (define-parameter hop-remote-keep-alive-timeout
    ;; the number of milli-seconds to keep alive remote connections
-   30)
+   (*fx 30 1000))
 
 (define-parameter hop-keep-alive-threshold
    ;; the max number of connections above which keep-alive are closed
@@ -985,7 +985,7 @@
 	  v)))
 
 (define-parameter hop-remanent-timeout
-   (* 1000 30))
+   (*fx 1000 30))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-weblets ...                                                  */

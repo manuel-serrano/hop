@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sat Oct 31 08:25:52 2009 (serrano)                */
+;*    Last change :  Sun Dec 13 09:17:05 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -198,10 +198,11 @@
 		    (bigloo-mangle kname)
 		    kname))
 	  (hash (class-hash klass))
-	  (fields (class-all-fields klass)))
-      (format "(function() {var ~a=function(~a) {~a}; ~a.prototype.hop_bigloo_serialize = hop_bigloo_serialize_object; ~a.prototype.hop_classname = '~a'; ~a.prototype.hop_classhash = ~a; return new ~a(~a;})()"
+	  (fields (class-all-fields klass))
+	  (fnames (map class-field-name fields)))
+      (format "(function() {var ~a=function(~a) {~a}; ~a.prototype.hop_bigloo_serialize = hop_bigloo_serialize_object; ~a.prototype.hop_classname = '~a'; ~a.prototype.hop_classhash = ~a; ~a.prototype.hop_classfields = [~a]; return new ~a(~a;})()"
 	      name
-	      (list->block (map class-field-name fields))
+	      (list->block fnames)
 	      (apply string-append
 		     (map (lambda (f)
 			     (let ((n (class-field-name f)))
@@ -212,6 +213,8 @@
 	      name
 	      name
 	      hash
+	      name
+	      (list->block (map (lambda (s) (string-append "'" (symbol->string! s) "'")) fnames))
 	      name
 	      (list->arguments (map (lambda (f) ((class-field-accessor f) obj))
 				    fields)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Dec  8 10:56:59 2009 (serrano)                */
+;*    Last change :  Sun Dec 13 07:09:06 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -20,89 +20,26 @@
    
    (cond-expand
       (enable-threads (library pthread)))
-   
-   
-   (export  (init-hop-audio-services!)
 
+   (export  (class audio-server
+	      (audio-server-init)
+	      (%music (default #f))
+	      (%hmutex read-only (default (make-mutex)))
+	      (%thread (default #f))
+	      (%path (default #unspecified))
+	      (%service (default #unspecified))
+	      (%event (default #unspecified))
+	      (%errcount::int (default 0))
+	      (%state::symbol (default 'init))
+	      (%log::pair-nil (default '())))
+
+	    (generic audio-server-init ::audio-server)
+	    
 	    (<AUDIO> . args)
-	    
-	    (class hop-audio-player::music
-	       (engine read-only)
-	       (name read-only (default #f))
-	       (ident read-only (default (gensym 'hop-audio)))
-	       (%hmutex (default (make-mutex)))
-	       (%thread (default #f))
-	       (%service (default #unspecified))
-	       (%event (default #unspecified))
-	       (%errcount::int (default 0))
-	       (%state::symbol (default 'init))
-	       (%log::pair-nil (default '())))
-	    
-	    (hop-audio-player-json ::hop-audio-player)))
+	    (audio-server-close ::obj)
+	    (audio-server-music ::audio-server)
+	    (audio-server-music-set! ::audio-server ::obj)))
 
-;*---------------------------------------------------------------------*/
-;*    debug-players-list ...                                           */
-;*---------------------------------------------------------------------*/
-(define debug-players-list '())
-(define debug-mutex (make-mutex "hop-audio-debug"))
-(define debug-svc #f)
-(define debug-log-length 10)
-
-(define-struct logentry command args complete)
-
-;*---------------------------------------------------------------------*/
-;*    debug-player ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (debug-player p)
-   
-   (define (<log> log)
-      (<TABLE> :style "border: 1px dashed #777; width: 100%"
-	 (let loop ((log log)
-		    (i debug-log-length)
-		    (res '()))
-	    (if (>fx i 0)
-		(loop (cdr log)
-		      (-fx i 1)
-		      (cons (<TR> (<TD> :style "vertical-align: top"
-				     (<TT> :style (unless (logentry-complete (car log))
-						     "color: red; font-weight: bold")
-					(logentry-command (car log))))
-				  (<TD> :style "vertical-align: top"
-				     (<TT> (logentry-args (car log)))))
-			    res))
-		res))))
-   
-   (with-access::hop-audio-player p (name %state %hmutex %log ident)
-      (with-lock %hmutex
-	 (lambda ()
-	    (<TABLE> :style "border: 2px solid red; width: 100%"
-	       (<COLGROUP> (<COL> :width "0*"))
-	       (<TR> (<TH> :colspan 2 :style "text-align: left" "Player " name))
-	       (<TR> (<TD> "ident: " (<TD> (<TT> ident))))
-	       (<TR> (<TD> "status:") (<TD> (<TT> %state)))
-	       (<TR> (<TD> "log:" :style "vertical-align: top")
-		     (<TD> :style "vertical-align: top"
-			(<log> %log))))))))
-
-;*---------------------------------------------------------------------*/
-;*    init-hop-audio-services! ...                                     */
-;*---------------------------------------------------------------------*/
-(define (init-hop-audio-services!)
-   (set! debug-svc
-	 (service :name "hop-audio/debug" (name)
-	    (when (authorized-service? (current-request) 'admin)
-	       (with-lock debug-mutex
-		  (lambda ()
-		     (let ((p (if name
-				  (filter (lambda (p)
-					     (string=? (hop-audio-player-name p)
-						       name))
-					  debug-players-list)
-				  debug-players-list)))
-			(<HTML>
-			   (<BODY>
-			      (map debug-player p))))))))))
-						      
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO> ...                                                      */
 ;*    -------------------------------------------------------------    */
@@ -128,10 +65,7 @@
 			      (onnext #f)
 			      (onprev #f)
 			      (onclose #f)
-			      (onplayer #f)
-			      ;; the player
-			      (player #f)
-			      ;; controls click events
+			      (onbackend #f)
 			      (onprevclick #unspecified)
 			      (onplayclick #unspecified)
 			      (onpauseclick #unspecified)
@@ -143,46 +77,103 @@
 			      (onmuteclick #unspecified)
 			      (onvolumechange #unspecified)
 			      (onpanchange #unspecified)
+			      (backend 'auto)
+			      (server #f)
 			      (attr)
 			      body)
+
+   (set! id (xml-make-id id 'hopaudio))
+   (define hid (xml-make-id 'html5))
+   (define fid (xml-make-id 'flash))
+   (define cid (xml-make-id 'hopaudio))
    
-   (let* ((id (xml-make-id id 'audio))
-	  (pid (xml-make-id 'hopaudio))
-	  (controller (when controls
-			 (<AUDIO-CONTROLS>
-			    :id id
-			    :onprevclick onprevclick
-			    :onpauseclick onpauseclick
-			    :onplayclick onplayclick
-			    :onstopclick onstopclick
-			    :onnextclick onnextclick
-			    :onloadclick onloadclick
-			    :onprefsclick onprefsclick
-			    :onpodcastclick onpodcastclick
-			    :onmuteclick onmuteclick)))
-	  (init (<AUDIO-INIT> :id id :pid pid :player player
-		   :src src :autoplay autoplay
-		   :start start
-		   :onplay (hop->js-callback onplay)
-		   :onstop (hop->js-callback onstop)
-		   :onpause (hop->js-callback onpause)
-		   :onload (hop->js-callback onload)
-		   :onerror (hop->js-callback onerror)
-		   :onended (hop->js-callback onended)
-		   :onprogress (hop->js-callback onprogress)
-		   :onloadedmetadata (hop->js-callback onloadedmetadata)
-		   :onclose (hop->js-callback onclose)
-		   :onplayer (hop->js-callback onplayer))))
-      (<AUDIO-OBJECT> id pid init controller)))
+   (define (<controls>)
+      (<AUDIO:CONTROLS>
+	 :id cid :audioid id
+	 :onprevclick onprevclick
+	 :onpauseclick onpauseclick
+	 :onplayclick onplayclick
+	 :onstopclick onstopclick
+	 :onnextclick onnextclick
+	 :onloadclick onloadclick
+	 :onprefsclick onprefsclick
+	 :onpodcastclick onpodcastclick
+	 :onmuteclick onmuteclick))
+   
+   (define (<init> backendid init plist)
+      (<AUDIO:INIT> :id id :backendid backendid
+	 :init init
+	 :server server
+	 :src src :playlist plist
+	 :autoplay autoplay :start start
+	 :onplay (hop->js-callback onplay)
+	 :onstop (hop->js-callback onstop)
+	 :onpause (hop->js-callback onpause)
+	 :onload (hop->js-callback onload)
+	 :onerror (hop->js-callback onerror)
+	 :onended (hop->js-callback onended)
+	 :onprogress (hop->js-callback onprogress)
+	 :onloadedmetadata (hop->js-callback onloadedmetadata)
+	 :onclose (hop->js-callback onclose)
+	 :onbackend (hop->js-callback onbackend)))
+
+   (define (playlist suffixes)
+      (filter-map (lambda (x)
+		     (when (xml-markup-is? x 'source)
+			(let ((src (dom-get-attribute x "src")))
+			   (when (string? src)
+			      (let ((suf (suffix src)))
+				 (when (member suf suffixes)
+				    src))))))
+		  body))
+
+   (<DIV> :id id :class "hop-audio"
+      (when controls (<controls>))
+      (case backend
+	 ((flash)
+	  (list (<init> fid
+			"audio.clientbackend = clientbackend;"
+			(playlist '("mp3")))
+		(<AUDIO:FLASH> :id fid)))
+	 ((html5)
+	  (list (<init> hid
+			"hop_audio_html5_init(clientbackend); audio.clientbackend = clientbackend;"
+			(playlist '("ogg")))
+		(<AUDIO:HTML5> :id hid)))
+	 ((auto)
+	  (list (<init> hid
+			(format "if(hop_config.html5_audio ) {
+                                   hop_audio_html5_init(clientbackend);
+                                   audio.clientbackend = clientbackend;
+                                 } else 
+                                  audio.clientbackend = document.getElementById( '~a' );" fid)
+			'("ogg" "mp3"))
+		(<AUDIO:HTML5> :id hid (<AUDIO:FLASH> :id fid))))
+	 (else
+	  (error '<AUDIO> "Illegal backend" backend)))))
 
 ;*---------------------------------------------------------------------*/
-;*    <AUDIO-OBJECT> ...                                               */
+;*    <AUDIO:HTML5> ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (<AUDIO-OBJECT> id pid init controller)
-   (let ((swf (make-file-path (hop-share-directory) "flash" "HopAudio.swf"))
-	 (fvar (string-append "arg=hop_audio_flash_init_" pid)))
-      (<DIV> :id id :class "hop-audio"
-	 controller
+(define (<AUDIO:HTML5> #!key id  #!rest body)
+   (instantiate::xml-element
+      (id id)
+      (markup 'AUDIO)
+      (attributes '(:controls #f :autoplay #f))
+      (body body)))
+   
+;*---------------------------------------------------------------------*/
+;*    <AUDIO:FLASH> ...                                                */
+;*---------------------------------------------------------------------*/
+(define (<AUDIO:FLASH> #!key id)
+   (let* ((swf (make-file-path (hop-share-directory) "flash" "HopAudio.swf"))
+	  (init (string-append "hop_audio_flash_init_" id))
+	  (fvar (string-append "arg=" init)))
+      (<DIV> :id id
+	 (<SCRIPT>
+	    (format "function ~a() {" init)
+	    (format "var backend = document.getElementById( ~s );" id)
+	    "if( backend ) hop_audio_flash_init( backend );}")
 	 (<OBJECT> :id (string-append id "-object") :class "hop-audio"
 	    :width "1px" :height "1px"
 	    :title "hop-audio" :classId "HopAudio.swf"
@@ -199,43 +190,59 @@
 	       :name id
 	       :swliveconnect #t
 	       :allowScriptAccess "sameDomain"
-	       :FlashVars fvar))
-	 init)))
+	       :FlashVars fvar)))))
 
 ;*---------------------------------------------------------------------*/
-;*    <AUDIO-INIT> ...                                                 */
+;*    <AUDIO:INIT> ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (<AUDIO-INIT> #!key id pid player src autoplay start
+(define (<AUDIO:INIT> #!key id backendid
+		      server
+		      init
+		      src playlist
+		      autoplay start
 		      onplay onstop onpause onload onerror onended onprogress
-		      onloadedmetadata onclose onplayer)
+		      onloaded onloadedmetadata onclose onbackend)
    (<SCRIPT>
-      (format "function hop_audio_flash_init_~a() {hop_audio_flash_init( ~s, ~a, ~a, ~a );};"
-	      pid id
-	      (if (string? src) (string-append "'" src "'") "false")
-	      (if autoplay "true" "false")
-	      (if player (hop->json player #f #f) "false"))
-      (format "hop_add_event_listener( window, 'load',
-                function(_) {hop_audio_init( ~s, ~s, ~a, ~a, ~a, ~a, ~a, ~a, ~a, ~a , ~a, ~a, ~a, ~a );} );"
-	      id
-	      start
-	      (if (string? src) (string-append "'" src "'") "false")
-	      (if autoplay "true" "false")
-	      onplay
-	      onstop
-	      onpause
-	      onload
-	      onerror
-	      onended
-	      onprogress
-	      onloadedmetadata
-	      onclose
-	      onplayer)))
+      "hop_add_event_listener( window, 'load', function(_) {"
+      (format "var audio = document.getElementById( '~a' );" id)
+      (format "var clientbackend = document.getElementById( '~a' );" backendid)
+      init
+      (format " audio.clientbackend.audio = audio;")
+      (if server
+	  (format "audio.serverbackend = new HopAudioServerBackend( '~a',audio )
+                   hop_audio_server_init( audio.serverbackend );"
+		  (hop->json server #f #f))
+	  "audio.serverbackend = false;")
+      "audio.backend = false;"
+      "audio.paused = false;"
+      "audio.state = false;"
+      (format "audio.src = ~a;" (hop->json src #f #f))
+      "audio.initialized = true;"
+      (format "audio.start = ~a;" start)
+      (format "audio.onplay = ~a;" onplay)
+      (format "audio.onstop = ~a;" onstop)
+      (format "audio.onpause = ~a;" onpause)
+      (format "audio.onload = ~a;" onload)
+      (format "audio.onerror = ~a;" onerror)
+      (format "audio.onended = ~a;" onended)
+      (format "audio.onprogress = ~a;" onprogress)
+      (format "audio.onloadedmetadata = ~a;" onloadedmetadata)
+      (format "audio.onclose = ~a;" onclose)
+      (format "audio.onbackend = ~a;" onbackend)
+      "audio.hop_add_event_listener = hop_audio_add_event_listener;"
+      "audio.toString = function() { return '[object HopAudio]' };"
+      (format "hop_audio_backend_set( audio, sc_jsstring2symbol( '~a' ) );"
+	      (if server "server" "client"))
+      (when (pair? playlist)
+	 "hop_audio_playlist_set( audio, ~a )" (hop->json playlist #f #f))
+      (when autoplay
+	 "hop_audio_playlist_play( audio, 0 );")
+      "} )"))
 
 ;*---------------------------------------------------------------------*/
-;*    <AUDIO-CONTROLS> ...                                             */
+;*    <AUDIO:CONTROLS> ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (<AUDIO-CONTROLS> #!key
-			  id
+(define (<AUDIO:CONTROLS> #!key id audioid
 			  onprevclick onplayclick onpauseclick
 			  onstopclick onnextclick
 			  onloadclick onpodcastclick onmuteclick onprefsclick
@@ -257,32 +264,24 @@
 	 :title title :alt title :inline #t
 	 :onclick onclick))
 
-   (<DIV> :id (string-append id "-controls") :class "hop-audio-controls"
+   (<DIV> :id id :class "hop-audio-controls"
       ;; the controls callbacks
       (<SCRIPT>
-	 (format "hop_add_event_listener( window, 'load', 
-                   function(_) {var el=document.getElementById(~s);"
-		 (string-append id "-controls"))
-	 "el.onload=hop_audio_controls_onload;"
-	 "el.onerror=hop_audio_controls_onerror;"
-	 "el.onplay=hop_audio_controls_onplay;"
-	 "el.onmetadata=hop_audio_controls_onmetadata;"
-	 "el.onpause=hop_audio_controls_onpause;"
-	 "el.onstop=hop_audio_controls_onstop;"
-	 "el.onclose=hop_audio_controls_onclose;"
-	 "el.onended=hop_audio_controls_onended;"
-         "el.onprogress=hop_audio_controls_onprogress;"
-         "el.onvolume=hop_audio_controls_onvolume;"
-         "el.onplayer=hop_audio_controls_onplayer;})")
+	 "hop_add_event_listener( window, 'load', function(_) {"
+	 (format "var audio = document.getElementById(~s);" audioid)
+	 (format "var controls = document.getElementById(~s);" id)
+	 "audio.controls = controls; controls.audio = audio;"
+	 (format "hop_audio_controls_listeners_init( ~s );" id)
+	 "})")
       ;; the info line
       (<TABLE> :class "hop-audio-panel"
 	 (<TR>
 	    (<TD> :class "hop-audio-panel"
-	       (<AUDIO-CONTROLS-STATUS> id))
+	       (<AUDIO:CONTROLS-STATUS> id))
 	    (<TD> :class "hop-audio-panel"
 	       (<DIV> :class "hop-audio-panel2"
-		  (<AUDIO-CONTROLS-METADATA> id)
-		  (<AUDIO-CONTROLS-SOUND> id)))))
+		  (<AUDIO:CONTROLS-METADATA> id)
+		  (<AUDIO:CONTROLS-SOUND> id)))))
       ;; separator
       (<DIV> :class "hop-audio-separator")
       ;; the button line
@@ -290,35 +289,30 @@
 	 (<BUT> :title "Previous"
 	    :class "hop-audio-button-prev"
 	    :onclick (if (eq? onprevclick #unspecified)
-			 (format "hop_audio_playlist_prev(document.getElementById(~s))"
-				 id)
+			 (format "hop_audio_playlist_prev(document.getElementById('~a'))" audioid)
 			 onprevclick))
 	 (<BUT> :title "Play"
 	    :id (string-append id "-hop-audio-button-play")
 	    :class "hop-audio-button-play"
 	    :onclick (if (eq? onplayclick #unspecified)
-			 (format "hop_audio_playlist_play(document.getElementById(~s), 0)"
-				 id)
+			 (format "hop_audio_playlist_play(document.getElementById('~a'), 0)" audioid)
 			 onplayclick))
 	 (<BUT> :title "Pause"
 	    :id (string-append id "-hop-audio-button-pause")
 	    :class "hop-audio-button-pause"
 	    :onclick (if (eq? onpauseclick #unspecified)
-			 (format "hop_audio_pause(document.getElementById(~s))"
-				 id)
+			 (format "hop_audio_pause(document.getElementById('~a'))" audioid)
 			 onpauseclick))
 	 (<BUT> :title "Stop"
 	    :id (string-append id "-hop-audio-button-stop")
 	    :class "hop-audio-button-stop"
 	    :onclick (if (eq? onstopclick #unspecified)
-			 (format "hop_audio_stop(document.getElementById(~s))"
-				 id)
+			 (format "hop_audio_stop(document.getElementById('~a'))" audioid)
 			 onstopclick))
 	 (<BUT> :title "Next"
 	    :class "hop-audio-button-next"
 	    :onclick (if (eq? onnextclick #unspecified)
-			 (format "hop_audio_playlist_next(document.getElementById(~s))"
-				 id)
+			 (format "hop_audio_playlist_next(document.getElementById('~a'))" audioid)
 			 onnextclick))
 	 (<BUT> :title "Playlist"
 	    :class "hop-audio-button-playlist"
@@ -330,8 +324,7 @@
 	    :id (string-append id "-hop-audio-button-mute")
 	    :class "hop-audio-button-mute"
 	    :onclick (if (eq? onmuteclick #unspecified)
-			 (format "hop_audio_mute(document.getElementById(~s))"
-				 id)
+			 (format "hop_audio_mute(document.getElementById('~a'))" audioid)
 			 onmuteclick))
 	 (<BUT> :title "Preferences"
 	    :id (string-append id "-hop-audio-button-prefs")
@@ -339,9 +332,9 @@
 	    :onclick onprefsclick))))
 
 ;*---------------------------------------------------------------------*/
-;*    <AUDIO-CONTROLS-STATUS> ...                                      */
+;*    <AUDIO:CONTROLS-STATUS> ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (<AUDIO-CONTROLS-STATUS> id)
+(define (<AUDIO:CONTROLS-STATUS> id)
    (<DIV> :class "hop-audio-info-status"
       :id (string-append id "-controls-status")
       (<DIV>
@@ -367,9 +360,9 @@
 	    "88888"))))
 
 ;*---------------------------------------------------------------------*/
-;*    <AUDIO-CONTROLS-METADATA> ...                                    */
+;*    <AUDIO:CONTROLS-METADATA> ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (<AUDIO-CONTROLS-METADATA> id)
+(define (<AUDIO:CONTROLS-METADATA> id)
    (<DIV> :class "hop-audio-panel-metadata"
       :id (string-append id "-controls-metadata")
       (<DIV> :class "hop-audio-panel-metadata-song"
@@ -391,9 +384,9 @@
 		  ""))))))
 
 ;*---------------------------------------------------------------------*/
-;*    <AUDIO-CONTROLS-SOUND> ...                                       */
+;*    <AUDIO:CONTROLS-SOUND> ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (<AUDIO-CONTROLS-SOUND> id)
+(define (<AUDIO:CONTROLS-SOUND> id)
    
    (define (on action)
       (format "var el = document.getElementById( '~a' );
@@ -401,7 +394,7 @@
 
                evt.value = this.value;
                if( el.on~aclick ) el.on~aclick( evt );
-	       if( !evt.stopped ) hop_audio_~a( el, this.value );"
+	       if( !evt.stopped ) hop_audio_~a( el.audio, this.value );"
 	       id action action action))
 
    (<DIV> :class "hop-audio-panel-sound"
@@ -421,24 +414,157 @@
 	    (<TH> :class "hop-audio-panel-right" "R")))))
 
 ;*---------------------------------------------------------------------*/
+;*    audio-server-init ...                                            */
+;*---------------------------------------------------------------------*/
+(define-generic (audio-server-init as::audio-server)
+   (let* ((p (gen-service-url "audio"))
+	  (s (service :name p (a0 a1)
+		(with-handler
+		   (lambda (e)
+		      (error-notify e)
+		      #f)
+		   (with-access::audio-server as (%music %hmutex %state)
+		      (with-lock %hmutex
+			 (lambda ()
+			    (when (eq? %state 'ready)
+			       (case a0
+				  ((ready)
+				   #t)
+				  ((load)
+				   (music-playlist-clear! %music)
+				   (hop-music-playlist-add! %music a1)
+				   #t)
+				  ((pause)
+				   (music-pause %music)
+				   #t)
+				  ((play)
+				   (music-play %music a1)
+				   #t)
+				  ((stop)
+				   (music-stop %music)
+				   #t)
+				  ((position)
+				   (music-seek %music a1)
+				   #t)
+				  ((playlist)
+				   (music-playlist-set! %music a1)
+				   #t)
+				  ((volume)
+				   (music-volume-set! %music a1)
+				   #t))))))))))
+      (cond-expand
+	 (enable-threads
+	  (with-access::audio-server as (%service %music %thread %path %event)
+	     (set! %path p)
+	     (set! %event (string-append (hop-service-base) "/" (audio-server-%path as)))
+	     (set! %service s)))
+	 (else
+	  (error 'audio-server
+		 "Backend cannot be started in single-thread setting"
+		 "Re-configure HOP with multi-threading enabled")))))
+
+;*---------------------------------------------------------------------*/
+;*    audio-server-close ...                                           */
+;*---------------------------------------------------------------------*/
+(define (audio-server-close as)
+   (with-access::audio-server as (%hmutex %state %thread %music)
+      (with-lock %hmutex
+	 (lambda ()
+	    (set! %state 'close)
+	    (when (music? %music) (music-close %music))
+	    (when (thread? %thread) (thread-terminate! %thread))))))
+
+;*---------------------------------------------------------------------*/
+;*    audio-server-music ...                                           */
+;*---------------------------------------------------------------------*/
+(define (audio-server-music as)
+   (with-access::audio-server as (%music)
+      %music))
+   
+;*---------------------------------------------------------------------*/
+;*    audio-server-music-set! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (audio-server-music-set! as m)
+   (with-access::audio-server as (%hmutex %state %thread %music)
+      (with-lock %hmutex
+	 (lambda ()
+	    (when (music? %music) (music-close %music))
+	    (when (thread? %thread) (thread-terminate! %thread))
+	    (audio-server-%music-set! as m)
+	    (when (music? m) (set! %thread (make-audio-server-thread as)))))))
+
+;*---------------------------------------------------------------------*/
+;*    music-playlist-set! ...                                          */
+;*---------------------------------------------------------------------*/
+(define (music-playlist-set! music a1)
+   (music-playlist-clear! music)
+   (for-each (lambda (s)
+		(let ((f (charset-convert s (hop-charset) 'UTF-8)))
+		   (music-playlist-add! music f)))
+	     a1))
+
+;*---------------------------------------------------------------------*/
+;*    make-audio-server-thread ...                                     */
+;*---------------------------------------------------------------------*/
+(define (make-audio-server-thread as)
+   
+   (define (thread-body)
+      (with-access::audio-server as (%music %event %errcount %state)
+	 (let ((onstate (audio-onstate %event %music as))
+	       (onerror (audio-onerror %event %music))
+	       (onvolume (audio-onvolume %event %music))
+	       (onmeta (audio-onmeta %event %music as)))
+	    (with-handler
+	       (lambda (e)
+		  (exception-notify e)
+		  (let ((msg (with-error-to-string
+				(lambda ()
+				   (exception-notify e)))))
+		     (set! %state 'error)
+		     (onerror msg)))
+	       (set! %state 'ready)
+	       (hop-event-broadcast! %event (list 'ready))
+	       (music-event-loop %music
+				 :onstate onstate
+				 :onerror onerror
+				 :onvolume onvolume
+				 :onmeta onmeta)))))
+   
+   (define (thread-cleanup th)
+      (with-access::audio-server as (%event %state %thread)
+	 (with-access::musicstatus (music-status (audio-server-music as)) (err)
+	    (if err
+		(hop-event-broadcast! %event (list 'abort err))
+		(begin
+		   (set! %state 'closed)
+		   (hop-event-broadcast! %event (list 'close)))))
+	 (set! %thread #f)))
+
+   (let ((th (instantiate::pthread
+		(body thread-body)
+		(cleanup thread-cleanup))))
+      (thread-start! th)
+      th))
+
+;*---------------------------------------------------------------------*/
 ;*    audio-onstate ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (audio-onstate %event engine player)
+(define (audio-onstate event music as)
    (lambda (status)
       (with-trace 3 "audio-onstate"
-	 (trace-item "engine=" (find-runtime-type engine))
-	 (trace-item "player=" (find-runtime-type player))
+	 (trace-item "music=" (find-runtime-type music))
+	 (trace-item "as=" (find-runtime-type as))
 	 (with-access::musicstatus status (state song songpos songlength volume)
 	    (let ((ev (list state songlength songpos volume song)))
 	       (trace-item "state=" state)
 	       (trace-item "songlength=" songlength)
-	       (hop-audio-player-%errcount-set! player 0)
-	       (hop-event-broadcast! %event ev))))))
+	       (audio-server-%errcount-set! as 0)
+	       (hop-event-broadcast! event ev))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-onmeta ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (audio-onmeta %event engine player)
+(define (audio-onmeta event music as)
 
    (define conv (charset-converter 'UTF-8 (hop-charset)))
    
@@ -471,7 +597,7 @@
 	    (plist (map convert-file plist)))
 	 (trace-item "s=" (if (string? s) s (find-runtime-type s)))
 	 (trace-item "pl length=" (length plist))
-	 (hop-event-broadcast! %event (list 'meta s plist))))
+	 (hop-event-broadcast! event (list 'meta s plist))))
    
    (define (audio-onfile-name meta plist)
       (let ((url (url-decode meta)))
@@ -479,9 +605,9 @@
    
    (lambda (meta playlist)
       (with-trace 3 "audio-onmeta"
-	 (trace-item "engine=" (find-runtime-type engine))
-	 (trace-item "player=" (find-runtime-type player))
-	 (hop-audio-player-%errcount-set! player 0)
+	 (trace-item "music=" (find-runtime-type music))
+	 (trace-item "as=" (find-runtime-type as))
+	 (audio-server-%errcount-set! as 0)
 	 (if (string? meta)
 	     ;; this is a file name (a url)
 	     (let ((file (charset-convert meta 'UTF-8 (hop-locale))))
@@ -496,351 +622,29 @@
 ;*---------------------------------------------------------------------*/
 ;*    audio-onerror ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (audio-onerror %event engine)
+(define (audio-onerror event music)
    (lambda (error)
       (with-trace 3 "audio-onerror"
-	 (trace-item "engine=" (find-runtime-type engine))
-	 (hop-event-broadcast! %event (list 'error error)))))
+	 (trace-item "music=" (find-runtime-type music))
+	 (hop-event-broadcast! event (list 'error error)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-onvolume ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (audio-onvolume %event engine)
+(define (audio-onvolume event music)
    (lambda (vol)
       (with-trace 3 "audio-onvolume"
-	 (trace-item "engine=" (find-runtime-type engine))
-	 (hop-event-broadcast! %event (list 'volume vol)))))
-
-;*---------------------------------------------------------------------*/
-;*    make-audio-thread ...                                            */
-;*---------------------------------------------------------------------*/
-(define (make-audio-thread player)
-   
-   (define (audio-thread-trace player)
-      (with-access::hop-audio-player player (%event %state %hmutex engine %thread)
-	 (let ((th (current-thread)))
-	    ;; debug
-	    (with-trace 2 'make-audio-thread
-	       (trace-item "player=" (find-runtime-type player))
-	       (trace-item "engine=" (find-runtime-type engine))
-	       (trace-item "thread=" thread)
-	       (thread-cleanup-set!
-		th
-		(lambda (_)
-		   (with-trace 2 'audio-thread-cleanup
-		      (trace-item "thread=" thread)
-		      (with-access::musicstatus (music-%status engine) (err)
-			 (if err
-			     (hop-event-broadcast! %event (list 'abort err))
-			     (begin
-				(set! %state 'closed)
-				(hop-event-broadcast! %event (list 'close))))))
-		   (set! %thread #f)))))))
-   
-   (thread-start!
-    (make-thread
-     (lambda ()
-	(audio-thread-trace player)
-	(with-access::hop-audio-player player (engine %event %errcount %state)
-	   (let ((onstate (audio-onstate %event engine player))
-		 (onerror (audio-onerror %event engine))
-		 (onvolume (audio-onvolume %event engine))
-		 (onmeta (audio-onmeta %event engine player)))
-	      (with-handler
-		 (lambda (e)
-		    (exception-notify e)
-		    (let ((msg (with-error-to-string
-				  (lambda ()
-				     (exception-notify e)))))
-		       (set! %state 'error)
-		       (onerror msg)))
-		 (set! %state 'running)
-		 (music-event-loop engine
-				   :onstate onstate
-				   :onerror onerror
-				   :onvolume onvolume
-				   :onmeta onmeta))))))))
+	 (trace-item "music=" (find-runtime-type music))
+	 (hop-event-broadcast! event (list 'volume vol)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-music-playlist-add! ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (hop-music-playlist-add! engine s)
-   (music-playlist-add! engine (charset-convert s (hop-charset) 'UTF-8)))
+(define (hop-music-playlist-add! music s)
+   (music-playlist-add! music (charset-convert s (hop-charset) 'UTF-8)))
    
 ;*---------------------------------------------------------------------*/
-;*    music-playlist-set! ...                                          */
+;*    hop->json ::%audio-server ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (music-playlist-set! engine a1)
-   (music-playlist-clear! engine)
-   (for-each (lambda (s) (hop-music-playlist-add! engine s)) a1))
-
-;*---------------------------------------------------------------------*/
-;*    debug-log ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (debug-log player a0 a1)
-   (with-access::hop-audio-player player (%log %hmutex)
-      (mutex-lock! %hmutex)
-      (let ((loge (car %log)))
-	 (logentry-command-set! loge a0)
-	 (logentry-args-set! loge a1)
-	 (logentry-complete-set! loge #f)
-      (mutex-unlock! %hmutex))))
-
-;*---------------------------------------------------------------------*/
-;*    debug-log-complete ...                                           */
-;*---------------------------------------------------------------------*/
-(define (debug-log-complete player a0 a1)
-   (with-access::hop-audio-player player (%log %hmutex)
-      (mutex-lock! %hmutex)
-      (let ((loge (car %log)))
-	 (logentry-complete-set! loge #t)
-	 (set! %log (cdr %log)))
-      (mutex-unlock! %hmutex)))
-
-;*---------------------------------------------------------------------*/
-;*    music-init ...                                                   */
-;*---------------------------------------------------------------------*/
-(define-method (music-init player::hop-audio-player)
-
-   (define (hop-audio-player-event-loop-start player)
-      (with-access::hop-audio-player player (%thread %hmutex %state %log engine)
-	 (mutex-lock! %hmutex)
-	 (if (thread? %thread)
-	     (begin
-		(set! %state 'reset-event-loop)
-		(mutex-unlock! %hmutex)
-		(music-event-loop-reset! engine))
-	     (unwind-protect
-		(begin
-		   (set! %state 'start-event-loop)
-		   (set! %thread (make-audio-thread player)))
-		(mutex-unlock! %hmutex)))))
-
-   (mutex-lock! debug-mutex)
-   (set! debug-players-list (cons player debug-players-list))
-   (let ((log (map! (lambda (_) (logentry #f #f #t)) (iota debug-log-length))))
-      (set-cdr! (last-pair log) log)
-      (hop-audio-player-%log-set! player log))
-   (mutex-unlock! debug-mutex)
-   
-   (cond-expand
-      (enable-threads
-       (with-access::hop-audio-player player (%service %event engine)
-	  (set! %service (service :name (get-service-url "hop-audio") (a0 a1)
-			    (debug-log player a0 a1)
-			    (with-trace 2 'hop-audio
-			       (trace-item "a0=" a0)
-			       (trace-item "a1=" a1)
-			       (trace-item "engine=" (find-runtime-type engine))
-			       (trace-item "player=" (find-runtime-type player))
-			       (with-handler
-				  (lambda (e)
-				     (error-notify e)
-				     #f)
-				  (case a0
-				     ((ready)
-				      (hop-audio-player-event-loop-start player)
-				      #unspecified)
-				     ((load)
-				      (music-playlist-clear! engine)
-				      (hop-music-playlist-add! engine a1))
-				     ((pause)
-				      (music-pause engine))
-				     ((play)
-				      (music-play engine a1)
-				      #unspecified)
-				     ((stop)
-				      (music-stop engine))
-				     ((position)
-				      (music-seek engine a1))
-				     ((playlist)
-				      (music-playlist-set! engine a1))
-				     ((volume)
-				      (music-volume-set! engine a1))
-				     ((close)
-				      (music-close player)))
-				  (debug-log-complete player a0 a1)
-				  #t))))
-	  (set! %event (service-path %service))
-	  player))
-      (else
-       (error 'hop-audio-player
-	      "Player cannot be started in single-thread setting"
-	      "Re-configure HOP with multi-threading enabled"))))
-
-;*---------------------------------------------------------------------*/
-;*    music-close ...                                                  */
-;*---------------------------------------------------------------------*/
-(define-method (music-close audio::hop-audio-player)
-   (with-access::hop-audio-player audio (%hmutex %thread %state engine)
-      (with-lock %hmutex
-	 (lambda ()
-	    (set! %state 'close)
-	    (when (thread? %thread)
-	       (music-close engine)
-	       (set! %thread #f)
-	       (mutex-lock! debug-mutex)
-	       (set! debug-players-list (remq! audio debug-players-list))
-	       (mutex-unlock! debug-mutex))))))
-
-;*---------------------------------------------------------------------*/
-;*    music-closed? ::hop-audio-player ...                             */
-;*---------------------------------------------------------------------*/
-(define-method (music-closed? audio::hop-audio-player)
-   (with-access::hop-audio-player audio (%state %hmutex)
-      (with-lock %hmutex
-	 (lambda ()
-	    (eq? %state 'close)))))
-
-;*---------------------------------------------------------------------*/
-;*    music-reset! ::hop-audio-player ...                              */
-;*---------------------------------------------------------------------*/
-(define-method (music-reset! audio::hop-audio-player)
-   (with-access::hop-audio-player audio (engine)
-      (music-reset! engine)))
-
-;*---------------------------------------------------------------------*/
-;*    music-playlist-get ::hop-audio-player ...                        */
-;*---------------------------------------------------------------------*/
-(define-method (music-playlist-get audio::hop-audio-player)
-   (with-access::hop-audio-player audio (engine)
-      (music-playlist-get engine)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-playlist-add! ::hop-audio-player ...                       */
-;*---------------------------------------------------------------------*/
-(define-method (music-playlist-add! audio::hop-audio-player song)
-   (with-access::hop-audio-player audio (engine)
-      (music-playlist-add! engine song)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-playlist-delete! ::hop-audio-player ...                    */
-;*---------------------------------------------------------------------*/
-(define-method (music-playlist-delete! audio::hop-audio-player num)
-   (with-access::hop-audio-player audio (engine)
-      (music-playlist-delete! engine num)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-playlist-clear! ::hop-audio-player ...                     */
-;*---------------------------------------------------------------------*/
-(define-method (music-playlist-clear! audio::hop-audio-player)
-   (with-access::hop-audio-player audio (engine)
-      (music-playlist-clear! engine)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-play ::hop-audio-player ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (music-play audio::hop-audio-player . song)
-   (with-access::hop-audio-player audio (engine)
-      (apply music-play engine song)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-seek ::hop-audio-player ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (music-seek audio::hop-audio-player obj . song)
-   (with-access::hop-audio-player audio (engine)
-      (apply music-seek engine obj song)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-stop ::hop-audio-player ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (music-stop audio::hop-audio-player)
-   (with-access::hop-audio-player audio (engine)
-      (music-stop engine)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-pause ::hop-audio-player ...                               */
-;*---------------------------------------------------------------------*/
-(define-method (music-pause audio::hop-audio-player)
-   (with-access::hop-audio-player audio (engine)
-      (music-pause engine)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-next ::hop-audio-player ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (music-next audio::hop-audio-player)
-   (with-access::hop-audio-player audio (engine)
-      (music-next engine)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-prev ::hop-audio-player ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (music-prev audio::hop-audio-player)
-   (with-access::hop-audio-player audio (engine)
-      (music-next engine)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-crossfade ::hop-audio-player ...                           */
-;*---------------------------------------------------------------------*/
-(define-method (music-crossfade audio::hop-audio-player i)
-   (with-access::hop-audio-player audio (engine)
-      (music-crossfade engine i)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-random-set! ::hop-audio-player ...                         */
-;*---------------------------------------------------------------------*/
-(define-method (music-random-set! audio::hop-audio-player b)
-   (with-access::hop-audio-player audio (engine)
-      (music-random-set! engine b)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-repeat-set! ::hop-audio-player ...                         */
-;*---------------------------------------------------------------------*/
-(define-method (music-repeat-set! audio::hop-audio-player b)
-   (with-access::hop-audio-player audio (engine)
-      (music-repeat-set! engine b)))
-
-;*---------------------------------------------------------------------*/
-;*    music-reset-error! ::hop-audio-player ...                        */
-;*---------------------------------------------------------------------*/
-(define-method (music-reset-error! audio::hop-audio-player)
-   (with-access::hop-audio-player audio (engine)
-      (music-reset-error! engine)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-status ::hop-audio-player ...                              */
-;*---------------------------------------------------------------------*/
-(define-method (music-status audio::hop-audio-player)
-   (with-access::hop-audio-player audio (engine)
-      (music-status engine)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-update-status! ::hop-audio-player ...                      */
-;*---------------------------------------------------------------------*/
-(define-method (music-update-status! audio::hop-audio-player status)
-   (with-access::hop-audio-player audio (engine)
-      (music-update-status! engine status)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-song ::hop-audio-player ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (music-song audio::hop-audio-player)
-   (with-access::hop-audio-player audio (engine)
-      (music-song engine)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-songpos ::hop-audio-player ...                             */
-;*---------------------------------------------------------------------*/
-(define-method (music-songpos audio::hop-audio-player)
-   (with-access::hop-audio-player audio (engine)
-      (music-songpos engine)))
-   
-;*---------------------------------------------------------------------*/
-;*    music-meta ::hop-audio-player ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (music-meta audio::hop-audio-player)
-   (with-access::hop-audio-player audio (engine)
-      (music-meta engine)))
-   
-;*---------------------------------------------------------------------*/
-;*    hop-audio-player-json ...                                        */
-;*---------------------------------------------------------------------*/
-(define (hop-audio-player-json player)
-   (with-access::hop-audio-player player (%event)
-      %event))
-
-;*---------------------------------------------------------------------*/
-;*    hop->json ::hop-audio-player ...                                 */
-;*---------------------------------------------------------------------*/
-(define-method (hop->json player::hop-audio-player isrep isflash)
-   (format "\"~a\"" (hop-audio-player-json player)))
+(define-method (hop->json as::audio-server isrep isflash)
+   (string-append "\"" (hop-service-base) "/" (audio-server-%path as) "\""))
