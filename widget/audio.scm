@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sun Dec 13 07:09:06 2009 (serrano)                */
+;*    Last change :  Mon Dec 14 13:47:55 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -131,14 +131,12 @@
       (when controls (<controls>))
       (case backend
 	 ((flash)
-	  (list (<init> fid
-			"audio.clientbackend = clientbackend;"
-			(playlist '("mp3")))
+	  (list (<init> fid "audio.clientbackend = clientbackend;" '())
 		(<AUDIO:FLASH> :id fid)))
 	 ((html5)
 	  (list (<init> hid
 			"hop_audio_html5_init(clientbackend); audio.clientbackend = clientbackend;"
-			(playlist '("ogg")))
+			'())
 		(<AUDIO:HTML5> :id hid)))
 	 ((auto)
 	  (list (<init> hid
@@ -147,7 +145,7 @@
                                    audio.clientbackend = clientbackend;
                                  } else 
                                   audio.clientbackend = document.getElementById( '~a' );" fid)
-			'("ogg" "mp3"))
+			'())
 		(<AUDIO:HTML5> :id hid (<AUDIO:FLASH> :id fid))))
 	 (else
 	  (error '<AUDIO> "Illegal backend" backend)))))
@@ -234,7 +232,7 @@
       (format "hop_audio_backend_set( audio, sc_jsstring2symbol( '~a' ) );"
 	      (if server "server" "client"))
       (when (pair? playlist)
-	 "hop_audio_playlist_set( audio, ~a )" (hop->json playlist #f #f))
+	 "hop_audio_playlist_set( audio, ~a );" (hop->json playlist #f #f))
       (when autoplay
 	 "hop_audio_playlist_play( audio, 0 );")
       "} )"))
@@ -450,6 +448,7 @@
 				   (music-playlist-set! %music a1)
 				   #t)
 				  ((volume)
+				   (tprint "VOLUME SET: " a1)
 				   (music-volume-set! %music a1)
 				   #t))))))))))
       (cond-expand
@@ -635,6 +634,7 @@
    (lambda (vol)
       (with-trace 3 "audio-onvolume"
 	 (trace-item "music=" (find-runtime-type music))
+	 (tprint "BROADCAST VOLUME: " event " " vol)
 	 (hop-event-broadcast! event (list 'volume vol)))))
 
 ;*---------------------------------------------------------------------*/
