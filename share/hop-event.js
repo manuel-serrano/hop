@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Oct 30 06:24:18 2009 (serrano)                */
+/*    Last change :  Fri Nov 27 13:27:16 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -199,7 +199,9 @@ function start_servevt_xhr_multipart_proxy( key ) {
 
 	 var failure = function( xhr ) {
 	    if( xhr.exception ) {
-	       hop_report_exception( xhr.exception );
+	       if( typeof hop_report_exception === "function" ) {
+		  hop_report_exception( xhr.exception );
+	       }
 	    }
 	    
 	    if( "hop_servevt_onclose" in window ) hop_servevt_onclose();

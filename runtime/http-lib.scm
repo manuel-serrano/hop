@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/http-lib.scm              */
+;*    serrano/prgm/project/hop/2.0.x/runtime/http-lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Mon May 26 05:42:03 2008 (serrano)                */
-;*    Copyright   :  2004-08 Manuel Serrano                            */
+;*    Last change :  Sun Nov 29 10:58:12 2009 (serrano)                */
+;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
 ;*=====================================================================*/
@@ -31,7 +31,8 @@
 	    (http-htaccess-authentication? ::http-request ::bstring)
 	    (http-decode-authentication::bstring ::bstring)
 	    (http-write-header ::output-port ::pair-nil)
-	    (http-filter-proxy-header::pair-nil ::pair-nil)))
+	    (http-filter-proxy-header::pair-nil ::pair-nil)
+	    (http-parse-range ::bstring)))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    parse-error ...                                                  */
@@ -275,3 +276,38 @@
 		 (loop (cdr lst) fil)
 		 (loop (cdr lst) (cons (cdar lst) fil))))))))
 		 
+;*---------------------------------------------------------------------*/
+;*    http-parse-range ...                                             */
+;*---------------------------------------------------------------------*/
+(define (http-parse-range range)
+   
+   (define (err)
+      (raise (instantiate::&io-parse-error
+		(proc 'http-parse-range)
+		(msg "Illegal range")
+		(obj range))))
+   
+   (define (string->fixnum string offset len)
+      (let loop ((i offset)
+		 (acc #e0))
+	 (if (=fx i len)
+	     acc
+	     (let ((d (fixnum->elong
+		       (-fx (char->integer (string-ref string i))
+			    (char->integer #\0)))))
+		(loop (+fx i 1) (+elong (*elong acc #d10) d))))))
+   
+   (if (not (substring-ci-at? range "bytes=" 0))
+       (err)
+       (let ((i (string-index range #\- 6))
+	     (l (string-length range)))
+	  (cond
+	     ((not i)
+	      (err))
+	     ((= i 6)
+	      (values #f (string->fixnum range 7 l)))
+	     ((= i (-fx (string-length range) 1))
+	      (values (string->fixnum range 6 i) #f))
+	     (else
+	      (values (string->fixnum range 6 i)
+		      (string->fixnum range (+fx i 1) l)))))))

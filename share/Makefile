@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sat Nov 14 06:33:27 2009 (serrano)                */
+#*    Last change :  Mon Nov 30 08:32:06 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -206,7 +206,7 @@ uninstall:
 #*---------------------------------------------------------------------*/
 #*    hop.js ...                                                       */
 #*---------------------------------------------------------------------*/
-hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js $(RTS)
+hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js hop-exception.js $(RTS) 
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* " >> $@
 	date >> $@
@@ -236,10 +236,7 @@ hop-runtime.sch: $(EXPORTER) $(EXPORTED_RT_JS)
 #*---------------------------------------------------------------------*/
 #*    .afile ...                                                       */
 #*---------------------------------------------------------------------*/
-EXPORTED_RT_SCM = hop-runtime.sch $(filter %.scm,$(EXTRA)) \
-                                    $(filter %.sch,$(EXTRA))
-
-.afile: $(EXPORTED_RT_SCM)
+.afile: hop-runtime.sch $(filter %.scm,$(EXTRA)) $(filter %.sch,$(EXTRA))
 	@ $(AFILE) -o $@ $^
 
 #*---------------------------------------------------------------------*/
@@ -247,6 +244,18 @@ EXPORTED_RT_SCM = hop-runtime.sch $(filter %.scm,$(EXTRA)) \
 #*---------------------------------------------------------------------*/
 flash/%.swf: flash/%.as
 	(cd flash && $(FLASHCC) $(FFLAGS) $(@F) $(<F))
+
+#*---------------------------------------------------------------------*/
+#*    JavaScript compilation                                           */
+#*---------------------------------------------------------------------*/
+hop-exception.js: hop-exception.scm
+	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
+         export LD_LIBRARY_PATH; \
+         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
+         export DYLD_LIBRARY_PATH; \
+         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
+         export PATH; \
+	 $(call compile3b,HOPC,BJFLAGS,HFLAGS,BLFLAGS,$< -o $@ -c))
 
 #*---------------------------------------------------------------------*/
 #*    backends                                                         */
@@ -266,3 +275,22 @@ jvm-list:
           fi \
         done
 
+#*---------------------------------------------------------------------*/
+#*    predistrib                                                       */
+#*---------------------------------------------------------------------*/
+predistrib: hop-exception.js
+
+predistrib-clean:
+	$(RM) hop-exception.js
+
+#*---------------------------------------------------------------------*/
+#*    cleaning                                                         */
+#*---------------------------------------------------------------------*/
+.PHONY: clean predistrib-clean devclean
+
+clean:
+	$(RM) hop.js
+
+devclean: predistrib-clean
+
+distclean: clean

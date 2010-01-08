@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Wed Nov 18 09:20:24 2009 (serrano)                */
+;*    Last change :  Sun Nov 29 07:42:39 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -161,13 +161,23 @@
 	  '()))))
 
 ;*---------------------------------------------------------------------*/
+;*    in-exception-report ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Use a symbol instead of a boolean to avoid confusion when        */
+;*    uninitialized.                                                   */
+;*---------------------------------------------------------------------*/
+(define in-exception-report 'no)
+
+;*---------------------------------------------------------------------*/
 ;*    <EXCEPTION-FRAME> ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (<EXCEPTION-FRAME> . args)
    (let ((mask (<DIV> :style (hop-exception-mask-style) ""))
 	 (frame (<DIV> :style (hop-exception-frame-style)
 		   (<DIV> :style "overflow: auto" args))))
-      (<DIV> :onclick (dom-remove-child! (dom-parent-node this) this)
+      (<DIV> :onclick (begin
+			 (set! in-exception-report 'no)
+			 (dom-remove-child! (dom-parent-node this) this))
 	 mask frame)))
 
 ;*---------------------------------------------------------------------*/
@@ -207,7 +217,7 @@
 (define (<EXCEPTION-STACK> stack)
    (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px"
       (<DIV> :style "font-weight: bold; margin-bttom: 1ex;" "Hop client stack:")
-      (<PRE> :style "font-size: 9pt; padding-left: 1em"
+      (<PRE> :style "font-size: 9pt; padding-left: 1em;"
 	 :onclick (stop-event-propagation event)
 	 (map (lambda (frame)
 		 (list (obj->string (car frame) #t) "\n"))
@@ -286,13 +296,13 @@
 		      (string-split exc.description "\n "))))
 	 (else
 	  "unknwown error")))
-   
+
    (let* ((message (exception-message exc))
-	  (msg (if (and exc.scObject (not (eq? exc.scObject #unspecified)))
+	  (msg (if (in? "scObject" exc)
 		   (list message " -- " (obj->string exc.scObject #f))
 		   message))
 	  (name (exception-name exc))
-	  (url (if (string? exc.fileName) exc.fileName document.location))
+	  (url (if (string? exc.fileName) exc.fileName document.location.href))
 	  (location (if (string? exc.hopLocation) exc.hopLocation "Client Error"))
 	  (src (cond
 		  ((and exc.lineNumber (not (eq? exc.lineNumber #unspecified)))
@@ -301,8 +311,6 @@
 		   (list (<A> :href url url) ", line " exc.line))
 		  (else
 		   (<A> :href url)))))
-
-      (tprint "EXC URL=" url)
 
       (<EXCEPTION-FRAME>
 	 (<TABLE> :style "width: 100%; font-family: arial; font-size: 10pt; background: #FFFFF7; border-bottom: 1px solid #ccc; overflow: visible"
@@ -341,11 +349,17 @@
 ;*    hop-report-exception ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hop-report-exception exc)
-   ;; the error might be raised before document.body is bound
-   (if (and document.body (not (null? document.body)))
-       (let ((e (<EXCEPTION> exc)))
-	  (dom-append-child! document.body (<EXCEPTION> exc)))
-       (add-window-onload! (lambda (e) (hop-report-exception exc)))))
+   (cond
+      ((eq? in-exception-report 'yes)
+       ;; we are already reporting an error
+       (raise exc))
+      ((and document.body (not (null? document.body)))
+       ;; regular report
+       (set! in-exception-report 'yes)
+       (dom-append-child! document.body (<EXCEPTION> exc)))
+      (else
+       ;; the error might be raised even before document.body is bound
+       (add-window-onload! (lambda (e) (hop-report-exception exc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-last-exception ...                                           */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Sun Nov  1 08:55:08 2009 (serrano)                */
+/*    Last change :  Sat Nov 28 07:22:53 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -31,19 +31,23 @@ function hop_callback( proc ) {
 	    throw( e );
 	 }
       } else {
-	 var hstack = hop_get_stack( 2 );
+	 var hstack =
+	    ((typeof hop_get_stack) === "function") ?
+	    hop_get_stack( 2 ) : null;
+	 
 	 return function( e ) {
 	    try {
 	       return proc.apply( this, arguments );
-	    } catch( e ) {
-	       if( e.hopStack )
-		  e.hopStack = sc_append( e.hopStack, hstack );
-	       else
-		  e.hopStack = hstack;
+	    } catch( exc ) {
 
-	       hop_report_exception( e );
-	       
-	       if( hop_debug() >= 2 ) throw( e );
+	       if( sc_isPair( exc.hopStack ) ) {
+		  exc.hopStack = sc_append( exc.hopStack, hstack );
+	       }
+	       else
+		  exc.hopStack = hstack;
+
+
+	       hop_report_exception( exc );
 	    }
 	 }
       }
@@ -97,6 +101,17 @@ function hop_foreach_in( proc, obj ) {
    for( var p in obj ) {
       proc( p, obj[ p ] );
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_in ...                                                       */
+/*---------------------------------------------------------------------*/
+/*** META ((export in?) (arity #t)
+           (peephole (infix 2 2 " in "))
+           (type bool))
+*/
+function hop_in( field, obj ) {
+   return field in obj;
 }
 
 /*---------------------------------------------------------------------*/
@@ -246,17 +261,18 @@ function hop_load( src, timeout ) {
 /*** META ((export add-window-onload!) (arity 1)) */
 var hop_window_onload_add = function( proc ) {
    var oldonload = window.onload;
+   var wproc = hop_callback( proc );
 
    if( typeof oldonload != 'function' ) {
-      window.onload = proc;
+      window.onload = wproc;
    } else {
       window.onload = function( e ) {
 	 oldonload( e );
-	 proc( e );
+	 wproc( e );
       }
    }
 }
-
+   
 hop_window_onload_add( function( e ) {
       /* once the window is loaded, onload handlers */
       /* must be invoked eargly                     */
@@ -269,12 +285,13 @@ hop_window_onload_add( function( e ) {
 /*** META ((export add-window-onload-first!) (arity #t)) */
 function hop_window_onload_cons( proc ) {
    var oldonload = window.onload;
+   var wproc = hop_callback( proc );
 
    if( typeof oldonload != 'function' ) {
-      window.onload = proc;
+      window.onload = wproc;
    } else {
       window.onload = function( e ) {
-	 proc( e );
+	 wproc( e );
 	 oldonload( e );
       }
    }
@@ -285,14 +302,16 @@ function hop_window_onload_cons( proc ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export add-window-onunload!) (arity #t)) */
 function hop_window_onunload_add( proc ) {
+   var wproc = hop_callback( proc );
+   
    if( typeof( window.onunload ) != 'function' ) {
-      window.onunload = proc;
+      window.onunload = wproc;
    } else {
       var oldonunload = window.onunload;
 
       window.onunload = function( e ) {
 	 oldonunload( e );
-	 proc( e );
+	 wproc( e );
       }
    }
 }
@@ -570,7 +589,7 @@ function date_year( d ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)) */
 function date_month( d ) {
-   return d.getMonth();
+   return d.getMonth() + 1;
 }
 
 /*---------------------------------------------------------------------*/
@@ -578,7 +597,7 @@ function date_month( d ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)) */
 function date_day( d ) {
-   return d.getDay();
+   return d.getDate();
 }
 
 /*---------------------------------------------------------------------*/
@@ -624,3 +643,68 @@ function date_minute( d ) {
 function date_second( d ) {
    return d.getSeconds();
 }   
+
+/*---------------------------------------------------------------------*/
+/*    hop_day_names ...                                                */
+/*---------------------------------------------------------------------*/
+var hop_day_names =
+   [ "Sunday", "Monday",  "Tuesday", "Wednesday", "Thursday", "Friday",  "Saturday" ];
+
+/*---------------------------------------------------------------------*/
+/*    day-name ...                                                     */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity #t)) */
+function day_name( day ) {
+   if( day < 1 ) 
+      sc_error( "date-name", "Illegal day number", day );
+   else if( day > 7 )
+      return sc_jsstring2string( hop_day_names[ day % 7 ] );
+   else
+      return sc_jsstring2string( hop_day_names[ day - 1 ] );
+}
+
+/*---------------------------------------------------------------------*/
+/*    day-aname ...                                                    */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity #t)) */
+function day_aname( day ) {
+   if( day < 1 ) 
+      sc_error( "date-name", "Illegal day number", day );
+   else if( day > 7 )
+      return sc_jsstring2string( hop_day_names[ day % 7 ].substring( 0, 2 ) );
+   else
+      return sc_jsstring2string( hop_day_names[ day - 1 ].substring( 0, 2 ) );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_month_names ...                                              */
+/*---------------------------------------------------------------------*/
+var hop_month_names =
+   [ "January", "February", "March", "April", "May", "June",
+     "July", "August", "September", "October", "November", "December" ];
+
+/*---------------------------------------------------------------------*/
+/*    month-name ...                                                   */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity #t)) */
+function month_name( month ) {
+   if( month < 1 ) 
+      sc_error( "date-name", "Illegal month number", month );
+   else if( month > 12 )
+      return sc_jsstring2string( hop_month_names[ month % 12 ] );
+   else
+      return sc_jsstring2string( hop_month_names[ month - 1 ] );
+}
+
+/*---------------------------------------------------------------------*/
+/*    month-aname ...                                                  */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity #t)) */
+function month_aname( month ) {
+   if( month < 1 ) 
+      sc_error( "date-name", "Illegal month number", month );
+   else if( month > 12 )
+      return sc_jsstring2string( hop_month_names[ month % 12 ].substring( 0, 2 ) );
+   else
+      return sc_jsstring2string( hop_month_names[ month - 1 ].substring( 0, 2 ) );
+}

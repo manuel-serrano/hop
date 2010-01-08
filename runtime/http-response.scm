@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Oct 22 18:06:27 2009 (serrano)                */
+;*    Last change :  Tue Dec  1 18:35:16 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -267,7 +267,9 @@
    (with-trace 3 'http-response::http-response-procedure
       (with-access::http-response-procedure r (start-line header content-type charset server content-length proc bodyp timeout request)
 	 (let ((p (socket-output socket))
-	       (connection (http-request-connection request)))
+	       (connection (if (>elong content-length #e0)
+			       (http-request-connection request)
+			       'close)))
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	    (http-write-line-string p start-line)
 	    (http-write-header p header)
@@ -303,6 +305,91 @@
 		(http-request-connection request))))))
 
 ;*---------------------------------------------------------------------*/
+;*    http-response-range ...                                          */
+;*---------------------------------------------------------------------*/
+(define (http-response-range range r::http-response-file socket::socket)
+   
+   (define (response-error status-line request socket header)
+      (http-response
+       (instantiate::http-response-error
+	  (request request)
+	  (start-line status-line)
+	  (charset (hop-locale))
+	  (header header))
+       socket))
+
+   (define (response-header conn beg end size p r)
+      (with-access::http-response-file r (start-line header content-type charset server request)
+	 ;; partial content header
+	 (display (http-request-http request) p)
+	 (http-write-line-string p " 206 Partial Content")
+	 (http-write-header p header)
+	 (http-write-line p "Connection: " conn)
+	 (http-write-content-type p content-type charset)
+	 (when server (http-write-line-string p "Server: " server))
+	 (let ((dt (date->rfc2822-date (current-date))))
+	    (http-write-line p "Date: " dt)
+	    (http-write-line p "Last-Modified: " dt))
+	 ;; content-length
+	 (display "Content-Length: " p)
+	 (display-elong (+elong #e1 (-elong end beg)) p)
+	 (http-write-line p)
+	 ;; content-range
+	 (display "Content-Range: bytes " p)
+	 (display-elong beg p)
+	 (display "-" p)
+	 (display-elong end p)
+	 (display "/" p)
+	 (display-elong size p)
+	 (http-write-line p)
+	 ;; close the header
+	 (http-write-line p)))
+   
+   (with-access::http-response-file r (start-line file bodyp request timeout)
+      (let ((size (file-size file)))
+	 (if (>=elong size #e0)
+	     (with-handler
+		(lambda (e)
+		   (exception-notify e)
+		   (response-error "HTTP/1.0 400 Bad Request" request socket '()))
+		(multiple-value-bind (beg end)
+		   (http-parse-range range)
+		   (let* ((connection (http-request-connection request))
+			  (p (socket-output socket)))
+		      ;; fill the default arguments
+		      (unless end (set! end (-elong size #e1)))
+		      (unless beg (set! beg (-elong size end)))
+		      (when (>=elong end size)
+			 (set! end (-elong size 1)))
+		      ;; check the correctness
+		      (unless (and (>=elong beg 0) (<=elong beg end))
+			 (response-error
+			  "HTTP/1.0 416 Requested range not satisfiable"
+			  request
+			  socket
+			  '((content-range: . "*"))))
+		      (output-timeout-set! p timeout)
+		      ;; the header
+		      (response-header connection beg end size p r)
+		      ;; capture dumping
+		      (let ((cp (hop-capture-port)))
+			 (when (output-port? cp)
+			    (display "----------------------------------------------------------\n" cp)
+			    (fprintf cp "http://~a:~a~a\n\n"
+				     (http-request-host request)
+				     (http-request-port request)
+				     (http-request-path request))
+			    (response-header connection beg end size cp r)
+			    (flush-output-port cp)))
+		      ;; the body
+		      (with-trace 4 'http-response-file
+			 (when bodyp
+			    (send-file file p (+elong #e1 (-elong end beg)) beg)
+			    (flush-output-port p)))
+		      connection)))
+	     (http-response (http-file-not-found file) socket)))))
+
+;*---------------------------------------------------------------------*/
 ;*    http-response-regular-file ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (http-response-regular-file r::http-response-file socket::socket)
@@ -330,21 +417,9 @@
 	     (http-response (http-file-not-found file) socket)))))
 
 ;*---------------------------------------------------------------------*/
-;*    http-response ::http-response-file ...                           */
+;*    directory->response ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-file socket)
-   (with-trace 3 'http-response::http-response-file
-      (with-access::http-response-file r (start-line header file request)
-	 (if (authorized-path? request file)
-	     (if (directory? file)
-		 (http-response (response-directory r file) socket)
-		 (http-response-regular-file r socket))
-	     (http-response (user-access-denied request) socket)))))
-
-;*---------------------------------------------------------------------*/
-;*    response-directory ...                                           */
-;*---------------------------------------------------------------------*/
-(define (response-directory rep dir)
+(define (directory->response rep dir)
    (instantiate::http-response-hop
       (backend (hop-xml-backend))
       (content-type (xml-backend-mime-type (hop-xml-backend)))
@@ -366,6 +441,24 @@
 						 (string-append f "\n")))))
 				    (sort (directory->list dir) string<?))))))
 	       '()))))
+
+;*---------------------------------------------------------------------*/
+;*    http-response ::http-response-file ...                           */
+;*---------------------------------------------------------------------*/
+(define-method (http-response r::http-response-file socket)
+   (with-trace 3 'http-response::http-response-file
+      (with-access::http-response-file r (start-line header file request)
+	 (if (authorized-path? request file)
+	     (cond
+		((directory? file)
+		 (http-response (directory->response r file) socket))
+		((http-header-field (http-request-header request) range:)
+		 =>
+		 (lambda (range)
+		    (http-response-range range r socket)))
+		(else
+		 (http-response-regular-file r socket)))
+	     (http-response (user-access-denied request) socket)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-cgi-env ...                                                  */

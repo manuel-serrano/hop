@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Oct 19 17:09:05 2009 (serrano)                */
+#*    Last change :  Thu Dec  3 18:22:17 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -25,14 +25,14 @@ POPULATION	= Makefile LICENSE README INSTALL INSTALL.jvm \
                   configure .hoprelease .hgignore
 POPDIRS		= runtime hopscheme scheme2js src hopc hopsh hopreplay \
                   etc share arch \
-                  weblets widget # contribs
+                  weblets widget
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-.PHONY: bindir libdir lib widget share weblets bin
+.PHONY: bindir libdir lib widget share weblets bin share-afile
 
-build: showflags bindir libdir lib share weblets widget bin $(BUILD-SPECIFIC)
+build: showflags bindir libdir lib weblets widget bin share $(BUILD-SPECIFIC)
 
 bindir:
 	mkdir -p bin
@@ -42,10 +42,10 @@ libdir:
 
 bin: bindir hopc-bin src-bin hopsh-bin hopreplay-bin
 
-hopc-bin: share lib
+hopc-bin: lib
 	(cd hopc && $(MAKE) build)
 
-src-bin: share lib widget
+src-bin: lib widget
 	(cd src && $(MAKE) build)
 
 hopsh-bin: lib
@@ -54,15 +54,18 @@ hopsh-bin: lib
 hopreplay-bin: lib
 	(cd hopreplay && $(MAKE) build)
 
-lib: libdir share 
+lib: libdir 
 	(cd scheme2js && $(MAKE) build)
 	(cd hopscheme && $(MAKE) build)
 	(cd runtime && $(MAKE) build)
 
-widget: libdir hopc-bin
+widget: libdir hopc-bin share-afile
 	(cd widget && $(MAKE) build)
 
-share:
+share-afile:
+	(cd share && $(MAKE) .afile)
+
+share: bin hopc-bin
 	(cd share && $(MAKE) build)
 
 weblets: lib
@@ -143,8 +146,6 @@ hop-dirs:
          && chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)
 	mkdir -p $(DESTDIR)$(HOPWEBLETSDIR) \
 	 && chmod $(BMASK) $(DESTDIR)$(HOPWEBLETSDIR)
-	mkdir -p $(DESTDIR)$(HOPCONTRIBSDIR) \
-	 && chmod $(BMASK) $(DESTDIR)$(HOPCONTRIBSDIR) 
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
@@ -166,9 +167,11 @@ clean-quick:
 	(cd runtime; $(MAKE) clean)
 	(cd src; $(MAKE) clean)
 	(cd hopsh; $(MAKE) clean)
+	(cd hopc; $(MAKE) clean)
 	(cd hopreplay; $(MAKE) clean)
 	(cd weblets; $(MAKE) clean)
 	(cd widget; $(MAKE) clean)
+	(cd share; $(MAKE) clean)
 
 clean:
 	(cd runtime; $(MAKE) clean)
@@ -176,17 +179,21 @@ clean:
 	(cd hopscheme; $(MAKE) clean)
 	(cd src; $(MAKE) clean)
 	(cd hopsh; $(MAKE) clean)
+	(cd hopc; $(MAKE) clean)
 	(cd hopreplay; $(MAKE) clean)
 	(cd etc; $(MAKE) clean)
 	(cd weblets; $(MAKE) clean)
 	(cd widget; $(MAKE) clean)
+	(cd share; $(MAKE) clean)
 
 devclean:
 	(cd runtime; $(MAKE) devclean)
 	(cd src; $(MAKE) devclean)
+	(cd hopc; $(MAKE) devclean)
 	(cd hopsh; $(MAKE) devclean)
 	(cd hopreplay; $(MAKE) devclean)
 	(cd widget; $(MAKE) devclean)
+	(cd share; $(MAKE) devclean)
 
 distclean: clean devclean
 	/bin/rm -f etc/Makefile.hopconfig
@@ -307,3 +314,4 @@ distrib-sans-version:
 predistrib:
 	$(MAKE)
 	$(MAKE) -C widget predistrib
+	$(MAKE) -C share predistrib

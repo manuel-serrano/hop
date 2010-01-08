@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sun Nov 15 06:40:16 2009 (serrano)                */
+;*    Last change :  Sat Nov 28 07:08:00 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -140,8 +140,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 				 (<SCRIPT> :inline #f
 				    :type (hop-configure-javascript-mime-type)
 				    :src p)))
-			   (append (hop-runtime-system)
-				   (list "hop-exception.scm")))))
+			   (hop-runtime-system))))
 	 ;; this is used for non-inlined header for browsers that restrict
 	 ;; size of javascript files (e.g., IE6 on WinCE)
 	 (set! head-runtime-system-unpacked
@@ -155,8 +154,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 				 (<SCRIPT> :inline #f
 				    :type (hop-configure-javascript-mime-type)
 				    :src p)))
-			   (append (hop-runtime-system-files)
-				   (list "hop-exception.scm")))))
+			   (hop-runtime-system-files))))
 	 ;; this is used for inlined headers
 	 (set! head-runtime-system-inline
 	       (cons* (<LINK> :inline #t
@@ -439,6 +437,8 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HEAD> ...                                                       */
+;*    -------------------------------------------------------------    */
+;*    Move the base on top of the HEAD body.                           */
 ;*---------------------------------------------------------------------*/
 (define (<HEAD> . args)
    (init-extra!)

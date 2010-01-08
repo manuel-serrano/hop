@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat Oct 31 09:42:50 2009 (serrano)                */
+/*    Last change :  Wed Dec  2 19:48:30 2009 (serrano)                */
 /*    Copyright   :  2004-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -19,6 +19,9 @@ var hop_anim_latency = 400;
 /*---------------------------------------------------------------------*/
 /*    hop_busy_anim ...                                                */
 /*---------------------------------------------------------------------*/
+var hop_busy_vis_16_16 = false;
+var hop_busy_vis_32_32 = false;
+
 var hop_busy_anim_16_16 = "data:image/gif;base64,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";
 
 var hop_busy_anim_32_32_simple = "data:image/gif;base64,R0lGODlhIAAgALMMAOxiJlM8GvrYydTOxu1sNPGJXPjErX5tU15IKJ+Sf/Snhb62qf///wAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQJBQAMACwAAAAAIAAgAAAETJDJSau9OOvNu/9gKI6YQQBoqq4AYXAnK6sEN9+pjd/6Lve+FTCY2xBZw2OSuAw2fc9dFDflGY+q6kz728SwtY0J/CKZz+i0es3ORAAAIfkECQUADAAsAAAAACAAIAAABEWQyUmrvTjrzbv/YCiOmgKcaIoqoeqm7fvGskrX6I0DOt7XP1lwBtrBisbT0LW0IZPN4yepfBqjOZDJyCJ5v+CweEzmRAAAIfkECQUADAAsAAAAACAAIAAABEKQyUmrvTjrzbv/YCiOXQGcKFCQU+qykpvCjIzS9onnu93LvxcsBwjOhjykTwlkCllE4815hCZZJtmKxu16v+AwKwIAIfkECQUADAAsAAAAACAAIAAABDyQyUmrvTjrzbv/YCiOIGCSmQmgmMpe7lvF8kTXzF3rMv/6LCBKSCKOjCJkSFk64STMT9QzfVqv2KzWEwEAIfkEBQUADAAsAAAAACAAIAAABDyQyUmrvTjrzbv/YCiOISCQmolm6nq1bgXH00wzNp3Hu9uvP1SQNBwVRcfS6VZbMnFOZhI0fVqv2Kw2EwEAIfkEBQUADAAsDgAGAAMAFAAABAkwyEmrvTjrGgEAIfkEBQUADAAsCwAGAAkAFAAABBLwhEmDrDjrzbv/YCiOZHhhRwQAIfkEBQUADAAsCAAGAA8AFAAABBYwhUkrlTbrzbv/YCiOZGmeaKpeYBIBACH5BAkFAAwALAYABgAUABQAAAQdcKFAq70BSczv7GAojmRpnmiqrmzrvnD7ndpMahEAIfkECQUADAAsAAAAACAAIAAABEWQyUmrvTjrzbv/YCiOWhKcaIomoeqm7fvGskrX6I0HOt7XP1lwBtrBisbT0LW0IZPN4yepfBqjOZDJyCJ5v+CweEzmRAAAIfkECQUADAAsAAAAACAAIAAABEKQyUmrvTjrzbv/YCiO3RGcaHCQU+qykpvCjIzS9onnu93LvxcsFwjOhjykTwlkCllE4815hCZZJtmKxu16v+AwKwIAIfkECQUADAAsAAAAACAAIAAABDyQyUmrvTjrzbv/YCiOYGCSmRmgmMpe7lvF8kTXzF3rMv/6LCBKSCKOjCJkSFk64STMT9QzfVqv2KzWEwEAIfkEBQUADAAsAAAAACAAIAAABDyQyUmrvTjrzbv/YCiOYTCQmolm6nq1bgXH00wzNp3Hu9uvP1SQNBwVRcfS6VZbMnFOZhI0fVqv2Kw2EwEAIfkEBQUADAAsDgAGAAMAFAAABAkQyEmrvTjrGgEAIfkEBQUADAAsCwAGAAkAFAAABBKwgEmBrDjrzbv/YCiOZHhhRQQAIfkEBQUADAAsCAAGAA8AFAAABBZQgUkrlTbrzbv/YCiOZGmeaKpeoBIBACH5BAUFAAwALAYABgAUABQAAAQd0BBAq72ASMzv7GAojmRpnmiqrmzrvnD7ndpMahEAOw==";
@@ -123,64 +126,70 @@ function hop_default_failure( xhr ) {
 /*    hop_anim_16_16 ...                                               */
 /*---------------------------------------------------------------------*/
 function hop_anim_16_16( title ) {
-   var vis = document.createElement( "div" );
+   if( !hop_busy_vis_16_16 ) {
+      var vis = document.createElement( "div" );
       
-   node_style_set( vis, "position", "fixed" );
-   node_style_set( vis, "top", "5px" );
-   node_style_set( vis, "right", "5px" );
-   node_style_set( vis, "z-index", "100" );
-   node_style_set( vis, "background", "#eeeeee" );
-   node_style_set( vis, "border-color", "black" );
-   node_style_set( vis, "border-style", "outset" );
-   node_style_set( vis, "border-width", "1px" );
-   node_style_set( vis, "padding-top", "3px" );
-   node_style_set( vis, "width", "20px" );
-   node_style_set( vis, "height", "20px" );
-   node_style_set( vis, "-moz-border-radius", "0.2em" );
-   node_style_set( vis, "-moz-opacity", "0.7" );
+      node_style_set( vis, "position", "fixed" );
+      node_style_set( vis, "top", "5px" );
+      node_style_set( vis, "right", "5px" );
+      node_style_set( vis, "z-index", "100" );
+      node_style_set( vis, "background", "#eeeeee" );
+      node_style_set( vis, "border-color", "black" );
+      node_style_set( vis, "border-style", "outset" );
+      node_style_set( vis, "border-width", "1px" );
+      node_style_set( vis, "padding-top", "3px" );
+      node_style_set( vis, "width", "20px" );
+      node_style_set( vis, "height", "20px" );
+      node_style_set( vis, "-moz-border-radius", "0.2em" );
+      node_style_set( vis, "-moz-opacity", "0.7" );
       
-   vis.title = title;
-   vis.align = "center";
+      vis.align = "center";
+      vis.count = false;
 
-   var img = document.createElement( "img" );
-   img.className = "hop-busy-anim";
+      var img = document.createElement( "img" );
+      img.className = "hop-busy-anim";
 
-   if( !hop_config.inline_image ) {
-      img.src = hop_share_directory() + "/icons/busy-anim-16.gif";
-   } else {
-      img.src = hop_busy_anim_16_16;
+      if( !hop_config.inline_image ) {
+	 img.src = hop_share_directory() + "/icons/busy-anim-16.gif";
+      } else {
+	 img.src = hop_busy_anim_16_16;
+      }
+
+      vis.appendChild( img );
+      
+      hop_busy_vis_16_16 = vis;
    }
-
-   vis.appendChild( img );
- 
-   return vis;
+   return hop_busy_vis_16_16;
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_anim_32_32 ...                                               */
 /*---------------------------------------------------------------------*/
 function hop_anim_32_32( title ) {
-   var vis = document.createElement( "div" );
+   if( !hop_busy_vis_32_32 ) {
+      var vis = document.createElement( "div" );
       
-   node_style_set( vis, "position", "fixed" );
-   node_style_set( vis, "top", "5px" );
-   node_style_set( vis, "right", "5px" );
+      node_style_set( vis, "position", "fixed" );
+      node_style_set( vis, "top", "5px" );
+      node_style_set( vis, "right", "5px" );
       
-   vis.title = title;
-   vis.align = "center";
+      vis.align = "center";
+      vis.count = false;
 
-   var img = document.createElement( "img" );
-   img.className = "hop-busy-anim";
+      var img = document.createElement( "img" );
+      img.className = "hop-busy-anim";
 
-   if( !hop_config.inline_image ) {
-      img.src = hop_share_directory() + "/icons/busy-anim-32.gif";
-   } else {
-      img.src = hop_busy_anim_32_32;
+      if( !hop_config.inline_image ) {
+	 img.src = hop_share_directory() + "/icons/busy-anim-32.gif";
+      } else {
+	 img.src = hop_busy_anim_32_32;
+      }
+
+      vis.appendChild( img );
+      hop_busy_vis_32_32 = vis;
    }
 
-   vis.appendChild( img );
- 
-   return vis;
+   return hop_busy_vis_32_32;
 }
 
 /*---------------------------------------------------------------------*/
@@ -202,7 +211,7 @@ function hop_default_anim_set( anim ) {
 /*    hop_default_anim_get ...                                         */
 /*---------------------------------------------------------------------*/
 /*** META ((export with-hop-default-anim) (arity #t)) */
-function hop_default_anim_get( ) {
+function hop_default_anim_get() {
    return hop_default_anim;
 }
 
@@ -210,39 +219,39 @@ function hop_default_anim_get( ) {
 /*    hop_anim_vis ...                                                 */
 /*---------------------------------------------------------------------*/
 var hop_anim_vis = false;
-var hop_anim_service = false;
-var hop_anim_interval;
 var hop_anim_fun = false;
 
 /*---------------------------------------------------------------------*/
 /*    hop_stop_anim ...                                                */
 /*---------------------------------------------------------------------*/
-function hop_stop_anim() {
-   if( hop_anim_interval ) {
-      if( hop_has_setInterval ) clearInterval( hop_anim_interval );
-      hop_anim_interval = false;
+function hop_stop_anim( xhr ) {
+   if( xhr.hop_anim ) {
+      if( xhr.hop_anim_interval ) {
+	 clearInterval( xhr.hop_anim_interval );
+	 xhr.hop_anim_interval = false;
+      }
+
+      xhr.hop_anim.count--;
+      if( xhr.hop_anim.count == 1 )
+	 node_style_set( xhr.hop_anim, "display", "none" );
    }
 }
    
 /*---------------------------------------------------------------------*/
-/*    hop_anim ...                                                     */
+/*    hop_start_anim ...                                               */
 /*---------------------------------------------------------------------*/
-function hop_anim( service, user_anim ) {
-   hop_stop_anim();
+function hop_start_anim( service, user_anim ) {
+   var anim = user_anim( service );
 
-   if( hop_anim_service == service ) {
-      if( hop_anim_vis && (hop_anim_fun == user_anim) ) {
-	 hop_anim_vis.title = service;
-	 // node_style_set( hop_anim_vis, "visibility", "visible" );
-	 node_style_set( hop_anim_vis, "display", "block" );
-	 return hop_anim_vis;
-      } else {
-	 hop_anim_vis = user_anim( service );
-	 document.body.appendChild( hop_anim_vis );
-	 return hop_anim_vis;
-      }
+   if( !anim.count ) {
+      document.body.appendChild( anim );
+      anim.count = 2;
+   } else {
+      anim.count++;
+      node_style_set( anim, "display", "block" );
    }
-   return false;
+
+   return anim;
 }
 
 /*---------------------------------------------------------------------*/
@@ -349,14 +358,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, x ) {
 	    fail( xhr );
 	    return false;
 	 } finally {
-	    try {
-	       if( hop_anim_vis != false ) {
-		  node_style_set( hop_anim_vis, "display", "none" );
-	       }
-	       hop_anim_service = false;
-	    } catch( e ) {
-	       ;
-	    }
+	    hop_stop_anim( xhr );
 	 }
       }
 
@@ -383,17 +385,25 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, x ) {
    }
    
    try {
-      if( anim ) hop_anim_service = svc;
-
       xhr.send( null );
 
-      hop_stop_anim();
-      
-      if( anim && hop_has_setInterval ) {
-	 var a = (anim instanceof Function) ? anim : hop_default_anim;
-
-	 hop_anim_interval =
-	    setInterval( function() { hop_anim( svc, a ) }, hop_anim_latency );
+      if( anim ) {
+	 var a = (anim instanceof Function) ? anim : hop_default_anim_get();
+	 
+	 if( hop_has_setInterval ) {
+	    xhr.hop_anim = true;
+	    xhr.hop_anim_interval =
+	       setInterval( function() {
+		     clearInterval( xhr.hop_anim_interval );
+		     if( xhr.hop_anim == true )
+			xhr.hop_anim = hop_start_anim( svc, a );
+		  }, hop_anim_latency );
+	 } else {
+	    xhr.hop_anim_interval = false;
+	    xhr.hop_anim = hop_start_anim( svc, a );
+	 }
+      } else {
+	 xhr.hop_anim = false;
       }
 
       if( sync ) {
@@ -406,10 +416,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, x ) {
 	 }
       }
    } catch( e ) {
-      if( hop_anim_vis != false ) {
-	 node_style_set( hop_anim_vis, "display", "none" );
-      }
-      hop_anim_service = false;
+      hop_stop_anim( xhr )
 
       e.hopObject = svc;
       throw e;

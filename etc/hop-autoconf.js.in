@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Sat Nov 14 06:35:11 2009 (serrano)                */
+/*    Last change :  Tue Dec  1 16:56:22 2009 (serrano)                */
 /*    Copyright   :  2006-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -99,6 +99,10 @@ function hop_Config() {
 
   /* flash version */
   this.flash_version = hop_get_flash_version();
+
+  /* html5 */
+  this.html5_video = "play" in document.createElement( "video" );
+  this.html5_audio = "play" in document.createElement( "audio" );
 
   /* default navigator setting */
   this.mouse_left_button = 0;

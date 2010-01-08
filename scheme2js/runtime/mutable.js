@@ -479,16 +479,37 @@ function sc_stringIndexRight(s, cset, start) {
 
 /*** META ((export #t) (arity 1)) */
 function sc_string_downcase(s) {
-   return s.toLowerCase();
+   return new sc_String(s.val.toLowerCase());
+}
+
+/*** META ((export #t) (arity 1)) */
+function sc_string_downcase_bang(s) {
+   s.val = s.val.toLowerCase();
+   return s;
 }
 
 /*** META ((export #t) (arity 1)) */
 function sc_string_upcase(s) {
-   return s.toUpperCase();
+   return new sc_String(s.val.toUpperCase());
+}
+
+/*** META ((export #t) (arity 1)) */
+function sc_string_upcase_bang(s) {
+   s.val = s.val.toUpperCase();
+   return s;
 }
 
 /*** META ((export #t) (arity 1)) */
 function sc_string_capitalize(s) {
-   // MS, 2009-10-12: TODO
+   return new sc_String(s.val.replace(/\w+/g, function (w) {
+	    return w.charAt(0).toUpperCase() + w.substr(1).toLowerCase();
+	 }));
+}
+
+/*** META ((export #t) (arity 1)) */
+function sc_string_capitalize_bang(s) {
+   s.val = s.val.replace(/\w+/g, function (w) {
+	 return w.charAt(0).toUpperCase() + w.substr(1).toLowerCase();
+      });
    return s;
 }

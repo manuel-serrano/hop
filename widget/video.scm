@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sat Jun 20 09:04:50 2009 (serrano)                */
+;*    Last change :  Tue Dec  1 20:22:47 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Video support.                                               */
@@ -27,16 +27,19 @@
 (define-xml-compound <VIDEO> ((id #unspecified string)
 			      (src #f)
 			      (img #f)
-			      (width 640)
-			      (height 480)
+			      (width "auto")
+			      (height "auto")
 			      (bg #f)
+			      (backend 'html5)
 			      (attr)
 			      body)
-   (let ((dummy (symbol->string (gensym 'video-container)))
-	 (tmp (gensym 'video_tmp)))
-      (<DIV> :id dummy
+   
+   (define (<flash> src vid bool)
+      (let ((tmp (gensym 'video-flash)))
 	 (<SCRIPT> :type "text/javascript"
-	    (format "var ~a = new SWFObject('~a','~a','~a','~a','9','#FFFFFF');"
+	    (format "if( ~a || !hop_config.html5_video ) {
+                 var ~a = new SWFObject('~a','~a','~a','~a','9','#FFFFFF');"
+		    (if bool "true" "false")
 		    tmp
 		    (make-file-path (hop-share-directory) "flash" "player.swf")
 		    (xml-make-id id 'video)
@@ -47,4 +50,53 @@
 		(format "~a.addParam('flashvars','file=~a&image=~a');" tmp src img)
 		(format "~a.addParam('flashvars','file=~a');" tmp src))
 	    (when bg (format "~a.addParam('screencolor','~a');" tmp bg))
-	    (format "~a.write('~a');" tmp dummy)))))
+	    (format "~a.write('~a'); }" tmp vid))))
+   
+   (define (flv body)
+      (filter-map (lambda (x)
+		     (when (xml-markup-is? x 'source)
+			(let ((src (dom-get-attribute x "src"))
+			      (typ (dom-get-attribute x "type")))
+			   (cond
+			      ((string? typ)
+			       (when (substring-at? typ "video/x-flv" 0)
+				  src))
+			      ((is-suffix? src "flv")
+			       src)))))
+		  body))
+   
+   (let ((vid (symbol->string (gensym 'video-container))))
+      (cond
+	 ((eq? backend 'flash)
+	  (<DIV> :id vid
+	     (<flash> src vid #t)))
+	 ((eq? backend 'html5)
+	  (instantiate::xml-element
+	     (id (xml-make-id id 'video))
+	     (markup 'VIDEO)
+	     (attributes `(:src ,src :width ,width :height ,height ,@attr))
+	     (body body)))
+	 ((string? src)
+	  (if (is-suffix? src "flv")
+	      (<DIV> :id vid
+		 (<flash> src vid #t))
+	      (instantiate::xml-element
+		 (id (xml-make-id id 'video))
+		 (markup 'VIDEO)
+		 (attributes `(:src ,src :width ,width :height ,height ,@attr))
+		 (body body))))
+	 ((flv body)
+	  =>
+	  (lambda (els)
+	     (instantiate::xml-element
+		(id vid)
+		(markup 'VIDEO)
+		(attributes `(:width ,width :height ,height ,@attr))
+		(body (append body (list (<flash> (car els) vid #f)))))))
+	 (else
+	  (instantiate::xml-element
+	     (id vid)
+	     (markup 'VIDEO)
+	     (attributes `(:width ,width :height ,height ,@attr))
+	     (body body))))))
+

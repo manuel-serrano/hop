@@ -70,7 +70,7 @@ RUNTIME_EXPORTER_MODULES = exporter meta multi-file-port string
 RUNTIME_EXPORTER_SCMS = $(RUNTIME_EXPORTER_MODULES:%=$(SCHEME2JS_RUNTIME)/%.scm)
 
 $(SCHEME2JS_RUNTIME)/exporter: $(RUNTIME_EXPORTER_SCMS)
-	$(BIGLOO) -g -o $@ $^
+	$(BIGLOO) -g -o $@ $^ -rm
 
 RUNTIME_INTERFACE_MODULES = interface meta multi-file-port string
 RUNTIME_INTERFACE_SCMS = $(RUNTIME_INTERFACE_MODULES:%=$(SCHEME2JS_RUNTIME)/%.scm)

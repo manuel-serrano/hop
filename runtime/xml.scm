@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Oct 26 08:00:05 2009 (serrano)                */
+;*    Last change :  Tue Dec  1 16:35:56 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -190,6 +190,7 @@
 	    (<SAMP> . ::obj)
 	    (<SELECT> . ::obj)
 	    (<SMALL> . ::obj)
+	    (<SOURCE> . ::obj)
 	    (<SPAN> . ::obj)
 	    (<STRIKE> . ::obj)
 	    (<STRONG> . ::obj)
@@ -929,6 +930,7 @@
 (define-xml-element <SAMP>)
 (define-xml-element <SELECT>)
 (define-xml-element <SMALL>)
+(define-xml-element <SOURCE>)
 (define-xml-element <SPAN>)
 (define-xml-element <STRIKE>)
 (define-xml-element <STRONG>)
