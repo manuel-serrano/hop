@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/1.10.x/weblets/hzbuilder/hzbuilder.hss      */
+/*    .../prgm/project/hop/2.0.x/weblets/hzbuilder/hzbuilder.hss       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Sep 29 11:00:36 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Tue Dec 22 05:39:52 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HZBUILDER's CSS                                                  */
 /*=====================================================================*/
@@ -294,10 +294,10 @@ div#hzb-log {
   left: 100px;
   right: 100px;
   background: white;
-  -moz-opacity: 0.92;
   border: 4px dashed #555;
   padding-left: 5px;
   padding-right: 5px;
+  opacity: 0.92;
 }
 
 div#hzb-log {

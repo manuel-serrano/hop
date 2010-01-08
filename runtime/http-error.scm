@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Oct 29 07:42:34 2009 (serrano)                */
+;*    Last change :  Wed Dec 23 06:18:49 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -78,7 +78,8 @@
 			      (http-request-host req) ":" (http-request-port req))))
 		  (<TR>
 		     (<TD> :style ths "path:")
-		     (<TD> (<TT> :style "font-size: 9pt" (http-request-path req)))))))
+		     (<TD> (<TT> :style "font-size: 9pt"
+			      (html-string-encode (http-request-path req))))))))
       (cond
 	 ((&io-unknown-host-error? e)
 	  (http-unknown-host (&error-obj e)))

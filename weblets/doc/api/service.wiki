@@ -250,9 +250,10 @@ the currently available weblets. These are automatically
 
 <arguments>
 ^  common attributes  ^   type           ^  short description               ^
-| :name             |  string             | a remote user name.              |
-| :password         |  string             | a remote user password.          |
-| :authorization    |  string             | a remote authorization.          |
+| :name             |  string            | a remote user name.              |
+| :password         |  string            | a remote user password.          |
+| :authorization    |  string            | a remote authorization.          |
+| :timeout          |  integer           | An optional timeout.             |
 </arguments>
 
 <arguments>

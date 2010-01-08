@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Tue Nov 24 10:46:40 2009 (serrano)                */
+/*    Last change :  Wed Dec 16 06:06:58 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
@@ -141,9 +141,17 @@ var hop_dashboard_key_prev = 0;
 function hop_dashboard_key_listener( event ) {
    var key = hop_event_key_code( event );
    if( (key == 72) && (hop_dashboard_key_prev == 18) ) {
+      var el = document.getElementById( "hop-dashboard-frame" );
       hop_stop_propagation( event, false );
       hop_dashboard_key_prev = 0;
-      with_hop( "/hop/hop/dashboard", false, false );
+      
+      if( el ) {
+	 
+	 document.body.removeChild( el );
+	 document.body.removeChild( document.getElementById( "hop-dashboard-frame-mask" ) );
+      } else {
+	 with_hop( "/hop/hop/dashboard", false, false );
+      }
    } else {
       hop_dashboard_key_prev = key;
    }

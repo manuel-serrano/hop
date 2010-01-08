@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Sat Nov 28 07:01:54 2009 (serrano)                */
-#*    Copyright   :  2004-09 Manuel Serrano                            */
+#*    Last change :  Mon Jan  4 18:06:04 2010 (serrano)                */
+#*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
 #*=====================================================================*/
@@ -31,7 +31,6 @@ AFILE		= @AFILE@
 JFILE		= @JFILE@
 BTAGS		= @BTAGS@
 DEPEND		= @BDEPEND@
-CC		= @CC@
 UNZIP		= @UNZIP@
 JAR		= @JAR@
 FLASHCC		= @FLASHCC@
@@ -44,7 +43,8 @@ INSTALL		= @INSTALL@
 #*    Compilation flags                                                */
 #*---------------------------------------------------------------------*/
 DEBUG		= @DEBUG@
-BCFLAGS		= @BCFLAGS@ -copt "$(CCFLAGS)" $(EFLAGS)
+CCOMP		= @CC@
+BCFLAGS		= @BCFLAGS@ -cc $(CCOMP) -copt "$(CCFLAGS)" $(EFLAGS)
 BCFLAGSDEV	= @BCFLAGSDEV@
 BCFLAGSRTS	= @BCFLAGSRTS@
 FFLAGS		= @FFLAGS@

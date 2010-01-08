@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan 17 18:56:22 2005                          */
-/*    Last change :  Sun Nov 22 09:36:44 2009 (serrano)                */
+/*    Last change :  Mon Dec 14 19:02:32 2009 (serrano)                */
 /*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad CSS                                                  */
@@ -12,16 +12,16 @@
 /*---------------------------------------------------------------------*/
 /*    HSS declarations                                                 */
 /*---------------------------------------------------------------------*/
-$(define-hss-type notepad "div.hop-notepad")
-$(define-hss-type notepad-tabs "td.hop-notepad-tabs")
-$(define-hss-type notepad-tabs-row "div.hop-notepad-tabs-row")
-$(define-hss-type notepad-body "td.hop-notepad-body")
-$(define-hss-type nphead "div.hop-nphead")
-$(define-hss-type nptab "span.hop-nptab")
+$(define-hss-type notepad "div[hssclass=hop-notepad]")
+$(define-hss-type notepad-tabs "td[hssclass=hop-notepad-tabs]")
+$(define-hss-type notepad-tabs-row "div[hssclass=hop-notepad-tabs-row]")
+$(define-hss-type notepad-body "td[hssclass=hop-notepad-body]")
+$(define-hss-type nphead "div[hssclass=hop-nphead]")
+$(define-hss-type nptab "span[hssclass=hop-nptab]")
 $(define-hss-type nptab-active "span.hop-nptab-active")
-$(define-hss-type nptab-inactive "span.hop-nptab-inactive")
-$(define-hss-type nptab-body "div.hop-notepad-tab-body")
-$(define-hss-type nptabhead "span.hop-nptab-head")
+$(define-hss-type nptab-inactive "span..hop-nptab-inactive")
+$(define-hss-type nptab-body "div[hssclass=hop-notepad-tab-body]")
+$(define-hss-type nptabhead "span[hssclass=hop-nptab-head]")
     
 /*---------------------------------------------------------------------*/
 /*    <NOTEPAD>                                                        */
@@ -34,7 +34,7 @@ notepad {
   font-family: Arial, Verdana, sans-serif;
 }
 
-notepad table.hop-notepad {
+notepad table[hssclass=hop-notepad] {
   width: 100%;
   height: 100%;
   border-collapse: collapse;

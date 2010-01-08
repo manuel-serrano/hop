@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Sat Nov 14 07:03:35 2009 (serrano)                */
+#*    Last change :  Thu Dec 31 07:14:59 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -40,7 +40,7 @@ API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
                   regexp.wiki output.wiki webdav.wiki \
                   charset.wiki svg.wiki mathml.wiki canvas.wiki login.wiki \
                   condexpand.wiki lframe.wiki spinbutton.wiki \
-                  colorchooser.wiki font.wiki
+                  colorchooser.wiki font.wiki javascript.wiki
 CORE_POP	= core.wiki
 JS_POP		= js-interface.wiki
 EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
@@ -67,7 +67,7 @@ WIKI_POP	= basic.wiki hop.wiki link.wiki lists.wiki misc.wiki \
 TUTORIAL_POP	= 00-hello.wiki 01-ajax.wiki 02-hss.wiki 03-proxy.wiki \
 		  04-authentication.wiki 05-rss.wiki 06-hz.wiki \
                   07-hoprc.wiki 08-history.wiki 09-resource.wiki \
-                  10-javascript.wiki 11-rest.wiki
+                  11-rest.wiki
 
 POPULATION	= Makefile doc.hss doc.scm \
                   examples api core wiki tutorials etc/weblet.info.in \

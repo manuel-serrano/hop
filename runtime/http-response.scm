@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Dec  1 18:35:16 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Mon Jan  4 10:10:16 2010 (serrano)                */
+;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -599,7 +599,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-abort socket)
    (with-trace 3 'http-response::http-response-abort
-      'http-response-abort))
+      'abort))
       
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-filter ...                         */

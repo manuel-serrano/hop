@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/weblets/hz/hz-install.js         */
+/*    serrano/prgm/project/hop/2.0.x/weblets/hz/hz-install.js          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Nov 16 11:07:40 2007                          */
-/*    Last change :  Thu Oct  2 08:00:47 2008 (serrano)                */
-/*    Copyright   :  2007-08 Manuel Serrano                            */
+/*    Last change :  Tue Dec 22 06:12:46 2009 (serrano)                */
+/*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Create a click and install panel                                 */
 /*=====================================================================*/
@@ -25,6 +25,12 @@ function hop_install_weblet( url, srci, srcr, parent ) {
    if( i >= 0 ) base = url.substring( i + 1, url.length );
 
    var m = base.match( "((.*)-[0-9]+[.][0-9]+(?:[.][0-9]+)?(?:-(?:r|rc|pre)[0-9]+)?).hz" );
+
+   if( !m ) {
+      alert( "Illegal weblet base name \"" + base + "\"" );
+      return ;
+   }
+   
    var namev = (m.length > 1) ? m[ 1 ] : base;
    var name = (m.length > 2) ? m[ 2 ] : namev;
 

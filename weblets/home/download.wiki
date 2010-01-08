@@ -2,8 +2,7 @@
 
 ,(<DIV> :class "os-download" :align 'center
   (<DIV> :class "download-header" "Stable versions")
-  (<TABLE>
-     :class "os-download os-download-stable"
+  (<TABLE> :class "os-download os-download-stable"
      (<COLGROUP> 
         (<COL>)
         (<COL> :width "20%")
@@ -18,6 +17,10 @@
         (<TH> "Linux")
         (<TD> :rowspan 2 :class "type"
            (<IMG> :inline #t
+             :src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")))
+        (<TH> "Maemo")
+        (<TD> :rowspan 2 :class "type"
+           (<IMG> :inline #t
              :src (make-file-path (home-dir) "etc" "icons" "macos.png")))
         (<TH> "MacOS X")
         (<TD> :rowspan 2 :class "type"
@@ -26,13 +29,13 @@
         (<TH> "Windows"))
      (<TR> 
          (<TD> (<A> :href *stable-tar-url* *stable-tar-gz*))
-         (<TD> (<A> :href *stable-tar-url* *stable-tar-gz*))
+         (<TD> (<A> :href *maemo-freemantle-url* "Fremantle"))
+         (<TD> (<A> :href *stable-dmg* (basename *stable-dmg*)))
          (<TD> (<A> :href *stable-jar-url* *stable-jar*)))))
 
 ,(<DIV> :class "os-download" :align 'center
   (<DIV> :class "download-header" "Unstable versions")
-  (<TABLE>
-     :class "os-download os-download-unstable"
+  (<TABLE> :class "os-download os-download-unstable"
      (<COLGROUP> 
         (<COL>)
         (<COL> :width "50%")
@@ -73,14 +76,35 @@ used without downloading and installing the source code manually:
 
 ~~ We provide some pre-compiled packages for non-standard architectures:
 
-  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "maemo-16x16.png")) ,(<A> :href *maemo-deb-url* "maemo") (Nokia N800, N810)
+  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "maemo-16x16.png")) [[http://maemo.org|Maemo]]
+
+,(<DIV> :class "os-download" :align 'center
+  (<DIV> :class "download-header" "Maemo")
+  (<TABLE> :class "os-download os-download-maemo"
+     (<COLGROUP> 
+        (<COL>)
+        (<COL> :width "50%")
+        (<COL>)
+        (<COL> :width "50%"))
+     (<TR> 
+        (<TD> :rowspan 2 :class "type"
+           (<IMG> :inline #t
+             :src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")))
+        (<TH> "OS2008")
+        (<TD> :rowspan 2 :class "type"
+           (<IMG> :inline #t
+             :src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")))
+        (<TH> "Maemo5"))
+     (<TR> 
+         (<TD> (<A> :href *maemo-chinook-url* "Chinook"))
+         (<TD> (<A> :href *maemo-freemantle-url* "Freemantle")))))
 
 
 == Getting Bigloo ==
 
 In order to install HOP from the source (for significantly improving
 performance), the ,(<A> :href (home-bigloo-url) "Bigloo") compiler has
-first to be installed. Bigloo version **3.2c** or higher is required for
+first to be installed. Bigloo version **3.3a** or higher is required for
 compiling HOP.
 
 ~~ Bigloo versions may be downloaded

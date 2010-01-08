@@ -853,10 +853,12 @@
 				 (append (cdr e) new-macros))
 			   (loop (cdr entries) new-macros)))
 		      (else
-		       (set! exports
-			     (cons (create-Export-Desc
-				    (normalize-fun e pragmas) name #f)
-				   exports))
+		       (let ((undsssl (dsssl-formals->scheme-formals
+				       e (lambda (o p m) (scheme2js-error o p m e)))))
+			  (set! exports
+				(cons (create-Export-Desc
+				       (normalize-fun undsssl pragmas) name #f)
+				      exports)))
 		       (loop (cdr entries) new-macros)))))))))
 
 (define (check-scheme2js-export-clause ex)

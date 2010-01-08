@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/weblets/doc/doc.scm              */
+;*    serrano/prgm/project/hop/2.0.x/weblets/doc/doc.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 22 08:00:34 2007                          */
-;*    Last change :  Sun Feb  8 07:14:49 2009 (serrano)                */
+;*    Last change :  Thu Dec 31 07:10:07 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Doc weblet library                                               */
@@ -114,5 +114,12 @@
 		(innerHTML-set! el h)
 		(notepad-select "doc-notepad" "doc-tutorials")
 		(window.scrollTo 0 0)))))))
+
+;*---------------------------------------------------------------------*/
+;*    jsref ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (jsref)
+   (notepad-select "doc-notepad" "doc-js")
+   (window.scrollTo 0 0))
 
 

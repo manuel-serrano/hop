@@ -18,9 +18,7 @@
 			 files)))
       (if compiled
 	  compiled
-	  (error 'hopscheme
-		 "Could not find module"
-		 m))))
+	  (error 'hopscheme "Could not find module" m))))
    
 (define (precompile-headers headers)
    (let loop ((headers headers)
@@ -34,14 +32,23 @@
 		((import ?i1 . ?Lis)
 		 (let liip ((import-names (cdr header))
 			    (rev-imports rev-imports))
-		    (if (null? import-names)
+		    (cond
+		       ((null? import-names)
 			(loop (cdr headers)
 			      rev-imports
-			      rev-others)
+			      rev-others))
+		       ((and (pair? (car import-names))
+			     (symbol? (caar import-names)))
+			(module-add-access! (caar import-names)
+					    (cdar import-names)
+					    "hopscheme")
+			(liip (cons (caar import-names) (cdr import-names))
+			      rev-imports))
+		       (else
 			(liip (cdr import-names)
 			      (cons (precompile-module (car import-names)
 						       (bigloo-module-resolver))
-				    rev-imports)))))
+				    rev-imports))))))
 		(else
 		 (loop (cdr headers)
 		       rev-imports

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Tue Jun 16 11:33:42 2009 (serrano)                */
+;*    Last change :  Tue Dec  8 08:33:21 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing SpinButtons                                              */
@@ -41,8 +41,7 @@
 	     (node-style-set! $color :background
 			      (format "rgb(~a,~a,~a)"
 				      $red.value $green.value $blue.value)))
-	 ~(add-window-onload! (lambda () (update-color!)))
-
+	 ~(add-event-listener! window "load" (lambda () (update-color!)))
 	 (<BUTTON> :onclick ~(dom-append-child!
 			      document.body
 			      (<SPINBUTTON> :min -10 :max 10

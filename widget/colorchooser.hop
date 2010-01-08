@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 14 12:01:13 2009                          */
-;*    Last change :  Fri Oct  9 07:41:01 2009 (serrano)                */
-;*    Copyright   :  2009 Manuel Serrano                               */
+;*    Last change :  Sat Jan  2 08:48:31 2010 (serrano)                */
+;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Color Chooser implementation                                     */
 ;*=====================================================================*/
@@ -169,49 +169,49 @@
 					    :onclick ~(hop-colorchooser-onselect (dom-get-element-by-id $cc))
 					    (<SPAN> :class "hop-colorchooser-ok" " ")))
 				      (<TD> :class "hop-colorchooser-body" :colspan 3 body))))))))))
-       ~(add-window-onload!
-	 (lambda ()
-	    ;; init the colorchooser object
-	    (let ((cc (dom-get-element-by-id $cc)))
-	       ;; default values
-	       (set! cc.hue 360)
-	       (set! cc.saturation 100)
-	       (set! cc.value 100)
-	       ;; inner widgets
-	       (set! cc.huespinbutton (dom-get-element-by-id $huespinbutton))
-	       (set! cc.satspinbutton (dom-get-element-by-id $satspinbutton))
-	       (set! cc.valspinbutton (dom-get-element-by-id $valspinbutton))
-	       (set! cc.redspinbutton (dom-get-element-by-id $redspinbutton))
-	       (set! cc.greenspinbutton (dom-get-element-by-id $greenspinbutton))
-	       (set! cc.bluespinbutton (dom-get-element-by-id $bluespinbutton))
-	       (set! cc.color (dom-get-element-by-id $color))
-	       (set! cc.rgb (dom-get-element-by-id $rgb))
-	       (set! cc.huecolorscale (dom-get-element-by-id $hue))
-	       (set! cc.satcolorscale (dom-get-element-by-id $sat))
-	       (set! cc.valcolorscale (dom-get-element-by-id $val))
-	       (set! cc.redcolorscale (dom-get-element-by-id $red))
-	       (set! cc.greencolorscale (dom-get-element-by-id $green))
-	       (set! cc.bluecolorscale (dom-get-element-by-id $blue))
-	       (set! cc.spinbuttonopacity (dom-get-element-by-id $oidsp))
-	       (set! cc.slideropacity (dom-get-element-by-id $oidsl))
-	       ;; init satval
-	       (let ((satval (dom-get-element-by-id $satval)))
-		  (set! satval.grid1 $grid1)
-		  (set! satval.grid2 $grid2)
-		  (set! cc.satval satval))
-	       ;; hmodel init
-	       (let ((hmodel (dom-get-element-by-id $hmodel)))
-		  (colorchooser-init-hmodel hmodel)
-		  (set! cc.hmodel hmodel))
-	       ;; colorscale init
-	       (colorchooser-init-colorscale (dom-get-element-by-id $hue))
-	       (colorchooser-init-colorscale (dom-get-element-by-id $sat))
-	       (colorchooser-init-colorscale (dom-get-element-by-id $val))
-	       (colorchooser-init-colorscale (dom-get-element-by-id $red))
-	       (colorchooser-init-colorscale (dom-get-element-by-id $green))
-	       (colorchooser-init-colorscale (dom-get-element-by-id $blue))
-	       (colorchooser-update-colorscales! cc)
-	       #t))))))
+       ~(add-event-listener! window "ready"
+	   (lambda ()
+	      ;; init the colorchooser object
+	      (let ((cc (dom-get-element-by-id $cc)))
+		 ;; default values
+		 (set! cc.hue 360)
+		 (set! cc.saturation 100)
+		 (set! cc.value 100)
+		 ;; inner widgets
+		 (set! cc.huespinbutton (dom-get-element-by-id $huespinbutton))
+		 (set! cc.satspinbutton (dom-get-element-by-id $satspinbutton))
+		 (set! cc.valspinbutton (dom-get-element-by-id $valspinbutton))
+		 (set! cc.redspinbutton (dom-get-element-by-id $redspinbutton))
+		 (set! cc.greenspinbutton (dom-get-element-by-id $greenspinbutton))
+		 (set! cc.bluespinbutton (dom-get-element-by-id $bluespinbutton))
+		 (set! cc.color (dom-get-element-by-id $color))
+		 (set! cc.rgb (dom-get-element-by-id $rgb))
+		 (set! cc.huecolorscale (dom-get-element-by-id $hue))
+		 (set! cc.satcolorscale (dom-get-element-by-id $sat))
+		 (set! cc.valcolorscale (dom-get-element-by-id $val))
+		 (set! cc.redcolorscale (dom-get-element-by-id $red))
+		 (set! cc.greencolorscale (dom-get-element-by-id $green))
+		 (set! cc.bluecolorscale (dom-get-element-by-id $blue))
+		 (set! cc.spinbuttonopacity (dom-get-element-by-id $oidsp))
+		 (set! cc.slideropacity (dom-get-element-by-id $oidsl))
+		 ;; init satval
+		 (let ((satval (dom-get-element-by-id $satval)))
+		    (set! satval.grid1 $grid1)
+		    (set! satval.grid2 $grid2)
+		    (set! cc.satval satval))
+		 ;; hmodel init
+		 (let ((hmodel (dom-get-element-by-id $hmodel)))
+		    (colorchooser-init-hmodel hmodel)
+		    (set! cc.hmodel hmodel))
+		 ;; colorscale init
+		 (colorchooser-init-colorscale (dom-get-element-by-id $hue))
+		 (colorchooser-init-colorscale (dom-get-element-by-id $sat))
+		 (colorchooser-init-colorscale (dom-get-element-by-id $val))
+		 (colorchooser-init-colorscale (dom-get-element-by-id $red))
+		 (colorchooser-init-colorscale (dom-get-element-by-id $green))
+		 (colorchooser-init-colorscale (dom-get-element-by-id $blue))
+		 (colorchooser-update-colorscales! cc)
+		 #t))))))
     
 ;*---------------------------------------------------------------------*/
 ;*    obj->proc ...                                                    */

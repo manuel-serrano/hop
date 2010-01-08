@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Sat Nov 28 07:22:53 2009 (serrano)                */
-/*    Copyright   :  2007-09 Manuel Serrano                            */
+/*    Last change :  Tue Jan  5 20:37:20 2010 (serrano)                */
+/*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
 /*=====================================================================*/
@@ -39,13 +39,15 @@ function hop_callback( proc ) {
 	    try {
 	       return proc.apply( this, arguments );
 	    } catch( exc ) {
-
 	       if( sc_isPair( exc.hopStack ) ) {
 		  exc.hopStack = sc_append( exc.hopStack, hstack );
 	       }
-	       else
-		  exc.hopStack = hstack;
-
+	       else {
+		  try {
+		     exc.hopStack = hstack;
+		  } catch( _ ) {
+		  }
+	       }
 
 	       hop_report_exception( exc );
 	    }
@@ -94,10 +96,10 @@ function hop_tprint( file, pos, rest ) {
 */
 
 /*---------------------------------------------------------------------*/
-/*    hop_foreach_in ...                                               */
+/*    hop_for ...                                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export for-each-in) (arity #t)) */
-function hop_foreach_in( proc, obj ) {
+/*** META ((export js-for) (arity #t)) */
+function hop_for( proc, obj ) {
    for( var p in obj ) {
       proc( p, obj[ p ] );
    }
@@ -106,12 +108,23 @@ function hop_foreach_in( proc, obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_in ...                                                       */
 /*---------------------------------------------------------------------*/
-/*** META ((export in?) (arity #t)
+/*** META ((export js-in?) (arity #t)
            (peephole (infix 2 2 " in "))
            (type bool))
 */
 function hop_in( field, obj ) {
    return field in obj;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_instanceof ...                                               */
+/*---------------------------------------------------------------------*/
+/*** META ((export js-instanceof?) (arity #t)
+           (peephole (infix 2 2 " instanceof "))
+           (type bool))
+*/
+function hop_instanceof( obj, klass ) {
+   return obj instanceof klass;
 }
 
 /*---------------------------------------------------------------------*/
@@ -260,61 +273,29 @@ function hop_load( src, timeout ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export add-window-onload!) (arity 1)) */
 var hop_window_onload_add = function( proc ) {
-   var oldonload = window.onload;
-   var wproc = hop_callback( proc );
-
-   if( typeof oldonload != 'function' ) {
-      window.onload = wproc;
-   } else {
-      window.onload = function( e ) {
-	 oldonload( e );
-	 wproc( e );
-      }
-   }
-}
-   
-hop_window_onload_add( function( e ) {
-      /* once the window is loaded, onload handlers */
-      /* must be invoked eargly                     */
-      hop_window_onload_add = function( proc ) { proc( e ); }
-   } );
-
-/*---------------------------------------------------------------------*/
-/*    hop_window_onload_cons ...                                       */
-/*---------------------------------------------------------------------*/
-/*** META ((export add-window-onload-first!) (arity #t)) */
-function hop_window_onload_cons( proc ) {
-   var oldonload = window.onload;
-   var wproc = hop_callback( proc );
-
-   if( typeof oldonload != 'function' ) {
-      window.onload = wproc;
-   } else {
-      window.onload = function( e ) {
-	 wproc( e );
-	 oldonload( e );
-      }
-   }
+   /* backward compatibility */
+   return hop_add_event_listener( window, "load", proc );
 }
 
-/*---------------------------------------------------------------------*/
-/*    hop_window_onunload_add ...                                      */
-/*---------------------------------------------------------------------*/
-/*** META ((export add-window-onunload!) (arity #t)) */
-function hop_window_onunload_add( proc ) {
-   var wproc = hop_callback( proc );
-   
-   if( typeof( window.onunload ) != 'function' ) {
-      window.onunload = wproc;
-   } else {
-      var oldonunload = window.onunload;
-
-      window.onunload = function( e ) {
-	 oldonunload( e );
-	 wproc( e );
-      }
-   }
-}
+/*    var oldonload = window.onload;                                   */
+/*    var wproc = hop_callback( proc );                                */
+/*                                                                     */
+/*    if( typeof oldonload != 'function' ) {                           */
+/*       window.onload = wproc;                                        */
+/*    } else {                                                         */
+/*       window.onload = function( e ) {                               */
+/* 	 oldonload( e );                                               */
+/* 	 wproc( e );                                                   */
+/*       }                                                             */
+/*    }                                                                */
+/* }                                                                   */
+/*                                                                     */
+/* hop_window_onload_add( function( e ) {                              */
+/*       {* once the window is loaded, onload handlers *}              */
+/*       {* must be invoked eargly                     *}              */
+/*       hop_window_onload_add = function( proc ) { proc( e ); }       */
+/*    } );                                                             */
+/*                                                                     */
 
 /*---------------------------------------------------------------------*/
 /*    hop_update ...                                                   */
@@ -708,3 +689,73 @@ function month_aname( month ) {
    else
       return sc_jsstring2string( hop_month_names[ month - 1 ].substring( 0, 2 ) );
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_alist2jsobject ...                                           */
+/*---------------------------------------------------------------------*/
+/*** META ((export alist->jsobject) (arity #t)) */
+function hop_alist2jsobject( alist ) {
+   var o = {};
+
+   while( sc_isPair( alist ) ) {
+      if( !sc_isPair( alist.car ) || !sc_isPair( alist.car.cdr ) )
+	 sc_error( "alist->object", "Illegal entry", alist.car );
+      if( !sc_isKeyword( alist.car.car ) )
+	 sc_error( "alist->object", "Illegal key", alist.car.car );
+      
+      o[ sc_keyword2jsstring( alist.car.car ) ] = alist.car.cdr.car;
+      alist = alist.cdr;
+   }
+
+   return o;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_jsobject2alist ...                                           */
+/*---------------------------------------------------------------------*/
+/*** META ((export jsobject->alist) (arity #t)) */
+function hop_jsobject2alist( obj ) {
+   var l = null;
+
+   for( p in obj ) {
+      var c = sc_cons( sc_jsstring2keyword( p ), sc_cons( o[ p ], null ) );
+      l = sc_cons( c, l );
+   }
+
+   return l;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_plist2object ...                                             */
+/*---------------------------------------------------------------------*/
+/*** META ((export plist->object) (arity #t)) */
+function hop_plist2jsobject( plist ) {
+   var o = {};
+
+   while( sc_isPair( plist ) ) {
+      if( !sc_isKeyword( plist.car ) )
+	 sc_error( "plist->object", "Illegal key", plist.car.car );
+      if( !sc_isPair( plist.cdr ) ) 
+	 sc_error( "plist->object", "Illegal entry", plist );
+      
+      o[ sc_keyword2jsstring( plist.car ) ] = plist.cdr.car;
+      plist = plist.cdr.cdr;
+   }
+
+   return o;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_jsobject2plist ...                                           */
+/*---------------------------------------------------------------------*/
+/*** META ((export jsobject->plist) (arity #t)) */
+function hop_jsobject2plist( obj ) {
+   var l = null;
+
+   for( p in obj ) {
+      l = sc_cons( sc_jsstring2keyword( p ), sc_cons( o[ p ], l ) );
+   }
+
+   return l;
+}
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Sat Jun 20 05:26:44 2009 (serrano)                */
+;*    Last change :  Thu Dec 17 14:43:26 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -264,13 +264,12 @@
 (define (dom-append-child! node::xml-markup new)
    (with-access::xml-markup node (body)
       (let ((doc (dom-owner-document node)))
-	 (set! body (cons new (remq! new body)))
+	 (set! body (append! (remq! new body) (list new)))
 	 (when (xml-document? doc)
 	    (with-access::xml-document doc (%idtable)
 	       (let ((id (xml-element-id new)))
 		  (hashtable-remove! %idtable id)
 		  (doc-update-idtable! doc new)))))))
-	 
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-set-child-node! ...                                          */

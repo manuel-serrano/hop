@@ -20,19 +20,23 @@ operational only using XHTML. It does not work with HTML.])
 === Server ===
 
   (<SVG> arg ...)
-  (<SVG:G> arg ...)
-  (<SVG:DEFS> arg ...)
-  (<SVG:RECT> arg ...)
   (<SVG:CIRCLE> arg ...)
+  (<SVG:DEFS> arg ...)
   (<SVG:ELLIPSE> arg ...)
-  (<SVG:LINE> arg ...)
-  (<SVG:POLYLINE> arg ...)
-  (<SVG:POLYGON> arg ...)
-  (<SVG:TEXT> arg ...)
-  (<SVG:TSPAN> arg ...)
-  (<SVG:TREF> arg ...)
-  (<SVG:TEXTPATH> arg ...)
+  (<SVG:FEGAUSSIANBLUR> ...)
+  (<SVG:FECOLORMATRIX> ...)
+  (<SVG:FILTER> arg ...)
+  (<SVG:FOREIGNOBJECT> arg ...)
+  (<SVG:G> arg ...)
   (<SVG:IMG> arg ...)
+  (<SVG:LINE> arg ...)
+  (<SVG:POLYGON> arg ...)
+  (<SVG:POLYLINE> arg ...)
+  (<SVG:RECT> arg ...)
+  (<SVG:TEXT> arg ...)
+  (<SVG:TEXTPATH> arg ...)
+  (<SVG:TREF> arg ...)
+  (<SVG:TSPAN> arg ...)
 
 
 == Examples ==
@@ -44,14 +48,18 @@ operational only using XHTML. It does not work with HTML.])
 
 === SVG regular markups ===
 <markup> <SVG>
-<markup> <SVG:G>
-<markup> <SVG:DEFS>
-<markup> <SVG:RECT>
 <markup> <SVG:CIRCLE>
+<markup> <SVG:DEFS>
 <markup> <SVG:ELLIPSE>
+<markup> <SVG:FEGAUSSIANBLUR>
+<markup> <SVG:FECOLORMATRIX>
+<markup> <SVG:FILTER>
+<markup> <SVG:FOREIGNOBJECT>
+<markup> <SVG:G>
 <markup> <SVG:LINE>
-<markup> <SVG:POLYLINE>
 <markup> <SVG:POLYGON>
+<markup> <SVG:POLYLINE>
+<markup> <SVG:RECT>
 <markup> <SVG:TEXT>
 <markup> <SVG:TSPAN>
 <markup> <SVG:TREF>

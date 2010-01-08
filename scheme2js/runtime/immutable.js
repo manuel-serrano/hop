@@ -105,7 +105,7 @@ var sc_string2number = sc_jsstring2number;
 
 /*** META ((export #t)
            (arity -2)
-           (peephole (prefix "+" s)))
+           (peephole (prefix "+")))
            ;; peephole will only apply if no radix is given.
 */
 function sc_string2integer(s, radix) {
@@ -468,7 +468,6 @@ function sc_string_upcase(s) {
 
 /*** META ((export #t) (arity 1)) */
 function sc_string_capitalize(s) {
-   return s.replace(/\w+/g, function (w) {
-	 return w.charAt(0).toUpperCase() + w.substr(1).toLowerCase();
-      });
+   // MS, 2009-10-12: TODO
+   return s;
 }

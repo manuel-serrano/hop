@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:59:42 2007                          */
-/*    Last change :  Fri Nov 27 12:46:09 2009 (serrano)                */
-/*    Copyright   :  2007-09 Manuel Serrano                            */
+/*    Last change :  Sat Jan  2 08:19:30 2010 (serrano)                */
+/*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP history manager.                                             */
 /*=====================================================================*/
@@ -394,9 +394,11 @@ function hop_history_add( history, id, val ) {
 if( hop_enable_location_event ) {
    if( !hop_location_event_initp ) {
       hop_location_event_initp = true;
-      hop_window_onload_add( function( e ) {
-	hop_add_event_listener( document, "location", hop_eval_history_state );
-      } );
+      hop_add_event_listener(
+	 window, "ready",
+	 function( e ) {
+	    hop_add_event_listener( document, "location", hop_eval_history_state );
+	 } );
    }
 }
 

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Mon Nov 30 08:58:17 2009 (serrano)                */
-;*    Copyright   :  2008-09 Manuel Serrano                            */
+;*    Last change :  Mon Jan  4 10:09:46 2010 (serrano)                */
+;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
 ;*=====================================================================*/
@@ -117,12 +117,12 @@
 	 (hop-verb 2 (if (http-proxy-request? req)
 			 (hop-color req req
 				    (if (eq? mode 'keep-alive)
-					" EXEC.prox+"
-					" EXEC.prox"))
+					" REQUEST.prox+"
+					" REQUEST.prox"))
 			 (hop-color req req
 				    (if (eq? mode 'keep-alive)
-					" EXEC.serv+"
-					" EXEC.serv")))
+					" REQUEST.serv+"
+					" REQUEST.serv")))
 		   (format " ~a" thread)
 		   (scheduler-stat scd)
 		   ": " method " " scheme "://"
@@ -142,7 +142,7 @@
 
    ;; debug trace
    (debug-thread-info-set! thread "connection established with ~a")
-   
+
    (with-stage-handler
       stage-request-error-handler (id sock mode)
       (let ((req (with-time (http-parse-request sock id timeout) id "CONNECT")))
@@ -211,70 +211,6 @@
    (socket-close sock))
 
 ;*---------------------------------------------------------------------*/
-;*    response-error-handler ...                                       */
-;*---------------------------------------------------------------------*/
-(define (response-error-handler e scd req)
-   ;; when the error is a response, we transmit it to the next stage
-   (cond
-      ((&hop-autoload-error? e)
-       (with-handler
-	  (lambda (e)
-	     ;; there is nothing we can do but aborting the request
-	     (socket-close (http-request-socket req))
-	     (raise (instantiate::&ignore-exception)))
-	  (let ((e (&hop-autoload-error-obj e)))
-	     (response-exception-error-handler e scd req))))
-      ((&io-error? e)
-       (response-io-error-handler e scd req)
-       (raise e))
-      (else
-       (with-handler
-	  (lambda (e)
-	     ;; there is nothing we can do but aborting the request
-	     (socket-close (http-request-socket req))
-	     (raise (instantiate::&ignore-exception)))
-	  (response-exception-error-handler e scd req)))))
-
-;*---------------------------------------------------------------------*/
-;*    response-io-error-handler ...                                    */
-;*---------------------------------------------------------------------*/
-(define (response-io-error-handler e scd req)
-   ;; signal the error
-   (hop-verb 2 (hop-color req req " INTERRUPTED"))
-   (hop-verb 2 ": " (&error-obj e) "\n")
-   ;; there is nothing we can do but aborting the request
-   (socket-close (http-request-socket req))
-   ;; abort the request
-   (raise (instantiate::&ignore-exception)))
-
-;*---------------------------------------------------------------------*/
-;*    response-exception-error-handler ...                             */
-;*---------------------------------------------------------------------*/
-(define (response-exception-error-handler e scd req)
-   (begin
-      (hop-verb 1 (hop-color req req " ERROR"))
-      (hop-verb 2 (scheduler-stat scd))
-      (hop-verb 1 ": " (trace-color 1 e) "\n")
-      (if (%http-response? e)
-	  e
-	  (begin
-	     (cond
-		((&error? e)
-		 (error-notify (evmeaning-annotate-exception! e)))
-		((&warning? e)
-		 (warning-notify (evmeaning-annotate-exception! e)))
-		(else
-		 (exception-notify e)))
-	     ;; generate a legal response for the next stage (although
-	     ;; this response denotes the error).
-	     (let ((resp ((or (hop-http-response-error) http-error) e req))
-		   (sock (http-request-socket req)))
-		(http-response resp sock)
-		;; abort this request
-		(socket-close sock)
-		'close)))))
-
-;*---------------------------------------------------------------------*/
 ;*    http-response-static? ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (http-response-static? resp)
@@ -310,6 +246,40 @@
 	    (stage scd thread proc id req resp)))))
 
 ;*---------------------------------------------------------------------*/
+;*    response-error-handler ...                                       */
+;*---------------------------------------------------------------------*/
+(define (response-error-handler e scd req)
+   ;; notify the erro
+   (hop-verb 1 (hop-color req req " ERROR"))
+   (hop-verb 2 (scheduler-stat scd))
+   (hop-verb 1 ": " (trace-color 1 e) "\n")
+   ;; when the error is a response, we transmit it to the next stage
+   (with-handler
+      (lambda (e)
+	 ;; there is nothing we can do but aborting the request
+	 (socket-close (http-request-socket req))
+	 (raise (instantiate::&ignore-exception)))
+      ;; try to send the error message
+      (if (%http-response? e)
+	  (http-response e (http-request-socket req))
+	  (begin
+	     (cond
+		((&error? e)
+		 (error-notify (evmeaning-annotate-exception! e)))
+		((&warning? e)
+		 (warning-notify (evmeaning-annotate-exception! e)))
+		(else
+		 (exception-notify e)))
+	     ;; generate a legal response for the next stage (although
+	     ;; this response denotes the error).
+	     (let ((resp ((or (hop-http-response-error) http-error) e req))
+		   (sock (http-request-socket req)))
+		(http-response resp sock)
+		;; abort this request
+		(socket-close sock)
+		'close)))))
+
+;*---------------------------------------------------------------------*/
 ;*    stage-static-answer ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (stage-static-answer scd thread id req resp)
@@ -329,7 +299,7 @@
 	     (format " ~a" thread)
 	     " load=" (scheduler-load scd)
 	     (scheduler-stat scd)
-	     ": " (find-runtime-type resp) " " connection
+	     ": " (find-runtime-type resp) " "
 	     " [" (current-date) "] "
 	     (if (and (eq? connection 'keep-alive) (>=fx (hop-verbose) 4))
 		 (format " keep-alive [open=~a/~a]"
@@ -344,14 +314,17 @@
 (define (stage-exec scd thread id req resp)
    (current-request-set! thread req)
    ;; log
-   (hop-verb 3 (hop-color req req " EXEC")
-	     " load=" (scheduler-load scd)
-	     (scheduler-stat scd)
-	     (format " ~a" thread)
-	     ": " (find-runtime-type resp)
-	     " " (user-name (http-request-user req)) "\n")
+   (if (http-response-abort? resp)
+       (hop-verb 2 (hop-color req req " ABORT")
+		 " user=" (user-name (http-request-user req)) "\n")
+       (hop-verb 3 (hop-color req req " EXEC")
+		 " load=" (scheduler-load scd)
+		 (scheduler-stat scd)
+		 (format " ~a" thread)
+		 ": " (find-runtime-type resp)
+		 " " (user-name (http-request-user req)) "\n"))
    (with-stage-handler
-      response-error-handler (scd req)
+      exec-error-handler (scd req)
       (let* ((sock (http-request-socket req))
 	     (connection (with-time (http-response resp sock) id "EXEC")))
 	 ;; debug
@@ -395,3 +368,16 @@
 	     (when (>=fx (hop-verbose) 3)
 		(stage-exec-verb scd thread req resp connection " END"))
 	     (socket-close sock))))))
+
+;*---------------------------------------------------------------------*/
+;*    exec-error-handler ...                                           */
+;*---------------------------------------------------------------------*/
+(define (exec-error-handler e scd req)
+   ;; signal the error
+   (hop-verb 2 (hop-color req req " INTERRUPTED"))
+   (hop-verb 2 ": " (&error-obj e) "\n")
+   ;; there is nothing we can do but aborting the request
+   (socket-close (http-request-socket req))
+   ;; abort the request
+   (raise (instantiate::&ignore-exception)))
+

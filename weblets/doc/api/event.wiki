@@ -27,8 +27,6 @@ and IE7.
 
   (add-event-listener! obj name handler capture)
   (remove-event-listener! obj name handler capture)
-  (add-window-onload! handler)
-  (add-window-onunload! handler)
   (stop-event-propagation evt default)
   (event-mouse-x evt)
   (event-mouse-y evt)
@@ -39,7 +37,7 @@ and IE7.
 
 
 == Examples ==
-<example>add-event-listener!, remove-event-listener!, window-onload, window-onunload, event-mouse-, event-key-code</example>
+<example>add-event-listener!, remove-event-listener!, event-mouse-, event-key-code</example>
 
 == Event propagation ==
 
@@ -200,26 +198,6 @@ These functions respectively register and unregister event handlers.
  a //capturing// handler) if set to ++#f++, it does not capture it.
 
 
-</procedure>
-</procedure>
-
-=== ++(add-window-onload! handler)++ ===
-=== ++(add-window-onunload! handler)++ ===
-<procedure> add-window-onload!
-<procedure> add-window-onunload!
-<arguments>
-^  arguments       ^   type     ^  short description                         ^
-| handler          | procedure  | the function on to when load completes.    |
-</arguments>
-
-This function adds a new handler (a procedure of one argument) to be called
-when loading a document completes (respectively, when a document is 
-//unloaded//). 
-
-~~ It is recommended to use ++add-window-onload!++ instead of using the
-++onload++ attribute of windows because this function manages correctly
-multiple calls while setting the ++onload++ attribute erases the previous
-values it contained.
 </procedure>
 </procedure>
 

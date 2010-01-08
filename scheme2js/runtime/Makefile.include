@@ -7,7 +7,7 @@ RUNTIME_INTERFACE_FLAGS = --interface-prefix "sci_" --ignored-prefixes '("sc_")'
 ifdef MUTABLE_STRINGS
 RUNTIME_POPULATION = runtime_part IO mutable
 else
-RUNTIME_POPULATION = runtime_part IO immutable
+RUNTIME_POPULATION = runtime_part IO immutable dsssl
 endif
 RUNTIME_POPULATION_JS = $(RUNTIME_POPULATION:%=$(SCHEME2JS_RUNTIME)/%.js)
 
@@ -70,7 +70,7 @@ RUNTIME_EXPORTER_MODULES = exporter meta multi-file-port string
 RUNTIME_EXPORTER_SCMS = $(RUNTIME_EXPORTER_MODULES:%=$(SCHEME2JS_RUNTIME)/%.scm)
 
 $(SCHEME2JS_RUNTIME)/exporter: $(RUNTIME_EXPORTER_SCMS)
-	$(BIGLOO) -g -o $@ $^ -rm
+	$(BIGLOO) -g -o $@ $^
 
 RUNTIME_INTERFACE_MODULES = interface meta multi-file-port string
 RUNTIME_INTERFACE_SCMS = $(RUNTIME_INTERFACE_MODULES:%=$(SCHEME2JS_RUNTIME)/%.scm)

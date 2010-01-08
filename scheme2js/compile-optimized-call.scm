@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -315,8 +315,22 @@
 	    (let* ((optimize-fun
 		    (case (car peephole)
 		       ((infix) (apply infix-op (cdr peephole)))
-		       ((postfix) (apply postfix-op (cdr peephole)))
-		       ((prefix) (apply prefix-op (cdr peephole)))
+		       ((postfix)
+			(match-case peephole
+			   ((?- ?v) (postfix-op v))
+			   (else (scheme2js-error
+				  "compile-optimized-call"
+				  "Illegal postfix arity"
+				  (car peephole)
+				  operator))))
+		       ((prefix)
+			(match-case peephole
+			   ((?- ?v) (prefix-op v))
+			   (else (scheme2js-error
+				  "compile-optimized-call"
+				  "Illegal prefix arity"
+				  (car peephole)
+				  operator))))
 		       ((hole) (apply hole-op (cdr peephole)))
 		       ((minus) minus-op)
 		       ((div) div-op)

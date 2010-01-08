@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Apr 18 07:13:09 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Thu Jan  7 14:51:13 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZBUILDER weblet                                                 */
 ;*=====================================================================*/
@@ -49,6 +49,7 @@
 		      (v (dom-get-element-by-id "hzb-version"))
 		      (hd (dom-get-element-by-id "hzb-header"))
 		      (de (dom-get-element-by-id "hzb-comment"))
+		      (di (dom-get-element-by-id "hzb-directory"))
 		      (lo (dom-get-element-by-id "hzb-logo"))
 		      (fv (dom-get-element-by-id "hzb-favicon"))
 		      (dc (dom-get-element-by-id "hzb-dash"))
@@ -58,7 +59,8 @@
 		      (mih (dom-get-element-by-id "hzb-minhop"))
 		      (mah (dom-get-element-by-id "hzb-maxhop"))
 		      (ho (dom-get-element-by-id "hzb-home"))
-		      (do (dom-get-element-by-id "hzb-download")))
+		      (do (dom-get-element-by-id "hzb-download"))
+		      (pu (dom-get-element-by-id "hzb-publisher")))
 		   (cond
 		      ((not (valid? dir.value))
 		       (alert "No directory provided"))
@@ -73,6 +75,7 @@
 				  v.value
 				  hd.value
 				  de.value
+				  di.value
 				  au.value
 				  lo.title
 				  fv.title
@@ -82,7 +85,8 @@
 				  mih.value
 				  mah.value
 				  ho.value
-				  do.value)
+				  do.value
+				  pu.value)
 			  (lambda (h)
 			     (let ((log (dom-get-element-by-id
 					 "hzb-log")))
@@ -279,8 +283,8 @@
 		  (<TR>
 		     (<TD>
 			(<SPAN> :onclick
-			   ~(let ((w (current-window-width))
-				  (h (current-window-height)))
+			   ~(let ((w (main-window-width))
+				  (h (main-window-height)))
 			       (window-open :parent document.body
 				  :id "hzb-filebrowser"
 				  :width (max (/ w 2) 640)
@@ -365,11 +369,6 @@
       (<TR> :class "form"
 	 (<TD> (<ENTRY> :class "required" :title "The name of the weblet"
 		  :id "hzb-name"
-		  :onkeyup ~(let ((e1 (dom-get-element-by-id "hzb-home"))
-				  (e2 (dom-get-element-by-id "hzb-download"))
-				  (e3 (dom-get-element-by-id "hzb-version")))
-			       (set! e2.value (format "http://localhost:8080/hop/weblets/homepage?weblet=~a" this.value))
-			       (set! e2.value (format "http://localhost:8080/hop/weblets/download?weblet=~a-~a.hz" this.value e3.value)))
 		  "name"))
 	 (<TD> (<ENTRY> :title "The author name"
 		  :id "hzb-author"
@@ -379,9 +378,6 @@
 	 (<TD> (<ENTRY> :class "required" :default "1.0.0"
 		  :id "hzb-version"
 		  :title "The weblet version number"
-		  :onkeyup ~(let ((e2 (dom-get-element-by-id "hzb-download"))
-				  (e3 (dom-get-element-by-id "hzb-version")))
-			       (set! e2.value (format "http://localhost:8080/hop/weblets/download?weblet=~a-~a.hz" this.value e3.value)))
 		  "version"))
 	 (<TD> (<ENTRY> :title "The license" :default "GPL v2"
 		  :id "hzb-license"
@@ -432,14 +428,20 @@
 	 (<TD> :colspan 2
 	    (<ENTRY> :title "The URL of the weblet's home page"
 	       :id "hzb-home"
-	       :default (format "http://localhost:8080/hop/weblets/homepage?weblet=")
+	       :default "http://hop.inria.fr/hop/weblets/homepage?weblet=$(HZ)"
 	       "Home page")))
       (<TR>
 	 (<TD> :colspan 2
 	    (<ENTRY> :title "The URL of the weblet download"
 	       :id "hzb-download"
-	       :default (format "http://localhost:8080/hop/weblets/download?weblet=")
+	       :default "http://hop.inria.fr/hop/weblets/download?weblet=$(HZ)-$(VERSION).hz"
 	       "Download URL")))
+      (<TR>
+	 (<TD> :colspan 2
+	    (<ENTRY> :title "The URL of the publisher (for updates)"
+	       :id "hzb-publisher"
+	       :default "http://hop.inria.fr/hop/weblets/synclist"
+	       "Publisher URL")))
       (<TR>
 	 (<TD> :colspan 2
 	    (<ENTRY> :title "The weblet's header" :id "hzb-header"
@@ -448,6 +450,11 @@
 	 (<TD> :colspan 2
 	    (<ENTRY> :title "The weblet's description" :id "hzb-comment"
 	       "comment")))
+      (<TR>
+	 (<TD> :colspan 2
+	    (<ENTRY> :title "The weblet  directory" :id "hzb-directory"
+	       :default "weblet"
+	       "directory")))
       (<SEPARATOR>)
       (<TR>
 	 (<TD> :colspan 2 :id "hzb-target"
@@ -456,8 +463,8 @@
 	       :title "Complete with [tab]"
 	       :value "/tmp")
 	    (<SPAN> :class "browse" :onclick
-	       ~(let ((w (current-window-width))
-		      (h (current-window-height)))
+	       ~(let ((w (main-window-width))
+		      (h (main-window-height)))
 		   (window-open :parent document.body
 		      :id "hzb-dirbrowser"
 		      :width (max (/ w 2) 640)

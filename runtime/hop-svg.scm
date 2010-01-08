@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Fri Oct 23 18:22:13 2009 (serrano)                */
+;*    Last change :  Mon Dec 14 09:39:34 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -13,11 +13,11 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_hop-svg
-
+   
    (library web)
    
    (include "xml.sch")
-
+   
    (import  __hop_param
 	    __hop_types
 	    __hop_xml
@@ -26,7 +26,7 @@
 	    __hop_js-lib
 	    __hop_service
 	    __hop_cache)
-
+   
    (static (class xml-svg::xml-element)
 	   (class svg-img-markup
 	      name
@@ -35,21 +35,25 @@
 	      body))
    
    (export (<SVG> . ::obj)
-	   (<SVG:G> . ::obj)
+	   
 	   (<SVG:DEFS> . ::obj)
 	   (<SVG:RECT> . ::obj)
 	   (<SVG:CIRCLE> . ::obj)
 	   (<SVG:ELLIPSE> . ::obj)
+	   (<SVG:FILTER> . ::obj)
+	   (<SVG:FEGAUSSIANBLUR>  . ::obj)
+	   (<SVG:FECOLORMATRIX> . ::obj)
+	   (<SVG:FOREIGNOBJECT> . ::obj)
+	   (<SVG:G> . ::obj)
+	   (<SVG:IMG> . ::obj)
 	   (<SVG:LINE> . ::obj)
+	   (<SVG:PATH> . ::obj)
 	   (<SVG:POLYLINE> . ::obj)
 	   (<SVG:POLYGON> . ::obj)
 	   (<SVG:TEXT> . ::obj)
-	   (<SVG:TSPAN> . ::obj)
-	   (<SVG:TREF> . ::obj)
 	   (<SVG:TEXTPATH> . ::obj)
-	   (<SVG:PATH> . ::obj)
-	   (<SVG:FOREIGNOBJECT> . ::obj)
-	   (<SVG:IMG> . ::obj)))
+	   (<SVG:TREF> . ::obj)
+	   (<SVG:TSPAN> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    svg-img-tree-cache ...                                           */
@@ -114,6 +118,10 @@
 (define-xml xml-element #t <SVG:G> :markup g)
 (define-xml xml-element #t <SVG:DEFS> :markup defs)
 (define-xml xml-element #t <SVG:FOREIGNOBJECT> :markup foreignObject)
+;; filter
+(define-xml xml-element #t <SVG:FILTER> :markup filter)
+(define-xml xml-element #t <SVG:FEGAUSSIANBLUR> :markup feGaussianBlur)
+(define-xml xml-element #t <SVG:FECOLORMATRIX> :markup feColorMatrix)
 ;; basic shapes
 (define-xml xml-element #t <SVG:RECT> :markup rect)
 (define-xml xml-element #t <SVG:CIRCLE> :markup circle)

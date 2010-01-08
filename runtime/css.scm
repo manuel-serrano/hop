@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Mon Oct 26 11:16:07 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Wed Jan  6 08:32:40 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
 ;*=====================================================================*/
@@ -759,6 +759,12 @@
   -webkit-column-rule: ~l;"
 	   v v v v))
 
+;; transform
+(define-hss-property (transform v p)
+   (format "transform: ~l;
+  -moz-transform: ~l;
+  -webkit-transform: ~l;"
+	   v v v v))
 ;; hsv
 (define-hss-function (hsv h s v)
    (multiple-value-bind (r g b)

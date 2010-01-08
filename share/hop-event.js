@@ -3,11 +3,18 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Nov 27 13:27:16 2009 (serrano)                */
-/*    Copyright   :  2007-09 Manuel Serrano                            */
+/*    Last change :  Sat Jan  2 08:51:44 2010 (serrano)                */
+/*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    window event listener ...                                        */
+/*---------------------------------------------------------------------*/
+var hop_is_ready = false;
+
+hop_add_native_event_listener( window, "load", function() { hop_is_ready = true; } );
 
 /*---------------------------------------------------------------------*/
 /*    hop_add_event_listener ...                                       */
@@ -33,6 +40,14 @@ function hop_add_event_listener( obj, event, proc, capture ) {
        (obj.hop_add_event_listener != hop_add_event_listener) )
       return obj.hop_add_event_listener( event, proc, capture );
 
+   if( event === "ready" ) {
+      if( hop_is_ready ) {
+	 return proc( new function() { this.name = 'ready' } );
+      } else {
+	 return hop_add_native_event_listener( window, "load", proc, capture );
+      }
+   }
+   
    return hop_add_native_event_listener( obj, event, proc, capture );
 }
 
@@ -222,6 +237,8 @@ function start_servevt_xhr_multipart_proxy( key ) {
 						       // no environment
 						       [],
 						       // no authentication
+						       false,
+						       // no timeout
 						       false,
 						       // xhr request
 	                                               req );
@@ -493,7 +510,7 @@ function hop_servevt_proxy_flash_init() {
    }
 
    // register the event event deregistration
-   hop_window_onunload_add( failure );
+   hop_add_event_listener( window, "unload", failure );
 
    // count the number of pre-registered events
    for( var p in hop_servevt_table ) {
@@ -681,7 +698,9 @@ function hop_add_server_listener( obj, proc, capture ) {
    } else {
       if( !document.body ) {
 	 // delay until the document is fully built
-	 hop_window_onload_add( function( e ) {
+	 hop_add_event_listener(
+	    window, "ready", 
+	    function( e ) {
 	       hop_add_server_listener( obj, proc, capture );
 	    } );
       } else {

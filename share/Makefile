@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Nov 30 08:32:06 2009 (serrano)                */
+#*    Last change :  Mon Dec 14 07:34:15 2009 (serrano)                */
 #*    Copyright   :  2004-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -61,7 +61,7 @@ EXTRA		= hop-error.hss hop.css \
 		  hop-spinbutton.scm hop-spinbutton.hss \
 		  hop-color.scm hop-color.hss \
                   hop-lframe.hss \
-                  hop-canvas.scm hop-exception.scm \
+                  hop-canvas.scm hop-exception.scm hop-orientation.scm \
                   hop-spage.scm hop-spage.hss \
                   hop-font.scm
 
@@ -226,7 +226,6 @@ hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js hop-exception.js $(RTS)
 EXPORTED_RT_JS = $(RTS) $(filter %.js,$(EXTRA)) hop-autoconf.js
 
 SCHEME2JS_RUNTIME = ../scheme2js/runtime
--include $(SCHEME2JS_RUNTIME)/Makefile.include
 EXPORTER = $(SCHEME2JS_RUNTIME)/exporter
 EXPORTER_FLAGS = --module "__hop" --constant
 
@@ -291,6 +290,6 @@ predistrib-clean:
 clean:
 	$(RM) hop.js
 
-devclean: predistrib-clean
+devclean:
 
 distclean: clean

@@ -24,10 +24,13 @@
 
 == Can the HOP Web server be used as an Apache replacement? ==
 
-  - Certainly **not**. The HOP Web server is not tuned for supporting
- a large number of simultaneous connections. Typical it can handle up to
- a hundred simultaneous requests. No test have been conducted in more
- stressed environments.
+  - Yes, it can. However, keep in mind that the HOP Web server is not tuned 
+ for supporting a very large number of simultaneous connections. Typical it 
+ can handle up to several thousands simultaneous requests but no test have 
+ been conducted in more stressed environments. 
+  - If you want to use HOP under heavily loaded configurations, then checks the 
+ documentation to change the setting of the server that by default is configured
+ for supporting light loads.
 
 == Why are HOP markups surrounded with < and >? ==
 

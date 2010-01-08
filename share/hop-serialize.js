@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Wed Sep  9 10:14:44 2009 (serrano)                */
+/*    Last change :  Wed Dec 23 09:10:33 2009 (serrano)                */
 /*    Copyright   :  2007-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -76,15 +76,14 @@ function hop_bigloo_serialize( item ) {
 function hop_bigloo_serialize_object() {
    var o = this;
    var classname = hop_demangle( o.hop_classname );
+   var classfields = o.hop_classfields;
    var str = "|" + "%27" + hop_serialize_string( '%22', classname );
    var args = "";
    var len = 1;
 
-   for( var p in o ) {
-      if( (p != "hop_bigloo_serialize") && (p != "hop_classname") ) {
-	 len++;
- 	 args += hop_bigloo_serialize( o[ p ] );
-      }
+   for( var i = 0; i < classfields.length; i++ ) {
+      len++;
+      args += hop_bigloo_serialize( o[ classfields[ i ] ] );
    }
 
    str += hop_serialize_word( len );
@@ -219,10 +218,23 @@ function hop_serialize_number( item ) {
    var sitem = item + "";
 
    if( sitem.indexOf( "." ) == -1 ) {
-      if( item < 0 )
-	 return '-' + hop_serialize_word( -item );
-      else
-	 return hop_serialize_word( item );
+      if( item < 0 ) {
+	 if( item >= -536870912 ) {
+	    return '-' + hop_serialize_word( -item );
+	 } else if( item >= 2147483648 ) {
+	    return hop_serialize_string( 'E', item + "" );
+	 } else {
+	    return hop_serialize_string( 'L', item + "" );
+	 }
+      } else {
+	 if( item <= 536870911 ) {
+	    return hop_serialize_word( item );
+	 } else if( item <= 2147483647 ) {
+	    return hop_serialize_string( 'E', item + "" );
+	 } else {
+	    return hop_serialize_string( 'L', item + "" );
+	 }
+      }
    } else {
       return 'f' + hop_serialize_word( sitem.length ) + sitem;
    }

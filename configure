@@ -4,8 +4,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Dec  1 15:16:07 2009 (serrano)                */
-#*    Copyright   :  2004-09 Manuel Serrano                            */
+#*    Last change :  Wed Jan  6 16:46:02 2010 (serrano)                */
+#*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -21,8 +21,8 @@ jfile=bgljfile
 btags=bgltags
 bdepend=bgldepend
 cc=
-flashcc=mtasc
-fflags="-main -version 9 -cp std8 -swf"
+flashcc=/usr/bin/mtasc
+fflags="-main -version 9 -cp /usr/share/mtasc/std -cp /usr/share/mtasc/std8 -swf"
 backend=native
 unzip=unzip
 gzip="gzip -9"
@@ -54,7 +54,7 @@ cssmimetype="text/css"
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
 version="2.0.0"
-devel=rc
+devel=
 
 hopc=$PWD/bin/hopc
 
@@ -156,6 +156,9 @@ while : ; do
 
     --bigloo=*)
       bigloo="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --bigloolibdir=*)
+      bigloolibdir="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --backend=*)
       backend="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -272,6 +275,7 @@ while : ; do
       echo "   --jsmimetype=type..... default 'text/javascript'" >&2;
       echo "   --cssmimetype=type.... default 'text/css'" >&2;
       echo "   --bigloo=comp......... The Bigloo compiler ($bigloo)" >&2;
+      echo "   --bigloolibdir=path... The Bigloo lib-dir path" >&2;
       echo "   --backend=backend..... The execution platform [native,jvm,dotnet]" >&2;
       echo "   --cigloo=comp......... The Cigloo compiler" >&2;
       echo "   --afile=afile......... The Bigloo afile tool" >&2;
@@ -453,13 +457,18 @@ if [ "$cc " = " " ]; then
   cc=`$bigloo -eval '(begin (print *cc*) (exit 0))'`
 fi
 
-bigloolibdir=`$bigloo -q -eval "(begin (print *default-lib-dir*) (exit 0))"`
+if [ "$bigloolibdir " = " " ]; then
+  bigloolibdir=`$bigloo -q -eval "(begin (print *default-lib-dir*) (exit 0))"`
+else
+  bcflags="$bcflags -lib-dir $bigloolibdir"
+fi
+
 if [ "$ccflags " = " " ]; then
   ccflags=`grep '^CFLAGS=' $bigloolibdir/Makefile.config | sed 's/^[A-Z]*=//'`
   if [ "$debug " = "yes " ]; then
     ccflags=`echo $ccflags | sed 's/[-]O[0-9]//'`
   fi
-  ccflags="$ccflags -I $bigloolibdir"
+  ccflags="$ccflags -I$bigloolibdir"
 fi
 
 #*---------------------------------------------------------------------*/

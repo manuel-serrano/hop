@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -21,6 +21,7 @@
 	   expand
 	   expanders
 	   runtime-expander
+	   dsssl-expander
 	   dot-expand
 	   pobject-conv
 	   symbol
@@ -77,7 +78,10 @@
 	  (top-level-runtime-e (runtime-expand! top-level-e))
 	  (dummy2 (when (eq? debug-stage 'runtime-expand)
 		     (pp top-level-runtime-e p)))
-	  (tree (pobject-conv top-level-runtime-e)))
+	  (dsssl-e (dsssl-expand! top-level-runtime-e))
+	  (dummy3 (when (eq? debug-stage 'dsssl-expand)
+		     (pp dsssl-e p)))
+	  (tree (pobject-conv dsssl-e)))
 
       ;;we could do the letrec-expansion in list-form too.
       (pass 'letrec      (letrec-expansion! tree))

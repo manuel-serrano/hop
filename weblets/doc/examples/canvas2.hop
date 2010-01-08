@@ -1,7 +1,7 @@
 ;; Using a canvas for highlighting DOM elements
 (let ((can (<CANVAS>
-	      :width ~(current-window-width)
-	      :height ~(current-window-height)
+	      :width ~(main-window-width)
+	      :height ~(main-window-height)
 	      :style "position: absolute; top: 0; bottom: 0; right: 0; bottom: 0")))
    (<HTML>
       (<HEAD> :include "hop-canvas")

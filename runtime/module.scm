@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Tue Sep  1 10:47:02 2009 (serrano)                */
-;*    Copyright   :  2009 Manuel Serrano                               */
+;*    Last change :  Thu Jan  7 12:26:27 2010 (serrano)                */
+;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
 ;*=====================================================================*/
@@ -42,11 +42,17 @@
        '())))
 
 ;*---------------------------------------------------------------------*/
+;*    initial-resolver ...                                             */
+;*---------------------------------------------------------------------*/
+(define initial-resolver #f)
+
+;*---------------------------------------------------------------------*/
 ;*    make-hop-module-resolver ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (make-hop-module-resolver resolver)
+   (set! initial-resolver resolver)
    (lambda (module abase)
-      (let ((files (resolver module abase)))
+      (let ((files (resolver module '*)))
 	 (if (pair? files)
 	     (hop-module-afile-resolver module files)
 	     (hop-module-path-resolver module ".")))))
@@ -86,5 +92,6 @@
 	 (when (file-exists? afile)
 	    (module-load-access-file afile)
 	    (module-abase-set! dir))
-	 ((bigloo-module-resolver) module dir))))
+	 (initial-resolver module dir))))
+		    
 

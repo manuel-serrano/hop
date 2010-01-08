@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Nov 13 07:21:21 2009 (serrano)                */
-/*    Copyright   :  2006-09 Manuel Serrano                            */
+/*    Last change :  Mon Jan  4 16:09:35 2010 (serrano)                */
+/*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
 /*    -------------------------------------------------------------    */
@@ -136,6 +136,12 @@ function dom_create( tag, _ ) {
 
 	    if( prop === "class" ) {
 	       el.className = at;
+	    } else if( prop === "style" ) {
+	       if( hop_config.navigator_family === "msie" ) {
+		  el.style.setAttribute( "cssText", at );
+	       } else {
+		  el.setAttribute( prop, at );
+	       }
 	    } else {
 	       if( (at instanceof String) || (typeof at == "string") ) {
 		  if( sc_isSymbol( at ) ) {
@@ -196,12 +202,17 @@ function hop_dom_create_msie_radio( name, _ ) {
 		   ((or (null? (cdr args)) (not (keyword? (car args))))
 		    (loop (cdr args) attrs (cons (car args) body) listeners))
 		   ((string-prefix? "on" (keyword->string (car args)))
-		    (let ((s (keyword->string (car args))))
+		    (let ((s (keyword->string (car args)))
+		          (tmp (gensym)))
 		       (loop (cddr args)
 			     attrs
 			     body
 			     (cons (list (substring s 2 (string-length s))
-					 `(lambda (event) ,(cadr args)))
+					 `(lambda (event)
+					     (let ((,tmp ,(cadr args)))
+					        (unless ,tmp
+						   (stop-event-propagation event #f))
+					       ,tmp)))
 				   listeners))))
 		   (else
 		    (loop (cddr args)
@@ -227,11 +238,16 @@ function hop_dom_create_msie_radio( name, _ ) {
 		   ((or (null? (cdr args)) (not (keyword? (car args))))
 		    (loop (cdr args) (cons (car args) attrs) listeners))
 		   ((string-prefix? "on" (keyword->string (car args)))
-		    (let ((s (keyword->string (car args))))
+		    (let ((s (keyword->string (car args)))
+   		          (tmp (gensym)))
 		       (loop (cddr args)
 			     attrs
 			     (cons (list (substring s 2 (string-length s))
-					 `(lambda (event) ,(cadr args)))
+					 `(lambda (event)
+					    (let ((,tmp ,(cadr args)))
+					        (unless ,tmp
+						   (stop-event-propagation event #f))
+						   ,tmp)))
 				   listeners))))
 		   (else
 		    (loop (cddr args)

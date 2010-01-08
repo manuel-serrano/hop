@@ -1,7 +1,7 @@
 #*=====================================================================*/
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Tue Nov 10 16:23:26 2009 (serrano)                */
+#*    Last change :  Fri Dec 18 08:32:02 2009 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -32,7 +32,7 @@ _BGL_OBJECTS = main scheme2js srfi0 \
         tools \
         config mutable-strings verbose error \
         module module-resolver infotron \
-        expand expanders runtime-expander dot-expand \
+        expand expanders runtime-expander dsssl-expander dot-expand \
         nodes export walk \
         pobject-conv \
         symbol symbol-table gen-js mapping1 mapping2 \
@@ -72,7 +72,8 @@ INCLUDES = mapping.sch
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
 POPULATION = $(SOURCES) $(INCLUDES) make-lib.scm Makefile \
-             runtime/exporter.scm runtime/runtime_callcc.js
+             runtime/exporter.scm \
+             runtime/runtime_callcc.js runtime/dsssl.js 
 
 -include ../etc/Makefile.library
 

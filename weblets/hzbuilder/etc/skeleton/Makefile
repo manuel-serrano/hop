@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue May  5 11:20:10 2009 (serrano)                */
+#*    Last change :  Tue Dec 22 05:46:12 2009 (serrano)                */
 #*    Copyright   :  2006-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Generic Makefile to build Hop weblets.                           */
@@ -22,6 +22,7 @@ MINHOP=@MINHOP@
 MAXHOP=@MAXHOP@
 WEBLETHOME=@HOME@
 DOWNLOAD=@DOWNLOAD@
+PUBLISHER=@PUBLISHER@
 
 CLIENT_SOURCES=@HZ@.hop config.hop.in @HZ@.hss 
 SOURCES=$(CLIENT_SOURCES)
@@ -39,8 +40,6 @@ HOPREPOSITORY=@REPOSITORY@
 #*---------------------------------------------------------------------*/
 #*    Common configuration                                             */
 #*---------------------------------------------------------------------*/
-PUBLICHOST=http://hop.inria.fr
-PRIVATEHOST=http://localhost:8080
 OBJECTS=$(SOURCES:%.in=%)
 PUBLISHER=http://hop.inria.fr/hop/weblets/synclist
 DATE=$(shell date +'%d %B %Y')
@@ -74,10 +73,9 @@ etc/weblet.info: etc/weblet.info.in Makefile
                      -e "s|@@MAXHOP@@|$(MAXHOP)|" \
                      -e "s|@@PUBLISHER@@|$(PUBLISHER)|" \
                      -e "s|@@DATE@@|$(DATE)|" \
-                     -e "s|@@PRIVATEHOST@@|$(PRIVATEHOST)|" \
-                     -e "s|@@PUBLICHOST@@|$(PUBLIKHOST)|" \
-                     -e "s|@@HOME@@|$(WEBLETHOME)|" \
+                     -e "s|@@HOME@@|$(HOME)|" \
                      -e "s|@@DOWNLOAD@@|$(DOWNLOAD)|" \
+                     -e "s|@@PUBLISHER@@|$(PUBLISHER)|" \
                      -e "s|@@CATEGORY@@|$(CATEGORY)|" \
                      -e "s|@@LICENSE@@|$(LICENSE)|" > $@
 
@@ -86,14 +84,11 @@ etc/weblet.info: etc/weblet.info.in Makefile
                      -e "s|@@MINHOP@@|$(MINHOP)|" \
                      -e "s|@@HZ@@|$(HZ)|" \
                      -e "s|@@MAXHOP@@|$(MAXHOP)|" \
-                     -e "s|@@HOST@@|$(PRIVATEHOST)|" \
                      -e "s|@@DATE@@|$(DATE)|" \
-                     -e "s|@@PUBLISHER@@|$(PUBLISHER)|" \
                      -e "s|@@TITLE@@|$(TITLE)|" \
-                     -e "s|@@PRIVATEHOST@@|$(PRIVATEHOST)|" \
-                     -e "s|@@PUBLICHOST@@|$(PUBLIKHOST)|" \
                      -e "s|@@HOME@@|$(WEBLETHOME)|" \
                      -e "s|@@DOWNLOAD@@|$(DOWNLOAD)|" \
+                     -e "s|@@PUBLISHER@@|$(PUBLISHER)|" \
                      -e "s|@@CATEGORY@@|$(CATEGORY)|" \
                      -e "s|@@LICENSE@@|$(LICENSE)|" > $@
 
@@ -102,13 +97,10 @@ config.hop: config.hop.in Makefile
                      -e "s|@@TITLE@@|$(TITLE)|" \
                      -e "s|@@MINHOP@@|$(MINHOP)|" \
                      -e "s|@@DATE@@|$(DATE)|" \
-                     -e "s|@@HOST@@|$(PRIVATEHOST)|" \
                      -e "s|@@URL@@|$(URL)|" \
-                     -e "s|@@REPOSITORY@@|$(PUBLICREPOSITORY)|" \
-                     -e "s|@@PRIVATEHOST@@|$(PRIVATEHOST)|" \
-                     -e "s|@@PUBLICHOST@@|$(PUBLIKHOST)|" \
                      -e "s|@@HOME@@|$(WEBLETHOME)|" \
                      -e "s|@@DOWNLOAD@@|$(DOWNLOAD)|" \
+                     -e "s|@@PUBLISHER@@|$(PUBLISHER)|" \
                      -e "s|@@CATEGORY@@|$(CATEGORY)|" \
                      -e "s|@@LICENSE@@|$(LICENSE)|" > $@
 

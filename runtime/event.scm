@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Nov 13 05:12:03 2009 (serrano)                */
+;*    Last change :  Mon Dec 14 17:56:18 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -453,7 +453,7 @@
 (define (server-event-register event key mode)
    
    (define (ajax-register-event! req name key)
-      (tprint "***** ajax-register-event, name=" name " key=" key)
+;*       (tprint "***** ajax-register-event, name=" name " key=" key)  */
       (let ((conn (ajax-find-connection-by-key key)))
 	 (if conn
 	     (with-lock (ajax-connection-mutex conn)
@@ -479,7 +479,7 @@
 		   (request req))))))
    
    (define (flash-register-event! req name)
-      (tprint "***** flash-register-event, name=" name)
+;*       (tprint "***** flash-register-event, name=" name)             */
       (hashtable-update! *flash-socket-table*
 			 name
 			 (lambda (l) (cons req l))
@@ -488,7 +488,7 @@
 	 (request req)))
 
    (define (multipart-register-event! req name)
-      (tprint "***** multipart-register-event, name=" name)
+;*       (tprint "***** multipart-register-event, name=" name)         */
       (hashtable-update! *multipart-socket-table*
 			 name
 			 (lambda (l) (cons req l))

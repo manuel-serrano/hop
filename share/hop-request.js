@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Dec  2 19:48:30 2009 (serrano)                */
+/*    Last change :  Sun Dec 27 07:21:54 2009 (serrano)                */
 /*    Copyright   :  2004-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -87,7 +87,7 @@ function hop_default_failure( xhr ) {
    var div = document.createElement( "div" );
    var hstack = xhr.hopStack ? hop_make_exception_stack( xhr.hopStack ) : false;
    var jsstack = xhr.jsStack ? hop_make_exception_stack( xhr.jsStack ) : false;
-
+   
    if( "exception" in xhr ) {
       hop_report_exception( xhr.exception );
    } else {
@@ -269,7 +269,7 @@ function hop_default_success( h, xhr ) {
 /*    -------------------------------------------------------------    */
 /*    This function DOES NOT evaluates its result.                     */
 /*---------------------------------------------------------------------*/
-function hop_send_request( svc, sync, success, failure, anim, henv, auth, x ) {
+function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x ) {
    var xhr = x ? x : hop_make_xml_http_request();
    /* MS, 20 Jun 08: I cannot understand why but sometime sc_error is  */
    /* unbound (at least in Firefox) when used inside a catch! Binding  */
@@ -301,6 +301,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, x ) {
 			   xhr.exception = exc;
 			   xhr.exception.hopStack = hstack;
 			   xhr.exception.hopService = svc;
+			   xhr.exception.message = xhr.responseText;
 			   fail( xhr );
 			   expr = false;
 			}
@@ -358,7 +359,9 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, x ) {
 	    fail( xhr );
 	    return false;
 	 } finally {
-	    hop_stop_anim( xhr );
+	    if( typeof hop_stop_anim === "function" ) { 
+	       hop_stop_anim( xhr );
+	    }
 	 }
       }
 
@@ -369,8 +372,16 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, x ) {
       xhr.onreadystatechange = onreadystatechange;
    }
 
-   xhr.open( "PUT", svc, (sync != true) );
+   if( t ) {
+      if( xhr.setTimeouts ) {
+	 xhr.setTimeouts = t;
+      }
+      xhr.timeout = t;
+      xhr.ontimeout = failure;
+   }
 
+   xhr.open( "PUT", svc, (sync != true) );
+   
    if( hop_config.navigator_family != "safari" &&
        hop_config.navigator_family != "webkit" )
       xhr.setRequestHeader( 'Connection', 'close' );
@@ -416,7 +427,9 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, x ) {
 	 }
       }
    } catch( e ) {
-      hop_stop_anim( xhr )
+      if( typeof hop_stop_anim === "function" ) { 
+	 hop_stop_anim( xhr );
+      }
 
       e.hopObject = svc;
       throw e;
@@ -429,10 +442,10 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, x ) {
 /*    with_hop ...                                                     */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity -2)) */
-function with_hop( svc, success, failure, sync, anim ) {
+function with_hop( svc, success, failure, sync, anim, timeout ) {
    return hop_send_request( svc, sync,
 			    success, failure,
-			    true, hop_serialize_request_env(), false );
+			    true, hop_serialize_request_env(), false, timeout );
 }
 
 /*---------------------------------------------------------------------*/
@@ -446,7 +459,8 @@ function with_hop( svc, success, failure, sync, anim ) {
 	 (anim #t)
 	 (user #f)
 	 (password #f)
-	 (authorization #f))
+	 (authorization #f)
+	 (timeout #f))
       (let loop ((rest rest))
 	 (cond
 	    ((null? rest)
@@ -466,7 +480,8 @@ function with_hop( svc, success, failure, sync, anim ) {
 				      "Basic "
 				      (base64-encode
 				       (string-append
-					user ":" password)))))))
+					user ":" password)))))
+				timeout))
 	    ((eq? (car rest) :anim)
 	     (if (null? (cdr rest))
 		 (error 'with-hop "Illegal :anim argument" rest)
@@ -491,6 +506,11 @@ function with_hop( svc, success, failure, sync, anim ) {
 	     (if (null? (cdr rest))
 		 (error 'with-hop "Illegal :password argument" rest)
 		 (set! password (cadr rest)))
+	     (loop (cddr rest)))
+	    ((eq? (car rest) :timeout)
+	     (if (null? (cdr rest))
+		 (error 'with-hop "Illegal :timeout argument" rest)
+		 (set! timeout (cadr rest)))
 	     (loop (cddr rest)))
 	    ((not success)
 	     (set! success (car rest))

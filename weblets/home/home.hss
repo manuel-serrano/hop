@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/weblets/home/home.hss            */
+/*    serrano/prgm/project/hop/2.0.x/weblets/home/home.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Sep 26 14:30:51 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Sun Dec  6 16:50:46 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -369,6 +369,12 @@ table.os-download {
 table.os-download-stable {
   width: 50em;
   background: #daffbd;
+  margin-bottom: 5ex;
+}
+
+table.os-download-maemo {
+  width: 35em;
+  background: #fff6ee;
   margin-bottom: 5ex;
 }
 

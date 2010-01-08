@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Mon Sep 14 11:32:04 2009 (serrano)                */
+;*    Last change :  Fri Dec 11 07:07:57 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOPWIDGET heap file.                */
@@ -33,5 +33,4 @@
 	   __hopwidget-spage)
 
    (eval   (export-all)
-
-	   (class hop-audio-player)))
+	   (class audio-server)))

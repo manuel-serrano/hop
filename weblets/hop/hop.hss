@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Nov 20 16:18:57 2009 (serrano)                */
-/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    Last change :  Fri Jan  1 07:55:18 2010 (serrano)                */
+/*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -49,6 +49,7 @@ body {
 img.logo {
   background: transparent;
   padding: 15px;
+  user-select: none;
 }
 
 /*--- dashboard -------------------------------------------------------*/
@@ -100,24 +101,18 @@ table.weblet {
 
 table.weblet td.logo {
   border: 1px outset transparent;
-  -moz-border-radius: 0.2em;
-  -webkit-border-radius: 0.2em;
   border-radius: 0.2em;
 }
 
 table.weblet td.logo:hover {
   border: 1px outset #777;
   background-color: #fbffe1;
-  -moz-border-radius: 0.2em;
-  -webkit-border-radius: 0.2em;
   border-radius: 0.2em;
 }
 
 body.hop-dashboard-panel table.weblet td.logo:hover {
   background-color: #464444;
   border: 1px solid #777;
-  -moz-border-radius: 0.3em;
-  -webkit-border-radius: 0.3em;
   border-radius: 0.3em;
 }
 
@@ -137,8 +132,6 @@ table.hop {
   padding: 10px;
   border: 1px solid $border-color;
   background-color: white;
-  -moz-border-radius: 0.4em;
-  -webkit-border-radius: 0.4em;
   border-radius: 0.4em;
 }
 

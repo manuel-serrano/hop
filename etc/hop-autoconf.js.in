@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue Dec  1 16:56:22 2009 (serrano)                */
-/*    Copyright   :  2006-09 Manuel Serrano                            */
+/*    Last change :  Thu Jan  7 07:20:03 2010 (serrano)                */
+/*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
@@ -103,6 +103,9 @@ function hop_Config() {
   /* html5 */
   this.html5_video = "play" in document.createElement( "video" );
   this.html5_audio = "play" in document.createElement( "audio" );
+
+  /* Geolocation */
+  this.geolocation = (navigator.geolocation ? true : false);
 
   /* default navigator setting */
   this.mouse_left_button = 0;
@@ -213,7 +216,7 @@ function hop_config_get( key ) {
       }
       
       return l;
-   } else if( !sc_isSymbol ) {
+   } else if( !sc_isSymbol( key ) ) {
       return false;
    } else {
       return hop_config[ sc_symbol2jsstring( key ) ];
@@ -379,17 +382,9 @@ var hop_make_xml_http_request;
 
 if( "XMLHttpRequest" in window ) {
    var req = new XMLHttpRequest();
-   if( "overrideMimeType" in req ) {
-      hop_make_xml_http_request = function hop_make_xml_http_request() {
-	 var req = new XMLHttpRequest();
-	 /* this is required by some versions of Mozilla */
-/* 	 req.overrideMimeType( "text/xml" );                           */
-	 return req;
-      }
-   } else {
-      hop_make_xml_http_request = function hop_make_xml_http_request() {
-	 return new XMLHttpRequest();
-      }
+   
+   hop_make_xml_http_request = function hop_make_xml_http_request() {
+      return new XMLHttpRequest();
    }
    if( "multipart" in req ) {
       hop_config.xhr_multipart = true;
@@ -465,64 +460,88 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
 /*---------------------------------------------------------------------*/
 /*    node_style_set ...                                               */
 /*---------------------------------------------------------------------*/
-function node_style_set_native( obj, prop, value ) {
-   if( (obj instanceof String) || (typeof obj === "string") )
-      obj = document.getElementById( obj );
-
-   if( sc_isKeyword( prop ) )
-      prop = sc_keyword2jsstring( prop );
+function node_style_set_native( el, prop, value ) {
+   var obj = el;
    
-   if( !(value instanceof String) && (typeof value !== "string") ) {
-      if( !value && (value != 0) ) {
-	 sc_error( "node-style-set!", "Illegal \"" + prop + "\" value", value );
-      } else {
-	 value = value.toString();
+   if( (el instanceof String) || (typeof el === "string") )
+      obj = document.getElementById( el );
+
+   for( var i = 1; i < arguments.length; i += 2 ) {
+      var p = arguments[ i ];
+      var v = arguments[ i + 1 ];
+
+      if( sc_isKeyword( p ) )
+	 p = sc_keyword2jsstring( p );
+   
+      if( !(v instanceof String) && (typeof v !== "string") ) {
+	 if( !v && (v != 0) ) {
+	    sc_error( "node-style-set!", "Illegal \"" + p + "\" value: " + v, el );
+	 } else {
+	    v = v.toString();
+	 }
       }
-   }
 
-   if( !obj || !obj.style ) {
-      sc_error( "node-style-set!",
-		"Illegal object",
-                obj + ", " + prop + ": " + value );
-   }
+      if( !obj || !obj.style ) {
+	 sc_error( "node-style-set!",
+		   "Illegal object while setting \"" + p + ": " + v + "\"",
+		   el );
+      }
 
-   if( prop in obj.style ) {
-      obj.style[ prop ] =  value;
-   } else {
-      obj.style.setProperty( prop, value, "" );
+      try {
+	 if( p in obj.style ) {
+	    obj.style[ p ] =  v;
+	 } else {
+	    obj.style.setProperty( p, v, "" );
+	 }
+      } catch( e ) {
+	 sc_error( "node-style-set!", "Can't set property \"" + p + "\"", el );
+      }
    }
 }
 
-function node_style_set_array( obj, prop, value ) {
-   if( (obj instanceof String) || (typeof obj === "string") )
-      obj = document.getElementById( obj );
+function node_style_set_array( el, prop, value ) {
+   var obj = el;
+   
+   if( (el instanceof String) || (typeof el === "string") )
+      obj = document.getElementById( el );
 
-   if( sc_isKeyword( prop ) )
-      prop = sc_keyword2jsstring( prop );
+   for( var i = 1; i < arguments.length; i += 2 ) {
+      var p = arguments[ i ];
+      var v = arguments[ i + 1 ];
+      
+      if( sc_isKeyword( p ) )
+	 p = sc_keyword2jsstring( p );
    
-   if( !(value instanceof String) && (typeof value !== "string") ) {
-      if( !value && (value != 0) ) {
-	 sc_error( "node-style-set!", "Illegal \"" + prop + "\" value", value );
-      } else {
-	 value = value.toString();
+      if( !(v instanceof String) && (typeof v !== "string") ) {
+	 if( !v && (v != 0) ) {
+	    sc_error( "node-style-set!", "Illegal \"" + p + "\" value: "+ v, el );
+	 } else {
+	    v = v.toString();
+	 }
       }
-   }
    
-   obj.style[ prop ] = value;
+      obj.style[ p ] = v;
+   }
 }
 
-/*** META ((export node-style-set!) (arity 3)) */
-var node_style_set = function( obj, property, value ) {
-   if( (obj instanceof String) || (typeof obj === "string") )
-      obj = document.getElementById( obj );
+/*** META ((export node-style-set!) (arity -3)) */
+var node_style_set = function( el, prop, value ) {
+   var obj = el;
+   
+   if( (el instanceof String) || (typeof el === "string") )
+      obj = document.getElementById( el );
 
-   if( "setProperty" in obj.style ) {
-      node_style_set = node_style_set_native;
-      return node_style_set_native( obj, property, value );
-   } else {
-      node_style_set = node_style_set_array;
-      return node_style_set_array( obj, property, value );
-   }
+   try {
+      if( "setProperty" in obj.style ) {
+         node_style_set = node_style_set_native;
+      	 return node_style_set_native.apply( null, arguments );
+      } else {
+	 node_style_set = node_style_set_array;
+	 return node_style_set_array.apply( null, arguments );
+      }
+   } catch( e ) {
+      sc_error( "node-style-set!", "Can't set property \"" + prop + "\"", el );
+  }
 }
 
 /*---------------------------------------------------------------------*/
@@ -723,29 +742,73 @@ switch( hop_config.mouse_left_button ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_current_window_width/height ...                              */
+/*    hop_window_width/height ...                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export current-window-width) (arity 0)) */
-var hop_current_window_width = undefined;
-/*** META ((export current-window-height) (arity 0)) */
-var hop_current_window_height = undefined;
+/*** META ((export main-window-width) (arity 0)) */
+var hop_main_window_width = undefined;
+/*** META ((export main-window-height) (arity 0)) */
+var hop_main_window_height = undefined;
+/*** META ((export main-window-orientation) (arity 0)) */
+var hop_main_window_orientation = undefined;
 
 if( isNaN( window.innerWidth ) ) {
-   hop_current_window_width = function hop_current_window_width() {
+   hop_main_window_width = function hop_main_window_width() {
       return document.documentElement.clientWidth;
    }
-   hop_current_window_height = function hop_current_window_height() {
+   hop_main_window_height = function hop_main_window_height() {
       return document.documentElement.clientHeight;
    }
 } else {
-   hop_current_window_width = function hop_current_window_width() {
+   hop_main_window_width = function hop_main_window_width() {
       return window.innerWidth;
    }
-   hop_current_window_height = function hop_current_window_height() {
+   hop_main_window_height = function hop_main_window_height() {
       return window.innerHeight;
    }
 }
 
+var hop_orientation = false;
+hop_main_window_orientation = function hop_main_window_orientation() {
+  if( !hop_orientation ) {
+     hop_orientation = sc_jsstring2symbol( "landscape" );
+  }
+  return hop_orientation;
+}
+
+/* backward compatibility */
+/*** META ((export current-window-width) (arity 0)) */
+var hop_current_window_width = hop_main_window_width;
+/*** META ((export current-window-height) (arity 0)) */
+var hop_current_window_height = hop_main_window_height;
+
+/*---------------------------------------------------------------------*/
+/*    hop_screen_dimensions ...                                        */
+/*---------------------------------------------------------------------*/
+/*** META ((export screen-dimensions) (arity -1)) */
+function hop_screen_dimensions( unit ) {
+   if( !unit ) unit = "cm";
+
+   var d = document.createElement( "div" );
+   var h = document.getElementsByTagName( "body" )[ 0 ];
+
+   node_style_set( d, "visibility", "hidden" );
+   node_style_set( d, "border", "0" );
+   d.innerHTML = ".";
+
+   h.appendChild( d );
+   
+   node_style_set( d, "width", "1" + unit );
+   node_style_set( d, "height", "1" + unit );
+
+   var res =
+      new sc_Pair( Math.round( hop_config.screen_width / d.offsetWidth ),
+		   Math.round( hop_config.screen_height / d.offsetHeight ) );
+
+   h.removeChild( d );
+
+   return res;
+}
+   
 /*---------------------------------------------------------------------*/
 /*    hop_iframe_scroll_height ...                                     */
 /*---------------------------------------------------------------------*/

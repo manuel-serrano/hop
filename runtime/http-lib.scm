@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Sun Nov 29 10:58:12 2009 (serrano)                */
+;*    Last change :  Tue Dec 15 09:08:46 2009 (serrano)                */
 ;*    Copyright   :  2004-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -255,6 +255,8 @@
    (with-trace 5 'http-filter-proxy-header
       (let loop ((lst header)
 		 (fil '()))
+	 ;; a two stage process to avoid re-allocating a list
+	 ;; when nothing is stripped of the initial list.
 	 (cond
 	    ((null? lst)
 	     (if (null? fil)
@@ -269,6 +271,9 @@
 	     (loop (cdr lst) (cons (caar lst) fil)))
 	    ((eq? (caar lst) connection:)
 	     (loop (cdr lst) (cons (caar lst) fil)))
+	    ((eq? (caar lst) host:)
+	     (set-car! (car lst) Host:)
+	     (loop (cdr lst) fil))
 	    ((not (eq? (caar lst) content:))
 	     (loop (cdr lst) fil))
 	    (else

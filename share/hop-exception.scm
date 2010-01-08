@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Sun Nov 29 07:42:39 2009 (serrano)                */
+;*    Last change :  Thu Dec 10 09:50:57 2009 (serrano)                */
 ;*    Copyright   :  2009 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -359,7 +359,8 @@
        (dom-append-child! document.body (<EXCEPTION> exc)))
       (else
        ;; the error might be raised even before document.body is bound
-       (add-window-onload! (lambda (e) (hop-report-exception exc))))))
+       (add-event-listener! window "load"
+	  (lambda (e) (hop-report-exception exc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-last-exception ...                                           */

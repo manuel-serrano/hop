@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Sep 18 12:31:18 2009 (serrano)                */
+;*    Last change :  Mon Dec 14 19:02:35 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -97,7 +97,7 @@
 		    (xml-delay? (car (xml-element-body tab)))
 		    (null? (cdr (xml-element-body tab))))
 	    (set! attributes `(:lang "delay" ,@attributes)))
-	 (<DIV> :class "hop-notepad-tab-body"
+	 (<DIV> :hssclass "hop-notepad-tab-body"
 	    :style (if (=fx i 0) "display: block" "display: none")
 	    :id (string-append id "-notepad-tab-body")
 	    (cond
@@ -116,17 +116,18 @@
 			    attrs)))
       (apply <DIV>
 	     :id id
+	     :hssclass "hop-notepad"
 	     :class (make-class-name "hop-notepad" klass)
 	     :onkeyup (format "return ~a;" svc)
 	     head
-	     (<TABLE> :class "hop-notepad"
+	     (<TABLE> :hssclass "hop-notepad"
 		(<TR>
 		   (<TD> :id (string-append id "-tabs")
-		      :class "hop-notepad-tabs"
+		      :hssclass "hop-notepad-tabs"
 		      tabs))
 		(<TR>
 		   (<TD> :id (string-append id "-body")
-		      :class "hop-notepad-body" bodies)))
+		      :hssclass "hop-notepad-body" bodies)))
 	     (when onchange
 		(<SCRIPT> :class "hop-notepad-init"
 		   (format "document.getElementById('~a').onchange = ~a"
@@ -137,15 +138,13 @@
 ;*    <NPHEAD> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-markup <NPHEAD> ((id #unspecified string)
-			 (class #unspecified string)
 			 (attr)
 			 body)
-   (let ((cla (make-class-name "hop-nphead " class)))
-      (instantiate::xml-nphead-element
-	 (markup 'div)
-	 (id (xml-make-id id 'NPHEAD))
-	 (attributes `(:class ,cla ,@attr))
-	 (body body))))
+   (instantiate::xml-nphead-element
+      (markup 'div)
+      (id (xml-make-id id 'NPHEAD))
+      (attributes `(:hssclass "hop-nphead" ,@attr))
+      (body body)))
    
 ;*---------------------------------------------------------------------*/
 ;*    <NPTAB> ...                                                      */
@@ -167,8 +166,8 @@
 	  (instantiate::xml-nptab-element
 	     (markup 'span)
 	     (id (xml-make-id id 'NPTAB))
+	     (attributes `(:hssclass "hop-nptab" ,@attr))
 	     (klass cla)
-	     (attributes attr)
 	     (onselect onselect)
 	     (head (car body))
 	     (body (cdr body)))))))
@@ -177,15 +176,13 @@
 ;*    <NPTABHEAD> ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-markup <NPTABHEAD> ((id #unspecified string)
-			    (class #unspecified string)
 			    (attr)
 			    body)
-   (let ((cla (make-class-name "hop-nptab-head" class)))
-      (instantiate::xml-nptabhead-element
-	 (markup 'span)
-	 (id (xml-make-id id 'NPTABHEAD))
-	 (attributes `(:class ,cla ,@attr))
-	 (body body))))
+   (instantiate::xml-nptabhead-element
+      (markup 'span)
+      (id (xml-make-id id 'NPTABHEAD))
+      (attributes `(:hssclass "hop-nptab-head" ,@attr))
+      (body body)))
    
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */

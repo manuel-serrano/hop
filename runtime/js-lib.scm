@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sat Oct 31 08:25:52 2009 (serrano)                */
+;*    Last change :  Wed Dec 23 07:58:40 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -198,10 +198,11 @@
 		    (bigloo-mangle kname)
 		    kname))
 	  (hash (class-hash klass))
-	  (fields (class-all-fields klass)))
-      (format "(function() {var ~a=function(~a) {~a}; ~a.prototype.hop_bigloo_serialize = hop_bigloo_serialize_object; ~a.prototype.hop_classname = '~a'; ~a.prototype.hop_classhash = ~a; return new ~a(~a;})()"
+	  (fields (class-all-fields klass))
+	  (fnames (map class-field-name fields)))
+      (format "(function() {var ~a=function(~a) {~a}; ~a.prototype.hop_bigloo_serialize = hop_bigloo_serialize_object; ~a.prototype.hop_classname = '~a'; ~a.prototype.hop_classhash = ~a; ~a.prototype.hop_classfields = [~a]; return new ~a(~a;})()"
 	      name
-	      (list->block (map class-field-name fields))
+	      (list->block fnames)
 	      (apply string-append
 		     (map (lambda (f)
 			     (let ((n (class-field-name f)))
@@ -212,6 +213,8 @@
 	      name
 	      name
 	      hash
+	      name
+	      (list->block (map (lambda (s) (string-append "'" (symbol->string! s) "'")) fnames))
 	      name
 	      (list->arguments (map (lambda (f) ((class-field-accessor f) obj))
 				    fields)
@@ -276,6 +279,8 @@
        (list 'COMMA))
       (#\;
        (list 'SEMI-COMMA))
+      (#\:
+       (list 'COLON))
       (#\=
        (list '=))
       
@@ -299,13 +304,13 @@
       
       ;; integer constant
       ((: (+ digit))
-       (list 'CONSTANT (the-fixnum)))
+       (list 'CONSTANT (the-integer)))
       
       ;; floating-point constant
-      ((or (: (+ digit)
+      ((or (: (? #\-) (+ digit)
 	      (: (in #\e #\E) (? (in #\- #\+)) (+ digit))
 	      (? (in #\f #\F #\l #\L)))
-	   (: (or (: (+ digit) #\. (* digit)) (: #\. (+ digit)))
+	   (: (? #\-) (or (: (+ digit) #\. (* digit)) (: #\. (+ digit)))
 	      (? (: (in #\e #\E) (? (in #\- #\+)) (+ digit)))
 	      (? (in #\f #\F #\l #\L))))
        (list 'CONSTANT (the-flonum)))
@@ -316,7 +321,7 @@
       
       ;; string constant
       ((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
-       (let ((str (the-substring 0 (-fx (the-length) 1))))
+       (let ((str (ucs2->utf8 (the-substring 0 (-fx (the-length) 1)) 0)))
 	  (list 'CONSTANT (escape-C-string str))))
       
       ;; identifier
@@ -339,6 +344,52 @@
 	      (list 'ERROR c))))))
 
 ;*---------------------------------------------------------------------*/
+;*    ucs2->utf8 ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (ucs2->utf8 str start)
+
+   (define (hex n)
+      (cond
+	 ((and (char>=? n #\0) (char<=? n #\9))
+	  (-fx (char->integer n) (char->integer #\0)))
+	 ((and (char>=? n #\a) (char<=? n #\f))
+	  (+fx 10 (-fx (char->integer n) (char->integer #\a))))
+	 ((and (char>=? n #\A) (char<=? n #\F))
+	  (+fx 10 (-fx (char->integer n) (char->integer #\A))))
+	 (else
+	  0)))
+	 
+   (define (utf8 str i)
+      (let* ((c0 (hex (string-ref str i)))
+	     (c1 (hex (string-ref str (+fx i 1))))
+	     (c2 (hex (string-ref str (+fx i 2))))
+	     (c3 (hex (string-ref str (+fx i 3))))
+	     (n (+fx (bit-lsh (+fx (*fx c0 16) c1) 8)
+		     (+fx (*fx c2 16) c3)))
+	     (u (integer->ucs2 n)))
+	 (ucs2-string->utf8-string (make-ucs2-string 1 u))))
+   
+   (let ((len (string-length str)))
+      (let loop ((i start))
+	 (cond
+	    ((=fx i len)
+	     (if (=fx start 0)
+		 str
+		 (substring str start len)))
+	    ((and (char=? (string-ref str i) #\\)
+		  (<= (+fx i 6) len)
+		  (char=? (string-ref str (+fx i 1)) #\u))
+	     (if (> i start)
+		 (string-append (substring str start i)
+				(utf8 str (+fx i 2))
+				(ucs2->utf8 str (+fx i 6)))
+		 (string-append (substring str start i)
+				(utf8 str (+fx i 2))
+				(ucs2->utf8 str (+fx i 6)))))
+	    (else
+	     (loop (+fx i 1)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    *json-parser* ...                                                */
 ;*---------------------------------------------------------------------*/
 (define *json-parser*
@@ -347,7 +398,7 @@
       
       ;; tokens
       (CONSTANT PAR-OPEN PAR-CLO BRA-OPEN BRA-CLO ANGLE-OPEN ANGLE-CLO
-       COMMA SEMI-COMMA DOT =
+       COMMA SEMI-COMMA COLON DOT =
        IDENTIFIER ERROR NEW CONS DATE FUNCTION RETURN VAR)
       
       ;; initial rule
@@ -375,6 +426,10 @@
 	'#())
        ((ANGLE-OPEN array-elements ANGLE-CLO)
 	(list->vector array-elements))
+       ((BRA-OPEN BRA-CLO)
+	'())
+       ((BRA-OPEN hash-elements BRA-CLO)
+	hash-elements)
        ((object)
 	object)
        ((get-element-by-id)
@@ -422,6 +477,25 @@
 	(list expression))
        ((expression COMMA array-elements)
 	(cons expression array-elements)))
+
+      ;; hash
+      (hash-elements
+       ((hash-element)
+	(list hash-element))
+       ((hash-element COMMA hash-elements)
+	(cons hash-element hash-elements)))
+
+      (hash-element
+       ((IDENTIFIER COLON expression)
+	(list (symbol->keyword (car IDENTIFIER)) expression))
+       ((CONSTANT COLON expression)
+	(let* ((i (car CONSTANT))
+	       (k (cond
+		     ((keyword? i) i)
+		     ((symbol? i) (symbol->keyword i))
+		     ((string? i) (string->keyword i))
+		     (else (error 'json->hop "Illegal key" i)))))
+	   (list k expression))))
 
       ;; object
       (object

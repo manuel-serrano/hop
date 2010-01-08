@@ -10,9 +10,11 @@ in JavaScript can be written with HOP. However it is often necessary
 (or simply convenient) to interface with existing JavaScript code. HOP provides
 some facilities to ease such an integration.
 
-== JavaScript Objects ==
-HOP provides several means to use JavaScript objects efficiently inside HOP
-code.
+== JavaScript Objects == 
+
+~~ HOP provides several means to use JavaScript objects efficiently
+inside HOP code. The whole list of functions is described in
+,(<APIREF> "JavaScript API" "javascript.wiki") page.
 
 ~~ HOP provides dot-access for JavaScript objects. One can thus simply write
 ++o.x++ to access the property (field) ++x++ of object ++o++. This dot-access
@@ -264,4 +266,25 @@ procedure ++(define (foo (x . L) ...))++ has arity -2.
       (arity 1)
       (type bool)
       (peephole (postfix ".hasChildNodes()"))))
+</code>
+
+
+== Blending Hop and JavaScript ==
+
+HOP and JavaScript can easily interact. HOP can call JavaScript functions 
+and use JavaScript variables and vice versa. Hence, a HOP program can
+simultaneously use HOP and JavaScript. 
+
+~~ HOP and JavaScript may exchange values (read and write) without restriction.
+Each language can also set the global variable of the other language.
+
+~~ HOP client-side expression are introduced by the ,(<CODE> "~") character.
+JavaScript expressions are enclosed in angle brackets (,(<CODE> "{...}")).
+
+<code>
+  (<DIV>
+    (<SCRIPT> { function js_foo( x ) { alert( "x=" + hop_bar( x ) ); } })
+    ~(define (hop_bar x) (+ 1 x))
+    (<BUTTON> :onclick ~(js_foo 1) "A HOP client expression")
+    (<BUTTON> :onclick {js_foo( 1 )} "A JavaScript client expression"))
 </code>

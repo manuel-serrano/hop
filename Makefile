@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Dec  3 18:22:17 2009 (serrano)                */
+#*    Last change :  Mon Dec 14 07:35:27 2009 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -30,7 +30,7 @@ POPDIRS		= runtime hopscheme scheme2js src hopc hopsh hopreplay \
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-.PHONY: bindir libdir lib widget share weblets bin share-afile
+.PHONY: bindir libdir lib widget share weblets bin share-afile scheme2js
 
 build: showflags bindir libdir lib weblets widget bin share $(BUILD-SPECIFIC)
 
@@ -54,22 +54,24 @@ hopsh-bin: lib
 hopreplay-bin: lib
 	(cd hopreplay && $(MAKE) build)
 
-lib: libdir 
-	(cd scheme2js && $(MAKE) build)
+lib: libdir scheme2js
 	(cd hopscheme && $(MAKE) build)
 	(cd runtime && $(MAKE) build)
 
 widget: libdir hopc-bin share-afile
 	(cd widget && $(MAKE) build)
 
-share-afile:
+share-afile: scheme2js
 	(cd share && $(MAKE) .afile)
 
-share: bin hopc-bin
+share: bin hopc-bin scheme2js
 	(cd share && $(MAKE) build)
 
 weblets: lib
 	(cd weblets && $(MAKE) build)
+
+scheme2js:
+	(cd scheme2js && $(MAKE) build)
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */

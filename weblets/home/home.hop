@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/weblets/home/home.hop            */
+;*    serrano/prgm/project/hop/2.0.x/weblets/home/home.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Thu Jan 15 07:43:43 2009 (serrano)                */
+;*    Last change :  Tue Dec  8 08:07:54 2009 (serrano)                */
 ;*    Copyright   :  2006-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -201,6 +201,22 @@
 					""))])))))))
 
 ;*---------------------------------------------------------------------*/
+;*    home/maemo/hop.install ...                                       */
+;*---------------------------------------------------------------------*/
+(define-service (home/maemo/hop.install distrib catalogues)
+   (instantiate::http-response-string
+      (content-type "application/x-install-instructions")
+      (body (format "[install]
+catalogues = ~a
+package  = hop
+
+[~a]
+name = Hop package for Maemo
+uri = ~a/maemo
+dist = ~a
+components = free" catalogues catalogues (home-ftp-hop-url) distrib))))
+
+;*---------------------------------------------------------------------*/
 ;*    home/documentation ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-service (home/documentation)
@@ -245,12 +261,13 @@
 (define *devel-tar-url* #unspecified)
 (define *devel-jar-url* #unspecified)
 (define *stable-tar-gz* #unspecified)
+(define *stable-dmg* #unspecified)
 (define *stable-jar* #unspecified)
 (define *stable-tar-url* #unspecified)
 (define *stable-jar-url* #unspecified)
-(define *maemo-deb-url* #unspecified)
-(define *maemo-deb* #unspecified)
-
+(define *maemo-chinook-url* (home/maemo/hop.install "chinook" "internet"))
+(define *maemo-freemantle-url* (home/maemo/hop.install "freemantle" "hop"))
+   
 ;*---------------------------------------------------------------------*/
 ;*    download-versions-set! ...                                       */
 ;*---------------------------------------------------------------------*/
@@ -282,6 +299,11 @@
 		(string-append "hop-" (home-hop-stable-version) ".tar.gz")
 		"not available"))
       
+      (set! *stable-dmg*
+	    (if (string? (home-hop-stable-version))
+		(string-append "macosx/hop-" (home-hop-stable-version) ".dmg")
+		"not available"))
+      
       (set! *stable-jar*
 	    (if (string? (home-hop-stable-version))
 		(string-append "hop-" (home-hop-stable-version) ".jar")
@@ -295,14 +317,6 @@
       (set! *stable-jar-url*
 	    (if (string? *stable-jar*)
 		(make-file-name (home-ftp-hop-url) *stable-jar*)
-		"not available"))
-
-      (set! *maemo-deb*
-	    (if (string? (home-hop-stable-version))
-		(string-append "hop_" (home-hop-stable-version) "_armel.deb")
-		"not available"))
-      
-      (set! *maemo-deb-url*
-	    (if (string? *maemo-deb*)
-		(make-file-name (home-ftp-hop-url) *maemo-deb*)
 		"not available"))))
+
+

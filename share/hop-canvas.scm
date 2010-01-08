@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov  3 08:24:25 2007                          */
-;*    Last change :  Tue Nov 17 07:35:54 2009 (serrano)                */
+;*    Last change :  Thu Dec 24 16:58:06 2009 (serrano)                */
 ;*    Copyright   :  2007-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Canvas interface                                             */
@@ -47,13 +47,17 @@
 	   (canvas-add-color-stop gradient position color)
 	   (canvas-create-pattern ctx img type)
 	   (canvas-draw-image ctx image x y . rest)
+	   (canvas-get-image-data ctx x y w h)
+	   (canvas-put-image-data ctx frame x y)
 	   (canvas-arrow-to ctx x0 y0 x1 y1 . args)
 	   (canvas-quadratic-arrow-to ctx x0 y0 cpx cpy x1 y1 . args)
 	   (canvas-fill-text ctx text x y . rest)
 	   (canvas-stroke-text ctx text x y . rest)
 	   (canvas-measure-text ctx text)
 	   (canvas-path-text ctx text)
-	   (canvas-text-along-path ctx text stroke)))
+	   (canvas-text-along-path ctx text stroke)
+	   (canvas-transform ctx m11 m12 m21 m22 dx dy)
+	   (canvas-set-transform ctx m11 m12 m21 m22 dx dy)))
    
 ;*---------------------------------------------------------------------*/
 ;*    canvas-get-context ...                                           */
@@ -75,7 +79,7 @@
 		    :line-join ,ctx.lineJoin
 		    :line-width ,ctx.lineWidth
 		    :miter-limit ,ctx.miterLimit
-		    :shadow-blur ,ctx.shadowBlue
+		    :shadow-blur ,ctx.shadowBlur
 		    :shadow-color ,ctx.shadowColor
 		    :shadow-offset-x ,ctx.shadowOffsetX
 		    :shadow-offset-y ,ctx.shadowOffsetY
@@ -101,8 +105,8 @@
 		 (set! ctx.fillStyle (cadr props)))
 		((:global-alpha)
 		 (set! ctx.globalAlpha (cadr props)))
-		((:global-composition-operation)
-		 (set! ctx.globalCompositionOperation (cadr props)))
+		((:global-composite-operation)
+		 (set! ctx.globalCompositeOperation (cadr props)))
 		((:line-cap)
 		 (set! ctx.lineCap (cadr props)))
 		((:line-join)
@@ -216,7 +220,7 @@
 	 (if (null? (cdr rest))
 	     (error 'canvas-line "Illegal number of arguments" rest)
 	     (begin
-		(ctx.moveTo (car rest) (cadr rest))
+		(ctx.lineTo (car rest) (cadr rest))
 		(loop (cddr rest)))))))
    
 ;*---------------------------------------------------------------------*/
@@ -376,6 +380,18 @@
 			 (caddr rest) (cadddr rest))))))
 
 ;*---------------------------------------------------------------------*/
+;*    canvas-get-image-data ...                                        */
+;*---------------------------------------------------------------------*/
+(define (canvas-get-image-data ctx x y w h)
+   (ctx.getImageData x y w h))
+
+;*---------------------------------------------------------------------*/
+;*    canvas-put-image-data ...                                        */
+;*---------------------------------------------------------------------*/
+(define (canvas-put-image-data ctx frame x y)
+   (ctx.putImageData frame x y))
+
+;*---------------------------------------------------------------------*/
 ;*    canvas-arrow-to ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (canvas-arrow-to ctx x0 y0 x1 y1 . args)
@@ -521,7 +537,9 @@
 (define (canvas-fill-text ctx text x y . rest)
    (cond
       ((procedure? ctx.fillText)
-       (apply ctx.fillText x y rest))
+       (if (pair? rest)
+	   (ctx.fillText text x y (car rest))
+	   (ctx.fillText text x y)))
       ((procedure? ctx.mozDrawText)
        (ctx.save)
        (ctx.translate x y)
@@ -534,7 +552,9 @@
 (define (canvas-stroke-text ctx text x y . rest)
    (cond
       ((procedure? ctx.strokeText)
-       (apply ctx.strokeText x y rest))
+       (if (pair? rest)
+	   (ctx.strokeText text x y (car rest))
+	   (ctx.strokeText text x y)))
       ((procedure? ctx.mozPathText)
        (ctx.save)
        (ctx.translate x y)
@@ -552,7 +572,7 @@
 ;*---------------------------------------------------------------------*/
 (define (canvas-measure-text ctx text)
    (cond
-      ((procedure? ctx.measureText) (ctx.measureText text))
+      ((procedure? ctx.measureText) (ctx.measureText text).width)
       ((procedure? ctx.mozMeasureText) (ctx.mozMeasureText text))
       (else 0)))
 
@@ -569,6 +589,18 @@
 (define (canvas-text-along-path ctx text stroke)
    (when (procedure? ctx.mozTextAlongPath)
       (ctx.mozTextAlongPath text stroke)))
+
+;*---------------------------------------------------------------------*/
+;*    canvas-transform ...                                             */
+;*---------------------------------------------------------------------*/
+(define (canvas-transform ctx m11 m12 m21 m22 dx dy)
+   (ctx.transform m11 m12 m21 m22 dx dy))
+
+;*---------------------------------------------------------------------*/
+;*    canvas-set-transform ...                                         */
+;*---------------------------------------------------------------------*/
+(define (canvas-set-transform ctx m11 m12 m21 m22 dx dy)
+   (ctx.setTransform m11 m12 m21 m22 dx dy))
 
 ;*---------------------------------------------------------------------*/
 ;*    Internet Explorer 7 Canvas support                               */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sat Nov 28 07:08:00 2009 (serrano)                */
+;*    Last change :  Tue Dec 22 18:41:24 2009 (serrano)                */
 ;*    Copyright   :  2005-09 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -204,7 +204,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 		     ((<HEAD> . ?head) head)
 		     ((module (? symbol?) . ?-) (loop (hop-read in)))
 		     (else '())))))))
-   
+
    (define (favicon p inl)
       (<LINK> :rel "shortcut icon" :href p :inline inl))
 
@@ -218,50 +218,46 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 	 :href p))
 
    (define (hz-get-weblet-info-files path)
-      (let ((hop (make-file-path path "etc" "weblet.info")))
-	 (when (file-exists? hop)
-	    (let ((l (call-with-input-file hop read)))
+      (let ((info (make-file-path path "etc" "weblet.info")))
+	 (when (file-exists? info)
+	    (let ((l (call-with-input-file info read)))
 	       (when (pair? l)
-		  (let ((c (assq 'api l)))
+		  (let ((c (assq 'client l)))
 		     (when (pair? c)
 			(cadr c))))))))
       
-   (define (hz-get-files path suffix)
-      (filter-map (lambda (f)
-		     (when (is-suffix? f suffix)
-			(make-file-name path f)))
-		  (or (hz-get-weblet-info-files path)
-		      (directory->list path))))
+   (define (hz-get-files path)
+      (or (hz-get-weblet-info-files path)
+	  (directory->list path)))
 
    (define (read-file file)
       (call-with-input-file file
 	 (lambda (ip)
 	    (display (read-string ip)))))
    
-   (define (hz->client path suffix file-to-string)
-      (let ((file (make-file-name path (string-append ".hop." suffix))))
-	 (if (file-exists? file)
-	     file
-	     (let ((files (hz-get-files path suffix)))
-		(when (pair? files)
-		   (with-output-to-file file
-		      (lambda ()
-			 (for-each file-to-string files)))
-		   file)))))
-   
-   (define (hz f inl)
+   (define (hz f)
       (let* ((path (hz-download-to-cache f))
-	     (hss (hz->client path "hss" read-file))
-	     (jscript1 (hz->client path "hop" get-clientc-compiled-file))
-	     (jscript2 (hz->client path "js" read-file))
-	     (res '()))
-	 (when hss
-	    (set! res (cons (css hss #f inl) res)))
-	 (when jscript1
-	    (set! res (cons (script jscript1 inl) res)))
-	 (when jscript2
-	    (set! res (cons (script jscript2 inl) res)))
-	 (values res (if jscript1 (find-head jscript1) '()))))
+	     (base (basename path))
+	     (hzfiles (hz-get-files path))
+	     (hss (string-append base ".hss"))
+	     (jscript1 (string-append base "-client.hop"))
+	     (jscript2 (string-append base ".scm")))
+	 `(:with-base ,path
+		      (,@(if (member hss hzfiles) (list :css hss) '())
+			 ,@(apply append
+				  (filter-map (lambda (f)
+						 (when (string-suffix? ".js" f)
+						    (list :jscript
+						       (make-file-name path f))))
+					      hzfiles))
+			 ,@(if (member jscript1 hzfiles)
+			       (cons* :jscript jscript1
+				  (find-head (make-file-name path jscript1)))
+			       '())
+			 ,@(if (member jscript2 hzfiles)
+			       (cons* :jscript jscript2
+				  (find-head (make-file-name path jscript2)))
+			       '())))))
 
    (define (find-incl-dep f path)
       (let* ((path (append path (list (hop-share-directory))))
@@ -387,6 +383,11 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 		  (if (or (boolean? (cadr a)) (symbol? (cadr a)))
 		      (loop (cddr a) #f rts dir path base inl (cadr a) incs els)
 		      (error '<HEAD> "Illegal :inline" (cadr a))))
+		 ((:with-base)
+		  (if (and (string? (cadr a)) (pair? (cddr a)))
+		      (let ((wbels (loop (caddr a) #f #f (cadr a) (cadr a) (cadr a) inl packed incs '())))
+			 (loop (cdddr a) #f rts dir path base inl (cadr a) incs
+			       (append (reverse! wbels) els)))))
 		 (else
 		  (error '<HEAD>
 			 (format "Unknown ~a argument" (car a))
@@ -416,14 +417,13 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 			   nincs
 			   (append iels (reverse! hels) els))))))
 	     ((:hz :include-hz)
-	      (multiple-value-bind (zels hds)
-		 (hz (car a) inl)
-		 (let* ((nincs (cons (car a) incs))
-			(hels (loop hds #f #f dir path base inl packed nincs '())))
-		    (loop (cdr a)
-			  (if (eq? mode :hz) :hz :include)
-			  rts dir path base inl packed incs
-			  (append zels (reverse! hels) els)))))
+	      (let* ((hds (hz (car a)))
+		     (nincs (cons (car a) incs))
+		     (hels (loop hds #f #f dir path base inl packed nincs '())))
+		 (loop (cdr a)
+		       (if (eq? mode :hz) :hz :include)
+		       rts dir path base inl packed incs
+		       (append (reverse! hels) els))))
 	     (else
 	      (loop (cdr a) #f rts dir path base inl packed incs
 		    (cons (car a) els)))))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Mon Nov 30 09:17:27 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Thu Jan  7 15:41:58 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
 ;*=====================================================================*/
@@ -95,7 +95,14 @@
 	       (with-handler
 		  (lambda (e)
 		     (error-notify e)
-		     (connection-close! remote)
+;* 		     (tprint "connection: keep-alive?: "               */
+;* 			     (connection-keep-alive? remote)           */
+;* 			     " wstart=" (connection-wstart? remote))   */
+		     (with-trace 4 'connection-close@handler
+;* 			(trace-item "remote=" remote)                  */
+;* 			(tprint "connection close/error "              */
+;* 				(connection-id remote))                */
+			(connection-close! remote))
 		     (cond
 			((connection-wstart? remote)
 			 ;; If we have already sent characters to the client
@@ -124,7 +131,11 @@
 		     ;; connection is closed
 		     (if (connection-down? remote)
 			 (begin
-			    (connection-close! remote)
+			    (with-trace 4 "connection-close@down"
+			       (trace-item "remote=" remote)
+			       (tprint "connection close/down "
+				(connection-id remote))
+			       (connection-close! remote))
 			    (loop))
 			 (let ((cp (hop-capture-port)))
 			    ;; the content of the request
@@ -229,12 +240,18 @@
 		  ;; what to do with the remote connection. if the
 		  ;; status code is not 200, we always close the connection
 		  ;; in order to avoid, in particular, re-direct problems.
-		  (if (or (not (=fx status-code 200))
+		  (if (or (>=fx status-code 500)
 			  (eq? connection 'close)
 			  (and (not connection)
 			       (string=? http-version "HTTP/1.0"))
 			  (not (hop-enable-remote-keep-alive)))
-		      (connection-close! remote)
+		      (with-trace 4 'connection-close@remote-body
+			 (trace-item "remote=" remote)
+;* 			 (tprint "connection close/client "            */
+;* 				 (connection-id remote)                */
+;* 				 " [status=" status-code " connection=" connection */
+;* 				 " http=" http-version "]")            */
+			 (connection-close! remote))
 		      (connection-keep-alive! remote))
 		  ;; return to the main hop loop
 		  (let ((s (http-header-field
@@ -363,7 +380,9 @@
 				key
 				(lambda (l) (cons conn l))
 				(list conn)))
-	  (close-connection! conn)))
+	  (begin
+;* 	     (tprint "connection close/timeout " (connection-id conn)) */
+	     (close-connection! conn))))
    
    [assert () (not (symbol? (mutex-state *remote-lock*)))]
    
@@ -392,8 +411,9 @@
 (define (remote-get-socket host port timeout request ssl)
    
    (define (make-new-connection key id)
-      (with-trace 4 'make--new-connection
+      (with-trace 4 'make-new-connection
 	 (let ((s (make-client-socket/timeout host port timeout request ssl)))
+;* 	    (tprint "make-new-connection id=" id)                      */
 	    (instantiate::connection
 	       (id id)
 	       (socket s)
@@ -445,17 +465,17 @@
       (let ((now (current-seconds)))
 	 (filter-connection-table!
 	  (lambda (c)
-	     (or (connection-locked? c)
-		 (not (connection-timeout? c now)))))))
+	     (or (connection-locked? c) (not (connection-timeout? c now)))))))
    (if (too-many-keep-alive-connection?)
        ;; we have failed, we still have too many keep-alive connections open
        (begin
-	  (filter-connection-table!
-	   (lambda (c) (connection-locked? c)))
+	  (filter-connection-table! (lambda (c) (connection-locked? c)))
 	  (connection-close-sans-lock! conn))
        ;; store the connection only if room is available on the table
-       (with-access::connection conn (locked?)
+       (with-access::connection conn (locked? keep-alive?)
+;* 	  (tprint "keep-alive connection : " (connection-id conn))     */
 	  (set! locked? #f)
+	  (set! keep-alive? #t)
 	  (unless (connection-intable? conn)
 	     ;; this is the first time we see this connection, we add it to
 	     ;; the connection table
@@ -489,7 +509,8 @@
       (or (not (input-port? ip))
 	  (when (char-ready? ip)
 	     (with-handler
-		(lambda (e) #t)
+		(lambda (e)
+		   #t)
 		(let ((c (read-char ip)))
 		   (if (eof-object? c)
 		       #t
