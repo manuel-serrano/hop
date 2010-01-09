@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Wed Dec 16 06:06:58 2009 (serrano)                */
-/*    Copyright   :  2007-09 Manuel Serrano                            */
+/*    Last change :  Sat Jan  9 09:29:36 2010 (serrano)                */
+/*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
 /*=====================================================================*/
@@ -91,7 +91,10 @@ function hop_dashboard_populate( proc ) {
 		   
 	 app.onmouseover = function( e ) {
 	    node_style_set( this, "background", "#fff" );
-	    node_style_set( this, "border", "1px outset #542d73" );
+	    node_style_set( this, "border-left", "1px solid #ccc" );
+	    node_style_set( this, "border-top", "1px solid #ccc" );
+	    node_style_set( this, "border-right", "1px solid #555" );
+	    node_style_set( this, "border-bottom", "1px solid #555" );
 	 }
 	 app.onmouseout = function( e ) {
 	    node_style_set( this, "background", "inherit" );
@@ -365,4 +368,4 @@ function hop_dashboard_init() {
 /*---------------------------------------------------------------------*/
 /*    runtime initialization                                           */
 /*---------------------------------------------------------------------*/
-hop_window_onload_add( hop_dashboard_init );
+hop_add_event_listener( window, "ready", hop_dashboard_init, true );

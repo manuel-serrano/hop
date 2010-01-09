@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:38:36 2006                          */
-#*    Last change :  Sat Dec 19 07:23:58 2009 (serrano)                */
-#*    Copyright   :  2006-09 Manuel Serrano                            */
+#*    Last change :  Fri Jan  8 20:35:14 2010 (serrano)                */
+#*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    This Makefile interfaces with version managers.                  */
 #*=====================================================================*/
@@ -39,9 +39,9 @@ populate:
 
 commit:
 	if [ "$(LOGMSG) " != " " ]; then \
-           $(VM-COMMIT) $(OPT) -m "$(LOGMSG)"; \
+           $(VM-COMMIT) $(OPT) -m "$(LOGMSG)" && $(VM-VERIFY); \
         else \
-           $(VM-COMMIT) $(OPT); \
+           $(VM-COMMIT) $(OPT) && $(VM-VERIFY); \
         fi
 
 push:

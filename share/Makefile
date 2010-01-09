@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Dec 14 07:34:15 2009 (serrano)                */
-#*    Copyright   :  2004-09 Manuel Serrano                            */
+#*    Last change :  Sat Jan  9 11:04:45 2010 (serrano)                */
+#*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -75,10 +75,10 @@ ICONS_PANED	= hcursor.png vcursor.png
 
 ICONS_SLIDER	= cursor.png
 
-ICONS_WINDOW	= bottom-left.png close.png \
-                  title-left.png bottom-middle.png icon.png \
-                  title.png bottom-right.png maximize.png \
-                  title-right.png
+ICONS_WINDOW	= bottom-left.png bottom-middle.png bottom-right.png \
+		  close.png icon.png maximize.png \
+                  title-left.png title.png title-right.png \
+                  title-left-hover.png title-hover.png title-right-hover.png
 
 ICONS_FX	= shadow-e.png shadow-se.png shadow-ne.png \
                   shadow-sw.png shadow-s.png

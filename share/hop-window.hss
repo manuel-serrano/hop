@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Wed Oct  7 10:11:42 2009 (serrano)                */
-/*    Copyright   :  2006-09 Manuel Serrano                            */
+/*    Last change :  Sat Jan  9 11:03:35 2010 (serrano)                */
+/*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP WINDOW CSS                                                   */
 /*=====================================================================*/
@@ -172,12 +172,20 @@ div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-left {
   width: 10px;
 }
 
+div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-left {
+  background-image: $(url "icons/hop-window/title-left-hover.png");
+}
+
 div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-middle {
   background-image: $(url "icons/hop-window/title.png");
   background-repeat: repeat;
   background-position: center;
   vertical-align: middle;
   text-align: center;
+}
+
+div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-middle {
+  background-image: $(url "icons/hop-window/title-hover.png");
 }
 
 div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-right {
@@ -189,13 +197,17 @@ div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-right {
   width: 10px;
 }
 
+div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-right {
+  background-image: $(url "icons/hop-window/title-right-hover.png");
+}
+
 /*---------------------------------------------------------------------*/
 /*    content                                                          */
 /*---------------------------------------------------------------------*/
 div[hssclass=hop-window] div.hop-window-content {
   position: absolute;
   top: 17px; 
-  padding-top: 2px;
+  padding-top: 0;
   bottom: 4px; 
   left: 1px; 
   right: 1px;

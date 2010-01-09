@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Thu Sep 24 01:33:27 2009 (serrano)                */
-/*    Copyright   :  2007-09 Manuel Serrano                            */
+/*    Last change :  Sat Jan  9 10:26:10 2010 (serrano)                */
+/*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
 /*=====================================================================*/
@@ -100,9 +100,17 @@ function hop_get_window( o ) {
 
 /*---------------------------------------------------------------------*/
 /*    hop_iwindow_zindex ...                                           */
+/*    -------------------------------------------------------------    */
+/*    This uses a two stage initialization that support multiple       */
+/*    inclusion of the hop-window.js file.                             */
 /*---------------------------------------------------------------------*/
-var hop_iwindow_zindex = 0;
-var hop_iwindow_count = 0;
+var hop_iwindow_zindex;
+var hop_iwindow_count;
+
+if( typeof hop_iwindow_count !== "number" ) {
+   hop_iwindow_zindex = 0;
+   hop_iwindow_count = 0;
+}
 
 /*---------------------------------------------------------------------*/
 /*    hop_iwindow_close ...                                            */
@@ -350,7 +358,6 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
    var poh = (win.parentNode == document.body) ? -1 : hop_element_y( win.parentNode) + win.parentNode.offsetHeight - 8;
    var mousemove;
 
-   node_style_set( win.el_content, "border", "0" );
    node_style_set( win.el_content, "display", "none" );
    node_style_set( win.el_win, "background", "white" );
    node_style_set( win, "clip", "auto" );

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Mon Jan  4 10:09:46 2010 (serrano)                */
+;*    Last change :  Sat Jan  9 07:52:47 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -379,5 +379,5 @@
    ;; there is nothing we can do but aborting the request
    (socket-close (http-request-socket req))
    ;; abort the request
-   (raise (instantiate::&ignore-exception)))
+   (raise e))
 
