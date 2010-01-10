@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Sat Jan  9 09:50:47 2010 (serrano)                */
+/*    Last change :  Sun Jan 10 08:53:24 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -101,8 +101,9 @@ function hop_Config() {
   this.flash_version = hop_get_flash_version();
 
   /* html5 */
+  var audio = document.createElement( "audio" );
   this.html5_video = "play" in document.createElement( "video" );
-  this.html5_audio = "play" in document.createElement( "audio" );
+  this.html5_audio = "play" in audio && audio.constructor === HTMLAudioElement;
 
   /* Geolocation */
   this.geolocation = (navigator.geolocation ? true : false);
@@ -145,7 +146,7 @@ function hop_Config() {
      this.flash_audio = false;
      this.flash_markup = "embed";
      this.inline_image = true;
-     this.css = 2.1;
+     this.css = 3;
   } else if( navigator.userAgent.indexOf( "Safari" ) >= 0 ) {
      this.js_speed = 80;
      this.navigator_family = "safari";

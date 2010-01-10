@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Sat Jan  9 11:03:35 2010 (serrano)                */
+/*    Last change :  Sun Jan 10 09:44:21 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP WINDOW CSS                                                   */
@@ -228,7 +228,9 @@ div[hssclass=hop-window] div.hop-window-foot {
 }
 
 div[hssclass=hop-window] div.hop-window-foot table {
-  font-size: 2pt;
+  font-size: 1px;
+  height: 4px;
+  overflow: hidden;
 }
 
 div[hssclass=hop-window] td.hop-window-bottom-left {

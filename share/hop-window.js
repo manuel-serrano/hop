@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Sat Jan  9 10:26:10 2010 (serrano)                */
+/*    Last change :  Sun Jan 10 09:30:49 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -274,11 +274,10 @@ function hop_iwindow_drag( event, win ) {
    var py = hop_element_y( p );
 
    hop_iwindow_raise( win );
-   
+
    node_style_set( win.el_content, "visibility", "hidden" );
    node_style_set( win.el_handle, "cursor", "move" );
    node_style_set( win.el_win, "background", "white" );
-   node_style_set( win, "clip", "auto" );
 
    var mousemove = function( event ) {
       var nx = (hop_event_mouse_x( event ) - dx);
@@ -360,7 +359,6 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
 
    node_style_set( win.el_content, "display", "none" );
    node_style_set( win.el_win, "background", "white" );
-   node_style_set( win, "clip", "auto" );
 
    if( widthp && heightp ) {
       mousemove = function( event ) {
@@ -465,9 +463,9 @@ function make_hop_iwindow( id, klass, parent ) {
    var foot = "\
 <table width='100%' border='0' cellspacing='0' cellpadding='0'>\n\
   <tr>\n\
-    <td id='" + id + "-resize-left' class='hop-window-bottom-left'>&#160;</td>\n\
-    <td id='" + id + "-resize-middle' class='hop-window-bottom-middle'>&#160;</td>\n\
-    <td id='" + id + "-resize-right' class='hop-window-bottom-right'>&#160;</td>\n\
+    <td id='" + id + "-resize-left' class='hop-window-bottom-left'>&shy;</td>\n\
+    <td id='" + id + "-resize-middle' class='hop-window-bottom-middle'>&shy;</td>\n\
+    <td id='" + id + "-resize-right' class='hop-window-bottom-right'>&shy;</td>\n\
   </tr>\n\
 </table>";
 

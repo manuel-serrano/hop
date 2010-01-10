@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Fri Jan  8 15:17:14 2010 (serrano)                */
+/*    Last change :  Sun Jan 10 05:59:16 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -191,8 +191,139 @@ HopAudioServerBackend.prototype.update = function() {
 	     false,
 	     true,
 	     5000 );
-}
+};
+
+/*---------------------------------------------------------------------*/
+/*    HTMLAudioElement                                                 */
+/*---------------------------------------------------------------------*/
+// playurl
+HTMLAudioElement.prototype.playurl = function( url, start ) {
+   this.isStopped = false;
+   if( this.loadedurl !== url ) {
+      this.loadedurl = false;
+      this.src = url;
+      this.autoplay = true;
+      this.load( url );
+   } else {
+      this.play();
+   }
+};
+
+// playlist_play
+HTMLAudioElement.prototype.playlist_play = function( index ) {
+   this.isStopped = false;
+   this.playlistindex = index;
+
+   this.playurl( sc_listRef( this.playlist, index ), 0 );
+};
+
+// stop
+HTMLAudioElement.prototype.stop = function() {
+   this.isStopped = true;
+   return this.pause();
+};
+
+// close
+HTMLAudioElement.prototype.close = function() {
+   this.isStopped = true;
+   this.pause();
+   hop_audio_invoke_listeners( this.audio, "close" );
+};
+
+// volume_get
+HTMLAudioElement.prototype.volume_get = function() {
+   return Math.round( this.volume * 100 );
+};
+
+// volume_set
+HTMLAudioElement.prototype.volume_set = function( v ) {
+   this.volume = v / 100;
+   return v;
+};
+
+// duration_get
+HTMLAudioElement.prototype.duration_get = function() {
+   return this.duration ? Math.round( this.duration ) : 0;
+};
+
+// position_get
+HTMLAudioElement.prototype.position_get = function() {
+   return this.currentTime ? Math.round( this.currentTime ) : 0;
+};
+
+// playlist_index_get
+HTMLAudioElement.prototype.playlist_index_get = function() {
+   return this.playlistindex;
+};
+
+// playlist_get
+HTMLAudioElement.prototype.playlist_get = function() {
+   return this.playlist;
+};
+
+// playlist_set   
+HTMLAudioElement.prototype.playlist_set = function( playlist, autorun ) {
+   var backend = this;
    
+   var html5_canplay = function( o ) {
+      if( typeof o === "string" ) {
+	 return o;
+      }
+      if( !sc_isPair( o ) ) {
+	 return false;
+      }
+      while( sc_isPair( o ) ) {
+	 var e = o.car;
+
+	 if( typeof e === "string" ) {
+	    return e;
+	 }
+	 if( sc_isPair( e ) && sc_isPair( e.cdr ) ) {
+	    if( backend.canPlayType( e.car ) !== "" ) {
+	       return e.cdr.car;
+	    }
+	 }
+	 o = o.cdr;
+      }
+      return false;
+   }
+
+   backend.playlist = sc_filterMap1( html5_canplay, playlist );
+   if( autorun ) backend.playlist_play( 0 );
+};
+
+// metadata_get
+HTMLAudioElement.prototype.metadata_get = function() {
+   if( typeof this.loadedurl === "string" ) {
+      var a = url_decode( this.loadedurl ).split( "/" );
+
+      if( a.length >= 3 ) {
+	 return { title: a[ a.length - 1 ],
+	       album: a[ a.length - 2 ],
+	       artist: a[ a.length - 3 ] };
+	 if( a.length >= 2 ) {
+	    return { title: a[ a.length - 1 ],
+		  album: a[ a.length - 2 ],
+		  artist: false };
+	 }
+	 if( a.length >= 1 )
+	    return { title: a[ a.length - 1 ],
+		  album: false,
+		  artist: false };
+      }
+      return { title: s,
+	       album: false,
+	       artist: false };
+   } else {
+      return false;
+   }
+};
+
+// update
+HTMLAudioElement.prototype.update = function() {
+   ;
+}
+
 /*---------------------------------------------------------------------*/
 /*    hop_audio_init ...                                               */
 /*    -------------------------------------------------------------    */
@@ -284,107 +415,6 @@ function hop_audio_html5_init( backend ) {
    backend.loadedurl = false;
    backend.isstopped = false;
 
-   var html5_canplay = function( o ) {
-      if( typeof o === "string" ) {
-	 return o;
-      }
-      if( !sc_isPair( o ) ) {
-	 return false;
-      }
-      while( sc_isPair( o ) ) {
-	 var e = o.car;
-
-	 if( typeof e === "string" ) {
-	    return e;
-	 }
-	 if( sc_isPair( e ) && sc_isPair( e.cdr ) ) {
-	    if( backend.canPlayType( e.car ) !== "" ) {
-	       return e.cdr.car;
-	    }
-	 }
-	 o = o.cdr;
-      }
-      return false;
-   }
-   
-   backend.playurl = function( url, start ) {
-      this.isStopped = false;
-      if( this.loadedurl !== url ) {
-	 this.loadedurl = false;
-	 this.src = url;
-	 this.autoplay = true;
-	 this.load( url );
-      } else {
-	 this.play();
-      }
-   }
-   backend.playlist_play = function( index ) {
-      this.isStopped = false;
-      this.playlistindex = index;
-
-      this.playurl( sc_listRef( this.playlist, index ), 0 );
-   }
-   backend.stop = function() {
-      this.isStopped = true;
-      return this.pause();
-   }
-   backend.close = function() {
-      this.isStopped = true;
-      this.pause();
-      hop_audio_invoke_listeners( this.audio, "close" );
-   }
-   backend.volume_get = function() {
-      return Math.round( this.volume * 100 );
-   }
-   backend.volume_set = function( v ) {
-      this.volume = v / 100;
-      return v;
-   }
-   backend.duration_get = function() {
-      return this.duration ? Math.round( this.duration ) : 0;
-   }
-   backend.position_get = function() {
-      return this.currentTime ? Math.round( this.currentTime ) : 0;
-   }
-   backend.playlist_index_get = function() {
-      return this.playlistindex;
-   }
-   backend.playlist_get = function() {
-      return this.playlist;
-   }
-   backend.playlist_set = function( playlist, autorun ) {
-      this.playlist = sc_filterMap1( html5_canplay, playlist );
-      if( autorun ) this.playlist_play( 0 );
-   }
-   backend.metadata_get = function() {
-      if( typeof this.loadedurl === "string" ) {
-	 var a = url_decode( this.loadedurl ).split( "/" );
-
-	 if( a.length >= 3 ) {
-	    return { title: a[ a.length - 1 ],
-		     album: a[ a.length - 2 ],
-		     artist: a[ a.length - 3 ] };
-	 if( a.length >= 2 ) {
-	    return { title: a[ a.length - 1 ],
-		     album: a[ a.length - 2 ],
-		     artist: false };
-	 }
-	 if( a.length >= 1 )
-	    return { title: a[ a.length - 1 ],
-		     album: false,
-		     artist: false };
-	 }
-	 return { title: s,
-		  album: false,
-		  artist: false };
-      } else {
-	 return false;
-      }
-   }
-   backend.update = function() {
-      ;
-   }
-   
    backend.addEventListener( "play", function( e ) {
 	 this.state = Splay;
 	 hop_audio_invoke_listeners( this.audio, "play" );

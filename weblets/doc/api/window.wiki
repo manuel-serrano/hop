@@ -40,6 +40,13 @@ must include in their header, the following statement:
   (<HEAD> :include "hop-window")
 
 
+~~ Alternative window themes may be loaded. For instance, to load the //red//
+them, use:
+
+
+  (<HEAD> :include "hop-window" "hop-window-red")
+
+
 == Examples ==
 
 <example>window</example>

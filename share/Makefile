@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sat Jan  9 11:04:45 2010 (serrano)                */
+#*    Last change :  Sun Jan 10 09:47:30 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -47,7 +47,7 @@ EXTRA		= hop-error.hss hop.css \
 	 	  hop-notepad.hss hop-notepad.js \
                   hop-tree.js hop-tree.css \
 		  hop-foldlist.js hop-foldlist.css \
-                  hop-window.scm hop-window.js hop-window.hss \
+                  hop-window.scm hop-window.js hop-window.hss hop-window-red.hss\
                   hop-editor.js hop-editor.css \
                   hop-file.js hop-file.scm hop-file.hss \
                   hop-fileselect.js hop-fileselect.css \
@@ -79,6 +79,8 @@ ICONS_WINDOW	= bottom-left.png bottom-middle.png bottom-right.png \
 		  close.png icon.png maximize.png \
                   title-left.png title.png title-right.png \
                   title-left-hover.png title-hover.png title-right-hover.png
+
+ICONS_WINDOW_RED= close.png iconify.png maximize.png 
 
 ICONS_FX	= shadow-e.png shadow-se.png shadow-ne.png \
                   shadow-sw.png shadow-s.png
@@ -113,6 +115,7 @@ ICONS		= important.png shadow-se.png shadow-sw.png \
                   $(ICONS_PANED:%=hop-paned/%) \
                   $(ICONS_SLIDER:%=hop-slider/%) \
                   $(ICONS_WINDOW:%=hop-window/%) \
+                  $(ICONS_WINDOW_RED:%=hop-window-red/%) \
                   $(ICONS_FX:%=hop-fx/%) \
                   $(ICONS_TREE:%=hop-tree/%) \
                   $(ICONS_FOLDLIST:%=hop-foldlist/%) \

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jul  8 08:39:01 2009                          */
-/*    Last change :  Thu Jul  9 07:09:24 2009 (serrano)                */
-/*    Copyright   :  2009 Manuel Serrano                               */
+/*    Last change :  Sun Jan 10 09:23:08 2010 (serrano)                */
+/*    Copyright   :  2009-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP FX CSS                                                       */
 /*=====================================================================*/
@@ -73,7 +73,6 @@ table.hop-fx-shadow td.hop-shadow-sw {
   background-image: $(url "icons/hop-fx/shadow-sw.png");
   background-repeat: repeat-x;
   background-position: bottom;
-  border: 0;
 }
 
 table.hop-fx-shadow td.hop-shadow-s {
@@ -83,7 +82,6 @@ table.hop-fx-shadow td.hop-shadow-s {
   background-image: $(url "icons/hop-fx/shadow-s.png");
   background-repeat: repeat-x;
   background-position: bottom;
-  border: 0;
 }
 
 table.hop-fx-shadow td.hop-shadow-se {
