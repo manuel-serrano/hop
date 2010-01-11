@@ -1,0 +1,68 @@
+;; HTML5 video with canvas special effect
+(<HTML>
+   (<HEAD> :include "hop-canvas"
+      
+      ~(define video #unspecified)
+      ~(define c1 #unspecified)
+      ~(define c2 #unspecified)
+      ~(define ctx1 #unspecified)
+      ~(define ctx2 #unspecified)
+      
+      ~(define reflection 3)
+      
+      ~(define (init)
+	  
+	  (set! video (dom-get-element-by-id "video"))
+	  (set! c1 (dom-get-element-by-id "c1"))
+	  (set! ctx1 (canvas-get-context c1 "2d"))
+	  (set! c2 (dom-get-element-by-id "c2"))
+	  (set! ctx2 (canvas-get-context c2 "2d"))
+	  
+	  (add-event-listener! video "play"
+	     (lambda ()
+		(let ((height (min 256 (/ video.height reflection))))
+		   (set! c1.width video.width)
+		   (set! c1.height height)
+		   (set! c2.width video.width)
+		   (set! c2.height height)
+		   (let loop ()
+		      (unless (or video.paused video.ended)
+			 (compute-frame)
+			 (after 0 loop)))))))
+      
+      ~(define (alpha-row data width i j a)
+	  (let loop ((i 0))
+	     (when (< i (+ j width))
+		(vector-set! data (+ 3 (* 4 (+ i (* width j)))) a)
+		(loop (+ i 1)))))
+      
+      ~(define (compute-frame)
+	  (canvas-save ctx1)
+	  (canvas-set-transform ctx1 1 0 0 -1 0 video.height)
+	  (canvas-draw-image ctx1 video 0 0 video.width video.height)
+	  (canvas-restore ctx1)
+	  (let* ((frame (canvas-get-image-data ctx1 0 0 c1.width c1.height))
+		 (data frame.data)
+		 (l (/ data.length 4))
+		 (step (round (/ 256 c1.height))))
+	     ;; shaded rows
+	     (let loop ((j 0))
+		(when (< j c1.height)
+		   (let ((alpha (max 0 (- 256 (* step j)))))
+		      (alpha-row data video.width i j alpha)
+		      (loop (+ j 1)))))
+	     ;; draw the image
+	     (canvas-put-image-data ctx2 frame 0 0)))
+      
+      ~(add-event-listener! window "load" init))
+   
+   (<BODY> :style "background: black"
+      (<DIV> :style "text-align: center"
+	 (<DIV> :style "color: white" "A video with a reflection effect")
+	 (<VIDEO> :id "video" :src
+	    "<the-path-of-an-ogv-file-located-on-the-same-server>"
+	    :width 320 :height 200
+	    :controls #t)
+	 (<DIV> :style "border-top: 1px solid #aaa; height: 1px; margin-top: -4px;"
+	    (<CANVAS> :id "c1" :style "display: none")
+	    (<CANVAS> :id "c2" :style "height: 67px")))))

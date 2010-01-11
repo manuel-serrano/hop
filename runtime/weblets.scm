@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Tue Sep  1 12:17:47 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Sun Jan 10 10:46:33 2010 (serrano)                */
+;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
 ;*=====================================================================*/
@@ -291,11 +291,12 @@
 	    ;; load the autoloaded file
 	    (with-handler
 	       (lambda (e)
+		  (exception-notify e)
 		  (raise
 		   (instantiate::&hop-autoload-error
 		      (proc 'autoload-loadq!)
-		      (msg "Cannot autoload")
-		      (obj e))))
+		      (msg "Cannot autoload file")
+		      (obj path))))
 	       (hop-load-modified path))
 	    ;; execute the hooks
 	    (for-each (lambda (h) (h req)) hooks)

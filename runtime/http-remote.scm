@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Thu Jan  7 15:41:58 2010 (serrano)                */
+;*    Last change :  Sun Jan 10 17:48:02 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -247,10 +247,6 @@
 			  (not (hop-enable-remote-keep-alive)))
 		      (with-trace 4 'connection-close@remote-body
 			 (trace-item "remote=" remote)
-;* 			 (tprint "connection close/client "            */
-;* 				 (connection-id remote)                */
-;* 				 " [status=" status-code " connection=" connection */
-;* 				 " http=" http-version "]")            */
 			 (connection-close! remote))
 		      (connection-keep-alive! remote))
 		  ;; return to the main hop loop

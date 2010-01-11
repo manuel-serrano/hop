@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sun Dec  6 16:50:46 2009 (serrano)                */
-/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    Last change :  Sun Jan 10 10:37:47 2010 (serrano)                */
+/*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -299,11 +299,10 @@ $(define toolbar-opacity "0.9")
 $(define toolbar-background (color-lighter "#496bce"))
 
 demo {
-  width: 800px;
-  height: 600px;
+  width: 100%;
+  height: 700px;
   background-color: #496bce;
   overflow: auto;
-  border: 2px double #aaa;
   z-index: 1001;
 }
   

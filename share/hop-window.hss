@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Sun Jan 10 09:44:21 2010 (serrano)                */
+/*    Last change :  Sun Jan 10 10:21:14 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP WINDOW CSS                                                   */
@@ -23,6 +23,9 @@ $(define-hss-type window "div[hssclass=hop-window]"
 
    (define-hss-property (background v)
       (format "div.hop-window-content { background: ~a; }" (car v)))
+
+   (define-hss-property (background-color v)
+      (format "div.hop-window-content { background-color: ~a; }" (car v)))
 
    (define-hss-property (color v)
       (format "div.hop-window-content { color: ~a; }" (car v)))

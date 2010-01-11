@@ -47,6 +47,12 @@ them, use:
   (<HEAD> :include "hop-window" "hop-window-red")
 
 
+~~ Windows can be //globally// configured by copying the file 
+++hop-window-red.hss++ into the ++,(hop-rc-directory)/hss/hop-window.hss++ 
+file. When present this file is loaded //after// the regular 
+++hop-window.hss++.
+
+
 == Examples ==
 
 <example>window</example>
@@ -266,7 +272,7 @@ This client-side gets (respec. sets) the //window// title.
 <style>
 
 === ++.window++ ===
-<css> .window
+<css> window
 
 The visual configuration of the body of the window.
 

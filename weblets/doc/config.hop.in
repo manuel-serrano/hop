@@ -72,7 +72,7 @@
 (define-parameter doc-core-dir (make-file-name (doc-dir) "core"))
 
 ;*---------------------------------------------------------------------*/
-;*    doc-js-dir                                                     */
+;*    doc-js-dir                                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter doc-js-dir (make-file-name (doc-dir) "js"))
 

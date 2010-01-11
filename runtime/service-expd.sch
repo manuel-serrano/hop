@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Fri Dec 11 05:37:18 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Sun Jan 10 10:57:29 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
 ;*    at compile-time and runtime-time.                                */
@@ -52,12 +52,20 @@
 		 (cons* (symbol->keyword (car args))
 			(car args)
 			(loop (cdr args) state))))
+	    ((and (pair? (car args)) (symbol? (caar args)))
+	     (if (eq? state 'plain)
+		 (error 'service "Illegal definition" id)
+		 (cons* (symbol->keyword (caar args))
+			(caar args)
+			(loop (cdr args) state))))
 	    ((eq? (car args) #!key)
 	     (loop (cdr args) 'key))
 	    ((eq? (car args) #!optional)
 	     (loop (cdr args) 'plain))
 	    ((eq? (car args) #!rest)
-	     (list (cadr args))))))
+	     (list (cadr args)))
+	    (else
+	     (error 'service "Illegal definition" id)))))
 
    (let* ((proc (if (symbol? wid) (symbol-append wid '-proc) 'proc))
 	  (hdl (if (symbol? wid) (symbol-append wid '-handler) 'hdl))

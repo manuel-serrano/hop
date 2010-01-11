@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Tue Dec  8 10:45:27 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Sun Jan 10 13:05:31 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
 ;*=====================================================================*/
@@ -24,88 +24,71 @@
 	   hophome_demos-wiki
 	   hophome_demos-rewrite
 	   hophome_demos-set
-	   hophome_demos-music)
+	   hophome_demos-music
+	   hophome_demos-video)
    (export (<DEMO> request)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <DEMO> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<DEMO> req)
-   ;; MSIE does not support yet, inline images!
    (let ((inl (not
 	       (string-contains
 		(http-header-field (http-request-header req) :user-agent)
 		"MSIE"))))
-      (<DIV>
-	 :class "demo"
+      (<DIV> :class "demo"
 	 :id "demo-playground"
 	 :align "left"
 	 (<TIPS> 550 500)
-	 (<DIV>
-	    :class "toolbar"
+	 (<DIV> :class "toolbar"
 	    :align "center"
 	    :id "toolbar-demo"
-	    (<TABLE>
-	       :class "toolbar"
+	    (<TABLE> :class "toolbar"
 	       (<TR>
-		  (<TD>
-		     :align "left"
+		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/sudoku)
-			     "games1-32x32.png" "games1-48x48.png" inl
-			     500 420)))
+			"games1-32x32.png" "games1-48x48.png" inl
+			500 450)))
 	       (<TR>
-		  (<TD>
-		     :align "left"
+		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/minesweeper)
-			     "mines-32x32.png" "mines-48x48.png" inl
-			     320 320)))
+			"mines-32x32.png" "mines-48x48.png" inl
+			320 320)))
 	       (<TR>
-		  (<TD>
-		     :align "left"
+		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/set)
-			     "set-32x32.png" "set-48x48.png" inl
-			     500 400)))
+			"set-32x32.png" "set-48x48.png" inl
+			500 550)))
 	       (<TR>
-		  (<TD>
-		     :align "left"
+		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/music)
-			     "music-32x32.png" "music-48x48.png" inl
-			     420 320)))
-;* 	    (<TR>                                                      */
-;* 	       (<TD>                                                   */
-;* 		  :align "left"                                        */
-;* 		  (<ZIMG> "hop/home/demos/tetris"                      */
-;* 			  "games2-32x32.png" "games2-48x48.png")))     */
+			"music-32x32.png" "music-48x48.png" inl
+			450 430)))
 	       (<TR>
-		  (<TD>
-		     :align "left"
+		  (<TD> :align "left"
+		     (<ZIMG> (home/demos/video)
+			"video-32x32.png" "video-48x48.png" inl
+			400 300)))
+	       (<TR>
+		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/rss)
-			     "news-32x32.png" "news-48x48.png" inl
-			     570 370)))
-;* 	       (<TR>                                                   */
-;* 		  (<TD>                                                */
-;* 		     :align "left"                                     */
-;* 		     (<ZIMG> (make-service-url home/demos/repl)        */
-;* 			     "term-32x32.png" "term-48x48.png" inl     */
-;* 			     640 500)))                                */
+			"news-32x32.png" "news-48x48.png" inl
+			570 370)))
 	       (<TR>
-		  (<TD>
-		     :align "left"
+		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/wiki)
-			     "wiki-32x32.png" "wiki-48x48.png" inl
-			     390 450)))
+			"wiki-32x32.png" "wiki-48x48.png" inl
+			390 450)))
 	       (<TR>
-		  (<TD>
-		     :align "left"
+		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/rewrite)
-			     "utilities-32x32.png" "utilities-48x48.png" inl
-			     500 220)))
+			"utilities-32x32.png" "utilities-48x48.png" inl
+			500 220)))
 	       (<TR>
-		  (<TD>
-		     :align "left"
+		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/source)
-			     "computer-32x32.png" "computer-48x48.png" inl
-			     700 500))))))))
+			"computer-32x32.png" "computer-48x48.png" inl
+			700 500))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    home/demos/tips ...                                              */
@@ -131,6 +114,17 @@ playground contains the following demonstrations:])
        (<P> :class "descr" [This demonstration implements a simple
  ,(<EM> "Minesweeper") game. It shows how to program client side applications
  in HOP.])
+       (<H2> "Set")
+       (<P> :class "descr" [This demonstration implements a simple
+ ,(<EM> "set") game. It shows how to program distributed applications
+ in HOP.])
+       (<H2> "Audio")
+       (<P> :class "descr" [This demonstration implements a simple
+ ,(<EM> "audio") player. It shows how to program multimedia applications
+ in HOP.])
+       (<H2> "Video")
+       (<P> :class "descr" [This demonstration shows how use HTML 5 video
+in HOP to implement live special effects.])
        (<H2> "Rss")
        (<P> :class "descr" [This implements a ,(<EM> "RSS") reader. It
  illustrates the HOP widget for ,(<EM> "fold lists"). It shows how to use
@@ -138,12 +132,6 @@ playground contains the following demonstrations:])
  demonstration, RSS feeds are fetched from the network and parsed only
  when items are unfolded. This demonstration also shows how to
  program applications that uses third party servers.])
-;*        (<H2> "Repl")                                                */
-;*        (<P> :class "descr" [This is a HOP client side interpreter. Each time, */
-;*  the \[return\] key is pressed. The expression after the prompt (the string */
-;*  ,(<TT> ":=>")) is sent to the server for compilation. Once back, it is */
-;*  evaluated on the client browser. The expressions may refer to the whole */
-;*  HOP client side API. In particular, they can manipulate the current DOM.]) */
        (<H2> "Wiki")
        (<P> :class "descr" [This demonstration uses the HOP Wiki library. It
 also shows how HOP ,(<EM> "signals") can be deployed for allowing external
@@ -176,7 +164,7 @@ be used to access the whole source code of this playground.]))))
 	  (set! frame.src $(home/demos/tips))
 	  (node-style-set! frame "border-width" "0")
 	  (node-style-set! frame "width" "100%")
-	  (node-style-set! frame "height" $(format "~apx" h))
+	  (node-style-set! frame "height" "100%")
 	  (let* ((w (window-open :id $t
 		       :src frame
 		       :width $w :height $h
@@ -254,7 +242,7 @@ be used to access the whole source code of this playground.]))))
 		      (set! frame.src $svc)
 		      (node-style-set! frame "border-width" "0")
 		      (node-style-set! frame "width" "100%")
-		      (node-style-set! frame "height" $(format "~apx" h))
+		      (node-style-set! frame "height" "100%")
 		      (let* ((w (window-open :id $t
 				   :src frame
 				   :width $w :height $h

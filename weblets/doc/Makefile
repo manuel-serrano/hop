@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Dec 31 07:14:59 2009 (serrano)                */
-#*    Copyright   :  2006-09 Manuel Serrano                            */
+#*    Last change :  Mon Jan 11 06:55:02 2010 (serrano)                */
+#*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
 #*=====================================================================*/
@@ -40,9 +40,11 @@ API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
                   regexp.wiki output.wiki webdav.wiki \
                   charset.wiki svg.wiki mathml.wiki canvas.wiki login.wiki \
                   condexpand.wiki lframe.wiki spinbutton.wiki \
-                  colorchooser.wiki font.wiki javascript.wiki
+                  colorchooser.wiki font.wiki javascript.wiki \
+                  audio.wiki video.wiki
 CORE_POP	= core.wiki
 JS_POP		= js-interface.wiki
+HSS_POP		= hss.wiki
 EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   canvas.hop canvas2.hop canvas3.hop canvas4.hop canvas5.hop \
                   filebrowse.hop filebrowse2.hop \
@@ -58,7 +60,8 @@ EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   wiki.hop wiki2.hop window.hop history-1.hop history-2.hop \
                   cookie.hop webdav.hop svg.hop svg2.hop svg3.hop mathml.hop \
                   login.hop json.hop busyanim.hop musicplay.hop form.hop \
-                  lframe.hop spinbutton.hop colorchooser.hop S3.hop
+                  lframe.hop spinbutton.hop colorchooser.hop S3.hop \
+                  video.hop videoenc.hop
 WEBLETS_POP	= .keep
 WIKI_POP	= basic.wiki hop.wiki link.wiki lists.wiki misc.wiki \
                   paragraph.wiki plugin.wiki section.wiki syntax.wiki \
@@ -80,6 +83,7 @@ POPULATION	= Makefile doc.hss doc.scm \
 		  $(API_POP:%=api/%) \
 		  $(CORE_POP:%=core/%) \
 		  $(JS_POP:%=js/%) \
+		  $(HSS_POP:%=hss/%) \
 		  $(EXAMPLES_POP:%=examples/%) \
 		  $(WEBLETS_POP:%=weblets/%) \
 		  $(WIKI_POP:%=wiki/%) \

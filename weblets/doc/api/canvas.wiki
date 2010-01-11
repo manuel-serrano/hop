@@ -33,6 +33,8 @@ Safari
   (canvas-rotate ctx angle)
   (canvas-scale ctx sx sy)
   (canvas-translate ctx tx ty)
+  (canvas-transform ctx m11 m12 m21 m22 dx dy)
+  (canvas-set-transform ctx m11 m12 m21 m22 dx dy)
   (canvas-arc ctx x y r sa ea clockwise)
   (canvas-arc-to ctx x0 y0 x1 y1 r)
   (canvas-arrow-to ctx x0 y0 x1 y1 ...)*
@@ -58,6 +60,8 @@ Safari
   (canvas-add-color-stop gradient position color)
   (canvas-create-pattern gradient image type)
   (canvas-draw-image ctx image x y ...)
+  (canvas-get-image-data ctx image x y w h)
+  (canvas-put-image-data ctx frame x y)
   (canvas-fill-text ctx text x y ...)
   (canvas-stroke-text ctx text x y ...)
   (canvas-measure-text ctx text)
@@ -210,6 +214,27 @@ Save and restore the current drawing state. The drawing state includes the
 | sx          |  float       | The horizontal translate.       |
 | sy          |  float       | The vertical translate.         |
 </arguments>
+</procedure>
+
+=== ++(canvas-transform ctx m11 m12 m21 m22 dx dy)++ ===
+=== ++(canvas-set-transform ctx m11 m12 m21 m22 dx dy)++ ===
+<procedure> canvas-transform
+<procedure> canvas-set-transform
+<arguments>
+^  arguments  ^   type       ^   description                   ^
+| ctx         |  context     | A canvas context.               |
+| m11         |  float       |        |
+| m12         |  float       |        |
+| m21         |  float       |        |
+| m22         |  float       |        |
+| dx          |  float       | The horizontal translate.       |
+| dy          |  float       | The vertical translate.         |
+</arguments>
+
+The function ++canvas-transform++ //multiplies// the current transformation
+matrix with the provided arguments. The function ++canvas-set-transform++
+//sets// the transformation matrix.
+</procedure>
 </procedure>
 
 
@@ -616,6 +641,31 @@ be set to the ++:fill-style++ property.
 Draws an image at point ++<x,y>++. The second form clips the
 image on the canvas. The third form clips an image and draws it on canvas.
 
+</procedure>
+
+=== ++(canvas-get-image-data ctx image x y w h)++ ===
+=== ++(canvas-put-image-data ctx frame x y)++ ===
+<procedure> canvas-get-image-data
+<procedure> canvas-put-image-data
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx        |  context   | A canvas context.                                 |
+| image      |  image     | An image.                                         |
+| x          |  integer   |                                                   |
+| y          |  integer   |                                                   |
+| w          |  integer   |                                                   |
+| h          |  integer   |                                                   |
+| frame      |  integer array   |  An image frame.                            |
+</arguments>
+
+  * The function ++canvas-get-image-data++ returns the frame composing the 
+image. A frame is a integer array representing the red, green, blue, alpha value
+of each pixel. For the sake of security function ++canvas-get-image-data++
+can only be applied to //same-origin// images. 
+  * The function ++canvas-put-image-data++ draw a frame on the canvas.
+
+
+</procedure>
 </procedure>
 
 == Text ==

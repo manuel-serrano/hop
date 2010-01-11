@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Sun Jan 10 05:59:16 2010 (serrano)                */
+/*    Last change :  Mon Jan 11 05:25:22 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -774,10 +774,10 @@ function hop_audio_load( audio, src, stream ) {
    audio.src = src;
    
    if( src ) {
-      audio.backend.state = stream ? Splay : Sstop;
+      if( stream ) audio.backend.state = Splay;
       hop_audio_invoke_listeners( audio, "progress" );
 
-      return audio.proxy.load( src, stream );
+      audio.backend.playurl( src, stream );
    } else {
       audio.backend.state = Sstop;
    }

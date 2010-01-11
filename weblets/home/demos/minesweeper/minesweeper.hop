@@ -14,7 +14,7 @@
 		  (<BUTTON> :onclick ~(game-start!) "restart"))
 	       (<TD>
 		  (<SPAN> :id "remaining"))))
-	 (<DIV> :id "board")
+	 (<DIV> :id "board" :style "user-select: none")
 	 (<SCRIPT> ~(begin
 		       (board-init!)
 		       (game-start!))))))

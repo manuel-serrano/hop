@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Oct  5 21:27:01 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Sun Jan 10 17:32:06 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
 ;*=====================================================================*/
@@ -381,6 +381,7 @@ Google, each containing a forward pointer to the actual URL.])))
 	    (hop-verb 2 (hop-color req req " BLACKLISTED") ": " host ":" port path "\n")
 	    (hop-verb 3 " header: " header "\n")
 	    (instantiate::http-response-string
+	       (header (list (cons 'connection: 'close)))
 	       (start-line "HTTP/1.0 404 Not Found"))))))
 
 ;*---------------------------------------------------------------------*/

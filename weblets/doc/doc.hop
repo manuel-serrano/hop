@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Mon Mar 23 11:58:26 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Mon Jan 11 05:30:37 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
 ;*=====================================================================*/
@@ -80,14 +80,21 @@
 		  (<API>)))
 	    
 	    (<NPTAB> :id "doc-core"
-	       (<NPTABHEAD> "Core language")
+	       (<NPTABHEAD> "Core")
 	       (<DIV> :class "core doc-tab"
 		  (doc-page
 		   (make-file-name (doc-core-dir) "core.wiki")
 		   (make-wiki-request-syntax (doc-api-syntax)))))
 
+	    (<NPTAB> :id "doc-hss"
+	       (<NPTABHEAD> "Hss")
+	       (<DIV> :class "hss doc-tab"
+		  (doc-page
+		   (make-file-name (doc-hss-dir) "hss.wiki")
+		   (make-wiki-request-syntax (doc-api-syntax)))))
+
 	    (<NPTAB> :id "doc-js"
-	       (<NPTABHEAD> "JavaScript Interface")
+	       (<NPTABHEAD> "JavaScript")
 	       (<DIV> :class "js doc-tab"
 		  (doc-page
 		   (make-file-name (doc-js-dir) "js-interface.wiki")

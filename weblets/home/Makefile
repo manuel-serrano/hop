@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Dec  8 08:17:33 2009 (serrano)                */
-#*    Copyright   :  2006-09 Manuel Serrano                            */
+#*    Last change :  Sun Jan 10 12:57:49 2010 (serrano)                */
+#*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
 #*=====================================================================*/
@@ -39,7 +39,8 @@ POPULATION	= Makefile home.hss tips.hss \
 
 HOP_DEMOS	= minesweeper/minesweeper.hop \
 	          minesweeper/minesweeper.scm \
-                  music/music.hop \
+                  music/music.hop music/music.hss \
+                  video/video.hop video/video.hss \
                   repl/repl.hop \
                   rewrite/rewrite.hop \
                   rss/rss.hop \

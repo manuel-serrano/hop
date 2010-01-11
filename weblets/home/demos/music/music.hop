@@ -1,51 +1,24 @@
 (module hophome_demos-music
    (export (home/demos/music)))
 
-(define (rss->podcast-mp3 url)
-   (with-url url
-      (lambda (p)
-	 (bind-exit (return)
-	    (let ((p (open-input-string p)))
-	       (xml-parse p
-			  :procedure
-			  (lambda (markup attributes body)
-			     (when (eq? markup 'enclosure)
-				(return (cdr (assq 'url attributes))))))
-	       #f)))))
-
 (define-service (home/demos/music)
    (let ((audio (<AUDIO> :controls #t))
 	 (input (<INPUT> :name "podcast" :id "podcast" :type 'text
 		   :size 50
-		   :value "http://radiofrance-podcast.net/podcast09/rss_10060.xml"
-		   :onchange ~(load-url this.value)))) 
+		   :value "http://www.vorbis.com/music/Epoq-Lepidoptera.ogg")))
       (<HTML>
-	 (<HEAD>
-	    :title "Podcast demo"
-	    :include "hop-audio" "hop-slider"
+	 (<HEAD> :title "Audio demo"
+	    :include "hop-audio"
 	    :css (service-resource home/demos/music "music.hss"))
 	 (<BODY>
-	    ~(define snd #f)
-	    ~(define (play-url url)
-		(if (string=? url "")
-		    (set! snd #f)
-		    (set! snd (make-sound url :stream #t))))
-	    ~(define (load-url podcast)
-		(with-hop ($(service (rss)
-			       (with-handler
-				  (lambda (e)
-				     (cons 'error rss))
-				  (rss->podcast-mp3 rss)))
-			    podcast)
-		   (lambda (path)
-		      (if (string? path)
-			  (audio-load $audio path #t)
-			  (alert "Cannot download podcast: " (cdr path))))))
-	    (<H3> "Podcast demonstration")
-	    audio
+	    (<H3> "Audio demo") audio
 	    (<BR>)
-	    (<DIV> "Enter a podcast URL")
-	    input
-	    (<BR>)
-	    (<BUTTON> "load" :onclick ~(load-url $input.value))))))
-	       
+	    (<DIV> "Enter a music URL:"
+	       input " "
+	       (<BUTTON> "load" :onclick ~(audio-load $audio $input.value #t)))
+	    (<DIV> :style "margin-top: 2ex; font-size: 70%; font-style: italic; border: 1px solid black; padding: 2px; background: #efe;" [Disclaimer: the file format
+to be used by the audio player, depends on the browser you use. With Firefox, you
+music provide an ,(<TT> ".ogg") file, with other browser you must provide a ,(<TT> ".mp3").
+Hop can be used to convert music files on the fly (e.g., from ,(<TT> ".ogg")
+,(<TT> ".mp3") and vice versa) but in order to avoid abuses of this Web site, this facility
+is not provided by this demo. Check the ,(<TT> "<AUDIO>") Hop markup in the Hop documentation.])))))

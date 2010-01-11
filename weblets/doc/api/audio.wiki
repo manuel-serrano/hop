@@ -1,0 +1,275 @@
+<doc> Audio
+
+== Description ==
+
+HOP supports //audio// markups based on the HTML5 specification
+with two extensions:
+
+  * HOP audio markup is independent of the actual physical back-end which can
+ either be HTML5, Flash, or even a server-located back-end. Using Hop with
+ a server-located back-end allows complex multimedia systems to be controlled
+ by Hop generated Web page.
+  * HOP supports a complete GUI for audio that can be graphically configured
+ using CSS declarations.
+
+
+== Synopsis ==
+
+=== Server ===
+
+  (<AUDIO> arg ...)
+  (<SOURCE> arg ...)
+
+=== Client ===
+  
+  (audio-backend audio)
+  (audio-backend-set! audio backend)
+  (audio-state audio)
+  (audio-load audio src audio)
+  (audio-play audio start)
+  (audio-playlist-set! audio plist)
+  (audio-playlist audio)
+  (audio-playlist-index audio)
+  (audio-playlist-prev audio)
+  (audio-playlist-next audio)
+  (audio-playlist-play audio index)
+  (audio-close audio)
+  (audio-pause audio)
+  (audio-volume audio)
+  (audio-volume-set! audio vol)
+  (audio-mute audio)
+  (audio-pan audio)
+  (audio-pan-set! audio pan)
+  (audio-duration audio)
+  (audio-current-time audio)
+  (audio-seek audio pos)
+  (audio-metadata audio)
+
+
+=== Requirements ===
+
+Client codes using //audio// need to load the script ++hop-audio.js++.
+They also need to load the ++hop-audio.css++ style sheet. Hence, documents
+using //audio// must include in their header, the following statement:
+
+
+  (<HEAD> :include "hop-audio")
+
+
+== Examples ==
+
+<example><AUDIO>, <SOURCE>, audio</example>
+
+
+== Codecs and Bakends ==
+
+~~ The codecs supported by the audio markup depend on the selected backend
+as well as on the capacity of the backend. For instance, the ++flash++ backend
+can play MP3 music. The ++html5++ backend depends on the browser running the
+page. For instance Firefox supports OGG and as of beginning of 2010 it is
+not clear yet what format is supported by WebKit based browsers. 
+
+== Server Definitions ==
+<server>
+
+=== ++<AUDIO>++ ===
+<markup> <AUDIO>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| :src         |  false or string  |  _          | the URL to play.  |
+| :autoplay    |  bool     |  #f          | start playing on load.  |
+| :start       |  int  |  0       | start offset.                   |
+| :controls    |  bool  |  #f       | associate a GUI to the markup.  |
+| :backend     |  symbol  |  ++auto++  | the audio backend.  |
+| :server     |  obj  |  #f  |  the optional server-side implementation.  |
+| :onload      |  proc   |  _   | event listener.  |
+| :onprogress      |  proc   |  _   | event listener.  |
+| :onerror      |  proc   |  _   | event listener.  |
+| :onended      |  proc   |  _   | event listener.  |
+| :onloadedmetadata      |  proc   |  _   | event listener.  |
+| :onplay      |  proc   |  _   | event listener.  |
+| :onstop      |  proc   |  _   | event listener.  |
+| :onpause      |  proc   |  _   | event listener.  |
+| :onnext      |  proc   |  _   | event listener.  |
+| :onprev      |  proc   |  _   | event listener.  |
+| :onclose      |  proc   |  _   | event listener.  |
+| :onbackend      |  proc   |  _   | event listener.  |
+| :onprevclick      |  proc   |  _   | event listener.  |
+| :onplayclick      |  proc   |  _   | event listener.  |
+| :onnextclick      |  proc   |  _   | event listener.  |
+| :onstopclick      |  proc   |  _   | event listener.  |
+| :onloadclick      |  proc   |  _   | event listener.  |
+| :onpodcastclick      |  proc   |  _   | event listener.  |
+| :onprefslick      |  proc   |  _   | event listener.  |
+| :onvolumechange      |  proc   |  _   | event listener.  |
+| :onpanchange      |  proc   |  _   | event listener.  |
+</arguments>
+
+
+  * ++:src++ is the URL to be played. This field is optional, it may
+ be replaced with a ++<SOURCE>++ elements placed in the body of the
+ ++<AUDIO>++ element.
+  * The argument ++:backend++ must either be ++html5++, ++flash++, or ++auto++.
+ In that latter case, the system will first try to use the ++html5++ physical
+ layer and defaults to ++flash++.
+
+</markup>
+
+=== ++<SOURCE>++ ===
+<markup> <SOURCE>
+</markup>
+
+</server>
+
+== Client Definitions ==
+<client>
+
+=== ++(audio-backend audio)++ ===
+=== ++(audio-backend-set! audio)++ ===
+<procedure> audio-backend
+<procedure> audio-backend-set!
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| audio       |  audio or string   | the audio.           |
+| backend     |  symbol or obj   | the backend.           |
+</arguments>
+</procedure>
+</procedure>
+
+=== ++(audio-load audio src stream)++ ===
+<procedure> audio-load
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| audio       |  audio or string   | the audio.           |
+| src         |  string   | a musical content.           |
+| stream      |  bool   | auto start.           |
+</arguments>
+</procedure>
+
+=== ++(audio-state audio)++ ===
+<procedure> audio-state
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| audio       |  audio or string   | the audio.           |
+</arguments>
+</procedure>
+
+=== ++(audio-playlist audio)++ ===
+=== ++(audio-playlist-index audio)++ ===
+=== ++(audio-playlist-set! audio playlist)++ ===
+<procedure> audio-playlist
+<procedure> audio-playlist-index
+<procedure> audio-playlist-set!
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| audio       |  audio or string   | the audio.           |
+| playlist    |  list              | the playlist.           |
+</arguments>
+</procedure>
+</procedure>
+</procedure>
+
+=== ++(audio-play audio)++ ===
+=== ++(audio-playlist-play audio)++ ===
+=== ++(audio-playlist-prev audio)++ ===
+=== ++(audio-playlist-next audio)++ ===
+<procedure> audio-play
+<procedure> audio-playlist-play
+<procedure> audio-playlist-prev
+<procedure> audio-playlist-next
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| audio       |  audio or string   | the audio.           |
+</arguments>
+</procedure>
+</procedure>
+</procedure>
+</procedure>
+
+=== ++(audio-close audio)++ ===
+=== ++(audio-stop audio)++ ===
+=== ++(audio-pause audio)++ ===
+<procedure> audio-close
+<procedure> audio-stop
+<procedure> audio-pause
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| audio       |  audio or string   | the audio.           |
+</arguments>
+</procedure>
+</procedure>
+</procedure>
+
+=== ++(audio-volume audio)++ ===
+=== ++(audio-volume-set! audio volume)++ ===
+=== ++(audio-mute audio)++ ===
+<procedure> audio-volume
+<procedure> audio-volume-set!
+<procedure> audio-mute
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| audio       |  audio or string   | the audio.           |
+</arguments>
+</procedure>
+</procedure>
+</procedure>
+
+=== ++(audio-pan audio)++ ===
+=== ++(audio-pan-set! audio pan)++ ===
+<procedure> audio-pan
+<procedure> audio-pan-set!
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| audio       |  audio or string   | the audio.           |
+</arguments>
+</procedure>
+</procedure>
+
+=== ++(audio-duration audio)++ ===
+=== ++(audio-current-time audio pan)++ ===
+=== ++(audio-seek audio pos)++ ===
+=== ++(audio-metadata audio pos)++ ===
+<procedure> audio-duration
+<procedure> audio-current-time
+<procedure> audio-seek
+<procedure> audio-metadata
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| audio       |  audio or string   | the audio.           |
+</arguments>
+</procedure>
+</procedure>
+</procedure>
+</procedure>
+
+</client>
+
+== Style ==
+<style>
+
+=== ++hop-audio.hss++ ===
+
+The file ++hop-audio.hss++ contains the default graphical configuration.
+It is defined as:
+
+~~
+<share-public>hop-audio.hss</share-public>
+</style>
+
+
+== See also ==
+<see-also><AUDIO>, <VIDEO>, <SOURCE>, audio, ogg</see-also>
+
+
+</doc>
