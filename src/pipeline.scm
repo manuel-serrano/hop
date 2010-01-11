@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Sun Jan 10 10:41:45 2010 (serrano)                */
+;*    Last change :  Mon Jan 11 10:06:08 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -316,9 +316,9 @@
    ;; log
    (if (http-response-abort? resp)
        (hop-verb 2 (hop-color req req " ABORT")
-		 " user=" (user-name (http-request-user req)) "\n")
+		 " user: " (user-name (http-request-user req)) "\n")
        (hop-verb 3 (hop-color req req " EXEC")
-		 " load=" (scheduler-load scd)
+		 " load: " (scheduler-load scd)
 		 (scheduler-stat scd)
 		 (format " ~a" thread)
 		 ": " (find-runtime-type resp)

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Jun 20 08:33:41 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Mon Jan 11 12:23:57 2010 (serrano)                */
+;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -42,6 +42,10 @@
 	    (hop-proxy-ip-mask-set! ::bstring)
 	    
 	    (hop-proxy-ip-mask-word::elong)
+	    
+	    (hop-ip-blacklist::obj)
+	    (hop-ip-blacklist-set! ::obj)
+	    (hop-ip-blacklist-table::obj)
 	    
 	    (hop-log-file::obj)
 	    (hop-log-file-set! ::obj)
@@ -170,6 +174,38 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-proxy-ip-mask-word
    (ipv4->elong "255.255.255.255"))
+
+;*---------------------------------------------------------------------*/
+;*    hop-ip-blacklist ...                                             */
+;*    -------------------------------------------------------------    */
+;*    A list of IP addresses not allowed to get connected              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-ip-blacklist
+   '()
+   (lambda (v)
+      (cond
+	 ((hashtable? v)
+	  v)
+	 ((list? v)
+	  (let ((t (create-hashtable :size 32)))
+	     (for-each (lambda (e)
+			  (when (string? e)
+			     (hashtable-put! t e #t)))
+		       v)
+	     (hop-ip-blacklist-table-set! t)
+	     v))
+	 (else
+	  (error 'hop-ip-blacklist "Illegal blacklist" v)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-ip-blacklist-table ...                                       */
+;*---------------------------------------------------------------------*/
+(define hop-ip-blacklist-table 
+   (create-hashtable :size 1)
+   (lambda (v)
+      (if (hashtable? v)
+	  v
+	  (error 'hop-ip-blacklist-table "Illegal hashtable" v))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-log-file ...                                                 */

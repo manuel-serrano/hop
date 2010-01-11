@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Thu Oct 22 17:30:45 2009 (serrano)                */
-;*    Copyright   :  2008-09 Manuel Serrano                            */
+;*    Last change :  Mon Jan 11 12:22:24 2010 (serrano)                */
+;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
 ;*=====================================================================*/
@@ -76,14 +76,21 @@
 (define-generic (scheduler-accept-loop scd::scheduler serv::socket wait::bool)
    (let loop ((id 1))
       (let ((sock (socket-accept serv)))
-	 (hop-verb 2 (hop-color id id " ACCEPT")
-		   ": " (socket-hostname sock)
-		   " [" (current-date) "]\n")
-	 ;; tune the socket
-	 (tune-socket! sock)
-	 ;; process the request
-	 (spawn scd stage-request id sock 'connect (hop-read-timeout))
-	 (loop (+fx id 1)))))
+	 (if (socket-reject sock)
+	     (begin
+		(notify-reject sock)
+		(socket-close sock)
+		(loop id))
+	     (begin
+		(hop-verb 2 (hop-color id id " ACCEPT")
+			  ": " (socket-hostname sock)
+			  " [" (current-date) "]\n")
+		(tprint "SOCKET.generic=" (socket-host-address sock))
+		;; tune the socket
+		(tune-socket! sock)
+		;; process the request
+		(spawn scd stage-request id sock 'connect (hop-read-timeout))
+		(loop (+fx id 1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    allocate-vector ...                                              */
@@ -124,6 +131,7 @@
 		      (hop-verb 2 (hop-color nid nid " ACCEPT")
 				": " (socket-hostname sock)
 				" [" (current-date) "]\n")
+		      (tprint "SOCKET.queue=" (socket-host-address sock))		      
 		      ;; tune the socket
 		      (tune-socket! sock)
 		      ;; process the request
@@ -174,24 +182,29 @@
 	 (let loop ()
 	    (scheduler-load-add! scd 1)
 	    (with-stage-handler
-	       accept-error-handler (scd)
-	       (let* ((sock (socket-accept serv
-					   :inbuf (hopthread-inbuf thread)
-					   :outbuf (hopthread-outbuf thread)))
-		      (id  (get-next-id))
-		      (fbuf (hopthread-flushbuf thread)))
-		  (scheduler-load-add! scd -1)
-		  (output-port-flush-buffer-set! (socket-output sock) fbuf)
-		  (hop-verb 2 (hop-color id id " ACCEPT")
-			    (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
-			    ": " (socket-hostname sock)
-			    " [" (current-date) "]\n")
-		  ;; tune the socket
-		  (tune-socket! sock)
-		  ;; process the request
-		  (stage scd thread stage-request id sock 'connect (hop-read-timeout))
-		  ;; go back to the accept stage
-		  (loop)))))
+	     accept-error-handler (scd)
+	     (let ((sock (socket-accept serv
+			    :inbuf (hopthread-inbuf thread)
+			    :outbuf (hopthread-outbuf thread))))
+		(if (socket-reject sock)
+		    (begin
+		       (notify-reject sock)
+		       (socket-close sock)
+		       (loop))
+		    (let* ((id  (get-next-id))
+			   (fbuf (hopthread-flushbuf thread)))
+		       (scheduler-load-add! scd -1)
+		       (output-port-flush-buffer-set! (socket-output sock) fbuf)
+		       (hop-verb 2 (hop-color id id " ACCEPT")
+			  (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
+			  ": " (socket-hostname sock)
+			  " [" (current-date) "]\n")
+		       ;; tune the socket
+		       (tune-socket! sock)
+		       ;; process the request
+		       (stage scd thread stage-request id sock 'connect (hop-read-timeout))
+		       ;; go back to the accept stage
+		       (loop)))))))
       (connect-stage scd thread))
    
    (let loop ((i nbthreads))
@@ -259,13 +272,35 @@
 					   serv
 					   :inbuf (hopthread-inbuf thread)
 					   :outbuf (hopthread-outbuf thread))))
-				    ;; tune the socket
-				    (tune-socket! s)
-				    ;; process the request
-				    (spawn scd stage-request id s
-					   'connect (hop-read-timeout))
-				    (loop (+fx id 1)))))
+				    (if (socket-reject s)
+					(begin
+					   ;; notify and close
+					   (notify-reject s)
+					   (socket-close s)
+					   (loop id))
+					(begin
+					   ;; tune the socket
+					   (tune-socket! s)
+					   ;; process the request
+					   (spawn scd stage-request id s
+						  'connect (hop-read-timeout))
+					   (loop (+fx id 1)))))))
 			   (loop))))))
       (if w
 	  (thread-join! (thread-start-joinable! thread))
 	  (thread-start! thread))))
+
+;*---------------------------------------------------------------------*/
+;*    socket-reject ...                                                */
+;*---------------------------------------------------------------------*/
+(define (socket-reject sock)
+   (hashtable-get (hop-ip-blacklist-table) (socket-host-address sock)))
+
+;*---------------------------------------------------------------------*/
+;*    notify-reject ...                                                */
+;*---------------------------------------------------------------------*/
+(define (notify-reject sock)
+   (hop-verb 1 (hop-color -1 -1 " REJECT")
+	     ": " (socket-host-address sock)
+	     " [" (current-date) "]\n"))
+

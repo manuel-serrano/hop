@@ -133,6 +133,15 @@ HOP as proxy to the set of clients whose IP address matches
 </parameter> 
 </parameter>
 
+=== ++hop-ip-blacklist++ ===
+<parameter> hop-ip-blacklist
+<parameter> hop-ip-blacklist-set!
+
+A list containing a list of blacklisted IP addresses. All attempts of
+connection by these machines will be refused.
+</parameter>
+</parameter>
+
 === ++hop-path-access-control++ ===
 <parameter> hop-path-access-control
 <parameter> hop-path-access-control-set!
