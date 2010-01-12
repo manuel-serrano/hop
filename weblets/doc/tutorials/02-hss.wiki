@@ -44,19 +44,38 @@ fields of the cascade style sheets. For instance:
 
 == Adding shorthands ==
 
-The function ,(<APIREF> "hop-hss-type!" "hss.wiki") binds //aliases//
+The function ,(<APIREF> "define-hss-type" "hss.wiki") binds //aliases//
 for CSS descriptors. That is, it gives a name to a descriptor that can
 be used as any other descriptors. For instance
 
 <code>
-  $(hop-hss-type! "api" "div.api div.pagearea")
+  $(define-hss-type lframe "div[hssclass=hop-lframe]"
+      :body "div[hssclass=hop-lfbody]"
+      (define-hss-property (-hop-label-margin v)
+         (format "padding: ~l;" v))
+      (define-hss-property (-hop-label-border v)
+         (format "div[hssclass=hop-lfborder] { border: ~l; }" v))
+      (define-hss-property (padding v)
+         (format "div[hssclass=hop-lfbody] { padding: ~l; }" v))
+      (define-hss-property (-hop-label-border-radius v)
+         (format "div[hssclass=hop-lfborder] { border-radius: ~l; }" v))
+      (define-hss-property (-hop-label-align v)
+         (format "div[hssclass=hop-lflabel] { text-align: ~l; }" v))
+      (define-hss-property (-hop-label-offset v)
+         (format "div[hssclass=hop-lflabel] { top: -~l; }" v))
+      (define-hss-property (background v)
+         (list (format "background: ~a;" (car v))
+               (format "div[hssclass=hop-lflabel] > span { background: ~a; }" 
+                       (car v)))))
+
+  $(define-hss-type lflabel "div[hssclass=hop-lflabel] span")
 </code>
 
-names ++api++ the compound descriptor ++div.api div.pagearea++. This name
+names ++lframe++ the compound descriptor ++div[hssclass=hop-lframe]++. This name
 can be used as any regular descriptor. For instance:
 
 <code>
-  api span.foo {
+  lframe span.foo {
     border: 1px solid red;
   }
 </code>
@@ -64,7 +83,7 @@ can be used as any regular descriptor. For instance:
 is turned equivalent to:
 
 <code>
-  div.api div.pagearea span.foo {
+  div[hssclass=hop-lframe] span.foo {
     border: 1px solid red;
   }
 </code>

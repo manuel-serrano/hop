@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Jan 12 11:27:36 2010 (serrano)                */
+#*    Last change :  Tue Jan 12 15:30:30 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -44,7 +44,6 @@ API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
                   audio.wiki video.wiki
 CORE_POP	= core.wiki
 JS_POP		= js-interface.wiki
-HSS_POP		= hss.wiki
 EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   canvas.hop canvas2.hop canvas3.hop canvas4.hop canvas5.hop \
                   filebrowse.hop filebrowse2.hop \
@@ -84,7 +83,6 @@ POPULATION	= Makefile doc.hss doc.scm \
 		  $(API_POP:%=api/%) \
 		  $(CORE_POP:%=core/%) \
 		  $(JS_POP:%=js/%) \
-		  $(HSS_POP:%=hss/%) \
 		  $(EXAMPLES_POP:%=examples/%) \
 		  $(WEBLETS_POP:%=weblets/%) \
 		  $(WIKI_POP:%=wiki/%) \

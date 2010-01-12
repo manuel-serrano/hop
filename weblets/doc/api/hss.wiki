@@ -14,26 +14,133 @@ for a general presentation of HSS.
 
 === server ===
 
-  (hop-hss-type! string string)
+  (define-hss-type type alias props)
+  (define-hss-property ...)
+  (define-hss-function ...)
   (hop-load-hss string)
   (hop-read-hss input-port)
 
 == Examples ==
-<example>hop-hss-type!, hop-load-hss, hop-read-hss</example>
+<example>define-hss-type, hop-load-hss, hop-read-hss</example>
 
 == Server Definitions ==
 <server>
 
-=== ++(hop-hss-type! new old)++ ===
-<function> hop-hss-type!
+=== ++(define-hss-type type alias props)++ ===
+<function> define-hss-type
 
 <arguments>
 ^  arguments       ^   type       ^  short description                ^
-| new              |  string      | the new name for the CSS select.  |
-| descriptor       |  string      | the original CSS selector.        |
+| type             |  symbol      | the type identifier.              |
+| descriptor       |  string      | the aliases CSS selector.         |
 </arguments>
 
-This function installs an alias for the ++selector++.
+<code>
+  $(define-hss-type lframe "div[hssclass=hop-lframe]"
+      :body "div[hssclass=hop-lfbody]"
+      (define-hss-property (-hop-label-margin v)
+         (format "padding: ~l;" v))
+      (define-hss-property (-hop-label-border v)
+         (format "div[hssclass=hop-lfborder] { border: ~l; }" v))
+      (define-hss-property (padding v)
+         (format "div[hssclass=hop-lfbody] { padding: ~l; }" v))
+      (define-hss-property (-hop-label-border-radius v)
+         (format "div[hssclass=hop-lfborder] { border-radius: ~l; }" v))
+      (define-hss-property (-hop-label-align v)
+         (format "div[hssclass=hop-lflabel] { text-align: ~l; }" v))
+      (define-hss-property (-hop-label-offset v)
+         (format "div[hssclass=hop-lflabel] { top: -~l; }" v))
+      (define-hss-property (background v)
+         (list (format "background: ~a;" (car v))
+               (format "div[hssclass=hop-lflabel] > span { background: ~a; }" 
+                       (car v)))))
+  
+  $(define-hss-type lflabel "div[hssclass=hop-lflabel] span")
+</code>
+
+~~ Provided with the declaration above, one may declare:
+
+<code>
+  lframe {
+    background: #edeceb;
+    border: 1px solid black;
+    padding: 2px;
+    box-shadow: 5px 5px 5px #888;
+    -hop-label-margin: 10px;
+    -hop-label-border: 2px groove #ddd;
+    -hop-label-border-radius: 4px;
+    -hop-label-align: left;
+    -hop-label-offset: 12px;
+  }
+  
+  lflabel {
+    font-style: roman;
+  } 
+</code>
+
+</function>
+
+=== ++(define-hss-property (property value priority) body)++ ===
+<function> define-hss-property
+
+<arguments>
+^  arguments       ^   type       ^  short description                ^
+| property         |  symbol      | the name of the property.          |
+</arguments>
+
+~~ The form ++define-hss-property++ defines a new property that can be
+used in CSS rules. Example:
+
+<code>
+  $(define-hss-property (border-radius v p)
+     (match-case v
+        ((?tl ?tr ?br ?bl)
+         (format "border-top-left-radius: ~a;
+                  border-top-right-radius: ~a;
+                  border-bottom-right-radius: ~a;
+                  border-bottom-left-radius: ~a;
+                  -moz-border-radius: ~a ~a ~a ~a;
+                  -webkit-border-top-left-radius: ~a;
+                  -webkit-border-top-right-radius: ~a;
+                  -webkit-border-bottom-right-radius: ~a;
+                  -webkit-border-bottom-left-radius: ~a;"
+               tl tr br bl tl tr br bl tl tr br bl))
+        (else
+         (format "border-radius: ~a;
+                  -moz-border-radius: ~a;
+                  -webkit-border-radius: ~a;" (car v) (car v) (car v)))))
+
+  div {
+    border: 1px solid red;
+    border-radius: 2px;
+  }
+</code>
+  
+</function>
+
+=== ++(define-hss-function (id arg ...) body)++ ===
+<function> define-hss-function
+
+<arguments>
+^  arguments       ^   type       ^  short description                ^
+| id               |  symbol      | the function identifier.          |
+</arguments>
+
+~~ The form ++define-hss-function++ defines a new property that can be
+used in CSS rules. Example:
+
+<code>
+  $(define-hss-function (hsv h s v)
+     (multiple-value-bind (r g b)
+        (hsv->rgb (string->integer h) (string->integer s) (string->integer v))
+        (format "rgb(~a,~a,~a)" r g b)))
+
+  div {
+    border: 1px solid red;
+    background: hsv(23, 45, 12);
+  }
+</code>
+  
 </function>
 
 === ++(hop-load-hss path)++ ===
@@ -62,6 +169,6 @@ Reads a HSS expression from an input port.
 </server>
 
 == See also ==
-<see-also>hop-load-hss, hop-read-hss, hop-hss-type!</see-also>
+<see-also>hop-load-hss, hop-read-hss, define-hss-type, define-hss-function, define-hss-property</see-also>
 
 </doc>

@@ -78,7 +78,13 @@ overrides the previous ones).
  attributes. For instance ++:include "hop-notepad"++ is actually equivalent to
  ++:css (make-file-name (hop-share-directory) "hop-notepad.css")++
  ++:jscript (make-file-name (hop-share-directory) "hop-notepad.js")++. See also
- ++service-base-url++ and ++service-resource++.
+ ++service-base-url++ and ++service-resource++.,(<BR>)In addition to loading
+ the CSS file mentioned above, the ++:include++ attribute forces Hop to search
+ the directory ++hss++ located in the RC directory 
+ (++,(begin (hop-rc-directory))++) for a user-defined CSS file. If this file
+ exists, it is inserted in the generated document after the regular CSS file.
+ This facility allows users to override some definition of the regular
+ markups.
   * The attribute :dir is a //meta-attribute//. It sets a base name used to
  complete relative file names. This name is used to complete ++css++, 
  ++jscript++, and ++favicon++ relative file names. By default no completion
