@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Sun Jan 10 13:05:31 2010 (serrano)                */
+;*    Last change :  Tue Jan 12 20:26:06 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -68,7 +68,7 @@
 		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/video)
 			"video-32x32.png" "video-48x48.png" inl
-			400 300)))
+			400 350)))
 	       (<TR>
 		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/rss)

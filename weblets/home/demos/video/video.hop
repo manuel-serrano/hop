@@ -63,7 +63,7 @@
 	 (<DIV> :style "text-align: center"
 	    (<DIV> :style "color: white" "A video with a reflection effect")
 	    (<VIDEO> :id "video" :src
-	       (service-resource home/demos/video "/../../videos/hopx10.ogv")
+	       (service-resource home/demos/video "/../../../videos/hopx10.ogv")
 	       :width 320 :height 200
 	       :controls #t)
 	    (<DIV> :style "border-top: 1px solid #aaa; height: 1px; margin-top: -4px;"
