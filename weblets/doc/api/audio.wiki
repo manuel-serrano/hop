@@ -17,8 +17,11 @@ with two extensions:
 
 === Server ===
 
+  (class audio-server ...)
+
   (<AUDIO> arg ...)
   (<SOURCE> arg ...)
+
 
 === Client ===
   
@@ -27,6 +30,7 @@ with two extensions:
   (audio-state audio)
   (audio-load audio src audio)
   (audio-play audio start)
+  (audio-seek audio pos)
   (audio-playlist-set! audio plist)
   (audio-playlist audio)
   (audio-playlist-index audio)
@@ -42,7 +46,6 @@ with two extensions:
   (audio-pan-set! audio pan)
   (audio-duration audio)
   (audio-current-time audio)
-  (audio-seek audio pos)
   (audio-metadata audio)
 
 
@@ -61,16 +64,81 @@ using //audio// must include in their header, the following statement:
 <example><AUDIO>, <SOURCE>, audio</example>
 
 
-== Codecs and Bakends ==
+== Codecs, Backends, and playlists ==
 
 ~~ The codecs supported by the audio markup depend on the selected backend
 as well as on the capacity of the backend. For instance, the ++flash++ backend
 can play MP3 music. The ++html5++ backend depends on the browser running the
 page. For instance Firefox supports OGG and as of beginning of 2010 it is
-not clear yet what format is supported by WebKit based browsers. 
+not clear yet what format is supported by WebKit based browsers.
+
+~~ Each Hop audio element uses //one// backend at a time. This backend may
+either be located on the browser (the client) or an the server. The backend
+can be switched from client to browser and vice versa dynamically (see
+++audio-backend-set!++) and the server-side implementation can be
+changed dynamically (see ++audio-server-music-set!++) but
+the client-side implementation cannot be changed.
+
+~~ A server-side backend is an instance of the class ++audio-server++ that
+is a wrapper of the ++music++ class of the 
+,(<LIBREF> "multimedia library" "multimedia.wiki").
+
+~~ An ++<AUDIO>++ element may specify a URL to be loaded using the 
+++:src++ attribute. However, in most cases it is not recommended to use
+this attribute because it does not support multiple audio format. In replacement
+it is recommended to use ++<SOURCE>++ elements in the body of the ++<AUDIO>++
+element. That is, instead of:
+
+  (<AUDIO> :controls #t :stream #f :src "sound-test.mp3")
+
+
+~~ it is recommended to write:
+
+  (<AUDIO> :controls #t :stream #f
+     (<SOURCE> :type "audio/mpeg" "sound-test.mp3")
+     (<SOURCE> :type "audio/ogg" "sound-test.ogg"))
+
+
+~~ This will give opportunities to the browser to select the correct version
+of the music according to its capacities. Playlists can be modified dynamically
+with the client-side function ++audio-playlist-set!++. Check the documentation
+of that function for the actual syntax of the client-side playlist.
+
 
 == Server Definitions ==
 <server>
+
+==== ++(class audio-server ...)++ ====
+<class> audio-server
+<fields>
+^  fields  ^   access  ^   type      ^  default value     ^  short description           ^
+| music   |    r/2      |   music or ++#f++    |  ++#f++    | the server-side music player.    |
+</fields>
+
+~~ The class ++audio-server++ implements a server-side music player. Its only
+parameter is an instance of the ++music++ class that implements an actual 
+music player. The ,(<LIBREF> "multimedia" "multimedia.wiki") and
+,(<LIBREF> "gstreamer" "gstreamer.wiki") library implements several
+music player. Once created, the server music player can be changed
+using the ++audio-server-music-set!++ class accessor.
+Example:
+
+  (define audio-server
+    (instantiate::audio-server
+       (music (instantiate::gstmusic))))
+
+  (audio-server-music-set! audio-server
+    (instantiate::mpc
+       (host "my-host")
+       (port 6600)))
+
+  (<AUDIO> :controls #t
+     :src "http://www.m-base.org/tao_of_mad_phat_mp3_files/the_tao_of_mad_phat.mp3"
+     :backend 'none
+     :server audio-server)
+
+
+</class>
 
 === ++<AUDIO>++ ===
 <markup> <AUDIO>
@@ -81,9 +149,9 @@ not clear yet what format is supported by WebKit based browsers.
 | :src         |  false or string  |  _          | the URL to play.  |
 | :autoplay    |  bool     |  #f          | start playing on load.  |
 | :start       |  int  |  0       | start offset.                   |
-| :controls    |  bool  |  #f       | associate a GUI to the markup.  |
-| :backend     |  symbol  |  ++auto++  | the audio backend.  |
-| :server     |  obj  |  #f  |  the optional server-side implementation.  |
+| :controls    |  bool  |  #f       | associate a GUI to the element.  |
+| :browser     |  symbol  |  ++auto++  | the client-side (browser) backend.  |
+| :server     |  obj  |  #f  | an optional server-side backend.  |
 | :onload      |  proc   |  _   | event listener.  |
 | :onprogress      |  proc   |  _   | event listener.  |
 | :onerror      |  proc   |  _   | event listener.  |
@@ -111,14 +179,19 @@ not clear yet what format is supported by WebKit based browsers.
   * ++:src++ is the URL to be played. This field is optional, it may
  be replaced with a ++<SOURCE>++ elements placed in the body of the
  ++<AUDIO>++ element.
-  * The argument ++:backend++ must either be ++html5++, ++flash++, or ++auto++.
- In that latter case, the system will first try to use the ++html5++ physical
- layer and defaults to ++flash++.
+  * The argument ++:backend++ must either be ++none++, ++html5++, ++flash++, 
+ or ++auto++. In that latter case, the system will first try to use the 
+ ++html5++ physical layer and falls back to ++flash++.
 
 </markup>
 
 === ++<SOURCE>++ ===
 <markup> <SOURCE>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+|  :type       |  string   |  _   | the music mime-type.  | 
+|  :src       |  string   |  _   | the music url.  | 
 </markup>
 
 </server>
@@ -134,8 +207,17 @@ not clear yet what format is supported by WebKit based browsers.
 <arguments>
 ^  arguments  ^   type               ^  short description     ^
 | audio       |  audio or string   | the audio.           |
-| backend     |  symbol or obj   | the backend.           |
+| backend     |  symbol or audio-server   | the backend.           |
 </arguments>
+
+~~ These procedure sets and gets the //backend// of the
+audio element. The accepted values are:
+
+  * the symbol ++browser++, in which case the backend
+specified when the audio element was created is used.
+  * an instance of the ++audio-server++ class.
+
+
 </procedure>
 </procedure>
 
@@ -148,6 +230,9 @@ not clear yet what format is supported by WebKit based browsers.
 | src         |  string   | a musical content.           |
 | stream      |  bool   | auto start.           |
 </arguments>
+
+~~ Loads a song. If the argument ++stream++ is ++#t++ then
+the playback starts before the whole file is loaded.
 </procedure>
 
 === ++(audio-state audio)++ ===
@@ -157,39 +242,22 @@ not clear yet what format is supported by WebKit based browsers.
 ^  arguments  ^   type               ^  short description     ^
 | audio       |  audio or string   | the audio.           |
 </arguments>
+
+~~ Returns the current state of the player.
 </procedure>
 
-=== ++(audio-playlist audio)++ ===
-=== ++(audio-playlist-index audio)++ ===
-=== ++(audio-playlist-set! audio playlist)++ ===
-<procedure> audio-playlist
-<procedure> audio-playlist-index
-<procedure> audio-playlist-set!
-
-<arguments>
-^  arguments  ^   type               ^  short description     ^
-| audio       |  audio or string   | the audio.           |
-| playlist    |  list              | the playlist.           |
-</arguments>
-</procedure>
-</procedure>
-</procedure>
-
-=== ++(audio-play audio)++ ===
-=== ++(audio-playlist-play audio)++ ===
-=== ++(audio-playlist-prev audio)++ ===
-=== ++(audio-playlist-next audio)++ ===
+=== ++(audio-play audio offset)++ ===
+=== ++(audio-seek audio offset)++ ===
 <procedure> audio-play
-<procedure> audio-playlist-play
-<procedure> audio-playlist-prev
-<procedure> audio-playlist-next
-
+<procedure> audio-seek
 <arguments>
 ^  arguments  ^   type               ^  short description     ^
 | audio       |  audio or string   | the audio.           |
+| start       |  #f or integer  | an offset.           |
 </arguments>
-</procedure>
-</procedure>
+
+Start playing the loading music. Start at ++offset++ from
+the beginning of the song.
 </procedure>
 </procedure>
 
@@ -208,6 +276,62 @@ not clear yet what format is supported by WebKit based browsers.
 </procedure>
 </procedure>
 
+=== ++(audio-playlist audio)++ ===
+=== ++(audio-playlist-set! audio playlist)++ ===
+=== ++(audio-playlist-index audio)++ ===
+<procedure> audio-playlist
+<procedure> audio-playlist-index
+<procedure> audio-playlist-set!
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| audio       |  audio or string   | the audio.           |
+| playlist    |  list              | the playlist.           |
+</arguments>
+
+These procedures gets, sets, and gets the current index of a playlist.
+The syntax of playlists is as follows:
+
+  <playlist> := list of <pl-element>
+  <pl-element> := <url> | (<mime-type> <url>)
+  <mime-type> := string
+  <url> := string
+
+
+Examples:
+
+  (audio-playlist-set! "audio" '(("audio/ogg" "test.ogg") ("audio/mpeg" "test.mp3") "test.wav"))
+
+
+~~ When the player loads the playlist, for each entry it selects 
+which version will be used according to the mime-types. If no
+mime-type matches the capabilities of a player, the player falls back
+to the element which is not associated with a mime-type. In the
+previous example, if the client player is neither able to play
+++audio/ogg++ nor ++audio/mpeg++ then, it uses the ++test.wav++
+version.
+
+</procedure>
+</procedure>
+</procedure>
+
+=== ++(audio-playlist-play audio)++ ===
+=== ++(audio-playlist-prev audio)++ ===
+=== ++(audio-playlist-next audio)++ ===
+<procedure> audio-playlist-play
+<procedure> audio-playlist-prev
+<procedure> audio-playlist-next
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| audio       |  audio or string   | the audio.           |
+</arguments>
+
+~~ Navigate the current playlist.
+</procedure>
+</procedure>
+</procedure>
+
 === ++(audio-volume audio)++ ===
 === ++(audio-volume-set! audio volume)++ ===
 === ++(audio-mute audio)++ ===
@@ -219,6 +343,8 @@ not clear yet what format is supported by WebKit based browsers.
 ^  arguments  ^   type               ^  short description     ^
 | audio       |  audio or string   | the audio.           |
 </arguments>
+
+~~ Change and set the play back volume.
 </procedure>
 </procedure>
 </procedure>
@@ -232,23 +358,24 @@ not clear yet what format is supported by WebKit based browsers.
 ^  arguments  ^   type               ^  short description     ^
 | audio       |  audio or string   | the audio.           |
 </arguments>
+
+~~ Change and set the audio balance.
 </procedure>
 </procedure>
 
 === ++(audio-duration audio)++ ===
 === ++(audio-current-time audio pan)++ ===
-=== ++(audio-seek audio pos)++ ===
 === ++(audio-metadata audio pos)++ ===
 <procedure> audio-duration
 <procedure> audio-current-time
-<procedure> audio-seek
 <procedure> audio-metadata
 
 <arguments>
 ^  arguments  ^   type               ^  short description     ^
 | audio       |  audio or string   | the audio.           |
 </arguments>
-</procedure>
+
+~~ Get information about the current song.
 </procedure>
 </procedure>
 </procedure>
@@ -269,7 +396,7 @@ It is defined as:
 
 
 == See also ==
-<see-also><AUDIO>, <VIDEO>, <SOURCE>, audio, ogg</see-also>
+<see-also><AUDIO>, <VIDEO>, <SOURCE>, audio, audio/ogg, audio/mpeg, music</see-also>
 
 
 </doc>

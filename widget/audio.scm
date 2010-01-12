@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Jan  8 15:30:08 2010 (serrano)                */
+;*    Last change :  Tue Jan 12 11:31:22 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -23,6 +23,18 @@
 
    (export  (class audio-server
 	      (audio-server-init)
+	      (music (get (lambda (o)
+			     (audio-server-%music o)))
+		     (set (lambda (o v)
+			     (with-access::audio-server o (%hmutex %state %thread %music)
+				(with-lock %hmutex
+				   (lambda ()
+				      (when (music? %music) (music-close %music))
+				      (when (thread? %thread) (thread-terminate! %thread))
+				      (audio-server-%music-set! o v)
+				      (when (music? v)
+					 (set! %thread (make-audio-server-thread o v))))))))
+		     (default #f))
 	      (%music (default #f))
 	      (%hmutex read-only (default (make-mutex)))
 	      (%thread (default #f))
@@ -36,9 +48,7 @@
 	    (generic audio-server-init ::audio-server)
 	    
 	    (<AUDIO> . args)
-	    (audio-server-close ::obj)
-	    (audio-server-music ::audio-server)
-	    (audio-server-music-set! ::audio-server ::obj)))
+	    (audio-server-close ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO> ...                                                      */
@@ -77,7 +87,7 @@
 			      (onmuteclick #unspecified)
 			      (onvolumechange #unspecified)
 			      (onpanchange #unspecified)
-			      (backend 'auto)
+			      (browser 'auto)
 			      (server #f)
 			      (attr)
 			      body)
@@ -100,11 +110,11 @@
 	 :onpodcastclick onpodcastclick
 	 :onmuteclick onmuteclick))
    
-   (define (<init> backendid init plist)
+   (define (<init> backendid init)
       (<AUDIO:INIT> :id id :backendid backendid
 	 :init init
 	 :server server
-	 :src src :playlist plist
+	 :src src :playlist (playlist body)
 	 :autoplay autoplay :start start
 	 :onplay (hop->js-callback onplay)
 	 :onstop (hop->js-callback onstop)
@@ -122,33 +132,34 @@
 		     (when (xml-markup-is? x 'source)
 			(let ((src (dom-get-attribute x "src")))
 			   (when (string? src)
-			      (let ((suf (suffix src)))
-				 (when (member suf suffixes)
-				    src))))))
+			      (let ((type (dom-get-attribute x "type")))
+				 (if type
+				     (list type src)
+				     src))))))
 		  body))
 
    (<DIV> :id id :class "hop-audio"
       (when controls (<controls>))
-      (case backend
+      (case browser
 	 ((flash)
-	  (list (<init> fid "audio.clientbackend = clientbackend;" '())
+	  (list (<init> fid "audio.browserbackend = browserbackend;")
 		(<AUDIO:FLASH> :id fid)))
 	 ((html5)
 	  (list (<init> hid
-			"hop_audio_html5_init(clientbackend); audio.clientbackend = clientbackend;"
-			'())
+			"audio.browserbackend = hop_audio_html5_init(browserbackend);")
 		(<AUDIO:HTML5> :id hid)))
+	 ((none)
+	  (<init> fid "audio.browserbackend = false;"))
 	 ((auto)
 	  (list (<init> hid
 			(format "if(hop_config.html5_audio ) {
-                                   hop_audio_html5_init(clientbackend);
-                                   audio.clientbackend = clientbackend;
+                                   hop_audio_html5_init(browserbackend);
+                                   audio.browserbackend = browserbackend;
                                  } else 
-                                  audio.clientbackend = document.getElementById( '~a' );" fid)
-			'())
+                                  audio.browserbackend = document.getElementById( '~a' );" fid))
 		(<AUDIO:HTML5> :id hid (<AUDIO:FLASH> :id fid))))
 	 (else
-	  (error '<AUDIO> "Illegal backend" backend)))))
+	  (error '<AUDIO> "Illegal backend" browser)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO:HTML5> ...                                                */
@@ -203,16 +214,16 @@
    (<SCRIPT>
       (format "hop_audio_init[ '~a' ] = function (_) {" id)
       (format "var audio = document.getElementById( '~a' );" id)
-      "if( audio.clientbackend ) return;"
-      (format "var clientbackend = document.getElementById( '~a' );" backendid)
+      "if( audio.browserbackend ) return;"
+      (format "var browserbackend = document.getElementById( '~a' );" backendid)
       init
-      (format " audio.clientbackend.audio = audio;")
+      (format "if( audio.browserbackend ) audio.browserbackend.audio = audio;")
       (if server
-	  (format "audio.serverbackend = new HopAudioServerBackend( '~a',audio )
-                   hop_audio_server_init( audio.serverbackend );"
+	  (format "audio.serverbackend = new HopAudioServerBackend( audio, ~a )
+                   hop_audio_server_init( audio.serverbackend );
+                   audio.backend = audio.serverbackend;"
 		  (hop->json server #f #f))
-	  "audio.serverbackend = false;")
-      "audio.backend = false;"
+	  "audio.serverbackend = false; audio.backend = audio.browserbackend;")
       "audio.paused = false;"
       "audio.state = false;"
       (format "audio.src = ~a;" (hop->json src #f #f))
@@ -230,10 +241,8 @@
       (format "audio.onbackend = ~a;" onbackend)
       "audio.hop_add_event_listener = hop_audio_add_event_listener;"
       "audio.toString = function() { return '[object HopAudio]' };"
-      (format "hop_audio_backend_set( audio, sc_jsstring2symbol( '~a' ) );"
-	      (if server "server" "client"))
       (when (pair? playlist)
-	 "hop_audio_playlist_set( audio, ~a );" (hop->json playlist #f #f))
+	 (format "hop_audio_playlist_set( audio, ~a );" (hop->json (list playlist) #f #f)))
       (when autoplay
 	 "hop_audio_playlist_play( audio, 0 );")
       "};\n"
@@ -485,25 +494,25 @@
    (with-access::audio-server as (%music)
       (audio-status-event-value (music-status %music))))
          
-;*---------------------------------------------------------------------*/
-;*    audio-server-music ...                                           */
-;*---------------------------------------------------------------------*/
-(define (audio-server-music as)
-   (with-access::audio-server as (%music)
-      %music))
-   
-;*---------------------------------------------------------------------*/
-;*    audio-server-music-set! ...                                      */
-;*---------------------------------------------------------------------*/
-(define (audio-server-music-set! as m)
-   (with-access::audio-server as (%hmutex %state %thread %music)
-      (with-lock %hmutex
-	 (lambda ()
-	    (when (music? %music) (music-close %music))
-	    (when (thread? %thread) (thread-terminate! %thread))
-	    (audio-server-%music-set! as m)
-	    (when (music? m)
-	       (set! %thread (make-audio-server-thread as m)))))))
+;* {*---------------------------------------------------------------------*} */
+;* {*    audio-server-music ...                                           *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (audio-server-music as)                                     */
+;*    (with-access::audio-server as (%music)                           */
+;*       %music))                                                      */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    audio-server-music-set! ...                                      *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (audio-server-music-set! as m)                              */
+;*    (with-access::audio-server as (%hmutex %state %thread %music)    */
+;*       (with-lock %hmutex                                            */
+;* 	 (lambda ()                                                    */
+;* 	    (when (music? %music) (music-close %music))                */
+;* 	    (when (thread? %thread) (thread-terminate! %thread))       */
+;* 	    (audio-server-%music-set! as m)                            */
+;* 	    (when (music? m)                                           */
+;* 	       (set! %thread (make-audio-server-thread as m)))))))     */
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-set! ...                                          */

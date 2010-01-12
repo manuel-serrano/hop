@@ -1,0 +1,59 @@
+;; //Browser-side// audio with automatic mp3->ogg conversion
+(module audio-server
+   (library multimedia gstreamer))
+
+(define (gst-connector conv)
+   (lambda (el pad x)
+      (let ((sinkpad (gst-element-compatible-pad conv pad (gst-pad-caps pad))))
+	 (when sinkpad
+	    (gst-pad-link! pad sinkpad)))))
+
+(define (gst-ogg-pipeline ip op)
+   (let* ((pipeline (instantiate::gst-pipeline))
+	  (source (gst-element-factory-make "bglportsrc" :port ip))
+	  (decoder (gst-element-factory-make "decodebin"))
+	  (conv (gst-element-factory-make "audioconvert"))
+	  (encoder (gst-element-factory-make "vorbisenc" :quality 1.0))
+	  (mux (gst-element-factory-make "oggmux"))
+	  (sink (gst-element-factory-make "bglportsink" :port op)))
+      (gst-bin-add! pipeline source decoder conv encoder mux sink)
+      (gst-element-link! source decoder)
+      (gst-element-link! conv encoder mux sink)
+      (gst-object-connect! decoder "new-decoded-pad" (gst-connector conv))
+      pipeline))
+
+(define (gst-encode pipeline)
+   (let ((bus (gst-pipeline-bus pipeline)))
+      (gst-element-state-set! pipeline 'playing)
+      (let loop ()
+	 (let ((msg (gst-bus-poll bus)))
+	    (cond
+	       ((gst-message-eos? msg)
+		'done)
+	       ((gst-message-error? msg)
+		(let ((msg (gst-message-error-string msg)))
+		   (if (substring-at? msg "Error while writing to port" 0)
+		       'abort
+		       (error 'gst-encode "Cannot encode into ogg" msg))))
+	       (else
+		(loop)))))
+      (gst-element-state-set! pipeline 'null)))
+
+(define-service (mp3->ogg url)
+   (instantiate::http-response-procedure
+      (content-type "audio/ogg")
+      (proc (lambda (op)
+	       (call-with-input-file url
+		  (lambda (ip)
+		     (gst-encode (gst-ogg-pipeline ip op))))))))
+
+(<HTML>
+   (<HEAD> :include "hop-audio")
+   (<BODY>
+      (<AUDIO> :controls #t :backend 'auto
+	 (<SOURCE> :type "audio/mpeg"
+	    :src "http://www.m-base.org/tao_of_mad_phat_mp3_files/the_tao_of_mad_phat.mp3")
+	 (<SOURCE> :type "audio/ogg"
+	    :src (mp3->ogg "http://www.m-base.org/tao_of_mad_phat_mp3_files/the_tao_of_mad_phat.mp3")))
+      (<DIV> :style "margin-top: 2ex"
+	 "Click the \"play\" button to starting playing music")))

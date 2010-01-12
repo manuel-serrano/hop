@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed Oct 14 11:42:26 2009 (serrano)                */
-#*    Copyright   :  2006-09 Manuel Serrano                            */
+#*    Last change :  Tue Jan 12 10:36:37 2010 (serrano)                */
+#*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the wizard weblet                                */
 #*=====================================================================*/
@@ -26,12 +26,13 @@ SOURCES		= test.hop \
                   image.hop withhop.hop event.hop hss.hop \
                   fl.hop tree.hop notepad.hop paned.hop sorttable.hop \
                   tabslider.hop slider.hop canvas.hop \
-                  busy.hop sound.hop audio.hop fselector.hop window.hop \
+                  busy.hop audio.hop fselector.hop window.hop \
                   xhtml.hop svg.hop mathml.hop spinbutton.hop \
                   colorchooser.hop
 
 POPULATION	= Makefile test.hss hss.hss window.hss \
-                  canvas-test.jpg sound-test.mp3 \
+                  canvas-test.jpg \
+                  sound-test.mp3 sound-test.ogg \
 		  etc/weblet.info.in etc/test.wiki.in \
                   etc/logo.png etc/favicon.png etc/kangaroo.svgz \
                   $(SOURCES)

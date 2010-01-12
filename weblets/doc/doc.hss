@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.11.x/weblets/doc/doc.hss              */
+/*    serrano/prgm/project/hop/2.0.x/weblets/doc/doc.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sun Feb  8 08:46:32 2009 (serrano)                */
-/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    Last change :  Tue Jan 12 07:23:59 2010 (serrano)                */
+/*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -135,7 +135,9 @@ textarea {
 }
 
 table.doc {
-  width: 45em;
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
   margin-top: 20px;
   padding: 10px;
   border: 1px solid $border-color;
@@ -166,6 +168,7 @@ div#result {
 
 /*--- popup-menu ------------------------------------------------------*/
 div.popup-menu {
+  user-select: none;
   cursor: pointer;
   display: none;
   font-size: x-small;
@@ -178,7 +181,8 @@ div.popup-menu {
   z-index: 10;
   background-color: $popup-menu-color;
   border: $popup-menu-border;
-  -moz-opacity: $doc-opacity;
+  opacity: $doc-opacity;
+  box-shadow: 3px 3px 10px #222;
 }
 
 div.popup-menu tt {
@@ -186,6 +190,7 @@ div.popup-menu tt {
 }
 
 table.popup-menu {
+  user-select: none;
   width: 18em;
   font-weight: normal;
   font-size: x-small;
@@ -193,6 +198,7 @@ table.popup-menu {
 
 table.popup-menu td tt:hover {
   text-decoration: underline;
+  color: #00a;
 }
 
 /*--- fold list -------------------------------------------------------*/
@@ -294,6 +300,7 @@ search-bar {
   padding: 2px;
   background-color: $header-color;
   margin-bottom: 10px;
+  user-select: none;
 }
 
 search-menu {
@@ -426,9 +433,9 @@ doc span.href {
   font-size: small;
 }
 
-pre {
-  max-width: 120em;
-}
+/* pre {                                                               */
+/*   max-width: 120em;                                                 */
+/* }                                                                   */
 
 doc pre span.href,
 doc toc span.href,

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Mon Mar 30 11:28:09 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Tue Jan 12 13:30:52 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
 ;*=====================================================================*/
@@ -43,7 +43,7 @@
 	 :jscript (string-append (doc-dir) "/doc.scm")
 	 script)
       (<BODY>
-	 (<DIV> :align "center"
+	 (<DIV> :style "text-align: center"
 	    (<TABLE> :class "doc"
 	       (<TR>
 		  (<TD> :valign "top"
@@ -51,7 +51,7 @@
 			:alt "Hop Doc logo"
 			:src (string-append (doc-dir) "/etc/logo.png")))
 		  (<TD> :valign "top"
-		     (<TABLE>
+		     (<TABLE> :style "width: 100%"
 			(<TR>
 			   (<TD>
 			      (<DIV> :id "title" "Hop Documentation Center")))
@@ -81,6 +81,7 @@
 ;*---------------------------------------------------------------------*/
 (define (<POPUP> id)
    (<DIV> :class "popup-menu" :id id
+      :onmousedown ~(stop-event-propagation event #t)
       ""))
 
 ;*---------------------------------------------------------------------*/
@@ -91,10 +92,7 @@
    (define popup-letter-menu
       ~(let ((el this)
 	     (menu $popup))
-	  (unless (eq? event.preventDefault #unspecified)
-	     (event.preventDefault))
-	  (unless (eq? event.stopPropagation #unspecified)
-	     (event.stopPropagation))
+	  (stop-event-propagation event #t)
 	  (with-hop ($click this.innerHTML)
 	     (lambda (h)
 		(if h
@@ -188,22 +186,31 @@
    (let ((es (vector-ref table (char->offset (string-ref i 0))))
 	 (id (xml-make-id)))
       (when (pair? es)
-	 (<TABLE> :class "popup-menu"
-	    :id id
-	    :onmouseup ~(let* ((n (document.getElementById $id))
-			       (p n.parentNode))
-			   (set! p.style.display "none"))
-	    (map (lambda (entry)
-		    (let ((api (cdr entry))
-			  (el (car entry)))
-		       (<TR>
-			  (<TD>
-			     (<TT> :onmouseup
-				~(select-api-doc $doc/api $api $pagearea $el)
-				(html-string-encode el))))))
-		 (sort es
-		       (lambda (a b)
-			  (string-ci<? (car a) (car b)))))))))
+	 (list
+	  ~(add-event-listener! document "mousedown"
+	      (lambda (e)
+		 (let ((n (dom-get-element-by-id $id)))
+		    (when n (node-style-set! (dom-parent-node n) :display "none")))
+		 (remove-event-listener! document "mousedown" arguments.callee)))
+	  (<TABLE> :class "popup-menu"
+	     :id id
+	     (map (lambda (entry)
+		     (let ((api (cdr entry))
+			   (el (car entry)))
+			(<TR>
+			   (<TD>
+			      (<TT> :onmouseup
+				 ~(let ((n (dom-get-element-by-id $id)))
+				     (node-style-set! (dom-parent-node n) :display "none")
+				     (select-api-doc $doc/api $api $pagearea $el))
+				 :onmousedown
+				 ~(let ((n (dom-get-element-by-id $id)))
+				     (node-style-set! (dom-parent-node n) :display "none")
+				     (select-api-doc $doc/api $api $pagearea $el))
+				 (html-string-encode el))))))
+		  (sort es
+			(lambda (a b)
+			   (string-ci<? (car a) (car b))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <SEE-ALSO-LIST> ...                                              */

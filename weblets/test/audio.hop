@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/test/audio.hop                  */
+;*    serrano/prgm/project/hop/2.0.x/weblets/test/audio.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jul  7 08:33:34 2007                          */
-;*    Last change :  Thu Sep 20 15:34:23 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Tue Jan 12 10:30:48 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing audio                                                    */
 ;*=====================================================================*/
@@ -20,15 +20,15 @@
 ;*    test/audio ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-service (test/audio)
-   (let* ((snd (service-resource test/audio "sound-test.mp3"))
-	  (audio (<AUDIO> :controls #t :src snd :stream #f)))
-      (<TEST-HTML>
-	 :include '("hop-audio" "hop-slider")
-	 :source (service-resource test/audio "audio.hop")
-	 (<DIV> :class "comment"
-	    "This test uses the Flash plugin for playing audios. This requires
-Flash 8 or 9.")
- 	 audio
-	 (<BR>)
-	 (<BUTTON> :onclick ~(audio-load $audio "foo" #t)
-	    "Raises a load error"))))
+   (<TEST-HTML>
+      :include '("hop-audio" "hop-slider")
+      :source (service-resource test/audio "audio.hop")
+      (<DIV> :class "comment"
+	 "This test uses HTML5 or Flash for playing audios.")
+      (<AUDIO> :controls #t :stream #f
+	 (<SOURCE> :type "audio/mpeg"
+	    (service-resource test/audio "sound-test.mp3"))
+	 (<SOURCE> :type "audio/ogg"
+	    (service-resource test/audio "sound-test.ogg")))
+      (<BR>)
+      "Click the \"play\" button to start playing."))

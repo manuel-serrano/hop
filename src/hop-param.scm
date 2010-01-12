@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Jan 11 12:23:57 2010 (serrano)                */
+;*    Last change :  Mon Jan 11 12:45:25 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -200,7 +200,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-ip-blacklist-table ...                                       */
 ;*---------------------------------------------------------------------*/
-(define hop-ip-blacklist-table 
+(define-parameter hop-ip-blacklist-table 
    (create-hashtable :size 1)
    (lambda (v)
       (if (hashtable? v)

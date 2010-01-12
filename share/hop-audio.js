@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Mon Jan 11 05:25:22 2010 (serrano)                */
+/*    Last change :  Tue Jan 12 11:29:14 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -28,6 +28,8 @@ function HopAudioServerBackend( a, u ) {
    var be = this;
    this.url = u;
    this.audio = a;
+   this.playlistindex = -1;
+   this.playlist = null;
 }
 
 // toString
@@ -37,14 +39,16 @@ HopAudioServerBackend.prototype.toString = function() {
 
 // playurl
 HopAudioServerBackend.prototype.playurl = function( url, start ) {
-   if( !sc_isPair( this.playlist ) ) {
+   var o = this;
+
+   if( !sc_isPair( o.playlist ) ) {
       var success = function( h ) {
-	 with_hop( hop_apply_url( this.url, [ Splay, 0 ] ), this.err );
+	 with_hop( hop_apply_url( o.url, [ Splay, 0 ] ), o.err );
       }
-      var url = this.audio.src;
-      with_hop( hop_apply_url( this.url, [ Sload, url ] ), success );
+      var url = o.audio.src;
+      with_hop( hop_apply_url( o.url, [ Sload, url ] ), success );
    } else {
-      with_hop( hop_apply_url( this.url, [ Splay, 0 ] ), this.err );
+      with_hop( hop_apply_url( o.url, [ Splay, 0 ] ), o.err );
    }
 };
 
@@ -65,7 +69,7 @@ HopAudioServerBackend.prototype.close = function() {
    hop_remove_event_listener( this.audio.serverbackend.url,
 			      "server",
 			      this.audio.serverbackend.event_listener );
-   this.audio.backend = this.audio.clientbackend;
+   this.audio.backend = this.audio.browserbackend;
 
    with_hop( hop_apply_url( this.url, [ Sclose, false ] ) );
 };
@@ -264,7 +268,7 @@ HTMLAudioElement.prototype.playlist_get = function() {
 // playlist_set   
 HTMLAudioElement.prototype.playlist_set = function( playlist, autorun ) {
    var backend = this;
-   
+
    var html5_canplay = function( o ) {
       if( typeof o === "string" ) {
 	 return o;
@@ -289,6 +293,7 @@ HTMLAudioElement.prototype.playlist_set = function( playlist, autorun ) {
    }
 
    backend.playlist = sc_filterMap1( html5_canplay, playlist );
+
    if( autorun ) backend.playlist_play( 0 );
 };
 
@@ -350,7 +355,7 @@ var Serror = sc_jsstring2symbol( "error" );
 var Sabort = sc_jsstring2symbol( "abort" );
 var Sstatus = sc_jsstring2symbol( "status" );
 
-var Sclient = sc_jsstring2symbol( "client" );
+var Sbrowser = sc_jsstring2symbol( "browser" );
 var Sserver = sc_jsstring2symbol( "server" );
 
 /*---------------------------------------------------------------------*/
@@ -717,7 +722,7 @@ function hop_audio_server_event_listener( e, backend ) {
 function hop_audio_backend( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
 
-   return ( audio.backend === audio.clientbackend ) ? Sclient : Sserver;
+   return ( audio.backend === audio.browserbackend ) ? Sbrowser : Sserver;
 }
 
 /*---------------------------------------------------------------------*/
@@ -727,10 +732,10 @@ function hop_audio_backend( audio ) {
 function hop_audio_backend_set( audio, backend ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
 
-   if( backend === Sclient ) {
-      if( audio.clientbackend && audio.clientbackend !== audio.backend ) {
+   if( backend === Sbrowser ) {
+      if( audio.browserbackend && audio.browserbackend !== audio.backend ) {
 	 if( audio.backend ) hop_audio_stop( audio );
-	 audio.backend = audio.clientbackend;
+	 audio.backend = audio.browserbackend;
       }
       hop_audio_invoke_listeners( audio, "backend" );
    } else {
@@ -742,10 +747,10 @@ function hop_audio_backend_set( audio, backend ) {
 	 audio.serverbackend.url = backend;
 	 hop_audio_invoke_listeners( audio, "backend" );
       } else {
-	 backend = new HopAudioServerBackend( audio, backend );
-	 audio.serverbackend = backend;
-	 audio.backend = backend;
-	 hop_audio_server_init( backend );
+	 servbackend = new HopAudioServerBackend( audio, backend );
+	 audio.serverbackend = servbackend;
+	 audio.backend = servbackend;
+	 hop_audio_server_init( servbackend );
       }
 
       hop_audio_update( audio );
@@ -839,7 +844,7 @@ function hop_audio_play( audio, start ) {
 /*** META ((export audio-playlist-play) (arity #t)) */
 function hop_audio_playlist_play( audio, i ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
-   
+
    var pl = hop_audio_playlist_get( audio );
 
    if( (i >= 0) && (i < sc_length( pl )) ) {

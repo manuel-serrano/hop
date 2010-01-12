@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/doc/libraries.hop         */
+;*    serrano/prgm/project/hop/2.0.x/weblets/doc/libraries.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon May  8 06:21:47 2006                          */
-;*    Last change :  Fri Sep 19 14:54:40 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Tue Jan 12 09:26:45 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP libraries doc.                                           */
 ;*=====================================================================*/
@@ -20,7 +20,8 @@
 	   hopdoc_widgets
 	   hopdoc_search)
    
-   (export (<LIBRARIES>)))
+   (export (<LIBRARIES>)
+	   (<LIBREF> lbl file)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <LIBRARIES> ...                                                  */
@@ -54,4 +55,12 @@
 		(<COLGROUP> :span 2 :width "50%")
 		(map (lambda (a b) (<TR> (<TD> a) (<TD> b)))
 		     (car l2) (cadr l2))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <LIBREF> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<LIBREF> lbl file)
+   (<SPAN> :class "href" 
+      :onclick ~(select-api-pad $(make-file-name (doc-api-dir) file) #f "libraries")
+      lbl))
 

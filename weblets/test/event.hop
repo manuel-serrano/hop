@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/test/event.hop            */
+;*    serrano/prgm/project/hop/2.0.x/weblets/test/event.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Sun Feb 17 19:16:18 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Tue Jan 12 08:46:20 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
 ;*=====================================================================*/
@@ -115,8 +115,32 @@ events succeeded, you should see an acknowledge.")
 							evt2 evt2)
 						       (hop-event-signal!
 							evt3 evt3))))))
+	       (<H4> "Client events")
 	       b
 	       b2
+	       (<H4> "Server events")
 	       (<DIV> "Server event: " b3
-		      ", Server event 2 (AB or BA when okay): " b4))))))
+		      ", Server event 2 (AB or BA when okay): " b4)
+	       (<H4> "Orientation (browser dependent)")
+	       (<DIV> :style "border: 1px solid black; text-align: center;"
+		  (<SPAN> :id "orientation" "Move your device"))
+	       ~(add-event-listener! window "load"
+		   (lambda (e)
+		      (let ((ox 1)
+			    (oy 1)
+			    (oz 1)
+			    (PI/2 (* 2 (atan 1))))
+			 (add-event-listener! window "MozOrientation"
+			    (lambda (e)
+			       (when (or (> (abs (- e.x ox)) 0.05)
+					 (> (abs (- e.y oy)) 0.05)
+					 (> (abs (- e.z oz)) 0.05))
+				  (set! ox e.x)
+				  (set! oy e.y)
+				  (set! oy e.z)
+				  (node-style-set! "orientation"
+				     :color "red"
+				     :MozTransform (format "rotate(~arad) scale(~a,~a)" (* PI/2 (- e.x)) (+ 1 (* 2 e.y)) (+ 1 (* 2 e.z)))))))))))))))
+		      
+				    
       

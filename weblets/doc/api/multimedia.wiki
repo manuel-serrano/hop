@@ -26,7 +26,7 @@ library:
 </code>
 
 The source code of the 
-[[http://hop.inria.fr/hop/weblets/homepage?weblet=hopaudio|HopAudio]] 
+[[http://hop.inria.fr/hop/weblets/homepage?weblet=hopmusic|HopMusic]] 
 weblet is good example of Web Audio multimedia application implemented 
 in Hop. It uses almost all the features described in the manual page.
 
@@ -353,7 +353,7 @@ spawns in background a mpg123 process.
 </class>
 
 ===== ++(class mpc::music ...)++ =====
-<class> mplayer
+<class> mpc
 <fields>
 ^  fields  ^   access  ^   type      ^  default value     ^  short description           ^
 | hello   |    r      |   obj    |  ++#f++   | An optional //hello// phrase sent to MPD.  |
@@ -592,6 +592,8 @@ music files.
 
 </class>
 
+=== Color ===
+
 ===== ++(hsv->rgb h s v)++ =====
 ===== ++(hsl->rgb h s l)++ =====
 ===== ++(rgb->hsv r g b)++ =====
@@ -612,12 +614,12 @@ arguments ++r++, ++g++, and ++b++ are in the range ++[0..255]++.
 These procedures returns multiple-values.
 
 <code>
-(multiple-value-bind (r g b)
-   (hsv->rgb 340 34 56)
-   (list r g b)) ,(<SYM> '=>) (143 94 110)
-(multiple-value-bind (h s v)
-   (rgb->hsv 255 0 0)
-   (list h s v)) ,(<SYM> '=>) (0 100 100)
+  (multiple-value-bind (r g b)
+     (hsv->rgb 340 34 56)
+     (list r g b)) ,(<SYM> '=>) (143 94 110)
+  (multiple-value-bind (h s v)
+     (rgb->hsv 255 0 0)
+     (list h s v)) ,(<SYM> '=>) (0 100 100)
 </code>
 
 </server>

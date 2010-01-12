@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/doc/config.hop            */
+;*    serrano/prgm/project/hop/1.9.x/weblets/doc/config.hop.in         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Mon Jan 11 05:31:06 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Fri Jun 20 09:12:37 2008 (serrano)                */
+;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Doc configuration                                                */
 ;*=====================================================================*/
@@ -21,7 +21,6 @@
 	   (doc-weblets-dir)
 	   (doc-wiki-dir)
 	   (doc-core-dir)
-	   (doc-hss-dir)
 	   (doc-js-dir)
 	   (doc-hss-dir)
 	   (doc-tutorials-dir)
@@ -39,7 +38,7 @@
 ;*    Version                                                          */
 ;*---------------------------------------------------------------------*/
 (define (doc-version) "1.1.0")
-(define (doc-date) "30 December 2009")
+(define (doc-date) "12 January 2010")
 (define (doc-author) "M. Serrano")
 
 ;*---------------------------------------------------------------------*/
@@ -71,11 +70,6 @@
 ;*    doc-core-dir                                                     */
 ;*---------------------------------------------------------------------*/
 (define-parameter doc-core-dir (make-file-name (doc-dir) "core"))
-
-;*---------------------------------------------------------------------*/
-;*    doc-hss-dir                                                      */
-;*---------------------------------------------------------------------*/
-(define-parameter doc-hss-dir (make-file-name (doc-dir) "hss"))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc-js-dir                                                       */

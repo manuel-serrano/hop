@@ -1,0 +1,11 @@
+;; //Browser-side// audio using flash player
+(module audio-server
+   (library multimedia gstreamer))
+
+(<HTML>
+   (<HEAD> :include "hop-audio")
+   (<BODY>
+      (<AUDIO> :controls #t :browser 'flash :stream #t
+	 :src "http://www.m-base.org/tao_of_mad_phat_mp3_files/the_tao_of_mad_phat.mp3")
+      (<DIV> :style "margin-top: 2ex"
+	 "Click the \"play\" button to starting playing music")))

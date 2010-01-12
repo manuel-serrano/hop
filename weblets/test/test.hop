@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Jun 20 18:32:15 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Tue Jan 12 10:29:50 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client side testing                                          */
 ;*=====================================================================*/
@@ -28,7 +28,6 @@
 	   weblet_test-canvas
 	   weblet_test-window
 	   weblet_test-fselector
-	   weblet_test-sound
 	   weblet_test-audio
 	   weblet_test-xhtml
 	   weblet_test-svg
@@ -88,7 +87,6 @@
 	 (<H4> "Miscellaneous tests")
 	 (<UL>
 	    (<LI> (<A> :href test/busy :target "_blank" "Busy anim"))
-	    (<LI> (<A> :href test/sound :target "_blank" "Sounds"))
 	    (<LI> (<A> :href test/audio :target "_blank" "Audio"))))))
 
 ;*---------------------------------------------------------------------*/
