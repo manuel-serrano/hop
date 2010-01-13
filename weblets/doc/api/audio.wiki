@@ -138,6 +138,16 @@ Example:
      :server audio-server)
 
 
+~~ **Note: ** //an error in bigloo3.3a, fixed in bigloo3.3b, prevent ++music++
+to be considered as a regular field of the ++audio-server++ class. Hence,
+with bigloo3.3a, the following example must be written://
+
+  (define audio-server
+    (let ((o (instantiate::audio-server)))
+       (audio-server-music-set! o (instantiate::gstmusic))
+       o))
+
+
 </class>
 
 === ++<AUDIO>++ ===
