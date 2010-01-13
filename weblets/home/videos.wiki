@@ -10,7 +10,7 @@ and the genuine ,(<A> :href "http://www.youtube.com/watch?v=i7bc6yiJQ0I"
 "YouTube") page.
   * **HopX10** (2 min): Your House in your pocket (or Home Automation with Hop),September 2009.
  ,(<DIV> :style "margin-top: 1em; margin-bottom: 1em;"
-    (<VIDEO> 
+    (<VIDEO> :controls #t
        (<SOURCE> :src (make-file-name (home-dir) "videos/hopx10.ogv")
           :type "video/ogg")
        (<SOURCE> :src (make-file-name (home-dir) "videos/hopx10.flv")
