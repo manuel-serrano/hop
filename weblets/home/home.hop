@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Tue Jan 12 19:33:35 2010 (serrano)                */
+;*    Last change :  Wed Jan 13 14:29:58 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -264,6 +264,7 @@ components = free" catalogues catalogues (home-ftp-hop-url) distrib))))
 (define *stable-dmg* #unspecified)
 (define *stable-jar* #unspecified)
 (define *stable-tar-url* #unspecified)
+(define *stable-dmg-url* #unspecified)
 (define *stable-jar-url* #unspecified)
 (define *maemo-chinook-url* (home/maemo/hop.install "chinook" "internet"))
 (define *maemo-freemantle-url* (home/maemo/hop.install "freemantle" "hop"))
@@ -306,14 +307,19 @@ components = free" catalogues catalogues (home-ftp-hop-url) distrib))))
       
       (set! *stable-jar*
 	    (if (string? (home-hop-stable-version))
-		(string-append "hop-" (home-hop-stable-version) ".jar")
+		(string-append "java/hop-" (home-hop-stable-version) ".jar")
 		"not available"))
       
       (set! *stable-tar-url*
 	    (if (string? *stable-tar-gz*)
 		(make-file-name (home-ftp-hop-url) *stable-tar-gz*)
 		"not available"))
-      
+
+      (set! *stable-dmg-url*
+	    (if (string? *stable-dmg*)
+		(make-file-name (home-ftp-hop-url) *stable-dmg*)
+		"not available"))
+	    
       (set! *stable-jar-url*
 	    (if (string? *stable-jar*)
 		(make-file-name (home-ftp-hop-url) *stable-jar*)
