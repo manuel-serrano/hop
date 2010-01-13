@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Jan 12 11:31:22 2010 (serrano)                */
+;*    Last change :  Wed Jan 13 06:41:36 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -21,31 +21,52 @@
    (cond-expand
       (enable-threads (library pthread)))
 
-   (export  (class audio-server
-	      (audio-server-init)
-	      (music (get (lambda (o)
-			     (audio-server-%music o)))
-		     (set (lambda (o v)
-			     (with-access::audio-server o (%hmutex %state %thread %music)
-				(with-lock %hmutex
-				   (lambda ()
-				      (when (music? %music) (music-close %music))
-				      (when (thread? %thread) (thread-terminate! %thread))
-				      (audio-server-%music-set! o v)
-				      (when (music? v)
-					 (set! %thread (make-audio-server-thread o v))))))))
-		     (default #f))
-	      (%music (default #f))
-	      (%hmutex read-only (default (make-mutex)))
-	      (%thread (default #f))
-	      (%path (default #unspecified))
-	      (%service (default #unspecified))
-	      (%event (default #unspecified))
-	      (%errcount::int (default 0))
-	      (%state::symbol (default 'init))
-	      (%log::pair-nil (default '())))
-
-	    (generic audio-server-init ::audio-server)
+   (cond-expand
+      (bigloo3.3a
+       (export
+	(class audio-server
+	   (audio-server-init)
+	   (%music (default #f))
+	   (%hmutex read-only (default (make-mutex)))
+	   (%thread (default #f))
+	   (%path (default #unspecified))
+	   (%service (default #unspecified))
+	   (%event (default #unspecified))
+	   (%errcount::int (default 0))
+	   (%state::symbol (default 'init))
+	   (%log::pair-nil (default '())))
+	
+	(audio-server-music ::audio-server)
+	(audio-server-musc-set! ::audio-server ::obj)))
+      (else
+       (export
+	(class audio-server
+	   (audio-server-init)
+	   (music (get (lambda (o)
+			  (audio-server-%music o)))
+		  (set (lambda (o v)
+			  (with-lock (audio-server-%hmutex o)
+			     (lambda ()
+				(when (music? (audio-server-%music o))
+				   (music-close (audio-server-%music o)))
+				(when (thread? (audio-server-%thread o))
+				   (thread-terminate! (audio-server-%thread o)))
+				(audio-server-%music-set! o v)
+				(when (music? v)
+				   (audio-server-%thread-set! o
+                                      (make-audio-server-thread o v)))))))
+		  (default #f))
+	   (%music (default #f))
+	   (%hmutex read-only (default (make-mutex)))
+	   (%thread (default #f))
+	   (%path (default #unspecified))
+	   (%service (default #unspecified))
+	   (%event (default #unspecified))
+	   (%errcount::int (default 0))
+	   (%state::symbol (default 'init))
+	   (%log::pair-nil (default '()))))))
+   
+   (export  (generic audio-server-init ::audio-server)
 	    
 	    (<AUDIO> . args)
 	    (audio-server-close ::obj)))
@@ -493,26 +514,26 @@
 (define (audio-server-status as)
    (with-access::audio-server as (%music)
       (audio-status-event-value (music-status %music))))
-         
-;* {*---------------------------------------------------------------------*} */
-;* {*    audio-server-music ...                                           *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (audio-server-music as)                                     */
-;*    (with-access::audio-server as (%music)                           */
-;*       %music))                                                      */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    audio-server-music-set! ...                                      *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (audio-server-music-set! as m)                              */
-;*    (with-access::audio-server as (%hmutex %state %thread %music)    */
-;*       (with-lock %hmutex                                            */
-;* 	 (lambda ()                                                    */
-;* 	    (when (music? %music) (music-close %music))                */
-;* 	    (when (thread? %thread) (thread-terminate! %thread))       */
-;* 	    (audio-server-%music-set! as m)                            */
-;* 	    (when (music? m)                                           */
-;* 	       (set! %thread (make-audio-server-thread as m)))))))     */
+
+;*---------------------------------------------------------------------*/
+;*    bigloo3.3a workaround                                            */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (bigloo3.3a
+    
+    (define (audio-server-music as)
+       (with-access::audio-server as (%music)
+	  %music))
+    
+    (define (audio-server-music-set! as m)
+       (with-access::audio-server as (%hmutex %state %thread %music)
+	  (with-lock %hmutex
+	     (lambda ()
+		(when (music? %music) (music-close %music))
+		(when (thread? %thread) (thread-terminate! %thread))
+		(audio-server-%music-set! as m)
+		(when (music? m)
+		   (set! %thread (make-audio-server-thread as m)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-set! ...                                          */
