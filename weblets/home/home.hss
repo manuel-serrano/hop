@@ -367,7 +367,7 @@ table.os-download {
 
 table.os-download-stable {
   width: 50em;
-  background: #daffbd;
+  background: #E6FFBD;
   margin-bottom: 5ex;
 }
 

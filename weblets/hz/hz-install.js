@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Nov 16 11:07:40 2007                          */
-/*    Last change :  Tue Dec 22 06:12:46 2009 (serrano)                */
-/*    Copyright   :  2007-09 Manuel Serrano                            */
+/*    Last change :  Wed Jan 13 08:53:17 2010 (serrano)                */
+/*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Create a click and install panel                                 */
 /*=====================================================================*/
@@ -49,7 +49,7 @@ function hop_install_weblet( url, srci, srcr, parent ) {
       "<tr><td colspan='2' width='100%'><div style='width: 100%; border-bottom: 1px solid #777'>HOP</td></tr>" +
       "<tr><th>host:</th><td><input id='hop_click_and_install_host_" + hop_install_stamp + "' size='10 type='text' value='localhost' style='border: 1px solid #bbb; color: #555; font-size: inherit'/></td></tr>" +
       "<tr><th>port:</th><td><input id='hop_click_and_install_port_" + hop_install_stamp + "' size='4 type='text' value='8080' style='border: 1px solid #bbb; color: #555; font-size: inherit'/></td></tr></table>";
-   var panel = "<table class='hz-install' style='background: #daffbd; border: 1px solid #bbb; -moz-border-radius: 0.5em; font-family: arial; padding-left: 1em; padding-right: 1em'>" +
+   var panel = "<table class='hz-install' style='background: #E6FFBD; border: 1px solid #bbb; -moz-border-radius: 0.5em; font-family: arial; padding-left: 1em; padding-right: 1em'>" +
       "<tr><th colspan='3' style='font-size: 110%' align='left'>" + namev + ".hz</th></tr>" + 
       "<tr>" +
       "<td><table style='border-collapse: collapse'>" +

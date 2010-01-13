@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Tue Jan 12 07:23:59 2010 (serrano)                */
+/*    Last change :  Wed Jan 13 08:47:58 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -1192,10 +1192,12 @@ table.global-search td:hover {
 table.weblet-facts {
   margin-top: 2ex;
   margin-left: 2em;
-  padding: 2px;
-  font-size: 80%;
+  padding: 4px;
+  padding-right: 1em;
+  font-size: 85%;
   border: 1px solid $border-color;
   background: #eeffdd;
+  border-radius: 3px;
 }
 
 table.weblet-facts th:after {
@@ -1206,4 +1208,12 @@ table.weblet-facts td.logo {
   vertical-align: top;
   padding-right: 10px;
   padding-left: 10px;
+}
+
+table.weblet-facts th {
+  color: #777;
+}
+
+table.weblet-facts td {
+  font-weight: bold;
 }

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon Dec 21 08:00:53 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Wed Jan 13 08:26:06 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
 ;*=====================================================================*/
@@ -332,7 +332,7 @@
 	      :onload (node-style-set! this :display "block"))
 	   (<DIV> :style
 	      (format "color: #ccc; font-size: 60%; position: fixed; bottom: ~apx; text-align: center; left: 0; right: 0; z-index: 9999;" (+ 4 vert))
-	      "Click here to remove...")
+	      "Click here to remove ([alt-h] to toogle).")
 	   (add-event-listener! $panel-event "server" remove-hop-dashboard!)))))
 
 ;*---------------------------------------------------------------------*/

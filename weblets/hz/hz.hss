@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Wed May  6 10:26:32 2009 (serrano)                */
-/*    Copyright   :  2006-09 Manuel Serrano                            */
+/*    Last change :  Wed Jan 13 08:53:40 2010 (serrano)                */
+/*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
 /*=====================================================================*/
@@ -545,7 +545,7 @@ weblets td.homepage tt {
 }
 
 weblets div.action {
-  background: #daffbd;
+  background: #E6FFBD;
   border: 1px solid $border-color;
   padding-left: 15px;
   padding-right: 15px;
