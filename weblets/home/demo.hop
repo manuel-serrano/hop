@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Tue Jan 12 20:26:06 2010 (serrano)                */
+;*    Last change :  Wed Jan 13 17:31:57 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -102,7 +102,7 @@
        (<H1> "This is the HOP demonstration playground.")
        (<P> [It illustrates various features provided by HOP. It shows
 some of the HTML extensions provided by HOP (for instance for implementing
-this simple window manager). It shows how to programs application where
+his simple window manager). It shows how to programs application where
 ,(<EM> "client") computations and ,(<EM> "server") computations are
 simultaneously involved. It also illustrates some of the HOP libraries
 such as libraries for accessing and parsing ressources over the network. This
@@ -123,7 +123,7 @@ playground contains the following demonstrations:])
  ,(<EM> "audio") player. It shows how to program multimedia applications
  in HOP.])
        (<H2> "Video")
-       (<P> :class "descr" [This demonstration shows how use HTML 5 video
+       (<P> :class "descr" [This demonstration shows how use HTML 5 videos
 in HOP to implement live special effects.])
        (<H2> "Rss")
        (<P> :class "descr" [This implements a ,(<EM> "RSS") reader. It
