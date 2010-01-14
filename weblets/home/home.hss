@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sun Jan 10 10:37:47 2010 (serrano)                */
+/*    Last change :  Thu Jan 14 07:59:08 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -268,7 +268,7 @@ hr {
 /*--- iframe ----------------------------------------------------------*/
 iframe.weblets {
   width: 98%;
-  height: 500px;
+  height: 800px;
   overflow: auto;
   border: 1px solid $border-color;
   margin: 5px;

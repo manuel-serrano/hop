@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Nov 16 11:07:40 2007                          */
-/*    Last change :  Wed Jan 13 08:53:17 2010 (serrano)                */
+/*    Last change :  Thu Jan 14 08:30:17 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Create a click and install panel                                 */
@@ -35,14 +35,19 @@ function hop_install_weblet( url, srci, srcr, parent ) {
    var name = (m.length > 2) ? m[ 2 ] : namev;
 
    hop_install_stamp++;
-   
+
+   var check = 'var i = new Image(); i.onerror = function() {alert( "Host \\\"" + host.value + ":" + port.value + "\\\" is not accessible. \\n\\nPlease check that Hop is running on that host before installing or running a weblet." )}; i.src = "http://" + host.value + ":" + port.value + ' + '"/hop/hz/check";';
    var oninstall = 'var host = document.getElementById( "hop_click_and_install_host_' + hop_install_stamp + '" );' +
       'var port = document.getElementById( "hop_click_and_install_port_' + hop_install_stamp + '" );' +
-      'this.href = "http://" + host.value + ":" + port.value + ' +
+      'var a = this;' +
+      check +
+      'a.href = "http://" + host.value + ":" + port.value + ' +
       '"/hop/hz/install?url=' + encodeURIComponent( url ) + '";';
    var onrun = 'var host = document.getElementById( "hop_click_and_install_host_' + hop_install_stamp + '" );' +
-      'var port = document.getElementById( "hop_click_and_install_port_' + hop_install_stamp + '" );' + 
-      'this.href = "http://" + host.value + ":" + port.value + ' +
+      'var port = document.getElementById( "hop_click_and_install_port_' + hop_install_stamp + '" );' +
+      'var a = this;' +
+      check +
+      'a.href = "http://" + host.value + ":" + port.value + ' +
       '"/hop/hz/run?url=' + encodeURIComponent( url ) + '";';
 
    var host = "<table style='font-size: 60%'>" +

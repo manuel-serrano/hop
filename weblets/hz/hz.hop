@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Tue May  5 10:49:28 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Thu Jan 14 08:04:54 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
 ;*=====================================================================*/
@@ -87,6 +87,14 @@
       (hz-load url)
       (<HTML>
 	 ~(set! document.location (string-append "/hop/" $name)))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/check ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-service (hz/check)
+   (instantiate::http-response-file
+      (start-line "HTTP/1.1 200 ok")
+      (file (service-resource hz "etc/favicon.png"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    The user configuration                                           */
