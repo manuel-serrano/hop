@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Sun Jan 10 09:48:20 2010 (serrano)                */
+;*    Last change :  Thu Jan 14 07:56:32 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME widgets.                                                */
@@ -87,21 +87,10 @@
 	       :inline #t
 	       :src "konqueror.png")
 	    (<FOOT-BUTTON>
-	       :href "http://validator.w3.org/check/referer"
-	       :title "Valid xml"
-	       :inline #t
-	       :src "html401.png")
-	    (<FOOT-BUTTON>
-	       :href "http://jigsaw.w3.org/css-validator/check/referer"
-	       :title "Valid CSS"
-	       :inline #t
-	       :src "css.png")
-	    (<FOOT-BUTTON>
 	       :inline #t
 	       :href "home/rss"
 	       :title "HOP rss"
-	       :src (make-file-path (hop-share-directory)
-				    "buttons" "rss.png"))))))
+	       :src (make-file-path (hop-share-directory) "buttons" "rss.png"))))))
       
 				     
 	     
