@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Jan 13 06:41:36 2010 (serrano)                */
+;*    Last change :  Thu Jan 14 11:04:34 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -37,7 +37,7 @@
 	   (%log::pair-nil (default '())))
 	
 	(audio-server-music ::audio-server)
-	(audio-server-musc-set! ::audio-server ::obj)))
+	(audio-server-music-set! ::audio-server ::obj)))
       (else
        (export
 	(class audio-server
