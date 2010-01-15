@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sat Jan  2 08:51:44 2010 (serrano)                */
+/*    Last change :  Fri Jan 15 11:59:41 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -141,6 +141,8 @@ function HopServerEvent( n, text, val ) {
    this.name = n;
    this.value = val;
    this.id = hop_server_event_count++;
+   this.preventDefault = function() { ; };
+   this.stopPropagation = this.preventDefault;
    
    if( typeof text == "string" ) {
       this.responseText = text.replace( re, "" );
