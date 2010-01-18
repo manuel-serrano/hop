@@ -1,10 +1,10 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/configure                         */
+#*    serrano/prgm/project/hop/2.1.x/configure                         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Jan 15 12:00:01 2010 (serrano)                */
+#*    Last change :  Mon Jan 18 06:53:31 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -53,8 +53,8 @@ cssmimetype="text/css"
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="2.0.1"
-devel=
+version="2.1.0"
+devel=pre1
 
 hopc=$PWD/bin/hopc
 
