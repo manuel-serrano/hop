@@ -226,6 +226,7 @@
 	 :share (hop-share-directory)
 	 :verbose (hop-verbose)
 	 :eval (lambda (e) (hop->json (eval e) #f #f))
+	 :hop-compile (lambda (e p) (display (hop->json e #f #f) p))
 	 :postprocess (lambda (s)
 			 (with-input-from-string s
 			    (lambda ()
@@ -241,9 +242,11 @@
 	 :expressionc compile-scheme-expression
 	 :macroe create-empty-hopscheme-macro-environment
 	 :filec compile-scheme-file
-	 :JS-expression JS-expression
-	 :JS-statement JS-statement
-	 :JS-return JS-return)
+	 :expr->precompiled expr->precompiled
+	 :precompiled->JS-expression precompiled->JS-expression
+	 :precompiled->JS-statement precompiled->JS-statement
+	 :precompiled->JS-return precompiled->JS-return
+	 :precompiled->expr precompiled->expr)
       (init-hop-services!)
       (init-hop-widgets!)
       

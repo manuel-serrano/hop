@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/clientc.scm               */
+;*    serrano/prgm/project/hop/2.1.x/runtime/clientc.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Mon Dec 21 18:02:48 2009 (serrano)                */
-;*    Copyright   :  2009 Manuel Serrano                               */
+;*    Last change :  Mon Jan 18 07:05:33 2010 (serrano)                */
+;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
 ;*=====================================================================*/
@@ -38,13 +38,20 @@
 	       (expressionc::procedure read-only)
 	       (modulec::procedure read-only)
 	       (macroe::procedure read-only)
-	       (JS-expression::procedure read-only)
-	       (JS-statement::procedure read-only)
-	       (JS-return::procedure read-only))
+	       (expr->precompiled::procedure read-only)
+	       (precompiled->JS-expression::procedure read-only)
+	       (precompiled->JS-statement::procedure read-only)
+	       (precompiled->JS-return::procedure read-only)
+	       (precompiled->expr::procedure read-only))
 
 	    (init-clientc-compiler! #!key
 				    filec expressionc modulec macroe
-				    JS-expression JS-statement JS-return)
+				    expr->precompiled
+				    precompiled->JS-expression
+				    precompiled->JS-statement
+				    precompiled->JS-return
+				    precompiled->expr)
+
 	    (clientc-url ::bstring)
 	    (clientc-response::%http-response ::http-request ::bstring)
 	    (get-clientc-compiled-file ::bstring)))
@@ -63,7 +70,11 @@
 ;*    init-clientc-compiler! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (init-clientc-compiler! #!key filec expressionc modulec macroe
-				JS-expression JS-statement JS-return)
+				expr->precompiled
+				precompiled->JS-expression
+				precompiled->JS-statement
+				precompiled->JS-return
+				precompiled->expr)
    ;; prepare the client-code compiler cache
    (set! clientc-cache
 	 (instantiate::cache-disk
@@ -81,9 +92,11 @@
        (expressionc expressionc)
        (modulec modulec)
        (macroe macroe)
-       (JS-expression JS-expression)
-       (JS-statement JS-statement)
-       (JS-return JS-return))))
+       (expr->precompiled expr->precompiled)
+       (precompiled->JS-expression precompiled->JS-expression)
+       (precompiled->JS-statement precompiled->JS-statement)
+       (precompiled->JS-return precompiled->JS-return)
+       (precompiled->expr precompiled->expr))))
    
 ;*---------------------------------------------------------------------*/
 ;*    clientc-url ...                                                  */

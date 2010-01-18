@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/hopc/main.scm                     */
+;*    serrano/prgm/project/hop/2.1.x/hopc/main.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Nov 28 07:11:57 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Mon Jan 18 07:02:42 2010 (serrano)                */
+;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
 ;*=====================================================================*/
@@ -65,6 +65,7 @@
       :share (hopc-share-directory)
       :verbose (hop-verbose)
       :eval (lambda (e) (hop->json (eval e) #f #f))
+      :hop-compile (lambda (e p) (display (hop->json e #f #f) p))
       :postprocess (lambda (s)
 		      (with-input-from-string s
 			 (lambda ()
@@ -80,9 +81,11 @@
       :expressionc compile-scheme-expression
       :macroe create-empty-hopscheme-macro-environment
       :filec compile-scheme-file
-      :JS-expression JS-expression
-      :JS-statement JS-statement
-      :JS-return JS-return))
+      :expr->precompiled expr->precompiled
+      :precompiled->JS-expression precompiled->JS-expression
+      :precompiled->JS-statement precompiled->JS-statement
+      :precompiled->JS-return precompiled->JS-return
+      :precompiled->expr precompiled->expr))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile-sources ...                                              */
@@ -120,7 +123,7 @@
 			  (cons* "-o" d opts)))
 		      (else
 		       (cons "--to-stdout" opts))))
-	     (cmd (format "| ~a - ~l -fread-internal-src" (hopc-bigloo) opts))
+	     (cmd (format "| ~a - ~l -library hop -library hopscheme -fread-internal-src" (hopc-bigloo) opts))
 	     (out (open-output-file cmd)))
 	 (hop-verb 1 cmd "\n")
 	 (unwind-protect

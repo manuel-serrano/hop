@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/xml.scm                   */
+;*    serrano/prgm/project/hop/2.1.x/runtime/xml.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Dec  1 16:35:56 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Mon Jan 18 07:09:27 2010 (serrano)                */
+;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -117,9 +117,12 @@
 	    (string->html ::bstring)
 	    (string->xml ::bstring)
 
-	    (xml-tilde->statement::bstring ::xml-tilde)
 	    (xml-tilde->expression::bstring ::xml-tilde)
+	    (xml-tilde->statement::bstring ::xml-tilde)
 	    (xml-tilde->return::bstring ::xml-tilde)
+
+	    (xml-tilde->expr ::xml-tilde)
+	    (expr->xml-tilde::xml-tilde expr)
 
 	    (<A> . ::obj)
 	    (<ABBR> . ::obj)
@@ -813,40 +816,34 @@
 			   (eval-markup constr attributes body)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-tilde->statement ...                                         */
-;*---------------------------------------------------------------------*/
-(define (xml-tilde->statement::bstring obj)
-   (with-access::xml-tilde obj (%js-statement)
-      (if (string? %js-statement)
-	  %js-statement
-	  (let* ((body (xml-tilde-body obj))
-		 (js-stmt ((clientc-JS-statement (hop-clientc)) body)))
-	     (set! %js-statement js-stmt)
-	     js-stmt))))
-
-;*---------------------------------------------------------------------*/
 ;*    xml-tilde->expression ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (xml-tilde->expression::bstring obj)
-   (with-access::xml-tilde obj (%js-expression)
-      (if (string? %js-expression)
-	  %js-expression
-	  (let* ((body (xml-tilde-body obj))
-		 (js-expr ((clientc-JS-expression (hop-clientc)) body)))
-	     (set! %js-expression js-expr)
-	     js-expr))))
+   (with-access::xml-tilde obj (%js-expression body)
+      (when (not (string? %js-expression))
+	 (set! %js-expression
+	       ((clientc-precompiled->JS-expression (hop-clientc)) body)))
+      %js-expression))
+
+;*---------------------------------------------------------------------*/
+;*    xml-tilde->statement ...                                         */
+;*---------------------------------------------------------------------*/
+(define (xml-tilde->statement::bstring obj)
+   (with-access::xml-tilde obj (%js-statement body)
+      (when (not (string? %js-statement))
+	 (set! %js-statement
+	       ((clientc-precompiled->JS-statement (hop-clientc)) body)))
+      %js-statement))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-tilde->return ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (xml-tilde->return::bstring obj)
-   (with-access::xml-tilde obj (%js-return)
-      (if (string? %js-return)
-	  %js-return
-	  (let* ((body (xml-tilde-body obj))
-		 (js-ret ((clientc-JS-return (hop-clientc)) body)))
-	     (set! %js-return js-ret)
-	     js-ret))))
+   (with-access::xml-tilde obj (%js-return body)
+      (when (not (string? %js-return))
+	 (set! %js-return
+	       ((clientc-precompiled->JS-return (hop-clientc)) body)))
+      %js-return))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-tilde->attribute ...                                         */
@@ -858,6 +855,20 @@
 	  (let ((js-attr (xml-attribute-encode (xml-tilde->statement obj))))
 	     (set! %js-attribute js-attr)
 	     js-attr))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-tilde->expr ...                                              */
+;*---------------------------------------------------------------------*/
+(define (xml-tilde->expr obj)
+   (with-access::xml-tilde obj (body)
+      ((clientc-precompiled->expr (hop-clientc)) body)))
+
+;*---------------------------------------------------------------------*/
+;*    expr->xml-tilde ...                                              */
+;*---------------------------------------------------------------------*/
+(define (expr->xml-tilde obj)
+   (let ((compiled ((clientc-expr->precompiled (hop-clientc)) obj)))
+      (<TILDE> compiled)))
 
 ;*---------------------------------------------------------------------*/
 ;*    HTML 4.01 elements ...                                           */

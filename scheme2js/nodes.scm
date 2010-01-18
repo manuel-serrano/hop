@@ -66,6 +66,10 @@
        
        (free-vars::pair-nil (default '()))
 
+       ;; declared vars need to be declared using "var".
+       ;; most often declared-vars includes scope-vars.
+       ;; However, scope-vars contains parameters of functions, but they
+       ;; are not inside 'declared-vars'.
        (declared-vars::pair-nil (default '())))
     
     (final-class Module::Execution-Unit

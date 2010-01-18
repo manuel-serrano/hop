@@ -29,7 +29,8 @@
 	   template-display
 	   pipe-port
 	   js-pp
-	   push-declarations)
+	   push-declarations
+	   error)
    (static
     (class Pragmas
        lock
@@ -42,6 +43,8 @@
        call/cc?::bool
        optimize-calls?::bool
        debug?::bool
+
+       foreign-out
 
        pp?::bool
        pragmas       ;; ::Pragmas or #f
@@ -100,6 +103,8 @@
 		 (call/cc? (and (config 'call/cc) #t))
 		 (optimize-calls? (and (config 'optimize-calls) #t))
 		 (debug? (and (config 'debug) #t))
+
+		 (foreign-out (config 'foreign-out))
 
 		 (pp? (and (config 'pp) #t))
 		 (pragmas pragmas)
@@ -166,7 +171,7 @@
 	      (loop (+fx i 1)
 		    (cons (string-ref str i) rev-str))))))))
 
-(define (compile-const const p)
+(define (compile-const const p foreign-out loc)
    (define (display-ucs2-char p c) ;; without the quotes
       (let ((i (ucs2->integer c)))
 	 (cond
@@ -224,18 +229,18 @@
 	     (unless (>= i (vector-length const))
 		(if (not (= i 0))
 		    (template-display p ", "))
-		(compile-const (vector-ref const i) p)
+		(compile-const (vector-ref const i) p foreign-out loc)
 		(loop (+ i 1))))))
       ((pair? const)
        (if (small-list/pair? const)
 	   (template-display p
 	      "(new sc_Pair(~e,~e))"
-	      (compile-const (car const) p)
-	      (compile-const (cdr const) p))
+	      (compile-const (car const) p foreign-out loc)
+	      (compile-const (cdr const) p foreign-out loc))
 	   (template-display p
 	      "sc_list(~e)"
 	      (separated ", " 
-			 (lambda (e) "~e" (compile-const e p))
+			 (lambda (e) "~e" (compile-const e p foreign-out loc))
 			 const))))
       ((eq? const #unspecified) (template-display p "undefined"))
       ((keyword? const)
@@ -244,13 +249,21 @@
 	      "(new sc_Keyword(\"~a\"))" (keyword->string const))
 	   (template-display p
 	      "\"~a~a\"" *keyword-prefix* (keyword->string const))))
-      (else (error #f "Internal Error: forgot Const-type" const))))
+      (foreign-out
+       (let ((ok? (foreign-out const p)))
+	  (when (not ok?)
+	     (scheme2js-error 'const-out
+			      "Could not compile value:"
+			      const
+			      loc))))
+      (else
+       (error #f "Internal Error: forgot Const-type" const))))
    
 (define-nmethod (Const.compile p stmt?)
    (with-access::Const this (value)
       (template-display p
 	 (?@ stmt? "~@;\n")
-	 "~e" (compile-const value p))))
+	 "~e" (compile-const value p (Out-Env-foreign-out env) this))))
 
 (define-nmethod (Ref.compile p stmt?)
    (with-access::Ref this (var)
@@ -260,18 +273,6 @@
 	    "$js-id"))))
 
 (define-nmethod (Module.compile p stmt?)
-   ;; exported-vars
-   (with-access::Module this (scope-vars)
-      (unless (null? scope-vars)
-	 (template-display p
-	    "/* Exported Variables */\n"
-	    "~e" (for-each (lambda (var)
-			      (with-access::Named-Var var (js-id)
-				 (template-display p
-				    "var $js-id;\n")))
-			   scope-vars)
-	    "/* End Exports */\n\n")))
-
    ;; trampoline-code
    (when (Out-Env-trampoline? env)
       (scm2js-globals-init p)
@@ -285,13 +286,12 @@
 	    "~a.MAX_TAIL_CALLs = ~a;\n" tail-obj max-tail-depth
 	    "var sc_funTailCalls = ~a;\n"max-tail-depth)))
 
-   ;; declared variables
+   ;; note: due to "push-declarations" these are not all declared variables.
+   ;;   Just the ones that need to be declared by us.
    (with-access::Module this (declared-vars body)
       (for-each (lambda (var)
-		   (unless (eq? (Var-kind var) 'exported)
-		      (with-access::Named-Var var (js-id)
-			 (template-display p
-			    "var $js-id;\n"))))
+		   (with-access::Named-Var var (js-id)
+		      (template-display p "var $js-id;\n")))
 		declared-vars)
 
       ;; finally the body.
