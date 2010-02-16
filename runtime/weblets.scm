@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/weblets.scm               */
+;*    serrano/prgm/project/hop/2.1.x/runtime/weblets.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Sun Jan 10 10:46:33 2010 (serrano)                */
+;*    Last change :  Tue Feb 16 07:43:05 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -342,5 +342,6 @@
     (instantiate::http-server-request
        (localclientp #t)
        (port (hop-port))
-       (path path))))
+       (path path)
+       (abspath path))))
 

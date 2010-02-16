@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/share/hop-color.scm               */
+;*    serrano/prgm/project/hop/2.1.x/share/hop-color.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 14 11:31:04 2009                          */
-;*    Last change :  Fri Oct  9 07:39:00 2009 (serrano)                */
-;*    Copyright   :  2009 Manuel Serrano                               */
+;*    Last change :  Tue Feb 16 11:59:51 2010 (serrano)                */
+;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client side support for color selectors.                         */
 ;*=====================================================================*/
@@ -614,11 +614,10 @@
       ((procedure? cc.onchange)
        (cc.onchange))
       ((string? (cc.getAttribute "onchange"))
-       (set! cc.onchange
-	     (eval (string-append "function(event) {"
-				  (cc.getAttribute "onchange")
-				  "}")))
-       (hop-colorchooser-onchange cc))))
+       (set! cc.onchange (lambda (e) (eval cc.getAttribute)))
+       (if (procedure? cc.onchange)
+	   (cc.onchange #unspecified)
+	   (error 'colorchooser "Illegal onchange action" cc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-colorchooser-oncancel ...                                    */

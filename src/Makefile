@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/src/Makefile                      */
+#*    serrano/prgm/project/hop/2.1.x/src/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Tue Sep  8 09:55:34 2009 (serrano)                */
+#*    Last change :  Tue Feb 16 07:54:18 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -89,7 +89,7 @@ jvm-stdlibs: o/class_s/lib/hop/$(HOPRELEASE)
 
 jvm-share:
 	$(RM) -r o/class_s/share
-	cp -r ../share o/class_s
+	(cd ../share && $(MAKE) hop.js) && cp -r ../share o/class_s
 	cp -r ../scheme2js/runtime/*.js o/class_s/share
 
 jvm-etc:

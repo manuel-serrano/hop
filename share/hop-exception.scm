@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Thu Dec 10 09:50:57 2009 (serrano)                */
-;*    Copyright   :  2009 Manuel Serrano                               */
+;*    Last change :  Mon Feb  8 10:55:25 2010 (serrano)                */
+;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
 ;*    debug mode).                                                     */
@@ -240,11 +240,20 @@
 			    ", ")
 			 (substring f 0 i)
 			 "\n"))
-		     f)))
+		     (let ((m (pregexp-match "at ([^ ]+) [(]([^ ]+)(:[0-9]+:[0-9]+)[)]" f)))
+			(if m
+			    (list
+			     (<SPAN> :style "color: #777" 
+				(<A> :style "color: inherit"
+				   :href (caddr m) (cadr m) "!" (caddr m)
+				   (cadddr m))
+				", ")
+			     "(" (cadr m)  " ...)\n")
+			    (list f "\n"))))))
 	   stack))
 
    (let loop ((l (string-split stack "\n"))
-	      (s skip))p
+	      (s skip))
       (cond
 	 ((null? l)
 	  "")
@@ -298,7 +307,7 @@
 	  "unknwown error")))
 
    (let* ((message (exception-message exc))
-	  (msg (if (in? "scObject" exc)
+	  (msg (if (js-in? "scObject" exc)
 		   (list message " -- " (obj->string exc.scObject #f))
 		   message))
 	  (name (exception-name exc))

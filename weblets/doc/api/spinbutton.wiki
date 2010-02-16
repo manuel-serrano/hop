@@ -97,7 +97,7 @@ Example:
 
 === ++hop-spinbutton.hss++ ===
 
-The file ++hop-spinbutton.hss++ contains the default graphical configuration.
+~~ The file ++hop-spinbutton.hss++ contains the default graphical configuration.
 It is defined as:
 
 ,(<P>)

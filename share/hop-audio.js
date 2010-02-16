@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Wed Jan 13 09:15:06 2010 (serrano)                */
+/*    Last change :  Tue Feb  9 05:50:50 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -187,6 +187,7 @@ HopAudioServerBackend.prototype.playlist_index_get = function() {
 // update
 HopAudioServerBackend.prototype.update = function() {
    var backend = this;
+   // ask the current service
    with_hop( hop_apply_url( backend.url, [ Sstatus, 0 ] ),
 	     function( val ) {
 		hop_audio_server_event_listener( {value: val}, backend );
@@ -354,6 +355,7 @@ var Splaylist = sc_jsstring2symbol( "playlist" );
 var Serror = sc_jsstring2symbol( "error" );
 var Sabort = sc_jsstring2symbol( "abort" );
 var Sstatus = sc_jsstring2symbol( "status" );
+var Smetadata = sc_jsstring2symbol( "metadata" );
 
 var Sbrowser = sc_jsstring2symbol( "browser" );
 var Sserver = sc_jsstring2symbol( "server" );
@@ -479,6 +481,10 @@ function hop_audio_server_init( backend ) {
 	    hop_audio_close( backend.audio );
 	    hop_audio_invoke_listeners( backend.audio, "close", false );
 	 }
+      } );
+   hop_add_event_listener( document, "serverready", function( evt ) {
+	 // we are ready to handle signals, ask for a metadata update
+	 with_hop( hop_apply_url( backend.url, [ Smetadata, false ] ), backend.err );
       } );
 }
 

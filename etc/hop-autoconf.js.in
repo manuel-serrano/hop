@@ -117,6 +117,8 @@ function hop_Config() {
   this.filtered_errors = [];
   this.css = 2.1;
   this.xhr_multipart = false; // see hop_make_xml_http_request conf
+  this.clone_innerHTML = false; // see hop_create_element (hop-dom.js)
+  this.eval_innerHTML = true;
 
   /* navigator specific configuration */
   if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {
@@ -138,6 +140,7 @@ function hop_Config() {
      this.flash_audio = false;
      this.flash_markup = "embed";
      this.inline_image = true;
+     this.clone_innerHTML = true;
   } else if( navigator.userAgent.indexOf( "Chrome" ) >= 0 ) {
      this.js_speed = 100;
      this.navigator_family = "chrome";
@@ -147,6 +150,10 @@ function hop_Config() {
      this.flash_markup = "embed";
      this.inline_image = true;
      this.css = 3;
+     this.clone_innerHTML = true;
+     if( ! "Window" in window || window.Window === undefined ) {
+       window.Window = window.constructor;
+     }
   } else if( navigator.userAgent.indexOf( "Safari" ) >= 0 ) {
      this.js_speed = 80;
      this.navigator_family = "safari";
@@ -155,6 +162,7 @@ function hop_Config() {
      this.flash_audio = false;
      this.flash_markup = "embed";
      this.inline_image = true;
+     this.clone_innerHTML = true;
   } else if( navigator.userAgent.indexOf( "WebKit" ) >= 0 ) {
      this.navigator_family = "webkit";
      this.js_speed = 80;
@@ -163,6 +171,7 @@ function hop_Config() {
      this.flash_audio = false;
      this.flash_markup = "embed";
      this.inline_image = true;
+     this.clone_innerHTML = true;
   } else if( navigator.userAgent.indexOf( "KHTML" ) >= 0 ) {
      this.navigator_family = "khtml";
      this.mouse_left_button = 1;
@@ -170,9 +179,10 @@ function hop_Config() {
      this.flash_audio = false;
      this.flash_markup = "embed";
      this.inline_image = true;
+     this.clone_innerHTML = true;
   } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
-     if( navigator.userAgent.match( /3.5[^ ]*$/ ) ) {
-        /* Firefox 3.5 */
+     if( navigator.userAgent.match( /3.[56][^ ]*$/ ) ) {
+        /* Firefox 3.5, 3.6 */
         this.js_speed = 75;	    
         this.css = 3;
      } else if( navigator.userAgent.match( /3.0[^ ]*$/ ) ) {
@@ -258,7 +268,8 @@ var hop_innerHTML_need_evalp = true;
 var tmp = document.createElement( "div" );
 
 try {
-   tmp.innerHTML = "<script type='text/javascript'>hop_innerHTML_need_evalp = false</script>";
+   tmp.innerHTML = "<script type='text/javascript'>hop_config.eval_innerHTML = false;</script>";
+   tmp = tmp.cloneNode( true );
    if( ("body" in document) && (document.body != null) ) {
       document.body.appendChild( tmp );
       document.body.removeChild( tmp );

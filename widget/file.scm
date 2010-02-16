@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Wed Nov 18 09:03:52 2009 (serrano)                */
-;*    Copyright   :  2008-09 Manuel Serrano                            */
+;*    Last change :  Mon Feb  8 09:02:22 2010 (serrano)                */
+;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
 ;*=====================================================================*/
@@ -194,25 +194,24 @@
 	 (<DIV> :id (string-append id "-path")
 	    (<FILECHOOSER:PATH> id url))
 	 (<FILECHOOSER:LOCATION> url id)
-	 (<DIV> :class "hop_filechooser_paned_container"
-	    (<PANED> :fraction 25
-	       (<PAN>
-		  :onmouseup (format "hop_filechooser_end_drag( event, ~s )" id)
-		  (<DIV> :id (string-append id "-places")
-		     (<FILECHOOSER:PLACES> id)))
-	       (<PAN>
-		  (let ((files (<DIV> :id (string-append id "-files")
-				  :class "filechooser-files"
-				  (<FILECHOOSER:FILES> id url regexp hidden))))
-		     (if (pair? body)
-			 (<TABLE> :class "filechooser-body"
-			    :cellspacing 0
-			    :cellpadding 0
-			    (<COLGROUP> (<COL>) (<COL> :width "0*"))
-			    (<TR>
-			       (<TD> files)
-			       (<TD> :class "filechooser-body" body)))
-			 files)))))
+	 (<PANED> :fraction 25
+	    (<PAN>
+	       :onmouseup (format "hop_filechooser_end_drag( event, ~s )" id)
+	       (<DIV> :id (string-append id "-places")
+		  (<FILECHOOSER:PLACES> id)))
+	    (<PAN>
+	       (let ((files (<DIV> :id (string-append id "-files")
+			       :class "filechooser-files"
+			       (<FILECHOOSER:FILES> id url regexp hidden))))
+		  (if (pair? body)
+		      (<TABLE> :class "filechooser-body"
+			 :cellspacing 0
+			 :cellpadding 0
+			 (<COLGROUP> (<COL>) (<COL> :width "0*"))
+			 (<TR>
+			    (<TD> files)
+			    (<TD> :class "filechooser-body" body)))
+		      files))))
 	 (<DIV> (<FILECHOOSER:BUTTONS> id url filters regexp hidden))
 	 (<DIV> (<FILECHOOSER:OKCANCEL> id)))))
 

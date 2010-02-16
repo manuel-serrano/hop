@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/http-webdav.scm           */
+;*    serrano/prgm/project/hop/2.1.x/runtime/http-webdav.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Mon Dec 14 05:10:59 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Last change :  Tue Feb 16 07:42:25 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
 ;*    This module implements a WebDAV server as specified              */
@@ -215,17 +215,17 @@
 ;*---------------------------------------------------------------------*/
 (define (webdav-propfind req::http-request)
    (with-access::http-request req (content-length socket abspath user header)
-      (cond
-	 ((not (authorized-service? req 'webdav))
-	  (user-service-denied req user 'webdav))
-	 ((not (authorized-path? req abspath))
-	  (user-access-denied req))
-	 (else
-	  (let ((depth (get-header header depth: "infinity"))
-		(props (if (<=elong content-length 0)
-			   (webdav-propfind-all-properties)
-			   (parse-propfind-body
-			    content-length (socket-input socket)))))
+      (let ((depth (get-header header depth: "infinity"))
+	    (props (if (<=elong content-length 0)
+		       (webdav-propfind-all-properties)
+		       (parse-propfind-body
+			content-length (socket-input socket)))))
+	 (cond
+	    ((not (authorized-service? req 'webdav))
+	     (user-service-denied req user 'webdav))
+	    ((not (authorized-path? req abspath))
+	     (user-access-denied req))
+	    (else
 	     (instantiate::http-response-hop
 		(request req)
 		(start-line "HTTP/1.1 207 Multi-Status")

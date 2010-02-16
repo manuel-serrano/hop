@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Mon Jan  4 16:09:35 2010 (serrano)                */
+/*    Last change :  Thu Feb 11 06:10:27 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -45,7 +45,7 @@ function dom_add_child( node, e ) {
 function dom_set_child_node( parent, node ) {
    var childs = parent.childNodes;
 
-   for( var nc = childs.length - 1; nc >=0; nc-- )
+   for( var nc = childs.length - 1; nc >= 0; nc-- )
       parent.removeChild( childs[ nc ] );
 
    dom_add_child( parent, node );
@@ -1022,8 +1022,35 @@ var hop_tags_parent = {
    'td' : 'tr',
    'th' : 'tr',
    'li' : 'ul'
-}
+};
 
+/*---------------------------------------------------------------------*/
+/*    cloneScriptNode ...                                              */
+/*---------------------------------------------------------------------*/
+function cloneScriptNode( node ) {
+   if( node.nodeType != 1 ) {
+      return node;
+   }
+   if( (node.tagName !== "SCRIPT") && (node.tagName !== "script") ) {
+      var childs = node.childNodes;
+
+      for( var i = childs.length - 1; i >= 0; i-- ) {
+	 var n = cloneScriptNode( childs[ i ] );
+	 if( n != childs[ i ] ) {
+	    node.replaceChild( n, childs[ i ] );
+	 }
+      }
+
+      return node;
+   } else {
+      var t = document.createTextNode( node.innerHTML );
+      var s = document.createElement( "SCRIPT" );
+
+      s.appendChild( t );
+
+      return s;
+   }
+}
 /*---------------------------------------------------------------------*/
 /*    hop_create_element ...                                           */
 /*---------------------------------------------------------------------*/
@@ -1041,7 +1068,17 @@ function hop_create_element( html ) {
    var el = document.createElement( tag );
    el.innerHTML = html;
 
-   return el.childNodes[ 0 ];
+   if( hop_config.clone_innerHTML ) {
+      // As of Feb 2010, webkit based browsers (Feb 2010) requires a deep
+      // clone. Otherwise, embedded scripts are not evaluated when the
+      // resulting is inserted in the DOM!
+      if( html.search( /<script[ >]/i ) >= 0 )
+	 return cloneScriptNode( el.childNodes[ 0 ] );
+      else
+	 return el.childNodes[ 0 ];
+   } else {
+      return el.childNodes[ 0 ];
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -1077,7 +1114,7 @@ function hop_innerHTML_set( nid, html ) {
       hop_node_eval( el, html );
    } else if( hop_is_html_element( html ) || sc_isPair( html ) ) {
       dom_set_child_node( el, html );
-      if( hop_innerHTML_need_evalp ) hop_node_eval( el, html );
+      if( hop_config.eval_innerHTML ) hop_node_eval( el, html );
    } else {
       el.innerHTML = html;
    }

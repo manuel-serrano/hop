@@ -79,7 +79,7 @@
 						 (cons (cons scm-id js-id)
 						       unresolved)))))
 	       (scheme2js-compile-expr
-		e              ;; top-level
+		expr           ;; top-level
 		s-port         ;; out-port
 		`(             ;; override-headers
 		  (merge-first (import ,@(hop-runtime-modules)))
@@ -95,7 +95,7 @@
 		     (js (gensym 'js))
 		     (replaced? (gensym 'replaced?))
 		     (dmap (gensym 'dmap)))
-		  `(let* ((,scm-expr ,(list 'quote e))
+		  `(let* ((,scm-expr ,(list 'quote expr))
 			  ,@(if (null? dollar-map)
 				'()
 				`((,replaced? #f)
@@ -104,8 +104,7 @@
 			  (,js (cons ',assig-var ,(*hop-postprocess* js-code))))
 		      (lambda (,command)
 			 (case ,command
-			    ((JS)
-			     (cons ',assig-var ,(*hop-postprocess* js-code)))
+			    ((JS) ,js)
 			    ((scheme)
 			     ,(unless (null? dollar-map)
 				 `(when (not ,replaced?)
@@ -113,8 +112,8 @@
 					   (replace-dollars! ,scm-expr ,dmap))
 				     (set! ,replaced? #t)))
 			     ,scm-expr)
-			    ((exported) exported)
-			    ((unresolved) unresolved))))))
+			    ((exported) ',exported)
+			    ((unresolved) ',unresolved))))))
 	    (close-output-port s-port)))))
 
 (define (expr->precompiled expr)
@@ -132,7 +131,7 @@
       (string-append
        "(function() { " e "\n"
        "return " assig-var-str "; })"
-       ".call(this")))
+       ".call(this)")))
 
 (define (precompiled->JS-statement precompiled)
    (let ((t (precompiled 'JS)))

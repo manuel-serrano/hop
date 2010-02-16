@@ -18,9 +18,7 @@
 			 files)))
       (if compiled
 	  compiled
-	  (error 'hopscheme
-		 "Could not find module"
-		 m))))
+	  (error 'hopscheme "Could not find module" m))))
    
 (define (precompile-headers headers)
    (let loop ((headers headers)

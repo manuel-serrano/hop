@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 10:58:15 2008                          */
-/*    Last change :  Wed Nov 18 09:11:06 2009 (serrano)                */
-/*    Copyright   :  2008-09 Manuel Serrano                            */
+/*    Last change :  Fri Feb  5 12:01:48 2010 (serrano)                */
+/*    Copyright   :  2008-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopFile Hss                                                      */
 /*=====================================================================*/
@@ -64,14 +64,12 @@ filechooser {
 /*--- paned -----------------------------------------------------------*/
 filechooser paned {
   border: 1px outset #777;
+  width: 100%;
+  height: 400px;
 }
 
-filechooser td.hop-vpaned-pan {
+filechooser paned-pan {
   background-color: white;
-}
-
-filechooser.filechooser-drag-and-drop td.hop-vpaned-pan-left {
-  cursor: move;
 }
 
 /*--- span.filechooser-button -----------------------------------------*/
@@ -141,7 +139,7 @@ filechooser input.filechooser-location {
 /*    files                                                            */
 /*---------------------------------------------------------------------*/
 filechooser div.filechooser-files {
-  height: 50ex;
+  height: 100%;
   overflow: auto;
   width: 100%;
 }
@@ -149,9 +147,6 @@ filechooser div.filechooser-files {
 filechooser table.filechooser-body {
   border-collapse: collapse;
   width: 100%;
-}
-
-filechooser table.filechooser-body td {
   height: 100%;
 }
 

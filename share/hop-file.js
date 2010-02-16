@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 07:05:30 2008                          */
-/*    Last change :  Wed Nov 18 09:18:14 2009 (serrano)                */
-/*    Copyright   :  2008-09 Manuel Serrano                            */
+/*    Last change :  Mon Feb  8 08:40:33 2010 (serrano)                */
+/*    Copyright   :  2008-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side support for url browsers.                            */
 /*=====================================================================*/
@@ -270,7 +270,7 @@ function hop_filechooser_begin_drag( event, id, url ) {
 
    hop_filechooser_drag_el = document.getElementById( id + "-drag" );
    el.value = url;
-   
+
    hop_add_event_listener( document,
 			   "mousemove",
 			   hop_filechooser_drag_and_drop_move );

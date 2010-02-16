@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Jun 10 17:01:35 2009 (serrano)                */
-/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    Last change :  Thu Feb 11 05:37:49 2010 (serrano)                */
+/*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for the TEST weblet                                          */
 /*=====================================================================*/
@@ -28,13 +28,18 @@ ul {
   font-size: 90%;
 }
 
+div.maintest {
+  column-count: 2; 
+  margin-top: 2ex;
+}
+
 table.test {
   width: 45em;
   margin-top: 20px;
   padding: 10px;
   border: 1px solid $border-color;
   background: white;
-  -moz-border-radius: 0.5em;
+  border-radius: 0.5em;
 }
 
 table.test img#logo {

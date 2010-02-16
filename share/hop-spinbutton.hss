@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-spinbutton.hss          */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-spinbutton.hss          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jun 10 08:52:15 2009                          */
-/*    Last change :  Thu Oct  8 14:52:15 2009 (serrano)                */
-/*    Copyright   :  2009 Manuel Serrano                               */
+/*    Last change :  Tue Feb 16 11:08:20 2010 (serrano)                */
+/*    Copyright   :  2009-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Spin Buttons                                                     */
 /*=====================================================================*/
@@ -48,28 +48,75 @@ spinbutton td.hop-spinbutton-value {
   border-bottom: 1px solid #bbb;
   height: 100%;
   vertical-align: middle;
+  text-align: right;
+  margin: 0;
+  padding: 0;
+  padding-right: 1px;
 }
 
 spinbutton td.hop-spinbutton-value input {
   background: inherit;
   border: 0;
   color: inherit;
+  text-align: right;
+  margin: 0;
+  font-size: inherit;
+  padding: 0;
 }
 
-spinbutton td.hop-spinbutton-button {
-  text-align: center;
+spinbutton td.hop-spinbutton-value input.hop-spinbutton-entry-onchange {
+  display: none;
+}
+
+spinbutton td.hop-spinbutton-buttons {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  vertical-align: middle;
+  background-color: #ddd;
+  border-top: 1px solid black;
+  border-bottom: 1px solid #bbb;
+  border-right: 1px solid black;
+}
+
+spinbutton td.hop-spinbutton-buttons table {
   font-size: 4pt;
+  border-collapse: collapse;
   width: 2em;
   height: 100%;
-  background: #ddd;
-  border-right: 1px solid black;
-  border-left: 0;
-  cursor: default;
-  user-select: none;
+  border: 0;
 }
 
-spinbutton td.hop-spinbutton-button:hover {
-  background: #eee;
+spinbutton td.hop-spinbutton-buttons td {
+  text-align: center;
+  width: 100%;
+  cursor: default;
+  user-select: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+spinbutton td.hop-spinbutton-button-top div {
+  height: 100%;
+  width: 100%;
+  user-select: none;
+  cursor: default;
+  padding: 0;
+  margin: 0;
+}
+
+spinbutton td.hop-spinbutton-button-top div {
+  border-bottom: 1px solid #ccc;
+}
+
+spinbutton td.hop-spinbutton-button-bottom div {
+  border-top: 1px solid white;
+}
+
+spinbutton td.hop-spinbutton-buttons td:hover {
+  background: #8EB6F0;
+  color: white;
 }
 
 spinbutton td.hop-spinbutton-button-top {
@@ -84,11 +131,11 @@ spinbutton[dir=max] td.hop-spinbutton-button-top {
   color: #999;
 }
 
-spinbutton[dir=min] td.hop-spinbutton-button-bottom {
+spinbutton[dir-main] td.hop-spinbutton-button-bottom {
   color: #999;
 }
 
-spinbutton td.hop-spinbutton-button div {
-  border-top: 1px solid white;
-  border-bottom: 1px solid #ccc;
+spinbutton td.hop-spinbutton-buttons td {
+/*   border-top: 1px solid white;                                      */
+/*   border-bottom: 1px solid #ccc;                                    */
 }

@@ -2,8 +2,7 @@
 (<HTML>
    (<HEAD> :include "hop-paned")
    (<BODY>
-      (<PANED>
-	 :fraction "250px"
+      (<PANED> :fraction 75
 	 (<PAN>
 	    (let ((enum (iota 9 1)))
 	       (<DIV>

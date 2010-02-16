@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/widget/slider.scm                 */
+;*    serrano/prgm/project/hop/2.1.x/widget/slider.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Jun 20 09:00:24 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Tue Feb 16 08:36:41 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
 ;*=====================================================================*/
@@ -83,14 +83,14 @@
 		 "'" klass "', "
 		 "'" id "', ")
  	 (xml-write-expression min p)
-	 (display "," p)
+	 (display ", " p)
 	 (xml-write-expression max p)
-	 (display "," p)
+	 (display ", " p)
 	 (xml-write-expression step p)
-	 (display "," p)
+	 (display ", " p)
 	 (xml-write-expression value p)
-	 (display "," p)
+	 (display ", " p)
 	 (xml-write-expression caption p)
-	 (fprint p"), function() { " oc " } )"))
+	 (fprint p "), function() { " oc " } )"))
       (display " </script>" p)))
 

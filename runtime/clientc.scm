@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Mon Jan 18 07:05:33 2010 (serrano)                */
+;*    Last change :  Tue Feb 16 07:03:09 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -142,4 +142,3 @@
    (let* ((req (current-request))
 	  (rep (clientc-response req path)))
       (with-input-from-file (http-response-file-file rep) read-string)))
-      

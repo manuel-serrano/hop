@@ -110,10 +110,13 @@ browser history.
 == Style ==
 <style>
 
-This section describes the various CSS elements used to configure
-//tabsliders//.
+=== ++hop-tabslider.hss++ ===
 
-<share>hop-tabslider.hss</share>
+~~ The file ++hop-tabslider.hss++ contains the default graphical configuration.
+It is defined as:
+
+,(<P>)
+<share-public>hop-tabslider.hss</share-public>
 
 </style>
 

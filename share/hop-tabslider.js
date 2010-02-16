@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-tabslider.js            */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-tabslider.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio [eg@essi.fr]                       */
 /*    Creation    :  14-Sep-2005 09:24 (eg)                            */
-/*    Last change :  Sat Jun  6 19:14:58 2009 (serrano)                */
-/*    Copyright   :  2006-09 Inria                                     */
+/*    Last change :  Tue Feb 16 12:36:02 2010 (serrano)                */
+/*    Copyright   :  2006-10 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    HOP tabslider implementation                                     */
 /*=====================================================================*/
@@ -26,13 +26,15 @@ function hop_tabslider_user_select( id1, id2 ) {
 function hop_tabslider_select( item ) {
    var parent = item.parentNode;
 
-   /* generate a new history entry */
-   if( parent.history && (parent.tab_selected != item) ) {
-      hop_state_history_add( parent.id, "ts", item.id );
+   if( parent.tab_selected != item ) {
+      /* generate a new history entry */
+      if( parent.history && (parent.tab_selected != item) ) {
+	 hop_state_history_add( parent.id, "ts", item.id );
    }
-
-   /* select the correct tab */
-   hop_tabslider_select_inner( parent, item );
+      
+      /* select the correct tab */
+      hop_tabslider_select_inner( parent, item );
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -84,8 +86,8 @@ function hop_tabslider_select_inner( parent, item ) {
 
    /* Set the height of the selected item */
    var i = 0;
-   var height = (totalHeight - titlesHeight) - (parent.childNodes.length + 2);
-   
+   var height = (totalHeight - titlesHeight) - (2*(1+parent.childNodes.length));
+
    if( old ) {
       old.style.display = "block";
       

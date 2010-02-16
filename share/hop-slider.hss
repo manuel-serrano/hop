@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-slider.hss              */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-slider.hss              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:04:10 2005                          */
-/*    Last change :  Thu Oct  1 07:00:22 2009 (serrano)                */
-/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    Last change :  Tue Feb 16 09:13:10 2010 (serrano)                */
+/*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider CSS                                                   */
 /*=====================================================================*/
@@ -26,7 +26,7 @@ $(define-hss-type slider "table[hssclass=hop-slider]"
        (format "div.lineright { background: ~l; }" v))
 
     (define-hss-property (cursor-color v)
-       (format "div.cursor { background: ~l; }" v))
+       (format "td.cursor { background-color: ~l; }" v))
 
     (define-hss-property (caption-color v)
        (format "td.caption { color: ~l; }" v))
@@ -44,12 +44,11 @@ $(define-hss-type slider "table[hssclass=hop-slider]"
        (format "div.line { height: ~l; }" v))
 
     (define-hss-property (cursor-height v)
-       (list (format "td { height: ~l; }" v)
-             (format "div.cursor { height: ~l; }" v)))
+       (list (format "height: ~l;" v)
+             (format "td.cursor { height: ~l; }" v)))
 
     (define-hss-property (cursor-width v)
-       (list (format "td.cursor { width: ~l; }" v)
-             (format "div.cursor { width: ~l; }" v))))
+       (list (format "td.cursor { width: ~l; }" v))))
 
 /*---------------------------------------------------------------------*/
 /*    public declarations                                              */
@@ -59,9 +58,9 @@ slider {
   line-left-color: #68f;
   line-right-color: #ccc;
   line-height: 3px;
-  cursor-height: 7px;
+  cursor-height: 8px;
   cursor-width: 14px;
-  cursor-color: rgb(150,150,150);
+  cursor-color: #ccc;
   caption-color: black;
   caption-font-size: 8px;
   caption-font-family: Arial, Helvetica, sans-serif;
@@ -76,6 +75,8 @@ slider {
   border-collapse: collapse;
   border-spacing: 0;
   border: 1px solid transparent;
+  border: 1px solid red;
+  border: 0;
   user-select: none;
 } 
 
@@ -85,11 +86,12 @@ slider {
 slider td {
   vertical-align: middle;
   border: 1px solid transparent;
+  border: 0;
 }
 
 slider div.line {
   height: 3px;
-  border-top: 1px solid #555;
+  border-top: 1px solid #999;
   border-bottom: 1px solid #555;
   user-select: none;
   margin: 0;
@@ -102,7 +104,7 @@ slider div.lineleft {
   
 slider div.lineright {
   border-left: 0;
-  border-right: 1px solid #aaa;
+  border-right: 1px solid #999;
 }
 
 /*---------------------------------------------------------------------*/
@@ -111,28 +113,24 @@ slider div.lineright {
 slider td.cursor {
   margin: 0;
   padding: 0;
-  border-left: 1px solid #aaa;
-  border-top: 1px solid #aaa;
+  border-left: 1px solid #999;
+  border-top: 1px solid #999;
   border-right: 1px solid #555;
   border-bottom: 1px solid #555;
   user-select: none;
   vertical-align: middle;
-}
-
-slider div.cursor {
   background-image: url( "icons/hop-slider/cursor.png" );
   background-position: center center;
   background-repeat: repeat-y;
   user-select: none;
+  cursor: pointer;
 }
    
-slider div.cursoron {
-}
-   
-slider div.cursoroff {
-  background-color: rgb(204,204,204);
+slider td.cursor:hover {
+  background-color: #999;
 }
 
 slider td.caption {
   user-select: none;
+  text-align: center;
 }

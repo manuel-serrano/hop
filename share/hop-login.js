@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Mar  9 16:20:17 2008                          */
-/*    Last change :  Mon Jul 20 10:30:05 2009 (serrano)                */
-/*    Copyright   :  2008-09 Manuel Serrano                            */
+/*    Last change :  Sun Feb  7 08:27:07 2010 (serrano)                */
+/*    Copyright   :  2008-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop login panel                                                  */
 /*=====================================================================*/
@@ -14,10 +14,9 @@
 /*---------------------------------------------------------------------*/
 function  hop_login_prompt( id, user, pass ) {
    return "<table class='hop-login-prompt'>"
-      + " <colgroup><col width='0*'></colgroup>"
       + ((user || (user instanceof String) || (typeof user === "string")) ?
-	 " <tr><th>Login name</th><td><input type='text' id='hop_login_user_" + id + "' value='" + user + "'></input><td></tr>" : "")
-      + " <tr><th>Password</th><td><input type='password' id='hop_login_password_" + id + "' value='" + (pass ? pass : "") + "'></input><td></tr>"
+	 " <tr><th>Login name</th><td><input type='text' id='hop_login_user_" + id + "' value='" + user + "'></input></td></tr>" : "")
+      + " <tr><th>Password</th><td><input type='password' id='hop_login_password_" + id + "' value='" + (pass ? pass : "") + "'></input></td></tr>"
       + " <tr>"
       + "  <td colspan=2>"
       + "   <table class='hop_login_button'>"

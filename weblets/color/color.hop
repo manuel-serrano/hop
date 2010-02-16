@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Dec  8 10:44:12 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Mon Feb  8 10:44:35 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP color                                                        */
 ;*=====================================================================*/
@@ -127,6 +127,7 @@
 		 (set! attr (car e.value)))))
 	  
 	  (add-event-listener! $id "server" color-event-listener)
+	  
 	  (window-open :id "color/dashboard"
 	     :title "Color Chooser"
 	     :parent document.body
@@ -149,19 +150,21 @@
 	 
 	 ~(define cs :background-color)
 
-	 ~(define (signal val)
+	 ~(define (hop-signal val)
 	     (with-hop ($(service (id v)
 			    (hop-event-signal! id v)) $id val)))
 
-	 ~(add-event-listener! $id2 "server" (lambda (e)
-						(colorchooser-value-set! $id e.value)))
+	 ~(add-event-listener! $id2 "server"
+	     (lambda (e)
+		(colorchooser-value-set! $id e.value)))
 	 
 	 (<COLORCHOOSER> :class "dashboard" :id id
-	    :onchange ~(signal (cons cs (colorchooser-value this)))
+	    :onchange ~(let ((val (cons cs (colorchooser-value this))))
+			  (hop-signal val))
 	    (<TABLE> :class "colorchooser-element"
 	       (<TR>
 		  (<TD> :class "main"
-		     (<BUTTON> :onclick ~(signal 'install-onclick)
+		     (<BUTTON> :onclick ~(hop-signal 'install-onclick)
 			:class "grab"
 			(<IMG> :inline #t :src "etc/grab.png")))
 		  (<TD> :class "main"

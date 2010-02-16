@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Wed May  6 10:39:43 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Last change :  Fri Feb  5 11:34:01 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ markups set                                                   */
 ;*=====================================================================*/
@@ -414,7 +414,7 @@
 ;*    <HZ:WEBLETS-PAN> ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (<HZ:WEBLETS-PAN> weblet)
-   (<PANED> :fraction 25
+   (<PANED> :fraction 35
       (<PAN>
 	 (<TREE> :id "main-tree" :open #t
 	    (<TRHEAD>

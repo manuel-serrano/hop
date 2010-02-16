@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/src/main.scm                      */
+;*    serrano/prgm/project/hop/2.1.x/src/main.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Oct 27 13:31:13 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Tue Feb 16 07:54:57 2010 (serrano)                */
+;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -33,9 +33,12 @@
 	    hop_scheduler-pool
 	    hop_scheduler-accept-many)
 
-   (main    main))
+   (cond-expand
+      (hop-as-library (extern (export main "hop_main"))
+		      (export (main x)))
+      (else (main main))))
 
-
+ 
 ;*---------------------------------------------------------------------*/
 ;*    signal-init! ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -79,7 +82,9 @@
    (bigloo-library-path-set! (hop-library-path))
    ;; preload the hop libraries
    (for-each (lambda (l)
-		(eval `(library-load ',l)))
+		(cond-expand
+		   (hop-as-library (eval `(library-load_e ',l)))
+		   (else (eval `(library-load ',l)))))
 	     (hop-preload-libraries))
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)

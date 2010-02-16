@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/share/hop-spinbutton.scm          */
+;*    serrano/prgm/project/hop/2.1.x/share/hop-spinbutton.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun 11 19:03:05 2009                          */
-;*    Last change :  Fri Oct  9 15:06:39 2009 (serrano)                */
-;*    Copyright   :  2009 Manuel Serrano                               */
+;*    Last change :  Tue Feb 16 12:03:38 2010 (serrano)                */
+;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SpinButton client side implementation                            */
 ;*=====================================================================*/
@@ -16,6 +16,7 @@
    (export (hop_create_spinbutton attrs body)
 	   (spinbutton-value el)
 	   (spinbutton-value-set! el val)
+	   (spinbutton-value-update! el val)
 	   (spinbutton-inc! el)
 	   (spinbutton-dec! el))
    (scheme2js-pragma
@@ -54,26 +55,46 @@
 	     :value value :min min :max max
 	     :onchange onchange
 	     (<TR>
-		(<TD> :class "hop-spinbutton-value" :rowspan 2
+		(<TD> :class "hop-spinbutton-value"
 		   (<INPUT> :class "hop-spinbutton-entry"
 		      :id (string-append id "-entry")
 		      :type 'text
 		      :style (format "width: ~aem" w)
-		      :onchange (hop_spinbutton_set id this.value)
-		      :value (integer->string value)))
-		(<TD> :class "hop-spinbutton-button hop-spinbutton-button-top"
-		   :onmousedown (spinbutton-inc! id)
-		   (<DIV> "codepoint(#u25b2)")))
-	     (<TR> 
-		(<TD> :class "hop-spinbutton-button hop-spinbutton-button-bottom"
-		   :onmousedown (spinbutton-dec! id)
-		   (<DIV> "codepoint(&#9660)")))))))
+		      :onchange (spinbutton-value-update! id (string->number this.value))
+		      :value (integer->string value))
+		   (<INPUT> :class "hop-spinbutton-entry-onchange"
+		      :id (string-append id "-onchange")
+		      :onchange onchange))
+		(<TD> :class "hop-spinbutton-buttons"
+		   (<TABLE>
+		      (<TR>
+			 (<TD> :class "hop-spinbutton-button-top"
+			    :onmousedown (spinbutton-inc! id)
+			    "codepoint(#u25b2)"))
+		      (<TR>
+			 (<TD> :class "hop-spinbutton-button-bottom"
+			    :onmousedown (spinbutton-dec! id)
+			    "codepoint(&#9660)")))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spinbutton-value ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (spinbutton-value el)
    el.value)
+
+;*---------------------------------------------------------------------*/
+;*    spinbutton-value-update! ...                                     */
+;*---------------------------------------------------------------------*/
+(define (spinbutton-value-update! el val)
+   (let ((el (if (string? el) (dom-get-element-by-id el) el)))
+      (when el
+	 (spinbutton-value-set! el val)
+	 (let ((inp2 (dom-get-element-by-id (string-append el.id "-onchange")))
+	       (s (number->string el.value)))
+	    (unless (string=? s inp2.value)
+	       (set! inp2.value s)
+	       (when (procedure? inp2.onchange)
+		  (inp2.onchange #unspecified)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spinbutton-value-set! ...                                        */
@@ -91,44 +112,21 @@
 	    (else
 	     (set! el.dir "")
 	     (set! el.value val)))
-	 (let ((inp (dom-get-element-by-id (string-append el.id "-entry"))))
-	    (unless (= el.value (string->number inp.value))
-	       (set! inp.value (number->string el.value)))))))
-
-;*---------------------------------------------------------------------*/
-;*    hop_spinbutton_onchange ...                                      */
-;*---------------------------------------------------------------------*/
-(define (hop_spinbutton_onchange el)
-   (cond
-      ((procedure? el.onchange)
-       (el.onchange))
-      ((string? (el.getAttribute "onchange"))
-       (set! el.onchange
-	     (eval (string-append "function(event) {"
-				  (el.getAttribute "onchange")
-				  "}")))
-       (hop_spinbutton_onchange el))))
-
-;*---------------------------------------------------------------------*/
-;*    hop_spinbutton_set ...                                           */
-;*---------------------------------------------------------------------*/
-(define (hop_spinbutton_set el val)
-   (let ((el (dom-get-element-by-id el)))
-      (spinbutton-value-set! el (string->number val))
-      (hop_spinbutton_onchange el)))
+	 (let ((inp (dom-get-element-by-id (string-append el.id "-entry")))
+	       (s (number->string el.value)))
+	    (unless (string=? s inp.value)
+	       (set! inp.value s))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spinbutton-inc! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (spinbutton-inc! el)
    (let ((el (dom-get-element-by-id el)))
-      (when el (spinbutton-value-set! el (+ el.value 1)))
-      (hop_spinbutton_onchange el)))
+      (when el (spinbutton-value-update! el (+ el.value 1)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    spinbutton-dec! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (spinbutton-dec! el)
    (let ((el (dom-get-element-by-id el)))
-      (when el (spinbutton-value-set! el (- el.value 1)))
-      (hop_spinbutton_onchange el)))
+      (when el (spinbutton-value-update! el (- el.value 1)))))

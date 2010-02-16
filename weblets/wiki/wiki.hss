@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Jul 31 09:17:04 2009 (serrano)                */
-/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    Last change :  Thu Feb 11 07:19:01 2010 (serrano)                */
+/*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for the WIKI weblet                                          */
 /*=====================================================================*/
@@ -22,8 +22,6 @@ table.wiki {
   padding: 10px;
   border: 1px solid $border-color;
   background: white;
-  -moz-border-radius: 0.5em;
-  -webkit-border-radius: 0.5em;
   border-radius: 0.5em;
 }
 

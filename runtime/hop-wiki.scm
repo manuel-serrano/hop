@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/hop-wiki.scm              */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop-wiki.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  6 07:37:32 2006                          */
-;*    Last change :  Thu Apr 16 08:18:28 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Tue Feb 16 07:41:15 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The wiki markup                                                  */
 ;*=====================================================================*/
@@ -67,7 +67,7 @@
 (define-xml-compound <WIKI> ((src #unspecified string)
 			     (syntax #unspecified wiki-syntax)
 			     (cache #unspecified cache)
-			     (charset (hop-locale))
+			     (charset (hop-charset))
 			     body)
    (let ((syn (if (eq? syntax #unspecified)
 		  #f

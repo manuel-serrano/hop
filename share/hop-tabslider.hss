@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-tabslider.hss           */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-tabslider.hss           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Sep 14 09:25:00 2005                              */
-/*    Last change :  Wed Jun 10 07:55:50 2009 (serrano)                */
-/*    Copyright   :  2007-09 Manuel Serrano                            */
+/*    Last change :  Tue Feb 16 12:30:44 2010 (serrano)                */
+/*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tabslide CSS                                                 */
 /*=====================================================================*/
@@ -19,14 +19,22 @@ $(module hoptabslider_hss)
 /*---------------------------------------------------------------------*/
 $(define-hss-type tabslider "div.hop-tabslider")
 
+
+/*---------------------------------------------------------------------*/
+/*    Public declarations                                              */
+/*---------------------------------------------------------------------*/
+/* <public> */
 tabslider {
   width: 300px;
   height: 500px;
   overflow: auto;
   background: #fff;
+  margin: 0;
+  padding: 0;
 }
+/* </public> */
 
-tabslider span.hop-tabslider-head {
+tabslider div.hop-tabslider-head {
   display: block;
   background: #fff;
   cursor: pointer;
@@ -41,14 +49,14 @@ tabslider span.hop-tabslider-head {
   border-radius: 0.2em 0.2em 0 0.2em;
 }
 
-tabslider span.hop-tabslider-head-inactive {
+tabslider div.hop-tabslider-head-inactive {
   border: 1px solid #ccc;
   color: #7381de;
   background: #f7f7f7;
   margin-bottom: 1px;
 }
 
-tabslider span.hop-tabslider-head-inactive:hover {
+tabslider div.hop-tabslider-head-inactive:hover {
   color: darkorange;
   background: #ffedb3;
 }

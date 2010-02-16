@@ -3,97 +3,148 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:51 2005                          */
-/*    Last change :  Sat Jun  6 18:58:05 2009 (serrano)                */
-/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    Last change :  Thu Feb  4 06:58:08 2010 (serrano)                */
+/*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned CSS                                                    */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module _hss-paned)
+
+/*---------------------------------------------------------------------*/
 /*    HSS declarations                                                 */
 /*---------------------------------------------------------------------*/
-$(define-hss-type paned "div.hop-paned")
+$(define-hss-type paned "div[hssclass=hop-paned]"
+
+   :body "div.hop-paned-inner"
+
+   (define-hss-property (inner-border v)
+      (format "div.hop-paned-inner { border: ~l; }" v))
+   (define-hss-property (pan-border v)
+      (format "div.hop-paned-pan { border: ~l; }" v))
+   (define-hss-property (padding v)
+      (format "div.hop-paned-pan { padding: ~l; }" v)))
+
+$(define-hss-type paned-cursor "div.hop-paned-cursor")
+
+$(define-hss-type paned-pan "div.hop-paned-pan")
 
 /*---------------------------------------------------------------------*/
-/*    Common settings                                                  */
+/*    public declarations ...                                          */
 /*---------------------------------------------------------------------*/
+/* <public> */
 paned {
-  width: 100%;
-  height: inherit;
-  border: 1px inset #777;
+  border: 1px outset #333;
+  inner-border: 5px solid #ccc;
+  pan-border: 1px inset #333;
+  background: white;
   padding: 0;
-  margin: 0;
 }
 
-/*---------------------------------------------------------------------*/
-/*    Vertical paned                                                   */
-/*---------------------------------------------------------------------*/
-table.hop-vpaned {
-  border: 5px solid rgb(204,204,204);
-  border-collapse: separate;
-  border-spacing: 0;
+paned-cursor {
+  background-color: #ccc;
+  background-repeat: no-repeat;
+  background-position: center;
+  border: 0;
+  cursor: move;
 }
 
-td.hop-vpaned-pan {
-  border: 1px inset #777;
-  padding: 0;
-  margin: 0;
-  vertical-align: top;
+paned-cursor:hover {
+  background-color: #999;
 }
 
-td.hop-vpaned-pan-right {
-  width: auto;
-}
-
-td.hop-vpaned-pan div.hop-pan {
-  border-width: 0;
-  height: 100%;
+paned-pan {
   overflow: hidden;
 }
+/* </public> */
 
-td.hop-vpaned-cursor {
-  text-align: center;
-  vertical-align: middle;
-  border-width: 0;
+/*---------------------------------------------------------------------*/
+/*    Common configuration                                             */
+/*---------------------------------------------------------------------*/
+div[hssclass=hop-paned] {
+  width: 300px;
+  height: 200px;
+  position: relative;
+}
+
+div.hop-paned-inner {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+div.hop-pan {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Vertical pan                                                     */
+/*---------------------------------------------------------------------*/
+div.hop-paned-vertical > div.hop-paned-el1 {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+}
+
+div.hop-paned-vertical > div.hop-paned-el2 {
+  position: absolute;
+  right: 0;
+  left: 109px;
+  top: 0;
+  bottom: 0;
+}
+
+div.hop-paned-vertical > div.hop-paned-cursor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
   margin: 0;
-  width: 5px;
-  cursor: move;
-  background-color: rgb(204,204,204);
-  background-repeat: no-repeat;
-  background-position: center;
+  left: 102px;
+  width: 7px;
+  min-width: 7px;
   background-image: url( "icons/hop-paned/vcursor.png" );
-  height: 100%;
-}
-
-td.hop-vpaned-cursor:hover {
-  background-color: rgb(150,150,150);
 }
 
 /*---------------------------------------------------------------------*/
-/*    Horizontal settings                                              */
+/*    Horizontal pan                                                   */
 /*---------------------------------------------------------------------*/
-div.hop-hpaned {
-  height: 100%;
+div.hop-paned-horizontal > div.hop-paned-el1 {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100;
+  top: 0;
+  bottom: 0;
 }
 
-div.hop-hpaned-cursor {
-  border-width: 0;
-  background-color: rgb(204,204,204);
-  background-repeat: no-repeat;
-  background-position: center;
-  height: 10px;
-  width: 100%;
-  cursor: move;
-  background-repeat: no-repeat;
-  background-position: center;
+div.hop-paned-horizontal > div.hop-paned-el2 {
+  position: absolute;
+  right: 0;
+  left: 0;
+  top: 107px;
+  bottom: 0;
+}
+
+div.hop-paned-horizontal > div.hop-paned-cursor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100px;
+  bottom: 0;
+  margin: 0;
+  height: 7px;
   background-image: url( "icons/hop-paned/hcursor.png" );
 }
 
-div.hop-hpaned-cursor:hover {
-  background-color: rgb(150,150,150);
-}
 
-div.hop-hpaned > div.hop-pan {
-  overflow: auto;
-  border: 0;
-}
+  

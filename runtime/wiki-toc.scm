@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/runtime/wiki-toc.scm             */
+;*    serrano/prgm/project/hop/2.1.x/runtime/wiki-toc.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 12 15:53:32 2006                          */
-;*    Last change :  Fri Feb 13 08:18:44 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Tue Feb 16 07:43:36 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki toc                                                         */
 ;*=====================================================================*/
@@ -18,14 +18,21 @@
 	    __hop_read
 	    __hop_dom)
 
-   (export  (hop-wiki->toc ::obj #!key (ul <UL>) (li <LI>) (max-depth 3))))
+   (export  (hop-wiki->toc ::obj
+			   #!key
+			   (ul <UL>) (li <LI>) (max-depth 3)
+			   is-section?
+			   section-depth)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-wiki->toc ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (hop-wiki->toc obj #!key (ul <UL>) (li <LI>) (max-depth 3))
+(define (hop-wiki->toc obj #!key (ul <UL>) (li <LI>) (max-depth 3)
+		       is-section? section-depth)
    (multiple-value-bind (res _)
-      (inner-toc obj ul li max-depth)
+      (inner-toc obj ul li max-depth
+		 (or is-section? (@ is-section? __hop_wiki-toc))
+		 (or section-depth (@ section-depth __hop_wiki-toc)))
       (if (pair? res)
 	  (ul res)
 	  res)))
@@ -33,7 +40,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    inner-toc ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (inner-toc obj ul li max-depth)
+(define (inner-toc obj ul li max-depth is-section? section-depth)
    (let loop ((obj obj)
 	      (res '())
 	      (depth 0))

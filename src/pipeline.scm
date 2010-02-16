@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/src/pipeline.scm                  */
+;*    serrano/prgm/project/hop/2.1.x/src/pipeline.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Mon Jan 11 10:06:08 2010 (serrano)                */
+;*    Last change :  Tue Feb 16 07:55:32 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -112,6 +112,29 @@
    ;; verbose function (only for log and debug)
    (define (http-connect-verb scd id sock req)
       (with-access::http-request req (method scheme host port path user header)
+	 (hop-verb 1 (if (http-proxy-request? req)
+			 (hop-color req req
+				    (if (eq? mode 'keep-alive)
+					" REQUEST.prox+"
+					" REQUEST.prox"))
+			 (hop-color req req
+				    (if (eq? mode 'keep-alive)
+					" REQUEST.serv+"
+					" REQUEST.serv")))
+		   (if (>=fx (hop-verbose) 2)
+		       (format " ~a~a: " thread (scheduler-stat scd))
+		       ": ")
+		   method " " scheme "://"
+		   (if (>=fx (hop-verbose) 2)
+		       (string-append (user-name user) "@")
+		       "")
+		   host ":"
+		   port (string-for-read path)
+		   " "
+		   (if (>=fx (hop-verbose) 2)
+		       (http-request-http req)
+		       "")
+		   "\n")
 	 (hop-verb 4 (hop-color id id " CONNECT.header") ": "
 		   (with-output-to-string (lambda () (write header))) "\n")
 	 (hop-verb 2 (if (http-proxy-request? req)
@@ -132,7 +155,7 @@
 
    ;; log
    (unless (eq? mode 'keep-alive)
-      (hop-verb 1 (hop-color id id " CONNECT")
+      (hop-verb 2 (hop-color id id " CONNECT")
 		(if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
 		(if (>=fx (hop-verbose) 2) (scheduler-stat scd) "")
 		": " (if (>=fx (hop-verbose) 2)
@@ -315,7 +338,7 @@
    (current-request-set! thread req)
    ;; log
    (if (http-response-abort? resp)
-       (hop-verb 2 (hop-color req req " ABORT")
+       (hop-verb 1 (hop-color req req " ABORT")
 		 " user: " (user-name (http-request-user req)) "\n")
        (hop-verb 3 (hop-color req req " EXEC")
 		 " load: " (scheduler-load scd)

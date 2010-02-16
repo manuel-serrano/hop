@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/test/spinbutton.hop       */
+;*    serrano/prgm/project/hop/2.1.x/weblets/test/spinbutton.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Tue Dec  8 08:33:21 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Last change :  Tue Feb 16 10:31:20 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing SpinButtons                                              */
 ;*=====================================================================*/

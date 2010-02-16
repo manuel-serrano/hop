@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/http-remote.scm           */
+;*    serrano/prgm/project/hop/2.1.x/runtime/http-remote.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sun Jan 10 17:48:02 2010 (serrano)                */
+;*    Last change :  Tue Feb 16 07:41:44 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -94,7 +94,8 @@
 	       ;; remove the unwind-protected block.
 	       (with-handler
 		  (lambda (e)
-		     (error-notify e)
+		     (unless (&io-error? e)
+			(error-notify e))
 ;* 		     (tprint "connection: keep-alive?: "               */
 ;* 			     (connection-keep-alive? remote)           */
 ;* 			     " wstart=" (connection-wstart? remote))   */
@@ -133,8 +134,8 @@
 			 (begin
 			    (with-trace 4 "connection-close@down"
 			       (trace-item "remote=" remote)
-			       (tprint "connection close/down "
-				(connection-id remote))
+;* 			       (tprint "connection close/down "        */
+;* 				       (connection-id remote))         */
 			       (connection-close! remote))
 			    (loop))
 			 (let ((cp (hop-capture-port)))

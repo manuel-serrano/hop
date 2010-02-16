@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Jan 12 10:36:37 2010 (serrano)                */
+#*    Last change :  Thu Feb 11 05:02:07 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the wizard weblet                                */
@@ -22,7 +22,7 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-SOURCES		= test.hop \
+SOURCES		= test.hop dom.hop \
                   image.hop withhop.hop event.hop hss.hop \
                   fl.hop tree.hop notepad.hop paned.hop sorttable.hop \
                   tabslider.hop slider.hop canvas.hop \

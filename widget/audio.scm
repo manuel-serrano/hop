@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Thu Jan 14 11:04:34 2010 (serrano)                */
+;*    Last change :  Sun Feb 14 18:22:19 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -34,7 +34,9 @@
 	   (%event (default #unspecified))
 	   (%errcount::int (default 0))
 	   (%state::symbol (default 'init))
-	   (%log::pair-nil (default '())))
+	   (%log::pair-nil (default '()))
+	   (%meta (default #f))
+	   (%playlist::pair-nil (default '())))
 	
 	(audio-server-music ::audio-server)
 	(audio-server-music-set! ::audio-server ::obj)))
@@ -64,7 +66,9 @@
 	   (%event (default #unspecified))
 	   (%errcount::int (default 0))
 	   (%state::symbol (default 'init))
-	   (%log::pair-nil (default '()))))))
+	   (%log::pair-nil (default '()))
+	   (%meta (default #f))
+	   (%playlist::pair-nil (default '()))))))
    
    (export  (generic audio-server-init ::audio-server)
 	    
@@ -483,6 +487,9 @@
 				  ((status)
 				   (audio-status-event-value
 				    (music-status %music)))
+				  ((metadata)
+				   (audio-update-metadata as)
+				   #t)
 				  (else
 				   (tprint "unknown msg..." a0)
 				   #f))))))))))
@@ -613,6 +620,15 @@
 	    (hop-event-broadcast! event ev)))))
 
 ;*---------------------------------------------------------------------*/
+;*    audio-update-metadata ...                                        */
+;*    -------------------------------------------------------------    */
+;*    This function is used by clients to update metadata.             */
+;*---------------------------------------------------------------------*/
+(define (audio-update-metadata as)
+   (with-access::audio-server as (%music %event %meta %playlist)
+      ((audio-onmeta %event %music as) %meta %playlist)))
+   
+;*---------------------------------------------------------------------*/
 ;*    audio-onmeta ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (audio-onmeta event music as)
@@ -655,6 +671,11 @@
 	 (signal-meta url plist)))
    
    (lambda (meta playlist)
+      ;; store the meta data for audio-update-metadata
+      (with-access::audio-server as (%meta %playlist)
+	 (set! %meta meta)
+	 (set! %playlist playlist))
+      ;; send the event
       (with-trace 3 "audio-onmeta"
 	 (trace-item "music=" (find-runtime-type music))
 	 (trace-item "as=" (find-runtime-type as))

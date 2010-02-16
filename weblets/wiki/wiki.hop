@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Oct 27 05:48:30 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Fri Feb 12 08:09:21 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
 ;*=====================================================================*/
@@ -20,41 +20,45 @@
 	   wiki/compile
 	   wiki/documentation
 	   wiki/preferences
-	   (<DOCUMENT> . l))
+	   (<DOCUMENT> . l)
+	   (<TOC> l))
 
    (static (class wiki-document
 	      (head read-only)
+	      (toc read-only)
+	      (body read-only))
+	   (class wiki-toc
 	      (body read-only))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define-service (wiki #!key path)
+(define-service (wiki #!key path (xml "xhtml"))
    (let ((req (current-request)))
       (if (string? path)
 	  (if (authorized-path? req path)
-	      (let ((be (hop-get-xml-backend 'xhtml)))
+	      (let ((be (hop-get-xml-backend (string->symbol xml))))
 		 (instantiate::http-response-hop
 		    (backend be)
 		    (content-type (xml-backend-mime-type be))
 		    (xml (wiki-view req path #t #f))))
 	      (user-access-denied))
-	  (wiki-query req))))
+	  (wiki-query req xml))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define-service (wiki/compile #!optional path)
+(define-service (wiki/compile #!optional path (xml "xhtml"))
    (let ((req (current-request)))
       (if (string? path)
 	  (if (authorized-path? req path)
-	      (let ((be (hop-get-xml-backend 'xhtml)))
+	      (let ((be (hop-get-xml-backend (string->symbol xml))))
 		 (instantiate::http-response-hop
 		    (backend be)
 		    (content-type (xml-backend-mime-type be))
 		    (xml (wiki-view req path #f #t))))
 	      (user-access-denied))
-	  (wiki-query req))))
+	  (wiki-query req xml))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki/documentation ...                                           */
@@ -207,7 +211,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    wiki-query ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (wiki-query req)
+(define (wiki-query req xml)
    (<HTML>
       (<HEAD> :title "Wiki selection page"
 	 :include "hop-paned" "hop-file" "hop-window" "hop-tree" "hop-dashboard"
@@ -218,7 +222,7 @@
 	 (<FILECHOOSER>
 	    :filters '(("Wiki (*.wiki)" "^[^.].*[.]wiki$")
 		       ("All Files" ".*"))
-	    :onopen ~(set! document.location ($wiki :path this.value))))))
+	    :onopen ~(set! document.location ($wiki :path this.value :xml $xml))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-load ...                                                    */
@@ -280,13 +284,14 @@
       (else
        (let ((doc (hop-load path :env wiki-env)))
 	  (if (wiki-document? doc)
-	      (with-access::wiki-document doc (head body)
+	      (with-access::wiki-document doc (head toc body)
 		 (let ((head (when head
 				(apply make-wiki-head compiled
-				       (xml-element-body head)))))
+				       (xml-element-body head))))
+		       (toc (or toc (hop-wiki->toc body :max-depth 3 :ul <OL>))))
 		    (<WIKI:HTML> :compiled compiled :prefs prefs :file file
 		       :req req
-		       head body)))
+		       head toc body)))
 	      (http-service-error req
 				  'wiki
 				  (format "Loading path \"~a\"should have produced a DOCUMENT" path)))))))
@@ -329,12 +334,11 @@
 				  (<EDIT:EMACS> file)
 				  (<EDIT:EDIT> file))))))))
 	 (<DIV> :class "wiki-head" :id "wiki-head")
-	 (<DIV> :class "wiki-toc" :id "wiki-toc"
-	    (hop-wiki->toc body :max-depth 3 :ul <OL>))
+	 (<DIV> :class "wiki-toc" :id "wiki-toc" (cadr body))
 	 (<DIV> :class "wiki-toc wiki-toc-popup" :id "wiki-toc-popup"
 	    :onclick ~(wiki-hide-toc-popup this)
-	    (hop-wiki->toc body :max-depth 3 :ul <OL>))
-	 (<DIV> :class "wiki-body" :id "wiki-body" (cdr body))
+	    (cadr body))
+	 (<DIV> :class "wiki-body" :id "wiki-body" (cddr body))
 	 (<DIV> :class "wiki-foot" :id "wiki-foot"))))
 
 ;*---------------------------------------------------------------------*/
@@ -342,10 +346,22 @@
 ;*---------------------------------------------------------------------*/
 (define (<DOCUMENT> . l)
    (let ((heads (filter (lambda (x) (xml-markup-is? x 'head)) l))
-	 (body (filter (lambda (x) (not (xml-markup-is? x 'head))) l)))
+	 (tocs (filter wiki-toc? l))
+	 (body (filter (lambda (x)
+			  (and (not (wiki-toc? x))
+			       (not (xml-markup-is? x 'head))))
+		       l)))
       (instantiate::wiki-document
 	 (head (when (pair? heads) (car heads)))
+	 (toc (when (pair? tocs) (wiki-toc-body (car tocs))))
 	 (body body))))
+
+;*---------------------------------------------------------------------*/
+;*    <TOC> ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (<TOC> l)
+   (instantiate::wiki-toc
+      (body l)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <EDIT:EDIT> ...                                                  */

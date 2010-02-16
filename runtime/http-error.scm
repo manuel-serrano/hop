@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/http-error.scm            */
+;*    serrano/prgm/project/hop/2.1.x/runtime/http-error.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Dec 23 06:18:49 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Tue Feb 16 07:41:28 2010 (serrano)                */
+;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
 ;*=====================================================================*/
@@ -639,11 +639,13 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title" "IO Error"))
 				   (<TR> (<ETD> :class "msg"
-						(list (find-runtime-type e)
-						      ": "
-						      (&error-msg e))))
+					    (list (find-runtime-type e)
+						  ": "
+						  (&error-msg e)
+						  (<DIV>
+						     (<TT> (&error-obj e))))))
 				   (<TR> (<ETD> :class "dump"
-						(<PRE> (html-string-encode s)))))))))))))))
+					    (<PRE> (html-string-encode s)))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-gateway-timeout ...                                         */

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sun Jan 10 09:47:30 2010 (serrano)                */
+#*    Last change :  Fri Feb  5 10:56:25 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -37,7 +37,7 @@ RTS		= $(RTSCONFIG)
 #*    -------------------------------------------------------------    */
 #*    See hopscheme/hop-runtime.scm to add new modules.                */
 #*---------------------------------------------------------------------*/
-EXTRA		= hop-error.hss hop.css \
+EXTRA		= hop-error.hss hop.hss \
                   hop-fx.js hop-fx.hss \
                   hop-paned.hss hop-paned.js \
                   hop-sorttable.hss hop-sorttable.js \

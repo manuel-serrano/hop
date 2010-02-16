@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Jan 18 07:09:27 2010 (serrano)                */
+;*    Last change :  Tue Feb 16 11:44:19 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -272,6 +272,20 @@
       (meta-format " content=\"~a; charset=~a\">")))
 
 ;*---------------------------------------------------------------------*/
+;*    *html5-backend* ...                                              */
+;*---------------------------------------------------------------------*/
+(define *html5-backend*
+   (instantiate::xml-backend
+      (id 'html-5)
+      (mime-type "text/html")
+      (doctype "<!DOCTYPE html>")
+      (html-attributes '())
+      (header-format "")
+      (no-end-tags-elements '(link))
+      ;; the meta-format contains the closing >
+      (meta-format " content=\"~a; charset=~a\">")))
+
+;*---------------------------------------------------------------------*/
 ;*    *xhtml-backend* ...                                              */
 ;*---------------------------------------------------------------------*/
 (define *xhtml-backend*
@@ -306,6 +320,8 @@
    (case id
       ((html html-4.01)
        *html-4.01-backend*)
+      ((html5 html-5)
+       *html5-backend*)
       ((xhtml xhtml-1.0)
        *xhtml-backend*)
       (else
@@ -408,20 +424,18 @@
    (and (xml-markup? o) (eq? (xml-markup-markup o) markup)))
 
 ;*---------------------------------------------------------------------*/
-;*    if-debug ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-macro (if-debug exp1 exp2)
-   (if (>fx (bigloo-debug) 0)
-       exp1
-       exp2))
-
-;*---------------------------------------------------------------------*/
 ;*    xml-make-id ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (xml-make-id #!optional id (markup 'HOP))
-   (if (string? id)
-       id
-       (if-debug (symbol->string (gensym markup)) (symbol->string (gensym)))))
+   (cond
+      ((string? id)
+       id)
+      ((=fx (bigloo-debug) 0)
+       (symbol->string (gensym)))
+      ((symbol? id)
+       (symbol->string (gensym id)))
+      (else
+       (symbol->string (gensym markup)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-event-handler-attribute? ...                                 */

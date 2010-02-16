@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Sep 25 13:45:53 2009                          */
-/*    Last change :  Sun Jan 10 09:42:14 2010 (serrano)                */
+/*    Last change :  Thu Feb  4 07:31:33 2010 (serrano)                */
 /*    Copyright   :  2009-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Window customizations                                            */
@@ -86,7 +86,7 @@ div[hssclass=hop-window] table.hop-window-handle {
   background-image: none;
   vertical-align: middle;
   background: $passive-color;
-  background: -moz-gradient-linear( $passive-color, $passive-color-to );
+  background-inage: -moz-linear-gradient( -90deg, $passive-color, $passive-color-to );
 }
 
 div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-middle,
@@ -95,7 +95,7 @@ div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-right,
 div[hssclass=hop-window]:hover table.hop-window-handle {
   background-image: none;
   background: $active-color;
-  background: -moz-gradient-linear( $active-color, $active-color-to );
+  background: -moz-linear-gradient( -90deg, $active-color, $active-color-to );
 }
 
 div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-right {

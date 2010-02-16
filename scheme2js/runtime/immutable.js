@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -105,7 +105,7 @@ var sc_string2number = sc_jsstring2number;
 
 /*** META ((export #t)
            (arity -2)
-           (peephole (prefix "+" s)))
+           (peephole (prefix "+")))
            ;; peephole will only apply if no radix is given.
 */
 function sc_string2integer(s, radix) {

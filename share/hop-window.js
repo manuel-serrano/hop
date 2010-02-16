@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Sun Jan 10 12:13:37 2010 (serrano)                */
+/*    Last change :  Mon Feb 15 11:07:35 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -238,26 +238,31 @@ function hop_iwindow_clip( win ) {
       var px = hop_element_x( parent );
       var py = hop_element_y( parent );
 
-      var top = 'auto';
-      var right = 'auto';
-      var bottom = 'auto';
-      var left = 'auto';
-      
-      if( x < px )
-	 left = ((px - x) + 'px');
-      if( y < py )
-	 top = ((py - y) + 'px');
-      if( x + win.offsetWidth > px + parent.offsetWidth )
-	 right = ((px + parent.offsetWidth) - x) + 'px';
-      if( y + win.offsetHeight > py + parent.offsetHeight )
-	 bottom = ((py + parent.offsetHeight) - y) + 'px';
+      if( (x < px)
+	  || (y < py)
+	  || (x + win.offsetWidth > px + parent.offsetWidth)
+	  || (y + win.offsetHeight > py + parent.offsetHeight) ) {
+	 /* some clipping is needed */
+	 var top, right, bottom, left;
 
-      node_style_set( win, 'clip', 'rect( ' + top + ', ' +
-		      right + ', ' +
-		      bottom + ', ' +
-		      left + ') ');
+	 left = ( x < px ) ? (px - x) + "px" : "auto";
+	 top = ( y < py ) ? (py - y) + "px" : "auto";
+	 right = (x + win.offsetWidth > px + parent.offsetWidth) ?
+	    ((px + parent.offsetWidth) - x) + "px" : "99999px";
+	 bottom = (y + win.offsetHeight > py + parent.offsetHeight) ?
+	    ((py + parent.offsetHeight) - y) + "px" : "99999px";
+
+	 node_style_set( win, 'clip', 'rect( '
+			 + top + ', '
+			 + right + ', '
+			 + bottom + ", "
+			 + left + ' ) ');
+      } else {
+	 node_style_set( win, 'clip', 'inherit' );
+      }
    }
 }
+   
 
 /*---------------------------------------------------------------------*/
 /*    hop_iwindow_drag ...                                             */
@@ -288,7 +293,7 @@ function hop_iwindow_drag( event, win ) {
 	 var ny0 = hop_event_mouse_y( event ) - dy0;
 
 	 if( win.clip ) {
-	    /* because we will apply cplipping once the drag */
+	    /* because we will apply clipping once the drag  */
 	    /* is over, we only ensure that the window does  */
 	    /* not escape on the top of the window.          */
 	    node_style_set( win, "left", nx + "px" );
@@ -593,7 +598,6 @@ function hop_iwindow_open( id, src, title, klass, width, height, x, y, bg, resiz
    var win = document.getElementById( id );
    var isnew = false;
 
-   klass = klass ? ("hop-window " + klass) : "hop-window";
    if( win == null ) {
       win = make_hop_iwindow( id, klass, parent );
       isnew = true;

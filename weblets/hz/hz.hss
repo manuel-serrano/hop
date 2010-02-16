@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Wed Jan 13 08:53:40 2010 (serrano)                */
+/*    Last change :  Fri Feb  5 11:33:46 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
@@ -185,43 +185,31 @@ nptab-active {
 }
 
 /*--- paned -----------------------------------------------------------*/
-div.hop-paned {
+paned {
   width: 100%;
-  height: inherit;
-  border: 0;
+  min-height: 60ex;
   border: 1px solid $border-color;
   padding: 0;
   margin: 0;
+  pan-border: 1px solid $info-color;
 }
 
-div.hop-paned-cursoroff {
-  border: 1px solid $border-color;
-  background: rgb(204,204,204);
-  background-repeat: no-repeat;
-  background-position: center;
+paned-cursor {
+  background-color: rgb(204,204,204);
 }
 
-div.hop-paned-cursoron {
-  border: 1px solid $border-color;
+paned-cursor:hover {
   cursor: move;
-  background: rgb(220,220,220);
-  background-repeat: no-repeat;
-  background-position: center;
+  background-color: rgb(220,220,220);
 }
    
-table.hop-vpaned {
-  border: 1px solid $info-color;
-  border: 0;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-td.hop-vpaned-pan {
+paned-pan {
   border: 0;
   padding: 0;
   margin: 0;
   vertical-align: top;
   background: white;
+  overflow: auto;
 }
 
 /*--- tree ------------------------------------------------------------*/
@@ -464,13 +452,8 @@ span.title {
 
 /*--- weblets ---------------------------------------------------------*/
 weblets {
-  min-height: 60ex;
 }
 
-weblets div.hop-paned {
-  height: 100%;
-}
-  
 weblets div.weblet {
   font-size: small;
   padding: 2px;

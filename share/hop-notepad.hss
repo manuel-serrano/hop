@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-notepad.hss             */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-notepad.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan 17 18:56:22 2005                          */
-/*    Last change :  Mon Dec 14 19:02:32 2009 (serrano)                */
-/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    Last change :  Tue Feb 16 09:21:05 2010 (serrano)                */
+/*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad CSS                                                  */
 /*=====================================================================*/
@@ -30,7 +30,7 @@ $(define-hss-type nptabhead "span[hssclass=hop-nptab-head]")
 /*    the <NOTEPAD> element.                                           */
 /*---------------------------------------------------------------------*/
 notepad {
-  font-size: 86%;
+  font-size: 11pt;
   font-family: Arial, Verdana, sans-serif;
 }
 

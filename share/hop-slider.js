@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-slider.js               */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-slider.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Thu Oct  1 06:53:57 2009 (serrano)                */
-/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    Last change :  Tue Feb 16 09:15:05 2010 (serrano)                */
+/*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
 /*=====================================================================*/
@@ -163,17 +163,12 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    div = document.createElement( "div" );
    div.className = "line lineleft";
    div.id = id + "-lineleft";
-   line1.appendChild(div);
+   line1.appendChild( div );
 
    div = document.createElement( "div" );
    div.className = "line lineright";
    div.id = id + "-lineright";
-   line2.appendChild(div);
-
-   div = document.createElement( "div" );
-   div.className = "cursor cursoroff";
-   div.id = id + "-cursor";
-   cursor.appendChild( div );
+   line2.appendChild( div );
 
    slider.min = min;
    slider.max = max;
@@ -188,22 +183,12 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
       hop_remove_event_listener( document, "mousemove", mousemove, true );
    };
    
-   var onmouseover = function( e ) {
-      div.className = "cursor cursoron";
-   };
-
-   var onmouseout = function( e ) {
-      div.className = "cursor cursoroff";
-   };
-
    var onmousedown = function( e ) {
       hop_add_event_listener( document, "mousemove", mousemove, true );
       hop_add_event_listener( document, "mouseup", delmousemove, true );
       hop_add_event_listener( document, "onblur", delmousemove, true );
    }
 
-   hop_add_event_listener( cursor, "mouseover", onmouseover );
-   hop_add_event_listener( cursor, "mouseout", onmouseout );
    hop_add_event_listener( cursor, "mousedown", onmousedown );
    
    // line event handling
@@ -216,10 +201,12 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 
    slider.value = min - 1;
 
-   if( value != undefined ) 
-      hop_slider_value_set( slider, value );
-   else
-      hop_slider_value_set( slider, min );
+   hop_add_event_listener( window, "ready",
+			   function( e ) {
+			      if( value != undefined ) 
+				 hop_slider_value_set( slider, value );
+			      else
+				 hop_slider_value_set( slider, min ); } );
 
    if( slider.onchange != undefined ) slider.onchange();
 

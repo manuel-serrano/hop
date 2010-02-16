@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Jan 18 06:55:52 2010 (serrano)                */
+#*    Last change :  Tue Feb 16 07:36:09 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -485,7 +485,7 @@ for p in scheme2js hopscheme hop hopwidget; do
 done
 
 # Bigloo libraries
-for p in web multimedia sqlite ssl calendar mail; do
+for p in web multimedia sqlite ssl calendar mail text; do
   elib="$bigloolibdir/bigloo$p"_e-$bglversion.zip;
   slib="$bigloolibdir/bigloo$p"_s-$bglversion.zip;
   jvmziplibs="$elib $slib $jvmziplibs";

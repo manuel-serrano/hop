@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/wiki-parser.scm           */
+;*    serrano/prgm/project/hop/2.1.x/runtime/wiki-parser.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Thu Jul 16 10:26:33 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Tue Feb 16 07:43:18 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
 ;*=====================================================================*/
@@ -413,11 +413,11 @@
 		       ((and (string? path) (file-exists? path))
 			(proc path))
 		       ((string? path)
-			(warning 'wiki-parser "Can't find file" path)
+			(warning 'wiki-parser "Can't find file: " path)
 			(add-expr! ((wiki-syntax-pre syn)
 				    "File not found -- " path)))
 		       (else
-			(warning 'wiki-parser "Can't find file" path)
+			(warning 'wiki-parser "Can't find file: " path)
 			(add-expr! ((wiki-syntax-pre syn)
 				    "Cannot find file in path -- " name)))))))
 	    ((+ (or (out #\<) (: "<" (out "/"))))

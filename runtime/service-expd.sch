@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/service-expd.sch          */
+;*    serrano/prgm/project/hop/2.1.x/runtime/service-expd.sch          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sun Jan 10 10:57:29 2010 (serrano)                */
+;*    Last change :  Tue Feb 16 07:42:47 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -47,21 +47,28 @@
 	    ((symbol? args)
 	     (list args))
 	    ((symbol? (car args))
-	     (if (eq? state 'plain)
-		 (cons (car args) (loop (cdr args) state))
+	     (case state
+		((plain optional)
+		 (cons (car args) (loop (cdr args) state)))
+		((key)
 		 (cons* (symbol->keyword (car args))
 			(car args)
-			(loop (cdr args) state))))
+			(loop (cdr args) state)))))
 	    ((and (pair? (car args)) (symbol? (caar args)))
-	     (if (eq? state 'plain)
-		 (error 'service "Illegal definition" id)
+	     (case state
+		((key)
 		 (cons* (symbol->keyword (caar args))
 			(caar args)
-			(loop (cdr args) state))))
+			(loop (cdr args) state)))
+		((optional)
+		 (cons (caar args)
+		       (loop (cdr args) state)))
+		(else
+		 (error 'service "Illegal definition" id))))
 	    ((eq? (car args) #!key)
 	     (loop (cdr args) 'key))
 	    ((eq? (car args) #!optional)
-	     (loop (cdr args) 'plain))
+	     (loop (cdr args) 'optional))
 	    ((eq? (car args) #!rest)
 	     (list (cadr args)))
 	    (else

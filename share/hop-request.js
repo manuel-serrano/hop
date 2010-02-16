@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Jan 12 07:39:46 2010 (serrano)                */
+/*    Last change :  Mon Feb  8 08:44:04 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -383,6 +383,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
    xhr.open( "PUT", svc, (sync != true) );
    
    if( hop_config.navigator_family != "safari" &&
+       hop_config.navigator_family != "chrome" &&
        hop_config.navigator_family != "webkit" )
       xhr.setRequestHeader( 'Connection', 'close' );
    xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );

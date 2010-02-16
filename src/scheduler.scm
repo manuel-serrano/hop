@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/src/scheduler.scm                 */
+;*    serrano/prgm/project/hop/2.1.x/src/scheduler.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Thu Oct 29 07:19:51 2009 (serrano)                */
-;*    Copyright   :  2008-09 Manuel Serrano                            */
+;*    Last change :  Tue Feb 16 07:55:46 2010 (serrano)                */
+;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
 ;*=====================================================================*/
@@ -27,19 +27,19 @@
        (eval (class pthread))))
    
    (export (class hopthread::pthread
-		  (proc::procedure (default (lambda (t) #f)))
-		  (condv::condvar read-only (default (make-condition-variable)))
-		  (mutex::mutex read-only (default (make-mutex)))
-		  (scheduler::scheduler (default (scheduler-nil)))
-		  (info::obj (default #unspecified))
-		  (request::obj (default #f))
-		  (onerror::obj (default #f))
-		  (error-args::vector read-only (default (make-vector 3)))
-		  (error-args-length::int (default 0))
-		  (inbuf::bstring (default (make-string 512)))
-		  (outbuf::bstring (default (make-string 8192)))
-		  (flushbuf::bstring (default (make-string 16)))
-		  (userdata::obj (default #unspecified)))
+	      (proc::procedure (default (lambda (t) #f)))
+	      (condv::condvar read-only (default (make-condition-variable)))
+	      (mutex::mutex read-only (default (make-mutex)))
+	      (scheduler::scheduler (default (scheduler-nil)))
+	      (info::obj (default #unspecified))
+	      (request::obj (default #f))
+	      (onerror::obj (default #f))
+	      (error-args::vector read-only (default (make-vector 3)))
+	      (error-args-length::int (default 0))
+	      (inbuf::bstring (default (make-string 512)))
+	      (outbuf::bstring (default (make-string 8192)))
+	      (flushbuf::bstring (default (make-string 16)))
+	      (userdata::obj (default #unspecified)))
 
            (macro debug-thread-info-set! thread info)
 	   (macro with-stage-handler thread args . body)

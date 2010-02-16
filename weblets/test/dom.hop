@@ -1,0 +1,73 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.0.x/weblets/test/dom.hop              */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
+;*    Last change :  Thu Feb 11 06:07:38 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    Testing DOM                                                      */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-dom
+   (import weblet_test)
+   (export test/dom))
+
+;*---------------------------------------------------------------------*/
+;*    test/dom ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-service (test/dom)
+   (<TEST-HTML>
+      :source (service-resource test/dom "dom.hop")
+      (<DIV> :class "comment" "These tests check DOM manipulations.")
+      (<H3> "innerHTML")
+      (<DIV> "This checks how innerHTML is supported, in particular, it tests
+if script get evaluated inside script tags. After clicking the innerHTML-set!
+buttons, the green message \"ok\" should replace the question marks.")
+      (<H4> "local")
+      (let ((res1 (<SPAN> :style "color: red" "???"))
+	    (dummy1 (<SPAN>)))
+	 (<DIV>
+	    (<BUTTON> :onclick
+	       ~(innerHTML-set! $dummy1 (<SPAN> (<SCRIPT> (innerHTML-set! $res1 (<SPAN> :style "color: green" "ok")))))
+	       "innerHTML-set!")
+	    " result: " res1 dummy1))
+      (<H4> "with-hop")
+      (let* ((id2 (symbol->string (gensym)))
+	     (res2 (<SPAN> :id id2 :style "color: red" "???"))
+	     (dummy2 (<SPAN>)))
+	 (<DIV>
+	    (<BUTTON> :onclick
+	       ~(with-hop ($(service () (<SPAN> ~(innerHTML-set! $id2 (<SPAN> :style "color: green" "ok")))))
+		   (lambda (h)
+		      (innerHTML-set! $dummy2 h)))
+	       "innerHTML-set!, withop")
+	    " result: " res2 dummy2))
+      (<H3> "appendChild")
+      (<DIV> "This checks how appendChild is supported, in particular, it tests
+if script get evaluated inside script tags. After clicking the innerHTML-set!
+buttons, the green message \"ok\" should replace the question marks.")
+      (<H4> "local")
+      (let ((res1 (<SPAN> :style "color: green" ""))
+	    (dummy1 (<SPAN>)))
+	 (<DIV>
+	    (<BUTTON> :onclick
+	       ~(dom-append-child! $dummy1 (<SPAN> (<SCRIPT> (innerHTML-set! $res1 (<SPAN> "ok")))))
+	       "dom-append-child")
+	    " result: " res1 dummy1))
+      (<H4> "with-hop")
+      (let* ((id2 (symbol->string (gensym)))
+	     (res2 (<SPAN> :id id2 :style "color: green" ""))
+	     (dummy2 (<SPAN>)))
+	 (<DIV>
+	    (<BUTTON> :onclick
+	       ~(with-hop ($(service () (<SPAN> ~(innerHTML-set! $id2 (<SPAN> "ok")))))
+		   (lambda (h)
+		      (dom-append-child! $dummy2 h)))
+	       "dom-append-child")
+	    " result: " res2 dummy2))))
+				    
+      

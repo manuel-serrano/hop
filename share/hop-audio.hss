@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 28 06:23:39 2007                          */
-/*    Last change :  Tue Jan 12 13:21:16 2010 (serrano)                */
+/*    Last change :  Mon Feb  8 16:20:47 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Audio's cascade style sheet.                                 */
@@ -30,12 +30,16 @@ $(define hopaudio-button-background "#eee")
 $(define hopaudio-button-radius hopaudio-gui-radius)
 $(define hopaudio-font "Verdana, Bitstream Vera Sans")
 $(define hopaudio-monospace "DejaVu Sans Mono, Andale Mono, Bitstream Vera Sans Mono, monospace")
-$(define hopaudio-width 23)
+$(define hopaudio-width 350)
 $(define hopaudio-height 90)
 
 /*---------------------------------------------------------------------*/
 /*    hop-audio                                                        */
 /*---------------------------------------------------------------------*/
+div.hop-audio {
+  display: inline-block;
+}
+
 object.hop-audio {
   visibility: hidden;
   position: fixed;
@@ -51,7 +55,7 @@ audio {
   font-size: 11pt;
   background: $hopaudio-background;
   padding: 4px;
-  width: $(format "~aem" hopaudio-width);
+  width: $(format "~apx" hopaudio-width);
   height: $(format "~apx" hopaudio-height);
   border: 1px solid $hopaudio-border-color;
 }
