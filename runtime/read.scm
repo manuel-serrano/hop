@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/read.scm                  */
+;*    serrano/prgm/project/hop/2.1.x/runtime/read.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Oct 26 08:12:48 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Tue Feb 16 17:26:24 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -813,7 +813,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-afile ...                                               */
 ;*    -------------------------------------------------------------    */
-;*    Load the .afile if it exists and complements the module          */
+;*    Load the .afile if it exists and complement the module           */
 ;*    access table.                                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-afile dir)
@@ -828,8 +828,32 @@
 	  (set! *afile-dirs* (cons dir *afile-dirs*))
 	  (mutex-unlock! *afile-mutex*)
 	  (let ((path (make-file-name dir ".afile")))
-	     (when (file-exists? path)
-		(module-load-access-file path))))))
+	     (if (file-exists? path)
+		 (module-load-access-file path)
+		 (get-directory-module-access dir))))))
+
+;*---------------------------------------------------------------------*/
+;*    get-directory-module-access ...                                  */
+;*---------------------------------------------------------------------*/
+(define (get-directory-module-access dir)
+   
+   (define (get-file-module-access f abase)
+      (with-handler
+	 (lambda (e) #f)
+	 (call-with-input-file f
+	    (lambda (p)
+	       (let loop ((e (hop-read p)))
+		  (match-case e
+		     ((module ?module-name . ?-)
+		      (module-add-access! module-name (list f) abase))
+		     ($
+		      (loop (hop-read p)))))))))
+   
+   (for-each (lambda (f)
+		(when (member (suffix f) (hop-module-suffixes))
+		   ;; look like a source file, try it
+		   (get-file-module-access f dir)))
+	     (directory->path-list dir)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load ...                                                     */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/param.scm                 */
+;*    serrano/prgm/project/hop/2.1.x/runtime/param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Dec 20 22:01:20 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Tue Feb 16 14:12:44 2010 (serrano)                */
+;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -124,6 +124,7 @@
 	    (hop-hss-compile-suffix::bstring)
 	    
 	    (hop-client-script-suffixes::pair-nil)
+	    (hop-module-suffixes::pair-nil)
 	    
 	    (hop-service-weblet-name::bstring)
 	    (hop-service-weblet-wid::symbol)
@@ -689,7 +690,13 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-client-script-suffixes
    '("hop" "scm"))
-   
+
+;*---------------------------------------------------------------------*/
+;*    hop-module-suffixes ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-module-suffixes
+   '("hop" "scm" "sch" "hss"))
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-initial-weblet ...                                           */
 ;*    -------------------------------------------------------------    */
