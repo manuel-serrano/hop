@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/test/test.hop             */
+;*    serrano/prgm/project/hop/2.1.x/weblets/test/test.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Feb 11 05:37:42 2010 (serrano)                */
+;*    Last change :  Thu Feb 18 06:25:50 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client side testing                                          */
@@ -34,7 +34,8 @@
 	   weblet_test-svg
 	   weblet_test-mathml
 	   weblet_test-spinbutton
-	   weblet_test-colorchooser)
+	   weblet_test-colorchooser
+	   weblet_test-widget)
    (export (<TEST-HTML> . args)))
 
 ;*---------------------------------------------------------------------*/
@@ -80,7 +81,8 @@
 	    (<LI> (<A> :href test/fselector :target "_blank" "File Selector"))
 	    (<LI> (<A> :href test/hss :target "_blank" "Label Frame"))
 	    (<LI> (<A> :href test/spinbutton :target "_blank" "SpinButton"))
-	    (<LI> (<A> :href test/colorchooser :target "_blank" "ColorChooser")))
+	    (<LI> (<A> :href test/colorchooser :target "_blank" "ColorChooser"))
+	    (<LI> (<A> :href test/widget :target "_blank" "Curstom Widget")))
 	 (<H4> "XML and HTML")
 	 (<UL>
 	    (<LI> (<A> :href test/xhtml :target "_blank" "XHTML"))

@@ -1,0 +1,43 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.1.x/weblets/test/widget.hop           */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Thu Feb 18 06:26:07 2010                          */
+;*    Last change :  Thu Feb 18 06:31:01 2010 (serrano)                */
+;*    Copyright   :  2010 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Testing custom widgets                                           */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-widget
+   (import weblet_test)
+   (export test/widget))
+
+;*---------------------------------------------------------------------*/
+;*    <WIDGET> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <MYWIDGET> ((onclick) body)
+   (let ((id (xml-make-id)))
+      (<DIV> :id id 
+	 (sexp->tilde
+	  `(add-event-listener! ,id (lambda (e) ,(tilde->sexp onclick))))
+	 body)))
+
+;*---------------------------------------------------------------------*/
+;*    test/widget ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-service (test/widget)
+   (<TEST-HTML> :include "hop-color"
+      :source (service-resource test/widget "widget.hop")
+      (<DIV> :class "comment"
+	 "This test checks custom Widget.")
+      (let ((res (<SPAN> :style "color: red" "???")))
+	 (<DIV> 
+	    (<WIDGET> :onclick ~(begin
+				   (node-style-set! $res :color "green")
+				   (innerHTML-set! $res "ok"))
+	       "Click me")
+	    " Result: " res))))
