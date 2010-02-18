@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Feb 18 08:46:34 2010 (serrano)                */
+;*    Last change :  Thu Feb 18 14:30:56 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -240,7 +240,10 @@
 	 :precompiled->sexp hopscheme->sexp
 	 :precompiled->JS-expression hopscheme->JS-expression
 	 :precompiled->JS-statement hopscheme->JS-statement
-	 :precompiled->JS-return hopscheme->JS-return)
+	 :precompiled->JS-return hopscheme->JS-return
+	 :precompiled-declared-variables hopscheme-declared
+	 :precompiled-free-variables hopscheme-free)
+	 
       (init-hop-services!)
       (init-hop-widgets!)
       

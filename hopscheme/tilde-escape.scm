@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:09:56 2010                          */
-;*    Last change :  Thu Feb 18 11:39:08 2010 (serrano)                */
+;*    Last change :  Thu Feb 18 14:30:33 2010 (serrano)                */
 ;*    Copyright   :  2010 Florian Loitsch and Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    Interface between Scheme2JS and Hop.                             */
@@ -22,6 +22,8 @@
 	   (hopscheme->JS-expression::bstring ::vector) 
 	   (hopscheme->JS-statement::bstring ::vector)
 	   (hopscheme->JS-return::bstring ::vector)
+	   (hopscheme-declared::pair-nil ::vector)
+	   (hopscheme-free::pair-nil ::vector)
 	   (sexp->hopscheme::vector ::obj)
 	   (hopscheme->sexp::obj ::vector ::procedure))
    
@@ -30,14 +32,14 @@
 	   __hopscheme_dollar-escape))
 
 ;*---------------------------------------------------------------------*/
-;*    %hopscheme ...                                                   */
+;*    hopscheme ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (%hopscheme-src h) (vector-ref h 0))
-(define (%hopscheme-var h) (vector-ref h 1))
-(define (%hopscheme-exported h) (vector-ref h 2))
-(define (%hopscheme-unresolved h) (vector-ref h 3))
-(define (%hopscheme-jstr h) (vector-ref h 4))
-(define (%hopscheme-env h) (vector-ref h 5))
+(define (hopscheme-src h) (vector-ref h 0))
+(define (hopscheme-var h) (vector-ref h 1))
+(define (hopscheme-declared h) (vector-ref h 2))
+(define (hopscheme-free h) (vector-ref h 3))
+(define (hopscheme-jstr h) (vector-ref h 4))
+(define (hopscheme-env h) (vector-ref h 5))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-create-empty-macro-environment ...                     */
@@ -74,8 +76,8 @@
 ;*    hopscheme->JS-expression ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme->JS-expression hs)
-   (let* ((jstr (%hopscheme-jstr hs))
-	  (assig-var (%hopscheme-var hs))
+   (let* ((jstr (hopscheme-jstr hs))
+	  (assig-var (hopscheme-var hs))
 	  (assig-var-str (symbol->string assig-var)))
       (string-append
        "(function() { " jstr "\n"
@@ -86,7 +88,7 @@
 ;*    hopscheme->JS-statement ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme->JS-statement hs)
-   (let ((jstr (%hopscheme-jstr hs)))
+   (let ((jstr (hopscheme-jstr hs)))
       (if (>fx (bigloo-debug) 0)
 	  (string-append "{ " jstr "\n undefined; }" )
 	  jstr)))
@@ -95,8 +97,8 @@
 ;*    hopscheme->JS-return ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme->JS-return hs)
-   (let* ((jstr (%hopscheme-jstr hs))
-	  (assig-var (%hopscheme-var hs))
+   (let* ((jstr (hopscheme-jstr hs))
+	  (assig-var (hopscheme-var hs))
 	  (assig-var-str (symbol->string assig-var)))
       (string-append
        "{ " jstr "\n"
@@ -230,8 +232,8 @@
 (define (hopscheme->sexp hs wrapper)
    (let ((env (map (lambda (l)
 		      (list (car l) (wrapper (cadr l))))
-		   (%hopscheme-env hs))))
-      (replace-dollars! (tree-copy (%hopscheme-src hs)) env)))
+		   (hopscheme-env hs))))
+      (replace-dollars! (tree-copy (hopscheme-src hs)) env)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-compile-hop-client ...                                 */

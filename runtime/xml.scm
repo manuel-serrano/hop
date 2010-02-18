@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Feb 18 11:40:00 2010 (serrano)                */
+;*    Last change :  Thu Feb 18 15:13:36 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -637,6 +637,19 @@
       (display doctype p)
       (newline p)
       (with-access::xml-html obj (markup attributes body)
+	 
+	 (when (> (bigloo-debug) 0)
+	    (let ((env (make-hashtable)))
+	       (xml-tilde-unbound body env)
+	       (let* ((l (hashtable-map env (lambda (k v)
+					       (when v (cons k v)))))
+		      (lf (let loop ((x l))
+			     (when (pair? x) (or (car x) (loop (cdr x)))))))
+		  (when (pair? lf)
+		     (error/source '<HTML>
+				   (format "Unbound client-side variable: ~a" (car lf))
+				   (cdr lf)
+				   (cdr lf))))))
 	 (display "<" p)
 	 (display markup p)
 	 (let ((hattr (let loop ((hattr html-attributes))
@@ -1064,3 +1077,45 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-expression obj::xml-tilde p)
    (display (xml-tilde->expression obj) p))
+
+;*---------------------------------------------------------------------*/
+;*    xml-tilde-unbound ::obj ...                                      */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-tilde-unbound obj::obj env)
+   (if (pair? obj)
+       (for-each (lambda (x) (xml-tilde-unbound x env)) obj)
+       '()))
+
+;*---------------------------------------------------------------------*/
+;*    xml-tilde-unbound ::xml-if ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (xml-tilde-unbound obj::xml-if env)
+   (with-access::xml-if obj (test then otherwise)
+      (append (xml-tilde-unbound test env)
+	      (xml-tilde-unbound then env)
+	      (xml-tilde-unbound otherwise env))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-tilde-unbound ::xml-markup ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (xml-tilde-unbound obj::xml-markup env)
+   (with-access::xml-markup obj (markup body attributes)
+      (xml-tilde-unbound body env)
+      (for-each (lambda (a)
+		   (when (xml-tilde? a)
+		      (xml-tilde-unbound a env)))
+		attributes)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-tilde-unbound ::xml-tilde ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (xml-tilde-unbound obj::xml-tilde env)
+   (with-access::xml-tilde obj (body src)
+      (for-each (lambda (v)
+		   (let ((v (car v)))
+		      (hashtable-update! env v (lambda (x) #f) #f)))
+		((clientc-precompiled-declared-variables (hop-clientc)) body))
+      (for-each (lambda (v)
+		   (let ((v (car v)))
+		      (hashtable-update! env v (lambda (x) #f) src)))
+		((clientc-precompiled-free-variables (hop-clientc)) body))))
