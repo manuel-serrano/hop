@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Feb 17 18:45:20 2010 (serrano)                */
+;*    Last change :  Thu Feb 18 08:46:34 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -227,12 +227,6 @@
 	 :verbose (hop-verbose)
 	 :eval (lambda (e) (hop->json (eval e) #f #f))
 	 :hop-compile (lambda (e p) (display (hop->json e #f #f) p))
-	 :postprocess (lambda (s)
-			 (with-input-from-string s
-			    (lambda ()
-			       (hop-read-javascript
-				(current-input-port)
-				(hop-charset)))))
 	 :features `(hop
 		     ,(string->symbol (format "hop-~a" (hop-branch)))
 		     ,(string->symbol (format "hop-~a" (hop-version))))
@@ -242,8 +236,8 @@
 	 :expressionc hopscheme-compile-expression
 	 :macroe hopscheme-create-empty-macro-environment
 	 :filec hopscheme-compile-file
-	 :sexp->precompiled sexp->precompiled
-	 :precompiled->sexp precompiled->sexp
+	 :sexp->precompiled sexp->hopscheme
+	 :precompiled->sexp hopscheme->sexp
 	 :precompiled->JS-expression hopscheme->JS-expression
 	 :precompiled->JS-statement hopscheme->JS-statement
 	 :precompiled->JS-return hopscheme->JS-return)

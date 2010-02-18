@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Feb 17 11:57:35 2010 (serrano)                */
+;*    Last change :  Thu Feb 18 11:40:00 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -26,7 +26,10 @@
 	    __hop_configure
 	    __hop_css
 	    __hop_clientc
-	    __hop_priv)
+	    __hop_priv
+	    __hop_read-js)
+
+   (use     __hop_js-lib)
 
    (export  (class xml-backend
 	      (id::symbol read-only)
@@ -874,15 +877,19 @@
 ;*    xml-tilde->sexp ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (xml-tilde->sexp obj)
+   
+   (define (wrapper o)
+      `(pragma ,(hop->json o #f #f)))
+   
    (with-access::xml-tilde obj (body)
-      ((clientc-precompiled->sexp (hop-clientc)) body)))
+      ((clientc-precompiled->sexp (hop-clientc)) body wrapper)))
 
 ;*---------------------------------------------------------------------*/
 ;*    sexp->xml-tilde ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (sexp->xml-tilde obj)
-   (let ((compiled ((clientc-sexp->precompiled (hop-clientc)) obj)))
-      (<TILDE> compiled)))
+   (let ((c ((clientc-sexp->precompiled (hop-clientc)) obj)))
+      (<TILDE> c :src obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    HTML 4.01 elements ...                                           */

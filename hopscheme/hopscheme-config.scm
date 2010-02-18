@@ -3,11 +3,10 @@
    (import __hopscheme_hop_runtime
 	   __dollar_scheme2js_module)
    (export (hopscheme-config compile-file?)
-	   (init-hopscheme! #!key reader share path verbose eval hop-compile postprocess features expanders)
+	   (init-hopscheme! #!key reader share path verbose eval hop-compile features expanders)
 	   *hop-reader*
 	   *hop-share-directory*
-	   *hop-eval*
-	   *hop-postprocess*))
+	   *hop-eval*))
 
 (define *module-counter* -1)
 (define *cached-config* #f)
@@ -18,7 +17,6 @@
 (define *hop-verbose* 0)
 (define *hop-eval* (lambda (e) (error 'hop-eval "not implemented yet" e)))
 (define *hop-compile* (lambda (v p) (error 'hop-compile "not implemented yet" p)))
-(define *hop-postprocess* (lambda (s) (error 'hop-postprocess "not implemented yet" s)))
 
 (define (get-cached-config)
    (or *cached-config*
@@ -84,13 +82,12 @@
       (e (expand-once x) e)))
 
 ;;
-(define (init-hopscheme! #!key reader share path verbose eval hop-compile postprocess features expanders)
+(define (init-hopscheme! #!key reader share path verbose eval hop-compile features expanders)
    (set! *hop-reader* reader)
    (set! *hop-share-directory* share)
    (set! *hop-verbose* verbose)
    (set! *hop-eval* eval)
    (set! *hop-compile* hop-compile)
-   (set! *hop-postprocess* postprocess)
    (for-each srfi0-declare! features)
    (for-each (lambda (expd)
 		(if (pair? expd)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Feb 18 05:39:35 2010 (serrano)                */
+;*    Last change :  Thu Feb 18 08:52:45 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -66,24 +66,17 @@
       :verbose (hop-verbose)
       :eval (lambda (e) (hop->json (eval e) #f #f))
       :hop-compile (lambda (e p) (display (hop->json e #f #f) p))
-      :postprocess (lambda (s)
-		      (with-input-from-string s
-			 (lambda ()
-			    (hop-read-javascript
-			     (current-input-port)
-			     (hop-charset)))))
       :features `(hop
 		  ,(string->symbol (format "hop-~a" (hop-branch)))
 		  ,(string->symbol (format "hop-~a" (hop-version))))
       :expanders `(labels match-case
 			(define-markup . ,(eval 'hop-client-define-markup))))
    (init-clientc-compiler! :modulec hopscheme-compile-module
-      :expressionc (lambda (e env menv)
-		      (hopscheme-compile-expression e env menv))
+      :expressionc hopscheme-compile-expression
       :macroe hopscheme-create-empty-macro-environment
       :filec hopscheme-compile-file
-      :sexp->precompiled sexp->precompiled
-      :precompiled->sexp precompiled->sexp
+      :sexp->precompiled sexp->hopscheme
+      :precompiled->sexp hopscheme->sexp
       :precompiled->JS-expression hopscheme->JS-expression
       :precompiled->JS-statement hopscheme->JS-statement
       :precompiled->JS-return hopscheme->JS-return))

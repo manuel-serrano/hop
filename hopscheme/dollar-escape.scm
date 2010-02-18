@@ -146,8 +146,8 @@
        (if (and (starts-with-dollar? (car expr))
 		(contains-dot? (car expr)))
 	   (receive (obj fields)
-	      (split-dotted expr)
-	      (replace! (cons* `(begin obj) fields (cdr expr))
+	      (split-dotted (car expr))
+	      (replace! (cons* `(begin ,obj) fields (cdr expr))
 			quasi-depth dollar-map))
 	   (begin
 	      (set-car! expr (replace! (car expr) quasi-depth dollar-map))

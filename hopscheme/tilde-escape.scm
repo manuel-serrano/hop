@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:09:56 2010                          */
-;*    Last change :  Thu Feb 18 06:15:37 2010 (serrano)                */
+;*    Last change :  Thu Feb 18 11:39:08 2010 (serrano)                */
 ;*    Copyright   :  2010 Florian Loitsch and Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    Interface between Scheme2JS and Hop.                             */
@@ -17,18 +17,13 @@
    (library scheme2js)
    
    (export (hopscheme-create-empty-macro-environment)
-	   (hopscheme-compile-expression e ::obj ::obj)
+	   (hopscheme-compile-expression e ::obj ::obj ::procedure)
 	   (hopscheme-compile-hop-client e #!optional (env '()) (menv #f))
 	   (hopscheme->JS-expression::bstring ::vector) 
 	   (hopscheme->JS-statement::bstring ::vector)
 	   (hopscheme->JS-return::bstring ::vector)
-	   
-	   (sexp->precompiled sexp)
-	   (precompiled->sexp precompiled)
-;* 	   (precompiled->JS-statement::bstring precompiled)            */
-;* 	   (precompiled->JS-expression::bstring precompiled)           */
-;* 	   (precompiled->JS-return::bstring precompiled)               */
-	   )
+	   (sexp->hopscheme::vector ::obj)
+	   (hopscheme->sexp::obj ::vector ::procedure))
    
    (import __hopscheme_config
 	   __hopscheme_hop_runtime
@@ -39,9 +34,10 @@
 ;*---------------------------------------------------------------------*/
 (define (%hopscheme-src h) (vector-ref h 0))
 (define (%hopscheme-var h) (vector-ref h 1))
-(define (%hopscheme-jstr h) (vector-ref h 2))
-(define (%hopscheme-exported h) (vector-ref h 3))
-(define (%hopscheme-unresolved h) (vector-ref h 4))
+(define (%hopscheme-exported h) (vector-ref h 2))
+(define (%hopscheme-unresolved h) (vector-ref h 3))
+(define (%hopscheme-jstr h) (vector-ref h 4))
+(define (%hopscheme-env h) (vector-ref h 5))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-create-empty-macro-environment ...                     */
@@ -65,14 +61,14 @@
 ;*    effect.) This is a special case (and thus slightly inconsistent  */
 ;*    with the rest.                                                   */
 ;*---------------------------------------------------------------------*/
-(define (hopscheme-compile-expression e env menv)
+(define (hopscheme-compile-expression e env menv postproc)
    (unless (Compilation-Unit? menv)
       (error 'hopscheme-compile-expression "Illegal macro environment" menv))
    (if (only-macros? e)
        (begin
 	  (add-macros! e menv)
 	  #unspecified)
-       (compile-expression e env menv)))
+       (compile-expression e env menv postproc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme->JS-expression ...                                     */
@@ -136,7 +132,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    compile-expression ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (compile-expression e env menv)
+(define (compile-expression e env menv postproc)
    
    (define (quasiquote-map dollar-map)
       `(,(begin 'quasiquote)
@@ -172,15 +168,70 @@
 				  (exported-declare . ,exported-declare!))))
 	       (let ((js-code (close-output-port s-port))
 		     (command (gensym 'command))
-		     (scm-expr (gensym 'scm-expr))
-		     (hs (gensym 'hs)))
-		  `(let ,dollar-map
-		      '#(,(list 'quote expr)
-			 ',assig-var
-			 ,(*hop-postprocess* js-code)
-			 ',exported
-			 ',unresolved))))
+		     (scm-expr (gensym 'scm-expr)))
+		  `(let* (,@dollar-map)
+		      (vector ',expr
+			      ',assig-var
+			      ',exported
+			      ',unresolved
+			      ,(postproc js-code)
+			      ,(quasiquote-map dollar-map)))))
 	    (close-output-port s-port)))))
+
+;*---------------------------------------------------------------------*/
+;*    sexp->hopscheme ...                                              */
+;*---------------------------------------------------------------------*/
+(define (sexp->hopscheme e)
+   
+   (let ((menv (instantiate::Compilation-Unit
+		  (name (gensym 'macro))
+		  (top-level '())
+		  (exported-macros (create-hashtable :size 1))
+		  (exports '())))
+	 (env '())
+	 (s-port (open-output-string))
+	 (assig-var (gensym 'result)))
+      (receive (expr dollar-map)
+	 (dollar-extraction! e)
+	 (unwind-protect
+	    (let* ((exported '())
+		   (unresolved '())
+		   (exported-declare! (lambda (scm-id js-id)
+					 (set! exported
+					       (cons (cons scm-id js-id)
+						     exported))))
+		   (unresolved-declare! (lambda (scm-id js-id)
+					   (set! unresolved
+						 (cons (cons scm-id js-id)
+						       unresolved)))))
+	       (scheme2js-compile-expr
+		expr           ;; top-level
+		s-port         ;; out-port
+		`(             ;; override-headers
+		  (merge-first (import ,@(hop-runtime-modules)))
+		  (merge-last (import ,menv))
+		  ,@env)
+		(extend-config* (hopscheme-config #f)	;; config
+				`((module-result-var . ,assig-var)
+				  (unresolved-declare . ,unresolved-declare!)
+				  (exported-declare . ,exported-declare!))))
+	       (let ((js-code (close-output-port s-port)))
+		  (vector expr
+			  assig-var
+			  exported
+			  unresolved
+			  js-code
+			  '())))
+	    (close-output-port s-port)))))
+
+;*---------------------------------------------------------------------*/
+;*    hopscheme->sexp ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hopscheme->sexp hs wrapper)
+   (let ((env (map (lambda (l)
+		      (list (car l) (wrapper (cadr l))))
+		   (%hopscheme-env hs))))
+      (replace-dollars! (tree-copy (%hopscheme-src hs)) env)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-compile-hop-client ...                                 */
@@ -205,16 +256,4 @@
 	    ,@env)
 	  (hopscheme-config #f))
 	 (close-output-port s-port))))
-
-(define (sexp->precompiled sexp)
-   'todo)
-;*    (let ((compiled (compile-hop-client sexp)))                      */
-;*       (lambda (command)                                             */
-;* 	 (case command                                                 */
-;* 	    ((JS) (cons 'foo compiled))                                */
-;* 	    ((scheme) sexp)))))                                        */
-
-(define (precompiled->sexp precompiled)
-   'todo)
-;*    (precompiled 'scheme))                                           */
 

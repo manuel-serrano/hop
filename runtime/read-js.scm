@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/read-js.scm              */
+;*    serrano/prgm/project/hop/2.1.x/runtime/read-js.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:45:35 2005                          */
-;*    Last change :  Mon Oct 13 16:57:00 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Thu Feb 18 08:45:58 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP javascript parser                                        */
 ;*=====================================================================*/
@@ -18,9 +18,18 @@
 	   __hop_param
 	   __hop_charset)
    
-   (export (hop-read-javascript #!optional
+   (export (hop-read-javascript-string s::bstring)
+	   (hop-read-javascript #!optional
 				(iport::input-port (current-input-port))
 				(charset (hop-locale)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-read-javascript-string ...                                   */
+;*---------------------------------------------------------------------*/
+(define (hop-read-javascript-string s)
+   (call-with-input-string s 
+      (lambda (p)
+	 (hop-read-javascript p (hop-charset)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-read-javascript ...                                          */

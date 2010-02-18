@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Feb 18 06:26:07 2010                          */
-;*    Last change :  Thu Feb 18 06:31:01 2010 (serrano)                */
+;*    Last change :  Thu Feb 18 11:38:45 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Testing custom widgets                                           */
@@ -19,11 +19,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    <WIDGET> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <MYWIDGET> ((onclick) body)
+(define-xml-compound <WIDGET> ((onclick #f) body)
    (let ((id (xml-make-id)))
-      (<DIV> :id id 
-	 (sexp->tilde
-	  `(add-event-listener! ,id (lambda (e) ,(tilde->sexp onclick))))
+      (<BUTTON> :id id 
+	 (sexp->xml-tilde
+	  `(add-event-listener! (dom-get-element-by-id ,id) "click"
+	      (lambda (e) ,(xml-tilde->sexp onclick))))
 	 body)))
 
 ;*---------------------------------------------------------------------*/
