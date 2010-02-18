@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-request.js              */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-request.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Feb  8 08:44:04 2010 (serrano)                */
+/*    Last change :  Wed Feb 17 11:30:25 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -248,6 +248,7 @@ function hop_start_anim( service, user_anim ) {
       anim.count = 2;
    } else {
       anim.count++;
+      anim.title = service;
       node_style_set( anim, "display", "block" );
    }
 

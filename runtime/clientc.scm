@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Tue Feb 16 07:03:09 2010 (serrano)                */
+;*    Last change :  Wed Feb 17 11:54:54 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -38,19 +38,19 @@
 	       (expressionc::procedure read-only)
 	       (modulec::procedure read-only)
 	       (macroe::procedure read-only)
-	       (expr->precompiled::procedure read-only)
+	       (sexp->precompiled::procedure read-only)
 	       (precompiled->JS-expression::procedure read-only)
 	       (precompiled->JS-statement::procedure read-only)
 	       (precompiled->JS-return::procedure read-only)
-	       (precompiled->expr::procedure read-only))
+	       (precompiled->sexp::procedure read-only))
 
 	    (init-clientc-compiler! #!key
 				    filec expressionc modulec macroe
-				    expr->precompiled
+				    sexp->precompiled
 				    precompiled->JS-expression
 				    precompiled->JS-statement
 				    precompiled->JS-return
-				    precompiled->expr)
+				    precompiled->sexp)
 
 	    (clientc-url ::bstring)
 	    (clientc-response::%http-response ::http-request ::bstring)
@@ -70,11 +70,11 @@
 ;*    init-clientc-compiler! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (init-clientc-compiler! #!key filec expressionc modulec macroe
-				expr->precompiled
+				sexp->precompiled
 				precompiled->JS-expression
 				precompiled->JS-statement
 				precompiled->JS-return
-				precompiled->expr)
+				precompiled->sexp)
    ;; prepare the client-code compiler cache
    (set! clientc-cache
 	 (instantiate::cache-disk
@@ -92,11 +92,11 @@
        (expressionc expressionc)
        (modulec modulec)
        (macroe macroe)
-       (expr->precompiled expr->precompiled)
+       (sexp->precompiled sexp->precompiled)
        (precompiled->JS-expression precompiled->JS-expression)
        (precompiled->JS-statement precompiled->JS-statement)
        (precompiled->JS-return precompiled->JS-return)
-       (precompiled->expr precompiled->expr))))
+       (precompiled->sexp precompiled->sexp))))
    
 ;*---------------------------------------------------------------------*/
 ;*    clientc-url ...                                                  */

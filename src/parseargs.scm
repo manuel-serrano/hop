@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/src/parseargs.scm                 */
+;*    serrano/prgm/project/hop/2.1.x/src/parseargs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Jan 11 12:45:23 2010 (serrano)                */
+;*    Last change :  Wed Feb 17 18:45:20 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -238,15 +238,15 @@
 		     ,(string->symbol (format "hop-~a" (hop-version))))
 	 :expanders `(labels match-case
 		      (define-markup . ,(eval 'hop-client-define-markup))))
-      (init-clientc-compiler! :modulec compile-scheme-module
-	 :expressionc compile-scheme-expression
-	 :macroe create-empty-hopscheme-macro-environment
-	 :filec compile-scheme-file
-	 :expr->precompiled expr->precompiled
-	 :precompiled->JS-expression precompiled->JS-expression
-	 :precompiled->JS-statement precompiled->JS-statement
-	 :precompiled->JS-return precompiled->JS-return
-	 :precompiled->expr precompiled->expr)
+      (init-clientc-compiler! :modulec hopscheme-compile-module
+	 :expressionc hopscheme-compile-expression
+	 :macroe hopscheme-create-empty-macro-environment
+	 :filec hopscheme-compile-file
+	 :sexp->precompiled sexp->precompiled
+	 :precompiled->sexp precompiled->sexp
+	 :precompiled->JS-expression hopscheme->JS-expression
+	 :precompiled->JS-statement hopscheme->JS-statement
+	 :precompiled->JS-return hopscheme->JS-return)
       (init-hop-services!)
       (init-hop-widgets!)
       

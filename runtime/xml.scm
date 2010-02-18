@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Feb 16 11:44:19 2010 (serrano)                */
+;*    Last change :  Wed Feb 17 11:57:35 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -121,8 +121,8 @@
 	    (xml-tilde->statement::bstring ::xml-tilde)
 	    (xml-tilde->return::bstring ::xml-tilde)
 
-	    (xml-tilde->expr ::xml-tilde)
-	    (expr->xml-tilde::xml-tilde expr)
+	    (xml-tilde->sexp ::xml-tilde)
+	    (sexp->xml-tilde::xml-tilde expr)
 
 	    (<A> . ::obj)
 	    (<ABBR> . ::obj)
@@ -871,17 +871,17 @@
 	     js-attr))))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-tilde->expr ...                                              */
+;*    xml-tilde->sexp ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (xml-tilde->expr obj)
+(define (xml-tilde->sexp obj)
    (with-access::xml-tilde obj (body)
-      ((clientc-precompiled->expr (hop-clientc)) body)))
+      ((clientc-precompiled->sexp (hop-clientc)) body)))
 
 ;*---------------------------------------------------------------------*/
-;*    expr->xml-tilde ...                                              */
+;*    sexp->xml-tilde ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (expr->xml-tilde obj)
-   (let ((compiled ((clientc-expr->precompiled (hop-clientc)) obj)))
+(define (sexp->xml-tilde obj)
+   (let ((compiled ((clientc-sexp->precompiled (hop-clientc)) obj)))
       (<TILDE> compiled)))
 
 ;*---------------------------------------------------------------------*/
