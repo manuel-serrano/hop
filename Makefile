@@ -7,7 +7,7 @@
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
-.PHONY: do 
+.PHONY: do
 
 do: build
 
@@ -213,7 +213,7 @@ cleanall: distclean
 #*---------------------------------------------------------------------*/
 .PHONY: distrib newdistrib distrib-inc-version distrib-sans-version
 
-distrib: 
+distrib:
 	$(MAKE) distrib-sans-version
 
 newdistrib:
@@ -231,7 +231,7 @@ distrib-inc-version:
           version=$(HOPRELEASE); \
           devel=$(HOPDEVEL); \
           if [ -f .hoprelease ]; then \
-             . .hoprelease; \
+             . ./.hoprelease; \
              rm -f .hoprelease; \
           fi; \
           if [ "$$devel " = " " ]; then \
@@ -256,7 +256,7 @@ distrib-inc-version:
           chmod a+rx .hoprelease; \
         fi
 
-distrib-sans-version: 
+distrib-sans-version:
 	if [ -d $(HOPTMPDIR)/hop-tmp ]; then \
           echo "*** ERROR: $(HOPTMPDIR)/hop-tmp exists!"; \
           exit 1; \
@@ -267,7 +267,7 @@ distrib-sans-version:
           version=$(HOPRELEASE); \
           devel=$(HOPDEVEL); \
           if [ -f .hoprelease ]; then \
-             . .hoprelease; \
+             . ./.hoprelease; \
           fi; \
           if [ "$$devel " = " " ]; then \
             distrib=$$version; \
