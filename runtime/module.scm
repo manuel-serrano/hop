@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Thu Feb 18 09:07:44 2010 (serrano)                */
+;*    Last change :  Fri Feb 19 11:32:30 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
@@ -32,7 +32,7 @@
       ((?- ?- . ?clauses)
        (let ((i (filter-map (lambda (c)
 			       (match-case c
-				  ((<TILDE> ??- :src (quote ?import)) import)
+				  ((<TILDE> ??- :src (quote ?import) ??-) import)
 				  (else #f)))
 			    clauses)))
 	  (if (pair? i)

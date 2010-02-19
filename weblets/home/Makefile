@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/weblets/home/Makefile             */
+#*    serrano/prgm/project/hop/2.1.x/weblets/home/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Sun Jan 10 12:57:49 2010 (serrano)                */
+#*    Last change :  Fri Feb 19 07:41:18 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -41,7 +41,6 @@ HOP_DEMOS	= minesweeper/minesweeper.hop \
 	          minesweeper/minesweeper.scm \
                   music/music.hop music/music.hss \
                   video/video.hop video/video.hss \
-                  repl/repl.hop \
                   rewrite/rewrite.hop \
                   rss/rss.hop \
                   set/set.hop \

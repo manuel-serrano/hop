@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:39:39 2010                          */
-;*    Last change :  Wed Feb 17 18:41:25 2010 (serrano)                */
+;*    Last change :  Fri Feb 19 07:45:49 2010 (serrano)                */
 ;*    Copyright   :  2010 Florian Loitsch and Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    Hopscheme                                                        */
@@ -17,7 +17,6 @@
    (library scheme2js)
    
    (import __hopscheme_config
-	   __hopscheme_scm-compil
 	   __hopscheme_dollar-escape
 	   __hopscheme_tilde-escape
 	   __hopscheme_precompilation
