@@ -1,6 +1,6 @@
 #! /bin/bash
 
-if [ "$0" == "build-android.sh" ]; then
+if [ "$(basename $0)" == "build-android.sh" ]; then
   set -e
 fi
 
@@ -32,7 +32,7 @@ BGL_LIBDIR=$HOME/local/soft/bigloo-android/lib/bigloo/3.3b
 
 prefix=$(pwd)/arch/android
 
-if [ "$1" == "reconfigure" ]; then
+if [ "$1" == "configure" ]; then
   ./configure --disable-threads \
     --prefix=$prefix/assets --libdir=$prefix/libs/armeabi \
     --cc=$CC \
