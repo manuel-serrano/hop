@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-lib.js                  */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-lib.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Tue Jan  5 20:37:20 2010 (serrano)                */
+/*    Last change :  Thu Feb 18 18:23:56 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -14,6 +14,8 @@
 /*---------------------------------------------------------------------*/
 /*** META ((export Math) (JS Math)) */
 /*** META ((export eval) (JS eval)) */
+/*** META ((export hop_update) (JS hop_update)) */
+/*** META ((export confirm) (JS comfirm)) */
 
 /*---------------------------------------------------------------------*/
 /*    hop_callback ...                                                 */

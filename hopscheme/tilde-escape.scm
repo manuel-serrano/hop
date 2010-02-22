@@ -1,24 +1,112 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.1.x/hopscheme/tilde-escape.scm        */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  Wed Feb 17 18:09:56 2010                          */
+;*    Last change :  Thu Feb 18 14:30:33 2010 (serrano)                */
+;*    Copyright   :  2010 Florian Loitsch and Manuel Serrano           */
+;*    -------------------------------------------------------------    */
+;*    Interface between Scheme2JS and Hop.                             */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module __hopscheme_tilde-escape
+   
    (library scheme2js)
-   (export (compile-scheme-expression e ::obj ::obj)
-	   (compile-hop-client e #!optional (env '()) (menv #f))
-	   (expr->precompiled expr)
-	   (precompiled->expr precompiled)
-	   (precompiled->JS-statement::bstring precompiled)
-	   (precompiled->JS-expression::bstring precompiled)
-	   (precompiled->JS-return::bstring precompiled)
-	   (create-empty-hopscheme-macro-environment))
+   
+   (export (hopscheme-create-empty-macro-environment)
+	   (hopscheme-compile-expression e ::obj ::obj ::procedure)
+	   (hopscheme-compile-hop-client e #!optional (env '()) (menv #f))
+	   (hopscheme->JS-expression::bstring ::vector) 
+	   (hopscheme->JS-statement::bstring ::vector)
+	   (hopscheme->JS-return::bstring ::vector)
+	   (hopscheme-declared::pair-nil ::vector)
+	   (hopscheme-free::pair-nil ::vector)
+	   (sexp->hopscheme::vector ::obj)
+	   (hopscheme->sexp::obj ::vector ::procedure))
+   
    (import __hopscheme_config
 	   __hopscheme_hop_runtime
 	   __hopscheme_dollar-escape))
 
-(define (create-empty-hopscheme-macro-environment)
+;*---------------------------------------------------------------------*/
+;*    hopscheme ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (hopscheme-src h) (vector-ref h 0))
+(define (hopscheme-var h) (vector-ref h 1))
+(define (hopscheme-declared h) (vector-ref h 2))
+(define (hopscheme-free h) (vector-ref h 3))
+(define (hopscheme-jstr h) (vector-ref h 4))
+(define (hopscheme-env h) (vector-ref h 5))
+
+;*---------------------------------------------------------------------*/
+;*    hopscheme-create-empty-macro-environment ...                     */
+;*---------------------------------------------------------------------*/
+(define (hopscheme-create-empty-macro-environment)
    (instantiate::Compilation-Unit
       (name (gensym 'macro))
       (top-level '())
       (exported-macros (make-hashtable))
       (exports '())))
 
+;*---------------------------------------------------------------------*/
+;*    hopscheme-compile-expression ...                                 */
+;*    -------------------------------------------------------------    */
+;*    this function is called during parsing. It returns an expression */
+;*    that is supposed to take the place of a tilde expression. We     */
+;*    therefore return a quotted 'cons (instead of a pair).            */
+;*                                                                     */
+;*    When the expression exclusively consists of define-macros, then  */
+;*    we add it to the 'menv'. (Otherwise it would not have any        */
+;*    effect.) This is a special case (and thus slightly inconsistent  */
+;*    with the rest.                                                   */
+;*---------------------------------------------------------------------*/
+(define (hopscheme-compile-expression e env menv postproc)
+   (unless (Compilation-Unit? menv)
+      (error 'hopscheme-compile-expression "Illegal macro environment" menv))
+   (if (only-macros? e)
+       (begin
+	  (add-macros! e menv)
+	  #unspecified)
+       (compile-expression e env menv postproc)))
+
+;*---------------------------------------------------------------------*/
+;*    hopscheme->JS-expression ...                                     */
+;*---------------------------------------------------------------------*/
+(define (hopscheme->JS-expression hs)
+   (let* ((jstr (hopscheme-jstr hs))
+	  (assig-var (hopscheme-var hs))
+	  (assig-var-str (symbol->string assig-var)))
+      (string-append
+       "(function() { " jstr "\n"
+       "return " assig-var-str "; })"
+       ".call(this)")))
+
+;*---------------------------------------------------------------------*/
+;*    hopscheme->JS-statement ...                                      */
+;*---------------------------------------------------------------------*/
+(define (hopscheme->JS-statement hs)
+   (let ((jstr (hopscheme-jstr hs)))
+      (if (>fx (bigloo-debug) 0)
+	  (string-append "{ " jstr "\n undefined; }" )
+	  jstr)))
+
+;*---------------------------------------------------------------------*/
+;*    hopscheme->JS-return ...                                         */
+;*---------------------------------------------------------------------*/
+(define (hopscheme->JS-return hs)
+   (let* ((jstr (hopscheme-jstr hs))
+	  (assig-var (hopscheme-var hs))
+	  (assig-var-str (symbol->string assig-var)))
+      (string-append
+       "{ " jstr "\n"
+       "return " assig-var-str "; }")))
+
+;*---------------------------------------------------------------------*/
+;*    only-macros? ...                                                 */
+;*---------------------------------------------------------------------*/
 (define (only-macros? e)
    (match-case e
       ((define-macro (?- . ?-) ?- . ?-)
@@ -29,22 +117,9 @@
 	    (every? only-macros? es)))
       (else #f)))
 
-;; this function is called during parsing. It returns an expression that is
-;; supposed to take the place of a tilde expression. We therefore return a
-;; quotted 'cons (instead of a pair).
-;;
-;; When the expression exclusively consists of define-macros, then we add it to
-;; the 'menv'. (Otherwise it would not have any effect.)
-;; This is a special case (and thus slightly inconsistent with the rest.
-(define (compile-scheme-expression e env menv)
-   (when (not (Compilation-Unit? menv))
-      (error 'compile-scheme-expression "Illegal macro environment" menv))
-   (if (only-macros? e)
-       (begin
-	  (add-macros! e menv)
-	  #unspecified)
-       (compile-expression e env menv)))
-
+;*---------------------------------------------------------------------*/
+;*    add-macros! ...                                                  */
+;*---------------------------------------------------------------------*/
 (define (add-macros! e menv)
    (match-case e
       ((define-macro (?- . ?-) ?- . ?-)
@@ -56,13 +131,17 @@
 		   "internal Error. e different than macro or begin"
 		   e))))
 
-(define (compile-expression e env menv)
+;*---------------------------------------------------------------------*/
+;*    compile-expression ...                                           */
+;*---------------------------------------------------------------------*/
+(define (compile-expression e env menv postproc)
+   
    (define (quasiquote-map dollar-map)
       `(,(begin 'quasiquote)
 	,(map (lambda (p)
 		 `(,(car p) ,(list 'unquote (cadr p))))
 	      dollar-map)))
-      
+   
    (let ((s-port (open-output-string))
 	 (assig-var (gensym 'result)))
       (receive (expr dollar-map)
@@ -91,67 +170,75 @@
 				  (exported-declare . ,exported-declare!))))
 	       (let ((js-code (close-output-port s-port))
 		     (command (gensym 'command))
-		     (scm-expr (gensym 'scm-expr))
-		     (js (gensym 'js))
-		     (replaced? (gensym 'replaced?))
-		     (dmap (gensym 'dmap)))
-		  `(let* ((,scm-expr ,(list 'quote expr))
-			  ,@(if (null? dollar-map)
-				'()
-				`((,replaced? #f)
-				  ,@dollar-map
-				  (,dmap ,(quasiquote-map dollar-map))))
-			  (,js (cons ',assig-var ,(*hop-postprocess* js-code))))
-		      (lambda (,command)
-			 (case ,command
-			    ((JS) ,js)
-			    ((scheme)
-			     ,(unless (null? dollar-map)
-				 `(when (not ,replaced?)
-				     (set! ,scm-expr
-					   (replace-dollars! ,scm-expr ,dmap))
-				     (set! ,replaced? #t)))
-			     ,scm-expr)
-			    ((exported) ',exported)
-			    ((unresolved) ',unresolved))))))
+		     (scm-expr (gensym 'scm-expr)))
+		  `(let* (,@dollar-map)
+		      (vector ',expr
+			      ',assig-var
+			      ',exported
+			      ',unresolved
+			      ,(postproc js-code)
+			      ,(quasiquote-map dollar-map)))))
 	    (close-output-port s-port)))))
 
-(define (expr->precompiled expr)
-   (let ((compiled (compile-hop-client expr)))
-      (lambda (command)
-	 (case command
-	    ((JS) (cons 'foo compiled))
-	    ((scheme) expr)))))
+;*---------------------------------------------------------------------*/
+;*    sexp->hopscheme ...                                              */
+;*---------------------------------------------------------------------*/
+(define (sexp->hopscheme e)
+   
+   (let ((menv (instantiate::Compilation-Unit
+		  (name (gensym 'macro))
+		  (top-level '())
+		  (exported-macros (create-hashtable :size 1))
+		  (exports '())))
+	 (env '())
+	 (s-port (open-output-string))
+	 (assig-var (gensym 'result)))
+      (receive (expr dollar-map)
+	 (dollar-extraction! e)
+	 (unwind-protect
+	    (let* ((exported '())
+		   (unresolved '())
+		   (exported-declare! (lambda (scm-id js-id)
+					 (set! exported
+					       (cons (cons scm-id js-id)
+						     exported))))
+		   (unresolved-declare! (lambda (scm-id js-id)
+					   (set! unresolved
+						 (cons (cons scm-id js-id)
+						       unresolved)))))
+	       (scheme2js-compile-expr
+		expr           ;; top-level
+		s-port         ;; out-port
+		`(             ;; override-headers
+		  (merge-first (import ,@(hop-runtime-modules)))
+		  (merge-last (import ,menv))
+		  ,@env)
+		(extend-config* (hopscheme-config #f)	;; config
+				`((module-result-var . ,assig-var)
+				  (unresolved-declare . ,unresolved-declare!)
+				  (exported-declare . ,exported-declare!))))
+	       (let ((js-code (close-output-port s-port)))
+		  (vector expr
+			  assig-var
+			  exported
+			  unresolved
+			  js-code
+			  '())))
+	    (close-output-port s-port)))))
 
-(define (precompiled->JS-expression precompiled)
-   (let* ((t (precompiled 'JS))
-	  (assig-var (car t))
-	  (assig-var-str (symbol->string assig-var))
-	  (e (cdr t)))
-      (string-append
-       "(function() { " e "\n"
-       "return " assig-var-str "; })"
-       ".call(this)")))
+;*---------------------------------------------------------------------*/
+;*    hopscheme->sexp ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hopscheme->sexp hs wrapper)
+   (let ((env (map (lambda (l)
+		      (list (car l) (wrapper (cadr l))))
+		   (hopscheme-env hs))))
+      (replace-dollars! (tree-copy (hopscheme-src hs)) env)))
 
-(define (precompiled->JS-statement precompiled)
-   (let ((t (precompiled 'JS)))
-      (if (>fx (bigloo-debug) 0)
-	  (string-append "{ " (cdr t) "\n undefined; }" )
-	  (cdr t))))
-
-(define (precompiled->JS-return precompiled)
-   (let* ((t (precompiled 'JS))
-	  (assig-var (car t))
-	  (assig-var-str (symbol->string assig-var))
-	  (e (cdr t)))
-      (string-append
-       "{ " e "\n"
-       "return " assig-var-str "; }")))
-
-(define (precompiled->expr precompiled)
-   (precompiled 'scheme))
-
-(define (compile-hop-client e #!optional (env '()) (menv #f))
+;*---------------------------------------------------------------------*/
+;*    hopscheme-compile-hop-client ...                                 */
+;*---------------------------------------------------------------------*/
+(define (hopscheme-compile-hop-client e #!optional (env '()) (menv #f))
    ;; This function is used from weblets, don't remove it!
    (let ((unit (or menv (instantiate::Compilation-Unit
 			   (name (gensym 'macro))
@@ -171,3 +258,4 @@
 	    ,@env)
 	  (hopscheme-config #f))
 	 (close-output-port s-port))))
+

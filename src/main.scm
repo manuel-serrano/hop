@@ -38,7 +38,7 @@
 		      (export (main x)))
       (else (main main))))
 
- 
+
 ;*---------------------------------------------------------------------*/
 ;*    signal-init! ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -101,7 +101,7 @@
    ;; parse the command line
    (parse-args args)
    ;; set the hop process owner
-   (set-hop-owner! (hop-user))
+   ; (set-hop-owner! (hop-user))
    ;; hello world
    (hop-verb 1 "Hop (v" (hop-version)
 	     ", " (hop-backend)
@@ -203,7 +203,7 @@
 ;*    set-hop-owner! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (set-hop-owner! user)
-   
+
    (define (err)
       (error 'hop
 	     "Hop is not allowed to be executed as `root'. Create a dedicated Hop user to run Hop on behalf of.\n"

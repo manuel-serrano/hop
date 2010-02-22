@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Feb 16 11:44:19 2010 (serrano)                */
+;*    Last change :  Fri Feb 19 11:26:04 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -26,7 +26,11 @@
 	    __hop_configure
 	    __hop_css
 	    __hop_clientc
-	    __hop_priv)
+	    __hop_priv
+	    __hop_read-js
+	    __hop_http-error)
+
+   (use     __hop_js-lib)
 
    (export  (class xml-backend
 	      (id::symbol read-only)
@@ -79,6 +83,7 @@
 	       (body read-only)
 	       (parent (default #unspecified))
 	       (src read-only (default #f))
+	       (loc read-only (default #f))
 	       (%js-expression (default #f))
 	       (%js-statement (default #f))
 	       (%js-return (default #f))
@@ -121,8 +126,8 @@
 	    (xml-tilde->statement::bstring ::xml-tilde)
 	    (xml-tilde->return::bstring ::xml-tilde)
 
-	    (xml-tilde->expr ::xml-tilde)
-	    (expr->xml-tilde::xml-tilde expr)
+	    (xml-tilde->sexp ::xml-tilde)
+	    (sexp->xml-tilde::xml-tilde expr)
 
 	    (<A> . ::obj)
 	    (<ABBR> . ::obj)
@@ -213,7 +218,7 @@
 	    (<UL> . ::obj)
 	    (<VAR> . ::obj)
 
-	    (<TILDE> ::obj #!key src)
+	    (<TILDE> ::obj #!key src loc)
 	    (<DELAY> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -629,6 +634,48 @@
 ;*    xml-write ::xml-html ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-html p backend)
+   (if (>fx (bigloo-debug) 0)
+       (xml-write-html-debug obj p backend)
+       (xml-write-html obj p backend)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write-html-debug ...                                         */
+;*---------------------------------------------------------------------*/
+(define (xml-write-html-debug obj::xml-html p backend)
+   (with-access::xml-html obj (body)
+      ;; check the unbound variables
+      (let ((env (make-hashtable)))
+	 (xml-tilde-unbound body env)
+	 (let* ((l (hashtable-map env (lambda (k v)
+					 (when v (cons k v)))))
+		(lf (let loop ((x l))
+		       (when (pair? x) (or (car x) (loop (cdr x)))))))
+	    (if (pair? lf)
+		;; we got at least one
+		(with-handler
+		   (lambda (e)
+		      (exception-notify e)
+		      (let* ((m (if (epair? (cdr lf))
+				    (match-case (cer (cdr lf))
+				       ((at ?file . ?-)
+					(format "~a: unbound variable" file))
+				       (else
+					"Unbound variables"))
+				    "Unbound variables"))
+			     (r (http-internal-error e m)))
+			 (xml-write-html (http-response-hop-xml r) p backend)))
+		   (error/source '<HTML>
+				 (format "Unbound client-side variable: ~a"
+					 (car lf))
+				 (cdr lf)
+				 (cdr lf)))
+		;; everything is fine
+		(xml-write-html obj p backend))))))
+       
+;*---------------------------------------------------------------------*/
+;*    xml-write-html ...                                               */
+;*---------------------------------------------------------------------*/
+(define (xml-write-html obj::xml-html p backend)	    
    (with-access::xml-backend backend (header-format doctype html-attributes)
       (fprintf p header-format (hop-charset))
       (display doctype p)
@@ -871,18 +918,22 @@
 	     js-attr))))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-tilde->expr ...                                              */
+;*    xml-tilde->sexp ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (xml-tilde->expr obj)
+(define (xml-tilde->sexp obj)
+   
+   (define (wrapper o)
+      `(pragma ,(hop->json o #f #f)))
+   
    (with-access::xml-tilde obj (body)
-      ((clientc-precompiled->expr (hop-clientc)) body)))
+      ((clientc-precompiled->sexp (hop-clientc)) body wrapper)))
 
 ;*---------------------------------------------------------------------*/
-;*    expr->xml-tilde ...                                              */
+;*    sexp->xml-tilde ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (expr->xml-tilde obj)
-   (let ((compiled ((clientc-expr->precompiled (hop-clientc)) obj)))
-      (<TILDE> compiled)))
+(define (sexp->xml-tilde obj)
+   (let ((c ((clientc-sexp->precompiled (hop-clientc)) obj)))
+      (<TILDE> c :src obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    HTML 4.01 elements ...                                           */
@@ -1016,10 +1067,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    <TILDE> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (<TILDE> body #!key src)
+(define (<TILDE> body #!key src loc)
    (instantiate::xml-tilde
       (body body)
-      (src src)))
+      (src src)
+      (loc loc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <DELAY> ...                                                      */
@@ -1057,3 +1109,48 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-expression obj::xml-tilde p)
    (display (xml-tilde->expression obj) p))
+
+;*---------------------------------------------------------------------*/
+;*    xml-tilde-unbound ::obj ...                                      */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-tilde-unbound obj::obj env)
+   (if (pair? obj)
+       (for-each (lambda (x) (xml-tilde-unbound x env)) obj)
+       '()))
+
+;*---------------------------------------------------------------------*/
+;*    xml-tilde-unbound ::xml-if ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (xml-tilde-unbound obj::xml-if env)
+   (with-access::xml-if obj (test then otherwise)
+      (xml-tilde-unbound test env)
+      (xml-tilde-unbound then env)
+      (xml-tilde-unbound otherwise env)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-tilde-unbound ::xml-markup ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (xml-tilde-unbound obj::xml-markup env)
+   (with-access::xml-markup obj (markup body attributes)
+      (xml-tilde-unbound body env)
+      (let ((old (hashtable-get env 'event)))
+	 (unless old (hashtable-put! env 'event #f))
+	 (for-each (lambda (a)
+		      (when (xml-tilde? a)
+			 (xml-tilde-unbound a env)))
+		   attributes)
+	 (unless old (hashtable-remove! env 'event)))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-tilde-unbound ::xml-tilde ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (xml-tilde-unbound obj::xml-tilde env)
+   (with-access::xml-tilde obj (body src)
+      (for-each (lambda (v)
+		   (let ((v (car v)))
+		      (hashtable-update! env v (lambda (x) #f) #f)))
+		((clientc-precompiled-declared-variables (hop-clientc)) body))
+      (for-each (lambda (v)
+		   (let ((v (car v)))
+		      (hashtable-update! env v (lambda (x) #f) src)))
+		((clientc-precompiled-free-variables (hop-clientc)) body))))

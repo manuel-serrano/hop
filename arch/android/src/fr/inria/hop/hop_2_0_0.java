@@ -23,9 +23,11 @@ import android.widget.TextView;
 public class hop_2_0_0 extends Activity {
     static Runtime mRuntime = Runtime.getRuntime();
     final static String mAppRoot = "/data/data/fr.inria.hop";
-    final static int BUFSIZE = 10000;
+    final static int BUFSIZE = 10*1024; // 10k
     final static String APK_PATH = "/data/app/fr.inria.hop.apk";
-    final static String ZIP_FILTER = "assets";
+    final static String assetsFilter = "assets";
+    final static String librarySuffix = ".so";
+    final static String libraryInitSuffix = ".init";
     TextView mStatus;
 
     public void Log(String string) {
@@ -71,8 +73,9 @@ public class hop_2_0_0 extends Activity {
             File zipFile = new File(APK_PATH);
             long zipLastModified = zipFile.lastModified();
             ZipFile zip = new ZipFile(APK_PATH);
-            Vector<ZipEntry> files = pluginsFilesFromZip(zip);
-            int zipFilterLength = ZIP_FILTER.length();
+
+            Vector<ZipEntry> files = filesFromZip(zip);
+            int zipFilterLength = assetsFilter.length();
 
             Enumeration entries = files.elements();
             while (entries.hasMoreElements()) {
@@ -83,7 +86,7 @@ public class hop_2_0_0 extends Activity {
 
                 if (outputFile.exists() && entry.getSize() == outputFile.length() &&
                   zipLastModified < outputFile.lastModified()) {
-                    Log(outputFile.getName() + " already extracted.");
+                    Log(outputFile.getName() + " already extracted and not older.");
                 } else {
                     FileOutputStream fos = new FileOutputStream(outputFile);
                     Log("Copied " + entry + " to " + mAppRoot + "/" + path);
@@ -95,82 +98,23 @@ public class hop_2_0_0 extends Activity {
                     } while (!curPath.equals(mAppRoot));
                 }
             }
-            cachePackageSharedLibsLI (zipFile);
         } catch (IOException e) {
             Log("Error: " + e.getMessage());
         }
     }
 
-    void cachePackageSharedLibsLI(File scanFile) throws IOException {
-        // File sharedLibraryDir = new File(dataPath.getPath() + "/lib");
-        final String sharedLibraryABI = "armeabi";
-        final String apkLibraryDirectory = "lib/" + sharedLibraryABI + "/";
-        final String apkSharedLibraryPrefix = apkLibraryDirectory + "lib";
-        final String sharedLibrarySuffix = ".so";
-        final String libraryInitSuffix = ".init";
-        boolean createdSharedLib = false;
-        try {
-            Log ("scanning package for shared libs");
-            ZipFile zipFile = new ZipFile(scanFile);
-            Enumeration<ZipEntry> entries =
-                (Enumeration<ZipEntry>) zipFile.entries();
-
-            while (entries.hasMoreElements()) {
-                ZipEntry entry = entries.nextElement();
-                if (entry.isDirectory()) {
-                    Log (entry.getName ()+" skipped: DIR");
-                    continue;
-                }
-                String entryName = entry.getName();
-                if (! (entryName.startsWith(apkSharedLibraryPrefix)
-                        && entryName.endsWith(sharedLibrarySuffix))) {
-                    Log (entry.getName ()+" skipped: does not match "+apkSharedLibraryPrefix+"*"+sharedLibrarySuffix);
-                    continue;
-                }
-                String libFileName = entryName.substring(
-                        apkLibraryDirectory.length());
-                if (libFileName.contains("/")) {
-                        // || (!FileUtils.isFilenameSafe(new File(libFileName)))) {
-                    Log (entry.getName ()+" skipped: has / or not safe.");
-                    continue;
-                }
-                /*
-                String sharedLibraryFilePath = sharedLibraryDir.getPath() +
-                    File.separator + libFileName;
-                File sharedLibraryFile = new File(sharedLibraryFilePath);
-                if (! sharedLibraryFile.exists() ||
-                    sharedLibraryFile.length() != entry.getSize() ||
-                    sharedLibraryFile.lastModified() != entry.getTime()) {
-                    if (Config.LOGD) {
-                        Log.d(TAG, "Caching shared lib " + entry.getName());
-                    }
-                    if (mInstaller == null) {
-                        sharedLibraryDir.mkdir();
-                        createdSharedLib = true;
-                    }
-                    cacheSharedLibLI(pkg, zipFile, entry, sharedLibraryDir,
-                            sharedLibraryFile);
-                }
-                */
-            }
-        } catch (IOException e) {
-            Log.e("hop-shlib-", "Failed to cache package shared libs", e);
-            /*
-            if(createdSharedLib) {
-                sharedLibraryDir.delete();
-            }
-            */
-            throw e;
-        }
-    }
-
-    public Vector<ZipEntry> pluginsFilesFromZip(ZipFile zip) {
-        Vector<ZipEntry> list = new Vector<ZipEntry>();
-        Enumeration entries = zip.entries();
+    public Vector<ZipEntry> filesFromZip(ZipFile zip) {
+        // we don't copy the whole contents of the .apk file
+        // just what is filtered with this function
+        Vector<ZipEntry> list= new Vector<ZipEntry>();
+        Enumeration entries= zip.entries();
         while (entries.hasMoreElements()) {
-            ZipEntry entry = (ZipEntry) entries.nextElement();
-            if (entry.getName().startsWith(ZIP_FILTER)) {
+            ZipEntry entry= (ZipEntry) entries.nextElement();
+            String name= entry.getName();
+            if (name.startsWith (assetsFilter)) {
                 list.add(entry);
+            } else {
+                Log (name + "skipped: not an asset?");
             }
         }
         return list;

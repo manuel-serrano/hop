@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jan 18 07:02:42 2010 (serrano)                */
+;*    Last change :  Thu Feb 18 08:52:45 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -66,26 +66,20 @@
       :verbose (hop-verbose)
       :eval (lambda (e) (hop->json (eval e) #f #f))
       :hop-compile (lambda (e p) (display (hop->json e #f #f) p))
-      :postprocess (lambda (s)
-		      (with-input-from-string s
-			 (lambda ()
-			    (hop-read-javascript
-			     (current-input-port)
-			     (hop-charset)))))
       :features `(hop
 		  ,(string->symbol (format "hop-~a" (hop-branch)))
 		  ,(string->symbol (format "hop-~a" (hop-version))))
       :expanders `(labels match-case
 			(define-markup . ,(eval 'hop-client-define-markup))))
-   (init-clientc-compiler! :modulec compile-scheme-module
-      :expressionc compile-scheme-expression
-      :macroe create-empty-hopscheme-macro-environment
-      :filec compile-scheme-file
-      :expr->precompiled expr->precompiled
-      :precompiled->JS-expression precompiled->JS-expression
-      :precompiled->JS-statement precompiled->JS-statement
-      :precompiled->JS-return precompiled->JS-return
-      :precompiled->expr precompiled->expr))
+   (init-clientc-compiler! :modulec hopscheme-compile-module
+      :expressionc hopscheme-compile-expression
+      :macroe hopscheme-create-empty-macro-environment
+      :filec hopscheme-compile-file
+      :sexp->precompiled sexp->hopscheme
+      :precompiled->sexp hopscheme->sexp
+      :precompiled->JS-expression hopscheme->JS-expression
+      :precompiled->JS-statement hopscheme->JS-statement
+      :precompiled->JS-return hopscheme->JS-return))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile-sources ...                                              */
@@ -93,7 +87,7 @@
 (define (compile-sources)
 
    (define (compile-javascript p)
-      (let ((s (compile-scheme-file p '())))
+      (let ((s (hopscheme-compile-file p '())))
 	 (call-with-output-file (hopc-destination) (lambda (p) (display s p)))))
 
    (define (generate-bigloo in)

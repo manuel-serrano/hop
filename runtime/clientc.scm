@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Tue Feb 16 07:03:09 2010 (serrano)                */
+;*    Last change :  Thu Feb 18 14:32:17 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -38,19 +38,23 @@
 	       (expressionc::procedure read-only)
 	       (modulec::procedure read-only)
 	       (macroe::procedure read-only)
-	       (expr->precompiled::procedure read-only)
+	       (sexp->precompiled::procedure read-only)
 	       (precompiled->JS-expression::procedure read-only)
 	       (precompiled->JS-statement::procedure read-only)
 	       (precompiled->JS-return::procedure read-only)
-	       (precompiled->expr::procedure read-only))
+	       (precompiled->sexp::procedure read-only)
+	       (precompiled-declared-variables::procedure read-only)
+	       (precompiled-free-variables::procedure read-only))
 
 	    (init-clientc-compiler! #!key
 				    filec expressionc modulec macroe
-				    expr->precompiled
+				    sexp->precompiled
 				    precompiled->JS-expression
 				    precompiled->JS-statement
 				    precompiled->JS-return
-				    precompiled->expr)
+				    precompiled->sexp
+				    precompiled-declared-variables
+				    precompiled-free-variables)
 
 	    (clientc-url ::bstring)
 	    (clientc-response::%http-response ::http-request ::bstring)
@@ -70,11 +74,16 @@
 ;*    init-clientc-compiler! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (init-clientc-compiler! #!key filec expressionc modulec macroe
-				expr->precompiled
+				sexp->precompiled
 				precompiled->JS-expression
 				precompiled->JS-statement
 				precompiled->JS-return
-				precompiled->expr)
+				precompiled->sexp
+				precompiled-declared-variables
+				precompiled-free-variables)
+
+   (define (null e) '())
+   
    ;; prepare the client-code compiler cache
    (set! clientc-cache
 	 (instantiate::cache-disk
@@ -83,6 +92,7 @@
 						 (integer->string (hop-port)))))
 	    (out (lambda (o p) (with-output-to-port p (lambda () (print
 								  o)))))))
+
    ;; hook the client-code compiler
    (hop-clientc-set!
     (instantiate::clientc
@@ -92,11 +102,13 @@
        (expressionc expressionc)
        (modulec modulec)
        (macroe macroe)
-       (expr->precompiled expr->precompiled)
+       (sexp->precompiled sexp->precompiled)
        (precompiled->JS-expression precompiled->JS-expression)
        (precompiled->JS-statement precompiled->JS-statement)
        (precompiled->JS-return precompiled->JS-return)
-       (precompiled->expr precompiled->expr))))
+       (precompiled->sexp precompiled->sexp)
+       (precompiled-declared-variables (or precompiled-declared-variables null))
+       (precompiled-free-variables (or precompiled-free-variables null)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    clientc-url ...                                                  */
@@ -142,3 +154,4 @@
    (let* ((req (current-request))
 	  (rep (clientc-response req path)))
       (with-input-from-file (http-response-file-file rep) read-string)))
+

@@ -11,8 +11,7 @@ ANDROIDROOT=$HOME/src/works/inria/android
 export ANDSRC=$ANDROIDROOT/eclair-git
 export ANDSDK=$ANDROIDROOT/android-sdk-linux
 
-# try to communicate with the emulator, or fire it if is not there.
-# we can't fire one automatically, so just do it yourself by hand
+# we can't fire an emulator automatically, so just do it yourself by hand
 export ANDROID_SERIAL="emulator-5556"
 
 # droid-wrapper
@@ -28,35 +27,76 @@ export CC=$ANDROIDROOT/droid-wrapper/bin/droid-gcc
 # so ant works :|
 export JAVA_HOME=/usr/lib/jvm/java-6-sun-1.6.0.17
 
+# the bootstraping bigloo libdir dir
 BGL_LIBDIR=$HOME/local/soft/bigloo-android/lib/bigloo/3.3b
+# the bootstraping hop dir
+BS_HOPDIR=$HOME/src/works/inria/bootstrap/hop-live
 
 prefix=$(pwd)/arch/android
+# libdir=$prefix/libs/armeabi
+libdir=$prefix/assets/lib
 
 if [ "$1" == "configure" ]; then
   ./configure --disable-threads \
-    --prefix=$prefix/assets --libdir=$prefix/libs/armeabi \
+    --prefix=$prefix/assets \
     --cc=$CC \
     --bigloolibdir=$BGL_LIBDIR
+    #--libdir=$libdir \
+    # --hopc=$BS_HOPDIR/bin/hopc
   shift
 fi
 
 if [ "$1" == "build" ]; then
-  # nice -n 19 make -j 8
-  # nice -n 19 make --print-data-base --warn-undefined-variables
+  # yes, we need a bootstraping hop too :|
+  # unluckily our build system is not ready for this kind of things
+  # so just hack it away
+  ( cd widget
+    for i in *.hop; do
+      $BS_HOPDIR/bin/hopc $i -o o/${i%.hop}.o -c \
+        --bigloo=bigloo -L $BS_HOPDIR/lib \
+        --share-dir $PWD/share -- \
+        -O2 -fsharing -Wall -wslots -L $BS_HOPDIR/lib \
+        -lib-dir $BGL_LIBDIR \
+        -cc $CC \
+        -copt "-O3 -DPLATFORM_ANDROID -I$BGL_LIBDIR" \
+        -copt -fPIC -unsafe -safee
+    done
+  )
   make
   shift
 fi
 
 if [ "$1" == "apk" ]; then
   make install
+
+  # we have to massage a little the output of 'make install' befoe we build the .apk
+  # FIX: [null] Unable to add '/home/mdione/src/works/inria/android/live/hop-2.0.0-android-basic/android/assets/share/hop/base64.js.gz': file already in archive (try '-u'?)
+  rm -rf $prefix/assets/share
+
+  # FIX: copy the hop binary in the Makefiles
+  # cp -v bin/hop $prefix/assets/bin
+  # remove symlinks and move .so/.init files to lib
+  rm -v $libdir/*.so
+  (
+    . ./.hoprelease
+    mv -v $libdir/hop/$major/*_{s,e}-$major.so $libdir
+    # mkdir -p $prefix/assets/lib
+    # mv -v $libdir/hop/$major/*.init $prefix/assets/lib
+    mkdir -p $libdir
+    mv -v $libdir/hop/$major/*.init $libdir
+  )
+
+  # FIX: V/hop-installer(  288): Error: /data/data/fr.inria.hop/lib/hop/2.1.0/weblets/color/etc/color.wiki
+  rm -rf $libdir/hop
+
+  # throw in bigloo's libs too
+  cp -v $BGL_LIBDIR/libbigloo{gc,{,web,multimedia}_s}*.so $libdir
+  cp -v $BGL_LIBDIR/libbigloo{web,multimedia}_e*.so $libdir
+  cp -v $BGL_LIBDIR/*.init $libdir
+
   (
     cd arch/android
-    # FIX: [null] Unable to add '/home/mdione/src/works/inria/android/live/hop-2.0.0-android-basic/android/assets/share/hop/base64.js.gz': file already in archive (try '-u'?)
-    rm -rf assets/share
-    # FIX: copy the hop binary in the Makefiles
-    cp -v ../../bin/hop assets/bin
-    # copy bigloo's libs too
-    cp -v $BGL_LIBDIR/libbigloo{gc,{,web,multimedia}_s}*.so $prefix/libs/armeabi/
+    # finally build the .apk
     ant debug
   )
   shift
@@ -64,5 +104,10 @@ fi
 
 if [ "$1" == "install" ]; then
    $ANDSDK/tools/adb install -r arch/android/bin/hop-debug.apk
+   shift
+fi
+
+if [ "$1" == "unpack" ]; then
+   $ANDSDK/tools/adb shell monkey -p fr.inria.hop 1
    shift
 fi
