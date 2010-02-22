@@ -28,21 +28,20 @@ export CC=$ANDROIDROOT/droid-wrapper/bin/droid-gcc
 export JAVA_HOME=/usr/lib/jvm/java-6-sun-1.6.0.17
 
 # the bootstraping bigloo libdir dir
-BGL_LIBDIR=$HOME/local/soft/bigloo-android/lib/bigloo/3.3b
+export BGL_LIBDIR=$HOME/local/soft/bigloo-android/lib/bigloo/3.3b
 # the bootstraping hop dir
-BS_HOPDIR=$HOME/src/works/inria/bootstrap/hop-live
+export BS_HOPDIR=$HOME/src/works/inria/bootstrap/hop-live
 
-prefix=$(pwd)/arch/android
+prefix=/data/data/fr.inria.hop
+install_prefix=$(pwd)/arch/android/assets
 # libdir=$prefix/libs/armeabi
-libdir=$prefix/assets/lib
+libdir=$install_prefix/lib
 
 if [ "$1" == "configure" ]; then
   ./configure --disable-threads \
-    --prefix=$prefix/assets \
+    --prefix=$prefix \
     --cc=$CC \
     --bigloolibdir=$BGL_LIBDIR
-    #--libdir=$libdir \
-    # --hopc=$BS_HOPDIR/bin/hopc
   shift
 fi
 
@@ -50,11 +49,12 @@ if [ "$1" == "build" ]; then
   # yes, we need a bootstraping hop too :|
   # unluckily our build system is not ready for this kind of things
   # so just hack it away
+  pwd=$(pwd)
   ( cd widget
     for i in *.hop; do
       $BS_HOPDIR/bin/hopc $i -o o/${i%.hop}.o -c \
         --bigloo=bigloo -L $BS_HOPDIR/lib \
-        --share-dir $PWD/share -- \
+        --share-dir $pwd/share -- \
         -O2 -fsharing -Wall -wslots -L $BS_HOPDIR/lib \
         -lib-dir $BGL_LIBDIR \
         -cc $CC \
@@ -66,28 +66,57 @@ if [ "$1" == "build" ]; then
   shift
 fi
 
+function install-prefix {
+    # installs $file in $prefix/$file,
+    # creating all the parent dirs as needed
+    file="$1"
+    prefix="$2"
+
+    dir="$(dirname $file)"
+    mkdir -p "$prefix/$dir"
+    cp -v "$file" "$prefix/$dir"
+}
+
+function install {
+    # installs $src in $dst,
+    # creating all the parent dirs as needed
+    src="$1"
+    dst="$2"
+
+    dir="$(dirname $dst)"
+    mkdir -p "$dir"
+    cp -vr "$src" "$dst"
+}
+
 if [ "$1" == "apk" ]; then
-  make install
+  # make install
+  # we have to install by hand because prefix is needed for the host layout
+  rm -rf $install_prefix
+  for file in bin/hop etc/hoprc.hop lib/*.{so,init}; do
+    install "$file" "$install_prefix/$file"
+  done
+  for file in share/*; do
+    install "$file" "$install_prefix/share/hop/$(basename $file)"
+  done
+
 
   # we have to massage a little the output of 'make install' befoe we build the .apk
   # FIX: [null] Unable to add '/home/mdione/src/works/inria/android/live/hop-2.0.0-android-basic/android/assets/share/hop/base64.js.gz': file already in archive (try '-u'?)
-  rm -rf $prefix/assets/share
+  # rm -rf $install_prefix/share
 
   # FIX: copy the hop binary in the Makefiles
   # cp -v bin/hop $prefix/assets/bin
   # remove symlinks and move .so/.init files to lib
-  rm -v $libdir/*.so
+  # rm -fv $libdir/*.so
   (
     . ./.hoprelease
-    mv -v $libdir/hop/$major/*_{s,e}-$major.so $libdir
-    # mkdir -p $prefix/assets/lib
-    # mv -v $libdir/hop/$major/*.init $prefix/assets/lib
-    mkdir -p $libdir
-    mv -v $libdir/hop/$major/*.init $libdir
+    # mv -v $libdir/hop/$major/*_{s,e}-$major.so $libdir
+    # mkdir -p $libdir
+    # mv -v $libdir/hop/$major/*.init $libdir
   )
 
   # FIX: V/hop-installer(  288): Error: /data/data/fr.inria.hop/lib/hop/2.1.0/weblets/color/etc/color.wiki
-  rm -rf $libdir/hop
+  # rm -rf $libdir/hop
 
   # throw in bigloo's libs too
   cp -v $BGL_LIBDIR/libbigloo{gc,{,web,multimedia}_s}*.so $libdir
