@@ -89,7 +89,7 @@ public class hop_2_0_0 extends Activity {
                     Log(outputFile.getName() + " already extracted and not older.");
                 } else {
                     FileOutputStream fos = new FileOutputStream(outputFile);
-                    Log("Copied " + entry + " to " + mAppRoot + "/" + path);
+                    Log(entry+" installed...");
                     copyStreams(zip.getInputStream(entry), fos);
                     String curPath = outputFile.getAbsolutePath();
                     do {
@@ -114,7 +114,7 @@ public class hop_2_0_0 extends Activity {
             if (name.startsWith (assetsFilter)) {
                 list.add(entry);
             } else {
-                Log (name + "skipped: not an asset?");
+                // Log (name + " skipped: not an asset?");
             }
         }
         return list;

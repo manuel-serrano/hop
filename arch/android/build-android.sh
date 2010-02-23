@@ -34,12 +34,14 @@ export BS_HOPDIR=$HOME/src/works/inria/bootstrap/hop-live
 
 prefix=/data/data/fr.inria.hop
 install_prefix=$(pwd)/arch/android/assets
-# libdir=$prefix/libs/armeabi
 libdir=$install_prefix/lib
+
+# weblets="wizard,hop,hz,shutdown,info"
 
 if [ "$1" == "configure" ]; then
   ./configure --disable-threads \
     --prefix=$prefix \
+    --libdir=$prefix/lib \
     --cc=$CC \
     --bigloolibdir=$BGL_LIBDIR
   shift
@@ -89,34 +91,19 @@ function install {
 }
 
 if [ "$1" == "apk" ]; then
-  # make install
   # we have to install by hand because prefix is needed for the host layout
+  source .hoprelease
   rm -rf $install_prefix
   for file in bin/hop etc/hoprc.hop lib/*.{so,init}; do
     install "$file" "$install_prefix/$file"
   done
-  for file in share/*; do
+  for file in share/{buttons,icons,*.js,*.hss,*.scm,.afile}; do
     install "$file" "$install_prefix/share/hop/$(basename $file)"
   done
-
-
-  # we have to massage a little the output of 'make install' befoe we build the .apk
-  # FIX: [null] Unable to add '/home/mdione/src/works/inria/android/live/hop-2.0.0-android-basic/android/assets/share/hop/base64.js.gz': file already in archive (try '-u'?)
-  # rm -rf $install_prefix/share
-
-  # FIX: copy the hop binary in the Makefiles
-  # cp -v bin/hop $prefix/assets/bin
-  # remove symlinks and move .so/.init files to lib
-  # rm -fv $libdir/*.so
-  (
-    . ./.hoprelease
-    # mv -v $libdir/hop/$major/*_{s,e}-$major.so $libdir
-    # mkdir -p $libdir
-    # mv -v $libdir/hop/$major/*.init $libdir
-  )
-
-  # FIX: V/hop-installer(  288): Error: /data/data/fr.inria.hop/lib/hop/2.1.0/weblets/color/etc/color.wiki
-  # rm -rf $libdir/hop
+  # don't install all the weblets
+  for file in weblets/{wizard,hop,hz,shutdown,info}; do
+    install "$file" "$install_prefix/lib/hop/$major/weblets/$(basename $file)"
+  done
 
   # throw in bigloo's libs too
   cp -v $BGL_LIBDIR/libbigloo{gc,{,web,multimedia}_s}*.so $libdir
@@ -125,6 +112,10 @@ if [ "$1" == "apk" ]; then
 
   (
     cd arch/android
+    ant package-resources
+    # aaand add .afiles because the apk builder skips them
+    # zip -u bin/hop-debug.apk assets/lib/hop/$major/weblets/{wizard,hop,hz,shutdown,info}/.afile
+    find assets -name .afile | xargs zip -u bin/hop-debug.apk
     # finally build the .apk
     ant debug
   )
@@ -132,11 +123,16 @@ if [ "$1" == "apk" ]; then
 fi
 
 if [ "$1" == "install" ]; then
-   $ANDSDK/tools/adb install -r arch/android/bin/hop-debug.apk
-   shift
+  $ANDSDK/tools/adb install -r arch/android/bin/hop-debug.apk
+  shift
 fi
 
 if [ "$1" == "unpack" ]; then
-   $ANDSDK/tools/adb shell monkey -p fr.inria.hop 1
-   shift
+  $ANDSDK/tools/adb shell monkey -p fr.inria.hop 1
+  ( cd arch/android/assets
+    find . -name .afile | while read file; do
+      push $file /data/data/fr.inria.hop/$file
+    ; done
+  )
+  shift
 fi
