@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/etc/hop-autoconf.js.in            */
+/*    serrano/prgm/project/hop/2.1.x/etc/hop-autoconf.js.in            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Sun Jan 10 08:53:24 2010 (serrano)                */
+/*    Last change :  Mon Feb 22 07:14:00 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -119,6 +119,7 @@ function hop_Config() {
   this.xhr_multipart = false; // see hop_make_xml_http_request conf
   this.clone_innerHTML = false; // see hop_create_element (hop-dom.js)
   this.eval_innerHTML = true;
+  this.websocket = false;
 
   /* navigator specific configuration */
   if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {
@@ -434,6 +435,13 @@ if( "XMLHttpRequest" in window ) {
       }
    }
 }
+
+/*---------------------------------------------------------------------*/
+/*    web socket                                                       */
+/*---------------------------------------------------------------------*/
+/* if( "WebSocket" in window ) {                                       */
+/*    hop_config.websocket = true;                                     */
+/* }                                                                   */
 
 /*---------------------------------------------------------------------*/
 /*    hop_header_content_type ...                                      */

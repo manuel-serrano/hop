@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-event.js                */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-event.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Jan 15 11:59:41 2010 (serrano)                */
+/*    Last change :  Tue Feb 23 07:11:07 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -534,6 +534,13 @@ function hop_servevt_proxy_flash_init() {
 }
 
 /*---------------------------------------------------------------------*/
+/*    servevt_websocketp ...                                           */
+/*---------------------------------------------------------------------*/
+function servevt_websocketp() {
+   return hop_config.websocket;
+}
+
+/*---------------------------------------------------------------------*/
 /*    servevt_xhr_multipartp ...                                       */
 /*---------------------------------------------------------------------*/
 function servevt_xhr_multipartp() {
@@ -551,41 +558,75 @@ function servevt_flashp( port ) {
       
 /*---------------------------------------------------------------------*/
 /*    hop_start_servevt_proxy ...                                      */
+/*    -------------------------------------------------------------    */
+/*    http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol      */
+/*    for details on the Web protocol.                                 */
 /*---------------------------------------------------------------------*/
 function hop_start_servevt_proxy() {
    hop_servevt_proxy = new Object();
-   hop_servevt_proxy.register = function( x ) {};
 
-   hop_send_request( hop_service_base() + "/server-event/info",
-		     // asynchronous call
-		     false,
-		     // success callback
-		     function( v ) {
-			var host = v[ 0 ];
-			var port = v[ 1 ];
-			var key = v[ 2 ];
+   if( servevt_websocketp() ) {
+      var url = "ws://localhost:8888" + hop_service_base() + "/server-event/websocket";
+      var ws = new WebSocket( url );
 
-			if( servevt_xhr_multipartp() ) {
-			   start_servevt_xhr_multipart_proxy( key );
-			} else if( servevt_flashp( port ) ) {
-			   try {
-			      start_servevt_flash_proxy( key, host, port );
-			   } catch( e ) {
-			      e.scObject = ("port=" + port);
-			      throw( e );
+      ws.onopen = function() {
+	 alert( "websocket onopen..." );
+      }
+      ws.onclose = function() {
+	 alert( "websocket onclose..." );
+      }
+      ws.onmessage = function ( e ) {
+	 alert( "websocket onmessage..." );
+      }
+
+      alert( "web socket: " + ws + " " + ws.readyState );
+      
+      hop_servevt_proxy.register = function( id ) {
+	 ws.send( id );
+      }
+	
+      // register the unitialized events
+/*       for( var p in hop_servevt_table ) {                           */
+/* 	 if( hop_servevt_table[ p ].hop_servevt ) {                    */
+/* 	    hop_servevt_proxy.register( p );                           */
+/* 	 }                                                             */
+/*       }                                                             */
+/*                                                                     */
+      alert( "state=" + ws.readyState );
+   } else {
+      hop_servevt_proxy.register = function( x ) {};
+      
+      hop_send_request( hop_service_base() + "/server-event/info",
+			// asynchronous call
+			false,
+			// success callback
+			function( v ) {
+			   var host = v[ 0 ];
+			   var port = v[ 1 ];
+			   var key = v[ 2 ];
+
+			   if( servevt_xhr_multipartp() ) {
+			      start_servevt_xhr_multipart_proxy( key );
+			   } else if( servevt_flashp( port ) ) {
+			      try {
+				 start_servevt_flash_proxy( key, host, port );
+			      } catch( e ) {
+				 e.scObject = ("port=" + port);
+				 throw( e );
+			      }
+			   } else {
+			      start_servevt_ajax_proxy( key );
 			   }
-			} else {
-			   start_servevt_ajax_proxy( key );
-			}
-		     },
-		     // failure callback
-		     function( v ) {
-			throw new Error( "No event server acknowledge" );
-		     },
-		     // run the anim during the call
-		     true,
-		     // no environment
-		     [] );
+			},
+			// failure callback
+			function( v ) {
+			   throw new Error( "No event server acknowledge" );
+			},
+			// run the anim during the call
+			true,
+			// no environment
+			[] );
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -848,5 +889,3 @@ function hop_remove_timeout_listener( proc ) {
       }
    }
 }
-
-

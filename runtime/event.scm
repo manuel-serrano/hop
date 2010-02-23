@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/event.scm                 */
+;*    serrano/prgm/project/hop/2.1.x/runtime/event.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Dec 14 17:56:18 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Mon Feb 22 20:21:44 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -75,6 +75,7 @@
 ;*    event services ...                                               */
 ;*---------------------------------------------------------------------*/
 (define *port-service* #f)
+(define *websocket-service* #f)
 (define *register-service* #f)
 (define *unregister-service* #f)
 (define *init-service* #f)
@@ -298,7 +299,37 @@
 		  (key key)
 		  (req req))))
       (hashtable-put! *ajax-connection-key-table* key conn)))
+
+
+;*---------------------------------------------------------------------*/
+;*    websocket-register-new-connection! ...                           */
+;*---------------------------------------------------------------------*/
+(define (websocket-register-new-connection! req name)
    
+   (define (get-header header key default)
+      (let ((c (assq key header)))
+	 (if (pair? c)
+	     (cdr c)
+	     default)))
+   
+   (define (websocket-server-location)
+      (format "ws://~a:~a/~a/server-event/websocket"
+	      (hostname) (hop-port) (hop-initial-weblet)))
+
+   ;; register the websocket
+   (hashtable-update! *websocket-socket-table*
+		      name
+		      (lambda (l) (cons req l))
+		      (list req))
+
+   (with-access::http-request req (header connection socket)
+      (instantiate::http-response-websocket
+	 (start-line "HTTP/1.1 101 Web Socket Protocol Handshake")
+	 (location (websocket-server-location))
+	 (origin (get-header header origin: "localhost"))
+	 (protocol (get-header header WebSocket-Protocol: "sample"))
+	 (connection 'Upgrade))))
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-init! ...                                              */
 ;*    -------------------------------------------------------------    */
@@ -312,6 +343,10 @@
       (lambda ()
 	 (when (=fx *client-key* 0)
 	    (set! *client-key* (elong->fixnum (current-seconds)))
+	    
+	    (set! *websocket-service*
+		  (service :name "server-event/websocket" ()
+		     (websocket-register-new-connection! (current-request) "name")))
 	    
 	    (set! *port-service*
 		  (service :name "server-event/info" ()
@@ -388,6 +423,8 @@
 	   (*flash-socket-table* ,*flash-socket-table*)
 	   (*multipart-request-list* ,*multipart-request-list*)
 	   (*multipart-socket-table* ,*multipart-socket-table*)
+	   (*websocket-request-list* ,*websocket-request-list*)
+	   (*websocket-socket-table* ,*websocket-socket-table*)
 	   (*ajax-connection-key-table* ,(dump-ajax-table *ajax-connection-key-table*))))))
 
 ;*---------------------------------------------------------------------*/
@@ -510,6 +547,8 @@
 		(let ((r (cond
 			    ((string=? mode "xhr-multipart")
 			     (multipart-register-event! req event))
+;* 			    ((string=? mode "websocket")               */
+;* 			     (websocket-register-event! req event))    */
 			    ((string=? mode "flash")
 			     (let ((req (cadr (assq key *flash-request-list*))))
 				(flash-register-event! req event)))
@@ -555,9 +594,23 @@
 	       ;; no longer exists, an error will be raised and the client
 	       ;; will be removed from the tables.
 	       (multipart-signal-value req (multipart-value *ping* #unspecified))))))
+
+   (define (unregister-websocket-event! event key)
+      (let ((c (assq (string->symbol key) *websocket-request-list*)))
+	 (when (pair? c)
+	    (let ((req (cadr c)))
+	       (hashtable-update! *websocket-socket-table*
+				  event
+				  (lambda (l) (delete! req l))
+				  '())
+	       ;; Ping the client to check it still exists. If the client
+	       ;; no longer exists, an error will be raised and the client
+	       ;; will be removed from the tables.
+	       (websocket-signal-value req (websocket-value *ping* #unspecified))))))
    
    (with-lock *event-mutex*
       (lambda ()
+	 (unregister-websocket-event! event key)
 	 (unregister-multipart-event! event key)
 	 (unregister-ajax-event! event key)
 	 (unregister-flash-event! event key)
@@ -593,7 +646,8 @@
    (socket-close (http-request-socket req))
    ;; remove the request from the *multipart-request-list*
    (set! *multipart-request-list*
-	 (filter! (lambda (e) (not (eq? (cadr e) req))) *multipart-request-list*))
+	 (filter! (lambda (e) (not (eq? (cadr e) req)))
+		  *multipart-request-list*))
    ;; remove the request from the *multipart-socket-table*
    (hashtable-for-each *multipart-socket-table*
 		       (lambda (k l)
@@ -602,6 +656,27 @@
 					     (lambda (l) (delete! req l))
 					     '())))
    (hashtable-filter! *multipart-socket-table* (lambda (k l) (pair? l))))
+   
+;*---------------------------------------------------------------------*/
+;*    websocket-close-request! ...                                     */
+;*    -------------------------------------------------------------    */
+;*    This assumes that the event-mutex has been acquired.             */
+;*---------------------------------------------------------------------*/
+(define (websocket-close-request! req)
+   ;; close the socket
+   (socket-close (http-request-socket req))
+   ;; remove the request from the *websocket-request-list*
+   (set! *websocket-request-list*
+	 (filter! (lambda (e) (not (eq? (cadr e) req)))
+		  *websocket-request-list*))
+   ;; remove the request from the *websocket-socket-table*
+   (hashtable-for-each *websocket-socket-table*
+		       (lambda (k l)
+			  (hashtable-update! *websocket-socket-table*
+					     k
+					     (lambda (l) (delete! req l))
+					     '())))
+   (hashtable-filter! *websocket-socket-table* (lambda (k l) (pair? l))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-client-ready? ...                                      */
@@ -619,6 +694,14 @@
 			  (not (socket-down? s))))
 		    l))))
    
+   (define (websocket-event-client-ready? name)
+      (let ((l (hashtable-get *websocket-socket-table* name)))
+	 (and (pair? l)
+	      (any? (lambda (req)
+		       (let ((s (http-request-socket req)))
+			  (not (socket-down? s))))
+		    l))))
+   
    (define (flash-event-client-ready? name)
       (let ((l (hashtable-get *flash-socket-table* name)))
 	 (and (pair? l)
@@ -628,6 +711,7 @@
 		    l))))
    
    (or (multipart-event-client-ready? name)
+       (websocket-event-client-ready? name)
        (ajax-event-client-ready? name)
        (flash-event-client-ready? name)))
 
@@ -642,6 +726,12 @@
 ;*---------------------------------------------------------------------*/
 (define *multipart-socket-table* (make-hashtable))
 (define *multipart-request-list* '())
+
+;*---------------------------------------------------------------------*/
+;*    *websocket-socket-table*                                         */
+;*---------------------------------------------------------------------*/
+(define *websocket-socket-table* (make-hashtable))
+(define *websocket-request-list* '())
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-event ...                          */
@@ -719,6 +809,26 @@
 	    (flush-output-port p)))))
 
 ;*---------------------------------------------------------------------*/
+;*    websocket-signal-value ...                                       */
+;*---------------------------------------------------------------------*/
+(define (websocket-signal-value req value)
+   (let* ((s (http-request-socket req))
+	  (p (socket-output s)))
+      (with-handler
+	 (lambda (e)
+	    (tprint "WEBSOCKET EVENT ERROR: " e " thread=" (current-thread))
+	    (if (&io-error? e)
+		(begin
+		   (set! *clients-number* (-fx *clients-number* 1))
+		   (websocket-close-request! req))
+		(raise e)))
+	 (begin
+	    (display #a000 p)
+	    (display value)
+	    (display #a255 p)
+	    (flush-output-port p)))))
+
+;*---------------------------------------------------------------------*/
 ;*    multipart-value ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (multipart-value name value)
@@ -733,6 +843,22 @@
        (format "<f name='~a'>~a</f>" name value))
       (else
        (format "<j name='~a'><![CDATA[~a]]></j>" name (hop->json value #f #f)))))
+   
+;*---------------------------------------------------------------------*/
+;*    websocket-value ...                                              */
+;*---------------------------------------------------------------------*/
+(define (websocket-value name value)
+   (cond
+      ((xml? value)
+       (format "<x name='~a'>~a</x>" name (base64-encode (xml->string value (hop-xml-backend)))))
+      ((string? value)
+       (format "<s name='~a'>~a</s>" name (base64-encode value)))
+      ((integer? value)
+       (format "<i name='~a'>~a</i>" name (base64-encode (integer->string value))))
+      ((real? value)
+       (format "<f name='~a'>~a</f>" name (base64-encode (number->string value))))
+      (else
+       (format "<j name='~a'><![CDATA[~a]]></j>" name (base64-encode (hop->json value #f #f))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    json-make-signal-value ...                                       */
@@ -805,9 +931,9 @@
        name
        (lambda (l)
 	  (when (pair? l)
-		(let ((val (json-make-signal-value value)))
-		   (flash-signal-value (car l) name val)
-		   #t)))))
+	     (let ((val (json-make-signal-value value)))
+		(flash-signal-value (car l) name val)
+		#t)))))
 
    (define (multipart-event-signal! name value)
       (for-each-socket
@@ -819,6 +945,16 @@
 		(multipart-signal-value (car l) val)
 		#t)))))
 
+   (define (websocket-event-signal! name value)
+      (for-each-socket
+       *websocket-socket-table*
+       name
+       (lambda (l)
+	  (when (pair? l)
+	     (let ((val (websocket-value name value)))
+		(websocket-signal-value (car l) val)
+		#t)))))
+
    (set! hop-signal-id (-fx hop-signal-id 1))
    (hop-verb 2 (hop-color hop-signal-id hop-signal-id " SIGNAL")
 	     ": " name)
@@ -826,19 +962,27 @@
    (hop-verb 2 "\n")
    (mutex-lock! *event-mutex*)
    (unwind-protect
-      (case (random 3)
+      (case (random 4)
 	 ((0)
 	  (unless (multipart-event-signal! name value)
-	     (unless (flash-event-signal! name value)
-		(ajax-event-signal! name value))))
+	     (unless (websocket-event-signal! name value)
+		(unless (flash-event-signal! name value)
+		   (ajax-event-signal! name value)))))
 	 ((1)
 	  (unless (flash-event-signal! name value)
 	     (unless (ajax-event-signal! name value)
-		(multipart-event-signal! name value))))
+		(unless (multipart-event-signal! name value)
+		   (websocket-event-signal! name value)))))
 	 ((2)
 	  (unless (ajax-event-signal! name value)
 	     (unless (multipart-event-signal! name value)
-		(flash-event-signal! name value)))))
+		(unless (websocket-event-signal! name value)
+		   (flash-event-signal! name value)))))
+	 ((3)
+	  (unless (websocket-event-signal! name value)
+	     (unless (flash-event-signal! name value)
+		(unless (ajax-event-signal! name value)
+		   (multipart-event-signal! name value))))))
       (mutex-unlock! *event-mutex*))
 	 
    #unspecified)
@@ -879,6 +1023,17 @@
 			     (flash-signal-value req name val))
 			  l))))))
 
+   (define (websocket-event-broadcast! name value)
+      (for-each-socket
+       *websocket-socket-table*
+       name
+       (lambda (l)
+	  (when (pair? l)
+	     (let ((val (websocket-value name value)))
+		(for-each (lambda (req)
+			     (websocket-signal-value req val))
+			  l))))))
+       
    (define (multipart-event-broadcast! name value)
       (for-each-socket
        *multipart-socket-table*
@@ -899,6 +1054,7 @@
    (unwind-protect
       (begin
 	 (ajax-event-broadcast! name value)
+	 (websocket-event-broadcast! name value)
 	 (multipart-event-broadcast! name value)
 	 (flash-event-broadcast! name value))
       (mutex-unlock! *event-mutex*))
