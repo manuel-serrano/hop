@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Thu Feb 25 07:58:05 2010 (serrano)                */
+/*    Last change :  Thu Feb 25 21:18:30 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -163,17 +163,54 @@ var hop_servevt_table = {};
 var hop_servevt_ctable = {};
 var hop_servevt_dlist = null;
 
-var hop_servevt_multipart_re =
+var hop_servevt_enveloppe_re =
    new RegExp( "^<([rsxifj]) name='([^']+)'>((?:.|[\n])*)</[rsxifj]>$" );
-var hop_servevt_multipart_cdata_re =
+var hop_servevt_enveloppe_cdata_re =
    new RegExp( "^<!\\[CDATA\\[((?:.|[\n])*)\\]\\]>$" );
+
+/*---------------------------------------------------------------------*/
+/*    hop_servevt_enveloppe_parse ...                                  */
+/*---------------------------------------------------------------------*/
+function hop_servevt_enveloppe_parse( val, xhr ) {
+   var m = val.match( hop_servevt_enveloppe_re );
+
+   if( m != null ) {
+      var k = m [ 1 ];
+      var id = m[ 2 ];
+      var text = m[ 3 ];
+
+      if( k === "i" ) {
+	 hop_trigger_servevt( id, text, parseInt( text ), false );
+      } else if( k == "f" ) {
+	 hop_trigger_servevt( id, text, parseFloat( text ), false );
+      } else if( k == "s" ) {
+	 hop_trigger_servevt( id, text, text, false );
+      } else if( k == "x" ) {
+	 hop_trigger_servevt( id, text, hop_create_element( text ), false );
+      } else if( k == "j" ) {
+	 var t = text.match( hop_servevt_enveloppe_cdata_re );
+	 if( t ) {
+	    hop_trigger_servevt( id, t[ 1 ], t[ 1 ], true );
+	 }
+      } else if( k == "r" ) {
+	 if( !server_ready ) {
+	    server_ready = true;
+	    hop_trigger_serverready_event( new HopServerReadyEvent() );
+	 }
+      } else {
+	 alert( "unknow event message: [" + xhr.responseText + "]" );
+      }
+   } else {
+      alert( "unknow event message: [" + xhr.responseText + "]" );
+   }
+}
 
 /*---------------------------------------------------------------------*/
 /*    start_servevt_websocket_proxy ...                                */
 /*---------------------------------------------------------------------*/
 function start_servevt_websocket_proxy( key, host, port ) {
    var url = "ws://" + host + ":" + port +
-      hop_service_base() + "/server-event/websocket";
+      hop_service_base() + "/server-event/websocket?key=" + key;
    var ws = new WebSocket( url );
 
    var register = function( id ) {
@@ -211,25 +248,15 @@ function start_servevt_websocket_proxy( key, host, port ) {
 	    register( p );
 	 }
       }
+      hop_trigger_serverready_event( new HopServerReadyEvent() );
    }
    ws.onclose = function() {
-      alert( "websocket onclose..." );
+      hop_servevt_onclose();
    }
    ws.onmessage = function ( e ) {
-      alert( "websocket onmessage..." + e.data );
+      e.responseText = e.data;
+      hop_servevt_enveloppe_parse( e.data, e );
    }
-
-/*    hop_servevt_proxy.register = function( id ) {                    */
-/*       ws.send( id );                                                */
-/*    }                                                                */
-	
-   // register the unitialized events
-/*       for( var p in hop_servevt_table ) {                           */
-/* 	 if( hop_servevt_table[ p ].hop_servevt ) {                    */
-/* 	    hop_servevt_proxy.register( p );                           */
-/* 	 }                                                             */
-/*       }                                                             */
-/*                                                                     */
 }
 
 /*---------------------------------------------------------------------*/
@@ -245,37 +272,6 @@ function start_servevt_xhr_multipart_proxy( key ) {
 	    "&key=" + key  + "&mode=xhr-multipart";
 
 	 var success = function( val, xhr ) {
-	    var m = val.match( hop_servevt_multipart_re );
-
-	    if( m != null ) {
-	       var k = m [ 1 ];
-	       var id = m[ 2 ];
-	       var text = m[ 3 ];
-
-	       if( k === "i" ) {
-		  hop_trigger_servevt( id, text, parseInt( text ), false );
-	       } else if( k == "f" ) {
-		  hop_trigger_servevt( id, text, parseFloat( text ), false );
-	       } else if( k == "s" ) {
-		  hop_trigger_servevt( id, text, text, false );
-	       } else if( k == "x" ) {
-		  hop_trigger_servevt( id, text, hop_create_element( text ), false );
-	       } else if( k == "j" ) {
-		  var t = text.match( hop_servevt_multipart_cdata_re );
-		  if( t ) {
-		     hop_trigger_servevt( id, t[ 1 ], t[ 1 ], true );
-		  }
-	       } else if( k == "r" ) {
-		  if( !server_ready ) {
-		     server_ready = true;
-		     hop_trigger_serverready_event( new HopServerReadyEvent() );
-		  }
-	       } else {
-		  alert( "unknow event message: [" + xhr.responseText + "]" );
-	       }
-	    } else {
-	       alert( "unknow event message: [" + xhr.responseText + "]" );
-	    }
 	 }
 
 	 var failure = function( xhr ) {
@@ -639,7 +635,7 @@ function hop_start_servevt_proxy() {
 			var port = v[ 1 ];
 			var key = v[ 2 ];
 
-			if( false && servevt_websocketp() ) {
+			if( servevt_websocketp() ) {
 			   // websocket backend
 			   start_servevt_websocket_proxy( key, host, port );
 			} else if( servevt_xhr_multipartp() ) {
