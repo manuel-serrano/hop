@@ -9,10 +9,11 @@ ANDROIDROOT=$HOME/src/works/inria/android
 # ANDROIDROOT=/misc/virtual/android
 
 export ANDSRC=$ANDROIDROOT/eclair-git
-export ANDSDK=$ANDROIDROOT/android-sdk-linux
+export ANDSDK=$ANDROIDROOT/android-sdk-linux_86
 
 # we can't fire an emulator automatically, so just do it yourself by hand
-export ANDROID_SERIAL="emulator-5556"
+export ANDROID_SERIAL="emulator-5554"
+# export ANDROID_SERIAL="emulator-5556"
 
 # droid-wrapper
 # http://github.com/tmurakam/droid-wrapper/
@@ -38,47 +39,6 @@ libdir=$install_prefix/lib
 
 # weblets="wizard,hop,hz,shutdown,info"
 
-if [ "$1" == "configure" ]; then
-  ./configure --disable-threads \
-    --prefix=$prefix \
-    --libdir=$prefix/lib \
-    --cc=$CC \
-    --bigloolibdir=$BGL_LIBDIR
-  shift
-fi
-
-if [ "$1" == "build" ]; then
-  # yes, we need a bootstraping hop too :|
-  # unluckily our build system is not ready for this kind of things
-  # so just hack it away
-  pwd=$(pwd)
-  ( cd widget
-    for i in *.hop; do
-      $BS_HOPDIR/bin/hopc $i -o o/${i%.hop}.o -c \
-        --bigloo=bigloo -L $BS_HOPDIR/lib \
-        --share-dir $pwd/share -- \
-        -O2 -fsharing -Wall -wslots -L $BS_HOPDIR/lib \
-        -lib-dir $BGL_LIBDIR \
-        -cc $CC \
-        -copt "-O3 -DPLATFORM_ANDROID -I$BGL_LIBDIR" \
-        -copt -fPIC -unsafe -safee
-    done
-  )
-  make
-  shift
-fi
-
-function install-prefix {
-    # installs $file in $prefix/$file,
-    # creating all the parent dirs as needed
-    file="$1"
-    prefix="$2"
-
-    dir="$(dirname $file)"
-    mkdir -p "$prefix/$dir"
-    cp -v "$file" "$prefix/$dir"
-}
-
 function install {
     # installs $src in $dst,
     # creating all the parent dirs as needed
@@ -90,7 +50,49 @@ function install {
     cp -vr "$src" "$dst"
 }
 
-if [ "$1" == "apk" ]; then
+if [ "$1" == "configure" -o "$1" == "all" ]; then
+  ./configure --disable-threads \
+    --prefix=$prefix \
+    --libdir=$prefix/lib \
+    --cc=$CC \
+    --bigloolibdir=$BGL_LIBDIR
+
+  if [ "$1" == "configure" ]; then
+    shift
+  fi
+fi
+
+if [ "$1" == "build" -o "$1" == "all" ]; then
+  # yes, we need a bootstraping hop too :|
+  # unluckily our build system is not ready for this kind of things
+  # so just hack it away
+  pwd=$(pwd)
+
+  # this first attempt to build will fail because the widget/ directory will fail
+  # but it will be enough to actually build it by hand
+  # and the the latter make there below will continue the building
+  make || true
+  ( cd widget
+    for i in *.hop; do
+      echo $BS_HOPDIR/bin/hopc $i -o o/${i%.hop}.o -c
+      $BS_HOPDIR/bin/hopc $i -o o/${i%.hop}.o -c \
+        --bigloo=bigloo -L $BS_HOPDIR/lib \
+        --share-dir $pwd/share -- \
+        -O2 -fsharing -Wall -wslots -L $BS_HOPDIR/lib \
+        -lib-dir $BGL_LIBDIR \
+        -cc $CC \
+        -copt "-O3 -DPLATFORM_ANDROID -I$BGL_LIBDIR" \
+        -copt -fPIC -unsafe -safee
+    done
+  )
+  make
+
+  if [ "$1" == "build" ]; then
+    shift
+  fi
+fi
+
+if [ "$1" == "apk" -o "$1" == "all" ]; then
   # we have to install by hand because prefix is needed for the host layout
   source .hoprelease
   rm -rf $install_prefix
@@ -119,20 +121,28 @@ if [ "$1" == "apk" ]; then
     # finally build the .apk
     ant debug
   )
-  shift
+
+  if [ "$1" == "apk" ]; then
+    shift
+  fi
 fi
 
-if [ "$1" == "install" ]; then
+if [ "$1" == "install" -o "$1" == "all" ]; then
   $ANDSDK/tools/adb install -r arch/android/bin/hop-debug.apk
-  shift
+
+  if [ "$1" == "install" ]; then
+    shift
+  fi
 fi
 
-if [ "$1" == "unpack" ]; then
+if [ "$1" == "unpack" -o "$1" == "all" ]; then
   $ANDSDK/tools/adb shell monkey -p fr.inria.hop 1
   ( cd arch/android/assets
     find . -name .afile | while read file; do
-      push $file /data/data/fr.inria.hop/$file
-    ; done
+      $ANDSDK/tools/adb push $file /data/data/fr.inria.hop/$file
+    done
   )
-  shift
+  if [ "$1" == "unpack" ]; then
+    shift
+  fi
 fi
