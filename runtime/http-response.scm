@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Feb 23 06:25:12 2010 (serrano)                */
+;*    Last change :  Wed Feb 24 08:10:16 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -125,21 +125,12 @@
 					       protocol)
 	 (let ((p (socket-output socket)))
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
-	    (let ((p (current-error-port)))
-	       (http-write-line-string p start-line)
-	       (http-write-line-string p "Upgrade: WebSocket")
-	       (http-write-line p "Connection: " connection)
-	       (http-write-line p "WebSocket-Origin: " origin)
-	       (http-write-line p "WebSocket-Location: " location)
-	       (http-write-line p "WebSocket-Protocol: " protocol)
-	       (http-write-line p)
-	       (flush-output-port p))
 	    (http-write-line-string p start-line)
 	    (http-write-line-string p "Upgrade: WebSocket")
 	    (http-write-line p "Connection: " connection)
 	    (http-write-line p "WebSocket-Origin: " origin)
 	    (http-write-line p "WebSocket-Location: " location)
-	    (http-write-line p "WebSocket-Protocol: " protocol)
+	    (when protocol (http-write-line p "WebSocket-Protocol: " protocol))
  	    (http-write-line p)
 	    (flush-output-port p)
 	    'persistent))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Feb 22 20:21:44 2010 (serrano)                */
+;*    Last change :  Wed Feb 24 08:53:27 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -312,23 +312,25 @@
 	     (cdr c)
 	     default)))
    
-   (define (websocket-server-location)
-      (format "ws://~a:~a/~a/server-event/websocket"
-	      (hostname) (hop-port) (hop-initial-weblet)))
-
+   (define (websocket-server-location host)
+      (format "ws://~a/~a/server-event/websocket"
+	      (or host (format "~a:~a" (hostname) (hop-port)))
+	      (hop-initial-weblet)))
+   
    ;; register the websocket
    (hashtable-update! *websocket-socket-table*
 		      name
 		      (lambda (l) (cons req l))
 		      (list req))
-
+   
    (with-access::http-request req (header connection socket)
-      (instantiate::http-response-websocket
-	 (start-line "HTTP/1.1 101 Web Socket Protocol Handshake")
-	 (location (websocket-server-location))
-	 (origin (get-header header origin: "localhost"))
-	 (protocol (get-header header WebSocket-Protocol: "sample"))
-	 (connection 'Upgrade))))
+      (let ((host (get-header header host: #f)))
+	 (instantiate::http-response-websocket
+	    (start-line "HTTP/1.1 101 Web Socket Protocol Handshake")
+	    (location (websocket-server-location host))
+	    (origin (get-header header origin: "localhost"))
+	    (protocol (get-header header WebSocket-Protocol: #f))
+	    (connection 'Upgrade)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-init! ...                                              */
@@ -350,7 +352,16 @@
 	    
 	    (set! *port-service*
 		  (service :name "server-event/info" ()
-		     (vector (hostname) port (get-ajax-key (or port 0)))))
+		     (let* ((hd (http-request-header (current-request)))
+			    (host (assq host: hd)))
+			(if (pair? host)
+			    (let ((s (string-split (cdr host) ":")))
+			       (vector (car s)
+				       port
+				       (get-ajax-key (or port 0))))
+			    (vector (hostname)
+				    port
+				    (get-ajax-key (or port 0)))))))
 	    
 	    (set! *init-service*
 		  (service :name "server-event/init" (#!key key)
@@ -535,6 +546,15 @@
 		       hop-multipart-key hop-multipart-key name hop-multipart-key))
 	 (request req)))
 
+   (define (websocket-register-event! req name)
+      (tprint "***** websocket-register-event, name=" name " req=" req)
+      (hashtable-update! *websocket-socket-table*
+			 name
+			 (lambda (l) (cons req l))
+			 (list req))
+      (instantiate::http-response-string
+	 (request req)))
+
    (with-lock *event-mutex*
       (lambda ()
 	 (if (<fx *clients-number* (hop-event-max-clients))
@@ -547,8 +567,8 @@
 		(let ((r (cond
 			    ((string=? mode "xhr-multipart")
 			     (multipart-register-event! req event))
-;* 			    ((string=? mode "websocket")               */
-;* 			     (websocket-register-event! req event))    */
+			    ((string=? mode "websocket")
+			     (websocket-register-event! req event))
 			    ((string=? mode "flash")
 			     (let ((req (cadr (assq key *flash-request-list*))))
 				(flash-register-event! req event)))
@@ -823,8 +843,9 @@
 		   (websocket-close-request! req))
 		(raise e)))
 	 (begin
+	    (tprint "websocket-signal-value: " req)
 	    (display #a000 p)
-	    (display value)
+	    (display "value" p)
 	    (display #a255 p)
 	    (flush-output-port p)))))
 

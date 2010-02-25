@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Feb 22 09:38:43 2010 (serrano)                */
+;*    Last change :  Wed Feb 24 06:35:17 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -132,7 +132,7 @@
 	      (connection::symbol read-only (default 'Upgrade))
 	      (origin::bstring read-only)
 	      (location::bstring read-only)
-	      (protocol::bstring read-only))
+	      (protocol::obj read-only))
 
 	   (class http-response-error::http-response-string)
 

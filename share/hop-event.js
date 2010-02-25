@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Tue Feb 23 07:11:07 2010 (serrano)                */
+/*    Last change :  Thu Feb 25 07:58:05 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -167,7 +167,71 @@ var hop_servevt_multipart_re =
    new RegExp( "^<([rsxifj]) name='([^']+)'>((?:.|[\n])*)</[rsxifj]>$" );
 var hop_servevt_multipart_cdata_re =
    new RegExp( "^<!\\[CDATA\\[((?:.|[\n])*)\\]\\]>$" );
-				     
+
+/*---------------------------------------------------------------------*/
+/*    start_servevt_websocket_proxy ...                                */
+/*---------------------------------------------------------------------*/
+function start_servevt_websocket_proxy( key, host, port ) {
+   var url = "ws://" + host + ":" + port +
+      hop_service_base() + "/server-event/websocket";
+   var ws = new WebSocket( url );
+
+   var register = function( id ) {
+      var svc = hop_service_base() +
+      "/server-event/register?event=" + id +
+      "&key=" + key  + "&mode=websocket";
+
+      hop_servevt_proxy.httpreq =
+        hop_send_request( svc, false,
+			  function() { ; }, false,
+			  false, [] );
+   }
+
+   var unregister = function( id ) {
+      hop_servevt_proxy.httpreq.abort();
+
+      var svc = hop_service_base() +
+      "/server-event/unregister?event=" + id +
+      "&key=" + hop_servevt_proxy.key;
+	 
+      hop_servevt_proxy.httpreq = hop_send_request( svc, false,
+						    function() { ; }, false,
+						    false, [] );
+   };
+
+   // complete the proxy definition
+   hop_servevt_proxy.register = register;
+   hop_servevt_proxy.unregister = unregister;
+   hop_servevt_proxy.websocket = ws;
+
+   ws.onopen = function() {
+      // register the unitialized events
+      for( var p in hop_servevt_table ) {
+	 if( hop_servevt_table[ p ].hop_servevt ) {
+	    register( p );
+	 }
+      }
+   }
+   ws.onclose = function() {
+      alert( "websocket onclose..." );
+   }
+   ws.onmessage = function ( e ) {
+      alert( "websocket onmessage..." + e.data );
+   }
+
+/*    hop_servevt_proxy.register = function( id ) {                    */
+/*       ws.send( id );                                                */
+/*    }                                                                */
+	
+   // register the unitialized events
+/*       for( var p in hop_servevt_table ) {                           */
+/* 	 if( hop_servevt_table[ p ].hop_servevt ) {                    */
+/* 	    hop_servevt_proxy.register( p );                           */
+/* 	 }                                                             */
+/*       }                                                             */
+/*                                                                     */
+}
+
 /*---------------------------------------------------------------------*/
 /*    start_servevt_xhr_multipart_proxy ...                            */
 /*---------------------------------------------------------------------*/
@@ -564,69 +628,45 @@ function servevt_flashp( port ) {
 /*---------------------------------------------------------------------*/
 function hop_start_servevt_proxy() {
    hop_servevt_proxy = new Object();
+   hop_servevt_proxy.register = function( x ) {};
 
-   if( servevt_websocketp() ) {
-      var url = "ws://localhost:8888" + hop_service_base() + "/server-event/websocket";
-      var ws = new WebSocket( url );
+   hop_send_request( hop_service_base() + "/server-event/info",
+		     // asynchronous call
+		     false,
+		     // success callback
+		     function( v ) {
+			var host = v[ 0 ];
+			var port = v[ 1 ];
+			var key = v[ 2 ];
 
-      ws.onopen = function() {
-	 alert( "websocket onopen..." );
-      }
-      ws.onclose = function() {
-	 alert( "websocket onclose..." );
-      }
-      ws.onmessage = function ( e ) {
-	 alert( "websocket onmessage..." );
-      }
-
-      alert( "web socket: " + ws + " " + ws.readyState );
-      
-      hop_servevt_proxy.register = function( id ) {
-	 ws.send( id );
-      }
-	
-      // register the unitialized events
-/*       for( var p in hop_servevt_table ) {                           */
-/* 	 if( hop_servevt_table[ p ].hop_servevt ) {                    */
-/* 	    hop_servevt_proxy.register( p );                           */
-/* 	 }                                                             */
-/*       }                                                             */
-/*                                                                     */
-      alert( "state=" + ws.readyState );
-   } else {
-      hop_servevt_proxy.register = function( x ) {};
-      
-      hop_send_request( hop_service_base() + "/server-event/info",
-			// asynchronous call
-			false,
-			// success callback
-			function( v ) {
-			   var host = v[ 0 ];
-			   var port = v[ 1 ];
-			   var key = v[ 2 ];
-
-			   if( servevt_xhr_multipartp() ) {
-			      start_servevt_xhr_multipart_proxy( key );
-			   } else if( servevt_flashp( port ) ) {
-			      try {
-				 start_servevt_flash_proxy( key, host, port );
-			      } catch( e ) {
-				 e.scObject = ("port=" + port);
-				 throw( e );
-			      }
-			   } else {
-			      start_servevt_ajax_proxy( key );
+			if( false && servevt_websocketp() ) {
+			   // websocket backend
+			   start_servevt_websocket_proxy( key, host, port );
+			} else if( servevt_xhr_multipartp() ) {
+			   // xhr_multipart backend
+			   start_servevt_xhr_multipart_proxy( key );
+			} else if( servevt_flashp( port ) ) {
+			   // flash backend
+			   try {
+			      start_servevt_flash_proxy( key, host, port );
+			   } catch( e ) {
+			      e.scObject = ("port=" + port);
+			      throw( e );
 			   }
-			},
-			// failure callback
-			function( v ) {
-			   throw new Error( "No event server acknowledge" );
-			},
-			// run the anim during the call
-			true,
-			// no environment
-			[] );
-   }
+			} else {
+			   // fallback xhr backend
+			   start_servevt_ajax_proxy( key );
+			}
+		     },
+
+		     // failure callback
+		     function( v ) {
+			throw new Error( "No event server acknowledge" );
+		     },
+		     // run the anim during the call
+		     true,
+		     // no environment
+		     [] );
 }
 
 /*---------------------------------------------------------------------*/
