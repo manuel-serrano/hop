@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/types.scm                 */
+;*    serrano/prgm/project/hop/2.1.x/runtime/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Nov 29 15:05:44 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Wed Feb 24 06:35:17 2010 (serrano)                */
+;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
 ;*=====================================================================*/
@@ -127,6 +127,12 @@
 	   
 	   (class http-response-string::%http-response-local
 	      (body::bstring read-only (default "")))
+
+	   (class http-response-websocket::%http-response-local
+	      (connection::symbol read-only (default 'Upgrade))
+	      (origin::bstring read-only)
+	      (location::bstring read-only)
+	      (protocol::obj read-only))
 
 	   (class http-response-error::http-response-string)
 

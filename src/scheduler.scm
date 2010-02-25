@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Tue Feb 16 07:55:46 2010 (serrano)                */
+;*    Last change :  Thu Feb 25 08:30:39 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -237,14 +237,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    thread-request ::hopthread ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (thread-request th::hopthread)
-   (hopthread-request th))
+(cond-expand
+   (enable-threads
+    (define-method (thread-request th::hopthread)
+       (hopthread-request th))))
 
 ;*---------------------------------------------------------------------*/
 ;*    thread-request-set! ::hopthread ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (thread-request-set! th::hopthread req)
-   (hopthread-request-set! th req))
+(cond-expand
+   (enable-threads
+    (define-method (thread-request-set! th::hopthread req)
+       (hopthread-request-set! th req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-default-handler ...                                    */

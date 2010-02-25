@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/share/hop-font.scm                */
+;*    serrano/prgm/project/hop/2.1.x/share/hop-font.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 14 06:16:17 2009                          */
-;*    Last change :  Sat Nov 14 07:17:26 2009 (serrano)                */
-;*    Copyright   :  2009 Manuel Serrano                               */
+;*    Last change :  Mon Feb 22 07:01:11 2010 (serrano)                */
+;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Font utilities                                                   */
 ;*    -------------------------------------------------------------    */
@@ -39,7 +39,7 @@
 	 (dwidth20 0)
 	 (dheight20 0)
 	 (dwidth72 0)
-	 (height72 0))
+	 (dheight72 0))
 
       (define (init!)
 	 ;; insert the new DIV and SPAN and measure the default font

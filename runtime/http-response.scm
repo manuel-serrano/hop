@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Feb 16 07:42:10 2010 (serrano)                */
+;*    Last change :  Wed Feb 24 08:10:16 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -105,6 +105,35 @@
 	    (when bodyp (display s p))
 	    (flush-output-port p)
 	    connection))))
+
+;*---------------------------------------------------------------------*/
+;*    http-response ::http-response-websocket ...                      */
+;*    -------------------------------------------------------------    */
+;*    websocket are described at:                                      */
+;*    http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol      */
+;*                                                                     */
+;*    They impose a strict ordering and case for the reply. Thus Hop   */
+;*    uses a dedicated class instead of a generic response-string.     */
+;*---------------------------------------------------------------------*/
+(define-method (http-response r::http-response-websocket socket)
+   (with-trace 3 'http-response::http-response-string
+      (with-access::http-response-websocket r (start-line
+					       connection
+					       origin
+					       location
+					       timeout
+					       protocol)
+	 (let ((p (socket-output socket)))
+	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
+	    (http-write-line-string p start-line)
+	    (http-write-line-string p "Upgrade: WebSocket")
+	    (http-write-line p "Connection: " connection)
+	    (http-write-line p "WebSocket-Origin: " origin)
+	    (http-write-line p "WebSocket-Location: " location)
+	    (when protocol (http-write-line p "WebSocket-Protocol: " protocol))
+ 	    (http-write-line p)
+	    (flush-output-port p)
+	    'persistent))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-js ...                             */

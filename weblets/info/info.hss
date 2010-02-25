@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/weblets/info/info.hss             */
+/*    serrano/prgm/project/hop/2.1.x/weblets/info/info.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat Nov 14 07:14:00 2009 (serrano)                */
-/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    Last change :  Tue Feb 23 09:47:49 2010 (serrano)                */
+/*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    INFO HOP CSS                                                     */
 /*=====================================================================*/
@@ -36,7 +36,7 @@ table.info {
   padding: 10px;
   border: 1px solid $border-color;
   background: white;
-  -moz-border-radius: 0.5em;
+  border-radius: 0.5em;
 }
 
 table.info td#user-name {
@@ -81,10 +81,6 @@ notepad-body {
   background-color: $info-color;
 }
 
-notepad-tabs {
-  background: transparent;
-}
-
 nptab {
   font-size: small;
   border-color: $border-color;
@@ -92,11 +88,9 @@ nptab {
 
 nptab-active {
   background-color: $info-color;
-  border-bottom-color: $info-color;
 }
 
 nptab-body {
-  border-color: blue;
   background-color: $info-color;
 }  
 

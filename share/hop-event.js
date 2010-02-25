@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-event.js                */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-event.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Jan 15 11:59:41 2010 (serrano)                */
+/*    Last change :  Thu Feb 25 07:58:05 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -167,7 +167,71 @@ var hop_servevt_multipart_re =
    new RegExp( "^<([rsxifj]) name='([^']+)'>((?:.|[\n])*)</[rsxifj]>$" );
 var hop_servevt_multipart_cdata_re =
    new RegExp( "^<!\\[CDATA\\[((?:.|[\n])*)\\]\\]>$" );
-				     
+
+/*---------------------------------------------------------------------*/
+/*    start_servevt_websocket_proxy ...                                */
+/*---------------------------------------------------------------------*/
+function start_servevt_websocket_proxy( key, host, port ) {
+   var url = "ws://" + host + ":" + port +
+      hop_service_base() + "/server-event/websocket";
+   var ws = new WebSocket( url );
+
+   var register = function( id ) {
+      var svc = hop_service_base() +
+      "/server-event/register?event=" + id +
+      "&key=" + key  + "&mode=websocket";
+
+      hop_servevt_proxy.httpreq =
+        hop_send_request( svc, false,
+			  function() { ; }, false,
+			  false, [] );
+   }
+
+   var unregister = function( id ) {
+      hop_servevt_proxy.httpreq.abort();
+
+      var svc = hop_service_base() +
+      "/server-event/unregister?event=" + id +
+      "&key=" + hop_servevt_proxy.key;
+	 
+      hop_servevt_proxy.httpreq = hop_send_request( svc, false,
+						    function() { ; }, false,
+						    false, [] );
+   };
+
+   // complete the proxy definition
+   hop_servevt_proxy.register = register;
+   hop_servevt_proxy.unregister = unregister;
+   hop_servevt_proxy.websocket = ws;
+
+   ws.onopen = function() {
+      // register the unitialized events
+      for( var p in hop_servevt_table ) {
+	 if( hop_servevt_table[ p ].hop_servevt ) {
+	    register( p );
+	 }
+      }
+   }
+   ws.onclose = function() {
+      alert( "websocket onclose..." );
+   }
+   ws.onmessage = function ( e ) {
+      alert( "websocket onmessage..." + e.data );
+   }
+
+/*    hop_servevt_proxy.register = function( id ) {                    */
+/*       ws.send( id );                                                */
+/*    }                                                                */
+	
+   // register the unitialized events
+/*       for( var p in hop_servevt_table ) {                           */
+/* 	 if( hop_servevt_table[ p ].hop_servevt ) {                    */
+/* 	    hop_servevt_proxy.register( p );                           */
+/* 	 }                                                             */
+/*       }                                                             */
+/*                                                                     */
+}
+
 /*---------------------------------------------------------------------*/
 /*    start_servevt_xhr_multipart_proxy ...                            */
 /*---------------------------------------------------------------------*/
@@ -534,6 +598,13 @@ function hop_servevt_proxy_flash_init() {
 }
 
 /*---------------------------------------------------------------------*/
+/*    servevt_websocketp ...                                           */
+/*---------------------------------------------------------------------*/
+function servevt_websocketp() {
+   return hop_config.websocket;
+}
+
+/*---------------------------------------------------------------------*/
 /*    servevt_xhr_multipartp ...                                       */
 /*---------------------------------------------------------------------*/
 function servevt_xhr_multipartp() {
@@ -551,6 +622,9 @@ function servevt_flashp( port ) {
       
 /*---------------------------------------------------------------------*/
 /*    hop_start_servevt_proxy ...                                      */
+/*    -------------------------------------------------------------    */
+/*    http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol      */
+/*    for details on the Web protocol.                                 */
 /*---------------------------------------------------------------------*/
 function hop_start_servevt_proxy() {
    hop_servevt_proxy = new Object();
@@ -565,9 +639,14 @@ function hop_start_servevt_proxy() {
 			var port = v[ 1 ];
 			var key = v[ 2 ];
 
-			if( servevt_xhr_multipartp() ) {
+			if( false && servevt_websocketp() ) {
+			   // websocket backend
+			   start_servevt_websocket_proxy( key, host, port );
+			} else if( servevt_xhr_multipartp() ) {
+			   // xhr_multipart backend
 			   start_servevt_xhr_multipart_proxy( key );
 			} else if( servevt_flashp( port ) ) {
+			   // flash backend
 			   try {
 			      start_servevt_flash_proxy( key, host, port );
 			   } catch( e ) {
@@ -575,9 +654,11 @@ function hop_start_servevt_proxy() {
 			      throw( e );
 			   }
 			} else {
+			   // fallback xhr backend
 			   start_servevt_ajax_proxy( key );
 			}
 		     },
+
 		     // failure callback
 		     function( v ) {
 			throw new Error( "No event server acknowledge" );
@@ -848,5 +929,3 @@ function hop_remove_timeout_listener( proc ) {
       }
    }
 }
-
-
