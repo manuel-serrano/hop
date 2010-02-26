@@ -29,7 +29,7 @@ export CC=$ANDROIDROOT/droid-wrapper/bin/droid-gcc
 export JAVA_HOME=/usr/lib/jvm/java-6-sun-1.6.0.17
 
 # the bootstraping bigloo libdir dir
-export BGL_LIBDIR=$HOME/local/soft/bigloo-android/lib/bigloo/3.3b
+export BGL_LIBDIR=$HOME/local/soft/bigloo-hg/lib/bigloo/3.3b
 # the bootstraping hop dir
 export BS_HOPDIR=$HOME/src/works/inria/bootstrap/hop-live
 
@@ -51,11 +51,12 @@ function install {
 }
 
 if [ "$1" == "configure" -o "$1" == "all" ]; then
-  ./configure --disable-threads \
-    --prefix=$prefix \
+  ./configure --prefix=$prefix \
+    --disable-threads \
     --libdir=$prefix/lib \
     --cc=$CC \
-    --bigloolibdir=$BGL_LIBDIR
+    --bigloolibdir=$BGL_LIBDIR \
+    --devel
 
   if [ "$1" == "configure" ]; then
     shift
