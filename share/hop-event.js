@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Thu Feb 25 21:18:30 2010 (serrano)                */
+/*    Last change :  Fri Feb 26 10:42:18 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -209,53 +209,56 @@ function hop_servevt_enveloppe_parse( val, xhr ) {
 /*    start_servevt_websocket_proxy ...                                */
 /*---------------------------------------------------------------------*/
 function start_servevt_websocket_proxy( key, host, port ) {
-   var url = "ws://" + host + ":" + port +
-      hop_service_base() + "/server-event/websocket?key=" + key;
-   var ws = new WebSocket( url );
+   if( !hop_servevt_proxy.websocket ) {
+      var url = "ws://" + host + ":" + port +
+	 hop_service_base() + "/server-event/websocket?key=" + key;
+      var ws = new WebSocket( url );
 
-   var register = function( id ) {
-      var svc = hop_service_base() +
-      "/server-event/register?event=" + id +
-      "&key=" + key  + "&mode=websocket";
+      var register = function( id ) {
+	 var svc = hop_service_base() +
+	 "/server-event/register?event=" + id +
+	 "&key=" + key  + "&mode=websocket";
 
-      hop_servevt_proxy.httpreq =
-        hop_send_request( svc, false,
-			  function() { ; }, false,
-			  false, [] );
-   }
-
-   var unregister = function( id ) {
-      hop_servevt_proxy.httpreq.abort();
-
-      var svc = hop_service_base() +
-      "/server-event/unregister?event=" + id +
-      "&key=" + hop_servevt_proxy.key;
-	 
-      hop_servevt_proxy.httpreq = hop_send_request( svc, false,
-						    function() { ; }, false,
-						    false, [] );
-   };
-
-   // complete the proxy definition
-   hop_servevt_proxy.register = register;
-   hop_servevt_proxy.unregister = unregister;
-   hop_servevt_proxy.websocket = ws;
-
-   ws.onopen = function() {
-      // register the unitialized events
-      for( var p in hop_servevt_table ) {
-	 if( hop_servevt_table[ p ].hop_servevt ) {
-	    register( p );
-	 }
+	 hop_send_request( svc, false,
+			   function() { ; }, false,
+			   false, [] );
       }
-      hop_trigger_serverready_event( new HopServerReadyEvent() );
-   }
-   ws.onclose = function() {
-      hop_servevt_onclose();
-   }
-   ws.onmessage = function ( e ) {
-      e.responseText = e.data;
-      hop_servevt_enveloppe_parse( e.data, e );
+
+      var unregister = function( id ) {
+	 hop_servevt_proxy.httpreq.abort();
+
+	 var svc = hop_service_base() +
+	 "/server-event/unregister?event=" + id +
+	 "&key=" + key;
+	 
+	 hop_send_request( svc, false,
+			   function() { ; }, false,
+			   false, [] );
+      };
+
+      // complete the proxy definition
+      hop_servevt_proxy.websocket = ws;
+
+      ws.onopen = function() {
+	 // we are ready to register now
+	 hop_servevt_proxy.register = register;
+	 hop_servevt_proxy.unregister = unregister;
+	 
+	 // register the unitialized events
+	 for( var p in hop_servevt_table ) {
+	    if( hop_servevt_table[ p ].hop_servevt ) {
+	       register( p );
+	    }
+	 }
+	 hop_trigger_serverready_event( new HopServerReadyEvent() );
+      }
+      ws.onclose = function() {
+	 hop_servevt_onclose();
+      }
+      ws.onmessage = function ( e ) {
+	 e.responseText = e.data;
+	 hop_servevt_enveloppe_parse( e.data, e );
+      }
    }
 }
 
