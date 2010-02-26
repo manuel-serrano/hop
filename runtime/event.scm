@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Feb 24 08:53:27 2010 (serrano)                */
+;*    Last change :  Thu Feb 25 21:17:06 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -304,7 +304,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    websocket-register-new-connection! ...                           */
 ;*---------------------------------------------------------------------*/
-(define (websocket-register-new-connection! req name)
+(define (websocket-register-new-connection! req key)
    
    (define (get-header header key default)
       (let ((c (assq key header)))
@@ -313,16 +313,15 @@
 	     default)))
    
    (define (websocket-server-location host)
-      (format "ws://~a/~a/server-event/websocket"
+      (format "ws://~a/~a/server-event/websocket?key=~a"
 	      (or host (format "~a:~a" (hostname) (hop-port)))
-	      (hop-initial-weblet)))
+	      (hop-initial-weblet)
+	      key))
    
    ;; register the websocket
-   (hashtable-update! *websocket-socket-table*
-		      name
-		      (lambda (l) (cons req l))
-		      (list req))
-   
+   (set! *websocket-request-list*
+	 (cons (cons (string->symbol key) req) *websocket-request-list*))
+
    (with-access::http-request req (header connection socket)
       (let ((host (get-header header host: #f)))
 	 (instantiate::http-response-websocket
@@ -347,8 +346,8 @@
 	    (set! *client-key* (elong->fixnum (current-seconds)))
 	    
 	    (set! *websocket-service*
-		  (service :name "server-event/websocket" ()
-		     (websocket-register-new-connection! (current-request) "name")))
+		  (service :name "server-event/websocket" (#!key key)
+		     (websocket-register-new-connection! (current-request) key)))
 	    
 	    (set! *port-service*
 		  (service :name "server-event/info" ()
@@ -358,10 +357,10 @@
 			    (let ((s (string-split (cdr host) ":")))
 			       (vector (car s)
 				       port
-				       (get-ajax-key (or port 0))))
+				       (get-server-event-key (or port 0))))
 			    (vector (hostname)
 				    port
-				    (get-ajax-key (or port 0)))))))
+				    (get-server-event-key (or port 0)))))))
 	    
 	    (set! *init-service*
 		  (service :name "server-event/init" (#!key key)
@@ -546,14 +545,18 @@
 		       hop-multipart-key hop-multipart-key name hop-multipart-key))
 	 (request req)))
 
-   (define (websocket-register-event! req name)
-      (tprint "***** websocket-register-event, name=" name " req=" req)
-      (hashtable-update! *websocket-socket-table*
-			 name
-			 (lambda (l) (cons req l))
-			 (list req))
-      (instantiate::http-response-string
-	 (request req)))
+   (define (websocket-register-event! req name key)
+;*       (tprint "***** websocket-register-event, name=" name " req=" req " key=" key) */
+      (let ((c (assq key *websocket-request-list*)))
+	 (if (pair? c)
+	     (let ((req (cdr c)))
+		(hashtable-update! *websocket-socket-table*
+				   name
+				   (lambda (l) (cons req l))
+				   (list req))
+		(instantiate::http-response-string
+		   (request req)))
+	     (error 'server-event-register "Illegal websocket entry" key))))
 
    (with-lock *event-mutex*
       (lambda ()
@@ -568,7 +571,7 @@
 			    ((string=? mode "xhr-multipart")
 			     (multipart-register-event! req event))
 			    ((string=? mode "websocket")
-			     (websocket-register-event! req event))
+			     (websocket-register-event! req event key))
 			    ((string=? mode "flash")
 			     (let ((req (cadr (assq key *flash-request-list*))))
 				(flash-register-event! req event)))
@@ -748,7 +751,7 @@
 (define *multipart-request-list* '())
 
 ;*---------------------------------------------------------------------*/
-;*    *websocket-socket-table*                                         */
+;*    *websocket-request-table*                                        */
 ;*---------------------------------------------------------------------*/
 (define *websocket-socket-table* (make-hashtable))
 (define *websocket-request-list* '())
@@ -764,9 +767,9 @@
       'persistent))
 
 ;*---------------------------------------------------------------------*/
-;*    get-ajax-key ...                                                 */
+;*    get-server-event-key ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (get-ajax-key port)
+(define (get-server-event-key port)
    (mutex-lock! *event-mutex*)
    (set! *client-key* (+fx 1 *client-key*))
    (let ((key (format "~a:~a://~a" (hostname) port *client-key*)))
@@ -843,16 +846,15 @@
 		   (websocket-close-request! req))
 		(raise e)))
 	 (begin
-	    (tprint "websocket-signal-value: " req)
 	    (display #a000 p)
-	    (display "value" p)
+	    (display value p)
 	    (display #a255 p)
 	    (flush-output-port p)))))
 
 ;*---------------------------------------------------------------------*/
-;*    multipart-value ...                                              */
+;*    enveloppe-value ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (multipart-value name value)
+(define (enveloppe-value name value)
    (cond
       ((xml? value)
        (format "<x name='~a'>~a</x>" name (xml->string value (hop-xml-backend))))
@@ -864,22 +866,18 @@
        (format "<f name='~a'>~a</f>" name value))
       (else
        (format "<j name='~a'><![CDATA[~a]]></j>" name (hop->json value #f #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    multipart-value ...                                              */
+;*---------------------------------------------------------------------*/
+(define (multipart-value name value)
+   (enveloppe-value name value))
    
 ;*---------------------------------------------------------------------*/
 ;*    websocket-value ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (websocket-value name value)
-   (cond
-      ((xml? value)
-       (format "<x name='~a'>~a</x>" name (base64-encode (xml->string value (hop-xml-backend)))))
-      ((string? value)
-       (format "<s name='~a'>~a</s>" name (base64-encode value)))
-      ((integer? value)
-       (format "<i name='~a'>~a</i>" name (base64-encode (integer->string value))))
-      ((real? value)
-       (format "<f name='~a'>~a</f>" name (base64-encode (number->string value))))
-      (else
-       (format "<j name='~a'><![CDATA[~a]]></j>" name (base64-encode (hop->json value #f #f))))))
+   (enveloppe-value name value))
    
 ;*---------------------------------------------------------------------*/
 ;*    json-make-signal-value ...                                       */
