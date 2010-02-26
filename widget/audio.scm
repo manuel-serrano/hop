@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/widget/audio.scm                  */
+;*    serrano/prgm/project/hop/2.1.x/widget/audio.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sun Feb 14 18:22:19 2010 (serrano)                */
+;*    Last change :  Fri Feb 26 08:02:39 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -645,6 +645,21 @@
 	  ;; in the URL and Hop should detect that encoding.
 	  ((hop-locale->charset) (url-decode file))
 	  (conv file)))
+
+   (define (alist->id3 l)
+      
+      (define (get k l d)
+	 (let ((c (assq k l)))
+	    (if (pair? c) (cdr c) d)))
+      
+      (instantiate::id3
+	 (title (get 'title l "???"))
+	 (artist (get 'artist l "???"))
+	 (album (get 'album l "???"))
+	 (genre (get 'genre l "???"))
+	 (year (get 'year l 0))
+	 (comment (get 'comment l ""))
+	 (version (get 'version l "v1"))))
    
    (define (signal-meta s plist)
       (let ((s (cond
@@ -659,6 +674,8 @@
 		      (comment ((hop-locale->charset) (id3-comment s)))))
 		  ((string? s)
 		   (convert-file s))
+		  ((list? s)
+		   (alist->id3 s))
 		  (else
 		   s)))
 	    (plist (map convert-file plist)))
@@ -680,7 +697,8 @@
 	 (trace-item "music=" (find-runtime-type music))
 	 (trace-item "as=" (find-runtime-type as))
 	 (audio-server-%errcount-set! as 0)
-	 (if (string? meta)
+	 (cond
+	    ((string? meta)
 	     ;; this is a file name (a url)
 	     (let ((file (charset-convert meta 'UTF-8 (hop-locale))))
 		(if (not (file-exists? file))
@@ -688,8 +706,11 @@
 		    (let ((id3 (mp3-id3 file)))
 		       (if (not id3)
 			   (audio-onfile-name file playlist)
-			   (signal-meta id3 playlist)))))
-	     (signal-meta #f playlist)))))
+			   (signal-meta id3 playlist))))))
+	    ((list? meta)
+	     (signal-meta meta playlist))
+	    (else
+	     (signal-meta #f playlist))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-onerror ...                                                */
