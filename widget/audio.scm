@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Mar  1 07:31:08 2010 (serrano)                */
+;*    Last change :  Mon Mar  1 12:18:53 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -688,7 +688,7 @@
       (define (get k l d)
 	 (let ((c (assq k l)))
 	    (if (pair? c) (cdr c) d)))
-      
+
       (instantiate::id3
 	 (title (get 'title l "???"))
 	 (artist (get 'artist l "???"))
@@ -697,25 +697,24 @@
 	 (year (get 'year l 0))
 	 (comment (get 'comment l ""))
 	 (version (get 'version l "v1"))))
-   
+
    (define (signal-meta s)
-      (tprint ">>> signal-meta s=" s)
       (let ((tag (cond
 		    ((id3? s)
 		     (duplicate::id3 s
-			(title ((hop-locale->charset) (id3-title s)))
-			(artist ((hop-locale->charset) (id3-artist s)))
-			(album ((hop-locale->charset) (id3-album s)))
+			(title (conv (id3-title s)))
+			(artist (conv (id3-artist s)))
+			(album (conv (id3-album s)))
 			(orchestra #f)
 			(conductor #f)
 			(interpret #f)
-			(comment ((hop-locale->charset) (id3-comment s)))))
+			(comment (conv (id3-comment s)))))
 		    ((vorbis? s)
 		     (duplicate::vorbis s
-			(title ((hop-locale->charset) (vorbis-title s)))
-			(artist ((hop-locale->charset) (vorbis-artist s)))
-			(album ((hop-locale->charset) (vorbis-album s)))
-			(comment ((hop-locale->charset) (vorbis-comment s)))))
+			(title (conv (vorbis-title s)))
+			(artist (conv (vorbis-artist s)))
+			(album (conv (vorbis-album s)))
+			(comment (conv (vorbis-comment s)))))
 		    ((string? s)
 		     (convert-file s))
 		    ((list? s)
