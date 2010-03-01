@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Feb 26 10:42:18 2010 (serrano)                */
+/*    Last change :  Sat Feb 27 18:42:21 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -171,7 +171,7 @@ var hop_servevt_enveloppe_cdata_re =
 /*---------------------------------------------------------------------*/
 /*    hop_servevt_enveloppe_parse ...                                  */
 /*---------------------------------------------------------------------*/
-function hop_servevt_enveloppe_parse( val, xhr ) {
+function hop_servevt_enveloppe_parse( val, xhr, server_ready ) {
    var m = val.match( hop_servevt_enveloppe_re );
 
    if( m != null ) {
@@ -194,15 +194,16 @@ function hop_servevt_enveloppe_parse( val, xhr ) {
 	 }
       } else if( k == "r" ) {
 	 if( !server_ready ) {
-	    server_ready = true;
 	    hop_trigger_serverready_event( new HopServerReadyEvent() );
 	 }
+	 return true;
       } else {
 	 alert( "unknow event message: [" + xhr.responseText + "]" );
       }
    } else {
       alert( "unknow event message: [" + xhr.responseText + "]" );
    }
+   return server_ready;
 }
 
 /*---------------------------------------------------------------------*/
@@ -257,7 +258,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
       }
       ws.onmessage = function ( e ) {
 	 e.responseText = e.data;
-	 hop_servevt_enveloppe_parse( e.data, e );
+	 hop_servevt_enveloppe_parse( e.data, e, true );
       }
    }
 }
@@ -275,6 +276,7 @@ function start_servevt_xhr_multipart_proxy( key ) {
 	    "&key=" + key  + "&mode=xhr-multipart";
 
 	 var success = function( val, xhr ) {
+	    server_ready = hop_servevt_enveloppe_parse( val, xhr, server_ready );
 	 }
 
 	 var failure = function( xhr ) {

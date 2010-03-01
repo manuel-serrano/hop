@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-audio.js                */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-audio.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Tue Feb  9 05:50:50 2010 (serrano)                */
+/*    Last change :  Mon Mar  1 06:53:28 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -190,7 +190,8 @@ HopAudioServerBackend.prototype.update = function() {
    // ask the current service
    with_hop( hop_apply_url( backend.url, [ Sstatus, 0 ] ),
 	     function( val ) {
-		hop_audio_server_event_listener( {value: val}, backend );
+		if( val.car === Splay )
+		   hop_audio_server_event_listener( {value: val}, backend );
 	     },
 	     backend.err,
 	     false,
@@ -477,8 +478,9 @@ function hop_audio_server_init( backend ) {
 	    return hop_audio_server_event_listener( evt, backend );
       } );
    hop_add_event_listener( document, "serverclose", function( evt ) {
+	 hop_audio_invoke_listeners( backend.audio, "error", "Connection closed by server" );
 	 if( backend.audio.backend === backend && !backend.state === Sclose ) {
-	    hop_audio_close( backend.audio );
+	    backend.state = Sclose;
 	    hop_audio_invoke_listeners( backend.audio, "close", false );
 	 }
       } );
@@ -654,7 +656,8 @@ function hop_audio_server_event_listener( e, backend ) {
 	 backend.current_position = rest.cdr.car;
 	 backend.current_volume = rest.cdr.cdr.car;
 	 backend.playlistindex = rest.cdr.cdr.cdr.car;
-	    
+	 backend.playlist = rest.cdr.cdr.cdr.cdr.car;
+
 	 hop_audio_invoke_listeners( backend.audio, "play" );
 	 hop_audio_invoke_listeners( backend.audio, "volume" );
       } else if( k == Spause ) {
@@ -664,6 +667,7 @@ function hop_audio_server_event_listener( e, backend ) {
 	 backend.current_position = rest.cdr.car;
 	 backend.current_volume = rest.cdr.cdr.car;
 	 backend.playlistindex = rest.cdr.cdr.cdr.car;
+	 backend.playlist = rest.cdr.cdr.cdr.cdr.car;
 	    
 	 hop_audio_invoke_listeners( backend.audio, "pause" );
 	 hop_audio_invoke_listeners( backend.audio, "volume" );
@@ -674,6 +678,7 @@ function hop_audio_server_event_listener( e, backend ) {
 	 backend.current_position = rest.cdr.car;
 	 backend.current_volume = rest.cdr.cdr.car;
 	 backend.playlistindex = rest.cdr.cdr.cdr.car;
+	 backend.playlist = rest.cdr.cdr.cdr.cdr.car;
 	    
 	 hop_audio_invoke_listeners( backend.audio, "stop" );
 	 hop_audio_invoke_listeners( backend.audio, "volume" );
@@ -683,20 +688,20 @@ function hop_audio_server_event_listener( e, backend ) {
 	 hop_audio_invoke_listeners( backend.audio, "volume" );
       } else if( k == Serror ) {
 	 // error
+	 alert( "ERROR(hop-audio.js) rest=" + rest );
 	 hop_audio_invoke_listeners( backend.audio, "error", rest.car );
       } else if( k == Sabort ) {
 	 // abort
 	 hop_audio_close( backend.audio );
-	 alert( "ERROR.abort: audio=" + backend.audio + " be=" + backend);
+	 alert( "ERROR.abort(hop-audio.js) audio=" + backend.audio + " be=" + backend);
 	 hop_audio_invoke_listeners( backend.audio, "error", rest.car );
       } else if( k == Sclose ) {
 	 // close
 	 hop_audio_close( backend.audio );
 	 hop_audio_invoke_listeners( backend.audio, "close", false );
       } else if( k == Smeta ) {
-	 // meta (and playlist)
+	 // meta
 	 var val = rest.car;
-	 backend.playlist = rest.cdr.car;
 
 	 if( typeof val === "string" ) {
 	    backend.current_metadata = {

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-audio.hss               */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-audio.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 28 06:23:39 2007                          */
-/*    Last change :  Mon Feb  8 16:20:47 2010 (serrano)                */
+/*    Last change :  Sun Feb 28 19:32:33 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Audio's cascade style sheet.                                 */
@@ -257,6 +257,7 @@ audio div.hop-audio-panel-metadata {
   overflow: hidden;
   color: black;
   $hopaudio-gui-radius;
+  padding-left: 2px;
 }
 
 div.hop-audio-panel-metadata-song, div.hop-audio-panel-metadata-error {

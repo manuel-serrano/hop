@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Feb 26 08:02:39 2010 (serrano)                */
+;*    Last change :  Mon Mar  1 07:31:08 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -35,8 +35,7 @@
 	   (%errcount::int (default 0))
 	   (%state::symbol (default 'init))
 	   (%log::pair-nil (default '()))
-	   (%meta (default #f))
-	   (%playlist::pair-nil (default '())))
+	   (%meta (default #f)))
 	
 	(audio-server-music ::audio-server)
 	(audio-server-music-set! ::audio-server ::obj)))
@@ -67,8 +66,7 @@
 	   (%errcount::int (default 0))
 	   (%state::symbol (default 'init))
 	   (%log::pair-nil (default '()))
-	   (%meta (default #f))
-	   (%playlist::pair-nil (default '()))))))
+	   (%meta (default #f))))))
    
    (export  (generic audio-server-init ::audio-server)
 	    
@@ -486,10 +484,14 @@
 				   #t)
 				  ((status)
 				   (audio-status-event-value
-				    (music-status %music)))
+				    (music-status %music)
+				    (music-playlist-get %music)))
 				  ((metadata)
 				   (audio-update-metadata as)
 				   #t)
+				  ((close)
+				   (tprint "*** AUDIO-SERVER CLOSE... !!!")
+				   (audio-server-close-sans-lock as))
 				  (else
 				   (tprint "unknown msg..." a0)
 				   #f))))))))))
@@ -505,22 +507,22 @@
 	     "Re-configure HOP with multi-threading enabled")))))
 
 ;*---------------------------------------------------------------------*/
+;*    audio-server-close-sans-lock ...                                 */
+;*---------------------------------------------------------------------*/
+(define (audio-server-close-sans-lock as)
+   (with-access::audio-server as (%hmutex %state %thread %music)
+      (set! %state 'close)
+      (when (music? %music) (music-close %music))
+      (when (thread? %thread) (thread-terminate! %thread))))
+   
+;*---------------------------------------------------------------------*/
 ;*    audio-server-close ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (audio-server-close as)
-   (with-access::audio-server as (%hmutex %state %thread %music)
+   (with-access::audio-server as (%hmutex)
       (with-lock %hmutex
 	 (lambda ()
-	    (set! %state 'close)
-	    (when (music? %music) (music-close %music))
-	    (when (thread? %thread) (thread-terminate! %thread))))))
-
-;*---------------------------------------------------------------------*/
-;*    audio-server-status ...                                          */
-;*---------------------------------------------------------------------*/
-(define (audio-server-status as)
-   (with-access::audio-server as (%music)
-      (audio-status-event-value (music-status %music))))
+	    (audio-server-close-sans-lock as)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    bigloo3.3a workaround                                            */
@@ -603,9 +605,44 @@
 ;*---------------------------------------------------------------------*/
 ;*    audio-status-event-value ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (audio-status-event-value status)
+(define (audio-status-event-value status plist)
    (with-access::musicstatus status (state song songpos songlength volume)
-      (list state songlength songpos volume song)))
+      (list state songlength songpos volume song (tag-playlist plist))))
+
+;*---------------------------------------------------------------------*/
+;*    *playlist* ...                                                   */
+;*---------------------------------------------------------------------*/
+(define *playlist* #f)
+(define *playlist-tag* #f)
+(define *playlist-mutex* (make-mutex 'playlist))
+
+;*---------------------------------------------------------------------*/
+;*    tag-playlist ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (tag-playlist plist)
+   
+   (define (make-tag-playlist plist)
+      (map (lambda (url)
+	      (let ((durl (charset-convert url (hop-charset) (hop-locale))))
+		 (if (file-exists? durl)
+		     (let ((tag (file-musictag durl)))
+			(if (musictag? tag)
+			    (charset-convert (musictag-title tag) 'UTF-8 (hop-charset))
+			    url))
+		     url)))
+	   plist))
+
+   (if (null? plist)
+       plist
+       (with-lock *playlist-mutex*
+	  (lambda ()
+	     (cond
+		((eq? *playlist* plist)
+		 *playlist-tag*)
+		(else
+		 (set! *playlist* plist)
+		 (set! *playlist-tag* (make-tag-playlist plist))
+		 *playlist-tag*))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-onstate ...                                                */
@@ -615,9 +652,9 @@
       (with-trace 3 "audio-onstate"
 	 (trace-item "music=" (find-runtime-type music))
 	 (trace-item "as=" (find-runtime-type as))
-	 (let ((ev (audio-status-event-value status)))
+	 (let ((e (audio-status-event-value status (music-playlist-get music))))
 	    (audio-server-%errcount-set! as 0)
-	    (hop-event-broadcast! event ev)))))
+	    (hop-event-broadcast! event e)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-update-metadata ...                                        */
@@ -625,9 +662,9 @@
 ;*    This function is used by clients to update metadata.             */
 ;*---------------------------------------------------------------------*/
 (define (audio-update-metadata as)
-   (with-access::audio-server as (%music %event %meta %playlist)
-      ((audio-onmeta %event %music as) %meta %playlist)))
-   
+   (with-access::audio-server as (%music %event %meta)
+      ((audio-onmeta %event %music as) %meta)))
+
 ;*---------------------------------------------------------------------*/
 ;*    audio-onmeta ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -661,37 +698,43 @@
 	 (comment (get 'comment l ""))
 	 (version (get 'version l "v1"))))
    
-   (define (signal-meta s plist)
-      (let ((s (cond
-		  ((id3? s)
-		   (duplicate::id3 s
-		      (title ((hop-locale->charset) (id3-title s)))
-		      (artist ((hop-locale->charset) (id3-artist s)))
-		      (album ((hop-locale->charset) (id3-album s)))
-		      (orchestra #f)
-		      (conductor #f)
-		      (interpret #f)
-		      (comment ((hop-locale->charset) (id3-comment s)))))
-		  ((string? s)
-		   (convert-file s))
-		  ((list? s)
-		   (alist->id3 s))
-		  (else
-		   s)))
-	    (plist (map convert-file plist)))
+   (define (signal-meta s)
+      (tprint ">>> signal-meta s=" s)
+      (let ((tag (cond
+		    ((id3? s)
+		     (duplicate::id3 s
+			(title ((hop-locale->charset) (id3-title s)))
+			(artist ((hop-locale->charset) (id3-artist s)))
+			(album ((hop-locale->charset) (id3-album s)))
+			(orchestra #f)
+			(conductor #f)
+			(interpret #f)
+			(comment ((hop-locale->charset) (id3-comment s)))))
+		    ((vorbis? s)
+		     (duplicate::vorbis s
+			(title ((hop-locale->charset) (vorbis-title s)))
+			(artist ((hop-locale->charset) (vorbis-artist s)))
+			(album ((hop-locale->charset) (vorbis-album s)))
+			(comment ((hop-locale->charset) (vorbis-comment s)))))
+		    ((string? s)
+		     (convert-file s))
+		    ((list? s)
+		     (alist->id3 s))
+		    (else
+		     s))))
 	 (trace-item "s=" (if (string? s) s (find-runtime-type s)))
 	 (trace-item "pl length=" (length plist))
-	 (hop-event-broadcast! event (list 'meta s plist))))
+	 (tprint "<<< signal meta: " (list 'meta tag))
+	 (hop-event-broadcast! event (list 'meta tag))))
    
-   (define (audio-onfile-name meta plist)
+   (define (audio-onfile-name meta)
       (let ((url (url-decode meta)))
-	 (signal-meta url plist)))
+	 (signal-meta url)))
    
-   (lambda (meta playlist)
+   (lambda (meta)
       ;; store the meta data for audio-update-metadata
-      (with-access::audio-server as (%meta %playlist)
-	 (set! %meta meta)
-	 (set! %playlist playlist))
+      (with-access::audio-server as (%meta)
+	 (set! %meta meta))
       ;; send the event
       (with-trace 3 "audio-onmeta"
 	 (trace-item "music=" (find-runtime-type music))
@@ -702,15 +745,15 @@
 	     ;; this is a file name (a url)
 	     (let ((file (charset-convert meta 'UTF-8 (hop-locale))))
 		(if (not (file-exists? file))
-		    (audio-onfile-name file playlist)
-		    (let ((id3 (mp3-id3 file)))
-		       (if (not id3)
-			   (audio-onfile-name file playlist)
-			   (signal-meta id3 playlist))))))
+		    (audio-onfile-name file)
+		    (let ((tag (file-musictag file)))
+		       (if (not tag)
+			   (audio-onfile-name file)
+			   (signal-meta tag))))))
 	    ((list? meta)
-	     (signal-meta meta playlist))
-	    (else
-	     (signal-meta #f playlist))))))
+	     (signal-meta meta))
+	    ((musictag? meta)
+	     (signal-meta meta))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-onerror ...                                                */

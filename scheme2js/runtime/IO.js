@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+/*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -551,7 +551,7 @@ function sc_basename(p) {
    if(i >= 0)
       return p.substring(i + 1, p.length);
    else
-      return '';
+      return p;
 }
 
 /*** META ((export #t) (arity #t)) */
