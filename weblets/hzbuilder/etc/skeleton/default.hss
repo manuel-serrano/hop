@@ -41,7 +41,7 @@ table.main {
   padding: 10px;
   border: 1px solid $border-color;
   background: white;
-  -moz-border-radius: 0.5em;
+  border-radius: 0.5em;
 }
 
 table.main td.weblet-title {
@@ -56,7 +56,12 @@ table.main td.weblet-title {
 table td {
   vertical-align: top;
 }
-  
+
+table td.body-buttons {
+  text-align: center;
+  width: 64px;
+}
+
 table.body {
   width: 100%;
 }

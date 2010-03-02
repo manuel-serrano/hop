@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/wiki/wiki.hop             */
+;*    serrano/prgm/project/hop/2.1.x/weblets/wiki/wiki.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Feb 12 08:09:21 2010 (serrano)                */
+;*    Last change :  Tue Mar  2 10:27:05 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -15,6 +15,8 @@
 (module wiki
    
    (import wiki_config)
+
+   ~(import wiki_client)
    
    (export wiki
 	   wiki/compile
@@ -264,7 +266,7 @@
 	      (head (make-wiki-head compiled :jscript jscript :css css)))
 	  (<WIKI:HTML> :compiled compiled :prefs prefs :file file
 	     :req req
-	     head body))
+	     head (cons* #f #f body)))
        (http-file-not-found file)))
 
 ;*---------------------------------------------------------------------*/
@@ -334,10 +336,11 @@
 				  (<EDIT:EMACS> file)
 				  (<EDIT:EDIT> file))))))))
 	 (<DIV> :class "wiki-head" :id "wiki-head")
-	 (<DIV> :class "wiki-toc" :id "wiki-toc" (cadr body))
-	 (<DIV> :class "wiki-toc wiki-toc-popup" :id "wiki-toc-popup"
-	    :onclick ~(wiki-hide-toc-popup this)
-	    (cadr body))
+	 (when (cadr body)
+	    (<DIV> :class "wiki-toc" :id "wiki-toc" (cadr body))
+	    (<DIV> :class "wiki-toc wiki-toc-popup" :id "wiki-toc-popup"
+	       :onclick ~(wiki-hide-toc-popup this)
+	       (cadr body)))
 	 (<DIV> :class "wiki-body" :id "wiki-body" (cddr body))
 	 (<DIV> :class "wiki-foot" :id "wiki-foot"))))
 

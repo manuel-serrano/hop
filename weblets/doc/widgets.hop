@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/doc/widgets.hop           */
+;*    serrano/prgm/project/hop/2.1.x/weblets/doc/widgets.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Tue Jan 12 13:30:52 2010 (serrano)                */
+;*    Last change :  Tue Mar  2 10:23:48 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -102,13 +102,13 @@
 					:top
 					(string-append
 					 (number->string
-					  (+ 12 (hop_element_y el)))
+					  (+ 12 (node-bounding-box-y el)))
 					 "px"))
 		       (node-style-set! menu
 					:left
 					(string-append
 					 (number->string
-					  (- (hop_element_x el) 10))
+					  (- (node-bounding-box-x el) 10))
 					 "px"))
 		       (node-style-set! menu :display "block"))
 		    (node-style-set! menu :display "none"))))
