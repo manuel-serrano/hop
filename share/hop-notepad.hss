@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan 17 18:56:22 2005                          */
-/*    Last change :  Tue Feb 23 10:25:10 2010 (serrano)                */
+/*    Last change :  Wed Mar  3 08:49:20 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad CSS                                                  */
@@ -119,7 +119,6 @@ nptab {
 nptab-active {
   color: black;
   background: #dedeff;
-  border-bottom-color: red;
 }
 
 nptab-inactive {

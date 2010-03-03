@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/css.scm                   */
+;*    serrano/prgm/project/hop/2.1.x/runtime/css.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Jan  6 08:32:40 2010 (serrano)                */
+;*    Last change :  Wed Mar  3 08:24:27 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -201,6 +201,15 @@
 	   (css-selector-name? (car selector+))
 	   (string=? (css-selector-name-name (car selector+)) "")))
 
+   (define (args->string-args args)
+      (map (lambda (a)
+	      (if (string? a)
+		  a
+		  (let ((p (open-output-string)))
+		     (css-write a p)
+		     (close-output-port p))))
+	   args))
+
    (let loop ((decl decl)
 	      (old '())
 	      (nrules '()))
@@ -222,7 +231,7 @@
 		 =>
 		 (lambda (comp)
 		    ;; a local property
-		    (let liip ((rules (comp expr prio))
+		    (let liip ((rules (comp (args->string-args expr) prio))
 			       (ndecl '())
 			       (old old)
 			       (nrules nrules))
@@ -249,7 +258,7 @@
 		 (lambda (comp)
 		    ;; A global property that have to be processes again
 		    ;; unless the generated property is the initial one
-		    (let liip ((l (comp expr prio))
+		    (let liip ((l (comp (args->string-args expr) prio))
 			       (decl (cdr decl))
 			       (old old))
 		       (cond
@@ -413,7 +422,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (css-write o::css-ruleset-unfold p::output-port)
    (for-each (lambda (o) (css-write o p)) (css-ruleset-unfold-ruleset+ o)))
-			  
+
 ;*---------------------------------------------------------------------*/
 ;*    css-compile ...                                                  */
 ;*---------------------------------------------------------------------*/

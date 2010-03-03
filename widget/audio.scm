@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Mar  1 12:18:53 2010 (serrano)                */
+;*    Last change :  Wed Mar  3 07:27:31 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -291,12 +291,13 @@
 		  id action action)))
    
    (define (<BUT> #!key (class "") title id src onclick)
-      (<DIV> :class (string-append "hop-audio-button " class)
-	 :id (or id (xml-make-id "hopaudio-but"))
-	 :title title :alt title :inline #t
-	 :onclick onclick))
+      (<DIV> :hssclass "hop-audio-button" :class class
+	 (<DIV> :hssclass "hop-audio-button-background"
+	    :id (or id (xml-make-id "hopaudio-but"))
+	    :title title :alt title :inline #t
+	    :onclick onclick)))
 
-   (<DIV> :id id :class "hop-audio-controls"
+   (<DIV> :id id :hssclass "hop-audio-controls"
       ;; the controls callbacks
       (<SCRIPT>
 	 "hop_add_event_listener( window, 'load', function(_) {"
