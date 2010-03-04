@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Mar  2 10:42:24 2010 (serrano)                */
+;*    Last change :  Thu Mar  4 05:43:14 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -718,7 +718,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (xml-write-attribute attr::obj id p backend)
    ;; boolean false attribute has no value, xml-tilde are initialized
-   (when (and attr)
+   (when attr
       (display (keyword->string! id) p)
       ;; boolean true attribute has no value
       (display "='" p)
@@ -729,9 +729,19 @@
 	  (if (hop-service? (procedure-attr attr))
 	      (display (hop-service-path (procedure-attr attr)) p)
 	      (error 'xml "Illegal procedure argument in XML attribute" id)))
+	 ((and (>fx (hop-security) 0) (string? attr) (attr-event-handler? id))
+	  (raise
+	   (instantiate::&hop-injection-error
+	      (obj attr))))
 	 (else
 	  (display (xml-attribute-encode attr) p)))
       (display "'" p)))
+
+;*---------------------------------------------------------------------*/
+;*    attr-event-handler? ...                                          */
+;*---------------------------------------------------------------------*/
+(define (attr-event-handler? id)
+   (string-prefix-ci? "on" (keyword->string! id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::xml-tilde ...                              */
