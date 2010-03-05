@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Mar  4 05:43:14 2010 (serrano)                */
+;*    Last change :  Thu Mar  4 09:26:00 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -729,7 +729,7 @@
 	  (if (hop-service? (procedure-attr attr))
 	      (display (hop-service-path (procedure-attr attr)) p)
 	      (error 'xml "Illegal procedure argument in XML attribute" id)))
-	 ((and (>fx (hop-security) 0) (string? attr) (attr-event-handler? id))
+	 ((and (>fx (hop-security) 1) (string? attr) (attr-event-handler? id))
 	  (raise
 	   (instantiate::&hop-injection-error
 	      (obj attr))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Mar  3 07:27:31 2010 (serrano)                */
+;*    Last change :  Fri Mar  5 10:36:55 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -15,63 +15,62 @@
 (module __hopwidget-audio
    
    (library multimedia web hop)
-
+   
    (import  __hopwidget-slider)
-   
-   (cond-expand
-      (enable-threads (library pthread)))
 
    (cond-expand
-      (bigloo3.3a
-       (export
-	(class audio-server
-	   (audio-server-init)
-	   (%music (default #f))
-	   (%hmutex read-only (default (make-mutex)))
-	   (%thread (default #f))
-	   (%path (default #unspecified))
-	   (%service (default #unspecified))
-	   (%event (default #unspecified))
-	   (%errcount::int (default 0))
-	   (%state::symbol (default 'init))
-	   (%log::pair-nil (default '()))
-	   (%meta (default #f)))
-	
-	(audio-server-music ::audio-server)
-	(audio-server-music-set! ::audio-server ::obj)))
-      (else
-       (export
-	(class audio-server
-	   (audio-server-init)
-	   (music (get (lambda (o)
-			  (audio-server-%music o)))
-		  (set (lambda (o v)
-			  (with-lock (audio-server-%hmutex o)
-			     (lambda ()
-				(when (music? (audio-server-%music o))
-				   (music-close (audio-server-%music o)))
-				(when (thread? (audio-server-%thread o))
-				   (thread-terminate! (audio-server-%thread o)))
-				(audio-server-%music-set! o v)
-				(when (music? v)
-				   (audio-server-%thread-set! o
-                                      (make-audio-server-thread o v)))))))
-		  (default #f))
-	   (%music (default #f))
-	   (%hmutex read-only (default (make-mutex)))
-	   (%thread (default #f))
-	   (%path (default #unspecified))
-	   (%service (default #unspecified))
-	   (%event (default #unspecified))
-	   (%errcount::int (default 0))
-	   (%state::symbol (default 'init))
-	   (%log::pair-nil (default '()))
-	   (%meta (default #f))))))
-   
-   (export  (generic audio-server-init ::audio-server)
+      (enable-threads
+       (library pthread)))
+
+   (export  (class audio-server
+	       (audio-server-init)
+	       (music (get (lambda (o)
+			      (audio-server-%music o)))
+		      (set (lambda (o v)
+			      (with-lock (audio-server-%hmutex o)
+				 (lambda ()
+				    (when (music? (audio-server-%music o))
+				       (music-close (audio-server-%music o)))
+				    (when (thread? (audio-server-%thread o))
+				       (thread-terminate! (audio-server-%thread o)))
+				    (audio-server-%music-set! o v)
+				    (when (music? v)
+				       (if (webmusic? v)
+					   ;; register the mapping audioserver/webserver
+					   (begin
+					      (audio-server-%state-set! o 'ready)
+					      (webmusic-audioserver-set! v o))
+					   ;; start a thread for the player
+					   (begin
+					      (audio-server-%state-set! o 'init)
+					      (audio-server-%thread-set! o (make-audio-server-thread o v)))))))))
+		      (default #f))
+	       (%music (default #f))
+	       (%hmutex read-only (default (make-mutex)))
+	       (%thread (default #f))
+	       (%path (default #unspecified))
+	       (%service (default #unspecified))
+	       (%event (default #unspecified))
+	       (%errcount::int (default 0))
+	       (%state::symbol (default 'init))
+	       (%log::pair-nil (default '()))
+	       (%meta (default #f)))
+	    
+	    (class webmusic::music
+	       (audioserver::obj (default #unspecified))
+	       (playlist::pair-nil (default '()))
+	       (playtime::elong (default #e0)))
+	    
+	    (generic audio-server-init ::audio-server)
 	    
 	    (<AUDIO> . args)
 	    (audio-server-close ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    *audio-mutex* ...                                                */
+;*---------------------------------------------------------------------*/
+(define *audio-mutex* (make-mutex))
+(define *audio-service* #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO> ...                                                      */
@@ -465,8 +464,7 @@
 				   (music-volume-set! %music a1)
 				   #t)
 				  ((load)
-				   (music-playlist-clear! %music)
-				   (hop-music-playlist-add! %music a1)
+				   (music-playlist-set! %music (list a1))
 				   #t)
 				  ((pause)
 				   (music-pause %music)
@@ -490,6 +488,18 @@
 				  ((metadata)
 				   (audio-update-metadata as)
 				   #t)
+				  ((ackplaylistset)
+				   (when (webmusic? %music)
+				      (webmusic-playlist-set! %music a1)))
+				  ((ackpause)
+				   (when (webmusic? %music)
+				      (webmusic-ackstate! %music 'pause)))
+				  ((ackstop)
+				   (when (webmusic? %music)
+				      (webmusic-ackstate! %music 'stop)))
+				  ((ackplay)
+				   (when (webmusic? %music)
+				      (webmusic-ackplay! %music a1)))
 				  ((close)
 				   (tprint "*** AUDIO-SERVER CLOSE... !!!")
 				   (audio-server-close-sans-lock as))
@@ -498,9 +508,9 @@
 				   #f))))))))))
       (cond-expand
 	 (enable-threads
-	  (with-access::audio-server as (%service %music %thread %path %event)
+	  (with-access::audio-server as (%service %path %event)
 	     (set! %path p)
-	     (set! %event (string-append (hop-service-base) "/" (audio-server-%path as)))
+	     (set! %event (string-append (hop-service-base) "/" %path))
 	     (set! %service s)))
 	 (else
 	  (error 'audio-server
@@ -526,33 +536,30 @@
 	    (audio-server-close-sans-lock as)))))
 
 ;*---------------------------------------------------------------------*/
-;*    bigloo3.3a workaround                                            */
-;*---------------------------------------------------------------------*/
-(cond-expand
-   (bigloo3.3a
-    
-    (define (audio-server-music as)
-       (with-access::audio-server as (%music)
-	  %music))
-    
-    (define (audio-server-music-set! as m)
-       (with-access::audio-server as (%hmutex %state %thread %music)
-	  (with-lock %hmutex
-	     (lambda ()
-		(when (music? %music) (music-close %music))
-		(when (thread? %thread) (thread-terminate! %thread))
-		(audio-server-%music-set! as m)
-		(when (music? m)
-		   (set! %thread (make-audio-server-thread as m)))))))))
-
-;*---------------------------------------------------------------------*/
 ;*    music-playlist-set! ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (music-playlist-set! music a1)
+(define-generic (music-playlist-set! music::music a1)
+   
+   (define (can-play o)
+      (cond
+	 ((string? o)
+	  o)
+	 ((not (pair? o))
+	  #f)
+	 (else 
+	  (let loop ((o o))
+	     (when (pair? o)
+		(cond
+		   ((string? (car o)) (car o))
+		   ((music-can-play-type? music (car o)) (cadr (car o)))
+		   (else (loop (cdr o)))))))))
+   
    (music-playlist-clear! music)
-   (for-each (lambda (s)
-		(let ((f (charset-convert s (hop-charset) 'UTF-8)))
-		   (music-playlist-add! music f)))
+   (for-each (lambda (e)
+		(let ((s (can-play e)))
+		   (when (string? s)
+		      (let ((f (charset-convert s (hop-charset) 'UTF-8)))
+			 (music-playlist-add! music f)))))
 	     a1))
 
 ;*---------------------------------------------------------------------*/
@@ -774,13 +781,150 @@
 	 (hop-event-broadcast! event (list 'volume vol)))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-music-playlist-add! ...                                      */
-;*---------------------------------------------------------------------*/
-(define (hop-music-playlist-add! music s)
-   (music-playlist-add! music (charset-convert s (hop-charset) 'UTF-8)))
-   
-;*---------------------------------------------------------------------*/
 ;*    hop->json ::%audio-server ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->json as::audio-server isrep isflash)
    (string-append "\"" (hop-service-base) "/" (audio-server-%path as) "\""))
+
+;*---------------------------------------------------------------------*/
+;*    music-closed? ::webmusic ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (music-closed? o::webmusic)
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    music-play ::webmusic ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (music-play o::webmusic . song)
+   'todo)
+
+;*---------------------------------------------------------------------*/
+;*    music-playlist-set! ::webmusic ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (music-playlist-set! o::webmusic a1)
+   (with-access::webmusic o (audioserver playlist %mutex %status)
+      (with-lock %mutex
+	 (lambda ()
+	    (with-access::musicstatus %status (playlistid playlistlength)
+	       (set! playlistid (+fx playlistid 1))
+	       (set! playlistlength (length a1)))
+	    (with-access::audio-server audioserver (%event)
+	       (hop-event-broadcast! %event (list 'cmdplaylistset a1)))))))
+
+;*---------------------------------------------------------------------*/
+;*    music-playlist-clear! ::webmusic ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (music-playlist-clear! o::webmusic)
+   (with-access::webmusic o (audioserver playlist %mutex %status)
+      (with-lock %mutex
+	 (lambda ()
+	    (with-access::musicstatus %status (playlistlength)
+	       (set! playlistlength 0))
+	    (with-access::audio-server audioserver (%event)
+	       (set! playlist '())
+	       (hop-event-broadcast! %event (list 'cmdplaylistclear)))))))
+
+;*---------------------------------------------------------------------*/
+;*    music-playlist-add! ::webmusic ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (music-playlist-add! o::webmusic s::bstring)
+   (with-access::webmusic o (audioserver playlist %mutex %status)
+      (with-lock %mutex
+	 (lambda ()
+	    (with-access::musicstatus %status (playlistid playlistlength)
+	       (set! playlistid (+fx playlistid 1))
+	       (set! playlistlength (+fx playlistlength 1)))
+	    (with-access::audio-server audioserver (%event)
+	       (set! playlist (append playlist (list s)))
+	       (hop-event-broadcast! %event (list 'cmdplaylistadd s)))))))
+
+;*---------------------------------------------------------------------*/
+;*    music-playlist-get ::webmusic ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (music-playlist-get o::webmusic)
+   (with-access::webmusic o (playlist)
+      playlist))
+
+;*---------------------------------------------------------------------*/
+;*    music-play ::webmusic ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (music-play o::webmusic . song)
+   (with-access::webmusic o (audioserver)
+      (with-access::audio-server audioserver (%event)
+	 (hop-event-broadcast! %event (list 'cmdplay (if (pair? song) (car song) 0))))))
+
+;*---------------------------------------------------------------------*/
+;*    music-stop ::webmusic ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (music-stop o::webmusic)
+   (tprint "MUSIC-STOP...")
+   (with-access::webmusic o (audioserver)
+      (with-access::audio-server audioserver (%event)
+	 (hop-event-broadcast! %event (list 'cmdstop)))))
+
+;*---------------------------------------------------------------------*/
+;*    music-pause ::webmusic ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (music-pause o::webmusic)
+   (with-access::webmusic o (audioserver)
+      (with-access::audio-server audioserver (%event)
+	 (hop-event-broadcast! %event (list 'cmdpause)))))
+
+;*---------------------------------------------------------------------*/
+;*    music-status ::webmusic ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (music-status o::webmusic)
+   (with-access::webmusic o (%status)
+      (music-update-status! o %status)))
+
+;*---------------------------------------------------------------------*/
+;*    music-update-status! ::webmusic ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (music-update-status! o::webmusic s::musicstatus)
+   (with-access::webmusic o (%mutex playtime)
+      (with-lock %mutex
+	 (lambda ()
+	    (with-access::musicstatus s (songpos)
+	       (let ((pos (-elong (current-seconds) playtime)))
+		  (set! songpos (elong->fixnum pos))))))
+      s))
+
+;*---------------------------------------------------------------------*/
+;*    music-songpos ::webmusic ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (music-songpos o::webmusic)
+   (with-access::webmusic o (%mutex playtime)
+      (with-lock %mutex
+	 (lambda ()
+	    (elong->fixnum (-elong (current-seconds) playtime))))))
+
+;*---------------------------------------------------------------------*/
+;*    music-song ::webmusic ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (music-song o::webmusic)
+   (with-access::webmusic o (%mutex %status)
+      (with-lock %mutex
+	 (lambda ()
+	    (musicstatus-song %status)))))
+
+;*---------------------------------------------------------------------*/
+;*    webmusic-ackstate! ...                                           */
+;*---------------------------------------------------------------------*/
+(define (webmusic-ackstate! o::webmusic state)
+   (with-access::webmusic o (%mutex %status)
+      (with-lock %mutex
+	 (lambda ()
+	    (musicstatus-state-set! %status state)))))
+
+;*---------------------------------------------------------------------*/
+;*    webmusic-ackplay! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (webmusic-ackplay! o::webmusic song)
+   (with-access::webmusic o (%mutex %status playlist playtime)
+      (with-lock %mutex
+	 (lambda ()
+	    (with-access::musicstatus %status (state song)
+	       (set! playtime (current-seconds))
+	       (set! state 'play)
+	       (set! song song))))))
+
