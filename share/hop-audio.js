@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Fri Mar  5 10:43:15 2010 (serrano)                */
+/*    Last change :  Fri Mar  5 17:19:28 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -33,17 +33,20 @@ var Sbrowser = sc_jsstring2symbol( "browser" );
 var Sserver = sc_jsstring2symbol( "server" );
 
 var Scmdplay = sc_jsstring2symbol( "cmdplay" );
+var Scmdseek = sc_jsstring2symbol( "cmdseek" );
 var Scmdstop = sc_jsstring2symbol( "cmdstop" );
 var Scmdpause = sc_jsstring2symbol( "cmdpause" );
 var Scmdplaylistset = sc_jsstring2symbol( "cmdplaylistset" );
 var Scmdplaylistclear = sc_jsstring2symbol( "cmdplaylistclear" );
 var Scmdplaylistadd = sc_jsstring2symbol( "cmdplaylistadd" );
 var Scmdplaylistget = sc_jsstring2symbol( "cmdplaylistget" );
+var Scmdvolume = sc_jsstring2symbol( "cmdvolume" );
 
 var Sackplaylistset = sc_jsstring2symbol( "ackplaylistset" );
 var Sackstop = sc_jsstring2symbol( "ackstop" );
 var Sackpause = sc_jsstring2symbol( "ackpause" );
 var Sackplay = sc_jsstring2symbol( "ackplay" );
+var Sackvolume = sc_jsstring2symbol( "ackvolume" );
 
 /*---------------------------------------------------------------------*/
 /*    HopAudioEvent ...                                                */
@@ -266,7 +269,12 @@ HTMLAudioElement.prototype.volume_get = function() {
 
 // volume_set
 HTMLAudioElement.prototype.volume_set = function( v ) {
-   this.volume = v / 100;
+   var backend = this;
+   backend.volume = v / 100;
+   
+   if( backend.url ) {
+      with_hop( hop_apply_url( backend.url, [ Sackvolume, v ] ), backend.err );
+   }
    return v;
 };
 
@@ -751,11 +759,23 @@ function hop_audio_server_event_listener( e, backend ) {
 
 	 try {
 	    if( k === Scmdpause ) {
+	       backend.state = Spause;
 	       hop_audio_pause( audio );
+	       hop_audio_invoke_listeners( audio, "pause" );
 	    } else if( k === Scmdstop ) {
 	       hop_audio_stop( audio );
+	       backend.state = Sstop;
+	       hop_audio_invoke_listeners( audio, "stop" );
 	    } else if( k === Scmdplay ) {
+	       backend.state = Splay;
 	       hop_audio_playlist_play( audio, rest.car );
+	       hop_audio_invoke_listeners( audio, "play" );
+	    } else if( k === Scmdseek ) {
+	       backend.state = Splay;
+	       if( rest.car.cdr )
+		  hop_audio_playlist_play( audio, rest.car.cdr );
+	       hop_audio_seek( audio, rest.car.car );
+	       hop_audio_invoke_listeners( audio, "play" );
 	    } else if( k === Scmdplaylistclear ) {
 	       hop_audio_playlist_set( audio, null, false );
 	    } else if( k === Scmdplaylistset ) {
@@ -767,6 +787,9 @@ function hop_audio_server_event_listener( e, backend ) {
 	       hop_audio_playlist_set( audio, pl, false );
 	    } else if( k === Scmdplaylistget ) {
 	       var opl = hop_audio_playlist_get( audio );
+	    } else if( k === Scmdvolume ) {
+	       var opl = hop_audio_volume_set( audio, rest.car );
+	       hop_audio_invoke_listeners( audio, "volume" );
 	    }
 	 } finally {
 	    audio.backend = backend;

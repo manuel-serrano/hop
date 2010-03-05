@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/doc/api.hop               */
+;*    serrano/prgm/project/hop/2.1.x/weblets/doc/api.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Tue Jan 12 06:46:01 2010 (serrano)                */
+;*    Last change :  Fri Mar  5 18:57:33 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -13,27 +13,29 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hopdoc_api
-
-   (import hopdoc_widgets
-	   hopdoc_config
-	   hopdoc_wiki
-	   hopdoc_search)
-
-   (export (setup-api-tables!)
-	   (index-table)
-	   (doc-api-syntax)
-	   doc/api
-	   doc/api-sans-title
-	   (<API>)
-	   (decorate-api-code code)
-	   (decorate-api-wiki-code code)
-	   (<APIREF> key api #!key (pad "api"))
-	   (<OBJ->STRING> expr)
-	   (markup-parser k)
-	   (server-parser k)
-	   (client-parser k)
-	   (class-parser k)
-	   (select-api-pad-on-load weblet)))
+   
+   ~(import hopdoc_client)
+   
+   (import  hopdoc_widgets
+	    hopdoc_config
+	    hopdoc_wiki
+	    hopdoc_search)
+   
+   (export  (setup-api-tables!)
+	    (index-table)
+	    (doc-api-syntax)
+	    doc/api
+	    doc/api-sans-title
+	    (<API>)
+	    (decorate-api-code code)
+	    (decorate-api-wiki-code code)
+	    (<APIREF> key api #!key (pad "api"))
+	    (<OBJ->STRING> expr)
+	    (markup-parser k)
+	    (server-parser k)
+	    (client-parser k)
+	    (class-parser k)
+	    (select-api-pad-on-load weblet)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <API> ...                                                        */

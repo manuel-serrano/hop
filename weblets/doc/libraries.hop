@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/doc/libraries.hop         */
+;*    serrano/prgm/project/hop/2.1.x/weblets/doc/libraries.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon May  8 06:21:47 2006                          */
-;*    Last change :  Tue Jan 12 09:26:45 2010 (serrano)                */
+;*    Last change :  Fri Mar  5 18:27:56 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP libraries doc.                                           */
@@ -14,14 +14,16 @@
 ;*---------------------------------------------------------------------*/
 (module hopdoc_libraries
 
-   (import hopdoc_config
-	   hopdoc_wiki
-	   hopdoc_api
-	   hopdoc_widgets
-	   hopdoc_search)
+   ~(import hopdoc_client)
    
-   (export (<LIBRARIES>)
-	   (<LIBREF> lbl file)))
+   (import  hopdoc_config
+	    hopdoc_wiki
+	    hopdoc_api
+	    hopdoc_widgets
+	    hopdoc_search)
+   
+   (export  (<LIBRARIES>)
+	    (<LIBREF> lbl file)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <LIBRARIES> ...                                                  */

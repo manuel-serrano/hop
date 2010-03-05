@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-dom.js                  */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-dom.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Thu Feb 11 06:10:27 2010 (serrano)                */
+/*    Last change :  Fri Mar  5 18:13:35 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -13,6 +13,9 @@
 
 /*** META ((export document) (JS document)) */
 /*** META ((export window) (JS window)) */
+/*** META ((export hop_create_lframe) (JS hop_create_lframe)) */
+/*** META ((export hop_create_lflabel) (JS hop_create_lflabel)) */
+/*** META ((export Image) (JS Image)) */
 
 /*---------------------------------------------------------------------*/
 /*    dom_add_child ...                                                */

@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/weblets/doc/Makefile              */
+#*    serrano/prgm/project/hop/2.1.x/weblets/doc/Makefile              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Jan 12 15:30:30 2010 (serrano)                */
+#*    Last change :  Fri Mar  5 17:56:08 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -22,7 +22,7 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-SOURCES         = doc.hop config.hop \
+SOURCES         = doc.hop config.hop doc.scm \
                   api.hop tutorials.hop libraries.hop weblets.hop \
                   search.hop widgets.hop wiki.hop services.hop index.hop
 API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \

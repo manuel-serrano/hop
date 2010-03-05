@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Mar  5 10:49:48 2010 (serrano)                */
+;*    Last change :  Fri Mar  5 17:18:17 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -500,6 +500,9 @@
 				  ((ackplay)
 				   (when (webmusic? %music)
 				      (webmusic-ackplay! %music a1)))
+				  ((ackvolume)
+				   (when (webmusic? %music)
+				      (webmusic-ackvolume! %music a1)))
 				  ((close)
 				   (tprint "*** AUDIO-SERVER CLOSE... !!!")
 				   (audio-server-close-sans-lock as))
@@ -786,6 +789,12 @@
 (define-method (hop->json as::audio-server isrep isflash)
    (string-append "\"" (hop-service-base) "/" (audio-server-%path as) "\""))
 
+;*---------------------------------------------------------------------*/
+;*    music-init ::webmusic ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (music-init o::webmusic)
+   (with-access::webmusic o (%status)
+      (musicstatus-volume-set! %status 100)))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-close ...                                                  */
@@ -862,6 +871,14 @@
 	 (hop-event-broadcast! %event (list 'cmdplay (if (pair? song) (car song) 0))))))
 
 ;*---------------------------------------------------------------------*/
+;*    music-seek ::webmusic ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (music-seek o::webmusic p . song)
+   (with-access::webmusic o (audioserver)
+      (with-access::audio-server audioserver (%event)
+	 (hop-event-broadcast! %event (list 'cmdseek (cons p (if (pair? song) (car song) #f)))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    music-stop ::webmusic ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (music-stop o::webmusic)
@@ -897,6 +914,15 @@
       s))
 
 ;*---------------------------------------------------------------------*/
+;*    music-song ::webmusic ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (music-song o::webmusic)
+   (with-access::webmusic o (%mutex %status)
+      (with-lock %mutex
+	 (lambda ()
+	    (musicstatus-song %status)))))
+
+;*---------------------------------------------------------------------*/
 ;*    music-songpos ::webmusic ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (music-songpos o::webmusic)
@@ -906,14 +932,22 @@
 	    (elong->fixnum (-elong (current-seconds) playtime))))))
 
 ;*---------------------------------------------------------------------*/
-;*    music-song ::webmusic ...                                        */
+;*    music-volume-get ::webmusic ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (music-song o::webmusic)
+(define-method (music-volume-get o::webmusic)
    (with-access::webmusic o (%mutex %status)
       (with-lock %mutex
 	 (lambda ()
-	    (musicstatus-song %status)))))
-
+	    (musicstatus-volume %status)))))
+   
+;*---------------------------------------------------------------------*/
+;*    music-volume-set! ::webmusic ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (music-volume-set! o::webmusic volume)
+   (with-access::webmusic o (audioserver)
+      (with-access::audio-server audioserver (%event)
+	 (hop-event-broadcast! %event (list 'cmdvolume volume)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    webmusic-ackstate! ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -926,12 +960,23 @@
 ;*---------------------------------------------------------------------*/
 ;*    webmusic-ackplay! ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (webmusic-ackplay! o::webmusic song)
+(define (webmusic-ackplay! o::webmusic s)
    (with-access::webmusic o (%mutex %status playlist playtime)
       (with-lock %mutex
 	 (lambda ()
 	    (with-access::musicstatus %status (state song)
 	       (set! playtime (current-seconds))
 	       (set! state 'play)
-	       (set! song song))))))
+	       (set! song s))))))
+
+;*---------------------------------------------------------------------*/
+;*    webmusic-ackvolume! ...                                          */
+;*---------------------------------------------------------------------*/
+(define (webmusic-ackvolume! o::webmusic volume)
+   (with-access::webmusic o (%mutex %status)
+      (with-lock %mutex
+	 (lambda ()
+	    (musicstatus-volume-set! %status volume)))))
+
+
 

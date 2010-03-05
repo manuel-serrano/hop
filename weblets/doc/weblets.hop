@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/doc/weblets.hop           */
+;*    serrano/prgm/project/hop/2.1.x/weblets/doc/weblets.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon May  8 06:21:47 2006                          */
-;*    Last change :  Fri Jun 20 13:27:37 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Fri Mar  5 19:00:43 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP weblets doc.                                             */
 ;*=====================================================================*/
@@ -14,15 +14,17 @@
 ;*---------------------------------------------------------------------*/
 (module hopdoc_weblets
 
-   (import hopdoc_config
-	   hopdoc_wiki
-	   hopdoc_api
-	   hopdoc_widgets
-	   hopdoc_search)
+   ~(import hopdoc_client)
    
-   (export (<WEBLETS>)
-	   (select-weblet-pad-on-load weblet)
-	   (<WEBLETREF> key weblet)))
+   (import  hopdoc_config
+	    hopdoc_wiki
+	    hopdoc_api
+	    hopdoc_widgets
+	    hopdoc_search)
+   
+   (export  (<WEBLETS>)
+	    (select-weblet-pad-on-load weblet)
+	    (<WEBLETREF> key weblet)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLETS> ...                                                    */

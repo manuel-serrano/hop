@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Tue Mar  2 10:23:48 2010 (serrano)                */
+;*    Last change :  Fri Mar  5 18:08:40 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -14,18 +14,20 @@
 ;*---------------------------------------------------------------------*/
 (module hopdoc_widgets
 
-   (import hopdoc_config
-	   hopdoc_wiki
-	   hopdoc_api
-	   hopdoc_services)
+   ~(import hopdoc_client)
    
-   (export (<DOC> . obj)
-	   (<POPUP> ::bstring)
-	   (<SEARCH-BAR> . obj)
-	   (char->offset c)
-	   (<SEARCH-POPUP-MENU> table i)
-	   (<SEE-ALSO-LIST> id lst)
-	   (<EXAMPLE> . expr)))
+   (import  hopdoc_config
+	    hopdoc_wiki
+	    hopdoc_api
+	    hopdoc_services)
+   
+   (export  (<DOC> . obj)
+	    (<POPUP> ::bstring)
+	    (<SEARCH-BAR> . obj)
+	    (char->offset c)
+	    (<SEARCH-POPUP-MENU> table i)
+	    (<SEE-ALSO-LIST> id lst)
+	    (<EXAMPLE> . expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <DOC> ...                                                        */

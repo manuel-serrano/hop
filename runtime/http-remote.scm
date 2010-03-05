@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Tue Feb 16 07:41:44 2010 (serrano)                */
+;*    Last change :  Fri Mar  5 14:42:21 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -182,6 +182,9 @@
 	       (output-timeout-set! op timeout))
 	    (multiple-value-bind (http-version status-code phrase)
 	       (http-parse-status-line ip)
+	       ;; CAR MS: TO BE REMOVED
+	       (unless (integer? status-code)
+		  (error 'remote-body "status-code not a integer" status-code))
 	       (multiple-value-bind (header _1 _2 cl te _3 _4 connection)
 		  (http-parse-header ip (connection-output remote))
 		  ;; WARNING: phrase contains its terminal \r\n hence
