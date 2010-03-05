@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Mar  5 10:36:55 2010 (serrano)                */
+;*    Last change :  Fri Mar  5 10:49:48 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -551,7 +551,7 @@
 	     (when (pair? o)
 		(cond
 		   ((string? (car o)) (car o))
-		   ((music-can-play-type? music (car o)) (cadr (car o)))
+		   ((music-can-play-type? music (caar o)) (cadr (car o)))
 		   (else (loop (cdr o)))))))))
    
    (music-playlist-clear! music)
@@ -786,6 +786,14 @@
 (define-method (hop->json as::audio-server isrep isflash)
    (string-append "\"" (hop-service-base) "/" (audio-server-%path as) "\""))
 
+
+;*---------------------------------------------------------------------*/
+;*    music-close ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-method (music-close o::webmusic)
+   (tprint "MUSIC-CLOSE ::webmusic")
+   #f)
+
 ;*---------------------------------------------------------------------*/
 ;*    music-closed? ::webmusic ...                                     */
 ;*---------------------------------------------------------------------*/
@@ -857,7 +865,6 @@
 ;*    music-stop ::webmusic ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (music-stop o::webmusic)
-   (tprint "MUSIC-STOP...")
    (with-access::webmusic o (audioserver)
       (with-access::audio-server audioserver (%event)
 	 (hop-event-broadcast! %event (list 'cmdstop)))))
