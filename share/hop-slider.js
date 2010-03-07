@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Tue Feb 16 09:15:05 2010 (serrano)                */
+/*    Last change :  Sun Mar  7 19:23:50 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
@@ -20,11 +20,11 @@ function hop_slider_value_set( slider, value ) {
    
    value = Math.round( value / slider.step ) * slider.step;
 
-   if( (value < slider.min) || (value > slider.max) ) {
-      return;
-   }
-
    if( slider.value != value ) {
+      if( (value < slider.min) || (value > slider.max) ) {
+	 return;
+      }
+
       var v = (value - slider.min) / (slider.max - slider.min);
       var w = slider.clientWidth - slider.cursor.clientWidth;
 
@@ -73,7 +73,7 @@ function hop_slider_value_get( slider ) {
 /*---------------------------------------------------------------------*/
 function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    var slider, tbody, tr, tr2 = false;
-   var line1, line2, cursor;
+   var line1, line2, cursor, cursorbg;
    var td1, td3;
    var div;
    var caption;
@@ -91,11 +91,9 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    slider.onchange = undefined;
    
    slider.parent = parent;
-   slider.width = "100%";
    slider.rules = "none";
    slider.cellpadding = 0;
    slider.cellspacing = 0;
-   slider.border = 1;
    parent.appendChild( slider );
 
    tbody = document.createElement( "tbody" );
@@ -103,38 +101,38 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    
    tr = document.createElement( "tr" );
 
-   if( cap == "top" ) {
-      tr2 = document.createElement( "tr" );
-      tbody.appendChild( tr2 );
-      tbody.appendChild( tr );
-   } else {
-      if( cap == "bottom" ) {
+   if( cap ) {
+      if( cap == "top" ) {
 	 tr2 = document.createElement( "tr" );
-	 tbody.appendChild( tr );
 	 tbody.appendChild( tr2 );
-      } else {
 	 tbody.appendChild( tr );
+      } else {
+	 if( cap == "bottom" ) {
+	    tr2 = document.createElement( "tr" );
+	    tbody.appendChild( tr );
+	    tbody.appendChild( tr2 );
+	 } else {
+	    tbody.appendChild( tr );
+	 }
       }
+   } else {
+      tbody.appendChild( tr );
    }
 
    // the two lines and the cursor
    line1 = document.createElement( "td" );
-   line1.className = "lineleft";
+   line1.className = "line lineleft";
    line2 = document.createElement( "td" );
-   line2.className = "lineright";
+   line2.className = "line lineright";
    cursor = document.createElement( "td" );
-   cursor.className = "cursor";
+   cursor.setAttribute( "hssclass", "hop-slider-cursor" );
+   cursorbg = document.createElement( "div" );
+   cursorbg.setAttribute( "hssclass", "hop-slider-cursor-background" );
+   cursor.appendChild( cursorbg );
 
    slider.line1 = line1;
    slider.line2 = line2;
    slider.cursor = cursor;
-
-   line1.style.border = 0;
-   line1.style.margin = 0;
-   line1.style.padding = 0;
-   line2.style.border = 0;
-   line2.style.margin = 0;
-   line2.style.padding = 0;
 
    tr.appendChild( line1 );
    tr.appendChild( cursor );
@@ -143,9 +141,7 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    if( cap ) {
       td1 = document.createElement( "td" );
       caption = document.createElement( "td" );
-      caption.className = "caption";
-      caption.align = "center";
-/*       caption.style.width = cursor.width + "%";                     */
+      caption.setAttribute( "hssclass", "hop-slider-caption" );
       td3 = document.createElement( "td" );
 
       caption.innerHTML = "";

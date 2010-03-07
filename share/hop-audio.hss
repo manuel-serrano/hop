@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 28 06:23:39 2007                          */
-/*    Last change :  Wed Mar  3 08:38:01 2010 (serrano)                */
+/*    Last change :  Sun Mar  7 19:30:46 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Audio's cascade style sheet.                                 */
@@ -32,6 +32,8 @@ $(define-hss-type audio "div[hssclass=hop-audio-controls]"
 $(define-hss-type audiobutton "div[hssclass=hop-audio-button]"
     (define-hss-property (-hop-background-gradient v)
        (list (format "background: ~l; background-image: ~l;" v v)))
+    (define-hss-property (background v)
+       (list (format "div[hssclass=hop-audio-button-background] { background: ~l; }" v)))
     (define-hss-property (background-image v)
        (list (format "div[hssclass=hop-audio-button-background] { background-image: ~l; }" v)))
     (define-hss-property (background-repeat v)
@@ -106,13 +108,14 @@ audio table.hop-audio-panel td.hop-audio-panel {
 
 audio div.hop-audio-panel2 {
   padding-left: 4px;
+  padding-right: 4px;
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop-audio-button                                                 */
 /*---------------------------------------------------------------------*/
 audio div.hop-audio-buttons {
-  padding-top: 1ex;
+  padding-top: 6px;
   width: 100%;
   overflow: hidden;
 }
@@ -182,10 +185,12 @@ audiobutton.hop-audio-button-prefs {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop-audio-separator ...                                          */
+/*    hop-audio-seek                                                   */
 /*---------------------------------------------------------------------*/
-audio div.hop-audio-separator {
-  border-bottom: 1px solid white;
+slider.hop-audio-seek {
+  line-height: 0px;
+  line-border-bottom: 1px solid white;
+  cursor-height: 6px;
 }
 
 /*---------------------------------------------------------------------*/
@@ -278,13 +283,15 @@ audio span.hop-audio-info-status-length-label {
 /*---------------------------------------------------------------------*/
 audio div.hop-audio-panel-metadata {
   background: #fff;
-  width: 16em;
   height: 4ex;
   float: left;
   overflow: hidden;
   color: black;
   $hopaudio-gui-radius;
+  /* the width must match div.hop-audio-panel-sound */
+  width: 245px;
   padding-left: 2px;
+  padding-right: 2px;
 }
 
 div.hop-audio-panel-metadata-song, div.hop-audio-panel-metadata-error {
@@ -336,6 +343,15 @@ td.hop-audio-panel-metadata-year {
 /*---------------------------------------------------------------------*/
 audio div.hop-audio-panel-sound {
   float: left;
+  /* the width must match div.hop-audio-panel-metadata */
+  width: 245px;
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+audio div.hop-audio-panel-sound > table {
+  width: 100%;
+  border: 0;
 }
 
 audio div.hop-audio-panel-sound th {
@@ -343,18 +359,24 @@ audio div.hop-audio-panel-sound th {
   vertical-align: top;
   font-weight: 100;
   color: black;
+  width: 3em;
 }
 
 audio div.hop-audio-panel-sound th.hop-audio-panel-left {
   padding-left: 10px;
+  width: 1em;
+}
+
+audio div.hop-audio-panel-sound th.hop-audio-panel-right {
+  width: 1em;
 }
 
 audio table.hop-audio-panel-volume {
-  width: 8em;
+  width: 110px;
 }
 
 audio table.hop-audio-panel-pan {
-  width: 4em;
+  width: 55px;
 }
 
 table.hop-audio-panel-pan div.lineleft {

@@ -50,16 +50,17 @@ using //sliders// must include in their header, the following statement:
 | :min         |  integer  |   ++0++      | the minimum value.          |
 | :max         |  integer  |   ++100++    | the maximum value.          |
 | :step        |  integer  |   ++1++      | the increment.              |
-| :caption     |  string   |   ++top++    | the caption location.       |
+| :caption     |  obj      |   ++top++    | the caption location.       |
 | :onchange    |  script   |              | the action to executed.     |
 </arguments>
 
-The argument :onchange is a script that is invoked each time the
+~~ The argument :onchange is a script that is invoked each time the
 slider is changed via the GUI. That is calling the function
 ++slider-value-set!++ **does not** invoke automatically :onchange. In
 the scope of that script, the variable ++this++ is bound to the
 //slider// whose value can be fetch using ++slider-value++.
 
+~~ If the argument :caption is ++#f++ not caption is associated.
 </markup>
 </server>
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Mar  5 17:18:17 2010 (serrano)                */
+;*    Last change :  Sun Mar  7 19:18:18 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -314,8 +314,10 @@
 	       (<DIV> :class "hop-audio-panel2"
 		  (<AUDIO:CONTROLS-METADATA> id)
 		  (<AUDIO:CONTROLS-SOUND> id)))))
-      ;; separator
-      (<DIV> :class "hop-audio-separator")
+      ;; seek
+      (<SLIDER> :class "hop-audio-seek"
+	 :id (string-append id "-controls-seek")
+	 :caption #f)
       ;; the button line
       (<DIV> :class "hop-audio-buttons"
 	 (<BUT> :title "Previous"

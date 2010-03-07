@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/src/init.scm                      */
+;*    serrano/prgm/project/hop/2.1.x/src/init.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Mon Nov 30 09:15:34 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Sun Mar  7 19:08:06 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
 ;*=====================================================================*/
@@ -192,7 +192,7 @@
 ;*---------------------------------------------------------------------*/
 (define (http-get-file/cache req)
    (with-access::http-request req (abspath)
-      (let ((cache (cache-memory-get get-memory-cache abspath)))
+      (let ((cache (cache-get get-memory-cache abspath)))
 	 (if (%http-response? cache)
 	     cache
 	     (let ((resp (http-get-file req #t)))

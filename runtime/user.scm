@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/user.scm                  */
+;*    serrano/prgm/project/hop/2.1.x/runtime/user.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon Sep 14 16:44:13 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Sun Mar  7 19:07:57 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -327,7 +327,7 @@
 ;*---------------------------------------------------------------------*/
 (define (find-hopaccess path)
    (let loop ((p path))
-      (let ((cache (cache-memory-get hopaccess-cache p)))
+      (let ((cache (cache-get hopaccess-cache p)))
 	 (cond
 	    (cache
 	     (when (string? cache) cache))
