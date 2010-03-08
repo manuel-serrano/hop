@@ -85,9 +85,9 @@ vectors.
   (dom-node-eval node)
   (node-style-get node prop)
   (node-style-set! node prop value)
-  (node-absolute-x node)
-  (node-absolute-y node)
   (node-bounding-box node [margin])
+  (node-bounding-box-x node)
+  (node-bounding-box-y node)
   (bounding-box->list bbox])
   (bounding-box-x bbox [loc])
   (bounding-box-y bbox [loc])
@@ -677,26 +677,26 @@ or its identifier (a keyword). Example:
 
 </procedure>
 
-=== ++(node-absolute-x node)++ ===
-<procedure> node-absolute-x
+=== ++(node-bounding-box-x node)++ ===
+<procedure> node-bounding-box-x
 
 <arguments>
 ^  arguments       ^   type           ^  short description                      ^
 | node             |  element         | an element.                             |
 </arguments>
 
-Returns the absolute horizontal position of an HTML element.
+Returns the bounding-box horizontal position of an HTML element.
 </procedure>
 
-=== ++(node-absolute-y node)++ ===
-<procedure> node-absolute-y
+=== ++(node-bounding-box-y node)++ ===
+<procedure> node-bounding-box-y
 
 <arguments>
 ^  arguments       ^   type           ^  short description                      ^
 | node             |  element         | an element.                             |
 </arguments>
 
-Returns the absolute vertical position of an HTML element.
+Returns the bounding-box vertical position of an HTML element.
 </procedure>
 
 === ++(node-bounding-box node [margin])++ ===

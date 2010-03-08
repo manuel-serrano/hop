@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -15,9 +15,7 @@
 	   error
 	   export-desc
 	   symbol)
-   (export (parameter-assig-mapping operands
-				    formals
-				    vaarg)))
+   (export (parameter-assig-mapping where call operands formals vaarg)))
 
 ;; needed for inlining, ...
 ;; if vaarg? is #t then the last element is a vaarg.
@@ -29,7 +27,7 @@
 ;; The formals/vaarg are *not* referenced.
 ;;
 ;; Ensures that the order of assignment is that of formals
-(define (parameter-assig-mapping operands formals vaarg?)
+(define (parameter-assig-mapping where call operands formals vaarg?)
    (let loop ((opnds operands)
 	      (formals formals)
 	      (rev-res '()))
@@ -42,10 +40,10 @@
 	 ;; no formals, but opnds
 	 ((and (not (null? opnds))
 	       (null? formals))
-	  (scheme2js-error "parametr-assig-mapping"
+	  (scheme2js-error where
 			   "too many arguments"
 			   '()
-			   (car opnds)))
+			   call))
 	 
 	 ;; the last element is a vaarg
 	 ;; and no operands left
@@ -75,11 +73,12 @@
 	 ;; no opnds, but formals
 	 ((and (null? opnds)
 	       (not (null? formals)))
-	  (scheme2js-error #f "not enough arguments"
+	  (scheme2js-error where
+			   "not enough arguments"
 			   (if (Ref? (car formals))
 			       (Var-id (Ref-var (car formals)))
 			       '())
-			   (car formals)))
+			   call))
 
 	 ;; still (non-vaarg)-formals and operands left.
 	 (else

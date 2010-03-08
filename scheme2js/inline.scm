@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -193,7 +193,9 @@
 	     ;; body must be a Return.
 	     ;; no need to include it...
 	     (let* ((return-body (Return-val body))
-		    (assigs-mapping (parameter-assig-mapping operands
+		    (assigs-mapping (parameter-assig-mapping (Var-id (Lambda-this-var operator))
+							     this
+							     operands
 							     formals
 							     vaarg?))
 		    (assigs (map (lambda (p)
