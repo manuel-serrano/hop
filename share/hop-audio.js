@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Sun Mar  7 08:06:52 2010 (serrano)                */
+/*    Last change :  Mon Mar  8 08:58:01 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -47,6 +47,13 @@ var Sackstop = sc_jsstring2symbol( "ackstop" );
 var Sackpause = sc_jsstring2symbol( "ackpause" );
 var Sackplay = sc_jsstring2symbol( "ackplay" );
 var Sackvolume = sc_jsstring2symbol( "ackvolume" );
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_init ...                                               */
+/*    -------------------------------------------------------------    */
+/*    The list of audio init functions.                                */
+/*---------------------------------------------------------------------*/
+var hop_audio_init = {};
 
 /*---------------------------------------------------------------------*/
 /*    HopAudioEvent ...                                                */
@@ -366,13 +373,6 @@ HTMLAudioElement.prototype.metadata_get = function() {
 HTMLAudioElement.prototype.update = function() {
    ;
 }
-
-/*---------------------------------------------------------------------*/
-/*    hop_audio_init ...                                               */
-/*    -------------------------------------------------------------    */
-/*    The list of audio init functions.                                */
-/*---------------------------------------------------------------------*/
-var hop_audio_init = {};
 
 /*---------------------------------------------------------------------*/
 /*    hop_audio_add_event_listener ...                                 */

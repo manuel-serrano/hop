@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Sun Mar  7 19:09:10 2010 (serrano)                */
+;*    Last change :  Mon Mar  8 08:48:13 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
@@ -238,7 +238,7 @@
 		    (set! %head %next))
 		(if %next
 		    (cache-entry-%prev-set! %next %prev)
-		    (set! %tail #f))
+		    (set! %tail %prev))
 		(mutex-unlock! %mutex)
 		#f))
 	    (else

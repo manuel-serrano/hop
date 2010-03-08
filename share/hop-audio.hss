@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 28 06:23:39 2007                          */
-/*    Last change :  Sun Mar  7 19:30:46 2010 (serrano)                */
+/*    Last change :  Mon Mar  8 08:51:17 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Audio's cascade style sheet.                                 */
@@ -185,9 +185,17 @@ audiobutton.hop-audio-button-prefs {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop-audio-panel sliders (requires by Midori and Arora)           */
+/*---------------------------------------------------------------------*/
+audio slider.hop-audio-panel-volume,
+audio slider.hop-audio-panel-pan {
+  line-height: 3px;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop-audio-seek                                                   */
 /*---------------------------------------------------------------------*/
-slider.hop-audio-seek {
+audio slider.hop-audio-seek {
   line-height: 0px;
   line-border-bottom: 1px solid white;
   cursor-height: 6px;
