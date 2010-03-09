@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-window.hss              */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-window.hss              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Sun Jan 10 10:21:14 2010 (serrano)                */
+/*    Last change :  Tue Mar  9 08:23:27 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP WINDOW CSS                                                   */
@@ -110,10 +110,11 @@ div[hssclass=hop-window] div.hop-window-inner {
 /*---------------------------------------------------------------------*/
 div[hssclass=hop-window] div.hop-window-handle {
   position: absolute;
-  height: 13px;
+  height: 18px;
   top: 0;
   left: 0; 
   right: 0;
+  overflow: hidden;
 }
 
 div[hssclass=hop-window] table.hop-window-handle {
@@ -164,6 +165,7 @@ div[hssclass=hop-window] td.hop-window-up-title table {
   font-weight: bold;
   font-family: arial;
   color: #ff9f1a;
+  overflow: hidden;
 }
 
 div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-left {
@@ -185,6 +187,8 @@ div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-middle {
   background-position: center;
   vertical-align: middle;
   text-align: center;
+  white-space: pre;
+  overflow: hidden;
 }
 
 div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-middle {

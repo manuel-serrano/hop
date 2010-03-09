@@ -1,9 +1,26 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.1.x/hopscheme/precompilation.scm      */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  Tue Mar  9 05:13:01 2010                          */
+;*    Last change :  Tue Mar  9 05:13:39 2010 (serrano)                */
+;*    Copyright   :  2010 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Module pre-compilation                                           */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module __hopscheme_precompilation
    (library scheme2js)
    (import __hopscheme_config)
    (export (precompile-module m::symbol resolver::procedure)
 	   (precompile-headers headers::pair-nil)))
 
+;*---------------------------------------------------------------------*/
+;*    precompile-module ...                                            */
+;*---------------------------------------------------------------------*/
 (define (precompile-module m resolver)
    (let* ((files (resolver m '*))
 	  (compiled (any (lambda (f)
@@ -20,6 +37,9 @@
 	  compiled
 	  (error 'hopscheme "Could not find module" m))))
 
+;*---------------------------------------------------------------------*/
+;*    precompile-headers ...                                           */
+;*---------------------------------------------------------------------*/
 (define (precompile-headers headers)
    (let loop ((headers headers)
 	      (rev-imports '())
@@ -54,7 +74,7 @@
 		       rev-imports
 		       (cons header rev-others))))))))
 
-(define (precompile-headers.TO-BE-REMOVED-8mar2010 headers)
+#;(define (precompile-headers.TO-BE-REMOVED-8mar2010 headers)
    (let loop ((headers headers)
 	      (rev-imports '())
 	      (rev-others '()))

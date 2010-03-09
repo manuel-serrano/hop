@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-window.js               */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-window.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Mon Feb 15 11:07:35 2010 (serrano)                */
+/*    Last change :  Tue Mar  9 07:47:28 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -468,9 +468,9 @@ function make_hop_iwindow( id, klass, parent ) {
    var foot = "\
 <table width='100%' border='0' cellspacing='0' cellpadding='0'>\n\
   <tr>\n\
-    <td id='" + id + "-resize-left' class='hop-window-bottom-left'>&shy;</td>\n\
-    <td id='" + id + "-resize-middle' class='hop-window-bottom-middle'>&shy;</td>\n\
-    <td id='" + id + "-resize-right' class='hop-window-bottom-right'>&shy;</td>\n\
+    <td id='" + id + "-resize-left' class='hop-window-bottom-left'>&#160;</td>\n\
+    <td id='" + id + "-resize-middle' class='hop-window-bottom-middle'>&#160;</td>\n\
+    <td id='" + id + "-resize-right' class='hop-window-bottom-right'>&#160;</td>\n\
   </tr>\n\
 </table>";
 

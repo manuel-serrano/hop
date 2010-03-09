@@ -165,27 +165,28 @@
    (verbose " inline-funs!")
    (let ((env (instantiate::Inline-Env
 		 (counter 0))))
-      (absorb! tree env #f)
+      (absorb! tree env #f #f)
       (> (Inline-Env-counter env) 0)))
 
-(define-nmethod (Node.absorb! label)
-   (default-walk! this label))
+(define-nmethod (Node.absorb! label fun)
+   (default-walk! this label fun))
 
-(define-nmethod (Set!.absorb! label)
+(define-nmethod (Set!.absorb! label fun)
    (with-access::Set! this (lvalue val)
       (with-access::Ref lvalue (var)
 	 (when (Inlined-Local? var)
 	    (set! val (instantiate::Const (value #unspecified)))
 	    (shrink! var)))
-      (default-walk! this label)))
+      (default-walk! this label fun)))
 
-(define-nmethod (Inlined-Call.absorb! label)
+(define-nmethod (Inlined-Call.absorb! label fun)
    (with-access::Inlined-Call this (operator cloned-fun)
-      (set! operator cloned-fun)
-      (shrink! this)
-      (walk! this label)))
+      (let ((nfun operator))
+	 (set! operator cloned-fun)
+	 (shrink! this)
+	 (walk! this label nfun))))
 
-(define-nmethod (Call.absorb! label)
+(define-nmethod (Call.absorb! label fun)
    (with-access::Call this (operator operands)
       (if (and (Lambda? operator)
 	       (lambda-can-be-inlined? operator))
@@ -193,24 +194,25 @@
 	     ;; body must be a Return.
 	     ;; no need to include it...
 	     (let* ((return-body (Return-val body))
-		    (assigs-mapping (parameter-assig-mapping (Var-id (Lambda-this-var operator))
-							     this
-							     operands
-							     formals
-							     vaarg?))
+		    (assigs-mapping (parameter-assig-mapping
+				     (if (Ref? fun) (Var-id (Ref-var fun)))
+				     this
+				     operands
+				     formals
+				     vaarg?))
 		    (assigs (map (lambda (p)
 				    (instantiate::Set!
 				       (lvalue (car p))
 				       (val (cdr p))))
 				 assigs-mapping))
 		    (traversed-assigs (map (lambda (node)
-					      (walk! node label))
+					      (walk! node label fun))
 					   assigs))
 		    (return-label (make-Label (gensym 'inlined)))
 		    (return-labeled (instantiate::Labeled
 					(body return-body)
 					(label return-label)))
-		    (traversed-labeled (walk! return-labeled return-label)))
+		    (traversed-labeled (walk! return-labeled return-label fun)))
 		(with-access::Inline-Env env (counter)
 		   (set! counter (+ counter 1)))
 		(instantiate::Let
@@ -218,16 +220,17 @@
 		   (bindings traversed-assigs)
 		   (body traversed-labeled)
 		   (kind 'let))))
-	  (default-walk! this label))))
+	  (default-walk! this label fun))))
 
-(define-nmethod (Lambda.absorb! label)
-   (default-walk! this #f))
+(define-nmethod (Lambda.absorb! label fun)
+   (default-walk! this #f fun))
 
-(define-nmethod (Return.absorb! label)
+(define-nmethod (Return.absorb! label fun)
    (if label
        (with-access::Return this (val)
 	  (walk! (instantiate::Break
 		    (val val)
 		    (label label))
-		 label))
-       (default-walk! this label)))
+		 label
+		 fun))
+       (default-walk! this label fun)))
