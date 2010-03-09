@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Mon Mar  8 08:58:01 2010 (serrano)                */
+/*    Last change :  Tue Mar  9 17:04:48 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -295,6 +295,12 @@ HTMLAudioElement.prototype.position_get = function() {
    return this.currentTime ? Math.round( this.currentTime ) : 0;
 };
 
+// position_set
+HTMLAudioElement.prototype.position_set = function( val ) {
+   this.currentTime = val;
+   return val;
+};
+
 // playlist_index_get
 HTMLAudioElement.prototype.playlist_index_get = function() {
    return this.playlistindex;
@@ -421,6 +427,7 @@ function hop_audio_controls_listeners_init( id ) {
    el.onended = hop_audio_controls_onended;
    el.onprogress = hop_audio_controls_onprogress;
    el.onvolume = hop_audio_controls_onvolume;
+   el.onmute = hop_audio_controls_onmute;
    el.onbackend = hop_audio_controls_onbackend;
 
    return el;
@@ -1049,16 +1056,15 @@ function hop_audio_volume_set( audio, vol ) {
 /*** META ((export audio-mute) (arity #t)) */
 function hop_audio_mute( audio ) {
    if( typeof audio === "string" ) audio = document.getElementById( audio );
-   var img = document.getElementById( audio.id + "-hop-audio-button-mute" );
    
    if( audio.mute_volume ) {
       var vol = audio.mute_volume;
-      img.src = hop_share_directory() + "/icons/hop-audio/mute.png";
       audio.mute_volume = false;
+      hop_audio_invoke_listeners( audio, "mute" );
       return hop_audio_volume_set( audio, vol );
    } else {
-      img.src = hop_share_directory() + "/icons/hop-audio/unmute.png";
       audio.mute_volume = hop_audio_volume( audio );
+      hop_audio_invoke_listeners( audio, "mute" );
       return hop_audio_volume_set( audio, 0 );
    }
 }
@@ -1216,7 +1222,7 @@ function hop_audio_time_interval_set( audio ) {
 	    pos.innerHTML = int2( audio.min ) + ":" + int2( audio.sec );
 
 	    if( duration > 0 )
-	       hop_slider_value_set( seek, Math.round( audio.ctime / duration ) );
+	       hop_slider_value_set( seek, Math.round( 1000 * audio.ctime / duration ) );
 	 }
       }, 1000 );
    
@@ -1459,6 +1465,20 @@ function hop_audio_controls_onvolume( evt ) {
    var slider = document.getElementById( id + "-controls-volume" );
 
    hop_slider_value_set( slider, hop_audio_volume( audio ) );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_controls_onmute ...                                    */
+/*---------------------------------------------------------------------*/
+function hop_audio_controls_onmute( evt ) {
+   var audio = evt.audio;
+   var img = document.getElementById( audio.id + "-hop-audio-button-mute" );
+
+   if( audio.mute_volume ) {
+      img.src = hop_share_directory() + "/icons/hop-audio/unmute.png";
+   } else {
+      img.src = hop_share_directory() + "/icons/hop-audio/mute.png";
+   }
 }
 
 /*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Feb 16 07:40:47 2010 (serrano)                */
+;*    Last change :  Tue Mar  9 13:10:41 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -115,7 +115,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
       ((and (http-request? (current-request))
 	    (or (substring-at? p "http://" 0) (substring-at? p "https://" 0)))
        (preload-http p))
-      ((file-exists? p)
+      ((and (file-exists? p) (char=? (string-ref p 0) (file-separator)))
        (hop-load-hss p))
       ((and base (>fx (string-length p) 0) (not (char=? (string-ref p 0) #\/)))
        (preload-css (string-append base p) #f))))

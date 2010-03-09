@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Mar  8 13:43:26 2010 (serrano)                */
+;*    Last change :  Tue Mar  9 16:57:58 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -317,7 +317,10 @@
       ;; seek
       (<SLIDER> :class "hop-audio-seek"
 	 :id (string-append id "-controls-seek")
-	 :caption #f)
+	 :max 1000
+	 :caption #f
+	 :onchange (format "hop_audio_seek(document.getElementById('~a'), Math.round(60*this.value/1000))"
+			   audioid))
       ;; the button line
       (<DIV> :class "hop-audio-buttons"
 	 (<BUT> :title "Previous"

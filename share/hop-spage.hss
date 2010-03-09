@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug 15 16:47:08 2009                          */
-/*    Last change :  Mon Mar  8 14:32:25 2010 (serrano)                */
+/*    Last change :  Tue Mar  9 11:32:07 2010 (serrano)                */
 /*    Copyright   :  2009-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Slide Pages                                                      */
@@ -61,11 +61,12 @@ spage {
 }
 
 spbody {
-  height: 94%;
   overflow: auto;
+  margin-top: 17px;
 }
 
 sphead {
+  height: 16px;
   border-bottom: $border;
   font-family: $font-family;
   font-weight: bold;
@@ -76,6 +77,7 @@ sphead {
 
 spprevbutton,
 spupdatebutton {
+  height: 100%;
   color: black;
   background: #ddd;
   border-right: $border;
@@ -84,6 +86,11 @@ spupdatebutton {
   cursor: default;
   margin-right: 2px;
   user-select: none;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  display: inline-block;
 }
 
 spprevbutton:hover,
@@ -139,11 +146,19 @@ div[hssclass=hop-spage] div[hssclass=hop-spage] {
   border: 0;
 }
 
+div[hssclass=hop-spage] > div[hssclass=hop-spage] {
+  height: 100%;
+}
+  
 div[hssclass=hop-spage] div[hssclass=hop-spage] spbody {
   border-left: 4px solid darkorange;
 }
 
-sphead spprevbutton {
-  width: 2em;
+div[hssclass=hop-spage] spbody {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }
   
