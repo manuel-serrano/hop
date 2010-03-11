@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Thu Mar 11 12:03:09 2010 (serrano)                */
+;*    Last change :  Thu Mar 11 16:15:31 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -629,7 +629,7 @@
 ;*---------------------------------------------------------------------*/
 (define (audio-status-event-value status plist)
    (with-access::musicstatus status (state song songpos songlength volume)
-      (list state songlength songpos volume song (tag-playlist plist))))
+      (list state songlength songpos volume song plist)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *playlist* ...                                                   */

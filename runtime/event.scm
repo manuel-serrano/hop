@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Mar 11 09:15:49 2010 (serrano)                */
+;*    Last change :  Thu Mar 11 16:35:12 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -408,7 +408,6 @@
 	    
 	    (set! *register-service*
 		  (service :name "server-event/register" (#!key event key mode)
-		     (tprint "!!!!!!!!!! server-event/register... event=" event)
 		     (server-event-register event key mode)))))))
 
 ;*---------------------------------------------------------------------*/
