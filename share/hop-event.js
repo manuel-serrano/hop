@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sat Feb 27 18:42:21 2010 (serrano)                */
+/*    Last change :  Thu Mar 11 11:44:32 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -213,6 +213,8 @@ function start_servevt_websocket_proxy( key, host, port ) {
    if( !hop_servevt_proxy.websocket ) {
       var url = "ws://" + host + ":" + port +
 	 hop_service_base() + "/server-event/websocket?key=" + key;
+/*       var url = "ws://" + host + ":" + 8788 + "/echo";              */
+
       var ws = new WebSocket( url );
 
       var register = function( id ) {
@@ -244,7 +246,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
 	 // we are ready to register now
 	 hop_servevt_proxy.register = register;
 	 hop_servevt_proxy.unregister = unregister;
-	 
+
 	 // register the unitialized events
 	 for( var p in hop_servevt_table ) {
 	    if( hop_servevt_table[ p ].hop_servevt ) {
@@ -629,6 +631,7 @@ function servevt_flashp( port ) {
 /*---------------------------------------------------------------------*/
 function hop_start_servevt_proxy() {
    hop_servevt_proxy = new Object();
+   hop_servevt_proxy.websocket = false;
    hop_servevt_proxy.register = function( x ) {};
 
    hop_send_request( hop_service_base() + "/server-event/info",

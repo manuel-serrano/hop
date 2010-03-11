@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat Feb 27 18:13:07 2010 (serrano)                */
+;*    Last change :  Thu Mar 11 09:15:49 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -325,7 +325,7 @@
 	       (cons (cons (string->symbol key) req)
 		     *websocket-request-list*))))
 
-;*    (tprint "websocket-register-new-connection: " key)               */
+   (tprint "websocket-register-new-connection: " key)
    
    (with-access::http-request req (header connection socket)
       (let ((host (get-header header host: #f)))
@@ -359,7 +359,7 @@
 		     (let* ((hd (http-request-header (current-request)))
 			    (host (assq host: hd))
 			    (key (get-server-event-key (or port 0))))
-;* 			(tprint "server-info key=" key)                */
+			(tprint "server-info key=" key)
 			(if (pair? host)
 			    (let ((s (string-split (cdr host) ":")))
 			       (vector (car s) port key))
@@ -408,6 +408,7 @@
 	    
 	    (set! *register-service*
 		  (service :name "server-event/register" (#!key event key mode)
+		     (tprint "!!!!!!!!!! server-event/register... event=" event)
 		     (server-event-register event key mode)))))))
 
 ;*---------------------------------------------------------------------*/

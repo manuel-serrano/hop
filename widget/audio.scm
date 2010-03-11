@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Mar  9 16:57:58 2010 (serrano)                */
+;*    Last change :  Thu Mar 11 12:03:09 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -24,26 +24,8 @@
 
    (export  (class audio-server
 	       (audio-server-init)
-	       (music (get (lambda (o)
-			      (audio-server-%music o)))
-		      (set (lambda (o v)
-			      (with-lock (audio-server-%hmutex o)
-				 (lambda ()
-				    (when (music? (audio-server-%music o))
-				       (music-close (audio-server-%music o)))
-				    (when (thread? (audio-server-%thread o))
-				       (thread-terminate! (audio-server-%thread o)))
-				    (audio-server-%music-set! o v)
-				    (when (music? v)
-				       (if (webmusic? v)
-					   ;; register the mapping audioserver/webserver
-					   (begin
-					      (audio-server-%state-set! o 'ready)
-					      (webmusic-audioserver-set! v o))
-					   ;; start a thread for the player
-					   (begin
-					      (audio-server-%state-set! o 'init)
-					      (audio-server-%thread-set! o (make-audio-server-thread o v)))))))))
+	       (music (get (lambda (o) (audio-server-%music o)))
+		      (set %audio-server-music-set!)
 		      (default #f))
 	       (%music (default #f))
 	       (%hmutex read-only (default (make-mutex)))
@@ -55,6 +37,8 @@
 	       (%state::symbol (default 'init))
 	       (%log::pair-nil (default '()))
 	       (%meta (default #f)))
+
+	    (%audio-server-music-set! ::audio-server ::obj)
 	    
 	    (class webmusic::music
 	       (audioserver::obj (default #unspecified))
@@ -65,6 +49,28 @@
 	    
 	    (<AUDIO> . args)
 	    (audio-server-close ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    %audio-server-music-set! ...                                     */
+;*---------------------------------------------------------------------*/
+(define (%audio-server-music-set! o::audio-server v)
+   (with-lock (audio-server-%hmutex o)
+      (lambda ()
+	 (when (music? (audio-server-%music o))
+	    (music-close (audio-server-%music o)))
+	 (when (thread? (audio-server-%thread o))
+	    (thread-terminate! (audio-server-%thread o)))
+	 (audio-server-%music-set! o v)
+	 (when (music? v)
+	    (if (webmusic? v)
+		;; register the mapping audioserver/webserver
+		(begin
+		   (audio-server-%state-set! o 'ready)
+		   (webmusic-audioserver-set! v o))
+		;; start a thread for the player
+		(let ((th (make-audio-server-thread o v)))
+		   (audio-server-%state-set! o 'init)
+		   (audio-server-%thread-set! o th)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *audio-mutex* ...                                                */

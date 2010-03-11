@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Tue Mar  9 17:04:48 2010 (serrano)                */
+/*    Last change :  Thu Mar 11 14:36:21 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -13,6 +13,7 @@
 /*    pre-allocated symbols                                            */
 /*---------------------------------------------------------------------*/
 var Splay = sc_jsstring2symbol( "play" );
+var Sinit = sc_jsstring2symbol( "init" );
 var Sstart = sc_jsstring2symbol( "start" );
 var Spause = sc_jsstring2symbol( "pause" );
 var Sstop = sc_jsstring2symbol( "stop" );
@@ -730,17 +731,20 @@ function hop_audio_server_event_listener( e, backend ) {
 	 backend.current_volume = rest.car;
 	    
 	 hop_audio_invoke_listeners( backend.audio, "volume" );
+      } else if( k === Sinit ) {
+	 hop_audio_invoke_listeners( backend.audio, "stop" );
       } else if( k == Serror ) {
 	 // error
-	 alert( "ERROR(hop-audio.js) rest=" + rest );
+/* 	 alert( "ERROR(hop-audio.js) " + e.value );                    */
 	 hop_audio_invoke_listeners( backend.audio, "error", rest.car );
       } else if( k == Sabort ) {
 	 // abort
 	 hop_audio_close( backend.audio );
-	 alert( "ERROR.abort(hop-audio.js) audio=" + backend.audio + " be=" + backend);
+/* 	 alert( "ERROR(hop-audio.js) " + e.value );                    */
 	 hop_audio_invoke_listeners( backend.audio, "error", rest.car );
       } else if( k == Sclose ) {
 	 // close
+/* 	 alert( "ERROR(hop-audio.js) " + e.value );                    */
 	 hop_audio_close( backend.audio );
 	 hop_audio_invoke_listeners( backend.audio, "close", false );
       } else if( k == Smeta ) {
@@ -1201,7 +1205,7 @@ function hop_audio_time_interval_set( audio ) {
    var id = audio.controls.id;
    var pos = document.getElementById( id + "-controls-status-position" );
    var ctime = hop_audio_current_time( audio );
-   var duration = hop_audio_duration( audio ) / 100;
+   var duration = hop_audio_duration( audio );
    var seek = document.getElementById( id + "-controls-seek" );
    
    audio.ctime = ctime;
