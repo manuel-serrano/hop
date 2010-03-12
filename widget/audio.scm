@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Thu Mar 11 16:15:31 2010 (serrano)                */
+;*    Last change :  Thu Mar 11 17:39:35 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -515,7 +515,6 @@
 				   (when (webmusic? %music)
 				      (webmusic-ackvolume! %music a1)))
 				  ((close)
-				   (tprint "*** AUDIO-SERVER CLOSE... !!!")
 				   (audio-server-close-sans-lock as))
 				  (else
 				   (tprint "unknown msg..." a0)
@@ -538,7 +537,8 @@
    (with-access::audio-server as (%hmutex %state %thread %music)
       (set! %state 'close)
       (when (music? %music) (music-close %music))
-      (when (thread? %thread) (thread-terminate! %thread))))
+      (when (thread? %thread) (thread-terminate! %thread))
+      #f))
    
 ;*---------------------------------------------------------------------*/
 ;*    audio-server-close ...                                           */

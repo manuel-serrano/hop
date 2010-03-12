@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Thu Mar 11 16:13:30 2010 (serrano)                */
+/*    Last change :  Fri Mar 12 10:23:12 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -444,6 +444,18 @@ function hop_audio_html5_init( backend ) {
    backend.loadedurl = false;
    backend.isstopped = false;
 
+   var glop = false;
+   
+   hop_add_event_listener( backend, "durationchange",
+			   function( e ) {
+			      if( backend.duration > 0 ) {
+				 backend.current_duration = backend.duration;
+				 if( backend.state === Splay )
+				    hop_audio_invoke_listeners( backend.audio, "play" );
+			      }
+			   },
+			   true );
+      
    var make_html5listener = function( f ) {
       /* It is required to wrap actual listeners because the HTML5 backend */
       /* may be actually accessed via a server webmusic player. In that    */
@@ -735,7 +747,7 @@ function hop_audio_server_event_listener( e, backend ) {
 	 hop_audio_invoke_listeners( backend.audio, "stop" );
       } else if( k == Serror ) {
 	 // error
-/* 	 alert( "ERROR(hop-audio.js) " + e.value );                    */
+	 alert( "ERROR(hop-audio.js) " + e.value );
 	 hop_audio_invoke_listeners( backend.audio, "error", rest.car );
       } else if( k == Sabort ) {
 	 // abort
@@ -744,8 +756,6 @@ function hop_audio_server_event_listener( e, backend ) {
 	 hop_audio_invoke_listeners( backend.audio, "error", rest.car );
       } else if( k == Sclose ) {
 	 // close
-/* 	 alert( "ERROR(hop-audio.js) " + e.value );                    */
-	 hop_audio_close( backend.audio );
 	 hop_audio_invoke_listeners( backend.audio, "close", false );
       } else if( k == Smeta ) {
 	 // meta
@@ -839,7 +849,7 @@ function hop_audio_backend_set( audio, backend ) {
 	 if( audio.backend ) hop_audio_stop( audio );
 	 audio.backend = audio.browserbackend;
       }
-      hop_audio_invoke_listeners( audio, "backend" );
+      hop_audio_invoke_listeners( audio, "backend", "Browser"  );
    } else {
       if( audio.serverbackend ) {
 	 if( audio.backend !== audio.serverbackend ) {
@@ -847,7 +857,7 @@ function hop_audio_backend_set( audio, backend ) {
 	    audio.backend = audio.serverbackend;
 	 }
 	 audio.serverbackend.url = backend;
-	 hop_audio_invoke_listeners( audio, "backend" );
+	 hop_audio_invoke_listeners( audio, "backend", "Player" );
       } else {
 	 servbackend = new HopAudioServerBackend( audio, backend );
 	 audio.serverbackend = servbackend;
