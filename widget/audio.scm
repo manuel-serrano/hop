@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Thu Mar 11 17:39:35 2010 (serrano)                */
+;*    Last change :  Sun Mar 14 07:00:09 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -69,7 +69,6 @@
 		   (webmusic-audioserver-set! v o))
 		;; start a thread for the player
 		(let ((th (make-audio-server-thread o v)))
-		   (audio-server-%state-set! o 'init)
 		   (audio-server-%thread-set! o th)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -614,6 +613,7 @@
    
    (cond-expand
       (enable-threads
+       (audio-server-%state-set! as 'init)
        (let ((th (instantiate::pthread
 		    (body thread-body)
 		    (cleanup thread-cleanup))))
