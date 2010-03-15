@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Sun Mar 14 07:12:30 2010 (serrano)                */
+/*    Last change :  Mon Mar 15 10:13:46 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -706,6 +706,7 @@ function hop_audio_server_event_listener( e, backend ) {
       var k = e.value.car;
       var rest = e.value.cdr;
 
+      // we notify only if we are not using the browser player
       if( (k === Splay) || (k === Sstart) ) {
 	 // play
 	 backend.state = Splay;
@@ -763,9 +764,9 @@ function hop_audio_server_event_listener( e, backend ) {
 
 	 if( typeof val === "string" ) {
 	    backend.current_metadata = {
-	       title: sc_basename( val ),
-	       artist: sc_basename( sc_dirname( sc_dirname( val ) ) ),
-  	       album: sc_basename( sc_dirname( val ) )
+	    title: sc_basename( val ),
+	    artist: sc_basename( sc_dirname( sc_dirname( val ) ) ),
+	    album: sc_basename( sc_dirname( val ) )
 	    };
 	 } else if( val ) {
 	    backend.current_metadata = val;
@@ -1233,6 +1234,13 @@ function hop_audio_time_interval_set( audio ) {
 	       audio.min++; audio.sec = 0;
 	       hop_audio_update( audio );
 	    };
+	    if( audio.sec == 10
+		|| audio.sec == 20
+		|| audio.sec == 30
+		|| audio.sec == 40
+		|| audio.sec == 50 ) {
+	       hop_audio_update( audio );
+	    }
 	    pos.innerHTML = int2( audio.min ) + ":" + int2( audio.sec );
 
 	    if( duration > 0 )

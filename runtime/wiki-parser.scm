@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue Feb 16 07:43:18 2010 (serrano)                */
+;*    Last change :  Mon Mar 15 11:56:38 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -428,15 +428,21 @@
 	     (ignore))))
 
       (define (link-val s)
-	 (if (and (>fx (string-length s) 3) (substring-at? s ",(" 0))
+	 (cond
+	    ((and (>fx (string-length s) 3) (substring-at? s ",(" 0))
 	     (with-input-from-string (substring s 1 (string-length s))
 		(lambda ()
 		   (with-handler
 		      (lambda (e)
 			 (exception-notify e)
 			 "")
-		      (eval-wiki (hop-read (current-input-port))))))
-	     s))
+		      (eval-wiki (hop-read (current-input-port)))))))
+	    ((and (string? s)
+		  (>fx (string-length s) 0)
+		  (not (char=? (string-ref s 0) #\/)))
+	     (string-append (the-loading-dir) "/" s))
+	    (else
+	     s)))
 
       ;; continuation lines
       ((: #\\ (? #\Return) #\Newline)
