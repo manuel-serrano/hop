@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/widget/file.scm                   */
+;*    serrano/prgm/project/hop/2.1.x/widget/file.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Mon Feb  8 09:02:22 2010 (serrano)                */
+;*    Last change :  Wed Mar 17 14:27:35 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -174,13 +174,13 @@
 		    "filechooser")
 	 :onkeydown (format "hop_filechooser_key( this, ~s )" id)
 	 (<SCRIPT>
-	    (format "hop_window_onload_add( function( e ) { var el = document.getElementById( ~s ); ~a; ~a; ~a; ~a; } )"
+	    (format "hop_add_event_listener( window, 'ready', function( e ) { var el = document.getElementById( ~s ); ~a; ~a; ~a; ~a; }, false )"
 		    id
 		    (if onselect
 			(format "el.select = ~a" (obj->proc onselect))
 			"false")
 		    (if onopen
-			(format "el.open = ~a" (obj->proc onopen))
+			(format "el.open = ~a;" (obj->proc onopen))
 			"false")
 		    (if oncancel
 			(format "el.cancel = ~a" (obj->proc oncancel))
