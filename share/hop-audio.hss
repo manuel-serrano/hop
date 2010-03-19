@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 28 06:23:39 2007                          */
-/*    Last change :  Mon Mar  8 08:51:17 2010 (serrano)                */
+/*    Last change :  Thu Mar 18 10:09:18 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Audio's cascade style sheet.                                 */
@@ -198,9 +198,12 @@ audio slider.hop-audio-panel-pan {
 audio slider.hop-audio-seek {
   line-height: 0px;
   line-border-bottom: 1px solid white;
-  cursor-height: 6px;
 }
 
+audio slider.hop-audio-seek slidercursor {
+  height: 6px;
+}
+  
 /*---------------------------------------------------------------------*/
 /*    hop-audio-info-status                                            */
 /*---------------------------------------------------------------------*/

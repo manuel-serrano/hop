@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Feb 24 06:35:17 2010 (serrano)                */
+;*    Last change :  Fri Mar 19 12:20:01 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -26,7 +26,8 @@
 	       (directories read-only)
 	       (preferences-filename::obj read-only)
 	       (preferences::pair-nil (default '()))
-	       (data::obj (default #unspecified)))
+	       (data::obj (default #unspecified))
+	       (authentication::symbol read-only (default 'basic)))
 
 	   (class &hop-method-error::&io-parse-error)
 	   (class &hop-autoload-error::&io-error)
@@ -57,17 +58,16 @@
 	      (method::symbol read-only (default 'GET))
 	      (abspath::bstring (default ""))
 	      (query::obj (default #f))
-	      (connection::symbol (default 'keep-alive)))
+	      (connection::symbol (default 'keep-alive))
+	      (authorization (default #f)))
 
 	   (final-class http-server-request::http-request
-	      (authorization (default #f))
 	      (service::obj (default #unspecified)))
 
 	   (wide-class http-server-request+::http-server-request
 	      (%env (default #f)))
 
-	   (class http-proxy-request::http-request
-	      (proxy-authorization (default #f)))
+	   (class http-proxy-request::http-request)
 
 	   (class xml-http-request
 	      (status::int read-only)

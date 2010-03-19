@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/http-request.scm          */
+;*    serrano/prgm/project/hop/2.1.x/runtime/http-request.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Dec 14 05:32:00 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Fri Mar 19 12:20:06 2010 (serrano)                */
+;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
 ;*    -------------------------------------------------------------    */
@@ -143,6 +143,7 @@
 	       (trace-item "abspath=" abspath
 			   " query=" query
 			   " connection=" connection)
+
 	       (let ((user (or (and (string? auth)
 				    (find-authenticated-user auth abspath))
 			       (and (string? pauth)
@@ -165,7 +166,7 @@
 			 (host (or actual-host hostname "localhost"))
 			 (content-length cl)
 			 (transfer-encoding te)
-			 (proxy-authorization pauth)
+			 (authorization pauth)
 			 (connection connection)
 			 (user user))
 		      (instantiate::http-server-request

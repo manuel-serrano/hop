@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Wed Mar 17 13:44:32 2010 (serrano)                */
+/*    Last change :  Thu Mar 18 07:56:43 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -705,8 +705,6 @@ function hop_audio_server_event_listener( e, backend ) {
    if( sc_isPair( e.value ) ) {
       var k = e.value.car;
       var rest = e.value.cdr;
-
-      // we notify only if we are not using the browser player
       if( (k === Splay) || (k === Sstart) ) {
 	 var li = rest.cdr.cdr.cdr.car;
 	 // play

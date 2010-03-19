@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Feb 16 14:12:44 2010 (serrano)                */
+;*    Last change :  Fri Mar 19 09:22:21 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -48,6 +48,9 @@
 	    
 	    (hop-session::int)
 	    (hop-session-set! ::int)
+
+	    (hop-realm::bstring)
+	    (hop-realm-set! ::bstring)
 	    
 	    (hop-login-cookie-id::bstring)
 	    (hop-login-cookie-time::int)
@@ -357,6 +360,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-session
    (elong->fixnum (date->seconds (current-date))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-realm ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-realm
+   "hop")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-login-cookie-id ...                                          */

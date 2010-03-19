@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/http-lib.scm              */
+;*    serrano/prgm/project/hop/2.1.x/runtime/http-lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Tue Dec 15 09:08:46 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Fri Mar 19 13:21:17 2010 (serrano)                */
+;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
 ;*=====================================================================*/
@@ -29,7 +29,7 @@
 	    (http-basic-base64-authentication? ::http-request ::pair-nil)
 	    (http-basic-authorization::bstring ::bstring ::bstring)
 	    (http-htaccess-authentication? ::http-request ::bstring)
-	    (http-decode-authentication::bstring ::bstring)
+	    (http-parse-authentication::pair ::bstring)
 	    (http-write-header ::output-port ::pair-nil)
 	    (http-filter-proxy-header::pair-nil ::pair-nil)
 	    (http-parse-range ::bstring)))
@@ -173,19 +173,67 @@
    (string-append "Basic " (base64-encode (string-append name ":" passwd))))
 
 ;*---------------------------------------------------------------------*/
-;*    http-decode-authentication ...                                   */
+;*    digest-grammar ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (http-decode-authentication auth)
+(define digest-grammar
+   (regular-grammar ()
+      ((: (+ (in ("az") "-")) "=")
+       (let* ((k (the-subsymbol 0 -1))
+	      (v (ignore)))
+	  (cons (cons k v) (ignore))))
+      ((: #\" (* (out #\")) #\")
+       (the-substring 1 -1))
+      ((: (+ (out "\",=\n\t\t")) #\,)
+       (the-substring 0 -1))
+      ((+ (in ", \n\t"))
+       (ignore))
+      (else
+       (let ((c (the-failure)))
+	  (if (eof-object? c)
+	      '()
+	      (parse-error 'digest-decode
+			   "Illegal digest header field"
+			   (http-parse-error-message c (the-port))))))))
+
+;*---------------------------------------------------------------------*/
+;*    digest-decode ...                                                */
+;*---------------------------------------------------------------------*/
+(define (digest-decode port)
+   
+   (define (get k l)
+      (let ((c (assq k l)))
+	 (if (pair? c)
+	     (cdr c)
+	     (parse-error 'digest-decode
+			  "Illegal digest header field missing"
+			  k))))
+
+   (define (find k l)
+      (let ((c (assq k l)))
+	 (if (pair? c)
+	     (cdr c)
+	     #f)))
+
+   (read/rp digest-grammar port))
+
+;*---------------------------------------------------------------------*/
+;*    http-parse-authentication ...                                    */
+;*---------------------------------------------------------------------*/
+(define (http-parse-authentication auth)
+   
    (define authentication-grammar
       (regular-grammar ((SP #\Space))
 	 ((: (* SP) "Basic" (+ SP))
-	  (base64-decode (read/rp password-grammar (the-port))))
+	  (cons 'basic (base64-decode (read/rp password-grammar (the-port)))))
+	 ((: (* SP) "Digest" (+ SP))
+	  (cons 'digest (digest-decode (the-port))))
 	 (else
-	  auth)))
+	  (cons 'url auth))))
+   
    (let* ((p (open-input-string auth))
-	  (s (read/rp authentication-grammar p)))
+	  (o (read/rp authentication-grammar p)))
       (close-input-port p)
-      s))
+      o))
    
 ;*---------------------------------------------------------------------*/
 ;*    http-htaccess-authentication? ...                                */
