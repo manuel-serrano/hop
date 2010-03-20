@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Fri Mar 19 13:21:17 2010 (serrano)                */
+;*    Last change :  Fri Mar 19 19:21:33 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -173,47 +173,30 @@
    (string-append "Basic " (base64-encode (string-append name ":" passwd))))
 
 ;*---------------------------------------------------------------------*/
-;*    digest-grammar ...                                               */
-;*---------------------------------------------------------------------*/
-(define digest-grammar
-   (regular-grammar ()
-      ((: (+ (in ("az") "-")) "=")
-       (let* ((k (the-subsymbol 0 -1))
-	      (v (ignore)))
-	  (cons (cons k v) (ignore))))
-      ((: #\" (* (out #\")) #\")
-       (the-substring 1 -1))
-      ((: (+ (out "\",=\n\t\t")) #\,)
-       (the-substring 0 -1))
-      ((+ (in ", \n\t"))
-       (ignore))
-      (else
-       (let ((c (the-failure)))
-	  (if (eof-object? c)
-	      '()
-	      (parse-error 'digest-decode
-			   "Illegal digest header field"
-			   (http-parse-error-message c (the-port))))))))
-
-;*---------------------------------------------------------------------*/
 ;*    digest-decode ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (digest-decode port)
    
-   (define (get k l)
-      (let ((c (assq k l)))
-	 (if (pair? c)
-	     (cdr c)
-	     (parse-error 'digest-decode
-			  "Illegal digest header field missing"
-			  k))))
-
-   (define (find k l)
-      (let ((c (assq k l)))
-	 (if (pair? c)
-	     (cdr c)
-	     #f)))
-
+   (define digest-grammar
+      (regular-grammar ()
+	 ((: (+ (in ("az") "-")) "=")
+	  (let* ((k (the-subsymbol 0 -1))
+		 (v (ignore)))
+	     (cons (cons k v) (ignore))))
+	 ((: #\" (* (out #\")) #\")
+	  (the-substring 1 -1))
+	 ((: (+ (out "\",=\n\t\t")) #\,)
+	  (the-substring 0 -1))
+	 ((+ (in ", \n\t"))
+	  (ignore))
+	 (else
+	  (let ((c (the-failure)))
+	     (if (eof-object? c)
+		 '()
+		 (parse-error 'digest-decode
+			      "Illegal digest header field"
+			      (http-parse-error-message c (the-port))))))))
+   
    (read/rp digest-grammar port))
 
 ;*---------------------------------------------------------------------*/

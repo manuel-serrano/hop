@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Mar 19 09:22:21 2010 (serrano)                */
+;*    Last change :  Sat Mar 20 08:34:34 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -46,6 +46,9 @@
 	    (hop-security::int)
 	    (hop-security-set! ::int)
 	    
+	    (hop-http-authentication::symbol)
+	    (hop-http-authentication-set! ::symbol)
+
 	    (hop-session::int)
 	    (hop-session-set! ::int)
 
@@ -354,6 +357,11 @@
 ;*    hop-security ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-security 1)
+
+;*---------------------------------------------------------------------*/
+;*    hop-http-authentication ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-http-authentication 'digest)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-session ...                                                  */

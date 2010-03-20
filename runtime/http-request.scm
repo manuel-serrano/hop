@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Mar 19 12:20:06 2010 (serrano)                */
+;*    Last change :  Fri Mar 19 19:45:30 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -145,11 +145,11 @@
 			   " connection=" connection)
 
 	       (let ((user (or (and (string? auth)
-				    (find-authenticated-user auth abspath))
+				    (find-authenticated-user auth abspath method))
 			       (and (string? pauth)
-				    (find-authenticated-user pauth abspath))
+				    (find-authenticated-user pauth abspath method))
 			       (and (string? userinfo)
-				    (find-authenticated-user userinfo abspath))
+				    (find-authenticated-user userinfo abspath method))
 			       (anonymous-user))))
 		  (if (string? hostname)
 		      (instantiate::http-proxy-request

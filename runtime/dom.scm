@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/dom.scm                   */
+;*    serrano/prgm/project/hop/2.1.x/runtime/dom.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Thu Dec 17 14:43:26 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Sat Mar 20 07:17:08 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
 ;*=====================================================================*/
@@ -114,6 +114,12 @@
 (define-method (dom-get-element-by-id obj::xml-delay id)
    (when (string=? id (xml-delay-id obj))
       obj))
+
+;*---------------------------------------------------------------------*/
+;*    dom-get-element-by-id ::xml-markup ...                           */
+;*---------------------------------------------------------------------*/
+(define-method (dom-get-element-by-id obj::xml-markup id)
+   (dom-get-element-by-id* (xml-markup-body obj) id))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-element-by-id ::xml-element ...                          */
