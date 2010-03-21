@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/share/Makefile                    */
+#*    serrano/prgm/project/hop/2.1.x/share/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Feb  5 10:56:25 2010 (serrano)                */
+#*    Last change :  Sun Mar 21 12:08:15 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */

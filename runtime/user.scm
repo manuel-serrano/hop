@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sat Mar 20 08:36:40 2010 (serrano)                */
+;*    Last change :  Sun Mar 21 07:02:07 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -93,6 +93,7 @@
 	 (cname (make-file-path
 		 (hop-rc-directory) "users" (string-append name ".prefs")))
 	 (c '())
+	 (u #f)
 	 (d (list (hop-share-directory)
 		  (hop-cache-directory)
 		  (hop-var-directory))))
@@ -128,7 +129,8 @@
 				(services s)
 				(preferences (append c prefs))
 				(preferences-filename cname)
-				(directories d))))
+				(directories d)
+				(uri u))))
 		      (if (hashtable-get *users* name)
 			  (begin
 			     (hashtable-remove! *users* name)
@@ -168,6 +170,8 @@
 		 (set! c (append c (cadr a))))
 		((:preferences-filename)
 		 (set! cname (cadr a)))
+		((:uri)
+		 (set! u (cadr a)))
 		(else
 		 (error 'add-user! "Illegal argument" args)))
 	     (loop (cddr a)))))))
