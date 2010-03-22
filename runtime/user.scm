@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sun Mar 21 07:02:07 2010 (serrano)                */
+;*    Last change :  Sun Mar 21 13:59:24 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -208,7 +208,7 @@
 ;*    hpassword ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (hpassword pass)
-   (string-append (integer->string (hop-session)) ":" pass))
+   (md5sum (string-append (integer->string (hop-session)) ":" pass)))
 
 ;*---------------------------------------------------------------------*/
 ;*    encrypt-authentication ...                                       */
@@ -223,7 +223,7 @@
 		       (user-authentication u)
 		       'basic)))
 	     (k (hpassword (password-encrypt n p m))))
-	 (string-append "HO0" n ":" (md5sum k))))
+	 (string-append "HO0" n ":" k)))
 
    (define (encrypt-ho1-authentication i auth path)
       (let* ((n (substring auth 0 i))
@@ -232,8 +232,9 @@
 		   (if (user? u)
 		       (user-authentication u)
 		       'basic)))
-	     (k (hpassword (password-encrypt n p m))))
-	 (string-append "HO1" n ":" (md5sum (string-append k ":" path)))))
+	     (k (hpassword (string-append (password-encrypt n p m) ":" path))))
+	 (tprint "encrypt=" (password-encrypt n p m)" path=" path " -> k=" k)
+	 (string-append "HO1" n ":" k)))
    
    (let ((a (http-parse-authentication auth)))
       (case (car a)
@@ -279,18 +280,21 @@
       (let ((u (hashtable-get *users* n)))
 	 (if (user? u)
 	     (with-access::user u (password)
-		(if (string=? (md5sum (hpassword password)) md5p)
-		    (add-cached-user! auth u)
-		    (cannot-authenticate "HO0" n)))
+		(let ((p (hpassword password)))
+		   (if (string=? p md5p)
+		       (add-cached-user! auth u)
+		       (cannot-authenticate "HO0" n))))
 	     (cannot-authenticate "HO0:" n))))
    
    (define (find-ho1-authentication n md5p path)
       (let ((u (hashtable-get *users* n)))
 	 (if (user? u)
 	     (with-access::user u (password)
-		(if (string=? (md5sum (string-append (hpassword password) ":" path)) md5p)
-		    (add-cached-user! auth u)
-		    (cannot-authenticate  "H01:" n)))
+		(let ((p (hpassword (string-append password ":" path))))
+		   (tprint "password=" password " path=" path "-> p=" p)
+		   (if (string=? p md5p)
+		       (add-cached-user! auth u)
+		       (cannot-authenticate  "H01:" n))))
 	     (cannot-authenticate  "H01:" n))))
 
    (define (find-digest-authentication l)
