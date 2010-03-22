@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sun Mar 21 13:59:24 2010 (serrano)                */
+;*    Last change :  Mon Mar 22 12:05:57 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -205,10 +205,16 @@
        (digest-password-encrypt n p)))
 
 ;*---------------------------------------------------------------------*/
-;*    hpassword ...                                                    */
+;*    h0password ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (hpassword pass)
-   (md5sum (string-append (integer->string (hop-session)) ":" pass)))
+(define (h0password pass path)
+   (md5sum (string-append pass ":" path)))
+
+;*---------------------------------------------------------------------*/
+;*    h1password ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (h1password pass path)
+   (md5sum (string-append (integer->string (hop-session)) ":" pass ":" path)))
 
 ;*---------------------------------------------------------------------*/
 ;*    encrypt-authentication ...                                       */
@@ -222,7 +228,7 @@
 		   (if (user? u)
 		       (user-authentication u)
 		       'basic)))
-	     (k (hpassword (password-encrypt n p m))))
+	     (k (h0password (password-encrypt n p m) path)))
 	 (string-append "HO0" n ":" k)))
 
    (define (encrypt-ho1-authentication i auth path)
@@ -232,8 +238,8 @@
 		   (if (user? u)
 		       (user-authentication u)
 		       'basic)))
-	     (k (hpassword (string-append (password-encrypt n p m) ":" path))))
-	 (tprint "encrypt=" (password-encrypt n p m)" path=" path " -> k=" k)
+	     (k (h1password (password-encrypt n p m) path)))
+	 (tprint "encrypt, password=" (password-encrypt n p m)" path=" path " -> k=" k)
 	 (string-append "HO1" n ":" k)))
    
    (let ((a (http-parse-authentication auth)))
@@ -280,7 +286,7 @@
       (let ((u (hashtable-get *users* n)))
 	 (if (user? u)
 	     (with-access::user u (password)
-		(let ((p (hpassword password)))
+		(let ((p (h0password password path)))
 		   (if (string=? p md5p)
 		       (add-cached-user! auth u)
 		       (cannot-authenticate "HO0" n))))
@@ -290,8 +296,8 @@
       (let ((u (hashtable-get *users* n)))
 	 (if (user? u)
 	     (with-access::user u (password)
-		(let ((p (hpassword (string-append password ":" path))))
-		   (tprint "password=" password " path=" path "-> p=" p)
+		(let ((p (h1password password path)))
+		   (tprint "decrypt, password=" password " path=" path "-> p=" p)
 		   (if (string=? p md5p)
 		       (add-cached-user! auth u)
 		       (cannot-authenticate  "H01:" n))))

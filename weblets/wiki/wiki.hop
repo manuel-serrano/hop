@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Mar  2 10:27:05 2010 (serrano)                */
+;*    Last change :  Mon Mar 22 10:15:39 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -152,7 +152,7 @@
 				  (path #f)
 				  (class "wiki")
 				  body)
-   (<BODY> :class class
+   (<BODY> :class class :wikimode (if compiled "compiled" "plain")
       (<DIV> :align 'center
 	 (if compiled
 	     (<TABLE> :class "wiki"
@@ -337,10 +337,11 @@
 				  (<EDIT:EDIT> file))))))))
 	 (<DIV> :class "wiki-head" :id "wiki-head")
 	 (when (cadr body)
-	    (<DIV> :class "wiki-toc" :id "wiki-toc" (cadr body))
-	    (<DIV> :class "wiki-toc wiki-toc-popup" :id "wiki-toc-popup"
-	       :onclick ~(wiki-hide-toc-popup this)
-	       (cadr body)))
+	    (list
+	     (<DIV> :class "wiki-toc" :id "wiki-toc" (cadr body))
+	     (<DIV> :class "wiki-toc wiki-toc-popup" :id "wiki-toc-popup"
+		:onclick ~(wiki-hide-toc-popup this)
+		(cadr body))))
 	 (<DIV> :class "wiki-body" :id "wiki-body" (cddr body))
 	 (<DIV> :class "wiki-foot" :id "wiki-foot"))))
 

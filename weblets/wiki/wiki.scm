@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 10 09:57:17 2009                          */
-;*    Last change :  Tue Mar  2 10:24:20 2010 (serrano)                */
+;*    Last change :  Mon Mar 22 10:13:36 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki runtime system                                              */
@@ -13,7 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module wiki_client
-   (export (wiki-hide-toc-popup obj)))
+   (export (wiki-hide-toc-popup obj)
+	   (wiki-show-toc-popup obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-key-modifier ...                                            */
