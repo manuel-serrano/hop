@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Mon Mar  8 19:58:50 2010 (serrano)                */
+/*    Last change :  Mon Mar 22 16:48:20 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -15,7 +15,7 @@
 /*** META ((export Math) (JS Math)) */
 /*** META ((export eval) (JS eval)) */
 /*** META ((export hop_update) (JS hop_update)) */
-/*** META ((export confirm) (JS comfirm)) */
+/*** META ((export confirm) (JS confirm)) */
 /*** META ((export setInterval) (JS setInterval)) */
 /*** META ((export clearInterval) (JS clearInterval)) */
 /*** META ((export arguments) (JS arguments)) */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Thu Mar 18 07:56:43 2010 (serrano)                */
+/*    Last change :  Tue Mar 23 07:46:15 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -300,6 +300,16 @@ HTMLAudioElement.prototype.position_get = function() {
 HTMLAudioElement.prototype.position_set = function( val ) {
    this.currentTime = val;
    return val;
+};
+
+// pan_get
+HTMLAudioElement.prototype.pan_get = function() {
+   return 0;
+};
+
+// pan_set
+HTMLAudioElement.prototype.pan_set = function( v ) {
+   return 0;
 };
 
 // playlist_index_get
@@ -705,18 +715,21 @@ function hop_audio_server_event_listener( e, backend ) {
    if( sc_isPair( e.value ) ) {
       var k = e.value.car;
       var rest = e.value.cdr;
+      
       if( (k === Splay) || (k === Sstart) ) {
 	 var li = rest.cdr.cdr.cdr.car;
 	 // play
 	 backend.current_duration = rest.car;
 	 backend.current_position = rest.cdr.car;
-	 backend.playlist = rest.cdr.cdr.cdr.cdr.car;
 
 	 if( backend.current_volume != rest.cdr.cdr.car ) {
 	    backend.current_volume = rest.cdr.cdr.car;
 	    hop_audio_invoke_listeners( backend.audio, "volume" );
 	 }
-	 if( backend.state != Splay || backend.playlistindex != li ) {
+	 if( backend.state != Splay
+	     || backend.playlistindex != li
+	     || !sc_equal( backend.playlist, rest.cdr.cdr.cdr.cdr.car ) ) {
+	    backend.playlist = rest.cdr.cdr.cdr.cdr.car;
 	    backend.state = Splay;
 	    backend.playlistindex = li;
 	    hop_audio_invoke_listeners( backend.audio, "play" );

@@ -28,6 +28,10 @@ body {
   font-family: arial, sans serif;
 }
 
+div.foot {
+  margin-top: 2ex;
+}
+
 tt {
   font-family: Bitstream Vera Sans Mono, Andale Mono, monospace;
   font-size: 80%;
