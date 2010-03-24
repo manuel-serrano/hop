@@ -52,6 +52,10 @@ img.logo {
   user-select: none;
 }
 
+div.foot {
+  margin-top: 2ex;
+}
+
 /*--- dashboard -------------------------------------------------------*/
 body.hop-dashboard-panel {
   background-color: white;
