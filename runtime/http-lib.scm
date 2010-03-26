@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Fri Mar 19 19:21:33 2010 (serrano)                */
+;*    Last change :  Fri Mar 26 09:54:01 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -30,6 +30,7 @@
 	    (http-basic-authorization::bstring ::bstring ::bstring)
 	    (http-htaccess-authentication? ::http-request ::bstring)
 	    (http-parse-authentication::pair ::bstring)
+	    (http-decode-authentication::obj ::bstring)
 	    (http-write-header ::output-port ::pair-nil)
 	    (http-filter-proxy-header::pair-nil ::pair-nil)
 	    (http-parse-range ::bstring)))
@@ -217,6 +218,15 @@
 	  (o (read/rp authentication-grammar p)))
       (close-input-port p)
       o))
+
+;*---------------------------------------------------------------------*/
+;*    http-decode-authentication ...                                   */
+;*---------------------------------------------------------------------*/
+(define (http-decode-authentication auth)
+   (let ((pauth (http-parse-authentication auth)))
+      (case (car pauth)
+	 ((basic url) (cdr pauth))
+	 (else #f))))
    
 ;*---------------------------------------------------------------------*/
 ;*    http-htaccess-authentication? ...                                */

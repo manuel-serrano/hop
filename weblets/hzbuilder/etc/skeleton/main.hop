@@ -37,7 +37,7 @@
 ;; <@HZUPCASE@:BODY> widget
 (define-xml-compound <@HZUPCASE@:BODY>
       ((class "@HZ@")
-       (header string "")
+       (header "" string)
        (prefs #f)
        body)
    (<BODY> :class class
