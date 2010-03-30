@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-dashboard.js            */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-dashboard.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Thu Feb 11 11:13:26 2010 (serrano)                */
+/*    Last change :  Fri Mar 26 13:11:10 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */

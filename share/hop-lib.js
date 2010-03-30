@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Mon Mar 22 16:48:20 2010 (serrano)                */
+/*    Last change :  Mon Mar 29 17:02:09 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -19,6 +19,10 @@
 /*** META ((export setInterval) (JS setInterval)) */
 /*** META ((export clearInterval) (JS clearInterval)) */
 /*** META ((export arguments) (JS arguments)) */
+/*** META ((export hop-session) (JS hop_session)) */
+/*** META ((export hop-realm) (JS hop_realm)) */
+/*** META ((export md5sum) (JS md5sum)) */
+/*** META ((export md5sum-string) (JS hdex_md5)) */
 
 /*---------------------------------------------------------------------*/
 /*    hop_callback ...                                                 */
@@ -130,6 +134,20 @@ function hop_in( field, obj ) {
 */
 function hop_instanceof( obj, klass ) {
    return obj instanceof klass;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_properties_to_list ...                                       */
+/*---------------------------------------------------------------------*/
+/*** META ((export js-properties->list) (arity #t)) */
+function hop_properties_to_list( obj ) {
+   var res = null;
+
+   for( var p in obj ) {
+      res = sc_cons( sc_cons( p, obj[ p ] ), res );
+   }
+   
+   return sc_reverseBang( res );
 }
 
 /*---------------------------------------------------------------------*/

@@ -102,7 +102,7 @@
 
 ;; m.header must be of form (module sym ...)
 (define (normalize-module-header! m::WIP-Unit)
-   (define (add-new-els! acc new-elements)
+   (define (add-new-els! acc new-elements loc)
       (let loop ((new-els new-elements))
 	 (cond
 	    ((null? new-els) 'done)
@@ -123,7 +123,7 @@
 	      "module"
 	      "invalid module-clause"
 	      new-els
-	      new-elements)))))
+	      loc)))))
 	     
    (with-access::WIP-Unit m (header)
       (let loop ((h (cddr header))
@@ -145,24 +145,24 @@
 	     (scheme2js-error "module"
 			      "invalid module-clause"
 			      h
-			      (car h)))
+			      header))
 	    (else
 	     (let* ((clause (car h))
 		    (acc (assq (car clause) rev-res)))
 		(cond
 		   (acc ;; already have an entry for this kind.
-		    (add-new-els! acc (cdr clause))
+		    (add-new-els! acc (cdr clause) header)
 		    (loop (cdr h) rev-res))
 		   ((epair? clause)
 		    (let ((acc (econs (car clause)
 				      '()
 				      (cer clause))))
-		       (add-new-els! acc (cdr clause))
+		       (add-new-els! acc (cdr clause) header)
 		       (loop (cdr h)
 			     (cons acc rev-res))))
 		   (else
 		    (let ((acc (list (car clause))))
-		       (add-new-els! acc (cdr clause))
+		       (add-new-els! acc (cdr clause) header)
 		       (loop (cdr h)
 			     (cons acc rev-res)))))))))))
 
@@ -446,14 +446,21 @@
 		 ;; replace and provide are complete module-headers (they
 		 ;; must start with (module ...)
 		 (new-name (select-name header replace provide)))
-	     (set! header `(module ,new-name
+	     (let ((h `(module ,new-name
 			      ,@(apply append merge-firsts)
 			      ,@(cond
 				   (replace (cddr replace))
 				   (header (cddr header))
 				   (provide (cddr header))
 				   (else '()))
-			      ,@(apply append merge-lasts))))))))
+			      ,@(apply append merge-lasts))))
+		(cond
+		   ((epair? replace)
+		    (set! header (econs (car h) (cdr h) (cer replace))))
+		   ((epair? header)
+		    (set! header (econs (car h) (cdr h) (cer header))))
+		   (else
+		    (set! header h)))))))))
 
 (define (set-name! m::WIP-Unit)
    (with-access::WIP-Unit m (header name declared-module?)

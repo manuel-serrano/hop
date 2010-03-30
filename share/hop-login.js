@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-login.js                */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-login.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Mar  9 16:20:17 2008                          */
-/*    Last change :  Sun Feb  7 08:27:07 2010 (serrano)                */
+/*    Last change :  Tue Mar 30 08:14:05 2010 (serrano)                */
 /*    Copyright   :  2008-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop login panel                                                  */
@@ -17,6 +17,7 @@ function  hop_login_prompt( id, user, pass ) {
       + ((user || (user instanceof String) || (typeof user === "string")) ?
 	 " <tr><th>Login name</th><td><input type='text' id='hop_login_user_" + id + "' value='" + user + "'></input></td></tr>" : "")
       + " <tr><th>Password</th><td><input type='password' id='hop_login_password_" + id + "' value='" + (pass ? pass : "") + "'></input></td></tr>"
+      + " <tr class='schema'><th>Encryption</th><td>basic<input type='radio' name='hop_login_schema_" + id + "'></input>digest<input type='radio' id='hop_login_schema_digest_" + id + "' checked name='hop_login_schema_" + id + "'></input></td></tr>"
       + " <tr>"
       + "  <td colspan=2>"
       + "   <table class='hop_login_button'>"
@@ -121,6 +122,7 @@ function hop_login_panel() {
    ok = document.getElementById( 'hop_login_login_' + id );
    cancel = document.getElementById( 'hop_login_cancel_' + id );
    passwd = document.getElementById( "hop_login_password_" + id );
+   schema = document.getElementById( "hop_login_schema_digest_" + id );
 
    if( message ) {
       var msg = document.getElementById( 'hop_login_message_' + id );
@@ -143,6 +145,7 @@ function hop_login_panel() {
       var eluser = document.getElementById( "hop_login_user_" + id );
       e.user = eluser ? eluser.value : false;
       e.password = passwd.value;
+      e.schema = schema.checked ? sc_jsstring2symbol( "digest" ) : sc_jsstring2symbol( "basic" );
       node_style_set( login, "display", "none" );
       document.body.removeChild( login );
 	 
@@ -159,6 +162,7 @@ function hop_login_panel() {
 	 var eluser = document.getElementById( "hop_login_user_" + id );
 	 e.user = eluser ? eluser.value : false;
 	 e.password = passwd.value;
+	 e.schema = schema.checked ? sc_jsstring2symbol( "digest" ) : sc_jsstring2symbol( "basic" );
 	 if( oncancel ) oncancel( e );
 	 node_style_set( login, "display", "none" );
 	 document.body.removeChild( login );

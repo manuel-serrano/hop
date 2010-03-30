@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon Mar 22 12:05:57 2010 (serrano)                */
+;*    Last change :  Tue Mar 30 09:19:10 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -20,14 +20,15 @@
 	    __hop_http-lib
 	    __hop_misc
 	    __hop_service
-	    __hop_cache)
-   
+	    __hop_cache
+	    __hop_password)
+
    (export  (users-close!)
 	    (add-user! ::bstring . opt)
 	    (user-exists? ::bstring)
-	    (encrypt-authentication::bstring ::symbol ::bstring ::bstring)
+	    (user-authentication-encrypt::bstring ::symbol ::bstring ::bstring)
 	    (anonymous-user::user)
-	    (find-authenticated-user ::bstring ::bstring ::symbol)
+	    (find-authenticated-user ::bstring ::bstring ::symbol ::bstring)
 	    (find-user ::bstring ::bstring)
 	    (find-user/encrypt ::bstring ::bstring ::procedure)
 	    (user-authorized-request?::bool ::user ::http-request)
@@ -185,81 +186,23 @@
 	 (user? (hashtable-get *users* name)))))
 
 ;*---------------------------------------------------------------------*/
-;*    basic-password-encrypt ...                                       */
+;*    user-authentication-encrypt ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (basic-password-encrypt n p)
-   (md5sum (string-append n " " p)))
-
-;*---------------------------------------------------------------------*/
-;*    digest-password-encrypt ...                                      */
-;*---------------------------------------------------------------------*/
-(define (digest-password-encrypt n p)
-   (md5sum (string-append n ":" (hop-realm) ":" p)))
-
-;*---------------------------------------------------------------------*/
-;*    password-encrypt ...                                             */
-;*---------------------------------------------------------------------*/
-(define (password-encrypt n p method)
-   (if (eq? method 'basic)
-       (basic-password-encrypt n p)
-       (digest-password-encrypt n p)))
-
-;*---------------------------------------------------------------------*/
-;*    h0password ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (h0password pass path)
-   (md5sum (string-append pass ":" path)))
-
-;*---------------------------------------------------------------------*/
-;*    h1password ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (h1password pass path)
-   (md5sum (string-append (integer->string (hop-session)) ":" pass ":" path)))
-
-;*---------------------------------------------------------------------*/
-;*    encrypt-authentication ...                                       */
-;*---------------------------------------------------------------------*/
-(define (encrypt-authentication algo auth path)
-   
-   (define (encrypt-ho0-authentication i auth path)
-      (let* ((n (substring auth 0 i))
-	     (p (substring auth (+fx i 1) (string-length auth)))
-	     (m (let ((u (hashtable-get *users* n)))
-		   (if (user? u)
-		       (user-authentication u)
-		       'basic)))
-	     (k (h0password (password-encrypt n p m) path)))
-	 (string-append "HO0" n ":" k)))
-
-   (define (encrypt-ho1-authentication i auth path)
-      (let* ((n (substring auth 0 i))
-	     (p (substring auth (+fx i 1) (string-length auth)))
-	     (m (let ((u (hashtable-get *users* n)))
-		   (if (user? u)
-		       (user-authentication u)
-		       'basic)))
-	     (k (h1password (password-encrypt n p m) path)))
-	 (tprint "encrypt, password=" (password-encrypt n p m)" path=" path " -> k=" k)
-	 (string-append "HO1" n ":" k)))
-   
+(define (user-authentication-encrypt algo auth path)
    (let ((a (http-parse-authentication auth)))
       (case (car a)
 	 ((basic url)
 	  (let* ((auth (cdr a))
-		 (i (string-index auth #\:)))
-	     (if (not (fixnum? i))
-		 (error 'encrypt-authentication "Illegal authentication" auth)
-		 (case algo
-		    ((none)
-		     auth)
-		    ((ho0)
-		     (encrypt-ho0-authentication i auth path))
-		    ((ho1)
-		     (encrypt-ho1-authentication i auth path))
-		    (else
-		     (error 'encrypt-authentication "Illegal algorithm" algo))))))
+		 (i (string-index auth #\:))
+		 (n (substring auth 0 i))
+		 (p (substring auth (+fx i 1) (string-length auth)))
+		 (s (let ((u (hashtable-get *users* n)))
+		       (if (user? u)
+			   (user-authentication u)
+			   'basic))))
+	     (authentication-encrypt s algo (hop-session) n p path)))
 	 (else
-	  (error 'encrypt-authentication "Illegal authentication" auth)))))
+	  (error 'user-authentication-encrypt "Illegal authentication" auth)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-authorized-user ...                                         */
@@ -267,7 +210,7 @@
 ;*    This function never raises an error. It returns #f if something  */
 ;*    goes wrong.                                                      */
 ;*---------------------------------------------------------------------*/
-(define (find-authorized-user auth l::pair path::bstring method::symbol)
+(define (find-authorized-user auth l::pair path::bstring method::symbol ip::bstring)
 
    (define (cannot-authenticate m n)
       (hop-verb 2 m "Can't authentify user: " n "\n")
@@ -296,12 +239,21 @@
       (let ((u (hashtable-get *users* n)))
 	 (if (user? u)
 	     (with-access::user u (password)
-		(let ((p (h1password password path)))
-		   (tprint "decrypt, password=" password " path=" path "-> p=" p)
+		(let ((p (h1password password path (hop-session))))
 		   (if (string=? p md5p)
 		       (add-cached-user! auth u)
 		       (cannot-authenticate  "H01:" n))))
 	     (cannot-authenticate  "H01:" n))))
+
+   (define (find-ho2-authentication n md5p path)
+      (let ((u (hashtable-get *users* n)))
+	 (if (user? u)
+	     (with-access::user u (password)
+		(let ((p (h2password password path (hop-session) ip)))
+		   (if (string=? p md5p)
+		       (add-cached-user! auth u)
+		       (cannot-authenticate  "H02:" n))))
+	     (cannot-authenticate  "H02:" n))))
 
    (define (find-digest-authentication l)
       
@@ -375,6 +327,9 @@
 		   ((substring-at? s "HO1" 0)
 		    (let ((n (substring s 3 (string-length s))))
 		       (find-ho1-authentication n p path)))
+		   ((substring-at? s "HO2" 0)
+		    (let ((n (substring s 3 (string-length s))))
+		       (find-ho2-authentication n p path)))
 		   (else
 		    (find-none-authentication s p)))))))
       ((digest)
@@ -453,10 +408,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    The authorization is of the form "Basic <base64string>".         */
 ;*---------------------------------------------------------------------*/
-(define (find-authenticated-user auth path method)
+(define (find-authenticated-user auth path method ip)
    (and (string? auth)
 	(or (find-cached-user auth)
-	    (find-authorized-user auth (http-parse-authentication auth) path method))))
+	    (find-authorized-user auth (http-parse-authentication auth) path method ip))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-unauthenticated-user ...                                    */
@@ -616,8 +571,10 @@
 	      (eq? http 'HTTP/1.0)
 	      (let ((user (find-unauthenticated-user req)))
 		 (and (user? user) (eq? (user-authentication user) 'basic))))
-	  `((WWW-Authenticate: . ,(basic-authenticate req)))
-	  `((WWW-Authenticate: . ,(digest-authenticate req))))))
+	  `((WWW-Authenticate: . ,(basic-authenticate req))
+	    (hop-session: . ,(hop-session)))
+	  `((WWW-Authenticate: . ,(digest-authenticate req))
+	    (hop-session: . ,(hop-session)))))) ;
 
 ;*---------------------------------------------------------------------*/
 ;*    user-access-denied ...                                           */

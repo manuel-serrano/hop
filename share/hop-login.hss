@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-login.hss               */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-login.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Mar  9 16:52:54 2008                          */
-/*    Last change :  Sun Feb  7 08:27:57 2010 (serrano)                */
+/*    Last change :  Tue Mar 30 08:12:20 2010 (serrano)                */
 /*    Copyright   :  2008-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop login                                                        */
@@ -141,6 +141,15 @@ hop-login-panel table.hop-login-prompt input {
   max-width: 30em;
   border-width: 1px;
   font-size: 80%;
+}
+
+hop-login-panel table.hop-login-prompt tr.schema td {
+  font-size: 75%;
+  color: #555;
+}
+
+hop-login-panel table.hop-login-prompt input[type=radio] {
+  margin-right: 5ex;
 }
 
 hop-login-panel table.hop-login-prompt button {

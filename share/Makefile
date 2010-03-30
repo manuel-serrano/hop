@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sun Mar 21 12:08:15 2010 (serrano)                */
+#*    Last change :  Mon Mar 29 17:05:36 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -63,7 +63,8 @@ EXTRA		= hop-error.hss hop.hss \
                   hop-lframe.hss \
                   hop-canvas.scm hop-exception.scm hop-orientation.scm \
                   hop-spage.scm hop-spage.hss \
-                  hop-font.scm
+                  hop-font.scm \
+                  hop-password.scm
 
 #*---------------------------------------------------------------------*/
 #*    AUDIO and ICONS                                                  */
@@ -142,7 +143,14 @@ POPULATION	= $(RTS) $(EXTRA) \
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-build: .afile hop.js $(FLASHSRC:%.as=flash/%.swf) $(BACKEND)
+build: .afile hop.js $(FLASHSRC:%.as=flash/%.swf) $(BACKEND) hop-password.scm
+
+#*---------------------------------------------------------------------*/
+#*    hop-password.scm ...                                             */
+#*---------------------------------------------------------------------*/
+hop-password.scm: ../runtime/password.scm
+	@ echo ";; Generated file, don't edit" > $@
+	@ cat $^ | sed -e "s|;; @client ||" -e "s|#;@server|;;|" >> $@
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */

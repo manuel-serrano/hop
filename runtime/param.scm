@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Mar 20 08:34:34 2010 (serrano)                */
+;*    Last change :  Sun Mar 28 07:50:37 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -361,7 +361,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-authentication ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-http-authentication 'digest)
+(define-parameter hop-http-authentication 'basic)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-session ...                                                  */

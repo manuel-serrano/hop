@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Mar 21 12:42:16 2010 (serrano)                */
+;*    Last change :  Tue Mar 30 08:32:06 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -144,13 +144,14 @@
 			   " query=" query
 			   " connection=" connection)
 
-	       (let ((user (or (and (string? auth)
-				    (find-authenticated-user auth abspath method))
-			       (and (string? pauth)
-				    (find-authenticated-user pauth abspath method))
-			       (and (string? userinfo)
-				    (find-authenticated-user userinfo abspath method))
-			       (anonymous-user))))
+	       (let* ((ip (input-port-name pi))
+		      (user (or (and (string? auth)
+				     (find-authenticated-user auth abspath method ip))
+				(and (string? pauth)
+				     (find-authenticated-user pauth abspath method ip))
+				(and (string? userinfo)
+				     (find-authenticated-user userinfo abspath method ip))
+				(anonymous-user))))
 		  (if (string? hostname)
 		      (instantiate::http-proxy-request
 			 (id id)

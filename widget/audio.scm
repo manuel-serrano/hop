@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Mar 15 09:55:27 2010 (serrano)                */
+;*    Last change :  Mon Mar 29 11:56:47 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -744,7 +744,6 @@
 		    (else
 		     s))))
 	 (trace-item "s=" (if (string? s) s (find-runtime-type s)))
-	 (trace-item "pl length=" (length plist))
 	 (tprint "<<< signal meta: " (list 'meta tag))
 	 (hop-event-broadcast! event (list 'meta tag))))
    
