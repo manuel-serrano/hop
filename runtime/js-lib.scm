@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/js-lib.scm                */
+;*    serrano/prgm/project/hop/2.1.x/runtime/js-lib.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Wed Dec 23 07:58:40 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Tue Mar 30 19:28:24 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
 ;*=====================================================================*/
@@ -316,7 +316,7 @@
        (list 'CONSTANT (the-flonum)))
       
       ;; symbols constant
-      ((: #\' (+ all) #\')
+      ((: #\' (* (or (out #\\ #\') (: #\\ all))) #\')
        (list 'CONSTANT (the-symbol)))
       
       ;; string constant
@@ -469,13 +469,16 @@
 			  (create (class-creator c))
 			  (ins (apply create vals)))
 		      (when (procedure? constr) (constr ins))
+		      (tprint "NEW: " (car IDENTIFIER))
 		      ins)))))))
       
       ;; array
       (array-elements
        ((expression)
+	(tprint "array-lement.1: " expression)
 	(list expression))
        ((expression COMMA array-elements)
+	(tprint "array-lement.2: " expression)
 	(cons expression array-elements)))
 
       ;; hash
@@ -503,6 +506,7 @@
 		  BRA-OPEN set+ BRA-CLO SEMI-COMMA
 		  BRA-OPEN proto BRA-CLO SEMI-COMMA
 		  NEW IDENTIFIER@klass PAR-OPEN vals PAR-CLO)
+	(tprint "OBJECT: " klass)
 	(let ((c (find-class klass)))
 	   (if (not (class? c))
 	       (error 'json->hop "Can't find class" c)

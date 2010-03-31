@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Feb 18 14:30:56 2010 (serrano)                */
+;*    Last change :  Tue Mar 30 12:02:31 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -228,6 +228,7 @@
 	 :eval (lambda (e) (hop->json (eval e) #f #f))
 	 :hop-compile (lambda (e p) (display (hop->json e #f #f) p))
 	 :features `(hop
+		     hop-client
 		     ,(string->symbol (format "hop-~a" (hop-branch)))
 		     ,(string->symbol (format "hop-~a" (hop-version))))
 	 :expanders `(labels match-case

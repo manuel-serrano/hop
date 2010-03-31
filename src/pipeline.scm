@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Tue Feb 16 07:55:32 2010 (serrano)                */
+;*    Last change :  Tue Mar 30 11:35:54 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -396,11 +396,12 @@
 ;*    exec-error-handler ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (exec-error-handler e scd req)
-   ;; signal the error
-   (hop-verb 2 (hop-color req req " INTERRUPTED"))
-   (hop-verb 2 ": " (&error-obj e) "\n")
-   ;; there is nothing we can do but aborting the request
+   ;; first, close the socket, anycase
    (socket-close (http-request-socket req))
-   ;; abort the request
-   (raise e))
+   (unless (&io-sigpipe-error? e)
+      ;; signal the error, when this is an error
+      (hop-verb 2 (hop-color req req " INTERRUPTED"))
+      (hop-verb 2 ": " (&error-obj e) "\n")
+      ;; abort the request
+      (raise e)))
 

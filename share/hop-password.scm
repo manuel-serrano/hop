@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 29 10:14:56 2010                          */
-;*    Last change :  Tue Mar 30 08:36:08 2010 (serrano)                */
+;*    Last change :  Tue Mar 30 10:22:38 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Password encryption (shared by client and server code).          */
@@ -72,7 +72,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    digest-password-encrypt ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (digest-password-encrypt n r p)
+(define (digest-password-encrypt n p r)
    (md5sum (string-append n ":" r ":" p)))
 
 ;*---------------------------------------------------------------------*/
@@ -81,7 +81,7 @@
 (define (password-encrypt n p method)
    (if (or (eq? method 'basic) (eq? method 'url))
        (basic-password-encrypt n p)
-       (digest-password-encrypt n (hop-realm) p)))
+       (digest-password-encrypt n p (hop-realm))))
 
 ;*---------------------------------------------------------------------*/
 ;*    h0password ...                                                   */

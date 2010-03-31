@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu Feb 25 08:30:10 2010 (serrano)                */
+;*    Last change :  Tue Mar 30 17:01:17 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -214,6 +214,9 @@
 		((application/bigloo)
 		 (success (string->obj (read p))))
 		(else
+		 (let ((s (read-string p)))
+;* 		    (tprint "s [" s "]")                               */
+		    (tprint (json->hop (open-input-string s))))
 		 (if (eq? ctype (hop-json-mime-type-symbol))
 		     (success (json->hop p))
 		     (success (read-string p)))))))
@@ -396,7 +399,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-remote ...                        */
 ;*    -------------------------------------------------------------    */
-;*    This method is used for imported services. This services         */
+;*    This method is used for imported services. These services        */
 ;*    are called locally but they are still remote.                    */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-remote success fail auth)
