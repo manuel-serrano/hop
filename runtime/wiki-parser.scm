@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Mar 15 11:56:38 2010 (serrano)                */
+;*    Last change :  Wed Mar 31 09:55:23 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -890,7 +890,9 @@
 		  (<A> :name href))
 	       (let ((s2 (substring s (+fx i 1) (string-length s))))
 		  (let ((href (link-val (substring s 0 i)))
-			(title (substring s (+fx i 1) (string-length s))))
+			(title (html-string-encode
+				(charset
+				 (substring s (+fx i 1) (string-length s))))))
 		     (<A> :name href :title title)))))
 	  (ignore)))
 
@@ -903,7 +905,9 @@
 	       (let ((path (link-val s)))
 		  (<IMG> :src path :alt path))
 	       (let ((path (link-val (substring s 0 i)))
-		     (title (substring s (+fx i 1) (string-length s))))
+		     (title (html-string-encode
+			     (charset
+			      (substring s (+fx i 1) (string-length s))))))
 		  (<IMG> :src path :alt path :title title)))))
        (ignore))
 
