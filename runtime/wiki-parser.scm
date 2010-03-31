@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed Mar 31 09:55:23 2010 (serrano)                */
+;*    Last change :  Wed Mar 31 10:50:32 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -439,7 +439,8 @@
 		      (eval-wiki (hop-read (current-input-port)))))))
 	    ((and (string? s)
 		  (>fx (string-length s) 0)
-		  (not (char=? (string-ref s 0) #\/)))
+		  (not (char=? (string-ref s 0) #\/))
+		  (not (char=? (string-ref s 0) #\.)))
 	     (string-append (the-loading-dir) "/" s))
 	    (else
 	     s)))
@@ -903,12 +904,13 @@
 	  (add-expr!
 	   (if (not i)
 	       (let ((path (link-val s)))
-		  (<IMG> :src path :alt path))
-	       (let ((path (link-val (substring s 0 i)))
-		     (title (html-string-encode
-			     (charset
-			      (substring s (+fx i 1) (string-length s))))))
-		  (<IMG> :src path :alt path :title title)))))
+		  (<IMG> :src path :alt s))
+	       (let* ((p (substring s 0 i))
+		      (path (link-val p))
+		      (title (html-string-encode
+			      (charset
+			       (substring s (+fx i 1) (string-length s))))))
+		  (<IMG> :src path :alt p :title title)))))
        (ignore))
 
       ;; embedded hop
