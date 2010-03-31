@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Mar 22 10:15:39 2010 (serrano)                */
+;*    Last change :  Wed Mar 31 10:22:53 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -153,7 +153,7 @@
 				  (class "wiki")
 				  body)
    (<BODY> :class class :wikimode (if compiled "compiled" "plain")
-      (<DIV> :align 'center
+      (<DIV> :align 'center :class "wiki-body"
 	 (if compiled
 	     (<TABLE> :class "wiki"
 		(<TR> (<TD> :id "body" :class "wiki-compiled" body)))
