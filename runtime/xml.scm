@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Apr  1 06:48:06 2010 (serrano)                */
+;*    Last change :  Thu Apr  1 19:32:25 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -614,9 +614,7 @@
 	  (display "</" p)
 	  (display markup p)
 	  (display ">" p)))
-      (xml-write-initializations obj p backend)
-      (when (> (bigloo-debug) 0)
-	 (newline p))))
+      (xml-write-initializations obj p backend)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-empty-element ...                                */
