@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Mar 29 17:05:36 2010 (serrano)                */
+#*    Last change :  Thu Apr  1 11:05:00 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -223,9 +223,9 @@ hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js hop-exception.js $(RTS)
 	date >> $@
 	echo " */" >> $@
 	if [ "$(DEBUG) " != "yes " ]; then \
-	  cat $^ | sed -e "s%/[*]\([^*]\|[*][^/]\)*[*]/%%g" \
-                       -e "/^[ \t]*$$/D" \
-                       -e "s|//[^\"]*$$||g" \
+	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+                 | sed -e "s|//[^\"]*$$||g" \
+                 | sed -e "/^[ \t]*$$/D" \
                  >> $@; \
         else \
 	  cat $^ >> $@; \

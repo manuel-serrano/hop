@@ -269,7 +269,7 @@ var hop_innerHTML_need_evalp = true;
 var tmp = document.createElement( "div" );
 
 try {
-   tmp.innerHTML = "<script type='text/javascript'>hop_config.eval_innerHTML = false;</script>";
+   tmp.innerHTML = "<script type='text/javascript'>hop_config.eval_innerHTML = false;<\u002fscript>";
    tmp = tmp.cloneNode( true );
    if( ("body" in document) && (document.body != null) ) {
       document.body.appendChild( tmp );

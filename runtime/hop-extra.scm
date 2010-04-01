@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon Mar 29 12:13:59 2010 (serrano)                */
+;*    Last change :  Thu Apr  1 06:59:04 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -87,8 +87,8 @@
 ;*---------------------------------------------------------------------*/
 (define (<HOP-SETUP>)
    (<SCRIPT> :type (hop-configure-javascript-mime-type)
-      (string-append
-       "function hop_etc_directory() { return \"" (hop-etc-directory) "\"; }
+      (string-append "
+function hop_etc_directory() { return \"" (hop-etc-directory) "\"; }
 function hop_bin_directory() { return \"" (hop-bin-directory) "\"; }
 function hop_lib_directory() { return \"" (hop-lib-directory) "\"; }
 function hop_share_directory() { return \"" (hop-share-directory) "\"; }
@@ -97,7 +97,8 @@ function hop_contribs_directory() { return \"" (hop-contribs-directory) "\"; }
 function hop_weblets_directory() { return \"" (hop-weblets-directory) "\"; }
 function hop_debug() { return " (integer->string (bigloo-debug)) "; }
 function hop_session() { return " (integer->string (hop-session))) "; }
-function hop_realm() { return \"" (hop-realm) "\"; }"))
+function hop_realm() { return \"" (hop-realm) "\"; }
+"))
 
 ;*---------------------------------------------------------------------*/
 ;*    preload-css ...                                                  */
@@ -132,11 +133,11 @@ function hop_realm() { return \"" (hop-realm) "\"; }"))
 	 ;; force loading to evaluate hop hss types
 	 (preload-css hopcss #f)
 	 (set! head-runtime-system-packed 
-	       (cons* (<LINK> :inline #f
+	       (cons* (<HOP-SETUP>)
+		      (<LINK> :inline #f
 			 :rel "stylesheet"
 			 :type (hop-configure-css-mime-type) 
 			 :href hopcss)
-		      (<HOP-SETUP>)
 		      (map (lambda (f)
 			      (let ((p (make-file-name (hop-share-directory) f)))
 				 (<SCRIPT> :inline #f
@@ -146,11 +147,11 @@ function hop_realm() { return \"" (hop-realm) "\"; }"))
 	 ;; this is used for non-inlined header for browsers that restrict
 	 ;; size of javascript files (e.g., IE6 on WinCE)
 	 (set! head-runtime-system-unpacked
-	       (cons* (<LINK> :inline #f
+	       (cons* (<HOP-SETUP>)
+		      (<LINK> :inline #f
 			 :rel "stylesheet"
 			 :type (hop-configure-css-mime-type) 
 			 :href hopcss)
-		      (<HOP-SETUP>)
 		      (map (lambda (f)
 			      (let ((p (make-file-name (hop-share-directory) f)))
 				 (<SCRIPT> :inline #f
@@ -159,11 +160,11 @@ function hop_realm() { return \"" (hop-realm) "\"; }"))
 			   (hop-runtime-system-files))))
 	 ;; this is used for inlined headers
 	 (set! head-runtime-system-inline
-	       (cons* (<LINK> :inline #t
+	       (cons* (<HOP-SETUP>)
+		      (<LINK> :inline #t
 			 :rel "stylesheet"
 			 :type (hop-configure-css-mime-type) 
 			 :href hopcss)
-		      (<HOP-SETUP>)
 		      (map (lambda (f)
 			      (let ((p (make-file-name (hop-share-directory) f)))
 				 (<SCRIPT> :inline #t
@@ -444,11 +445,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }"))
 ;*---------------------------------------------------------------------*/
 (define (<HEAD> . args)
    (init-extra!)
-   (let* ((hss (make-file-path (hop-rc-directory) (hop-hss-theme) "hop.hss"))
-	  (args (if (file-exists? hss)
-		    (append args `(:css ,hss))
-		    args))
-	  (body0 (head-parse args))
+   (let* ((body0 (head-parse args))
 	  (ubase (filter (lambda (x)
 			    (xml-markup-is? x 'base))
 			 body0))
