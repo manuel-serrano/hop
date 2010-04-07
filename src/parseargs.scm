@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Mar 30 12:02:31 2010 (serrano)                */
+;*    Last change :  Fri Apr  2 15:37:13 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -232,7 +232,8 @@
 		     ,(string->symbol (format "hop-~a" (hop-branch)))
 		     ,(string->symbol (format "hop-~a" (hop-version))))
 	 :expanders `(labels match-case
-		      (define-markup . ,(eval 'hop-client-define-markup))))
+		      (define-markup . ,(eval 'hop-client-define-markup))
+		      (define-xml-compound . ,(eval 'hop-client-define-xml-compound))))
       (init-clientc-compiler! :modulec hopscheme-compile-module
 	 :expressionc hopscheme-compile-expression
 	 :macroe hopscheme-create-empty-macro-environment

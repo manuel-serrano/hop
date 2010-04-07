@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/hz.scm                    */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hz.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Mon May  4 13:46:55 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Last change :  Fri Apr  2 16:17:41 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
 ;*=====================================================================*/
@@ -126,13 +126,15 @@
 						    host port
 						    (prefix (basename apath))))
 			    (make-file-name dest (prefix (basename apath)))))
-		   (url (if (string? (hop-hz-local-repository))
+		   (url (cond
+			   ((string? (hop-hz-local-repository))
 			    (let ((f (make-file-name (hop-hz-local-repository)
 						     (basename apath))))
 			       (if (file-exists? f)
 				   f
-				   url))
-			    url)))
+				   url)))
+			   (else
+			    url))))
 	       (unless (directory? dir)
 		  (call-with-input-file url
 		     (lambda (iport)

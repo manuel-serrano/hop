@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Apr  1 11:05:00 2010 (serrano)                */
+#*    Last change :  Fri Apr  2 06:03:46 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -219,6 +219,7 @@ uninstall:
 #*---------------------------------------------------------------------*/
 hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js hop-exception.js $(RTS) 
 	echo "/* Automatically generated file (don't edit) */" > $@
+	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	echo "/* " >> $@
 	date >> $@
 	echo " */" >> $@

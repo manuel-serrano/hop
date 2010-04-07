@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/xml-expd.sch              */
+;*    serrano/prgm/project/hop/2.1.x/runtime/xml-expd.sch              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Thu Oct  1 07:18:15 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Fri Apr  2 15:47:26 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
 ;*=====================================================================*/
@@ -318,6 +318,22 @@
        (error 'define-xml-compound "Illegal form" x))))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-client-define-xml-compound ...                               */
+;*---------------------------------------------------------------------*/
+(define (hop-client-define-xml-compound x e)
+   (match-case x
+      ((?- ?id ?bindings . ?body)
+       (let* ((id2 (symbol-append '< id '>))
+	      (nf (expand-define-xml-compound id2 bindings body))
+	      (nm `(define-macro (,id . args)
+		      (list 'quasiquote
+			    (,id2 ,(list 'unquote-splicing 'args)))))
+	      (nx nm))
+	  (e (evepairify nx x) e)))
+      (else
+       (error 'define-xml-compound "Illegal form" x))))
+
+;*---------------------------------------------------------------------*/
 ;*    expand-define-markup ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (expand-define-markup id bindings body)
@@ -350,9 +366,7 @@
 	      (nm `(define-macro (,id . args)
 		      (list 'quasiquote
 			    (,id2 ,(list 'unquote-splicing 'args)))))
-	      (nx `(begin ,nf ,nm))
 	      (nx nm))
-	  (pp nx)
 	  (e (evepairify nx x) e)))
       (else
        (error 'define-markup "Illegal form" x))))

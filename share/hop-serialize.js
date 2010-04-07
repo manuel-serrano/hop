@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-serialize.js            */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-serialize.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Wed Dec 23 09:10:33 2009 (serrano)                */
-/*    Copyright   :  2007-09 Manuel Serrano                            */
+/*    Last change :  Wed Apr  7 08:52:56 2010 (serrano)                */
+/*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
@@ -67,7 +67,7 @@ function hop_bigloo_serialize( item ) {
    if( hop_is_html_element( item ) )
       return hop_serialize_html( item );
 
-   return hop_bigloo_serialize( "#<" + tname + ">" );
+   return hop_bigloo_serialize_alist( item );
 }
 
 /*---------------------------------------------------------------------*/
@@ -297,6 +297,20 @@ function hop_serialize_html( item ) {
 	 }
       }
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_serialize_alist ...                                          */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_alist( item ) {
+   var alist = null;
+   
+   for( p in item ) {
+      var k = sc_jsstring2keyword( p );
+      alist = sc_cons( sc_cons( k, sc_cons( item[ p ] ) ), alist );
+   }
+
+   return hop_bigloo_serialize( alist );
 }
    
 /*---------------------------------------------------------------------*/

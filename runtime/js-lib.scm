@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Tue Mar 30 19:28:24 2010 (serrano)                */
+;*    Last change :  Wed Apr  7 08:54:11 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -58,6 +58,58 @@
 		 (apply string-append "[" strs)
 		 (loop (-fx i 1)
 		       (cons* (hop->json (vector-ref vec i) m f) ", " strs))))))))
+
+;*---------------------------------------------------------------------*/
+;*    alist? ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (alist? obj)
+   (when (list? obj)
+      (every? (lambda (el)
+		 (and (list? el)
+		      (or (keyword? (car el))
+			  (symbol? (car el))
+			  (string? (car el))
+			  (number? (car el)))
+		      (pair? (cdr el))
+		      (null? (cddr el))))
+	      obj)))
+
+;*---------------------------------------------------------------------*/
+;*    alist->json ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (alist->json alist m f)
+   
+   (define (hop->json-key-hash key)
+      (cond
+	 ((keyword? key)
+	  (keyword->string! key))
+	 ((string? key)
+	  (string-append "\"" (json-string-encode key f) "\""))
+	 ((symbol? key)
+	  (string-append "\'" (symbol->string! key) "\'"))
+	 (else
+	  key)))
+   
+   (define (hop->json-hash el)
+      (string-append (hop->json-key-hash (car el))
+		     ": "
+		     (hop->json (cadr el) m f)))
+
+   (cond
+      ((null? alist)
+       "{}")
+      ((null? (cdr alist))
+       (string-append "{" (hop->json-hash (car alist)) "}"))
+      (else
+       (let loop ((alist alist)
+		  (strs (list "{")))
+	  (cond
+	     ((null? (cdr alist))
+	      (apply string-append
+		     (reverse! (cons* "}" (hop->json-hash (car alist)) strs))))
+	     (else
+	      (loop (cdr alist)
+		    (cons* ", " (hop->json-hash (car alist)) strs))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    json-string-encode ...                                           */
@@ -131,7 +183,7 @@
 (define-generic (hop->json obj isrep isflash)
    (cond
       ((string? obj)
-       (string-append "\"" (json-string-encode obj isflash) "\"\n"))
+       (string-append "\"" (json-string-encode obj isflash) "\""))
       ((number? obj)
        (number->string obj))
       ((symbol? obj)
@@ -145,7 +197,10 @@
       ((null? obj)
        "null")
       ((pair? obj)
-       (if (and (pair? (cdr obj)) (pair? (cddr obj)))
+       (cond
+;* 	  ((alist? obj)                                                */
+;* 	   (alist->json obj isrep isflash))                            */
+	  ((and (pair? (cdr obj)) (pair? (cddr obj)))
 	   ;; avoid deep recursion for long lists
 	   (let loop ((els (hop->json (car obj) isrep isflash))
 		      (rest (cdr obj)))
@@ -158,10 +213,11 @@
 			(cdr rest)))
 		 (else
 		  (format "sc_consStar(~a, ~a)"
-			  els (hop->json rest isrep isflash)))))
+			  els (hop->json rest isrep isflash))))))
+	  (else
 	   (let ((car (hop->json (car obj) isrep isflash))
 		 (cdr (hop->json (cdr obj) isrep isflash)))
-	      (format "new sc_Pair( ~a, ~a )" car cdr))))
+	      (format "new sc_Pair( ~a, ~a )" car cdr)))))
       ((vector? obj)
        (vector->json obj isrep isflash))
       ((eq? obj #unspecified)
@@ -469,16 +525,13 @@
 			  (create (class-creator c))
 			  (ins (apply create vals)))
 		      (when (procedure? constr) (constr ins))
-		      (tprint "NEW: " (car IDENTIFIER))
 		      ins)))))))
       
       ;; array
       (array-elements
        ((expression)
-	(tprint "array-lement.1: " expression)
 	(list expression))
        ((expression COMMA array-elements)
-	(tprint "array-lement.2: " expression)
 	(cons expression array-elements)))
 
       ;; hash
@@ -492,13 +545,7 @@
        ((IDENTIFIER COLON expression)
 	(list (symbol->keyword (car IDENTIFIER)) expression))
        ((CONSTANT COLON expression)
-	(let* ((i (car CONSTANT))
-	       (k (cond
-		     ((keyword? i) i)
-		     ((symbol? i) (symbol->keyword i))
-		     ((string? i) (string->keyword i))
-		     (else (error 'json->hop "Illegal key" i)))))
-	   (list k expression))))
+	(list (car CONSTANT) expression)))
 
       ;; object
       (object
@@ -506,7 +553,6 @@
 		  BRA-OPEN set+ BRA-CLO SEMI-COMMA
 		  BRA-OPEN proto BRA-CLO SEMI-COMMA
 		  NEW IDENTIFIER@klass PAR-OPEN vals PAR-CLO)
-	(tprint "OBJECT: " klass)
 	(let ((c (find-class klass)))
 	   (if (not (class? c))
 	       (error 'json->hop "Can't find class" c)

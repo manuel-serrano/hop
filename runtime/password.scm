@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 29 10:14:56 2010                          */
-;*    Last change :  Tue Mar 30 10:22:38 2010 (serrano)                */
+;*    Last change :  Fri Apr  2 10:52:17 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Password encryption (shared by client and server code).          */
@@ -46,8 +46,10 @@
 	 (string-append "HO0" n ":" k)))
    
    (define (encrypt-ho1-authentication m n p path)
-      (let ((k (h1password (password-encrypt n p m) path session)))
-	 (string-append "HO1" n ":" k)))
+      (if session
+	  (let ((k (h1password (password-encrypt n p m) path session)))
+	     (string-append "HO1" n ":" k))
+	  (encrypt-ho0-authentication m n p path)))
    
    (define (encrypt-ho2-authentication m n p path ip)
       (if ip

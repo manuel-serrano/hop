@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Apr  1 06:59:04 2010 (serrano)                */
+;*    Last change :  Fri Apr  2 16:44:15 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -389,7 +389,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 		      (error '<HEAD> "Illegal :inline" (cadr a))))
 		 ((:with-base)
 		  (if (and (string? (cadr a)) (pair? (cddr a)))
-		      (let ((wbels (loop (caddr a) #f #f (cadr a) (cadr a) (cadr a) inl packed '())))
+		      (let ((wbels (loop (caddr a) #f #f (cadr a) (list (cadr a)) (cadr a) inl packed '())))
 			 (loop (cdddr a) #f rts dir path base inl (cadr a) 
 			       (append (reverse! wbels) els)))))
 		 (else

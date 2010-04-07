@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Mar  9 16:52:54 2008                          */
-/*    Last change :  Tue Mar 30 08:12:20 2010 (serrano)                */
+/*    Last change :  Tue Apr  6 08:33:25 2010 (serrano)                */
 /*    Copyright   :  2008-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop login                                                        */
@@ -146,10 +146,13 @@ hop-login-panel table.hop-login-prompt input {
 hop-login-panel table.hop-login-prompt tr.schema td {
   font-size: 75%;
   color: #555;
+  text-align: left;
 }
 
 hop-login-panel table.hop-login-prompt input[type=radio] {
   margin-right: 5ex;
+  min-width: 2em;
+  max-width: 2em;
 }
 
 hop-login-panel table.hop-login-prompt button {

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon May  8 06:21:47 2006                          */
-;*    Last change :  Fri Mar  5 19:00:43 2010 (serrano)                */
+;*    Last change :  Fri Apr  2 12:23:59 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP weblets doc.                                             */
@@ -64,7 +64,7 @@
 ;*    select-weblet-pad-on-load ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (select-weblet-pad-on-load weblet)
-   ~(hop_window_onload_add 
+   ~(add-event-listener! window "load"
      (lambda (e)
 	(with-history
 	   (lambda ()
