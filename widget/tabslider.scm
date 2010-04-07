@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue Feb 16 12:18:15 2010 (serrano)                */
+;*    Last change :  Wed Apr  7 11:58:47 2010 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -108,7 +108,7 @@
 			    :class "hop-tabslider-content"
 			    :lang "delay"
 			    :onkeyup (format "return ~a;"
-					     (hop->json
+					     (hop->x-javascript
 					      (procedure->service
 					       (xml-delay-thunk (cadr body)))
 					      #f #f))

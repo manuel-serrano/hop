@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Feb 25 19:13:25 2010 (serrano)                */
+;*    Last change :  Wed Apr  7 11:57:10 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -160,7 +160,7 @@
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-js
-	       (when bodyp (display (hop->json value #t #f) p)))
+	       (when bodyp (display (hop->x-javascript value #t #f) p)))
 	    (flush-output-port p)
 	    connection))))
 

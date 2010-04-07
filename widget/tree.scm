@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/widget/tree.scm                   */
+;*    serrano/prgm/project/hop/2.1.x/widget/tree.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue Jul 21 14:29:09 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Wed Apr  7 11:58:56 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
 ;*=====================================================================*/
@@ -178,7 +178,7 @@
 		      ((null? body)
 		       "false")
 		      ((delayed-tree-body? body)
-		       (hop->json
+		       (hop->x-javascript
 			(procedure->service
 			 (lambda ()
 			    (let* ((p (open-output-string))

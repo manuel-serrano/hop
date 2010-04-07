@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Mar 29 11:56:47 2010 (serrano)                */
+;*    Last change :  Wed Apr  7 11:58:37 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -249,11 +249,11 @@
 	  (format "audio.serverbackend = new HopAudioServerBackend( audio, ~a )
                    hop_audio_server_init( audio.serverbackend );
                    audio.backend = audio.serverbackend;"
-		  (hop->json server #f #f))
+		  (hop->x-javascript server #f #f))
 	  "audio.serverbackend = false; audio.backend = audio.browserbackend;")
       "audio.paused = false;"
       "audio.state = false;"
-      (format "audio.src = ~a;" (hop->json src #f #f))
+      (format "audio.src = ~a;" (hop->x-javascript src #f #f))
       "audio.initialized = true;"
       (format "audio.start = ~a;" start)
       (format "audio.onplay = ~a;" onplay)
@@ -269,7 +269,7 @@
       "audio.hop_add_event_listener = hop_audio_add_event_listener;"
       "audio.toString = function() { return '[object HopAudio]' };"
       (when (pair? playlist)
-	 (format "hop_audio_playlist_set( audio, ~a );" (hop->json (list playlist) #f #f)))
+	 (format "hop_audio_playlist_set( audio, ~a );" (hop->x-javascript (list playlist) #f #f)))
       (when autoplay
 	 "hop_audio_playlist_play( audio, 0 );")
       "};\n"
@@ -794,9 +794,9 @@
 	 (hop-event-broadcast! event (list 'volume vol)))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop->json ::%audio-server ...                                    */
+;*    hop->x-javascript ::%audio-server ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json as::audio-server isrep isflash)
+(define-method (hop->x-javascript as::audio-server isrep isflash)
    (string-append "\"" (hop-service-base) "/" (audio-server-%path as) "\""))
 
 ;*---------------------------------------------------------------------*/
