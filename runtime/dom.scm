@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Sat Mar 20 07:17:08 2010 (serrano)                */
+;*    Last change :  Wed Apr  7 21:07:24 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -17,8 +17,7 @@
    (import __hop_xml
 	   __hop_priv)
 
-   (export (%make-xml-document ::xml-document)
-	   (dom-get-attributes::pair-nil ::obj)
+   (export (dom-get-attributes::pair-nil ::obj)
 	   (dom-owner-document node)
 	   (dom-child-nodes::pair-nil ::obj)
 	   (dom-first-child ::obj)
@@ -51,12 +50,7 @@
 	   (dom-node-document-fragment? node)
 	   (dom-node-attr? node)
 	   (dom-inner-html-set! ::xml-markup ::obj)
-	   (innerHTML-set! ::xml-markup obj))
-   
-   (export (class xml-document::xml-markup
-	      (%make-xml-document)
-	      (id read-only)
-	      (%idtable read-only (default (make-hashtable))))))
+	   (innerHTML-set! ::xml-markup obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc-update-idtable! ...                                          */
@@ -79,9 +73,9 @@
       (update-body! body)))
 
 ;*---------------------------------------------------------------------*/
-;*    %make-xml-document ...                                           */
+;*    %xml-constructor ::xml-document ...                              */
 ;*---------------------------------------------------------------------*/
-(define (%make-xml-document doc::xml-document)
+(define-method (%xml-constructor doc::xml-document)
    (with-access::xml-document doc (body %idtable)
       (doc-update-idtable! doc body)
       doc))

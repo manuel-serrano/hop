@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Wed Apr  7 11:57:46 2010 (serrano)                */
+;*    Last change :  Thu Apr  8 08:07:02 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -18,12 +18,14 @@
 	    
    (import  __hop_param
 	    __hop_types
+	    __hop_hop-inline
+	    __hop_dom
 	    __hop_xml
 	    __hop_service
 	    __hop_charset)
 
    (export  (json-string-encode::bstring ::bstring ::bool)
-	    (generic hop->x-javascript ::obj ::bool ::bool)
+	    (generic hop->javascript ::obj ::bool ::bool)
 	    (json->hop ::input-port)
 	    (hop->js-callback ::obj)))
 
@@ -37,7 +39,7 @@
 	  (apply string-append (reverse! res))
 	  (loop (cdr lst)
 		(cons* (if (pair? (cdr lst)) "," ")")
-		       (hop->x-javascript (car lst) isrep isflash)
+		       (hop->javascript (car lst) isrep isflash)
 		       res)))))
 
 ;*---------------------------------------------------------------------*/
@@ -49,15 +51,15 @@
 	 ((0)
 	  "[]")
 	 ((1)
-	  (string-append "[" (hop->x-javascript (vector-ref vec 0) m f) "]"))
+	  (string-append "[" (hop->javascript (vector-ref vec 0) m f) "]"))
 	 (else
 	  (let loop ((i (-fx len 2))
-		     (strs (list (hop->x-javascript (vector-ref vec (-fx len 1)) m f)
+		     (strs (list (hop->javascript (vector-ref vec (-fx len 1)) m f)
 				 "]")))
 	     (if (=fx i -1)
 		 (apply string-append "[" strs)
 		 (loop (-fx i 1)
-		       (cons* (hop->x-javascript (vector-ref vec i) m f) ", " strs))))))))
+		       (cons* (hop->javascript (vector-ref vec i) m f) ", " strs))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    alist? ...                                                       */
@@ -79,7 +81,7 @@
 ;*---------------------------------------------------------------------*/
 (define (alist->json alist m f)
    
-   (define (hop->x-javascript-key-hash key)
+   (define (hop->javascript-key-hash key)
       (cond
 	 ((keyword? key)
 	  (keyword->string! key))
@@ -90,26 +92,26 @@
 	 (else
 	  key)))
    
-   (define (hop->x-javascript-hash el)
-      (string-append (hop->x-javascript-key-hash (car el))
+   (define (hop->javascript-hash el)
+      (string-append (hop->javascript-key-hash (car el))
 		     ": "
-		     (hop->x-javascript (cadr el) m f)))
+		     (hop->javascript (cadr el) m f)))
 
    (cond
       ((null? alist)
        "{}")
       ((null? (cdr alist))
-       (string-append "{" (hop->x-javascript-hash (car alist)) "}"))
+       (string-append "{" (hop->javascript-hash (car alist)) "}"))
       (else
        (let loop ((alist alist)
 		  (strs (list "{")))
 	  (cond
 	     ((null? (cdr alist))
 	      (apply string-append
-		     (reverse! (cons* "}" (hop->x-javascript-hash (car alist)) strs))))
+		     (reverse! (cons* "}" (hop->javascript-hash (car alist)) strs))))
 	     (else
 	      (loop (cdr alist)
-		    (cons* ", " (hop->x-javascript-hash (car alist)) strs))))))))
+		    (cons* ", " (hop->javascript-hash (car alist)) strs))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    json-string-encode ...                                           */
@@ -178,9 +180,9 @@
       (encode str ol (count str ol))))
 	 
 ;*---------------------------------------------------------------------*/
-;*    hop->x-javascript ...                                            */
+;*    hop->javascript ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-generic (hop->x-javascript obj isrep isflash)
+(define-generic (hop->javascript obj isrep isflash)
    (cond
       ((string? obj)
        (string-append "\"" (json-string-encode obj isflash) "\""))
@@ -202,21 +204,21 @@
 ;* 	   (alist->json obj isrep isflash))                            */
 	  ((and (pair? (cdr obj)) (pair? (cddr obj)))
 	   ;; avoid deep recursion for long lists
-	   (let loop ((els (hop->x-javascript (car obj) isrep isflash))
+	   (let loop ((els (hop->javascript (car obj) isrep isflash))
 		      (rest (cdr obj)))
 	      (cond
 		 ((null? rest)
 		  (format "sc_list(~a)" els))
 		 ((pair? rest)
 		  (loop (format "~a, ~a"
-				els (hop->x-javascript (car rest) isrep isflash))
+				els (hop->javascript (car rest) isrep isflash))
 			(cdr rest)))
 		 (else
 		  (format "sc_consStar(~a, ~a)"
-			  els (hop->x-javascript rest isrep isflash))))))
+			  els (hop->javascript rest isrep isflash))))))
 	  (else
-	   (let ((car (hop->x-javascript (car obj) isrep isflash))
-		 (cdr (hop->x-javascript (cdr obj) isrep isflash)))
+	   (let ((car (hop->javascript (car obj) isrep isflash))
+		 (cdr (hop->javascript (cdr obj) isrep isflash)))
 	      (format "new sc_Pair( ~a, ~a )" car cdr)))))
       ((vector? obj)
        (vector->json obj isrep isflash))
@@ -224,8 +226,8 @@
        "undefined")
       ((procedure? obj)
        (if (service? obj)
-	   (hop->x-javascript (procedure-attr obj) isrep isflash)
-	   (error 'hop->x-javascript
+	   (hop->javascript (procedure-attr obj) isrep isflash)
+	   (error 'hop->javascript
 		  "Illegal procedure in JavaScript conversion"
 		  obj)))
       ((date? obj)
@@ -234,9 +236,9 @@
        (error 'javascript "Illegal Javascript value" obj))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop->x-javascript ::object ...                                   */
+;*    hop->javascript ::object ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->x-javascript obj::object isrep isflash)
+(define-method (hop->javascript obj::object isrep isflash)
    (define (list->block lst)
       (let loop ((lst lst)
 		 (res '()))
@@ -278,38 +280,38 @@
 			       isflash))))
    
 ;*---------------------------------------------------------------------*/
-;*    hop->x-javascript ::xml ...                                      */
+;*    hop->javascript ::xml ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->x-javascript obj::xml isrep isflash)
-   (error 'hop->x-javascript "Cannot translate xml element" xml))
+(define-method (hop->javascript obj::xml isrep isflash)
+   (error 'hop->javascript "Cannot translate xml element" xml))
 
 ;*---------------------------------------------------------------------*/
-;*    hop->x-javascript ::xml-markup ...                               */
+;*    hop->javascript ::xml-markup ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->x-javascript obj::xml-markup isrep isflash)
+(define-method (hop->javascript obj::xml-markup isrep isflash)
    (let ((s (with-output-to-string
 	       (lambda ()
 		  (xml-write obj (current-output-port) (hop-xml-backend))))))
       (format "hop_create_encoded_element( \"~a\" )" (url-path-encode s))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop->x-javascript ::xml-element ...                              */
+;*    hop->javascript ::xml-element ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->x-javascript obj::xml-element isrep isflash)
+(define-method (hop->javascript obj::xml-element isrep isflash)
    (if isrep
        (call-next-method)
        (format "document.getElementById( '~a' )" (xml-element-id obj))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop->x-javascript ::xml-tilde ...                                */
+;*    hop->javascript ::xml-tilde ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->x-javascript obj::xml-tilde isrep isflash)
+(define-method (hop->javascript obj::xml-tilde isrep isflash)
    (xml-tilde->expression obj))
 
 ;*---------------------------------------------------------------------*/
-;*    hop->x-javascript ...                                            */
+;*    hop->javascript ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->x-javascript obj::hop-service isrep isflash)
+(define-method (hop->javascript obj::hop-service isrep isflash)
    (hop-service-javascript obj))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Apr  7 11:58:18 2010 (serrano)                */
+;*    Last change :  Thu Apr  8 08:10:39 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -70,6 +70,10 @@
 	       body::pair-nil)
 
 	    (class xml-html::xml-markup)
+
+	    (class xml-document::xml-markup
+	       (id read-only)
+	       (%idtable read-only (default (make-hashtable))))
 
 	    (class xml-element::xml-markup
 	       (id read-only (default #unspecified))
@@ -933,7 +937,7 @@
 (define (xml-tilde->sexp obj)
    
    (define (wrapper o)
-      `(pragma ,(hop->x-javascript o #f #f)))
+      `(pragma ,(hop->javascript o #f #f)))
    
    (with-access::xml-tilde obj (body)
       ((clientc-precompiled->sexp (hop-clientc)) body wrapper)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Apr  7 11:58:56 2010 (serrano)                */
+;*    Last change :  Thu Apr  8 08:08:15 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -178,7 +178,7 @@
 		      ((null? body)
 		       "false")
 		      ((delayed-tree-body? body)
-		       (hop->x-javascript
+		       (hop->javascript
 			(procedure->service
 			 (lambda ()
 			    (let* ((p (open-output-string))

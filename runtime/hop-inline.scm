@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/hop-inline.scm            */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop-inline.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Sat Aug 30 18:53:05 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Wed Apr  7 21:08:53 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
 ;*=====================================================================*/
@@ -21,8 +21,8 @@
    (import  __hop_param
 	    __hop_types
 	    __hop_user
-	    __hop_xml
 	    __hop_dom
+	    __hop_xml
 	    __hop_misc
 	    __hop_js-lib
 	    __hop_service

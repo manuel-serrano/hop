@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Apr  7 09:13:36 2010 (serrano)                */
+/*    Last change :  Thu Apr  8 08:26:23 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -321,7 +321,6 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 			}
 
 			return succ( expr, xhr );
-		     }
 		     } else if( (ctype === "text/html") ||
 				(ctype === "application/xhtml+xml") ) {
 			var el = hop_create_element( xhr.responseText );
