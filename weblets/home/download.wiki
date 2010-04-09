@@ -29,7 +29,7 @@
         (<TH> "Windows"))
      (<TR> 
          (<TD> (<A> :href *stable-tar-url* *stable-tar-gz*))
-         (<TD> (<A> :href *maemo-fremantle-url* "Fremantle"))
+         (<TD> (<A> :href *maemo-fremantle-free-url* "Fremantle"))
          (<TD> (<A> :href *stable-dmg-url* (basename *stable-dmg*)))
          (<TD> (<A> :href *stable-jar-url* (basename *stable-jar*))))))
 

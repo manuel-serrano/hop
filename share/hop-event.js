@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sun Mar 14 07:19:22 2010 (serrano)                */
+/*    Last change :  Thu Apr  8 15:45:40 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -680,6 +680,7 @@ function hop_start_servevt_proxy() {
 /*---------------------------------------------------------------------*/
 function hop_trigger_servevt( id, text, value, json ) {
    try {
+/*       alert( "id=" + id + " text=" + text + " value=" + value + " json=" + json); */
       var v = (json ? eval( value ) : value);
       var evt = new HopServerEvent( id, text, v );
       var p2 = hop_servevt_table[ id ];

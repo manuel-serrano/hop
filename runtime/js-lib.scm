@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Thu Apr  8 08:07:02 2010 (serrano)                */
+;*    Last change :  Thu Apr  8 15:44:18 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -113,11 +113,12 @@
 	      (loop (cdr alist)
 		    (cons* ", " (hop->javascript-hash (car alist)) strs))))))))
 
-;*---------------------------------------------------------------------*/
-;*    json-string-encode ...                                           */
-;*---------------------------------------------------------------------*/
-(define (json-string-encode str isflash)
 
+;*---------------------------------------------------------------------*/
+;*    json-string-flash-encode ...                                     */
+;*---------------------------------------------------------------------*/
+(define (json-string-flash-encode str)
+   
    (define (count str ol)
       (let loop ((i 0)
 		 (n 0))
@@ -126,7 +127,7 @@
 	     (let ((c (string-ref str i)))
 		(case c
 		   ((#\" #\\ #\Newline #\Return)
-		    (loop (+fx i 1) (+fx n (if isflash 3 2))))
+		    (loop (+fx i 1) (+fx n 3)))
 		   (else
 		    (loop (+fx i 1) (+fx n 1))))))))
    
@@ -141,43 +142,74 @@
 		    (let ((c (string-ref str i)))
 		       (case c
 			  ((#\" #\\)
-			   (if isflash
-			       (begin
-				  (string-set! res j #\\)
-				  (string-set! res (+fx j 1) #\\)
-				  (string-set! res (+fx j 2) c)
-				  (loop (+fx i 1) (+fx j 3)))
-			       (begin
-				  (string-set! res j #\\)
-				  (string-set! res (+fx j 1) c)
-				  (loop (+fx i 1) (+fx j 2)))))
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) #\\)
+			   (string-set! res (+fx j 2) c)
+			   (loop (+fx i 1) (+fx j 3)))
 			  ((#\Newline)
-			   (if isflash
-			       (begin
-				  (string-set! res j #\\)
-				  (string-set! res (+fx j 1) #\\)
-				  (string-set! res (+fx j 2) #\n)
-				  (loop (+fx i 1) (+fx j 3)))
-			       (begin
-				  (string-set! res j #\\)
-				  (string-set! res (+fx j 1) #\n)
-				  (loop (+fx i 1) (+fx j 2)))))
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) #\\)
+			   (string-set! res (+fx j 2) #\n)
+			   (loop (+fx i 1) (+fx j 3)))
 			  ((#\Return)
-			   (if isflash
-			       (begin
-				  (string-set! res j #\\)
-				  (string-set! res (+fx j 1) #\\)
-				  (string-set! res (+fx j 2) #\r)
-				  (loop (+fx i 1) (+fx j 3)))
-			       (begin
-				  (string-set! res j #\\)
-				  (string-set! res (+fx j 1) #\r)
-				  (loop (+fx i 1) (+fx j 2)))))
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) #\\)
+			   (string-set! res (+fx j 2) #\r)
+			   (loop (+fx i 1) (+fx j 3)))
 			  (else
 			   (string-set! res j c)
 			   (loop (+fx i 1) (+fx j 1))))))))))
+   
    (let ((ol (string-length str)))
       (encode str ol (count str ol))))
+   
+;*---------------------------------------------------------------------*/
+;*    json-string-encode ...                                           */
+;*---------------------------------------------------------------------*/
+(define (json-string-encode str isflash)
+   
+   (define (count str ol)
+      (let loop ((i 0)
+		 (n 0))
+	 (if (=fx i ol)
+	     n
+	     (let ((c (string-ref str i)))
+		(case c
+		   ((#\" #\\ #\Newline #\Return)
+		    (loop (+fx i 1) (+fx n 2)))
+		   (else
+		    (loop (+fx i 1) (+fx n 1))))))))
+   
+   (define (encode str ol nl)
+      (if (=fx nl ol)
+	  str
+	  (let ((res (make-string nl)))
+	     (let loop ((i 0)
+			(j 0))
+		(if (=fx j nl)
+		    res
+		    (let ((c (string-ref str i)))
+		       (case c
+			  ((#\" #\\)
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) c)
+			   (loop (+fx i 1) (+fx j 2)))
+			  ((#\Newline)
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) #\n)
+			   (loop (+fx i 1) (+fx j 2)))
+			  ((#\Return)
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) #\r)
+			   (loop (+fx i 1) (+fx j 2)))
+			  (else
+			   (string-set! res j c)
+			   (loop (+fx i 1) (+fx j 1))))))))))
+
+   (if isflash
+       (json-string-flash-encode str)
+       (let ((ol (string-length str)))
+	  (encode str ol (count str ol)))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ...                                              */

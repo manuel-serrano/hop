@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/flash/HopServevt.as         */
+/*    serrano/prgm/project/hop/2.1.x/share/flash/HopServevt.as         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Sep  7 15:31:58 2007                          */
-/*    Last change :  Sat Mar 21 18:02:25 2009 (serrano)                */
-/*    Copyright   :  2007-09 Manuel Serrano                            */
+/*    Last change :  Thu Apr  8 14:39:38 2010 (serrano)                */
+/*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    ActionScript server events runtime system.                       */
 /*    To be compiled with:                                             */

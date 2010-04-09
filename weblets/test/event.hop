@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Thu Feb 25 21:14:45 2010 (serrano)                */
+;*    Last change :  Thu Apr  8 14:45:58 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
@@ -22,7 +22,8 @@
 (define-service (test/events)
    (let ((evt1 (symbol->string (gensym "event")))
 	 (evt2 (symbol->string (gensym "event")))
-	 (evt3 (symbol->string (gensym "event"))))
+	 (evt3 (symbol->string (gensym "event")))
+	 (evt4 (symbol->string (gensym "event"))))
       (<TEST-HTML>
 	 :source (service-resource test/events "event.hop")
 	 (<DIV> :class "comment"
@@ -35,6 +36,7 @@ events succeeded, you should see an acknowledge.")
 		      "I'm a sensitive region"))
 		(b3 (<SPAN> :style "color: red" "...waiting"))
 		(b4 (<SPAN> :style "color: red" ""))
+		(b5 (<SPAN> :style "color: red" ""))
 		(b2 (<DIV> :style "padding-top: 3ex"
 		       ~(add-event-listener! $b
 					     "mouseover"
@@ -87,6 +89,9 @@ events succeeded, you should see an acknowledge.")
 		      (let ((nval (string-append $b4.innerHTML e.value)))
 			 (innerHTML-set! $b4 nval)
 			 #t)))
+	       ~(define (add-text e)
+		   (when e.value
+		      (innerHTML-set! $b5 (apply string-append e.value))))
 	       ~(add-event-listener! $evt1
 				     "server"
 				     (lambda (e)
@@ -95,6 +100,7 @@ events succeeded, you should see an acknowledge.")
 				     #t)
 	       ~(add-event-listener! $evt2 "server" add #t)
 	       ~(add-event-listener! $evt3 "server" add #t)
+	       ~(add-event-listener! $evt4 "server" add-text #t)
 	       ~(add-event-listener! document
 				     "server"
 				     (lambda (e)
@@ -114,13 +120,16 @@ events succeeded, you should see an acknowledge.")
 						       (hop-event-signal!
 							evt2 evt2)
 						       (hop-event-signal!
-							evt3 evt3))))))
+							evt3 evt3)
+						       (hop-event-signal!
+							evt4 (list "foo" "\"" "bar")))))))
 	       (<H4> "Client events")
 	       b
 	       b2
 	       (<H4> "Server events")
 	       (<DIV> "Server event: " b3
 		      ", Server event 2 (AB or BA when okay): " b4)
+	       (<DIV> "Server string event: should be [foo\"bar]: " b5)
 	       (<H4> "Orientation (browser dependent)")
 	       (<DIV> :style "border: 1px solid black; text-align: center;"
 		  (<SPAN> :id "orientation" "Move your device"))
