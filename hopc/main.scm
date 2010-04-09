@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Apr  8 08:06:21 2010 (serrano)                */
+;*    Last change :  Fri Apr  9 14:51:56 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -64,8 +64,8 @@
    (init-hopscheme! :reader (lambda (p v) (hop-read p))
       :share (hopc-share-directory)
       :verbose (hop-verbose)
-      :eval (lambda (e) (hop->javascript (eval e) #f #f))
-      :hop-compile (lambda (e p) (display (hop->javascript e #f #f) p))
+      :eval (lambda (e) (hop->javascript (eval e) #f))
+      :hop-compile (lambda (e p) (display (hop->javascript e #f) p))
       :features `(hop
 		  ,(string->symbol (format "hop-~a" (hop-branch)))
 		  ,(string->symbol (format "hop-~a" (hop-version))))

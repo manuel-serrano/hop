@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Apr  9 10:28:22 2010 (serrano)                */
+;*    Last change :  Fri Apr  9 14:49:06 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -874,7 +874,7 @@
       ((real? value)
        (format "<f name='~a'>~a</f>" name value))
       (else
-       (format "<j name='~a'><![CDATA[~a]]></j>" name (hop->javascript value #f #f)))))
+       (format "<j name='~a'><![CDATA[~a]]></j>" name (hop->javascript value #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    multipart-value ...                                              */
@@ -898,7 +898,7 @@
       ((or (string? value) (number? value))
        value)
       (else
-       (string-append "<json><![CDATA[" (hop->javascript value #f #t) "]]></json>"))))
+       (string-append "<json><![CDATA[" (hop->javascript value #f) "]]></json>"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    for-each-socket ...                                              */

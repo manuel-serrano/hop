@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Sep  7 15:31:58 2007                          */
-/*    Last change :  Fri Apr  9 14:15:36 2010 (serrano)                */
+/*    Last change :  Fri Apr  9 14:44:06 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    ActionScript server events runtime system.                       */
@@ -54,6 +54,40 @@ class HopServevt {
 	 ExternalInterface.call( onclose );
       }
 
+      var encodeStringChar = function( str, char, repl ) {
+	 var s = str.split( char );
+	 var r = "";
+	 var i;
+	       
+	 for( i = 0; i < s.length - 1; i++ ) r = r.concat( s[ i ] + repl );
+	 r = r.concat( s[ i ] );
+
+	 return r;
+      }
+      
+      var encodeStringSlash = function( str ) {
+	 var s = str.split( "\\" );
+	 var r = "";
+	 var i;
+	       
+	 for( i = 0; i < s.length - 1; i++ ) r = r.concat( s[ i ] + "\\\\" );
+	 r = r.concat( s[ i ] );
+
+	 return encodeStringChar( encodeStringChar( r, "\n", "\\\n" ), "\r", "\\\r" );
+      }
+      
+      var encodeString = function( str ) {
+	 var s = str.split( "\"" );
+	 var r = "";
+	 var i;
+	       
+	 for( i = 0; i < s.length - 1; i++ )
+	    r = r.concat( encodeStringSlash( s[ i ] ) + '"' );
+	 r = r.concat( encodeStringSlash( s[ i ] ) );
+
+	 return r;
+      }
+      
       socket.onData = function( evt ) {
 	 var e = (new XML( evt )).firstChild;
 
@@ -62,8 +96,8 @@ class HopServevt {
 	    var n = e.attributes.name;
 
 	    if( c.nodeName == "json" ) {
-	       var s = c.firstChild.nodeValue;
-	       alert( "e=" + c.firstChild.toString() );
+	       var s = encodeString( c.firstChild.nodeValue );
+
 	       return ExternalInterface.call( onevent, n, "evt", s, true );
 	    } else {
 	       return ExternalInterface.call( onevent, n, evt, c.nodeValue, false );

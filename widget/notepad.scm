@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Apr  8 08:08:02 2010 (serrano)                */
+;*    Last change :  Fri Apr  9 14:52:08 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -80,7 +80,7 @@
        (procedure->service
 	(lambda (i)
 	   (nptab-get-body (list-ref tabs i))))
-       #f #f))
+       #f))
    
    (define (make-tab-div tab i)
       (with-access::xml-nptab-element tab (attributes (idt id) body klass)
