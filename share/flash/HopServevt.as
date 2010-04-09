@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Sep  7 15:31:58 2007                          */
-/*    Last change :  Thu Apr  8 14:39:38 2010 (serrano)                */
+/*    Last change :  Fri Apr  9 14:15:36 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    ActionScript server events runtime system.                       */
@@ -17,6 +17,7 @@
 /*    Imports                                                          */
 /*---------------------------------------------------------------------*/
 import flash.external.ExternalInterface;
+import flash.RegExp;
 
 /*---------------------------------------------------------------------*/
 /*    HopServevt ...                                                   */
@@ -55,15 +56,17 @@ class HopServevt {
 
       socket.onData = function( evt ) {
 	 var e = (new XML( evt )).firstChild;
-	 
+
 	 if( e.nodeName == "event" ) {
 	    var c = e.firstChild;
 	    var n = e.attributes.name;
 
 	    if( c.nodeName == "json" ) {
-	       ExternalInterface.call( onevent, n, "evt", c.firstChild.nodeValue, true );
+	       var s = c.firstChild.nodeValue;
+	       alert( "e=" + c.firstChild.toString() );
+	       return ExternalInterface.call( onevent, n, "evt", s, true );
 	    } else {
-	       ExternalInterface.call( onevent, n, evt, c.nodeValue, false );
+	       return ExternalInterface.call( onevent, n, evt, c.nodeValue, false );
 	    }
 	 }
 	 
@@ -71,6 +74,7 @@ class HopServevt {
 	    return ExternalInterface.call( init );
 	 }
       }
+      
 
       ExternalInterface.addCallback( 'close', this, close );
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Thu Apr  8 15:44:18 2010 (serrano)                */
+;*    Last change :  Fri Apr  9 10:27:19 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -206,7 +206,7 @@
 			   (string-set! res j c)
 			   (loop (+fx i 1) (+fx j 1))))))))))
 
-   (if isflash
+   (if (and #f isflash)
        (json-string-flash-encode str)
        (let ((ol (string-length str)))
 	  (encode str ol (count str ol)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Apr  8 08:06:31 2010 (serrano)                */
+;*    Last change :  Fri Apr  9 10:28:22 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -809,6 +809,10 @@
 		   (flash-close-request! req))
 		(raise e)))
 	 (begin
+	    (let ((p (current-error-port)))
+	       (fprintf p "<event name='~a'>" name)
+	       (display value p)
+	       (display "</event>\n" p))
 	    (fprintf p "<event name='~a'>" name)
 	    (display value p)
 	    (display "</event>\n" p)
