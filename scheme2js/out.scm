@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -162,14 +162,17 @@
 	 (else
 	  (case (string-ref str i)
 	     ((#\\ #\")
-	      (loop (+fx i 1)
-		    (cons* (string-ref str i) #\\ rev-str)))
-	     ((#\return)  (loop (+fx i 1) (cons* #\r #\\ rev-str)))
-	     ((#\newline) (loop (+fx i 1) (cons* #\n #\\ rev-str)))
-	     ((#\null)    (loop (+fx i 1) (cons* #\0 #\0 #\0 #\0 #\u rev-str)))
+	      (loop (+fx i 1) (cons* (string-ref str i) #\\ rev-str)))
+	     ((#\return)
+	      (loop (+fx i 1) (cons* #\r #\\ rev-str)))
+	     ((#\newline)
+	      (loop (+fx i 1) (cons* #\n #\\ rev-str)))
+	     ((#\null)
+	      (loop (+fx i 1) (cons* #\0 #\0 #\0 #\0 #\u rev-str)))
+	     ((#\/)
+	      (loop (+fx i 1) (cons* #\f #\2 #\0 #\0 #\u #\\ rev-str)))
 	     (else
-	      (loop (+fx i 1)
-		    (cons (string-ref str i) rev-str))))))))
+	      (loop (+fx i 1) (cons (string-ref str i) rev-str))))))))
 
 (define (compile-const const p foreign-out loc)
    (define (display-ucs2-char p c) ;; without the quotes
