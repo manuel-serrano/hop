@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Apr  9 14:52:34 2010 (serrano)                */
+;*    Last change :  Mon Apr 12 11:32:40 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -221,9 +221,8 @@
 	 (display proc p)
 	 (display ", " p)
 	 ;; the title
-	 (display "\"" p)
-	 (display (json-string-encode title) p)
-	 (display "\", " p)
+	 (display (hop->javascript title #t) p)
+	 (display ", " p)
 	 ;; is the tree open
 	 (if (xml-tilde? open)
 	     (begin
@@ -364,12 +363,11 @@
       (display klass p)
       (display "\", " p)
       ;; the body
-      (display #\" p)
       (let ((sbody (let ((ps (open-output-string)))
 		      (xml-write-body (xml-element-body obj) ps be)
 		      (close-output-port ps))))
-	 (display (json-string-encode sbody) p))
-      (display "\", " p)
+	 (display (hop->javascript sbody #t) p))
+      (display ", " p)
       ;; the value
       (if (string? value)
 	  (begin

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Thu Feb 18 14:32:17 2010 (serrano)                */
+;*    Last change :  Mon Apr 12 11:31:02 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -36,6 +36,7 @@
    (export  (class clientc
 	       (filec::procedure read-only)
 	       (expressionc::procedure read-only)
+	       (valuec::procedure read-only)
 	       (modulec::procedure read-only)
 	       (macroe::procedure read-only)
 	       (sexp->precompiled::procedure read-only)
@@ -47,7 +48,8 @@
 	       (precompiled-free-variables::procedure read-only))
 
 	    (init-clientc-compiler! #!key
-				    filec expressionc modulec macroe
+				    filec expressionc valuec
+				    modulec macroe
 				    sexp->precompiled
 				    precompiled->JS-expression
 				    precompiled->JS-statement
@@ -73,7 +75,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    init-clientc-compiler! ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (init-clientc-compiler! #!key filec expressionc modulec macroe
+(define (init-clientc-compiler! #!key filec expressionc valuec
+				modulec macroe
 				sexp->precompiled
 				precompiled->JS-expression
 				precompiled->JS-statement
@@ -90,8 +93,7 @@
 	    (path (make-file-path (hop-cache-directory)
 				  (string-append "clientc-"
 						 (integer->string (hop-port)))))
-	    (out (lambda (o p) (with-output-to-port p (lambda () (print
-								  o)))))))
+	    (out (lambda (o p) (with-output-to-port p (lambda () (print o)))))))
 
    ;; hook the client-code compiler
    (hop-clientc-set!
@@ -100,6 +102,7 @@
 		 (hop-load-afile (dirname file))
 		 (filec file env)))
        (expressionc expressionc)
+       (valuec valuec)
        (modulec modulec)
        (macroe macroe)
        (sexp->precompiled sexp->precompiled)

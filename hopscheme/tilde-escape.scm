@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:09:56 2010                          */
-;*    Last change :  Thu Feb 18 14:30:33 2010 (serrano)                */
+;*    Last change :  Mon Apr 12 11:45:10 2010 (serrano)                */
 ;*    Copyright   :  2010 Florian Loitsch and Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    Interface between Scheme2JS and Hop.                             */
@@ -18,6 +18,7 @@
    
    (export (hopscheme-create-empty-macro-environment)
 	   (hopscheme-compile-expression e ::obj ::obj ::procedure)
+	   (hopscheme-compile-value ::obj ::output-port ::procedure ::obj)
 	   (hopscheme-compile-hop-client e #!optional (env '()) (menv #f))
 	   (hopscheme->JS-expression::bstring ::vector) 
 	   (hopscheme->JS-statement::bstring ::vector)
@@ -72,6 +73,12 @@
 	  #unspecified)
        (compile-expression e env menv postproc)))
 
+;*---------------------------------------------------------------------*/
+;*    hopscheme-compile-value ...                                      */
+;*---------------------------------------------------------------------*/
+(define (hopscheme-compile-value v p foreign-out loc)
+   (scheme2js-compile-value v p foreign-out loc))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme->JS-expression ...                                     */
 ;*---------------------------------------------------------------------*/

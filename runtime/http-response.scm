@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Apr  9 14:48:48 2010 (serrano)                */
+;*    Last change :  Mon Apr 12 17:13:08 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -157,13 +157,30 @@
 	    (http-write-content-type p (or content-type (hop-json-mime-type)) charset)
 	    (when server
 	       (http-write-line-string p "Server: " server))
+	    (http-write-line-string p "Hop-Serialize: "
+				    (symbol->string! (hop-serialize-method)))
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-js
-	       (when bodyp (display (hop->javascript value #t) p)))
+	       (when bodyp
+		  (case (hop-serialize-method)
+		     ((javascript)
+		      (display (hop->javascript value #t) p))
+		     ((hop)
+		      (display (hop-obj->string value) p))
+		     (else
+		      (error 'http-response
+			     "Unspported serialization method"
+			     (hop-serialize-method))))))
 	    (flush-output-port p)
 	    connection))))
 
+;*---------------------------------------------------------------------*/
+;*    hop-obj->string ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hop-obj->string value)
+   (url-path-encode (obj->string value)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    chunked-flush-hook ...                                           */
 ;*---------------------------------------------------------------------*/

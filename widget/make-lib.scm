@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Thu Mar  4 14:24:02 2010 (serrano)                */
+;*    Last change :  Tue Apr 13 09:12:58 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOPWIDGET heap file.                */
@@ -30,7 +30,8 @@
 	   __hopwidget-colorchooser
 	   __hopwidget-spinbutton
 	   __hopwidget-lframe
-	   __hopwidget-spage)
+	   __hopwidget-spage
+	   __hopwidget-gauge)
 
    (eval   (export-all)
 	   (class audio-server)

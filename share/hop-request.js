@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Apr  8 08:26:23 2010 (serrano)                */
+/*    Last change :  Mon Apr 12 17:03:07 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -276,6 +276,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
    /* unbound (at least in Firefox) when used inside a catch! Binding  */
    /* it to a local var eliminates this problem.                       */
    var hop_header_ctype = hop_header_content_type;
+   var hop_header_serialize = hop_header_hop_serialize;
    var succ = (typeof success === "function") ? success : hop_default_success;
    var fail = (typeof failure === "function") ? failure : hop_default_failure;
    var hstack = hop_debug() > 0 ? hop_get_stack( 1 ) : false;
@@ -294,23 +295,19 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 		     var expr;
 
 		     if( ctype === "application/x-javascript" ) {
+			var serialize = hop_header_serialize( xhr );
 			/* ctype must match the value hop-json-mime-type */
 			/* which is defined in runtime/param.scm.        */
 			try {
-			   expr = eval( xhr.responseText );
-			} catch( exc ) {
-			   xhr.exception = exc;
-			   xhr.exception.hopStack = hstack;
-			   xhr.exception.hopService = svc;
-			   xhr.exception.message = xhr.responseText;
-			   fail( xhr );
-			   expr = false;
-			}
-
-			return succ( expr, xhr );
-		     } else if( ctype === "application/json" ) {
-			try {
-			   expr = hop_json_parse( xhr.responseText );
+			   if( serialize === "javascript" ) {
+			      expr = eval( xhr.responseText );
+			   } else if( serialize === "hop" ) {
+			      expr = hop_string_to_obj( decodeURIComponent( xhr.responseText ) );
+			   } else if( serialize === "json" ) {
+			      expr = hop_json_parse( xhr.responseText );
+			   } else {
+			      raise( "Unknown serialize format" + serialize );
+			   }
 			} catch( exc ) {
 			   xhr.exception = exc;
 			   xhr.exception.hopStack = hstack;

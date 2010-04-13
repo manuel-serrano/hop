@@ -53,7 +53,8 @@
        last-file)
     (wide-class Out-Lambda::Lambda
        lvalue))
-   (export (out tree::Module p)))
+   (export (compile-value const p::output-port foreign-out loc)
+	   (out tree::Module p)))
 
 (define (out tree p)
    (verbose "Compiling")
@@ -174,7 +175,7 @@
 	     (else
 	      (loop (+fx i 1) (cons (string-ref str i) rev-str))))))))
 
-(define (compile-const const p foreign-out loc)
+(define (compile-value val p foreign-out loc)
    (define (display-ucs2-char p c) ;; without the quotes
       (let ((i (ucs2->integer c)))
 	 (cond
@@ -192,81 +193,86 @@
 	     (template-display p "\\u~x" i)))))
 	     
    (cond
-      ((null? const) (template-display p "null"))
-      ((boolean? const)
-       (template-display p "~a" (if const "true" "false")))
-      ((symbol? const)
+      ((null? val)
+       (template-display p "null"))
+      ((boolean? val)
+       (template-display p "~a" (if val "true" "false")))
+      ((symbol? val)
        (template-display p
 	  "\"~?~a\""
 	  (and (not (use-mutable-strings?)) *symbol-prefix*)
-	  const))
-      ((char? const)
+	  val))
+      ((char? val)
        (template-display p
-	  "(new sc_Char(\"~a\"))" (my-string-for-read (string const))))
-      ((ucs2? const)
+	  "(new sc_Char(\"~a\"))" (my-string-for-read (string val))))
+      ((ucs2? val)
        (template-display p
-	  "(new sc_Char(\"~e\"))" (display-ucs2-char p const)))
-      ((number? const)
-       ;; CARE: initially I had "($const)" here. and I suppose there was a
+	  "(new sc_Char(\"~e\"))" (display-ucs2-char p val)))
+      ((number? val)
+       ;; CARE: initially I had "($val)" here. and I suppose there was a
        ;; reason I put the parenthesis around. this will probably come back and
        ;; bite me...
        (template-display p
-	  (?@ (< const 0) "(~@)")
-	  "$const"))
-      ((string? const)
+	  (?@ (< val 0) "(~@)")
+	  "$val"))
+      ((string? val)
        (template-display p
 	  (?@ (use-mutable-strings?) "(new sc_String(~@))")
-	  "\"~a\"" (my-string-for-read const)))
-      ((ucs2-string? const)
+	  "\"~a\"" (my-string-for-read val)))
+      ((ucs2-string? val)
        (template-display p
 	  (?@ (use-mutable-strings?) "(new sc_String(~@))")
 	  "\"~e\""
 	  (let loop ((i 0))
-	     (unless (>= i (ucs2-string-length const))
-		(display-ucs2-char p (ucs2-string-ref const i))
+	     (unless (>= i (ucs2-string-length val))
+		(display-ucs2-char p (ucs2-string-ref val i))
 		(loop (+fx i 1))))))
-      ((vector? const)
+      ((vector? val)
        (template-display p
 	  "[~e]"
 	  (let loop ((i 0))
-	     (unless (>= i (vector-length const))
+	     (unless (>= i (vector-length val))
 		(if (not (= i 0))
 		    (template-display p ", "))
-		(compile-const (vector-ref const i) p foreign-out loc)
+		(compile-value (vector-ref val i) p foreign-out loc)
 		(loop (+ i 1))))))
-      ((pair? const)
-       (if (small-list/pair? const)
+      ((pair? val)
+       (if (small-list/pair? val)
 	   (template-display p
 	      "(new sc_Pair(~e,~e))"
-	      (compile-const (car const) p foreign-out loc)
-	      (compile-const (cdr const) p foreign-out loc))
+	      (compile-value (car val) p foreign-out loc)
+	      (compile-value (cdr val) p foreign-out loc))
 	   (template-display p
 	      "sc_list(~e)"
 	      (separated ", " 
-			 (lambda (e) "~e" (compile-const e p foreign-out loc))
-			 const))))
-      ((eq? const #unspecified) (template-display p "undefined"))
-      ((keyword? const)
+			 (lambda (e) "~e" (compile-value e p foreign-out loc))
+			 val))))
+      ((eq? val #unspecified)
+       (template-display p "undefined"))
+      ((keyword? val)
        (if (use-mutable-strings?)
 	   (template-display p
-	      "(new sc_Keyword(\"~a\"))" (keyword->string const))
+	      "(new sc_Keyword(\"~a\"))" (keyword->string val))
 	   (template-display p
-	      "\"~a~a\"" *keyword-prefix* (keyword->string const))))
+	      "\"~a~a\"" *keyword-prefix* (keyword->string val))))
       (foreign-out
-       (let ((ok? (foreign-out const p)))
+       (let ((ok? (foreign-out val p)))
 	  (when (not ok?)
-	     (scheme2js-error 'const-out
+	     (scheme2js-error 'val-out
 			      "Could not compile value:"
-			      const
+			      val
 			      loc))))
       (else
-       (error #f "Internal Error: forgot Const-type" const))))
+       (scheme2js-error 'val-out
+			"Internal Error: forgot Val-type"
+			val
+			loc))))
    
 (define-nmethod (Const.compile p stmt?)
    (with-access::Const this (value)
       (template-display p
 	 (?@ stmt? "~@;\n")
-	 "~e" (compile-const value p (Out-Env-foreign-out env) this))))
+	 "~e" (compile-value value p (Out-Env-foreign-out env) this))))
 
 (define-nmethod (Ref.compile p stmt?)
    (with-access::Ref this (var)

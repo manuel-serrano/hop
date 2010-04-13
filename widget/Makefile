@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/widget/Makefile                   */
+#*    serrano/prgm/project/hop/2.1.x/widget/Makefile                   */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sat Nov 28 06:54:00 2009 (serrano)                */
+#*    Last change :  Tue Apr 13 05:43:12 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -33,7 +33,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 _OBJECTS = init notepad paned slider tree file foldlist tabslider \
    editor audio video lframe
-_HOBJECTS= spinbutton colorchooser spage
+_HOBJECTS= spinbutton colorchooser spage gauge
 
 OBJECTS = $(_OBJECTS:%=o/%.o) $(_HOBJECTS:%=o/%.o)
 EOBJECTS = o/make-lib.o

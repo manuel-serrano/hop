@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Apr  9 14:44:24 2010 (serrano)                */
+/*    Last change :  Tue Apr 13 10:16:44 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -15,6 +15,26 @@
 var hop_is_ready = false;
 
 hop_add_native_event_listener( window, "load", function() { hop_is_ready = true; } );
+
+/*---------------------------------------------------------------------*/
+/*    HopEvent ...                                                     */
+/*---------------------------------------------------------------------*/
+function HopEvent( n, v ) {
+   this.isStopped = false;
+   this.preventDefault = function() { ; };
+   this.stopPropagation = this.preventDefault;
+   this.name = n;
+   this.value = v;
+   return this;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_event_stoppedp ...                                           */
+/*---------------------------------------------------------------------*/
+/*** META ((export event-stopped?) (arity 1))) */
+function hop_event_stoppedp( e ) {
+   return this.isStopped = true;
+}
 
 /*---------------------------------------------------------------------*/
 /*    hop_add_event_listener ...                                       */

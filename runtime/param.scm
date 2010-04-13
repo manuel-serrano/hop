@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Apr  7 11:59:58 2010 (serrano)                */
+;*    Last change :  Mon Apr 12 16:28:42 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -157,6 +157,9 @@
 	    (hop-json-mime-type::bstring)
 	    (hop-json-mime-type-symbol::symbol)
 	    (hop-bigloo-mime-type::bstring)
+
+	    (hop-serialize-method::symbol)
+	    (hop-serialize-method-set! ::symbol)
 
 	    (hop-authorize-service-hook::procedure)
 	    (hop-authorize-service-hook-set! ::procedure)
@@ -812,6 +815,12 @@
 
 (define-parameter hop-json-mime-type-symbol
    'application/x-javascript)
+
+;*---------------------------------------------------------------------*/
+;*    hop-serialize-method ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-serialize-method
+   'javascript)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-bigloo-mime-type ...                                         */

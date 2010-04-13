@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -2135,6 +2135,19 @@ function sc_random(n) {
 function sc_currentDate() {
    return new Date();
 }
+
+/*** META ((export current-seconds) (arity #t)) 
+*/
+function sc_currentSeconds() {
+   return (new Date()).getTime() / 1000;
+}
+
+/*** META ((export current-microseconds) (arity #t)) 
+*/
+function sc_currentMicroseconds() {
+   return (new Date()).getTime();
+}
+
 
 function sc_Hashtable() {
 }

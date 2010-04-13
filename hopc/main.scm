@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Apr  9 14:51:56 2010 (serrano)                */
+;*    Last change :  Mon Apr 12 11:34:28 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -73,6 +73,7 @@
 			(define-markup . ,(eval 'hop-client-define-markup))))
    (init-clientc-compiler! :modulec hopscheme-compile-module
       :expressionc hopscheme-compile-expression
+      :valuec hopscheme-compile-value 
       :macroe hopscheme-create-empty-macro-environment
       :filec hopscheme-compile-file
       :sexp->precompiled sexp->hopscheme

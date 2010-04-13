@@ -1,0 +1,100 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.1.x/share/hop-gauge.hss               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Tue Apr 13 09:01:57 2010                          */
+/*    Last change :  Tue Apr 13 10:34:18 2010 (serrano)                */
+/*    Copyright   :  2010 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    HOP gauge CSS                                                    */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module __hop_hop-gauge)
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type gauge "div[hssclass=hop-gauge]"
+   
+    (define-hss-property (text-color v)
+       (format "div[hssclass=hop-gauge-text] { color: ~l; }" v))
+
+    (define-hss-property (font v)
+       (list (format "font: ~l;" v)
+             (format "div[hssclass=hop-gauge-text] { font: ~l; }" v)))
+
+    (define-hss-property (font-family v)
+       (list (format "font-family: ~l;" v)
+             (format "div[hssclass=hop-gauge-text] { font-family: ~l; }" v)))
+
+    (define-hss-property (font-size v)
+       (list (format "font-size: ~l;" v)
+             (format "div[hssclass=hop-gauge-text] { font-size: ~l; }" v)))
+
+    (define-hss-property (font-weight v)
+       (list (format "font-weight: ~l;" v)
+             (format "div[hssclass=hop-gauge-text] { font-weight: ~l; }" v)))
+
+    (define-hss-property (font-style v)
+       (list (format "font-style: ~l;" v)
+             (format "div[hssclass=hop-gauge-text] { font-style: ~l; }" v)))
+
+    (define-hss-property (text-shadow v)
+       (list (format "text-shadow: ~l;" v)
+             (format "div[hssclass=hop-gauge-text] { text-shadow: ~l; }" v))))
+
+$(define-hss-type gaugefill "div[hssclass=hop-gauge-fill]")
+
+/*---------------------------------------------------------------------*/
+/*    public declarations                                              */
+/*---------------------------------------------------------------------*/
+/* <public> */
+gauge {
+  border-radius: 2px;
+  border: 1px solid #555;
+  background-color: #eeeeee;
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(white), to(#dddddd));
+  background-image: -moz-linear-gradient( -90deg, white, #dddddd );
+  text-color: #000;
+  font-weight: bold;
+  font-size: 8pt;
+  font-family: arial;
+}
+
+gaugefill {
+  background-color: #14a3eb;
+  /* when google-chrome is fixed, uncomment the line below */
+/*   background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter "#14a3eb" 4)), to(#14a3eb)); */
+  background-image: -moz-linear-gradient( -90deg, $(color-lighter "#14a3eb" 4), #14a3eb );
+}
+/* </public> */
+
+/*---------------------------------------------------------------------*/
+/*    private declarations                                             */
+/*---------------------------------------------------------------------*/
+gauge {
+  position: relative;
+  color: transparent;
+  z-index: 0;
+}
+
+gaugefill {
+  position: absolute;
+  top: 0; bottom: 0; right: 0; left: 0;
+  display: inline-block;
+  z-index: 1;
+}
+
+gauge div[hssclass=hop-gauge-text] {
+  position: absolute;
+  top: 0; bottom: 0; right: 0; left: 0;
+  text-align: center;
+  display: inline-block;
+  background-color: transparent;
+  z-index: 2;
+  white-space: nowrap;
+  overflow: hidden;
+}

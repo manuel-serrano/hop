@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Feb 18 11:42:32 2010 (serrano)                */
+;*    Last change :  Tue Apr 13 10:28:35 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client side testing                                          */
@@ -35,7 +35,8 @@
 	   weblet_test-mathml
 	   weblet_test-spinbutton
 	   weblet_test-colorchooser
-	   weblet_test-widget)
+	   weblet_test-widget
+	   weblet_test-gauge)
    (export (<TEST-HTML> . args)))
 
 ;*---------------------------------------------------------------------*/
@@ -82,6 +83,7 @@
 	    (<LI> (<A> :href test/hss :target "_blank" "Label Frame"))
 	    (<LI> (<A> :href test/spinbutton :target "_blank" "SpinButton"))
 	    (<LI> (<A> :href test/colorchooser :target "_blank" "ColorChooser"))
+	    (<LI> (<A> :href test/gauge :target "_blank" "Gauge"))
 	    (<LI> (<A> :href test/widget :target "_blank" "Custom Widget")))
 	 (<H4> "XML and HTML")
 	 (<UL>

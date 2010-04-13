@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Wed Apr  7 09:17:59 2010 (serrano)                */
+/*    Last change :  Mon Apr 12 12:14:29 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -457,8 +457,9 @@ if( "WebSocket" in window ) {
 /*---------------------------------------------------------------------*/
 /*    hop_header_content_type ...                                      */
 /*---------------------------------------------------------------------*/
-var hop_header_content_type;
 var hop_header_autoconf = hop_make_xml_http_request();
+var hop_header_content_type;
+var hop_header_hop_serialize;
 
 if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
    hop_header_content_type = function hop_header_content_type( http ) {
@@ -476,13 +477,22 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
 	 return "application/text";
       }
    }
+   hop_header_hop_serialize = function hop_header_hop_serialize( http ) {
+      var h = http.getResponseHeader( "Hop-Serialize" );
+
+      if( h ) {
+	 return h;
+      } else {
+	 return "javascript";
+      }
+   }
 } else {
    hop_header_content_type = function hop_header_content_type( http ) {
       var hds = http.getAllResponseHeaders();
       var i = hds.indexOf( "Content-Type" );
-
       if( i < 0 ) i = hds.indexOf( "content-type" );
       if( i < 0 ) i = hds.indexOf( "Content-type" );
+      
       if( i < 0 ) return "application/text";
 
       var j = hds.indexOf( "\n", i + 1 );
@@ -493,6 +503,20 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
 	 return m[ 1 ];
       else
 	 return "application/text";
+   }
+   hop_header_hop_serialize = function hop_header_hop_serialize( http ) {
+      var hds = http.getAllResponseHeaders();
+      var i = hds.indexOf( "Hop-Serialize" );
+
+      if( i < 0 ) return "javascript";
+      
+      var j = hds.indexOf( "\n", i + 1 );
+      var s = (j >= 0) ? hds.substring( i, j ) : hds.substring( i, s.length );
+
+      if( m )
+	 return m[ 1 ];
+      else
+	 return "javascript";
    }
 }
 

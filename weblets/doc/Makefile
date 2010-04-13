@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Mar  5 17:56:08 2010 (serrano)                */
+#*    Last change :  Tue Apr 13 11:00:23 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -39,7 +39,7 @@ API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
                   window.wiki xml.wiki symbol.wiki rss.wiki history.wiki \
                   regexp.wiki output.wiki webdav.wiki \
                   charset.wiki svg.wiki mathml.wiki canvas.wiki login.wiki \
-                  condexpand.wiki lframe.wiki spinbutton.wiki \
+                  condexpand.wiki lframe.wiki spinbutton.wiki gauge.wiki \
                   colorchooser.wiki font.wiki javascript.wiki \
                   audio.wiki video.wiki
 CORE_POP	= core.wiki
@@ -61,7 +61,7 @@ EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   login.hop json.hop busyanim.hop musicplay.hop form.hop \
                   lframe.hop spinbutton.hop colorchooser.hop S3.hop \
                   audio-server.hop audio-browser-1.hop audio-browser-2.hop \
-                  video.hop videoenc.hop
+                  video.hop videoenc.hop gauge.hop
 WEBLETS_POP	= .keep
 WIKI_POP	= basic.wiki hop.wiki link.wiki lists.wiki misc.wiki \
                   paragraph.wiki plugin.wiki section.wiki syntax.wiki \

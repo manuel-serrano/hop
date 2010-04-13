@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Fri Apr  9 14:49:43 2010 (serrano)                */
+;*    Last change :  Mon Apr 12 11:49:59 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -22,10 +22,11 @@
 	    __hop_dom
 	    __hop_xml
 	    __hop_service
-	    __hop_charset)
+	    __hop_charset
+	    __hop_clientc
+	    __hop_read-js)
 
-   (export  (json-string-encode::bstring ::bstring)
-	    (generic hop->javascript ::obj ::obj)
+   (export  (generic hop->javascript ::obj ::obj)
 	    (json->hop ::input-port)
 	    (hop->js-callback ::obj)))
 
@@ -77,134 +78,10 @@
 	      obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    alist->json ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (alist->json alist m)
-   
-   (define (hop->javascript-key-hash key)
-      (cond
-	 ((keyword? key)
-	  (keyword->string! key))
-	 ((string? key)
-	  (string-append "\"" (json-string-encode key) "\""))
-	 ((symbol? key)
-	  (string-append "\'" (symbol->string! key) "\'"))
-	 (else
-	  key)))
-   
-   (define (hop->javascript-hash el)
-      (string-append (hop->javascript-key-hash (car el))
-		     ": "
-		     (hop->javascript (cadr el) m)))
-
-   (cond
-      ((null? alist)
-       "{}")
-      ((null? (cdr alist))
-       (string-append "{" (hop->javascript-hash (car alist)) "}"))
-      (else
-       (let loop ((alist alist)
-		  (strs (list "{")))
-	  (cond
-	     ((null? (cdr alist))
-	      (apply string-append
-		     (reverse! (cons* "}" (hop->javascript-hash (car alist)) strs))))
-	     (else
-	      (loop (cdr alist)
-		    (cons* ", " (hop->javascript-hash (car alist)) strs))))))))
-
-
-;*---------------------------------------------------------------------*/
-;*    json-string-encode ...                                           */
-;*---------------------------------------------------------------------*/
-(define (json-string-encode str)
-   
-   (define (count str ol)
-      (let loop ((i 0)
-		 (n 0))
-	 (if (=fx i ol)
-	     n
-	     (let ((c (string-ref str i)))
-		(case c
-		   ((#\" #\\ #\Newline #\Return)
-		    (loop (+fx i 1) (+fx n 2)))
-		   (else
-		    (loop (+fx i 1) (+fx n 1))))))))
-   
-   (define (encode str ol nl)
-      (if (=fx nl ol)
-	  str
-	  (let ((res (make-string nl)))
-	     (let loop ((i 0)
-			(j 0))
-		(if (=fx j nl)
-		    res
-		    (let ((c (string-ref str i)))
-		       (case c
-			  ((#\" #\\)
-			   (string-set! res j #\\)
-			   (string-set! res (+fx j 1) c)
-			   (loop (+fx i 1) (+fx j 2)))
-			  ((#\Newline)
-			   (string-set! res j #\\)
-			   (string-set! res (+fx j 1) #\n)
-			   (loop (+fx i 1) (+fx j 2)))
-			  ((#\Return)
-			   (string-set! res j #\\)
-			   (string-set! res (+fx j 1) #\r)
-			   (loop (+fx i 1) (+fx j 2)))
-			  (else
-			   (string-set! res j c)
-			   (loop (+fx i 1) (+fx j 1))))))))))
-
-   (let ((ol (string-length str)))
-      (encode str ol (count str ol))))
-	 
-;*---------------------------------------------------------------------*/
 ;*    hop->javascript ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-generic (hop->javascript obj isrep)
    (cond
-      ((string? obj)
-       (string-append "\"" (json-string-encode obj) "\""))
-      ((number? obj)
-       (number->string obj))
-      ((symbol? obj)
-       (string-append "sc_jsstring2symbol(\"" (symbol->string obj) "\")"))
-      ((keyword? obj)
-       (string-append "sc_jsstring2keyword(\"" (keyword->string obj) "\")"))
-      ((eq? obj #t)
-       "true")
-      ((eq? obj #f)
-       "false")
-      ((null? obj)
-       "null")
-      ((pair? obj)
-       (cond
-;* 	  ((alist? obj)                                                */
-;* 	   (alist->json obj isrep))                            */
-	  ((and (pair? (cdr obj)) (pair? (cddr obj)))
-	   ;; avoid deep recursion for long lists
-	   (let loop ((els (hop->javascript (car obj) isrep))
-		      (rest (cdr obj)))
-	      (cond
-		 ((null? rest)
-		  (format "sc_list(~a)" els))
-		 ((pair? rest)
-		  (loop (format "~a, ~a"
-				els (hop->javascript (car rest) isrep))
-			(cdr rest)))
-		 (else
-		  (format "sc_consStar(~a, ~a)"
-			  els (hop->javascript rest isrep))))))
-	  (else
-	   (let ((car (hop->javascript (car obj) isrep))
-		 (cdr (hop->javascript (cdr obj) isrep)))
-	      (format "new sc_Pair( ~a, ~a )" car cdr)))))
-      ((vector? obj)
-       (vector->json obj isrep))
-      ((eq? obj #unspecified)
-       "undefined")
       ((procedure? obj)
        (if (service? obj)
 	   (hop->javascript (procedure-attr obj) isrep)
@@ -214,7 +91,13 @@
       ((date? obj)
        (format "new Date( ~a000 )" (date->seconds obj)))
       (else
-       (error 'javascript "Illegal Javascript value" obj))))
+       (let ((comp (hop-clientc))
+	     (p (open-output-string))
+	     (foreign-out (lambda (obj p)
+			     (display (hop->javascript obj isrep) p)
+			     #t)))
+	  ((clientc-valuec comp) obj p foreign-out #f)
+	  (close-output-port p)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::object ...                                     */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Apr  9 14:58:00 2010 (serrano)                */
+;*    Last change :  Mon Apr 12 11:23:41 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -236,6 +236,7 @@
 		      (define-xml-compound . ,(eval 'hop-client-define-xml-compound))))
       (init-clientc-compiler! :modulec hopscheme-compile-module
 	 :expressionc hopscheme-compile-expression
+	 :valuec hopscheme-compile-value
 	 :macroe hopscheme-create-empty-macro-environment
 	 :filec hopscheme-compile-file
 	 :sexp->precompiled sexp->hopscheme

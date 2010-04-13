@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Wed Apr  7 08:52:56 2010 (serrano)                */
+/*    Last change :  Tue Apr 13 05:35:14 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -462,23 +462,23 @@ function hop_string_to_obj( s ) {
    }
 
    function read_item() {
-      switch( s.charAt( pointer++ ) ) {
-	 case '=': return read_definition();
-	 case '#': return read_reference();
-	 case "'": return read_symbol();
-	 case ":": return read_keyword();
-	 case "a": return read_char( s );
-	 case "F": return false;
-	 case "T": return true;
-	 case ";": return undefined;
-	 case ".": return null;
-	 case "<": return read_cnst();
-	 case '"': return read_string( s )
-	 case '(': return read_list( read_size( s ) );
-	 case '^': return read_extended_list( read_size( s ) );
-	 case '[': return read_vector( read_size( s ) );
-	 case "f": return read_float( s );
-	 case "-": return -read_integer( s );
+      switch( s.charCodeAt( pointer++ ) ) {
+	 case 0x3d /* = */: return read_definition();
+	 case 0x23 /* # */: return read_reference();
+	 case 0x2c /* ' */: return read_symbol();
+	 case 0x3a /* : */: return read_keyword();
+	 case 0x61 /* a */: return read_char( s );
+	 case 0x46 /* F */: return false;
+	 case 0x54 /* T */: return true;
+	 case 0x3b /* ; */: return undefined;
+	 case 0x2e /* . */: return null;
+	 case 0x3c /* < */: return read_cnst();
+	 case 0x22 /* " */: return read_string( s )
+	 case 0x28 /* ( */: return read_list( read_size( s ) );
+	 case 0x53 /* ^ */: return read_extended_list( read_size( s ) );
+	 case 0x5b /* [ */: return read_vector( read_size( s ) );
+	 case 0x66 /* f */: return read_float( s );
+	 case 0x2d /* - */: return -read_integer( s );
 	 default: pointer--; return read_integer( s );
       }
    }
