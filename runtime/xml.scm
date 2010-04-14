@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Apr  9 14:47:09 2010 (serrano)                */
+;*    Last change :  Wed Apr 14 10:41:46 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -736,6 +736,8 @@
 	 ((and (>fx (hop-security) 1) (string? attr) (attr-event-handler? id))
 	  (raise
 	   (instantiate::&hop-injection-error
+	      (proc id)
+	      (msg "Illegal handler attribute value type")
 	      (obj attr))))
 	 (else
 	  (display (xml-attribute-encode attr) p)))

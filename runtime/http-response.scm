@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Apr 13 17:10:43 2010 (serrano)                */
+;*    Last change :  Wed Apr 14 11:10:47 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -223,7 +223,14 @@
    (with-trace 3 'http-response::http-response-hop
       (if (<fx (hop-security) 2)
 	  (http-response-hop-unsecure r socket)
-	  (http-response-hop-secure r socket))))
+	  (with-handler
+	     (lambda (e)
+		(if (and (&hop-security-error? e) (> (bigloo-debug) 0))
+		    (begin
+		       (exception-notify e)
+		       (http-response-hop-unsecure (http-security-error e) socket))
+		    (raise e)))
+	     (http-response-hop-secure r socket)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response-hop-unsecure ...                                   */

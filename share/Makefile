@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Tue Apr 13 05:43:58 2010 (serrano)                */
+#*    Last change :  Wed Apr 14 10:53:33 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -109,7 +109,7 @@ ICONS		= important.png shadow-se.png shadow-sw.png \
 		  dashboard.png notfound.png source.png \
 		  resize-grip.png stop.png \
 		  error.png client-error.png shadow-e.png timeout.png \
-		  error2.png shadow-ne.png warning.png \
+		  error2.png shadow-ne.png warning.png privacy.png \
 		  hop-16x16.png hop-48x48.png hop-32x32.png hop-128x128.png \
                   hop-api-48x48.png hop-api-16x16.png \
                   hop.png hop.svg \
