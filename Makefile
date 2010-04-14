@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Apr  8 15:11:19 2010 (serrano)                */
+#*    Last change :  Tue Apr 13 13:02:42 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -121,6 +121,7 @@ install-quick: hop-dirs install-init
 	(cd hopscheme && $(MAKE) install) && \
 	(cd src && $(MAKE) install) && \
 	(cd hopsh && $(MAKE) install) && \
+	(cd hopc && $(MAKE) install) && \
 	(cd etc && $(MAKE) install)
 
 install-init: hop-dirs

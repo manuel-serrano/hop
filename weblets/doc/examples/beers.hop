@@ -1,0 +1,49 @@
+;; Five bootle of beers song
+(module beers)
+
+(define beers-number 5)
+
+(define (bottles n)
+   (cond ((= n 0) "No more bottles of beer")
+	 ((= n 1) "One bottle of beer")
+	 (else (string-append (integer->string n) " bottles of beer"))))
+
+(define (couplet n)
+   (if (>= n 0)
+       (cons* (format "~a on the wall, ~a." (bottles n) (bottles n))
+	      (if (> n 0)
+		  (format "Take one down, pass it around, ~a on the wall." (bottles (- n 1)))
+		  (format "Go to the store and buy some more, ~a bootles of beer on the wall." beers-number))
+	      (couplet (- n 1)))
+       '()))
+
+(let ((audio (<AUDIO> :controls #f :browser 'flash :onended ~(sing-next this)))
+      (number beers-number))
+   (<HTML>
+      (<HEAD> :include "hop-audio")
+      (<BODY>
+	 
+	 audio
+	 
+	 ~(define couplet '())
+	 
+	 ~(define (convert-to-mots h)
+	     (pregexp-replace* " " h "+"))
+	 
+	 ~(define (sing audio chanson)
+	     (let ((url (string-append "http://translate.google.com/translate_tts?tl=en&q="
+				       (convert-to-mots chanson))))
+		(audio-load audio url #t)))
+	 
+	 ~(define (sing-next audio)
+	     (when (pair? couplet)
+		(let ((s (car couplet)))
+		   (set! couplet (cdr couplet))
+		   (sing audio s))))
+	 
+	 ~(define (sing-couplet audio c)
+	     (set! couplet c)
+	     (sing-next audio))
+	 
+	 (<BUTTON> "Sing" :onclick ~(sing-couplet $audio $(couplet number)))
+	 (<TABLE> (map (lambda (t) (<TR> (<TD> t))) (couplet number))))))

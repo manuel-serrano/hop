@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/share/hop-exception.scm           */
+;*    serrano/prgm/project/hop/2.1.x/share/hop-exception.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Mon Feb  8 10:55:25 2010 (serrano)                */
+;*    Last change :  Tue Apr 13 17:00:21 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -312,7 +312,9 @@
 		   message))
 	  (name (exception-name exc))
 	  (url (if (string? exc.fileName) exc.fileName document.location.href))
-	  (location (if (string? exc.hopLocation) exc.hopLocation "Client Error"))
+	  (location (if (string? exc.hopLocation)
+			exc.hopLocation
+			"Client Error"))
 	  (src (cond
 		  ((and exc.lineNumber (not (eq? exc.lineNumber #unspecified)))
 		   (list (<A> :href url url) ", line " exc.lineNumber))

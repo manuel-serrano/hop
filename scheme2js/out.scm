@@ -154,7 +154,73 @@
 
    (smaller? l 5))
 
+;*---------------------------------------------------------------------*/
+;*    my-string-for-read ...                                           */
+;*    -------------------------------------------------------------    */
+;*    MS: new implementation 13apr2010.                                */
+;*---------------------------------------------------------------------*/
 (define (my-string-for-read str)
+   
+   (define (count str ol)
+      (let loop ((i 0)
+		 (n 0))
+	 (if (=fx i ol)
+	     n
+	     (let ((c (string-ref str i)))
+		(case c
+		   ((#\" #\\ #\Newline #\Return)
+		    (loop (+fx i 1) (+fx n 2)))
+		   ((#\/ #\null)
+		    (loop (+fx i 1) (+fx n 6)))
+		   (else
+		    (loop (+fx i 1) (+fx n 1))))))))
+   
+   (define (encode str ol nl)
+      (if (=fx nl ol)
+	  str
+	  (let ((res (make-string nl)))
+	     (let loop ((i 0)
+			(j 0))
+		(if (=fx j nl)
+		    res
+		    (let ((c (string-ref str i)))
+		       (case c
+			  ((#\" #\\)
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) c)
+			   (loop (+fx i 1) (+fx j 2)))
+			  ((#\Newline)
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) #\n)
+			   (loop (+fx i 1) (+fx j 2)))
+			  ((#\Return)
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) #\r)
+			   (loop (+fx i 1) (+fx j 2)))
+			  ((#\/)
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) #\u)
+			   (string-set! res (+fx j 2) #\0)
+			   (string-set! res (+fx j 3) #\0)
+			   (string-set! res (+fx j 4) #\2)
+			   (string-set! res (+fx j 5) #\f)
+			   (loop (+fx i 1) (+fx j 6)))
+			  ((#\null)
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) #\u)
+			   (string-set! res (+fx j 2) #\0)
+			   (string-set! res (+fx j 3) #\0)
+			   (string-set! res (+fx j 4) #\0)
+			   (string-set! res (+fx j 5) #\0)
+			   (loop (+fx i 1) (+fx j 6)))
+			  (else
+			   (string-set! res j c)
+			   (loop (+fx i 1) (+fx j 1))))))))))
+   (let ((ol (string-length str)))
+      (encode str ol (count str ol))))
+
+
+#;(define (my-string-for-read.old str)
    (let loop ((i 0)
 	      (rev-str '()))
       (cond
@@ -201,7 +267,7 @@
        (template-display p
 	  "\"~?~a\""
 	  (and (not (use-mutable-strings?)) *symbol-prefix*)
-	  val))
+	  (my-string-for-read (symbol->string! val))))
       ((char? val)
        (template-display p
 	  "(new sc_Char(\"~a\"))" (my-string-for-read (string val))))
@@ -252,9 +318,11 @@
       ((keyword? val)
        (if (use-mutable-strings?)
 	   (template-display p
-	      "(new sc_Keyword(\"~a\"))" (keyword->string val))
+	      "(new sc_Keyword(\"~a\"))"
+	      (my-string-for-read (keyword->string! val)))
 	   (template-display p
-	      "\"~a~a\"" *keyword-prefix* (keyword->string val))))
+	      "\"~a~a\"" *keyword-prefix*
+	      (my-string-for-read (keyword->string! val)))))
       (foreign-out
        (let ((ok? (foreign-out val p)))
 	  (when (not ok?)
