@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Apr 14 11:26:14 2010 (serrano)                */
+;*    Last change :  Thu Apr 15 11:18:02 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -27,7 +27,8 @@
 	    __hop_hop-extra
 	    __hop_service
 	    __hop_misc
-	    __hop_hop)
+	    __hop_hop
+	    __hop_security)
    
    (export  (http-request-error::%http-response ::&error)
 	    (http-error::%http-response ::obj ::http-request)
@@ -120,10 +121,11 @@
 ;*---------------------------------------------------------------------*/
 (define (<EIMG> #!key src req)
    (let* ((path (make-file-name (hop-icons-directory) src))
-	  (epath (format "http://~a:~a~a" (hostname) (hop-port) path)))
+	  (epath (format "http://~a:~a~a" (hostname) (hop-port) path))
+	  (js (format "this.src = ~s" epath)))
       (<IMG> :src (img-base64-encode path)
 	 :alt src
-	 :onerror (sexp->xml-tilde `(pragma ,(format "this.src = ~s" epath))))))
+	 :onerror (secure-javascript-attr js))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ESPAN> ...                                                      */
