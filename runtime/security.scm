@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Fri Apr 16 09:14:20 2010 (serrano)                */
+;*    Last change :  Fri Apr 16 16:07:23 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -112,8 +112,8 @@
 			(normalize-ast (xml-markup-body a2)))
 		  (raise (instantiate::&hop-injection-error
 			    (proc 'default-security-manager)
-			    (msg "Illegal attribute")
-			    (obj a2))))
+			    (msg "Illegal attributes")
+			    (obj (xml-markup-attributes a2)))))
 	      (cons a1 a2)))
 	 ((object? a1)
 	  (or (and (object? a2) (eq? (object-class a1) (object-class a2)))
@@ -130,11 +130,12 @@
 (define (safe-attributes? o::xml-markup)
    (with-access::xml-markup o (attributes)
       (let loop ((a attributes))
-	 (when (pair? a)
-	    (when (pair? (cdr a))
-	       (when (or (not (string? (cadr a)))
-			 (not (string-prefix? "javascript:" (cadr a))))
-		  (loop (cddr a))))))))
+	 (if (null? a)
+	     #t
+	     (when (pair? (cdr a))
+		(when (or (not (string? (cadr a)))
+			  (not (string-prefix? "javascript:" (cadr a))))
+		   (loop (cddr a))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ast->string-list ...                                             */

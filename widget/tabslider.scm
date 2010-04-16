@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Apr  9 14:52:47 2010 (serrano)                */
+;*    Last change :  Fri Apr 16 16:02:34 2010 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -107,11 +107,12 @@
 			    :id id
 			    :class "hop-tabslider-content"
 			    :lang "delay"
-			    :onkeyup (format "return ~a;"
-					     (hop->javascript
-					      (procedure->service
-					       (xml-delay-thunk (cadr body)))
-					      #f))
+			    :onkeyup (secure-javascript-attr
+				      (format "return ~a;"
+					      (hop->javascript
+					       (procedure->service
+						(xml-delay-thunk (cadr body)))
+					       #f)))
 			    (tspan-onselect id onselect)
 			    "delayed tab")))))
 	 (else
@@ -136,4 +137,4 @@
 ;*---------------------------------------------------------------------*/
 (define-xml-alias <TSHEAD> <DIV>
    :class "hop-tabslider-head"
-   :onclick "hop_tabslider_select( this )")
+   :onclick (secure-javascript-attr "hop_tabslider_select( this )"))

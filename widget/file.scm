@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Wed Mar 17 14:27:35 2010 (serrano)                */
+;*    Last change :  Fri Apr 16 16:15:00 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -172,7 +172,8 @@
 	 :class (if (string? class)
 		    (string-append "filechooser " class)
 		    "filechooser")
-	 :onkeydown (format "hop_filechooser_key( this, ~s )" id)
+	 :onkeydown (secure-javascript-attr
+		     (format "hop_filechooser_key( this, ~s )" id))
 	 (<SCRIPT>
 	    (format "hop_add_event_listener( window, 'ready', function( e ) { var el = document.getElementById( ~s ); ~a; ~a; ~a; ~a; }, false )"
 		    id
@@ -277,8 +278,9 @@
 	 (<TD> (<INPUT> :type 'url
 		  :id (string-append id "-location-input")
 		  :class "filechooser-location"
-		  :onkeypress (format "hop_filechooser_location_keypress( this, event, ~s )"
-				      id)
+		  :onkeypress (secure-javascript-attr
+			       (format "hop_filechooser_location_keypress( this, event, ~s )"
+				       id))
 		  :value "")))))
 
 ;*---------------------------------------------------------------------*/
@@ -417,8 +419,9 @@
 		  ;; we should use an input element to receive key events
 		  #;(<INPUT> :value (url-decode (basename p))
 		     :type 'text
-		     :onkeydown (format "hop_filechooser_key( this, event, ~s, ~s, ~s, ~s, ~s )"
-					id prevep previd nextep nextid))
+		     :onkeydown (secure-javascript-attr
+				 (format "hop_filechooser_key( this, event, ~s, ~s, ~s, ~s, ~s )"
+					 id prevep previd nextep nextid)))
 		  (<SPAN> (url-decode (basename p))))
 	       (<TD> :class "filechooser-modified"
 		  (file-date ep)))))

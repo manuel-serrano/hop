@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/hop-file.scm              */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop-file.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Wed Nov 18 09:10:18 2009 (serrano)                */
-;*    Copyright   :  2008-09 Manuel Serrano                            */
+;*    Last change :  Fri Apr 16 16:14:02 2010 (serrano)                */
+;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
 ;*=====================================================================*/
@@ -193,7 +193,8 @@
 	 :class (if (string? class)
 		    (string-append "filechooser " class)
 		    "filechooser")
-	 :onkeydown (format "hop_filechooser_key( this, ~s )" id)
+	 :onkeydown (secure-javascript-attr
+		     (format "hop_filechooser_key( this, ~s )" id))
 	 (<SCRIPT>
 	    (format "hop_window_onload_add( function( e ) { var el = document.getElementById( ~s ); ~a; ~a; ~a; ~a; } )"
 		    id
@@ -434,8 +435,9 @@
 		  ;; we should use an input element to receive key events
 		  #;(<INPUT> :value (url-decode (basename p))
 		     :type 'text
-		     :onkeydown (format "hop_filechooser_key( this, event, ~s, ~s, ~s, ~s, ~s )"
-					id prevep previd nextep nextid))
+		     :onkeydown (secure-javascript-attr
+				 (format "hop_filechooser_key( this, event, ~s, ~s, ~s, ~s, ~s )"
+					 id prevep previd nextep nextid)))
 		  (<SPAN> (url-decode (basename p))))
 	       (<TD> :class "filechooser-modified"
 		  (file-date ep)))))
