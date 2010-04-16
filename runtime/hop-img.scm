@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Thu Apr 15 11:21:30 2010 (serrano)                */
+;*    Last change :  Fri Apr 16 17:14:44 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -122,6 +122,13 @@
 	 (id (xml-make-id id 'img))
 	 (attributes `(:src ,cssrc :alt ,(or alt (basename src)) ,@attributes))
 	 (body '())))
+
+   (define (empty-img)
+      (instantiate::xml-empty-element
+	 (markup 'img)
+	 (id (xml-make-id id 'img))
+	 (attributes `(if alt `(:alt ,alt ,@attributes) attributes))
+	 (body '())))
    
    (define (onerror-img attributes src)
       (let* ((val (format "if( !this.onhoperror ) { this.onhoperror = true; hop_deinline_image(this, ~s) }" src))
@@ -150,7 +157,7 @@
 				,@(onerror-img attributes src)))
 	     (body '()))
 	  (plain-img src cssrc)))
-   
+
    (cond
       ((xml-tilde? src)
        (instantiate::xml-empty-element
@@ -173,5 +180,7 @@
 		     (plain-img src cssrc))))
 	     (else
 	      (plain-img src cssrc)))))
+      ((eq? src #unspecified)
+       (empty-img))
       (else
        (error '<IMG> "Illegal image src" src))))

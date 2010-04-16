@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Fri Apr 16 16:15:00 2010 (serrano)                */
+;*    Last change :  Fri Apr 16 16:17:53 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -197,7 +197,8 @@
 	 (<FILECHOOSER:LOCATION> url id)
 	 (<PANED> :fraction 25
 	    (<PAN>
-	       :onmouseup (format "hop_filechooser_end_drag( event, ~s )" id)
+	       :onmouseup (secure-javascript-attr
+			   (format "hop_filechooser_end_drag( event, ~s )" id))
 	       (<DIV> :id (string-append id "-places")
 		  (<FILECHOOSER:PLACES> id)))
 	    (<PAN>
@@ -231,9 +232,11 @@
    
    (define (<BUT> dir url id)
       (<SPAN> :class "filechooser-button filechooser-button-unselected"
-	 :onclick (format "hop_filechooser_button_push( this, ~s, ~s )" id url)
-	 :onmousedown (format "hop_filechooser_begin_drag( event, ~s, ~s )"
-			      id url)
+	 :onclick (secure-javascript-attr
+		   (format "hop_filechooser_button_push( this, ~s, ~s )" id url))
+	 :onmousedown (secure-javascript-attr
+		       (format "hop_filechooser_begin_drag( event, ~s, ~s )"
+			      id url))
 	 dir
 	 (<SPAN> :style "display: none" (string (file-separator)))))
    
@@ -260,8 +263,9 @@
 	     (<DIV> :class "filechooser-path"
 		(<SPAN> :class (location-classname
 				(preference-get 'filechooser/show-location))
-		   :onclick (format "hop_filechooser_toggle_location( this, ~s )"
-				    id )
+		   :onclick (secure-javascript-attr
+			     (format "hop_filechooser_toggle_location( this, ~s )"
+				     id ))
 		   "  ")
 		(reverse! buts))))))
 
@@ -289,20 +293,24 @@
 (define (<FILECHOOSER:PLACES> id)
    (<TABLE> :class "filechooser-places"
       :cellspacing 0 :cellpadding 0
-      :onmouseup (format "hop_filechooser_end_drag( event, ~s )" id)
+      :onmouseup (secure-javascript-attr
+		  (format "hop_filechooser_end_drag( event, ~s )" id))
       (<COLGROUP> (<COL> :width "0*"))
       (<TR> (<TH> :colspan 2 "Places"))
       ;; home and hdd
       (let ((path (getenv "HOME")))
-	 (<TR> :ondblclick (format "hop_filechooser_open( ~s, ~s )" id path)
+	 (<TR> :ondblclick (secure-javascript-attr
+			    (format "hop_filechooser_open( ~s, ~s )" id path))
 	    :title path
 	    (<TD> :class "filechooser-icon filechooser-home" (getenv "USER"))))
       (let ((path (make-file-name (getenv "HOME") "Desktop")))
-	 (<TR> :ondblclick (format "hop_filechooser_open( ~s, ~s )" id path)
+	 (<TR> :ondblclick (secure-javascript-attr
+			    (format "hop_filechooser_open( ~s, ~s )" id path))
 	    :title path
 	    (<TD> :class "filechooser-icon filechooser-desktop" "Desktop")))
       (let ((path (dirname (make-file-name "" "foo"))))
-	 (<TR> :ondblclick (format "hop_filechooser_open( ~s, ~s )" id path)
+	 (<TR> :ondblclick (secure-javascript-attr
+			    (format "hop_filechooser_open( ~s, ~s )" id path))
 	    :title path
 	    (<TD> :class "filechooser-icon filechooser-hdd" "File system")))
       (<TR> (<TD> :colspan 2 :class "filechooser-br"))
@@ -311,9 +319,11 @@
 		     (when (string? ep)
 			(let ((p ((hop-locale->charset) ep)))
 			   (<TR>
-			      :onclick (format "hop_filechooser_select( this, event, ~s, ~s )" id p)
-			      :ondblclick (format "hop_filechooser_open( ~s, ~s )"
-						  id p)
+			      :onclick (secure-javascript-attr
+					(format "hop_filechooser_select( this, event, ~s, ~s )" id p))
+			      :ondblclick (secure-javascript-attr
+					   (format "hop_filechooser_open( ~s, ~s )"
+						   id p))
 			      :title p
 			      (<TD> :class "filechooser-icon filechooser-folder"
 				 (basename p))))))
@@ -405,14 +415,17 @@
       (define (<tr> ep eid class prevep previd nextep nextid)
 	 (let ((p ((hop-locale->charset) ep)))
 	    (<TR> :class class 
-	       :onclick (format "hop_filechooser_select( this, event, ~s, ~s )" id p)
-	       :ondblclick (if (is-directory? p)
-			       (format "hop_filechooser_open( ~s, ~s )"
-				       id p)
-			       (format "hop_filechooser_ok( event, ~s )"
-				       id))
-	       :onmousedown (format "hop_filechooser_begin_drag( event, ~s, ~s )"
-				    id p)
+	       :onclick (secure-javascript-attr
+			 (format "hop_filechooser_select( this, event, ~s, ~s )" id p))
+	       :ondblclick (secure-javascript-attr
+			    (if (is-directory? p)
+				(format "hop_filechooser_open( ~s, ~s )"
+					id p)
+				(format "hop_filechooser_ok( event, ~s )"
+					id)))
+	       :onmousedown (secure-javascript-attr
+			     (format "hop_filechooser_begin_drag( event, ~s, ~s )"
+				     id p))
 	       (<TD> :class (if (is-directory? p)
 				"filechooser-icon filechooser-folder"
 				"filechooser-icon filechooser-file")
@@ -454,21 +467,25 @@
       (<TR>
 	 (<TD>
 	    (<BUTTON> :class "filechooser-button-add"
-	       :onclick (format "hop_filechooser_add( ~s )" id)
+	       :onclick (secure-javascript-attr
+			 (format "hop_filechooser_add( ~s )" id))
 	       "Add")
 	    (<BUTTON> :class "filechooser-button-remove"
-	       :onclick (format "hop_filechooser_remove( ~s )" id)
+	       :onclick (secure-javascript-attr
+			 (format "hop_filechooser_remove( ~s )" id))
 	       "Remove"))
 	 (<TD> :class "right"
 	    (<SPAN> :class "filechooser-hidden"
 	       (<INPUT> :type 'checkbox
 		  :id (string-append id "-hidden")
 		  :selected (not hidden)
-		  :onchange (format "hop_filechooser_filter( ~s, ~s )" id url))
+		  :onchange (secure-javascript-attr
+			     (format "hop_filechooser_filter( ~s, ~s )" id url)))
 	       "Show Hidden Files")
 	    (<SELECT> :class "filechooser-filters"
 	       :id (string-append id "-filters")
-	       :onchange (format "hop_filechooser_filter( ~s, ~s )" id url)
+	       :onchange (secure-javascript-attr
+			  (format "hop_filechooser_filter( ~s, ~s )" id url))
 	       (map (lambda (o)
 		       (<OPTION> :value (cadr o)
 			  :selected (string=? (cadr o) regexp)
@@ -481,13 +498,16 @@
 (define (<FILECHOOSER:OKCANCEL> id)
    (<DIV> :class "filechooser-okcancel"
       (<BUTTON> :class "filechooser-button-cancel"
-	 :onclick (format "hop_filechooser_cancel( event, ~s )" id)
+	 :onclick (secure-javascript-attr
+		   (format "hop_filechooser_cancel( event, ~s )" id))
 	 (<SPAN> :class "filechooser-button-cancel" " "))
       (<BUTTON> :class "filechooser-button-open"
-	 :onclick (format "hop_filechooser_ok( event, ~s )" id)
+	 :onclick (secure-javascript-attr
+		   (format "hop_filechooser_ok( event, ~s )" id))
 	 (<SPAN> :class "filechooser-button-open" " "))
       (<BUTTON> :class "filechooser-button-run"
-	 :onclick (format "hop_filechooser_run( event, ~s )" id)
+	 :onclick (secure-javascript-attr
+		   (format "hop_filechooser_run( event, ~s )" id))
 	 (<SPAN> :class "filechooser-button-run" " "))))
 
 

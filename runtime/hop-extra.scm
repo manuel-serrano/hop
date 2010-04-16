@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Apr  2 16:44:15 2010 (serrano)                */
+;*    Last change :  Fri Apr 16 16:20:55 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -31,7 +31,8 @@
 	    __hop_clientc
 	    __hop_hz
 	    __hop_priv
-	    __hop_read)
+	    __hop_read
+	    __hop_security)
 
    (export  (<HTML> . ::obj)
 	    (<HEAD> . ::obj)
@@ -664,13 +665,15 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 	  (instantiate::xml-empty-element
 	     (markup 'input)
 	     (id id)
-	     (attributes `(:type ,type :onkeydown ,onkeydown ,@attributes))
+	     (attributes `(:type ,type
+				 :onkeydown ,(secure-javascript-attr onkeydown)
+				 ,@attributes))
 	     (body '())))
        (instantiate::xml-empty-element
 	  (markup 'input)
 	  (id (xml-make-id id 'input))
 	  (attributes `(type: ,type
-			      ,@(if onkeydown `(onkeydown: ,onkeydown) '())
+			      ,@(if onkeydown `(onkeydown: ,(secure-javascript-attr onkeydown)) '())
 			      ,@attributes))
 	  (body '()))))
 
