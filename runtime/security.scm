@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Thu Apr 15 16:15:34 2010 (serrano)                */
+;*    Last change :  Fri Apr 16 09:14:20 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -61,61 +61,6 @@
 		s)))))
 
 ;*---------------------------------------------------------------------*/
-;*    same-ast? ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (same-ast? ast1 ast2)
-   
-   (define (normalize-ast ast)
-      (if (pair? ast)
-	  (let ((l (filter (lambda (x)
-			      (match-case x
-				 ((? xml?)
-				  #t)
-				 ((? string?)
-				  #t)
-				 ((? number?)
-				  #t)
-				 (((and ?sym (? symbol?)) . ?val)
-				  (not (eq? sym 'declaration)))
-				 (else
-				  #t)))
-			   ast)))
-	     (match-case l
-		((?x) (normalize-ast x))
-		(else (map normalize-ast l))))
-	  ast))
-
-   (define (constant? a)
-      (or (string? a)
-	  (number? a)
-	  (and (list? a) (every constant? a))))
-   
-   (let loop ((a1 (normalize-ast ast1))
-	      (a2 (normalize-ast ast2)))
-      (cond
-	 ((null? a1)
-	  (null? a2))
-	 ((null? a2)
-	  #f)
-	 ((constant? a1)
-	  (constant? a2))
-	 ((list? a1)
-	  (when (and (list? a2) (=fx (length a1) (length a2)))
-	     (every? loop a1 a2)))
-	 ((xml-markup? a1)
-	  (when (and (xml-markup? a2)
-		     (eq? (xml-markup-markup a1) (xml-markup-markup a2)))
-	     (loop (normalize-ast (xml-markup-body a1))
-		   (normalize-ast (xml-markup-body a2)))))
-	 ((object? a1)
-	  (and (object? a2) (eq? (object-class a1) (object-class a2))))
-	 (else
-	  (raise (instantiate::&io-parse-error
-		    (proc 'same-ast)
-		    (msg "Illegal XML tree")
-		    (obj a1)))))))
-
-;*---------------------------------------------------------------------*/
 ;*    compare-ast ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (compare-ast ast1 ast2)
@@ -162,17 +107,34 @@
 	 ((xml-markup? a1)
 	  (if (and (xml-markup? a2)
 		   (eq? (xml-markup-markup a1) (xml-markup-markup a2)))
-	      (loop (normalize-ast (xml-markup-body a1))
-		    (normalize-ast (xml-markup-body a2)))
+	      (if (safe-attributes? a2)
+		  (loop (normalize-ast (xml-markup-body a1))
+			(normalize-ast (xml-markup-body a2)))
+		  (raise (instantiate::&hop-injection-error
+			    (proc 'default-security-manager)
+			    (msg "Illegal attribute")
+			    (obj a2))))
 	      (cons a1 a2)))
 	 ((object? a1)
 	  (or (and (object? a2) (eq? (object-class a1) (object-class a2)))
 	      (cons a1 a2)))
 	 (else
 	  (raise (instantiate::&io-parse-error
-		    (proc 'same-ast)
+		    (proc 'default-security-manager)
 		    (msg "Illegal XML tree")
 		    (obj a1)))))))
+
+;*---------------------------------------------------------------------*/
+;*    safe-attributes? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (safe-attributes? o::xml-markup)
+   (with-access::xml-markup o (attributes)
+      (let loop ((a attributes))
+	 (when (pair? a)
+	    (when (pair? (cdr a))
+	       (when (or (not (string? (cadr a)))
+			 (not (string-prefix? "javascript:" (cadr a))))
+		  (loop (cddr a))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ast->string-list ...                                             */

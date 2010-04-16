@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Apr 14 10:29:47 2010 (serrano)                */
+;*    Last change :  Fri Apr 16 08:42:56 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -84,13 +84,13 @@
 	   (class http-response-remote::%http-response
 	      (http::symbol read-only (default 'HTTP/1.1))
 	      (host::bstring read-only (default "localhost"))
-	      (scheme::symbol read-only (default '?))
+	      (scheme::symbol read-only (default 'http))
  	      (port::bint read-only (default 80))
 	      (method::symbol read-only (default 'GET))
 	      (path::bstring read-only)
 	      (userinfo read-only (default #f))
-	      (remote-timeout read-only (default #f))
-	      (connection-timeout read-only (default #f)))
+	      (remote-timeout read-only (default (hop-read-timeout)))
+	      (connection-timeout read-only (default (hop-connection-timeout))))
 
 	   (class http-response-filter::%http-response
 	      (response::%http-response read-only)
