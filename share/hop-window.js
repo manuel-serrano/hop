@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Tue Mar  9 07:47:28 2010 (serrano)                */
+/*    Last change :  Sat Apr 17 07:04:46 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -476,6 +476,7 @@ function make_hop_iwindow( id, klass, parent ) {
 
    var t = "\n\
 <div class='hop-window-inner' id='" + id + "-win'>\n\
+  <div class='hop-window-content-border'></div>\n\
   <div class='hop-window-content' id='" + id + "-content'>\n\</div>\n\
   <div class='hop-window-handle' id='" + id + "-handle'>" + handle + "</div>\n\
   <div class='hop-window-foot'>" + foot + "</div>\n\

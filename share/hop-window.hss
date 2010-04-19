@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Tue Mar  9 08:23:27 2010 (serrano)                */
+/*    Last change :  Sat Apr 17 07:31:24 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP WINDOW CSS                                                   */
@@ -100,10 +100,6 @@ div[hssclass=hop-window] {
   position: absolute;
   background: none;
 }
-
-div[hssclass=hop-window] div.hop-window-inner {
-  border: 1px solid black;
-}  
 
 /*---------------------------------------------------------------------*/
 /*    handle                                                           */
@@ -211,11 +207,23 @@ div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-right 
 /*---------------------------------------------------------------------*/
 /*    content                                                          */
 /*---------------------------------------------------------------------*/
+div[hssclass=hop-window] div.hop-window-content-border,
 div[hssclass=hop-window] div.hop-window-content {
   position: absolute;
   top: 17px; 
-  padding-top: 0;
   bottom: 4px; 
+}
+
+div[hssclass=hop-window] div.hop-window-content-border {
+  padding-top: 0;
+  border: 0;
+  left: 0; 
+  right: 0;
+  border-left: 1px solid black;
+  border-right: 1px solid black;
+}
+
+div[hssclass=hop-window] div.hop-window-content {
   left: 1px; 
   right: 1px;
   border-top: 0;

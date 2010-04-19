@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Apr 15 11:18:02 2010 (serrano)                */
+;*    Last change :  Mon Apr 19 08:29:18 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -181,7 +181,8 @@
 ;*    <DUMP> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<DUMP> obj)
-   (<PRE> :style "width: 70em; height: 50ex; overflow: auto; border: 1px dashed black; background-color: #ffe; padding: 4px; font-size: 8pt; color: #333; font-weight: 200;" obj))
+;*    (<PRE> :style "width: 70em; height: 50ex; overflow: auto; border: 1px dashed black; background-color: #ffe; padding: 4px; font-size: 8pt; color: #333; font-weight: 200;" obj)) */
+   (<PRE> :style "width: 100%; height: 80ex; border: 1px dashed #ccc; background-color: #ffe; overflow: auto; font-size: 8pt; color: #333; font-weight: 200;" obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    title-style ...                                                  */
@@ -385,7 +386,7 @@ a timeout which has now expired. The service is then no longer available."))
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY> :style "background: #ccc; padding-top: 3ex; overflow: auto"
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<ERRTABLE>
 		       (<EIMG> :src (if (&io-timeout-error? e)
 					"timeout.png"
