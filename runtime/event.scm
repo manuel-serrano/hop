@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Apr 20 05:49:58 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 13:54:07 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -875,7 +875,7 @@
        (format "<f name='~a'>~a</f>" name value))
       (else
        (let ((op (open-output-string)))
-	  (fprintf op "<j name='~a'><![CDATA[")
+	  (fprintf op "<j name='~a'><![CDATA[" name)
 	  (obj->javascript value op #f)
 	  (display "]]></j>" op)
 	  (close-output-port op)))))
