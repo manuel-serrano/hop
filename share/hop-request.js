@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Apr 12 17:03:07 2010 (serrano)                */
+/*    Last change :  Tue Apr 20 10:34:36 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -304,9 +304,11 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 			   } else if( serialize === "hop" ) {
 			      expr = hop_string_to_obj( decodeURIComponent( xhr.responseText ) );
 			   } else if( serialize === "json" ) {
-			      expr = hop_json_parse( xhr.responseText );
+			      expr = hop_unjson( hop_json_parse( xhr.responseText ) );
 			   } else {
-			      raise( "Unknown serialize format" + serialize );
+			      sc_error( svc,
+					"Unknown serialization format",
+					serialize );
 			   }
 			} catch( exc ) {
 			   xhr.exception = exc;

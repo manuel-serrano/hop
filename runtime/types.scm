@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Apr 16 08:42:56 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 08:02:11 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -111,6 +111,7 @@
 	   
 	   (class http-response-js::%http-response-local
 	      (backend read-only (default (hop-xml-backend)))
+	      (serializer::symbol read-only (default (hop-serialize-method)))
 	      (value::obj read-only))
 	   
 	   (class http-response-procedure::%http-response-local

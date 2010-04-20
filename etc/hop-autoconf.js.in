@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Mon Apr 12 12:14:29 2010 (serrano)                */
+/*    Last change :  Tue Apr 20 10:21:59 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -294,10 +294,10 @@ try {
 /*---------------------------------------------------------------------*/
 var hop_json_parse;
 
-if( typeof JSON === "function" ) {
+if( "JSON" in window ) {
    hop_json_parse = JSON.parse;
 } else {
-   hop_json_parse = function( o ) { return '(' + eval( o ) + ')'; };
+   hop_json_parse = function( o ) { return hop_unjson( eval( o ) ); };
 }
 
 /*---------------------------------------------------------------------*/

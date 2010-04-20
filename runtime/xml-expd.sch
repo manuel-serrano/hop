@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Fri Apr  2 15:47:26 2010 (serrano)                */
+;*    Last change :  Mon Apr 19 16:08:50 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -177,7 +177,7 @@
 ;*---------------------------------------------------------------------*/
 (define (define-alias id ea opts)
    `(define (,id . args)
-       (%make-xml-element ',ea (append args ',opts))))
+       (%make-xml-element ',ea (append args (list ,@opts)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-define-xml-alias ...                                      */

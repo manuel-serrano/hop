@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Apr 14 10:41:46 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 05:50:59 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -939,7 +939,9 @@
 (define (xml-tilde->sexp obj)
    
    (define (wrapper o)
-      `(pragma ,(hop->javascript o #f)))
+      `(pragma ,(call-with-output-string
+		 (lambda (op)
+		    (obj->javascript o op #f)))))
    
    (with-access::xml-tilde obj (body)
       ((clientc-precompiled->sexp (hop-clientc)) body wrapper)))

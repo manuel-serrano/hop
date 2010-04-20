@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Apr  9 14:49:06 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 05:49:58 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -874,7 +874,11 @@
       ((real? value)
        (format "<f name='~a'>~a</f>" name value))
       (else
-       (format "<j name='~a'><![CDATA[~a]]></j>" name (hop->javascript value #f)))))
+       (let ((op (open-output-string)))
+	  (fprintf op "<j name='~a'><![CDATA[")
+	  (obj->javascript value op #f)
+	  (display "]]></j>" op)
+	  (close-output-port op)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    multipart-value ...                                              */
@@ -898,7 +902,11 @@
       ((or (string? value) (number? value))
        value)
       (else
-       (string-append "<json><![CDATA[" (hop->javascript value #f) "]]></json>"))))
+       (let ((op (open-output-string)))
+	  (display "<json><![CDATA[" op)
+	  (obj->javascript value op #f)
+	  (display "]]></json>" op)
+	  (close-output-port op)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    for-each-socket ...                                              */

@@ -18,6 +18,10 @@ client-side.
 
   (hop-gauge-value gauge)
   (hop-gauge-value-set! gauge val)
+  (hop-gauge-min gauge)
+  (hop-gauge-max gauge)
+  (hop-gauge-min-set! gauge val)
+  (hop-gauge-max-set! gauge val)
   (hop-gauge-text gauge)
   (hop-gauge-text-set! gauge val)
 
@@ -89,6 +93,27 @@ Example:
     (<BUTTON> :onclick ~(gauge-value-set! $but 0) "Reset"))
 
 
+</procedure>
+</procedure>
+
+=== ++(gauge-min gauge)++ ===
+=== ++(gauge-max gauge)++ ===
+=== ++(gauge-min-set! gauge val)++ ===
+=== ++(gauge-max-set! gauge val)++ ===
+<procedure> gauge-min
+<procedure> gauge-max
+<procedure> gauge-min-set!
+<procedure> gauge-max-set!
+
+<arguments>
+^  arguments  ^   type                  ^  short description     ^
+| gauge       |  gauge or string        | the gauge button.       |
+| val         |  integer                | the new gauge min/max value.  |
+</arguments>
+
+These functions get and set the min/max value of a //gauge//.
+</procedure>
+</procedure>
 </procedure>
 </procedure>
 

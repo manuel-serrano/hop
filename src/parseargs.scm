@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Apr 12 11:23:41 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 05:51:10 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -225,8 +225,11 @@
       (init-hopscheme! :reader (lambda (p v) (hop-read p))
 	 :share (hop-share-directory)
 	 :verbose (hop-verbose)
-	 :eval (lambda (e) (hop->javascript (eval e) #f))
-	 :hop-compile (lambda (e p) (display (hop->javascript e #f) p))
+	 :eval (lambda (e) (call-with-output-string
+			    (lambda (op)
+			       (obj->javascript (eval e) op #f))))
+	 :hop-compile (lambda (e p)
+			 (obj->javascript e p #f))
 	 :features `(hop
 		     hop-client
 		     ,(string->symbol (format "hop-~a" (hop-branch)))

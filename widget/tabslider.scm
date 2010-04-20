@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Apr 16 16:02:34 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 05:51:39 2010 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -109,10 +109,13 @@
 			    :lang "delay"
 			    :onkeyup (secure-javascript-attr
 				      (format "return ~a;"
-					      (hop->javascript
-					       (procedure->service
-						(xml-delay-thunk (cadr body)))
-					       #f)))
+					      (call-with-output-string
+					       (lambda (op)
+						  (obj->javascript
+						   (procedure->service
+						    (xml-delay-thunk (cadr body)))
+						   op
+						   #f)))))
 			    (tspan-onselect id onselect)
 			    "delayed tab")))))
 	 (else

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 13 08:24:51 2010                          */
-;*    Last change :  Tue Apr 13 10:45:43 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 09:58:16 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Gauge client-side implementation                                 */
@@ -17,6 +17,10 @@
 	   (gauge-init! id fid tid value min max text listener)
 	   (gauge-value el)
 	   (gauge-value-set! el value)
+	   (gauge-max el)
+	   (gauge-max-set! el value)
+	   (gauge-min el)
+	   (gauge-min-set! el value)
 	   (gauge-text el)
 	   (gauge-text-set! el text))
    (JS     hop_add_native_event_listener
@@ -61,7 +65,7 @@
       (set! el.max max)
       (set! el.fill fel)
       (set! el.text tel)
-      (gauge-text-set! el (format fmt value))
+      (gauge-text-set! el (format fmt value max min))
       (if listener
 	  (add-event-listener! el "change" listener #t)
 	  (set! el.onchange #f))
@@ -101,8 +105,40 @@
 	  (let ((evt (new HopEvent "change" v)))
 	     (el.onchange evt)
 	     (unless (event-stopped? evt)
-		(gauge-text-set! el (format el.format v))))
-	  (gauge-text-set! el (format el.format v)))))
+		(gauge-text-set! el (format el.format v el.max el.min))))
+	  (gauge-text-set! el (format el.format v el.max el.min)))))
+
+;*---------------------------------------------------------------------*/
+;*    gauge-max ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (gauge-max o)
+   (let ((el (if (string? o) (dom-get-element-by-id o) o)))
+      el.value))
+
+;*---------------------------------------------------------------------*/
+;*    gauge-max-set! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (gauge-max-set! o v)
+   (let ((el (if (string? o) (dom-get-element-by-id o) o)))
+      (set! el.max v)
+      (when (> el.value v)
+	 (set! el.value v))))
+
+;*---------------------------------------------------------------------*/
+;*    gauge-min ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (gauge-min o)
+   (let ((el (if (string? o) (dom-get-element-by-id o) o)))
+      el.value))
+
+;*---------------------------------------------------------------------*/
+;*    gauge-min-set! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (gauge-min-set! o v)
+   (let ((el (if (string? o) (dom-get-element-by-id o) o)))
+      (set! el.min v)
+      (when (< el.value v)
+	 (set! el.value v))))
 
 ;*---------------------------------------------------------------------*/
 ;*    gauge-text ...                                                   */

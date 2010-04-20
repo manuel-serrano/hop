@@ -216,30 +216,51 @@
 			  (else
 			   (string-set! res j c)
 			   (loop (+fx i 1) (+fx j 1))))))))))
+   
    (let ((ol (string-length str)))
       (encode str ol (count str ol))))
 
+;*---------------------------------------------------------------------*/
+;*    display-string-for-read ...                                      */
+;*---------------------------------------------------------------------*/
+(define (display-string-for-read str op)
+   (let ((ol (string-length str)))
+      (let loop ((i 0))
+	 (when (<fx i ol)
+	    (let ((c (string-ref str i)))
+	       (case c
+		  ((#\" #\\)
+		   (write-char #\\ op)
+		   (write-char c op)
+		   (loop (+fx i 1)))
+		  ((#\Newline)
+		   (write-char #\\ op)
+		   (write-char #\n op)
+		   (loop (+fx i 1)))
+		  ((#\Return)
+		   (write-char #\\ op)
+		   (write-char #\r op)
+		   (loop (+fx i 1)))
+		  ((#\/)
+		   (write-char #\\ op)
+		   (write-char #\u op)
+		   (write-char #\0 op)
+		   (write-char #\0 op)
+		   (write-char #\2 op)
+		   (write-char #\f op)
+		   (loop (+fx i 1)))
+		  ((#\null)
+		   (write-char #\\ op)
+		   (write-char #\u op)
+		   (write-char #\0 op)
+		   (write-char #\0 op)
+		   (write-char #\0 op)
+		   (write-char #\0 op)
+		   (loop (+fx i 1)))
+		  (else
+		   (write-char c op)
+		   (loop (+fx i 1)))))))))
 
-#;(define (my-string-for-read.old str)
-   (let loop ((i 0)
-	      (rev-str '()))
-      (cond
-	 ((= i (string-length str))
-	  (apply string (reverse! rev-str)))
-	 (else
-	  (case (string-ref str i)
-	     ((#\\ #\")
-	      (loop (+fx i 1) (cons* (string-ref str i) #\\ rev-str)))
-	     ((#\return)
-	      (loop (+fx i 1) (cons* #\r #\\ rev-str)))
-	     ((#\newline)
-	      (loop (+fx i 1) (cons* #\n #\\ rev-str)))
-	     ((#\null)
-	      (loop (+fx i 1) (cons* #\0 #\0 #\0 #\0 #\u rev-str)))
-	     ((#\/)
-	      (loop (+fx i 1) (cons* #\f #\2 #\0 #\0 #\u #\\ rev-str)))
-	     (else
-	      (loop (+fx i 1) (cons (string-ref str i) rev-str))))))))
 
 (define (compile-value val p foreign-out loc)
    (define (display-ucs2-char p c) ;; without the quotes

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Apr  9 14:53:06 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 05:51:19 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -246,14 +246,20 @@
       init
       (format "if( audio.browserbackend ) audio.browserbackend.audio = audio;")
       (if server
-	  (format "audio.serverbackend = new HopAudioServerBackend( audio, ~a )
-                   hop_audio_server_init( audio.serverbackend );
-                   audio.backend = audio.serverbackend;"
-		  (hop->javascript server #f))
+	  (call-with-output-string
+	   (lambda (op)
+	      (display "audio.serverbackend = new HopAudioServerBackend( audio, " op)
+	      (obj->javascript server op #f)
+	      (display "hop_audio_server_init( audio.serverbackend );" op)
+	      (display "audio.backend = audio.serverbackend;" op)))
 	  "audio.serverbackend = false; audio.backend = audio.browserbackend;")
       "audio.paused = false;"
       "audio.state = false;"
-      (format "audio.src = ~a;" (hop->javascript src #f))
+      (call-with-output-string
+       (lambda (op)
+	  (display "audio.src = " op)
+	  (obj->javascript src op #f)
+	  (display ";" op)))
       "audio.initialized = true;"
       (format "audio.start = ~a;" start)
       (format "audio.onplay = ~a;" onplay)
@@ -269,7 +275,11 @@
       "audio.hop_add_event_listener = hop_audio_add_event_listener;"
       "audio.toString = function() { return '[object HopAudio]' };"
       (when (pair? playlist)
-	 (format "hop_audio_playlist_set( audio, ~a );" (hop->javascript (list playlist) #f)))
+	 (call-with-output-string
+	  (lambda (op)
+	     (display "hop_audio_playlist_set( audio, " op)
+	     (obj->javascript (list playlist) op #f)
+	     (display " );" op))))
       (when autoplay
 	 "hop_audio_playlist_play( audio, 0 );")
       "};\n"
@@ -794,10 +804,10 @@
 	 (hop-event-broadcast! event (list 'volume vol)))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop->javascript ::%audio-server ...                              */
+;*    obj->javascript ::%audio-server ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript as::audio-server isrep)
-   (string-append "\"" (hop-service-base) "/" (audio-server-%path as) "\""))
+(define-method (obj->javascript as::audio-server op isrep)
+   (fprint op  "\"~a/~a\"" (hop-service-base) (audio-server-%path as)))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-init ::webmusic ...                                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Apr 16 16:04:18 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 05:51:29 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -76,11 +76,14 @@
 (define (notepad id klass history attrs head tabs onchange)
    
    (define svc
-      (hop->javascript
-       (procedure->service
-	(lambda (i)
-	   (nptab-get-body (list-ref tabs i))))
-       #f))
+      (call-with-output-string
+       (lambda (op)
+	  (obj->javascript
+	   (procedure->service
+	    (lambda (i)
+	       (nptab-get-body (list-ref tabs i))))
+	   op
+	   #f))))
    
    (define (make-tab-div tab i)
       (with-access::xml-nptab-element tab (attributes (idt id) body klass)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Apr 14 11:10:47 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 11:00:04 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -29,6 +29,7 @@
 	    __hop_http-error
 	    __hop_http-filter
 	    __hop_js-lib
+	    __hop_json
 	    __hop_user
 	    __hop_cache
 	    __hop_security)
@@ -144,7 +145,7 @@
 					header
 					content-type charset
 					server content-length value
-					bodyp timeout request)
+					bodyp timeout request serializer)
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request)))
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
@@ -158,16 +159,18 @@
 	    (when server
 	       (http-write-line-string p "Server: " server))
 	    (http-write-line-string p "Hop-Serialize: "
-				    (symbol->string! (hop-serialize-method)))
+				    (symbol->string! serializer))
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-js
 	       (when bodyp
-		  (case (hop-serialize-method)
+		  (case serializer
 		     ((javascript)
-		      (display (hop->javascript value #t) p))
+		      (obj->javascript value p #t))
 		     ((hop)
-		      (display (hop-obj->string value) p))
+		      (display (url-path-encode (obj->string value)) p))
+		     ((json)
+		      (hop->json value p))
 		     (else
 		      (error 'http-response
 			     "Unspported serialization method"
@@ -175,12 +178,6 @@
 	    (flush-output-port p)
 	    connection))))
 
-;*---------------------------------------------------------------------*/
-;*    hop-obj->string ...                                              */
-;*---------------------------------------------------------------------*/
-(define (hop-obj->string value)
-   (url-path-encode (obj->string value)))
-   
 ;*---------------------------------------------------------------------*/
 ;*    chunked-flush-hook ...                                           */
 ;*---------------------------------------------------------------------*/

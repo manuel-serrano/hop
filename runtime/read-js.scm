@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:45:35 2005                          */
-;*    Last change :  Fri Apr  9 14:57:37 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 07:49:35 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP javascript parser                                        */
@@ -40,7 +40,7 @@
 (define (hop-read-javascript #!optional
 			     (iport::input-port (current-input-port))
 			     (charset (hop-locale)))
-
+ 
    (let* ((sp (input-port-position iport))
 	  (g (regular-grammar (bra-open acc cset)
 		("{"
@@ -86,7 +86,10 @@
 					     (input-port-name iport)
 				 	     pos)
 			(begin
-			   (set! acc (cons `(hop->javascript ,exp #f) acc))
+			   (set! acc (cons `(call-with-output-string
+					     (lambda (op)
+						(obj->javascript ,exp op #f)))
+					   acc))
 			   (ignore)))))
 		(else
 		 (let ((char (the-failure)))

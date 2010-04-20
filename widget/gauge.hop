@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 13 05:44:41 2010                          */
-;*    Last change :  Tue Apr 13 10:46:27 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 09:57:11 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Gauge server-side implementation                                 */
@@ -36,7 +36,7 @@
 	 (tid (xml-make-id 'GAUGE-TEXT))
 	 (fmt (if (string? format)
 		  format
-		  (string-append "~a/" (number->string max)))))
+		  (string-append "~a/~a"))))
       (<DIV> :hssclass "hop-gauge" :id id
 	 "0"
 	 (<DIV> :hssclass "hop-gauge-fill" :id fid)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Tue Apr 13 05:35:14 2010 (serrano)                */
+/*    Last change :  Tue Apr 20 10:59:58 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -27,7 +27,7 @@ function hop_bigloo_serialize( item ) {
       }
    }
 
-   if( (typeof item) == "number" )
+   if( tname == "number" )
       return hop_serialize_number( item );
       
    if( (item instanceof Boolean) || (tname == "boolean") )
@@ -328,7 +328,7 @@ function hop_obj_to_string( item ) {
 function hop_string_to_obj( s ) {
    var pointer = 0;
    var definitions = [];
-   var defining = false;
+   var defining = -1;
 
    function read_integer( s ) {
       return read_size( s );
@@ -370,9 +370,9 @@ function hop_string_to_obj( s ) {
       var sz = read_size( s );
       var res = s.substring( pointer, pointer + sz );
 
-      if( defining ) {
+      if( defining >= 0 ) {
 	 definitions[ defining ] = res;
-	 defining = false;
+	 defining = -1;
       }
       pointer += sz;
 
@@ -405,9 +405,9 @@ function hop_string_to_obj( s ) {
    function read_vector( sz ) {
       var res = sc_makeVector( sz );
 
-      if( defining ) {
+      if( defining >= 0 ) {
 	 definitions[ defining ] = res;
-	 defining = false;
+	 defining = -1;
       }
 
       for( var iv = 0; iv < sz; iv++ ) {
@@ -421,9 +421,9 @@ function hop_string_to_obj( s ) {
       var res = sc_cons( null, null );
       var hd = res;
 
-      if( defining ) {
+      if( defining >=0 ) {
 	 definitions[ defining ] = res;
-	 defining = false;
+	 defining = -1;
       }
 
       for( var i = 0; i < (sz - 2); i++, hd = hd.cdr ) {
@@ -441,9 +441,9 @@ function hop_string_to_obj( s ) {
       var res = sc_cons( null, null );
       var hd = res;
 
-      if( defining ) {
+      if( defining >= 0 ) {
 	 definitions[ defining ] = res;
-	 defining = false;
+	 defining = -1;
       }
 
       for( var i = 0; i < (sz - 2); i++, hd = hd.cdr ) {
@@ -465,7 +465,7 @@ function hop_string_to_obj( s ) {
       switch( s.charCodeAt( pointer++ ) ) {
 	 case 0x3d /* = */: return read_definition();
 	 case 0x23 /* # */: return read_reference();
-	 case 0x2c /* ' */: return read_symbol();
+	 case 0x27 /* ' */: return read_symbol();
 	 case 0x3a /* : */: return read_keyword();
 	 case 0x61 /* a */: return read_char( s );
 	 case 0x46 /* F */: return false;
@@ -490,3 +490,41 @@ function hop_string_to_obj( s ) {
 
    return read_item();
 }
+
+/*---------------------------------------------------------------------*/
+/*    unjson ...                                                       */
+/*---------------------------------------------------------------------*/
+var unjson = {
+   "pair": function( o ) {
+      return sc_cons( hop_unjson( o.car ), hop_unjson( o.cdr ) );
+   },
+}
+ 
+/*---------------------------------------------------------------------*/
+/*    hop_unjson ...                                                   */
+/*---------------------------------------------------------------------*/
+function hop_unjson( o ) {
+   var tname = typeof o;
+
+   if( ((o instanceof String) || (tname == "string")) ||
+       ((typeof o) == "number") ||
+       (o instanceof Boolean) || (tname == "boolean") ||
+       (o === null) ) {
+      return o;
+   }
+
+   if( o instanceof Array ) {
+      for( var i = 0; i < o.length; i++ ) {
+	 o[ i ] = hop_unjson( o [ i ] );
+      }
+
+      return o;
+   }
+   
+   if( "__uuid" in o )
+      return unjson[ o.__uuid ]( o );
+   else
+      return o;
+}
+
+

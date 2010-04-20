@@ -2148,7 +2148,6 @@ function sc_currentMicroseconds() {
    return (new Date()).getTime();
 }
 
-
 function sc_Hashtable() {
 }
 sc_Hashtable.prototype.toString = function() {

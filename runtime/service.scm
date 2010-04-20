@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Apr  9 14:47:43 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 05:50:48 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -298,7 +298,9 @@
 ;*    %eval ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (%eval exp req cont)
-   (let ((s (hop->javascript (procedure->service (lambda (res) (cont res))) #f)))
+   (let ((s (call-with-output-string
+	     (lambda (op)
+		(obj->javascript (procedure->service (lambda (res) (cont res))) op #f)))))
       (instantiate::http-response-hop
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
