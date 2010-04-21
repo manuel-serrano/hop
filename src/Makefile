@@ -33,7 +33,8 @@ MODULES		= hop_param parseargs main init \
 
 INCLUDES	= stage.sch
 
-CLASS_DIR	= o/class_s/bigloo/hop
+CLASS_PATH	= o/class_s
+CLASS_DIR	= $(CLASS_PATH)/bigloo/hop
 
 OBJECTS 	= $(MODULES:%=o/%.o)
 BGL_CLASSES	= $(MODULES:%=$(CLASS_DIR)/%.class)
@@ -67,7 +68,17 @@ $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $@ $(OBJECTS))
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
-$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib
+# if we build for Apache Felix we must add the 3 java wrappers needed to run hop from a bundle
+FELIX_JAR = /home/mdione/src/works/inria/orange/felix-framework-2.0.4/bin/felix.jar
+ifeq ($(FELIX), 1)
+FELIX_MODULES = HopRunner HopThread HopActivator
+else
+FELIX_MODULES =
+endif
+FELIX_SOURCES = $(FELIX_MODULES:%=%.java)
+FELIX_CLASSES = $(FELIX_MODULES:%=$(CLASS_DIR)/%.class)
+
+$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib $(FELIX_CLASSES)
 	@ $(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
@@ -128,6 +139,9 @@ o/%.o: %.scm .afile
 
 $(CLASS_DIR)/%.class: %.scm .afile
 	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
+
+$(CLASS_DIR)/%.class: %.java
+	/usr/lib/jvm/java-1.5.0-sun-1.5.0.17/bin/javac -classpath $(CLASS_PATH):$(FELIX_JAR) -d $(CLASS_PATH) $<
 
 o/main.o: main.scm
 	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV,$< -o $@ -c)
