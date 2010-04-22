@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Tue Apr 20 05:49:30 2010 (serrano)                */
+;*    Last change :  Thu Apr 22 14:36:56 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -99,7 +99,8 @@
       (display-list fields op (lambda (f op)
 				 (obj->javascript
 				  ((class-field-accessor f) obj) op isrep)))
-      (display ";})()" op)))
+      (display ";})()" op))
+   #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript ::xml ...                                        */
@@ -116,7 +117,8 @@
 	     (call-with-output-string
 	      (lambda (op) (xml-write obj op (hop-xml-backend)))))))
       (display s op))
-   (display "\")" op))
+   (display "\")" op)
+   #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript ::xml-element ...                                */
@@ -124,19 +126,22 @@
 (define-method (obj->javascript obj::xml-element op isrep)
    (if isrep
        (call-next-method)
-       (fprintf op "document.getElementById( '~a' )" (xml-element-id obj))))
+       (fprintf op "document.getElementById( '~a' )" (xml-element-id obj)))
+   #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript ::xml-tilde ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (obj->javascript obj::xml-tilde op isrep)
-   (display (xml-tilde->expression obj) op))
+   (display (xml-tilde->expression obj) op)
+   #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript ::hop-service ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (obj->javascript obj::hop-service op isrep)
-   (display (hop-service-javascript obj) op))
+   (display (hop-service-javascript obj) op)
+   #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    *json-lexer* ...                                                 */

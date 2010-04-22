@@ -429,8 +429,7 @@ function sc_remainder(x, y) {
     return x % y;
 }
 
-/*** META ((export #t) (arity #t)
-           (peephole (modulo)))
+/*** META ((export #t) (arity #t))
 */
 function sc_modulo(x, y) {
     var remainder = x % y;

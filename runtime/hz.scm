@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Wed Apr 21 15:24:48 2010 (serrano)                */
+;*    Last change :  Thu Apr 22 13:52:45 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hz
 
+   (library web)
+   
    (import  __hop_param)
 
    (export (hz-package-filename? ::bstring)
@@ -21,7 +23,7 @@
 	   (hz-package-url-parse ::bstring)
 	   (hz-package-info ::bstring)
 	   (hz-download-to-cache ::bstring)
-	   (hz-resolver ::bstring ::pair-nil)))
+	   (hz-resolve-name ::bstring ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-package-filename? ...                                         */
@@ -142,16 +144,7 @@
 					    (format "~a_~a~a"
 						    host port
 						    (prefix (basename apath))))
-			    (make-file-name dest (prefix (basename apath)))))
-		   (url (cond
-			   ((string? (hop-hz-local-repository))
-			    (let ((f (make-file-name (hop-hz-local-repository)
-						     (basename apath))))
-			       (if (file-exists? f)
-				   f
-				   url)))
-			   (else
-			    url))))
+			    (make-file-name dest (prefix (basename apath))))))
 	       (unless (directory? dir)
 		  (call-with-input-file url
 		     (lambda (iport)
@@ -163,30 +156,46 @@
 	       (make-file-name dir base))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hz-resolver ...                                                  */
+;*    hz-resolve-name ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    This function accepts as parameter a HZ specification and        */
 ;*    returns an actual local file name that contains that HZ          */
 ;*    package. This function may download from the web the package.    */
 ;*---------------------------------------------------------------------*/
-(define (hz-resolver url path)
+(define (hz-resolve-name url path)
    (if (or (string-prefix? "http://" url)
 	   (string-prefix? "https://" url))
        (hz-download-to-cache url)
        (or ((hop-hz-resolver) url)
 	   (let ((regexp (hz-package-pattern->regexp url)))
-	      (or (find (lambda (p) (hz/path regexp p)) path)
-		  (hz/path regexp (hop-hz-local-repository))
-		  path)))))
+	      (or (find-val (lambda (p) (hz/repository regexp p)) path)
+		  url)))))
 
 ;*---------------------------------------------------------------------*/
-;*    hz/path ...                                                      */
+;*    hz/repository ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (hz/path regexp dir)
-   (when (and (string? dir) (directory? dir))
-      (let ((files (sort (directory->list dir)
+(define (hz/repository regexp dir)
+   
+   (define (find dir dir->files)
+      (let ((files (sort (dir->files dir)
 			 (lambda (f1 f2)
 			    (<fx (string-natural-compare3 f1 f2) 0)))))
-	 (find (lambda (f) (pregexp-match regexp f)) files))))
+	 (find-val (lambda (f)
+		      (when (pregexp-match regexp f)
+			 (make-file-path dir f)))
+		   files)))
+   
+   (cond
+      ((not (string? dir)) #f)
+      ((directory? dir) (find dir directory->list))
+      (else (find dir webdav-directory->list))))
+
+;*---------------------------------------------------------------------*/
+;*    find-val ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (find-val pred lst)
+   (when (pair? lst)
+      (let ((v (pred (car lst))))
+	 (or v (find-val pred (cdr lst))))))
       
        

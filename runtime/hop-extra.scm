@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Apr 21 15:25:13 2010 (serrano)                */
+;*    Last change :  Thu Apr 22 13:41:26 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -240,7 +240,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 	    (display (read-string ip)))))
    
    (define (hz f path)
-      (let* ((url (hz-resolver f (list path)))
+      (let* ((url (hz-resolve-name f (cons path (hop-hz-repositories))))
 	     (path (hz-download-to-cache url))
 	     (base (basename path))
 	     (hzfiles (hz-get-files path))

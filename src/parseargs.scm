@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Apr 20 05:51:10 2010 (serrano)                */
+;*    Last change :  Thu Apr 22 13:29:57 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -40,7 +40,8 @@
 	 (log-file #f)
 	 (be #f)
 	 (files '())
-	 (killp #f))
+	 (killp #f)
+	 (clear-cache #f))
       
       (bigloo-debug-set! 0)
       
@@ -74,6 +75,8 @@
 	  (hop-upload-directory-set! (make-file-name dir "upload")))
 	 (("--cache-dir" ?dir (help "Set cache directory"))
 	  (hop-cache-directory-set! dir))
+	 (("--clear-cache" (help "Clear cache"))
+	  (set! clear-cache #t))
 	 (("--script-file" ?file (help "A file loaded before the main loop"))
 	  (hop-script-file-set! file))
 	 (("--enable-autoload" (help "Enable autoload (default)"))
@@ -215,6 +218,10 @@
 	 (load-mime-types (if (string? mime-file)
 			      mime-file
 			      (make-file-name (getenv "HOME") ".mime.types"))))
+
+      ;; clear cache
+      (when (and clear-cache (directory? (hop-cache-directory)))
+	 (delete-path (hop-cache-directory)))
       
       ;; weblets path
       (hop-autoload-directory-add!

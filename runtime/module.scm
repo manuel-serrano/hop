@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Wed Apr 21 09:09:56 2010 (serrano)                */
+;*    Last change :  Thu Apr 22 13:41:29 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
@@ -86,7 +86,8 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-module-resolver module url)
    ;; feed the cache
-   (let ((dir (hz-download-to-cache url)))
+   (let* ((url (hz-resolve-name url (hop-hz-repositories)))
+	  (dir (hz-download-to-cache url)))
       ;; resolve the module
       (let ((afile (make-file-path dir ".afile")))
 	 (when (file-exists? afile)
