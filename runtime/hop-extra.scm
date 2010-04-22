@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Apr 16 16:20:55 2010 (serrano)                */
+;*    Last change :  Wed Apr 21 15:25:13 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -239,8 +239,9 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 	 (lambda (ip)
 	    (display (read-string ip)))))
    
-   (define (hz f)
-      (let* ((path (hz-download-to-cache f))
+   (define (hz f path)
+      (let* ((url (hz-resolver f (list path)))
+	     (path (hz-download-to-cache url))
 	     (base (basename path))
 	     (hzfiles (hz-get-files path))
 	     (hss (string-append base ".hss"))
@@ -422,7 +423,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 			   (append iels (reverse! hels) els))))))
 	     ((:hz :include-hz)
 	      (set! incs (cons (car a) incs))
-	      (let* ((hds (hz (car a)))
+	      (let* ((hds (hz (car a) path))
 		     (hels (loop hds #f #f dir path base inl packed '())))
 		 (loop (cdr a)
 		       (if (eq? mode :hz) :hz :include)

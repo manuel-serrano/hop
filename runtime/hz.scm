@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Apr  2 16:17:41 2010 (serrano)                */
+;*    Last change :  Wed Apr 21 15:24:48 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -20,7 +20,8 @@
 	   (hz-package-name-parse ::bstring)
 	   (hz-package-url-parse ::bstring)
 	   (hz-package-info ::bstring)
-	   (hz-download-to-cache ::bstring)))
+	   (hz-download-to-cache ::bstring)
+	   (hz-resolver ::bstring ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-package-filename? ...                                         */
@@ -60,6 +61,22 @@
                  (let* ((version (substring n (+fx 1 vindex) (string-length n)))
                         (base (substring n 0 vindex)))
 		    (values base version))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-package-pattern->regexp ...                                   */
+;*---------------------------------------------------------------------*/
+(define (hz-package-pattern->regexp url)
+   (multiple-value-bind (base version)
+      (hz-package-name-parse-sans-url url)
+      (cond
+	 ((pregexp-match "([0-9]+)[.]([0-9]+)[.][*]" version)
+	  =>
+	  (lambda (m) (format "~a-~a[.]~a[.].*" base (cadr m) (caddr m))))
+	 ((pregexp-match "([0-9]+)[.][*]" version)
+	  =>
+	  (lambda (m) (format "~a-~a[.].*" base (cadr m))))
+	 (else
+	  (pregexp-quote url)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-package-name-parse ...                                        */
@@ -144,3 +161,32 @@
 			      (untar p :directory dir)
 			      (close-input-port iport))))))
 	       (make-file-name dir base))))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-resolver ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    This function accepts as parameter a HZ specification and        */
+;*    returns an actual local file name that contains that HZ          */
+;*    package. This function may download from the web the package.    */
+;*---------------------------------------------------------------------*/
+(define (hz-resolver url path)
+   (if (or (string-prefix? "http://" url)
+	   (string-prefix? "https://" url))
+       (hz-download-to-cache url)
+       (or ((hop-hz-resolver) url)
+	   (let ((regexp (hz-package-pattern->regexp url)))
+	      (or (find (lambda (p) (hz/path regexp p)) path)
+		  (hz/path regexp (hop-hz-local-repository))
+		  path)))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/path ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (hz/path regexp dir)
+   (when (and (string? dir) (directory? dir))
+      (let ((files (sort (directory->list dir)
+			 (lambda (f1 f2)
+			    (<fx (string-natural-compare3 f1 f2) 0)))))
+	 (find (lambda (f) (pregexp-match regexp f)) files))))
+      
+       

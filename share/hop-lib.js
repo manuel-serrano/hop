@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Mon Mar 29 17:02:09 2010 (serrano)                */
+/*    Last change :  Wed Apr 21 08:30:47 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -751,7 +751,7 @@ function hop_jsobject2alist( obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_plist2object ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export plist->object) (arity #t)) */
+/*** META ((export plist->jsobject) (arity #t)) */
 function hop_plist2jsobject( plist ) {
    var o = {};
 

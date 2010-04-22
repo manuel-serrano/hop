@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Mon Apr 19 14:35:14 2010 (serrano)                */
+;*    Last change :  Wed Apr 21 12:09:28 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -286,13 +286,7 @@
       (if (%http-response? e)
 	  (http-response e (http-request-socket req))
 	  (begin
-	     (cond
-		((&error? e)
-		 (error-notify (evmeaning-annotate-exception! e)))
-		((&warning? e)
-		 (warning-notify (evmeaning-annotate-exception! e)))
-		(else
-		 (exception-notify e)))
+	     (exception-notify e)
 	     ;; generate a legal response for the next stage (although
 	     ;; this response denotes the error).
 	     (let ((resp ((or (hop-http-response-error) http-error) e req))

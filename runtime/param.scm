@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Apr 12 16:28:42 2010 (serrano)                */
+;*    Last change :  Wed Apr 21 08:55:45 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -281,6 +281,9 @@
 	    (hop-proxy-sniffer-add! ::procedure)
 
 	    (hop-api-cache::bstring)
+
+	    (hop-hz-resolver::procedure)
+	    (hop-hz-resolver-set! ::procedure)
 	    
 	    (hop-hz-package-suffix::bstring)
 	    (hop-hz-package-suffix-set! ::bstring)
@@ -1226,6 +1229,16 @@
 			(close-output-port new))))
 		 new))))))
 
+;*---------------------------------------------------------------------*/
+;*    hop-hz-resolver ...                                              */
+;*    -------------------------------------------------------------    */
+;*    A resolver is a function that accepts a HZ package name and      */
+;*    either returns the name of a local file containing that package  */
+;*    or #f. In that case, the regular HZ resolution takes place.      */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hz-resolver
+   (lambda (hz) #f))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-hz-package-suffix ...                                        */
 ;*---------------------------------------------------------------------*/
