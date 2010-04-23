@@ -67,7 +67,7 @@ $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $@ $(OBJECTS))
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
-$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-etc jvm-lib
+$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib
 	@ $(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
@@ -110,13 +110,6 @@ jvm-lib: o/class_s/lib/hop/$(HOPRELEASE)
 	$(MAKE) -s jvm-list SRC=.. DIR=weblets DEST=o/class_s/lib
 	cp -f $(BUILDLIBDIR)/*.init $<
 
-META-INF/MANIFEST.MF: META-INF
-	echo "Manifest-Version: 1.0" > $@
-	echo "Main-Class: bigloo/hop/main" >> $@
-	echo "Created-By: Hop $(VERSION)" >> $@
-
-META-INF:
-	mkdir -p $@
 
 o/class_s/lib/hop/$(HOPRELEASE):
 	mkdir -p $@
@@ -207,7 +200,6 @@ clean:
 	/bin/rm -rf o
 	/bin/rm -f $(BUILDBINDIR)/$(EXEC)
 	/bin/rm -f $(BUILDBINDIR)/$(EXEC).jar
-	/bin/rm -rf META-INF
 
 devclean: clean
 
