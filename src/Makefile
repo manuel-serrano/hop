@@ -69,8 +69,8 @@ $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
 # if we build for Apache Felix we must add the 3 java wrappers needed to run hop from a bundle
-FELIX_JAR = /home/mdione/src/works/inria/orange/felix-framework-2.0.4/bin/felix.jar
-ifeq ($(FELIX), 1)
+# FELIX_JAR = /home/mdione/src/works/inria/orange/felix-framework-2.0.4/bin/felix.jar
+ifdef FELIX_JAR
 FELIX_MODULES = HopRunner HopThread HopActivator
 else
 FELIX_MODULES =
