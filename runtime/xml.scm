@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Apr 23 16:29:47 2010 (serrano)                */
+;*    Last change :  Fri Apr 23 16:45:28 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -101,7 +101,7 @@
 
 	    (xml-markup-is? ::obj ::symbol)
 
-	    (xml-make-id #!optional id markup)
+	    (xml-make-id::bstring #!optional id markup)
 
 	    (xml-event-handler-attribute?::bool ::keyword)
 	    
@@ -359,19 +359,20 @@
 ;*    xml-make-id ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (xml-make-id #!optional id markup)
-   (cond
-      ((string? id)
-       id)
-      ((symbol? id)
-       (symbol->string (gensym id)))
-      ((symbol? markup)
-       (symbol->string (gensym markup)))
-      (else
-       (mutex-lock! make-id-lock)
-       (let ((id id-count))
-	  (set! id-count (+fx id-count 1))
-	  (mutex-unlock! make-id-lock)
-	  id))))
+   (if (string? id)
+       id
+       (begin
+	  (mutex-lock! make-id-lock)
+	  (let ((n (fixnum->string id-count)))
+	     (set! id-count (+fx 1 id-count))
+	     (mutex-unlock! make-id-lock)
+	     (cond
+		((symbol? id)
+		 (string-append (symbol->string! id) n))
+		((symbol? markup)
+		 (string-append (symbol->string! markup) n))
+		(else
+		 (string-append "hop" n)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-event-handler-attribute? ...                                 */
@@ -508,7 +509,6 @@
 	  (display "<" p)
 	  (display markup p)
 	  (display " id='" p)
-	  (when (fixnum? id) (display "hop" p))
 	  (display id p)
 	  (display "'" p)
 	  (if (xml-backend-abbrev-emptyp backend)
@@ -521,7 +521,6 @@
 	  (display "<" p)
 	  (display markup p)
 	  (display " id='" p)
-	  (when (fixnum? id) (display "hop" p))
 	  (display id p)
 	  (display "'" p)
 	  (xml-write-attributes attributes p backend)
@@ -539,7 +538,6 @@
 	  (display "<" p)
 	  (display markup p)
 	  (display " id='" p)
-	  (when (fixnum? id) (display "hop" p))
 	  (display id p)
 	  (display "'" p)
 	  (xml-write-attributes attributes p backend)
@@ -558,7 +556,6 @@
       (display "<" p)
       (display markup p)
       (display " id='" p)
-      (when (fixnum? id) (display "hop" p))
       (display id p)
       (display "'" p)
       (xml-write-attributes attributes p backend)
