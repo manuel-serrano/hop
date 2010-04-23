@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Apr 20 08:02:11 2010 (serrano)                */
+;*    Last change :  Fri Apr 23 07:54:13 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -20,7 +20,7 @@
    
    (export (class user
 	       (name::bstring read-only)
-	       (uri::obj read-only (default #unspecified))
+	       (uuid::obj read-only (default #unspecified))
 	       (groups::pair-nil read-only (default '()))
 	       (password::bstring read-only)
 	       (services read-only)

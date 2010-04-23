@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Mon Mar  8 10:21:49 2010 (serrano)                */
+;*    Last change :  Fri Apr 23 13:33:58 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -42,7 +42,7 @@
 	      (userdata::obj (default #unspecified)))
 
            (macro debug-thread-info-set! thread info)
-	   (macro with-stage-handler thread args . body)
+	   (macro with-stage-handler handler args . body)
 
 	   (class &ignore-exception::&exception)
 	   

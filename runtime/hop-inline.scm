@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Wed Apr  7 21:08:53 2010 (serrano)                */
+;*    Last change :  Fri Apr 23 08:18:26 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
@@ -23,6 +23,7 @@
 	    __hop_user
 	    __hop_dom
 	    __hop_xml
+	    __hop_html
 	    __hop_misc
 	    __hop_js-lib
 	    __hop_service

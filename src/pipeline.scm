@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Wed Apr 21 12:09:28 2010 (serrano)                */
+;*    Last change :  Fri Apr 23 13:58:46 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -28,7 +28,7 @@
 	   hop_param
 	   hop_accept)
    
-   (export (stage-request ::scheduler ::thread ::int ::socket ::symbol ::obj)))
+   (export (stage-request ::scheduler ::thread ::int ::socket ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-verb ...                                                     */
@@ -40,13 +40,9 @@
 	  (let ((v (gensym)))
 	     `(let ((,v ,(e level e)))
 		 (if (>=fx (hop-verbose) ,v)
-		     (with-lock *verb-mutex*
-			(lambda ()
-			   (hop-verb ,v ,@(map (lambda (x) (e x e)) rest))))))))
+		     (hop-verb ,v ,@(map (lambda (x) (e x e)) rest))))))
 	 (else
-	  `(with-lock *verb-mutex*
-	      (lambda ()
-		 (hop-verb ,@(map (lambda (x) (e x e)) (cdr x)))))))))
+	  `(hop-verb ,@(map (lambda (x) (e x e)) (cdr x)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *socket-mutex* ...                                               */
@@ -107,19 +103,19 @@
 ;*    This stage is in charge of parsing the request. It produces a    */
 ;*    http-request.                                                    */
 ;*---------------------------------------------------------------------*/
-(define (stage-request scd thread id sock mode timeout)
+(define (stage-request scd thread id sock timeout)
    
    ;; verbose function (only for log and debug)
-   (define (http-connect-verb scd id sock req)
+   (define (http-connect-verb scd id sock req mode num)
       (with-access::http-request req (method scheme host port path user header)
 	 (hop-verb 1 (if (http-proxy-request? req)
 			 (hop-color req req
 				    (if (eq? mode 'keep-alive)
-					" REQUEST.prox+"
+					(format " REQUEST.prox (+~a)" num)
 					" REQUEST.prox"))
 			 (hop-color req req
 				    (if (eq? mode 'keep-alive)
-					" REQUEST.serv+"
+					(format " REQUEST.serv (+~a)" num)
 					" REQUEST.serv")))
 		   (if (>=fx (hop-verbose) 2)
 		       (format " ~a~a: " thread (scheduler-stat scd))
@@ -136,52 +132,40 @@
 		       "")
 		   "\n")
 	 (hop-verb 4 (hop-color id id " CONNECT.header") ": "
-		   (with-output-to-string (lambda () (write header))) "\n")
-	 (hop-verb 2 (if (http-proxy-request? req)
-			 (hop-color req req
-				    (if (eq? mode 'keep-alive)
-					" REQUEST.prox+"
-					" REQUEST.prox"))
-			 (hop-color req req
-				    (if (eq? mode 'keep-alive)
-					" REQUEST.serv+"
-					" REQUEST.serv")))
-		   (format " ~a" thread)
-		   (scheduler-stat scd)
-		   ": " method " " scheme "://"
-		   (user-name user) "@" host ":" port (string-for-read path)
-		   " " (http-request-http req)
-		   "\n")))
+		   (with-output-to-string (lambda () (write header))) "\n")))
 
-   ;; log
-   (unless (eq? mode 'keep-alive)
-      (hop-verb 2 (hop-color id id " CONNECT")
-		(if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
-		(if (>=fx (hop-verbose) 2) (scheduler-stat scd) "")
-		": " (if (>=fx (hop-verbose) 2)
-			 (socket-hostname sock)
-			 (socket-host-address sock))
-		" [" (current-date) "]\n"))
-
-   ;; debug trace
-   (debug-thread-info-set! thread "connection established with ~a")
-
-   (with-stage-handler
-      stage-request-error-handler (id sock mode)
-      (let ((req (with-time (http-parse-request sock id timeout) id "CONNECT")))
-	 ;; debug info
-	 (debug-thread-info-set! thread
-				 (format "request parsed for ~a, ~a ~a"
-					 (if (>=fx (hop-verbose) 2)
-					     (socket-hostname sock)
-					     (socket-host-address sock))
-					 (http-request-method req)
-					 (http-request-path req)))
-	 (http-connect-verb scd id sock req)
-	 ;; decrement the keep-alive number (we have a valid connection)
-	 (when (eq? mode 'keep-alive) (keep-alive--))
-	 ;; start compting the answer
-	 (stage scd thread stage-response id req))))
+   (let loop ((mode 'connect)
+	      (timeout timeout)
+	      (num 1))
+      (with-stage-handler
+       stage-request-error-handler (id sock mode)
+       ;; log
+       (unless (eq? mode 'keep-alive)
+	  (hop-verb 2 (hop-color id id " CONNECT")
+		    (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
+		    (if (>=fx (hop-verbose) 2) (scheduler-stat scd) "")
+		    ": " (if (>=fx (hop-verbose) 2)
+			     (socket-hostname sock)
+			     (socket-host-address sock))
+		    " [" (current-date) "]\n"))
+       ;; debug trace
+       (debug-thread-info-set! thread "connection established with ~a")
+       (let ((req (with-time (http-parse-request sock id timeout) id "CONNECT")))
+	  ;; debug info
+	  (debug-thread-info-set! thread
+				  (format "request parsed for ~a, ~a ~a"
+					  (if (>=fx (hop-verbose) 2)
+					      (socket-hostname sock)
+					      (socket-host-address sock))
+					  (http-request-method req)
+					  (http-request-path req)))
+	  (http-connect-verb scd id sock req mode num)
+	  ;; decrement the keep-alive number (we have a valid connection)
+	  (when (eq? mode 'keep-alive) (keep-alive--))
+	  ;; start compting the answer
+	  (let ((keep-alive-timeout (stage scd thread stage-response id req)))
+	     (when (fixnum? keep-alive-timeout)
+		(loop 'keep-alive keep-alive-timeout (+fx num 1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-request-error-handler ...                                  */
@@ -359,7 +343,7 @@
 	     (when (>=fx (hop-verbose) 3)
 		(stage-exec-verb scd thread req resp connection
 				   " PERSISTENT"))
-	     #unspecified)
+	     #f)
 	    ((keep-alive)
 	     (let ((load (scheduler-load scd)))
 		(cond
@@ -368,23 +352,27 @@
 		    (when (>=fx (hop-verbose) 3)
 		       (stage-exec-verb scd thread req resp connection
 					  " END"))
-		    (socket-close sock))
+		    (socket-close sock)
+		    #f)
 		   ((>=fx load 80)
 		    (when (>=fx (hop-verbose) 3)
 		       (stage-exec-verb scd thread req resp connection
 					  " KEEP-ALIVE"))
 		    (keep-alive++)
-		    (stage scd thread stage-request id sock 'keep-alive 1))
+		    ;(stage scd thread stage-request id sock 'keep-alive 1)
+		    1)
 		   (else
 		    (when (>=fx (hop-verbose) 3)
 		       (stage-exec-verb scd thread req resp connection
 					  " KEEP-ALIVE"))
 		    (keep-alive++)
-		    (stage scd thread stage-request id sock 'keep-alive (hop-keep-alive-timeout))))))
+		    ;(stage scd thread stage-request id sock 'keep-alive (hop-keep-alive-timeout))
+		    (hop-keep-alive-timeout)))))
 	    (else
 	     (when (>=fx (hop-verbose) 3)
 		(stage-exec-verb scd thread req resp connection " END"))
-	     (socket-close sock))))))
+	     (socket-close sock)
+	     #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    exec-error-handler ...                                           */
