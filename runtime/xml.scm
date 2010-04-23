@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Apr 23 15:41:16 2010 (serrano)                */
+;*    Last change :  Fri Apr 23 16:29:47 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -312,7 +312,7 @@
 	  (instantiate::xml-element
 	     (markup (string->symbol (string-downcase (symbol->string el))))
 	     (attributes (reverse! attr))
-	     (id (xml-make-id id el))
+	     (id (xml-make-id id))
 	     (body (reverse! body))))
 	 ((keyword? (car a))
 	  (cond
