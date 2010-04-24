@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 29 10:14:56 2010                          */
-;*    Last change :  Fri Apr 23 19:46:37 2010 (serrano)                */
+;*    Last change :  Sat Apr 24 10:49:15 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Password encryption (shared by client and server code).          */
@@ -95,7 +95,6 @@
 ;*    h1password ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (h1password pass::bstring path::bstring session::int)
-   (tprint "h1password\n  path=" (string-for-read pass) "\n  path=" (string-for-read path) "\n  session=" session)
    (md5sum (string-append (integer->string session) ":" pass ":" path)))
 
 ;*---------------------------------------------------------------------*/
