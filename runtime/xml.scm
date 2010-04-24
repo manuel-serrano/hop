@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sat Apr 24 07:26:58 2010 (serrano)                */
+;*    Last change :  Sat Apr 24 07:28:19 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -379,7 +379,7 @@
 	     ((symbol? tag)
 	      (string-append (symbol->string! tag) n))
 	     (else
-	      (string-append "hop" n))))))
+	      (string-append "_" n))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-event-handler-attribute? ...                                 */
