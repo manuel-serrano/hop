@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Apr 23 16:45:28 2010 (serrano)                */
+;*    Last change :  Sat Apr 24 07:26:58 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -101,7 +101,7 @@
 
 	    (xml-markup-is? ::obj ::symbol)
 
-	    (xml-make-id::bstring #!optional id markup)
+	    (xml-make-id::bstring #!optional id tag)
 
 	    (xml-event-handler-attribute?::bool ::keyword)
 	    
@@ -303,6 +303,10 @@
 ;*    %make-xml-element ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (%make-xml-element el args)
+   
+   (define (symbol-upcase s)
+      (string->symbol (string-upcase! (symbol->string s))))
+   
    (let loop ((a args)
 	      (attr '())
 	      (body '())
@@ -310,14 +314,14 @@
       (cond
 	 ((null? a)
 	  (instantiate::xml-element
-	     (markup (string->symbol (string-downcase (symbol->string el))))
+	     (markup el)
 	     (attributes (reverse! attr))
 	     (id (xml-make-id id))
 	     (body (reverse! body))))
 	 ((keyword? (car a))
 	  (cond
 	     ((not (pair? (cdr a)))
-	      (error (symbol-append '< el '>)
+	      (error (symbol-append '< (symbol-upcase el) '>)
 		     "Illegal attribute"
 		     (car a)))
 	     ((eq? (car a) :id)
@@ -330,9 +334,9 @@
 	  (loop (cdr a) attr body id))
 	 ((pair? (car a))
 	  (if (not (and (or (null? (cdr a)) (pair? (cdr a))) (list? (car a))))
-	      (error (symbol-append '< el '>)
+	      (error (symbol-append '< (symbol-upcase el) '>)
 		     "Illegal arguments"
-		     `(,(symbol-append '< el '>) ,@args))
+		     `(,(symbol-append '< (symbol-upcase el) '>) ,@args))
 	      (loop (append (car a) (cdr a)) attr body id)))
 	 (else
 	  (loop (cdr a) attr (cons (car a) body) id)))))
@@ -358,21 +362,24 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-make-id ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (xml-make-id #!optional id markup)
+(define (xml-make-id #!optional id tag)
    (if (string? id)
        id
-       (begin
-	  (mutex-lock! make-id-lock)
-	  (let ((n (fixnum->string id-count)))
-	     (set! id-count (+fx 1 id-count))
-	     (mutex-unlock! make-id-lock)
-	     (cond
-		((symbol? id)
-		 (string-append (symbol->string! id) n))
-		((symbol? markup)
-		 (string-append (symbol->string! markup) n))
-		(else
-		 (string-append "hop" n)))))))
+       ;; CARE, MS 24 apr 2010 !!!
+       ;; I don't think we need a lock here because
+       ;; I don't think it's important to have a really unique ID generator.
+       ;; I think we are only interested in uniqueness inside a single
+       ;; thread. If two threads call xml-make-id in parallel it's unlikely
+       ;; that they are constructing a shared tree.
+       (let ((n (fixnum->string id-count)))
+	  (set! id-count (+fx 1 id-count))
+	  (cond
+	     ((symbol? id)
+	      (string-append (symbol->string! id) n))
+	     ((symbol? tag)
+	      (string-append (symbol->string! tag) n))
+	     (else
+	      (string-append "hop" n))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-event-handler-attribute? ...                                 */
@@ -799,7 +806,7 @@
 			(let ((constr (string->symbol
 				       (string-append
 					"<"
-					(string-upcase (symbol->string markup))
+					(string-upcase! (symbol->string markup))
 					">"))))
 			   (eval-markup constr attributes body)))))))
 
@@ -816,7 +823,7 @@
 			(let ((constr (string->symbol
 				       (string-append
 					"<"
-					(string-upcase (symbol->string markup))
+					(string-upcase! (symbol->string markup))
 					">"))))
 			   (eval-markup constr attributes body)))))))
 
@@ -899,7 +906,7 @@
 	    (procedure? (car body))
 	    (correct-arity? (car body) 0))
        (instantiate::xml-delay
-	  (id (xml-make-id id 'DELAY))
+	  (id (xml-make-id id))
 	  (thunk (car body)))
        (error '<DELAY> "Illegal delay's thunk" (car body))))
 

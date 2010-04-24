@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 29 10:14:56 2010                          */
-;*    Last change :  Fri Apr  2 10:52:17 2010 (serrano)                */
+;*    Last change :  Fri Apr 23 19:46:37 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Password encryption (shared by client and server code).          */
@@ -16,13 +16,13 @@
    
    #;@server (cond-expand ((not scheme2js) (import __hop_param)))
    
-   (export (authentication-encrypt #!key (schema 'digest) (algo 'ho0) session name password path ip)
-	   (basic-password-encrypt ::bstring ::bstring)
-	   (digest-password-encrypt ::bstring ::bstring ::bstring)
-	   (password-encrypt ::bstring ::bstring ::symbol)
-	   (h0password ::bstring ::bstring)
-	   (h1password ::bstring ::bstring ::int)
-	   (h2password ::bstring ::bstring ::int ::bstring)))
+   (export (authentication-encrypt::bstring #!key (schema 'digest) (algo 'ho0) session name password path ip)
+	   (basic-password-encrypt::bstring ::bstring ::bstring)
+	   (digest-password-encrypt::bstring ::bstring ::bstring ::bstring)
+	   (password-encrypt::bstring ::bstring ::bstring ::symbol)
+	   (h0password::bstring ::bstring ::bstring)
+	   (h1password::bstring ::bstring ::bstring ::int)
+	   (h2password::bstring ::bstring ::bstring ::int ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    The head                                                         */
@@ -94,6 +94,7 @@
 ;*    h1password ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (h1password pass::bstring path::bstring session::int)
+   (tprint "h1password\n  path=" (string-for-read pass) "\n  path=" (string-for-read path) "\n  session=" session)
    (md5sum (string-append (integer->string session) ":" pass ":" path)))
 
 ;*---------------------------------------------------------------------*/
