@@ -61,5 +61,9 @@ The [[http://www-sop.inria.fr/indes/fp/Bigloo|Bigloo]] compiler is the only
 strict requirement for HOP.
 
 ,(<DIV> :class "app"
-   (<A> :class "iddn" :href "http://app.legalis.net/"
-     "IDDN.FR.001.260002.000.S.P.2006.000.10400"))
+   (<SPAN> :class "iddn"
+       (<A> :class "iddn" :href "http://app.legalis.net/"
+           "IDDN.FR.001.260002.000.S.P.2006.000.10400")
+       " - "
+       (<A> :class "iddn" :href "http://app.legalis.net/"
+           "IDDN.FR.001.260002.001.S.A.2006.000.10600")))
