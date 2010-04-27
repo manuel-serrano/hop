@@ -261,7 +261,7 @@ flash/%.swf: flash/%.as
 #*---------------------------------------------------------------------*/
 #*    JavaScript compilation                                           */
 #*---------------------------------------------------------------------*/
-hop-exception.js: hop-exception.scm
+hop-exception.js: hop_exception.scm
 	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
          export LD_LIBRARY_PATH; \
          DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
