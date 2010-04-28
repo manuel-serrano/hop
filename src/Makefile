@@ -23,13 +23,13 @@ EXEC		= hop
 #*---------------------------------------------------------------------*/
 #*    Sources    					               */
 #*---------------------------------------------------------------------*/
-MODULES		= hop-param parseargs main init \
+MODULES		= hop_param parseargs main init \
                   scheduler accept pipeline \
-                  nothread-scheduler \
-                  queue-scheduler \
-                  oto-scheduler \
-                  pool-scheduler \
-                  amany-scheduler
+                  nothread_scheduler \
+                  queue_scheduler \
+                  oto_scheduler \
+                  pool_scheduler \
+                  amany_scheduler
 
 INCLUDES	= stage.sch
 
@@ -222,5 +222,11 @@ $(OBJECTS): .afile
 #*---------------------------------------------------------------------*/
 #*    Dependencies ...                                                 */
 #*---------------------------------------------------------------------*/
+o/pipeline.o ./pipeline.class: stage.sch 
+o/accept.o ./accept.class: stage.sch 
+o/accept.o accept.class: stage.sch 
+o/pipeline.o pipeline.class: stage.sch 
+o/nothread_scheduler.o nothread_scheduler.class: stage.sch 
+o/nothread_scheduler.o ./nothread_scheduler.class: stage.sch 
 
 #bdepend stop
