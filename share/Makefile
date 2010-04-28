@@ -47,26 +47,26 @@ EXTRA		= hop-error.hss hop.hss \
 	 	  hop-notepad.hss hop-notepad.js \
                   hop-tree.js hop-tree.css \
 		  hop-foldlist.js hop-foldlist.css \
-                  hop-window.scm hop-window.js \
+                  hop_window.scm hop-window.js \
                   hop-window.hss hop-window-red.hss\
                   hop-editor.js hop-editor.css \
-                  hop-file.js hop-file.scm hop-file.hss \
+                  hop-file.js hop_file.scm hop-file.hss \
                   hop-fileselect.js hop-fileselect.css \
                   hop-tooltip.js \
-                  hop-dashboard.js hop-dashboard.scm \
+                  hop-dashboard.js hop_dashboard.scm \
                   hop-prefs.js hop-prefs.hss \
                   hop-debug.js hop-debug.css \
-                  hop-audio.js hop-audio.scm hop-audio.hss \
+                  hop-audio.js hop_audio.scm hop-audio.hss \
                   hop-video.js hop-video.hss \
                   hop-login.js hop-login.hss \
-		  hop-spinbutton.scm hop-spinbutton.hss \
-		  hop-color.scm hop-color.hss \
+		  hop_spinbutton.scm hop-spinbutton.hss \
+		  hop_color.scm hop-color.hss \
                   hop-lframe.hss \
-                  hop-canvas.scm hop-exception.scm hop-orientation.scm \
-                  hop-spage.scm hop-spage.hss \
-                  hop-gauge.scm hop-gauge.hss \
-                  hop-font.scm \
-                  hop-password.scm
+                  hop_canvas.scm hop_exception.scm hop_orientation.scm \
+                  hop_spage.scm hop-spage.hss \
+                  hop_gauge.scm hop-gauge.hss \
+                  hop_font.scm \
+                  hop_password.scm
 
 #*---------------------------------------------------------------------*/
 #*    AUDIO and ICONS                                                  */

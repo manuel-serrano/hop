@@ -24,7 +24,7 @@ EXEC		= hopc
 #*---------------------------------------------------------------------*/
 #*    Sources    					               */
 #*---------------------------------------------------------------------*/
-MODULES		= hopc-param parseargs main
+MODULES		= hopc_param parseargs main
 
 INCLUDES	= 
 
