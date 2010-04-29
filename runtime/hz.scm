@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Thu Apr 22 13:52:45 2010 (serrano)                */
+;*    Last change :  Thu Apr 29 18:30:03 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -165,7 +165,7 @@
 (define (hz-resolve-name url path)
    (if (or (string-prefix? "http://" url)
 	   (string-prefix? "https://" url))
-       (hz-download-to-cache url)
+       url
        (or ((hop-hz-resolver) url)
 	   (let ((regexp (hz-package-pattern->regexp url)))
 	      (or (find-val (lambda (p) (hz/repository regexp p)) path)
@@ -186,9 +186,15 @@
 		   files)))
    
    (cond
-      ((not (string? dir)) #f)
-      ((directory? dir) (find dir directory->list))
-      (else (find dir webdav-directory->list))))
+      ((not (string? dir))
+       #f)
+      ((directory? dir)
+       (find dir directory->list))
+      (else
+       (multiple-value-bind (_ _ host _ _)
+	  (url-parse dir)
+	  (when (string? host)
+	     (find dir webdav-directory->list))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-val ...                                                     */
