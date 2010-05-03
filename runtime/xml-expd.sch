@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Sat Apr 24 07:13:40 2010 (serrano)                */
+;*    Last change :  Mon Apr 26 09:52:17 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -83,7 +83,9 @@
 	 ((and (>fx (string-length s) 2)
 	       (char=? (string-ref s 0) #\<)
 	       (char=? (string-ref s (-fx (string-length s) 1)) #\>))
-	  (let ((el (string->symbol (substring s 1 (-fx (string-length s) 1))))
+	  (let ((el (string->symbol
+		     (string-downcase!
+		      (substring s 1 (-fx (string-length s) 1)))))
 		(css (memq :hss-type exp))
 		(markup (memq :markup exp))
 		(at (memq :attributes exp))
@@ -175,8 +177,9 @@
 ;*    define-alias ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (define-alias id ea opts)
-   `(define (,id . args)
-       (%make-xml-element ',ea (append args (list ,@opts)))))
+   (let ((eal (string->symbol (string-downcase! (symbol->string ea)))))
+      `(define (,id . args)
+	  (%make-xml-element ',eal (append args (list ,@opts))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-define-xml-alias ...                                      */

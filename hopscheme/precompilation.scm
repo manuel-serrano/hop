@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Tue Mar  9 05:13:01 2010                          */
-;*    Last change :  Tue Mar  9 05:13:39 2010 (serrano)                */
+;*    Last change :  Thu Apr 29 18:08:04 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Module pre-compilation                                           */
@@ -59,6 +59,8 @@
 			      rev-others))
 		       ((and (pair? (car import-names))
 			     (symbol? (caar import-names)))
+			(unless (every? string? (cdar import-names))
+			   (error 'hopscheme "Illegal module clause" header))
 			(module-add-access! (caar import-names)
 					    (cdar import-names)
 					    "hopscheme")
