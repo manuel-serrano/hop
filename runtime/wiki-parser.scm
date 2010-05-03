@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Fri Apr 23 08:17:21 2010 (serrano)                */
+;*    Last change :  Sat May  1 08:35:11 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -483,7 +483,7 @@
        (ignore))
 
       ;; simple text
-      ((+ (or letter (: punct letter)))
+      ((+ (or letter (: punct letter) (: #\space letter)))
        (add-expr! (the-html-string))
        (ignore))
 
@@ -820,14 +820,18 @@
 
       ;; quotes
       (#\"
-       (let ((s (in-state 'quotation)))
-	  (if s
-	      (begin
-		 (unwind-state! s)
-		 (ignore))
-	      (begin
-		 (enter-expr! 'quotation (wiki-syntax-q syn) #f)
-		 (ignore)))))
+       (if (in-state 'code)
+	   (begin
+	      (add-expr! (the-html-string))
+	      (ignore))
+	   (let ((s (in-state 'quotation)))
+	      (if s
+		  (begin
+		     (unwind-state! s)
+		     (ignore))
+		  (begin
+		     (enter-expr! 'quotation (wiki-syntax-q syn) #f)
+		     (ignore))))))
 
       ;; keywords
       ((: (in " \t") #\: (out " \t\n:)\"'`;#") (* (out " \t\n)\"'`;#")))
