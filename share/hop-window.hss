@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-window.hss              */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-window.hss              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Sun Jan 10 10:21:14 2010 (serrano)                */
+/*    Last change :  Sat Apr 17 07:31:24 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP WINDOW CSS                                                   */
@@ -101,19 +101,16 @@ div[hssclass=hop-window] {
   background: none;
 }
 
-div[hssclass=hop-window] div.hop-window-inner {
-  border: 1px solid black;
-}  
-
 /*---------------------------------------------------------------------*/
 /*    handle                                                           */
 /*---------------------------------------------------------------------*/
 div[hssclass=hop-window] div.hop-window-handle {
   position: absolute;
-  height: 13px;
+  height: 18px;
   top: 0;
   left: 0; 
   right: 0;
+  overflow: hidden;
 }
 
 div[hssclass=hop-window] table.hop-window-handle {
@@ -164,6 +161,7 @@ div[hssclass=hop-window] td.hop-window-up-title table {
   font-weight: bold;
   font-family: arial;
   color: #ff9f1a;
+  overflow: hidden;
 }
 
 div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-left {
@@ -185,6 +183,8 @@ div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-middle {
   background-position: center;
   vertical-align: middle;
   text-align: center;
+  white-space: pre;
+  overflow: hidden;
 }
 
 div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-middle {
@@ -207,11 +207,23 @@ div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-right 
 /*---------------------------------------------------------------------*/
 /*    content                                                          */
 /*---------------------------------------------------------------------*/
+div[hssclass=hop-window] div.hop-window-content-border,
 div[hssclass=hop-window] div.hop-window-content {
   position: absolute;
   top: 17px; 
-  padding-top: 0;
   bottom: 4px; 
+}
+
+div[hssclass=hop-window] div.hop-window-content-border {
+  padding-top: 0;
+  border: 0;
+  left: 0; 
+  right: 0;
+  border-left: 1px solid black;
+  border-right: 1px solid black;
+}
+
+div[hssclass=hop-window] div.hop-window-content {
   left: 1px; 
   right: 1px;
   border-top: 0;

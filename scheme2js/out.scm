@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -53,7 +53,8 @@
        last-file)
     (wide-class Out-Lambda::Lambda
        lvalue))
-   (export (out tree::Module p)))
+   (export (compile-value const p::output-port foreign-out loc)
+	   (out tree::Module p)))
 
 (define (out tree p)
    (verbose "Compiling")
@@ -153,25 +154,115 @@
 
    (smaller? l 5))
 
+;*---------------------------------------------------------------------*/
+;*    my-string-for-read ...                                           */
+;*    -------------------------------------------------------------    */
+;*    MS: new implementation 13apr2010.                                */
+;*---------------------------------------------------------------------*/
 (define (my-string-for-read str)
-   (let loop ((i 0)
-	      (rev-str '()))
-      (cond
-	 ((= i (string-length str))
-	  (apply string (reverse! rev-str)))
-	 (else
-	  (case (string-ref str i)
-	     ((#\\ #\")
-	      (loop (+fx i 1)
-		    (cons* (string-ref str i) #\\ rev-str)))
-	     ((#\return)  (loop (+fx i 1) (cons* #\r #\\ rev-str)))
-	     ((#\newline) (loop (+fx i 1) (cons* #\n #\\ rev-str)))
-	     ((#\null)    (loop (+fx i 1) (cons* #\0 #\0 #\0 #\0 #\u rev-str)))
-	     (else
-	      (loop (+fx i 1)
-		    (cons (string-ref str i) rev-str))))))))
+   
+   (define (count str ol)
+      (let loop ((i 0)
+		 (n 0))
+	 (if (=fx i ol)
+	     n
+	     (let ((c (string-ref str i)))
+		(case c
+		   ((#\" #\\ #\Newline #\Return)
+		    (loop (+fx i 1) (+fx n 2)))
+		   ((#\/ #\null)
+		    (loop (+fx i 1) (+fx n 6)))
+		   (else
+		    (loop (+fx i 1) (+fx n 1))))))))
+   
+   (define (encode str ol nl)
+      (if (=fx nl ol)
+	  str
+	  (let ((res (make-string nl)))
+	     (let loop ((i 0)
+			(j 0))
+		(if (=fx j nl)
+		    res
+		    (let ((c (string-ref str i)))
+		       (case c
+			  ((#\" #\\)
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) c)
+			   (loop (+fx i 1) (+fx j 2)))
+			  ((#\Newline)
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) #\n)
+			   (loop (+fx i 1) (+fx j 2)))
+			  ((#\Return)
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) #\r)
+			   (loop (+fx i 1) (+fx j 2)))
+			  ((#\/)
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) #\u)
+			   (string-set! res (+fx j 2) #\0)
+			   (string-set! res (+fx j 3) #\0)
+			   (string-set! res (+fx j 4) #\2)
+			   (string-set! res (+fx j 5) #\f)
+			   (loop (+fx i 1) (+fx j 6)))
+			  ((#\null)
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) #\u)
+			   (string-set! res (+fx j 2) #\0)
+			   (string-set! res (+fx j 3) #\0)
+			   (string-set! res (+fx j 4) #\0)
+			   (string-set! res (+fx j 5) #\0)
+			   (loop (+fx i 1) (+fx j 6)))
+			  (else
+			   (string-set! res j c)
+			   (loop (+fx i 1) (+fx j 1))))))))))
+   
+   (let ((ol (string-length str)))
+      (encode str ol (count str ol))))
 
-(define (compile-const const p foreign-out loc)
+;*---------------------------------------------------------------------*/
+;*    display-string-for-read ...                                      */
+;*---------------------------------------------------------------------*/
+(define (display-string-for-read str op)
+   (let ((ol (string-length str)))
+      (let loop ((i 0))
+	 (when (<fx i ol)
+	    (let ((c (string-ref str i)))
+	       (case c
+		  ((#\" #\\)
+		   (write-char #\\ op)
+		   (write-char c op)
+		   (loop (+fx i 1)))
+		  ((#\Newline)
+		   (write-char #\\ op)
+		   (write-char #\n op)
+		   (loop (+fx i 1)))
+		  ((#\Return)
+		   (write-char #\\ op)
+		   (write-char #\r op)
+		   (loop (+fx i 1)))
+		  ((#\/)
+		   (write-char #\\ op)
+		   (write-char #\u op)
+		   (write-char #\0 op)
+		   (write-char #\0 op)
+		   (write-char #\2 op)
+		   (write-char #\f op)
+		   (loop (+fx i 1)))
+		  ((#\null)
+		   (write-char #\\ op)
+		   (write-char #\u op)
+		   (write-char #\0 op)
+		   (write-char #\0 op)
+		   (write-char #\0 op)
+		   (write-char #\0 op)
+		   (loop (+fx i 1)))
+		  (else
+		   (write-char c op)
+		   (loop (+fx i 1)))))))))
+
+
+(define (compile-value val p foreign-out loc)
    (define (display-ucs2-char p c) ;; without the quotes
       (let ((i (ucs2->integer c)))
 	 (cond
@@ -189,81 +280,88 @@
 	     (template-display p "\\u~x" i)))))
 	     
    (cond
-      ((null? const) (template-display p "null"))
-      ((boolean? const)
-       (template-display p "~a" (if const "true" "false")))
-      ((symbol? const)
+      ((null? val)
+       (template-display p "null"))
+      ((boolean? val)
+       (template-display p "~a" (if val "true" "false")))
+      ((symbol? val)
        (template-display p
 	  "\"~?~a\""
 	  (and (not (use-mutable-strings?)) *symbol-prefix*)
-	  const))
-      ((char? const)
+	  (my-string-for-read (symbol->string! val))))
+      ((char? val)
        (template-display p
-	  "(new sc_Char(\"~a\"))" (my-string-for-read (string const))))
-      ((ucs2? const)
+	  "(new sc_Char(\"~a\"))" (my-string-for-read (string val))))
+      ((ucs2? val)
        (template-display p
-	  "(new sc_Char(\"~e\"))" (display-ucs2-char p const)))
-      ((number? const)
-       ;; CARE: initially I had "($const)" here. and I suppose there was a
+	  "(new sc_Char(\"~e\"))" (display-ucs2-char p val)))
+      ((number? val)
+       ;; CARE: initially I had "($val)" here. and I suppose there was a
        ;; reason I put the parenthesis around. this will probably come back and
        ;; bite me...
        (template-display p
-	  (?@ (< const 0) "(~@)")
-	  "$const"))
-      ((string? const)
+	  (?@ (< val 0) "(~@)")
+	  "$val"))
+      ((string? val)
        (template-display p
 	  (?@ (use-mutable-strings?) "(new sc_String(~@))")
-	  "\"~a\"" (my-string-for-read const)))
-      ((ucs2-string? const)
+	  "\"~a\"" (my-string-for-read val)))
+      ((ucs2-string? val)
        (template-display p
 	  (?@ (use-mutable-strings?) "(new sc_String(~@))")
 	  "\"~e\""
 	  (let loop ((i 0))
-	     (unless (>= i (ucs2-string-length const))
-		(display-ucs2-char p (ucs2-string-ref const i))
+	     (unless (>= i (ucs2-string-length val))
+		(display-ucs2-char p (ucs2-string-ref val i))
 		(loop (+fx i 1))))))
-      ((vector? const)
+      ((vector? val)
        (template-display p
 	  "[~e]"
 	  (let loop ((i 0))
-	     (unless (>= i (vector-length const))
+	     (unless (>= i (vector-length val))
 		(if (not (= i 0))
 		    (template-display p ", "))
-		(compile-const (vector-ref const i) p foreign-out loc)
+		(compile-value (vector-ref val i) p foreign-out loc)
 		(loop (+ i 1))))))
-      ((pair? const)
-       (if (small-list/pair? const)
+      ((pair? val)
+       (if (small-list/pair? val)
 	   (template-display p
 	      "(new sc_Pair(~e,~e))"
-	      (compile-const (car const) p foreign-out loc)
-	      (compile-const (cdr const) p foreign-out loc))
+	      (compile-value (car val) p foreign-out loc)
+	      (compile-value (cdr val) p foreign-out loc))
 	   (template-display p
 	      "sc_list(~e)"
 	      (separated ", " 
-			 (lambda (e) "~e" (compile-const e p foreign-out loc))
-			 const))))
-      ((eq? const #unspecified) (template-display p "undefined"))
-      ((keyword? const)
+			 (lambda (e) "~e" (compile-value e p foreign-out loc))
+			 val))))
+      ((eq? val #unspecified)
+       (template-display p "undefined"))
+      ((keyword? val)
        (if (use-mutable-strings?)
 	   (template-display p
-	      "(new sc_Keyword(\"~a\"))" (keyword->string const))
+	      "(new sc_Keyword(\"~a\"))"
+	      (my-string-for-read (keyword->string! val)))
 	   (template-display p
-	      "\"~a~a\"" *keyword-prefix* (keyword->string const))))
+	      "\"~a~a\"" *keyword-prefix*
+	      (my-string-for-read (keyword->string! val)))))
       (foreign-out
-       (let ((ok? (foreign-out const p)))
+       (let ((ok? (foreign-out val p)))
 	  (when (not ok?)
-	     (scheme2js-error 'const-out
-			      "Could not compile value:"
-			      const
+	     (scheme2js-error 'val-out
+			      "Could not compile value"
+			      val
 			      loc))))
       (else
-       (error #f "Internal Error: forgot Const-type" const))))
+       (scheme2js-error 'val-out
+			"Internal Error: forgot Val-type"
+			val
+			loc))))
    
 (define-nmethod (Const.compile p stmt?)
    (with-access::Const this (value)
       (template-display p
 	 (?@ stmt? "~@;\n")
-	 "~e" (compile-const value p (Out-Env-foreign-out env) this))))
+	 "~e" (compile-value value p (Out-Env-foreign-out env) this))))
 
 (define-nmethod (Ref.compile p stmt?)
    (with-access::Ref this (var)

@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -14,8 +14,7 @@
    (import verbose
 	   error
 	   tools)
-   (export (my-expand x
-		      additional-macros) ;; list of lists/ht of macros
+   (export (my-expand x additional-macros) ;; list of lists/ht of macros
 	   (install-expander! id e)
 	   ;; priority: lower -> later
 	   (add-pre-expand! priority::bint f::procedure)

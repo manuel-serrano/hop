@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/info/info.hop             */
+;*    serrano/prgm/project/hop/2.1.x/weblets/info/info.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Nov 21 19:48:10 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Mon Mar  8 09:59:53 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
 ;*=====================================================================*/
@@ -41,7 +41,7 @@
 				     (<TD> :nowrap #t
 					(if (user? user) (user-name user) ""))
 				     (<TD> :nowrap #t
-					(seconds->date date))))))
+					(seconds->date seconds))))))
       rep))
 
 ;*---------------------------------------------------------------------*/
@@ -145,13 +145,13 @@
 	     (<BODY>
 		:onunload ~(with-hop ($(service ()
 					  (set! traffic-hookingp #f))))
-		(<DIV> :align "center"
+		(<DIV> :class "body"
 		   (<TABLE> :class "info"
 		      (<TR>
-			 (<TD>
+			 (<TD> :id "logo"
 			    (<IMG> :src "etc/logo.png"))
 			 (<TD>
-			    (<TABLE>
+			    (<TABLE> :width "100%"
 			       (<TR>
 				  (<TD>
 				     (<DIV> :id "title"

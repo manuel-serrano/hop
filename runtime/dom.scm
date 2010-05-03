@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/dom.scm                   */
+;*    serrano/prgm/project/hop/2.1.x/runtime/dom.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Thu Dec 17 14:43:26 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Wed Apr  7 21:07:24 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
 ;*=====================================================================*/
@@ -17,8 +17,7 @@
    (import __hop_xml
 	   __hop_priv)
 
-   (export (%make-xml-document ::xml-document)
-	   (dom-get-attributes::pair-nil ::obj)
+   (export (dom-get-attributes::pair-nil ::obj)
 	   (dom-owner-document node)
 	   (dom-child-nodes::pair-nil ::obj)
 	   (dom-first-child ::obj)
@@ -51,12 +50,7 @@
 	   (dom-node-document-fragment? node)
 	   (dom-node-attr? node)
 	   (dom-inner-html-set! ::xml-markup ::obj)
-	   (innerHTML-set! ::xml-markup obj))
-   
-   (export (class xml-document::xml-markup
-	      (%make-xml-document)
-	      (id read-only)
-	      (%idtable read-only (default (make-hashtable))))))
+	   (innerHTML-set! ::xml-markup obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc-update-idtable! ...                                          */
@@ -79,9 +73,9 @@
       (update-body! body)))
 
 ;*---------------------------------------------------------------------*/
-;*    %make-xml-document ...                                           */
+;*    %xml-constructor ::xml-document ...                              */
 ;*---------------------------------------------------------------------*/
-(define (%make-xml-document doc::xml-document)
+(define-method (%xml-constructor doc::xml-document)
    (with-access::xml-document doc (body %idtable)
       (doc-update-idtable! doc body)
       doc))
@@ -114,6 +108,12 @@
 (define-method (dom-get-element-by-id obj::xml-delay id)
    (when (string=? id (xml-delay-id obj))
       obj))
+
+;*---------------------------------------------------------------------*/
+;*    dom-get-element-by-id ::xml-markup ...                           */
+;*---------------------------------------------------------------------*/
+(define-method (dom-get-element-by-id obj::xml-markup id)
+   (dom-get-element-by-id* (xml-markup-body obj) id))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-element-by-id ::xml-element ...                          */

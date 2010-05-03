@@ -29,7 +29,7 @@
         (<TH> "Windows"))
      (<TR> 
          (<TD> (<A> :href *stable-tar-url* *stable-tar-gz*))
-         (<TD> (<A> :href *maemo-freemantle-url* "Fremantle"))
+         (<TD> (<A> :href *maemo-fremantle-free-url* "Fremantle"))
          (<TD> (<A> :href *stable-dmg-url* (basename *stable-dmg*)))
          (<TD> (<A> :href *stable-jar-url* (basename *stable-jar*))))))
 
@@ -79,7 +79,7 @@ used without downloading and installing the source code manually:
   * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "maemo-16x16.png")) [[http://maemo.org|Maemo]]
 
 ,(<DIV> :class "os-download" :align 'center
-  (<DIV> :class "download-header" "Maemo")
+  (<DIV> :class "download-header" "Stable Maemo")
   (<TABLE> :class "os-download os-download-maemo"
      (<COLGROUP> 
         (<COL>)
@@ -96,8 +96,29 @@ used without downloading and installing the source code manually:
              :src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")))
         (<TH> "Maemo5"))
      (<TR> 
-         (<TD> (<A> :href *maemo-chinook-url* "Chinook"))
-         (<TD> (<A> :href *maemo-freemantle-url* "Freemantle")))))
+         (<TD> (<A> :href *maemo-chinook-free-url* "Chinook"))
+         (<TD> (<A> :href *maemo-fremantle-free-url* "Fremantle")))))
+
+,(<DIV> :class "os-download" :align 'center
+  (<DIV> :class "download-header" "Unstable Maemo")
+  (<TABLE> :class "os-download os-download-unstable"
+     (<COLGROUP> 
+        (<COL>)
+        (<COL> :width "50%")
+        (<COL>)
+        (<COL> :width "50%"))
+     (<TR> 
+        (<TD> :rowspan 2 :class "type"
+           (<IMG> :inline #t
+             :src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")))
+        (<TH> "OS2008")
+        (<TD> :rowspan 2 :class "type"
+           (<IMG> :inline #t
+             :src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")))
+        (<TH> "Maemo5"))
+     (<TR> 
+         (<TD> (<A> :href *maemo-chinook-unstable-url* "Chinook"))
+         (<TD> (<A> :href *maemo-fremantle-unstable-url* "Fremantle")))))
 
 
 == Getting Bigloo ==

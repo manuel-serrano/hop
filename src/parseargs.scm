@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Feb 18 14:30:56 2010 (serrano)                */
+;*    Last change :  Thu Apr 22 13:29:57 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -40,7 +40,8 @@
 	 (log-file #f)
 	 (be #f)
 	 (files '())
-	 (killp #f))
+	 (killp #f)
+	 (clear-cache #f))
       
       (bigloo-debug-set! 0)
       
@@ -74,6 +75,8 @@
 	  (hop-upload-directory-set! (make-file-name dir "upload")))
 	 (("--cache-dir" ?dir (help "Set cache directory"))
 	  (hop-cache-directory-set! dir))
+	 (("--clear-cache" (help "Clear cache"))
+	  (set! clear-cache #t))
 	 (("--script-file" ?file (help "A file loaded before the main loop"))
 	  (hop-script-file-set! file))
 	 (("--enable-autoload" (help "Enable autoload (default)"))
@@ -215,6 +218,10 @@
 	 (load-mime-types (if (string? mime-file)
 			      mime-file
 			      (make-file-name (getenv "HOME") ".mime.types"))))
+
+      ;; clear cache
+      (when (and clear-cache (directory? (hop-cache-directory)))
+	 (delete-path (hop-cache-directory)))
       
       ;; weblets path
       (hop-autoload-directory-add!
@@ -225,15 +232,21 @@
       (init-hopscheme! :reader (lambda (p v) (hop-read p))
 	 :share (hop-share-directory)
 	 :verbose (hop-verbose)
-	 :eval (lambda (e) (hop->json (eval e) #f #f))
-	 :hop-compile (lambda (e p) (display (hop->json e #f #f) p))
+	 :eval (lambda (e) (call-with-output-string
+			    (lambda (op)
+			       (obj->javascript (eval e) op #f))))
+	 :hop-compile (lambda (e p)
+			 (obj->javascript e p #f))
 	 :features `(hop
+		     hop-client
 		     ,(string->symbol (format "hop-~a" (hop-branch)))
 		     ,(string->symbol (format "hop-~a" (hop-version))))
 	 :expanders `(labels match-case
-		      (define-markup . ,(eval 'hop-client-define-markup))))
+		      (define-markup . ,(eval 'hop-client-define-markup))
+		      (define-xml-compound . ,(eval 'hop-client-define-xml-compound))))
       (init-clientc-compiler! :modulec hopscheme-compile-module
 	 :expressionc hopscheme-compile-expression
+	 :valuec hopscheme-compile-value
 	 :macroe hopscheme-create-empty-macro-environment
 	 :filec hopscheme-compile-file
 	 :sexp->precompiled sexp->hopscheme

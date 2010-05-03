@@ -1,13 +1,20 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/wiki/wiki.scm             */
+;*    serrano/prgm/project/hop/2.1.x/weblets/wiki/wiki.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 10 09:57:17 2009                          */
-;*    Last change :  Wed Dec  9 16:00:21 2009 (serrano)                */
-;*    Copyright   :  2009 Manuel Serrano                               */
+;*    Last change :  Mon Mar 22 10:13:36 2010 (serrano)                */
+;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki runtime system                                              */
 ;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module wiki_client
+   (export (wiki-hide-toc-popup obj)
+	   (wiki-show-toc-popup obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-key-modifier ...                                            */
@@ -37,12 +44,12 @@
 	  (stop-event-propagation event #f))
 	 ((35)
 	  ;; end
-	  (window.scrollTo 0 (hop_element_y (dom-get-element-by-id "wiki-foot")))
+	  (window.scrollTo 0 (node-bounding-box-y (dom-get-element-by-id "wiki-foot")))
 	  (stop-event-propagation event #f))
 	 ((82)
 	  ;; r
 	  (when (eq? wiki-key-modifier 'alt)
-	     (location.reload)
+	     (document.location.reload)
 	     (stop-event-propagation event #f)))
 	 ((83)
 	  ;; s

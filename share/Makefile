@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/share/Makefile                    */
+#*    serrano/prgm/project/hop/2.1.x/share/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Feb  5 10:56:25 2010 (serrano)                */
+#*    Last change :  Wed Apr 14 10:53:33 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -47,7 +47,8 @@ EXTRA		= hop-error.hss hop.hss \
 	 	  hop-notepad.hss hop-notepad.js \
                   hop-tree.js hop-tree.css \
 		  hop-foldlist.js hop-foldlist.css \
-                  hop-window.scm hop-window.js hop-window.hss hop-window-red.hss\
+                  hop-window.scm hop-window.js \
+                  hop-window.hss hop-window-red.hss\
                   hop-editor.js hop-editor.css \
                   hop-file.js hop-file.scm hop-file.hss \
                   hop-fileselect.js hop-fileselect.css \
@@ -63,7 +64,9 @@ EXTRA		= hop-error.hss hop.hss \
                   hop-lframe.hss \
                   hop-canvas.scm hop-exception.scm hop-orientation.scm \
                   hop-spage.scm hop-spage.hss \
-                  hop-font.scm
+                  hop-gauge.scm hop-gauge.hss \
+                  hop-font.scm \
+                  hop-password.scm
 
 #*---------------------------------------------------------------------*/
 #*    AUDIO and ICONS                                                  */
@@ -106,7 +109,7 @@ ICONS		= important.png shadow-se.png shadow-sw.png \
 		  dashboard.png notfound.png source.png \
 		  resize-grip.png stop.png \
 		  error.png client-error.png shadow-e.png timeout.png \
-		  error2.png shadow-ne.png warning.png \
+		  error2.png shadow-ne.png warning.png privacy.png \
 		  hop-16x16.png hop-48x48.png hop-32x32.png hop-128x128.png \
                   hop-api-48x48.png hop-api-16x16.png \
                   hop.png hop.svg \
@@ -142,7 +145,14 @@ POPULATION	= $(RTS) $(EXTRA) \
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-build: .afile hop.js $(FLASHSRC:%.as=flash/%.swf) $(BACKEND)
+build: .afile hop.js $(FLASHSRC:%.as=flash/%.swf) $(BACKEND) hop-password.scm
+
+#*---------------------------------------------------------------------*/
+#*    hop-password.scm ...                                             */
+#*---------------------------------------------------------------------*/
+hop-password.scm: ../runtime/password.scm
+	@ echo ";; Generated file, don't edit" > $@
+	@ cat $^ | sed -e "s|;; @client ||" -e "s|#;@server|;;|" >> $@
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
@@ -211,13 +221,14 @@ uninstall:
 #*---------------------------------------------------------------------*/
 hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js hop-exception.js $(RTS) 
 	echo "/* Automatically generated file (don't edit) */" > $@
+	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	echo "/* " >> $@
 	date >> $@
 	echo " */" >> $@
 	if [ "$(DEBUG) " != "yes " ]; then \
-	  cat $^ | sed -e "s%/[*]\([^*]\|[*][^/]\)*[*]/%%g" \
-                       -e "/^[ \t]*$$/D" \
-                       -e "s|//[^\"]*$$||g" \
+	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+                 | sed -e "s|//[^\"]*$$||g" \
+                 | sed -e "/^[ \t]*$$/D" \
                  >> $@; \
         else \
 	  cat $^ >> $@; \

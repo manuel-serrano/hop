@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Feb 19 11:26:04 2010 (serrano)                */
+;*    Last change :  Sat Apr 24 07:28:19 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -71,6 +71,10 @@
 
 	    (class xml-html::xml-markup)
 
+	    (class xml-document::xml-markup
+	       (id read-only)
+	       (%idtable read-only (default (make-hashtable))))
+
 	    (class xml-element::xml-markup
 	       (id read-only (default #unspecified))
 	       (parent (default #unspecified)))
@@ -97,7 +101,7 @@
 
 	    (xml-markup-is? ::obj ::symbol)
 
-	    (xml-make-id::bstring #!optional id (markup 'HOP))
+	    (xml-make-id::bstring #!optional id tag)
 
 	    (xml-event-handler-attribute?::bool ::keyword)
 	    
@@ -128,95 +132,6 @@
 
 	    (xml-tilde->sexp ::xml-tilde)
 	    (sexp->xml-tilde::xml-tilde expr)
-
-	    (<A> . ::obj)
-	    (<ABBR> . ::obj)
-	    (<ACRONYM> . ::obj)
-	    (<ADDRESS> . ::obj)
-	    (<APPLET> . ::obj)
-	    (<AREA> . ::obj)
-	    (<B> . ::obj)
-	    (<BASE> . ::obj)
-	    (<BASEFONT> . ::obj)
-	    (<BDO> . ::obj)
-	    (<BIG> . ::obj)
-	    (<BLOCKQUOTE> . ::obj)
-	    (<BODY> . ::obj)
-	    (<BR> . ::obj)
-	    (<BUTTON> . ::obj)
-	    (<CANVAS> . ::obj)
-	    (<CAPTION> . ::obj)
-	    (<CENTER> . ::obj)
-	    (<CITE> . ::obj)
-	    (<CODE> . ::obj)
-	    (<COL> . ::obj)
-	    (<COLGROUP> . ::obj)
-	    (<DD> . ::obj)
-	    (<DEL> . ::obj)
-	    (<DFN> . ::obj)
-	    (<DIR> . ::obj)
- 	    (<DIV> . ::obj)
-	    (<DL> . ::obj)
-	    (<DT> . ::obj)
-	    (<EM> . ::obj)
-	    (<EMBED> . ::obj)
-	    (<FIELDSET> . ::obj)
-	    (<FONT> . ::obj)
-	    (<FORM> . ::obj)
-	    (<FRAME> . ::obj)
-	    (<FRAMESET> . ::obj)
-	    (<H1> . ::obj)
-	    (<H2> . ::obj)
-	    (<H3> . ::obj)
-	    (<H4> . ::obj)
-	    (<H5> . ::obj)
-	    (<H6> . ::obj)
-	    (<HR> . ::obj)
-	    (<I> . ::obj)
-	    (<IFRAME> . ::obj)
-	    (<INS> . ::obj)
-	    (<ISINDEX> . ::obj)
-	    (<KBD> . ::obj)
-	    (<LABEL> . ::obj)
-	    (<LEGEND> . ::obj)
-	    (<LI> . ::obj)
-	    (<MAP> . ::obj)
-	    (<MARQUEE> . ::obj)
-	    (<MENU> . ::obj)
-	    (<META> . ::obj)
-	    (<NOFRAMES> . ::obj)
-	    (<NOSCRIPT> . ::obj)
-	    (<OBJECT> . ::obj)
-	    (<OL> . ::obj)
-	    (<OPTGROUP> . ::obj)
-	    (<OPTION> . ::obj)
-	    (<P> . ::obj)
-	    (<PARAM> . ::obj)
-	    (<PRE> . ::obj)
-	    (<Q> . ::obj)
-	    (<S> . ::obj)
-	    (<SAMP> . ::obj)
-	    (<SELECT> . ::obj)
-	    (<SMALL> . ::obj)
-	    (<SOURCE> . ::obj)
-	    (<SPAN> . ::obj)
-	    (<STRIKE> . ::obj)
-	    (<STRONG> . ::obj)
-	    (<SUB> . ::obj)
-	    (<SUP> . ::obj)
-	    (<TABLE> . ::obj)
-	    (<TBODY> . ::obj)
-	    (<TD> . ::obj)
-	    (<TEXTAREA> . ::obj)
-	    (<TFOOT> . ::obj)
-	    (<TH> . ::obj)
-	    (<THEAD> . ::obj)
-	    (<TITLE> . ::obj)
-	    (<TR> . ::obj)
-	    (<TT> . ::obj)
-	    (<U> . ::obj)
-	    (<UL> . ::obj)
-	    (<VAR> . ::obj)
 
 	    (<TILDE> ::obj #!key src loc)
 	    (<DELAY> . ::obj)))
@@ -388,6 +303,10 @@
 ;*    %make-xml-element ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (%make-xml-element el args)
+   
+   (define (symbol-upcase s)
+      (string->symbol (string-upcase! (symbol->string s))))
+   
    (let loop ((a args)
 	      (attr '())
 	      (body '())
@@ -395,14 +314,14 @@
       (cond
 	 ((null? a)
 	  (instantiate::xml-element
-	     (markup (string->symbol (string-downcase (symbol->string el))))
+	     (markup el)
 	     (attributes (reverse! attr))
-	     (id (xml-make-id id el))
+	     (id (xml-make-id id))
 	     (body (reverse! body))))
 	 ((keyword? (car a))
 	  (cond
 	     ((not (pair? (cdr a)))
-	      (error (symbol-append '< el '>)
+	      (error (symbol-append '< (symbol-upcase el) '>)
 		     "Illegal attribute"
 		     (car a)))
 	     ((eq? (car a) :id)
@@ -415,9 +334,9 @@
 	  (loop (cdr a) attr body id))
 	 ((pair? (car a))
 	  (if (not (and (or (null? (cdr a)) (pair? (cdr a))) (list? (car a))))
-	      (error (symbol-append '< el '>)
+	      (error (symbol-append '< (symbol-upcase el) '>)
 		     "Illegal arguments"
-		     `(,(symbol-append '< el '>) ,@args))
+		     `(,(symbol-append '< (symbol-upcase el) '>) ,@args))
 	      (loop (append (car a) (cdr a)) attr body id)))
 	 (else
 	  (loop (cdr a) attr (cons (car a) body) id)))))
@@ -429,18 +348,38 @@
    (and (xml-markup? o) (eq? (xml-markup-markup o) markup)))
 
 ;*---------------------------------------------------------------------*/
+;*    make-id-lock ...                                                 */
+;*---------------------------------------------------------------------*/
+(define make-id-lock
+   (make-mutex))
+
+;*---------------------------------------------------------------------*/
+;*    id-count ...                                                     */
+;*---------------------------------------------------------------------*/
+(define id-count
+   0)
+
+;*---------------------------------------------------------------------*/
 ;*    xml-make-id ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (xml-make-id #!optional id (markup 'HOP))
-   (cond
-      ((string? id)
-       id)
-      ((=fx (bigloo-debug) 0)
-       (symbol->string (gensym)))
-      ((symbol? id)
-       (symbol->string (gensym id)))
-      (else
-       (symbol->string (gensym markup)))))
+(define (xml-make-id #!optional id tag)
+   (if (string? id)
+       id
+       ;; CARE, MS 24 apr 2010 !!!
+       ;; I don't think we need a lock here because
+       ;; I don't think it's important to have a really unique ID generator.
+       ;; I think we are only interested in uniqueness inside a single
+       ;; thread. If two threads call xml-make-id in parallel it's unlikely
+       ;; that they are constructing a shared tree.
+       (let ((n (fixnum->string id-count)))
+	  (set! id-count (+fx 1 id-count))
+	  (cond
+	     ((symbol? id)
+	      (string-append (symbol->string! id) n))
+	     ((symbol? tag)
+	      (string-append (symbol->string! tag) n))
+	     (else
+	      (string-append "_" n))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-event-handler-attribute? ...                                 */
@@ -718,7 +657,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (xml-write-attribute attr::obj id p backend)
    ;; boolean false attribute has no value, xml-tilde are initialized
-   (when (and attr)
+   (when attr
       (display (keyword->string! id) p)
       ;; boolean true attribute has no value
       (display "='" p)
@@ -729,9 +668,21 @@
 	  (if (hop-service? (procedure-attr attr))
 	      (display (hop-service-path (procedure-attr attr)) p)
 	      (error 'xml "Illegal procedure argument in XML attribute" id)))
+	 ((and (>fx (hop-security) 1) (string? attr) (attr-event-handler? id))
+	  (raise
+	   (instantiate::&hop-injection-error
+	      (proc id)
+	      (msg "Illegal handler attribute value type")
+	      (obj attr))))
 	 (else
 	  (display (xml-attribute-encode attr) p)))
       (display "'" p)))
+
+;*---------------------------------------------------------------------*/
+;*    attr-event-handler? ...                                          */
+;*---------------------------------------------------------------------*/
+(define (attr-event-handler? id)
+   (string-prefix-ci? "on" (keyword->string! id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::xml-tilde ...                              */
@@ -855,7 +806,7 @@
 			(let ((constr (string->symbol
 				       (string-append
 					"<"
-					(string-upcase (symbol->string markup))
+					(string-upcase! (symbol->string markup))
 					">"))))
 			   (eval-markup constr attributes body)))))))
 
@@ -872,7 +823,7 @@
 			(let ((constr (string->symbol
 				       (string-append
 					"<"
-					(string-upcase (symbol->string markup))
+					(string-upcase! (symbol->string markup))
 					">"))))
 			   (eval-markup constr attributes body)))))))
 
@@ -923,7 +874,9 @@
 (define (xml-tilde->sexp obj)
    
    (define (wrapper o)
-      `(pragma ,(hop->json o #f #f)))
+      `(pragma ,(call-with-output-string
+		 (lambda (op)
+		    (obj->javascript o op #f)))))
    
    (with-access::xml-tilde obj (body)
       ((clientc-precompiled->sexp (hop-clientc)) body wrapper)))
@@ -934,135 +887,6 @@
 (define (sexp->xml-tilde obj)
    (let ((c ((clientc-sexp->precompiled (hop-clientc)) obj)))
       (<TILDE> c :src obj)))
-
-;*---------------------------------------------------------------------*/
-;*    HTML 4.01 elements ...                                           */
-;*---------------------------------------------------------------------*/
-(define-xml-element <A>)
-(define-xml-element <ABBR>)
-(define-xml-element <ACRONYM>)
-(define-xml-element <ADDRESS>)
-(define-xml-element <APPLET>)
-(define-xml xml-empty-element #t <AREA>)
-(define-xml-element <B>)
-(define-xml xml-empty-element #t <BASE>)
-(define-xml xml-empty-element #t <BASEFONT>)
-(define-xml-element <BDO>)
-(define-xml-element <BIG>)
-(define-xml-element <BLOCKQUOTE>)
-(define-xml-element <BODY>)
-(define-xml xml-empty-element #t <BR>)
-(define-xml-element <BUTTON>)
-(define-xml-element <CANVAS>)
-(define-xml-element <CAPTION>)
-(define-xml-element <CENTER>)
-(define-xml-element <CITE>)
-(define-xml-element <CODE>)
-(define-xml xml-empty-element #t <COL>)
-(define-xml-element <COLGROUP>)
-(define-xml-element <DD>)
-(define-xml-element <DEL>)
-(define-xml-element <DFN>)
-(define-xml-element <DIR>)
-(define-xml-element <DIV>)
-(define-xml-element <DL>)
-(define-xml-element <DT>)
-(define-xml-element <EM>)
-(define-xml-element <EMBED>)
-(define-xml-element <FIELDSET>)
-(define-xml-element <FONT>)
-(define-xml xml-empty-element #t <FRAME>)
-(define-xml-element <FRAMESET>)
-(define-xml-element <H1>)
-(define-xml-element <H2>)
-(define-xml-element <H3>)
-(define-xml-element <H4>)
-(define-xml-element <H5>)
-(define-xml-element <H6>)
-(define-xml xml-empty-element #t <HR>)
-(define-xml-element <I>)
-(define-xml-element <IFRAME>)
-(define-xml-element <INS>)
-(define-xml-element <ISINDEX>)
-(define-xml-element <KBD>)
-(define-xml-element <LABEL>)
-(define-xml-element <LEGEND>)
-(define-xml-element <LI>)
-(define-xml-element <MAP>)
-(define-xml-element <MARQUEE>)
-(define-xml-element <MENU>)
-(define-xml xml-meta #f <META>)
-(define-xml-element <NOFRAMES>)
-(define-xml-element <NOSCRIPT>)
-(define-xml-element <OBJECT>)
-(define-xml-element <OL>)
-(define-xml-element <OPTGROUP>)
-(define-xml-element <OPTION>)
-(define-xml-element <P>)
-(define-xml xml-empty-element #t <PARAM>)
-(define-xml-element <PRE>)
-(define-xml-element <Q>)
-(define-xml-element <S>)
-(define-xml-element <SAMP>)
-(define-xml-element <SELECT>)
-(define-xml-element <SMALL>)
-(define-xml-element <SOURCE>)
-(define-xml-element <SPAN>)
-(define-xml-element <STRIKE>)
-(define-xml-element <STRONG>)
-(define-xml-element <SUB>)
-(define-xml-element <SUP>)
-(define-xml-element <TABLE>)
-(define-xml-element <TBODY>)
-(define-xml-element <TD>)
-(define-xml-element <TEXTAREA>)
-(define-xml-element <TFOOT>)
-(define-xml-element <TH>)
-(define-xml-element <THEAD>)
-(define-xml-markup <TITLE>)
-(define-xml-element <TR>)
-(define-xml-element <TT>)
-(define-xml-element <U>)
-(define-xml-element <UL>)
-(define-xml-element <VAR>)
-
-;*---------------------------------------------------------------------*/
-;*    <FORM> ...                                                       */
-;*---------------------------------------------------------------------*/
-(define-markup <FORM> ((id #unspecified string)
-		       (onsubmit #f)
-		       (onreset #f)
-		       (action #f)
-		       (attrs)
-		       body)
-   (let* ((attrs (cond
-		    ((xml-tilde? onsubmit)
-		     `(:onsubmit ,(xml-tilde->return onsubmit) ,@attrs))
-		    (onsubmit
-		     `(:onsubmit ,onsubmit ,@attrs))
-		    (else
-		     attrs)))
-	  (attrs (cond
-		    ((xml-tilde? onreset)
-		     `(:onreset ,(xml-tilde->return onreset) ,@attrs))
-		    (onreset
-		     `(:onreset ,onreset ,@attrs))
-		    (else
-		     attrs)))
-	  (attrs (cond
-		    ((xml-tilde? action)
-		     `(:action ,(format "javascript: ~a"
-					(xml-tilde->statement action))
-			       ,@attrs))
-		    (action
-		     `(:action ,action ,@attrs))
-		    (else
-		     attrs))))
-      (instantiate::xml-element
-	 (markup 'form)
-	 (id (xml-make-id id 'FORM))
-	 (attributes attrs)
-	 (body body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TILDE> ...                                                      */
@@ -1082,7 +906,7 @@
 	    (procedure? (car body))
 	    (correct-arity? (car body) 0))
        (instantiate::xml-delay
-	  (id (xml-make-id id 'DELAY))
+	  (id (xml-make-id id))
 	  (thunk (car body)))
        (error '<DELAY> "Illegal delay's thunk" (car body))))
 

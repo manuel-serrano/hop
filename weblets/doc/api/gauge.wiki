@@ -1,0 +1,159 @@
+<doc> Gauge widget
+
+== Description ==
+
+The tag ++<GAUGE>++ implements //gauges// which are a kind of progress
+bars. These elements can be created on server-side //and// 
+client-side.
+
+
+== Synopsis ==
+
+=== Server & client ===
+
+  (<GAUGE> arg ...)
+
+
+=== client ===
+
+  (hop-gauge-value gauge)
+  (hop-gauge-value-set! gauge val)
+  (hop-gauge-min gauge)
+  (hop-gauge-max gauge)
+  (hop-gauge-min-set! gauge val)
+  (hop-gauge-max-set! gauge val)
+  (hop-gauge-text gauge)
+  (hop-gauge-text-set! gauge val)
+
+
+=== Requirements ===
+
+Client codes using //gauge// need to load the client-side
+code ++hop-gauge++.
+
+
+  (<HEAD> :include "hop-gauge")
+
+
+== Examples ==
+
+<example><GAUGE></example>
+
+== Server & Client Definitions ==
+<server>
+<client>
+
+=== ++<GAUGE>++ ===
+<markup> <GAUGE>
+
+<arguments>
+^  attributes  ^   type      ^   default    ^  short description         ^
+| :id          |  string     |  //random//  | element identifier.        |
+| :min         |  integer    |  0           | the range lowest bound.    |
+| :max         |  integer    |  99          | the range lowest bound.    |
+| :format      |  string     |  ~a          | the text template.         |
+| :value       |  integer    |  0           | the initial value.         |
+| :onchange    |  procedure  |  _           | a procedure to invoke on value changes.         |
+</arguments>
+
+This function creates a //gauge//.
+
+~~ The argument :onchange is a script that is invoked each time the
+gauge is changed. That is calling the function
+++gauge-value-set!++ **invokes automatically** :onchange. In
+the scope of that script, the variable ++this++ is bound to the
+//gauge// whose value can be retrieve by the means of the function
+++gauge-value++.
+
+</markup>
+
+</client>
+</server>
+
+== Client Definitions ==
+<client>
+
+=== ++(gauge-value gauge)++ ===
+=== ++(gauge-value-set! gauge val)++ ===
+<procedure> gauge-value
+<procedure> gauge-value-set!
+
+<arguments>
+^  arguments  ^   type                  ^  short description     ^
+| gauge       |  gauge or string        | the gauge button.       |
+| val         |  integer                | the new gauge value.  |
+</arguments>
+
+These functions get and set the value of a //gauge//.
+
+Example:
+
+  (let ((but (<GAUGE> :max 10 :min -10 
+                 :onchange ~(alert (gauge-value this)))))
+    (<BUTTON> :onclick ~(gauge-value-set! $but 0) "Reset"))
+
+
+</procedure>
+</procedure>
+
+=== ++(gauge-min gauge)++ ===
+=== ++(gauge-max gauge)++ ===
+=== ++(gauge-min-set! gauge val)++ ===
+=== ++(gauge-max-set! gauge val)++ ===
+<procedure> gauge-min
+<procedure> gauge-max
+<procedure> gauge-min-set!
+<procedure> gauge-max-set!
+
+<arguments>
+^  arguments  ^   type                  ^  short description     ^
+| gauge       |  gauge or string        | the gauge button.       |
+| val         |  integer                | the new gauge min/max value.  |
+</arguments>
+
+These functions get and set the min/max value of a //gauge//.
+</procedure>
+</procedure>
+</procedure>
+</procedure>
+
+=== ++(gauge-text gauge)++ ===
+=== ++(gauge-text-set! gauge val)++ ===
+<procedure> gauge-text
+<procedure> gauge-text-set!
+
+<arguments>
+^  arguments  ^   type                  ^  short description      ^
+| gauge       |  gauge or string        | the gauge button.       |
+| val         |  string                 | the new gauge text.     |
+</arguments>
+
+~~ These functions get and set the text of a //gauge//. When the value
+is changed. The text is changed automatically by invoking the ++format++
+function with the value of the :format attribute and the new //gauge//
+value. This default behavior can be disabled by calling 
+++stop-event-propagation++ in the :onchange listener of the //gauge//.
+
+
+</procedure>
+</procedure>
+
+</client>
+
+== Style ==
+<style>
+
+=== ++hop-gauge.hss++ ===
+
+~~ The file ++hop-gauge.hss++ contains the default graphical configuration.
+It is defined as:
+
+,(<P>)
+<share-public>hop-gauge.hss</share-public>
+
+</style>
+
+== See also ==
+<see-also><GAUGE></see-also>
+
+</doc>

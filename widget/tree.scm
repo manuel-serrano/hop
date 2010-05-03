@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/widget/tree.scm                   */
+;*    serrano/prgm/project/hop/2.1.x/widget/tree.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue Jul 21 14:29:09 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Tue Apr 20 05:51:53 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
 ;*=====================================================================*/
@@ -171,135 +171,128 @@
 				   onopen onclose
 				   value history
 				   inline iconopen iconclose icondir)
-      (let* ((title (let ((ps (open-output-string)))
-		       (xml-write-body (xml-element-body head) ps be)
-		       (close-output-port ps)))
-	     (proc (cond
-		      ((null? body)
-		       "false")
-		      ((delayed-tree-body? body)
-		       (hop->json
-			(procedure->service
-			 (lambda ()
-			    (let* ((p (open-output-string))
-				   (v (html-write-tree-body (+ 1 level)
-							    (car body)
-							    id p
-							    be))
-				   (vp (close-output-port p)))
-			       (or v vp))))
-			#f #f))
+      ;; set the parent relationship with the body
+      (when (and (pair? body) (html-trbody? (car body)))
+	 (html-trbody-parent-set! (car body) obj))
+      ;; the constructor call
+      (display "hop_make_tree(" p)
+      ;; parent 
+      (display "document.getElementById('" p)
+      (display (string-escape parent #\') p)
+      (display "'), " p)
+      ;; the ident of the tree
+      (display "'" p)
+      (display (string-escape id #\') p)
+      (display "', " p)
+      ;; the visibility
+      (display (if visible "true," "false,") p)
+      ;; the nesting level of the tree
+      (display level p)
+      (display ", " p)
+      ;; service to get the body of the tree
+      (cond
+	 ((null? body)
+	  (display "false" p))
+	 ((delayed-tree-body? body)
+	  (obj->javascript
+	   (procedure->service
+	    (lambda ()
+	       (let* ((p (open-output-string))
+		      (v (html-write-tree-body (+ 1 level)
+					       (car body)
+					       id p
+					       be))
+		      (vp (close-output-port p)))
+		  (or v vp))))
+	   p
+	   #f))
+	 (else
+	  (display "function() {" p)
+	  (html-write-tree-body (+ 1 level) (car body) id p be)
+	  (display "}" p)))
+      (display ", " p)
+      ;; the title
+      (let ((title (let ((ps (open-output-string)))
+		      (xml-write-body (xml-element-body head) ps be)
+		      (close-output-port ps))))
+	 (obj->javascript title p #t))
+      (display ", " p)
+      ;; is the tree open
+      (if (xml-tilde? open)
+	  (begin
+	     (display (xml-tilde->expression open) p)
+	     (display ", " p))
+	  (display (if open "true, " "false, ") p))
+      ;; is the tree cached
+      (display (if (delayed-tree-body? body) "true, " "false, ") p)
+      ;; multi-selection
+      (display (if multiselect "true, " "false, ") p)
+      ;; onselect/onunselect event handlers
+      (display (obj->js-tree-thunk onselect) p)
+      (display ", " p)
+      (display (obj->js-tree-thunk onunselect) p)
+      (display ", " p)
+      ;; onopen/onclose event handlers
+      (display (obj->js-tree-thunk onopen) p)
+      (display ", " p)
+      (display (obj->js-tree-thunk onclose) p)
+      (display ", " p)
+      ;; the value associated with the tree
+      (if (string? value)
+	  (begin
+	     (display "'" p)
+	     (display (string-escape value #\') p)
+	     (display "', " p))
+	  (display "''," p))
+      ;; history
+      (display (if history "true," "false,") p)
+      ;; the icons
+      (let ((iopen (cond
+		      ((not iconopen)
+		       #f)
+		      ((>fx level 0)
+		       (tree-icon iconopen inline "folder-open.png"))
+		      (inline
+		       (if (string? iconopen)
+			   (img-base64-encode iconopen)
+			   0))
 		      (else
-		       (with-output-to-string
-			  (lambda ()
-			     (display "function() {")
-			     (if 
-			      "nop"
-			      (html-write-tree-body (+ 1 level) (car body)
-						    id (current-output-port)
-						    be))
-			     (display "}")))))))
-	 ;; set the parent relationship with the body
-	 (when (and (pair? body) (html-trbody? (car body)))
-	    (html-trbody-parent-set! (car body) obj))
-	 ;; the constructor call
-	 (display "hop_make_tree(" p)
-	 ;; parent 
-	 (display "document.getElementById('" p)
-	 (display (string-escape parent #\') p)
-	 (display "'), " p)
-	 ;; the ident of the tree
-	 (display "'" p)
-	 (display (string-escape id #\') p)
-	 (display "', " p)
-	 ;; the visibility
-	 (display (if visible "true," "false,") p)
-	 ;; the nesting level of the tree
-	 (display level p)
-	 (display ", " p)
-	 ;; service to get the body of the tree
-	 (display proc p)
-	 (display ", " p)
-	 ;; the title
-	 (display "\"" p)
-	 (display (json-string-encode title #f) p)
-	 (display "\", " p)
-	 ;; is the tree open
-	 (if (xml-tilde? open)
-	     (begin
-		(display (xml-tilde->expression open) p)
-		(display ", " p))
-	     (display (if open "true, " "false, ") p))
-	 ;; is the tree cached
-	 (display (if (delayed-tree-body? body) "true, " "false, ") p)
-	 ;; multi-selection
-	 (display (if multiselect "true, " "false, ") p)
-	 ;; onselect/onunselect event handlers
-	 (display (obj->js-tree-thunk onselect) p)
-	 (display ", " p)
-	 (display (obj->js-tree-thunk onunselect) p)
-	 (display ", " p)
-	 ;; onopen/onclose event handlers
-	 (display (obj->js-tree-thunk onopen) p)
-	 (display ", " p)
-	 (display (obj->js-tree-thunk onclose) p)
-	 (display ", " p)
-	 ;; the value associated with the tree
-	 (if (string? value)
-	     (begin
-		(display "'" p)
-		(display (string-escape value #\') p)
-		(display "', " p))
-	     (display "''," p))
-	 ;; history
-	 (display (if history "true," "false,") p)
-	 ;; the icons
-	 (let ((iopen (cond
-			 ((not iconopen)
-			  #f)
-			 ((>fx level 0)
-			  (tree-icon iconopen inline "folder-open.png"))
-			 (inline
-			  (if (string? iconopen)
-			      (img-base64-encode iconopen)
-			      0))
-			 (else
-			  (tree-icon iconopen
-				     inline
-				     (make-file-name (hop-icons-directory)
-						     "device.png")))))
-	       (iclose (cond
-			  ((not iconclose)
-			   #f)
-			  ((>fx level 0)
-			   (tree-icon iconclose inline "folder-close.png"))
-			  (inline
-			   (if (string? iconclose)
-			       (img-base64-encode iconclose)
-			       0))
-			  (else
-			   (tree-icon iconclose
-				      inline
-				      (make-file-name (hop-icons-directory)
-						      "device.png"))))))
-	    (xml-write-expression iopen p)
-	    (display "," p)
-	    (xml-write-expression iconopen p)
-	    (display "," p)
-	    (xml-write-expression iclose p)
-	    (display "," p)
-	    (xml-write-expression iconclose p))
-	 ;; icon dir
-	 (cond
-	    ((string? icondir)
-	     (display ",'" p)
-	     (display (string-escape icondir #\') p)
-	     (display "' " p))
-	    ((not inline)
-	     (display ",'" p)
-	     (display (string-escape (hop-icons-directory) #\') p)
-	     (display "' " p)))
-	 (display ")" p))))
+		       (tree-icon iconopen
+				  inline
+				  (make-file-name (hop-icons-directory)
+						  "device.png")))))
+	    (iclose (cond
+		       ((not iconclose)
+			#f)
+		       ((>fx level 0)
+			(tree-icon iconclose inline "folder-close.png"))
+		       (inline
+			(if (string? iconclose)
+			    (img-base64-encode iconclose)
+			    0))
+		       (else
+			(tree-icon iconclose
+				   inline
+				   (make-file-name (hop-icons-directory)
+						   "device.png"))))))
+	 (xml-write-expression iopen p)
+	 (display "," p)
+	 (xml-write-expression iconopen p)
+	 (display "," p)
+	 (xml-write-expression iclose p)
+	 (display "," p)
+	 (xml-write-expression iconclose p))
+      ;; icon dir
+      (cond
+	 ((string? icondir)
+	  (display ",'" p)
+	  (display (string-escape icondir #\') p)
+	  (display "' " p))
+	 ((not inline)
+	  (display ",'" p)
+	  (display (string-escape (hop-icons-directory) #\') p)
+	  (display "' " p)))
+      (display ")" p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    delayed-tree-body? ...                                           */
@@ -364,12 +357,11 @@
       (display klass p)
       (display "\", " p)
       ;; the body
-      (display #\" p)
       (let ((sbody (let ((ps (open-output-string)))
 		      (xml-write-body (xml-element-body obj) ps be)
 		      (close-output-port ps))))
-	 (display (json-string-encode sbody #f) p))
-      (display "\", " p)
+	 (obj->javascript sbody p #t))
+      (display ", " p)
       ;; the value
       (if (string? value)
 	  (begin

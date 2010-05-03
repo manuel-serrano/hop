@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Feb 16 07:41:28 2010 (serrano)                */
+;*    Last change :  Fri Apr 23 08:18:06 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -23,11 +23,13 @@
 	    __hop_types
 	    __hop_user
 	    __hop_xml
+	    __hop_html
 	    __hop_img
 	    __hop_hop-extra
 	    __hop_service
 	    __hop_misc
-	    __hop_hop)
+	    __hop_hop
+	    __hop_security)
    
    (export  (http-request-error::%http-response ::&error)
 	    (http-error::%http-response ::obj ::http-request)
@@ -46,7 +48,8 @@
 	    (http-internal-warning e)
 	    (http-service-unavailable obj)
 	    (http-remote-error ::obj ::&exception)
-	    (http-gateway-timeout e)))
+	    (http-gateway-timeout e)
+	    (http-security-error e::&hop-security-error)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-request-error ...                                           */
@@ -118,14 +121,12 @@
 ;*    <EIMG> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<EIMG> #!key src req)
-   (let ((path (make-file-name (hop-icons-directory) src)))
+   (let* ((path (make-file-name (hop-icons-directory) src))
+	  (epath (format "http://~a:~a~a" (hostname) (hop-port) path))
+	  (js (format "this.src = ~s" epath)))
       (<IMG> :src (img-base64-encode path)
 	 :alt src
-	 :onerror (format "this.src = ~s"
-			  (format "http://~a:~a~a"
-				  (hostname)
-				  (hop-port)
-				  path)))))
+	 :onerror (secure-javascript-attr js))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ESPAN> ...                                                      */
@@ -172,11 +173,17 @@
 ;*    <ETABLE> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (<ETABLE> . args)
-   (apply <TABLE>
-	  :class "error"
-	  :style "width: 50em; border: 1px solid #bbb; background: #fff; -moz-border-radius: 0.5em; border-radius: 0.5em"
-	  (<COLGROUP> (<COL> :width "0*"))
-	  args))
+   (<TABLE> :class "error"
+      :style "width: 50em; border: 1px solid #bbb; background: #fff; -moz-border-radius: 0.5em; border-radius: 0.5em; "
+      (<COLGROUP> (<COL> :width "0*"))
+      args))
+
+;*---------------------------------------------------------------------*/
+;*    <DUMP> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<DUMP> obj)
+;*    (<PRE> :style "width: 70em; height: 50ex; overflow: auto; border: 1px dashed black; background-color: #ffe; padding: 4px; font-size: 8pt; color: #333; font-weight: 200;" obj)) */
+   (<PRE> :style "width: 100%; height: 80ex; border: 1px dashed #ccc; background-color: #ffe; overflow: auto; font-size: 8pt; color: #333; font-weight: 200;" obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    title-style ...                                                  */
@@ -380,7 +387,7 @@ a timeout which has now expired. The service is then no longer available."))
 	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
-		 (<BODY> :style "background: #ccc; padding-top: 3ex; overflow: auto"
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
 		    (<ERRTABLE>
 		       (<EIMG> :src (if (&io-timeout-error? e)
 					"timeout.png"
@@ -389,8 +396,7 @@ a timeout which has now expired. The service is then no longer available."))
 		       msg)
 		    (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px; background: white; overflow: visible"
 		       (<DIV> :style "font-weight: bold" "Server message:")
-		       (<PRE> :style "padding-left: 1em; font-size: 9pt"
-			  (html-string-encode s)))))))))
+		       (<DUMP> (html-string-encode s)))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    http-service-error ...                                           */
@@ -441,8 +447,7 @@ a timeout which has now expired. The service is then no longer available."))
 					     info))
 				   (<TR>
 				      (<ETD> :class "dump"
-					     (<PRE>
-						(html-string-encode m)))))))))))))))
+					     (<DUMP> (html-string-encode m)))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-invalidated-service-error ...                               */
@@ -576,9 +581,9 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 				   (<TR> (<ETD> :class "title" "Service Unavailable"))
 				   (<TR> (<ETD> :class "msg" ""))
 				   (<TR> (<ETD> :class "dump"
-					    (<PRE> (if (http-request? e)
-						       (http-request-path e)
-						       e)))))))))))))))
+					    (<DUMP> (if (http-request? e)
+							(http-request-path e)
+							e)))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-remote-error ...                                            */
@@ -609,7 +614,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 				   (<TR> (<ETD> :class "title" "An error occured while talking to a remote host"))
 				   (<TR> (<ETD> :class "msg" host))
 				   (<TR> (<ETD> :class "dump"
-					    (<PRE> (html-string-encode s)))))))))))))))
+					    (<DUMP> (html-string-encode s)))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-io-error ...                                                */
@@ -639,13 +644,10 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title" "IO Error"))
 				   (<TR> (<ETD> :class "msg"
-					    (list (find-runtime-type e)
-						  ": "
-						  (&error-msg e)
-						  (<DIV>
-						     (<TT> (&error-obj e))))))
+					    (list "Error type: "
+						  (find-runtime-type e))))
 				   (<TR> (<ETD> :class "dump"
-					    (<PRE> (html-string-encode s)))))))))))))))
+					    (<DUMP> (html-string-encode s)))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-gateway-timeout ...                                         */
@@ -656,4 +658,35 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (start-line "HTTP/1.0 502 Bad Gateway")
       (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Gateway Timeout ~a</body></html>" e))))
+
+;*---------------------------------------------------------------------*/
+;*    http-security-error ...                                          */
+;*---------------------------------------------------------------------*/
+(define (http-security-error e)
+   (let ((s (with-error-to-string (lambda () (error-notify e))))
+	 (req (current-request)))
+      (instantiate::http-response-hop
+	 (request req)
+	 (start-line (http-start-line req "200 ok"))
+	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	 (backend (hop-xml-backend))
+	 (content-type (xml-backend-mime-type (hop-xml-backend)))
+	 (charset (hop-charset))
+	 (xml (<HTML>
+		 (<EHEAD> (current-request))
+		 (<BODY> :style "background: #ccc; padding-top: 3ex"
+		    (<CENTER>
+		       (<ETABLE>
+			  (<TR>
+			     (<ETD> :class "logo" :valign 'top
+				(<EIMG> :src "privacy.png" :req req))
+			     (<ETD>
+				(<TABLE> :width "100%"
+				   (<TR> (<ETD> :class "title"
+					    "Security Error"))
+				   (<TR> (<ETD> :class "msg"
+					    (list "Error type: "
+						  (find-runtime-type e))))
+				   (<TR> (<ETD> :class "dump"
+					    (<DUMP> (html-string-encode s)))))))))))))))
 

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/service.scm               */
+;*    serrano/prgm/project/hop/2.1.x/runtime/service.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Dec 11 05:37:14 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Fri Apr 23 08:17:01 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
 ;*=====================================================================*/
@@ -27,6 +27,7 @@
 	    __hop_http-response
 	    __hop_cgi
 	    __hop_xml
+	    __hop_html
 	    __hop_hop-extra
 	    __hop_prefs
 	    __hop_js-lib
@@ -298,7 +299,9 @@
 ;*    %eval ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (%eval exp req cont)
-   (let ((s (hop->json (procedure->service (lambda (res) (cont res))) #f #f)))
+   (let ((s (call-with-output-string
+	     (lambda (op)
+		(obj->javascript (procedure->service (lambda (res) (cont res))) op #f)))))
       (instantiate::http-response-hop
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))

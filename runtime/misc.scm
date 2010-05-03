@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Thu Feb 18 09:07:52 2010 (serrano)                */
+;*    Last change :  Fri Apr 23 13:45:34 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -19,8 +19,7 @@
    
    (import  __hop_configure
 	    __hop_param
-	    __hop_types
-	    __hop_read)
+	    __hop_types)
    
    (extern  (macro fork::int () "fork"))
    

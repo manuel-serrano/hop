@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-dashboard.js            */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-dashboard.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Thu Feb 11 11:13:26 2010 (serrano)                */
+/*    Last change :  Wed Apr 14 14:49:39 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
@@ -359,7 +359,7 @@ function hop_dashboard_control_panel_init() {
 function hop_dashboard_init() {
    hop_dashboard_control_panel_init();
    hop_dashboard_button_init();
-   hop_load( hop_share_directory() + "/hop-window.js" );
+/*    hop_load( hop_share_directory() + "/hop-window.js" );            */
    hop_add_native_event_listener( document, "keydown",
 				  hop_dashboard_key_listener, true );
 }

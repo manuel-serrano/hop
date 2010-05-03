@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/hz.scm                    */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hz.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Mon May  4 13:46:55 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Last change :  Thu Apr 22 13:52:45 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
 ;*=====================================================================*/
@@ -14,13 +14,16 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hz
 
+   (library web)
+   
    (import  __hop_param)
 
    (export (hz-package-filename? ::bstring)
 	   (hz-package-name-parse ::bstring)
 	   (hz-package-url-parse ::bstring)
 	   (hz-package-info ::bstring)
-	   (hz-download-to-cache ::bstring)))
+	   (hz-download-to-cache ::bstring)
+	   (hz-resolve-name ::bstring ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-package-filename? ...                                         */
@@ -60,6 +63,22 @@
                  (let* ((version (substring n (+fx 1 vindex) (string-length n)))
                         (base (substring n 0 vindex)))
 		    (values base version))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-package-pattern->regexp ...                                   */
+;*---------------------------------------------------------------------*/
+(define (hz-package-pattern->regexp url)
+   (multiple-value-bind (base version)
+      (hz-package-name-parse-sans-url url)
+      (cond
+	 ((pregexp-match "([0-9]+)[.]([0-9]+)[.][*]" version)
+	  =>
+	  (lambda (m) (format "~a-~a[.]~a[.].*" base (cadr m) (caddr m))))
+	 ((pregexp-match "([0-9]+)[.][*]" version)
+	  =>
+	  (lambda (m) (format "~a-~a[.].*" base (cadr m))))
+	 (else
+	  (pregexp-quote url)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-package-name-parse ...                                        */
@@ -125,14 +144,7 @@
 					    (format "~a_~a~a"
 						    host port
 						    (prefix (basename apath))))
-			    (make-file-name dest (prefix (basename apath)))))
-		   (url (if (string? (hop-hz-local-repository))
-			    (let ((f (make-file-name (hop-hz-local-repository)
-						     (basename apath))))
-			       (if (file-exists? f)
-				   f
-				   url))
-			    url)))
+			    (make-file-name dest (prefix (basename apath))))))
 	       (unless (directory? dir)
 		  (call-with-input-file url
 		     (lambda (iport)
@@ -142,3 +154,48 @@
 			      (untar p :directory dir)
 			      (close-input-port iport))))))
 	       (make-file-name dir base))))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-resolve-name ...                                              */
+;*    -------------------------------------------------------------    */
+;*    This function accepts as parameter a HZ specification and        */
+;*    returns an actual local file name that contains that HZ          */
+;*    package. This function may download from the web the package.    */
+;*---------------------------------------------------------------------*/
+(define (hz-resolve-name url path)
+   (if (or (string-prefix? "http://" url)
+	   (string-prefix? "https://" url))
+       (hz-download-to-cache url)
+       (or ((hop-hz-resolver) url)
+	   (let ((regexp (hz-package-pattern->regexp url)))
+	      (or (find-val (lambda (p) (hz/repository regexp p)) path)
+		  url)))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/repository ...                                                */
+;*---------------------------------------------------------------------*/
+(define (hz/repository regexp dir)
+   
+   (define (find dir dir->files)
+      (let ((files (sort (dir->files dir)
+			 (lambda (f1 f2)
+			    (<fx (string-natural-compare3 f1 f2) 0)))))
+	 (find-val (lambda (f)
+		      (when (pregexp-match regexp f)
+			 (make-file-path dir f)))
+		   files)))
+   
+   (cond
+      ((not (string? dir)) #f)
+      ((directory? dir) (find dir directory->list))
+      (else (find dir webdav-directory->list))))
+
+;*---------------------------------------------------------------------*/
+;*    find-val ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (find-val pred lst)
+   (when (pair? lst)
+      (let ((v (pred (car lst))))
+	 (or v (find-val pred (cdr lst))))))
+      
+       

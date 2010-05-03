@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:04:10 2005                          */
-/*    Last change :  Tue Feb 16 09:13:10 2010 (serrano)                */
+/*    Last change :  Mon Mar  8 14:19:24 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider CSS                                                   */
@@ -19,36 +19,40 @@ $(module __hop_hop-slider-hss)
 /*---------------------------------------------------------------------*/
 $(define-hss-type slider "table[hssclass=hop-slider]"
 
-    (define-hss-property (line-left-color v)
-       (format "div.lineleft { background: ~l; }" v))
-
-    (define-hss-property (line-right-color v)
-       (format "div.lineright { background: ~l; }" v))
-
-    (define-hss-property (cursor-color v)
-       (format "td.cursor { background-color: ~l; }" v))
-
-    (define-hss-property (caption-color v)
-       (format "td.caption { color: ~l; }" v))
-
-    (define-hss-property (caption-font-size v)
-       (format "td.caption { font-size: ~l; }" v))
- 
-    (define-hss-property (caption-font-family v)
-       (format "td.caption { font-family: ~l; }" v))
-
-    (define-hss-property (caption-font-weight v)
-       (format "td.caption { font-size: ~l; }" v))
-
     (define-hss-property (line-height v)
        (format "div.line { height: ~l; }" v))
 
-    (define-hss-property (cursor-height v)
-       (list (format "height: ~l;" v)
-             (format "td.cursor { height: ~l; }" v)))
+    (define-hss-property (line-border-top v)
+       (format "div.line { border-top: ~l; }" v))
 
-    (define-hss-property (cursor-width v)
-       (list (format "td.cursor { width: ~l; }" v))))
+    (define-hss-property (line-border-right v)
+       (format "div.line { border-right: ~l; }" v))
+
+    (define-hss-property (line-border-bottom v)
+       (format "div.line { border-bottom: ~l; }" v))
+
+    (define-hss-property (line-border-left v)
+       (format "div.line { border-left: ~l; }" v))
+
+    (define-hss-property (line-left-color v)
+       (format "div.lineleft { background-color: ~l; }" v))
+
+    (define-hss-property (line-right-color v)
+       (format "div.lineright { background-color: ~l; }" v)))
+
+$(define-hss-type slidercaption "td[hssclass=hop-slider-caption]")
+
+$(define-hss-type slidercursor "td[hssclass=hop-slider-cursor]"
+    (define-hss-property (-hop-background-gradient v)
+       (format "background: ~l; background-image: ~l;" v v))
+    (define-hss-property (background v)
+       (list (format "div[hssclass=hop-slider-cursor-background] { background: ~l; }" v)))
+    (define-hss-property (background-image v)
+       (list (format "div[hssclass=hop-slider-cursor-background] { background-image: ~l; }" v)))
+    (define-hss-property (background-repeat v)
+       (list (format "div[hssclass=hop-slider-cursor-background] { background-repeat: ~l; }" v)))
+    (define-hss-property (background-position v)
+       (list (format "div[hssclass=hop-slider-cursor-background] { background-position: ~l; }" v))))
 
 /*---------------------------------------------------------------------*/
 /*    public declarations                                              */
@@ -58,13 +62,37 @@ slider {
   line-left-color: #68f;
   line-right-color: #ccc;
   line-height: 3px;
-  cursor-height: 8px;
-  cursor-width: 14px;
-  cursor-color: #ccc;
-  caption-color: black;
-  caption-font-size: 8px;
-  caption-font-family: Arial, Helvetica, sans-serif;
-  caption-font-weight: bold;
+  line-border-left: 1px solid #999;
+  line-border-right: 1px solid #999;
+  line-border-top: 1px solid #999;
+  line-border-bottom: 1px solid #555;
+}
+
+slidercaption {
+  color: black;
+  font-size: 8px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+  text-align: center;
+}
+
+slidercursor {
+  height: 7px;
+  width: 14px;
+  color: #ccc;
+  border-left: 1px solid #999;
+  border-top: 1px solid #999;
+  border-right: 1px solid #555;
+  border-bottom: 1px solid #555;
+  cursor: pointer;
+  background-image: share( "icons/hop-slider/cursor.png" );
+  background-position: center center;
+  background-repeat: repeat-y;
+  background-color: #bbb;
+}
+
+slidercursor:hover {
+  background-color: #999;
 }
 /* </public> */
 
@@ -74,63 +102,64 @@ slider {
 slider {
   border-collapse: collapse;
   border-spacing: 0;
-  border: 1px solid transparent;
-  border: 1px solid red;
   border: 0;
   user-select: none;
+  font-size: 2pt;
+  width: 100%;
+  background-color: transparent;
 } 
 
 /*---------------------------------------------------------------------*/
 /*    Line configuration                                               */
 /*---------------------------------------------------------------------*/
 slider td {
-  vertical-align: middle;
-  border: 1px solid transparent;
+  margin: 0;
+  padding: 0;
+}
+
+slider td.line {
   border: 0;
+  vertical-align: middle;
+  background-color: inherit;
 }
 
 slider div.line {
-  height: 3px;
-  border-top: 1px solid #999;
-  border-bottom: 1px solid #555;
   user-select: none;
   margin: 0;
 }
 
 slider div.lineleft {
   border-right: 0;
-  border-left: 1px solid #555;
 }
   
 slider div.lineright {
   border-left: 0;
-  border-right: 1px solid #999;
 }
 
 /*---------------------------------------------------------------------*/
 /*    Cursor configuration                                             */
 /*---------------------------------------------------------------------*/
-slider td.cursor {
+slidercursor {
   margin: 0;
   padding: 0;
-  border-left: 1px solid #999;
-  border-top: 1px solid #999;
-  border-right: 1px solid #555;
-  border-bottom: 1px solid #555;
   user-select: none;
   vertical-align: middle;
-  background-image: url( "icons/hop-slider/cursor.png" );
-  background-position: center center;
-  background-repeat: repeat-y;
-  user-select: none;
-  cursor: pointer;
+  position: relative;
+  display: inline-block;
+  border: 0;
 }
    
-slider td.cursor:hover {
-  background-color: #999;
+slidercursor div[hssclass=hop-slider-cursor-background] {
+  position: absolute;
+  top: 0; bottom: 0; right: 0; left: 0;
+  background-color: transparent;
+  display: inline-block;
 }
 
-slider td.caption {
+/*---------------------------------------------------------------------*/
+/*    caption                                                          */
+/*---------------------------------------------------------------------*/
+slider slidercaption {
   user-select: none;
-  text-align: center;
+  vertical-align: bottom;
 }

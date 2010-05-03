@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/hop-img.scm               */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop-img.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Sat Jun 20 05:28:06 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Last change :  Fri Apr 16 17:14:44 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
 ;*=====================================================================*/
@@ -29,7 +29,8 @@
 	    __hop_user
 	    __hop_cache
 	    __hop_charset
-	    __hop_priv)
+	    __hop_priv
+	    __hop_security)
 
    (export  (<IMG> . ::obj)
 	    (img-base64-encode::bstring ::bstring)))
@@ -121,6 +122,13 @@
 	 (id (xml-make-id id 'img))
 	 (attributes `(:src ,cssrc :alt ,(or alt (basename src)) ,@attributes))
 	 (body '())))
+
+   (define (empty-img)
+      (instantiate::xml-empty-element
+	 (markup 'img)
+	 (id (xml-make-id id 'img))
+	 (attributes `(if alt `(:alt ,alt ,@attributes) attributes))
+	 (body '())))
    
    (define (onerror-img attributes src)
       (let* ((val (format "if( !this.onhoperror ) { this.onhoperror = true; hop_deinline_image(this, ~s) }" src))
@@ -132,11 +140,13 @@
 		(set-car! (cdr onerror) nval)
 		attributes))
 	    ((xml-tilde? oval)
-	     (let ((nval (string-append (xml-tilde->statement oval) "\n" val)))
+	     (let ((nval (sexp->xml-tilde `(begin
+					      ,(xml-tilde->sexp oval)
+					      ,(secure-javascript-attr val)))))
 		(set-car! (cdr onerror) nval)
 		attributes))
 	    (else
-	     `(:onerror ,val ,@attributes)))))
+	     `(:onerror ,(secure-javascript-attr val) ,@attributes)))))
    
    (define (inline-img src cssrc isrc)
       (if isrc
@@ -147,7 +157,7 @@
 				,@(onerror-img attributes src)))
 	     (body '()))
 	  (plain-img src cssrc)))
-   
+
    (cond
       ((xml-tilde? src)
        (instantiate::xml-empty-element
@@ -170,5 +180,7 @@
 		     (plain-img src cssrc))))
 	     (else
 	      (plain-img src cssrc)))))
+      ((eq? src #unspecified)
+       (empty-img))
       (else
        (error '<IMG> "Illegal image src" src))))

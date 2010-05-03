@@ -8,8 +8,9 @@
 (define *hop-runtime-afile* ".afile")
 
 (define *hop-runtime-modules*
-   '(__hop __hop-canvas __hop-spage __hop-spinbutton __hop-color __hop-window
-     __hop-dashboard __hop-audio __hop-file __hop-font __hop-exception))
+   '(__hop __hop_password __hop-exception
+     __hop-canvas __hop-spage __hop-spinbutton __hop-color __hop-window
+     __hop-dashboard __hop-audio __hop-file __hop-font  __hop-gauge))
 
 (define (runtime-resolver)
    (let* ((afile (make-file-path *hop-share-directory* *hop-runtime-afile*))

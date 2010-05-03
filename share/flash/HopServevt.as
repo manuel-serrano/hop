@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/flash/HopServevt.as         */
+/*    serrano/prgm/project/hop/2.1.x/share/flash/HopServevt.as         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Sep  7 15:31:58 2007                          */
-/*    Last change :  Sat Mar 21 18:02:25 2009 (serrano)                */
-/*    Copyright   :  2007-09 Manuel Serrano                            */
+/*    Last change :  Fri Apr  9 14:44:06 2010 (serrano)                */
+/*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    ActionScript server events runtime system.                       */
 /*    To be compiled with:                                             */
@@ -17,6 +17,7 @@
 /*    Imports                                                          */
 /*---------------------------------------------------------------------*/
 import flash.external.ExternalInterface;
+import flash.RegExp;
 
 /*---------------------------------------------------------------------*/
 /*    HopServevt ...                                                   */
@@ -53,17 +54,53 @@ class HopServevt {
 	 ExternalInterface.call( onclose );
       }
 
+      var encodeStringChar = function( str, char, repl ) {
+	 var s = str.split( char );
+	 var r = "";
+	 var i;
+	       
+	 for( i = 0; i < s.length - 1; i++ ) r = r.concat( s[ i ] + repl );
+	 r = r.concat( s[ i ] );
+
+	 return r;
+      }
+      
+      var encodeStringSlash = function( str ) {
+	 var s = str.split( "\\" );
+	 var r = "";
+	 var i;
+	       
+	 for( i = 0; i < s.length - 1; i++ ) r = r.concat( s[ i ] + "\\\\" );
+	 r = r.concat( s[ i ] );
+
+	 return encodeStringChar( encodeStringChar( r, "\n", "\\\n" ), "\r", "\\\r" );
+      }
+      
+      var encodeString = function( str ) {
+	 var s = str.split( "\"" );
+	 var r = "";
+	 var i;
+	       
+	 for( i = 0; i < s.length - 1; i++ )
+	    r = r.concat( encodeStringSlash( s[ i ] ) + '"' );
+	 r = r.concat( encodeStringSlash( s[ i ] ) );
+
+	 return r;
+      }
+      
       socket.onData = function( evt ) {
 	 var e = (new XML( evt )).firstChild;
-	 
+
 	 if( e.nodeName == "event" ) {
 	    var c = e.firstChild;
 	    var n = e.attributes.name;
 
 	    if( c.nodeName == "json" ) {
-	       ExternalInterface.call( onevent, n, "evt", c.firstChild.nodeValue, true );
+	       var s = encodeString( c.firstChild.nodeValue );
+
+	       return ExternalInterface.call( onevent, n, "evt", s, true );
 	    } else {
-	       ExternalInterface.call( onevent, n, evt, c.nodeValue, false );
+	       return ExternalInterface.call( onevent, n, evt, c.nodeValue, false );
 	    }
 	 }
 	 
@@ -71,6 +108,7 @@ class HopServevt {
 	    return ExternalInterface.call( init );
 	 }
       }
+      
 
       ExternalInterface.addCallback( 'close', this, close );
 

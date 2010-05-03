@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Feb 25 21:17:06 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 13:54:07 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -319,9 +319,14 @@
 	      key))
    
    ;; register the websocket
-   (set! *websocket-request-list*
-	 (cons (cons (string->symbol key) req) *websocket-request-list*))
+   (with-lock *event-mutex*
+      (lambda ()
+	 (set! *websocket-request-list*
+	       (cons (cons (string->symbol key) req)
+		     *websocket-request-list*))))
 
+   (tprint "websocket-register-new-connection: " key)
+   
    (with-access::http-request req (header connection socket)
       (let ((host (get-header header host: #f)))
 	 (instantiate::http-response-websocket
@@ -352,15 +357,13 @@
 	    (set! *port-service*
 		  (service :name "server-event/info" ()
 		     (let* ((hd (http-request-header (current-request)))
-			    (host (assq host: hd)))
+			    (host (assq host: hd))
+			    (key (get-server-event-key (or port 0))))
+			(tprint "server-info key=" key)
 			(if (pair? host)
 			    (let ((s (string-split (cdr host) ":")))
-			       (vector (car s)
-				       port
-				       (get-server-event-key (or port 0))))
-			    (vector (hostname)
-				    port
-				    (get-server-event-key (or port 0)))))))
+			       (vector (car s) port key))
+			    (vector (hostname) port key)))))
 	    
 	    (set! *init-service*
 		  (service :name "server-event/init" (#!key key)
@@ -546,7 +549,8 @@
 	 (request req)))
 
    (define (websocket-register-event! req name key)
-;*       (tprint "***** websocket-register-event, name=" name " req=" req " key=" key) */
+;*       (tprint "***** websocket-register-event, name=" name " key=" key) */
+;*       (tprint " list=" *websocket-request-list*)                    */
       (let ((c (assq key *websocket-request-list*)))
 	 (if (pair? c)
 	     (let ((req (cdr c)))
@@ -690,7 +694,7 @@
    (socket-close (http-request-socket req))
    ;; remove the request from the *websocket-request-list*
    (set! *websocket-request-list*
-	 (filter! (lambda (e) (not (eq? (cadr e) req)))
+	 (filter! (lambda (e) (not (eq? (cdr e) req)))
 		  *websocket-request-list*))
    ;; remove the request from the *websocket-socket-table*
    (hashtable-for-each *websocket-socket-table*
@@ -805,6 +809,10 @@
 		   (flash-close-request! req))
 		(raise e)))
 	 (begin
+	    (let ((p (current-error-port)))
+	       (fprintf p "<event name='~a'>" name)
+	       (display value p)
+	       (display "</event>\n" p))
 	    (fprintf p "<event name='~a'>" name)
 	    (display value p)
 	    (display "</event>\n" p)
@@ -839,7 +847,8 @@
 	  (p (socket-output s)))
       (with-handler
 	 (lambda (e)
-	    (tprint "WEBSOCKET EVENT ERROR: " e " thread=" (current-thread))
+	    (tprint "WEBSOCKET EVENT ERROR: " e " thread=" (current-thread)
+		    " req=" req " value=" value)
 	    (if (&io-error? e)
 		(begin
 		   (set! *clients-number* (-fx *clients-number* 1))
@@ -865,7 +874,11 @@
       ((real? value)
        (format "<f name='~a'>~a</f>" name value))
       (else
-       (format "<j name='~a'><![CDATA[~a]]></j>" name (hop->json value #f #f)))))
+       (let ((op (open-output-string)))
+	  (fprintf op "<j name='~a'><![CDATA[" name)
+	  (obj->javascript value op #f)
+	  (display "]]></j>" op)
+	  (close-output-port op)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    multipart-value ...                                              */
@@ -889,7 +902,11 @@
       ((or (string? value) (number? value))
        value)
       (else
-       (string-append "<json><![CDATA[" (hop->json value #f #t) "]]></json>"))))
+       (let ((op (open-output-string)))
+	  (display "<json><![CDATA[" op)
+	  (obj->javascript value op #f)
+	  (display "]]></json>" op)
+	  (close-output-port op)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    for-each-socket ...                                              */

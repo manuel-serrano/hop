@@ -1,0 +1,48 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.1.x/widget/gauge.hop                  */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Tue Apr 13 05:44:41 2010                          */
+;*    Last change :  Tue Apr 20 09:57:11 2010 (serrano)                */
+;*    Copyright   :  2010 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Gauge server-side implementation                                 */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module __hopwidget-gauge
+
+   (library hop)
+
+   (export  (<GAUGE> . ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    <GAUGE> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <GAUGE> ((id (xml-make-id 'GAUGE) string)
+			      (format #unspecified)
+			      (value 0 integer)
+			      (min 0 integer)
+			      (max 99 integer)
+			      (onchange #f)
+			      (attrs)
+			      body)
+   (let ((listener (when (xml-tilde? onchange)
+		      (sexp->xml-tilde `(lambda (event)
+					  ,(xml-tilde->sexp onchange)))))
+	 (fid (xml-make-id 'GAUGE-FILL))
+	 (tid (xml-make-id 'GAUGE-TEXT))
+	 (fmt (if (string? format)
+		  format
+		  (string-append "~a/~a"))))
+      (<DIV> :hssclass "hop-gauge" :id id
+	 "0"
+	 (<DIV> :hssclass "hop-gauge-fill" :id fid)
+	 (<DIV> :hssclass "hop-gauge-text" :id tid "0")
+	 ~(add-event-listener! window "ready"
+	     (lambda (e)
+		(gauge-init! $id $fid $tid $value $min $max $fmt $listener))))))
+      
+      

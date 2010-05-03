@@ -36,7 +36,7 @@ such as:
 
 <code>
   (add-user! "turing"
-             :password "7cfc0ea2b67e6d80366f014674cb6cd9"
+             :password "+7cfc0ea2b67e6d80366f014674cb6cd9"
              :directories '("/university/manchester")
              :services '(enigma))
 </code>

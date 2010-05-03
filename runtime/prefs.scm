@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/prefs.scm                 */
+;*    serrano/prgm/project/hop/2.1.x/runtime/prefs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Mon Oct 12 11:55:01 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Fri Apr 23 08:18:54 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
 ;*=====================================================================*/
@@ -22,6 +22,7 @@
 	    __hop_types
 	    __hop_misc
 	    __hop_xml
+	    __hop_html
 	    __hop_hop-extra
 	    __hop_cgi
 	    __hop_service
@@ -29,7 +30,8 @@
 	    __hop_read
 	    __hop_hop
 	    __hop_user
-	    __hop_http-error)
+	    __hop_http-error
+	    __hop_security)
    
    (export (<PREFS> . ::obj)
 	   (<PRLABEL> . ::obj)
@@ -533,8 +535,9 @@
       :value (value->string type value)
       :title (format "~a (hit [return] to validate)"
 		     (if (string? title) title name))
-      :onkeyup (format "hop_prefs_editor_expr( event, this, \"~a\", ~a, \"~a\", \"~a\" )"
-		       name (hop->js-callback parse) type key)))
+      :onkeyup (secure-javascript-attr
+		(format "hop_prefs_editor_expr( event, this, \"~a\", ~a, \"~a\", \"~a\" )"
+			name (hop->js-callback parse) type key))))
 
 ;*---------------------------------------------------------------------*/
 ;*    pr-editor-text ...                                               */
@@ -544,8 +547,9 @@
       :rows rows :cols cols
       :title (format "~a (hit [return] to validate)"
 		     (if (string? title) title name))
-      :onkeyup (format "hop_prefs_editor_expr( event, this, \"~a\", ~a, \"~a\", \"~a\" )"
-		       name (hop->js-callback parse) type key)
+      :onkeyup (secure-javascript-attr
+		(format "hop_prefs_editor_expr( event, this, \"~a\", ~a, \"~a\", \"~a\" )"
+			name (hop->js-callback parse) type key))
       (value->string type value)))
 
 ;*---------------------------------------------------------------------*/
@@ -570,16 +574,18 @@
 		     :type "radio"
 		     :checked value
 		     :name name
-		     :onclick (format "hop_prefs_editor_bool( event, \"true\", \"~a\", ~a, \"~a\", \"~a\" )"
-				      name (hop->js-callback parse) 'bool key))
+		     :onclick (secure-javascript-attr
+			       (format "hop_prefs_editor_bool( event, \"true\", \"~a\", ~a, \"~a\", \"~a\" )"
+				       name (hop->js-callback parse) 'bool key)))
 		  yes-string)
 	       (<TD> 
 		  (<INPUT>
 		     :type "radio"
 		     :checked (not value)
 		     :name name
-		     :onclick (format "hop_prefs_editor_bool( event, \"false\", \"~a\", ~a, \"~a\", \"~a\" )"
-				      name (hop->js-callback parse) 'bool key))
+		     :onclick (secure-javascript-attr
+			       (format "hop_prefs_editor_bool( event, \"false\", \"~a\", ~a, \"~a\", \"~a\" )"
+				      name (hop->js-callback parse) 'bool key)))
 		  no-string))))))
 
 ;*---------------------------------------------------------------------*/
@@ -597,7 +603,8 @@
 			  :type "radio"
 			  :checked (eq? s value)
 			  :name name
-			  :onclick (format "hop_prefs_editor_bool( event, \"~a\", \"~a\", ~a, \"~a\", \"~a\" )"
-					   s name (hop->js-callback parse) 'enum key))
+			  :onclick (secure-javascript-attr
+				    (format "hop_prefs_editor_bool( event, \"~a\", \"~a\", ~a, \"~a\", \"~a\" )"
+					    s name (hop->js-callback parse) 'enum key)))
 		       (symbol->string s))))
 	      enum))))

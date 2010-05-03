@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/weblets/home/home.hss             */
+/*    serrano/prgm/project/hop/2.1.x/weblets/home/home.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Thu Jan 14 07:59:08 2010 (serrano)                */
+/*    Last change :  Sat Apr 24 07:35:52 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -450,7 +450,9 @@ div.app {
   color: #777;
 }
 
-div.app a.iddn {
+div.app span.iddn {
+  margin-left: auto;
+  margin-right: auto;
   font-family: $typewriter;
   color: #777;
   border-top: 1px solid #ccc;
@@ -459,6 +461,11 @@ div.app a.iddn {
   text-decoration: none;
 }
 
-div.app a.iddn:hover {
+div.app span.iddn a.iddn {
+  color: #777;
+}
+
+div.app span.iddn a.iddn:hover {
   text-decoration: underline;
+  color: #777;
 }

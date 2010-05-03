@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue Feb 16 08:36:41 2010 (serrano)                */
+;*    Last change :  Mon Mar  8 13:42:11 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
@@ -37,7 +37,8 @@
 			 (max 100)
 			 (step 1)
 			 (onchange #f)
-			 (caption "top"))
+			 (caption "top")
+			 (attrs))
    (instantiate::html-slider
       (markup 'slider)
       (klass (if (string? class) class "hop-slider"))
@@ -48,6 +49,7 @@
       (step step)
       (onchange onchange)
       (caption caption)
+      (attributes attrs)
       (body '())))
 
 ;*---------------------------------------------------------------------*/

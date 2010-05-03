@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/doc/doc.hop               */
+;*    serrano/prgm/project/hop/2.1.x/weblets/doc/doc.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Tue Jan 12 15:37:42 2010 (serrano)                */
+;*    Last change :  Fri Mar  5 18:56:07 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -67,11 +67,6 @@
       (thread-start! (make-thread (lambda () (setup-api-tables!))))
       (when (file-exists? prefs) (doc-preferences-load prefs))
       (<DOC> :script script
-	 ~(define doc/api $doc/api)
-	 ~(define doc/tutorial $doc/tutorial)
-	 ~(set! api-history-service $doc/api)
-	 ~(set! weblet-history-service $doc/api-sans-title)
-	 ~(set! tutorial-history-service $doc/tutorial)
 	 (<NOTEPAD> :id "doc-notepad"
 	    (<NPHEAD> "")
 	    (<NPTAB> :id "doc-api"

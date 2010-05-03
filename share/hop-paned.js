@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Tue Feb 16 09:15:08 2010 (serrano)                */
+/*    Last change :  Wed Mar 17 14:07:17 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -182,11 +182,6 @@ function hop_init_paned( id, fraction, handler ) {
       }
    };
 
-   // postponed initialization
-   hop_add_event_listener( window, "ready",
-			   function( e ) {
-			      paned.fraction_set( paned, fraction ); } );
-   
    return paned;
 }
 
@@ -207,6 +202,11 @@ function hop_init_paned_vertical( id, fraction, onresize ) {
    paned.fraction_set = hop_vpaned_fraction_set;
    hop_paned_onresize_set( paned, onresize );
    
+   // postponed initialization
+   hop_add_event_listener( window, "ready",
+			   function( e ) {
+			      paned.fraction_set( paned, fraction ); } );
+   
    return paned;
 }
 
@@ -220,6 +220,11 @@ function hop_init_paned_horizontal( id, fraction, onresize ) {
    paned.fraction_set = hop_hpaned_fraction_set;
    hop_paned_onresize_set( paned, onresize );
       
+   // postponed initialization
+   hop_add_event_listener( window, "ready",
+			   function( e ) {
+			      paned.fraction_set( paned, fraction ); } );
+   
    return paned;
 }
 

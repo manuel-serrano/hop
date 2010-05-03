@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Feb 16 17:27:41 2010 (serrano)                */
+#*    Last change :  Fri Apr 23 15:43:39 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -32,6 +32,7 @@ jar="jar cfm"
 debug=no
 
 bcflags="-O2 -fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
+btflags="-gtrace"
 
 bcflagsdev=""
 bcflagsdbg="-copt -g"
@@ -54,7 +55,7 @@ cssmimetype="text/css"
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
 version="2.1.0"
-devel=pre
+devel=rc
 
 hopc=$PWD/bin/hopc
 
@@ -555,6 +556,7 @@ cat $mkmf.in \
           -e "s|@INSTALL@|$install|" \
           -e "s|@JAR@|$jar|" \
           -e "s|@BCFLAGS@|$bcflags|" \
+          -e "s|@BTFLAGS@|$btflags|" \
           -e "s|@BCFLAGSRTS@|$bcflagsrts|" \
           -e "s|@BSCM2JSFLAGS@|$bscm2jsflags|" \
           -e "s|@BLFLAGS@|$blflags|" \

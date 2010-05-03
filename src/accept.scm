@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/src/accept.scm                    */
+;*    serrano/prgm/project/hop/2.1.x/src/accept.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Mon Jan 11 12:22:24 2010 (serrano)                */
+;*    Last change :  Fri Apr 23 13:50:21 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -50,13 +50,9 @@
 	  (let ((v (gensym)))
 	     `(let ((,v ,(e level e)))
 		 (if (>=fx (hop-verbose) ,v)
-		     (with-lock *verb-mutex*
-			(lambda ()
-			   (hop-verb ,v ,@(map (lambda (x) (e x e)) rest))))))))
+		     (hop-verb ,v ,@(map (lambda (x) (e x e)) rest))))))
 	 (else
-	  `(with-lock *verb-mutex*
-	      (lambda ()
-		 (hop-verb ,@(map (lambda (x) (e x e)) (cdr x)))))))))
+	  `(hop-verb ,@(map (lambda (x) (e x e)) (cdr x)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
@@ -89,7 +85,7 @@
 		;; tune the socket
 		(tune-socket! sock)
 		;; process the request
-		(spawn scd stage-request id sock 'connect (hop-read-timeout))
+		(spawn scd stage-request id sock (hop-read-timeout))
 		(loop (+fx id 1)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -131,13 +127,10 @@
 		      (hop-verb 2 (hop-color nid nid " ACCEPT")
 				": " (socket-hostname sock)
 				" [" (current-date) "]\n")
-		      (tprint "SOCKET.queue=" (socket-host-address sock))		      
 		      ;; tune the socket
 		      (tune-socket! sock)
 		      ;; process the request
-		      (spawn scd stage-request nid
-			     sock
-			     'connect (hop-read-timeout))
+		      (spawn scd stage-request nid sock (hop-read-timeout))
 		      (liip (+fx i 1)))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -147,7 +140,7 @@
    
    (define dummybuf (make-string 512))
    (define idmutex (make-mutex))
-   (define idcount (scheduler-size scd))
+   (define idcount 0)
    (define nbthreads (length (pool-scheduler-free scd)))
    
    (define (get-next-id)
@@ -202,7 +195,7 @@
 		       ;; tune the socket
 		       (tune-socket! sock)
 		       ;; process the request
-		       (stage scd thread stage-request id sock 'connect (hop-read-timeout))
+		       (stage scd thread stage-request id sock (hop-read-timeout))
 		       ;; go back to the accept stage
 		       (loop)))))))
       (connect-stage scd thread))
@@ -224,7 +217,7 @@
    (define dummybufs (make-vector acclen (make-string 10)))
    (define socks (make-vector acclen))
 
-   (define (stage-accept scd thread id sock mode timeout n)
+   (define (stage-accept scd thread id sock timeout n)
       ;; a little bit of traces
       (hop-verb 2 (hop-color id id " ACCEPT")
 		(if (>=fx (hop-verbose) 3)
@@ -240,7 +233,7 @@
 	 (input-port-buffer-set! (socket-input sock) (hopthread-inbuf thread))
 	 (output-port-buffer-set! (socket-output sock) (hopthread-outbuf thread)))
       ;; process the request
-      (stage scd thread stage-request id sock mode timeout))
+      (stage scd thread stage-request id sock timeout))
 
    (let loop ((id 1))
       (let ((n (socket-accept-many serv socks
@@ -253,9 +246,7 @@
 		(let ((sock (vector-ref socks i)))
 		   ;; process the request
 		   (spawn scd stage-accept (+fx id i)
-			  sock
-			  'connect (hop-read-timeout)
-			  n)
+			  sock (hop-read-timeout) n)
 		   (liip (+fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -283,7 +274,7 @@
 					   (tune-socket! s)
 					   ;; process the request
 					   (spawn scd stage-request id s
-						  'connect (hop-read-timeout))
+						  (hop-read-timeout))
 					   (loop (+fx id 1)))))))
 			   (loop))))))
       (if w

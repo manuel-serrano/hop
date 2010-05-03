@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Feb 16 07:40:47 2010 (serrano)                */
+;*    Last change :  Fri Apr 23 08:18:17 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -23,6 +23,7 @@
 	    __hop_types
 	    __hop_misc
 	    __hop_xml
+	    __hop_html
 	    __hop_img
 	    __hop_js-lib
 	    __hop_hop
@@ -31,7 +32,8 @@
 	    __hop_clientc
 	    __hop_hz
 	    __hop_priv
-	    __hop_read)
+	    __hop_read
+	    __hop_security)
 
    (export  (<HTML> . ::obj)
 	    (<HEAD> . ::obj)
@@ -87,15 +89,18 @@
 ;*---------------------------------------------------------------------*/
 (define (<HOP-SETUP>)
    (<SCRIPT> :type (hop-configure-javascript-mime-type)
-      (string-append
-       "function hop_etc_directory() { return \"" (hop-etc-directory) "\"; }
+      (string-append "
+function hop_etc_directory() { return \"" (hop-etc-directory) "\"; }
 function hop_bin_directory() { return \"" (hop-bin-directory) "\"; }
 function hop_lib_directory() { return \"" (hop-lib-directory) "\"; }
 function hop_share_directory() { return \"" (hop-share-directory) "\"; }
 function hop_var_directory() { return \"" (hop-var-directory) "\"; }
 function hop_contribs_directory() { return \"" (hop-contribs-directory) "\"; }
 function hop_weblets_directory() { return \"" (hop-weblets-directory) "\"; }
-function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
+function hop_debug() { return " (integer->string (bigloo-debug)) "; }
+function hop_session() { return " (integer->string (hop-session))) "; }
+function hop_realm() { return \"" (hop-realm) "\"; }
+"))
 
 ;*---------------------------------------------------------------------*/
 ;*    preload-css ...                                                  */
@@ -115,7 +120,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
       ((and (http-request? (current-request))
 	    (or (substring-at? p "http://" 0) (substring-at? p "https://" 0)))
        (preload-http p))
-      ((file-exists? p)
+      ((and (file-exists? p) (char=? (string-ref p 0) (file-separator)))
        (hop-load-hss p))
       ((and base (>fx (string-length p) 0) (not (char=? (string-ref p 0) #\/)))
        (preload-css (string-append base p) #f))))
@@ -130,11 +135,11 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 	 ;; force loading to evaluate hop hss types
 	 (preload-css hopcss #f)
 	 (set! head-runtime-system-packed 
-	       (cons* (<LINK> :inline #f
+	       (cons* (<HOP-SETUP>)
+		      (<LINK> :inline #f
 			 :rel "stylesheet"
 			 :type (hop-configure-css-mime-type) 
 			 :href hopcss)
-		      (<HOP-SETUP>)
 		      (map (lambda (f)
 			      (let ((p (make-file-name (hop-share-directory) f)))
 				 (<SCRIPT> :inline #f
@@ -144,11 +149,11 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 	 ;; this is used for non-inlined header for browsers that restrict
 	 ;; size of javascript files (e.g., IE6 on WinCE)
 	 (set! head-runtime-system-unpacked
-	       (cons* (<LINK> :inline #f
+	       (cons* (<HOP-SETUP>)
+		      (<LINK> :inline #f
 			 :rel "stylesheet"
 			 :type (hop-configure-css-mime-type) 
 			 :href hopcss)
-		      (<HOP-SETUP>)
 		      (map (lambda (f)
 			      (let ((p (make-file-name (hop-share-directory) f)))
 				 (<SCRIPT> :inline #f
@@ -157,11 +162,11 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 			   (hop-runtime-system-files))))
 	 ;; this is used for inlined headers
 	 (set! head-runtime-system-inline
-	       (cons* (<LINK> :inline #t
+	       (cons* (<HOP-SETUP>)
+		      (<LINK> :inline #t
 			 :rel "stylesheet"
 			 :type (hop-configure-css-mime-type) 
 			 :href hopcss)
-		      (<HOP-SETUP>)
 		      (map (lambda (f)
 			      (let ((p (make-file-name (hop-share-directory) f)))
 				 (<SCRIPT> :inline #t
@@ -235,8 +240,9 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 	 (lambda (ip)
 	    (display (read-string ip)))))
    
-   (define (hz f)
-      (let* ((path (hz-download-to-cache f))
+   (define (hz f path)
+      (let* ((url (hz-resolve-name f (cons path (hop-hz-repositories))))
+	     (path (hz-download-to-cache url))
 	     (base (basename path))
 	     (hzfiles (hz-get-files path))
 	     (hss (string-append base ".hss"))
@@ -386,7 +392,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 		      (error '<HEAD> "Illegal :inline" (cadr a))))
 		 ((:with-base)
 		  (if (and (string? (cadr a)) (pair? (cddr a)))
-		      (let ((wbels (loop (caddr a) #f #f (cadr a) (cadr a) (cadr a) inl packed '())))
+		      (let ((wbels (loop (caddr a) #f #f (cadr a) (list (cadr a)) (cadr a) inl packed '())))
 			 (loop (cdddr a) #f rts dir path base inl (cadr a) 
 			       (append (reverse! wbels) els)))))
 		 (else
@@ -418,7 +424,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 			   (append iels (reverse! hels) els))))))
 	     ((:hz :include-hz)
 	      (set! incs (cons (car a) incs))
-	      (let* ((hds (hz (car a)))
+	      (let* ((hds (hz (car a) path))
 		     (hels (loop hds #f #f dir path base inl packed '())))
 		 (loop (cdr a)
 		       (if (eq? mode :hz) :hz :include)
@@ -442,11 +448,7 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 ;*---------------------------------------------------------------------*/
 (define (<HEAD> . args)
    (init-extra!)
-   (let* ((hss (make-file-path (hop-rc-directory) (hop-hss-theme) "hop.hss"))
-	  (args (if (file-exists? hss)
-		    (append args `(:css ,hss))
-		    args))
-	  (body0 (head-parse args))
+   (let* ((body0 (head-parse args))
 	  (ubase (filter (lambda (x)
 			    (xml-markup-is? x 'base))
 			 body0))
@@ -665,13 +667,15 @@ function hop_debug() { return " (integer->string (bigloo-debug)) "; }")))
 	  (instantiate::xml-empty-element
 	     (markup 'input)
 	     (id id)
-	     (attributes `(:type ,type :onkeydown ,onkeydown ,@attributes))
+	     (attributes `(:type ,type
+				 :onkeydown ,(secure-javascript-attr onkeydown)
+				 ,@attributes))
 	     (body '())))
        (instantiate::xml-empty-element
 	  (markup 'input)
 	  (id (xml-make-id id 'input))
 	  (attributes `(type: ,type
-			      ,@(if onkeydown `(onkeydown: ,onkeydown) '())
+			      ,@(if onkeydown `(onkeydown: ,(secure-javascript-attr onkeydown)) '())
 			      ,@attributes))
 	  (body '()))))
 

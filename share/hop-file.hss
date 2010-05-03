@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-file.hss                */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-file.hss                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 10:58:15 2008                          */
-/*    Last change :  Fri Feb  5 12:01:48 2010 (serrano)                */
+/*    Last change :  Wed Mar 17 14:10:47 2010 (serrano)                */
 /*    Copyright   :  2008-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopFile Hss                                                      */
@@ -54,7 +54,6 @@ filechooser {
   border: 1px outset #777;
   padding: 4px;
   background: #eee;
-  width: 100%;
   color: black;
 }
 

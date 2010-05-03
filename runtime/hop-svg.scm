@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/hop-svg.scm               */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop-svg.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Mon Dec 14 09:39:34 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Last change :  Fri Apr 23 08:18:38 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
 ;*=====================================================================*/
@@ -21,11 +21,13 @@
    (import  __hop_param
 	    __hop_types
 	    __hop_xml
+	    __hop_html
 	    __hop_misc
 	    __hop_charset
 	    __hop_js-lib
 	    __hop_service
-	    __hop_cache)
+	    __hop_cache
+	    __hop_priv)
    
    (static (class xml-svg::xml-element)
 	   (class svg-img-markup
@@ -205,42 +207,43 @@
 ;*---------------------------------------------------------------------*/
 ;*    show-svg-img-attributes                                          */
 ;*---------------------------------------------------------------------*/
-(define (show-svg-img-attributes l prefix)
+(define (show-svg-img-attributes attr prefix)
    
    (define (kwote s)
       (if (string? s)
 	  (string-replace! s #\' #\")
 	  s))
-   
-   (for-each (lambda (a)
-		(display " ")
-		(display (car a))
-		(display "='")
-		(cond
-		   ((eq? (car a) 'id)
-		    (display prefix)
-		    (display (xml-attribute-encode (kwote (cdr a)))))
-		   ((and (eq? (car a) 'xlink:href)
-			 (string? (cdr a))
-			 (char=? (string-ref (cdr a) 0) #\#))
-		    (display "#")
-		    (display prefix)
-		    (display
-		     (kwote (substring (cdr a) 1 (string-length (cdr a))))))
-		   ((and (eq? (car a) 'style) (string? (cdr a)))
-		    (display
-		     (kwote
-		      (pregexp-replace*
-		       "url[(]#" (cdr a) (string-append "url(#" prefix)))))
-		   ((and (string? (cdr a)) (substring-at? (cdr a) "url(#" 0))
-		    (display "url(#")
-		    (display prefix)
-		    (display
-		     (kwote (substring (cdr a) 5 (string-length (cdr a))))))
-		   (else
-		    (display (kwote (xml-attribute-encode (cdr a))))))
-		(display "'"))
-	     l))
+
+   (let loop ((a attr))
+      (when (pair? a)
+	 (display " ")
+	 (display (keyword->string! (car a)))
+	 (display "='")
+	 (cond
+	    ((eq? (car a) :id)
+	     (display prefix)
+	     (display (xml-attribute-encode (kwote (cadr a)))))
+	    ((and (eq? (car a) :xlink:href)
+		  (string? (cadr a))
+		  (char=? (string-ref (cadr a) 0) #\#))
+	     (display "#")
+	     (display prefix)
+	     (display
+	      (kwote (substring (cadr a) 1 (string-length (cadr a))))))
+	    ((and (eq? (car a) :style) (string? (cadr a)))
+	     (display
+	      (kwote
+	       (pregexp-replace*
+		"url[(]#" (cadr a) (string-append "url(#" prefix)))))
+	    ((and (string? (cadr a)) (substring-at? (cadr a) "url(#" 0))
+	     (display "url(#")
+	     (display prefix)
+	     (display
+	      (kwote (substring (cadr a) 5 (string-length (cadr a))))))
+	    (else
+	     (display (kwote (xml-attribute-encode (cadr a))))))
+	 (display "'")
+	 (loop (cddr a)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    show-svg-img-markup-open ...                                     */
@@ -274,9 +277,12 @@
 ;*    create-svg-img-markup ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (create-svg-img-markup n a b)
-   (if (null? b)
-       (instantiate::svg-img-markup (name n) (attributes a))
-       (instantiate::svg-img-markup+ (name n) (attributes a) (body b))))
+   (let ((attr (append-map (lambda (a)
+			      (list (symbol->keyword (car a)) (cdr a)))
+			   a)))
+      (if (null? b)
+	  (instantiate::svg-img-markup (name n) (attributes attr))
+	  (instantiate::svg-img-markup+ (name n) (attributes attr) (body b)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-svg-img-prefix ...                                          */
@@ -298,28 +304,28 @@
 
    (define (tune-svg! el)
       (with-access::svg-img-markup el (attributes)
-	 (let ((height (assq 'height attributes))
-	       (width (assq 'width attributes))
-	       (viewbox (assq 'viewBox attributes))
-	       (uid (assq 'id attributes)))
+	 (let ((height (plist-assq :height attributes))
+	       (width (plist-assq :width attributes))
+	       (viewbox (plist-assq :viewBox attributes))
+	       (uid (plist-assq :id attributes)))
 	    ;; fix the id
 	    (if uid
-		(set-cdr! uid id)
-		(set! attributes (cons (cons 'id id) attributes)))
+		(plist-set-first! uid id)
+		(set! attributes `(:id ,id ,@attributes)))
 	    ;; the dimensions
 	    (cond
 	       (viewbox
 		(when height
-		   (set-cdr! height "100%"))
+		   (plist-set-first! height "100%"))
 		(when width
-		   (set-cdr! width "100%")))
+		   (plist-set-first! width "100%")))
 	       ((and width height)
 		(let ((vb (format "0 0 ~a ~a"
-				  (dimension-value (cdr width))
-				  (dimension-value (cdr height)))))
-		   (set-cdr! width "100%")
-		   (set-cdr! height "100%")
-		   (set! attributes (cons (cons 'viewBox vb) attributes)))))
+				  (dimension-value (cadr width))
+				  (dimension-value (cadr height)))))
+		   (plist-set-first! width "100%")
+		   (plist-set-first! height "100%")
+		   (set! attributes `(:viewBox ,vb ,@attributes)))))
 	    (when (pair? uattributes)
 	       (set! attributes (append! attributes uattributes))))))
 

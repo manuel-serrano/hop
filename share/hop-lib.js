@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Thu Feb 18 18:23:56 2010 (serrano)                */
+/*    Last change :  Wed Apr 21 08:30:47 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -15,7 +15,14 @@
 /*** META ((export Math) (JS Math)) */
 /*** META ((export eval) (JS eval)) */
 /*** META ((export hop_update) (JS hop_update)) */
-/*** META ((export confirm) (JS comfirm)) */
+/*** META ((export confirm) (JS confirm)) */
+/*** META ((export setInterval) (JS setInterval)) */
+/*** META ((export clearInterval) (JS clearInterval)) */
+/*** META ((export arguments) (JS arguments)) */
+/*** META ((export hop-session) (JS hop_session)) */
+/*** META ((export hop-realm) (JS hop_realm)) */
+/*** META ((export md5sum) (JS md5sum)) */
+/*** META ((export md5sum-string) (JS hdex_md5)) */
 
 /*---------------------------------------------------------------------*/
 /*    hop_callback ...                                                 */
@@ -127,6 +134,20 @@ function hop_in( field, obj ) {
 */
 function hop_instanceof( obj, klass ) {
    return obj instanceof klass;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_properties_to_list ...                                       */
+/*---------------------------------------------------------------------*/
+/*** META ((export js-properties->list) (arity #t)) */
+function hop_properties_to_list( obj ) {
+   var res = null;
+
+   for( var p in obj ) {
+      res = sc_cons( sc_cons( p, obj[ p ] ), res );
+   }
+   
+   return sc_reverseBang( res );
 }
 
 /*---------------------------------------------------------------------*/
@@ -730,7 +751,7 @@ function hop_jsobject2alist( obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_plist2object ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export plist->object) (arity #t)) */
+/*** META ((export plist->jsobject) (arity #t)) */
 function hop_plist2jsobject( plist ) {
    var o = {};
 

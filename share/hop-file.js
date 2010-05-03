@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-file.js                 */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-file.js                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 07:05:30 2008                          */
-/*    Last change :  Mon Feb  8 08:40:33 2010 (serrano)                */
+/*    Last change :  Wed Mar 17 14:27:44 2010 (serrano)                */
 /*    Copyright   :  2008-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side support for url browsers.                            */
@@ -286,7 +286,7 @@ function hop_filechooser_begin_drag( event, id, url ) {
 /*---------------------------------------------------------------------*/
 function hop_filechooser_ok( event, id ) {
    var el = document.getElementById( id );
-   
+
    if( el.open ) el.open( event );
    hop_stop_propagation( event, false );
 }
@@ -338,7 +338,7 @@ var hop_filechooser_proc_table = [];
 function hop_filechooser_save_proc( event, proc ) {
    var c = hop_filechooser_proc_count++;
    hop_filechooser_proc_table[ c ] = proc;
-   return "this." + event + " = hop_filechooser_proc_table[" + c + "]; delete hop_filechooser_proc_table[" + c + "]; this." + event + "()";
+   return "this." + event + " = hop_filechooser_proc_table[" + c + "]; delete hop_filechooser_proc_table[" + c + "]; this." + event + "(event)";
 }
 
 /*---------------------------------------------------------------------*/

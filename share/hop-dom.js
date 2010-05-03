@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-dom.js                  */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-dom.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Thu Feb 11 06:10:27 2010 (serrano)                */
+/*    Last change :  Tue Apr 13 10:37:39 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -13,13 +13,20 @@
 
 /*** META ((export document) (JS document)) */
 /*** META ((export window) (JS window)) */
+/*** META ((export hop_create_lframe) (JS hop_create_lframe)) */
+/*** META ((export hop_create_lflabel) (JS hop_create_lflabel)) */
+/*** META ((export Image) (JS Image)) */
 
 /*---------------------------------------------------------------------*/
 /*    dom_add_child ...                                                */
 /*---------------------------------------------------------------------*/
 function dom_add_child( node, e ) {
    if( hop_is_html_element( e ) ) {
-      node.appendChild( e );
+      if( e.parentNode ) {
+	 node.appendChild( e.cloneNode( true ) );
+      } else {
+	 node.appendChild( e );
+      }
    } else {
       if( (e instanceof String) ||
 	  (typeof e == "string") ||
@@ -590,6 +597,9 @@ function hop_create_lflabel( attrs, body ) {
 /*** META (define-macro (<SPINBUTTON> . args)
      `(hop_dom_create_custom hop_create_spinbutton ,@args)) */
 
+/*** META (define-macro (<GAUGE> . args)
+     `(hop_dom_create_custom hop_create_gauge ,@args)) */
+
 /*---------------------------------------------------------------------*/
 /*    Server side constructors                                         */
 /* --------------------------------------------------------------------*}
@@ -946,8 +956,8 @@ function hop_node_eval( node, text ) {
 	 /* I don't understand why yet, IE 7 does not include */
 	 /* SCRIPT nodes in the resulting node!               */
 	 var start = script.index + script[0].length;
-	 var end = text.indexOf( "</script>", start );
-	 if( end == -1 ) end = text.indexOf( "</SCRIPT>", start );
+	 var end = text.indexOf( "<\u002fscript>", start );
+	 if( end == -1 ) end = text.indexOf( "<\u002fSCRIPT>", start );
 	 if( (end > start) ) {
 	    res = eval( text.substr( start, end - start ) );
 	 }
@@ -1075,9 +1085,12 @@ function hop_create_element( html ) {
       if( html.search( /<script[ >]/i ) >= 0 )
 	 return cloneScriptNode( el.childNodes[ 0 ] );
       else
-	 return el.childNodes[ 0 ];
+	 // Remove the node otherwise it has a parentNode set to non-null
+	 // which confused functions such as dom_add_child
+	 return el.removeChild( el.childNodes[ 0 ] );
    } else {
-      return el.childNodes[ 0 ];
+      // See the remark above for removeChild
+      return el.removeChild( el.childNodes[ 0 ] );
    }
 }
 

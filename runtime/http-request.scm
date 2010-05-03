@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/http-request.scm          */
+;*    serrano/prgm/project/hop/2.1.x/runtime/http-request.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Dec 14 05:32:00 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Fri Apr  2 09:48:05 2010 (serrano)                */
+;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
 ;*    -------------------------------------------------------------    */
@@ -143,13 +143,15 @@
 	       (trace-item "abspath=" abspath
 			   " query=" query
 			   " connection=" connection)
-	       (let ((user (or (and (string? auth)
-				    (find-authenticated-user auth abspath))
-			       (and (string? pauth)
-				    (find-authenticated-user pauth abspath))
-			       (and (string? userinfo)
-				    (find-authenticated-user userinfo abspath))
-			       (anonymous-user))))
+
+	       (let* ((ip (input-port-name pi))
+		      (user (or (and (string? auth)
+				     (find-authenticated-user auth abspath method ip))
+				(and (string? pauth)
+				     (find-authenticated-user pauth abspath method ip))
+				(and (string? userinfo)
+				     (find-authenticated-user userinfo abspath method ip))
+				(anonymous-user))))
 		  (if (string? hostname)
 		      (instantiate::http-proxy-request
 			 (id id)
@@ -165,7 +167,7 @@
 			 (host (or actual-host hostname "localhost"))
 			 (content-length cl)
 			 (transfer-encoding te)
-			 (proxy-authorization pauth)
+			 (authorization pauth)
 			 (connection connection)
 			 (user user))
 		      (instantiate::http-server-request

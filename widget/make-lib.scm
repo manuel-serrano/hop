@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/widget/make-lib.scm               */
+;*    serrano/prgm/project/hop/2.1.x/widget/make-lib.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Fri Dec 11 07:07:57 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Tue Apr 13 09:12:58 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOPWIDGET heap file.                */
 ;*=====================================================================*/
@@ -30,7 +30,9 @@
 	   __hopwidget-colorchooser
 	   __hopwidget-spinbutton
 	   __hopwidget-lframe
-	   __hopwidget-spage)
+	   __hopwidget-spage
+	   __hopwidget-gauge)
 
    (eval   (export-all)
-	   (class audio-server)))
+	   (class audio-server)
+	   (class webmusic)))

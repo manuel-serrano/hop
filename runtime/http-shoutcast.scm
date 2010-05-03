@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/http-shoutcast.scm       */
+;*    serrano/prgm/project/hop/2.1.x/runtime/http-shoutcast.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Oct 13 07:09:48 2008 (serrano)                */
-;*    Copyright   :  2004-08 Manuel Serrano                            */
+;*    Last change :  Mon Apr 19 15:18:38 2010 (serrano)                */
+;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -45,14 +45,14 @@
 	 (if (not (input-port? pf))
 	     (raise
 	      (if (not (file-exists? file))
-		  (make-&io-file-not-found-error #f #f
-						 'http-response
-						 "File not found"
-						 file)
-		  (make-&io-port-error #f #f
-				       'http-response
-				       "File not found"
-				       file)))
+		  (instantiate::&io-file-not-found-error
+		     (proc 'shoutcast)
+		     (msg "File not found")
+		     (obj file))
+		  (instantiate::&io-port-error
+		     (proc 'shoutcast)
+		     (msg "File not found")
+		     (obj file))))
 	     (let* ((size (file-size file))
 		    (psize #e10240)
 		    (id3 (mp3-id3 file))

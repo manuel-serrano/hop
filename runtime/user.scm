@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/user.scm                  */
+;*    serrano/prgm/project/hop/2.1.x/runtime/user.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon Sep 14 16:44:13 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Fri Apr 23 19:26:55 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -20,15 +20,15 @@
 	    __hop_http-lib
 	    __hop_misc
 	    __hop_service
-	    __hop_cache)
-   
+	    __hop_cache
+	    __hop_password)
+
    (export  (users-close!)
 	    (add-user! ::bstring . opt)
 	    (user-exists? ::bstring)
-	    (encrypt-authentication ::symbol ::bstring ::bstring)
-	    (decrypt-authentication ::bstring ::bstring)
+	    (user-authentication-encrypt::bstring ::symbol ::bstring ::bstring)
 	    (anonymous-user::user)
-	    (find-authenticated-user ::bstring ::bstring)
+	    (find-authenticated-user ::bstring ::bstring ::symbol ::bstring)
 	    (find-user ::bstring ::bstring)
 	    (find-user/encrypt ::bstring ::bstring ::procedure)
 	    (user-authorized-request?::bool ::user ::http-request)
@@ -67,13 +67,15 @@
 ;*    *users-open* ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define *users-open* #t)
+(define *basic-realm* #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    users-close! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (users-close!)
    (set! *users-open* #f))
-   
+   (set! *basic-realm* (format "Basic realm=\"Basic ~a authentication\"" (hop-realm)))
+
 ;*---------------------------------------------------------------------*/
 ;*    add-user! ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -92,6 +94,7 @@
 	 (cname (make-file-path
 		 (hop-rc-directory) "users" (string-append name ".prefs")))
 	 (c '())
+	 (u #f)
 	 (d (list (hop-share-directory)
 		  (hop-cache-directory)
 		  (hop-var-directory))))
@@ -108,15 +111,27 @@
 					  (file-exists? cname))
 				     (with-input-from-file cname read)
 				     '()))
+			  (auth 'basic)
+			  (pass (cond
+				   ((or (not (string? p))
+					(=fx (string-length p) 0))
+				    (set! auth 'digest)
+				    (symbol->string (gensym)))
+				   ((char=? (string-ref p 0) #\+)
+				    (set! auth 'digest)
+				    (substring p 1))
+				   (else
+				    p)))
 			  (u (instantiate::user
 				(name name)
 				(groups g)
-				(password (or p (symbol->string (gensym))))
+				(password pass)
+				(authentication auth)
 				(services s)
 				(preferences (append c prefs))
 				(preferences-filename cname)
-				(directories d)))
-			  (k (make-user-key name p)))
+				(directories d)
+				(uuid u))))
 		      (if (hashtable-get *users* name)
 			  (begin
 			     (hashtable-remove! *users* name)
@@ -156,6 +171,8 @@
 		 (set! c (append c (cadr a))))
 		((:preferences-filename)
 		 (set! cname (cadr a)))
+		((:uuid)
+		 (set! u (cadr a)))
 		(else
 		 (error 'add-user! "Illegal argument" args)))
 	     (loop (cddr a)))))))
@@ -169,78 +186,154 @@
 	 (user? (hashtable-get *users* name)))))
 
 ;*---------------------------------------------------------------------*/
-;*    encrypt-authentication ...                                       */
+;*    user-authentication-encrypt ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (encrypt-authentication algo auth path)
-   
-   (define (encrypt-ho0-authentication i auth path)
-      (let ((n (substring auth 0 i))
-	    (p (substring auth (+fx i 1) (string-length auth))))
-	 (string-append "HO0" n ":" (md5sum (format "~a ~a" n p)))))
-
-   (define (encrypt-ho1-authentication i auth path)
-      (let* ((n (substring auth 0 i))
-	     (p (substring auth (+fx i 1) (string-length auth)))
-	     (k (md5sum (string-append n " " p))))
-	 (string-append "HO1" n ":" (md5sum (string-append k path)))))
-   
-   (let* ((i (string-index auth #\:)))
-      (if (not (fixnum? i))
-	  (error 'encrypt-authentication "Illegal authentication" auth)
-	  (case algo
-	     ((none)
-	      auth)
-	     ((ho0)
-	      (encrypt-ho0-authentication i auth path))
-	     ((ho1)
-	      (encrypt-ho1-authentication i auth path))
-	     (else
-	      (error 'encrypt-authentication "Illegal algorithm" algo))))))
+(define (user-authentication-encrypt algo auth path)
+   (let ((a (http-parse-authentication auth)))
+      (case (car a)
+	 ((basic url)
+	  (let* ((auth (cdr a))
+		 (i (string-index auth #\:))
+		 (n (substring auth 0 i))
+		 (p (substring auth (+fx i 1) (string-length auth)))
+		 (s (let ((u (hashtable-get *users* n)))
+		       (if (user? u)
+			   (user-authentication u)
+			   'basic))))
+	     (authentication-encrypt s algo (hop-session) n p path)))
+	 (else
+	  (error 'user-authentication-encrypt "Illegal authentication" auth)))))
 
 ;*---------------------------------------------------------------------*/
-;*    decrypt-authentication ...                                       */
+;*    find-authorized-user ...                                         */
 ;*    -------------------------------------------------------------    */
 ;*    This function never raises an error. It returns #f if something  */
 ;*    goes wrong.                                                      */
 ;*---------------------------------------------------------------------*/
-(define (decrypt-authentication auth path)
-   
-   (define (find-none-authentication auth n p path)
-      (let ((u (find-user n (md5sum (format "~a ~a" n p)))))
-	 (if (user? u)
-	     (add-cached-user! auth u)
-	     (hop-verb 2 "Can't authentify user: " n "\n"))
-	 u))
-   
-   (define (find-ho0-authentication auth n md5p path)
-      (let ((u (find-user n md5p)))
-	 (if (user? u)
-	     (add-cached-user! auth u)
-	     (hop-verb 2 "HO0: Can't authentify user: " n "\n"))
-	 u))
-   
-   (define (find-ho1-authentication auth n md5p path)
+(define (find-authorized-user auth l::pair path::bstring method::symbol ip::bstring)
+
+   (define (cannot-authenticate m n)
+      (hop-verb 2 m "Can't authentify user: " n "\n")
+      #f)
+      
+   (define (find-none-authentication n p)
       (let ((u (hashtable-get *users* n)))
-	 (when (user? u)
-	    (if (string=? (md5sum (string-append (user-password u) path)) md5p)
-		u
-		(begin
-		   (hop-verb 2 "HO1: Can't authentify user: " n "\n")
-		   #f)))))
+	 (if (user? u)
+	     (with-access::user u (password authentication)
+		(if (string=? password (password-encrypt n p authentication))
+		    (add-cached-user! auth u)
+		    (cannot-authenticate "basic:" n)))
+	     (cannot-authenticate "basic:" n))))
    
-   (let ((i (string-index auth #\:)))
-      (when (and (fixnum? i) (>fx i 0))
-	 (let ((s (substring auth 0 i))
-	       (p (substring auth (+fx i 1) (string-length auth))))
-	    (cond
-	       ((substring-at? s "HO0" 0)
-		(let ((n (substring s 3 (string-length s))))
-		   (find-ho0-authentication auth n p path)))
-	       ((substring-at? s "HO1" 0)
-		(let ((n (substring s 3 (string-length s))))
-		   (find-ho1-authentication auth n p path)))
-	       (else
-		(find-none-authentication auth s p path)))))))
+   (define (find-ho0-authentication n md5p)
+      (let ((u (hashtable-get *users* n)))
+	 (if (user? u)
+	     (with-access::user u (password)
+		(let ((p (h0password password path)))
+		   (if (string=? p md5p)
+		       (add-cached-user! auth u)
+		       (cannot-authenticate "HO0" n))))
+	     (cannot-authenticate "HO0:" n))))
+   
+   (define (find-ho1-authentication n md5p path)
+      (let ((u (hashtable-get *users* n)))
+	 (if (user? u)
+	     (with-access::user u (password)
+		(let ((p (h1password password path (hop-session))))
+		   (if (string=? p md5p)
+		       (add-cached-user! auth u)
+		       (cannot-authenticate  "H01:" n))))
+	     (cannot-authenticate  "H01:" n))))
+
+   (define (find-ho2-authentication n md5p path)
+      (let ((u (hashtable-get *users* n)))
+	 (if (user? u)
+	     (with-access::user u (password)
+		(let ((p (h2password password path (hop-session) ip)))
+		   (if (string=? p md5p)
+		       (add-cached-user! auth u)
+		       (cannot-authenticate  "H02:" n))))
+	     (cannot-authenticate  "H02:" n))))
+
+   (define (find-digest-authentication l)
+      
+      (define (get k l)
+	 (let ((c (assq k l)))
+	    (when (pair? c)
+	       (cdr c))))
+      
+      (define (H str)
+	 (md5sum-string str))
+      
+      (define (KD secret data)
+	 (H (string-append secret ":" data)))
+      
+      (define (request-digest A1 n)
+	 (let ((nc (get 'nc l))
+	       (nonce (get 'nonce l))
+	       (qop (get 'qop l))
+	       (uri (get 'uri l)))
+	    (if (and (string? nonce) (string? nc) (string? uri))
+		;; Hop does not support auth-int so A2 is
+		;; only defined as follows
+		(let ((A2 (string-append
+			   (symbol->string method) ":" uri)))
+		   (if (equal? qop "auth")
+		       (let ((cnonce (get 'cnonce l)))
+			  (if (string? cnonce)
+			      (KD A1
+				  (string-append
+				   nonce
+				   ":" nc
+				   ":" cnonce
+				   ":" qop
+				   ":" (H A2)))
+			      (cannot-authenticate "digest:" n)))
+		       (KD (H A1) (string-append nonce ":" (H A2)))))
+		(cannot-authenticate "digest:" n))))
+      
+      (let* ((n (get 'username l))
+	     (u (hashtable-get *users* n)))
+	 (if (user? u)
+	     (with-access::user u (password authentication)
+		(if (eq? authentication 'digest)
+		    (let ((opaque (get 'opaque l))
+			  (realm (get 'realm l))
+			  (response (get 'response l)))
+		       (if (and (string? opaque)
+				(string=? opaque digest-opaque)
+				(string? realm)
+				(string=? realm (hop-realm))
+				(string? response))
+			   (let ((request (request-digest password n)))
+			      (if (and (string? request)
+				       (string=? request response))
+				  (add-cached-user! auth u)
+				  (cannot-authenticate "digest:" n)))
+			   (cannot-authenticate "digest:" n)))
+		    (cannot-authenticate "digest:" n))))))
+
+   (case (car l)
+      ((basic url)
+       (let* ((auth (cdr l))
+	      (i (string-index auth #\:)))
+	  (when (and (fixnum? i) (>fx i 0))
+	     (let ((s (substring auth 0 i))
+		   (p (substring auth (+fx i 1) (string-length auth))))
+		(cond
+		   ((substring-at? s "HO0" 0)
+		    (let ((n (substring s 3 (string-length s))))
+		       (find-ho0-authentication n p)))
+		   ((substring-at? s "HO1" 0)
+		    (let ((n (substring s 3 (string-length s))))
+		       (find-ho1-authentication n p path)))
+		   ((substring-at? s "HO2" 0)
+		    (let ((n (substring s 3 (string-length s))))
+		       (find-ho2-authentication n p path)))
+		   (else
+		    (find-none-authentication s p)))))))
+      ((digest)
+       (find-digest-authentication (cdr l)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    *authenticated-users* ...                                        */
@@ -274,7 +367,11 @@
 	 (if (and (string? *last-authentication*)
 		  (string=? *last-authentication* auth))
 	     *last-user*
-	     (hashtable-get *authenticated-users* auth)))))
+	     (let ((u (hashtable-get *authenticated-users* auth)))
+		(when (user? u)
+		   (set! *last-authentication* auth)
+		   (set! *last-user* u))
+		u)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-cached-user! ...                                             */
@@ -285,7 +382,8 @@
 	 (when (string? *last-authentication*)
 	    (hashtable-put! *authenticated-users* *last-authentication* *last-user*))
 	 (set! *last-authentication* auth)
-	 (set! *last-user* u))))
+	 (set! *last-user* u)
+	 u)))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-user ...                                                    */
@@ -310,10 +408,37 @@
 ;*    -------------------------------------------------------------    */
 ;*    The authorization is of the form "Basic <base64string>".         */
 ;*---------------------------------------------------------------------*/
-(define (find-authenticated-user auth path)
+(define (find-authenticated-user auth path method ip)
    (and (string? auth)
 	(or (find-cached-user auth)
-	    (decrypt-authentication (http-decode-authentication auth) path))))
+	    (find-authorized-user auth (http-parse-authentication auth) path method ip))))
+
+;*---------------------------------------------------------------------*/
+;*    find-unauthenticated-user ...                                    */
+;*---------------------------------------------------------------------*/
+(define (find-unauthenticated-user req)
+   
+   (define (find-request-user-name req)
+      (with-access::http-request req (userinfo abspath authorization)
+	 (cond
+	    ((string? userinfo)
+	     (let ((i (string-index userinfo #\:)))
+		(when i (substring userinfo 0 (-fx i 1)))))
+	    (authorization
+	     (let ((auth (http-parse-authentication authorization)))
+		(case (car auth)
+		   ((basic)
+		    (let* ((auth (cdr auth))
+			   (i (string-index auth #\:)))
+		       (when (and (fixnum? i) (>fx i 0))
+			  (substring auth 0 i))))
+		   ((digest)
+		    (let ((c (assq 'username (cdr auth))))
+		       (when (pair? c) (cdr c))))))))))
+   
+   (let ((name (find-request-user-name req)))
+      (when (string? name)
+	 (hashtable-get *users* name))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopaccess-cache ...                                              */
@@ -327,7 +452,7 @@
 ;*---------------------------------------------------------------------*/
 (define (find-hopaccess path)
    (let loop ((p path))
-      (let ((cache (cache-memory-get hopaccess-cache p)))
+      (let ((cache (cache-get hopaccess-cache p)))
 	 (cond
 	    (cache
 	     (when (string? cache) cache))
@@ -404,19 +529,59 @@
        ((hop-authorize-request-hook) user req)))
 
 ;*---------------------------------------------------------------------*/
-;*    realm ...                                                        */
+;*    basic-authenticate ...                                           */
+;*    -------------------------------------------------------------    */
+;*    The basic realm is computed once for all when users are closed   */
+;*    (see users-close!).                                              */
 ;*---------------------------------------------------------------------*/
-(define (realm req)
-   (format "Basic realm=\"hop@~a:~a\""
-	   (http-request-host req)
-	   (http-request-port req)))
+(define (basic-authenticate req)
+   *basic-realm*)
+
+;*---------------------------------------------------------------------*/
+;*    digest-private-key ...                                           */
+;*---------------------------------------------------------------------*/
+(define digest-private-key
+   (number->string
+    (bit-xor (random 10000000) (elong->fixnum (current-seconds)))))
+
+;*---------------------------------------------------------------------*/
+;*    digest-opaque ...                                                */
+;*---------------------------------------------------------------------*/
+(define digest-opaque
+   (base64-encode (format "~a:~a:~a" (hostname) (hop-port) (hop-session))))
+
+;*---------------------------------------------------------------------*/
+;*    digest-authenticate ...                                          */
+;*---------------------------------------------------------------------*/
+(define (digest-authenticate req)
+   (let ((nonce (base64-encode
+		 (string-append
+		  (number->string (current-seconds)) digest-private-key))))
+      (format "Digest realm=\"~a\", qop=\"auth\", nonce=\"~a\", opaque=\"~a\""
+	      (hop-realm)
+	      nonce
+	      digest-opaque)))
+
+;*---------------------------------------------------------------------*/
+;*    authenticate-header ...                                          */
+;*---------------------------------------------------------------------*/
+(define (authenticate-header req)
+   (with-access::http-request req (http)
+      (if (or (eq? (hop-http-authentication) 'basic)
+	      (eq? http 'HTTP/1.0)
+	      (let ((user (find-unauthenticated-user req)))
+		 (and (user? user) (eq? (user-authentication user) 'basic))))
+	  `((WWW-Authenticate: . ,(basic-authenticate req))
+	    (hop-session: . ,(hop-session)))
+	  `((WWW-Authenticate: . ,(digest-authenticate req))
+	    (hop-session: . ,(hop-session)))))) ;
 
 ;*---------------------------------------------------------------------*/
 ;*    user-access-denied ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (user-access-denied req #!optional message)
    (instantiate::http-response-authentication
-      (header `((WWW-Authenticate: . ,(realm req))))
+      (header (authenticate-header req))
       (start-line "HTTP/1.0 401 Unauthorized")
       (request req)
       (body (cond
@@ -435,7 +600,7 @@
 ;*---------------------------------------------------------------------*/
 (define (user-service-denied req user svc)
    (instantiate::http-response-authentication
-      (header `((WWW-Authenticate: . ,(realm req))))
+      (header (authenticate-header req))
       (start-line "HTTP/1.0 401 Unauthorized")
       (request req)
       (body (format "User `~a' is not allowed to execute service `~a'."

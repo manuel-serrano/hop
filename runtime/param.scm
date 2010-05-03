@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Feb 16 14:12:44 2010 (serrano)                */
+;*    Last change :  Thu Apr 22 13:44:05 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -46,8 +46,14 @@
 	    (hop-security::int)
 	    (hop-security-set! ::int)
 	    
+	    (hop-http-authentication::symbol)
+	    (hop-http-authentication-set! ::symbol)
+
 	    (hop-session::int)
 	    (hop-session-set! ::int)
+
+	    (hop-realm::bstring)
+	    (hop-realm-set! ::bstring)
 	    
 	    (hop-login-cookie-id::bstring)
 	    (hop-login-cookie-time::int)
@@ -151,6 +157,9 @@
 	    (hop-json-mime-type::bstring)
 	    (hop-json-mime-type-symbol::symbol)
 	    (hop-bigloo-mime-type::bstring)
+
+	    (hop-serialize-method::symbol)
+	    (hop-serialize-method-set! ::symbol)
 
 	    (hop-authorize-service-hook::procedure)
 	    (hop-authorize-service-hook-set! ::procedure)
@@ -272,12 +281,16 @@
 	    (hop-proxy-sniffer-add! ::procedure)
 
 	    (hop-api-cache::bstring)
+
+	    (hop-hz-resolver::procedure)
+	    (hop-hz-resolver-set! ::procedure)
 	    
 	    (hop-hz-package-suffix::bstring)
 	    (hop-hz-package-suffix-set! ::bstring)
 
-	    (hop-hz-local-repository::obj)
-	    (hop-hz-local-repository-set! ::obj)
+	    (hop-hz-repositories::pair-nil)
+	    (hop-hz-repositories-set! ::pair-nil)
+	    (hop-hz-repositories-add! ::bstring)
 	    
 	    (hop-rc-loaded!)))
 
@@ -353,10 +366,21 @@
 (define-parameter hop-security 1)
 
 ;*---------------------------------------------------------------------*/
+;*    hop-http-authentication ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-http-authentication 'basic)
+
+;*---------------------------------------------------------------------*/
 ;*    hop-session ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-session
-   (elong->fixnum (date->seconds (current-date))))
+   (absfx (elong->fixnum (date->seconds (current-date)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-realm ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-realm
+   "hop")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-login-cookie-id ...                                          */
@@ -797,6 +821,12 @@
    'application/x-javascript)
 
 ;*---------------------------------------------------------------------*/
+;*    hop-serialize-method ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-serialize-method
+   'javascript)
+
+;*---------------------------------------------------------------------*/
 ;*    hop-bigloo-mime-type ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-bigloo-mime-type
@@ -1201,16 +1231,29 @@
 		 new))))))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-hz-resolver ...                                              */
+;*    -------------------------------------------------------------    */
+;*    A resolver is a function that accepts a HZ package name and      */
+;*    either returns the name of a local file containing that package  */
+;*    or #f. In that case, the regular HZ resolution takes place.      */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hz-resolver
+   (lambda (hz) #f))
+   
+;*---------------------------------------------------------------------*/
 ;*    hop-hz-package-suffix ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-hz-package-suffix
    "hz")
 
 ;*---------------------------------------------------------------------*/
-;*    hop-hz-local-repository ...                                      */
+;*    hop-hz-repositories ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-hz-local-repository
-   #f)
+(define-parameter hop-hz-repositories
+   '())
+
+(define (hop-hz-repositories-add! v)
+   (hop-hz-repositories-set! (cons v (hop-hz-repositories))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-loaded! ...                                               */

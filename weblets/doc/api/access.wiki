@@ -27,6 +27,8 @@ declarations.
   (hop-path-access-control-set! proc)
   (hop-service-access-control)
   (hop-service-access-control-set! proc)
+  (hop-http-authentication)
+  (hop-http-authentication-set! schema)
 
 
 === server functions ===
@@ -43,6 +45,17 @@ declarations.
   (authorized-service? request symbol)
   (find-hopaccess string)
   (user-access-denied request [message])
+
+
+=== server and client functions ===
+
+  (authentication-encrypt :schema :algo :session :name :password :path :ip)
+  (basic-password-encrypt name password)
+  (digest-password-encrypt name password realm)
+  (password-encrypt name password method)
+  (h0password password path)
+  (h1password password path session)
+  (h2password password path session ip)
 
 
 == Server Definitions ==
@@ -201,6 +214,23 @@ the permission to execute such a service.
 </parameter>
 </parameter>
 
+=== ++hop-http-authentication++ ===
+<parameter> hop-http-authentication
+<parameter> hop-http-authentication-set!
+
+<arguments>
+^  access  ^   type   ^    short description                       ^
+|   r/w    |  symbol  |  either ++basic++ or ++digest++            |
+</arguments>
+
+~~ This parameter controls the type of HTTP authentication Hop asks to client.
+The ++digest++ authentication is more robust than ++basic++ because passwords
+are not sent as plain text but it consumes more server resource because 
+hashing operations have to be executed for each received requests.
+
+</parameter>
+</parameter>
+
 === ++(add-user! name option ...)++ ===
 <function> add-user!
 <arguments>
@@ -223,8 +253,11 @@ intercepted. Here are the meaning of its optional arguments:
   * :password - The user encrypted password. This encryption should
  be computed using the
  ,(<A> :href (format "http://localhost:~a/hop/epassword" (hop-port))
-       (<SPAN> :style "font-variant: small-caps" "EPassword")) weblet.
-  * :groups - The list of groups the user belongs to.
+       (<SPAN> :style "font-variant: small-caps" "EPassword")) weblet. Hop
+ proposes two encryption methods. The first one called //basic// is computed
+ with ++(md5sum (string-append name ":" password))++. The second, that should
+ be preferred as much as possible is called //digest// and is computed by
+ ++(string-append "+" (md5sum (string-append name ":" (hop-realm) ":" password)))++.
   * :directories - The value of this option should either be:
     * ++#f++, no directory can be visited by this user.
     * ++'*++ (the symbol ++*++), all directories can be visited.
@@ -236,21 +269,25 @@ intercepted. Here are the meaning of its optional arguments:
  can be executed.
     * a list of service names (a list of symbols), each
  ,(<APIREF> "service" "service.wiki") in the list can be executed.
+  * :groups - The list of groups the user belongs to.
 
 
 ~~ Examples:
 
-  ;; an administrator that can go everywhere and execute everthing
+  ;; an administrator that can go everywhere and execute everthing and that
+  ;; uses a basic pre-hashed password
   (add-user! "admin"
              :groups '(admin exec bbdb)
              :password "75874d556834ccb5361316184780089c"
              :directories '*
              :services '*)
 
-  ;; a guest that can only visit the /tmp/guest directory
+  ;; a guest that can only visit the /tmp/guest directory and that uses
+  ;; a digest pre-hashed password
   (add-user! "guest"
-             :password "75874d556834ccb5361316184780089c"
+             :password "+f874d556834ccb53613161847800897c"
              :directories '("/tmp/guest"))
+
 
 </function>
 
@@ -312,15 +349,20 @@ may used an encryption function such as:
 user connections.
 </function>
 
-=== ++(find-authenticated-user uinfo)++ ===
+=== ++(find-authenticated-user uinfo path method ip)++ ===
 <function> find-authenticated-user
 <arguments>
 ^  argument     ^   type   ^   short description                       ^
 | uinfo         |  string  | a user information.                       |
+| path          |  string  | a path.                                   |
+| method        |  symbol  | either ++basic++ or ++digest++.           |
+| ip            |  string  | an IP address.                            |
 </arguments>
 
 This functions search authenticated users from the ++userinfo++ field
-found in ::http-request objects.
+found in ::http-request objects. If method is ++digest++ the
+++method++ and ++ip++ are used to hash the user password. Otherwise,
+they are ignored.
 </function>
 
 === ++(user-authorized-request? user request)++ ===
@@ -407,6 +449,7 @@ This function scans the file system in order to find a file named
 containing the file ++path++.
 
 </function>
+
 === ++(user-access-denied request [message])++ ===
 <function> user-access-denied
 <arguments>
@@ -422,6 +465,176 @@ the request.
 </function>
 
 </server>
+
+== Server and Client Definitions ==
+<server>
+<client>
+
+=== ++(authentication-encrypt ...)++ ===
+<function> authentication-encrypt
+<procedure> authentication-encrypt
+<arguments>
+^  argument     ^   type           ^   short description                    ^
+| schema        |  symbol          | either ++url++, ++basic++, or ++digest++.  |
+| algo          |  symbol          | either ++none++, ++ho0++, ++ho1++, or ++ho2++.  |
+| session       |  integer         | Hop session.  |
+| name          |  string          | user name.  |
+| password      |  string          | user password.  |
+| path          |  string          | resource path.  |
+| ip            |  string          | IP address.  |
+</arguments>
+
+The procedure ++authentication-encrypt++ encrypts a user authentication. One may
+use this encryption to construct plains URLs. For instance, one may build an URL with
+an expression such as:
+
+  (define (authenticated-url p)
+     (multiple-value-bind (proto login host port abspath)
+        (url-parse p)
+        (if (string? login)
+            p
+            (let* ((user (find-user "foo"))
+                   (path (url-path-encode abspath))
+                   (auth (authentication-encrypt :name "foo" 
+                            :password (user-password user)
+                            :path path
+                            :algo 'ho1)))
+                (format "~a://~a@~a:~a~a" proto auth host port path)))))
+
+
+  * ++schema++: specifies the method used to encrypt the user password 
+ (see ++password-encrypt++ below).
+  * ++algo++: specifies the algorithm used to build the user authentication. The possible
+ values are as follows:
+    * ++none++: the authentication is the concatenation of the user name and 
+ the plain password. Example ,(<TT> "http://foo:password@localhost:8080/tmp/file1").
+    * ++ho0++: the authentication is the MD5 sum of the user name, the password, 
+ and the Hop session id. 
+ Example: ,(<TT> "http://HO0foo:cfe3aa676834ccb5361316184780089c@localhost:8080/hop/file1").
+    * ++ho1++: the authentication is the MD5 sum of the user name, the password, 
+ the requested path, and the Hop session id. 
+ Example: ,(<TT> "http://HO1foo:ae3aa676834ccb5361316184780a089c@localhost:8080/hop/file1").
+    * ++ho2++: the authentication is the MD5 sum of the user name, the password, 
+ the requested path, the Hop session id, and the client IP number. 
+ Example: ,(<TT> "http://HO2foo:f1cba676830ccb5f31316184400a0809c@localhost:8080/hop/file1").
+</procedure>
+  * ++session++: is the session id (an identifier) used by the authentication 
+ encryption algorithm. It is recommended to use ++(hop-session)++ as session identifier.
+  * ++name++: the user name.
+  * ++password++: the user password.
+  * ++path++: the resource path.
+  * ++ip++: the client IP which is granted the access authorization.
+</function>
+
+=== ++(basic-password-encrypt name password)++ ===
+<function> basic-password-encrypt
+<procedure> basic-password-encrypt
+<arguments>
+^  argument     ^   type           ^   short description  ^
+| name          |  string          |  the user name.   |
+| password      |  string          |  the user password.   |
+</arguments>
+
+~~ Encrypts a user identification as follows:
+
+  (md5sum (string-append name ":" password))
+
+
+</procedure>
+</function>
+
+=== ++(digest-password-encrypt name password realm)++ ===
+<function> digest-password-encrypt
+<procedure> digest-password-encrypt
+<arguments>
+^  argument     ^   type           ^   short description  ^
+| name          |  string          |  the user name.   |
+| password      |  string          |  the user password.   |
+| realm         |  string          |  the Hop realm.   |
+</arguments>
+
+~~ Encrypts a user identification as follows:
+
+  (md5sum (string-append name ":" realm ":" password))
+
+
+</procedure>
+</function>
+
+
+=== ++(password-encrypt name password method)++ ===
+<function> digest-password-encrypt
+<procedure> digest-password-encrypt
+<arguments>
+^  argument     ^   type           ^   short description  ^
+| name          |  string          |  the user name.   |
+| password      |  string          |  the user password.   |
+| method        |  symbol          |  either ++basic++ or ++digest++.   |
+</arguments>
+
+~~ Encrypts a user identification. If ++method++ is ++basic++ then
+the ++basic-password-encrypt++ is used. Otherwise, the 
+++digest-password-encrypt++ is used and ++hop-realm++ is used as
+++realm++.
+
+</procedure>
+</function>
+
+=== ++(h0password password path)++ ===
+<function> h0password
+<procedure> h0password
+<arguments>
+^  argument     ^   type           ^   short description  ^
+| password      |  string          |  an encrypted password.   |
+| path          |  string          |  a resource path.   |
+</arguments>
+
+~~ Encrypts a user password as follows:
+
+  (md5sum (string-append password ":" path))
+
+</procedure>
+</function>
+
+=== ++(h1password password path session)++ ===
+<function> h0password
+<procedure> h0password
+<arguments>
+^  argument     ^   type           ^   short description  ^
+| password      |  string          |  an encrypted password.   |
+| path          |  string          |  a resource path.   |
+| session       |  integer         |  a session identifier.   |
+</arguments>
+
+~~ Encrypts a user password as follows:
+
+  (md5sum (string-append (integer->string session) ":" password ":" path))
+
+</procedure>
+</function>
+
+=== ++(h2password password path session ip)++ ===
+<function> h0password
+<procedure> h0password
+<arguments>
+^  argument     ^   type           ^   short description  ^
+| password      |  string          |  an encrypted password.   |
+| path          |  string          |  a resource path.   |
+| session       |  integer         |  a session identifier.   |
+| ip            |  string          |  client IP number.       |
+</arguments>
+
+~~ Encrypts a user password as follows:
+
+  (md5sum (string-append (integer->string session) ":" ip ":" password ":" path))
+
+</procedure>
+</function>
+
+
+</client>
+</server>
+
 
 == See also ==
 <see-also>authentication, -user, user-</see-also>

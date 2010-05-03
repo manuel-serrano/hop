@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -50,6 +50,10 @@
 				   out-p
 				   module-headers::pair-nil
 				   configuration)
+	   (scheme2js-compile-value expr::obj
+				    out-p::output-port
+				    foreign-out
+				    loc)
 	   (scheme2js-compile-file in-file::bstring
 				   out-file::bstring
 				   module-headers::pair-nil
@@ -135,6 +139,9 @@
 	    (let* ((module (create-module-from-expr expr module-headers)))
 	       (scheme2js module out-p)))
 	 (configs-restore! old-configs))))
+
+(define (scheme2js-compile-value value out-p foreign-out loc)
+   (compile-value value out-p foreign-out loc))
 
 (define (scheme2js-compile-file in-file out-file
 				module-headers ;; list (module-clause . kind)

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-audio.hss               */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-audio.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 28 06:23:39 2007                          */
-/*    Last change :  Mon Feb  8 16:20:47 2010 (serrano)                */
+/*    Last change :  Thu Mar 18 10:09:18 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Audio's cascade style sheet.                                 */
@@ -17,21 +17,66 @@ $(module hopaudio_hss)
 /*---------------------------------------------------------------------*/
 /*    HSS declarations                                                 */
 /*---------------------------------------------------------------------*/
-$(define-hss-type audio "div.hop-audio-controls")
+$(define-hss-type audio "div[hssclass=hop-audio-controls]"
+    (define-hss-property (border v)
+       (list (format "border: ~l;" v)
+             (format "div.hop-audio-separator { border: ~l; }" v)
+             (format "div.hop-audio-info-status { border: ~l; }" v)
+             (format "div.hop-audio-panel-metadata { border: ~l; }" v)))
+    (define-hss-property (border-color v)
+       (list (format "border-color: ~l;" v)
+             (format "div.hop-audio-separator { border-color: ~l; }" v)
+             (format "div.hop-audio-info-status { border-color: ~l; }" v)
+             (format "div.hop-audio-panel-metadata { border-color: ~l; }" v))))
+
+$(define-hss-type audiobutton "div[hssclass=hop-audio-button]"
+    (define-hss-property (-hop-background-gradient v)
+       (list (format "background: ~l; background-image: ~l;" v v)))
+    (define-hss-property (background v)
+       (list (format "div[hssclass=hop-audio-button-background] { background: ~l; }" v)))
+    (define-hss-property (background-image v)
+       (list (format "div[hssclass=hop-audio-button-background] { background-image: ~l; }" v)))
+    (define-hss-property (background-repeat v)
+       (list (format "div[hssclass=hop-audio-button-background] { background-repeat: ~l; }" v)))
+    (define-hss-property (background-position v)
+       (list (format "div[hssclass=hop-audio-button-background] { background-position: ~l; }" v))))
+
+/*---------------------------------------------------------------------*/
+/*    public declarations                                              */
+/*---------------------------------------------------------------------*/
+/* <public> */
+audio {
+  font-family: Verdana, Bitstream Vera Sans;
+  font-size: 11pt;
+  background: #f7f3f0;
+  padding: 4px;
+  width: 350px;
+  height: 90px;
+  border: 1px solid #999;
+}
+
+audiobutton {
+  width: 14px;
+  height: 14px;
+  padding: 1px 4px 1px 4px;
+  cursor: default;
+  border: 1px solid #777; 
+  border-top: 1px solid #aaa; 
+  border-left: 1px solid #aaa; 
+  margin-left: 2px;
+  background-color: #e0e0e0;
+}
+
+audiobutton:hover {
+  background-color: #eeeeee;
+}
+/* </public> */
 
 /*---------------------------------------------------------------------*/
 /*    hopaudio-gui-radius                                              */
 /*---------------------------------------------------------------------*/
-$(define hopaudio-background "#f7f3f0")
-$(define hopaudio-gui-radius "-moz-border-radius: 0.2em")
-$(define hopaudio-border-color "#999")
-$(define hopaudio-button-border "border: 1px solid #777; border-top: 1px solid #aaa; border-left: 1px solid #aaa; margin-left: 2px")
-$(define hopaudio-button-background "#eee")
-$(define hopaudio-button-radius hopaudio-gui-radius)
-$(define hopaudio-font "Verdana, Bitstream Vera Sans")
+$(define hopaudio-gui-radius "border-radius: 0.2em")
 $(define hopaudio-monospace "DejaVu Sans Mono, Andale Mono, Bitstream Vera Sans Mono, monospace")
-$(define hopaudio-width 350)
-$(define hopaudio-height 90)
 
 /*---------------------------------------------------------------------*/
 /*    hop-audio                                                        */
@@ -45,19 +90,6 @@ object.hop-audio {
   position: fixed;
   top: 0;
   right: 0;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop-audio-controls                                               */
-/*---------------------------------------------------------------------*/
-audio {
-  font-family: $hopaudio-font;
-  font-size: 11pt;
-  background: $hopaudio-background;
-  padding: 4px;
-  width: $(format "~apx" hopaudio-width);
-  height: $(format "~apx" hopaudio-height);
-  border: 1px solid $hopaudio-border-color;
 }
 
 /*---------------------------------------------------------------------*/
@@ -76,89 +108,102 @@ audio table.hop-audio-panel td.hop-audio-panel {
 
 audio div.hop-audio-panel2 {
   padding-left: 4px;
+  padding-right: 4px;
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop-audio-button                                                 */
 /*---------------------------------------------------------------------*/
 audio div.hop-audio-buttons {
-  padding-top: 1ex;
+  padding-top: 6px;
   width: 100%;
   overflow: hidden;
 }
 
-audio div.hop-audio-button {
+audiobutton div[hssclass=hop-audio-button-background] {
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  border: 0;
+  background: transparent;
   display: inline-block;
-  background: $hopaudio-button-background;
-  width: 14px;
-  height: 14px;
-  padding: 1px 4px 1px 4px;
-  cursor: default;
-  background-repeat: no-repeat;
-  background-position: center center;
-  $hopaudio-button-border;
 }
 
-audio div.hop-audio-button.hop-audio-button-prev {
+audiobutton {
+  position: relative;
+  display: inline-block;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-color: transparent;
+}
+
+audiobutton.hop-audio-button-prev {
   background-image: share( "icons/hop-audio/prev.png" );
 }
 
-audio div.hop-audio-button.hop-audio-button-play {
+audiobutton.hop-audio-button-play {
   background-image: share( "icons/hop-audio/play.png" );
 }
 
-audio div.hop-audio-button.hop-audio-button-pause {
+audiobutton.hop-audio-button-pause {
   background-image: share( "icons/hop-audio/pause.png" );
 }
 
-audio div.hop-audio-button.hop-audio-button-stop {
+audiobutton.hop-audio-button-stop {
   background-image: share( "icons/hop-audio/stop.png" );
 }
 
-audio div.hop-audio-button.hop-audio-button-next {
+audiobutton.hop-audio-button-next {
   background-image: share( "icons/hop-audio/next.png" );
 }
 
-audio div.hop-audio-button.hop-audio-button-playlist {
+audiobutton.hop-audio-button-playlist {
   background-image: share( "icons/hop-audio/playlist.png" );
 }
 
-audio div.hop-audio-button.hop-audio-button-mute {
+audiobutton.hop-audio-button-mute {
   background-image: share( "icons/hop-audio/mute.png" );
 }
 
-audio div.hop-audio-button.hop-audio-button-prefs {
+audiobutton.hop-audio-button-prefs {
   background-image: share( "icons/hop-audio/prefs.png" );
 }
 
-audio div.hop-audio-button.hop-audio-button-podcast {
+audiobutton.hop-audio-button-podcast {
   background-image: share( "icons/hop-audio/podcast.png" );
 }
 
-audio div.hop-audio-button:hover {
-  background-color: $(color-lighter hopaudio-button-background);
-}
-
-audio div.hop-audio-button-playlist {
+audiobutton.hop-audio-button-playlist {
   margin-left: 15px;
 }
 
-audio div.hop-audio-button-mute {
+audiobutton.hop-audio-button-mute {
   margin-left: 20px;
 }
 
-audio div.hop-audio-button-prefs {
+audiobutton.hop-audio-button-prefs {
   margin-left: 50px;
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop-audio-separator ...                                          */
+/*    hop-audio-panel sliders (requires by Midori and Arora)           */
 /*---------------------------------------------------------------------*/
-audio div.hop-audio-separator {
-  border-top: 1px solid $hopaudio-border-color;
-  border-bottom: 1px solid white;
+audio slider.hop-audio-panel-volume,
+audio slider.hop-audio-panel-pan {
+  line-height: 3px;
 }
 
+/*---------------------------------------------------------------------*/
+/*    hop-audio-seek                                                   */
+/*---------------------------------------------------------------------*/
+audio slider.hop-audio-seek {
+  line-height: 0px;
+  line-border-bottom: 1px solid white;
+}
+
+audio slider.hop-audio-seek slidercursor {
+  height: 6px;
+}
+  
 /*---------------------------------------------------------------------*/
 /*    hop-audio-info-status                                            */
 /*---------------------------------------------------------------------*/
@@ -166,7 +211,6 @@ audio div.hop-audio-info-status {
   background: #fff;
   width: 6em;
   float: left;
-  border: 1px solid $hopaudio-border-color;
   margin-bottom: 1ex;
   $hopaudio-gui-radius;
 }
@@ -250,13 +294,15 @@ audio span.hop-audio-info-status-length-label {
 /*---------------------------------------------------------------------*/
 audio div.hop-audio-panel-metadata {
   background: #fff;
-  width: 16em;
   height: 4ex;
   float: left;
-  border: 1px solid $hopaudio-border-color;
   overflow: hidden;
   color: black;
   $hopaudio-gui-radius;
+  /* the width must match div.hop-audio-panel-sound */
+  width: 245px;
+  padding-left: 2px;
+  padding-right: 2px;
 }
 
 div.hop-audio-panel-metadata-song, div.hop-audio-panel-metadata-error {
@@ -308,6 +354,15 @@ td.hop-audio-panel-metadata-year {
 /*---------------------------------------------------------------------*/
 audio div.hop-audio-panel-sound {
   float: left;
+  /* the width must match div.hop-audio-panel-metadata */
+  width: 245px;
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+audio div.hop-audio-panel-sound > table {
+  width: 100%;
+  border: 0;
 }
 
 audio div.hop-audio-panel-sound th {
@@ -315,18 +370,24 @@ audio div.hop-audio-panel-sound th {
   vertical-align: top;
   font-weight: 100;
   color: black;
+  width: 3em;
 }
 
 audio div.hop-audio-panel-sound th.hop-audio-panel-left {
   padding-left: 10px;
+  width: 1em;
+}
+
+audio div.hop-audio-panel-sound th.hop-audio-panel-right {
+  width: 1em;
 }
 
 audio table.hop-audio-panel-volume {
-  width: 8em;
+  width: 110px;
 }
 
 audio table.hop-audio-panel-pan {
-  width: 4em;
+  width: 55px;
 }
 
 table.hop-audio-panel-pan div.lineleft {

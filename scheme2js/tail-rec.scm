@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -64,7 +64,9 @@
 		     (and constant?
 			  (eq? value current-fun)))))
 	  (with-access::Lambda current-fun (formals vaarg?)
-	     (let* ((assig-mapping (parameter-assig-mapping operands
+	     (let* ((assig-mapping (parameter-assig-mapping (Var-id (Ref-var operator))
+							    this
+							    operands
 							    formals
 							    vaarg?))
 		    (updates (map! cdr assig-mapping)))

@@ -37,47 +37,47 @@
 ;; <@HZUPCASE@:BODY> widget
 (define-xml-compound <@HZUPCASE@:BODY>
       ((class "@HZ@")
-       (header string "")
+       (header "" string)
        (prefs #f)
        body)
    (<BODY> :class class
       (<DIV> :align "center"
 	 (<TABLE> :class "main"
-	    (<COLGROUP> (<COL> :width "0*"))
 	    (<TR>
-	       (<TD> (<IMG> :class "logo" :src "etc/logo.png")
-		     (<DIV> :class "version"
-			(<DIV> "@HZ@ v " (@HZ@-version))
-			(<DIV> (@HZ@-date)))
-		     (<DIV> :class "buttons"
-			(<DIV> :class "button doc"
-			   (<A> :title "Documentation"
+	       (<TD> :class "body-buttons"
+		  (<IMG> :class "logo" :src "etc/logo.png")
+		  (<DIV> :class "version"
+		     (<DIV> "@HZ@ v " (@HZ@-version))
+		     (<DIV> (@HZ@-date)))
+		  (<DIV> :class "buttons"
+		     (<DIV> :class "button doc"
+			(<A> :title "Documentation"
+			   :class "doc"
+			   :href "documentation"
+			   :onclick ~(set! this.href ($@HZ@/documentation))
+			   :target "_blank"
+			   :title "@HZ@ documentation"
+			   (<IMG> :class "doc"
+			      :inline #t
+			      :src (service-resource @HZ@ "etc/doc.png"))
+			   "Help"))
+		     (when prefs
+			(<DIV> :class "button prefs"
+			   (<A> :title "Preferences"
 			      :class "doc"
-			      :href "documentation"
-			      :onclick ~(set! this.href ($@HZ@/documentation))
+			      :href "preferences"
+			      :onclick ~(set! this.href ($@HZ@/preferences))
 			      :target "_blank"
-			      :title "@HZ@ documentation"
+			      :title "@HZ@ configuration"
 			      (<IMG> :class "doc"
 				 :inline #t
-				 :src (service-resource @HZ@ "etc/doc.png"))
-			      "Help"))
-			(when prefs
-			   (<DIV> :class "button prefs"
-			      (<A> :title "Preferences"
-				 :class "doc"
-				 :href "preferences"
-				 :onclick ~(set! this.href ($@HZ@/preferences))
-				 :target "_blank"
-				 :title "@HZ@ configuration"
-				 (<IMG> :class "doc"
-				    :inline #t
-				    :src (service-resource @HZ@ "etc/prefs.png"))
-				 "Prefs")))))
+				 :src (service-resource @HZ@ "etc/prefs.png"))
+			      "Prefs")))))
 	       (<TD>
 		  (<TABLE> :class "body"
 		     (<TR> (<TD> :class "weblet-title"
 			      (format "~a - @TITLE@" (string-capitalize "@HZ@"))))
-		     (<TR> (<TD> body)))))))
+		     (<TR> (<TD> :class "body" body)))))))
       (<FOOT>)))
 
 ;; the documentation entry point

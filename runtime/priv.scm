@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/priv.scm                  */
+;*    serrano/prgm/project/hop/2.1.x/runtime/priv.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 14:41:13 2009                          */
-;*    Last change :  Sat Jun 20 05:37:52 2009 (serrano)                */
-;*    Copyright   :  2009 Manuel Serrano                               */
+;*    Last change :  Wed Mar 31 14:51:49 2010 (serrano)                */
+;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private tools functions                                          */
 ;*=====================================================================*/
@@ -22,6 +22,7 @@
 	    __hop_types)
    
    (export  (inline plist-assq ::obj ::pair-nil)
+	    (inline plist-set-first! ::pair ::obj)
 	    (plist-remq ::obj ::pair-nil)
 	    (plist-remq! ::obj ::pair-nil)))
 
@@ -30,6 +31,12 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (plist-assq key lst)
    (memq key lst))
+
+;*---------------------------------------------------------------------*/
+;*    plist-set-first! ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (plist-set-first! l e)
+   (set-car! (cdr l) e))
 
 ;*---------------------------------------------------------------------*/
 ;*    plist-remq ...                                                   */

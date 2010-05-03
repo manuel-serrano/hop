@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu Feb 25 08:30:10 2010 (serrano)                */
+;*    Last change :  Wed Apr  7 20:58:55 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -396,7 +396,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-remote ...                        */
 ;*    -------------------------------------------------------------    */
-;*    This method is used for imported services. This services         */
+;*    This method is used for imported services. These services        */
 ;*    are called locally but they are still remote.                    */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-remote success fail auth)

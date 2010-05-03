@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Feb 16 07:54:57 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 08:20:25 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -49,7 +49,7 @@
    (signal sigsegv
 	   (lambda (n)
 	      (fprint (current-error-port) "Segmentation violation")
-	      (dump-trace-stack (current-error-port) 10)
+	      (display-trace-stack (get-trace-stack) (current-error-port))
 	      (exit 2))))
 
 ;*---------------------------------------------------------------------*/
@@ -103,22 +103,25 @@
    ;; set the hop process owner
    ; (set-hop-owner! (hop-user))
    ;; hello world
-   (hop-verb 1 "Hop (v" (hop-version)
-	     ", " (hop-backend)
+   (hop-verb 1 "Hop v" (hop-version))
+   (hop-verb 2
+	     " (" (hop-backend)
 	     (cond-expand
 		(enable-threads
 		 (format ", ~a scheduler" (hop-scheduling)))
 		(else
 		 ", single-threaded"))
-	     ") "
+	     ")")
+   (hop-verb 1 ", "
 	     (if (hop-enable-https)
-		 (format "https (~a):" (hop-https-protocol)) "http:")
+		   (format "https (~a):" (hop-https-protocol)) "http:")
 	     (hop-port)
 	     (if (hop-enable-fast-server-event)
 		 (format ", comet-port:~a" (hop-fast-server-event-port))
 		 "")
-	     ", security:" (hop-security)
-	     "\n")
+	     ", security:" (hop-security))
+   (hop-verb 3 ", session:" (hop-session))
+   (hop-verb 1 "\n")
    ;; install the builtin filters
    (hop-filter-add! service-filter)
    ;; prepare the regular http handling

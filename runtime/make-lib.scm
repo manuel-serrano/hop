@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/make-lib.scm              */
+;*    serrano/prgm/project/hop/2.1.x/runtime/make-lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Tue Oct 20 07:01:22 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Fri Apr 23 08:17:46 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
 ;*=====================================================================*/
@@ -21,6 +21,7 @@
 	   __hop_mime
 	   __hop_types
 	   __hop_xml
+	   __hop_html
 	   __hop_img
 	   __hop_charset
 	   __hop_dom
@@ -31,6 +32,7 @@
 	   __hop_clientc
 	   __hop_cgi
 	   __hop_user
+	   __hop_password
 	   __hop_js-lib
 	   __hop_job
 	   __hop_hop
@@ -58,6 +60,7 @@
 	   __hop_wiki-parser
            __hop_wiki-toc
 	   __hop_hz
+	   __hop_security
 
 	   (hop-event-policy-file __hop_event))
 
@@ -65,8 +68,6 @@
 
 	   (class job)
 	   
-	   (class xml-document)
-
 	   (class user)
 	   
 	   (class %http-message)
@@ -100,6 +101,7 @@
 	   (class xml-element)
 	   (class xml-cdata)
 	   (class xml-html)
+	   (class xml-document)
 
 	   (class cache)
 	   (class cache-disk)

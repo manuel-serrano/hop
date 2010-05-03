@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -122,6 +122,12 @@
 ;; transform let* into nested lets
 (define (let*-expander x e)
    (match-case x
+      ((?- () . ?body)
+       (e (loc-attach
+	   `(let ()
+	       ,@body)
+	   x (cdr x))
+	  e))
       ((?- ((and (?- ?-) ?binding) . ?bindings) . ?body)
        (e (loc-attach
 	   `(let (,binding)

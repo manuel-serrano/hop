@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-serialize.js            */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-serialize.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Wed Dec 23 09:10:33 2009 (serrano)                */
-/*    Copyright   :  2007-09 Manuel Serrano                            */
+/*    Last change :  Tue Apr 20 10:59:58 2010 (serrano)                */
+/*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
@@ -27,7 +27,7 @@ function hop_bigloo_serialize( item ) {
       }
    }
 
-   if( (typeof item) == "number" )
+   if( tname == "number" )
       return hop_serialize_number( item );
       
    if( (item instanceof Boolean) || (tname == "boolean") )
@@ -67,7 +67,7 @@ function hop_bigloo_serialize( item ) {
    if( hop_is_html_element( item ) )
       return hop_serialize_html( item );
 
-   return hop_bigloo_serialize( "#<" + tname + ">" );
+   return hop_bigloo_serialize_alist( item );
 }
 
 /*---------------------------------------------------------------------*/
@@ -298,6 +298,20 @@ function hop_serialize_html( item ) {
       }
    }
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_serialize_alist ...                                          */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_alist( item ) {
+   var alist = null;
+   
+   for( p in item ) {
+      var k = sc_jsstring2keyword( p );
+      alist = sc_cons( sc_cons( k, sc_cons( item[ p ] ) ), alist );
+   }
+
+   return hop_bigloo_serialize( alist );
+}
    
 /*---------------------------------------------------------------------*/
 /*    hop_obj_to_string ...                                            */
@@ -314,7 +328,7 @@ function hop_obj_to_string( item ) {
 function hop_string_to_obj( s ) {
    var pointer = 0;
    var definitions = [];
-   var defining = false;
+   var defining = -1;
 
    function read_integer( s ) {
       return read_size( s );
@@ -356,9 +370,9 @@ function hop_string_to_obj( s ) {
       var sz = read_size( s );
       var res = s.substring( pointer, pointer + sz );
 
-      if( defining ) {
+      if( defining >= 0 ) {
 	 definitions[ defining ] = res;
-	 defining = false;
+	 defining = -1;
       }
       pointer += sz;
 
@@ -391,9 +405,9 @@ function hop_string_to_obj( s ) {
    function read_vector( sz ) {
       var res = sc_makeVector( sz );
 
-      if( defining ) {
+      if( defining >= 0 ) {
 	 definitions[ defining ] = res;
-	 defining = false;
+	 defining = -1;
       }
 
       for( var iv = 0; iv < sz; iv++ ) {
@@ -407,9 +421,9 @@ function hop_string_to_obj( s ) {
       var res = sc_cons( null, null );
       var hd = res;
 
-      if( defining ) {
+      if( defining >=0 ) {
 	 definitions[ defining ] = res;
-	 defining = false;
+	 defining = -1;
       }
 
       for( var i = 0; i < (sz - 2); i++, hd = hd.cdr ) {
@@ -427,9 +441,9 @@ function hop_string_to_obj( s ) {
       var res = sc_cons( null, null );
       var hd = res;
 
-      if( defining ) {
+      if( defining >= 0 ) {
 	 definitions[ defining ] = res;
-	 defining = false;
+	 defining = -1;
       }
 
       for( var i = 0; i < (sz - 2); i++, hd = hd.cdr ) {
@@ -448,23 +462,23 @@ function hop_string_to_obj( s ) {
    }
 
    function read_item() {
-      switch( s.charAt( pointer++ ) ) {
-	 case '=': return read_definition();
-	 case '#': return read_reference();
-	 case "'": return read_symbol();
-	 case ":": return read_keyword();
-	 case "a": return read_char( s );
-	 case "F": return false;
-	 case "T": return true;
-	 case ";": return undefined;
-	 case ".": return null;
-	 case "<": return read_cnst();
-	 case '"': return read_string( s )
-	 case '(': return read_list( read_size( s ) );
-	 case '^': return read_extended_list( read_size( s ) );
-	 case '[': return read_vector( read_size( s ) );
-	 case "f": return read_float( s );
-	 case "-": return -read_integer( s );
+      switch( s.charCodeAt( pointer++ ) ) {
+	 case 0x3d /* = */: return read_definition();
+	 case 0x23 /* # */: return read_reference();
+	 case 0x27 /* ' */: return read_symbol();
+	 case 0x3a /* : */: return read_keyword();
+	 case 0x61 /* a */: return read_char( s );
+	 case 0x46 /* F */: return false;
+	 case 0x54 /* T */: return true;
+	 case 0x3b /* ; */: return undefined;
+	 case 0x2e /* . */: return null;
+	 case 0x3c /* < */: return read_cnst();
+	 case 0x22 /* " */: return read_string( s )
+	 case 0x28 /* ( */: return read_list( read_size( s ) );
+	 case 0x53 /* ^ */: return read_extended_list( read_size( s ) );
+	 case 0x5b /* [ */: return read_vector( read_size( s ) );
+	 case 0x66 /* f */: return read_float( s );
+	 case 0x2d /* - */: return -read_integer( s );
 	 default: pointer--; return read_integer( s );
       }
    }
@@ -476,3 +490,41 @@ function hop_string_to_obj( s ) {
 
    return read_item();
 }
+
+/*---------------------------------------------------------------------*/
+/*    unjson ...                                                       */
+/*---------------------------------------------------------------------*/
+var unjson = {
+   "pair": function( o ) {
+      return sc_cons( hop_unjson( o.car ), hop_unjson( o.cdr ) );
+   },
+}
+ 
+/*---------------------------------------------------------------------*/
+/*    hop_unjson ...                                                   */
+/*---------------------------------------------------------------------*/
+function hop_unjson( o ) {
+   var tname = typeof o;
+
+   if( ((o instanceof String) || (tname == "string")) ||
+       ((typeof o) == "number") ||
+       (o instanceof Boolean) || (tname == "boolean") ||
+       (o === null) ) {
+      return o;
+   }
+
+   if( o instanceof Array ) {
+      for( var i = 0; i < o.length; i++ ) {
+	 o[ i ] = hop_unjson( o [ i ] );
+      }
+
+      return o;
+   }
+   
+   if( "__uuid" in o )
+      return unjson[ o.__uuid ]( o );
+   else
+      return o;
+}
+
+

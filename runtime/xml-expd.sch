@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/xml-expd.sch              */
+;*    serrano/prgm/project/hop/2.1.x/runtime/xml-expd.sch              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Thu Oct  1 07:18:15 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Sat Apr 24 07:13:40 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
 ;*=====================================================================*/
@@ -83,9 +83,7 @@
 	 ((and (>fx (string-length s) 2)
 	       (char=? (string-ref s 0) #\<)
 	       (char=? (string-ref s (-fx (string-length s) 1)) #\>))
-	  (let ((el (string->symbol
-		     (string-downcase!
-		      (substring s 1 (-fx (string-length s) 1)))))
+	  (let ((el (string->symbol (substring s 1 (-fx (string-length s) 1))))
 		(css (memq :hss-type exp))
 		(markup (memq :markup exp))
 		(at (memq :attributes exp))
@@ -137,10 +135,11 @@
 ;*    define-element ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (define-element id el exp)
-   (if (null? exp)
-       `(define (,id . args)
-	   (%make-xml-element ',el args))
-       `(define-xml xml-element #t ,el ,@exp)))
+   (let ((el (string->symbol (string-downcase! (symbol->string el)))))
+      (if (null? exp)
+	  `(define (,id . args)
+	      (%make-xml-element ',el args))
+	  `(define-xml xml-element #t ,el ,@exp))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-define-xml-element ...                                    */
@@ -177,7 +176,7 @@
 ;*---------------------------------------------------------------------*/
 (define (define-alias id ea opts)
    `(define (,id . args)
-       (%make-xml-element ',ea (append args ',opts))))
+       (%make-xml-element ',ea (append args (list ,@opts)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-define-xml-alias ...                                      */
@@ -318,6 +317,22 @@
        (error 'define-xml-compound "Illegal form" x))))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-client-define-xml-compound ...                               */
+;*---------------------------------------------------------------------*/
+(define (hop-client-define-xml-compound x e)
+   (match-case x
+      ((?- ?id ?bindings . ?body)
+       (let* ((id2 (symbol-append '< id '>))
+	      (nf (expand-define-xml-compound id2 bindings body))
+	      (nm `(define-macro (,id . args)
+		      (list 'quasiquote
+			    (,id2 ,(list 'unquote-splicing 'args)))))
+	      (nx nm))
+	  (e (evepairify nx x) e)))
+      (else
+       (error 'define-xml-compound "Illegal form" x))))
+
+;*---------------------------------------------------------------------*/
 ;*    expand-define-markup ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (expand-define-markup id bindings body)
@@ -350,9 +365,7 @@
 	      (nm `(define-macro (,id . args)
 		      (list 'quasiquote
 			    (,id2 ,(list 'unquote-splicing 'args)))))
-	      (nx `(begin ,nf ,nm))
 	      (nx nm))
-	  (pp nx)
 	  (e (evepairify nx x) e)))
       (else
        (error 'define-markup "Illegal form" x))))

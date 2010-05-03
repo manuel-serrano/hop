@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/Makefile                          */
+#*    serrano/prgm/project/hop/2.1.x/Makefile                          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Dec 14 07:35:27 2009 (serrano)                */
+#*    Last change :  Tue Apr 13 13:02:42 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -121,6 +121,7 @@ install-quick: hop-dirs install-init
 	(cd hopscheme && $(MAKE) install) && \
 	(cd src && $(MAKE) install) && \
 	(cd hopsh && $(MAKE) install) && \
+	(cd hopc && $(MAKE) install) && \
 	(cd etc && $(MAKE) install)
 
 install-init: hop-dirs

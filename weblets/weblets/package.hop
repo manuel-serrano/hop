@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/weblets/package.hop       */
+;*    serrano/prgm/project/hop/2.1.x/weblets/weblets/package.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Feb 29 08:50:52 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Fri Mar 26 09:56:50 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with packages.                             */
 ;*=====================================================================*/
@@ -43,7 +43,7 @@
 ;*---------------------------------------------------------------------*/
 (define (package-name-parse name)
    (unless (package-filename? name)
-      (error 'package-name-parse "Illegal package name" name))
+      (error 'package-name-parse "Illegal package name, wrong suffix" name))
    (let* ((n (package-sans-suffix (basename name)))
           (index (string-index-right n #\-))
           (vdot (string-index-right n #\.)))

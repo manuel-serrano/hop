@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/cache.scm                 */
+;*    serrano/prgm/project/hop/2.1.x/runtime/cache.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Wed Apr 29 14:20:23 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Mon Mar  8 08:48:13 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
 ;*=====================================================================*/
@@ -55,7 +55,6 @@
 	   (%cache-memory-new ::cache-memory)
 	   (generic cache-clear ::cache)
 	   (generic cache->list ::cache)
-	   (cache-memory-get::obj ::cache ::bstring)
 	   (generic cache-get::obj ::cache ::bstring)
 	   (generic cache-put! ::cache ::bstring ::obj)))
 
@@ -167,9 +166,9 @@
 	     (loop (cache-entry-%prev tail) (cons tail res))))))
 
 ;*---------------------------------------------------------------------*/
-;*    cache-memory-get ...                                             */
+;*    cache-get ::cache ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (cache-memory-get c::cache path::bstring)
+(define-generic (cache-get c::cache path::bstring)
    (with-access::cache c (%table %head %tail %mutex validity)
       (mutex-lock! %mutex)
       (let ((ce (hashtable-get %table path)))
@@ -199,18 +198,12 @@
 		    (set! %head %next))
 		(if %next
 		    (cache-entry-%prev-set! %next %prev)
-		    (set! %tail #f))
+		    (set! %tail %prev))
 		(mutex-unlock! %mutex)
 		#f))
 	    (else
 	     (mutex-unlock! %mutex)
 	     #f)))))
-
-;*---------------------------------------------------------------------*/
-;*    cache-get ::cache ...                                            */
-;*---------------------------------------------------------------------*/
-(define-generic (cache-get c::cache path::bstring)
-   (cache-memory-get c path))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-get ::cache-disk ...                                       */
@@ -245,7 +238,7 @@
 		    (set! %head %next))
 		(if %next
 		    (cache-entry-%prev-set! %next %prev)
-		    (set! %tail #f))
+		    (set! %tail %prev))
 		(mutex-unlock! %mutex)
 		#f))
 	    (else

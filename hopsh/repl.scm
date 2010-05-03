@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/hopsh/repl.scm                    */
+;*    serrano/prgm/project/hop/2.1.x/hopsh/repl.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Mon Jan 11 19:06:38 2010 (serrano)                */
+;*    Last change :  Wed Mar 31 14:34:27 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
@@ -97,27 +97,35 @@
 (define (hopsh-exec url)
    (let loop ((header (login->header (hopsh-login)))
 	      (count 3))
-      (with-url url
-	 (lambda (s) s)
-	 :timeout 10000
-	 :fail (lambda (xhr)
-		  (case (xml-http-request-status xhr)
-		     ((404)
-		      (error 'hopsh "document not found" url))
-		     ((401)
-		      (if (=fx count 0)
-			  (error 'hop-sh "permission denied'" url)
-			  (begin
-			     (login!)
-			     (when (hopsh-login)
-				(loop (login->header (hopsh-login))
-				      (-fx count 1))))))
-		     (else
-		      (error 'hopsh
-			     (format "Illegal status code `~a'"
-				     (xml-http-request-status xhr))
-			     (read-string (xml-http-request-input-port xhr))))))
-	 :header header)))
+      (let liip ((ttl 5))
+	 (with-handler
+	    (lambda (e)
+	       (if (and (&io-timeout-error? e) (> ttl 0))
+		   (begin
+		      (sleep 100000)
+		      (liip (- ttl 1)))
+		   (raise e)))
+	    (with-url url
+	       (lambda (s) s)
+	       :timeout 10000
+	       :fail (lambda (xhr)
+			(case (xml-http-request-status xhr)
+			   ((404)
+			    (error 'hopsh "document not found" url))
+			   ((401)
+			    (if (=fx count 0)
+				(error 'hop-sh "permission denied'" url)
+				(begin
+				   (login!)
+				   (when (hopsh-login)
+				      (loop (login->header (hopsh-login))
+					    (-fx count 1))))))
+			   (else
+			    (error 'hopsh
+				   (format "Illegal status code `~a'"
+					   (xml-http-request-status xhr))
+				   (read-string (xml-http-request-input-port xhr))))))
+	       :header header)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    login->header ...                                                */

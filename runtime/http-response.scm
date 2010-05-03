@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Feb 25 19:13:25 2010 (serrano)                */
+;*    Last change :  Fri Apr 23 08:17:53 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -23,12 +23,14 @@
 	    __hop_types
 	    __hop_misc
 	    __hop_xml
+	    __hop_html
 	    __hop_charset
 	    __hop_hop-extra
 	    __hop_http-lib
 	    __hop_http-error
 	    __hop_http-filter
 	    __hop_js-lib
+	    __hop_json
 	    __hop_user
 	    __hop_cache
 	    __hop_security)
@@ -144,7 +146,7 @@
 					header
 					content-type charset
 					server content-length value
-					bodyp timeout request)
+					bodyp timeout request serializer)
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request)))
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
@@ -157,10 +159,23 @@
 	    (http-write-content-type p (or content-type (hop-json-mime-type)) charset)
 	    (when server
 	       (http-write-line-string p "Server: " server))
+	    (http-write-line-string p "Hop-Serialize: "
+				    (symbol->string! serializer))
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-js
-	       (when bodyp (display (hop->json value #t #f) p)))
+	       (when bodyp
+		  (case serializer
+		     ((javascript)
+		      (obj->javascript value p #t))
+		     ((hop)
+		      (display (url-path-encode (obj->string value)) p))
+		     ((json)
+		      (hop->json value p))
+		     (else
+		      (error 'http-response
+			     "Unspported serialization method"
+			     (hop-serialize-method))))))
 	    (flush-output-port p)
 	    connection))))
 
@@ -206,7 +221,14 @@
    (with-trace 3 'http-response::http-response-hop
       (if (<fx (hop-security) 2)
 	  (http-response-hop-unsecure r socket)
-	  (http-response-hop-secure r socket))))
+	  (with-handler
+	     (lambda (e)
+		(if (and (&hop-security-error? e) (> (bigloo-debug) 0))
+		    (begin
+		       (exception-notify e)
+		       (http-response-hop-unsecure (http-security-error e) socket))
+		    (raise e)))
+	     (http-response-hop-secure r socket)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response-hop-unsecure ...                                   */

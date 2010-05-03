@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue Feb 23 09:22:57 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 05:51:29 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -76,18 +76,21 @@
 (define (notepad id klass history attrs head tabs onchange)
    
    (define svc
-      (hop->json
-       (procedure->service
-	(lambda (i)
-	   (nptab-get-body (list-ref tabs i))))
-       #f #f))
+      (call-with-output-string
+       (lambda (op)
+	  (obj->javascript
+	   (procedure->service
+	    (lambda (i)
+	       (nptab-get-body (list-ref tabs i))))
+	   op
+	   #f))))
    
    (define (make-tab-div tab i)
       (with-access::xml-nptab-element tab (attributes (idt id) body klass)
 	 (let ((click (format "hop_notepad_select( '~a', '~a', ~a )"
 			      id idt (if history "true" "false"))))
 	    (set! attributes
-		  `(:onclick ,click
+		  `(:onclick ,(secure-javascript-attr click)
 		    :class ,(string-append klass
 					   (if (=fx i 0)
 					       " hop-nptab-active"
@@ -118,7 +121,7 @@
 	     :id id
 	     :hssclass "hop-notepad"
 	     :class (make-class-name "hop-notepad" klass)
-	     :onkeyup (format "return ~a;" svc)
+	     :onkeyup (secure-javascript-attr (format "return ~a;" svc))
 	     head
 	     (<TABLE> :hssclass "hop-notepad"
 		(<TR>

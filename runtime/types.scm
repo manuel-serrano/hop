@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Feb 24 06:35:17 2010 (serrano)                */
+;*    Last change :  Fri Apr 23 07:54:13 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -20,18 +20,19 @@
    
    (export (class user
 	       (name::bstring read-only)
+	       (uuid::obj read-only (default #unspecified))
 	       (groups::pair-nil read-only (default '()))
 	       (password::bstring read-only)
 	       (services read-only)
 	       (directories read-only)
 	       (preferences-filename::obj read-only)
 	       (preferences::pair-nil (default '()))
-	       (data::obj (default #unspecified)))
+	       (data::obj (default #unspecified))
+	       (authentication::symbol read-only (default 'basic)))
 
 	   (class &hop-method-error::&io-parse-error)
 	   (class &hop-autoload-error::&io-error)
-	   (class &hop-security-error::&exception
-	      (obj read-only))
+	   (class &hop-security-error::&error)
 	   (class &hop-injection-error::&hop-security-error)
 	   
            (abstract-class %http-message
@@ -57,17 +58,16 @@
 	      (method::symbol read-only (default 'GET))
 	      (abspath::bstring (default ""))
 	      (query::obj (default #f))
-	      (connection::symbol (default 'keep-alive)))
+	      (connection::symbol (default 'keep-alive))
+	      (authorization (default #f)))
 
 	   (final-class http-server-request::http-request
-	      (authorization (default #f))
 	      (service::obj (default #unspecified)))
 
 	   (wide-class http-server-request+::http-server-request
 	      (%env (default #f)))
 
-	   (class http-proxy-request::http-request
-	      (proxy-authorization (default #f)))
+	   (class http-proxy-request::http-request)
 
 	   (class xml-http-request
 	      (status::int read-only)
@@ -84,13 +84,13 @@
 	   (class http-response-remote::%http-response
 	      (http::symbol read-only (default 'HTTP/1.1))
 	      (host::bstring read-only (default "localhost"))
-	      (scheme::symbol read-only (default '?))
+	      (scheme::symbol read-only (default 'http))
  	      (port::bint read-only (default 80))
 	      (method::symbol read-only (default 'GET))
 	      (path::bstring read-only)
 	      (userinfo read-only (default #f))
-	      (remote-timeout read-only (default #f))
-	      (connection-timeout read-only (default #f)))
+	      (remote-timeout read-only (default (hop-read-timeout)))
+	      (connection-timeout read-only (default (hop-connection-timeout))))
 
 	   (class http-response-filter::%http-response
 	      (response::%http-response read-only)
@@ -111,6 +111,7 @@
 	   
 	   (class http-response-js::%http-response-local
 	      (backend read-only (default (hop-xml-backend)))
+	      (serializer::symbol read-only (default (hop-serialize-method)))
 	      (value::obj read-only))
 	   
 	   (class http-response-procedure::%http-response-local
