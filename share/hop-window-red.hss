@@ -63,7 +63,7 @@ $(define iconify-icon "icons/hop-window-red/iconify.png")
 $(define maximize-icon "icons/hop-window-red/maximize.png")
 $(define close-icon "icons/hop-window-red/close.png")
 
-$(define radius "3px")
+$(define radius "0px")
 
 /*--- title and upper line --------------------------------------------*/
 div[hssclass=hop-window] div.hop-window-handle {
