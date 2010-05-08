@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue Apr 20 10:21:59 2010 (serrano)                */
+/*    Last change :  Sat May  8 06:27:01 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -236,10 +236,12 @@ function hop_config_get( key ) {
       }
       
       return l;
-   } else if( !sc_isSymbol( key ) ) {
+   } else if( !sc_isSymbol( key ) && !sc_isKeyword( key ) ) {
       return false;
-   } else {
+   } else if( sc_isSymbol( key ) ) {
       return hop_config[ sc_symbol2jsstring( key ) ];
+   } else {
+      return hop_config[ sc_keyword2jsstring( key ) ];
    }
 }
 

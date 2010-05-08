@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Fri Mar  5 14:42:21 2010 (serrano)                */
+;*    Last change :  Sat May  8 09:45:21 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -94,6 +94,7 @@
 	       ;; remove the unwind-protected block.
 	       (with-handler
 		  (lambda (e)
+		     (tprint "REMOTE ERROR: " e)
 		     (unless (&io-error? e)
 			(error-notify e))
 ;* 		     (tprint "connection: keep-alive?: "               */
@@ -138,22 +139,32 @@
 ;* 				       (connection-id remote))         */
 			       (connection-close! remote))
 			    (loop))
-			 (let ((cp (hop-capture-port)))
+			 (begin
 			    ;; the content of the request
 			    (when (>elong content-length #e0)
 			       (trace-item "send-chars.1 cl=" content-length)
 			       (send-chars sp rp content-length))
 			    (flush-output-port rp)
 			    ;; capture dumping
-			    (when (output-port? cp)
-			       (display "----------------------------------------------------------\n" cp)
-			       (fprintf cp "http://~a:~a~a\n\n"
-					(http-request-host request)
-					(http-request-port request)
-					(http-request-path request))
-			       (remote-header header cp r)
-			       (flush-output-port cp))
+			    (when (output-port? (hop-capture-port))
+			       (log-capture request r))
+			    (when (assq :xhr-multipart header)
+			       (print "~~~~~~~~~~ REMOVING TIMEOUT...")
+			       (input-timeout-set! (connection-input remote) 0))
 			    (remote-body r socket remote))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    log-capture ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (log-capture request r)
+   (let ((cp (hop-capture-port)))
+      (display "---------------------------------------------------------\n" cp)
+      (fprintf cp "http://~a:~a~a\n\n"
+	       (http-request-host request)
+	       (http-request-port request)
+	       (http-request-path request))
+      (remote-header (http-response-remote-header r) cp r)
+      (flush-output-port cp)))
 
 ;*---------------------------------------------------------------------*/
 ;*    remote-header ...                                                */

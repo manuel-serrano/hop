@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Apr 23 08:17:53 2010 (serrano)                */
+;*    Last change :  Sat May  8 07:36:51 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -38,7 +38,8 @@
    (export  (generic http-response::symbol ::%http-response ::socket)
 	    (generic scheme->response ::obj ::http-request)
 	    (http-response-void ::http-request)
-	    (http-send-request ::http-request ::procedure)))
+	    (http-send-request ::http-request ::procedure)
+	    (chunked-flush-hook port size)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ...                                                */
