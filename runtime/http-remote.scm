@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sat May  8 09:45:21 2010 (serrano)                */
+;*    Last change :  Sat May  8 18:30:00 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -33,10 +33,10 @@
 	       (host::bstring read-only)
 	       (port::int read-only)
 	       request-id::obj
-	       (keep-alive?::bool (default #f))
-	       (intable?::bool (default #f))
-	       (%%debug-closed?::bool (default #f))
-	       (locked?::bool (default #f))
+	       (keep-alive::bool (default #f))
+	       (intable::bool (default #f))
+	       (%%debug-closed::bool (default #f))
+	       (locked::bool (default #f))
 	       (wstart?::bool (default #f))
 	       date::elong))
    
@@ -77,7 +77,7 @@
 		   (rp (connection-output remote))
 		   (sp (socket-input socket)))
 	       ;; verb
-	       (if (connection-keep-alive? remote)
+	       (if (connection-keep-alive remote)
 		   (hop-verb 3
 			     (hop-color request request " REMOTE.ka")
 			     " (alive since "
@@ -97,8 +97,8 @@
 		     (tprint "REMOTE ERROR: " e)
 		     (unless (&io-error? e)
 			(error-notify e))
-;* 		     (tprint "connection: keep-alive?: "               */
-;* 			     (connection-keep-alive? remote)           */
+;* 		     (tprint "connection: keep-alive: "               */
+;* 			     (connection-keep-alive remote)           */
 ;* 			     " wstart=" (connection-wstart? remote))   */
 		     (with-trace 4 'connection-close@handler
 ;* 			(trace-item "remote=" remote)                  */
@@ -111,7 +111,7 @@
 			 ;; it is no longer possible to repl with "resource
 			 ;; unavailable" so we raise the error.
 			 (raise e))
-			((connection-keep-alive? remote)
+			((connection-keep-alive remote)
 			 ;; This is a keep-alive connection that is likely
 			 ;; to have been closed by the remote server, we
 			 ;; retry with a fresh connection
@@ -149,7 +149,6 @@
 			    (when (output-port? (hop-capture-port))
 			       (log-capture request r))
 			    (when (assq :xhr-multipart header)
-			       (print "~~~~~~~~~~ REMOVING TIMEOUT...")
 			       (input-timeout-set! (connection-input remote) 0))
 			    (remote-body r socket remote))))))))))
 
@@ -311,15 +310,15 @@
 	       (cond
 		  ((null? lst)
 		   #f)
-		  ((connection-locked? (car lst))
+		  ((connection-locked (car lst))
 		   (loop (cdr lst)))
 		  ((connection-timeout? (car lst) cs)
 		   (connection-close-sans-lock! (car lst))
 		   (loop (cdr lst)))
 		  (else
-		   (with-access::connection (car lst) (locked? wstart? date)
+		   (with-access::connection (car lst) (locked wstart? date)
 		      (set! date cs)
-		      (set! locked? #t)
+		      (set! locked #t)
 		      (set! wstart? #f)
 		      (car lst)))))))))
 
@@ -339,9 +338,9 @@
 ;*    This function assumes *remote-lock* acquired.                    */
 ;*---------------------------------------------------------------------*/
 (define (close-connection! conn)
-   (with-access::connection conn (socket %%debug-closed?)
+   (with-access::connection conn (socket %%debug-closed)
       (-- *open-connection-number*)
-      (set! %%debug-closed? #t)
+      (set! %%debug-closed #t)
       (socket-close socket)))
 
 ;*---------------------------------------------------------------------*/
@@ -357,8 +356,8 @@
 ;*---------------------------------------------------------------------*/
 (define (connection-table-add! conn)
    (++ *keep-alive-connection-number*)
-   (with-access::connection conn (key intable?)
-      (set! intable? #t)
+   (with-access::connection conn (key intable)
+      (set! intable #t)
       (hashtable-update! *connection-table*
 			 key
 			 (lambda (l) (cons conn l))
@@ -369,8 +368,8 @@
 ;*---------------------------------------------------------------------*/
 (define (connection-table-remove! conn)
    (-- *keep-alive-connection-number*)
-   (with-access::connection conn (key intable?)
-      (set! intable? #f)
+   (with-access::connection conn (key intable)
+      (set! intable #f)
       (hashtable-update! *connection-table*
 			 key
 			 (lambda (l) (remq! conn l))
@@ -433,8 +432,8 @@
 	       (key key)
 	       (request-id (http-request-id request))
 	       (date (current-seconds))
-	       (locked? #t)
-	       (intable? #f)))))
+	       (locked #t)
+	       (intable #f)))))
 
    (define (get-connection)
       (let ((key (string-append host ":" (integer->string port))))
@@ -476,18 +475,18 @@
       (let ((now (current-seconds)))
 	 (filter-connection-table!
 	  (lambda (c)
-	     (or (connection-locked? c) (not (connection-timeout? c now)))))))
+	     (or (connection-locked c) (not (connection-timeout? c now)))))))
    (if (too-many-keep-alive-connection?)
        ;; we have failed, we still have too many keep-alive connections open
        (begin
-	  (filter-connection-table! (lambda (c) (connection-locked? c)))
+	  (filter-connection-table! (lambda (c) (connection-locked c)))
 	  (connection-close-sans-lock! conn))
        ;; store the connection only if room is available on the table
-       (with-access::connection conn (locked? keep-alive?)
+       (with-access::connection conn (locked keep-alive)
 ;* 	  (tprint "keep-alive connection : " (connection-id conn))     */
-	  (set! locked? #f)
-	  (set! keep-alive? #t)
-	  (unless (connection-intable? conn)
+	  (set! locked #f)
+	  (set! keep-alive #t)
+	  (unless (connection-intable conn)
 	     ;; this is the first time we see this connection, we add it to
 	     ;; the connection table
 	     (connection-table-add! conn))))
@@ -497,11 +496,11 @@
 ;*    connection-close-sans-lock! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (connection-close-sans-lock! conn::connection)
-   (with-access::connection conn (socket %%debug-closed?)
-      (when %%debug-closed?
+   (with-access::connection conn (socket %%debug-closed)
+      (when %%debug-closed
 	 (error 'connection-close-sans-lock! "Connection already closed" conn))
       (close-connection! conn)
-      (when (connection-intable? conn)
+      (when (connection-intable conn)
 	 (connection-table-remove! conn))))
    
 ;*---------------------------------------------------------------------*/

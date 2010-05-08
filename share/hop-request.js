@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat May  8 09:35:08 2010 (serrano)                */
+/*    Last change :  Sat May  8 18:30:39 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -411,8 +411,11 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
    }
 
    if( xhr.multipart === true ) {
+      /* This header is needed to let the server */
+      /* disable timeout for this connection     */
       xhr.setRequestHeader( 'Xhr-Multipart', "true" );
    }
+   
    try {
       xhr.send( null );
 
