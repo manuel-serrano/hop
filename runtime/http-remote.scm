@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sat May  8 18:30:00 2010 (serrano)                */
+;*    Last change :  Sun May  9 06:23:10 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -148,9 +148,9 @@
 			    ;; capture dumping
 			    (when (output-port? (hop-capture-port))
 			       (log-capture request r))
-			    (when (assq :xhr-multipart header)
-			       (input-timeout-set! (connection-input remote) 0))
-			    (remote-body r socket remote))))))))))
+			    (if (assq :xhr-multipart header)
+				(remote-multipart-body r socket remote)
+				(remote-body r socket remote)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    log-capture ...                                                  */
@@ -177,6 +177,20 @@
 		   "connection: keep-alive")))
 	 (http-write-line rp h)))
    (http-write-line rp))
+
+;*---------------------------------------------------------------------*/
+;*    remote-multipart-body ...                                        */
+;*    -------------------------------------------------------------    */
+;*    Same thing as remote-body but timeouts must be disabled and      */
+;*    errors ignored (which do not make sense because multipart        */
+;*    is used for long polling).                                       */
+;*    timeout does not make sense).                                    */
+;*---------------------------------------------------------------------*/
+(define (remote-multipart-body r socket remote)
+   (with-handler
+      (lambda (e) 'close)
+      (input-timeout-set! (connection-input remote) 0)
+      (remote-body r socket remote)))
 
 ;*---------------------------------------------------------------------*/
 ;*    remote-body ...                                                  */
