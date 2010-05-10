@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Fri Mar 26 09:54:01 2010 (serrano)                */
+;*    Last change :  Mon May 10 11:47:13 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -186,8 +186,8 @@
 	     (cons (cons k v) (ignore))))
 	 ((: #\" (* (out #\")) #\")
 	  (the-substring 1 -1))
-	 ((: (+ (out "\",=\n\t\t")) #\,)
-	  (the-substring 0 -1))
+	 ((: (+ (out "\",=\n\t\t")))
+	  (the-string))
 	 ((+ (in ", \n\t"))
 	  (ignore))
 	 (else
@@ -197,7 +197,7 @@
 		 (parse-error 'digest-decode
 			      "Illegal digest header field"
 			      (http-parse-error-message c (the-port))))))))
-   
+
    (read/rp digest-grammar port))
 
 ;*---------------------------------------------------------------------*/

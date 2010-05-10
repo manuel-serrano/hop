@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Apr 23 19:26:55 2010 (serrano)                */
+;*    Last change :  Mon May 10 11:31:37 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -213,7 +213,7 @@
 (define (find-authorized-user auth l::pair path::bstring method::symbol ip::bstring)
 
    (define (cannot-authenticate m n)
-      (hop-verb 2 m "Can't authentify user: " n "\n")
+      (hop-verb 2 m " Can't authentify user: " n "\n")
       #f)
       
    (define (find-none-authentication n p)

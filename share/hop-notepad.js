@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-notepad.js              */
+/*    serrano/prgm/project/hop/2.1.x/share/hop-notepad.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Fri Jun  5 12:00:21 2009 (serrano)                */
-/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    Last change :  Mon May 10 12:06:46 2010 (serrano)                */
+/*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
 /*=====================================================================*/
@@ -111,15 +111,20 @@ function hop_notepad_selection( id ) {
 /*---------------------------------------------------------------------*/
 /*    Install the notepad history state handler                        */
 /*---------------------------------------------------------------------*/
-hop_state_history_register_handler(
-   "np", /* key argument */
-   "0",  /* reset value  */
-   function( id, arg ) {
-     var np = document.getElementById( id );
-     if( np != undefined ) {
-	hop_notepad_inner_select( np, parseInt( arg ) );
-	return true;
-     } else {
-	return false;
-     }
-} );
+window.addEventListener(
+   "onload",
+   function( _ ) {
+      hop_state_history_register_handler(
+	 "np", /* key argument */
+	 "0",  /* reset value  */
+	 function( id, arg ) {
+	    var np = document.getElementById( id );
+	    if( np != undefined ) {
+	       hop_notepad_inner_select( np, parseInt( arg ) );
+	       return true;
+	    } else {
+	       return false;
+	    }
+	 } );
+   },
+   true );
