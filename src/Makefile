@@ -23,17 +23,18 @@ EXEC		= hop
 #*---------------------------------------------------------------------*/
 #*    Sources    					               */
 #*---------------------------------------------------------------------*/
-MODULES		= hop-param parseargs main init \
+MODULES		= hop_param parseargs main init \
                   scheduler accept pipeline \
-                  nothread-scheduler \
-                  queue-scheduler \
-                  oto-scheduler \
-                  pool-scheduler \
-                  amany-scheduler
+                  nothread_scheduler \
+                  queue_scheduler \
+                  oto_scheduler \
+                  pool_scheduler \
+                  amany_scheduler
 
 INCLUDES	= stage.sch
 
-CLASS_DIR	= o/class_s/bigloo/hop
+CLASS_PATH	= o/class_s
+CLASS_DIR	= $(CLASS_PATH)/bigloo/hop
 
 OBJECTS 	= $(MODULES:%=o/%.o)
 BGL_CLASSES	= $(MODULES:%=$(CLASS_DIR)/%.class)
@@ -67,7 +68,17 @@ $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $@ $(OBJECTS))
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
-$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-etc jvm-lib
+# if we build for Apache Felix we must add the 3 java wrappers needed to run hop from a bundle
+# FELIX_JAR = /home/mdione/src/works/inria/orange/felix-framework-2.0.4/bin/felix.jar
+ifdef FELIX_JAR
+FELIX_MODULES = HopRunner HopThread HopActivator
+else
+FELIX_MODULES =
+endif
+FELIX_SOURCES = $(FELIX_MODULES:%=%.java)
+FELIX_CLASSES = $(FELIX_MODULES:%=$(CLASS_DIR)/%.class)
+
+$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib $(FELIX_CLASSES)
 	@ $(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
@@ -110,13 +121,6 @@ jvm-lib: o/class_s/lib/hop/$(HOPRELEASE)
 	$(MAKE) -s jvm-list SRC=.. DIR=weblets DEST=o/class_s/lib
 	cp -f $(BUILDLIBDIR)/*.init $<
 
-META-INF/MANIFEST.MF: META-INF
-	echo "Manifest-Version: 1.0" > $@
-	echo "Main-Class: bigloo/hop/main" >> $@
-	echo "Created-By: Hop $(VERSION)" >> $@
-
-META-INF:
-	mkdir -p $@
 
 o/class_s/lib/hop/$(HOPRELEASE):
 	mkdir -p $@
@@ -135,6 +139,9 @@ o/%.o: %.scm .afile
 
 $(CLASS_DIR)/%.class: %.scm .afile
 	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
+
+$(CLASS_DIR)/%.class: %.java
+	/usr/lib/jvm/java-1.5.0-sun-1.5.0.17/bin/javac -classpath $(CLASS_PATH):$(FELIX_JAR) -d $(CLASS_PATH) $<
 
 o/main.o: main.scm
 	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV,$< -o $@ -c)
@@ -207,7 +214,6 @@ clean:
 	/bin/rm -rf o
 	/bin/rm -f $(BUILDBINDIR)/$(EXEC)
 	/bin/rm -f $(BUILDBINDIR)/$(EXEC).jar
-	/bin/rm -rf META-INF
 
 devclean: clean
 
@@ -222,5 +228,11 @@ $(OBJECTS): .afile
 #*---------------------------------------------------------------------*/
 #*    Dependencies ...                                                 */
 #*---------------------------------------------------------------------*/
+o/pipeline.o ./pipeline.class: stage.sch 
+o/accept.o ./accept.class: stage.sch 
+o/accept.o accept.class: stage.sch 
+o/pipeline.o pipeline.class: stage.sch 
+o/nothread_scheduler.o nothread_scheduler.class: stage.sch 
+o/nothread_scheduler.o ./nothread_scheduler.class: stage.sch 
 
 #bdepend stop

@@ -24,7 +24,7 @@ EXEC		= hopsh
 #*---------------------------------------------------------------------*/
 #*    Sources    					               */
 #*---------------------------------------------------------------------*/
-MODULES		= hopsh-param parseargs main repl login
+MODULES		= hopsh_param parseargs main repl login
 
 INCLUDES	= 
 

@@ -36,6 +36,9 @@
    (cond-expand
       (hop-as-library (extern (export main "hop_main"))
 		      (export (main x)))
+      (boot-from-java
+         ; java name is bigloo.hop.main.main (args)
+         (export (main::int args::pair-nil)))
       (else (main main))))
 
  

@@ -36,15 +36,15 @@ _OBJECTS = init notepad paned slider tree file foldlist tabslider \
 _HOBJECTS= spinbutton colorchooser spage gauge
 
 OBJECTS = $(_OBJECTS:%=o/%.o) $(_HOBJECTS:%=o/%.o)
-EOBJECTS = o/make-lib.o
+EOBJECTS = o/make_lib.o
 
 BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class) \
               $(_HOBJECTS:%=$(CLASS_DIR)/%.class)
-BGL_ECLASSES = $(CLASS_EDIR)/make-lib.class
+BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
 BGL_DOTNET_OBJ = $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj) \
                  $(_HOBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
-BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make-lib.obj
+BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make_lib.obj
 
 SOURCES = $(_OBJECTS:%=%.scm) $(_HOBJECTS:%=%.hop)
 
@@ -53,7 +53,7 @@ INCLUDES =
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
-POPULATION = $(SOURCES) $(INCLUDES) make-lib.scm Makefile
+POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile
 
 include ../etc/Makefile.library
 
@@ -88,7 +88,7 @@ ude:
 
 .jfile: $(SOURCES)
 	@ $(JFILE) -suffix hop -o .jfile \
-                   -pbase $(PBASE) $(SOURCES) make-lib.scm
+                   -pbase $(PBASE) $(SOURCES) make_lib.scm
 
 .etags: $(SOURCES)
 	@ $(BTAGS) -o .etags $(SOURCES)

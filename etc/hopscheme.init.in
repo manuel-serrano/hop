@@ -17,7 +17,7 @@
 		  :module-init '__hopscheme
 		  :module-eval '__hopscheme_makelib
 		  :class-init "bigloo.hopscheme.scm-compil"
-		  :class-eval "bigloo.hopscheme.make-lib")
+		  :class-eval "bigloo.hopscheme.make_lib")
 
 ;*---------------------------------------------------------------------*/
 ;*    Link option                                                      */

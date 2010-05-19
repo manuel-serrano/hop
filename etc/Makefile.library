@@ -72,14 +72,14 @@ $(DOTNET_OBJ_EDIR)/%.obj: %.hop
 heap-c: .afile $(HEAP_FILE)
 heap-jvm: .afile .jfile $(HEAPJVM_FILE)
 
-$(HEAP_FILE): make-lib.scm .afile 
+$(HEAP_FILE): make_lib.scm .afile 
 	@ $(RM) -f $(HEAP_FILE)
 	@ $(call compile2,BIGLOO,BCFLAGS,BHFLAGS,$< -addheap $@ -heap-library $(TARGETNAME))
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
-$(HEAPJVM_FILE): .jfile .afile make-lib.scm
+$(HEAPJVM_FILE): .jfile .afile make_lib.scm
 	@ $(RM) -f $(HEAPJVM_FILE)
-	@ $(BIGLOO) -jvm $(EFLAGS) $(BJVMFLAGS) $(BHFLAGS) make-lib.scm -addheap $(HEAPJVM_FILE) -heap-library $(TARGETNAME)
+	@ $(BIGLOO) -jvm $(EFLAGS) $(BJVMFLAGS) $(BHFLAGS) make_lib.scm -addheap $(HEAPJVM_FILE) -heap-library $(TARGETNAME)
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
 #*---------------------------------------------------------------------*/

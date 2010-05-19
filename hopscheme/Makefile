@@ -32,20 +32,20 @@ BLIBFLAGS = $(BSCM2JSFLAGS)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_BGL_OBJECTS = hopscheme dollar-escape \
-	       tilde-escape hopscheme-config hop-runtime \
-	       dollar-scheme2js-module precompilation
+_BGL_OBJECTS = hopscheme dollar_escape \
+	       tilde_escape hopscheme_config hop_runtime \
+	       dollar_scheme2js_module precompilation
 
 _OBJECTS = $(_BGL_OBJECTS)
 
 OBJECTS = $(_OBJECTS:%=o/%.o)
-EOBJECTS = o/make-lib.o
+EOBJECTS = o/make_lib.o
 
 BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class)
-BGL_ECLASSES = $(CLASS_EDIR)/make-lib.class
+BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
 BGL_DOTNET_OBJ = $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
-BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make-lib.obj
+BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make_lib.obj
 
 SOURCES = $(_OBJECTS:%=%.scm)
 
@@ -54,7 +54,7 @@ INCLUDES =
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
-POPULATION = $(SOURCES) $(INCLUDES) make-lib.scm Makefile
+POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile
 
 include ../etc/Makefile.library
 
@@ -82,7 +82,7 @@ ude:
 
 .jfile: $(SOURCES) 
 	@ $(JFILE) -o .jfile \
-                   -pbase $(PBASE) $(SOURCES) make-lib.scm
+                   -pbase $(PBASE) $(SOURCES) make_lib.scm
 
 .etags: $(SOURCES)
 	@ $(BTAGS) -o .etags $(SOURCES)
