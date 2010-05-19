@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/widget/paned.scm                  */
+;*    serrano/prgm/project/hop/2.1.x/widget/paned.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Feb  8 08:55:31 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:28:11 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -50,7 +50,7 @@
        (error '<PANED> "Illegal orientation" orientation))
       ((null? (cddr body))
        (instantiate::html-paned
-	  (markup 'paned)
+	  (tag 'paned)
 	  (id (xml-make-id id 'PANED))
 	  (klass class)
 	  (fraction fraction)
@@ -69,7 +69,7 @@
 		      (attr)
 		      body)
    (instantiate::html-pan
-      (markup 'PAN)
+      (tag 'PAN)
       (id (xml-make-id id 'PAN))
       (klass class)
       (attributes attr)

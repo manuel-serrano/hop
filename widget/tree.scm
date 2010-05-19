@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sun Apr 25 08:15:43 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:28:33 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -73,7 +73,7 @@
 		"Illegal body"
 		body))
       (instantiate::html-tree
-	 (markup 'tree)
+	 (tag 'tree)
 	 (klass (if (string? class) class ""))
 	 (id (xml-make-id id 'TREE))
 	 (visible visible)
@@ -107,7 +107,7 @@
 			 (icon #t)
 			 body)
    (instantiate::html-tree-leaf
-      (markup 'tree-leaf)
+      (tag 'tree-leaf)
       (klass (if (string? class) class ""))
       (id (xml-make-id id 'TRLEAF))
       (value value)

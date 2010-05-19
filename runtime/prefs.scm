@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Fri Apr 23 08:18:54 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:27:05 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -410,7 +410,7 @@
 			      (attrs)
 			      body)
    (instantiate::xml-element
-      (markup 'table)
+      (tag 'table)
       (id (xml-make-id id 'PREFS))
       (attributes (cons* :class (make-class-name "hop-prefs" class) attrs))
       (body (cons (<COLGROUP> (<COL>) (<COL>) (<COL> :width "0*")) body))))

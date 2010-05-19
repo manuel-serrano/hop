@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue Apr 20 05:51:29 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:28:01 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -144,7 +144,7 @@
 			 (attr)
 			 body)
    (instantiate::xml-nphead-element
-      (markup 'div)
+      (tag 'div)
       (id (xml-make-id id 'NPHEAD))
       (attributes `(:hssclass "hop-nphead" ,@attr))
       (body body)))
@@ -167,7 +167,7 @@
       (else
        (let ((cla (make-class-name "hop-nptab " class)))
 	  (instantiate::xml-nptab-element
-	     (markup 'span)
+	     (tag 'span)
 	     (id (xml-make-id id 'NPTAB))
 	     (attributes `(:hssclass "hop-nptab" ,@attr))
 	     (klass cla)
@@ -182,7 +182,7 @@
 			    (attr)
 			    body)
    (instantiate::xml-nptabhead-element
-      (markup 'span)
+      (tag 'span)
       (id (xml-make-id id 'NPTABHEAD))
       (attributes `(:hssclass "hop-nptab-head" ,@attr))
       (body body)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Fri Apr 23 08:18:26 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:25:25 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
@@ -60,7 +60,7 @@
 			     (or port (hop-port))
 			     path userinfo auth id)
 		 (instantiate::xml-inline-element
-		    (markup '_)
+		    (tag '_)
 		    (eid id)
 		    (body '())
 		    (host host)
@@ -102,20 +102,20 @@
 	  (if (=fx status 200)
 	      (bind-exit (return)
 		 (let ((res (instantiate::xml-document
-			       (markup 'document)
+			       (tag 'document)
 			       (id (xml-make-id #unspecified 'DOCUMENT))
 			       (body (html-parse
 				      p
 				      :content-length
 				      cl
 				      :procedure
-				      (lambda (markup attr body)
+				      (lambda (tag attr body)
 					 (let* ((ia (assq 'id attr))
 						(i (if (pair? ia)
 						       (cdr ia)
-						       (xml-make-id #unspecified markup)))
+						       (xml-make-id #unspecified tag)))
 						(el (instantiate::xml-element
-						       (markup markup)
+						       (tag tag)
 						       (id i)
 						       (attributes (filter! filter-attr attr))
 						       (body body))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sat May  1 08:35:11 2010 (serrano)                */
+;*    Last change :  Tue May 11 16:59:53 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -179,6 +179,24 @@
 	 (else
 	  (values (substring str 0 i)
 		  (substring str (+fx i 1) (string-length str)))))))
+
+;*---------------------------------------------------------------------*/
+;*    normalize-string ...                                             */
+;*---------------------------------------------------------------------*/
+(define (normalize-string str)
+   (let ((b (string-skip str " \t"))
+	 (e (string-skip-right str " \t")))
+      (cond
+	 ((not b)
+	  "")
+	 ((=fx b 0)
+	  (if (=fx e (-fx (string-length str) 1))
+	      str
+	      (string-shrink! str (+fx 1 e))))
+	 ((=fx e (-fx (string-length str) 1))
+	  (substring str b))
+	 (else
+	  (substring str b (+fx 1 e))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *wiki-grammar* ...                                               */
@@ -428,6 +446,11 @@
 	     (set! name (cons (the-string) name))
 	     (ignore))))
 
+      (define skip-space-grammar
+	 (regular-grammar ()
+	    ((+ (in " \t")) #unspecified)
+	    (else #unspecified)))
+      
       (define (link-val s)
 	 (cond
 	    ((and (>fx (string-length s) 3) (substring-at? s ",(" 0))
@@ -457,8 +480,7 @@
 	     (st
 	      (unwind-state! st))
 	     ((is-state? 'p)
-	      (pop-state!)
-	      (add-expr! "\n"))))
+	      (pop-state!))))
        (add-expr! (the-html-string))
        (ignore))
       ((bol (: (>= 2 (in " \t")) (? #\Return) #\Newline))
@@ -505,6 +527,7 @@
 					 (append args (reverse! rev))))))
 			#f
 			#f))
+       (read/rp skip-space-grammar (the-port))
        (ignore))
       
       ;; sections
@@ -626,7 +649,7 @@
        (ignore))
 
       ;; comments
-      ((bol (: (or ";*" ";;") (+ all)))
+      ((bol (: (or ";*" ";;") (+ all) (? #\Newline)))
        (ignore))
 
       ;; tables
@@ -744,23 +767,47 @@
 				  (html-string-encode (read-string))))))))
 	      (ignore))
 	     (else
-	      (let* ((id (the-symbol))
-		     (proc ((wiki-syntax-plugins syn) id)))
-		 (if (procedure? proc)
-		     (let* ((/markup (string-append
-				      "</" (the-substring 1 (the-length))))
-			    (l/markup (string-length /markup))
-			    (title (read-line (the-port)))
-			    (ltitle (string-length title)))
-			(if (substring-at? title /markup (-fx ltitle l/markup))
-			    (add-expr!
-			     (proc (the-port)
-				   (substring title 0 (-fx ltitle l/markup))
-				   #f))
-			    (enter-plugin! id
-					   (lambda e (proc (the-port) title e))
-					   #f)))
-		     (add-expr! (the-html-string)))
+	      (let ((id (the-symbol)))
+		 (cond
+		    (((wiki-syntax-plugins syn) id)
+		     =>
+		     (lambda (proc)
+			(let* ((/markup (string-append
+					 "</" (the-substring 1 (the-length))))
+			       (l/markup (string-length /markup))
+			       (title (read-line (the-port)))
+			       (ltitle (string-length title)))
+			   (if (substring-at? title /markup (-fx ltitle l/markup))
+			       (add-expr!
+				(proc (the-port)
+				      (normalize-string
+				       (substring title 0 (-fx ltitle l/markup)))
+				      #f))
+			       (enter-plugin! id
+					      (lambda e
+						 (proc (the-port) (normalize-string title) e))
+					      #f)))))
+		    (((wiki-syntax-verbatims syn) id)
+		     =>
+		     (lambda (proc)
+			(let* ((/markup (string-append
+					 "</" (the-substring 1 (the-length))))
+			       (l/markup (string-length /markup))
+			       (title (read-line (the-port)))
+			       (ltitle (string-length title)))
+			   (if (substring-at? title /markup (-fx ltitle l/markup))
+			       (add-expr!
+				(proc (the-port)
+				      (normalize-string
+				       (substring title 0 (-fx ltitle l/markup)))
+				      #f))
+			       ;; read all the lines up to the closing tag
+			       (add-expr!
+				(proc (the-port)
+				      (normalize-string title)
+				      #f))))))
+		    (else
+		     (add-expr! (the-html-string))))
 		 (ignore))))))
       ((: "</" (+ (out #\>)) ">")
        (let ((id (the-symbol)))

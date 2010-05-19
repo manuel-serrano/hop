@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sun Mar  7 19:08:06 2010 (serrano)                */
+;*    Last change :  Mon May 10 17:42:49 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -437,7 +437,10 @@
    (add-http-handler! 'GET http-get)
    (add-http-handler! 'HEAD http-head)
    (add-http-handler! 'OPTIONS http-options)
-   
+
+;*    (add-http-handler! 'CONNECT (lambda (req)                        */
+;* 				  (tprint "~~~~ CONNECT: " req)))      */
+;*                                                                     */
    ;; local filter (Fallback local file filter)
    (hop-filter-add-always-last!
     (lambda (req)

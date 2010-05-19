@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Mar  8 13:42:11 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:28:21 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
@@ -40,7 +40,7 @@
 			 (caption "top")
 			 (attrs))
    (instantiate::html-slider
-      (markup 'slider)
+      (tag 'slider)
       (klass (if (string? class) class "hop-slider"))
       (id (xml-make-id id 'SLIDER))
       (value value)

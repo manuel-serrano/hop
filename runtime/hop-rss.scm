@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-rss.scm                     */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop-rss.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan  8 08:36:26 2007                          */
-;*    Last change :  Wed Oct 10 05:57:11 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Tue May 11 06:25:45 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP RSS bindings                                                 */
 ;*=====================================================================*/
@@ -61,7 +61,7 @@
 ;*    xml-write ::xml-rss ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-rss p backend)
-   (with-access::xml-rss obj (header markup attributes body)
+   (with-access::xml-rss obj (header tag attributes body)
       (display header p)
       (newline p)
       (call-next-method)))
@@ -80,37 +80,37 @@
 			 (string-downcase
 			  (symbol->string (hop-charset)))))))
       (instantiate::xml-rss
-	 (markup 'rss)
+	 (tag 'rss)
 	 (header hd)
 	 (attributes (cons* (cons 'version version)
 			    (cons 'xmlns:dc xmlns:dc)
 			    attributes))
 	 (body body))))
 
-(define-xml-markup <RSS:CHANNEL> :markup channel)
-(define-xml-markup <RSS:TITLE> :markup title)
-(define-xml-markup <RSS:LINK> :markup link)
-(define-xml-markup <RSS:DESCRIPTION> :markup description)
-(define-xml-markup <RSS:LANGUAGE> :markup language)
-(define-xml-markup <RSS:COPYRIGHT> :markup copyright)
-(define-xml-markup <RSS:MANAGING-EDITOR> :markup managingEditor)
-(define-xml-markup <RSS:WEB-MASTER> :markup webMaster)
-(define-xml-markup <RSS:PUB-DATE> :markup pubDate)
-(define-xml-markup <RSS:LAST-BUILD-DATE> :markup lastBuildDate)
-(define-xml-markup <RSS:CATEGORY> :markup category)
-(define-xml-markup <RSS:GENERATOR> :markup generator)
-(define-xml-markup <RSS:DOCS> :markup docs)
-(define-xml-markup <RSS:CLOUD> :markup cloud)
-(define-xml-markup <RSS:TTL> :markup ttl)
-(define-xml-markup <RSS:IMAGE> :markup image)
-(define-xml-markup <RSS:URL> :markup url)
-(define-xml-markup <RSS:RATING> :markup rating)
-(define-xml-markup <RSS:TEXT-INPUT> :markup textInput)
-(define-xml-markup <RSS:SKIP-HOURS> :markup skipHours)
-(define-xml-markup <RSS:SKIP-DAYS> :markup skipDays)
-(define-xml-markup <RSS:ITEM> :markup item)
-(define-xml-markup <RSS:AUTHOR> :markup author)
-(define-xml-markup <RSS:COMMENTS> :markup comments)
-(define-xml-markup <RSS:ENCLOSURE> :markup enclosure)
-(define-xml-markup <RSS:GUID> :markup guid)
-(define-xml-markup <RSS:SOURCE> :markup source)
+(define-xml-markup <RSS:CHANNEL> :tag channel)
+(define-xml-markup <RSS:TITLE> :tag title)
+(define-xml-markup <RSS:LINK> :tag link)
+(define-xml-markup <RSS:DESCRIPTION> :tag description)
+(define-xml-markup <RSS:LANGUAGE> :tag language)
+(define-xml-markup <RSS:COPYRIGHT> :tag copyright)
+(define-xml-markup <RSS:MANAGING-EDITOR> :tag managingEditor)
+(define-xml-markup <RSS:WEB-MASTER> :tag webMaster)
+(define-xml-markup <RSS:PUB-DATE> :tag pubDate)
+(define-xml-markup <RSS:LAST-BUILD-DATE> :tag lastBuildDate)
+(define-xml-markup <RSS:CATEGORY> :tag category)
+(define-xml-markup <RSS:GENERATOR> :tag generator)
+(define-xml-markup <RSS:DOCS> :tag docs)
+(define-xml-markup <RSS:CLOUD> :tag cloud)
+(define-xml-markup <RSS:TTL> :tag ttl)
+(define-xml-markup <RSS:IMAGE> :tag image)
+(define-xml-markup <RSS:URL> :tag url)
+(define-xml-markup <RSS:RATING> :tag rating)
+(define-xml-markup <RSS:TEXT-INPUT> :tag textInput)
+(define-xml-markup <RSS:SKIP-HOURS> :tag skipHours)
+(define-xml-markup <RSS:SKIP-DAYS> :tag skipDays)
+(define-xml-markup <RSS:ITEM> :tag item)
+(define-xml-markup <RSS:AUTHOR> :tag author)
+(define-xml-markup <RSS:COMMENTS> :tag comments)
+(define-xml-markup <RSS:ENCLOSURE> :tag enclosure)
+(define-xml-markup <RSS:GUID> :tag guid)
+(define-xml-markup <RSS:SOURCE> :tag source)

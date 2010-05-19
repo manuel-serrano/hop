@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 12 15:53:32 2006                          */
-;*    Last change :  Sat May  1 08:35:19 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:23:58 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki toc                                                         */
@@ -51,7 +51,7 @@
 	 ((pair? (car obj))
 	  (loop (append (car obj) (cdr obj)) res depth))
 	 ((and (xml-element? (car obj))
-	       (eq? (xml-element-markup (car obj)) 'div))
+	       (eq? (xml-element-tag (car obj)) 'div))
 	  (loop (append (xml-element-body (car obj)) (cdr obj)) res depth))
 	 ((null? (cdr obj))
 	  (values (reverse! res) '()))
@@ -75,7 +75,7 @@
 			      (if (pair? res2)
 				  (loop rest (cons (li a (ul res2)) res) depth)
 				  (loop rest (cons (li a) res) depth))))))))
-		((and (xml-element? fst) (eq? (xml-element-markup fst) 'div))
+		((and (xml-element? fst) (eq? (xml-element-tag fst) 'div))
 		 (loop (append (xml-element-body fst) (cdr obj)) res depth))
 		(else
 		 (loop (cdr obj) res depth))))))))
@@ -86,14 +86,14 @@
 (define (is-section? fst snd)
    (and (xml-element? fst)
 	(xml-element? snd)
-	(eq? (xml-element-markup fst) 'a)
-	(memq (xml-element-markup snd) '(h1 h2 h3 h4))))
+	(eq? (xml-element-tag fst) 'a)
+	(memq (xml-element-tag snd) '(h1 h2 h3 h4))))
 
 ;*---------------------------------------------------------------------*/
 ;*    section-depth ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (section-depth fst snd)
-   (case (xml-element-markup snd)
+   (case (xml-element-tag snd)
       ((h1) 1)
       ((h2) 2)
       ((h3) 3)

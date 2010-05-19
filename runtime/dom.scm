@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Wed Apr  7 21:07:24 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:22:54 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -201,7 +201,7 @@
       ((string? node)
        "#text")
       ((xml-markup? node)
-       (symbol->string (xml-markup-markup node)))
+       (symbol->string (xml-markup-tag node)))
       ((xml-document? node)
        "#document")
       (else
@@ -215,7 +215,7 @@
       ((string? node)
        'text)
       ((xml-markup? node)
-       (xml-markup-markup node))
+       (xml-markup-tag node))
       ((xml-markup? node)
        'element)
       ((xml-document? node)
@@ -463,7 +463,7 @@
 	    ((pair? obj)
 	     (append-map loop obj))
 	    ((xml-markup? obj)
-	     (if (eq? sym (xml-markup-markup obj))
+	     (if (eq? sym (xml-markup-tag obj))
 		 (cons obj (loop (xml-markup-body obj)))
 		 (loop (xml-markup-body obj))))
 	    (else

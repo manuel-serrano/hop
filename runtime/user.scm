@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon May 10 11:31:37 2010 (serrano)                */
+;*    Last change :  Mon May 10 17:32:21 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -127,7 +127,7 @@
 				(groups g)
 				(password pass)
 				(authentication auth)
-				(services s)
+				(services (if (eq? s '*) s (cons (hop-service-weblet-wid) s)))
 				(preferences (append c prefs))
 				(preferences-filename cname)
 				(directories d)
@@ -157,7 +157,7 @@
 		     (unless (eq? s '*)
 			(if (eq? (cadr a) '*)
 			    (set! s '*)
-			    (set! s (cons (hop-service-weblet-wid) (cadr a)))))))
+			    (set! s (cadr a))))))
 		((:directories)
 		 (unless (eq? d '*)
 		    (cond

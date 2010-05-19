@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Mon Apr 19 16:15:44 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:27:31 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -106,7 +106,7 @@
 	      (cons a1 a2)))
 	 ((xml-markup? a1)
 	  (if (and (xml-markup? a2)
-		   (eq? (xml-markup-markup a1) (xml-markup-markup a2)))
+		   (eq? (xml-markup-tag a1) (xml-markup-tag a2)))
 	      (if (safe-attributes? a2)
 		  (loop (normalize-ast (xml-markup-body a1))
 			(normalize-ast (xml-markup-body a2)))
@@ -147,8 +147,8 @@
       ((list? ast)
        (map ast->string-list ast))
       ((xml-markup? ast)
-       (with-access::xml-markup ast (markup body)
-	  `(,markup ,@(map ast->string-list body))))
+       (with-access::xml-markup ast (tag body)
+	  `(,tag ,@(map ast->string-list body))))
       ((symbol? ast)
        (string-upcase (symbol->string ast)))
       (else

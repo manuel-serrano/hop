@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Apr 29 10:21:57 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:24:52 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -80,7 +80,7 @@
 		    (else
 		     body))))
       (instantiate::xml-html
-	 (markup 'html)
+	 (tag 'html)
 	 (attributes attr)
 	 (body nbody))))
  
@@ -463,7 +463,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 			(cons meta body1))
 		     body1)))
       (instantiate::xml-markup
-	 (markup 'head)
+	 (tag 'head)
 	 (attributes '())
 	 (body body2))))
 
@@ -553,7 +553,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
       (when (and (string? href) inline)
 	 (warning '<LINK> "Cannot inline file -- " href))
       (instantiate::xml-element
-	 (markup 'link)
+	 (tag 'link)
 	 (id (xml-make-id id 'link))
 	 (attributes `(:href ,href ,@attributes))
 	 (body '())))
@@ -567,7 +567,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 		 (apply <STYLE> "\n" body (plist-remq :rel attributes)))
 		((string=? (cadr c) "shortcut icon")
 		 (instantiate::xml-element
-		    (markup 'link)
+		    (tag 'link)
 		    (id (xml-make-id id 'link))
 		    (attributes `(:href ,(img-base64-encode href) ,@attributes))
 		    (body '())))
@@ -612,11 +612,11 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 			 src)))
 	     (when inline (warning '<SCRIPT> "Cannot inline file -- " src))
 	     (instantiate::xml-cdata
-		(markup 'script)
+		(tag 'script)
 		(attributes `(:src ,src type: ,type ,@attributes))
 		(body body)))
 	  (instantiate::xml-cdata
-	     (markup 'script)
+	     (tag 'script)
 	     (attributes `(:type ,type ,@attributes))
 	     (body body))))
    
@@ -626,7 +626,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 		      (with-input-from-file src read-string))))
 	 (if body
 	     (instantiate::xml-cdata
-		(markup 'script)
+		(tag 'script)
 		(attributes `(:type ,type ,@attributes))
 		(body (list "\n" body)))
 	     (default src))))
@@ -644,7 +644,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 			(attributes)
 			body)
    (instantiate::xml-cdata
-      (markup 'style)
+      (tag 'style)
       (attributes `(:type ,type ,@attributes))
       (body body)))
 
@@ -665,14 +665,14 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 					 onkeydown))
 			     comp)))
 	  (instantiate::xml-empty-element
-	     (markup 'input)
+	     (tag 'input)
 	     (id id)
 	     (attributes `(:type ,type
 				 :onkeydown ,(secure-javascript-attr onkeydown)
 				 ,@attributes))
 	     (body '())))
        (instantiate::xml-empty-element
-	  (markup 'input)
+	  (tag 'input)
 	  (id (xml-make-id id 'input))
 	  (attributes `(type: ,type
 			      ,@(if onkeydown `(onkeydown: ,(secure-javascript-attr onkeydown)) '())
