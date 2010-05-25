@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/hop-sym.scm               */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop-sym.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 27 09:39:08 2006                          */
-;*    Last change :  Thu Apr 16 08:47:54 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Fri May 21 11:38:17 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML symbols (special characters).                               */
 ;*=====================================================================*/
@@ -28,7 +28,8 @@
    (let ((t (make-hashtable)))
       (for-each (lambda (e)
 		   (hashtable-put! t (car e) (cadr e)))
-		'(("iexcl" "&#161;")
+		'(("hyphen" "&shy;")
+		  ("iexcl" "&#161;")
 		  ("cent" "&#162;")
 		  ("pound" "&#163;")
 		  ("currency" "&#164;")

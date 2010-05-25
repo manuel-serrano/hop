@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue May 11 16:59:53 2010 (serrano)                */
+;*    Last change :  Fri May 21 12:03:07 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -23,7 +23,8 @@
 	    __hop_charset
 	    __hop_img
 	    __hop_hop-mathml
-	    __hop_wiki-syntax)
+	    __hop_wiki-syntax
+	    __hop_hop-sym)
    
    (static  (class state
 	       markup::symbol
@@ -203,7 +204,7 @@
 ;*---------------------------------------------------------------------*/
 (define *wiki-grammar*
    (regular-grammar ((punct (in "+*=/_-$#%!`'"))
-		     (blank (in "<>^|:~;,(){}[] \\\n"))
+		     (blank (in "<>^|:~;,(){}[] \n"))
 		     (letter (out "<>+^|*=/_-$#%:~;,\"`'(){}[]! \\\n"))
 		     syn state result trcount dbgcount charset env)
 
@@ -436,7 +437,7 @@
 			(add-expr! ((wiki-syntax-pre syn)
 				    "File not found -- " path)))
 		       (else
-			(warning 'wiki-parser "Can't find file: " path)
+			(warning 'wiki-parser "Can't find file: " name)
 			(add-expr! ((wiki-syntax-pre syn)
 				    "Cannot find file in path -- " name)))))))
 	    ((+ (or (out #\<) (: "<" (out "/"))))
@@ -509,6 +510,11 @@
        (add-expr! (the-html-string))
        (ignore))
 
+      ;; hyphen
+      ((: #\\ #\\)
+       (add-expr! ((wiki-syntax-hyphen syn) "\\\\"))
+       (ignore))
+
       ;; paragraphs
       ((bol (: "~~" (? (: #\: (+ (out " \t\n"))))))
        (when (is-state? 'p) (pop-state!))
@@ -520,11 +526,8 @@
 	  (enter-block! 'p
 			(lambda expr
 			   (let ((rev (reverse! expr)))
-			      (if (and (pair? rev) (equal? "\n" (car rev)))
-				  (apply (wiki-syntax-p syn)
-					 (append args (reverse! (cdr rev))))
-				  (apply (wiki-syntax-p syn)
-					 (append args (reverse! rev))))))
+			      (apply (wiki-syntax-p syn)
+				     (append args (reverse! rev)))))
 			#f
 			#f))
        (read/rp skip-space-grammar (the-port))
@@ -734,7 +737,7 @@
 		 (add-expr! (the-string))
 		 (ignore)))))
       
-      ((: "<" (out #\< #\> #\/) (* (out #\>)) ">")
+      ((: "<" (out #\< #\> #\/) (* (out #\/ #\>)) ">")
        (let ((id (the-symbol)))
 	  (case id
 	     ((<del>)
@@ -809,7 +812,7 @@
 		    (else
 		     (add-expr! (the-html-string))))
 		 (ignore))))))
-      ((: "</" (+ (out #\>)) ">")
+      ((: "</" (+ (out #\< #\> #\/)) ">")
        (let ((id (the-symbol)))
 	  (case id
 	     ((</del> </sup> </sub>)
@@ -827,6 +830,13 @@
 			    (add-expr! (the-html-string))))
 		     (add-expr! (the-html-string)))
 		 (ignore))))))
+      ((: "<" (+ (out #\< #\> #\/)) "/>")
+       (let* ((id (string->symbol (string-append "<" (the-substring 1 -2) ">")))
+	      (proc ((wiki-syntax-plugins syn) id)))
+	     (if (procedure? proc)
+		 (add-expr! (proc (the-port) #f #f))
+		 (add-expr! (the-html-string)))
+	  (ignore)))
 
       ;; math
       ((: "$$" (+ (or (out #\$) (: #\$ (out #\$)))) "$$")
@@ -989,7 +999,7 @@
        (ignore))
        
       ;; single escape characters
-      ((or punct blank)
+      ((or punct blank #\\)
        (add-expr! (the-html-string))
        (ignore))
 

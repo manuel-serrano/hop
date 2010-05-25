@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Tue Mar  9 13:03:42 2010 (serrano)                */
+;*    Last change :  Thu May 20 08:45:55 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -50,6 +50,7 @@
 	    (hss-response::%http-response ::http-request ::bstring)
 	    (hss->css ::bstring)
 	    (hss->css-url ::bstring)
+	    (hop-get-hss ::bstring)
 	    (hop-load-hss ::bstring)
 	    (hop-read-hss ::input-port)
 
@@ -344,24 +345,24 @@
        (user-access-denied req)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-load-hss ...                                                 */
+;*    hop-get-hss ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (hop-load-hss path)
+(define (hop-get-hss path)
    (with-lock hss-mutex
       (lambda ()
 	 (let ((cache (cache-get hss-cache path)))
 	    (if (string? cache)
 		cache
-		(let* ((hss (%hop-load-hss path))
+		(let* ((hss (hop-load-hss path))
 		       (cache (cache-put! hss-cache path hss)))
 		   (if (string? cache)
 		       cache
 		       hss)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    %hop-load-hss ...                                                */
+;*    hop-load-hss ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (%hop-load-hss file)
+(define (hop-load-hss file)
    (if (file-exists? file)
        (let ((p (open-input-file file))
 	     (mod (eval-module))
@@ -649,17 +650,19 @@
 				  "Unclosed list"
 				  (input-port-name ip)
 				  pos)
-	     (let ((val (with-handler
-			   (lambda (e)
-			      (if (&eval-warning? e)
-				  (begin
-				     (warning-notify e)
-				     #unspecified)
-				  (raise e)))
-			   (eval exp))))
-		(cond
-		   ((string? val) val)
-		   (else #unspecified)))))))
+	     (with-handler
+		(lambda (e)
+		   (cond
+		      ((&eval-warning? e)
+		       (warning-notify e)
+		       #unspecified)
+		      ((and (&exception? e) (not (&exception-location e)))
+		       (&exception-location-set! e pos)
+		       (&exception-fname-set! e (input-port-name ip))
+		       (raise e))
+		      (else
+		       (raise e))))
+		(eval exp))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-display ::css-hash-color ...                              */

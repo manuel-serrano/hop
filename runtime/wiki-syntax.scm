@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue May 11 15:42:43 2010 (serrano)                */
+;*    Last change :  Fri May 21 11:39:35 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -21,6 +21,7 @@
 	    __hop_read
 	    __hop_charset
 	    __hop_img
+	    __hop_hop-sym
 	    __hop_hop-mathml)
    
    (export  (class wiki-syntax
@@ -72,6 +73,7 @@
 					    (<A> :href href node))))
 	       (keyword::procedure (default (lambda (x) x)))
 	       (type::procedure (default (lambda (x) x)))
+	       (hyphen::procedure (default (lambda (x) (<SYM> 'hyphen))))
 	       (plugins::procedure (default (lambda (id) #f)))
 	       (verbatims::procedure (default (lambda (id) #f)))
 	       (prehook::procedure (default (lambda () #f)))
