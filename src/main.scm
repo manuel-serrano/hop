@@ -35,7 +35,7 @@
 
    (cond-expand
       (hop-as-library (extern (export main "hop_main"))
-		      (export (main x)))
+                      (export (main x)))
       (else (main main))))
 
 
@@ -81,11 +81,18 @@
    ;; set the library load path
    (bigloo-library-path-set! (hop-library-path))
    ;; preload the hop libraries
-   (for-each (lambda (l)
-		(cond-expand
-		   (hop-as-library (eval `(library-load_e ',l)))
-		   (else (eval `(library-load ',l)))))
-	     (hop-preload-libraries))
+   (cond-expand
+      (static
+         (pragma "BGl_modulezd2initializa7ationz75zz__hop_makelibz00(0,\"foo\")")
+         ; TODO: pick the dir from the config
+         (load "/data/data/fr.inria.hop/hoplib/hop.init"))
+      (else
+         (for-each (lambda (l)
+                     (cond-expand
+                        (hop-as-library (eval `(library-load_e ',l)))
+                        (static '())
+                        (else (eval `(library-load ',l)))))
+                   (hop-preload-libraries))))
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set! (lambda (f) (hop-load-modified f :abase #f)))
