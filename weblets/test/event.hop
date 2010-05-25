@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Thu Apr  8 14:45:58 2010 (serrano)                */
+;*    Last change :  Sat May  8 06:33:16 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
@@ -37,6 +37,7 @@ events succeeded, you should see an acknowledge.")
 		(b3 (<SPAN> :style "color: red" "...waiting"))
 		(b4 (<SPAN> :style "color: red" ""))
 		(b5 (<SPAN> :style "color: red" ""))
+		(b6 (<SPAN> :style "color: gray; font-style: italic" ""))
 		(b2 (<DIV> :style "padding-top: 3ex"
 		       ~(add-event-listener! $b
 					     "mouseover"
@@ -92,41 +93,51 @@ events succeeded, you should see an acknowledge.")
 	       ~(define (add-text e)
 		   (when e.value
 		      (innerHTML-set! $b5 (apply string-append e.value))))
-	       ~(add-event-listener! $evt1
-				     "server"
-				     (lambda (e)
-					(when e.value
-					   (innerHTML-set! $b3 e.value)))
-				     #t)
+	       ~(add-event-listener! window "ready"
+		   (lambda (e)
+		      (let ((imp (cond
+				    ((hop-config 'websocket)
+				     "websocket")
+				    ((hop-config 'xhr_multipart)
+				     "xhr/multipart")
+				    ((hop-config 'flash_external_interface)
+				     "flash")
+				    (else
+				     "long polling"))))
+			 (innerHTML-set! $b6 imp))))
+	       ~(add-event-listener! $evt1 "server"
+		   (lambda (e)
+		      (when e.value
+			 (innerHTML-set! $b3 e.value)))
+		   #t)
 	       ~(add-event-listener! $evt2 "server" add #t)
 	       ~(add-event-listener! $evt3 "server" add #t)
 	       ~(add-event-listener! $evt4 "server" add-text #t)
-	       ~(add-event-listener! document
-				     "server"
-				     (lambda (e)
-					(cond
-					   ((equal? e.value $evt1)
-					    (set! e.value "ok"))
-					   ((equal? e.value $evt2)
-					    (set! e.value "A"))
-					   ((equal? e.value $evt3)
-					    (set! e.value "B")))))
-	       ~(add-event-listener! document
-				     "serverready"
-				     (lambda (e)
-					(with-hop ($(service :ttl 1 ()
-						       (hop-event-signal!
-							evt1 evt1)
-						       (hop-event-signal!
-							evt2 evt2)
-						       (hop-event-signal!
-							evt3 evt3)
-						       (hop-event-signal!
-							evt4 (list "foo" "\"" "bar")))))))
+	       ~(add-event-listener! document "server"
+		   (lambda (e)
+		      (cond
+			 ((equal? e.value $evt1)
+			  (set! e.value "ok"))
+			 ((equal? e.value $evt2)
+			  (set! e.value "A"))
+			 ((equal? e.value $evt3)
+			  (set! e.value "B")))))
+	       ~(add-event-listener! document "serverready"
+		   (lambda (e)
+		      (with-hop ($(service :ttl 1 ()
+				     (hop-event-signal!
+				      evt1 evt1)
+				     (hop-event-signal!
+				      evt2 evt2)
+				     (hop-event-signal!
+				      evt3 evt3)
+				     (hop-event-signal!
+				      evt4 (list "foo" "\"" "bar")))))))
 	       (<H4> "Client events")
 	       b
 	       b2
 	       (<H4> "Server events")
+	       (<DIV> "client-side implementation: " b6)
 	       (<DIV> "Server event: " b3
 		      ", Server event 2 (AB or BA when okay): " b4)
 	       (<DIV> "Server string event: should be [foo\"bar]: " b5)

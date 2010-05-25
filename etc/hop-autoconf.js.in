@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue Apr 20 10:21:59 2010 (serrano)                */
+/*    Last change :  Mon May 10 12:11:37 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -86,7 +86,7 @@ function hop_Config() {
   if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.cpu_speed = 40;
   if( navigator.platform.indexOf( "armv5" ) >= 0 ) this.cpu_speed = 30;
   if( navigator.platform.indexOf( "WinCE" ) >= 0 ) this.cpu_speed = 30;
-  
+
   /* gpu speed */
   this.gpu_speed = 100;
   if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.gpu_speed = 30;
@@ -103,7 +103,13 @@ function hop_Config() {
   /* html5 */
   var audio = document.createElement( "audio" );
   this.html5_video = "play" in document.createElement( "video" );
-  this.html5_audio = "play" in audio && audio.constructor === HTMLAudioElement;
+
+  if( !"HTMLAudioElement" in window ) {
+     this.html5_audio = false;
+  } else {
+    this.html5_audio = 
+       ("play" in audio) && (audio.constructor === window[ "HTMLAudioElement" ]);
+  }
 
   /* Geolocation */
   this.geolocation = (navigator.geolocation ? true : false);
@@ -236,10 +242,12 @@ function hop_config_get( key ) {
       }
       
       return l;
-   } else if( !sc_isSymbol( key ) ) {
+   } else if( !sc_isSymbol( key ) && !sc_isKeyword( key ) ) {
       return false;
-   } else {
+   } else if( sc_isSymbol( key ) ) {
       return hop_config[ sc_symbol2jsstring( key ) ];
+   } else {
+      return hop_config[ sc_keyword2jsstring( key ) ];
    }
 }
 
@@ -356,7 +364,7 @@ if( !("HTMLElement" in window) ) {
 	 return (obj != null) && (obj instanceof HTMLElement);
       }
    } else {
-      /* this is konqueror */
+      /* this is (an old) konqueror */
       var ifproto = ifr.__proto__;
       hop_is_html_element = function hop_is_html_element( obj ) {
 	 return (obj instanceof HTMLElement) || (obj.__proto__ == ifproto);

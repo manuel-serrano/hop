@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Fri Apr 23 17:15:49 2010 (serrano)                */
+/*    Last change :  Mon May 10 11:06:08 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -260,7 +260,11 @@ HTMLAudioElement.prototype.stop = function() {
    if( backend.url ) {
       with_hop( hop_apply_url( backend.url, [ Sackstop, 0 ] ), backend.err );
    }
-   return backend.pause();
+
+   if( backend.state !== Spause )   
+      return backend.pause();
+   else
+      return false;
 };
 
 // close
@@ -452,10 +456,27 @@ function hop_audio_html5_init( backend ) {
    backend.playlistindex = -1;
    backend.playlist = null;
    backend.loadedurl = false;
-   backend.isstopped = false;
+   backend.isStopped = false;
+   backend.nativePause = backend.pause;
+   backend.state = Sstop;
 
-   var glop = false;
-   
+   backend.pause = function() {
+      var backend = this;
+      backend.isStopped = false;
+
+      if( backend.state === Spause ) {
+	 if( backend.url ) {
+	    with_hop( hop_apply_url( backend.url, [ Sackplay, 0 ] ), backend.err );
+	 }
+	 return backend.play();
+      } else {
+	 if( backend.url ) {
+	    with_hop( hop_apply_url( backend.url, [ Sackpause, 0 ] ), backend.err );
+	 }
+	 return backend.nativePause();
+      }
+   };
+
    hop_add_event_listener( backend, "durationchange",
 			   function( e ) {
 			      if( backend.duration > 0 ) {

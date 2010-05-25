@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Apr 20 13:54:07 2010 (serrano)                */
+;*    Last change :  Sat May  8 09:39:41 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -359,7 +359,7 @@
 		     (let* ((hd (http-request-header (current-request)))
 			    (host (assq host: hd))
 			    (key (get-server-event-key (or port 0))))
-			(tprint "server-info key=" key)
+;* 			(tprint "server-info key=" key)                */
 			(if (pair? host)
 			    (let ((s (string-split (cdr host) ":")))
 			       (vector (car s) port key))
@@ -538,15 +538,38 @@
 	 (request req)))
 
    (define (multipart-register-event! req name)
+      
+      (define (server-multipart-register-event! req name)
+	 (instantiate::http-response-persistent
+	    (body (format "HTTP/1.1 200 Ok\r\nContent-type: multipart/x-mixed-replace; boundary=\"~a\"\n\n--~a\nContent-type: text/xml\n\n<r name='~a'></r>\n--~a\n"
+			  hop-multipart-key hop-multipart-key name hop-multipart-key))
+	    (request req)))
+
+      (define (proxy-multipart-register-event! req name)
+	 ;; multipart never sends a complete answer. In order to traverse
+	 ;; proxy, we use a chunked response
+	 (let ((p (socket-output (http-request-socket req)))
+	       (content (format "--~a\nContent-type: text/xml\n\n<r name='~a'></r>\n--~a\n"
+				hop-multipart-key name hop-multipart-key)))
+	    (output-port-flush-hook-set!
+	     p (lambda (port size)
+		  (output-port-flush-hook-set! port chunked-flush-hook)
+		  ""))
+	    (instantiate::http-response-persistent
+	       (body (format "HTTP/1.1 200 Ok\r\nTransfer-Encoding: chunked\r\nContent-type: multipart/x-mixed-replace; boundary=\"~a\"\r\n\r\n~a\r\n~a"
+			     hop-multipart-key 
+			     (integer->string (string-length content) 16)
+			     content))
+	       (request req))))
+
 ;*       (tprint "***** multipart-register-event, name=" name)         */
       (hashtable-update! *multipart-socket-table*
 			 name
 			 (lambda (l) (cons req l))
 			 (list req))
-      (instantiate::http-response-persistent
-	 (body (format "HTTP/1.1 200 Ok\r\nContent-type: multipart/x-mixed-replace; boundary=\"~a\"\n\n--~a\nContent-type: text/xml\n\n<r name='~a'></r>\n--~a\n"
-		       hop-multipart-key hop-multipart-key name hop-multipart-key))
-	 (request req)))
+      ;; if it is possible to discover that we are not accessing the server
+      ;; via a proxy, use server-multipart-register-event!
+      (proxy-multipart-register-event! req name))
 
    (define (websocket-register-event! req name key)
 ;*       (tprint "***** websocket-register-event, name=" name " key=" key) */

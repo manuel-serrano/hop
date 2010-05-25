@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Tue Apr 13 10:16:44 2010 (serrano)                */
+/*    Last change :  Sun May  9 06:31:32 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -218,12 +218,26 @@ function hop_servevt_enveloppe_parse( val, xhr, server_ready ) {
 	 }
 	 return true;
       } else {
-	 alert( "unknow event message: [" + xhr.responseText + "]" );
+	 hop_servevt_enveloppe_parse_error( xhr );
       }
    } else {
-      alert( "unknow event message: [" + xhr.responseText + "]" );
+      hop_servevt_enveloppe_parse_error( xhr );
    }
    return server_ready;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_servevt_enveloppe_parse_error ...                            */
+/*---------------------------------------------------------------------*/
+function hop_servevt_enveloppe_parse_error( xhr ) {
+   exc = new Error( "bad server event enveloppe" );
+   
+   exc.hopStack = false;
+   exc.name = "HopServevtError";
+   exc.scObject = false;
+   exc.message = xhr.responseText === "" ? "Empty enveloppe" : xhr.responseText;
+   
+   hop_report_exception( exc );
 }
 
 /*---------------------------------------------------------------------*/

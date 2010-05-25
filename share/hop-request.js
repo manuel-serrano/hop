@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Apr 20 10:34:36 2010 (serrano)                */
+/*    Last change :  Sat May  8 18:30:39 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -399,6 +399,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
        hop_config.navigator_family != "chrome" &&
        hop_config.navigator_family != "webkit" )
       xhr.setRequestHeader( 'Connection', 'close' );
+   
    xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
    
    if( henv.length > 0 ) {
@@ -407,6 +408,12 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 
    if( auth ) {
       xhr.setRequestHeader( 'Authorization', auth );
+   }
+
+   if( xhr.multipart === true ) {
+      /* This header is needed to let the server */
+      /* disable timeout for this connection     */
+      xhr.setRequestHeader( 'Xhr-Multipart', "true" );
    }
    
    try {
