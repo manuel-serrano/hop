@@ -1,5 +1,7 @@
 #! /bin/bash
 
+# TODO: make ANDROIDROOT, BGL_PREFIX, XBGL_PREFIX and BS_HOPDIR parameters
+
 if [ "$(basename $0)" == "build-android.sh" ]; then
   set -e
 fi
@@ -27,27 +29,24 @@ export DROID_TARGET=5
 export CC=$ANDROIDROOT/droid-wrapper/bin/droid-gcc
 
 # so ant works :|
-export JAVA_HOME=/usr/lib/jvm/java-6-sun-1.6.0.17
+export JAVA_HOME=/usr/lib/jvm/java-6-sun
 
 # the bootstraping bigloo libdir dir
 export BGL_PREFIX=$HOME/local
 # the bigloo compiled for Android
-# TODO: make bigloo install the _e.a files
-# export XBGL_PREFIX=$HOME/local/soft/bigloo-hg-android
-# export XBGL_LIBDIR=$XBGL_PREFIX/lib/bigloo/3.3b
-export XBGL_PREFIX=$HOME/src/works/inria/android/live/bigloo-hg
-export XBGL_LIBDIR=$XBGL_PREFIX/lib/3.3b
+export XBGL_PREFIX=$HOME/local/soft/bigloo-hg-android
+export XBGL_LIBDIR=$XBGL_PREFIX/lib/bigloo/3.3b
 
 # the bootstraping hop dir
 # hopc is not installed!?! so we must use a source directory
 # export BS_HOPDIR=$HOME/local
-export BS_HOPDIR=$HOME/src/works/inria/bootstrap/hop-live
+export BS_HOPDIR=$HOME/src/works/inria/hop/live/hop-hg
 # export BS_HOPDIR=$HOME/src/works/inria/bootstrap/hop-2.0.0
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BS_HOPDIR/lib
 
 prefix=/data/data/fr.inria.hop
 install_prefix=$(pwd)/arch/android/assets
-libdir=$install_prefix/lib
+libdir=$install_prefix/hoplib
 
 # weblets="wizard,hop,hz,shutdown,info"
 
@@ -65,10 +64,12 @@ function install {
 if [ "$1" == "configure" -o "$1" == "all" ]; then
   ./configure \
     --prefix=$prefix \
+    --libdir=$prefix/hoplib \
     --disable-threads \
     --cc=$CC \
     --bigloolibdir=$XBGL_LIBDIR \
-    --devel
+    --devel \
+    --srfi=static
 
   if [ "$1" == "configure" ]; then
     shift
@@ -85,9 +86,11 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
   # but it will be enough to actually build it by hand
   # and then the latter make there below will continue the building
   nice -n 19 make || true
+  # nice -n 19 make --debug=v || true
   ( cd widget
     for i in *.hop; do
       echo $BS_HOPDIR/bin/hopc $i -o o/${i%.hop}.o -c
+      # TODO: this command is too specific. try to use bigloo's and hop's config
       nice -n 19 $BS_HOPDIR/bin/hopc $i -o o/${i%.hop}.o -c \
         --bigloo=$BGL_PREFIX/bin/bigloo -L $BS_HOPDIR/lib \
         --share-dir $pwd/share -- \
@@ -107,7 +110,8 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
     done
   )
   ( cd src
-    bigloo -fsharing -Wall -wslots -static-all-bigloo \
+    # TODO: this command is too specific. try to use bigloo's and hop's config
+    $BGL_PREFIX/bin/bigloo -fsharing -Wall -wslots -static-all-bigloo \
       -L $pwd/lib -lib-dir $XBGL_LIBDIR -cc $CC \
       -copt "-g -DPLATFORM_ANDROID -I$XBGL_LIBDIR" \
       -o $pwd/bin/hop \
@@ -137,21 +141,39 @@ if [ "$1" == "apk" -o "$1" == "all" ]; then
   # we have to install by hand because prefix is needed for the host layout
   source .hoprelease
   rm -rf $install_prefix
-  for file in bin/hop etc/hoprc.hop lib/*.{so,init}; do
+
+  # binary and config to the same path
+  for file in bin/hop etc/hoprc.hop; do
     install "$file" "$install_prefix/$file"
   done
+  # for file in lib/*.so; do
+  #   install "$file" "$install_prefix/libs"
+  # done
+  # files related to libs to hoplib
+  for file in lib/*.init; do
+    install "$file" "$libdir/$(basename $file)"
+  done
+  # misc
   for file in share/{buttons,icons,*.js,*.hss,*.scm,.afile,hop-runtime.sch}; do
     install "$file" "$install_prefix/share/hop/$(basename $file)"
   done
   # don't install all the weblets
   for file in weblets/{wizard,hop,hz,shutdown,info}; do
-    install "$file" "$install_prefix/lib/hop/$major/weblets/$(basename $file)"
+    install "$file" "$install_prefix/hoplib/hop/$major/weblets/$(basename $file)"
   done
 
   # throw in bigloo's libs too
-  cp -v $XBGL_LIBDIR/libbigloo{gc,{,web,multimedia}_s}*.so $libdir
-  cp -v $XBGL_LIBDIR/libbigloo{web,multimedia}_e*.so $libdir
-  cp -v $XBGL_LIBDIR/*.init $libdir
+  # install $XBGL_LIBDIR/libbigloo{gc,{,web,multimedia}_s}*.so $install_prefix/libs
+  # install $XBGL_LIBDIR/libbigloo{web,multimedia}_e*.so $install_prefix/libs
+  install $XBGL_LIBDIR/*.init $libdir
+
+  # the apkbuilder ignores the .afiles, so we change their names
+  # and the installer changes them back
+  for afile in $(find arch/android/assets -name .afile); do
+    # dot.afile
+    dot_afile=$(dirname $afile)/dot$(basename $afile)
+    mv -v $afile $dot_afile
+  done
 
   (
     cd arch/android
