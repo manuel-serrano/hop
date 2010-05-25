@@ -13,9 +13,10 @@ ANDROIDROOT=$HOME/src/works/inria/android
 export ANDSRC=$ANDROIDROOT/eclair-git
 export ANDSDK=$ANDROIDROOT/android-sdk-linux
 # the sdk version 4 is not working
+# $HOME/src/works/inria/android/android-sdk-linux
 
 # we can't fire an emulator automatically, so just do it yourself by hand
-export ANDROID_SERIAL="emulator-5554"
+# export ANDROID_SERIAL="emulator-5554"
 # export ANDROID_SERIAL="emulator-5556"
 
 # droid-wrapper
@@ -200,12 +201,6 @@ fi
 
 if [ "$1" == "unpack" -o "$1" == "all" ]; then
   $ANDSDK/tools/adb shell monkey -p fr.inria.hop 1
-  ( cd arch/android/assets
-    find . -name .afile | while read file; do
-      echo "pushing $file -> /data/data/fr.inria.hop/$file"
-      $ANDSDK/tools/adb push $file /data/data/fr.inria.hop/$file
-    done
-  )
   if [ "$1" == "unpack" ]; then
     shift
   fi
