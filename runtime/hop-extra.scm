@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu May 20 08:45:45 2010 (serrano)                */
+;*    Last change :  Wed May 26 14:12:24 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -310,7 +310,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 	 (if (null? res)
 	     (cond
 		((not (file-exists? f))
-		 (error '<HEAD> "Can't find include file" f))
+		 (error '<HEAD> "include file does not exist" f))
 		((or (is-suffix? f "hss") (is-suffix? f "css"))
 		 (list (css f #f inl)))
 		((or (is-suffix? f "scm") (is-suffix? f "hop"))

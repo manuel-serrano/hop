@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Wed Mar 31 14:34:27 2010 (serrano)                */
+;*    Last change :  Wed May 26 15:53:11 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
@@ -107,7 +107,7 @@
 		   (raise e)))
 	    (with-url url
 	       (lambda (s) s)
-	       :timeout 10000
+	       :timeout (hopsh-timeout)
 	       :fail (lambda (xhr)
 			(case (xml-http-request-status xhr)
 			   ((404)

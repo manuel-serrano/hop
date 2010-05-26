@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Thu May 20 08:45:55 2010 (serrano)                */
+;*    Last change :  Wed May 26 17:04:19 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -77,6 +77,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    hss-bind-type-compiler! ...                                      */
 ;*---------------------------------------------------------------------*/
+(define (hss-bind-type-compiler!.new type element body properties)
+   (with-lock *hss-compiler-mutex*
+      (lambda ()
+	 (let* ((p (open-input-string (format "~a {}" element)))
+		(ast (css->ast p :extension hss-extension))
+		(compiler (with-access::css-stylesheet ast (rule*)
+			     (with-access::css-ruleset (caar rule*) (selector+)
+				(tprint "COMPILER: " type " " (caar selector+))
+				(instantiate::hss-compiler
+				   (element (car selector+))
+				   (body body)
+				   (properties properties))))))
+	    (hashtable-put! *hss-type-env*
+			    (string-downcase (symbol->string type))
+			    compiler)))))
+
 (define (hss-bind-type-compiler! type element body properties)
    (with-lock *hss-compiler-mutex*
       (lambda ()

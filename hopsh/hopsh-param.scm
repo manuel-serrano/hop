@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hopsh/hopsh-param.scm                   */
+;*    serrano/prgm/project/hop/2.1.x/hopsh/hopsh-param.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Oct 18 11:46:22 2006 (serrano)                */
-;*    Copyright   :  2004-06 Manuel Serrano                            */
+;*    Last change :  Wed May 26 15:53:05 2010 (serrano)                */
+;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -26,7 +26,10 @@
 	    (hopsh-eval-service-set! ::bstring)
    
 	    (hopsh-enable-https::bool)
-	    (hopsh-enable-https-set! ::bool))
+	    (hopsh-enable-https-set! ::bool)
+
+	    (hopsh-timeout::int)
+	    (hopsh-timeout-set! ::int))
    
    (eval    (export-exports)))
 
@@ -53,3 +56,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopsh-enable-https
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopsh-timeout ...                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hopsh-timeout
+   10000)

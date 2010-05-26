@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Tue Apr 13 17:00:21 2010 (serrano)                */
+;*    Last change :  Tue May 25 14:24:59 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -53,6 +53,7 @@
     opacity: 0.97;
     background: white;
     z-index: 10000001;
+    text-align: left;
     border: 3px dashed red; padding: 4px;
     color: black;
     overflow: hidden")

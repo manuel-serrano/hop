@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Tue May 11 06:22:54 2010 (serrano)                */
+;*    Last change :  Wed May 26 12:53:21 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -119,7 +119,7 @@
 ;*    dom-get-element-by-id ::xml-element ...                          */
 ;*---------------------------------------------------------------------*/
 (define-method (dom-get-element-by-id obj::xml-element id)
-   (if (string=? id (xml-element-id obj))
+   (if (and (string? (xml-element-id obj)) (string=? id (xml-element-id obj)))
        obj
        (dom-get-element-by-id* (xml-element-body obj) id)))
 
