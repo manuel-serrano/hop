@@ -84,6 +84,7 @@
    (cond-expand
       (static
          (pragma "BGl_modulezd2initializa7ationz75zz__hop_makelibz00(0,\"foo\")")
+         (pragma "BGl_modulezd2initializa7ationz75zz__hopwidgetzd2makelibzd2(0,\"foo\")")
          ; TODO: pick the dir from the config
          (load "/data/data/fr.inria.hop/hoplib/hop.init"))
       (else
