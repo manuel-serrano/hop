@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Thu Apr 22 14:36:56 2010 (serrano)                */
+;*    Last change :  Thu May 27 13:52:25 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -376,7 +376,10 @@
        ((IDENTIFIER COLON expression)
 	(list (symbol->keyword (car IDENTIFIER)) expression))
        ((CONSTANT COLON expression)
-	(list (car CONSTANT) expression)))
+	(let ((v (car CONSTANT)))
+	   (if (string? v)
+	       (list (string->keyword v) expression)
+	       (list v expression)))))
 
       ;; object
       (object

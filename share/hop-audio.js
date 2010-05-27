@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Mon May 10 11:06:08 2010 (serrano)                */
+/*    Last change :  Thu May 27 16:36:57 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -226,173 +226,175 @@ HopAudioServerBackend.prototype.update = function() {
 /*---------------------------------------------------------------------*/
 /*    HTMLAudioElement                                                 */
 /*---------------------------------------------------------------------*/
-// playurl
-HTMLAudioElement.prototype.playurl = function( url, start ) {
-   this.isStopped = false;
-   if( this.loadedurl !== url ) {
-      this.loadedurl = false;
-      this.src = url;
-      this.autoplay = true;
-      this.load( url );
-   } else {
-      this.play();
-   }
-};
-
-// playlist_play
-HTMLAudioElement.prototype.playlist_play = function( index ) {
-   var backend = this;
-   backend.isStopped = false;
-   backend.playlistindex = index;
-
-   backend.playurl( sc_listRef( backend.playlist, index ), 0 );
-   
-   if( backend.url ) {
-      with_hop( hop_apply_url( backend.url, [ Sackplay, index ] ), backend.err );
-   }
-};
-
-// stop
-HTMLAudioElement.prototype.stop = function() {
-   var backend = this;
-   backend.isStopped = true;
-
-   if( backend.url ) {
-      with_hop( hop_apply_url( backend.url, [ Sackstop, 0 ] ), backend.err );
-   }
-
-   if( backend.state !== Spause )   
-      return backend.pause();
-   else
-      return false;
-};
-
-// close
-HTMLAudioElement.prototype.close = function() {
-   this.isStopped = true;
-   this.pause();
-   hop_audio_invoke_listeners( this.audio, "close" );
-};
-
-// volume_get
-HTMLAudioElement.prototype.volume_get = function() {
-   return Math.round( this.volume * 100 );
-};
-
-// volume_set
-HTMLAudioElement.prototype.volume_set = function( v ) {
-   var backend = this;
-   backend.volume = v / 100;
-   
-   if( backend.url ) {
-      with_hop( hop_apply_url( backend.url, [ Sackvolume, v ] ), backend.err );
-   }
-   return v;
-};
-
-// duration_get
-HTMLAudioElement.prototype.duration_get = function() {
-   return this.duration ? Math.round( this.duration ) : 0;
-};
-
-// position_get
-HTMLAudioElement.prototype.position_get = function() {
-   return this.currentTime ? Math.round( this.currentTime ) : 0;
-};
-
-// position_set
-HTMLAudioElement.prototype.position_set = function( val ) {
-   this.currentTime = val;
-   return val;
-};
-
-// pan_get
-HTMLAudioElement.prototype.pan_get = function() {
-   return 0;
-};
-
-// pan_set
-HTMLAudioElement.prototype.pan_set = function( v ) {
-   return 0;
-};
-
-// playlist_index_get
-HTMLAudioElement.prototype.playlist_index_get = function() {
-   return this.playlistindex;
-};
-
-// playlist_get
-HTMLAudioElement.prototype.playlist_get = function() {
-   return this.playlist;
-};
-
-// playlist_set   
-HTMLAudioElement.prototype.playlist_set = function( playlist, autorun ) {
-   var backend = this;
-
-   var html5_canplay = function( o ) {
-      if( typeof o === "string" ) {
-	 return o;
+if( hop_config.html5_audio ) {
+   // playurl
+   HTMLAudioElement.prototype.playurl = function( url, start ) {
+      this.isStopped = false;
+      if( this.loadedurl !== url ) {
+	 this.loadedurl = false;
+	 this.src = url;
+	 this.autoplay = true;
+	 this.load( url );
+      } else {
+	 this.play();
       }
-      if( !sc_isPair( o ) ) {
+   };
+
+   // playlist_play
+   HTMLAudioElement.prototype.playlist_play = function( index ) {
+      var backend = this;
+      backend.isStopped = false;
+      backend.playlistindex = index;
+
+      backend.playurl( sc_listRef( backend.playlist, index ), 0 );
+   
+      if( backend.url ) {
+	 with_hop( hop_apply_url( backend.url, [ Sackplay, index ] ), backend.err );
+      }
+   };
+
+   // stop
+   HTMLAudioElement.prototype.stop = function() {
+      var backend = this;
+      backend.isStopped = true;
+
+      if( backend.url ) {
+	 with_hop( hop_apply_url( backend.url, [ Sackstop, 0 ] ), backend.err );
+      }
+
+      if( backend.state !== Spause )   
+	 return backend.pause();
+      else
+	 return false;
+   };
+
+   // close
+   HTMLAudioElement.prototype.close = function() {
+      this.isStopped = true;
+      this.pause();
+      hop_audio_invoke_listeners( this.audio, "close" );
+   };
+
+   // volume_get
+   HTMLAudioElement.prototype.volume_get = function() {
+      return Math.round( this.volume * 100 );
+   };
+
+   // volume_set
+   HTMLAudioElement.prototype.volume_set = function( v ) {
+      var backend = this;
+      backend.volume = v / 100;
+   
+      if( backend.url ) {
+	 with_hop( hop_apply_url( backend.url, [ Sackvolume, v ] ), backend.err );
+      }
+      return v;
+   };
+
+   // duration_get
+   HTMLAudioElement.prototype.duration_get = function() {
+      return this.duration ? Math.round( this.duration ) : 0;
+   };
+
+   // position_get
+   HTMLAudioElement.prototype.position_get = function() {
+      return this.currentTime ? Math.round( this.currentTime ) : 0;
+   };
+
+   // position_set
+   HTMLAudioElement.prototype.position_set = function( val ) {
+      this.currentTime = val;
+      return val;
+   };
+
+   // pan_get
+   HTMLAudioElement.prototype.pan_get = function() {
+      return 0;
+   };
+
+   // pan_set
+   HTMLAudioElement.prototype.pan_set = function( v ) {
+      return 0;
+   };
+
+   // playlist_index_get
+   HTMLAudioElement.prototype.playlist_index_get = function() {
+      return this.playlistindex;
+   };
+
+   // playlist_get
+   HTMLAudioElement.prototype.playlist_get = function() {
+      return this.playlist;
+   };
+
+   // playlist_set   
+   HTMLAudioElement.prototype.playlist_set = function( playlist, autorun ) {
+      var backend = this;
+
+      var html5_canplay = function( o ) {
+	 if( typeof o === "string" ) {
+	    return o;
+	 }
+	 if( !sc_isPair( o ) ) {
+	    return false;
+	 }
+	 while( sc_isPair( o ) ) {
+	    var e = o.car;
+
+	    if( typeof e === "string" ) {
+	       return e;
+	    }
+	    if( sc_isPair( e ) && sc_isPair( e.cdr ) ) {
+	       if( backend.canPlayType( e.car ) !== "" ) {
+		  return e.cdr.car;
+	       }
+	    }
+	    o = o.cdr;
+	 }
 	 return false;
       }
-      while( sc_isPair( o ) ) {
-	 var e = o.car;
 
-	 if( typeof e === "string" ) {
-	    return e;
-	 }
-	 if( sc_isPair( e ) && sc_isPair( e.cdr ) ) {
-	    if( backend.canPlayType( e.car ) !== "" ) {
-	       return e.cdr.car;
-	    }
-	 }
-	 o = o.cdr;
+      backend.playlist = sc_filterMap1( html5_canplay, playlist );
+      if( autorun ) backend.playlist_play( 0 );
+
+      if( backend.url ) {
+	 with_hop( hop_apply_url( backend.url, [ Sackplaylistset, backend.playlist ] ), backend.err );
       }
-      return false;
-   }
+   };
 
-   backend.playlist = sc_filterMap1( html5_canplay, playlist );
-   if( autorun ) backend.playlist_play( 0 );
+   // metadata_get
+   HTMLAudioElement.prototype.metadata_get = function() {
+      var song = this.loadedurl ? this.loadedurl : this.src;
 
-   if( backend.url ) {
-      with_hop( hop_apply_url( backend.url, [ Sackplaylistset, backend.playlist ] ), backend.err );
-   }
-};
+      if( typeof song === "string" ) {
+	 var a = url_decode( song ).split( "/" );
 
-// metadata_get
-HTMLAudioElement.prototype.metadata_get = function() {
-   var song = this.loadedurl ? this.loadedurl : this.src;
-
-   if( typeof song === "string" ) {
-      var a = url_decode( song ).split( "/" );
-
-      if( a.length >= 3 ) {
-	 return { title: a[ a.length - 1 ],
-	       album: a[ a.length - 2 ],
-	       artist: a[ a.length - 3 ] };
-	 if( a.length >= 2 ) {
+	 if( a.length >= 3 ) {
 	    return { title: a[ a.length - 1 ],
 		  album: a[ a.length - 2 ],
-		  artist: false };
+		  artist: a[ a.length - 3 ] };
+	    if( a.length >= 2 ) {
+	       return { title: a[ a.length - 1 ],
+		     album: a[ a.length - 2 ],
+		     artist: false };
+	    }
+	    if( a.length >= 1 )
+	       return { title: a[ a.length - 1 ],
+		     album: false,
+		     artist: false };
 	 }
-	 if( a.length >= 1 )
-	    return { title: a[ a.length - 1 ],
-		  album: false,
-		  artist: false };
-      }
-      return { title: a,
+	 return { title: a,
 	       album: false,
 	       artist: false };
-   } else {
-      return false;
-   }
-};
+      } else {
+	 return false;
+      }
+   };
 
-// update
-HTMLAudioElement.prototype.update = function() {
-   ;
+   // update
+   HTMLAudioElement.prototype.update = function() {
+      ;
+   }
 }
 
 /*---------------------------------------------------------------------*/
