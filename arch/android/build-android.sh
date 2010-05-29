@@ -59,18 +59,18 @@ function install {
 
     dir="$(dirname $dst)"
     mkdir -p "$dir"
-    cp -vr "$src" "$dst"
+    cp -vur "$src" "$dst"
 }
 
 if [ "$1" == "configure" -o "$1" == "all" ]; then
   ./configure \
     --prefix=$prefix \
     --libdir=$prefix/hoplib \
-    --disable-threads \
     --cc=$CC \
     --bigloolibdir=$XBGL_LIBDIR \
     --devel \
-    --srfi=static
+    --srfi=static \
+    --disable-threads
 
   if [ "$1" == "configure" ]; then
     shift
