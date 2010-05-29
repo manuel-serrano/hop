@@ -32,7 +32,7 @@ LOCAL_SRC_FILES:= \
 
 # All of the shared libraries we link against.
 LOCAL_SHARED_LIBRARIES := \
-	libutils
+	# libutils
 
 # No static libraries.
 LOCAL_STATIC_LIBRARIES :=
