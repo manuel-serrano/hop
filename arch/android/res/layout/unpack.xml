@@ -3,13 +3,21 @@
   android:orientation="vertical"
   android:layout_width="fill_parent"
   android:layout_height="fill_parent"
-  android:id="@+id/LinearLayout">
+  android:id="@+id/layout">
     <ScrollView android:layout_width="fill_parent"
       android:layout_height="fill_parent">
         <TextView
+          android:id="@+id/statusText"
           android:layout_width="fill_parent"
           android:layout_height="wrap_content"
-          android:text="Hello World, greetings from hop-2.0.0!"
-          android:id="@+id/StatusText"/>
+          android:text="Unpacking files needed for Hop"/>
+    </ScrollView>
+    <ScrollView android:layout_width="fill_parent"
+      android:layout_height="fill_parent">
+        <fr.inria.hop.EmulatorView
+          android:id="@+id/emulatorView"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_alignParentLeft="true"/>
     </ScrollView>
 </LinearLayout>
