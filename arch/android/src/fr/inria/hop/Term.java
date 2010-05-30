@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.term;
+package fr.inria.hop;
 
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -157,6 +157,7 @@ public class Term extends Activity {
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         Log.e(Term.LOG_TAG, "onCreate");
+        /*
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         mPrefs.registerOnSharedPreferenceChangeListener(
                 new SharedPreferences.OnSharedPreferenceChangeListener(){
@@ -166,9 +167,10 @@ public class Term extends Activity {
                         readPrefs();
                         updatePrefs();
                     }});
+        */
         readPrefs();
 
-        setContentView(R.layout.term_activity);
+        // setContentView(R.layout.term_activity);
 
         mEmulatorView = (EmulatorView) findViewById(EMULATOR_VIEW);
 
@@ -209,10 +211,10 @@ public class Term extends Activity {
 
             public void run() {
                 Log.i(Term.LOG_TAG, "waiting for: " + procId);
-               int result = Exec.waitFor(procId);
+                int result = Exec.waitFor(procId);
                 Log.i(Term.LOG_TAG, "Subprocess exited: " + result);
                 handler.sendEmptyMessage(result);
-             }
+            }
 
         };
         Thread watcher = new Thread(watchForDeath);
@@ -488,12 +490,15 @@ public class Term extends Activity {
         return event.isSystem();
     }
 
+    /*
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
+    */
 
+    /*
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -508,6 +513,7 @@ public class Term extends Activity {
         }
         return super.onOptionsItemSelected(item);
     }
+    */
 
     private void doPreferences() {
         startActivity(new Intent(this, TermPreferences.class));
@@ -2792,10 +2798,12 @@ class EmulatorView extends View implements GestureDetector.OnGestureListener {
     public EmulatorView(Context context, AttributeSet attrs,
             int defStyle) {
         super(context, attrs, defStyle);
+        /*
         TypedArray a =
                 context.obtainStyledAttributes(android.R.styleable.View);
         initializeScrollbars(a);
         a.recycle();
+        */
         commonConstructor();
     }
 

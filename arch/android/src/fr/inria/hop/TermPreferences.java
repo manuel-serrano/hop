@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.term;
+package fr.inria.hop;
 
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
@@ -26,7 +26,7 @@ public class TermPreferences extends PreferenceActivity {
         super.onCreate(savedInstanceState);
 
         // Load the preferences from an XML resource
-        addPreferencesFromResource(R.xml.preferences);
+        // addPreferencesFromResource(R.xml.preferences);
     }
 
 }

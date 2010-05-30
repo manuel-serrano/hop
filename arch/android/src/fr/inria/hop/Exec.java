@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.term;
+package fr.inria.hop;
 
 import java.io.FileDescriptor;
 
@@ -50,7 +50,7 @@ public class Exec
      */
     public static native FileDescriptor createSubprocess(
         String cmd, String arg0, String arg1, int[] processId);
-        
+
     /**
      * Set the widow size for a given pty. Allows programs
      * connected to the pty learn how large their screen is.
