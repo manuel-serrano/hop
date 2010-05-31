@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed May 12 08:30:06 2010 (serrano)                */
+;*    Last change :  Mon May 31 08:09:49 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -77,7 +77,7 @@
 
 	    (class xml-element::xml-markup
 	       (id read-only (default #unspecified))
-	       (parent (default #unspecified)))
+	       (parent (default #f)))
 
 	    (class xml-empty-element::xml-element)
 
@@ -85,7 +85,7 @@
 	    
 	    (class xml-tilde::xml
 	       (body read-only)
-	       (parent (default #unspecified))
+	       (parent (default #f))
 	       (src read-only (default #f))
 	       (loc read-only (default #f))
 	       (%js-expression (default #f))

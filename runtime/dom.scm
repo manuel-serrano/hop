@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Wed May 26 12:53:21 2010 (serrano)                */
+;*    Last change :  Mon May 31 17:20:31 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -28,15 +28,15 @@
 	   (dom-node-value node)
 	   (dom-parent-node node)
 	   (dom-previous-sibling node)
+	   (dom-remove-child! node old)
 	   (dom-append-child! ::xml-markup new)
 	   (dom-set-child-node! ::xml-markup new)
+	   (dom-replace-child! node new old)
+	   (dom-insert-before! node new ref)
 	   (generic dom-clone-node ::obj ::bool)
 	   (dom-has-attributes? node)
 	   (dom-has-child-nodes? node)
-	   (dom-insert-before! node new ref)
 	   (dom-normalize! node)
-	   (dom-remove-child! node old)
-	   (dom-replace-child! node new old)
 	   (generic dom-get-element-by-id obj ::bstring)
 	   (dom-get-elements-by-tag-name::pair-nil obj ::bstring)
 	   (dom-get-elements-by-class::pair-nil obj ::bstring)
@@ -181,19 +181,6 @@
 	   (and (pair? body) (car (last-pair body))))))
 
 ;*---------------------------------------------------------------------*/
-;*    dom-next-sibling ...                                             */
-;*---------------------------------------------------------------------*/
-(define (dom-next-sibling node)
-   (and (xml-element? node)
-	(with-access::xml-element node (parent)
-	   (and (xml-markup? parent)
-		(with-access::xml-markup parent (body)
-		   (let ((child (assq node body)))
-		      (and (pair? child)
-			   (pair? (cdr child))
-			   (cadr child))))))))
-
-;*---------------------------------------------------------------------*/
 ;*    dom-node-name ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (dom-node-name node)
@@ -242,6 +229,33 @@
    (and (xml-element? node) (xml-element-parent node)))
 
 ;*---------------------------------------------------------------------*/
+;*    dom-set-parent-node! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (dom-set-parent-node! node parent)
+   (cond
+      ((xml-element? node) (xml-element-parent-set! node parent))
+      ((xml-tilde? node) (xml-tilde-parent-set! node parent))))
+
+;*---------------------------------------------------------------------*/
+;*    dom-ancestor-node ...                                            */
+;*    -------------------------------------------------------------    */
+;*    Transitive closure on parent node until no parent found.         */
+;*---------------------------------------------------------------------*/
+(define (dom-ancestor-node obj)
+   (when (xml-element? obj)
+      (let ((parent (xml-element-parent obj)))
+	 (when (xml-element? parent)
+	    (let loop ((nparent (xml-element-parent parent))
+		       (parent parent))
+	       (cond
+		  ((not nparent)
+		   parent)
+		  ((xml-document? nparent)
+		   nparent)
+		  (else
+		   (loop (xml-element-parent nparent) nparent))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    dom-previous-sibling ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (dom-previous-sibling node)
@@ -249,41 +263,146 @@
 	(with-access::xml-element node (parent)
 	   (and (xml-markup? parent)
 		(with-access::xml-markup parent (body)
-		   (let loop ((body body))
+		   (let loop ((body body)
+			      (prev #f))
 		      (cond
 			 ((null? body)
-			  #f)
-			 ((eq? (cdr body) node)
-			  (car body))
+			  prev)
+			 ((eq? (car body) node)
+			  prev)
 			 (else
-			  (loop (cdr body))))))))))
+			  (loop (cdr body) (car body))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    dom-next-sibling ...                                             */
+;*---------------------------------------------------------------------*/
+(define (dom-next-sibling node)
+   (and (xml-element? node)
+	(with-access::xml-element node (parent)
+	   (and (xml-markup? parent)
+		(with-access::xml-markup parent (body)
+		   (let ((child (memq node body)))
+		      (and (pair? child)
+			   (pair? (cdr child))
+			   (cadr child))))))))
+
+;*---------------------------------------------------------------------*/
+;*    dom-remove-child! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (dom-remove-child! node old)
+   (when (xml-markup? node)
+      (let ((doc (dom-owner-document node)))
+	 (when (xml-document? doc)
+	    (with-access::xml-document doc (%idtable)
+	       (hashtable-remove! %idtable (xml-element-id old)))))
+      (with-access::xml-markup node (body)
+	 (set! body (remq! old body))
+	 (when (eq? (dom-parent-node old) node)
+	    (dom-set-parent-node! old #f))
+	 old)))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-append-child! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (dom-append-child! node::xml-markup new)
+   (let ((ancp (dom-ancestor-node node))
+	 (ancn (dom-ancestor-node new)))
+      ;; re-parent new
+      (if (and ancp (eq? ancp ancn))
+	  (let ((parent (dom-parent-node new)))
+	     (when (xml-markup? parent)
+		(with-access::xml-markup parent (body)
+		   (set! body (remq! new body)))))
+	  (let ((doc (dom-owner-document node)))
+	     (when (xml-document? doc)
+		(with-access::xml-document doc (%idtable)
+		   (doc-update-idtable! doc new))))))
+   ;; and new to node
+   (dom-set-parent-node! new node)
    (with-access::xml-markup node (body)
-      (let ((doc (dom-owner-document node)))
-	 (set! body (append! (remq! new body) (list new)))
-	 (when (xml-document? doc)
-	    (with-access::xml-document doc (%idtable)
-	       (let ((id (xml-element-id new)))
-		  (hashtable-remove! %idtable id)
-		  (doc-update-idtable! doc new)))))))
+      (set! body (append! body (list new)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-set-child-node! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (dom-set-child-node! node::xml-markup new)
    (with-access::xml-markup node (body)
-      (for-each (lambda (o) (dom-remove-child! node o)) body)
-      (set! body (list new))
-      (let ((doc (dom-owner-document node)))
-	 (when (xml-document? doc)
-	    (with-access::xml-document doc (%idtable)
-	       (let ((id (xml-element-id new)))
-		  (hashtable-remove! %idtable id)
-		  (doc-update-idtable! doc new)))))))
+      (set! body '())
+      (dom-append-child! node new)))
+
+;*---------------------------------------------------------------------*/
+;*    dom-replace-child! ...                                           */
+;*---------------------------------------------------------------------*/
+(define (dom-replace-child! node new old)
+   (when (xml-element? node)
+      (let ((ancp (dom-ancestor-node node))
+	    (ancn (dom-ancestor-node new))
+	    (anco (dom-ancestor-node old))
+	    (docp (dom-owner-document node)))
+	 ;; re-parent the new node
+	 (if (and ancp (eq? ancp ancn))
+	     (let ((parent (dom-parent-node new)))
+		(when (xml-markup? parent)
+		   (with-access::xml-markup parent (body)
+		      (set! body (remq! new body)))))
+	     (when (xml-document? docp)
+		(with-access::xml-document docp (%idtable)
+		   (doc-update-idtable! docp new))))
+	 ;; unparent the old node
+	 (dom-set-parent-node! old #f)
+	 (let ((doco (dom-owner-document old)))
+	    (when (and docp (eq? docp doco))
+	       (with-access::xml-document doco (%idtable)
+		  (hashtable-remove! %idtable (xml-element-id old))))))
+      ;; replace the elements
+      (dom-set-parent-node! new node)
+      (with-access::xml-markup node (body)
+	 (let loop ((body body))
+	    (cond
+	       ((null? body)
+		(error 'dom-replace-child "old not a child" node))
+	       ((eq? (car body) old)
+		(set-car! body new))
+	       (else
+		(loop (cdr body))))))))
+
+;*---------------------------------------------------------------------*/
+;*    dom-insert-before! ...                                           */
+;*---------------------------------------------------------------------*/
+(define (dom-insert-before! node new ref)
+   (when (xml-markup? node)
+      (with-access::xml-markup node (body)
+	 (cond
+	    ((not ref)
+	     (dom-append-child! node new))
+	    ((null? body)
+	     (error 'dom-insert-before! "ref not a parent child" ref))
+	    (else
+	     (let ((ancp (dom-ancestor-node node))
+		   (ancn (dom-ancestor-node new)))
+		;; re-parent new
+		(if (and ancp (eq? ancp ancn))
+		    (let ((parent (dom-parent-node new)))
+		       (when (xml-markup? parent)
+			  (with-access::xml-markup parent (body)
+			     (set! body (remq! new body)))))
+		    (let ((doc (dom-owner-document node)))
+		       (when (xml-document? doc)
+			  (with-access::xml-document doc (%idtable)
+			     (doc-update-idtable! doc new))))))
+	     ;; add new
+	     (dom-set-parent-node! new node)
+	     (if (eq? (car body) ref)
+		 (set! body (cons new body))
+		 (let loop ((body (cdr body))
+			    (prev body))
+		    (cond
+		       ((null? body)
+			(set! body (list new)))
+		       ((eq? (car body) ref)
+			(set-cdr! prev (cons new body)))
+		       (else
+			(loop (cdr body) body))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-clone-node ...                                               */
@@ -363,33 +482,6 @@
    (and (xml-markup? node) (pair? (xml-markup-body node))))
 
 ;*---------------------------------------------------------------------*/
-;*    dom-insert-before! ...                                           */
-;*---------------------------------------------------------------------*/
-(define (dom-insert-before! node new ref)
-   (and (xml-element? node)
-	(with-access::xml-element node (parent)
-	   (and (xml-element? parent)
-		(with-access::xml-markup parent (body)
-		   (let ((doc (dom-owner-document node))
-			 (id (xml-element-id new)))
-		      (when (xml-document? doc)
-			 (with-access::xml-document doc (%idtable)
-			    (hashtable-remove! %idtable id)
-			    (doc-update-idtable! doc new))))
-		   (let ((body (remq! new body)))
-		      (cond
-			 ((null? body)
-			  (set! body (list new)))
-			 ((eq? (car body) ref)
-			  (set! body (cons new body)))
-			 (else
-			  (let loop ((body (cdr body))
-				     (prev body))
-			     (if (or (null? body) (eq? (car body) ref))
-				 (set-cdr! prev (cons new body))
-				 (loop (cdr body) body)))))))))))
-
-;*---------------------------------------------------------------------*/
 ;*    dom-normalize! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (dom-normalize! node)
@@ -417,41 +509,6 @@
 		    (loop (apply string-append (reverse! str)) body))
 		   (else
 		    (liip (cdr body) (cons (car body) str))))))))))
-
-;*---------------------------------------------------------------------*/
-;*    dom-remove-child! ...                                            */
-;*---------------------------------------------------------------------*/
-(define (dom-remove-child! node old)
-   (when (xml-markup? node)
-      (let ((doc (dom-owner-document node)))
-	 (when (xml-document? doc)
-	    (with-access::xml-document doc (%idtable)
-	       (hashtable-remove! %idtable (xml-element-id old)))))
-      (with-access::xml-markup node (body)
-	 (set! body (remq! old body))
-	 old)))
-
-;*---------------------------------------------------------------------*/
-;*    dom-replace-child! ...                                           */
-;*---------------------------------------------------------------------*/
-(define (dom-replace-child! node new old)
-   (when (xml-element? node)
-      (with-access::xml-markup node (body)
-	 (let loop ((body (remq! new body)))
-	    (cond
-	       ((null? body)
-		(error 'dom-replace-child "old not a child" node))
-	       ((eq? (car body) old)
-		(let ((doc (dom-owner-document node))
-		      (id (xml-element-id new)))
-		   (when (xml-document? doc)
-		      (with-access::xml-document doc (%idtable)
-			 (hashtable-remove! %idtable id)
-			 (when (xml-element? new)
-			    (doc-update-idtable! doc new)))))
-		(set-car! body new))
-	       (else
-		(loop (cdr body))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-elements-by-tag-name ...                                 */

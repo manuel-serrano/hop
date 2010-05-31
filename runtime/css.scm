@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Thu May 27 07:40:48 2010 (serrano)                */
+;*    Last change :  Sat May 29 06:38:48 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -42,6 +42,7 @@
 	       (body::obj read-only)
 	       (properties::pair-nil read-only (default '())))
 	    (init-hss-compiler! ::int)
+	    (hss-extension ::char ::input-port)
 	    (hss-bind-type-compiler! ::symbol ::bstring ::obj ::pair-nil)
 	    (hss-bind-property-compiler! ::symbol ::procedure)
 	    (hss-bind-function-compiler! ::bstring ::procedure)
@@ -432,9 +433,28 @@
 ;*---------------------------------------------------------------------*/
 (define (css-compile o::css-stylesheet)
    (duplicate::css-stylesheet o
+      (import* (map css-compile-import (css-stylesheet-import* o)))
       (rule* (map (lambda (r)
 		     (hss-compile r *hss-property-env*))
 		  (css-stylesheet-rule* o)))))
+
+;*---------------------------------------------------------------------*/
+;*    css-compile-import ...                                           */
+;*---------------------------------------------------------------------*/
+(define (css-compile-import import)
+   (with-access::css-import (car import) (value)
+      (cond
+	 ((and (string? value) (string-suffix? ".hss\"" value))
+	  (let ((s (substring value 0 (-fx (string-length value) 1))))
+	     (cons (duplicate::css-import (car import)
+		      (value (string-append s "?hss\"")))
+		   (cdr import))))
+	 ((and (string? value) (string-suffix? ".hss" value))
+	  (cons (duplicate::css-import (car import)
+		   (value (string-append value "?hss")))
+		(cdr import)))
+	 (else
+	  import))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile ...                                                  */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Fri May 21 11:12:53 2010 (serrano)                */
+;*    Last change :  Sat May 29 06:01:52 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -29,6 +29,7 @@
 	   __hop_module
 	   __hop_read-js
 	   __hop_css
+	   __hop_css-match
 	   __hop_clientc
 	   __hop_cgi
 	   __hop_user
@@ -104,6 +105,8 @@
 	   (class xml-html)
 	   (class xml-document)
 
+	   (class css-style)
+	   
 	   (class cache)
 	   (class cache-disk)
 	   (class cache-memory)

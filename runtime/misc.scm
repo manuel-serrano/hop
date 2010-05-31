@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Fri Apr 23 13:45:34 2010 (serrano)                */
+;*    Last change :  Sun May 30 09:06:07 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -37,7 +37,6 @@
 	    (string-member-ci? ::bstring ::bstring)
 	    (is-local?::bool ::bstring)
 	    (string-escape::bstring ::bstring ::char)
-	    (escape-string::bstring ::bstring)
 	    (delete-path ::bstring)
 	    (make-url-name::bstring ::bstring ::bstring)
 	    (make-hop-url-name::bstring ::bstring)
@@ -267,12 +266,6 @@
 		   (else
 		    (string-set! res j (string-ref a i))
 		    (loop (+fx i 1) (+fx j 1)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    escape-string ...                                                */
-;*---------------------------------------------------------------------*/
-(define (escape-string string)
-   (escape-scheme-string string))
 
 ;*---------------------------------------------------------------------*/
 ;*    delete-path ...                                                  */
