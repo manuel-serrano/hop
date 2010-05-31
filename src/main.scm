@@ -35,10 +35,10 @@
 
    (cond-expand
       (hop-as-library (extern (export main "hop_main"))
-		      (export (main x)))
+                      (export (main x)))
       (else (main main))))
 
- 
+
 ;*---------------------------------------------------------------------*/
 ;*    signal-init! ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -81,11 +81,19 @@
    ;; set the library load path
    (bigloo-library-path-set! (hop-library-path))
    ;; preload the hop libraries
-   (for-each (lambda (l)
-		(cond-expand
-		   (hop-as-library (eval `(library-load_e ',l)))
-		   (else (eval `(library-load ',l)))))
-	     (hop-preload-libraries))
+   (cond-expand
+      (static
+         (pragma "BGl_modulezd2initializa7ationz75zz__hop_makelibz00(0,\"foo\")")
+         (pragma "BGl_modulezd2initializa7ationz75zz__hopwidgetzd2makelibzd2(0,\"foo\")")
+         ; TODO: pick the dir from the config
+         (load "/data/data/fr.inria.hop/hoplib/hop.init"))
+      (else
+         (for-each (lambda (l)
+                     (cond-expand
+                        (hop-as-library (eval `(library-load_e ',l)))
+                        (static '())
+                        (else (eval `(library-load ',l)))))
+                   (hop-preload-libraries))))
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set! (lambda (f) (hop-load-modified f :abase #f)))
@@ -101,7 +109,7 @@
    ;; parse the command line
    (parse-args args)
    ;; set the hop process owner
-   (set-hop-owner! (hop-user))
+   ; (set-hop-owner! (hop-user))
    ;; hello world
    (hop-verb 1 "Hop v" (hop-version))
    (hop-verb 2
@@ -206,7 +214,7 @@
 ;*    set-hop-owner! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (set-hop-owner! user)
-   
+
    (define (err)
       (error 'hop
 	     "Hop is not allowed to be executed as `root'. Create a dedicated Hop user to run Hop on behalf of.\n"
