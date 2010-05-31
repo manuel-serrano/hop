@@ -9,15 +9,12 @@ fi
 # root for all things android
 ANDROIDROOT=$HOME/src/works/inria/android
 # ANDROIDROOT=/misc/virtual/android
+# ANDROIDROOT=/media/inria/media/android
 
 export ANDSRC=$ANDROIDROOT/eclair-git
 export ANDSDK=$ANDROIDROOT/android-sdk-linux
-# the sdk version 4 is not working
-# $HOME/src/works/inria/android/android-sdk-linux
-
-# we can't fire an emulator automatically, so just do it yourself by hand
-# export ANDROID_SERIAL="emulator-5554"
-# export ANDROID_SERIAL="emulator-5556"
+# export ANDSDK=$ANDROIDROOT/android-sdk-linux_86
+export ANDNDK=$ANDROIDROOT/android-ndk-r4
 
 # droid-wrapper
 # http://github.com/tmurakam/droid-wrapper/
@@ -37,12 +34,14 @@ export BGL_PREFIX=$HOME/local
 # the bigloo compiled for Android
 export XBGL_PREFIX=$HOME/local/soft/bigloo-hg-android
 export XBGL_LIBDIR=$XBGL_PREFIX/lib/bigloo/3.3b
+# export XBGL_PREFIX=$ANDROIDROOT/live/bigloo-hg
+# export XBGL_LIBDIR=$XBGL_PREFIX/lib/3.3b
 
 # the bootstraping hop dir
 # hopc is not installed!?! so we must use a source directory
 # export BS_HOPDIR=$HOME/local
 export BS_HOPDIR=$HOME/src/works/inria/hop/live/hop-hg
-# export BS_HOPDIR=$HOME/src/works/inria/bootstrap/hop-2.0.0
+# export BS_HOPDIR=$HOME/src/works/inria/bootstrap/hop-2.1.0
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BS_HOPDIR/lib
 
 prefix=/data/data/fr.inria.hop
@@ -138,7 +137,7 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
   fi
 fi
 
-if [ "$1" == "apk" -o "$1" == "all" ]; then
+if [ "$1" == "prepare" -o "$1" == "all" ]; then
   # we have to install by hand because prefix is needed for the host layout
   source .hoprelease
   rm -rf $install_prefix
@@ -175,13 +174,15 @@ if [ "$1" == "apk" -o "$1" == "all" ]; then
     dot_afile=$(dirname $afile)/dot$(basename $afile)
     mv -v $afile $dot_afile
   done
+  if [ "$1" == "prepare" ]; then
+    shift
+  fi
+fi
 
+if [ "$1" == "apk" -o "$1" == "all" ]; then
+  $ANDNDK/ndk-build -C arch/android/ V=1
   (
     cd arch/android
-    # ant package-resources
-    # aaand add .afiles because the apk builder skips them
-    # zip -u bin/hop-debug.apk assets/lib/hop/$major/weblets/{wizard,hop,hz,shutdown,info}/.afile
-    # find assets -name .afile | xargs zip -u bin/hop-debug.apk
     # finally build the .apk
     ant debug
   )
