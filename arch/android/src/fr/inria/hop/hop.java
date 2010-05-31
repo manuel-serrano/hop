@@ -31,12 +31,29 @@ public class hop extends Activity {
    final static String dot_afile = "dot.afile";
    TextView mStatus;
 
-   public void Log(String string) {
+   public static void Log(String string) {
       Log.v("hop-installer", string);
-      mStatus.setText(mStatus.getText() + "\n" + string);
+      // mStatus.append(string+"\n");
    }
 
-   public void copyStreams(InputStream is, FileOutputStream fos) {
+   /** Called when the activity is first created. */
+   @Override
+   public void onCreate(Bundle savedInstanceState) {
+      super.onCreate(savedInstanceState);
+      setContentView(R.layout.unpack);
+
+      mStatus = (TextView) findViewById(R.id.statusText);
+      mStatus.setVerticalScrollBarEnabled(true);
+
+      findViewById(R.id.layout).setVerticalScrollBarEnabled(true);
+
+      this.unpack();
+
+      // once we finished, show the terminal running hop
+      setContentView(R.layout.terminal);
+   }
+
+   public static void copyStreams(InputStream is, FileOutputStream fos) {
       BufferedOutputStream os = null;
       try {
          byte data[] = new byte[BUFSIZE];
@@ -59,17 +76,7 @@ public class hop extends Activity {
       }
    }
 
-   /** Called when the activity is first created. */
-   @Override
-   public void onCreate(Bundle savedInstanceState) {
-      super.onCreate(savedInstanceState);
-      setContentView(R.layout.main);
-
-      mStatus = (TextView) findViewById(R.id.StatusText);
-      mStatus.setVerticalScrollBarEnabled(true);
-
-      findViewById(R.id.LinearLayout).setVerticalScrollBarEnabled(true);
-
+   public static void unpack() {
       File zipFile = new File(APK_PATH);
       long zipLastModified = zipFile.lastModified();
       try {
@@ -110,9 +117,10 @@ public class hop extends Activity {
       } catch (IOException e) {
          Log("Error: " + e.toString());
       }
+
    }
 
-   public Vector<ZipEntry> filesFromZip(ZipFile zip) {
+   public static Vector<ZipEntry> filesFromZip(ZipFile zip) {
       // we don't copy the whole contents of the .apk file
       // just what is filtered with this function
       Vector<ZipEntry> list= new Vector<ZipEntry>();

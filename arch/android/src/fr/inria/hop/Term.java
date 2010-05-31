@@ -144,11 +144,15 @@ public class Term extends Activity {
 
     private int mControlKeyCode;
 
+    // private final static String DEFAULT_SHELL = "strace /data/data/fr.inria.hop/bin/hop -v3 -g3 -w3";
     private final static String DEFAULT_SHELL = "/system/bin/sh -";
     private String mShell;
 
-    private final static String DEFAULT_INITIAL_COMMAND =
-        "export PATH=/data/local/bin:$PATH";
+    private final static String DEFAULT_INITIAL_COMMANDS[] = {
+        "export PATH=/data/local/bin:$PATH",
+        "export HOME=/data/data/fr.inria.hop/home",
+        "/data/data/fr.inria.hop/bin/hop -v3 -g3 -w3",
+    };
     private String mInitialCommand;
 
     private SharedPreferences mPrefs;
@@ -156,8 +160,11 @@ public class Term extends Activity {
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-        Log.e(Term.LOG_TAG, "onCreate");
-        /*
+        Log.v(Term.LOG_TAG, "onCreate()");
+
+        Log.v(Term.LOG_TAG, "calling unpacker");
+        hop.unpack();
+
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         mPrefs.registerOnSharedPreferenceChangeListener(
                 new SharedPreferences.OnSharedPreferenceChangeListener(){
@@ -167,13 +174,13 @@ public class Term extends Activity {
                         readPrefs();
                         updatePrefs();
                     }});
-        */
         readPrefs();
 
-        // setContentView(R.layout.term_activity);
+        setContentView(R.layout.terminal);
 
         mEmulatorView = (EmulatorView) findViewById(EMULATOR_VIEW);
 
+        Log.v(Term.LOG_TAG, "onCreate()");
         startListening();
 
         mKeyListener = new TermKeyListener();
@@ -183,6 +190,7 @@ public class Term extends Activity {
         mEmulatorView.requestFocus();
         mEmulatorView.register(mKeyListener);
 
+        Log.v(Term.LOG_TAG, "onCreate()");
         updatePrefs();
     }
 
@@ -196,6 +204,7 @@ public class Term extends Activity {
     }
 
     private void startListening() {
+        Log.v(Term.LOG_TAG, "startListening()");
         int[] processId = new int[1];
 
         createSubprocess(processId);
@@ -222,6 +231,7 @@ public class Term extends Activity {
 
         mTermOut = new FileOutputStream(mTermFd);
 
+        Log.v(Term.LOG_TAG, "startListening()");
         mEmulatorView.initialize(mTermFd, mTermOut);
 
         sendInitialCommand();
@@ -229,11 +239,16 @@ public class Term extends Activity {
 
     private void sendInitialCommand() {
         String initialCommand = mInitialCommand;
+        /*
         if (initialCommand == null) {
             initialCommand = DEFAULT_INITIAL_COMMAND;
         }
-        if (initialCommand.length() > 0) {
-            write(initialCommand + '\r');
+        */
+        for (int i=0; i<3; i++) {
+            String command = DEFAULT_INITIAL_COMMANDS[i];
+            if (command.length() > 0) {
+                write(command + '\r');
+            }
         }
     }
 
@@ -1368,7 +1383,7 @@ class TerminalEmulator {
                 process(b);
                 mProcessedCharCount++;
             } catch (Exception e) {
-                Log.e(Term.LOG_TAG, "Exception while processing character "
+                Log.v(Term.LOG_TAG, "Exception while processing character "
                         + Integer.toString(mProcessedCharCount) + " code "
                         + Integer.toString(b), e);
             }
@@ -2109,7 +2124,7 @@ class TerminalEmulator {
 
     private void logError(String error) {
         if (Term.LOG_UNKNOWN_ESCAPE_SEQUENCES) {
-            Log.e(Term.LOG_TAG, error);
+            Log.v(Term.LOG_TAG, error);
         }
         finishSequence();
     }
@@ -2493,6 +2508,7 @@ class ByteQueue {
     private int mHead;
     private int mStoredBytes;
 }
+
 /**
  * A view on a transcript and a terminal emulator. Displays the text of the
  * transcript and the current cursor position of the terminal emulator.
@@ -2808,6 +2824,7 @@ class EmulatorView extends View implements GestureDetector.OnGestureListener {
     }
 
     private void commonConstructor() {
+        Log.v(Term.LOG_TAG, "commonConstructor()");
         mTextRenderer = null;
         mCursorPaint = new Paint();
         mCursorPaint.setARGB(255,128,128,128);
@@ -2846,6 +2863,7 @@ class EmulatorView extends View implements GestureDetector.OnGestureListener {
         mTextSize = 10;
         mForeground = Term.WHITE;
         mBackground = Term.BLACK;
+        Log.v(Term.LOG_TAG, "initialize()");
         updateText();
         mTermIn = new FileInputStream(mTermFd);
         mReceiveBuffer = new byte[4 * 1024];
@@ -2964,6 +2982,7 @@ class EmulatorView extends View implements GestureDetector.OnGestureListener {
     }
 
     private void updateText() {
+        Log.v(Term.LOG_TAG, "updateText()");
         if (mTextSize > 0) {
             mTextRenderer = new PaintRenderer(mTextSize, mForeground,
                     mBackground);
@@ -2975,6 +2994,7 @@ class EmulatorView extends View implements GestureDetector.OnGestureListener {
         mBackgroundPaint.setColor(mBackground);
         mCharacterWidth = mTextRenderer.getCharacterWidth();
         mCharacterHeight = mTextRenderer.getCharacterHeight();
+        Log.v(Term.LOG_TAG, "updateText():" + mCharacterWidth + ":" + mCharacterHeight);
 
         if (mKnownSize) {
             updateSize(getWidth(), getHeight());
@@ -2983,6 +3003,7 @@ class EmulatorView extends View implements GestureDetector.OnGestureListener {
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        Log.v(Term.LOG_TAG, "onSizeChanged()" + w + ":" + h);
         updateSize(w, h);
         if (!mKnownSize) {
             mKnownSize = true;
@@ -3012,6 +3033,7 @@ class EmulatorView extends View implements GestureDetector.OnGestureListener {
     }
 
     private void updateSize(int w, int h) {
+        Log.v(Term.LOG_TAG, "updateSize()" + w + ":" + h);
         mColumns = w / mCharacterWidth;
         mRows = h / mCharacterHeight;
 

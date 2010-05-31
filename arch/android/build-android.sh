@@ -200,9 +200,9 @@ if [ "$1" == "install" -o "$1" == "all" ]; then
   fi
 fi
 
-if [ "$1" == "unpack" -o "$1" == "all" ]; then
+if [ "$1" == "run" -o "$1" == "all" ]; then
   $ANDSDK/tools/adb shell monkey -p fr.inria.hop 1
-  if [ "$1" == "unpack" ]; then
+  if [ "$1" == "run" ]; then
     shift
   fi
 fi

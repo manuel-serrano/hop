@@ -4,7 +4,11 @@
       android:versionCode="2"
       android:versionName="2.1.0">
     <application android:label="@string/app_name">
-        <activity android:name=".hop"
+        <activity android:name="fr.inria.hop.hop"
+                  android:launchMode="singleInstance"
+                  android:label="@string/app_name">
+        </activity>
+        <activity android:name="fr.inria.hop.Term"
                   android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -12,4 +16,5 @@
             </intent-filter>
         </activity>
     </application>
+    <uses-permission android:name="android.permission.INTERNET" />
 </manifest>

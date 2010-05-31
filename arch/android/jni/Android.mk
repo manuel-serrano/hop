@@ -31,14 +31,12 @@ LOCAL_SRC_FILES:= \
   termExec.cpp
 
 # All of the shared libraries we link against.
-LOCAL_SHARED_LIBRARIES := \
-	# libutils
+LOCAL_SHARED_LIBRARIES :=
 
 # No static libraries.
 LOCAL_STATIC_LIBRARIES :=
 
 # Also need the JNI headers.
-# this is an ugly hack, I know
 LOCAL_C_INCLUDES += \
 	$(JNI_H_INCLUDE)
 
