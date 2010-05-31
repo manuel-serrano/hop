@@ -48,8 +48,6 @@ prefix=/data/data/fr.inria.hop
 install_prefix=$(pwd)/arch/android/assets
 libdir=$install_prefix/hoplib
 
-# weblets="wizard,hop,hz,shutdown,info"
-
 function install {
     # installs $src in $dst,
     # creating all the parent dirs as needed
@@ -85,13 +83,12 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
   # this first attempt to build will fail because the widget/ directory will fail
   # but it will be enough to actually build it by hand
   # and then the latter make there below will continue the building
-  nice -n 19 make || true
-  # nice -n 19 make --debug=v || true
+  make || true
   ( cd widget
     for i in *.hop; do
       echo $BS_HOPDIR/bin/hopc $i -o o/${i%.hop}.o -c
       # TODO: this command is too specific. try to use bigloo's and hop's config
-      nice -n 19 $BS_HOPDIR/bin/hopc $i -o o/${i%.hop}.o -c \
+      $BS_HOPDIR/bin/hopc $i -o o/${i%.hop}.o -c \
         --bigloo=$BGL_PREFIX/bin/bigloo -L $BS_HOPDIR/lib \
         --share-dir $pwd/share -- \
         -O2 -fsharing -Wall -wslots -L $BS_HOPDIR/lib \
@@ -104,7 +101,7 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
   ( cd share
     for i in hop-exception.scm; do
       echo $BS_HOPDIR/bin/hopc $i -o o/${i%.hop}.o -c
-      nice -n 19 $BS_HOPDIR/bin/hopc $i -o ${i%.scm}.js -c -j \
+      $BS_HOPDIR/bin/hopc $i -o ${i%.scm}.js -c -j \
         --bigloo=$BGL_PREFIX/bin/bigloo -L $XBS_HOPDIR/lib \
         --share-dir $pwd/share --
     done
@@ -130,7 +127,8 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
       -ldopt -L $XBGL_LIBDIR/libbigloomultimedia_e-3.3b.a
   )
 
-  nice -n 19 make
+  # finally, continue the compilation from where it was left
+  make
 
   if [ "$1" == "build" ]; then
     shift
@@ -146,9 +144,6 @@ if [ "$1" == "prepare" -o "$1" == "all" ]; then
   for file in bin/hop etc/hoprc.hop; do
     install "$file" "$install_prefix/$file"
   done
-  # for file in lib/*.so; do
-  #   install "$file" "$install_prefix/libs"
-  # done
   # files related to libs to hoplib
   for file in lib/*.init; do
     install "$file" "$libdir/$(basename $file)"
@@ -158,7 +153,7 @@ if [ "$1" == "prepare" -o "$1" == "all" ]; then
     install "$file" "$install_prefix/share/hop/$(basename $file)"
   done
   # don't install all the weblets
-  for file in weblets/{wizard,hop,hz,shutdown,info}; do
+  for file in weblets/{wizard,hop,hz,shutdown,info,color,dashboard,doc,home,hopsh,wiki,weblets}; do
     install "$file" "$install_prefix/hoplib/hop/$major/weblets/$(basename $file)"
   done
 
