@@ -6,43 +6,16 @@ if [ "$(basename $0)" == "build-android.sh" ]; then
   set -e
 fi
 
-# root for all things android
-ANDROIDROOT=$HOME/src/works/inria/android
-# ANDROIDROOT=/misc/virtual/android
-# ANDROIDROOT=/media/inria/media/android
+arch_dir=$(dirname $0)
+conf_file=$arch_dir/config.sh
 
-export ANDSRC=$ANDROIDROOT/eclair-git
-export ANDSDK=$ANDROIDROOT/android-sdk-linux
-# export ANDSDK=$ANDROIDROOT/android-sdk-linux_86
-export ANDNDK=$ANDROIDROOT/android-ndk-r4
-
-# droid-wrapper
-# http://github.com/tmurakam/droid-wrapper/
-export DROID_ROOT=$ANDSRC
-# 3 for cupcake
-# 5 for eclair
-export DROID_TARGET=5
-
-# bigloo/gc
-export CC=$ANDROIDROOT/droid-wrapper/bin/droid-gcc
-
-# so ant works :|
-export JAVA_HOME=/usr/lib/jvm/java-6-sun
-
-# the bootstraping bigloo libdir dir
-export BGL_PREFIX=$HOME/local
-# the bigloo compiled for Android
-export XBGL_PREFIX=$HOME/local/soft/bigloo-hg-android
-export XBGL_LIBDIR=$XBGL_PREFIX/lib/bigloo/3.3b
-# export XBGL_PREFIX=$ANDROIDROOT/live/bigloo-hg
-# export XBGL_LIBDIR=$XBGL_PREFIX/lib/3.3b
-
-# the bootstraping hop dir
-# hopc is not installed!?! so we must use a source directory
-# export BS_HOPDIR=$HOME/local
-export BS_HOPDIR=$HOME/src/works/inria/hop/live/hop-hg
-# export BS_HOPDIR=$HOME/src/works/inria/bootstrap/hop-2.1.0
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BS_HOPDIR/lib
+# import settings
+if [ -f $conf_file ]; then
+   source $conf_file
+else
+   echo "config file '$conf_file' not found, bailing out."
+   exit 1
+fi
 
 prefix=/data/data/fr.inria.hop
 install_prefix=$(pwd)/arch/android/assets
