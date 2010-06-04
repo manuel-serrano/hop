@@ -1,0 +1,18 @@
+NOTE: This instructions assume you already have Bigloo configured and compiled
+for Android. Please do it before atempting anything with Hop. Same definitions
+apply.
+
+Getting stuff:
+=============
+
+Compiling Hop for Android requires several things:
+
+ * An already compiled and running version of Hop for the host platform[1].
+ * The Android NDK[2].
+ * Ant and Java 6/1.6, needed for building the .apk.
+
+
+--
+[1] This is needed for executing 'hopc'.
+
+[2] http://developer.android.com/sdk/ndk/index.html

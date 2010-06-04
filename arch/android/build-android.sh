@@ -1,7 +1,5 @@
 #! /bin/bash
 
-# TODO: make ANDROIDROOT, BGL_PREFIX, XBGL_PREFIX and BS_HOPDIR parameters
-
 if [ "$(basename $0)" == "build-android.sh" ]; then
   set -e
 fi
@@ -56,8 +54,9 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
   # this first attempt to build will fail because the widget/ directory will fail
   # but it will be enough to actually build it by hand
   # and then the latter make there below will continue the building
-  make || true
+  # make || true
   ( cd widget
+    mkdir -pv o
     for i in *.hop; do
       echo $BS_HOPDIR/bin/hopc $i -o o/${i%.hop}.o -c
       # TODO: this command is too specific. try to use bigloo's and hop's config
@@ -72,6 +71,7 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
     done
   )
   ( cd share
+    mkdir -pv o
     for i in hop-exception.scm; do
       echo $BS_HOPDIR/bin/hopc $i -o o/${i%.hop}.o -c
       $BS_HOPDIR/bin/hopc $i -o ${i%.scm}.js -c -j \
@@ -79,6 +79,9 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
         --share-dir $pwd/share --
     done
   )
+  # finally, continue the compilation from where it was left
+  make || true
+
   ( cd src
     # TODO: this command is too specific. try to use bigloo's and hop's config
     $BGL_PREFIX/bin/bigloo -fsharing -Wall -wslots -static-all-bigloo \
@@ -99,9 +102,6 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
       -ldopt -L $XBGL_LIBDIR/libbiglooweb_e-3.3b.a \
       -ldopt -L $XBGL_LIBDIR/libbigloomultimedia_e-3.3b.a
   )
-
-  # finally, continue the compilation from where it was left
-  make
 
   if [ "$1" == "build" ]; then
     shift
