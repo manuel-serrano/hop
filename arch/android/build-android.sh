@@ -129,8 +129,6 @@ if [ "$1" == "prepare" -o "$1" == "all" ]; then
   done
 
   # throw in bigloo's libs too
-  # install $XBGL_LIBDIR/libbigloo{gc,{,web,multimedia}_s}*.so $install_prefix/libs
-  # install $XBGL_LIBDIR/libbigloo{web,multimedia}_e*.so $install_prefix/libs
   install $XBGL_LIBDIR/*.init $libdir
 
   # the apkbuilder ignores the .afiles, so we change their names
@@ -149,7 +147,7 @@ if [ "$1" == "apk" -o "$1" == "all" ]; then
   $ANDNDK/ndk-build -C arch/android/ V=1
   (
     cd arch/android
-    # finally build the .apk
+    # build the .apk
     ant debug
   )
 
