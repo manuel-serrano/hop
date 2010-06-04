@@ -1,16 +1,64 @@
-NOTE: This instructions assume you already have Bigloo configured and compiled
-for Android. Please do it before atempting anything with Hop. Same definitions
-apply.
-
 Getting stuff:
 =============
 
 Compiling Hop for Android requires several things:
 
- * An already compiled and running version of Hop for the host platform[1].
+ * Hop compiled for the host platform[1].
+ * Bibloo compiled for the host and target platfoms.
  * The Android NDK[2].
  * Ant and Java 6/1.6, needed for building the .apk.
 
+Compiling:
+=========
+
+Copy 'arch/android/config.sh.sample' into 'arch/android/config.sh' and edit it,
+then just call the script:
+
+   ./arch/android/build-android.sh configure build prepare apk
+
+This will generate the file 'arch/android/bni/hop-debug.apk'
+
+Installing:
+==========
+
+So far we've only tested using an USB cable and the USB Debugging settings on:
+
+   ./arch/android/build-android.sh install
+
+You can also copy the file to the SD card and install from there.
+
+Running:
+=======
+
+The instalation creates an icon in the 'Application tab' called 'hop'. When
+you run it for the first time it will run a procedire that decompresses
+resource files. This can take 2 o 3 minutes (yes, minutes), but it only does
+it the first time and everytime you install a new version (with new files).
+Currently we're not showing any progress, so you'll only see a black screen.
+
+Once the ersources are unpacked, you'll see a blue screen. It's not a BSoD, so
+don't worry. It's a terminal emulator, and it will run Hop in it. You'll see
+Hop's output. Once Hop is running, fire a browser and point it to
+http://localhost:8080/hop/wizard. Enter at least a password for the Admin
+user (we also recommend to create a user for you), submit the form and then
+shutdow Hop when told.
+
+Once Hop is shutdown, instead of finishing the task you'll get a shell in the
+terminal. We use this to do some debugging stuff. You can rerun Hop in two
+ways:
+
+ * run '/data/data/fr.inria.hop/bin/hop' fromt the terinal (beware, there is
+   no TAB completion).
+ * Force stop on the Hop app:
+   * Press the home button until you reach the 'Desktop'.
+   * Press the phine's 'Menu' button, then 'Settings' -> 'Applications' ->
+     'Manage Applications' -> 'hop'.
+   * Scroll down, press 'Force stop'.
+   Restart Hop:
+   * Go to the 'Apps tab' and run 'hop' again. This time it should boot very
+     fast.
+   * Use the browser to go to http://localhost:8080/hop/
+   * You're ready to go :)
 
 --
 [1] This is needed for executing 'hopc'.
