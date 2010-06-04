@@ -51,10 +51,6 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
   # so we must hack it
   pwd=$(pwd)
 
-  # this first attempt to build will fail because the widget/ directory will fail
-  # but it will be enough to actually build it by hand
-  # and then the latter make there below will continue the building
-  # make || true
   ( cd widget
     mkdir -pv o
     for i in *.hop; do
@@ -79,18 +75,20 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
         --share-dir $pwd/share --
     done
   )
-  # finally, continue the compilation from where it was left
+  # this first attempt to build will fail when linkking hop
+  # because we don't have a way to detect and compile a static hop in the build system
   make || true
 
+  # compile a static hop by hand
   ( cd src
     # TODO: this command is too specific. try to use bigloo's and hop's config
     $BGL_PREFIX/bin/bigloo -fsharing -Wall -wslots -static-all-bigloo \
       -L $pwd/lib -lib-dir $XBGL_LIBDIR -cc $CC \
       -copt "-g -DPLATFORM_ANDROID -I$XBGL_LIBDIR" \
       -o $pwd/bin/hop \
-        o/hop-param.o o/parseargs.o o/main.o o/init.o o/scheduler.o o/accept.o \
-        o/pipeline.o o/nothread-scheduler.o o/queue-scheduler.o o/oto-scheduler.o \
-        o/pool-scheduler.o o/amany-scheduler.o \
+         o/hop-param.o o/parseargs.o o/main.o o/init.o o/scheduler.o o/accept.o \
+         o/pipeline.o o/nothread-scheduler.o o/queue-scheduler.o o/oto-scheduler.o \
+         o/pool-scheduler.o o/amany-scheduler.o \
       -ldopt -L $pwd/lib/libhop_s-2.1.0.a \
       -ldopt -L $pwd/lib/libhop_e-2.1.0.a \
       -ldopt -L $pwd/lib/libhopscheme_s-2.1.0.a \
