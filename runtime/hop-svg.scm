@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Fri Apr 23 08:18:38 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:26:19 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -110,32 +110,32 @@
 		      (attributes)
 		      body)
    (instantiate::xml-element
-      (markup 'svg)
+      (tag 'svg)
       (id (xml-make-id id 'svg))
       (attributes `(:xmlns ,xmlns ,@attributes))
       (body body)))
 
 ;; misc
-(define-xml xml-element #t <SVG:PATH> :markup path)
-(define-xml xml-element #t <SVG:G> :markup g)
-(define-xml xml-element #t <SVG:DEFS> :markup defs)
-(define-xml xml-element #t <SVG:FOREIGNOBJECT> :markup foreignObject)
+(define-xml xml-element #t <SVG:PATH> :tag path)
+(define-xml xml-element #t <SVG:G> :tag g)
+(define-xml xml-element #t <SVG:DEFS> :tag defs)
+(define-xml xml-element #t <SVG:FOREIGNOBJECT> :tag foreignObject)
 ;; filter
-(define-xml xml-element #t <SVG:FILTER> :markup filter)
-(define-xml xml-element #t <SVG:FEGAUSSIANBLUR> :markup feGaussianBlur)
-(define-xml xml-element #t <SVG:FECOLORMATRIX> :markup feColorMatrix)
+(define-xml xml-element #t <SVG:FILTER> :tag filter)
+(define-xml xml-element #t <SVG:FEGAUSSIANBLUR> :tag feGaussianBlur)
+(define-xml xml-element #t <SVG:FECOLORMATRIX> :tag feColorMatrix)
 ;; basic shapes
-(define-xml xml-element #t <SVG:RECT> :markup rect)
-(define-xml xml-element #t <SVG:CIRCLE> :markup circle)
-(define-xml xml-element #t <SVG:ELLIPSE> :markup ellipse)
-(define-xml xml-element #t <SVG:LINE> :markup line)
-(define-xml xml-element #t <SVG:POLYLINE> :markup polyline)
-(define-xml xml-element #t <SVG:POLYGON> :markup polygon)
+(define-xml xml-element #t <SVG:RECT> :tag rect)
+(define-xml xml-element #t <SVG:CIRCLE> :tag circle)
+(define-xml xml-element #t <SVG:ELLIPSE> :tag ellipse)
+(define-xml xml-element #t <SVG:LINE> :tag line)
+(define-xml xml-element #t <SVG:POLYLINE> :tag polyline)
+(define-xml xml-element #t <SVG:POLYGON> :tag polygon)
 ;; text
-(define-xml xml-element #t <SVG:TEXT> :markup text)
-(define-xml xml-element #t <SVG:TSPAN> :markup tspan)
-(define-xml xml-element #t <SVG:TREF> :markup tref)
-(define-xml xml-element #t <SVG:TEXTPATH> :markup textPath)
+(define-xml xml-element #t <SVG:TEXT> :tag text)
+(define-xml xml-element #t <SVG:TSPAN> :tag tspan)
+(define-xml xml-element #t <SVG:TREF> :tag tref)
+(define-xml xml-element #t <SVG:TEXTPATH> :tag textPath)
 
 ;*---------------------------------------------------------------------*/
 ;*    read-attribute-value ...                                         */
@@ -547,7 +547,7 @@
 			  style1))))
 	  (<DIV> :style style2 :class class
 	     (instantiate::xml-svg
-		(markup 'svg:img)
+		(tag 'svg:img)
 		(id (gensym 'svg:img))
 		(attributes '())
 		(body (list img))))))))

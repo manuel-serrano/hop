@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/widget/video.scm                  */
+;*    serrano/prgm/project/hop/2.1.x/widget/video.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Dec  1 20:22:47 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Last change :  Tue May 11 06:29:18 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Video support.                                               */
 ;*=====================================================================*/
@@ -73,7 +73,7 @@
 	 ((eq? backend 'html5)
 	  (instantiate::xml-element
 	     (id (xml-make-id id 'video))
-	     (markup 'VIDEO)
+	     (tag 'VIDEO)
 	     (attributes `(:src ,src :width ,width :height ,height ,@attr))
 	     (body body)))
 	 ((string? src)
@@ -82,7 +82,7 @@
 		 (<flash> src vid #t))
 	      (instantiate::xml-element
 		 (id (xml-make-id id 'video))
-		 (markup 'VIDEO)
+		 (tag 'VIDEO)
 		 (attributes `(:src ,src :width ,width :height ,height ,@attr))
 		 (body body))))
 	 ((flv body)
@@ -90,13 +90,13 @@
 	  (lambda (els)
 	     (instantiate::xml-element
 		(id vid)
-		(markup 'VIDEO)
+		(tag 'VIDEO)
 		(attributes `(:width ,width :height ,height ,@attr))
 		(body (append body (list (<flash> (car els) vid #f)))))))
 	 (else
 	  (instantiate::xml-element
 	     (id vid)
-	     (markup 'VIDEO)
+	     (tag 'VIDEO)
 	     (attributes `(:width ,width :height ,height ,@attr))
 	     (body body))))))
 

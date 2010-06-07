@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Fri Apr 23 15:31:20 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:16:29 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -232,7 +232,7 @@
 		    (else
 		     attrs))))
       (instantiate::xml-element
-	 (markup 'form)
+	 (tag 'form)
 	 (id (xml-make-id id 'FORM))
 	 (attributes attrs)
 	 (body body))))

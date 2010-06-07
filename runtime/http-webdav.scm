@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Fri Apr  2 09:46:41 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:24:23 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
@@ -71,20 +71,20 @@
 ;*---------------------------------------------------------------------*/
 (define-xml xml-webdav #t <DAV> :attributes (:xmlns "DAV:"))
  
-(define-xmldav <DAV:MULTISTATUS> :markup D:multistatus
+(define-xmldav <DAV:MULTISTATUS> :tag D:multistatus
    :attributes (:xmlns:D "DAV:"))
-(define-xmldav <DAV:RESPONSE> :markup D:response
+(define-xmldav <DAV:RESPONSE> :tag D:response
    :attributes (:xmlns:D "DAV:"))
-(define-xmldav <DAV:PROPSTAT> :markup D:propstat)
-(define-xmldav <DAV:PROP> :markup D:prop)
-(define-xmldav <DAV:RESOURCETYPE> :markup D:resourcetype)
-(define-xmldav <DAV:COLLECTION> :markup D:collection)
-(define-xmldav <DAV:CREATIONDATE> :markup D:creationdate)
-(define-xmldav <DAV:GETCONTENTTYPE> :markup D:getcontenttype)
-(define-xmldav <DAV:GETLASTMODIFIED> :markup D:getlastmodified)
-(define-xmldav <DAV:GETCONTENTLENGTH> :markup D:getcontentlength)
-(define-xmldav <DAV:STATUS> :markup D:status)
-(define-xmldav <DAV:HREF> :markup D:href)
+(define-xmldav <DAV:PROPSTAT> :tag D:propstat)
+(define-xmldav <DAV:PROP> :tag D:prop)
+(define-xmldav <DAV:RESOURCETYPE> :tag D:resourcetype)
+(define-xmldav <DAV:COLLECTION> :tag D:collection)
+(define-xmldav <DAV:CREATIONDATE> :tag D:creationdate)
+(define-xmldav <DAV:GETCONTENTTYPE> :tag D:getcontenttype)
+(define-xmldav <DAV:GETLASTMODIFIED> :tag D:getlastmodified)
+(define-xmldav <DAV:GETCONTENTLENGTH> :tag D:getcontentlength)
+(define-xmldav <DAV:STATUS> :tag D:status)
+(define-xmldav <DAV:HREF> :tag D:href)
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-webdav ...                                       */
@@ -206,7 +206,7 @@
 			   (when (and (pair? xmlns)
 				      (string=? (cadr xmlns) "DAV:"))
 			      (instantiate::xml-element
-				 (markup (symbol-append '|D:| m))
+				 (tag (symbol-append '|D:| m))
 				 (id (symbol->string (gensym)))
 				 (body '()))))))))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sat Apr 24 07:28:19 2010 (serrano)                */
+;*    Last change :  Sun Jun  6 11:46:52 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -65,7 +65,7 @@
 	       (value::obj (default #f)))
 
 	    (class xml-markup::xml
-	       (markup::symbol read-only)
+	       (tag::symbol read-only)
 	       (attributes::pair-nil (default '()))
 	       body::pair-nil)
 
@@ -77,7 +77,7 @@
 
 	    (class xml-element::xml-markup
 	       (id read-only (default #unspecified))
-	       (parent (default #unspecified)))
+	       (parent (default #f)))
 
 	    (class xml-empty-element::xml-element)
 
@@ -85,7 +85,7 @@
 	    
 	    (class xml-tilde::xml
 	       (body read-only)
-	       (parent (default #unspecified))
+	       (parent (default #f))
 	       (src read-only (default #f))
 	       (loc read-only (default #f))
 	       (%js-expression (default #f))
@@ -143,9 +143,9 @@
 ;*    thus be display as is.                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (object-print o::xml-element p print-slot)
-   (with-access::xml-element o (markup attributes body id)
-      (display "#|xml-element markup=" p)
-      (print-slot markup p)
+   (with-access::xml-element o (tag attributes body id)
+      (display "#|xml-element tag=" p)
+      (print-slot tag p)
       (display " id=" p)
       (print-slot id p)
       (display " parent=..." p)
@@ -271,7 +271,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (%xml-constructor o::xml-markup)
    (call-next-method)
-   (with-access::xml-markup o (body markup)
+   (with-access::xml-markup o (body tag)
       (let loop ((es body))
 	 (cond
 	    ((pair? es)
@@ -314,7 +314,7 @@
       (cond
 	 ((null? a)
 	  (instantiate::xml-element
-	     (markup el)
+	     (tag el)
 	     (attributes (reverse! attr))
 	     (id (xml-make-id id))
 	     (body (reverse! body))))
@@ -344,8 +344,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-markup-is? ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (xml-markup-is? o markup)
-   (and (xml-markup? o) (eq? (xml-markup-markup o) markup)))
+(define (xml-markup-is? o tag)
+   (and (xml-markup? o) (eq? (xml-markup-tag o) tag)))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-id-lock ...                                                 */
@@ -437,10 +437,10 @@
 ;*    xml-write ::xml-cdata ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-cdata p backend)
-   (with-access::xml-cdata obj (markup body attributes)
+   (with-access::xml-cdata obj (tag body attributes)
       (with-access::xml-backend backend (cdata-start cdata-stop)
 	 (display "<" p)
-	 (display markup p)
+	 (display tag p)
 	 (xml-write-attributes attributes p backend)
 	 (display ">" p)
 	 (unless (or (not body) (null? body))
@@ -448,7 +448,7 @@
 	    (xml-write body p backend)
 	    (when cdata-stop (display cdata-stop p)))
 	 (display "</" p)
-	 (display markup p)
+	 (display tag p)
 	 (display ">\n" p))))
    
 ;*---------------------------------------------------------------------*/
@@ -456,7 +456,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-tilde p backend)
    (with-access::xml-tilde obj (body parent)
-      (if (and (xml-markup? parent) (eq? (xml-markup-markup parent) 'script))
+      (if (and (xml-markup? parent) (eq? (xml-markup-tag parent) 'script))
 	  (xml-write (xml-tilde->statement obj) p backend)
 	  (with-access::xml-backend backend (cdata-start cdata-stop)
 	     (display "<script type='" p)
@@ -478,18 +478,18 @@
 ;*    xml-write ::xml-markup ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-markup p backend)
-   (with-access::xml-markup obj (markup attributes body)
+   (with-access::xml-markup obj (tag attributes body)
       (display "<" p)
-      (display markup p)
+      (display tag p)
       (xml-write-attributes attributes p backend)
       (cond
-	 ((or (pair? body) (eq? markup 'script))
+	 ((or (pair? body) (eq? tag 'script))
 	  (display ">" p)
 	  (for-each (lambda (b) (xml-write b p backend)) body)
 	  (display "</" p)
-	  (display markup p)
+	  (display tag p)
 	  (display ">\n" p))
-	 ((memq markup (xml-backend-no-end-tags-elements backend))
+	 ((memq tag (xml-backend-no-end-tags-elements backend))
 	  (display ">\n" p))
 	 (else
 	  (display "/>" p)))))
@@ -498,9 +498,9 @@
 ;*    xml-write ::xml-meta ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-meta p backend)
-   (with-access::xml-meta obj (markup attributes body)
+   (with-access::xml-meta obj (tag attributes body)
       (display "<" p)
-      (display markup p)
+      (display tag p)
       (xml-write-attributes attributes p backend)
       (with-access::xml-backend backend (meta-format mime-type)
 	 (fprintf p meta-format mime-type (hop-charset)))
@@ -510,11 +510,11 @@
 ;*    xml-write ::xml-element ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-element p backend)
-   (with-access::xml-element obj (markup id attributes body)
+   (with-access::xml-element obj (tag id attributes body)
       (cond
 	 ((and (null? body) (null? attributes))
 	  (display "<" p)
-	  (display markup p)
+	  (display tag p)
 	  (display " id='" p)
 	  (display id p)
 	  (display "'" p)
@@ -522,11 +522,11 @@
 	      (display "/>" p)
 	      (begin
 		 (display "></" p)
-		 (display markup p)
+		 (display tag p)
 		 (display ">" p))))
 	 ((null? body)
 	  (display "<" p)
-	  (display markup p)
+	  (display tag p)
 	  (display " id='" p)
 	  (display id p)
 	  (display "'" p)
@@ -534,16 +534,16 @@
 	  (cond
 	     ((xml-backend-abbrev-emptyp backend)
 	      (display "/>" p))
-	     ((memq markup (xml-backend-no-end-tags-elements backend))
+	     ((memq tag (xml-backend-no-end-tags-elements backend))
 	      (display ">" p))
 	     (else
 	      (display ">" p)
 	      (display "</" p)
-	      (display markup p)
+	      (display tag p)
 	      (display ">" p))))
 	 (else
 	  (display "<" p)
-	  (display markup p)
+	  (display tag p)
 	  (display " id='" p)
 	  (display id p)
 	  (display "'" p)
@@ -551,7 +551,7 @@
 	  (display ">" p)
 	  (for-each (lambda (b) (xml-write b p backend)) body)
 	  (display "</" p)
-	  (display markup p)
+	  (display tag p)
 	  (display ">" p)))
       (xml-write-initializations obj p backend)))
 
@@ -559,9 +559,9 @@
 ;*    xml-write ::xml-empty-element ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-empty-element p backend)
-   (with-access::xml-empty-element obj (markup id attributes)
+   (with-access::xml-empty-element obj (tag id attributes)
       (display "<" p)
-      (display markup p)
+      (display tag p)
       (display " id='" p)
       (display id p)
       (display "'" p)
@@ -573,14 +573,14 @@
 ;*    xml-write ::xml-html ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-html p backend)
-   (if (>fx (bigloo-debug) 0)
-       (xml-write-html-debug obj p backend)
+   (if (>=fx (hop-clientc-debug-unbound) 1)
+       (xml-write-html/unbound-check obj p backend)
        (xml-write-html obj p backend)))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-write-html-debug ...                                         */
+;*    xml-write-html/unbound-check ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (xml-write-html-debug obj::xml-html p backend)
+(define (xml-write-html/unbound-check obj::xml-html p backend)
    (with-access::xml-html obj (body)
       ;; check the unbound variables
       (let ((env (make-hashtable)))
@@ -619,9 +619,9 @@
       (fprintf p header-format (hop-charset))
       (display doctype p)
       (newline p)
-      (with-access::xml-html obj (markup attributes body)
+      (with-access::xml-html obj (tag attributes body)
 	 (display "<" p)
-	 (display markup p)
+	 (display tag p)
 	 (let ((hattr (let loop ((hattr html-attributes))
 			 (cond
 			    ((null? hattr)
@@ -637,7 +637,7 @@
 	 (display ">\n" p)
 	 (for-each (lambda (b) (xml-write b p backend)) body)
 	 (display "</" p)
-	 (display markup p)
+	 (display tag p)
 	 (display ">\n" p))))
 
 ;*---------------------------------------------------------------------*/
@@ -781,7 +781,7 @@
        ;; The Hop head constructor is special because it implicitly introduces
        ;; the Hop rts. In order to avoid this here, head is explicitly created.
        (instantiate::xml-markup
-	  (markup 'head)
+	  (tag 'head)
 	  (attributes attributes)
 	  (body body)))
       (else
@@ -802,11 +802,11 @@
 	 (html-parse
 	  (current-input-port)
 	  :content-length 0
-	  :procedure (lambda (markup attributes body)
+	  :procedure (lambda (tag attributes body)
 			(let ((constr (string->symbol
 				       (string-append
 					"<"
-					(string-upcase! (symbol->string markup))
+					(string-upcase! (symbol->string tag))
 					">"))))
 			   (eval-markup constr attributes body)))))))
 
@@ -819,11 +819,11 @@
 	 (xml-parse
 	  (current-input-port)
 	  :content-length 0
-	  :procedure (lambda (markup attributes body)
+	  :procedure (lambda (tag attributes body)
 			(let ((constr (string->symbol
 				       (string-append
 					"<"
-					(string-upcase! (symbol->string markup))
+					(string-upcase! (symbol->string tag))
 					">"))))
 			   (eval-markup constr attributes body)))))))
 
@@ -955,7 +955,7 @@
 ;*    xml-tilde-unbound ::xml-markup ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-tilde-unbound obj::xml-markup env)
-   (with-access::xml-markup obj (markup body attributes)
+   (with-access::xml-markup obj (tag body attributes)
       (xml-tilde-unbound body env)
       (let ((old (hashtable-get env 'event)))
 	 (unless old (hashtable-put! env 'event #f))

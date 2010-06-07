@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Apr 20 13:59:00 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:29:25 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -194,7 +194,7 @@
 (define (<AUDIO:HTML5> #!key id  #!rest body)
    (instantiate::xml-element
       (id id)
-      (markup 'AUDIO)
+      (tag 'AUDIO)
       (attributes '(:controls #f :autoplay #f))
       (body body)))
    

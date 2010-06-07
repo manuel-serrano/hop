@@ -133,43 +133,45 @@ scans nested sections at a maximum depth of ++3++.
 === ++(class wiki-syntax ...) ===
 <class> wiki-syntax
 <fields>
-^  fields   ^   access  ^   type      ^  default value         ^  short description                      ^
-| section1  |   r/w     |  procedure  |   ++list++             | the level 1 sections constructor.       |
-| section2  |   r/w     |  procedure  |   ++list++             | the level 2 sections constructor.       |
-| section3  |   r/w     |  procedure  |   ++list++             | the level 3 sections constructor.       |
-| section4  |   r/w     |  procedure  |   ++list++             | the level 4 sections constructor.       |
-| section5  |   r/w     |  procedure  |   ++list++             | the level 5 sections constructor.       |
-| h1        |   r/w     |  procedure  |   ++<H1>++             | the level 1 headings constructor.       |
-| h2        |   r/w     |  procedure  |   ++<H2>++             | the level 2 headings constructor.       |
-| h3        |   r/w     |  procedure  |   ++<H3>++             | the level 3 headings constructor.       |
-| h4        |   r/w     |  procedure  |   ++<H4>++             | the level 4 headings constructor.       |
-| h5        |   r/w     |  procedure  |   ++<H5>++             | the level 5 headings constructor.       |
-| hr        |   r/w     |  procedure  |   ++<HR>++             | the horizontal rules constructor.       |
-| p         |   r/w     |  procedure  |   ++<P>++              | the paragraphs constructor.             |
-| q         |   r/w     |  procedure  |   ++<Q>++              | the quotations constructor.             |
-| ol        |   r/w     |  procedure  |   ++<OL>++             | the ordered lists constructor.          |
-| ul        |   r/w     |  procedure  |   ++<UL>++             | the unordered lists constructor.        |
-| li        |   r/w     |  procedure  |   ++<LI>++             | the list entries constructor.           |
-| b         |   r/w     |  procedure  |   ++<B>++              | the //bold// constructor.               |
-| em        |   r/w     |  procedure  |   ++<EM>++             | the //emphasize// constructor.          |
-| u         |   r/w     |  procedure  |   ++<U>++              | the //underline// constructor.          |
-| del       |   r/w     |  procedure  |   ++<DEL>++            | the //delete// constructor.             |
-| sub       |   r/w     |  procedure  |   ++<SUB>++            | the //subscript// constructor.          |
-| sup       |   r/w     |  procedure  |   ++<SUP>++            | the //superscript// constructor.        |
-| tt        |   r/w     |  procedure  |   ++<TT>++             | the //type writer// constructor.        |
-| code      |   r/w     |  procedure  |   ++<CODE>++           | the //code// constructor.               |
-| math      |   r/w     |  procedure  |   ++<MATH>++           | the //math// constructor.               |
-| pre       |   r/w     |  procedure  |   ++<PRE>++            | the mono space paragraphs constructor.  |
-| table     |   r/w     |  procedure  |   ++<TABLE>++          | the tables constructor.                 |
-| tr        |   r/w     |  procedure  |   ++<TR>++             | the table rows constructor.             |
-| td        |   r/w     |  procedure  |   ++<TD>++             | the table data constructor.             |
-| th        |   r/w     |  procedure  |   ++<TH>++             | the table headings constructor.         |
-| href      |   r/w     |  procedure  |   ++(lambda (h n) (<A> :href h n))++ | the href constructor.     |
-| keyword   |   r/w     |  procedure  |   //identity//         | the keyword constructor.                |
-| type      |   r/w     |  procedure  |   //identity//         | the type constructor.                   |
-| plugins   |   r/w     |  procedure  |   ++(lambda (x) #f)++  | the plugins connector.                  |
-| prehook   |   r/w     |  procedure  |   ++(lambda (#f)++     |  a pre-hook.                         |
-| posthook  |   r/w     |  procedure  |   ++(lambda (expr) #f)++  |  a post-hook.                   |
+^  fields    ^   access  ^   type      ^  default value         ^  short description                      ^
+| section1   |   r/w     |  procedure  |   ++list++             | the level 1 sections constructor.       |
+| section2   |   r/w     |  procedure  |   ++list++             | the level 2 sections constructor.       |
+| section3   |   r/w     |  procedure  |   ++list++             | the level 3 sections constructor.       |
+| section4   |   r/w     |  procedure  |   ++list++             | the level 4 sections constructor.       |
+| section5   |   r/w     |  procedure  |   ++list++             | the level 5 sections constructor.       |
+| h1         |   r/w     |  procedure  |   ++<H1>++             | the level 1 headings constructor.       |
+| h2         |   r/w     |  procedure  |   ++<H2>++             | the level 2 headings constructor.       |
+| h3         |   r/w     |  procedure  |   ++<H3>++             | the level 3 headings constructor.       |
+| h4         |   r/w     |  procedure  |   ++<H4>++             | the level 4 headings constructor.       |
+| h5         |   r/w     |  procedure  |   ++<H5>++             | the level 5 headings constructor.       |
+| hr         |   r/w     |  procedure  |   ++<HR>++             | the horizontal rules constructor.       |
+| p          |   r/w     |  procedure  |   ++<P>++              | the paragraphs constructor.             |
+| q          |   r/w     |  procedure  |   ++<Q>++              | the quotations constructor.             |
+| ol         |   r/w     |  procedure  |   ++<OL>++             | the ordered lists constructor.          |
+| ul         |   r/w     |  procedure  |   ++<UL>++             | the unordered lists constructor.        |
+| li         |   r/w     |  procedure  |   ++<LI>++             | the list entries constructor.           |
+| b          |   r/w     |  procedure  |   ++<B>++              | the //bold// constructor.               |
+| em         |   r/w     |  procedure  |   ++<EM>++             | the //emphasize// constructor.          |
+| u          |   r/w     |  procedure  |   ++<U>++              | the //underline// constructor.          |
+| del        |   r/w     |  procedure  |   ++<DEL>++            | the //delete// constructor.             |
+| sub        |   r/w     |  procedure  |   ++<SUB>++            | the //subscript// constructor.          |
+| sup        |   r/w     |  procedure  |   ++<SUP>++            | the //superscript// constructor.        |
+| tt         |   r/w     |  procedure  |   ++<TT>++             | the //type writer// constructor.        |
+| code       |   r/w     |  procedure  |   ++<CODE>++           | the //code// constructor.               |
+| math       |   r/w     |  procedure  |   ++<MATH>++           | the //math// constructor.               |
+| pre        |   r/w     |  procedure  |   ++<PRE>++            | the mono space paragraphs constructor.  |
+| table      |   r/w     |  procedure  |   ++<TABLE>++          | the tables constructor.                 |
+| tr         |   r/w     |  procedure  |   ++<TR>++             | the table rows constructor.             |
+| td         |   r/w     |  procedure  |   ++<TD>++             | the table data constructor.             |
+| th         |   r/w     |  procedure  |   ++<TH>++             | the table headings constructor.         |
+| href       |   r/w     |  procedure  |   ++(lambda (h n) (<A> :href h n))++ | the href constructor.     |
+| keyword    |   r/w     |  procedure  |   //identity//         | the keyword constructor.                |
+| type       |   r/w     |  procedure  |   //identity//         | the type constructor.                   |
+| hyphen     |   r/w     |  procedure  |   ++(lambda (x) (<SYM> 'hyphen))++//   | the type constructor.                   |
+| plugins    |   r/w     |  procedure  |   ++(lambda (x) #f)++  | the plugins connector.                  |
+| verbatims  |   r/w     |  procedure  |   ++(lambda (x) #f)++  | the verbatims connector.                |
+| prehook    |   r/w     |  procedure  |   ++(lambda (x) #f)++    |  a pre-hook.                          |
+| posthook   |   r/w     |  procedure  |   ++(lambda (expr) #f)++  |  a post-hook.                        |
 </fields>
 </class>
 

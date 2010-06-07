@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Mon Apr 26 09:52:17 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:08:53 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -22,7 +22,7 @@
 	      (let ((attr (reverse attr)))
 		 ,(if (null? exp)
 		      `(,(symbol-append 'instantiate:: type)
-			(markup ',el)
+			(tag ',el)
 			(attributes attr)
 			(body (reverse! body)))
 		      `(begin ,@exp))))
@@ -50,7 +50,7 @@
 	     ((null? args)
 	      ,(if (null? exp)
 		   `(,(symbol-append 'instantiate:: type)
-		     (markup ',el)
+		     (tag ',el)
 		     (id (xml-make-id id ',el))
 		     (attributes (reverse attr))
 		     (body (reverse! body)))
@@ -87,13 +87,13 @@
 		     (string-downcase!
 		      (substring s 1 (-fx (string-length s) 1)))))
 		(css (memq :hss-type exp))
-		(markup (memq :markup exp))
+		(tag (memq :tag exp))
 		(at (memq :attributes exp))
 		(attr '()))
-	     (when (and (pair? markup) (pair? (cdr markup)))
-		(set! el (cadr markup))
-		(set-cdr! markup (cddr markup))
-		(set! exp (remq! (car markup) exp)))
+	     (when (and (pair? tag) (pair? (cdr tag)))
+		(set! el (cadr tag))
+		(set-cdr! tag (cddr tag))
+		(set! exp (remq! (car tag) exp)))
 	     (when (and (pair? at) (pair? (cdr at)))
 		(set! attr (cadr at))
 		(set-cdr! at (cddr at))

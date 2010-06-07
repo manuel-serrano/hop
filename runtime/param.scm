@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Apr 22 13:44:05 2010 (serrano)                */
+;*    Last change :  Sun Jun  6 11:46:40 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -230,6 +230,9 @@
 
 	    (hop-clientc::obj)
 	    (hop-clientc-set! ::obj)
+
+	    (hop-clientc-debug-unbound::int)
+	    (hop-clientc-debug-unbound-set! ::int)
 	    
 	    (hop-read-pre-hook::procedure)
 	    (hop-read-pre-hook-set! ::procedure)
@@ -1035,6 +1038,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-clientc
    #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    hop-clientc-debug-unbound ...                                    */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-clientc-debug-unbound
+   0)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-pre-hook ...                                            */

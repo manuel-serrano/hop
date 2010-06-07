@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/widget/foldlist.scm               */
+;*    serrano/prgm/project/hop/2.1.x/widget/foldlist.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Sat Jun 20 08:47:20 2009 (serrano)                */
+;*    Last change :  Tue May 11 06:28:53 2010 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL> markup.                           */
 ;*=====================================================================*/
@@ -43,7 +43,7 @@
 		     (history #unspecified)
 		     body)
    (let ((res (instantiate::html-foldlist
-	         (markup 'fl)
+	         (tag 'fl)
 		 (cname (if (string? class)
 			    (string-append "hop-fl " class)
 			    "hop-fl"))
@@ -58,7 +58,7 @@
       ;; Verify that the body is a list of <FLITEM>s and fill their parent
       (for-each (lambda (x)
 		   (if (and (xml-element? x)
-			    (eq? (xml-element-markup x) 'flitem))
+			    (eq? (xml-element-tag x) 'flitem))
 		       (html-flitem-parent-set! x res)
 		       (error '<FL> "Component is not a <FLITEM>" x)))
 		body)
@@ -82,7 +82,7 @@
 			 (open #f)
 			 body)
    (instantiate::html-flitem
-      (markup 'flitem)
+      (tag 'flitem)
       (cname (if (string? class)
 		 (string-append "hop-fl-item " class)
 		 "hop-fl-item"))
@@ -142,7 +142,7 @@
 		  (html-flitem-cname obj))
 	 (when (and (pair? tmp)
 		    (xml-element? (car tmp))
-		    (eq? (xml-element-markup (car tmp)) 'flhead))
+		    (eq? (xml-element-tag (car tmp)) 'flhead))
 	    (xml-write (car tmp) p backend)
 	    (set! tmp (cdr tmp)))
 	 (fprintf p "</td></tr><tr><td></td><td class='hop-fl-item-body'><div class='~a' id='~a' style='display:~a'>"
@@ -157,7 +157,7 @@
 			 (class #unspecified string)
 			 body)
    (instantiate::html-flhead
-      (markup 'flhead)
+      (tag 'flhead)
       (cname (if (string? class)
 		 (string-append "hop-fl-head " class)
 		 "hop-fl-head"))

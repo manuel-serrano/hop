@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Tue Mar  9 13:03:42 2010 (serrano)                */
+;*    Last change :  Sat May 29 06:38:48 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -38,10 +38,11 @@
 	       (ruleset+::pair read-only)))
    
    (export  (class hss-compiler
-	       (element::obj read-only)
+	       (selector::pair read-only)
 	       (body::obj read-only)
 	       (properties::pair-nil read-only (default '())))
 	    (init-hss-compiler! ::int)
+	    (hss-extension ::char ::input-port)
 	    (hss-bind-type-compiler! ::symbol ::bstring ::obj ::pair-nil)
 	    (hss-bind-property-compiler! ::symbol ::procedure)
 	    (hss-bind-function-compiler! ::bstring ::procedure)
@@ -50,6 +51,7 @@
 	    (hss-response::%http-response ::http-request ::bstring)
 	    (hss->css ::bstring)
 	    (hss->css-url ::bstring)
+	    (hop-get-hss ::bstring)
 	    (hop-load-hss ::bstring)
 	    (hop-read-hss ::input-port)
 
@@ -79,11 +81,14 @@
 (define (hss-bind-type-compiler! type element body properties)
    (with-lock *hss-compiler-mutex*
       (lambda ()
-	 (let ((compiler (instantiate::hss-compiler
-			    (element (instantiate::css-selector-name
-					(name element)))
-			    (body body)
-			    (properties properties))))
+	 (let* ((p (open-input-string (format "~a {}" element)))
+		(ast (css->ast p :extension hss-extension))
+		(compiler (with-access::css-stylesheet ast (rule*)
+			     (with-access::css-ruleset (caar rule*) (selector+)
+				(instantiate::hss-compiler
+				   (selector (car selector+))
+				   (body body)
+				   (properties properties))))))
 	    (hashtable-put! *hss-type-env*
 			    (string-downcase (symbol->string type))
 			    compiler)))))
@@ -344,24 +349,24 @@
        (user-access-denied req)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-load-hss ...                                                 */
+;*    hop-get-hss ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (hop-load-hss path)
+(define (hop-get-hss path)
    (with-lock hss-mutex
       (lambda ()
 	 (let ((cache (cache-get hss-cache path)))
 	    (if (string? cache)
 		cache
-		(let* ((hss (%hop-load-hss path))
+		(let* ((hss (hop-load-hss path))
 		       (cache (cache-put! hss-cache path hss)))
 		   (if (string? cache)
 		       cache
 		       hss)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    %hop-load-hss ...                                                */
+;*    hop-load-hss ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (%hop-load-hss file)
+(define (hop-load-hss file)
    (if (file-exists? file)
        (let ((p (open-input-file file))
 	     (mod (eval-module))
@@ -428,9 +433,28 @@
 ;*---------------------------------------------------------------------*/
 (define (css-compile o::css-stylesheet)
    (duplicate::css-stylesheet o
+      (import* (map css-compile-import (css-stylesheet-import* o)))
       (rule* (map (lambda (r)
 		     (hss-compile r *hss-property-env*))
 		  (css-stylesheet-rule* o)))))
+
+;*---------------------------------------------------------------------*/
+;*    css-compile-import ...                                           */
+;*---------------------------------------------------------------------*/
+(define (css-compile-import import)
+   (with-access::css-import (car import) (value)
+      (cond
+	 ((and (string? value) (string-suffix? ".hss\"" value))
+	  (let ((s (substring value 0 (-fx (string-length value) 1))))
+	     (cons (duplicate::css-import (car import)
+		      (value (string-append s "?hss\"")))
+		   (cdr import))))
+	 ((and (string? value) (string-suffix? ".hss" value))
+	  (cons (duplicate::css-import (car import)
+		   (value (string-append value "?hss")))
+		(cdr import)))
+	 (else
+	  import))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile ...                                                  */
@@ -538,22 +562,26 @@
 	   (not (css-selector-pseudo-fun a))
 	   (member (css-selector-pseudo-expr a)
 		   '("first-child" "first-line" "first-letter"))))
+
+   (define (copy-compiler-selectors hc attr*)
+      (map (lambda (s)
+	      (if (css-selector? s)
+		  (duplicate::css-selector s
+		     (attr* (append (css-selector-attr* s) attr*)))
+		  s))
+	   (hss-compiler-selector hc)))
    
    (with-access::css-selector o (element attr*)
       (let ((el (css-selector-name-name element)))
 	 (if (and (hss-compiler-body hc) (or bodyp (any? pseudo-attr? attr*)))
-	     (list
-	      (instantiate::css-selector
-		 (element (hss-compiler-element hc))
-		 (attr* (filter (lambda (a) (not (pseudo-attr? a))) attr*)))
-	      '| |
-	      (instantiate::css-selector
-		 (element (hss-compiler-body hc))
-		 (attr* (filter pseudo-attr? attr*))))
-	     (list
-	      (instantiate::css-selector
-		 (element (hss-compiler-element hc))
-		 (attr* attr*)))))))
+	     (append
+	      (copy-compiler-selectors hc attr*)
+	      (list
+	       '| |
+	       (instantiate::css-selector
+		  (element (hss-compiler-body hc))
+		  (attr* (filter pseudo-attr? attr*)))))
+	     (copy-compiler-selectors hc attr*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-parse-function ...                                           */
@@ -618,22 +646,33 @@
 		    (append (hss-compile-selector o hc use-body)
 			    (hss-compile-selector* (cdr lst)))))
 		((css-selector-name? element)
-		 (cons (duplicate::css-selector o
-			  (element (hss-unalias-selector-name element)))
-		       (hss-compile-selector* (cdr lst))))
+		 (append (hss-unalias-selector-name o element)
+			 (hss-compile-selector* (cdr lst))))
 		(else
 		 (cons o (hss-compile-selector* (cdr lst))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-unalias-selector-name ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (hss-unalias-selector-name o::css-selector-name)
+(define (hss-unalias-selector-name::pair s::css-selector o::css-selector-name)
    (with-access::css-selector-name o (name)
       (if (string? name)
 	  (let ((new (hashtable-get *hss-type-env* (string-downcase name))))
 	     (if (hss-compiler? new)
-		 (instantiate::css-selector-name
-		    (name (hss-compiler-element new)))
+		 (hss-compiler-selector new)
+		 (list (duplicate::css-selector s
+			  (element o)))))
+	  (list (duplicate::css-selector s
+		   (element o))))))
+
+#;(define (hss-unalias-selector-name.old o::css-selector-name)
+   (with-access::css-selector-name o (name)
+      (if (string? name)
+	  (let ((new (hashtable-get *hss-type-env* (string-downcase name))))
+	     (if (hss-compiler? new)
+		 (hss-compiler-element new)
+;* 		 (instantiate::css-selector-name                       */
+;* 		    (name (hss-compiler-element new)))                 */
 		 o))
 	  o)))
 
@@ -649,17 +688,19 @@
 				  "Unclosed list"
 				  (input-port-name ip)
 				  pos)
-	     (let ((val (with-handler
-			   (lambda (e)
-			      (if (&eval-warning? e)
-				  (begin
-				     (warning-notify e)
-				     #unspecified)
-				  (raise e)))
-			   (eval exp))))
-		(cond
-		   ((string? val) val)
-		   (else #unspecified)))))))
+	     (with-handler
+		(lambda (e)
+		   (cond
+		      ((&eval-warning? e)
+		       (warning-notify e)
+		       #unspecified)
+		      ((and (&exception? e) (not (&exception-location e)))
+		       (&exception-location-set! e pos)
+		       (&exception-fname-set! e (input-port-name ip))
+		       (raise e))
+		      (else
+		       (raise e))))
+		(eval exp))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-display ::css-hash-color ...                              */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sat May  1 08:35:11 2010 (serrano)                */
+;*    Last change :  Sat Jun  5 06:58:57 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -23,7 +23,8 @@
 	    __hop_charset
 	    __hop_img
 	    __hop_hop-mathml
-	    __hop_wiki-syntax)
+	    __hop_wiki-syntax
+	    __hop_hop-sym)
    
    (static  (class state
 	       markup::symbol
@@ -181,11 +182,29 @@
 		  (substring str (+fx i 1) (string-length str)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    normalize-string ...                                             */
+;*---------------------------------------------------------------------*/
+(define (normalize-string str)
+   (let ((b (string-skip str " \t"))
+	 (e (string-skip-right str " \t")))
+      (cond
+	 ((not b)
+	  "")
+	 ((=fx b 0)
+	  (if (=fx e (-fx (string-length str) 1))
+	      str
+	      (string-shrink! str (+fx 1 e))))
+	 ((=fx e (-fx (string-length str) 1))
+	  (substring str b))
+	 (else
+	  (substring str b (+fx 1 e))))))
+
+;*---------------------------------------------------------------------*/
 ;*    *wiki-grammar* ...                                               */
 ;*---------------------------------------------------------------------*/
 (define *wiki-grammar*
    (regular-grammar ((punct (in "+*=/_-$#%!`'"))
-		     (blank (in "<>^|:~;,(){}[] \\\n"))
+		     (blank (in "<>^|:~;,(){}[] \n"))
 		     (letter (out "<>+^|*=/_-$#%:~;,\"`'(){}[]! \\\n"))
 		     syn state result trcount dbgcount charset env)
 
@@ -418,7 +437,7 @@
 			(add-expr! ((wiki-syntax-pre syn)
 				    "File not found -- " path)))
 		       (else
-			(warning 'wiki-parser "Can't find file: " path)
+			(warning 'wiki-parser "Can't find file: " name)
 			(add-expr! ((wiki-syntax-pre syn)
 				    "Cannot find file in path -- " name)))))))
 	    ((+ (or (out #\<) (: "<" (out "/"))))
@@ -428,6 +447,11 @@
 	     (set! name (cons (the-string) name))
 	     (ignore))))
 
+      (define skip-space-grammar
+	 (regular-grammar ()
+	    ((+ (in " \t")) #unspecified)
+	    (else #unspecified)))
+      
       (define (link-val s)
 	 (cond
 	    ((and (>fx (string-length s) 3) (substring-at? s ",(" 0))
@@ -457,8 +481,7 @@
 	     (st
 	      (unwind-state! st))
 	     ((is-state? 'p)
-	      (pop-state!)
-	      (add-expr! "\n"))))
+	      (pop-state!))))
        (add-expr! (the-html-string))
        (ignore))
       ((bol (: (>= 2 (in " \t")) (? #\Return) #\Newline))
@@ -487,6 +510,11 @@
        (add-expr! (the-html-string))
        (ignore))
 
+      ;; hyphen
+      ((: #\\ #\\)
+       (add-expr! ((wiki-syntax-hyphen syn) "\\\\"))
+       (ignore))
+
       ;; paragraphs
       ((bol (: "~~" (? (: #\: (+ (out " \t\n"))))))
        (when (is-state? 'p) (pop-state!))
@@ -498,13 +526,11 @@
 	  (enter-block! 'p
 			(lambda expr
 			   (let ((rev (reverse! expr)))
-			      (if (and (pair? rev) (equal? "\n" (car rev)))
-				  (apply (wiki-syntax-p syn)
-					 (append args (reverse! (cdr rev))))
-				  (apply (wiki-syntax-p syn)
-					 (append args (reverse! rev))))))
+			      (apply (wiki-syntax-p syn)
+				     (append args (reverse! rev)))))
 			#f
 			#f))
+       (read/rp skip-space-grammar (the-port))
        (ignore))
       
       ;; sections
@@ -626,7 +652,7 @@
        (ignore))
 
       ;; comments
-      ((bol (: (or ";*" ";;") (+ all)))
+      ((bol (: (or ";*" ";;") (+ all) (? #\Newline)))
        (ignore))
 
       ;; tables
@@ -711,7 +737,7 @@
 		 (add-expr! (the-string))
 		 (ignore)))))
       
-      ((: "<" (out #\< #\> #\/) (* (out #\>)) ">")
+      ((: "<" (out #\< #\> #\/) (* (out #\/ #\>)) ">")
        (let ((id (the-symbol)))
 	  (case id
 	     ((<del>)
@@ -738,15 +764,15 @@
 		       '()
 		       (lambda (path)
 			  (with-input-from-loading-file path
-		             (lambda ()
-				(add-expr!
-				 ((wiki-syntax-pre syn)
-				  (html-string-encode (read-string))))))))
+							(lambda ()
+							   (add-expr!
+							    ((wiki-syntax-pre syn)
+							     (html-string-encode (read-string))))))))
 	      (ignore))
 	     (else
 	      (let* ((id (the-symbol))
-		     (proc ((wiki-syntax-plugins syn) id)))
-		 (if (procedure? proc)
+		     (pproc ((wiki-syntax-plugins syn) id)))
+		 (if (procedure? pproc)
 		     (let* ((/markup (string-append
 				      "</" (the-substring 1 (the-length))))
 			    (l/markup (string-length /markup))
@@ -754,15 +780,36 @@
 			    (ltitle (string-length title)))
 			(if (substring-at? title /markup (-fx ltitle l/markup))
 			    (add-expr!
-			     (proc (the-port)
-				   (substring title 0 (-fx ltitle l/markup))
-				   #f))
+			     (pproc (the-port)
+				    (normalize-string
+				     (substring title 0 (-fx ltitle l/markup)))
+				    #f))
 			    (enter-plugin! id
-					   (lambda e (proc (the-port) title e))
+					   (lambda e
+					      (pproc (the-port) (normalize-string title) e))
 					   #f)))
-		     (add-expr! (the-html-string)))
-		 (ignore))))))
-      ((: "</" (+ (out #\>)) ">")
+		     (let ((sproc ((wiki-syntax-verbatims syn) id)))
+			(if (procedure? sproc)
+			    (let* ((/markup (string-append
+					     "</" (the-substring 1 (the-length))))
+				   (l/markup (string-length /markup))
+				   (title (read-line (the-port)))
+				   (ltitle (string-length title)))
+			       (if (substring-at? title /markup (-fx ltitle l/markup))
+				   (add-expr!
+				    (sproc (the-port)
+					   (normalize-string
+					    (substring title 0 (-fx ltitle l/markup)))
+					   #f))
+				   ;; read all the lines up to the closing tag
+				   (add-expr!
+				    (sproc (the-port)
+					   (normalize-string title)
+					   #f))))
+			    (add-expr! (the-html-string))))))
+	      (ignore)))))
+      
+      ((: "</" (+ (out #\< #\> #\/)) ">")
        (let ((id (the-symbol)))
 	  (case id
 	     ((</del> </sup> </sub>)
@@ -780,6 +827,13 @@
 			    (add-expr! (the-html-string))))
 		     (add-expr! (the-html-string)))
 		 (ignore))))))
+      ((: "<" (+ (out #\< #\> #\/)) "/>")
+       (let* ((id (string->symbol (string-append "<" (the-substring 1 -2) ">")))
+	      (proc ((wiki-syntax-plugins syn) id)))
+	     (if (procedure? proc)
+		 (add-expr! (proc (the-port) #f #f))
+		 (add-expr! (the-html-string)))
+	  (ignore)))
 
       ;; math
       ((: "$$" (+ (or (out #\$) (: #\$ (out #\$)))) "$$")
@@ -899,7 +953,7 @@
 			(title (html-string-encode
 				(charset
 				 (substring s (+fx i 1) (string-length s))))))
-		     (<A> :name href :title title)))))
+		     (<A> :name href :title title title)))))
 	  (ignore)))
 
       ;; images
@@ -942,7 +996,7 @@
        (ignore))
        
       ;; single escape characters
-      ((or punct blank)
+      ((or punct blank #\\)
        (add-expr! (the-html-string))
        (ignore))
 

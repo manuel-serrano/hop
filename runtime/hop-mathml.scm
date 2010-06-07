@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/hop-mathml.scm            */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop-mathml.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:24:08 2007                          */
-;*    Last change :  Fri Oct  9 18:05:21 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Last change :  Tue May 11 06:26:50 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop MATHML support.                                              */
 ;*=====================================================================*/
@@ -48,7 +48,7 @@
 ;*    xml-write ::xml-math ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-math p backend)
-   (with-access::xml-math obj (markup id attributes body)
+   (with-access::xml-math obj (tag id attributes body)
       (display (car body) p)))
 
 ;*---------------------------------------------------------------------*/
@@ -59,7 +59,7 @@
 		       (attributes)
 		       body)
    (instantiate::xml-element
-      (markup 'math)
+      (tag 'math)
       (id (xml-make-id id 'math))
       (attributes `(:xmlns ,xmlns ,@attributes))
       (body body)))
@@ -67,21 +67,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    MathML markups                                                   */
 ;*---------------------------------------------------------------------*/
-(define-xml xml-element #t <MATH:MSTYLE> :markup mstyle)
-(define-xml xml-element #t <MATH:MI> :markup mi)
-(define-xml xml-element #t <MATH:MN> :markup mn)
-(define-xml xml-element #t <MATH:MO> :markup mo)
-(define-xml xml-element #t <MATH:MROW> :markup mrow)
-(define-xml xml-element #t <MATH:MUNDER> :markup munder)
-(define-xml xml-element #t <MATH:MOVER> :markup mover)
-(define-xml xml-element #t <MATH:MUNDEROVER> :markup munderover)
-(define-xml xml-element #t <MATH:MSUP> :markup msup)
-(define-xml xml-element #t <MATH:MSUB> :markup msub)
-(define-xml xml-element #t <MATH:MSUBSUP> :markup msubsup)
-(define-xml xml-element #t <MATH:MFRAC> :markup mfrac)
-(define-xml xml-element #t <MATH:MROOT> :markup mroot)
-(define-xml xml-element #t <MATH:MSQRT> :markup msqrt)
-(define-xml xml-element #t <MATH:MTEXT> :markup mtext)
+(define-xml xml-element #t <MATH:MSTYLE> :tag mstyle)
+(define-xml xml-element #t <MATH:MI> :tag mi)
+(define-xml xml-element #t <MATH:MN> :tag mn)
+(define-xml xml-element #t <MATH:MO> :tag mo)
+(define-xml xml-element #t <MATH:MROW> :tag mrow)
+(define-xml xml-element #t <MATH:MUNDER> :tag munder)
+(define-xml xml-element #t <MATH:MOVER> :tag mover)
+(define-xml xml-element #t <MATH:MUNDEROVER> :tag munderover)
+(define-xml xml-element #t <MATH:MSUP> :tag msup)
+(define-xml xml-element #t <MATH:MSUB> :tag msub)
+(define-xml xml-element #t <MATH:MSUBSUP> :tag msubsup)
+(define-xml xml-element #t <MATH:MFRAC> :tag mfrac)
+(define-xml xml-element #t <MATH:MROOT> :tag mroot)
+(define-xml xml-element #t <MATH:MSQRT> :tag msqrt)
+(define-xml xml-element #t <MATH:MTEXT> :tag mtext)
 
 ;*---------------------------------------------------------------------*/
 ;*    <MATH:TEX> ...                                                   */

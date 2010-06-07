@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Thu Apr 22 14:36:56 2010 (serrano)                */
+;*    Last change :  Sun May 30 09:13:34 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -209,7 +209,7 @@
       ;; string constant
       ((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
        (let ((str (ucs2->utf8 (the-substring 0 (-fx (the-length) 1)) 0)))
-	  (list 'CONSTANT (escape-C-string str))))
+	  (list 'CONSTANT (string-as-read str))))
       
       ;; identifier
       ((: (or #\_ alpha) (* (or #\_ alpha digit)))
@@ -376,7 +376,10 @@
        ((IDENTIFIER COLON expression)
 	(list (symbol->keyword (car IDENTIFIER)) expression))
        ((CONSTANT COLON expression)
-	(list (car CONSTANT) expression)))
+	(let ((v (car CONSTANT)))
+	   (if (string? v)
+	       (list (string->keyword v) expression)
+	       (list v expression)))))
 
       ;; object
       (object

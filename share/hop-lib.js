@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Wed Apr 21 08:30:47 2010 (serrano)                */
+/*    Last change :  Thu May 27 13:39:21 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -13,6 +13,7 @@
 /*    Standard JS library                                              */
 /*---------------------------------------------------------------------*/
 /*** META ((export Math) (JS Math)) */
+/*** META ((export navigator) (JS navigator)) */
 /*** META ((export eval) (JS eval)) */
 /*** META ((export hop_update) (JS hop_update)) */
 /*** META ((export confirm) (JS confirm)) */
@@ -554,14 +555,6 @@ function seconds_date( d ) {
 /*** META ((export date->rfc282-date) (arity #t)) */
 function date_to_rfc2822( d ) {
    return d.toTimeString();
-}
-
-/*---------------------------------------------------------------------*/
-/*    date_from_rfc2822 ...                                            */
-/*---------------------------------------------------------------------*/
-/*** META ((export rfc282-date->date) (arity #t)) */
-function date_from_rfc2822( s ) {
-   return new Date( s );
 }
 
 /*---------------------------------------------------------------------*/

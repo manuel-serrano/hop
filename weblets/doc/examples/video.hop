@@ -60,7 +60,7 @@
       (<DIV> :style "text-align: center"
 	 (<DIV> :style "color: white" "A video with a reflection effect")
 	 (<VIDEO> :id "video" :src
-	    "<the-path-of-an-ogv-file-located-on-the-same-server>"
+	    "THE-PATH-OF-AN-OGV-FILE-LOCATED-ON-THE-SAME-SERVER"
 	    :width 320 :height 200
 	    :controls #t)
 	 (<DIV> :style "border-top: 1px solid #aaa; height: 1px; margin-top: -4px;"

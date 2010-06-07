@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/hopsh/parseargs.scm               */
+;*    serrano/prgm/project/hop/2.1.x/hopsh/parseargs.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Oct 19 17:06:34 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Wed May 26 15:54:49 2010 (serrano)                */
+;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -86,6 +86,8 @@
 	  (hopsh-enable-https-set! #f))
 	 ((("-l" "--login") ?user (help "Specify user log in"))
 	  (set! login user))
+	 ((("-t" "--timeout") ?timeout (help "Connection timeout (0=no timeout)"))
+	  (hopsh-timeout-set! (string->integer timeout)))
 	 (("-?dummy")
 	  (args-parse-usage #f)
 	  (exit 1))

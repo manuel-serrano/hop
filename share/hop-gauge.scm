@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 13 08:24:51 2010                          */
-;*    Last change :  Tue Apr 20 09:58:16 2010 (serrano)                */
+;*    Last change :  Thu May 27 16:55:34 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Gauge client-side implementation                                 */
@@ -64,7 +64,7 @@
       (set! el.min min)
       (set! el.max max)
       (set! el.fill fel)
-      (set! el.text tel)
+      (set! el.tel tel)
       (gauge-text-set! el (format fmt value max min))
       (if listener
 	  (add-event-listener! el "change" listener #t)
@@ -144,22 +144,12 @@
 ;*    gauge-text ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (gauge-text o)
-   (let* ((el (if (string? o) (dom-get-element-by-id o) o))
-	  (fel el.text))
-      el.innerHTML))
+   (let* ((el (if (string? o) (dom-get-element-by-id o) o)))
+      el.tel.innerHTML))
 
 ;*---------------------------------------------------------------------*/
 ;*    gauge-text ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (gauge-text-set! o t)
-   (let* ((el (if (string? o) (dom-get-element-by-id o) o))
-	  (fel el.text))
-      (innerHTML-set! fel t)))
-
-
-   
-		
-	     
-   
-      
-	    
+   (let ((el (if (string? o) (dom-get-element-by-id o) o)))
+      (innerHTML-set! el.tel t)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue Apr 20 05:51:39 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:29:04 2010 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -44,12 +44,12 @@
    ;; Verify that the body is a list of <TSPAN>
    (for-each (lambda (x)
 		(unless (and (xml-element? x)
-			     (eq? (xml-element-markup x) 'tspan))
+			     (eq? (xml-element-tag x) 'tspan))
 		   (error '<TABSLIDER> "Component is not a <TSPAN>" x)))
 	     body)
    
    (instantiate::html-tabslider
-      (markup 'tabslider)
+      (tag 'tabslider)
       (id (xml-make-id id 'TABSLIDER))
       (width width)
       (height height)
@@ -101,7 +101,7 @@
 	 ((and (xml-delay? (cadr body)) (null? (cddr body)))
 	  ;; a delayed tspan
 	  (instantiate::html-tspan
-	     (markup 'tspan)
+	     (tag 'tspan)
 	     (body (list (car body)
 			 (<DIV>
 			    :id id
@@ -121,7 +121,7 @@
 	 (else
 	  ;; an eager static tspan
 	  (instantiate::html-tspan
-	     (markup 'tspan)
+	     (tag 'tspan)
 	     (body (list (car body)
 			 (apply <DIV>
 				:id id

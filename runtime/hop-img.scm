@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Fri Apr 16 17:14:44 2010 (serrano)                */
+;*    Last change :  Tue May 11 06:25:07 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -118,14 +118,14 @@
    
    (define (plain-img src cssrc)
       (instantiate::xml-empty-element
-	 (markup 'img)
+	 (tag 'img)
 	 (id (xml-make-id id 'img))
 	 (attributes `(:src ,cssrc :alt ,(or alt (basename src)) ,@attributes))
 	 (body '())))
 
    (define (empty-img)
       (instantiate::xml-empty-element
-	 (markup 'img)
+	 (tag 'img)
 	 (id (xml-make-id id 'img))
 	 (attributes `(if alt `(:alt ,alt ,@attributes) attributes))
 	 (body '())))
@@ -151,7 +151,7 @@
    (define (inline-img src cssrc isrc)
       (if isrc
 	  (instantiate::xml-empty-element
-	     (markup 'img)
+	     (tag 'img)
 	     (id (xml-make-id id 'img))
 	     (attributes `(:src ,isrc :alt ,(or alt (basename src))
 				,@(onerror-img attributes src)))
@@ -161,7 +161,7 @@
    (cond
       ((xml-tilde? src)
        (instantiate::xml-empty-element
-	  (markup 'img)
+	  (tag 'img)
 	  (id (xml-make-id id 'img))
 	  (attributes `(:src ,src :alt ,alt ,@attributes))
 	  (body '())))

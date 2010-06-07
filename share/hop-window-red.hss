@@ -44,6 +44,10 @@ $(define (url file)
 /*    shadow                                                           */
 /*---------------------------------------------------------------------*/
 window {
+  box-shadow: 5px 5px 10px #444;
+}
+
+window:hover {
   box-shadow: 5px 5px 10px #333;
 }
 
@@ -56,7 +60,7 @@ $(define active-color-to "#FF0000")
 $(define passive-color "#888888")
 $(define passive-color-to "#BBBBBB")
 
-$(define active-opacity "0.95")
+$(define active-opacity "0.92")
 $(define passive-opacity "0.8")
 
 $(define iconify-icon "icons/hop-window-red/iconify.png")
