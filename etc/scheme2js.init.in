@@ -17,4 +17,4 @@
 		  :module-init 'scheme2js
 		  :module-eval '__scheme2js_makelib
 		  :class-init "bigloo.scheme2js.scheme2js"
-		  :class-eval "bigloo.scheme2js.make-lib")
+		  :class-eval "bigloo.scheme2js.make_lib")

@@ -66,13 +66,13 @@ $(SCHEME2JS_RUNTIME)/runtime_interface_callcc.js: $(SCHEME2JS_RUNTIME)/runtime_c
 #  exporter / interface
 #==============================================================================
 
-RUNTIME_EXPORTER_MODULES = exporter meta multi-file-port string
+RUNTIME_EXPORTER_MODULES = exporter meta multi_file_port string
 RUNTIME_EXPORTER_SCMS = $(RUNTIME_EXPORTER_MODULES:%=$(SCHEME2JS_RUNTIME)/%.scm)
 
 $(SCHEME2JS_RUNTIME)/exporter: $(RUNTIME_EXPORTER_SCMS)
 	$(BIGLOO) -g -o $@ $^
 
-RUNTIME_INTERFACE_MODULES = interface meta multi-file-port string
+RUNTIME_INTERFACE_MODULES = interface meta multi_file_port string
 RUNTIME_INTERFACE_SCMS = $(RUNTIME_INTERFACE_MODULES:%=$(SCHEME2JS_RUNTIME)/%.scm)
 $(SCHEME2JS_RUNTIME)/interface: $(RUNTIME_INTERFACE_SCMS)
 	$(BIGLOO) -g -o $@ $^

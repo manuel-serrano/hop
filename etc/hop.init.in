@@ -18,7 +18,7 @@
 		  :module-init '__hop_types
 		  :module-eval '__hop_makelib
 		  :class-init "bigloo.hop.types"
-		  :class-eval "bigloo.hop.make-lib")
+		  :class-eval "bigloo.hop.make_lib")
 
 ;*---------------------------------------------------------------------*/
 ;*    Link option                                                      */

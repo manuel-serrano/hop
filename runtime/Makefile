@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.1.x/runtime/Makefile                  */
+#*    serrano/prgm/project/hop/2.1.x/runtime.Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sat May 29 06:00:25 2010 (serrano)                */
+#*    Last change :  Mon Jun  7 16:47:58 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -33,27 +33,27 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 _OBJECTS = param misc priv types \
            xml html charset dom read module \
-           read-js css cssmatch clientc js-lib json cgi \
+           read_js cssmatch css clientc js_lib json cgi \
            hop service \
            job mime user password cache \
-           hop-wiki wiki-syntax wiki-parser wiki-toc hz \
-           http-lib http-request \
-           http-response http-shoutcast http-remote http-webdav \
-           http-error http-filter \
-           hop-img hop-extra hop-inline \
-           hop-rss hop-sym \
-           hop-svg hop-mathml \
+           hop_wiki wiki_syntax wiki_parser wiki_toc hz \
+           http_lib http_request \
+           http_response http_shoutcast http_remote http_webdav \
+           http_error http_filter \
+           hop_img hop_extra hop_inline \
+           hop_rss hop_sym \
+           hop_svg hop_mathml \
            event color weblets prefs expanders security
 
 OBJECTS = $(_OBJECTS:%=o/%.o) o/configure.o
-EOBJECTS = o/make-lib.o
+EOBJECTS = o/make_lib.o
 
 BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class) \
               $(CLASS_DIR)/configure.class
-BGL_ECLASSES = $(CLASS_EDIR)/make-lib.class
+BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
 BGL_DOTNET_OBJ = $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
-BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make-lib.obj
+BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make_lib.obj
 
 SOURCES = $(_OBJECTS:%=%.scm)
 
@@ -69,7 +69,7 @@ INCLUDES = http-lib.sch \
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
-POPULATION = $(SOURCES) $(INCLUDES) make-lib.scm Makefile
+POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile
 
 include ../etc/Makefile.library
 
@@ -97,7 +97,7 @@ ude:
 
 .jfile: $(SOURCES) configure.scm
 	@ $(JFILE) -suffix hop -o .jfile \
-                   -pbase $(PBASE) $(SOURCES) configure.scm make-lib.scm
+                   -pbase $(PBASE) $(SOURCES) configure.scm make_lib.scm
 
 .etags: $(SOURCES)
 	@ $(BTAGS) -o .etags $(SOURCES) configure.scm
@@ -114,53 +114,48 @@ o/thread.o thread.class: enable-thread.sch disable-thread.sch
 #*---------------------------------------------------------------------*/
 #*    Dependencies ...                                                 */
 #*---------------------------------------------------------------------*/
-o/hop-audio.o hop-audio.class: xml.sch service.sch 
-o/hop-svg.o hop-svg.class: xml.sch 
+o/http_filter.o ./http_filter.class: http-lib.sch 
 o/param.o param.class: param.sch 
-o/scm.o scm.class: xml.sch service.sch 
-o/http-response.o ./http-response.class: http-lib.sch 
-o/hop-wiki.o hop-wiki.class: xml.sch 
+o/clientc.o ./clientc.class: xml.sch service.sch 
+o/hop_extra.o ./hop_extra.class: xml.sch 
+o/clientc.o clientc.class: xml.sch service.sch 
 o/param.o ./param.class: param.sch 
-o/http-webdav.o http-webdav.class: http-lib.sch xml.sch 
 o/weblets.o ./weblets.class: xml.sch 
-o/hop-editor.o hop-editor.class: xml.sch 
-o/http-remote.o http-remote.class: http-lib.sch 
 o/weblets.o weblets.class: xml.sch 
-o/hop-fileselector.o hop-fileselector.class: xml.sch service.sch 
+o/http_response.o ./http_response.class: http-lib.sch 
+o/hop_inline.o ./hop_inline.class: xml.sch 
+o/hop_extra.o hop_extra.class: xml.sch 
+o/http_remote.o ./http_remote.class: http-lib.sch 
+o/configure.o ./configure.class: configure-noarch.sch 
+o/http_lib.o ./http_lib.class: http-lib.sch 
 o/event.o event.class: xml.sch service.sch param.sch 
-o/scm.o ./scm.class: xml.sch service.sch 
 o/prefs.o prefs.class: xml.sch service.sch 
-o/hop-inline.o hop-inline.class: xml.sch 
-o/event.o ./event.class: xml.sch service.sch param.sch 
-o/http-error.o http-error.class: xml.sch 
-o/hop-slider.o hop-slider.class: xml.sch 
-o/hop-mathml.o hop-mathml.class: xml.sch 
-o/http-response.o http-response.class: http-lib.sch 
+o/http_filter.o http_filter.class: http-lib.sch 
+o/http_error.o ./http_error.class: xml.sch 
+o/hop_mathml.o ./hop_mathml.class: xml.sch 
+o/prefs.o ./prefs.class: xml.sch service.sch 
+o/hop_img.o ./hop_img.class: param.sch xml.sch 
+o/hop_img.o hop_img.class: param.sch xml.sch 
+o/http_webdav.o http_webdav.class: http-lib.sch xml.sch 
+o/hop_rss.o hop_rss.class: xml.sch 
+o/http_remote.o http_remote.class: http-lib.sch 
 o/expanders.o expanders.class: service-expd.sch prefs-expd.sch           \
-      param-expd.sch xml-expd.sch expanders.sch 
-o/http-lib.o ./http-lib.class: http-lib.sch 
-o/css.o css.class: xml.sch service.sch 
-o/hop-extra.o ./hop-extra.class: xml.sch 
-o/hop-paned.o hop-paned.class: xml.sch 
-o/hop-tree.o ./hop-tree.class: xml.sch service.sch 
+      param-expd.sch hss-expd.sch xml-expd.sch expanders.sch 
+o/css.o css.class: xml.sch service.sch hss.sch 
 o/service.o ./service.class: service.sch 
+o/http_response.o http_response.class: http-lib.sch 
+o/http_lib.o http_lib.class: http-lib.sch 
 o/service.o service.class: service.sch 
-o/http-filter.o ./http-filter.class: http-lib.sch 
-o/hop-img.o ./hop-img.class: param.sch xml.sch 
-o/hop-img.o hop-img.class: param.sch xml.sch 
+o/hop_inline.o hop_inline.class: xml.sch 
+o/hop_wiki.o hop_wiki.class: xml.sch 
 o/xml.o xml.class: param.sch xml.sch 
-o/hop-extra.o hop-extra.class: xml.sch 
-o/css.o ./css.class: xml.sch service.sch 
-o/hop-rss.o hop-rss.class: xml.sch 
-o/hop-notepad.o hop-notepad.class: xml.sch 
-o/http-remote.o ./http-remote.class: http-lib.sch 
-o/http-error.o ./http-error.class: xml.sch 
-o/http-lib.o http-lib.class: http-lib.sch 
+o/css.o ./css.class: xml.sch service.sch hss.sch 
+o/hop_svg.o hop_svg.class: xml.sch 
+o/html.o ./html.class: param.sch xml.sch 
+o/hop_mathml.o hop_mathml.class: xml.sch 
+o/http_error.o http_error.class: xml.sch 
 o/xml.o ./xml.class: param.sch xml.sch 
-o/hop-slider.o ./hop-slider.class: xml.sch 
-o/hop-tree.o hop-tree.class: xml.sch service.sch 
-o/hop-video.o hop-video.class: xml.sch service.sch 
-o/http-filter.o http-filter.class: http-lib.sch 
-o/http-shoutcast.o http-shoutcast.class: http-lib.sch 
+o/http_shoutcast.o http_shoutcast.class: http-lib.sch 
+o/html.o html.class: param.sch xml.sch 
 
 #bdepend stop

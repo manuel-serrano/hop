@@ -107,6 +107,8 @@ done
 
 arch=noarch
 
+felix=
+
 # Argument parsing
 while : ; do
   case $1 in
@@ -260,6 +262,12 @@ while : ; do
     --macosx-bundle|--macosx)
       arch=macosx;;
 
+    --apache-felix=*)
+      felix="`echo $1 | sed 's/^[^=]*=//'`"
+      hopsrfis="$hopsrfis boot-from-java"
+      ;;
+
+
     -*)
       echo "*** Configure error, unknown option $1" >&2;
       echo >&2;
@@ -304,6 +312,7 @@ while : ; do
       echo "   --disable-threads..... Disables multi-threading support" >&2;
       echo "   --srfi=sym............ Activate this srfi (during compilation and runtime)" >&2;
       echo "   --macosx.............. Prepare the production of a MacOSX bundle" >&2;
+      echo "   --apache-felix=path... Path to felix.jar" >&2;
       exit -1;
   esac
   shift
@@ -511,6 +520,21 @@ for srfi in $hopsrfis; do
 done
 
 #*---------------------------------------------------------------------*/
+#*    Apache Felix                                                     */
+#*---------------------------------------------------------------------*/
+if [ "$felix " != " " ]; then
+   if [ ! -f "$felix" ]; then
+      echo "*** Configure error, Apache Felix not found in $felix" >&2;
+      exit 1;
+   fi
+
+   if [ "$backend " != "jvm " ]; then
+      echo "*** Configure error, Apache Felix requires the jvm backend" >&2;
+      exit 1;
+   fi
+fi
+
+#*---------------------------------------------------------------------*/
 #*    Makefile.hopconfig                                               */
 #*---------------------------------------------------------------------*/
 if [ "$ssl " = "yes " ]; then
@@ -585,6 +609,7 @@ cat $mkmf.in \
           -e "s|@BIGLOOSSLLIB@|$bigloossllib|" \
           -e "s|@BIGLOOPTHLIB@|$bigloopthlib|" \
           -e "s|@RTSCONFIG@|$rts|" \
+          -e "s|@FELIX_JAR@|$felix|" \
     >> $mkmf
 
 # runtime/configure.scm

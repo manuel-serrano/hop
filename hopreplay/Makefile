@@ -24,7 +24,7 @@ EXEC		= hopreplay
 #*---------------------------------------------------------------------*/
 #*    Sources    					               */
 #*---------------------------------------------------------------------*/
-MODULES		= hoprp-param parseargs main login replay log
+MODULES		= hoprp_param parseargs main login replay log
 
 INCLUDES	= 
 

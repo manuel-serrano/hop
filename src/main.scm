@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jun  7 16:06:11 2010 (serrano)                */
+;*    Last change :  Tue Apr 20 08:20:25 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -35,10 +35,13 @@
 
    (cond-expand
       (hop-as-library (extern (export main "hop_main"))
-                      (export (main x)))
+		      (export (main x)))
+      (boot-from-java
+         ; java name is bigloo.hop.main.main (args)
+         (export (main::int args::pair-nil)))
       (else (main main))))
 
-
+ 
 ;*---------------------------------------------------------------------*/
 ;*    signal-init! ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -214,7 +217,7 @@
 ;*    set-hop-owner! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (set-hop-owner! user)
-
+   
    (define (err)
       (error 'hop
 	     "Hop is not allowed to be executed as `root'. Create a dedicated Hop user to run Hop on behalf of.\n"

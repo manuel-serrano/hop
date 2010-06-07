@@ -72,14 +72,14 @@ $(DOTNET_OBJ_EDIR)/%.obj: %.hop
 heap-c: .afile $(HEAP_FILE)
 heap-jvm: .afile .jfile $(HEAPJVM_FILE)
 
-$(HEAP_FILE): make-lib.scm .afile
+$(HEAP_FILE): make_lib.scm .afile 
 	@ $(RM) -f $(HEAP_FILE)
 	@ $(call compile2,BIGLOO,BCFLAGS,BHFLAGS,$< -addheap $@ -heap-library $(TARGETNAME))
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
-$(HEAPJVM_FILE): .jfile .afile make-lib.scm
+$(HEAPJVM_FILE): .jfile .afile make_lib.scm
 	@ $(RM) -f $(HEAPJVM_FILE)
-	@ $(BIGLOO) -jvm $(EFLAGS) $(BJVMFLAGS) $(BHFLAGS) make-lib.scm -addheap $(HEAPJVM_FILE) -heap-library $(TARGETNAME)
+	@ $(BIGLOO) -jvm $(EFLAGS) $(BJVMFLAGS) $(BHFLAGS) make_lib.scm -addheap $(HEAPJVM_FILE) -heap-library $(TARGETNAME)
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
 #*---------------------------------------------------------------------*/
@@ -95,7 +95,7 @@ lib-c: $(TAGS) o lib-c-static lib-c-shared
 o:
 	mkdir -p $@
 
-lib-c-static: .afile o
+lib-c-static: .afile o 
 	$(MAKE) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a \
 	        $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a \
 	        $(BUILDLIBDIR)/lib$(TARGETNAME)_e-$(HOPRELEASE).a
@@ -164,10 +164,10 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a: .afile $(OBJECTS)
 #*--- lib-jvm ---------------------------------------------------------*/
 lib-jvm: $(TAGS) $(CLASS_DIR) $(CLASS_EDIR) lib.zip
 
-$(CLASS_DIR):
+$(CLASS_DIR): 
 	mkdir -p $(CLASS_DIR)
 
-$(CLASS_EDIR):
+$(CLASS_EDIR): 
 	mkdir -p $(CLASS_EDIR)
 
 lib.zip: $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip \
@@ -247,7 +247,7 @@ stdclean:
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).jheap
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).jheap 
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).heap
 	$(RM) -rf $(CLASS_DIR)
 	$(RM) -rf $(DOTNET_OBJ_DIR)
@@ -312,7 +312,7 @@ install-dotnet:
         $(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll && \
         chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll && \
         $(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll && \
-        chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
+        chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll 
 
 uninstall:
 	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
@@ -331,7 +331,7 @@ uninstall:
 #*    dep                                                              */
 #*---------------------------------------------------------------------*/
 .PHONY: dep
-dep:
+dep: 
 	@(num=`grep -n '^#bdepend start' Makefile | awk -F: '{ print $$1}' -`;\
           head -n `expr $$num - 1` Makefile > /tmp/Makefile.aux)
 	@ $(DEPEND) -fno-mco \
