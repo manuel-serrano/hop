@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.1.x/runtime.Makefile                  */
+#*    serrano/prgm/project/hop/2.1.x/runtime/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Jun  7 16:47:58 2010 (serrano)                */
+#*    Last change :  Mon Jun  7 17:10:17 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -33,7 +33,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 _OBJECTS = param misc priv types \
            xml html charset dom read module \
-           read_js cssmatch css clientc js_lib json cgi \
+           read_js css cssmatch clientc js_lib json cgi \
            hop service \
            job mime user password cache \
            hop_wiki wiki_syntax wiki_parser wiki_toc hz \
