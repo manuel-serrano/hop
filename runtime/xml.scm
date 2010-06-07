@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon May 31 08:09:49 2010 (serrano)                */
+;*    Last change :  Sun Jun  6 11:46:52 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -573,14 +573,14 @@
 ;*    xml-write ::xml-html ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-html p backend)
-   (if (>fx (bigloo-debug) 0)
-       (xml-write-html-debug obj p backend)
+   (if (>=fx (hop-clientc-debug-unbound) 1)
+       (xml-write-html/unbound-check obj p backend)
        (xml-write-html obj p backend)))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-write-html-debug ...                                         */
+;*    xml-write-html/unbound-check ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (xml-write-html-debug obj::xml-html p backend)
+(define (xml-write-html/unbound-check obj::xml-html p backend)
    (with-access::xml-html obj (body)
       ;; check the unbound variables
       (let ((env (make-hashtable)))

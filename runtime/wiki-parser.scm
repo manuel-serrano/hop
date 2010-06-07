@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed May 26 14:02:36 2010 (serrano)                */
+;*    Last change :  Sat Jun  5 06:58:57 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -764,54 +764,51 @@
 		       '()
 		       (lambda (path)
 			  (with-input-from-loading-file path
-		             (lambda ()
-				(add-expr!
-				 ((wiki-syntax-pre syn)
-				  (html-string-encode (read-string))))))))
+							(lambda ()
+							   (add-expr!
+							    ((wiki-syntax-pre syn)
+							     (html-string-encode (read-string))))))))
 	      (ignore))
 	     (else
-	      (let ((id (the-symbol)))
-		 (cond
-		    (((wiki-syntax-plugins syn) id)
-		     =>
-		     (lambda (proc)
-			(let* ((/markup (string-append
-					 "</" (the-substring 1 (the-length))))
-			       (l/markup (string-length /markup))
-			       (title (read-line (the-port)))
-			       (ltitle (string-length title)))
-			   (if (substring-at? title /markup (-fx ltitle l/markup))
-			       (add-expr!
-				(proc (the-port)
-				      (normalize-string
-				       (substring title 0 (-fx ltitle l/markup)))
-				      #f))
-			       (enter-plugin! id
-					      (lambda e
-						 (proc (the-port) (normalize-string title) e))
-					      #f)))))
-		    (((wiki-syntax-verbatims syn) id)
-		     =>
-		     (lambda (proc)
-			(let* ((/markup (string-append
-					 "</" (the-substring 1 (the-length))))
-			       (l/markup (string-length /markup))
-			       (title (read-line (the-port)))
-			       (ltitle (string-length title)))
-			   (if (substring-at? title /markup (-fx ltitle l/markup))
-			       (add-expr!
-				(proc (the-port)
-				      (normalize-string
-				       (substring title 0 (-fx ltitle l/markup)))
-				      #f))
-			       ;; read all the lines up to the closing tag
-			       (add-expr!
-				(proc (the-port)
-				      (normalize-string title)
-				      #f))))))
-		    (else
-		     (add-expr! (the-html-string))))
-		 (ignore))))))
+	      (let* ((id (the-symbol))
+		     (pproc ((wiki-syntax-plugins syn) id)))
+		 (if (procedure? pproc)
+		     (let* ((/markup (string-append
+				      "</" (the-substring 1 (the-length))))
+			    (l/markup (string-length /markup))
+			    (title (read-line (the-port)))
+			    (ltitle (string-length title)))
+			(if (substring-at? title /markup (-fx ltitle l/markup))
+			    (add-expr!
+			     (pproc (the-port)
+				    (normalize-string
+				     (substring title 0 (-fx ltitle l/markup)))
+				    #f))
+			    (enter-plugin! id
+					   (lambda e
+					      (pproc (the-port) (normalize-string title) e))
+					   #f)))
+		     (let ((sproc ((wiki-syntax-verbatims syn) id)))
+			(if (procedure? sproc)
+			    (let* ((/markup (string-append
+					     "</" (the-substring 1 (the-length))))
+				   (l/markup (string-length /markup))
+				   (title (read-line (the-port)))
+				   (ltitle (string-length title)))
+			       (if (substring-at? title /markup (-fx ltitle l/markup))
+				   (add-expr!
+				    (sproc (the-port)
+					   (normalize-string
+					    (substring title 0 (-fx ltitle l/markup)))
+					   #f))
+				   ;; read all the lines up to the closing tag
+				   (add-expr!
+				    (sproc (the-port)
+					   (normalize-string title)
+					   #f))))
+			    (add-expr! (the-html-string))))))
+	      (ignore)))))
+      
       ((: "</" (+ (out #\< #\> #\/)) ">")
        (let ((id (the-symbol)))
 	  (case id
@@ -956,7 +953,7 @@
 			(title (html-string-encode
 				(charset
 				 (substring s (+fx i 1) (string-length s))))))
-		     (<A> :name href :title title)))))
+		     (<A> :name href :title title title)))))
 	  (ignore)))
 
       ;; images

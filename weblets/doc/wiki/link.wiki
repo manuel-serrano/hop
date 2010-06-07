@@ -1,5 +1,5 @@
-Links may only refer to a URL such as [[http://www.inria.fr]]. They may
-also specify a text to be displayed instead of the url such as:
+Links may only not only refer to a URL such as [[http://www.inria.fr]]. 
+They may also specify a text to be displayed instead of the url such as:
 [[http://www.inria.fr|Inria]]. The text denoting a link may use all the wiki
 syntax such as: [[http://www.inria.fr|The //French// national institute for
 __research__ in **computer science** and **control**]].

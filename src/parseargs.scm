@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Apr 22 13:29:57 2010 (serrano)                */
+;*    Last change :  Sun Jun  6 12:16:47 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -99,13 +99,22 @@
 	      (hop-verbose-set! (+fx 1 (hop-verbose)))
 	      (hop-verbose-set! (string->integer level))))
          (("-g?level" (help "Increase/set debug level"))
-          (if (string=? level "")
-	      (begin
-		 (bigloo-debug-module-set! (+fx 1 (bigloo-debug-module)))
-		 (bigloo-debug-set! (+fx 1 (bigloo-debug))))
-	      (begin
-		 (bigloo-debug-module-set! (string->integer level))
-		 (bigloo-debug-set! (string->integer level)))))
+          (cond
+	     ((string=? level "")
+	      (hop-clientc-debug-unbound-set! 1)
+	      (bigloo-debug-module-set! (+fx 1 (bigloo-debug-module)))
+	      (bigloo-debug-set! (+fx 1 (bigloo-debug))))
+	     ((string=? level "clientc-debug-unbound")
+	      (hop-clientc-debug-unbound-set! 1))
+	     ((string=? level "no-clientc-debug-unbound")
+	      (hop-clientc-debug-unbound-set! 0))
+	     ((not (string=? level "0"))
+	      (bigloo-debug-module-set! (string->integer level))
+	      (bigloo-debug-set! (string->integer level)))
+	     (else
+	      (bigloo-debug-module-set! 0)
+	      (bigloo-debug-set! 0)
+	      (hop-clientc-debug-unbound-set! 0))))
 	 (("--time" (help "Report execution time"))
 	  (hop-report-execution-time-set! #t))
 	 (("-w?level" (help "Increase/set warning level (-w0 no warning)"))
