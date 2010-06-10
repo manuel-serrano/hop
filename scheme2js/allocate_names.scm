@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -142,7 +142,8 @@
 			     (allocate-global-name v env used-ht)))
 	       ((this)    (allocate-this-name v used-ht))
 	       ((imported exported)
-		(allocate-exported-name v env used-ht)))))))
+		(allocate-exported-name v env used-ht)))))
+      (hashtable-put! used-ht (Named-Var-js-id v) #t)))
 
 ;; call to reset the last-generated-id.
 ;; Too often and the id-generation will slow down.
@@ -238,18 +239,15 @@
 			  (else
 			   (string-append short "_"
 					  (number->string counter))))))
-		   (loop next-try #t)))))))
-   (hashtable-put! used-ht (Named-Var-js-id v) #t))
+		   (loop next-try #t))))))))
 
 (define (allocate-this-name v::Var used-ht)
-   (widen!::Named-Var v (js-id "this"))
-   (hashtable-put! used-ht 'this #t))
+   (widen!::Named-Var v (js-id "this")))
 
 (define (allocate-exported-name v::Var env used-ht)
    (with-access::Var v (export-desc)
       (let ((js-id (Export-Desc-js-id export-desc)))
-	 (widen!::Named-Var v (js-id js-id))
-	 (hashtable-put! used-ht js-id #t))))
+	 (widen!::Named-Var v (js-id js-id)))))
 
 (define (allocate-compressed-global-name v::Var env used-ht)
    (with-access::Name-Env env (suffix)
@@ -268,8 +266,7 @@
 		   (js-id (if (or (not (valid? short))
 				  (used? short used-ht))
 			      (string-append (gen-JS-sym id) suffix)
-			      short))))
-	     (hashtable-put! used-ht (Named-Var-js-id v) #t)))))
+			      short))))))))
 
 (define-nmethod (Node.name-gen used-ht)
    (default-walk this used-ht))
@@ -328,4 +325,7 @@
       (for-each (lambda (var)
 		   (allocate-name var env used-ht))
 		vars)
-      (default-walk this used-ht)))
+      (default-walk this used-ht)
+      (for-each (lambda (var)
+		   (hashtable-remove! used-ht (Named-Var-js-id var)))
+		vars)))
