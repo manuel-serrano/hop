@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Tue Feb 16 07:43:05 2010 (serrano)                */
+;*    Last change :  Thu Jun 10 09:03:46 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -56,7 +56,7 @@
 					 (cadr main)
 					 (string-append name ".hop")))))
 	 (when (file-exists? weblet)
-	    `((name ,name) (weblet ,weblet) (prefix ,prefix) ,@infos))))
+	    `((weblet ,weblet) (prefix ,prefix) (name ,name) ,@infos))))
    (let loop ((files (directory->list dir))
 	      (res '()))
       (if (null? files)
@@ -197,11 +197,15 @@
 	 (if (pair? cname)
 	     (let* ((name (cadr cname))
 		    (prefix (cadr (assq 'prefix x)))
-		    (url (make-url-name (hop-service-base) name))
+		    (svc (let ((c (assq 'service x)))
+			    (if (and (pair? c) (symbol? (cadr c)))
+				(symbol->string (cadr c))
+				name)))
+		    (url (make-url-name (hop-service-base) svc))
 		    (path (cadr (assq 'weblet x)))
 		    (autopred (assq 'autoload x))
 		    (rc (assq 'rc x))
-		    (opath (hashtable-get *weblet-table* name)))
+		    (opath (hashtable-get *weblet-table* svc)))
 		;; dashboard setup
 		(install-weblet-dashboard! name prefix x url)
 		;; rc setup
@@ -217,7 +221,7 @@
 				 (cadr autopred) "\n")
 		       (autoload path (eval (cadr autopred)))))
 		   (else
-		    (hashtable-put! *weblet-table* name path)
+		    (hashtable-put! *weblet-table* name svc)
 		    (install-autoload-prefix path url))))
 	     (warning 'autoload-weblets
 		      "Illegal weblet etc/weblet.info file"
