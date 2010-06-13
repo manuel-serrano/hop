@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Jun  6 11:46:40 2010 (serrano)                */
+;*    Last change :  Sun Jun 13 07:40:39 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -83,9 +83,6 @@
 	    (hop-max-file-entry-cache::int)
 	    (hop-max-file-entry-cache-set! ::int)
 	    
-	    (hop-restore-disk-cache::bool)
-	    (hop-restore-disk-cache-set! ::bool)
-
 	    (hop-svg-img-cache-size::int)
 	    (hop-svg-img-cache-size-set! ::int)
 	    
@@ -283,8 +280,6 @@
 	    (hop-proxy-sniffer-set! ::procedure)
 	    (hop-proxy-sniffer-add! ::procedure)
 
-	    (hop-api-cache::bstring)
-
 	    (hop-hz-resolver::procedure)
 	    (hop-hz-resolver-set! ::procedure)
 	    
@@ -303,12 +298,6 @@
 (define-parameter hop-uptime
    (current-date))
 
-;*---------------------------------------------------------------------*/
-;*    hop-api-cache ...                                                */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-api-cache
-   (os-tmp))
-   
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-directory ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -412,7 +401,6 @@
       (if (integer? v)
 	  (begin
 	     (hop-login-cookie-id-set! (format "hop@~a:~a" (hostname) v))
-	     (hop-api-cache-set! (format "api-~a" v))
 	     v)
 	  (error 'hop-port "Illegal hop port" v))))
 
@@ -456,12 +444,6 @@
 ;*    hop-capture-port ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-capture-port
-   #f)
-
-;*---------------------------------------------------------------------*/
-;*    hop-restore-disk-cache ...                                       */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-restore-disk-cache
    #f)
 
 ;*---------------------------------------------------------------------*/

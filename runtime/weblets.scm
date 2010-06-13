@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Thu Jun 10 09:03:46 2010 (serrano)                */
+;*    Last change :  Sat Jun 12 07:26:36 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -24,12 +24,18 @@
 	   __hop_misc
 	   __hop_read)
    
-   (static  (class %autoload
+   (static  (abstract-class %autoload
 	       (path::bstring read-only)
-	       (pred::procedure read-only)
+	       (pred::procedure read-only))
+
+	    (class %autoload-file::%autoload
+	       (loaded::bool (default #f))
 	       (hooks::pair-nil read-only (default '()))
-	       (mutex::mutex (default (make-mutex)))
-	       (loaded::bool (default #f))))
+	       (mutex::mutex (default (make-mutex))))
+
+	    (class %autoload-incompatible::%autoload
+	       (name::bstring read-only)
+	       (info::pair-nil read-only)))
    
    (export  (find-weblets-in-directory ::bstring)
 	    (reset-autoload!)
@@ -191,6 +197,35 @@
 		   "autoload already installed on:\n  ~a\nignoring:\n  ~a"
 		   opath
 		   npath))))
+
+   (define (hop-compatible? x)
+      
+      (define (cmpversion version cmp)
+	 (or (not (pair? version))
+	     (not (string? (cadr version)))
+	     (string=? (cadr version) "")
+	     (cmp (hop-version) (cadr version))))
+
+      (and (cmpversion (assq 'minhop x) string>=?)
+	   (cmpversion (assq 'maxhop x) string<=?)))
+
+   (define (make-incompatible-url name x)
+      (make-url-name (hop-service-base)
+		     (format "~a/incompatible?minhop=~a&maxhop=~a"
+			     name
+			     (let ((c (assq 'minhop x)))
+				(if (pair? c) (cadr c) "*"))
+			     (let ((c (assq 'maxhop x)))
+				(if (pair? c) (cadr c) "*")))))
+
+   (define (warn-incompatible name x)
+      (warning name
+	       (format " -- Hop ~s incompatible with min: ~a, max: ~a"
+		       (hop-version)
+		       (let ((c (assq 'minhop x)))
+			  (if (pair? c) (cadr c) "*"))
+		       (let ((c (assq 'maxhop x)))
+			  (if (pair? c) (cadr c) "*")))))
    
    (define (maybe-autoload x)
       (let ((cname (assq 'name x)))
@@ -214,6 +249,9 @@
 		(cond
 		   ((string? opath)
 		    (warn name opath path))
+		   ((not (hop-compatible? x))
+		    (warn-incompatible name x)
+		    (autoload-incompatible path (autoload-prefix url) name x))
 		   ((pair? autopred)
 		    (when (cadr autopred)
 		       (hashtable-put! *weblet-table* name path)
@@ -277,17 +315,38 @@
 	 (let ((qfile (find-file/path file (hop-path))))
 	    (if (not (and (string? qfile) (file-exists? qfile)))
 		(error 'autoload-add! "Can't find autoload file" file)
-		(let ((al (instantiate::%autoload
+		(let ((al (instantiate::%autoload-file
 			     (path qfile)
 			     (pred pred)
 			     (hooks hooks))))
 		   (set! *autoloads* (cons al *autoloads*))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    autoload-incompatible ...                                        */
+;*---------------------------------------------------------------------*/
+(define (autoload-incompatible file pred name info)
+   (with-lock *autoload-mutex*
+      (lambda ()
+	 (let ((qfile (find-file/path file (hop-path))))
+	    (if (not (and (string? qfile) (file-exists? qfile)))
+		(error 'autoload-add! "Can't find autoload file" file)
+		(let ((al (instantiate::%autoload-incompatible
+			     (path qfile)
+			     (pred pred)
+			     (name name)
+			     (info info))))
+		   (set! *autoloads* (cons al *autoloads*))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    autoload-load! ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (autoload-load! req al)
-   (with-access::%autoload al (path hooks loaded mutex)
+(define-generic (autoload-load! a::%autoload req))
+
+;*---------------------------------------------------------------------*/
+;*    autoload-load! ::%autoload-file ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (autoload-load! a::%autoload-file req)
+   (with-access::%autoload-file a (path hooks loaded mutex)
       (mutex-lock! mutex)
       (unwind-protect
 	 (unless loaded
@@ -306,6 +365,21 @@
 	    (for-each (lambda (h) (h req)) hooks)
 	    (set! loaded #t))
 	 (mutex-unlock! mutex))))
+
+;*---------------------------------------------------------------------*/
+;*    autoload-load! ::%autoload-incompatible ...                      */
+;*---------------------------------------------------------------------*/
+(define-method (autoload-load! a::%autoload-incompatible req)
+   (with-access::%autoload-incompatible a (name info)
+      (let* ((min (assq 'minhop info))
+	     (minhop (if (pair? min) (cadr min) "*"))
+	     (max (assq 'max info))
+	     (maxhop (if (pair? max) (cadr max) "*")))
+	 (raise
+	  (instantiate::&hop-autoload-error
+	     (proc name)
+	     (msg (format "Hop \"~a\" cannot run this weblet" (hop-version)))
+	     (obj (format "min-hop: ~a, max-hop: ~a" minhop maxhop)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload-filter ...                                              */
@@ -327,7 +401,7 @@
 		    ;; the autoload cannot be removed until read, otherwise
 		    ;; parallel requests to the autoloaded service will raise
 		    ;; a service not found error
-		    (autoload-load! req (car al))
+		    (autoload-load! (car al) req)
 		    ;; add all the file associated with the autoload in
 		    ;; the service path table (see __hop_service).
 		    (service-etc-path-table-fill! (%autoload-path (car al)))

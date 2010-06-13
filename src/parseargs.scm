@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Jun  6 12:16:47 2010 (serrano)                */
+;*    Last change :  Sun Jun 13 07:44:45 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -197,10 +197,6 @@
 		(print "  - pool (one thread per request from a pool)")
 		(print "  - accept-many (as pool but an accept-many call)")))
 	  (exit 0))
-	 (("--restore-cache" (help "Restore disk caches"))
-	  (hop-restore-disk-cache-set! #t))
-	 (("--no-restore-cache" (help "Do not restore disk caches"))
-	  (hop-restore-disk-cache-set! #f))
 	 (("-psn_?dummy") ;; Macosx sends process serial numbers this way.
 	  ;; just ignore it.
 	  'do-nothing)
@@ -228,9 +224,11 @@
 			      mime-file
 			      (make-file-name (getenv "HOME") ".mime.types"))))
 
-      ;; clear cache
-      (when (and clear-cache (directory? (hop-cache-directory)))
-	 (delete-path (hop-cache-directory)))
+      ;; clear al caches
+      (when clear-cache
+	 (let ((cache (make-cache-name)))
+	    (when (directory? cache)
+	       (delete-path cache))))
       
       ;; weblets path
       (hop-autoload-directory-add!

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Apr 20 08:20:25 2010 (serrano)                */
+;*    Last change :  Sun Jun 13 07:39:34 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -102,13 +102,6 @@
    (bigloo-load-module-set! (lambda (f) (hop-load-modified f :abase #f)))
    (bigloo-module-extension-handler-set! hop-module-extension-handler)
    (bigloo-module-resolver-set! (make-hop-module-resolver (bigloo-module-resolver)))
-   ;; clear the module cache unless we preserve
-   ;; caches from one session to another
-   (unless (hop-restore-disk-cache)
-      (let ((c (make-file-path (hop-cache-directory) (hop-api-cache))))
-	 (when (directory? c)
-	    (delete-path c)
-	    (make-directory c))))
    ;; parse the command line
    (parse-args args)
    ;; set the hop process owner

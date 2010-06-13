@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Sun May 30 09:06:07 2010 (serrano)                */
+;*    Last change :  Sun Jun 13 07:43:00 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -38,6 +38,7 @@
 	    (is-local?::bool ::bstring)
 	    (string-escape::bstring ::bstring ::char)
 	    (delete-path ::bstring)
+	    (make-cache-name::bstring #!optional name)
 	    (make-url-name::bstring ::bstring ::bstring)
 	    (make-hop-url-name::bstring ::bstring)
 	    (make-client-socket/timeout ::bstring ::int ::int ::obj ::bool)
@@ -280,6 +281,16 @@
 	  #t))
       (else
        (delete-file path))))
+
+;*---------------------------------------------------------------------*/
+;*    make-cache-name ...                                              */
+;*---------------------------------------------------------------------*/
+(define (make-cache-name #!optional name)
+   (let ((base (make-file-name (hop-cache-directory)
+			       (integer->string (hop-port)))))
+      (if name
+	  (make-file-name base name)
+	  base)))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-url-name ...                                                */
