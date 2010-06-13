@@ -40,6 +40,7 @@ share/.*\.list$
 ^weblets/[^/]+/etc/[^/]+\.wiki$
 ^share/flash/player.swf$
 ^share/flash/swfobject.js$
+^share/hop-exception.js$
 etc/hop.man
 etc/hopreplay.man
 etc/hopsh.man
