@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sun Jun 13 09:01:25 2010 (serrano)                */
+#*    Last change :  Sun Jun 13 09:06:09 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -261,7 +261,7 @@ flash/%.swf: flash/%.as
 #*---------------------------------------------------------------------*/
 #*    JavaScript compilation                                           */
 #*---------------------------------------------------------------------*/
-hop-exception.js: hop_exception.scm
+hop-exception.js: hop-exception.scm
 	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
          export LD_LIBRARY_PATH; \
          DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \

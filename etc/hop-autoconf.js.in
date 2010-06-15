@@ -418,6 +418,8 @@ if( !("HTMLSelectElement" in window) ) {
 /*---------------------------------------------------------------------*/
 /*    hop_make_xml_http_request ...                                    */
 /*---------------------------------------------------------------------*/
+/*** META ((export make-xml-http-request) (JS hop_make_xml_http_request)) */
+
 var hop_make_xml_http_request;
 
 if( "XMLHttpRequest" in window ) {

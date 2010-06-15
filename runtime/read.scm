@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun May 30 17:04:38 2010 (serrano)                */
+;*    Last change :  Sun Jun 13 16:19:46 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -580,13 +580,12 @@
 			 (input-port-position (the-port))))
 	      (expr (ignore))
 	      (src (tree-copy expr))
-	      (args (list ((clientc-expressionc (hop-clientc))
-			   expr
-			   (current-module-clientc-import)
-			   menv
-			   hop-read-javascript-string)
-			  :src `',src :loc `',loc)))
-	  (econs '<TILDE> args loc)))
+	      (js ((clientc-expressionc (hop-clientc))
+		      expr
+		      (current-module-clientc-import)
+		      menv
+		      hop-read-javascript-string)))
+	  (econs '<TILDE> (list js :src `',src :loc `',loc) loc)))
       
       ;; structures
       ("#{"

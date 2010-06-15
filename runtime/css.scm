@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sun Jun 13 08:42:42 2010 (serrano)                */
+;*    Last change :  Tue Jun 15 08:10:13 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -24,7 +24,8 @@
 	    __hop_param
 	    __hop_cache
 	    __hop_configure
-	    __hop_http-error)
+	    __hop_http-error
+	    __hop_xml)
 
    (use	    __hop_user
 	    __hop_hop
@@ -415,6 +416,14 @@
 		(else
 		 (raise e)))))
       (css->ast iport :extension hss-extension)))
+
+;*---------------------------------------------------------------------*/
+;*    css-write ::xml-tilde ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (css-write o::xml-tilde p::output-port)
+   (display "\"javascript:" p)
+   (display (xml-tilde->statement o) p)
+   (display "\"" p))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-write ::css-ruleset-unfold ...                               */
