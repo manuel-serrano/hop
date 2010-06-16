@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sun Jun 13 07:44:22 2010 (serrano)                */
+;*    Last change :  Wed Jun 16 09:54:44 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -101,6 +101,7 @@
 	   (class xml-verbatim)
 	   (class xml-markup)
 	   (class xml-element)
+	   (class xml-empty-element)
 	   (class xml-cdata)
 	   (class xml-html)
 	   (class xml-document)
