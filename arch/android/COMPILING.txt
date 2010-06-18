@@ -36,7 +36,7 @@ resource files. This can take 2 o 3 minutes (yes, minutes), but it only does
 it the first time and everytime you install a new version (with new files).
 Currently we're not showing any progress, so you'll only see a black screen.
 
-Once the ersources are unpacked, you'll see a blue screen. It's not a BSoD, so
+Once the resources are unpacked, you'll see a blue screen. It's not a BSoD, so
 don't worry. It's a terminal emulator, and it will run Hop in it. You'll see
 Hop's output. Once Hop is running, fire a browser and point it to
 http://localhost:8080/hop/wizard. Enter at least a password for the Admin
