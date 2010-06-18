@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Fri Jun 18 11:05:09 2010 (serrano)                */
+;*    Last change :  Fri Jun 18 11:06:15 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -31,7 +31,7 @@
 	    (class %autoload-file::%autoload
 	       (loaded::bool (default #f))
 	       (hooks::pair-nil read-only (default '()))
-	       (mutex::mutex (default (make-mutex))))
+	       (mutex::mutex (default (make-mutex "autoload-file"))))
 
 	    (class %autoload-incompatible::%autoload
 	       (name::bstring read-only)
