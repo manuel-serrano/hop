@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sun Jun  6 11:46:52 2010 (serrano)                */
+;*    Last change :  Fri Jun 18 10:58:31 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -44,7 +44,8 @@
 	      (css-start (default #f))
 	      (css-stop (default #f))
 	      (meta-format::bstring read-only)
-	      (abbrev-emptyp::bool (default #f)))
+	      (abbrev-emptyp::bool (default #f))
+	      (security-officer::bool (default #f)))
 
 	    (class xml
 	       (%xml-constructor))
@@ -674,6 +675,10 @@
 	      (proc id)
 	      (msg "Illegal handler attribute value type")
 	      (obj attr))))
+	 ((xml-backend-security-officer backend)
+	  ;; when the tree is dumped by a security officer,
+	  ;; don't write the actual values
+	  (display "_"))
 	 (else
 	  (display (xml-attribute-encode attr) p)))
       (display "'" p)))
@@ -688,7 +693,8 @@
 ;*    xml-write-attribute ::xml-tilde ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-attribute attr::xml-tilde id p backend)
-   (when (xml-event-handler-attribute? id)
+   (when (and (xml-event-handler-attribute? id)
+	      (not (xml-backend-security-officer backend)))
       (display (keyword->string! id) p)
       (display "='" p)
       (display (xml-tilde->attribute attr) p)
@@ -698,10 +704,11 @@
 ;*    xml-write-attribute ::hop-service ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-attribute attr::hop-service id p backend)
-   (display (keyword->string! id) p)
-   (display "='" p)
-   (display (hop-service-path attr) p)
-   (display "'" p))
+   (unless (xml-backend-security-officer backend)
+      (display (keyword->string! id) p)
+      (display "='" p)
+      (display (hop-service-path attr) p)
+      (display "'" p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-initializations ...                                    */
