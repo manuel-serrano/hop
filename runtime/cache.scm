@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Sun Jun 13 07:43:47 2010 (serrano)                */
+;*    Last change :  Fri Jun 18 11:11:51 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
@@ -28,7 +28,7 @@
 	      (%table (default #f))
 	      (%head (default #f))
 	      (%tail (default #f))
-	      (%mutex (default (make-mutex)))
+	      (%mutex (default (make-mutex "cache")))
 	      (register::bool (default #t))
 	      (max-entries::long (default 128))
 	      (current-entries::long (default 0))

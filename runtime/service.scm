@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Apr 23 08:17:01 2010 (serrano)                */
+;*    Last change :  Fri Jun 18 11:13:14 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -63,8 +63,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    mutexes ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define *service-mutex* (make-mutex))
-(define *expiration-mutex* (make-mutex))
+(define *service-mutex* (make-mutex "service"))
+(define *expiration-mutex* (make-mutex "expiration"))
 (define *service-table-mutex* (make-mutex "hop-service-table"))
 (define *service-etc-table-mutex* (make-mutex "hop-service-etc-table"))
 (define *service-serialize-mutex* (make-mutex "hop-service-serialize"))

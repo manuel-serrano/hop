@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hop-extra.scm             */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop_extra.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu May 27 10:53:21 2010 (serrano)                */
+;*    Last change :  Fri Jun 18 13:48:06 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -604,6 +604,11 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 			 (type (hop-javascript-mime-type) string)
 			 (attributes)
 			 body)
+
+   (define (purify node)
+      (if (>=fx (hop-security) 1)
+	  ((hop-security-script-purifier) node)
+	  node))
    
    (define (default src)
       (if (string? src)
@@ -630,12 +635,13 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 		(attributes `(:type ,type ,@attributes))
 		(body (list "\n" body)))
 	     (default src))))
-   
-   (if (and inline (string? src))
-       (if (file-exists? src)
-	   (inl src)
-	   (default src))
-       (default src)))
+
+   (purify
+    (if (and inline (string? src))
+	(if (file-exists? src)
+	    (inl src)
+	    (default src))
+	(default src))))
  
 ;*---------------------------------------------------------------------*/
 ;*    <STYLE> ...                                                      */

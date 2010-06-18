@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Tue May 11 06:27:31 2010 (serrano)                */
+;*    Last change :  Fri Jun 18 10:59:08 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -45,7 +45,8 @@
 (define (default-security-manager::bstring r::http-response-hop)
    (let ((p (open-output-string)))
       (with-access::http-response-hop r (backend xml)
-	 (xml-write xml p backend)
+	 (xml-write xml p (duplicate::xml-backend backend
+			     (security-officer #t)))
 	 (let* ((s (close-output-port p))
 		(ast (string->html s))
 		(cmp (compare-ast xml ast)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Fri Apr 23 13:50:21 2010 (serrano)                */
+;*    Last change :  Fri Jun 18 11:13:35 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -139,7 +139,7 @@
 (define-method (scheduler-accept-loop scd::pool-scheduler serv::socket w::bool)
    
    (define dummybuf (make-string 512))
-   (define idmutex (make-mutex))
+   (define idmutex (make-mutex 'pool-scheduler))
    (define idcount 0)
    (define nbthreads (length (pool-scheduler-free scd)))
    

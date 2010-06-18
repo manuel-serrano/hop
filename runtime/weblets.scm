@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Sat Jun 12 07:26:36 2010 (serrano)                */
+;*    Last change :  Fri Jun 18 11:15:51 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -31,7 +31,7 @@
 	    (class %autoload-file::%autoload
 	       (loaded::bool (default #f))
 	       (hooks::pair-nil read-only (default '()))
-	       (mutex::mutex (default (make-mutex))))
+	       (mutex::mutex (default (make-mutex "autoload-file"))))
 
 	    (class %autoload-incompatible::%autoload
 	       (name::bstring read-only)
@@ -291,7 +291,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    *autoload-mutex* ...                                             */
 ;*---------------------------------------------------------------------*/
-(define *autoload-mutex* (make-mutex))
+(define *autoload-mutex* (make-mutex "autoload"))
 
 ;*---------------------------------------------------------------------*/
 ;*    *autoloads* ...                                                  */
@@ -357,7 +357,7 @@
 		  (exception-notify e)
 		  (raise
 		   (instantiate::&hop-autoload-error
-		      (proc 'autoload-loadq!)
+		      (proc 'autoload-load!)
 		      (msg "Cannot autoload file")
 		      (obj path))))
 	       (hop-load-modified path))
