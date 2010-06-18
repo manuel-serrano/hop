@@ -17,7 +17,7 @@
                   :module-init '__hopwidget-init
 		  :module-eval '__hopwidget-makelib
 		  :class-init "bigloo.hop.init"
-		  :class-eval "bigloo.hop.make-lib")
+		  :class-eval "bigloo.hop.make_lib")
 
 ;*---------------------------------------------------------------------*/
 ;*    Link option                                                      */
