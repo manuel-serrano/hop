@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Thu May 27 10:53:52 2010 (serrano)                */
+;*    Last change :  Thu Jun 17 05:28:25 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -16,7 +16,8 @@
 
    (library web)
    
-   (import  __hop_param)
+   (import  __hop_param
+	    __hop_misc)
 
    (export (hz-package-filename? ::bstring)
 	   (hz-package-name-parse ::bstring)
@@ -45,6 +46,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-package-name-parse-sans-url name)
    (let* ((n (hz-package-sans-suffix (basename name)))
+	  (l (string-length n))
           (index (string-index-right n #\-))
           (vdot (string-index-right n #\.)))
       (cond
@@ -52,9 +54,11 @@
           (error 'hz-package-name-parse "Illegal hz-package name" name))
          ((and (fixnum? vdot) (>fx vdot index))
           ;; a hz-package without release
-          (let* ((version (substring n (+fx 1 index) (string-length n)))
+          (let* ((version (substring n (+fx 1 index) l))
                  (base (substring n 0 index)))
 	     (values base version)))
+	 ((and (=fx index (-fx l 2)) (char=? (string-ref n (-fx l 1)) #\*))
+	  (values (substring n 0 index) "*"))
          (else
           ;; a hz-package with release
           (let ((vindex (string-index-right n #\- (-fx index 1))))
@@ -77,6 +81,9 @@
 	 ((pregexp-match "([0-9]+)[.][*]" version)
 	  =>
 	  (lambda (m) (format "~a-~a[.].*" base (cadr m))))
+	 ((string=? "*" version)
+	  => 
+	  (lambda (m) (format "~a-.+" base)))
 	 (else
 	  (pregexp-quote url)))))
 
@@ -86,7 +93,7 @@
 ;*    Parses a hz-package file name and returns the base name, the     */
 ;*    version number, and release number.                              */
 ;*    The syntax of a hz-package name is:                              */
-;*       .*-[0-9]+.0-9]+.[0-9]+(-{pre,rc}?[0-9]+)?.hz                  */
+;*       .*-[0-9]+.[0-9]+.[0-9]+(-{pre,rc}?[0-9]+)?.hz                 */
 ;*---------------------------------------------------------------------*/
 (define (hz-package-name-parse name)
    (unless (hz-package-filename? name)
@@ -138,7 +145,7 @@
       (let ((apath (abspath->filename abspath)))
 	 (multiple-value-bind (base version)
 	    (hz-package-name-parse apath)
-	    (let* ((dest (make-file-path (hop-cache-directory) (hop-api-cache)))
+	    (let* ((dest (make-cache-name "api"))
 		   (dir (if host
 			    (make-file-name dest
 					    (format "~a_~a~a"

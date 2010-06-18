@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Apr 14 10:53:33 2010 (serrano)                */
+#*    Last change :  Sun Jun 13 09:06:09 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -47,26 +47,26 @@ EXTRA		= hop-error.hss hop.hss \
 	 	  hop-notepad.hss hop-notepad.js \
                   hop-tree.js hop-tree.css \
 		  hop-foldlist.js hop-foldlist.css \
-                  hop_window.scm hop-window.js \
+                  hop-window.scm hop-window.js \
                   hop-window.hss hop-window-red.hss\
                   hop-editor.js hop-editor.css \
-                  hop-file.js hop_file.scm hop-file.hss \
+                  hop-file.js hop-file.scm hop-file.hss \
                   hop-fileselect.js hop-fileselect.css \
                   hop-tooltip.js \
-                  hop-dashboard.js hop_dashboard.scm \
+                  hop-dashboard.js hop-dashboard.scm \
                   hop-prefs.js hop-prefs.hss \
                   hop-debug.js hop-debug.css \
-                  hop-audio.js hop_audio.scm hop-audio.hss \
+                  hop-audio.js hop-audio.scm hop-audio.hss \
                   hop-video.js hop-video.hss \
                   hop-login.js hop-login.hss \
-		  hop_spinbutton.scm hop-spinbutton.hss \
-		  hop_color.scm hop-color.hss \
+		  hop-spinbutton.scm hop-spinbutton.hss \
+		  hop-color.scm hop-color.hss \
                   hop-lframe.hss \
-                  hop_canvas.scm hop_exception.scm hop_orientation.scm \
-                  hop_spage.scm hop-spage.hss \
-                  hop_gauge.scm hop-gauge.hss \
-                  hop_font.scm \
-                  hop_password.scm
+                  hop-canvas.scm hop-exception.scm hop-orientation.scm \
+                  hop-spage.scm hop-spage.hss \
+                  hop-gauge.scm hop-gauge.hss \
+                  hop-font.scm \
+                  hop-password.scm
 
 #*---------------------------------------------------------------------*/
 #*    AUDIO and ICONS                                                  */
@@ -261,7 +261,7 @@ flash/%.swf: flash/%.as
 #*---------------------------------------------------------------------*/
 #*    JavaScript compilation                                           */
 #*---------------------------------------------------------------------*/
-hop-exception.js: hop_exception.scm
+hop-exception.js: hop-exception.scm
 	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
          export LD_LIBRARY_PATH; \
          DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \

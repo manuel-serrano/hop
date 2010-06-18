@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hop-inline.scm            */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop_inline.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Tue May 11 06:25:25 2010 (serrano)                */
+;*    Last change :  Thu Jun 17 06:11:38 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
@@ -81,8 +81,10 @@
 ;*    xml-inline ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (xml-inline host port path userinfo authorization eid)
+   
    (define (filter-attr attr)
       (not (eq? (car attr) 'id)))
+   
    (http-send-request
     (instantiate::http-server-request
        (host host)
@@ -117,7 +119,10 @@
 						(el (instantiate::xml-element
 						       (tag tag)
 						       (id i)
-						       (attributes (filter! filter-attr attr))
+						       (attributes (apply append
+									  (map (lambda (c)
+										  (list (symbol->keyword (car c)) (cdr c)))
+									       (filter! filter-attr attr))))
 						       (body body))))
 					    (for-each (lambda (b)
 							 (when (xml-element? b)

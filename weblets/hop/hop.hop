@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon Mar 29 12:10:39 2010 (serrano)                */
+;*    Last change :  Sat Jun 12 07:33:32 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -180,9 +180,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLET> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (<WEBLET> base #!key url hz title showtitle width height icons open)
-   (let ((url (or url (format "/hop/~a" hz))))
-      (<TABLE> :class "weblet" 
+(define (<WEBLET> base #!key url hz svc title showtitle width height icons open incompatible)
+   (let ((url (or url (format "/hop/~a" (or svc hz)))))
+      (<TABLE> :class (if incompatible "weblet weblet-incompatible" "weblet" )
 	 (<TR>
 	    (<TD> :class "logo"
 	       :onclick (case open
@@ -258,8 +258,22 @@
 ;*    hop-additional-row ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hop-additional-row ws #!key showtitle width height icons open)
+   
+   (define (hop-incompatible? x)
+      
+      (define (cmpversion version cmp)
+	 (or (not (pair? version))
+	     (not (string? (cadr version)))
+	     (string=? (cadr version) "")
+	     (cmp (hop-version) (cadr version))))
+      
+      (or (not (cmpversion (assq 'minhop x) string>=?))
+	  (not (cmpversion (assq 'maxhop x) string<=?))))
+   
    (map! (lambda (a)
-	    (let* ((n (cadr (assq 'name a)))
+	    (let* ((hz (cadr (assq 'name a)))
+		   (svc (let ((c (assq 'service a)))
+			   (when (pair? c) (cadr c))))
 		   (w (cadr (assq 'weblet a)))
 		   (d (let ((c (assq 'title a)))
 			 (if (pair? c)
@@ -267,8 +281,9 @@
 				 (format "~a - ~a" (cadr c) w)
 				 (cadr c))
 			     w))))
-	       (<WEBLET> (dirname (dirname w)) :hz n :title d
+	       (<WEBLET> (dirname (dirname w)) :hz hz :svc svc :title d
 			 :showtitle showtitle
+			 :incompatible (hop-incompatible? a)
 			 :width width :height height :icons icons :open open)))
 	 (sort ws (lambda (a b)
 		     (let ((namea (cadr (assq 'name a)))
@@ -347,7 +362,5 @@
 	 (<DIV> :style "border: 0; position: absolute; top: 0; bottom: 0; left: 0; right: 0;"
 	    (hop-panel
 	       :open 'tab
-;* 	       :showtitle #f                                           */
-;* 	       :directories '(weblet)                                  */
 	       :icons `("logo.png" ,(string-append (hop-dir) "/etc/default.png")))))))
    

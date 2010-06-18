@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 19 14:53:16 2010                          */
-;*    Last change :  Sun May 30 17:58:50 2010 (serrano)                */
+;*    Last change :  Tue Jun  8 17:25:15 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Parsing and dealing with CSS.                                    */
@@ -109,7 +109,7 @@
 	    (for-each (lambda (rule) (css-set-style! style rule))
 		      (css-sort-rules rules))
 	    #;(when (and (eq? (xml-element-tag el) 'div)
-		       (equal? (dom-get-attribute el "class") "GLOP"))
+		       (equal? (dom-get-attribute el "class") "hoptex-prog-line-comment"))
 	       (with-output-to-port (current-error-port)
 		  (lambda ()
 		     (print "----------------------------------------")

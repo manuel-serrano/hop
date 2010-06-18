@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sat May 29 06:38:48 2010 (serrano)                */
+;*    Last change :  Tue Jun 15 08:10:13 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -24,7 +24,8 @@
 	    __hop_param
 	    __hop_cache
 	    __hop_configure
-	    __hop_http-error)
+	    __hop_http-error
+	    __hop_xml)
 
    (use	    __hop_user
 	    __hop_hop
@@ -293,11 +294,10 @@
 (define (hss->css path)
    (with-lock hss-mutex
       (lambda ()
-	 (let ((cache (cache-get hss-cache path))
-	       (mime (mime-type path "text/css")))
+	 (let ((cache (cache-get hss-cache path)))
 	    (if (string? cache)
 		(with-input-from-file cache read-string)
-		(let* ((hss (hop-load-hss path))
+		(let* ((hss (hop-get-hss path))
 		       (cache (cache-put! hss-cache path hss)))
 		   (let ((p (open-output-string)))
 		      (css-write hss p)
@@ -313,11 +313,9 @@
 ;*    init-hss-compiler! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (init-hss-compiler! port)
-   ;; hss cache
    (set! hss-cache
 	 (instantiate::cache-disk
-	    (path (make-file-path (hop-cache-directory)
-				  (format "hss-~a" port)))
+	    (path (make-cache-name "hss"))
 	    (out (lambda (o p) (css-write o p))))))
 
 ;*---------------------------------------------------------------------*/
@@ -325,7 +323,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hss-response req path)
    (if (authorized-path? req path)
-       (let ((hss (hop-load-hss path))
+       (let ((hss (hop-get-hss path))
 	     (mime (mime-type path "text/css"))
 	     (method (http-request-method req)))
 	  (cond
@@ -418,6 +416,14 @@
 		(else
 		 (raise e)))))
       (css->ast iport :extension hss-extension)))
+
+;*---------------------------------------------------------------------*/
+;*    css-write ::xml-tilde ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (css-write o::xml-tilde p::output-port)
+   (display "\"javascript:" p)
+   (display (xml-tilde->statement o) p)
+   (display "\"" p))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-write ::css-ruleset-unfold ...                               */
@@ -665,17 +671,6 @@
 	  (list (duplicate::css-selector s
 		   (element o))))))
 
-#;(define (hss-unalias-selector-name.old o::css-selector-name)
-   (with-access::css-selector-name o (name)
-      (if (string? name)
-	  (let ((new (hashtable-get *hss-type-env* (string-downcase name))))
-	     (if (hss-compiler? new)
-		 (hss-compiler-element new)
-;* 		 (instantiate::css-selector-name                       */
-;* 		    (name (hss-compiler-element new)))                 */
-		 o))
-	  o)))
-
 ;*---------------------------------------------------------------------*/
 ;*    hss-extension ...                                                */
 ;*---------------------------------------------------------------------*/
@@ -765,13 +760,6 @@
   -webkit-border-bottom-left-radius: ~a;"
 	   (car v) (car v) (car v)))
 
-;; box-shadow
-(define-hss-property (box-shadow v p)
-   (format "box-shadow: ~l;
-  -moz-box-shadow: ~l;
-  -webkit-box-shadow: ~l;"
-	   v v v))
-
 ;; user-select
 (define-hss-property (user-select v p)
    (format "user-select: ~l;
@@ -814,7 +802,71 @@
    (format "transform: ~l;
   -moz-transform: ~l;
   -webkit-transform: ~l;"
-	   v v v v))
+	   v v v))
+
+;; box-align
+(define-hss-property (box-align v p)
+   (format "box-align: ~l;
+  -moz-box-align: ~l;
+  -webkit-box-align: ~l;"
+	   v v v))
+
+;; box-direction
+(define-hss-property (box-direction v p)
+   (format "box-direction: ~l;
+  -moz-box-direction: ~l;
+  -webkit-box-direction: ~l;"
+	   v v v))
+
+;; box-flex
+(define-hss-property (box-flex v p)
+   (format "box-flex: ~l;
+  -moz-box-flex: ~l;
+  -webkit-box-flex: ~l;"
+	   v v v))
+
+;; box-flexgroup
+(define-hss-property (box-flexgroup v p)
+   (format "box-flexgroup: ~l;
+  -moz-box-flexgroup: ~l;
+  -webkit-box-flexgroup: ~l;"
+	   v v v))
+
+;; box-ordinal-group
+(define-hss-property (box-ordinal-group v p)
+   (format "box-ordinal-group: ~l;
+  -moz-box-ordinal-group: ~l;
+  -webkit-box-ordinal-group: ~l;"
+	   v v v))
+
+;; box-orient
+(define-hss-property (box-orient v p)
+   (format "box-orient: ~l;
+  -moz-box-orient: ~l;
+  -webkit-box-orient: ~l;"
+	   v v v))
+
+;; box-pack
+(define-hss-property (box-pack v p)
+   (format "box-pack: ~l;
+  -moz-box-pack: ~l;
+  -webkit-box-pack: ~l;"
+	   v v v))
+
+;; box-shadow
+(define-hss-property (box-shadow v p)
+   (format "box-shadow: ~l;
+  -moz-box-shadow: ~l;
+  -webkit-box-shadow: ~l;"
+	   v v v))
+
+;; box-sizing
+(define-hss-property (box-sizing v p)
+   (format "box-sizing: ~l;
+  -moz-box-sizing: ~l;
+  -webkit-box-sizing: ~l;"
+	   v v v))
+
 ;; hsv
 (define-hss-function (hsv h s v)
    (multiple-value-bind (r g b)

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/wiki-parser.scm           */
+;*    serrano/prgm/project/hop/2.1.x/runtime/wiki_parser.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sat Jun  5 06:58:57 2010 (serrano)                */
+;*    Last change :  Thu Jun 17 12:12:11 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -621,7 +621,7 @@
        (if (is-state? 'pre)
 	   (begin
 	      (add-expr! (the-html-substring 2 (the-length)))
-	      (add-expr! (html-string-encode (read-line (the-port))))
+	      (add-expr! (html-string-encode (charset (read-line (the-port)))))
 	      (add-expr! "\n"))
  	   (begin
               ;; this is a common mistake so we impose the paragraph ending.
@@ -767,7 +767,8 @@
 							(lambda ()
 							   (add-expr!
 							    ((wiki-syntax-pre syn)
-							     (html-string-encode (read-string))))))))
+							     (html-string-encode
+							      (charset (read-string)))))))))
 	      (ignore))
 	     (else
 	      (let* ((id (the-symbol))

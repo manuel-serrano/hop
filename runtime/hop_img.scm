@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hop-img.scm               */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop_img.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Tue May 11 06:25:07 2010 (serrano)                */
+;*    Last change :  Sun Jun 13 07:41:43 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -48,9 +48,8 @@
    (unless img-disk-cache
       (set! img-disk-cache
 	    (instantiate::cache-disk
-	       (path (make-file-path
-		      (hop-cache-directory)
-		      (string-append "img-" (integer->string (hop-port)))))
+	       (clear #f)
+	       (path (make-cache-name "img"))
 	       (out display)))
       (set! img-memory-cache
 	    (instantiate::cache-memory
