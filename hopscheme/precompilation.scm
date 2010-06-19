@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Tue Mar  9 05:13:01 2010                          */
-;*    Last change :  Thu Apr 29 18:08:04 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:15:33 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Module pre-compilation                                           */
@@ -35,7 +35,7 @@
 			 files)))
       (if compiled
 	  compiled
-	  (error 'hopscheme "Could not find module" m))))
+	  (error "hopscheme" "Could not find module" m))))
 
 ;*---------------------------------------------------------------------*/
 ;*    precompile-headers ...                                           */
@@ -60,7 +60,7 @@
 		       ((and (pair? (car import-names))
 			     (symbol? (caar import-names)))
 			(unless (every? string? (cdar import-names))
-			   (error 'hopscheme "Illegal module clause" header))
+			   (error "hopscheme" "Illegal module clause" header))
 			(module-add-access! (caar import-names)
 					    (cdar import-names)
 					    "hopscheme")

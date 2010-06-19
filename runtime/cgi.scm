@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/cgi.scm                   */
+;*    serrano/prgm/project/hop/2.1.x/runtime/cgi.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Thu Jul 23 19:11:46 2009 (serrano)                */
-;*    Copyright   :  2003-09 Manuel Serrano                            */
+;*    Last change :  Sat Jun 19 06:16:38 2010 (serrano)                */
+;*    Copyright   :  2003-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
 ;*=====================================================================*/
@@ -59,7 +59,7 @@
 		 (cons abspath (cgi-args->list query))
 		 (cons abspath '())))
 	    (else
-	     (error 'http-request-cgi-args "Illegal HTTP method" method)))))
+	     (error "http-request-cgi-args" "Illegal HTTP method" method)))))
    
    (define (normalize l)
       (let loop ((l l)

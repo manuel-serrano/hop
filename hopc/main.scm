@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Apr 20 05:49:45 2010 (serrano)                */
+;*    Last change :  Fri Jun 18 21:18:07 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -61,6 +61,10 @@
 ;*    setup-client-compiler! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (setup-client-compiler!)
+   ;; disable cache clearing otherwise parallel
+   ;; invocations of hopc are impossible because one removes
+   ;; the file of the other.
+   (hop-clientc-clear-cache-set! #f)
    (init-hopscheme! :reader (lambda (p v) (hop-read p))
       :share (hopc-share-directory)
       :verbose (hop-verbose)

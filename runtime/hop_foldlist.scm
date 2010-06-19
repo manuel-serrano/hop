@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/hop-foldlist.scm          */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop_foldlist.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Fri Mar 20 12:05:01 2009 (serrano)                */
+;*    Last change :  Sat Jun 19 06:18:44 2010 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL> markup.                           */
 ;*=====================================================================*/
@@ -66,7 +66,7 @@
 		   (if (and (xml-element? x)
 			    (eq? (xml-element-markup x) 'flitem))
 		       (html-flitem-parent-set! x res)
-		       (error '<FL> "Component is not a <FLITEM>" x)))
+		       (error "<FL>" "Component is not a <FLITEM>" x)))
 		body)
       res))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Jun 13 07:44:45 2010 (serrano)                */
+;*    Last change :  Fri Jun 18 21:21:10 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -75,8 +75,10 @@
 	  (hop-upload-directory-set! (make-file-name dir "upload")))
 	 (("--cache-dir" ?dir (help "Set cache directory"))
 	  (hop-cache-directory-set! dir))
-	 (("--clear-cache" (help "Clear cache"))
+	 (("--clear-cache" (help "Clear all caches"))
 	  (set! clear-cache #t))
+	 (("--no-clear-cache" (help "Don't clear any cache"))
+	  (hop-clientc-clear-cache-set! #f))
 	 (("--script-file" ?file (help "A file loaded before the main loop"))
 	  (hop-script-file-set! file))
 	 (("--enable-autoload" (help "Enable autoload (default)"))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Tue Jun 15 08:10:13 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:16:51 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -136,10 +136,10 @@
       (unwind-protect
 	 (let ((ast (css->ast p :extension hss-extension)))
 	    (if (not (css-stylesheet? ast))
-		(error 'hss-string->rulset "Illegal declaration list" s)
+		(error "hss-string->rulset" "Illegal declaration list" s)
 		(with-access::css-stylesheet ast (rule*)
 		   (if (not (and (pair? rule*) (null? (cdr rule*))))
-		       (error 'hss-string->rulset "Illegal declaration list" s)
+		       (error "hss-string->rulset" "Illegal declaration list" s)
 		       (caar rule*)))))
 	 (close-input-port p))))
    

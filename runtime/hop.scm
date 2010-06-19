@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Apr  7 20:58:55 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:17:48 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -176,9 +176,9 @@
 (define (hop-request-hook::%http-response req rep)
    (cond
       ((not (http-request? req))
-       (error 'hop-request-hook "Illegal request" req))
+       (error "hop-request-hook" "Illegal request" req))
       ((not (%http-response? rep))
-       (error 'hop-request-hook "Illegal response" rep))
+       (error "hop-request-hook" "Illegal response" rep))
       (else
        (let* ((rep2 ((http-request-hook req) rep))
 	      (res (if (%http-response? rep2) rep2 rep)))
@@ -267,9 +267,9 @@
       (trace-item "header=" header)
       (cond
 	 ((and (procedure? fail) (not (correct-arity? fail 1)))
-	  (error 'with-url "Illegal fail handler" fail))
+	  (error "with-url" "Illegal fail handler" fail))
 	 ((and (procedure? success) (not (correct-arity? success 1)))
-	  (error 'with-url "Illegal success handler" success))
+	  (error "with-url" "Illegal success handler" success))
 	 (else
 	  (multiple-value-bind (scheme userinfo host port path)
 	     (url-parse url)
@@ -344,9 +344,9 @@
       (trace-item "authorization=" authorization)
       (cond
 	 ((and (procedure? fail) (not (correct-arity? fail 1)))
-	  (error 'with-hop "Illegal fail handler" fail))
+	  (error "with-hop" "Illegal fail handler" fail))
 	 ((and (procedure? success) (not (correct-arity? success 1)))
-	  (error 'with-hop "Illegal success handler" success))
+	  (error "with-hop" "Illegal success handler" success))
 	 (else
 	  (let* ((req (instantiate::http-server-request
 			 (userinfo (when (and (string? user) (string? password))

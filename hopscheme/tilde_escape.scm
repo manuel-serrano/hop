@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/hopscheme/tilde-escape.scm        */
+;*    serrano/prgm/project/hop/2.1.x/hopscheme/tilde_escape.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:09:56 2010                          */
-;*    Last change :  Mon Apr 19 15:41:51 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:15:56 2010 (serrano)                */
 ;*    Copyright   :  2010 Florian Loitsch and Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    Interface between Scheme2JS and Hop.                             */
@@ -66,7 +66,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hopscheme-compile-expression e env menv postproc)
    (unless (Compilation-Unit? menv)
-      (error 'hopscheme-compile-expression "Illegal macro environment" menv))
+      (error "hopscheme-compile-expression" "Illegal macro environment" menv))
    (if (only-macros? e)
        (begin
 	  (add-macros! e menv)
@@ -255,7 +255,7 @@
 	 (s-port (open-output-string)))
       (with-handler
 	 (lambda (e)
-	    (error 'compile-hop-client "Compilation failed" e))
+	    (error "compile-hop-client" "Compilation failed" e))
 	 (scheme2js-compile-expr
 	  e              ;; top-level
 	  s-port         ;; out-port

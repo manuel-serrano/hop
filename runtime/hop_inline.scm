@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Thu Jun 17 06:11:38 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:19:07 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
@@ -48,7 +48,7 @@
 			       (early #t boolean))
    (cond
       ((not (string? src))
-       (error '<INLINE> "Missing :src attribute" src))
+       (error "<INLINE>" "Missing :src attribute" src))
       (else
        (multiple-value-bind (_ userinfo host port path)
 	  (url-parse src)

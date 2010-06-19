@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Mon May 31 17:20:31 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:17:18 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -360,7 +360,7 @@
 	 (let loop ((body body))
 	    (cond
 	       ((null? body)
-		(error 'dom-replace-child "old not a child" node))
+		(error "dom-replace-child" "old not a child" node))
 	       ((eq? (car body) old)
 		(set-car! body new))
 	       (else
@@ -376,7 +376,7 @@
 	    ((not ref)
 	     (dom-append-child! node new))
 	    ((null? body)
-	     (error 'dom-insert-before! "ref not a parent child" ref))
+	     (error "dom-insert-before!" "ref not a parent child" ref))
 	    (else
 	     (let ((ancp (dom-ancestor-node node))
 		   (ancn (dom-ancestor-node new)))

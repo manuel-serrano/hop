@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Sun Jun 13 07:42:15 2010 (serrano)                */
+;*    Last change :  Fri Jun 18 21:18:18 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -90,6 +90,7 @@
    ;; prepare the client-code compiler cache
    (set! clientc-cache
 	 (instantiate::cache-disk
+	    (clear (hop-clientc-clear-cache))
 	    (path (make-cache-name "clientc"))
 	    (out (lambda (o p) (with-output-to-port p (lambda () (print o)))))))
 

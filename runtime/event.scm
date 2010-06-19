@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon May 10 17:39:16 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:17:27 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -583,7 +583,7 @@
 				   (list req))
 		(instantiate::http-response-string
 		   (request req)))
-	     (error 'server-event-register "Illegal websocket entry" key))))
+	     (error "server-event-register" "Illegal websocket entry" key))))
 
    (with-lock *event-mutex*
       (lambda ()

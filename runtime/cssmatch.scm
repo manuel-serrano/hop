@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 19 14:53:16 2010                          */
-;*    Last change :  Tue Jun  8 17:25:15 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:17:07 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Parsing and dealing with CSS.                                    */
@@ -85,14 +85,14 @@
 	       ((string? a) a)
 	       ((keyword? a) (keyword->string a))
 	       ((symbol? a) (symbol->string a))
-	       (else (error 'node-computed-style "Illegal attribute" a)))))
+	       (else (error "node-computed-style" "Illegal attribute" a)))))
       (if (dom-has-attribute? el a)
 	  (dom-get-attribute el a)
 	  (let* ((a (cond
 		       ((symbol? a) a)
 		       ((string? a) (string->symbol a))
 		       ((keyword? a) (keyword->symbol a))
-		       (else (error 'node-computed-style "Illegal attribute" a))))
+		       (else (error "node-computed-style" "Illegal attribute" a))))
 		 (style (css-get-computed-style css el)))
 	     (when style
 		(let ((v (assq a (css-style-attributes style))))
@@ -147,18 +147,33 @@
 ;*    css-set-style! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (css-set-style! style rule)
-   
+
+   (define (expand-attr property)
+      (case property
+	 ((margin)
+	  '(margin-left margin-right margin-top margin-bottom))
+	 ((padding)
+	  '(padding-left padding-right padding-top padding-bottom))
+	 (else
+	  '())))
+
+   (define (add-field! style k v)
+      (with-access::css-style style (attributes)
+	 (let ((o (assq k attributes)))
+	    (if (pair? o)
+		(set-cdr! o v)
+		(set! attributes (cons (cons k v) attributes))))))
+      
    (define (plain-css-set-style! style rule)
       (with-access::css-ruleset rule (declaration*)
 	 (for-each (lambda (d)
 		      (with-access::css-declaration d (property expr prio)
-			 (with-access::css-style style (attributes)
-			    (let* ((k (string->symbol property))
-				   (o (assq k attributes)))
-			       (if (pair? o)
-				   (set-cdr! o (car expr))
-				   (set! attributes (cons (cons  k (car expr))
-							  attributes)))))))
+			 (let ((k (string->symbol property))
+			       (v (car expr)))
+			    (add-field! style k v)
+			    (for-each (lambda (k)
+					 (add-field! style k v))
+				      (expand-attr k)))))
 		   declaration*)))
    
    (cond
@@ -283,7 +298,7 @@
 	       ((null? selectors)
 		#t)
 	       ((null? (cdr selectors))
-		(error 'css-rule-match? "bad css selector" selector))
+		(error "css-rule-match?" "bad css selector" selector))
 	       ((eq? (car selectors) '+)
 		;; sibling
 		(let ((sibling (node-get-sibling el)))
@@ -313,7 +328,7 @@
 			 (else
 			  (liip (dom-parent-node parent)))))))
 	       (else
-		(error 'css-rule-match? "bad css selector" selector)))))))
+		(error "css-rule-match?" "bad css selector" selector)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-get-sibling ...                                             */

@@ -12,11 +12,11 @@
 (define *cached-config* #f)
 (define *module-counter-lock* (make-mutex))
 
-(define *hop-reader* (lambda (p v) (error 'hop-reader "not implemented yet" p)))
+(define *hop-reader* (lambda (p v) (error "hop-reader" "not implemented yet" p)))
 (define *hop-share-directory* "/")
 (define *hop-verbose* 0)
-(define *hop-eval* (lambda (e) (error 'hop-eval "not implemented yet" e)))
-(define *hop-compile* (lambda (v p) (error 'hop-compile "not implemented yet" p)))
+(define *hop-eval* (lambda (e) (error "hop-eval" "not implemented yet" e)))
+(define *hop-compile* (lambda (v p) (error "hop-compile" "not implemented yet" p)))
 
 (define (get-cached-config)
    (or *cached-config*

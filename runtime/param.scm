@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Jun 18 11:57:29 2010 (serrano)                */
+;*    Last change :  Fri Jun 18 21:14:21 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -227,6 +227,9 @@
 
 	    (hop-clientc::obj)
 	    (hop-clientc-set! ::obj)
+
+	    (hop-clientc-clear-cache::obj)
+	    (hop-clientc-clear-cache-set! ::obj)
 
 	    (hop-clientc-debug-unbound::int)
 	    (hop-clientc-debug-unbound-set! ::int)
@@ -1023,6 +1026,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-clientc
    #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    hop-clientc-clear-cache ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-clientc-clear-cache
+   #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-clientc-debug-unbound ...                                    */

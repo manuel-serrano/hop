@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Jun 18 13:48:06 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:18:35 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -310,7 +310,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 	 (if (null? res)
 	     (cond
 		((not (file-exists? f))
-		 (error '<HEAD> "include file does not exist" f))
+		 (error "<HEAD>" "include file does not exist" f))
 		((or (is-suffix? f "hss") (is-suffix? f "css"))
 		 (list (css f #f inl)))
 		((or (is-suffix? f "scm") (is-suffix? f "hop"))
@@ -318,7 +318,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 		((is-suffix? f "js")
 		 (list (script f inl)))
 		(else
-		 (error '<HEAD> "Can't find include file" f)))
+		 (error "<HEAD>" "Can't find include file" f)))
 	     res)))
 
    (define incs '())
@@ -349,7 +349,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 	  (loop (cdr a) mode rts dir path base inl packed els))
 	 ((keyword? (car a))
 	  (if (null? (cdr a))
-	      (error '<HEAD> (format "Missing ~a value" (car a)) a)
+	      (error "<HEAD>" (format "Missing ~a value" (car a)) a)
 	      (case (car a)
 		 ((:css :jscript :include :hz)
 		  (loop (cdr a) (car a) rts dir path base inl packed els))
@@ -358,45 +358,45 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 		      (loop (cddr a) #f rts dir path base inl packed 
 			    (cons (favicon (absolute-path (cadr a) dir) inl)
 				  els))
-		      (error '<HEAD> "Illegal :favicon" (cadr a))))
+		      (error "<HEAD>" "Illegal :favicon" (cadr a))))
 		 ((:rts)
 		  (if (boolean? (cadr a))
 		      (loop (cddr a) #f (cadr a) dir path base inl packed els)
-		      (error '<HEAD> "Illegal :rts" (cadr a))))
+		      (error "<HEAD>" "Illegal :rts" (cadr a))))
 		 ((:title)
 		  (if (string? (cadr a))
 		      (loop (cddr a) #f rts dir path base inl packed 
 			    (cons (<TITLE> (cadr a)) els))
-		      (error '<HEAD> "Illegal :title" (cadr a))))
+		      (error "<HEAD>" "Illegal :title" (cadr a))))
 		 ((:base)
 		  (if (string? (cadr a))
 		      (loop (cddr a) #f rts dir path (cadr a) inl packed
 			    (cons (<BASE> :href (cadr a)) els))
-		      (error '<HEAD> "Illegal :base" (cadr a))))
+		      (error "<HEAD>" "Illegal :base" (cadr a))))
 		 ((:dir)
 		  (if (string? (cadr a))
 		      (loop (cddr a) #f rts (cadr a) path base inl packed els)
-		      (error '<HEAD> "Illegal :dir" (cadr a))))
+		      (error "<HEAD>" "Illegal :dir" (cadr a))))
 		 ((:path)
 		  (if (string? (cadr a))
 		      (loop (cddr a) #f rts dir (append! path (list (cadr a))) base
 			    inl packed els)
-		      (error '<HEAD> "Illegal :path" (cadr a))))
+		      (error "<HEAD>" "Illegal :path" (cadr a))))
 		 ((:inline)
 		  (if (or (boolean? (cadr a)) (symbol? (cadr a)))
 		      (loop (cddr a) #f rts dir path base (cadr a) packed els)
-		      (error '<HEAD> "Illegal :inline" (cadr a))))
+		      (error "<HEAD>" "Illegal :inline" (cadr a))))
 		 ((:packed)
 		  (if (or (boolean? (cadr a)) (symbol? (cadr a)))
 		      (loop (cddr a) #f rts dir path base inl (cadr a) els)
-		      (error '<HEAD> "Illegal :inline" (cadr a))))
+		      (error "<HEAD>" "Illegal :inline" (cadr a))))
 		 ((:with-base)
 		  (if (and (string? (cadr a)) (pair? (cddr a)))
 		      (let ((wbels (loop (caddr a) #f #f (cadr a) (list (cadr a)) (cadr a) inl packed '())))
 			 (loop (cdddr a) #f rts dir path base inl (cadr a) 
 			       (append (reverse! wbels) els)))))
 		 (else
-		  (error '<HEAD>
+		  (error "<HEAD>"
 			 (format "Unknown ~a argument" (car a))
 			 (cadr a))))))
 	 ((string? (car a))
@@ -510,7 +510,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 			      src)
 		      src))
 		 (else
-		  (error '<FOOT-BUTTON> "Illegal source" src))))))
+		  (error "<FOOT-BUTTON>" "Illegal source" src))))))
 				     
 ;*---------------------------------------------------------------------*/
 ;*    <TOOLTIP> ...                                                    */
@@ -695,4 +695,4 @@ function hop_realm() { return \"" (hop-realm) "\"; }
       ((every? string? obj)
        (instantiate::xml-verbatim (body (apply string-append obj))))
       (else
-       (error '<PRAGMA> "Illegal arguments" obj))))
+       (error "<PRAGMA>" "Illegal arguments" obj))))

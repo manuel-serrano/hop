@@ -18,7 +18,7 @@
       (lambda (m _)
 	 (let ((t (assq m a-list)))
 	    (when (not t)
-	       (error 'hop-runtime
+	       (error "hop-runtime"
 		      "Internal error: runtime module not in alist"
 		      m))
 	    (map (lambda (f) (make-file-path *hop-share-directory* f))

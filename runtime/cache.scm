@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Fri Jun 18 11:11:51 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:16:30 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
@@ -85,7 +85,7 @@
       (when clear (delete-path path))
       ;; create the new directory if it does not exist
       (unless (or (directory? path) (make-directories path))
-	 (error 'instantiate::cache "Can't create directory" path))
+	 (error "instantiate::cache" "Can't create directory" path))
       (set! %table (make-hashtable (*fx 4 max-entries)))
       (when register (set! *all-caches* (cons c *all-caches*)))
       ;; the name of the cache map path

@@ -110,7 +110,7 @@
    (define (dollar->val id map)
       (let ((t (assq id map)))
 	 (when (not t)
-	    (error 'dollar-replacement
+	    (error "dollar-replacement"
 		   "Could not find value for dollar-id"
 		   id))
 	 (cadr t)))
@@ -211,7 +211,7 @@
 		     (set-cdr! l (unhop-list! (cddr l)))
 		     l)))
 	   (begin
-	      (error 'dollar-escape
+	      (error "dollar-escape"
 		     "Internal Error"
 		     #f))))
       (else

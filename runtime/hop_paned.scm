@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/hop-paned.scm            */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop_paned.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Oct 13 19:41:33 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Sat Jun 19 06:19:21 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
 ;*=====================================================================*/
@@ -55,9 +55,9 @@
 			      body)
    (cond
       ((null? body)
-       (error '<PANED> "Illegal body, missing two pans" body))
+       (error "<PANED>" "Illegal body, missing two pans" body))
       ((null? (cdr body))
-       (error '<PANED> "Illegal body, missing one pan" body))
+       (error "<PANED>" "Illegal body, missing one pan" body))
       ((null? (cddr body))
        (case orientation
 	  ((horizontal)
@@ -81,7 +81,7 @@
 	      (height height)
 	      (body body)))
 	  (else
-	   (error '<PANED> "Illegal orientation" orientation))))))
+	   (error "<PANED>" "Illegal orientation" orientation))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <PAN> ...                                                        */

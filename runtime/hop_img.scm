@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Sun Jun 13 07:41:43 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:18:58 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -182,4 +182,4 @@
       ((eq? src #unspecified)
        (empty-img))
       (else
-       (error '<IMG> "Illegal image src" src))))
+       (error "<IMG>" "Illegal image src" src))))

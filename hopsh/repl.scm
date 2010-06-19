@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Wed May 26 15:53:11 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:16:18 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
@@ -76,7 +76,7 @@
       (lambda ()
 	 (let ((args (port->string-list (current-input-port))))
 	    (if (null? args)
-		(error 'command->url "Illegal command" str)
+		(error "command->url" "Illegal command" str)
 		(make-hopsh-url (car args)
 				(command-options str (cdr args))))))))
 
@@ -111,17 +111,17 @@
 	       :fail (lambda (xhr)
 			(case (xml-http-request-status xhr)
 			   ((404)
-			    (error 'hopsh "document not found" url))
+			    (error "hopsh" "document not found" url))
 			   ((401)
 			    (if (=fx count 0)
-				(error 'hop-sh "permission denied'" url)
+				(error "hop-sh" "permission denied'" url)
 				(begin
 				   (login!)
 				   (when (hopsh-login)
 				      (loop (login->header (hopsh-login))
 					    (-fx count 1))))))
 			   (else
-			    (error 'hopsh
+			    (error "hopsh"
 				   (format "Illegal status code `~a'"
 					   (xml-http-request-status xhr))
 				   (read-string (xml-http-request-input-port xhr))))))
@@ -144,13 +144,13 @@
 	 ((null? o)
 	  '())
 	 ((null? (cdr o))
-	  (error 'command->url
+	  (error "command->url"
 		 (format "Illegal command option `~a'" (car o))
 		 str))
 	 ((not (char=? (string-ref (car o) 0) #\-))
 	  (cons (car o) (loop (cdr o))))
 	 ((null? (cdr o))
-	  (error 'command->url
+	  (error "command->url"
 		 (format "Actual value missing for option: ~a" (car o))
 		 `(,str ,@opts)))
 	 (else
