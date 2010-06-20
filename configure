@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Jun 20 12:17:48 2010 (serrano)                */
+#*    Last change :  Sun Jun 20 17:50:21 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -489,22 +489,22 @@ jvminits=
 
 # Hop librairies
 for p in scheme2js hopscheme hop hopwidget; do
-  elib="$buildlibdir/$p"_e-$version.zip;
+  elib="$buildlibdir/$p"_es-$version.zip;
   slib="$buildlibdir/$p"_s-$version.zip;
   jvmziplibs="$elib $slib $jvmziplibs";
 done
 
 # Bigloo libraries
 for p in web multimedia sqlite ssl calendar mail text; do
-  elib="$bigloolibdir/bigloo$p"_e-$bglversion.zip;
+  elib="$bigloolibdir/bigloo$p"_es-$bglversion.zip;
   slib="$bigloolibdir/bigloo$p"_s-$bglversion.zip;
   jvmziplibs="$elib $slib $jvmziplibs";
   jvminits="$bigloolibdir/$p"".init $jvminits";
 done
 
 #pth
-elib="$bigloolibdir/bigloopth"_e-$bglversion.zip;
-slib="$bigloolibdir/bigloopth"_s-$bglversion.zip;
+elib="$bigloolibdir/bigloopthread"_es-$bglversion.zip;
+slib="$bigloolibdir/bigloopthread"_s-$bglversion.zip;
 jvmziplibs="$elib $slib $jvmziplibs";
 jvminits="$bigloolibdir/pthread.init $jvminits";
 
