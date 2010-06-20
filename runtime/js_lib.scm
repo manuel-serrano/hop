@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sat Jun 19 06:23:38 2010 (serrano)                */
+;*    Last change :  Sun Jun 20 15:22:10 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -208,7 +208,7 @@
       
       ;; string constant
       ((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
-       (let ((str (ucs2->utf8 (the-substring 0 (-fx (the-length) 1)) 0)))
+       (let ((str (ucs2->utf8 (the-substring 1 (-fx (the-length) 1)) 0)))
 	  (list 'CONSTANT (string-as-read str))))
       
       ;; identifier
