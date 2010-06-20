@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -30,7 +30,7 @@
    (elim! tree (instantiate::Elim-Env) #f))
 
 (define-nmethod (Node.elim! val-is-needed?)
-   (error 'elim
+   (error "elim"
 	  "Internal Error: Forgot node type"
 	  this))
 

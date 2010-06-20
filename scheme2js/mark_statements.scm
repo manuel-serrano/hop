@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -44,7 +44,7 @@
 		(or (walk (car l)) res)))))
 
 (define-nmethod (Node.mark)
-   (error 'stmt-mark
+   (error "stmt-mark"
 	  "Internal Error: forgot node type"
 	  this))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Fri Jun 18 21:18:18 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:53:18 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -70,7 +70,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    clientc-mutex ...                                                */
 ;*---------------------------------------------------------------------*/
-(define clientc-mutex (make-mutex 'scm))
+(define clientc-mutex (make-mutex "scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-clientc-compiler! ...                                       */

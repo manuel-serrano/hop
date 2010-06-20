@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue May 11 06:29:04 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:38:19 2010 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -45,7 +45,7 @@
    (for-each (lambda (x)
 		(unless (and (xml-element? x)
 			     (eq? (xml-element-tag x) 'tspan))
-		   (error '<TABSLIDER> "Component is not a <TSPAN>" x)))
+		   (error "<TABSLIDER>" "Component is not a <TSPAN>" x)))
 	     body)
    
    (instantiate::html-tabslider
@@ -97,7 +97,7 @@
       ;; Check that body is well formed
       (cond
 	 ((or (null? body) (null? (cdr body)))
-	  (error '<TSPAN> "Illegal body, at least two elements needed" body))
+	  (error "<TSPAN>" "Illegal body, at least two elements needed" body))
 	 ((and (xml-delay? (cadr body)) (null? (cddr body)))
 	  ;; a delayed tspan
 	  (instantiate::html-tspan

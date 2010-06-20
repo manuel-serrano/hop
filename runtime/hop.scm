@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sat Jun 19 06:17:48 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:40:03 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -291,7 +291,7 @@
 			(if (procedure? fail)
 			    (fail url)
 			    (raise (instantiate::&io-error
-				      (proc 'with-url)
+				      (proc "with-url")
 				      (msg "Cannot open url")
 				      (obj url)))))))
 		(else
@@ -454,11 +454,11 @@
 	   fail
 	   (if (not (file-exists? f))
 	       (instantiate::&io-file-not-found-error
-		  (proc 'with-hop)
+		  (proc "with-hop")
 		  (msg "File not found")
 		  (obj f))
 	       (instantiate::&io-port-error
-		  (proc 'with-hop)
+		  (proc "with-hop")
 		  (msg "Cannot open file")
 		  (obj f))))
 	  (unwind-protect
@@ -472,7 +472,7 @@
    (fail-or-raise
     fail
     (instantiate::&error
-       (proc 'with-response)
+       (proc "with-response")
        (msg "Illegal response")
        (obj obj))))
 
@@ -483,7 +483,7 @@
    (fail-or-raise
     fail
     (instantiate::&error
-       (proc 'with-response)
+       (proc "with-response")
        (msg "Illegal response")
        (obj obj))))
 
@@ -494,7 +494,7 @@
    (fail-or-raise
     fail 
     (instantiate::&error
-       (proc 'with-response)
+       (proc "with-response")
        (msg "Illegal response")
        (obj obj))))
 

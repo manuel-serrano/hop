@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Thu Jun 17 12:12:11 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:43:01 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -137,7 +137,7 @@
 			  (charset-converter! charset (hop-charset)))
 		      #f))))
       (else
-       (error 'wiki-input-port->hop "Illegal syntax" syntax))))
+       (error "wiki-input-port->hop" "Illegal syntax" syntax))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-read-error ...                                              */
@@ -146,7 +146,7 @@
    (raise (instantiate::&io-read-error
 	     (fname (input-port-name port))
 	     (location (input-port-position port))
-	     (proc 'wiki-parser)
+	     (proc "wiki-parser")
 	     (msg msg)
 	     (obj obj))))
 

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/mime.scm                  */
+;*    serrano/prgm/project/hop/2.1.x/runtime/mime.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 07:59:54 2006                          */
-;*    Last change :  Fri Aug 22 15:52:06 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Sat Jun 19 06:24:02 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP mime types management.                                       */
 ;*=====================================================================*/
@@ -83,7 +83,7 @@
 		 (let ((c (the-failure)))
 		    (if (eof-object? c)
 			'()
-			(error 'mime-type-parse
+			(error "mime-type-parse"
 			       "Illegal mime type syntax"
 			       (the-failure))))))))
       (read/rp g ip)))

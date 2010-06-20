@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/http-shoutcast.scm        */
+;*    serrano/prgm/project/hop/2.1.x/runtime/http_shoutcast.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Apr 19 15:18:38 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:41:44 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -46,11 +46,11 @@
 	     (raise
 	      (if (not (file-exists? file))
 		  (instantiate::&io-file-not-found-error
-		     (proc 'shoutcast)
+		     (proc "shoutcast")
 		     (msg "File not found")
 		     (obj file))
 		  (instantiate::&io-port-error
-		     (proc 'shoutcast)
+		     (proc "shoutcast")
 		     (msg "File not found")
 		     (obj file))))
 	     (let* ((size (file-size file))

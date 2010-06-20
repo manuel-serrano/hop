@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Tue May 11 06:28:53 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:37:35 2010 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL> markup.                           */
 ;*=====================================================================*/
@@ -60,7 +60,7 @@
 		   (if (and (xml-element? x)
 			    (eq? (xml-element-tag x) 'flitem))
 		       (html-flitem-parent-set! x res)
-		       (error '<FL> "Component is not a <FLITEM>" x)))
+		       (error "<FL>" "Component is not a <FLITEM>" x)))
 		body)
       res))
 

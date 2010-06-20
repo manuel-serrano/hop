@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue May 11 06:28:33 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:38:34 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -69,7 +69,7 @@
 	 (set! head (car body))
 	 (set! body (cdr body)))
       (when (any? (lambda (e) (not (xml-markup-is? e 'trbody))) body)
-	 (error (if (string? id) (format "<TREE id='~a'>" id) '<TREE>)
+	 (error (if (string? id) (format "<TREE id='~a'>" id) "<TREE>")
 		"Illegal body"
 		body))
       (instantiate::html-tree
@@ -338,7 +338,7 @@
 				 (content-type (hop-json-mime-type))
 				 (value b))))
 			    (else
-			     (error '<TREE> "Illegal tree body" b)))))
+			     (error "<TREE>" "Illegal tree body" b)))))
 		   body)
 	 #f)))
 

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/hss-expd.sch              */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hss-expd.sch              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr  3 15:32:27 2009                          */
-;*    Last change :  Fri Jun 26 11:54:19 2009 (serrano)                */
-;*    Copyright   :  2009 Manuel Serrano                               */
+;*    Last change :  Sat Jun 19 06:48:48 2010 (serrano)                */
+;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HSS expander                                                     */
 ;*=====================================================================*/
@@ -37,7 +37,7 @@
 	       (hss-properties->ruleset-list
 		(begin ,@body)))))
 	 (else
-	  (error 'define-hss-type
+	  (error "define-hss-type"
 		 "Illegal property compiler"
 		 p))))
    
@@ -56,7 +56,7 @@
 		     (list ,@(map local-define-hss-property-expander p*)))))
 	(e (evepairify nx x) e)))
       (else
-       (error 'define-hss-type "Illegal type compiler" x))))
+       (error "define-hss-type" "Illegal type compiler" x))))
 		   
 ;*---------------------------------------------------------------------*/
 ;*    hop-define-hss-property-expander ...                             */
@@ -80,7 +80,7 @@
 		      (hss-property->declaration-list (begin ,@body))))))
 	  (e (evepairify nx x) e)))
       (else
-       (error 'define-hss-property "Illegal property compiler" x))))
+       (error "define-hss-property" "Illegal property compiler" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-define-hss-function-expander ...                             */
@@ -93,4 +93,4 @@
 		   (lambda ,args ,@body))))
 	  (e (evepairify nx x) e)))
       (else
-       (error 'define-hss-function "Illegal function compiler" x))))
+       (error "define-hss-function" "Illegal function compiler" x))))

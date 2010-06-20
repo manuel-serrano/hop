@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Jun 18 11:10:08 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:47:47 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -176,7 +176,7 @@
 	    ((and (keyword? (car l)) (pair? (cdr l)) (string? (cadr l)))
 	     (loop (cddr l)))
 	    (else
-	     (error 'hop-xhtml-xmlns "Illegal namespaces" v))))))
+	     (error "hop-xhtml-xmlns" "Illegal namespaces" v))))))
 				   
 ;*---------------------------------------------------------------------*/
 ;*    *html-backend* ...                                               */
@@ -246,7 +246,7 @@
       ((xhtml xhtml-1.0)
        *xhtml-backend*)
       (else
-       (error 'hop-get-xml-backend "Illegal backend" id))))
+       (error "hop-get-xml-backend" "Illegal backend" id))))
    
 ;*---------------------------------------------------------------------*/
 ;*    *xml-constructors* ...                                           */
@@ -258,7 +258,7 @@
 ;*---------------------------------------------------------------------*/
 (define (xml-constructor-add! id proc)
    (if (not (correct-arity? proc 1))
-       (error 'xml-constructor-add! "Illegal constructor" proc)
+       (error "xml-constructor-add!" "Illegal constructor" proc)
        (hashtable-put! *xml-constructors* id proc)))
 
 ;*---------------------------------------------------------------------*/
@@ -322,7 +322,7 @@
 	 ((keyword? (car a))
 	  (cond
 	     ((not (pair? (cdr a)))
-	      (error (symbol-append '< (symbol-upcase el) '>)
+	      (error (string-append "<" (string-upcase (symbol->string! el)) ">")
 		     "Illegal attribute"
 		     (car a)))
 	     ((eq? (car a) :id)
@@ -335,9 +335,10 @@
 	  (loop (cdr a) attr body id))
 	 ((pair? (car a))
 	  (if (not (and (or (null? (cdr a)) (pair? (cdr a))) (list? (car a))))
-	      (error (symbol-append '< (symbol-upcase el) '>)
+	      (error (string-append "<" (string-upcase (symbol->string! el)) ">")
 		     "Illegal arguments"
-		     `(,(symbol-append '< (symbol-upcase el) '>) ,@args))
+		     `(,(string-append "<" (string-upcase (symbol->string! el)) ">")
+		       ,@args))
 	      (loop (append (car a) (cdr a)) attr body id)))
 	 (else
 	  (loop (cdr a) attr (cons (car a) body) id)))))
@@ -410,7 +411,7 @@
       ((eq? obj #t)
        #unspecified)
       (else
-       (error 'xml-write "Illegal xml object" obj))))
+       (error "xml-write" "Illegal xml object" obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-verbatim ...                                     */
@@ -643,7 +644,7 @@
       (when (pair? a)
 	 (display " " p)
 	 (unless (pair? (cdr a))
-	    (error 'xml-write-attributes "Illegal attributes" attr))
+	    (error "xml-write-attributes" "Illegal attributes" attr))
 	 (xml-write-attribute (cadr a) (car a) p backend)
 	 (loop (cddr a)))))
 
@@ -662,7 +663,7 @@
 	 ((procedure? attr)
 	  (if (hop-service? (procedure-attr attr))
 	      (display (hop-service-path (procedure-attr attr)) p)
-	      (error 'xml "Illegal procedure argument in XML attribute" id)))
+	      (error "xml" "Illegal procedure argument in XML attribute" id)))
 	 ((and (>fx (hop-security) 1) (string? attr) (attr-event-handler? id))
 	  (raise
 	   (instantiate::&hop-injection-error
@@ -792,7 +793,7 @@
 	     (constr (eval constr)))
 	  (if (procedure? constr)
 	      (apply constr (append a body))
-	      (error 'string->xml "Illegal markup" constr))))))
+	      (error "string->xml" "Illegal markup" constr))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string->html ...                                                 */
@@ -909,7 +910,7 @@
        (instantiate::xml-delay
 	  (id (xml-make-id id))
 	  (thunk (car body)))
-       (error '<DELAY> "Illegal delay's thunk" (car body))))
+       (error "<DELAY>" "Illegal delay's thunk" (car body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-expression ...                                         */

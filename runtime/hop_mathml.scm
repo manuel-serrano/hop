@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hop-mathml.scm            */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop_mathml.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:24:08 2007                          */
-;*    Last change :  Tue May 11 06:26:50 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:40:17 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop MATHML support.                                              */
@@ -96,7 +96,7 @@
 ;*---------------------------------------------------------------------*/
 (define (parse-tex-error msg obj)
    (raise (instantiate::&io-parse-error
-	     (proc '<MATH:TEX>)
+	     (proc "<MATH:TEX>")
 	     (msg msg)
 	     (obj obj))))
 
@@ -769,7 +769,7 @@
 	      c
 	      (let ((line (read-line (the-port))))
 		 (raise (instantiate::&io-parse-error
-			   (proc '<MATH:TEX>)
+			   (proc "<MATH:TEX>")
 			   (msg "Illegal character")
 			   (obj (string-append "{" (string c) "}"
 					       (if (string? line)

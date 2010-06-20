@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Tue May 11 06:08:53 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 07:13:01 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -59,12 +59,14 @@
 	      (cond
 		 ((null? (cdr args))
 		  (if (eq? (car args) :id)
-		      (error ',name ":id value missing" (car args))
+		      (error ,(symbol->string name)
+			     ":id value missing"
+			     (car args))
 		      (loop '() (cons* #t (car args) attr) body id)))
 		 ((eq? (car args) :id)
 		  (if (string? (cadr args))
 		      (loop (cddr args) attr body (cadr args))
-		      (bigloo-type-error ',name "string" (cadr args))))
+		      (bigloo-type-error ,(symbol->string name) "string" (cadr args))))
 		 (else
 		  (loop (cddr args) (cons* (cadr args) (car args) attr) body id))))
 	     ((null? (car args))
@@ -111,7 +113,7 @@
 		     (define-xml-constructor-with-id type name attr el exp)
 		     (define-xml-constructor type name attr el exp)))))
 	 (else
-	  (error 'define-xml "Illegal identifier" name)))))
+	  (error "define-xml" "Illegal identifier" name)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-define-xml-expander ...                                      */
@@ -121,7 +123,7 @@
       ((?- ?type ?with-id ?name . ?exp)
        (e (evepairify (expand-define-xml type with-id name exp) x) e))
       (else
-       (error 'define-xml "Illegal form" x))))
+       (error "define-xml" "Illegal form" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-define-xml-markup-expander ...                               */
@@ -131,7 +133,7 @@
       ((?- ?name . ?exp)
        (e (evepairify (expand-define-xml 'xml-markup #f name exp) x) e))
       (else
-       (error 'define-xml-markup "Illegal form" x))))
+       (error "define-xml-markup" "Illegal form" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    define-element ...                                               */
@@ -161,7 +163,7 @@
 			(hop-hss-type! ,(symbol->string el) ,new)
 			,(define-element id el exp)))
 		 (define-element id el exp)))
-	  (error 'define-xml-element "Illegal identifier" id))))
+	  (error "define-xml-element" "Illegal identifier" id))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-define-xml-el-expander ...                                   */
@@ -171,7 +173,7 @@
       ((?- ?id . ?exp)
        (e (evepairify (expand-define-xml-element id exp) x) e))
       (else
-       (error 'define-xml-element "Illegal form" x))))
+       (error "define-xml-element" "Illegal form" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    define-alias ...                                                 */
@@ -191,11 +193,11 @@
 	 ((not (and (>fx (string-length s) 2)
 		    (char=? (string-ref s 0) #\<)
 		    (char=? (string-ref s (-fx (string-length s) 1)) #\>)))
-	  (error 'define-xml-alias "Illegal identifier" id))
+	  (error "define-xml-alias" "Illegal identifier" id))
 	 ((not (and (>fx (string-length t) 2)
 		    (char=? (string-ref t 0) #\<)
 		    (char=? (string-ref t (-fx (string-length t) 1)) #\>)))
-	  (error 'define-xml-alias "Illegal alias identifier" alias))
+	  (error "define-xml-alias" "Illegal alias identifier" alias))
 	 (else
 	  (let ((el (string->symbol (substring s 1 (-fx (string-length s) 1))))
 		(ea (string->symbol (substring t 1 (-fx (string-length t) 1))))
@@ -216,7 +218,7 @@
    (match-case x
       ((?- ?id ?alias . ?opts)
        (e (evepairify (expand-define-xml-alias id alias opts) x) e))
-      (error 'define-xml-alias "Illegal form" x)))
+      (error "define-xml-alias" "Illegal form" x)))
 
 ;*---------------------------------------------------------------------*/
 ;*    define-compound ...                                              */
@@ -234,7 +236,7 @@
 			   (else
 			    (if (symbol? b)
 				`(,b '())
-				(error m "Illegal binding" b)))))
+				(error (symbol->string m) "Illegal binding" b)))))
 		     bindings)
 	     (let ,loop ((,args ,args))
 		  (cond
@@ -245,7 +247,7 @@
 				    `(unless (or (eq? ,id #unspecified)
 						 (,(symbol-append type '?) ,id))
 					(bigloo-type-error
-					 ',m
+					 ,(symbol->string m)
 					 (symbol->string ',type)
 					 ,id)))
 				   (((? symbol?))
@@ -287,7 +289,7 @@
 				     (,loop (append (car ,args) (cdr ,args)))))))
 			    bindings)
 		     (else
-		      (error ',m "Illegal argument" (car ,args)))))))))
+		      (error ,(symbol->string m) "Illegal argument" (car ,args)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-define-xml-compound ...                                   */
@@ -307,7 +309,7 @@
 			(hop-hss-type! ,(symbol->string el) ,new)
 			,(define-compound id el bindings body)))
 		 (define-compound id el bindings body)))
-	  (error 'define-xml-compound "Illegal identifier" id))))
+	  (error "define-xml-compound" "Illegal identifier" id))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-define-xml-cpd-expander ...                                  */
@@ -317,7 +319,7 @@
       ((?- ?id ?bindings . ?body)
        (e (evepairify (expand-define-xml-compound id bindings body) x) e))
       (else
-       (error 'define-xml-compound "Illegal form" x))))
+       (error "define-xml-compound" "Illegal form" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-client-define-xml-compound ...                               */
@@ -333,7 +335,7 @@
 	      (nx nm))
 	  (e (evepairify nx x) e)))
       (else
-       (error 'define-xml-compound "Illegal form" x))))
+       (error "define-xml-compound" "Illegal form" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-define-markup ...                                         */
@@ -345,7 +347,7 @@
 	       (char=? (string-ref s (-fx (string-length s) 1)) #\>))
 	  (let ((el (string->symbol (substring s 1 (-fx (string-length s) 1)))))
 	     (define-compound id el bindings body))
-	  (error 'define-markup "Illegal identifier" id))))
+	  (error "define-markup" "Illegal identifier" id))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-server-define-markup ...                                     */
@@ -355,7 +357,7 @@
       ((?- ?id ?bindings . ?body)
        (e (evepairify (expand-define-markup id bindings body) x) e))
       (else
-       (error 'define-markup "Illegal form" x))))
+       (error "define-markup" "Illegal form" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-client-define-markup ...                                     */
@@ -371,4 +373,4 @@
 	      (nx nm))
 	  (e (evepairify nx x) e)))
       (else
-       (error 'define-markup "Illegal form" x))))
+       (error "define-markup" "Illegal form" x))))

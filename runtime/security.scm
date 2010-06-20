@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Fri Jun 18 10:59:08 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:42:30 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -54,7 +54,7 @@
 		;; the tree differs
 		(raise
 		 (instantiate::&hop-injection-error
-		    (proc 'default-security-manager)
+		    (proc "default-security-manager")
 		    (msg "Infected tree")
 		    (obj (cons (ast->string-list (car cmp))
 			       (ast->string-list (cdr cmp))))))
@@ -112,7 +112,7 @@
 		  (loop (normalize-ast (xml-markup-body a1))
 			(normalize-ast (xml-markup-body a2)))
 		  (raise (instantiate::&hop-injection-error
-			    (proc 'default-security-manager)
+			    (proc "default-security-manager")
 			    (msg "Illegal attributes")
 			    (obj (xml-markup-attributes a2)))))
 	      (cons a1 a2)))
@@ -121,7 +121,7 @@
 	      (cons a1 a2)))
 	 (else
 	  (raise (instantiate::&io-parse-error
-		    (proc 'default-security-manager)
+		    (proc "default-security-manager")
 		    (msg "Illegal XML tree")
 		    (obj a1)))))))
 

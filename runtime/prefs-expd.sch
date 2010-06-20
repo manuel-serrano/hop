@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/runtime/prefs-expd.sch           */
+;*    serrano/prgm/project/hop/2.1.x/runtime/prefs-expd.sch            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:04:20 2006                          */
-;*    Last change :  Wed Nov 12 08:31:51 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Sat Jun 19 06:49:38 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the DEFINE-PREFERENCES macro.                  */
 ;*=====================================================================*/
@@ -128,7 +128,7 @@
 	  #t)
 	 ((eq? (car clauses) :onload)
 	  (if (null? (cdr clauses))
-	      (error 'define-preferences "Illegal form" x)
+	      (error "define-preferences" "Illegal form" x)
 	      (check-clauses (cddr clauses))))
 	 ((or (string? (car clauses)) (eq? (car clauses) '--))
 	  (check-clauses (cddr clauses)))
@@ -137,7 +137,7 @@
 	     (((and (? string?) ?lbl) ?type (and (? symbol?) ?param))
 	      (check-clauses (cdr clauses)))
 	     (else
-	      (error 'define-preferences "Illegal form" x))))))
+	      (error "define-preferences" "Illegal form" x))))))
    
    (match-case x
       ((?- (and (? symbol?) ?id) . ?clauses)
@@ -148,5 +148,5 @@
 			,(make-edit (symbol-append id '-edit) key clauses))))
 	  (e (evepairify body x) e)))
       (else
-       (error 'define-preferences "Illegal form" x))))
+       (error "define-preferences" "Illegal form" x))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jun 18 21:21:10 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:36:59 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -216,7 +216,7 @@
       (when log-file
 	 (let ((p (append-output-file log-file)))
 	    (unless p
-	       (error 'hop "Cannot open log file" log-file))
+	       (error "hop" "Cannot open log file" log-file))
 	    (hop-log-file-set! p)))
       
       ;; mime types
@@ -278,7 +278,7 @@
 	 (let ((key (hop-process-key-read p)))
 	    (if (string? key)
 		(http :port p :path (format "/hop/shutdown/kill?key=~a" key))
-		(error 'hop-kill "Cannot find process key" (key-filepath p)))
+		(error "hop-kill" "Cannot find process key" (key-filepath p)))
 	    (exit 0)))
       
       ;; default backend
@@ -287,7 +287,7 @@
       ;; server event port
       (when (hop-enable-fast-server-event)
 	 (if (<fx ep 1024)
-	     (error 'fast-server-event-port
+	     (error "fast-server-event-port"
 		    "Server event port must be greater than 1023. (See `--fast-server-event-port' or `--disable-fast-server-event' options.)"
 		    ep)
 	     (hop-fast-server-event-port-set! ep)))

@@ -347,12 +347,12 @@
       (foreign-out
        (let ((ok? (foreign-out val p)))
 	  (when (not ok?)
-	     (scheme2js-error 'val-out
+	     (scheme2js-error "val-out"
 			      "Could not compile value"
 			      val
 			      loc))))
       (else
-       (scheme2js-error 'val-out
+       (scheme2js-error "val-out"
 			"Internal Error: forgot Val-type"
 			val
 			loc))))

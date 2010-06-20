@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/disable-thread.sch        */
+;*    serrano/prgm/project/hop/2.1.x/runtime/disable-thread.sch        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 23 10:29:32 2007                          */
-;*    Last change :  Sat Feb 23 06:35:05 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Sat Jun 19 06:48:28 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The __hop_thread module directives when threads are              */
 ;*    disabled. It also complements the module with fake thread        */
@@ -198,10 +198,10 @@
 ;*    make-hop-thread ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (make-hop-thread thunk)
-   (error 'make-hop-thread "multi-threading disabled" "(see --configure)"))
+   (error "make-hop-thread" "multi-threading disabled" "(see --configure)"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-thread-terminate! ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (hop-thread-terminate! thread)
-   (error 'make-hop-thread "multi-threading disabled" "(see --configure)"))
+   (error "make-hop-thread" "multi-threading disabled" "(see --configure)"))

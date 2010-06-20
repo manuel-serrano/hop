@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/share/hop-canvas.scm              */
+;*    serrano/prgm/project/hop/2.1.x/share/hop-canvas.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov  3 08:24:25 2007                          */
-;*    Last change :  Thu Dec 24 16:58:06 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Last change :  Sat Jun 19 06:34:38 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Canvas interface                                             */
 ;*=====================================================================*/
@@ -96,9 +96,9 @@
       (when (pair? props)
 	 (cond
 	    ((null? (cdr props))
-	     (error 'canvas-property-set! "Illegal property attribute" props))
+	     (error "canvas-property-set!" "Illegal property attribute" props))
 	    ((not (keyword? (car props)))
-	     (error 'canvas-property-set! "Illegal property keyword" props))
+	     (error "canvas-property-set!" "Illegal property keyword" props))
 	    (else
 	     (case (car props)
 		((:fill-style)
@@ -135,7 +135,7 @@
 		((:stroke-style)
 		 (set! ctx.strokeStyle (cadr props)))
 		(else
-		 (error 'canvas-properties-set! "Illegal property" props)))))
+		 (error "canvas-properties-set!" "Illegal property" props)))))
 	 (loop (cddr props)))))
 
 ;*---------------------------------------------------------------------*/
@@ -218,7 +218,7 @@
    (let loop ((rest rest))
       (when (pair? rest)
 	 (if (null? (cdr rest))
-	     (error 'canvas-line "Illegal number of arguments" rest)
+	     (error "canvas-line" "Illegal number of arguments" rest)
 	     (begin
 		(ctx.lineTo (car rest) (cadr rest))
 		(loop (cddr rest)))))))
@@ -368,7 +368,7 @@
       ((null? rest)
        (ctx.drawImage image x y))
       ((not (and (pair? rest) (pair? (cdr rest))))
-       (error 'canvas-draw-image "Illegal number of arguments"  rest))
+       (error "canvas-draw-image" "Illegal number of arguments"  rest))
       ((null? (cddr rest))
        (ctx.drawImage image x y (car rest) (cadr rest)))
       (else
@@ -403,7 +403,7 @@
       (let loop ((args args))
 	 (when (pair? args)
 	    (if (null? (cdr args))
-		(error 'canvas-arrow-to "Illegal arguments" args)
+		(error "canvas-arrow-to" "Illegal arguments" args)
 		(cond
 		   ((eq? (car args) :angle)
 		    (set! an (cadr args))
@@ -418,7 +418,7 @@
 		    (set! tail (cadr args))
 		    (loop (cddr args)))
 		   (else
-		    (error 'canvas-arrow-to "Illegal arguments" args))))))
+		    (error "canvas-arrow-to" "Illegal arguments" args))))))
       (let* ((d (sqrt (+ (* (- x1 x0) (- x1 x0)) (* (- y1 y0) (- y1 y0)))))
 	     (ah (let ((acos (Math.acos (/ (- x1 x0) d))))
 		    (if (> y1 y0)
@@ -471,7 +471,7 @@
       (let loop ((args args))
 	 (when (pair? args)
 	    (if (null? (cdr args))
-		(error 'canvas-arrow-to "Illegal arguments" args)
+		(error "canvas-arrow-to" "Illegal arguments" args)
 		(cond
 		   ((eq? (car args) :angle)
 		    (set! an (cadr args))
@@ -486,7 +486,7 @@
 		    (set! tail (cadr args))
 		    (loop (cddr args)))
 		   (else
-		    (error 'canvas-arrow-to "Illegal arguments" args))))))
+		    (error "canvas-arrow-to" "Illegal arguments" args))))))
       (let* ((dh (sqrt (+ (* (- x1 cpx) (- x1 cpx)) (* (- y1 cpy) (- y1 cpy)))))
 	     (ah (let ((acos (Math.acos (/ (- x1 cpx) dh))))
 		    (if (> y1 cpy)

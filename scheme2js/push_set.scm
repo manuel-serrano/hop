@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -48,7 +48,7 @@
 
 ;; if var/return is not #f push it (and finally assign a value to it)
 (define-nmethod (Node.push! var/return)
-   (error 'push-set!s/return
+   (error "push-set!s/return"
 	  "Internal Error: forgot node type"
 	  this))
 

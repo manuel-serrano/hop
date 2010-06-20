@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun 11 19:03:05 2009                          */
-;*    Last change :  Tue Feb 16 12:03:38 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:35:55 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SpinButton client side implementation                            */
@@ -37,7 +37,7 @@
 		 w))))
    
    (if (pair? body)
-       (error '<SPINBUTTON> "arguments ignored" body)
+       (error "<SPINBUTTON>" "arguments ignored" body)
        (let* ((min (let ((l (memq :min attrs)))
 		      (if (pair? l) (cadr l) 0)))
 	      (max (let ((l (memq :max attrs)))

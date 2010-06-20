@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Thu Apr 22 14:27:36 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:50:11 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -64,7 +64,7 @@
 		 (cons (caar args)
 		       (loop (cdr args) state)))
 		(else
-		 (error 'service "Illegal definition" id))))
+		 (error "service" "Illegal definition" id))))
 	    ((eq? (car args) #!key)
 	     (loop (cdr args) 'key))
 	    ((eq? (car args) #!optional)
@@ -72,7 +72,7 @@
 	    ((eq? (car args) #!rest)
 	     (list (cadr args)))
 	    (else
-	     (error 'service "Illegal definition" id)))))
+	     (error "service" "Illegal definition" id)))))
 
    (let* ((proc (if (symbol? wid) (symbol-append wid '%) 'proc))
 	  (hdl (if (symbol? wid) (symbol-append wid '-handler) 'hdl))
@@ -128,7 +128,7 @@
 	      (svc (expand-service id wid `(make-hop-url-name ,url) -1 -1 args body)))
 	  `(define ,id ,(e (evepairify svc x) e))))
       (else
-       (error 'define-service "Illegal form" x))))
+       (error "define-service" "Illegal form" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-service-expander ...                                         */
@@ -149,7 +149,7 @@
 		 (e (evepairify svc x) e)))
 	     ((eq? (car a) :timeout)
 	      (if (null? (cdr a))
-		  (error 'service
+		  (error "service"
 			 "Illegal service declaration (missing timeout)"
 			 x)
 		  (loop (cddr a)
@@ -158,7 +158,7 @@
 			url)))
 	     ((eq? (car a) :url)
 	      (if (null? (cdr a))
-		  (error 'service
+		  (error "service"
 			 "Illegal service declaration (missing url)"
 			 x)
 		  (loop (cddr a)
@@ -167,7 +167,7 @@
 			(cadr a))))
 	     ((eq? (car a) :name)
 	      (if (null? (cdr a))
-		  (error 'service
+		  (error "service"
 			 "Illegal service declaration (missing name)"
 			 x)
 		  (loop (cddr a)
@@ -176,7 +176,7 @@
 			`(make-hop-url-name ,(cadr a)))))
 	     ((eq? (car a) :ttl)
 	      (if (null? (cdr a))
-		  (error 'service
+		  (error "service"
 			 "Illegal service declaration (missing ttl)"
 			 (cons 'service args))
 		  (loop (cddr a)
@@ -184,9 +184,9 @@
 			(cadr a)
 			url)))
 	     (else
-	      (error 'service "Illegal service declaration" x)))))
+	      (error "service" "Illegal service declaration" x)))))
       (else
-       (error 'service "Illegal form" x))))
+       (error "service" "Illegal form" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-with-hop-expander ...                                        */
@@ -233,11 +233,11 @@
 		 ((not fail)
 		  (loop (cdr opts) args success (car opts) host port sync auth))
 		 (else
-		  (error 'with-hop
+		  (error "with-hop"
 			 (format "Illegal optional argument: ~a" (car opts))
 			 x))))
 	     ((null? (cdr opts))
-	      (error 'with-hop
+	      (error "with-hop"
 		     (format "missing value for optional argument: ~a"
 			     (car opts))
 		     x))
@@ -273,5 +273,5 @@
 		    (cons* (cadr opts) (car opts) args)
 		    success fail host port sync auth)))))
       (else
-       (error 'with-hop "Illegal form" x))))
+       (error "with-hop" "Illegal form" x))))
    

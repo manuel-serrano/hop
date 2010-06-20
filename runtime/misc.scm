@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Sun Jun 13 07:43:00 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:53:36 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -52,7 +52,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define *verb-mutex* (make-mutex 'verb))
+(define *verb-mutex* (make-mutex "verb"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-verb ...                                                     */
@@ -340,9 +340,9 @@
 			      (enable-ssl
 			       (make-ssl-client-socket host port :timeout tmt))
 			      (else
-			       (error 'make-client-socket/timeout
+			       (error "make-client-socket/timeout"
 				      "SSL not supported"
-				      'make-ssl-client-socket)))
+				      "make-ssl-client-socket")))
 			   (make-client-socket host port :timeout tmt)))))
 	    (if (number? res)
 		(loop res)

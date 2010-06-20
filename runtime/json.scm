@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Tue Apr 20 10:19:13 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:23:47 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -37,7 +37,7 @@
       ((procedure? obj)
        (if (service? obj)
 	   (hop->json (procedure-attr obj) op)
-	   (error 'hop->json
+	   (error "hop->json"
 		  "Illegal procedure in JSON conversion"
 		  obj)))
       ((date? obj)

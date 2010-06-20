@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue May 11 06:29:25 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:53:00 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -186,7 +186,7 @@
                                   audio.browserbackend = document.getElementById( '~a' );" fid))
 		(<AUDIO:HTML5> :id hid (<AUDIO:FLASH> :id fid))))
 	 (else
-	  (error '<AUDIO> "Illegal backend" browser)))))
+	  (error "<AUDIO>" "Illegal backend" browser)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO:HTML5> ...                                                */
@@ -535,7 +535,7 @@
 	     (set! %event (string-append (hop-service-base) "/" %path))
 	     (set! %service s)))
 	 (else
-	  (error 'audio-server
+	  (error "audio-server"
 	     "Backend cannot be started in single-thread setting"
 	     "Re-configure HOP with multi-threading enabled")))))
 
@@ -630,7 +630,7 @@
 	  (thread-start! th)
 	  th))
       (else
-       (error 'make-audio-server-thread
+       (error "make-audio-server-thread"
 	  "Backend cannot be started in single-thread setting"
 	  "Re-configure HOP with multi-threading enabled"))))
 
@@ -646,7 +646,7 @@
 ;*---------------------------------------------------------------------*/
 (define *playlist* #f)
 (define *playlist-tag* #f)
-(define *playlist-mutex* (make-mutex 'playlist))
+(define *playlist-mutex* (make-mutex "playlist"))
 
 ;*---------------------------------------------------------------------*/
 ;*    tag-playlist ...                                                 */

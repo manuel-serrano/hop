@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Fri Jun 18 11:15:51 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:42:49 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -143,7 +143,7 @@
 			       '()))
 		    (url (string-append "/hop/" name)))
 		(install-weblet-dashboard! name dir winfo url)))
-	  (error 'hop-load-weblet "Cannot find HOP source" path))))
+	  (error "hop-load-weblet" "Cannot find HOP source" path))))
 
 ;*---------------------------------------------------------------------*/
 ;*    install-weblet-dashboard! ...                                    */
@@ -314,7 +314,7 @@
       (lambda ()
 	 (let ((qfile (find-file/path file (hop-path))))
 	    (if (not (and (string? qfile) (file-exists? qfile)))
-		(error 'autoload-add! "Can't find autoload file" file)
+		(error "autoload-add!" "Can't find autoload file" file)
 		(let ((al (instantiate::%autoload-file
 			     (path qfile)
 			     (pred pred)
@@ -329,7 +329,7 @@
       (lambda ()
 	 (let ((qfile (find-file/path file (hop-path))))
 	    (if (not (and (string? qfile) (file-exists? qfile)))
-		(error 'autoload-add! "Can't find autoload file" file)
+		(error "autoload-add!" "Can't find autoload file" file)
 		(let ((al (instantiate::%autoload-incompatible
 			     (path qfile)
 			     (pred pred)
@@ -357,7 +357,7 @@
 		  (exception-notify e)
 		  (raise
 		   (instantiate::&hop-autoload-error
-		      (proc 'autoload-load!)
+		      (proc "autoload-load!")
 		      (msg "Cannot autoload file")
 		      (obj path))))
 	       (hop-load-modified path))

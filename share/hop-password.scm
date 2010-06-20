@@ -1,10 +1,10 @@
 ;; Generated file, don't edit
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/password.scm              */
+;*    serrano/prgm/project/hop/2.1.x/share/hop-password.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 29 10:14:56 2010                          */
-;*    Last change :  Sat Apr 24 10:49:15 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:35:15 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Password encryption (shared by client and server code).          */
@@ -63,7 +63,7 @@
       ((ho0) (encrypt-ho0-authentication schema name password path))
       ((ho1) (encrypt-ho1-authentication schema name password path))
       ((ho2) (encrypt-ho2-authentication schema name password path ip))
-      (else (error 'authentication-encrypt "Illegal algorithm" algo))))
+      (else (error "authentication-encrypt" "Illegal algorithm" algo))))
 
 ;*---------------------------------------------------------------------*/
 ;*    basic-password-encrypt ...                                       */

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Fri Feb 19 07:45:27 2010 (serrano)                */
+#*    Last change :  Sun Jun 20 12:13:56 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopscheme library.                     */
@@ -24,8 +24,10 @@ do: build
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = hopscheme
-HOPCLOSELIBS = $(BGLCLOSELIBS) -lscheme2js_s-$(HOPRELEASE)
-HOPCLOSELIBS_E = -lhopscheme_s-$(HOPRELEASE)
+HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) -lscheme2js_s-$(HOPRELEASE)
+HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) -lscheme2js_u-$(HOPRELEASE)
+HOPCLOSELIBS_ES = -lhopscheme_es-$(HOPRELEASE)
+HOPCLOSELIBS_EU = -lhopscheme_ue-$(HOPRELEASE)
 
 BLIBFLAGS = $(BSCM2JSFLAGS)
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Fri Apr 23 13:58:46 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:53:09 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -47,7 +47,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    *socket-mutex* ...                                               */
 ;*---------------------------------------------------------------------*/
-(define *socket-mutex* (make-mutex 'hop-sock))
+(define *socket-mutex* (make-mutex "hop-sock"))
 
 ;*---------------------------------------------------------------------*/
 ;*    *keep-alive* ...                                                 */

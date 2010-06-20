@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -90,7 +90,7 @@
 			(s-end shorted-this))
 		(cond
 		   ((null? s-begin)
-		    (error 'liveness "Internal error: liveness" '()))
+		    (error "liveness" "Internal error: liveness" '()))
 		   ((eq? (cdr s-begin) (cdr s-end))
 		    ;; this even works for 'if/then/else'
 		    ;; although it isn't optimal.

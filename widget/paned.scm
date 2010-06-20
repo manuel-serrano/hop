@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue May 11 06:28:11 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:38:00 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -43,11 +43,11 @@
 			body)
    (cond
       ((null? body)
-       (error '<PANED> "Illegal body, missing two pans" body))
+       (error "<PANED>" "Illegal body, missing two pans" body))
       ((null? (cdr body))
-       (error '<PANED> "Illegal body, missing one pan" body))
+       (error "<PANED>" "Illegal body, missing one pan" body))
       ((not (memq orientation '(horizontal vertical)))
-       (error '<PANED> "Illegal orientation" orientation))
+       (error "<PANED>" "Illegal orientation" orientation))
       ((null? (cddr body))
        (instantiate::html-paned
 	  (tag 'paned)
@@ -59,7 +59,7 @@
 	  (orientation orientation)
 	  (body body)))
       (else
-       (error '<PANED> "Illegal body, too many pan" body))))
+       (error "<PANED>" "Illegal body, too many pan" body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <PAN> ...                                                        */

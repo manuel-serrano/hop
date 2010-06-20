@@ -9,6 +9,7 @@
 #*    Compilers, Tools and Destinations                                */
 #*---------------------------------------------------------------------*/
 HOPCLOSELIBS	= $(BGLCLOSELIBS)
-HOPCLOSELIBS_E	= -lscheme2js_s-$(HOPRELEASE)
+HOPCLOSELIBS_S	= -lscheme2js_s-$(HOPRELEASE)
+HOPCLOSELIBS_U	= -lscheme2js_u-$(HOPRELEASE)
 
 SCHEME2JSSHAREDIR = $(HOPSHAREDIR)

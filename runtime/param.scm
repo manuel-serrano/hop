@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Jun 18 21:14:21 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:25:40 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -408,7 +408,7 @@
 	  (begin
 	     (hop-login-cookie-id-set! (format "hop@~a:~a" (hostname) v))
 	     v)
-	  (error 'hop-port "Illegal hop port" v))))
+	  (error "hop-port" "Illegal hop port" v))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-proxy ...                                                    */
@@ -432,7 +432,7 @@
 	  (hop-use-proxy-port-set! #f)
 	  v)
 	 (else
-	  (error 'hop-proxy-set! "Illegal proxy" v)))))
+	  (error "hop-proxy-set!" "Illegal proxy" v)))))
 	  
 (define-parameter hop-use-proxy-host
    #f)
@@ -483,7 +483,7 @@
    #f
    (lambda (v)
       (if (and v (or (not (procedure? v)) (not (correct-arity? v 2))))
-	  (error 'hop-http-request-error "Illegal value" v)
+	  (error "hop-http-request-error" "Illegal value" v)
 	  v)))
       
 
@@ -533,7 +533,7 @@
    '()
    (lambda (v)
       (if (not *hop-filters-open*)
-	  (error 'hop-filters-set! "Filters closed" #f)
+	  (error "hop-filters-set!" "Filters closed" #f)
 	  v)))
 
 ;*---------------------------------------------------------------------*/
@@ -606,7 +606,7 @@
    '()
    (lambda (v)
       (if (not *hop-filters-open*)
-	  (error 'hop-http-response-local-hook-set! "Hooks closed" #f)
+	  (error "hop-http-response-local-hook-set!" "Hooks closed" #f)
 	  v)))
 
 ;*---------------------------------------------------------------------*/
@@ -634,7 +634,7 @@
    '()
    (lambda (v)
       (if (not *hop-filters-open*)
-	  (error 'hop-http-response-remote-hook-set! "Hooks closed" #f)
+	  (error "hop-http-response-remote-hook-set!" "Hooks closed" #f)
 	  v)))
 
 ;*---------------------------------------------------------------------*/
@@ -836,7 +836,7 @@
    (lambda (u s) #f)
    (lambda (v)
       (if (or (not (procedure? v)) (not (correct-arity? v 2)))
-	  (error 'hop-authorized-service "Illegal value" v)
+	  (error "hop-authorized-service" "Illegal value" v)
 	  v)))
       
 ;*---------------------------------------------------------------------*/
@@ -846,7 +846,7 @@
    (lambda (u r) #f)
    (lambda (v)
       (if (or (not (procedure? v)) (not (correct-arity? v 2)))
-	  (error 'hop-authorized-request "Illegal value" v)
+	  (error "hop-authorized-request" "Illegal value" v)
 	  v)))
 
 ;*---------------------------------------------------------------------*/
@@ -896,7 +896,7 @@
 	 ((ISO-8859-2 iso-8859-2) 'ISO-8859-2)
 	 ((ISO-8859-15 iso-8859-15) 'ISO-8859-15)
 	 ((WINDOW-1252 window-1252) 'WINDOW-1252)
-	 (else (error 'hop-locale-set! "Illegal charset" v)))))
+	 (else (error "hop-locale-set!" "Illegal charset" v)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-charset ...                                                  */
@@ -928,7 +928,7 @@
 	 ((ISO-8859-2 iso-8859-2) 'ISO-8859-2)
 	 ((ISO-8859-15 iso-8859-15) 'ISO-8859-15)
 	 ((WINDOW-1252 window-1252) 'WINDOW-1252)
-	 (else (error 'hop-charset-set! "Illegal charset" v)))))
+	 (else (error "hop-charset-set!" "Illegal charset" v)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-upload-directory ...                                         */
@@ -1007,7 +1007,7 @@
    8
    (lambda (v)
       (if (<fx v 4)
-	  (error 'hop-max-remote-keep-alive-connection-set!
+	  (error "hop-max-remote-keep-alive-connection-set!"
 		 "value should be greater or equal to 4"
 		 v)
 	  v)))
@@ -1047,7 +1047,7 @@
       #unspecified)
    (lambda (v)
       (if (or (not (procedure? v)) (not (correct-arity? v 1)))
-	  (error 'hop-read-pre-hook-set! "Illegal value" v)
+	  (error "hop-read-pre-hook-set!" "Illegal value" v)
 	  v)))
 
 ;*---------------------------------------------------------------------*/
@@ -1058,7 +1058,7 @@
       #unspecified)
    (lambda (v)
       (if (or (not (procedure? v)) (not (correct-arity? v 1)))
-	  (error 'hop-read-post-hook-set! "Illegal value" v)
+	  (error "hop-read-post-hook-set!" "Illegal value" v)
 	  v)))
 
 ;*---------------------------------------------------------------------*/
@@ -1078,17 +1078,17 @@
    (lambda (v)
       (cond
 	 (*hop-rc-loaded*
-	  (error 'define-parameter
+	  (error "define-parameter"
 		 "Parameter can only be set in rc file"
 		 'hop-path-access-control-set!))
 	 ((not (procedure? v))
-	  (error 'hop-path-access-control-set!
+	  (error "hop-path-access-control-set!"
 		 (bigloo-type-error-msg "Type"
 					"procedure"
 					(find-runtime-type v))
 		 v))
 	 ((not (correct-arity? v 2))
-	  (error 'hop-path-access-control-set!
+	  (error "hop-path-access-control-set!"
 		 "arity two procedure expected"
 		 v))
 	 (else
@@ -1105,17 +1105,17 @@
    (lambda (v)
       (cond
 	 (*hop-rc-loaded*
-	  (error 'define-parameter
+	  (error "define-parameter"
 		 "Parameter can only be set in rc file"
 		 'hop-service-access-control-set!))
 	 ((not (procedure? v))
-	  (error 'hop-path-access-control-set!
+	  (error "hop-path-access-control-set!"
 		 (bigloo-type-error-msg "Type"
 					"procedure"
 					(find-runtime-type v))
 		 v))
 	 ((not (correct-arity? v 2))
-	  (error 'hop-service-access-control-set!
+	  (error "hop-service-access-control-set!"
 		 "arity two procedure expected"
 		 v))
 	 (else
@@ -1190,7 +1190,7 @@
    #f
    (lambda (v)
       (if (not *hop-filters-open*)
-	  (error 'hop-security-manager-set! "Security manager closed" #f)
+	  (error "hop-security-manager-set!" "Security manager closed" #f)
 	  v)))
 
 ;*---------------------------------------------------------------------*/
@@ -1205,7 +1205,7 @@
    (lambda (v)
       (cond
 	 ((not *hop-filters-open*)
-	  (error 'hop-security-script-purifier-set!
+	  (error "hop-security-script-purifier-set!"
 		 "Security script-purifier closed"
 		 v))
 	 ((not (and (procedure? v) (correct-arity? v 1)))
@@ -1222,7 +1222,7 @@
    #f
    (lambda (v)
       (if (not *hop-filters-open*)
-	  (error 'hop-enable-proxy-sniffer-set!
+	  (error "hop-enable-proxy-sniffer-set!"
 		 "Sniffer can only be enabled/disabled to HOP startup time"
 		 #f)
 	  v)))
@@ -1234,7 +1234,7 @@
    (lambda (req) #f)
    (lambda (v)
       (if (not (and (procedure? v) (correct-arity? v 1)))
-	  (error 'hop-proxy-sniffer
+	  (error "hop-proxy-sniffer"
 		 "arity one procedure expected"
 		 v)
 	  v)))

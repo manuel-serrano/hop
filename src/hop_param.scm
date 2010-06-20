@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/src/hop-param.scm                 */
+;*    serrano/prgm/project/hop/2.1.x/src/hop_param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Jan 11 12:45:25 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:36:17 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -161,7 +161,7 @@
       (if (string? v)
 	  (let ((l (pregexp-match "([0-9]{1,3})[.]([0-9]{1,3})[.]([0-9]{1,3})[.]([0-9]{1,3})" v)))
 	     (if (not l)
-		 (error 'hop-proxy-ip-mask-set!
+		 (error "hop-proxy-ip-mask-set!"
 			"Illegal IPv4 mask"
 			v)
 		 (begin
@@ -195,7 +195,7 @@
 	     (hop-ip-blacklist-table-set! t)
 	     v))
 	 (else
-	  (error 'hop-ip-blacklist "Illegal blacklist" v)))))
+	  (error "hop-ip-blacklist" "Illegal blacklist" v)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-ip-blacklist-table ...                                       */
@@ -205,7 +205,7 @@
    (lambda (v)
       (if (hashtable? v)
 	  v
-	  (error 'hop-ip-blacklist-table "Illegal hashtable" v))))
+	  (error "hop-ip-blacklist-table" "Illegal hashtable" v))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-log-file ...                                                 */
@@ -257,7 +257,7 @@
    (hop-port)
    (lambda (v)
       (if (<fx v 1024)
-	  (error 'hop-fast-server-event-port-set!
+	  (error "hop-fast-server-event-port-set!"
 		 "Server event ports must be greater than 1023"
 		 v)
 	  v)))
@@ -285,7 +285,7 @@
    (lambda (v)
       (if (every? string? v)
 	  v
-	  (error 'hop-gzipped-directories "Illegal gzipped directory list" v))))
+	  (error "hop-gzipped-directories" "Illegal gzipped directory list" v))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-process-key ...                                              */

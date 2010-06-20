@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/js-lib.scm                */
+;*    serrano/prgm/project/hop/2.1.x/runtime/js_lib.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sun May 30 09:13:34 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:23:38 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -38,7 +38,7 @@
       ((procedure? obj)
        (if (service? obj)
 	   (obj->javascript (procedure-attr obj) op isrep)
-	   (error 'obj->javascript
+	   (error "obj->javascript"
 		  "Illegal procedure in JavaScript conversion"
 		  obj)))
       ((date? obj)
@@ -106,7 +106,7 @@
 ;*    obj->javascript ::xml ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (obj->javascript obj::xml op isrep)
-   (error 'obj->javascript "Cannot translate xml element" xml))
+   (error "obj->javascript" "Cannot translate xml element" xml))
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript ::xml-markup ...                                 */
@@ -308,7 +308,7 @@
 	   ((sc_list) vals)
 	   ((sc_jsstring2symbol) (string->symbol (car vals)))
 	   ((sc_jsstring2keyword) (string->keyword (car vals)))
-	   (else (error 'json->hop "Unknown function" (car IDENTIFIER)))))
+	   (else (error "json->hop" "Unknown function" (car IDENTIFIER)))))
        ((ANGLE-OPEN ANGLE-CLO)
 	'#())
        ((ANGLE-OPEN array-elements ANGLE-CLO)
@@ -341,17 +341,17 @@
 	       ((?a ?d)
 		(cons a d))
 	       (else
-		(error 'json->hop "Illegal `cons' construction" vals))))
+		(error "json->hop" "Illegal `cons' construction" vals))))
 	   ((Date)
 	    (match-case vals
 	       ((and ?sec (? integer?))
 		(seconds->date (/fx sec 1000)))
 	       (else
-		(error 'json->hop "Illegal `date' construction" vals))))
+		(error "json->hop" "Illegal `date' construction" vals))))
 	   (else
 	    (let ((c (find-class (car IDENTIFIER))))
 	       (if (not (class? c))
-		   (error 'json->hop "Can't find class" c)
+		   (error "json->hop" "Can't find class" c)
 		   (let* ((constr (class-constructor c))
 			  (create (class-creator c))
 			  (ins (apply create vals)))
@@ -389,7 +389,7 @@
 		  NEW IDENTIFIER@klass PAR-OPEN vals PAR-CLO)
 	(let ((c (find-class klass)))
 	   (if (not (class? c))
-	       (error 'json->hop "Can't find class" c)
+	       (error "json->hop" "Can't find class" c)
 	       (let* ((constr (class-constructor c))
 		      (create (class-creator c))
 		      (ins (apply constr vals)))
@@ -450,7 +450,7 @@
       (service
        ((FUNCTION PAR-OPEN PAR-CLO BRA-OPEN RETURN IDENTIFIER
 		  PAR-OPEN argument* PAR-CLO BRA-CLO)
-	(error 'json->hop "Service cannot be transmitted" IDENTIFIER)))
+	(error "json->hop" "Service cannot be transmitted" IDENTIFIER)))
 
       ;; constructor
       (constructor

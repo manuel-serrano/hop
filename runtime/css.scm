@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sat Jun 19 06:16:51 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:53:28 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -280,7 +280,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hss-mutex ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define hss-mutex (make-mutex 'hss))
+(define hss-mutex (make-mutex "hss"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-cache ...                                                    */
@@ -388,11 +388,11 @@
 		    (close-input-port p)
 		    (loading-file-set! loadingf)))
 	      (raise (instantiate::&io-port-error
-			(proc 'hop-load)
+			(proc "hop-load")
 			(msg "Can't open file")
 			(obj file)))))
        (raise (instantiate::&io-file-not-found-error
-		 (proc 'hop-load)
+		 (proc "hop-load")
 		 (msg "file does not exist")
 		 (obj file)))))
 

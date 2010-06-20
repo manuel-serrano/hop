@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Jun 18 11:13:14 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:26:58 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -257,7 +257,7 @@
 	 ((8)
 	  (service (a0 a1 a2 a3 a4 a5 a6 a7) (proc a0 a1 a2 a3 a4 a5 a6 a7)))
 	 (else
-	  (error 'procedure->service "arity not supported" proc)))))
+	  (error "procedure->service" "arity not supported" proc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    exp->eval-string ...                                             */

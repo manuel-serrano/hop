@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Fri Jun 18 11:13:35 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:53:50 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -57,7 +57,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define *verb-mutex* (make-mutex 'hop-verb))
+(define *verb-mutex* (make-mutex "hop-verb"))
 
 ;*---------------------------------------------------------------------*/
 ;*    tune-socket! ...                                                 */
@@ -139,7 +139,7 @@
 (define-method (scheduler-accept-loop scd::pool-scheduler serv::socket w::bool)
    
    (define dummybuf (make-string 512))
-   (define idmutex (make-mutex 'pool-scheduler))
+   (define idmutex (make-mutex "pool-scheduler"))
    (define idcount 0)
    (define nbthreads (length (pool-scheduler-free scd)))
    

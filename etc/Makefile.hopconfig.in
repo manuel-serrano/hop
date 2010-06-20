@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Fri Apr 23 08:21:08 2010 (serrano)                */
+#*    Last change :  Sun Jun 20 12:18:11 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -59,18 +59,25 @@ BHFLAGS		= -q -mkaddheap -mkaddlib $(EFLAGS)
 BJFLAGS		= -j
 CCFLAGS		= @CCFLAGS@
 
-BIGLOOPTHLIB	= @BIGLOOPTHLIB@
-BIGLOOSSLLIB	= @BIGLOOSSLLIB@
+BIGLOOPTHLIBS	= @BIGLOOPTHLIBS@
+BIGLOOPTHLIBU	= @BIGLOOPTHLIBU@
+BIGLOOSSLLIBS	= @BIGLOOSSLLIBS@
+BIGLOOSSLLIBU	= @BIGLOOSSLLIBU@
 
 BSCM2JSFLAGS	= @BSCM2JSFLAGS@
 
 #*---------------------------------------------------------------------*/
 #*    Linking                                                          */
 #*---------------------------------------------------------------------*/
-BGLCLOSELIBS	= $(BIGLOOPTHLIB) \
-                  $(BIGLOOSSLLIB) \
+BGLCLOSELIBS_S	= $(BIGLOOPTHLIBS) \
+                  $(BIGLOOSSLLIBS) \
                   -lbiglooweb_s-$(RELEASE) \
                   -lbigloomultimedia_s-$(RELEASE)
+
+BGLCLOSELIBS_U	= $(BIGLOOPTHLIBU) \
+                  $(BIGLOOSSLLIBU) \
+                  -lbiglooweb_u-$(RELEASE) \
+                  -lbigloomultimedia_u-$(RELEASE)
 
 #*---------------------------------------------------------------------*/
 #*    Build                                                            */

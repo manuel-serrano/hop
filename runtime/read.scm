@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Jun 13 16:19:46 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:42:14 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -85,7 +85,7 @@
       (raise (instantiate::&io-read-error
 		(fname (input-port-name port))
 		(location loc)
-		(proc 'read)
+		(proc "read")
 		(msg msg)
 		(obj obj)))))
 
@@ -96,7 +96,7 @@
    (raise (instantiate::&io-read-error
 	     (fname fname)
 	     (location (if (fixnum? loc) loc 0))
-	     (proc 'read)
+	     (proc "read")
 	     (msg msg)
 	     (obj obj))))
 
@@ -744,7 +744,7 @@
 		  (charset (hop-locale))
 		  (menv #f))
    (if (closed-input-port? iport)
-       (error 'hop-read "Illegal closed input port" iport)
+       (error "hop-read" "Illegal closed input port" iport)
        (begin
 	  ((hop-read-pre-hook) iport)
 	  (let* ((cset (charset-converter! charset (hop-charset)))
@@ -872,7 +872,7 @@
 	 (menv (or menv ((clientc-macroe (hop-clientc))))))
       (if (not (string? path))
 	  (raise (instantiate::&io-file-not-found-error
-		    (proc 'hop-load)
+		    (proc "hop-load")
 		    (msg "Can't find file")
 		    (obj file-name)))
 	  (let ((port (open-input-file path)))
@@ -910,14 +910,14 @@
 					(let ((val (eval! sexp env)))
 					   (loop (cons val res)))))))
 			     (else
-			      (error 'hop-load "Illegal mode" mode))))
+			      (error "hop-load" "Illegal mode" mode))))
 		       (begin
 			  ($evmeaning-byte-code-set! (current-dynamic-env) #f)
 			  (close-input-port port)
 			  (eval-module-set! m)
 			  (loading-file-set! f))))
 		 (raise (instantiate::&io-port-error
-			   (proc 'hop-load)
+			   (proc "hop-load")
 			   (msg "Can't open file")
 			   (obj file-name))))))))
 

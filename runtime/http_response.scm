@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/http-response.scm         */
+;*    serrano/prgm/project/hop/2.1.x/runtime/http_response.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon May 10 17:41:03 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:41:27 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -174,7 +174,7 @@
 		     ((json)
 		      (hop->json value p))
 		     (else
-		      (error 'http-response
+		      (error "http-response"
 			     "Unspported serialization method"
 			     (hop-serialize-method))))))
 	    (flush-output-port p)
@@ -828,7 +828,7 @@
 	    ((not (string? rhost))
 	     (raise
 	      (instantiate::&io-malformed-url-error
-		 (proc 'http-send-request)
+		 (proc "http-send-request")
 		 (msg "Illegal host")
 		 (obj url))))
 	    (else

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/http-lib.scm              */
+;*    serrano/prgm/project/hop/2.1.x/runtime/http_lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Mon May 10 11:47:13 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:40:34 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -329,7 +329,7 @@
    
    (define (err)
       (raise (instantiate::&io-parse-error
-		(proc 'http-parse-range)
+		(proc "http-parse-range")
 		(msg "Illegal range")
 		(obj range))))
    

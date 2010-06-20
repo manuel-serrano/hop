@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Apr 23 08:11:15 2010 (serrano)                */
+#*    Last change :  Sun Jun 20 12:15:14 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -23,8 +23,10 @@ do: build
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = hopwidget
-HOPCLOSELIBS = $(BGLCLOSELIBS) -lhopscheme_s-$(HOPRELEASE) -lhop_s-$(HOPRELEASE) 
-HOPCLOSELIBS_E = -lhopwidget_s-$(HOPRELEASE)
+HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) -lhopscheme_s-$(HOPRELEASE) -lhop_s-$(HOPRELEASE) 
+HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) -lhopscheme_u-$(HOPRELEASE) -lhop_u-$(HOPRELEASE) 
+HOPCLOSELIBS_ES = -lhopwidget_s-$(HOPRELEASE)
+HOPCLOSELIBS_EU = -lhopwidget_u-$(HOPRELEASE)
 
 BLIBFLAGS = $(BCFLAGSRTS)
 

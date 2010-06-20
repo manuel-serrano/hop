@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/param-expd.sch            */
+;*    serrano/prgm/project/hop/2.1.x/runtime/param-expd.sch            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:17:19 2006                          */
-;*    Last change :  Wed Apr  1 16:11:32 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Sat Jun 19 06:49:24 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Parameters expander                                              */
 ;*=====================================================================*/
@@ -54,7 +54,7 @@
       ((?- ?id ?default . ?setter)
        (e (expand-define-parameter id default setter x) e))
       (else
-       (error 'define-expander "Illegal form" x))))
+       (error "define-expander" "Illegal form" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-define-lazy-parameter-expander ...                           */
@@ -64,4 +64,4 @@
       ((?- ?id ?default . ?setter)
        (e (expand-define-lazy-parameter id default setter x) e))
       (else
-       (error 'define-expander "Illegal form" x))))
+       (error "define-expander" "Illegal form" x))))

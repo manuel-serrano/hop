@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue May 11 06:28:01 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:37:47 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -50,7 +50,7 @@
 	     (set! head #f)
 	     (set! body (filter xml-nptab-element? body))))
       (if (null? body)
-	  (error '<NOTEPAD> "Missing <NPTAB> elements" id)
+	  (error "<NOTEPAD>" "Missing <NPTAB> elements" id)
 	  (notepad id class history attrs head body onchange))))
 
 ;*---------------------------------------------------------------------*/
@@ -161,9 +161,9 @@
    
    (cond
       ((null? body)
-       (error '<NPTAB> "Missing <NPTABHEAD> " id))
+       (error "<NPTAB>" "Missing <NPTABHEAD> " id))
       ((not (xml-nptabhead-element? (car body)))
-       (error '<NPTAB> "Illegal <NPTABHEAD> " (car body)))
+       (error "<NPTAB>" "Illegal <NPTABHEAD> " (car body)))
       (else
        (let ((cla (make-class-name "hop-nptab " class)))
 	  (instantiate::xml-nptab-element

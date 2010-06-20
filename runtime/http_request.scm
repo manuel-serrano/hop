@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/http-request.scm          */
+;*    serrano/prgm/project/hop/2.1.x/runtime/http_request.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Apr  2 09:48:05 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:41:16 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -86,14 +86,14 @@
       ((: (out #\< SP) (+ (out SP)) SP)
        ;; Illegal (parsed) requests
        (raise (instantiate::&hop-method-error
-		 (proc 'request-line-grammar)
+		 (proc "request-line-grammar")
 		 (msg "Method not implemented")
 		 (obj (the-string)))))
       (else
        (let ((o (the-failure)))
 	  (if (eof-object? o)
 	      (raise request-eof-exception)
-	      (parse-error 'request-line-grammar
+	      (parse-error "request-line-grammar"
 			   "Illegal method"
 			   o
 			   (the-port)))))))
@@ -210,7 +210,7 @@
 	  (content-length 10)
 	  (user (anonymous-user)))
        (raise (instantiate::&hop-method-error
-		 (proc 'request-line-grammar)
+		 (proc "request-line-grammar")
 		 (msg "policy file request not understood")
 		 (obj string)))))
 

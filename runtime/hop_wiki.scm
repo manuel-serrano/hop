@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hop-wiki.scm              */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop_wiki.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  6 07:37:32 2006                          */
-;*    Last change :  Tue Feb 16 07:41:15 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:22:34 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The wiki markup                                                  */
@@ -80,7 +80,7 @@
 	     (let ((venv `(,id ',(list->vector (reverse! env)))))
 		(wiki-string->hop str :syntax syn :charset charset :env venv))))
 	 ((not (string? src))
-	  (error '<WIKI> "Illegal wiki src" src))
+	  (error "<WIKI>" "Illegal wiki src" src))
 	 ((file-exists? src)
 	  (if (cache? cache)
 	      (wiki-cache->hop cache src syn charset)

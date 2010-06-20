@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Jun 13 07:39:34 2010 (serrano)                */
+;*    Last change :  Sun Jun 20 13:57:57 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -70,7 +70,7 @@
 				      :protocol (hop-https-protocol)
 				      :cert cert :pkey pkey)))
 	  (else
-	   (error 'hop "SSL not supported by this version of Hop" #f)))
+	   (error "hop" "SSL not supported by this version of Hop" #f)))
        (make-server-socket (hop-port) :backlog (hop-somaxconn))))
 
 ;*---------------------------------------------------------------------*/
@@ -86,17 +86,17 @@
    ;; preload the hop libraries
    (cond-expand
       (static
-         (pragma "BGl_modulezd2initializa7ationz75zz__hop_makelibz00(0,\"foo\")")
-         (pragma "BGl_modulezd2initializa7ationz75zz__hopwidgetzd2makelibzd2(0,\"foo\")")
-         ; TODO: pick the dir from the config
-         (load "/data/data/fr.inria.hop/hoplib/hop.init"))
+       (pragma "BGl_modulezd2initializa7ationz75zz__hop_makelibz00(0,\"foo\")")
+       (pragma "BGl_modulezd2initializa7ationz75zz__hopwidgetzd2makelibzd2(0,\"foo\")")
+       ; TODO: pick the dir from the config
+       (load "/data/data/fr.inria.hop/hoplib/hop.init"))
       (else
-         (for-each (lambda (l)
-                     (cond-expand
-                        (hop-as-library (eval `(library-load_e ',l)))
-                        (static '())
-                        (else (eval `(library-load ',l)))))
-                   (hop-preload-libraries))))
+       (for-each (lambda (l)
+		    (cond-expand
+		       (hop-as-library (eval `(library-load_e ',l)))
+		       (static '())
+		       (else (eval `(library-load ',l)))))
+		 (hop-preload-libraries))))
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set! (lambda (f) (hop-load-modified f :abase #f)))
@@ -155,10 +155,10 @@
 	      (hop-scheduler-set! (instantiate::accept-many-scheduler
 				     (size (hop-max-threads)))))
 	     (else
-	      (error 'hop "Unknown scheduling policy" (hop-scheduling)))))
+	      (error "hop" "Unknown scheduling policy" (hop-scheduling)))))
 	 (else
 	  (unless (eq? (hop-scheduling) 'nothread)
-	     (warning 'hop "Threads disabled, forcing \"nothread\" scheduler."))
+	     (warning "hop" "Threads disabled, forcing \"nothread\" scheduler."))
 	  (hop-scheduler-set! (instantiate::nothread-scheduler)))))
    ;; start the hop scheduler loop (i.e. the hop main loop)
    (with-handler
@@ -179,7 +179,7 @@
 	 (when (hop-enable-repl)
 	    (if (>fx (hop-max-threads) 1)
 		(hop-repl (hop-scheduler))
-		(error 'hop "No thread available for the REPL" "aborting.")))
+		(error "hop" "No thread available for the REPL" "aborting.")))
 	 ;; when needed, start a loop for server events
 	 (hop-event-server (hop-scheduler))
 	 ;; execute the script file
@@ -212,7 +212,7 @@
 (define (set-hop-owner! user)
    
    (define (err)
-      (error 'hop
+      (error "hop"
 	     "Hop is not allowed to be executed as `root'. Create a dedicated Hop user to run Hop on behalf of.\n"
 	     "If you know what you are doing and want to run Hop with the
 `root' permissions, edit the Hop configuration file and set the appropriate `hop-user' value."))
@@ -228,7 +228,7 @@
        (let ((pw (getpwnam user)))
 	  (if (pair? pw)
 	      (setuid (caddr pw))
-	      (error 'set-hop-owner! "Cannot find HOP system user" user))))
+	      (error "set-hop-owner!" "Cannot find HOP system user" user))))
       (else
        (err))))
 
@@ -237,7 +237,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-repl scd)
    (if (<=fx (scheduler-size scd) 1)
-       (error 'hop-repl
+       (error "hop-repl"
 	      "HOP REPL cannot be spawned without multi-threading"
 	      scd)
        (spawn0 scd stage-repl)))

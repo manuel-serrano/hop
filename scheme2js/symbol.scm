@@ -198,7 +198,7 @@
 	  ((ask) (let ((oracle (config 'allow-unresolved-oracle)))
 		    (lambda (id loc)
 		       (oracle id (scheme2js-error-location loc)))))
-	  (else (error 'symbol-resolution
+	  (else (error "symbol-resolution"
 		       "invalid 'allow-unresolved' configuration"
 		       (config 'allow-unresolved)))))
       (Env-unbound-add!-set!
@@ -384,7 +384,7 @@
 		(let ((name (match-case id
 			       ((js-field ?v ?f) (format "~a.~a" v f))
 			       (else id))))
-		   (scheme2js-error 'define
+		   (scheme2js-error "define"
 				    ;; probably internal error.
 				    "Illegal identifier"
 				    name

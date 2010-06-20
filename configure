@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Apr 23 15:43:39 2010 (serrano)                */
+#*    Last change :  Sun Jun 20 12:17:48 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -539,18 +539,22 @@ fi
 #*---------------------------------------------------------------------*/
 if [ "$ssl " = "yes " ]; then
   bigloossl="'bigloossl";
-  bigloossllib="-lbigloossl_s-$""(RELEASE)";
+  bigloossllibs="-lbigloossl_s-$""(RELEASE)";
+  bigloossllibu="-lbigloossl_u-$""(RELEASE)";
 else
   bigloossl="";
-  bigloossllib="";
+  bigloossllibs="";
+  bigloossllibu="";
 fi
 
 if [ "$threads " = "yes " ]; then
   bigloopth="'bigloopth";
-  bigloopthlib="-lbigloopth_s-$""(RELEASE)";
+  bigloopthlibs="-lbigloopth_s-$""(RELEASE)";
+  bigloopthlibu="-lbigloopth_u-$""(RELEASE)";
 else
   bigloopth="";
-  bigloopthlib="";
+  bigloopthlibs="";
+  bigloopthlibu="";
 fi
 
 mkmf=etc/Makefile.hopconfig
@@ -606,8 +610,10 @@ cat $mkmf.in \
           -e "s|@DISTRIBDIR@|$distribdir|" \
           -e "s|@HOPSVN@|$svn|" \
           -e "s|@HOPDISTRIBDIR@|$distribdir|" \
-          -e "s|@BIGLOOSSLLIB@|$bigloossllib|" \
-          -e "s|@BIGLOOPTHLIB@|$bigloopthlib|" \
+          -e "s|@BIGLOOSSLLIBS@|$bigloossllibs|" \
+          -e "s|@BIGLOOSSLLIBU@|$bigloossllibu|" \
+          -e "s|@BIGLOOPTHLIBS@|$bigloopthlibs|" \
+          -e "s|@BIGLOOPTHLIBU@|$bigloopthlibu|" \
           -e "s|@RTSCONFIG@|$rts|" \
           -e "s|@FELIX_JAR@|$felix|" \
     >> $mkmf

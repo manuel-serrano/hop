@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hop-sym.scm               */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop_sym.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 27 09:39:08 2006                          */
-;*    Last change :  Fri May 21 11:38:17 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:22:25 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML symbols (special characters).                               */
@@ -302,7 +302,7 @@
       (let ((e (hashtable-get *symbol-table* s)))
 	 (if e
 	     (instantiate::xml-verbatim (body e))
-	     (error '<SYM> "Illegal symbol" sym)))))
+	     (error "<SYM>" "Illegal symbol" sym)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-symbol-alist ...                                             */

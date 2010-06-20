@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Tue May 11 06:27:05 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:26:18 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -177,7 +177,7 @@
 			 ((integer? s) (integer->string s))
 			 ((real? s) (real->string s))
 			 ((keyword? s) (keyword->string s))
-			 (else (error 'string->value "Illegal value" val))))
+			 (else (error "string->value" "Illegal value" val))))
 		   v)
 	      v)))))
 
@@ -260,7 +260,7 @@
 	     ((text ?- . ?-)
 	      val)
 	     (else
-	      (error 'value->string
+	      (error "value->string"
 		     "Illegal type (see the documentation)"
 		     type)))))))
 		 
@@ -269,7 +269,7 @@
 ;*---------------------------------------------------------------------*/
 (define (add-validator! pref validator)
    (unless (correct-arity? validator 1)
-      (error '<PR> "Illegal validate arity" validator))
+      (error "<PR>" "Illegal validate arity" validator))
    (mutex-lock! (preferences-mutex))
    (hashtable-update! *pref-validator-table* pref cons (list validator))
    (mutex-unlock! (preferences-mutex)))
@@ -475,9 +475,9 @@
 		     (? (lambda (p) (and (procedure? p) (correct-arity? p 1)))))
 		    (pr-param param type title parse))
 		   (else
-		    (error '<PR> "Illegal :param attribute" param))))
+		    (error "<PR>" "Illegal :param attribute" param))))
 	       (else
-		(error '<PR> "Either `pref' or `param' must be provided" id))))
+		(error "<PR>" "Either `pref' or `param' must be provided" id))))
 	 (when (pair? extra)
 	    (<TD> :class "hop-pr-editor-extra" extra)))))
 
@@ -522,7 +522,7 @@
 	   (lambda (name type value title parse key)
 	      (pr-editor-text name type value title parse key rows cols)))
 	  (else
-	   (error 'pr-editor "Illegal syntax" type))))
+	   (error "pr-editor" "Illegal syntax" type))))
       (else
        pr-editor-input)))
 

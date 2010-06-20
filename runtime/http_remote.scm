@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/http-remote.scm           */
+;*    serrano/prgm/project/hop/2.1.x/runtime/http_remote.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sun May  9 06:23:10 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:40:48 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -541,8 +541,8 @@
 		       (let ((m (http-parse-error-message c ip)))
 			  (raise
 			   (instantiate::&io-parse-error
+			      (proc "http-response")
 			      (obj ip)
-			      (proc 'http-response)
 			      (msg (format "Illegal character: ~a" m))))))))))))
 
 ;*---------------------------------------------------------------------*/

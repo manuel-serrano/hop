@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hop-svg.scm               */
+;*    serrano/prgm/project/hop/2.1.x/runtime/hop_svg.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Tue May 11 06:26:19 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:22:13 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -148,10 +148,10 @@
 	       (else
 		(let ((c (the-failure)))
 		   (if (eof-object? c)
-		       (error '<SVG-IMG>
+		       (error "<SVG-IMG>"
 			      "Premature end of file"
 			      ip)
-		       (error '<SVG-IMG>
+		       (error "<SVG-IMG>"
 			      "Illegal svg image attribute value"
 			      (string-append "{" (string c) "}"
 					     (read-line ip)))))))
@@ -173,10 +173,10 @@
 	       (else
 		(let ((c (the-failure)))
 		   (if (eof-object? c)
-		       (error '<SVG-IMG>
+		       (error "<SVG-IMG>"
 			      "Premature end of file"
 			      ip)
-		       (error '<SVG-IMG>
+		       (error "<SVG-IMG>"
 			      "Illegal svg image attribute"
 			      (string-append "{" (string c) "}"
 					     (read-line ip)))))))
@@ -202,7 +202,7 @@
 	  (else
 	  (for-each (lambda (o) (show-svg-img o prefix)) o))))
       (else
-       (error 'show-svg-img "Illegal object" o))))
+       (error "show-svg-img" "Illegal object" o))))
        
 ;*---------------------------------------------------------------------*/
 ;*    show-svg-img-attributes                                          */
@@ -388,7 +388,7 @@
 		     ((or (+ (out #\<)) (+ #\<))
 		      (ignore))
 		     (else
-		      (error '<SVG:IMG> "Illegal file format" ip)))
+		      (error "<SVG:IMG>" "Illegal file format" ip)))
 		  ip)))
 
    (multiple-value-bind (encoding prelude)
@@ -521,9 +521,9 @@
 			  (attrs))
    (cond
       ((not (string? src))
-       (error '<SVG-IMG> "Illegal image src" src))
+       (error "<SVG-IMG>" "Illegal image src" src))
       ((not (file-exists? src))
-       (error '<SVG-IMG> "Cannot find image" src))
+       (error "<SVG-IMG>" "Cannot find image" src))
       (else
        (let* ((img (call-with-input-file
 			 (if (string=? (suffix src) "svgz")

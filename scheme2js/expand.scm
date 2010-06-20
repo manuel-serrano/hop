@@ -299,7 +299,7 @@
 		  (null? ats))
 	     (cadr (car L)))
 	    ((or (null? L) (null? ats))
-	     (error 'e-attach
+	     (error "e-attach"
 		    "Internal error. Bad e-attach"
 		    (list LL attachments)))
 	    (else
@@ -326,7 +326,7 @@
 				  (&error-obj e)
 				  x)))
 	    (else
-	     (scheme2js-error 'expand
+	     (scheme2js-error "expand"
 			      "Illegal form"
 			      x
 			      x))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Thu Jun 17 05:28:25 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:23:13 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -51,7 +51,7 @@
           (vdot (string-index-right n #\.)))
       (cond
          ((not index)
-          (error 'hz-package-name-parse "Illegal hz-package name" name))
+          (error "hz-package-name-parse" "Illegal hz-package name" name))
          ((and (fixnum? vdot) (>fx vdot index))
           ;; a hz-package without release
           (let* ((version (substring n (+fx 1 index) l))
@@ -63,7 +63,7 @@
           ;; a hz-package with release
           (let ((vindex (string-index-right n #\- (-fx index 1))))
              (if (not vindex)
-                 (error 'hz-package-name-parse "Illegal hz-package name" name)
+                 (error "hz-package-name-parse" "Illegal hz-package name" name)
                  (let* ((version (substring n (+fx 1 vindex) (string-length n)))
                         (base (substring n 0 vindex)))
 		    (values base version))))))))
@@ -97,7 +97,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-package-name-parse name)
    (unless (hz-package-filename? name)
-      (error 'hz-package-name-parse "Illegal hz-package name" name))
+      (error "hz-package-name-parse" "Illegal hz-package name" name))
    (let ((varg (string-index-right name "?&")))
       (if varg
 	  (let ((name (substring name (+fx varg 1) (string-length name))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sun Jun 13 07:34:02 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:27:28 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -82,7 +82,7 @@
 (define (add-user! name . args)
    (if *users-open*
        (%add-user! name args)
-       (error 'add-user! "User registration closed" #f)))
+       (error "add-user!" "User registration closed" #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %add-user! ...                                                   */
@@ -139,21 +139,21 @@
 			  (hashtable-put! *users* name u))
 		      u))))
 	    ((or (not (keyword? (car a))) (null? (cdr a)))
-	     (error 'add-user! "Illegal arguments" args))
+	     (error "add-user!" "Illegal arguments" args))
 	    (else
 	     (case (car a)
 		((:groups)
 		 (if (not (and (list? (cadr a)) (every? symbol? (cadr a))))
-		     (error 'add-user! "Illegal group" (cadr a))
+		     (error "add-user!" "Illegal group" (cadr a))
 		     (set! g (cadr a))))
 		((:password)
 		 (if (not (string? (cadr a)))
-		     (error 'add-user! "Illegal password" (cadr a))
+		     (error "add-user!" "Illegal password" (cadr a))
 		     (set! p (cadr a))))
 		((:services)
 		 (if (not (or (eq? (cadr a) '*)
 			      (and (list? (cadr a)) (every? symbol? (cadr a)))))
-		     (error 'add-user! "Illegal services" (cadr a))
+		     (error "add-user!" "Illegal services" (cadr a))
 		     (unless (eq? s '*)
 			(if (eq? (cadr a) '*)
 			    (set! s '*)
@@ -166,7 +166,7 @@
 		       ((and (list? (cadr a)) (every? string? (cadr a)))
 			(set! d (append (map file-name-unix-canonicalize (cadr a)) d)))
 		       (else
-			(error 'add-user! "Illegal directories" (cadr a))))))
+			(error "add-user!" "Illegal directories" (cadr a))))))
 		((:preferences)
 		 (set! c (append c (cadr a))))
 		((:preferences-filename)
@@ -174,7 +174,7 @@
 		((:uuid)
 		 (set! u (cadr a)))
 		(else
-		 (error 'add-user! "Illegal argument" args)))
+		 (error "add-user!" "Illegal argument" args)))
 	     (loop (cddr a)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -202,7 +202,7 @@
 			   'basic))))
 	     (authentication-encrypt s algo (hop-session) n p path)))
 	 (else
-	  (error 'user-authentication-encrypt "Illegal authentication" auth)))))
+	  (error "user-authentication-encrypt" "Illegal authentication" auth)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-authorized-user ...                                         */
@@ -355,7 +355,7 @@
        (let ((a (hashtable-get *users* "anonymous")))
 	  (if (user? a)
 	      (set! *anonymous-user* a)
-	      (error 'anonymous-user "No anonymous user declared" a))
+	      (error "anonymous-user" "No anonymous user declared" a))
 	  *anonymous-user*)))
 
 ;*---------------------------------------------------------------------*/
