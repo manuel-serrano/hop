@@ -91,9 +91,9 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
       -L $pwd/lib -lib-dir $XBGL_LIBDIR -cc $CC \
       -copt "-g -DPLATFORM_ANDROID -I$XBGL_LIBDIR" \
       -o $pwd/bin/hop \
-         o/hop-param.o o/parseargs.o o/main.o o/init.o o/scheduler.o o/accept.o \
-         o/pipeline.o o/nothread-scheduler.o o/queue-scheduler.o o/oto-scheduler.o \
-         o/pool-scheduler.o o/amany-scheduler.o \
+         o/hop_param.o o/parseargs.o o/main.o o/init.o o/scheduler.o o/accept.o \
+         o/pipeline.o o/nothread_scheduler.o o/queue_scheduler.o o/oto_scheduler.o \
+         o/pool_scheduler.o o/amany_scheduler.o \
       -ldopt -L $pwd/lib/libhop_s-2.1.0.a \
       -ldopt -L $pwd/lib/libhop_es-2.1.0.a \
       -ldopt -L $pwd/lib/libhopscheme_s-2.1.0.a \
@@ -102,8 +102,10 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
       -ldopt -L $pwd/lib/libscheme2js_es-2.1.0.a \
       -ldopt -L $pwd/lib/libhopwidget_s-2.1.0.a \
       -ldopt -L $pwd/lib/libhopwidget_es-2.1.0.a \
-      -ldopt -L $XBGL_LIBDIR/libbiglooweb_e-3.3b.a \
-      -ldopt -L $XBGL_LIBDIR/libbigloomultimedia_e-3.3b.a
+      -ldopt -L $XBGL_LIBDIR/libbiglooweb_s-3.3b.a \
+      -ldopt -L $XBGL_LIBDIR/libbiglooweb_es-3.3b.a \
+      -ldopt -L $XBGL_LIBDIR/libbigloomultimedia_s-3.3b.a \
+      -ldopt -L $XBGL_LIBDIR/libbigloomultimedia_es-3.3b.a
   )
 
   if [ "$1" == "build" ]; then
