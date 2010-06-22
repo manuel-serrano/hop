@@ -8,7 +8,7 @@
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopscheme library.                     */
 #*=====================================================================*/
-.PHONY: do 
+.PHONY: do
 
 do: build
 
@@ -27,7 +27,7 @@ TARGETNAME = hopscheme
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) -lscheme2js_s-$(HOPRELEASE)
 HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) -lscheme2js_u-$(HOPRELEASE)
 HOPCLOSELIBS_ES = -lhopscheme_es-$(HOPRELEASE)
-HOPCLOSELIBS_EU = -lhopscheme_ue-$(HOPRELEASE)
+HOPCLOSELIBS_EU = -lhopscheme_eu-$(HOPRELEASE)
 
 BLIBFLAGS = $(BSCM2JSFLAGS)
 
@@ -51,7 +51,7 @@ BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make_lib.obj
 
 SOURCES = $(_OBJECTS:%=%.scm)
 
-INCLUDES = 
+INCLUDES =
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -82,7 +82,7 @@ ude:
 .afile: $(SOURCES)
 	@ $(AFILE) -o .afile $(SOURCES)
 
-.jfile: $(SOURCES) 
+.jfile: $(SOURCES)
 	@ $(JFILE) -o .jfile \
                    -pbase $(PBASE) $(SOURCES) make_lib.scm
 
