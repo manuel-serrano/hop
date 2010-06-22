@@ -51,6 +51,11 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
   # so we must hack it
   pwd=$(pwd)
 
+  # this first attempt to build will fail when linkking hop
+  # because we don't have a way to detect and compile a static hop in the build system
+  make || true
+
+  # compile some stuff by hand
   ( cd widget
     mkdir -pv o
     for i in *.hop; do
@@ -75,9 +80,9 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
         --share-dir $pwd/share --
     done
   )
-  # this first attempt to build will fail when linkking hop
-  # because we don't have a way to detect and compile a static hop in the build system
-  make || true
+
+  # finish the compilation
+  make
 
   # compile a static hop by hand
   ( cd src
@@ -90,13 +95,13 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
          o/pipeline.o o/nothread-scheduler.o o/queue-scheduler.o o/oto-scheduler.o \
          o/pool-scheduler.o o/amany-scheduler.o \
       -ldopt -L $pwd/lib/libhop_s-2.1.0.a \
-      -ldopt -L $pwd/lib/libhop_e-2.1.0.a \
+      -ldopt -L $pwd/lib/libhop_es-2.1.0.a \
       -ldopt -L $pwd/lib/libhopscheme_s-2.1.0.a \
-      -ldopt -L $pwd/lib/libhopscheme_e-2.1.0.a \
+      -ldopt -L $pwd/lib/libhopscheme_es-2.1.0.a \
       -ldopt -L $pwd/lib/libscheme2js_s-2.1.0.a \
-      -ldopt -L $pwd/lib/libscheme2js_e-2.1.0.a \
+      -ldopt -L $pwd/lib/libscheme2js_es-2.1.0.a \
       -ldopt -L $pwd/lib/libhopwidget_s-2.1.0.a \
-      -ldopt -L $pwd/lib/libhopwidget_e-2.1.0.a \
+      -ldopt -L $pwd/lib/libhopwidget_es-2.1.0.a \
       -ldopt -L $XBGL_LIBDIR/libbiglooweb_e-3.3b.a \
       -ldopt -L $XBGL_LIBDIR/libbigloomultimedia_e-3.3b.a
   )

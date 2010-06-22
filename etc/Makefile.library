@@ -146,7 +146,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX): \
              FORCELD=true \
              LIBDEST=$@ \
              SONAME=lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX) \
-             CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS_S) $(HOPCLOSELIBS_ES)"
+             CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS_S) $(HOPCLOSELIBS)"
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
 $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX): \
@@ -158,7 +158,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX): \
              FORCELD=true \
              LIBDEST=$@ \
              SONAME=lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX) \
-             CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U) $(HOPCLOSELIBS_EU)"
+             CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U) $(HOPCLOSELIBS)"
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
 $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a: .afile $(OBJECTS)
@@ -175,8 +175,8 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a: \
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
 $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a: $(EOBJECTS)
-	@ $(AR) $(ARFLAGS) $(BUILDLIBDIR)/lib$(TARGETNAME)_e-$(HOPRELEASE).a $(EOBJECTS)
-	@ $(RANLIB) $(BUILDLIBDIR)/lib$(TARGETNAME)_e-$(HOPRELEASE).a
+	@ $(AR) $(ARFLAGS) $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a $(EOBJECTS)
+	@ $(RANLIB) $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
 $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).a: \
