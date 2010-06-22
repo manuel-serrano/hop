@@ -1,11 +1,11 @@
 Q: If I run Hop once, some time passes, and I try to run it again, it gives an
    error that it cannot create the listening socket.
-A: This is a know error. The Hop apllication is just a terminal emulator writen
-   as a Java Activity[1] which in turn runs the Hop server. This Activity's
-   memory can be reclaimed by the Android platform to make space for other
-   Activities, but the server remains running. When this happens and you try
-   to recall the task/Activity, the Android Platform will rerun it, which will
-   try to launch another Hop server, which fails when it tries to bind() on
+A: This is a know problem. The Hop apllication is just a terminal emulator
+   writen as a Java Activity[1] which in turn runs the Hop server. This
+   Activity's memory can be reclaimed by the Android platform to make space for
+   other Activities, but the server remains running. When this happens and you
+   try to recall the task/Activity, the Android Platform will rerun it, which
+   will try to launch another Hop server, which fails when it tries to bind() on
    the socket the other Hop instance has. If you really want to see the output
    of Hop again, you will have to shut it down (you can use the web interface
    or just kill the process) and run it again. You might need to 'Force stop'
