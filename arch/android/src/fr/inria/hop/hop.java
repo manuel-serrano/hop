@@ -40,9 +40,9 @@ public class hop extends Activity {
    @Override
    public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
-      setContentView(R.layout.unpack);
+      setContentView(R.layout.terminal);
 
-      mStatus = (TextView) findViewById(R.id.statusText);
+      mStatus = (TextView) findViewById(R.id.emulatorView);
       mStatus.setVerticalScrollBarEnabled(true);
 
       findViewById(R.id.layout).setVerticalScrollBarEnabled(true);
