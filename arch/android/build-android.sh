@@ -82,7 +82,8 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
   )
 
   # finish the compilation
-  make
+  # || true because hop doesn't link
+  make || true
 
   # compile a static hop by hand
   ( cd src
@@ -130,6 +131,8 @@ if [ "$1" == "prepare" -o "$1" == "all" ]; then
   for file in share/{buttons,icons,*.js,*.hss,*.scm,.afile,hop-runtime.sch}; do
     install "$file" "$install_prefix/share/hop/$(basename $file)"
   done
+  # the icon
+  install share/icons/hop-128x128.png "arch/android/res/drawable/icon.png"
   # don't install all the weblets
   for file in weblets/{wizard,hop,hz,shutdown,info,color,dashboard,doc,home,hopsh,wiki,weblets}; do
     install "$file" "$install_prefix/hoplib/hop/$major/weblets/$(basename $file)"

@@ -3,7 +3,8 @@
       package="fr.inria.hop"
       android:versionCode="2"
       android:versionName="2.1.0">
-    <application android:label="@string/app_name">
+    <application android:label="@string/app_name"
+                 android:icon="@drawable/icon">
         <activity android:name="fr.inria.hop.hop"
                   android:launchMode="singleInstance"
                   android:label="@string/app_name">
