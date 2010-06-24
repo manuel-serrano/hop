@@ -12,8 +12,6 @@ import java.util.zip.ZipFile;
 
 import android.app.Activity;
 import android.os.Bundle;
-// import android.os.FileUtils;
-// import com.android.dx.util.FileUtils;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -135,5 +133,33 @@ public class hop extends Activity {
          }
       }
       return list;
+   }
+
+   /*
+      from weblets/wizard/wizard.hop:
+      ~(define (crypt na pd)
+         (string-append "+" (digest-password-encrypt na pd (hop-realm))))
+
+      from runtime/password.scm:
+      (define (digest-password-encrypt n p r)
+         (md5sum (string-append n ":" r ":" p)))
+
+      from runtime/param.scm:
+      (define-parameter hop-realm
+         "hop")
+   */
+   public static String crypt (String na, String pd) {
+      byte[] md5sum= {};
+      try {
+         java.security.MessageDigest digest= java.security.MessageDigest.getInstance ("MD5");
+         md5sum= digest.digest ((na+":hop:"+pd).getBytes());
+      } catch (java.security.NoSuchAlgorithmException e) {
+         // we really can't do much here
+      }
+
+      return "+"+md5sum;
+   }
+
+   public static void createAdminUser () {
    }
 }
