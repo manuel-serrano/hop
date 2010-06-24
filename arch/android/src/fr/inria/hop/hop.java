@@ -9,6 +9,8 @@ import java.util.Enumeration;
 import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.math.BigInteger;
+import java.util.Date;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -32,23 +34,6 @@ public class hop extends Activity {
    public static void Log(String string) {
       Log.v("hop-installer", string);
       // mStatus.append(string+"\n");
-   }
-
-   /** Called when the activity is first created. */
-   @Override
-   public void onCreate(Bundle savedInstanceState) {
-      super.onCreate(savedInstanceState);
-      setContentView(R.layout.terminal);
-
-      mStatus = (TextView) findViewById(R.id.emulatorView);
-      mStatus.setVerticalScrollBarEnabled(true);
-
-      findViewById(R.id.layout).setVerticalScrollBarEnabled(true);
-
-      this.unpack();
-
-      // once we finished, show the terminal running hop
-      setContentView(R.layout.terminal);
    }
 
    public static void copyStreams(InputStream is, FileOutputStream fos) {
@@ -150,16 +135,68 @@ public class hop extends Activity {
    */
    public static String crypt (String na, String pd) {
       byte[] md5sum= {};
+      String ans;
+
       try {
          java.security.MessageDigest digest= java.security.MessageDigest.getInstance ("MD5");
          md5sum= digest.digest ((na+":hop:"+pd).getBytes());
+         ans= "+"+getHex (md5sum);
       } catch (java.security.NoSuchAlgorithmException e) {
          // we really can't do much here
+         ans= null;
       }
 
-      return "+"+md5sum;
+      return ans;
    }
 
-   public static void createAdminUser () {
+   public static String createAdminUser () {
+      // we create the hoprc.hop file with an initial admin user
+      // whose password is randomly generated
+
+      Log("Creating admin user");
+      // 32bits==4bytes==8 hexa digits, 4Gi combinations
+      String password= new BigInteger (32, new java.util.Random ()).toString (16);
+      String scrambled= crypt ("admin", password);
+      Log("pass:  " + password);
+      Log("scram: " + scrambled);
+
+      if (scrambled!=null) {
+         File wizard_hop= new File (mAppRoot+"/home/.config/hop/wizard.hop");
+
+         try {
+            FileOutputStream fos= new FileOutputStream (wizard_hop);
+            Date now= new Date ();
+            String date= now.toString ();
+
+            fos.write ((";; generated file, Hop installer "+date+"\n").getBytes ());
+            fos.write (";; anonymous user\n".getBytes ());
+            fos.write ("(add-user! \"anonymous\")\n".getBytes ());
+
+            fos.write (";; admin\n".getBytes ());
+            fos.write (("(add-user! \"admin\" :groups (quote (admin exec)) :password \""+scrambled+"\" :directories (quote *) :services (quote *))\n").getBytes ());
+         } catch (IOException e) {
+            // if we can't set the password
+            password= null;
+         }
+      } else {
+         password= null;
+      }
+
+      // return the admin password
+      return password;
+   }
+
+   // copied from http://www.rgagnon.com/javadetails/java-0596.html
+   // CC by-nc-sa Réal Gagnon <real@rgagnon.com>
+   static final String HEXES = "0123456789abcedf";
+   public static String getHex( byte [] raw ) {
+      if ( raw == null ) {
+         return null;
+      }
+      final StringBuilder hex = new StringBuilder( 2 * raw.length );
+      for ( final byte b : raw ) {
+         hex.append(HEXES.charAt((b & 0xF0) >> 4)).append(HEXES.charAt((b & 0x0F)));
+      }
+      return hex.toString();
    }
 }
