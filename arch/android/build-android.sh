@@ -117,7 +117,7 @@ fi
 if [ "$1" == "prepare" -o "$1" == "all" ]; then
   # we have to install by hand because prefix is needed for the host layout
   source .hoprelease
-  rm -rf $install_prefix
+  # rm -rf $install_prefix
 
   # binary and config to the same path
   for file in bin/hop etc/hoprc.hop; do
