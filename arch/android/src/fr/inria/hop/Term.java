@@ -162,10 +162,7 @@ public class Term extends Activity {
         super.onCreate(icicle);
         Log.v(Term.LOG_TAG, "onCreate()");
 
-        Log.v(Term.LOG_TAG, "calling unpacker");
-        hop.unpack();
-        Log.v(Term.LOG_TAG, "calling createAdminUser()");
-        String password= hop.createAdminUser ();
+        hop.init(this);
 
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         mPrefs.registerOnSharedPreferenceChangeListener(

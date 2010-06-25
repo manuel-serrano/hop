@@ -17,7 +17,10 @@ import java.lang.String;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.TextView;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+
+import fr.inria.hop.Term;
 
 // shamelessly copied from MonoActivity
 // http://github.com/koush/androidmono/blob/master/MonoActivity/src/com/koushikdutta/mono/MonoActivity.java
@@ -31,7 +34,7 @@ public class hop extends Activity {
    final static String librarySuffix = ".so";
    final static String libraryInitSuffix = ".init";
    final static String dot_afile = "dot.afile";
-   TextView mStatus;
+   final static File wizard_hop= new File (mAppRoot+"/home/.config/hop/wizard.hop");
 
    public static void Log(String string) {
       Log.v("hop-installer", string);
@@ -164,11 +167,10 @@ public class hop extends Activity {
    public static String createAdminUser () {
       // we create the wizard.hop file with an initial admin user
       // whose password is randomly generated
-      File wizard_hop= new File (mAppRoot+"/home/.config/hop/wizard.hop");
       String password= null;
       String scrambled= null;
 
-      if (! wizard_hop.exists ()) {
+      if (firstTime ()) {
          Log("Creating admin user");
          // 32bits==4bytes==8 hexa digits, 4Gi combinations
          password= new BigInteger (32, new java.util.Random ()).toString (16);
@@ -235,5 +237,30 @@ public class hop extends Activity {
          hex.append(HEXES.charAt((b & 0xF0) >> 4)).append(HEXES.charAt((b & 0x0F)));
       }
       return hex.toString();
+   }
+
+   static final boolean firstTime () {
+      return ! wizard_hop.exists ();
+   }
+
+   static final void init (Term term) {
+      // TODO: what on updates?
+      if (firstTime ()) {
+         unpack ();
+         String password= createAdminUser ();
+
+         AlertDialog.Builder builder = new AlertDialog.Builder(term);
+         builder.setMessage("Hop has been installed. The admin password is: "+password)
+               .setCancelable(false)
+               .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                  public void onClick(DialogInterface dialog, int id) {
+                     dialog.dismiss();
+                  }
+               });
+         AlertDialog alert = builder.create();
+         alert.show ();
+      } else {
+         Log("not the first time!");
+      }
    }
 }
