@@ -164,6 +164,8 @@ public class Term extends Activity {
 
         Log.v(Term.LOG_TAG, "calling unpacker");
         hop.unpack();
+        Log.v(Term.LOG_TAG, "calling createAdminUser()");
+        String password= hop.createAdminUser ();
 
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         mPrefs.registerOnSharedPreferenceChangeListener(
@@ -190,7 +192,7 @@ public class Term extends Activity {
         mEmulatorView.requestFocus();
         mEmulatorView.register(mKeyListener);
 
-        Log.v(Term.LOG_TAG, "onCreate()");
+        Log.v(Term.LOG_TAG, "onCreate(): out");
         updatePrefs();
     }
 
@@ -239,11 +241,6 @@ public class Term extends Activity {
 
     private void sendInitialCommand() {
         String initialCommand = mInitialCommand;
-        /*
-        if (initialCommand == null) {
-            initialCommand = DEFAULT_INITIAL_COMMAND;
-        }
-        */
         for (int i=0; i<3; i++) {
             String command = DEFAULT_INITIAL_COMMANDS[i];
             if (command.length() > 0) {
@@ -2982,7 +2979,7 @@ class EmulatorView extends View implements GestureDetector.OnGestureListener {
     }
 
     private void updateText() {
-        Log.v(Term.LOG_TAG, "updateText()");
+        // Log.v(Term.LOG_TAG, "updateText()");
         if (mTextSize > 0) {
             mTextRenderer = new PaintRenderer(mTextSize, mForeground,
                     mBackground);
@@ -2994,7 +2991,7 @@ class EmulatorView extends View implements GestureDetector.OnGestureListener {
         mBackgroundPaint.setColor(mBackground);
         mCharacterWidth = mTextRenderer.getCharacterWidth();
         mCharacterHeight = mTextRenderer.getCharacterHeight();
-        Log.v(Term.LOG_TAG, "updateText():" + mCharacterWidth + ":" + mCharacterHeight);
+        // Log.v(Term.LOG_TAG, "updateText():" + mCharacterWidth + ":" + mCharacterHeight);
 
         if (mKnownSize) {
             updateSize(getWidth(), getHeight());
