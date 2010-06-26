@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sun Jun 20 15:22:10 2010 (serrano)                */
+;*    Last change :  Tue Jun 22 18:44:24 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -75,7 +75,7 @@
 		      (fprintf op "this.~a = ~a;" n n)))
 		fields)
       (display "}" op))
-   
+
    (let* ((klass (object-class obj))
 	  (kname (symbol->string! (class-name klass)))
 	  (name (if (bigloo-need-mangling? kname)

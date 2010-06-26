@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sat Jun 19 06:53:00 2010 (serrano)                */
+;*    Last change :  Tue Jun 22 18:44:02 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -807,7 +807,8 @@
 ;*    obj->javascript ::%audio-server ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (obj->javascript as::audio-server op isrep)
-   (fprintf op "\"~a/~a\"" (hop-service-base) (audio-server-%path as)))
+   (fprintf op "\"~a/~a\"" (hop-service-base) (audio-server-%path as))
+   #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    music-init ::webmusic ...                                        */

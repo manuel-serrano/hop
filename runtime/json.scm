@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Sat Jun 19 06:23:47 2010 (serrano)                */
+;*    Last change :  Tue Jun 22 18:37:12 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -44,6 +44,7 @@
        (format "new Date( ~a000 )" (date->seconds obj)))
       (else
        (let ((comp (hop-clientc)))
+	  (tprint "hop->json: " (find-runtime-type obj))
 	  ((clientc-valuec comp) obj op hop->json #f)))))
 
 ;*---------------------------------------------------------------------*/
