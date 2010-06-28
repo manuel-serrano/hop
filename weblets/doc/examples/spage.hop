@@ -1,0 +1,14 @@
+;; a simple spage
+(<SPAGE> :title "languages" :id "lang"
+   (<DIV>
+      (<SPAGE> :title "functional" :id "fun" :parent "lang"
+	 (<UL>
+	    (<LI> "Lisp")
+	    (<LI> "ML")
+	    (<LI> "Haskell"))))
+   (<DIV>
+      (<SPAGE> :title "sequential" :id "seq" :parent "lang"
+	 (<UL>
+	    (<LI> "Fortran")
+	    (<LI> "Pascal")
+	    (<LI> "C")))))

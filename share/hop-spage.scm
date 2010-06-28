@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/share/hop-spage.scm               */
+;*    serrano/prgm/project/hop/2.1.x/share/hop-spage.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:20:41 2009                          */
-;*    Last change :  Mon Feb  8 17:51:58 2010 (serrano)                */
+;*    Last change :  Sun Jun 27 07:30:22 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage client-side implementation                             */
@@ -89,7 +89,7 @@
       (cond
 	 ((string=? style "\"fade\"")
 	  (spage-fade node (if (> step 0) -0.3 0.2)))
-	 ((or #t (string=? style "\"slide\""))
+	 ((string=? style "\"slide\"")
 	  (spage-slide node width step))
 	 ((string=? style "\"auto\"")
 	  (cond
@@ -98,7 +98,7 @@
 	     ((< width 300)
 	      (spage-slide node width step))
 	     (else
-	      (spage-fade node (if (> step 0) -0.3 0.25)))))
+	      (spage-fade node (if (> step 0) -0.3 0.2)))))
 	 (else
 	  (spage-none node (- step))))))
 

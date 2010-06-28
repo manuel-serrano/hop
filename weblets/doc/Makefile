@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Apr 13 12:16:00 2010 (serrano)                */
+#*    Last change :  Sun Jun 27 08:16:39 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -61,7 +61,8 @@ EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   login.hop json.hop busyanim.hop musicplay.hop form.hop \
                   lframe.hop spinbutton.hop colorchooser.hop S3.hop \
                   audio-server.hop audio-browser-1.hop audio-browser-2.hop \
-                  video.hop videoenc.hop gauge.hop beers.hop
+                  video.hop videoenc.hop gauge.hop beers.hop \
+                  spage.hop
 WEBLETS_POP	= .keep
 WIKI_POP	= basic.wiki hop.wiki link.wiki lists.wiki misc.wiki \
                   paragraph.wiki plugin.wiki section.wiki syntax.wiki \

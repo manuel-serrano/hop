@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat May  8 18:30:39 2010 (serrano)                */
+/*    Last change :  Mon Jun 28 16:49:22 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -272,6 +272,7 @@ function hop_default_success( h, xhr ) {
 /*---------------------------------------------------------------------*/
 function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x ) {
    var xhr = x ? x : hop_make_xml_http_request();
+
    /* MS, 20 Jun 08: I cannot understand why but sometime sc_error is  */
    /* unbound (at least in Firefox) when used inside a catch! Binding  */
    /* it to a local var eliminates this problem.                       */
