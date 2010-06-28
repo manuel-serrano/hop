@@ -88,6 +88,7 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
   # compile a static hop by hand
   ( cd src
     # TODO: this command is too specific. try to use bigloo's and hop's config
+    # TODO: esp w/ lib versions
     $BGL_PREFIX/bin/bigloo -fsharing -Wall -wslots -static-all-bigloo \
       -L $pwd/lib -lib-dir $XBGL_LIBDIR -cc $CC \
       -copt "-g -DPLATFORM_ANDROID -I$XBGL_LIBDIR" \
