@@ -117,7 +117,7 @@ fi
 if [ "$1" == "prepare" -o "$1" == "all" ]; then
   # we have to install by hand because prefix is needed for the host layout
   source .hoprelease
-  # rm -rf $install_prefix
+  # rm -rf $install_prefix/{bin,etc,hoplib,share}
 
   # binary and config to the same path
   for file in bin/hop etc/hoprc.hop; do
@@ -134,7 +134,7 @@ if [ "$1" == "prepare" -o "$1" == "all" ]; then
   # the icon
   install share/icons/hop-128x128.png "arch/android/res/drawable/icon.png"
   # don't install all the weblets
-  for file in weblets/{wizard,hop,hz,shutdown,info,color,dashboard,doc,home,hopsh,wiki,weblets}; do
+  for file in weblets/{wizard,hop,hz,shutdown,info,color,dashboard,home,hopsh,wiki,weblets}; do
     install "$file" "$install_prefix/hoplib/hop/$major/weblets/$(basename $file)"
   done
 
