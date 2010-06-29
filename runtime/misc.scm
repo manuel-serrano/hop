@@ -48,7 +48,10 @@
 	    (inline output-timeout-set! ::output-port ::int)
 	    (inline socket-timeout-set! ::socket ::int ::int)
 	    (call-in-background ::procedure)
-            (set-write-verb! f)))
+            (set-write-verb! f)
+            (write-verb-error-port args)
+            (set-verb-socket! s)
+            (write-verb-socket args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
@@ -61,24 +64,31 @@
 (define (hop-verb level . args)
    (when (>=fx (hop-verbose) level)
       (with-lock *verb-mutex*
-	 (lambda () (write-verb args)))))
+	 (lambda () (*write-verb* args)))))
 
 (define (write-verb-error-port args)
    (for-each (lambda (a) (display a (current-error-port))) args)
    (flush-output-port (current-error-port)))
 
+(define verb-socket #f)
+
+(define (set-verb-socket! s)
+   (set! verb-socket s))
+
 (define (write-verb-socket args)
    ; write in the socket, in a best effort way
    ; that is, if we can't, we don't care
-   #f)
+   (if (socket? verb-socket)
+      (with-exception-handler
+         (lambda (e) (begin ; on error, close the socket
+            (socket-close verb-socket)
+            (set-verb-socket! #f)))
+         (fprint (socket-output verb-socket) args))))
 
-(define write-verb (lambda (args) #f))
+(define *write-verb* (lambda (args) #f))
 
 (define (set-write-verb! f)
-   (set! write-verb f))
-
-; test
-(set-write-verb! write-verb-error-port)
+   (set! *write-verb* f))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-color ...                                                    */
