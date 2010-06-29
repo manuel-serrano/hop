@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sun Mar  7 18:52:22 2010 (serrano)                */
+/*    Last change :  Tue Jun 29 09:45:06 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for the TEST weblet                                          */
@@ -68,6 +68,10 @@ table.test td#logo {
 a {
   font-family: Bitstream Vera Sans Mono, Andale Mono, monospace;
   font-size: small;
+}
+
+table.content {
+  text-align: left;
 }
 
 div.comment {
