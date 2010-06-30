@@ -18,6 +18,7 @@ fi
 prefix=/data/data/fr.inria.hop
 install_prefix=$(pwd)/arch/android/assets
 libdir=$install_prefix/hoplib
+bgl_version=$(awk -F '=' '/^RELEASE/ { print $2 }' $XBGL_PREFIX/Makefile.config)
 
 function install {
     # installs $src in $dst,
@@ -27,6 +28,7 @@ function install {
 
     dir="$(dirname $dst)"
     mkdir -p "$dir"
+    chmod -f u+w "$dst" || true
     cp -vur "$src" "$dst"
 }
 
@@ -104,10 +106,10 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
       -ldopt -L $pwd/lib/libscheme2js_es-2.1.0.a \
       -ldopt -L $pwd/lib/libhopwidget_s-2.1.0.a \
       -ldopt -L $pwd/lib/libhopwidget_es-2.1.0.a \
-      -ldopt -L $XBGL_LIBDIR/libbiglooweb_s-3.3b.a \
-      -ldopt -L $XBGL_LIBDIR/libbiglooweb_es-3.3b.a \
-      -ldopt -L $XBGL_LIBDIR/libbigloomultimedia_s-3.3b.a \
-      -ldopt -L $XBGL_LIBDIR/libbigloomultimedia_es-3.3b.a
+      -ldopt -L $XBGL_LIBDIR/libbiglooweb_s-$bgl_version.a \
+      -ldopt -L $XBGL_LIBDIR/libbiglooweb_es-$bgl_version.a \
+      -ldopt -L $XBGL_LIBDIR/libbigloomultimedia_s-$bgl_version.a \
+      -ldopt -L $XBGL_LIBDIR/libbigloomultimedia_es-$bgl_version.a
   )
 
   if [ "$1" == "build" ]; then
