@@ -51,6 +51,11 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
   # so we must hack it
   pwd=$(pwd)
 
+  # this first attempt to build will fail when linkking hop
+  # because we don't have a way to detect and compile a static hop in the build system
+  make || true
+
+  # compile some stuff by hand
   ( cd widget
     mkdir -pv o
     for i in *.hop; do
@@ -75,8 +80,9 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
         --share-dir $pwd/share --
     done
   )
-  # this first attempt to build will fail when linkking hop
-  # because we don't have a way to detect and compile a static hop in the build system
+
+  # finish the compilation
+  # || true because hop doesn't link
   make || true
 
   # compile a static hop by hand
@@ -86,19 +92,21 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
       -L $pwd/lib -lib-dir $XBGL_LIBDIR -cc $CC \
       -copt "-g -DPLATFORM_ANDROID -I$XBGL_LIBDIR" \
       -o $pwd/bin/hop \
-         o/hop-param.o o/parseargs.o o/main.o o/init.o o/scheduler.o o/accept.o \
-         o/pipeline.o o/nothread-scheduler.o o/queue-scheduler.o o/oto-scheduler.o \
-         o/pool-scheduler.o o/amany-scheduler.o \
+         o/hop_param.o o/parseargs.o o/main.o o/init.o o/scheduler.o o/accept.o \
+         o/pipeline.o o/nothread_scheduler.o o/queue_scheduler.o o/oto_scheduler.o \
+         o/pool_scheduler.o o/amany_scheduler.o \
       -ldopt -L $pwd/lib/libhop_s-2.1.0.a \
-      -ldopt -L $pwd/lib/libhop_e-2.1.0.a \
+      -ldopt -L $pwd/lib/libhop_es-2.1.0.a \
       -ldopt -L $pwd/lib/libhopscheme_s-2.1.0.a \
-      -ldopt -L $pwd/lib/libhopscheme_e-2.1.0.a \
+      -ldopt -L $pwd/lib/libhopscheme_es-2.1.0.a \
       -ldopt -L $pwd/lib/libscheme2js_s-2.1.0.a \
-      -ldopt -L $pwd/lib/libscheme2js_e-2.1.0.a \
+      -ldopt -L $pwd/lib/libscheme2js_es-2.1.0.a \
       -ldopt -L $pwd/lib/libhopwidget_s-2.1.0.a \
-      -ldopt -L $pwd/lib/libhopwidget_e-2.1.0.a \
-      -ldopt -L $XBGL_LIBDIR/libbiglooweb_e-3.3b.a \
-      -ldopt -L $XBGL_LIBDIR/libbigloomultimedia_e-3.3b.a
+      -ldopt -L $pwd/lib/libhopwidget_es-2.1.0.a \
+      -ldopt -L $XBGL_LIBDIR/libbiglooweb_s-3.3b.a \
+      -ldopt -L $XBGL_LIBDIR/libbiglooweb_es-3.3b.a \
+      -ldopt -L $XBGL_LIBDIR/libbigloomultimedia_s-3.3b.a \
+      -ldopt -L $XBGL_LIBDIR/libbigloomultimedia_es-3.3b.a
   )
 
   if [ "$1" == "build" ]; then
@@ -109,7 +117,7 @@ fi
 if [ "$1" == "prepare" -o "$1" == "all" ]; then
   # we have to install by hand because prefix is needed for the host layout
   source .hoprelease
-  rm -rf $install_prefix
+  # rm -rf $install_prefix/{bin,etc,hoplib,share}
 
   # binary and config to the same path
   for file in bin/hop etc/hoprc.hop; do
@@ -123,8 +131,10 @@ if [ "$1" == "prepare" -o "$1" == "all" ]; then
   for file in share/{buttons,icons,*.js,*.hss,*.scm,.afile,hop-runtime.sch}; do
     install "$file" "$install_prefix/share/hop/$(basename $file)"
   done
+  # the icon
+  install share/icons/hop-128x128.png "arch/android/res/drawable/icon.png"
   # don't install all the weblets
-  for file in weblets/{wizard,hop,hz,shutdown,info,color,dashboard,doc,home,hopsh,wiki,weblets}; do
+  for file in weblets/{wizard,hop,hz,shutdown,info,color,dashboard,home,hopsh,wiki,weblets}; do
     install "$file" "$install_prefix/hoplib/hop/$major/weblets/$(basename $file)"
   done
 

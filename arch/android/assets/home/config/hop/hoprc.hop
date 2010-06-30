@@ -1,0 +1,20 @@
+;; default rc file
+(let ((path (make-file-name (hop-etc-directory) "hoprc.hop"))) (when (file-exists? path) (hop-load path)))
+
+;; wizard file
+(hop-load-rc "wizard.hop")
+
+;; proxying
+(hop-enable-proxing-set! #t)
+
+;; proxy authentication
+(hop-proxy-authentication-set! #t)
+
+;; proxy remote connections
+(hop-proxy-allow-remote-client-set! #f)
+
+;; proxy IP mask
+(hop-proxy-ip-mask-set! "255.255.255.255")
+
+;; WebDAV
+(hop-enable-webdav-set! #f)

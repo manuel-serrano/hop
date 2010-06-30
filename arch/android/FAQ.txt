@@ -1,15 +1,29 @@
 Q: If I run Hop once, some time passes, and I try to run it again, it gives an
    error that it cannot create the listening socket.
-A: This is a know error. The Hop apllication is just a terminal emulator writen
-   as a Java Activity[1] which in turn runs the Hop server. This Activity's
-   memory can be reclaimed by the Android platform to make space for other
-   Activities, but the server remains running. When this happens and you try
-   to recall the task/Activity, the Android Platform will rerun it, which will
-   try to launch another Hop server, which fails when it tries to bind() on
+A: This is a know problem. The Hop apllication is just a terminal emulator
+   writen as a Java Activity[1] which in turn runs the Hop server. This
+   Activity's memory can be reclaimed by the Android platform to make space for
+   other Activities, but the server remains running. When this happens and you
+   try to recall the task/Activity, the Android Platform will rerun it, which
+   will try to launch another Hop server, which fails when it tries to bind() on
    the socket the other Hop instance has. If you really want to see the output
    of Hop again, you will have to shut it down (you can use the web interface
    or just kill the process) and run it again. You might need to 'Force stop'
    the application too.
+
+Q: If I try to run Hop in my Eclair image under the SDK's emulator it crashes.
+   In the logcat I can see an error like this:
+
+E/AndroidRuntime(  249): Caused by: java.lang.NoClassDefFoundError: com.android.term.Exec
+E/AndroidRuntime(  249):        at java.lang.Runtime.nativeLoad(Native Method)
+E/AndroidRuntime(  249):        at java.lang.Runtime.loadLibrary(Runtime.java:476)
+E/AndroidRuntime(  249):        at java.lang.System.loadLibrary(System.java:557)
+E/AndroidRuntime(  249):        at fr.inria.hop.Exec.<clinit>(Exec.java:33)
+E/AndroidRuntime(  249):        ... 16 more
+
+A: Sorry, pal. Our Term implementation somehow clashe's with the one installed
+   in the images and we haven't had time to figure it out yet. If you can help
+   up tackling it, we'll surely appreciate.
 
 --
 [1] http://developer.android.com/guide/topics/fundamentals.html#acttask
