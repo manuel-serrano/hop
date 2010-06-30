@@ -345,12 +345,7 @@
 	      "\"~a~a\"" *keyword-prefix*
 	      (my-string-for-read (keyword->string! val)))))
       (foreign-out
-       (let ((ok? (foreign-out val p)))
-	  (when (not ok?)
-	     (scheme2js-error "val-out"
-			      "Could not compile value"
-			      val
-			      loc))))
+       (foreign-out val p))
       (else
        (scheme2js-error "val-out"
 			"Internal Error: forgot Val-type"
