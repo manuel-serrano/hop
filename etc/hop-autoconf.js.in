@@ -558,12 +558,8 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
       if( i < 0 ) return "javascript";
       
       var j = hds.indexOf( "\n", i + 1 );
-      var s = (j >= 0) ? hds.substring( i, j ) : hds.substring( i, s.length );
-
-      if( m )
-	 return m[ 1 ];
-      else
-	 return "javascript";
+      return (j >= 0) ? hds.substring( i + 15, j - 1 )
+                      : hds.substring( i + 15, s.length );
    }
 }
 
