@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Sun Jun 13 10:38:59 2010 (serrano)                */
+/*    Last change :  Thu Jul  1 07:10:41 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -74,8 +74,7 @@ function hop_callback( proc ) {
 /*** META ((export trace) (arity -1)) */
 function hop_trace() {
    if( hop_debug() > 0 ) {
-      var svc = hop_apply_url( hop_service_base() + "/trace",
-			       arguments );
+      var svc = hop_apply_url( hop_service_base() + "/trace", arguments );
       hop_send_request( svc, true, function() {}, function() {}, false, [] );
    }
 }

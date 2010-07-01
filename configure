@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Jun 29 09:09:32 2010 (serrano)                */
+#*    Last change :  Tue Jun 29 15:18:24 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -518,8 +518,6 @@ jvminits="$bigloolibdir/pthread.init $jvminits";
 for srfi in $hopsrfis; do
     bcflags="$bcflags -srfi $srfi";
 done
-
-echo $hopsrfis
 
 #*---------------------------------------------------------------------*/
 #*    Apache Felix                                                     */
