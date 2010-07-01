@@ -24,7 +24,15 @@ functions ++trace++ and ++tprint++.
 
 === Services ===
 
-TRACE defines two service:
+TRACE defines two services that are not supposed to be directly used. These
+services are used by the two runtime functions ++trace++ and
+++tprint++. Example
+
+  (define-service (trace-example)
+     (<HTML>
+        (<DIV> (<BUTTON> "tprint" :onclick ~(tprint "button 1")))
+        (<DIV> (<BUTTON> "trace" :onclick ~(trace "button 2")))))
+      
 
   - ++[[trace]]++: This service displays its argument to the server console,
  provided ++hop-verbose++ is greater or equal to ++1++.
