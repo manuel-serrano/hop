@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sat Jun 19 06:47:47 2010 (serrano)                */
+;*    Last change :  Tue Jun 29 13:11:30 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -45,7 +45,8 @@
 	      (css-stop (default #f))
 	      (meta-format::bstring read-only)
 	      (abbrev-emptyp::bool (default #f))
-	      (security-officer::bool (default #f)))
+	      (attribute-string-encode::obj (default #f))
+	      (xml-string-encode::obj (default #f)))
 
 	    (class xml
 	       (%xml-constructor))
@@ -392,7 +393,10 @@
 (define-generic (xml-write obj p backend)
    (cond
       ((string? obj)
-       (display obj p))
+       (let ((e (xml-backend-xml-string-encode backend)))
+	  (if (procedure? e)
+	      (display (e obj) p)
+	      (display obj p))))
       ((number? obj)
        (display obj p))
       ((symbol? obj)
@@ -670,10 +674,9 @@
 	      (proc id)
 	      (msg "Illegal handler attribute value type")
 	      (obj attr))))
-	 ((xml-backend-security-officer backend)
-	  ;; when the tree is dumped by a security officer,
-	  ;; don't write the actual values
-	  (display "_"))
+	 ((xml-backend-attribute-string-encode backend)
+	  =>
+	  (lambda (p) (display (p attr) p)))
 	 (else
 	  (display (xml-attribute-encode attr) p)))
       (display "'" p)))
@@ -688,8 +691,7 @@
 ;*    xml-write-attribute ::xml-tilde ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-attribute attr::xml-tilde id p backend)
-   (when (and (xml-event-handler-attribute? id)
-	      (not (xml-backend-security-officer backend)))
+   (when (xml-event-handler-attribute? id)
       (display (keyword->string! id) p)
       (display "='" p)
       (display (xml-tilde->attribute attr) p)
@@ -699,11 +701,10 @@
 ;*    xml-write-attribute ::hop-service ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-attribute attr::hop-service id p backend)
-   (unless (xml-backend-security-officer backend)
-      (display (keyword->string! id) p)
-      (display "='" p)
-      (display (hop-service-path attr) p)
-      (display "'" p)))
+   (display (keyword->string! id) p)
+   (display "='" p)
+   (display (hop-service-path attr) p)
+   (display "'" p))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-initializations ...                                    */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Tue May 25 14:24:59 2010 (serrano)                */
+;*    Last change :  Sat Jun 26 13:52:29 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -56,7 +56,8 @@
     text-align: left;
     border: 3px dashed red; padding: 4px;
     color: black;
-    overflow: hidden")
+    overflow: hidden;
+    overflow-y: auto;")
 
 ;*---------------------------------------------------------------------*/
 ;*    bigloo-mangled? ...                                              */
@@ -309,7 +310,7 @@
 
    (let* ((message (exception-message exc))
 	  (msg (if (js-in? "scObject" exc)
-		   (list message " -- " (obj->string exc.scObject #f))
+		   (list message " -- " (<TT> (obj->string exc.scObject #f)))
 		   message))
 	  (name (exception-name exc))
 	  (url (if (string? exc.fileName) exc.fileName document.location.href))
@@ -335,7 +336,8 @@
 		  (<TABLE> :style "width: 100%"
 		     (<TR> (<TD> :style "font-size: 20pt; padding-bottom: 4px"
 			      (<SPAN> :style "color: red; font-weight: bold" location)))
-		     (<TR> (<TD> :style "font-size: 14pt" (<SPAN> :style "color: #777; font-weight: bold" name) ": " msg))
+		     (<TR> (<TD> :style "font-size: 11pt" (<SPAN> :style "color: #777; font-weight: bold" name) ": "
+			      msg))
 		     (<TR> (<TD> :style "font-family: monospace; font-size: 10pt" src))
 		     (<TR> (<TD> :style "font-family: monospace; color: #777" (properties->string exc)))))))
 	 (<DIV> :style "font-family: arial; font-size: 10pt; overflow: visible"

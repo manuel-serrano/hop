@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sat Jun 19 06:43:01 2010 (serrano)                */
+;*    Last change :  Tue Jun 29 20:56:36 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -958,7 +958,7 @@
 	  (ignore)))
 
       ;; images
-      ((: "!!" (+ (or (out #\!) (: #\! (out #\!)))) "!!")
+      ((: "{{" (+ (or (out #\}) (: #\} (out #\})))) "}}")
        (let* ((s (the-substring 2 -2))
 	      (i (string-index s "|")))
 	  (add-expr!

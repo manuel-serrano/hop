@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -113,7 +113,7 @@
 				   (car x) (car x)))
 	      (body (loc-attach `(,o-dot-f ,@args)
 				(cdr x))))
-	  `(let (,mapping) ,@body)))
+	  `(let (,mapping) ,body)))
       ;(quote ...)
       (((kwote quote) ???-)
        x)

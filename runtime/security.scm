@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Sat Jun 19 06:42:30 2010 (serrano)                */
+;*    Last change :  Tue Jun 29 13:13:55 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -21,7 +21,9 @@
 	    __hop_xml)
 
    (export  (secure-javascript-attr ::obj)
-	    (security-manager::bstring ::http-response-hop)))
+	    (security-manager ::http-response-hop)
+	    (tree-compare-security-manager::bstring ::http-response-hop)
+	    (filter-security-manager::xml-backend ::http-response-hop)))
 
 ;*---------------------------------------------------------------------*/
 ;*    secure-javascript-attr ...                                       */
@@ -43,10 +45,16 @@
 ;*    default-security-manager ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (default-security-manager::bstring r::http-response-hop)
+   (tree-compare-security-manager r))
+
+;*---------------------------------------------------------------------*/
+;*    tree-compare-security-manager ...                                */
+;*---------------------------------------------------------------------*/
+(define (tree-compare-security-manager::bstring r::http-response-hop)
    (let ((p (open-output-string)))
       (with-access::http-response-hop r (backend xml)
 	 (xml-write xml p (duplicate::xml-backend backend
-			     (security-officer #t)))
+			     (attribute-string-encode (lambda (v) "_"))))
 	 (let* ((s (close-output-port p))
 		(ast (string->html s))
 		(cmp (compare-ast xml ast)))
@@ -154,3 +162,54 @@
        (string-upcase (symbol->string ast)))
       (else
        (find-runtime-type ast))))
+
+;*---------------------------------------------------------------------*/
+;*    string-substitute ...                                            */
+;*---------------------------------------------------------------------*/
+(define-macro (string-substitute s charset . strings)
+   ;; assume S is an indentifier, CHARSET a string, STRINGS a list of strings
+   `(if (string-index ,s ,charset)
+	,(let ((l (gensym)))
+	    `(let ((,l (string-length ,s)))
+		(define (count i acc)
+		   (if (=fx i ,l)
+		       acc
+		       (case (string-ref ,s i)
+			  ,@(map (lambda (c s)
+				    `((,c)
+				      (count (+fx i 1)
+					     (+fx acc ,(string-length s)))))
+				 (string->list charset) strings)
+			  (else (count (+fx i 1) (+fx acc 1))))))
+		(define (replace new i j)
+		   (if (=fx i ,l)
+		       new
+		       (case (string-ref ,s i)
+			  ,@(map (lambda (c s)
+				    `((,c)
+				      (blit-string! ,s 0 new j ,(string-length s))
+				      (replace new
+					       (+fx i 1)
+					       (+fx j ,(string-length s)))))
+				 (string->list charset) strings)
+			  (else
+			   (string-set! new j (string-ref ,s i))
+			   (replace new (+fx i 1) (+fx j 1))))))
+		(replace (make-string (count 0 0)) 0 0)))
+	,s))
+
+;*---------------------------------------------------------------------*/
+;*    filter-xml-string-encode ...                                     */
+;*---------------------------------------------------------------------*/
+(define (filter-xml-string-encode str)
+   (if (string-index str "<>")
+       (string-substitute str "<>" "&lt;" "&gt;")
+       str))
+
+;*---------------------------------------------------------------------*/
+;*    filter-security-manager ...                                      */
+;*---------------------------------------------------------------------*/
+(define (filter-security-manager::xml-backend r::http-response-hop)
+   (with-access::http-response-hop r (backend)
+      (duplicate::xml-backend backend
+	 (xml-string-encode filter-xml-string-encode))))

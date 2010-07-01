@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Mon May 10 12:06:46 2010 (serrano)                */
+/*    Last change :  Wed Jun 30 18:03:17 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -111,7 +111,8 @@ function hop_notepad_selection( id ) {
 /*---------------------------------------------------------------------*/
 /*    Install the notepad history state handler                        */
 /*---------------------------------------------------------------------*/
-window.addEventListener(
+hop_add_native_event_listener(
+   window,
    "onload",
    function( _ ) {
       hop_state_history_register_handler(

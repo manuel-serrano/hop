@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Thu May 27 16:35:07 2010 (serrano)                */
+/*    Last change :  Mon Jun 28 20:24:19 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -434,11 +434,48 @@ if( "XMLHttpRequest" in window ) {
 } else {
    if( "ActiveXObject" in window ) {
       hop_make_xml_http_request = function hop_make_xml_http_request() {
+	 function hop_make_activexobject( ax ) {
+	    var o = new Object();
+	    var a = new ActiveXObject( ax );
+
+	    o.activex = a;
+	    
+	    o.open = function( msg, svc, sync ) {
+	       a.onreadystatechange = function() {
+		  o.status = a.status;
+		  o.readyState = a.readyState;
+		  o.responseText = a.responseText;
+		  
+		  o.onreadystatechange();
+	       }
+	       if( sync ) {
+		  var r = a.open( msg, svc, sync );
+		  o.status = a.status;
+		  o.readyState = a.readyState;
+		  o.responseText = a.responseText;
+		  
+		  return r;
+	       } else 
+		  return a.open( msg, svc, sync );
+	    }
+	    
+	    o.send = function( v ) {
+	       return a.send( v );
+	    }
+	    
+	    o.setRequestHeader = function( v ) {
+	       return a.setRequestHeader( v );
+	    };
+	    
+	    return o;
+	 }
 	 try {
-	    return new ActiveXObject( "Msxml2.XMLHTTP" );
+	    /* don't try to play with prototypes, because   */
+	    /* ActiveXObject are not fullfledged JS objects */
+	    return hop_make_activexobject( "Msxml2.XMLHTTP" );
 	 } catch( e ) {
 	    try {
-	       return new ActiveXObject( "Microsoft.XMLHTTP" );
+	       return hop_make_activexobject( "Microsoft.XMLHTTP" );
 	    } catch( e ) {
 	       alert( "*** ERROR: Don't know how to create XMLHttpRequest" );
 	    }
@@ -521,12 +558,8 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
       if( i < 0 ) return "javascript";
       
       var j = hds.indexOf( "\n", i + 1 );
-      var s = (j >= 0) ? hds.substring( i, j ) : hds.substring( i, s.length );
-
-      if( m )
-	 return m[ 1 ];
-      else
-	 return "javascript";
+      return (j >= 0) ? hds.substring( i + 15, j - 1 )
+                      : hds.substring( i + 15, s.length );
    }
 }
 
