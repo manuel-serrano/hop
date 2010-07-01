@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio [eg@essi.fr]                       */
 /*    Creation    :  14-Sep-2005 09:24 (eg)                            */
-/*    Last change :  Tue Feb 16 12:36:02 2010 (serrano)                */
+/*    Last change :  Wed Jun 30 18:21:05 2010 (serrano)                */
 /*    Copyright   :  2006-10 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    HOP tabslider implementation                                     */
@@ -97,8 +97,8 @@ function hop_tabslider_select_inner( parent, item ) {
 	 var int = setInterval( function() {
 	       if( i < height ) {
 		  old.style.height = (height - (i + 1)) + "px";
-		  selected.style.height = (i - 1) + "px";
-		  i += parent.speed;
+		  selected.style.height = i + "px";
+ 		  i += parent.speed;
 	       } else {
 		  clearInterval( int );
 		  old.style.display = "none";

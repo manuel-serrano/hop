@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Jun 28 16:49:22 2010 (serrano)                */
+/*    Last change :  Wed Jun 30 16:43:44 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -297,6 +297,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 
 		     if( ctype === "application/x-javascript" ) {
 			var serialize = hop_header_serialize( xhr );
+
 			/* ctype must match the value hop-json-mime-type */
 			/* which is defined in runtime/param.scm.        */
 			try {
@@ -386,16 +387,17 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
       xhr.onreadystatechange = onreadystatechange;
    }
 
+   xhr.open( "PUT", svc, (sync != true) );
+
    if( t ) {
-      if( xhr.setTimeouts ) {
+      if( "setTimeouts" in xhr ) {
 	 xhr.setTimeouts = t;
+      } else {
+	 xhr.timeout = t;
+	 xhr.ontimeout = failure;
       }
-      xhr.timeout = t;
-      xhr.ontimeout = failure;
    }
 
-   xhr.open( "PUT", svc, (sync != true) );
-   
    if( hop_config.navigator_family != "safari" &&
        hop_config.navigator_family != "chrome" &&
        hop_config.navigator_family != "webkit" )

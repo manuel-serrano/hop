@@ -52,7 +52,7 @@ are operational with [[http://www.mozilla.com/|Firefox]],
 [[http://www.mozilla.com/|Mozilla]],
 [[http://www.apple.com/macosx/features/safari|Safari]],
 [[http://www.konqueror.org|Konqueror]], 
-[[http://www.opera.com|Opera]], IE 7 and 8, [[http://www.google.com/chrome|Google Chrome]], and 
+[[http://www.opera.com|Opera]], IE 8, [[http://www.google.com/chrome|Google Chrome]], and 
 [[http://webkit.org/|WebKit]].
 
 == Requirement ==
