@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Mon Jun 28 20:24:19 2010 (serrano)                */
+/*    Last change :  Fri Jul  2 15:32:00 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -136,6 +136,7 @@ function hop_Config() {
      this.flash_audio = false;
      this.flash_markup = "object";
      this.inline_image = false;
+     this.clone_innerHTML = true;
      if( navigator.userAgent.indexOf( "MSIE 6.0" ) >= 0 ) {
 	hop_enable_location_event = false;
      }
@@ -625,7 +626,7 @@ function node_style_set_array( el, prop, value ) {
 	    v = v.toString();
 	 }
       }
-   
+
       obj.style[ p ] = v;
    }
 }
@@ -729,27 +730,32 @@ if( hop_has_event20 ) {
       event.isStopped = true;
    }
 } else {
+   var hop_event_counter = 0;
+   
    hop_add_native_event_listener = function( obj, event, proc, capture ) {
       var f = hop_callback( proc );
-      var p = function(_) { return f( window.event ) };
+      var procid = "on" + event + hop_event_counter++;
+      obj[ procid ] = f;
+      var p = function( e ) { return obj[ procid ]( window.event ); };
       var i = "on" + event + "hdl";
 
       if( obj[ i ] === undefined ) obj[ i ] = [];
-      obj[ i ][ proc ] = p;
-
+      obj[ i ][ proc ] = { proc: p, id: procid };
+      
       return obj.attachEvent( "on" + event, p );
    }
 
    hop_remove_native_event_listener = function( obj, event, proc, capture ) {
       var i = "on" + event + "hdl";
-      var h = obj[ i ];
 
-      if( h !== undefined ) {
+      if( i in obj ) {
 	 var p = obj[ i ][ proc ];
+	 
+	 delete obj[ p.id ];
+	 delete obj[ i ][ proc ] ;
 
-	 if( p !== undefined ) {
-	    h[ p ] = undefined;
-	    return obj.detachEvent( "on" + event, p );
+	 if( p.proc !== undefined ) {
+	    return obj.detachEvent( "on" + event, p.proc );
 	 }
       }
 

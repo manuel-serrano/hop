@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sat Jun 19 06:18:35 2010 (serrano)                */
+;*    Last change :  Fri Jul  2 07:28:13 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -580,7 +580,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 	   (let ((req (current-request)))
 	      (if (or (not req) (authorized-path? req href))
 		  (let ((body (hss->css href)))
-		     (if body
+ 		     (if body
 			 (inl body)
 			 (default (hss->css-url href))))
 		  (default (hss->css-url href))))

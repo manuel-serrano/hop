@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 14 11:31:04 2009                          */
-;*    Last change :  Sat Jun 19 06:34:49 2010 (serrano)                */
+;*    Last change :  Fri Jul  2 15:24:31 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client side support for color selectors.                         */
