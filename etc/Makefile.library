@@ -108,12 +108,16 @@ lib-c-shared: lib-c-static
            $(MAKE) lib-c.$(SHAREDSUFFIX); \
         fi
 
+# we have 4 versions of each library:
+# safe and unsafe, runtime and evaluation time
+# evaltime libs have to link to runtime libs, but with matching safeness
 lib-c.$(SHAREDSUFFIX): \
    $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX) \
    $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX) \
    $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX) \
    $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX)
 
+# unsafe runtime
 $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX): \
    $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX)
 	@ $(MAKE) shared-link-lib \
@@ -123,9 +127,10 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX): \
              LIBDEST=$@ \
              LIBSRC=$< \
              SONAME=lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX) \
-             CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS)"
+             CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U)"
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
+# safe runtime
 $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX): \
    .afile $(OBJECTS)
 	@ $(MAKE) shared-lib \
@@ -134,9 +139,10 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX): \
              FORCELD=true \
              LIBDEST=$@ \
              SONAME=lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX) \
-             CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS)"
+             CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS_S)"
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
+# safe evaltime
 $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX): \
    .afile $(EOBJECTS)
 	@ $(MAKE) shared-lib \
@@ -146,9 +152,10 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX): \
              FORCELD=true \
              LIBDEST=$@ \
              SONAME=lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX) \
-             CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS_S) $(HOPCLOSELIBS)"
+             CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS_S) $(HOPCLOSELIBS_ES)"
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
+# unsafe evaltime
 $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX): \
    .afile $(EOBJECTS)
 	@ $(MAKE) shared-lib \
@@ -158,9 +165,10 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX): \
              FORCELD=true \
              LIBDEST=$@ \
              SONAME=lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX) \
-             CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U) $(HOPCLOSELIBS)"
+             CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U) $(HOPCLOSELIBS_EU)"
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
+# and the static versions
 $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a: .afile $(OBJECTS)
 	@ $(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
 	@ $(AR) $(ARFLAGS) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a $(OBJECTS)

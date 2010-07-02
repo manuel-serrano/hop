@@ -1,3 +1,5 @@
+# This file exists because the possibility of releasing scheme2js separately
+
 #*---------------------------------------------------------------------*/
 #*    Standard Bigloo configuration                                    */
 #*---------------------------------------------------------------------*/
@@ -8,8 +10,9 @@
 #*---------------------------------------------------------------------*/
 #*    Compilers, Tools and Destinations                                */
 #*---------------------------------------------------------------------*/
-HOPCLOSELIBS	= $(BGLCLOSELIBS)
-HOPCLOSELIBS_S	= -lscheme2js_s-$(HOPRELEASE)
-HOPCLOSELIBS_U	= -lscheme2js_u-$(HOPRELEASE)
+HOPCLOSELIBS_S	= $(BGLCLOSELIBS_S)
+HOPCLOSELIBS_U	= $(BGLCLOSELIBS_U)
+HOPCLOSELIBS_ES	= $(BGLCLOSELIBS_ES)
+HOPCLOSELIBS_EU	= $(BGLCLOSELIBS_EU)
 
 SCHEME2JSSHAREDIR = $(HOPSHAREDIR)
