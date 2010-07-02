@@ -51,7 +51,9 @@
             (set-write-verb! f)
             (write-verb-error-port args)
             (set-verb-socket! s)
-            (write-verb-socket args)))
+            (write-verb-socket args)
+            (write-verb-list args)
+            (logcat-filter req)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
@@ -66,10 +68,12 @@
       (with-lock *verb-mutex*
 	 (lambda () (*write-verb* args)))))
 
+; 'console' verbose
 (define (write-verb-error-port args)
    (for-each (lambda (a) (display a (current-error-port))) args)
    (flush-output-port (current-error-port)))
 
+; socket verbose
 (define verb-socket #f)
 
 (define (set-verb-socket! s)
@@ -89,6 +93,35 @@
 
 (define (set-write-verb! f)
    (set! *write-verb* f))
+
+; service verbose
+(define verb-list '("dunga"))
+(define verb-list-last 0)
+
+(define verb-list-length 10)
+
+(define (write-verb-list args)
+   (tprint args)
+   ; add the last message and drop from the beginning the 'overflowing' messages
+   (append! verb-list (list (cons verb-list-last args)))
+   (set! verb-list-last (+ verb-list-last 1))
+   (if (> (length verb-list) verb-list-length)
+       (set! verb-list (drop verb-list (- (length verb-list) verb-list-length)))))
+
+(define (message-list port)
+   (fprint port verb-list))
+
+(define (logcat-filter req)
+   (tprint "here!")
+   (with-access::http-request req (abspath query timeout)
+      (when (string-prefix? "/logcat" abspath)
+         (instantiate::http-response-procedure
+            (request req)
+            (timeout timeout)
+            (charset (hop-locale))
+            ;(content-type (mime-type path "text/plain"))
+            (bodyp #t)
+            (proc message-list)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-color ...                                                    */
