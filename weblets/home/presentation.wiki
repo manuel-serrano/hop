@@ -67,3 +67,4 @@ strict requirement for HOP.
        " - "
        (<A> :class "iddn" :href "http://app.legalis.net/"
            "IDDN.FR.001.260002.001.S.A.2006.000.10600")))
+

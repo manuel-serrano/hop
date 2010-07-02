@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/test/dom.hop              */
+;*    serrano/prgm/project/hop/2.1.x/weblets/test/dom.hop              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Thu Feb 11 06:07:38 2010 (serrano)                */
+;*    Last change :  Fri Jul  2 14:39:38 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing DOM                                                      */
@@ -41,7 +41,7 @@ buttons, the green message \"ok\" should replace the question marks.")
 	     (dummy2 (<SPAN>)))
 	 (<DIV>
 	    (<BUTTON> :onclick
-	       ~(with-hop ($(service () (<SPAN> ~(innerHTML-set! $id2 (<SPAN> :style "color: green" "ok")))))
+	       ~(with-hop ($(service () (<SPAN> "&nbsp;" ~(innerHTML-set! $id2 (<SPAN> :style "color: green" "ok")))))
 		   (lambda (h)
 		      (innerHTML-set! $dummy2 h)))
 	       "innerHTML-set!, withop")
@@ -64,7 +64,7 @@ buttons, the green message \"ok\" should replace the question marks.")
 	     (dummy2 (<SPAN>)))
 	 (<DIV>
 	    (<BUTTON> :onclick
-	       ~(with-hop ($(service () (<SPAN> ~(innerHTML-set! $id2 (<SPAN> "ok")))))
+	       ~(with-hop ($(service () (<SPAN> "&nbsp;" ~(innerHTML-set! $id2 (<SPAN> "ok")))))
 		   (lambda (h)
 		      (dom-append-child! $dummy2 h)))
 	       "dom-append-child")

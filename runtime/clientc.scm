@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Sat Jun 19 06:53:18 2010 (serrano)                */
+;*    Last change :  Fri Jul  2 07:31:53 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -150,10 +150,16 @@
 		(eval-module-set! m))))))
 
 ;*---------------------------------------------------------------------*/
+;*    dummy-request ...                                                */
+;*---------------------------------------------------------------------*/
+(define dummy-request
+   (instantiate::http-request))
+
+;*---------------------------------------------------------------------*/
 ;*    get-clientc-compiled-file ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (get-clientc-compiled-file path)
-   (let* ((req (current-request))
+   (let* ((req (or (current-request) dummy-request))
 	  (rep (clientc-response req path)))
       (with-input-from-file (http-response-file-file rep) read-string)))
 

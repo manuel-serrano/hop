@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jun 10 08:52:15 2009                          */
-/*    Last change :  Tue Mar  9 08:08:30 2010 (serrano)                */
+/*    Last change :  Thu Jul  1 16:52:33 2010 (serrano)                */
 /*    Copyright   :  2009-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Spin Buttons                                                     */
@@ -128,11 +128,11 @@ spinbutton td.hop-spinbutton-button-bottom {
   border-bottom: 1px solid #bbb;
 }
 
-spinbutton[dir=max] td.hop-spinbutton-button-top {
+spinbutton[bound=max] td.hop-spinbutton-button-top {
   color: #999;
 }
 
-spinbutton[dir-main] td.hop-spinbutton-button-bottom {
+spinbutton[bound=min] td.hop-spinbutton-button-bottom {
   color: #999;
 }
 

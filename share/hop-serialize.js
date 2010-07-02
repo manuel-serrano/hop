@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Tue Apr 20 10:59:58 2010 (serrano)                */
+/*    Last change :  Fri Jul  2 11:52:39 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -497,7 +497,7 @@ function hop_string_to_obj( s ) {
 var unjson = {
    "pair": function( o ) {
       return sc_cons( hop_unjson( o.car ), hop_unjson( o.cdr ) );
-   },
+   }
 }
  
 /*---------------------------------------------------------------------*/
