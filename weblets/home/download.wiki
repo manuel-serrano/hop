@@ -125,7 +125,7 @@ used without downloading and installing the source code manually:
 
 In order to install HOP from the source (for significantly improving
 performance), the ,(<A> :href (home-bigloo-url) "Bigloo") compiler has
-first to be installed. Bigloo version **3.3a** or higher is required for
+first to be installed. Bigloo version **3.4a** or higher is required for
 compiling HOP.
 
 ~~ Bigloo versions may be downloaded
@@ -135,6 +135,19 @@ from: ,(<A> :href (home-ftp-bigloo-url) (home-ftp-bigloo-url)).
 
 The HOP source code may be browsed 
 ,(<A> :href (home-source-url) "here").
+
+== ChangeLog ==
+
+~~ Want to find out what we have been doing lately on Hop?
+
+,(<DIV> :style "text-align: center; margin-left: auto; margin-right: auto"
+   (<VIDEO> :controls #t
+      (<SOURCE> :src (make-file-name (home-dir) "videos/changelog.ogv")
+         :type "video/ogg")
+      (<SOURCE> :src (make-file-name (home-dir) "videos/changelog.flv")
+         :type "video/x-flv")
+      :width 640 :height 480))
+
 
 == License ==
 

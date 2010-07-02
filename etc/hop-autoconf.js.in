@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Jul  2 15:32:00 2010 (serrano)                */
+/*    Last change :  Fri Jul  2 15:33:40 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -626,7 +626,7 @@ function node_style_set_array( el, prop, value ) {
 	    v = v.toString();
 	 }
       }
-
+   
       obj.style[ p ] = v;
    }
 }
