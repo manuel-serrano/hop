@@ -18,5 +18,4 @@ export ANDNDK=$ANDROIDROOT/android-ndk-r4
 
 # the prefix where the host bigloo is installed
 export BGL_PREFIX=$BS_BIGLOO
-export XBGL_LIBDIR=$XBGL_PREFIX/lib/3.3b
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BS_HOPDIR/lib

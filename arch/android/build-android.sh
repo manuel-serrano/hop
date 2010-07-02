@@ -19,6 +19,9 @@ prefix=/data/data/fr.inria.hop
 install_prefix=$(pwd)/arch/android/assets
 libdir=$install_prefix/hoplib
 bgl_version=$(awk -F '=' '/^RELEASE/ { print $2 }' $XBGL_PREFIX/Makefile.config)
+# reroot to the installed version of bigloo
+export XBGL_PREFIX=$XBGL_PREFIX/arch/android/usr
+export XBGL_LIBDIR=$XBGL_PREFIX/lib/bigloo/$bgl_version
 
 function install {
     # installs $src in $dst,
