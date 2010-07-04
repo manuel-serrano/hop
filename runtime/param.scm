@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Jul  4 08:55:25 2010 (serrano)                */
+;*    Last change :  Sun Jul  4 09:14:44 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -1317,8 +1317,9 @@
 (define-parameter hop-runtime-extra
    '()
    (lambda (v)
-      (if (not *hop-filters-open*)
-	  (error "hop-runtime-extra-set!" "runtime extra closed" #f))))
+      (if *hop-rc-loaded*
+	  (error "hop-runtime-extra-set!" "runtime extra closed" #f)
+	  v)))
 
 (define (hop-runtime-extra-add! v)
    (hop-runtime-extra-set! (cons v (hop-runtime-extra))))
