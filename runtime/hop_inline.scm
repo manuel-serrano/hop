@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hop_inline.scm            */
+;*    serrano/prgm/project/hop/2.2.x/runtime/hop_inline.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Sat Jun 19 06:19:07 2010 (serrano)                */
+;*    Last change :  Sun Jul  4 06:49:55 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
@@ -45,10 +45,19 @@
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <INLINE> ((id #unspecified string)
 			       (src #f string)
-			       (early #t boolean))
+			       (early #t boolean)
+			       (resource #unspecified list)
+			       (unsafe #f boolean))
    (cond
       ((not (string? src))
        (error "<INLINE>" "Missing :src attribute" src))
+      ((and (>=fx (hop-security) 1) (not unsafe))
+       (let ((el (instantiate::xml-element
+		    (tag 'DIV)
+		    (id (xml-make-id id))
+		    (attributes `(:src ,src :resource ,resource))
+		    (body '()))))
+	  ((hop-security-inline-purifier) el)))
       (else
        (multiple-value-bind (_ userinfo host port path)
 	  (url-parse src)
@@ -68,7 +77,7 @@
 		    (path path)
 		    (userinfo userinfo)
 		    (authorization auth))))))))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-inline-element ...                               */
 ;*---------------------------------------------------------------------*/

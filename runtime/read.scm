@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/read.scm                  */
+;*    serrano/prgm/project/hop/2.2.x/runtime/read.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sat Jun 19 06:42:14 2010 (serrano)                */
+;*    Last change :  Sun Jul  4 09:09:59 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -24,7 +24,8 @@
 	    __hop_read-js
 	    __hop_css
 	    __hop_charset
-	    __hop_clientc)
+	    __hop_clientc
+	    __hop_hz)
 
    (use     __hop_types
 	    __hop_xml)
@@ -864,17 +865,42 @@
 		  (mode 'load)
 		  (charset (hop-locale))
 		  (abase #t))
-   (let ((path (find-file/path file-name (hop-path)))
-	 (apath (cond
-		   ((string? abase) abase)
-		   (abase (dirname file-name))
-		   (else ".")))
-	 (menv (or menv ((clientc-macroe (hop-clientc))))))
+   (if (hz-package-filename? file-name)
+       (hop-load-hz file-name env menv mode charset abase)
+       (hop-load-file file-name env menv mode charset abase)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-load-hz ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (hop-load-hz fname env menv mode charset abase)
+   ;; feed the cache
+   (let* ((url (hz-resolve-name fname (hop-hz-repositories)))
+	  (dir (hz-download-to-cache url)))
+      ;; load the afile
+      (let ((afile (make-file-path dir ".afile")))
+	 (when (file-exists? afile)
+	    (module-load-access-file afile)))
+      ;; load the .hop source file
+      (multiple-value-bind (base version)
+	 (hz-package-name-parse url)
+	 (let ((fname (string-append (make-file-name dir base) ".hop")))
+	    (hop-load-file fname env menv mode charset abase)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-load-file ...                                                */
+;*---------------------------------------------------------------------*/
+(define (hop-load-file fname env menv mode charset abase)
+   (let* ((path (find-file/path fname (hop-path)))
+	  (apath (cond
+		    ((string? abase) abase)
+		    (abase (dirname fname))
+		    (else ".")))
+	  (menv (or menv ((clientc-macroe (hop-clientc))))))
       (if (not (string? path))
 	  (raise (instantiate::&io-file-not-found-error
 		    (proc "hop-load")
 		    (msg "Can't find file")
-		    (obj file-name)))
+		    (obj fname)))
 	  (let ((port (open-input-file path)))
 	     (if (input-port? port)
 		 (let ((m (eval-module))
@@ -893,7 +919,7 @@
 					(let ((val (eval! sexp env)))
 					   (when (xml-tilde? val)
 					      (warning/location
-					       file-name
+					       fname
 					       (and (epair? sexp)
 						    (match-case (cer sexp)
 						       ((?- ?- ?loc . ?-)
@@ -919,7 +945,7 @@
 		 (raise (instantiate::&io-port-error
 			   (proc "hop-load")
 			   (msg "Can't open file")
-			   (obj file-name))))))))
+			   (obj fname))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *load-once-table* ...                                            */

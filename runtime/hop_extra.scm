@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hop_extra.scm             */
+;*    serrano/prgm/project/hop/2.2.x/runtime/hop_extra.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Jul  2 07:28:13 2010 (serrano)                */
+;*    Last change :  Sun Jul  4 08:53:55 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -145,7 +145,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 				 (<SCRIPT> :inline #f
 				    :type (hop-configure-javascript-mime-type)
 				    :src p)))
-			   (hop-runtime-system))))
+			   (append (hop-runtime-system) (hop-runtime-extra)))))
 	 ;; this is used for non-inlined header for browsers that restrict
 	 ;; size of javascript files (e.g., IE6 on WinCE)
 	 (set! head-runtime-system-unpacked
@@ -159,7 +159,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 				 (<SCRIPT> :inline #f
 				    :type (hop-configure-javascript-mime-type)
 				    :src p)))
-			   (hop-runtime-system-files))))
+			   (append (hop-runtime-system) (hop-runtime-extra)))))
 	 ;; this is used for inlined headers
 	 (set! head-runtime-system-inline
 	       (cons* (<HOP-SETUP>)
@@ -173,6 +173,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 				    :type (hop-configure-javascript-mime-type)
 				    :src p)))
 			   (append (hop-runtime-system)
+				   (hop-runtime-extra)
 				   (list "hop-exception.scm"))))))))
 
 ;*---------------------------------------------------------------------*/

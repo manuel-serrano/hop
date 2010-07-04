@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/param.scm                 */
+;*    serrano/prgm/project/hop/2.2.x/runtime/param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Jun 19 06:25:40 2010 (serrano)                */
+;*    Last change :  Sun Jul  4 08:55:25 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -279,6 +279,9 @@
 	    (hop-security-script-purifier::obj)
 	    (hop-security-script-purifier-set! ::obj)
 	    
+	    (hop-security-inline-purifier::obj)
+	    (hop-security-inline-purifier-set! ::obj)
+	    
 	    (hop-enable-proxy-sniffer::bool)
 	    (hop-enable-proxy-sniffer-set! ::bool)
 	    
@@ -295,6 +298,10 @@
 	    (hop-hz-repositories::pair-nil)
 	    (hop-hz-repositories-set! ::pair-nil)
 	    (hop-hz-repositories-add! ::bstring)
+	    
+	    (hop-runtime-extra::pair-nil)
+	    (hop-runtime-extra-set! ::pair-nil)
+	    (hop-runtime-extra-add! ::bstring)
 	    
 	    (hop-rc-loaded!)))
 
@@ -361,7 +368,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-security ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-security 1)
+(define-parameter hop-security 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-authentication ...                                      */
@@ -1201,7 +1208,7 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-security-script-purifier
    (lambda (s)
-      s)
+      (error "hop-security-script-purifier" "no purifier specified" s))
    (lambda (v)
       (cond
 	 ((not *hop-filters-open*)
@@ -1210,7 +1217,29 @@
 		 v))
 	 ((not (and (procedure? v) (correct-arity? v 1)))
 	  (bigloo-type-error 'hop-security-script-purifier-set!
-			     "procedure"
+			     "xml -> xml"
+			     v))
+	 (else
+	  v))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-security-inline-purifier ...                                 */
+;*    -------------------------------------------------------------    */
+;*    The inline purifier is applied to <INLINE> nodes that a given    */
+;*    resource list.                                                   */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-security-inline-purifier
+   (lambda (el)
+      (error "hop-security-inline-purifier" "no purifier specified" el))
+   (lambda (v)
+      (cond
+	 ((not *hop-filters-open*)
+	  (error "hop-security-script-purifier-set!"
+		 "Security script-purifier closed"
+		 v))
+	 ((not (and (procedure? v) (correct-arity? v 1)))
+	  (bigloo-type-error 'hop-security-inline-purifier-set!
+			     "xml -> xml"
 			     v))
 	 (else
 	  v))))
@@ -1281,6 +1310,18 @@
 
 (define (hop-hz-repositories-add! v)
    (hop-hz-repositories-set! (cons v (hop-hz-repositories))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-runtime-extra ...                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-runtime-extra
+   '()
+   (lambda (v)
+      (if (not *hop-filters-open*)
+	  (error "hop-runtime-extra-set!" "runtime extra closed" #f))))
+
+(define (hop-runtime-extra-add! v)
+   (hop-runtime-extra-set! (cons v (hop-runtime-extra))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-loaded! ...                                               */
