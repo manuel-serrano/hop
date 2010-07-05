@@ -13,43 +13,46 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hop_param
-   
+
    (library hop)
-   
+
    (export  (hop-scheduler::obj)
 	    (hop-scheduler-set! ::obj)
 
 	    (hop-max-threads::int)
 	    (hop-max-threads-set! ::int)
-	    
+
 	    (hop-autoload-directories::pair-nil)
 	    (hop-autoload-directories-set! ::pair-nil)
 	    (hop-autoload-directory-add! ::bstring)
-	    
+
 	    (hop-preload-libraries::pair-nil)
 	    (hop-preload-libraries-set! ::pair-nil)
-	    
+
 	    (hop-proxy-authentication::bool)
 	    (hop-proxy-authentication-set! ::bool)
-	    
+
 	    (hop-proxy-allow-remote-client::bool)
 	    (hop-proxy-allow-remote-client-set! ::bool)
-	    
+
 	    (hop-proxy-remote-authentication::bool)
 	    (hop-proxy-remote-authentication-set! ::bool)
-	    
+
 	    (hop-proxy-ip-mask::bstring)
 	    (hop-proxy-ip-mask-set! ::bstring)
-	    
+
 	    (hop-proxy-ip-mask-word::elong)
-	    
+
 	    (hop-ip-blacklist::obj)
 	    (hop-ip-blacklist-set! ::obj)
 	    (hop-ip-blacklist-table::obj)
-	    
+
 	    (hop-log-file::obj)
 	    (hop-log-file-set! ::obj)
-	    
+
+            (hop-verbose-output::symbol)
+            (hop-verbose-output-set! ::symbol)
+
 	    (hop-scheduling::symbol)
 	    (hop-scheduling-set! ::symbol)
 
@@ -58,25 +61,25 @@
 
 	    (hop-sndbuf::int)
 	    (hop-sndbuf-set! ::int)
-	    
+
 	    (hop-enable-https::bool)
 	    (hop-enable-https-set! ::bool)
-	    
+
 	    (hop-fast-server-event-port::int)
 	    (hop-fast-server-event-port-set! ::int)
-	    
+
 	    (hop-enable-fast-server-event::bool)
 	    (hop-enable-fast-server-event-set! ::bool)
-	    
+
 	    (hop-enable-repl::bool)
 	    (hop-enable-repl-set! ::bool)
-	    
+
 	    (hop-https-protocol::symbol)
 	    (hop-https-protocol-set! ::symbol)
-	    
+
 	    (hop-enable-webdav::bool)
 	    (hop-enable-webdav-set! ::bool)
-	    
+
 	    (hop-gzipped-directories::pair-nil)
 	    (hop-gzipped-directories-set! ::pair-nil)
 
@@ -200,7 +203,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-ip-blacklist-table ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-ip-blacklist-table 
+(define-parameter hop-ip-blacklist-table
    (create-hashtable :size 1)
    (lambda (v)
       (if (hashtable? v)
@@ -212,6 +215,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-log-file
    #f)
+
+(define-parameter hop-verbose-output
+   'console)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-scheduling ...                                               */
