@@ -13,16 +13,16 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_misc
-   
+
    (cond-expand
       (enable-ssl (library ssl)))
-   
+
    (import  __hop_configure
 	    __hop_param
 	    __hop_types)
-   
+
    (extern  (macro fork::int () "fork"))
-   
+
    (export  (hop-verb ::int . args)
 	    (hop-color ::obj ::obj ::obj)
 	    (shortest-prefix ::bstring)
@@ -47,7 +47,13 @@
 	    (inline input-timeout-set! ::input-port ::int)
 	    (inline output-timeout-set! ::output-port ::int)
 	    (inline socket-timeout-set! ::socket ::int ::int)
-	    (call-in-background ::procedure)))
+	    (call-in-background ::procedure)
+            (set-write-verb! f)
+            (write-verb-error-port args)
+            (set-verb-socket! s)
+            (write-verb-socket args)
+            (write-verb-list args)
+            (logcat-filter req)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
@@ -60,9 +66,63 @@
 (define (hop-verb level . args)
    (when (>=fx (hop-verbose) level)
       (with-lock *verb-mutex*
-	 (lambda ()
-	    (for-each (lambda (a) (display a (current-error-port))) args)
-	    (flush-output-port (current-error-port))))))
+	 (lambda () (*write-verb* args)))))
+
+(define *write-verb* (lambda (args) #f))
+
+(define (set-write-verb! f)
+   (tprint f)
+   (set! *write-verb* f))
+
+; 'console' verbose
+(define (write-verb-error-port args)
+   (for-each (lambda (a) (display a (current-error-port))) args)
+   (flush-output-port (current-error-port)))
+
+; socket verbose
+(define verb-socket #f)
+
+(define (set-verb-socket! s)
+   (set! verb-socket s))
+
+(define (write-verb-socket args)
+   ; write in the socket, in a best effort way
+   ; that is, if we can't, we don't care
+   (if (socket? verb-socket)
+      (with-exception-handler
+         (lambda (e) (begin ; on error, close the socket
+            (socket-close verb-socket)
+            (set-verb-socket! #f)))
+         (fprint (socket-output verb-socket) args))))
+
+; service/filter verbose
+(define verb-list (list '()))
+(define verb-list-last 0)
+
+(define verb-list-length 25)
+
+(define (write-verb-list args)
+   ; TODO: filter out ASCII esc seqs?
+   ; add the last message and drop from the beginning the 'overflowing' messages
+   ; append! concatenates two lists, that's why the outer (list)
+   (append! verb-list (list (cons verb-list-last args)))
+   (set! verb-list-last (+ verb-list-last 1))
+   (if (> (length verb-list) verb-list-length)
+       (set! verb-list (drop verb-list (- (length verb-list) verb-list-length)))))
+
+(define (message-list port)
+   (fprint port verb-list))
+
+(define (logcat-filter req)
+   (with-access::http-request req (abspath query timeout)
+      (when (string-prefix? "/logcat" abspath)
+         (instantiate::http-response-procedure
+            (request req)
+            (timeout timeout)
+            (charset (hop-locale))
+            ;(content-type (mime-type path "text/plain"))
+            (bodyp #t)
+            (proc message-list)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-color ...                                                    */
@@ -412,7 +472,7 @@
 (define-inline (socket-timeout-set! socket ti to)
    (input-timeout-set! (socket-input socket) ti)
    (output-timeout-set! (socket-output socket) to))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    call-in-background ...                                           */
 ;*    -------------------------------------------------------------    */

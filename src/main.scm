@@ -41,7 +41,7 @@
          (export (main::int args::pair-nil)))
       (else (main main))))
 
- 
+
 ;*---------------------------------------------------------------------*/
 ;*    signal-init! ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -106,6 +106,16 @@
    (parse-args args)
    ;; set the hop process owner
    (set-hop-owner! (hop-user))
+
+   (tprint (hop-verbose-output))
+   (tprint (eq? (hop-verbose-output) 'console))
+   (case (hop-verbose-output)
+      ((buffer)
+       (set-write-verb! write-verb-list)
+       (hop-filter-add! logcat-filter))
+      (else
+       (set-write-verb! write-verb-error-port)))
+
    ;; hello world
    (hop-verb 1 "Hop v" (hop-version))
    (hop-verb 2
@@ -210,7 +220,7 @@
 ;*    set-hop-owner! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (set-hop-owner! user)
-   
+
    (define (err)
       (error "hop"
 	     "Hop is not allowed to be executed as `root'. Create a dedicated Hop user to run Hop on behalf of.\n"

@@ -19,6 +19,9 @@ prefix=/data/data/fr.inria.hop
 install_prefix=$(pwd)/arch/android/assets
 libdir=$install_prefix/hoplib
 bgl_version=$(awk -F '=' '/^RELEASE/ { print $2 }' $XBGL_PREFIX/Makefile.config)
+# reroot to the installed version of bigloo
+export XBGL_PREFIX=$XBGL_PREFIX/arch/android/usr
+export XBGL_LIBDIR=$XBGL_PREFIX/lib/bigloo/$bgl_version
 
 function install {
     # installs $src in $dst,
@@ -90,6 +93,7 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
   # compile a static hop by hand
   ( cd src
     # TODO: this command is too specific. try to use bigloo's and hop's config
+    # TODO: esp w/ lib versions
     $BGL_PREFIX/bin/bigloo -fsharing -Wall -wslots -static-all-bigloo \
       -L $pwd/lib -lib-dir $XBGL_LIBDIR -cc $CC \
       -copt "-g -DPLATFORM_ANDROID -I$XBGL_LIBDIR" \

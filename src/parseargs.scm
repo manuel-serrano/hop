@@ -17,9 +17,9 @@
    (library scheme2js hopscheme hop hopwidget web)
 
    (import  hop_param)
-   
+
    (eval    (export hop-load-rc))
-   
+
    (export  (parse-args ::pair-nil)
 	    (hop-load-rc ::bstring)))
 
@@ -27,7 +27,8 @@
 ;*    parse-args ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (parse-args args)
-   
+
+   ; 'defaults'
    (let ((loadp #t)
 	 (mimep #t)
 	 (autoloadp #t)
@@ -42,9 +43,9 @@
 	 (files '())
 	 (killp #f)
 	 (clear-cache #f))
-      
+
       (bigloo-debug-set! 0)
-      
+
       (args-parse (cdr args)
 	 ;; Misc
 	 (section "Misc")
@@ -57,7 +58,7 @@
          (("--version" (help "Print the version and exit"))
           (print (hop-name) "-" (hop-version))
           (exit 0))
-	 
+
 	 ;; RC
 	 (section "RC & Autoload")
 	 (("-q" (help "Do not load an init file"))
@@ -93,7 +94,7 @@
 	  (set! mime-file file))
 	 (("--preload-service" ?svc (help "Preload service"))
 	  (hop-preload-services-set! (cons svc (hop-preload-services))))
-	 
+
 	 ;; Verbosity and logs
 	 (section "Verbosity & Logging")
          (("-v?level" (help "Increase/set verbosity level (-v0 crystal silence)"))
@@ -135,7 +136,9 @@
 	  (hop-capture-port-set! (open-output-file file)))
 	 (("--allow-service-override" (help "Allow service overriding (see -s)"))
 	  (hop-security-set! 0))
-	 
+	 (("--verbose-output" ?output (help "Use console or buffer based verbose output (default: console)"))
+	  (hop-verbose-output-set! (string->symbol output)))
+
 	 ;; Run
 	 (section "Run")
 	 ((("-p" "--http-port") ?port (help (format "Port number [~s]" p)))
@@ -168,7 +171,7 @@
 	  (hop-accept-kill-set! #f))
 	 ((("-k" "--kill") (help "Kill the running local HOP and exit"))
 	  (set! killp #t))
-	 
+
 	 ;; Paths
 	 (section "Paths")
 	 ((("-I" "--path") ?path (help "Add <PATH> to hop load path"))
@@ -177,7 +180,7 @@
 	  (bigloo-library-path-set! (cons path (bigloo-library-path))))
 	 ((("-l" "--library") ?library (help "Preload additional <LIBRARY>"))
 	  (set! libraries (cons library libraries )))
-	 
+
 	 ;; Internals
 	 (section "Internals")
 	 (("--configure" ?config (help "Report HOP configuration"))
@@ -207,18 +210,18 @@
 	  (exit 1))
 	 (else
 	  (set! files (cons else files))))
-      
+
       ;; http port
       (hop-port-set! p)
       (when (eq? ep #unspecified) (set! ep p))
-      
+
       ;; log
       (when log-file
 	 (let ((p (append-output-file log-file)))
 	    (unless p
 	       (error "hop" "Cannot open log file" log-file))
 	    (hop-log-file-set! p)))
-      
+
       ;; mime types
       (when mimep
 	 (load-mime-types (hop-mime-types-file))
@@ -231,11 +234,11 @@
 	 (let ((cache (make-cache-name)))
 	    (when (directory? cache)
 	       (delete-path cache))))
-      
+
       ;; weblets path
       (hop-autoload-directory-add!
        (make-file-name (hop-rc-directory) "weblets"))
-      
+
       ;; init hss, scm compilers, and services
       (init-hss-compiler! (hop-port))
       (init-hopscheme! :reader (lambda (p v) (hop-read p))
@@ -265,10 +268,10 @@
 	 :precompiled->JS-return hopscheme->JS-return
 	 :precompiled-declared-variables hopscheme-declared
 	 :precompiled-free-variables hopscheme-free)
-	 
+
       (init-hop-services!)
       (init-hop-widgets!)
-      
+
       ;; hoprc
       (when loadp (parseargs-loadrc rc-file (hop-rc-file)))
 
@@ -280,7 +283,7 @@
 		(http :port p :path (format "/hop/shutdown/kill?key=~a" key))
 		(error "hop-kill" "Cannot find process key" (key-filepath p)))
 	    (exit 0)))
-      
+
       ;; default backend
       (when (string? be) (hop-xml-backend-set! (string->symbol be)))
 
@@ -291,7 +294,7 @@
 		    "Server event port must be greater than 1023. (See `--fast-server-event-port' or `--disable-fast-server-event' options.)"
 		    ep)
 	     (hop-fast-server-event-port-set! ep)))
-      
+
       (for-each (lambda (expr)
 		   (with-input-from-string expr
 		      (lambda ()
@@ -305,9 +308,9 @@
 				      (raise e)))
 			       (eval sexp))))))
 		exprs)
-      
+
       (when autoloadp (install-autoload-weblets! (hop-autoload-directories)))
-      
+
       (for-each (lambda (l) (eval `(library-load ',l))) libraries)
 
       (when (pair? files)
@@ -327,7 +330,7 @@
       (register-exit-function! (lambda (ret)
 				  (hop-process-key-delete (hop-port))
 				  ret))
-      
+
       #unspecified))
 
 ;*---------------------------------------------------------------------*/
@@ -354,7 +357,7 @@
 	 (else
 	  ;; this is a plain file
 	  (hop-load-weblet path)))))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    usage ...                                                        */
 ;*---------------------------------------------------------------------*/
@@ -373,7 +376,7 @@
 	  (hop-verb 2 "Loading `" path "'...\n")
 	  (hop-load path)
 	  (hop-rc-loaded!))))
-      
+
 ;*---------------------------------------------------------------------*/
 ;*    parseargs-loadrc ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -435,4 +438,4 @@
    (let* ((dir (hop-rc-directory))
 	  (path (make-file-name dir (key-filename port))))
       (when (file-exists? path) (delete-file path))))
-   
+
