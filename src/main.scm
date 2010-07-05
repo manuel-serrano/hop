@@ -107,7 +107,14 @@
    ;; set the hop process owner
    (set-hop-owner! (hop-user))
 
-   (set-write-verb! write-verb-error-port)
+   (tprint (hop-verbose-output))
+   (tprint (eq? (hop-verbose-output) 'console))
+   (case (hop-verbose-output)
+      ((buffer)
+       (set-write-verb! write-verb-list)
+       (hop-filter-add! logcat-filter))
+      (else
+       (set-write-verb! write-verb-error-port)))
 
    ;; hello world
    (hop-verb 1 "Hop v" (hop-version))
