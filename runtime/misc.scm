@@ -68,6 +68,12 @@
       (with-lock *verb-mutex*
 	 (lambda () (*write-verb* args)))))
 
+(define *write-verb* (lambda (args) #f))
+
+(define (set-write-verb! f)
+   (tprint f)
+   (set! *write-verb* f))
+
 ; 'console' verbose
 (define (write-verb-error-port args)
    (for-each (lambda (a) (display a (current-error-port))) args)
@@ -89,20 +95,16 @@
             (set-verb-socket! #f)))
          (fprint (socket-output verb-socket) args))))
 
-(define *write-verb* (lambda (args) #f))
-
-(define (set-write-verb! f)
-   (set! *write-verb* f))
-
-; service verbose
-(define verb-list '("dunga"))
+; service/filter verbose
+(define verb-list (list '()))
 (define verb-list-last 0)
 
-(define verb-list-length 10)
+(define verb-list-length 25)
 
 (define (write-verb-list args)
-   (tprint args)
+   ; TODO: filter out ASCII esc seqs?
    ; add the last message and drop from the beginning the 'overflowing' messages
+   ; append! concatenates two lists, that's why the outer (list)
    (append! verb-list (list (cons verb-list-last args)))
    (set! verb-list-last (+ verb-list-last 1))
    (if (> (length verb-list) verb-list-length)
@@ -112,7 +114,6 @@
    (fprint port verb-list))
 
 (define (logcat-filter req)
-   (tprint "here!")
    (with-access::http-request req (abspath query timeout)
       (when (string-prefix? "/logcat" abspath)
          (instantiate::http-response-procedure
