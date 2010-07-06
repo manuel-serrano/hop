@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Sun Jul  4 06:49:55 2010 (serrano)                */
+;*    Last change :  Tue Jul  6 15:10:26 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
@@ -28,7 +28,8 @@
 	    __hop_js-lib
 	    __hop_service
 	    __hop_http-response
-	    __hop_hop)
+	    __hop_hop
+	    __hop_security)
 
    (static  (class xml-inline-element::xml-element
 	       (host::bstring read-only)
@@ -56,8 +57,9 @@
 		    (tag 'DIV)
 		    (id (xml-make-id id))
 		    (attributes `(:src ,src :resource ,resource))
-		    (body '()))))
-	  ((hop-security-inline-purifier) el)))
+		    (body '())))
+	     (sm (hop-security-manager)))
+	  ((security-manager-inline-sanitize sm) el)))
       (else
        (multiple-value-bind (_ userinfo host port path)
 	  (url-parse src)

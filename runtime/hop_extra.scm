@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sun Jul  4 08:53:55 2010 (serrano)                */
+;*    Last change :  Tue Jul  6 15:23:58 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -608,7 +608,8 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 
    (define (purify node)
       (if (>=fx (hop-security) 1)
-	  ((hop-security-script-purifier) node)
+	  (let ((sm (hop-security-manager)))
+	     ((security-manager-script-sanitize sm) node))
 	  node))
    
    (define (default src)

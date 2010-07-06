@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/share/hop-dom.js                  */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-dom.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Jul  2 14:37:52 2010 (serrano)                */
+/*    Last change :  Tue Jul  6 11:27:59 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -22,11 +22,11 @@
 /*---------------------------------------------------------------------*/
 function dom_add_child( node, e ) {
    if( hop_is_html_element( e ) ) {
-      if( e.parentNode ) {
-	 node.appendChild( e.cloneNode( true ) );
-      } else {
-	 node.appendChild( e );
-      }
+      /* we no longer need to clone a node, even if it is already  */
+      /* in the document because the server side implementation    */
+      /* of dom-add-child checks if the node is already in the     */
+      /* same tree and if it is, it removes it removes it first    */
+      node.appendChild( e );
    } else {
       if( (e instanceof String) ||
 	  (typeof e == "string") ||

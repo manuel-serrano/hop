@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/http_response.scm         */
+;*    serrano/prgm/project/hop/2.2.x/runtime/http_response.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Jun 29 13:12:11 2010 (serrano)                */
+;*    Last change :  Tue Jul  6 15:06:16 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -213,28 +213,19 @@
    
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-hop ...                            */
-;*    -------------------------------------------------------------    */
-;*    Since Bigloo3.1c hop response are transmitted as chunked         */
-;*    response to allow HOP to use keep-alive connections              */
-;*    for dynamic responses.                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-hop socket)
    (with-trace 3 'http-response::http-response-hop
-      (if (<fx (hop-security) 2)
+      (if (<fx (hop-security) 1)
 	  (http-response-hop-unsecure r socket (http-response-hop-backend r))
-	  (with-handler
-	     (lambda (e)
-		(if (and (&hop-security-error? e) (> (bigloo-debug) 0))
-		    (begin
-		       (exception-notify e)
-		       (http-response-hop-unsecure (http-security-error e)
-						   socket
-						   (http-response-hop-backend r)))
-		    (raise e)))
-	     (http-response-hop-secure r socket)))))
+	  (http-response-hop-secure r socket (http-response-hop-backend r)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response-hop-unsecure ...                                   */
+;*    -------------------------------------------------------------    */
+;*    Since Bigloo3.1c hop responses are transmitted as chunked        */
+;*    responses which allows Hop to use keep-alive connections for     */
+;*    dynamic responses.                                               */
 ;*---------------------------------------------------------------------*/
 (define (http-response-hop-unsecure r::http-response-hop
 				    socket::socket
@@ -288,43 +279,61 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-response-hop-secure ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (http-response-hop-secure r::http-response-hop socket::socket)
-   (with-trace 3 'http-response-hop-secure
-      (with-access::http-response-hop r (request
-					 start-line header
-					 content-type charset server backend
-					 content-length
-					 xml bodyp timeout)
-	 (let ((o (security-manager r)))
-	    (cond
-	       ((string? o)
-		;; the security manager has produced the response
-		(let ((connection (http-request-connection request))
-		      (p (socket-output socket)))
-		   (output-timeout-set! p timeout)
-		   (http-write-line-string p start-line)
-		   (http-write-header p header)
-		   (http-write-line p "Content-Length: " (string-length o))
-		   (http-write-line p "Connection: " connection)
-		   (let ((ctype (or content-type (xml-backend-mime-type backend))))
-		      (http-write-content-type p ctype charset))
-		   (when server
-		      (http-write-line-string p "Server: " server))
-		   (http-write-line-string p "Hhop: true")
-		   (http-write-line p "hop-security: " (hop-security))
+(define (http-response-hop-secure r::http-response-hop
+				  socket::socket
+				  backend::xml-backend)
+   
+   (define (secure-response r::http-response-hop content)
+      (with-access::http-response-hop r (xml timeout request start-line header
+					     charset content-type server)
+	 (let ((connection (http-request-connection request))
+	       (p (socket-output socket)))
+	    (output-timeout-set! p timeout)
+	    (http-write-line-string p start-line)
+	    (http-write-header p header)
+	    (http-write-line p "Connection: " connection)
+	    (let ((ctype (or content-type (xml-backend-mime-type backend))))
+	       (http-write-content-type p ctype charset))
+	    (when server
+	       (http-write-line-string p "Server: " server))
+	    (http-write-line-string p "Hhop: true")
+	    (http-write-line p "hop-security: " (hop-security))
+	    (if (string? content)
+		(begin
+		   (http-write-line p "Content-Length: " (string-length content))
 		   (http-write-line p)
-		   ;; the body
-		   (with-trace 4 'http-response-hop
-		      (when bodyp (display o p)))
 		   (flush-output-port p)
-		   connection))
-	       ((xml-backend? o)
-		;; we recevied a new XML backend from the mananger
-		(http-response-hop-unsecure r socket o))
-	       (else
-		(error "http-resposne-hop-secure"
-		       "Illegal security manager value"
-		       o)))))))
+		   (display content p))
+		(begin
+		   (http-write-line p "Content-Length: " (string-length content))
+		   (http-write-line p)))
+	    (flush-output-port p)
+	    connection)))
+
+   (define (security-handler e)
+      (if (and (&hop-security-error? e) (> (bigloo-debug) 0))
+	  (begin
+	     (exception-notify e)
+	     (http-response-hop-unsecure (http-security-error e)
+					 socket
+					 (http-response-hop-backend r)))
+	  (raise e)))
+   
+   (with-trace 3 'http-response-hop-secure
+      (with-access::http-response-hop r (xml bodyp timeout backend)
+	 (if (not bodyp)
+	     ;; send the header of the request
+	     (secure-response r #f)
+	     (let ((sm (hop-security-manager)))
+		(with-access::security-manager sm (xml-sanitize)
+		   (let ((t (with-handler
+			       security-handler
+			       (xml-sanitize xml backend))))
+		      (if (string? t)
+			  ;; the tree has been purified
+			  (secure-response r t)
+			  (let ((sbe (secure-backend sm backend)))
+			     (http-response-hop-unsecure r socket sbe))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-procedure ...                      */

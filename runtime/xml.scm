@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sun Jul  4 06:56:46 2010 (serrano)                */
+;*    Last change :  Tue Jul  6 15:48:32 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -28,25 +28,25 @@
 	    __hop_clientc
 	    __hop_priv
 	    __hop_read-js
-	    __hop_http-error)
+	    __hop_http-error
+	    __hop_security)
 
    (use     __hop_js-lib)
 
    (export  (class xml-backend
-	      (id::symbol read-only)
-	      (mime-type::bstring read-only)
-	      (doctype::bstring read-only)
-	      (header-format::bstring read-only)
-	      (html-attributes::pair-nil read-only (default '()))
-	      (no-end-tags-elements::pair-nil read-only (default '()))
-	      (cdata-start (default #f))
-	      (cdata-stop (default #f))
-	      (css-start (default #f))
-	      (css-stop (default #f))
-	      (meta-format::bstring read-only)
-	      (abbrev-emptyp::bool (default #f))
-	      (attribute-string-encode::obj (default #f))
-	      (xml-string-encode::obj (default #f)))
+	       (id::symbol read-only)
+	       (mime-type::bstring read-only)
+	       (doctype::bstring read-only)
+	       (header-format::bstring read-only)
+	       (html-attributes::pair-nil read-only (default '()))
+	       (no-end-tags-elements::pair-nil read-only (default '()))
+	       (cdata-start (default #f))
+	       (cdata-stop (default #f))
+	       (css-start (default #f))
+	       (css-stop (default #f))
+	       (meta-format::bstring read-only)
+	       (abbrev-emptyp::bool (default #f))
+	       (security-manager::obj (default #f)))
 
 	    (class xml
 	       (%xml-constructor))
@@ -393,10 +393,13 @@
 (define-generic (xml-write obj p backend)
    (cond
       ((string? obj)
-       (let ((e (xml-backend-xml-string-encode backend)))
-	  (if (procedure? e)
-	      (display (e obj) p)
-	      (display obj p))))
+       (let ((s (if (>=fx (hop-security) 1)
+		    (let ((sm (xml-backend-security-manager backend)))
+		       (if (security-manager? sm)
+			   ((security-manager-string-sanitize sm) obj)
+			   obj))
+		    obj)))
+	  (display s p)))
       ((number? obj)
        (display obj p))
       ((symbol? obj)
@@ -483,6 +486,24 @@
       (display tag p)
       (xml-write-attributes attributes p backend)
       (cond
+	 ((and (eq? tag 'head) (>fx (hop-security) 1))
+	  (display ">" p)
+	  (for-each (lambda (b) (xml-write b p backend)) body)
+	  (let ((sm (xml-backend-security-manager backend)))
+	     (when (security-manager? sm)
+		(with-access::xml-backend backend (cdata-start cdata-stop)
+		   (for-each (lambda (r)
+				(display "<script type='" p)
+				(display (hop-javascript-mime-type) p)
+				(display "'>" p)
+				(when cdata-start (display cdata-start p))
+				(display r p)
+				(when cdata-stop (display cdata-stop p))
+				(display "</script>\n" p))
+			     (security-manager-runtime sm)))))
+	  (display "</" p)
+	  (display tag p)
+	  (display ">\n" p))
 	 ((or (pair? body) (eq? tag 'script))
 	  (display ">" p)
 	  (for-each (lambda (b) (xml-write b p backend)) body)
@@ -667,25 +688,18 @@
 	 ((procedure? attr)
 	  (if (hop-service? (procedure-attr attr))
 	      (display (hop-service-path (procedure-attr attr)) p)
-	      (error "xml" "Illegal procedure argument in XML attribute" id)))
-	 ((and (>fx (hop-security) 1) (string? attr) (attr-event-handler? id))
-	  (raise
-	   (instantiate::&hop-injection-error
-	      (proc id)
-	      (msg "Illegal handler attribute value type")
-	      (obj attr))))
-	 ((xml-backend-attribute-string-encode backend)
-	  =>
-	  (lambda (p) (display (p attr) p)))
+	      (error "xml"
+		     "Illegal procedure argument in XML attribute"
+		     id)))
+	 ((>=fx (hop-security) 1)
+	  (let* ((sm (xml-backend-security-manager backend))
+		 (attr (if (security-manager? sm)
+			   ((security-manager-attribute-sanitize sm) attr id)
+			   attr)))
+	     (display attr p)))
 	 (else
 	  (display (xml-attribute-encode attr) p)))
       (display "'" p)))
-
-;*---------------------------------------------------------------------*/
-;*    attr-event-handler? ...                                          */
-;*---------------------------------------------------------------------*/
-(define (attr-event-handler? id)
-   (string-prefix-ci? "on" (keyword->string! id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::xml-tilde ...                              */
