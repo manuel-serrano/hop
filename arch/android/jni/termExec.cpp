@@ -33,9 +33,6 @@
 #define LOG_TAG "Exec"
 
 #include "jni.h"
-// #include "utils/Log.h"
-// #include "utils/misc.h"
-// #include "android_runtime/AndroidRuntime.h"
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -81,7 +78,7 @@ private:
 };
 
 static int create_subprocess(const char *cmd, const char *arg0, const char *arg1,
-    int* pProcessId)
+    const char *arg2, const char *arg3, const char *arg4, int* pProcessId)
 {
     char *devname;
     int ptm;
@@ -120,7 +117,7 @@ static int create_subprocess(const char *cmd, const char *arg0, const char *arg1
         dup2(pts, 1);
         dup2(pts, 2);
 
-        execl(cmd, cmd, arg0, arg1, NULL);
+        execl(cmd, cmd, arg0, arg1, arg2, arg3, arg4, NULL);
         exit(-1);
     } else {
         *pProcessId = (int) pid;
@@ -130,7 +127,8 @@ static int create_subprocess(const char *cmd, const char *arg0, const char *arg1
 
 
 static jobject android_os_Exec_createSubProcess(JNIEnv *env, jobject clazz,
-    jstring cmd, jstring arg0, jstring arg1, jintArray processIdArray)
+    jstring cmd, jstring arg0, jstring arg1, jstring arg2, jstring arg3,
+    jstring arg4, jintArray processIdArray)
 {
     const jchar* str = cmd ? env->GetStringCritical(cmd, 0) : 0;
     String8 cmd_8;
@@ -157,8 +155,36 @@ static jobject android_os_Exec_createSubProcess(JNIEnv *env, jobject clazz,
         arg1Str = arg1_8.string();
     }
 
+    str = arg2 ? env->GetStringCritical(arg2, 0) : 0;
+    const char* arg2Str = 0;
+    String8 arg2_8;
+    if (str) {
+        arg2_8.set(str, env->GetStringLength(arg2));
+        env->ReleaseStringCritical(arg2, str);
+        arg2Str = arg2_8.string();
+    }
+
+    str = arg3 ? env->GetStringCritical(arg3, 0) : 0;
+    const char* arg3Str = 0;
+    String8 arg3_8;
+    if (str) {
+        arg3_8.set(str, env->GetStringLength(arg3));
+        env->ReleaseStringCritical(arg3, str);
+        arg3Str = arg3_8.string();
+    }
+
+    str = arg4 ? env->GetStringCritical(arg4, 0) : 0;
+    const char* arg4Str = 0;
+    String8 arg4_8;
+    if (str) {
+        arg4_8.set(str, env->GetStringLength(arg4));
+        env->ReleaseStringCritical(arg4, str);
+        arg4Str = arg4_8.string();
+    }
+
     int procId;
-    int ptm = create_subprocess(cmd_8.string(), arg0Str, arg1Str, &procId);
+    int ptm = create_subprocess(cmd_8.string(), arg0Str, arg1Str, arg2Str,
+                                arg3Str, arg4Str, &procId);
 
     if (processIdArray) {
         int procIdLen = env->GetArrayLength(processIdArray);
