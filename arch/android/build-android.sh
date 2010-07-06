@@ -19,6 +19,7 @@ prefix=/data/data/fr.inria.hop
 install_prefix=$(pwd)/arch/android/assets
 libdir=$install_prefix/hoplib
 bgl_version=$(awk -F '=' '/^RELEASE/ { print $2 }' $XBGL_PREFIX/Makefile.config)
+hop_version=$(awk -F '[ =]*' '/^HOPRELEASE/ { print $2 }' etc/Makefile.hopconfig)
 # reroot to the installed version of bigloo
 export XBGL_PREFIX=$XBGL_PREFIX/arch/android/usr
 export XBGL_LIBDIR=$XBGL_PREFIX/lib/bigloo/$bgl_version
@@ -101,14 +102,14 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
          o/hop_param.o o/parseargs.o o/main.o o/init.o o/scheduler.o o/accept.o \
          o/pipeline.o o/nothread_scheduler.o o/queue_scheduler.o o/oto_scheduler.o \
          o/pool_scheduler.o o/amany_scheduler.o \
-      -ldopt -L $pwd/lib/libhop_s-2.1.0.a \
-      -ldopt -L $pwd/lib/libhop_es-2.1.0.a \
-      -ldopt -L $pwd/lib/libhopscheme_s-2.1.0.a \
-      -ldopt -L $pwd/lib/libhopscheme_es-2.1.0.a \
-      -ldopt -L $pwd/lib/libscheme2js_s-2.1.0.a \
-      -ldopt -L $pwd/lib/libscheme2js_es-2.1.0.a \
-      -ldopt -L $pwd/lib/libhopwidget_s-2.1.0.a \
-      -ldopt -L $pwd/lib/libhopwidget_es-2.1.0.a \
+      -ldopt -L $pwd/lib/libhop_s-$hop_version.a \
+      -ldopt -L $pwd/lib/libhop_es-$hop_version.a \
+      -ldopt -L $pwd/lib/libhopscheme_s-$hop_version.a \
+      -ldopt -L $pwd/lib/libhopscheme_es-$hop_version.a \
+      -ldopt -L $pwd/lib/libscheme2js_s-$hop_version.a \
+      -ldopt -L $pwd/lib/libscheme2js_es-$hop_version.a \
+      -ldopt -L $pwd/lib/libhopwidget_s-$hop_version.a \
+      -ldopt -L $pwd/lib/libhopwidget_es-$hop_version.a \
       -ldopt -L $XBGL_LIBDIR/libbiglooweb_s-$bgl_version.a \
       -ldopt -L $XBGL_LIBDIR/libbiglooweb_es-$bgl_version.a \
       -ldopt -L $XBGL_LIBDIR/libbigloomultimedia_s-$bgl_version.a \
