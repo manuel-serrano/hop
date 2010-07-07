@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/widget/audio.scm                  */
+;*    serrano/prgm/project/hop/2.2.x/widget/audio.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Jun 22 18:44:02 2010 (serrano)                */
+;*    Last change :  Tue Jul  6 18:26:24 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -108,9 +108,9 @@
 			      (onpauseclick #unspecified)
 			      (onnextclick #unspecified)
 			      (onstopclick #unspecified)
-			      (onloadclick "alert('load: not implemented')")
-			      (onpodcastclick "alert('podcast: not implemented')")
-			      (onprefsclick "alert('prefs: not implemented')")
+			      (onloadclick (secure-javascript-attr "alert('load: not implemented')"))
+			      (onpodcastclick (secure-javascript-attr "alert('podcast: not implemented')"))
+			      (onprefsclick (secure-javascript-attr "alert('prefs: not implemented')"))
 			      (onmuteclick #unspecified)
 			      (onvolumechange #unspecified)
 			      (onpanchange #unspecified)
@@ -341,30 +341,35 @@
 	 (<BUT> :title "Previous"
 	    :class "hop-audio-button-prev"
 	    :onclick (if (eq? onprevclick #unspecified)
-			 (format "hop_audio_playlist_prev(document.getElementById('~a'))" audioid)
+			 (secure-javascript-attr
+			  (format "hop_audio_playlist_prev(document.getElementById('~a'))" audioid))
 			 onprevclick))
 	 (<BUT> :title "Play"
 	    :id (string-append id "-hop-audio-button-play")
 	    :class "hop-audio-button-play"
 	    :onclick (if (eq? onplayclick #unspecified)
-			 (format "hop_audio_playlist_play(document.getElementById('~a'), 0)" audioid)
+			 (secure-javascript-attr
+			  (format "hop_audio_playlist_play(document.getElementById('~a'), 0)" audioid))
 			 onplayclick))
 	 (<BUT> :title "Pause"
 	    :id (string-append id "-hop-audio-button-pause")
 	    :class "hop-audio-button-pause"
 	    :onclick (if (eq? onpauseclick #unspecified)
-			 (format "hop_audio_pause(document.getElementById('~a'))" audioid)
+			 (secure-javascript-attr
+			  (format "hop_audio_pause(document.getElementById('~a'))" audioid))
 			 onpauseclick))
 	 (<BUT> :title "Stop"
 	    :id (string-append id "-hop-audio-button-stop")
 	    :class "hop-audio-button-stop"
 	    :onclick (if (eq? onstopclick #unspecified)
-			 (format "hop_audio_stop(document.getElementById('~a'))" audioid)
+			 (secure-javascript-attr
+			  (format "hop_audio_stop(document.getElementById('~a'))" audioid))
 			 onstopclick))
 	 (<BUT> :title "Next"
 	    :class "hop-audio-button-next"
 	    :onclick (if (eq? onnextclick #unspecified)
-			 (format "hop_audio_playlist_next(document.getElementById('~a'))" audioid)
+			 (secure-javascript-attr
+			  (format "hop_audio_playlist_next(document.getElementById('~a'))" audioid))
 			 onnextclick))
 	 (<BUT> :title "Playlist"
 	    :class "hop-audio-button-playlist"
@@ -376,7 +381,8 @@
 	    :id (string-append id "-hop-audio-button-mute")
 	    :class "hop-audio-button-mute"
 	    :onclick (if (eq? onmuteclick #unspecified)
-			 (format "hop_audio_mute(document.getElementById('~a'))" audioid)
+			 (secure-javascript-attr
+			  (format "hop_audio_mute(document.getElementById('~a'))" audioid))
 			 onmuteclick))
 	 (<BUT> :title "Preferences"
 	    :id (string-append id "-hop-audio-button-prefs")

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sun Jul  4 06:56:46 2010 (serrano)                */
+;*    Last change :  Wed Jul  7 08:41:43 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -28,25 +28,25 @@
 	    __hop_clientc
 	    __hop_priv
 	    __hop_read-js
-	    __hop_http-error)
+	    __hop_http-error
+	    __hop_security)
 
    (use     __hop_js-lib)
 
    (export  (class xml-backend
-	      (id::symbol read-only)
-	      (mime-type::bstring read-only)
-	      (doctype::bstring read-only)
-	      (header-format::bstring read-only)
-	      (html-attributes::pair-nil read-only (default '()))
-	      (no-end-tags-elements::pair-nil read-only (default '()))
-	      (cdata-start (default #f))
-	      (cdata-stop (default #f))
-	      (css-start (default #f))
-	      (css-stop (default #f))
-	      (meta-format::bstring read-only)
-	      (abbrev-emptyp::bool (default #f))
-	      (attribute-string-encode::obj (default #f))
-	      (xml-string-encode::obj (default #f)))
+	       (id::symbol read-only)
+	       (mime-type::bstring read-only)
+	       (doctype::bstring read-only)
+	       (header-format::bstring read-only)
+	       (html-attributes::pair-nil read-only (default '()))
+	       (no-end-tags-elements::pair-nil read-only (default '()))
+	       (cdata-start (default #f))
+	       (cdata-stop (default #f))
+	       (css-start (default #f))
+	       (css-stop (default #f))
+	       (meta-format::bstring read-only)
+	       (abbrev-emptyp::bool (default #f))
+	       (security::obj read-only (default #f)))
 
 	    (class xml
 	       (%xml-constructor))
@@ -117,6 +117,8 @@
 
 	    (hop-xml-backend::xml-backend)
 	    (hop-xml-backend-set! ::obj)
+	    
+	    (hop-xml-backend-secure::xml-backend)
 
  	    (generic xml-write ::obj ::output-port ::xml-backend)
 	    (generic xml-write-attribute ::obj ::obj ::output-port ::xml-backend)
@@ -248,7 +250,17 @@
        *xhtml-backend*)
       (else
        (error "hop-get-xml-backend" "Illegal backend" id))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    hop-xml-backend-secure ...                                       */
+;*---------------------------------------------------------------------*/
+(define (hop-xml-backend-secure)
+   (let ((be (hop-xml-backend)))
+      (if (<fx (hop-security) 1)
+	  be
+	  (duplicate::xml-backend be
+	     (security (hop-security-manager))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    *xml-constructors* ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -393,9 +405,10 @@
 (define-generic (xml-write obj p backend)
    (cond
       ((string? obj)
-       (let ((e (xml-backend-xml-string-encode backend)))
-	  (if (procedure? e)
-	      (display (e obj) p)
+       (with-access::xml-backend backend (security)
+	  (if (security-manager? security)
+	      (with-access::security-manager security (string-sanitize)
+		 (display (string-sanitize obj) p))
 	      (display obj p))))
       ((number? obj)
        (display obj p))
@@ -483,6 +496,20 @@
       (display tag p)
       (xml-write-attributes attributes p backend)
       (cond
+	 ((and (eq? tag 'head) (>fx (hop-security) 1))
+	  (display ">" p)
+	  (for-each (lambda (b) (xml-write b p backend)) body)
+	  (with-access::xml-backend backend (security)
+	     (when (security-manager? security)
+		(for-each (lambda (r)
+			     (display "<script type='" p)
+			     (display (hop-javascript-mime-type) p)
+			     (fprintf p "' src='~a'>" r)
+			     (display "</script>\n" p))
+			  (security-manager-runtime security))))
+	  (display "</" p)
+	  (display tag p)
+	  (display ">\n" p))
 	 ((or (pair? body) (eq? tag 'script))
 	  (display ">" p)
 	  (for-each (lambda (b) (xml-write b p backend)) body)
@@ -667,25 +694,19 @@
 	 ((procedure? attr)
 	  (if (hop-service? (procedure-attr attr))
 	      (display (hop-service-path (procedure-attr attr)) p)
-	      (error "xml" "Illegal procedure argument in XML attribute" id)))
-	 ((and (>fx (hop-security) 1) (string? attr) (attr-event-handler? id))
-	  (raise
-	   (instantiate::&hop-injection-error
-	      (proc id)
-	      (msg "Illegal handler attribute value type")
-	      (obj attr))))
-	 ((xml-backend-attribute-string-encode backend)
+	      (error "xml"
+		     "Illegal procedure argument in XML attribute"
+		     id)))
+	 ((xml-backend-security backend)
 	  =>
-	  (lambda (p) (display (p attr) p)))
+	  (lambda (sm)
+	     (if (security-manager? sm)
+		 (let ((a ((security-manager-attribute-sanitize sm) (xml-attribute-encode attr) id)))
+		    (display a p))
+		 (error "xml-write-attribute" "Illegal security-manager" sm))))
 	 (else
 	  (display (xml-attribute-encode attr) p)))
       (display "'" p)))
-
-;*---------------------------------------------------------------------*/
-;*    attr-event-handler? ...                                          */
-;*---------------------------------------------------------------------*/
-(define (attr-event-handler? id)
-   (string-prefix-ci? "on" (keyword->string! id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::xml-tilde ...                              */

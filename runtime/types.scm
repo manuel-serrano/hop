@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/types.scm                 */
+;*    serrano/prgm/project/hop/2.2.x/runtime/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Apr 23 07:54:13 2010 (serrano)                */
+;*    Last change :  Tue Jul  6 11:48:11 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -19,16 +19,16 @@
    (use    __hop_xml)
    
    (export (class user
-	       (name::bstring read-only)
-	       (uuid::obj read-only (default #unspecified))
-	       (groups::pair-nil read-only (default '()))
-	       (password::bstring read-only)
-	       (services read-only)
-	       (directories read-only)
-	       (preferences-filename::obj read-only)
-	       (preferences::pair-nil (default '()))
-	       (data::obj (default #unspecified))
-	       (authentication::symbol read-only (default 'basic)))
+	      (name::bstring read-only)
+	      (uuid::obj read-only (default #unspecified))
+	      (groups::pair-nil read-only (default '()))
+	      (password::bstring read-only)
+	      (services read-only)
+	      (directories read-only)
+	      (preferences-filename::obj read-only)
+	      (preferences::pair-nil (default '()))
+	      (data::obj (default #unspecified))
+	      (authentication::symbol read-only (default 'basic)))
 
 	   (class &hop-method-error::&io-parse-error)
 	   (class &hop-autoload-error::&io-error)

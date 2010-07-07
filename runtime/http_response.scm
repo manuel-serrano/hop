@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/http_response.scm         */
+;*    serrano/prgm/project/hop/2.2.x/runtime/http_response.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Jun 29 13:12:11 2010 (serrano)                */
+;*    Last change :  Wed Jul  7 08:44:43 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -214,37 +214,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-hop ...                            */
 ;*    -------------------------------------------------------------    */
-;*    Since Bigloo3.1c hop response are transmitted as chunked         */
-;*    response to allow HOP to use keep-alive connections              */
-;*    for dynamic responses.                                           */
+;*    Since Bigloo3.1c hop responses are transmitted as chunked        */
+;*    responses which allows Hop to use keep-alive connections for     */
+;*    dynamic responses.                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-hop socket)
-   (with-trace 3 'http-response::http-response-hop
-      (if (<fx (hop-security) 2)
-	  (http-response-hop-unsecure r socket (http-response-hop-backend r))
-	  (with-handler
-	     (lambda (e)
-		(if (and (&hop-security-error? e) (> (bigloo-debug) 0))
-		    (begin
-		       (exception-notify e)
-		       (http-response-hop-unsecure (http-security-error e)
-						   socket
-						   (http-response-hop-backend r)))
-		    (raise e)))
-	     (http-response-hop-secure r socket)))))
-
-;*---------------------------------------------------------------------*/
-;*    http-response-hop-unsecure ...                                   */
-;*---------------------------------------------------------------------*/
-(define (http-response-hop-unsecure r::http-response-hop
-				    socket::socket
-				    backend::xml-backend)
-   (with-trace 3 'http-response-hop-unsecure
+   (with-trace 3 'http-response-hop
       (with-access::http-response-hop r (request
 					 start-line header
 					 content-type charset server
 					 content-length
-					 xml bodyp timeout)
+					 xml bodyp timeout
+					 backend)
 	 (let ((connection (http-request-connection request))
 	       (p (socket-output socket))
 	       (clen content-length)
@@ -276,7 +257,11 @@
 	    ;; the body
 	    (with-trace 4 'http-response-hop
 	       (when bodyp
-		  (xml-write xml p backend)))
+		  (with-access::xml-backend backend (security)
+		     (if (security-manager? security)
+			 (let ((xmls ((security-manager-xml-sanitize security) xml backend)))
+			    (xml-write xmls p backend))
+			 (xml-write xml p backend)))))
 	    (flush-output-port p)
 	    ;; for chunked, write the last 0 chunk
 	    (when chunked
@@ -284,47 +269,6 @@
 	       (http-write-line p "\r\n0\r\n")
 	       (flush-output-port p))
 	    connection))))
-
-;*---------------------------------------------------------------------*/
-;*    http-response-hop-secure ...                                     */
-;*---------------------------------------------------------------------*/
-(define (http-response-hop-secure r::http-response-hop socket::socket)
-   (with-trace 3 'http-response-hop-secure
-      (with-access::http-response-hop r (request
-					 start-line header
-					 content-type charset server backend
-					 content-length
-					 xml bodyp timeout)
-	 (let ((o (security-manager r)))
-	    (cond
-	       ((string? o)
-		;; the security manager has produced the response
-		(let ((connection (http-request-connection request))
-		      (p (socket-output socket)))
-		   (output-timeout-set! p timeout)
-		   (http-write-line-string p start-line)
-		   (http-write-header p header)
-		   (http-write-line p "Content-Length: " (string-length o))
-		   (http-write-line p "Connection: " connection)
-		   (let ((ctype (or content-type (xml-backend-mime-type backend))))
-		      (http-write-content-type p ctype charset))
-		   (when server
-		      (http-write-line-string p "Server: " server))
-		   (http-write-line-string p "Hhop: true")
-		   (http-write-line p "hop-security: " (hop-security))
-		   (http-write-line p)
-		   ;; the body
-		   (with-trace 4 'http-response-hop
-		      (when bodyp (display o p)))
-		   (flush-output-port p)
-		   connection))
-	       ((xml-backend? o)
-		;; we recevied a new XML backend from the mananger
-		(http-response-hop-unsecure r socket o))
-	       (else
-		(error "http-resposne-hop-secure"
-		       "Illegal security manager value"
-		       o)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-procedure ...                      */
@@ -715,7 +659,7 @@
 	  (body obj)))
       (else
        (instantiate::http-response-js
-	  (backend (hop-xml-backend))
+	  (backend (hop-xml-backend-secure))
 	  (content-type (hop-json-mime-type))
 	  (charset (hop-charset))
 	  (request req)
@@ -733,14 +677,15 @@
 ;*    scheme->response ::xml ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (scheme->response obj::xml req)
-   (instantiate::http-response-hop
-      (request req)
-      (backend (hop-xml-backend))
-      (content-type (xml-backend-mime-type (hop-xml-backend)))
-      (charset (hop-charset))
-      (bodyp (not (eq? (http-request-method req) 'HEAD)))
-      (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-      (xml obj)))
+   (let ((be (hop-xml-backend-secure)))
+      (instantiate::http-response-hop
+	 (request req)
+	 (backend be)
+	 (content-type (xml-backend-mime-type be))
+	 (charset (hop-charset))
+	 (bodyp (not (eq? (http-request-method req) 'HEAD)))
+	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	 (xml obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::xml-tilde ...                                 */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sun Jul  4 06:56:36 2010 (serrano)                */
+;*    Last change :  Tue Jul  6 15:19:49 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -62,7 +62,7 @@
            __hop_wiki-toc
 	   __hop_hz
 	   __hop_security
-
+	   
 	   (hop-event-policy-file __hop_event))
 
    (eval   (export-all)
@@ -70,6 +70,8 @@
 	   (class job)
 	   
 	   (class user)
+
+	   (class security-manager)
 	   
 	   (class %http-message)
 	   (class http-request)

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/weblets/weblets/package.hop       */
+;*    serrano/prgm/project/hop/2.2.x/weblets/weblets/package.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Mar 26 09:56:50 2010 (serrano)                */
+;*    Last change :  Tue Jul  6 08:41:16 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with packages.                             */
@@ -76,25 +76,27 @@
 ;*    package-info ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (package-info url)
-   (let* ((ip (open-input-gzip-file url))
-	  (info (make-file-name "etc" "weblet.info"))
-	  (len (string-length info)))
-      (unwind-protect
-	 (let loop ()
-	    (let ((h (tar-read-header ip)))
-	       (when (tar-header? h)
-		  (case (tar-header-type h)
-		     ((dir)
-		      (loop))
-		     ((normal)
-		      (let ((b (tar-read-block h ip))
-			    (n (tar-header-name h)))
-			 (if (substring-at? n info (-fx (string-length n) len))
-			     (charset-convert b (hop-locale) (hop-charset))
-			     (loop))))
-		     (else
-		      #f)))))
-	 (close-input-port ip))))
+   (multiple-value-bind (base version)
+      (package-name-parse (basename url))
+      (let* ((ip (open-input-gzip-file url))
+	     (info (make-file-path base "etc" "weblet.info"))
+	     (len (string-length info)))
+	 (unwind-protect
+	    (let loop ()
+	       (let ((h (tar-read-header ip)))
+		  (when (tar-header? h)
+		     (case (tar-header-type h)
+			((dir)
+			 (loop))
+			((normal)
+			 (let ((b (tar-read-block h ip))
+			       (n (tar-header-name h)))
+			    (if (substring-at? n info (-fx (string-length n) len))
+				(charset-convert b (hop-locale) (hop-charset))
+				(loop))))
+			(else
+			 #f)))))
+	    (close-input-port ip)))))
 
 
 

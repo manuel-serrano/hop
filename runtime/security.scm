@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/security.scm              */
+;*    serrano/prgm/project/hop/2.2.x/runtime/security.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Tue Jun 29 13:13:55 2010 (serrano)                */
+;*    Last change :  Wed Jul  7 10:31:20 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -14,60 +14,119 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_security
 
+   (include "param.sch")
+
+   (library web)
+	    
    (import  __hop_param
 	    __hop_configure
 	    __hop_types
 	    __hop_misc
 	    __hop_xml)
 
-   (export  (secure-javascript-attr ::obj)
-	    (security-manager ::http-response-hop)
-	    (tree-compare-security-manager::bstring ::http-response-hop)
-	    (filter-security-manager::xml-backend ::http-response-hop)))
+   (export  (class security-manager
+	       (xml-sanitize::procedure read-only)
+	       (string-sanitize::procedure read-only)
+	       (attribute-sanitize::procedure read-only)
+	       (inline-sanitize::procedure read-only)
+	       (script-sanitize::procedure read-only)
+	       (runtime::pair-nil read-only))
+
+	    (secure-javascript-attr ::obj)
+
+	    (hop-security-manager::obj)
+	    (hop-security-manager-set! ::obj)
+
+	    (xml-tree-compare::bstring ::obj ::xml-backend)
+	    (xml-attribute-sanitize ::obj ::obj)
+	    (xml-string-sanitize::bstring ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    secure-javascript-attr ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (secure-javascript-attr obj)
-   (if (and (string? obj) (> (hop-security) 1))
+   (if (and (>=fx (hop-security) 1) (string? obj))
        (sexp->xml-tilde `(pragma ,obj))
        obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    security-manager ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (security-manager r)
-   (if (procedure? (hop-security-manager))
-       ((hop-security-manager) r)
-       (default-security-manager r)))
+(define-parameter hop-security-manager
+   security-manager-default
+   (lambda (v)
+      (cond
+	 ((hop-rc-loaded?)
+	  (error "hop-security-manager-set!"
+		 "Security managers can be specified once hoprc.hop loaded"
+		 #f))
+	 ((not (security-manager? v))
+	  (bigloo-type-error "hop-security-manager-set!" "security-manager" v))
+	 (else
+	  v))))
 
 ;*---------------------------------------------------------------------*/
-;*    default-security-manager ...                                     */
+;*    security-manager-default ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (default-security-manager::bstring r::http-response-hop)
-   (tree-compare-security-manager r))
+(define security-manager-default 
+   (instantiate::security-manager
+      (xml-sanitize (lambda (xml be) xml))
+      (string-sanitize xml-string-sanitize)
+      (attribute-sanitize xml-attribute-sanitize)
+      (inline-sanitize (lambda (n) n))
+      (script-sanitize (lambda (n) n))
+      (runtime '())))
 
 ;*---------------------------------------------------------------------*/
-;*    tree-compare-security-manager ...                                */
+;*    security-manager-tree-compare ...                                */
 ;*---------------------------------------------------------------------*/
-(define (tree-compare-security-manager::bstring r::http-response-hop)
+(define security-manager-tree-compare
+   (instantiate::security-manager
+      (xml-sanitize xml-tree-compare)
+      (string-sanitize (lambda (s) s))
+      (inline-sanitize (lambda (n) n))
+      (script-sanitize (lambda (n) n))
+      (attribute-sanitize (lambda (attr id) "_"))
+      (runtime '())))
+
+;*---------------------------------------------------------------------*/
+;*    attr-event-handler? ...                                          */
+;*---------------------------------------------------------------------*/
+(define (attr-event-handler? id)
+   (string-prefix-ci? "on" (keyword->string! id)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-attribute-sanitize ...                                       */
+;*---------------------------------------------------------------------*/
+(define (xml-attribute-sanitize attr id)
+   (if (and (string? attr) (attr-event-handler? id))
+       (raise
+	(instantiate::&hop-injection-error
+	   (proc id)
+	   (msg "Illegal handler attribute value type")
+	   (obj attr)))
+       (xml-attribute-encode attr)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-tree-compare ...                                             */
+;*---------------------------------------------------------------------*/
+(define (xml-tree-compare::bstring xml backend)
    (let ((p (open-output-string)))
-      (with-access::http-response-hop r (backend xml)
-	 (xml-write xml p (duplicate::xml-backend backend
-			     (attribute-string-encode (lambda (v) "_"))))
-	 (let* ((s (close-output-port p))
-		(ast (string->html s))
-		(cmp (compare-ast xml ast)))
-	    (if (pair? cmp)
-		;; the tree differs
-		(raise
-		 (instantiate::&hop-injection-error
-		    (proc "default-security-manager")
-		    (msg "Infected tree")
-		    (obj (cons (ast->string-list (car cmp))
-			       (ast->string-list (cdr cmp))))))
-		;; the tree are equivalent
-		s)))))
+      (xml-write xml p (duplicate::xml-backend backend
+			  (security security-manager-tree-compare)))
+      (let* ((s (close-output-port p))
+	     (ast (string->html s))
+	     (cmp (compare-ast xml ast)))
+	 (if (pair? cmp)
+	     ;; the tree differs
+	     (raise
+	      (instantiate::&hop-injection-error
+		 (proc "default-security-manager")
+		 (msg "Infected tree")
+		 (obj (cons (ast->string-list (car cmp))
+			    (ast->string-list (cdr cmp))))))
+	     ;; the tree are equivalent
+	     s))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compare-ast ...                                                  */
@@ -199,17 +258,9 @@
 	,s))
 
 ;*---------------------------------------------------------------------*/
-;*    filter-xml-string-encode ...                                     */
+;*    xml-string-sanitize ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (filter-xml-string-encode str)
+(define (xml-string-sanitize::bstring str::bstring)
    (if (string-index str "<>")
        (string-substitute str "<>" "&lt;" "&gt;")
        str))
-
-;*---------------------------------------------------------------------*/
-;*    filter-security-manager ...                                      */
-;*---------------------------------------------------------------------*/
-(define (filter-security-manager::xml-backend r::http-response-hop)
-   (with-access::http-response-hop r (backend)
-      (duplicate::xml-backend backend
-	 (xml-string-encode filter-xml-string-encode))))
