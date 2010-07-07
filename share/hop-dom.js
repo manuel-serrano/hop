@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Apr 13 10:37:39 2010 (serrano)                */
+/*    Last change :  Fri Jul  2 14:37:52 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -135,7 +135,7 @@ function dom_create( tag, _ ) {
 
    while( i < l ) {
       var k = arguments[ i ];
-      
+
       if( sc_isKeyword( k ) ) {
 	 if( i < (l - 1) ) {
 	    var at = arguments[ i + 1 ];
@@ -1041,6 +1041,7 @@ function cloneScriptNode( node ) {
    if( node.nodeType != 1 ) {
       return node;
    }
+
    if( (node.tagName !== "SCRIPT") && (node.tagName !== "script") ) {
       var childs = node.childNodes;
 
@@ -1056,7 +1057,10 @@ function cloneScriptNode( node ) {
       var t = document.createTextNode( node.innerHTML );
       var s = document.createElement( "SCRIPT" );
 
-      s.appendChild( t );
+      if( "text" in s ) 
+	 s.text = node.innerHTML;
+      else
+	 s.appendChild( t );
 
       return s;
    }

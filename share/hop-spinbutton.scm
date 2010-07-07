@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun 11 19:03:05 2009                          */
-;*    Last change :  Sat Jun 19 06:35:55 2010 (serrano)                */
+;*    Last change :  Thu Jul  1 16:51:16 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SpinButton client side implementation                            */
@@ -94,7 +94,8 @@
 	    (unless (string=? s inp2.value)
 	       (set! inp2.value s)
 	       (when (procedure? inp2.onchange)
-		  (inp2.onchange #unspecified)))))))
+		  (inp2.onchange #unspecified)
+		  #f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spinbutton-value-set! ...                                        */
@@ -105,12 +106,12 @@
 	 (cond
 	    ((<= val el.min)
 	     (set! el.value el.min)
-	     (set! el.dir "min"))
+	     (set! el.bound "min"))
 	    ((>= val el.max)
 	     (set! el.value el.max)
-	     (set! el.dir "max"))
+	     (set! el.bound "max"))
 	    (else
-	     (set! el.dir "")
+	     (set! el.bound "")
 	     (set! el.value val)))
 	 (let ((inp (dom-get-element-by-id (string-append el.id "-entry")))
 	       (s (number->string el.value)))

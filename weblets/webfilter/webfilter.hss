@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/1.9.x/weblets/webfilter/webfilter.hss       */
+/*    .../prgm/project/hop/2.1.x/weblets/webfilter/webfilter.hss       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Apr 16 10:49:52 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Thu Jul  1 05:37:42 2010 (serrano)                */
+/*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WEBFILTER HOP CSS                                                */
 /*=====================================================================*/
@@ -24,16 +24,27 @@ img {
 }
 
 table.webfilter {
-  width: 45em;
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+  min-width: 45em;
   margin-top: 20px;
   padding: 10px;
   border: 1px solid $border-color;
   background: white;
-  -moz-border-radius: 0.5em;
+  border-radius: 0.5em;
 }
 
 table td {
   text-align: left;
+}
+
+td#webfilter-logo {
+  width: 64px;
+}
+
+td.webfilter-content table {
+  width: 100%;
 }
 
 table.webfilter td#user-name {

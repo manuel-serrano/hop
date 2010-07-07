@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue Jun 29 20:56:36 2010 (serrano)                */
+;*    Last change :  Thu Jul  1 11:53:35 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -433,11 +433,11 @@
 		       ((and (string? path) (file-exists? path))
 			(proc path))
 		       ((string? path)
-			(warning 'wiki-parser "Can't find file: " path)
+			(warning "wiki-parser" "Can't find file: " path)
 			(add-expr! ((wiki-syntax-pre syn)
 				    "File not found -- " path)))
 		       (else
-			(warning 'wiki-parser "Can't find file: " name)
+			(warning "wiki-parser" "Can't find file: " name)
 			(add-expr! ((wiki-syntax-pre syn)
 				    "Cannot find file in path -- " name)))))))
 	    ((+ (or (out #\<) (: "<" (out "/"))))
