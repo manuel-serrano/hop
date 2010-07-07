@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Wed Jul  7 08:40:25 2010 (serrano)                */
+;*    Last change :  Wed Jul  7 10:31:20 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -53,13 +53,7 @@
 ;*    security-manager ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-security-manager
-   (instantiate::security-manager
-      (xml-sanitize (lambda (xml be) xml))
-      (string-sanitize xml-string-sanitize)
-      (attribute-sanitize xml-attribute-sanitize)
-      (inline-sanitize (lambda (n) n))
-      (script-sanitize (lambda (n) n))
-      (runtime '()))
+   security-manager-default
    (lambda (v)
       (cond
 	 ((hop-rc-loaded?)
@@ -70,6 +64,18 @@
 	  (bigloo-type-error "hop-security-manager-set!" "security-manager" v))
 	 (else
 	  v))))
+
+;*---------------------------------------------------------------------*/
+;*    security-manager-default ...                                     */
+;*---------------------------------------------------------------------*/
+(define security-manager-default 
+   (instantiate::security-manager
+      (xml-sanitize (lambda (xml be) xml))
+      (string-sanitize xml-string-sanitize)
+      (attribute-sanitize xml-attribute-sanitize)
+      (inline-sanitize (lambda (n) n))
+      (script-sanitize (lambda (n) n))
+      (runtime '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    security-manager-tree-compare ...                                */
