@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Tue Jul  6 15:39:39 2010 (serrano)                */
+;*    Last change :  Wed Jul  7 08:40:25 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -37,8 +37,6 @@
 	    (hop-security-manager::obj)
 	    (hop-security-manager-set! ::obj)
 
-	    (secure-backend sm::security-manager ::xml-backend)
-
 	    (xml-tree-compare::bstring ::obj ::xml-backend)
 	    (xml-attribute-sanitize ::obj ::obj)
 	    (xml-string-sanitize::bstring ::bstring)))
@@ -47,7 +45,7 @@
 ;*    secure-javascript-attr ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (secure-javascript-attr obj)
-   (if (and (string? obj) (>=fx (hop-security) 1))
+   (if (and (>=fx (hop-security) 1) (string? obj))
        (sexp->xml-tilde `(pragma ,obj))
        obj))
 
@@ -86,13 +84,6 @@
       (runtime '())))
 
 ;*---------------------------------------------------------------------*/
-;*    secure-backend ...                                               */
-;*---------------------------------------------------------------------*/
-(define (secure-backend sm be)
-   (duplicate::xml-backend be
-      (security-manager sm)))
-
-;*---------------------------------------------------------------------*/
 ;*    attr-event-handler? ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (attr-event-handler? id)
@@ -116,7 +107,7 @@
 (define (xml-tree-compare::bstring xml backend)
    (let ((p (open-output-string)))
       (xml-write xml p (duplicate::xml-backend backend
-			  (security-manager security-manager-tree-compare)))
+			  (security security-manager-tree-compare)))
       (let* ((s (close-output-port p))
 	     (ast (string->html s))
 	     (cmp (compare-ast xml ast)))

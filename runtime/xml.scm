@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Jul  6 15:48:32 2010 (serrano)                */
+;*    Last change :  Wed Jul  7 08:41:43 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -46,7 +46,7 @@
 	       (css-stop (default #f))
 	       (meta-format::bstring read-only)
 	       (abbrev-emptyp::bool (default #f))
-	       (security-manager::obj (default #f)))
+	       (security::obj read-only (default #f)))
 
 	    (class xml
 	       (%xml-constructor))
@@ -117,6 +117,8 @@
 
 	    (hop-xml-backend::xml-backend)
 	    (hop-xml-backend-set! ::obj)
+	    
+	    (hop-xml-backend-secure::xml-backend)
 
  	    (generic xml-write ::obj ::output-port ::xml-backend)
 	    (generic xml-write-attribute ::obj ::obj ::output-port ::xml-backend)
@@ -248,7 +250,17 @@
        *xhtml-backend*)
       (else
        (error "hop-get-xml-backend" "Illegal backend" id))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    hop-xml-backend-secure ...                                       */
+;*---------------------------------------------------------------------*/
+(define (hop-xml-backend-secure)
+   (let ((be (hop-xml-backend)))
+      (if (<fx (hop-security) 1)
+	  be
+	  (duplicate::xml-backend be
+	     (security (hop-security-manager))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    *xml-constructors* ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -393,13 +405,11 @@
 (define-generic (xml-write obj p backend)
    (cond
       ((string? obj)
-       (let ((s (if (>=fx (hop-security) 1)
-		    (let ((sm (xml-backend-security-manager backend)))
-		       (if (security-manager? sm)
-			   ((security-manager-string-sanitize sm) obj)
-			   obj))
-		    obj)))
-	  (display s p)))
+       (with-access::xml-backend backend (security)
+	  (if (security-manager? security)
+	      (with-access::security-manager security (string-sanitize)
+		 (display (string-sanitize obj) p))
+	      (display obj p))))
       ((number? obj)
        (display obj p))
       ((symbol? obj)
@@ -489,18 +499,14 @@
 	 ((and (eq? tag 'head) (>fx (hop-security) 1))
 	  (display ">" p)
 	  (for-each (lambda (b) (xml-write b p backend)) body)
-	  (let ((sm (xml-backend-security-manager backend)))
-	     (when (security-manager? sm)
-		(with-access::xml-backend backend (cdata-start cdata-stop)
-		   (for-each (lambda (r)
-				(display "<script type='" p)
-				(display (hop-javascript-mime-type) p)
-				(display "'>" p)
-				(when cdata-start (display cdata-start p))
-				(display r p)
-				(when cdata-stop (display cdata-stop p))
-				(display "</script>\n" p))
-			     (security-manager-runtime sm)))))
+	  (with-access::xml-backend backend (security)
+	     (when (security-manager? security)
+		(for-each (lambda (r)
+			     (display "<script type='" p)
+			     (display (hop-javascript-mime-type) p)
+			     (fprintf p "' src='~a'>" r)
+			     (display "</script>\n" p))
+			  (security-manager-runtime security))))
 	  (display "</" p)
 	  (display tag p)
 	  (display ">\n" p))
@@ -691,12 +697,13 @@
 	      (error "xml"
 		     "Illegal procedure argument in XML attribute"
 		     id)))
-	 ((>=fx (hop-security) 1)
-	  (let* ((sm (xml-backend-security-manager backend))
-		 (attr (if (security-manager? sm)
-			   ((security-manager-attribute-sanitize sm) attr id)
-			   attr)))
-	     (display attr p)))
+	 ((xml-backend-security backend)
+	  =>
+	  (lambda (sm)
+	     (if (security-manager? sm)
+		 (let ((a ((security-manager-attribute-sanitize sm) (xml-attribute-encode attr) id)))
+		    (display a p))
+		 (error "xml-write-attribute" "Illegal security-manager" sm))))
 	 (else
 	  (display (xml-attribute-encode attr) p)))
       (display "'" p)))

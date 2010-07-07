@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/widget/notepad.scm                */
+;*    serrano/prgm/project/hop/2.2.x/widget/notepad.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Jun 19 06:37:47 2010 (serrano)                */
+;*    Last change :  Tue Jul  6 18:57:58 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -121,7 +121,6 @@
 	     :id id
 	     :hssclass "hop-notepad"
 	     :class (make-class-name "hop-notepad" klass)
-	     :onkeyup (secure-javascript-attr (format "return ~a;" svc))
 	     head
 	     (<TABLE> :hssclass "hop-notepad"
 		(<TR>
@@ -131,10 +130,12 @@
 		(<TR>
 		   (<TD> :id (string-append id "-body")
 		      :hssclass "hop-notepad-body" bodies)))
-	     (when onchange
 		(<SCRIPT> :class "hop-notepad-init"
-		   (format "document.getElementById('~a').onchange = ~a"
-			   id (hop->js-callback onchange))))
+		   (when onchange
+		      (format "document.getElementById('~a').onchange = ~a"
+			      id (hop->js-callback onchange)))
+		   (format "document.getElementById('~a').onkeyup = function(_) { return ~a;}"
+			   id svc))
 	     attrs)))
    
 ;*---------------------------------------------------------------------*/
