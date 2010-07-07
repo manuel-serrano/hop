@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Wed Jul  7 10:31:20 2010 (serrano)                */
+;*    Last change :  Wed Jul  7 13:35:33 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -50,22 +50,6 @@
        obj))
 
 ;*---------------------------------------------------------------------*/
-;*    security-manager ...                                             */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-security-manager
-   security-manager-default
-   (lambda (v)
-      (cond
-	 ((hop-rc-loaded?)
-	  (error "hop-security-manager-set!"
-		 "Security managers can be specified once hoprc.hop loaded"
-		 #f))
-	 ((not (security-manager? v))
-	  (bigloo-type-error "hop-security-manager-set!" "security-manager" v))
-	 (else
-	  v))))
-
-;*---------------------------------------------------------------------*/
 ;*    security-manager-default ...                                     */
 ;*---------------------------------------------------------------------*/
 (define security-manager-default 
@@ -88,6 +72,22 @@
       (script-sanitize (lambda (n) n))
       (attribute-sanitize (lambda (attr id) "_"))
       (runtime '())))
+
+;*---------------------------------------------------------------------*/
+;*    security-manager ...                                             */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-security-manager
+   security-manager-default
+   (lambda (v)
+      (cond
+	 ((hop-rc-loaded?)
+	  (error "hop-security-manager-set!"
+		 "Security managers can be specified once hoprc.hop loaded"
+		 #f))
+	 ((not (security-manager? v))
+	  (bigloo-type-error "hop-security-manager-set!" "security-manager" v))
+	 (else
+	  v))))
 
 ;*---------------------------------------------------------------------*/
 ;*    attr-event-handler? ...                                          */
