@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/src/main.scm                      */
+;*    serrano/prgm/project/hop/2.2.x/src/main.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Jun 20 13:57:57 2010 (serrano)                */
+;*    Last change :  Wed Jul  7 16:06:30 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -106,16 +106,13 @@
    (parse-args args)
    ;; set the hop process owner
    (set-hop-owner! (hop-user))
-
-   (tprint (hop-verbose-output))
-   (tprint (eq? (hop-verbose-output) 'console))
+   ;; install the verb functions
    (case (hop-verbose-output)
       ((buffer)
-       (set-write-verb! write-verb-list)
+       (write-verb-set! write-verb-list)
        (hop-filter-add! logcat-filter))
       (else
-       (set-write-verb! write-verb-error-port)))
-
+       (write-verb-set! write-verb-error-port)))
    ;; hello world
    (hop-verb 1 "Hop v" (hop-version))
    (hop-verb 2

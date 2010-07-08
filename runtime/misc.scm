@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/misc.scm                  */
+;*    serrano/prgm/project/hop/2.2.x/runtime/misc.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Sat Jun 19 06:53:36 2010 (serrano)                */
+;*    Last change :  Wed Jul  7 16:08:12 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_misc
 
+   (include "param.sch")
+   
    (cond-expand
       (enable-ssl (library ssl)))
 
@@ -48,9 +50,11 @@
 	    (inline output-timeout-set! ::output-port ::int)
 	    (inline socket-timeout-set! ::socket ::int ::int)
 	    (call-in-background ::procedure)
-            (set-write-verb! f)
+	    (write-verb::obj)
+	    (write-verb-set! ::obj)
+	    (verb-socket::obj)
+	    (verb-socket-set! ::obj)
             (write-verb-error-port args)
-            (set-verb-socket! s)
             (write-verb-socket args)
             (write-verb-list args)
             (logcat-filter req)))
@@ -68,51 +72,72 @@
       (with-lock *verb-mutex*
 	 (lambda () (*write-verb* args)))))
 
-(define *write-verb* (lambda (args) #f))
+;*---------------------------------------------------------------------*/
+;*    *write-verb* ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-parameter write-verb
+   (lambda (args) #f))
 
-(define (set-write-verb! f)
-   (tprint f)
-   (set! *write-verb* f))
-
-; 'console' verbose
+;*---------------------------------------------------------------------*/
+;*    write-verb-error-port ...                                        */
+;*    -------------------------------------------------------------    */
+;*    'console' verbose                                                */
+;*---------------------------------------------------------------------*/
 (define (write-verb-error-port args)
    (for-each (lambda (a) (display a (current-error-port))) args)
    (flush-output-port (current-error-port)))
 
-; socket verbose
-(define verb-socket #f)
+;*---------------------------------------------------------------------*/
+;*    verb-socket ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter verb-socket
+   #f)
 
-(define (set-verb-socket! s)
-   (set! verb-socket s))
-
+;*---------------------------------------------------------------------*/
+;*    write-verb-socket ...                                            */
+;*    -------------------------------------------------------------    */
+;*    write in the socket, in a best effort way                        */
+;*    that is, if we can't, we don't care                              */
+;*---------------------------------------------------------------------*/
 (define (write-verb-socket args)
-   ; write in the socket, in a best effort way
-   ; that is, if we can't, we don't care
    (if (socket? verb-socket)
-      (with-exception-handler
-         (lambda (e) (begin ; on error, close the socket
-            (socket-close verb-socket)
-            (set-verb-socket! #f)))
-         (fprint (socket-output verb-socket) args))))
+       (with-handler
+	  (lambda (e)
+	     ;; on error, close the socket
+	     (socket-close (verb-socket))
+	     (verb-socket-set! #f))
+	  (fprint (socket-output (verb-socket)) args))))
 
-; service/filter verbose
+;*---------------------------------------------------------------------*/
+;*    verb-list ...                                                    */
+;*---------------------------------------------------------------------*/
 (define verb-list (list '()))
 (define verb-list-last 0)
-
 (define verb-list-length 25)
 
+;*---------------------------------------------------------------------*/
+;*    write-verb-list ...                                              */
+;*    -------------------------------------------------------------    */
+;*    TODO: filter out ASCII esc seqs?                                 */
+;*    add the last message and drop from the beginning the             */
+;*    'overflowing' messages append! concatenates two lists, that's    */
+;*    why the outer (list)                                             */
+;*---------------------------------------------------------------------*/
 (define (write-verb-list args)
-   ; TODO: filter out ASCII esc seqs?
-   ; add the last message and drop from the beginning the 'overflowing' messages
-   ; append! concatenates two lists, that's why the outer (list)
    (append! verb-list (list (cons verb-list-last args)))
-   (set! verb-list-last (+ verb-list-last 1))
-   (if (> (length verb-list) verb-list-length)
-       (set! verb-list (drop verb-list (- (length verb-list) verb-list-length)))))
+   (set! verb-list-last (+fx verb-list-last 1))
+   (when (>fx (length verb-list) verb-list-length)
+       (set! verb-list (drop verb-list (-fx (length verb-list) verb-list-length)))))
 
+;*---------------------------------------------------------------------*/
+;*    message-list ...                                                 */
+;*---------------------------------------------------------------------*/
 (define (message-list port)
    (fprint port verb-list))
 
+;*---------------------------------------------------------------------*/
+;*    logcat-filter ...                                                */
+;*---------------------------------------------------------------------*/
 (define (logcat-filter req)
    (with-access::http-request req (abspath query timeout)
       (when (string-prefix? "/logcat" abspath)
