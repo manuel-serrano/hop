@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/src/parseargs.scm                 */
+;*    serrano/prgm/project/hop/2.2.x/src/parseargs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Jun 19 06:36:59 2010 (serrano)                */
+;*    Last change :  Thu Jul  8 15:26:51 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -221,6 +221,14 @@
 	    (unless p
 	       (error "hop" "Cannot open log file" log-file))
 	    (hop-log-file-set! p)))
+
+      ;; install the verb functions
+      (case (hop-verbose-output)
+	 ((buffer)
+	  (write-verb-set! write-verb-list)
+	  (hop-filter-add! logcat-filter))
+	 (else
+	  (write-verb-set! write-verb-error-port)))
 
       ;; mime types
       (when mimep

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Jul  6 15:23:58 2010 (serrano)                */
+;*    Last change :  Thu Jul  8 16:18:06 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -98,9 +98,9 @@ function hop_var_directory() { return \"" (hop-var-directory) "\"; }
 function hop_contribs_directory() { return \"" (hop-contribs-directory) "\"; }
 function hop_weblets_directory() { return \"" (hop-weblets-directory) "\"; }
 function hop_debug() { return " (integer->string (bigloo-debug)) "; }
-function hop_session() { return " (integer->string (hop-session))) "; }
+function hop_session() { return " (integer->string (hop-session)) "; }
 function hop_realm() { return \"" (hop-realm) "\"; }
-"))
+")))
 
 ;*---------------------------------------------------------------------*/
 ;*    preload-css ...                                                  */

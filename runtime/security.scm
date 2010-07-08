@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Wed Jul  7 13:35:33 2010 (serrano)                */
+;*    Last change :  Thu Jul  8 16:58:16 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -115,7 +115,7 @@
       (xml-write xml p (duplicate::xml-backend backend
 			  (security security-manager-tree-compare)))
       (let* ((s (close-output-port p))
-	     (ast (string->html s))
+	     (ast (skip-declaration (string->html s)))
 	     (cmp (compare-ast xml ast)))
 	 (if (pair? cmp)
 	     ;; the tree differs
@@ -123,16 +123,24 @@
 	      (instantiate::&hop-injection-error
 		 (proc "default-security-manager")
 		 (msg "Infected tree")
-		 (obj (cons (ast->string-list (car cmp))
+		 (obj (list (ast->string-list (car cmp))
 			    (ast->string-list (cdr cmp))))))
 	     ;; the tree are equivalent
 	     s))))
 
 ;*---------------------------------------------------------------------*/
+;*    skip-declaration ...                                             */
+;*---------------------------------------------------------------------*/
+(define (skip-declaration ast)
+   (match-case ast
+      (((declaration . ?-) ?rest) rest)
+      (else ast)))
+
+;*---------------------------------------------------------------------*/
 ;*    compare-ast ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (compare-ast ast1 ast2)
-   
+
    (define (normalize-ast ast)
       (if (pair? ast)
 	  (let ((l (filter (lambda (x)
@@ -149,8 +157,10 @@
 				  #t)))
 			   ast)))
 	     (match-case l
-		((?x) (normalize-ast x))
-		(else (map normalize-ast l))))
+		((?x)
+		 (normalize-ast x))
+		(else
+		 (map normalize-ast l))))
 	  ast))
    
    (define (ast-constant? a)
@@ -170,7 +180,14 @@
 	  (or (ast-constant? a2) (cons a1 a2)))
 	 ((list? a1)
 	  (if (and (list? a2) (=fx (length a1) (length a2)))
-	      (or (every? loop a1 a2) (cons a1 a2))
+	      (let liip ((a1 a1)
+			 (a2 a2))
+		 (if (null? a1)
+		     #t
+		     (let ((t (loop (car a1) (car a2))))
+			(if (pair? t)
+			    t
+			    (liip (cdr a1) (cdr a2))))))
 	      (cons a1 a2)))
 	 ((xml-markup? a1)
 	  (if (and (xml-markup? a2)
@@ -216,9 +233,9 @@
        (map ast->string-list ast))
       ((xml-markup? ast)
        (with-access::xml-markup ast (tag body)
-	  `(,tag ,@(map ast->string-list body))))
+	  `(,(symbol-append '< tag '>) ,@(map ast->string-list body))))
       ((symbol? ast)
-       (string-upcase (symbol->string ast)))
+       (symbol->string ast))
       (else
        (find-runtime-type ast))))
 

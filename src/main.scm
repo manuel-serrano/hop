@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Jul  7 16:06:30 2010 (serrano)                */
+;*    Last change :  Thu Jul  8 15:26:53 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -106,13 +106,6 @@
    (parse-args args)
    ;; set the hop process owner
    (set-hop-owner! (hop-user))
-   ;; install the verb functions
-   (case (hop-verbose-output)
-      ((buffer)
-       (write-verb-set! write-verb-list)
-       (hop-filter-add! logcat-filter))
-      (else
-       (write-verb-set! write-verb-error-port)))
    ;; hello world
    (hop-verb 1 "Hop v" (hop-version))
    (hop-verb 2

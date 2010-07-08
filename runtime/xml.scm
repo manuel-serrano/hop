@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Jul  7 08:41:43 2010 (serrano)                */
+;*    Last change :  Thu Jul  8 16:31:59 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -830,7 +830,7 @@
 			(let ((constr (string->symbol
 				       (string-append
 					"<"
-					(string-upcase! (symbol->string tag))
+					(string-upcase (symbol->string! tag))
 					">"))))
 			   (eval-markup constr attributes body)))))))
 
@@ -847,7 +847,7 @@
 			(let ((constr (string->symbol
 				       (string-append
 					"<"
-					(string-upcase! (symbol->string tag))
+					(string-upcase (symbol->string! tag))
 					">"))))
 			   (eval-markup constr attributes body)))))))
 
