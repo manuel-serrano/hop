@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Jul  9 10:31:37 2010 (serrano)                */
+;*    Last change :  Fri Jul  9 16:54:47 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -164,22 +164,21 @@
       (let ((req (current-request)))
 	 (if (http-proxy-request? req) 
 	     ;; this is a proxy request
-	     (<HEAD> :include "hop-error"
-		:base (format "http://~a:~a" (hostname) (hop-port)))
+	     (<HEAD> :base (format "http://~a:~a" (hostname) (hop-port)))
 	     ;; this is a local request
-	     (<HEAD> :include "hop-error")))
-      (<BODY> :class class
-	 (<DIV> :id "body-center"
+	     (<HEAD>)))
+      (<BODY> :style "background: #000; font-family: arial; color: black;"
+	 :hssclass "hop-error"
+	 (<DIV> :hssclass "hop-error" :class class
 	    (let* ((path (make-file-name (hop-icons-directory) icon))
 		   (epath (format "http://~a:~a~a" (hostname) (hop-port) path))
 		   (js (format "this.src = ~s" epath)))
 	       (<IMG> :src (img-base64-encode path)
-		  :id "icon"
 		  :alt icon
 		  :onerror (secure-javascript-attr js)))
-	    (<DIV> :id "message"
-	       (<DIV> :id "title" title)
-	       (<DIV> :id "msg" msg)
+	    (<DIV> 
+	       (<DIV> :hssclass "hop-error-title" title)
+	       (<DIV> :hssclass "hop-error-msg" msg)
 	       body)))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Fri Jul  9 11:11:29 2010 (serrano)                */
+;*    Last change :  Fri Jul  9 16:41:14 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -213,6 +213,23 @@
        (xml-compare-error a1 a2)))
 
 ;*---------------------------------------------------------------------*/
+;*    xml-compare ::xml-element ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (xml-compare a1::xml-markup a2::obj)
+   (cond
+      ((and (xml-markup? a2) (eq? (xml-markup-tag a1) (xml-markup-tag a2)))
+       (if (safe-attributes? a2)
+	   (xml-compare (normalize-ast (xml-markup-body a1))
+			(normalize-ast (xml-markup-body a2)))
+	   (xml-compare-error a1 a2)))
+      ((and (any? xml-tilde? (dom-get-attributes a1))
+	    (pair? a2) (pair? (cdr a2)) (null? (cddr a2))
+	    (xml-cdata? (cadr a2)))
+       (xml-compare a1 (car a2)))
+      (else
+       (xml-compare-error a1 (car a2)))))
+
+;*---------------------------------------------------------------------*/
 ;*    xml-compare ::xml-tilde ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-compare a1::xml-tilde a2)
@@ -265,15 +282,21 @@
        "_")
       ((list? ast)
        (map ast->string-list ast))
-      ((xml-markup? ast)
-       (with-access::xml-markup ast (tag body)
+      ((xml-element? ast)
+       (with-access::xml-element ast (tag body id)
 	  (let ((c (dom-get-attribute ast "class")))
 	     (if c
 		 `(,(symbol-append '< tag '>) :class
 		     ,(string-append "\"" c "\"")
+		     :id ,(format "\"~a\"" id)
 		     ,@(map ast->string-list body))
 		 `(,(symbol-append '< tag '>)
+		   :id ,(format "\"~a\"" id)
 		   ,@(map ast->string-list body))))))
+      ((xml-markup? ast)
+       (with-access::xml-markup ast (tag body)
+	  `(,(symbol-append '< tag '>)
+	    ,@(map ast->string-list body))))
       ((xml-tilde? ast)
        (with-access::xml-tilde ast (body)
 	  `(~ -)))
