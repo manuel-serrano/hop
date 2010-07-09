@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Jul  8 16:31:59 2010 (serrano)                */
+;*    Last change :  Fri Jul  9 08:02:37 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -28,8 +28,7 @@
 	    __hop_clientc
 	    __hop_priv
 	    __hop_read-js
-	    __hop_http-error
-	    __hop_security)
+	    __hop_http-error)
 
    (use     __hop_js-lib)
 
@@ -47,6 +46,15 @@
 	       (meta-format::bstring read-only)
 	       (abbrev-emptyp::bool (default #f))
 	       (security::obj read-only (default #f)))
+
+	    (class security-manager
+	       (name::bstring read-only (default "*"))
+	       (xml-sanitize::procedure read-only (default (lambda (xml) xml)))
+	       (string-sanitize::procedure read-only (default (lambda (s) s)))
+	       (attribute-sanitize::procedure read-only (default (lambda (a i) a)))
+	       (inline-sanitize::procedure read-only (default (lambda (n) n)))
+	       (script-sanitize::procedure read-only (default (lambda (n) n)))
+	       (runtime::pair-nil read-only (default '())))
 
 	    (class xml
 	       (%xml-constructor))
@@ -118,8 +126,6 @@
 	    (hop-xml-backend::xml-backend)
 	    (hop-xml-backend-set! ::obj)
 	    
-	    (hop-xml-backend-secure::xml-backend)
-
  	    (generic xml-write ::obj ::output-port ::xml-backend)
 	    (generic xml-write-attribute ::obj ::obj ::output-port ::xml-backend)
 	    (generic xml-write-expression ::obj ::output-port)
@@ -250,16 +256,6 @@
        *xhtml-backend*)
       (else
        (error "hop-get-xml-backend" "Illegal backend" id))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-xml-backend-secure ...                                       */
-;*---------------------------------------------------------------------*/
-(define (hop-xml-backend-secure)
-   (let ((be (hop-xml-backend)))
-      (if (<fx (hop-security) 1)
-	  be
-	  (duplicate::xml-backend be
-	     (security (hop-security-manager))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *xml-constructors* ...                                           */
@@ -408,7 +404,9 @@
        (with-access::xml-backend backend (security)
 	  (if (security-manager? security)
 	      (with-access::security-manager security (string-sanitize)
-		 (display (string-sanitize obj) p))
+		 (let ((s (string-sanitize obj)))
+		    (when (string? s)
+		       (display s p))))
 	      (display obj p))))
       ((number? obj)
        (display obj p))
@@ -529,8 +527,10 @@
       (display "<" p)
       (display tag p)
       (xml-write-attributes attributes p backend)
-      (with-access::xml-backend backend (meta-format mime-type)
-	 (fprintf p meta-format mime-type (hop-charset)))
+      (if (pair? (plist-assq :content attributes))
+	  (display ">" p)
+	  (with-access::xml-backend backend (meta-format mime-type)
+	     (fprintf p meta-format mime-type (hop-charset))))
       (newline p)))
 
 ;*---------------------------------------------------------------------*/
@@ -701,8 +701,8 @@
 	  =>
 	  (lambda (sm)
 	     (if (security-manager? sm)
-		 (let ((a ((security-manager-attribute-sanitize sm) (xml-attribute-encode attr) id)))
-		    (display a p))
+		 (let ((a (xml-attribute-encode attr)))
+		    (display ((security-manager-attribute-sanitize sm) a id) p))
 		 (error "xml-write-attribute" "Illegal security-manager" sm))))
 	 (else
 	  (display (xml-attribute-encode attr) p)))

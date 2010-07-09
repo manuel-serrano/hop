@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Jul  6 18:26:24 2010 (serrano)                */
+;*    Last change :  Fri Jul  9 11:04:38 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -116,6 +116,7 @@
 			      (onpanchange #unspecified)
 			      (browser 'auto)
 			      (server #f)
+			      (native #f)
 			      (attr)
 			      body)
 
@@ -165,37 +166,42 @@
 				     src))))))
 		  body))
 
-   (<DIV> :id id :class "hop-audio"
-      (when controls (<controls>))
-      (case browser
-	 ((flash)
-	  (list (<init> fid "audio.browserbackend = browserbackend;")
-		(<AUDIO:FLASH> :id fid)))
-	 ((html5)
-	  (list (<init> hid
-			"audio.browserbackend = hop_audio_html5_init(browserbackend);")
-		(<AUDIO:HTML5> :id hid)))
-	 ((none)
-	  (<init> fid "audio.browserbackend = false;"))
-	 ((auto)
-	  (list (<init> hid
-			(format "if(hop_config.html5_audio ) {
+   (if native
+       (<AUDIO:HTML5> :id id body)
+       (<DIV> :id id :class "hop-audio"
+	  (when controls (<controls>))
+	  (case browser
+	     ((flash)
+	      (list (<init> fid "audio.browserbackend = browserbackend;")
+		    (<AUDIO:FLASH> :id fid)))
+	     ((html5)
+	      (list (<init> hid
+			    "audio.browserbackend = hop_audio_html5_init(browserbackend);")
+		    (<AUDIO:HTML5> :id hid)))
+	     ((none)
+	      (<init> fid "audio.browserbackend = false;"))
+	     ((auto)
+	      (list (<init> hid
+			    (format "if(hop_config.html5_audio ) {
                                    hop_audio_html5_init(browserbackend);
                                    audio.browserbackend = browserbackend;
                                  } else 
                                   audio.browserbackend = document.getElementById( '~a' );" fid))
-		(<AUDIO:HTML5> :id hid (<AUDIO:FLASH> :id fid))))
-	 (else
-	  (error "<AUDIO>" "Illegal backend" browser)))))
+		    (<AUDIO:HTML5> :id hid (<AUDIO:FLASH> :id fid))))
+	     (else
+	      (error "<AUDIO>" "Illegal backend" browser))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO:HTML5> ...                                                */
+;*    -------------------------------------------------------------    */
+;*    The native attribute is a hack to let AUDIO nodes be comparable  */
+;*    by the tree comparison security manager.                         */
 ;*---------------------------------------------------------------------*/
 (define (<AUDIO:HTML5> #!key id  #!rest body)
    (instantiate::xml-element
       (id id)
-      (tag 'AUDIO)
-      (attributes '(:controls #f :autoplay #f))
+      (tag 'audio)
+      (attributes '(:controls #f :autoplay #f :native #t))
       (body body)))
    
 ;*---------------------------------------------------------------------*/

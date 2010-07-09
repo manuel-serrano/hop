@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Tue Jul  6 15:19:49 2010 (serrano)                */
+;*    Last change :  Fri Jul  9 07:52:57 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -71,8 +71,6 @@
 	   
 	   (class user)
 
-	   (class security-manager)
-	   
 	   (class %http-message)
 	   (class http-request)
 	   (class http-server-request)
@@ -96,7 +94,8 @@
 	   (class hop-service)
 
 	   (class xml-backend)
-
+	   (class security-manager)
+	   
 	   (class xml-http-request)
 	   
 	   (class xml)

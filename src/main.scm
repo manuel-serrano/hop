@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Jul  8 15:26:53 2010 (serrano)                */
+;*    Last change :  Fri Jul  9 08:05:10 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -123,7 +123,8 @@
 	     (if (hop-enable-fast-server-event)
 		 (format ", comet-port:~a" (hop-fast-server-event-port))
 		 "")
-	     ", security:" (hop-security))
+	     ", security:" (security-manager-name (hop-security-manager))
+	     " [" (hop-security) "]")
    (hop-verb 3 ", session:" (hop-session))
    (hop-verb 1 "\n")
    ;; install the builtin filters

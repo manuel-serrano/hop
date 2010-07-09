@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Thu Jul  8 16:58:16 2010 (serrano)                */
+;*    Last change :  Fri Jul  9 11:11:29 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -22,22 +22,19 @@
 	    __hop_configure
 	    __hop_types
 	    __hop_misc
-	    __hop_xml)
+	    __hop_xml
+	    __hop_dom
+	    __hop_http-error)
 
-   (export  (class security-manager
-	       (xml-sanitize::procedure read-only)
-	       (string-sanitize::procedure read-only)
-	       (attribute-sanitize::procedure read-only)
-	       (inline-sanitize::procedure read-only)
-	       (script-sanitize::procedure read-only)
-	       (runtime::pair-nil read-only))
+   (export  (secure-javascript-attr ::obj)
 
-	    (secure-javascript-attr ::obj)
+	    (hop-xml-backend-secure::xml-backend)
 
 	    (hop-security-manager::obj)
 	    (hop-security-manager-set! ::obj)
 
-	    (xml-tree-compare::bstring ::obj ::xml-backend)
+	    (xml-tree-compare::obj ::obj ::xml-backend)
+	    (generic xml-compare a1::obj a2::obj)
 	    (xml-attribute-sanitize ::obj ::obj)
 	    (xml-string-sanitize::bstring ::bstring)))
 
@@ -50,13 +47,24 @@
        obj))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-xml-backend-secure ...                                       */
+;*---------------------------------------------------------------------*/
+(define (hop-xml-backend-secure)
+   (let ((be (hop-xml-backend)))
+      (if (<fx (hop-security) 1)
+	  be
+	  (duplicate::xml-backend be
+	     (security (hop-security-manager))))))
+
+;*---------------------------------------------------------------------*/
 ;*    security-manager-default ...                                     */
 ;*---------------------------------------------------------------------*/
 (define security-manager-default 
    (instantiate::security-manager
+      (name "Unsecure")
       (xml-sanitize (lambda (xml be) xml))
-      (string-sanitize xml-string-sanitize)
-      (attribute-sanitize xml-attribute-sanitize)
+      (string-sanitize (lambda (s) s))
+      (attribute-sanitize (lambda (a id) a))
       (inline-sanitize (lambda (n) n))
       (script-sanitize (lambda (n) n))
       (runtime '())))
@@ -66,11 +74,12 @@
 ;*---------------------------------------------------------------------*/
 (define security-manager-tree-compare
    (instantiate::security-manager
+      (name "_")
       (xml-sanitize xml-tree-compare)
-      (string-sanitize (lambda (s) s))
+      (string-sanitize (lambda (s) "_"))
       (inline-sanitize (lambda (n) n))
       (script-sanitize (lambda (n) n))
-      (attribute-sanitize (lambda (attr id) "_"))
+      (attribute-sanitize (lambda (a id) "_"))
       (runtime '())))
 
 ;*---------------------------------------------------------------------*/
@@ -110,23 +119,32 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-tree-compare ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (xml-tree-compare::bstring xml backend)
+(define (xml-tree-compare::obj xml backend)
    (let ((p (open-output-string)))
       (xml-write xml p (duplicate::xml-backend backend
 			  (security security-manager-tree-compare)))
       (let* ((s (close-output-port p))
-	     (ast (skip-declaration (string->html s)))
-	     (cmp (compare-ast xml ast)))
-	 (if (pair? cmp)
-	     ;; the tree differs
-	     (raise
-	      (instantiate::&hop-injection-error
-		 (proc "default-security-manager")
-		 (msg "Infected tree")
-		 (obj (list (ast->string-list (car cmp))
-			    (ast->string-list (cdr cmp))))))
-	     ;; the tree are equivalent
-	     s))))
+	     (ast (skip-declaration (string->html s))))
+	 (with-handler
+	    (lambda (e)
+	       (when (&hop-injection-error? e)
+		  (let ((p (open-output-file "/tmp/FOO.good")))
+		     (xml-write xml p (duplicate::xml-backend backend
+					 (security security-manager-tree-compare)))
+		     (close-output-port p))
+		  (let ((p (open-output-file "/tmp/FOO.bad")))
+		     (xml-write ast p (duplicate::xml-backend backend
+					 (security security-manager-tree-compare)))
+		     (close-output-port p)))
+	       (let ((rep (http-error e)))
+		  (if (http-response-hop? rep)
+		      (begin
+			 (exception-notify e)
+			 (http-response-hop-xml rep))
+		      (raise e))))
+	    (begin
+	       (xml-compare (normalize-ast xml) (normalize-ast ast))
+	       xml)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    skip-declaration ...                                             */
@@ -137,77 +155,74 @@
       (else ast)))
 
 ;*---------------------------------------------------------------------*/
-;*    compare-ast ...                                                  */
+;*    xml-compare-error ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (compare-ast ast1 ast2)
+(define (xml-compare-error a1 a2)
+   (raise
+    (instantiate::&hop-injection-error
+       (proc "xml-compare")
+       (msg "Infected tree")
+       (obj (format "\n tree1: ~a\n tree2: ~a" (ast->string-list a1) (ast->string-list a2))))))
 
-   (define (normalize-ast ast)
-      (if (pair? ast)
-	  (let ((l (filter (lambda (x)
-			      (match-case x
-				 ((? xml?)
-				  #t)
-				 ((? string?)
-				  #t)
-				 ((? number?)
-				  #t)
-				 (((and ?sym (? symbol?)) . ?val)
-				  (not (eq? sym 'declaration)))
-				 (else
-				  #t)))
-			   ast)))
-	     (match-case l
-		((?x)
-		 (normalize-ast x))
-		(else
-		 (map normalize-ast l))))
-	  ast))
+;*---------------------------------------------------------------------*/
+;*    xml-compare ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-compare a1::obj a2::obj)
    
    (define (ast-constant? a)
       (or (string? a)
 	  (number? a)
 	  (symbol? a)
+	  (null? a)
 	  (and (list? a) (every ast-constant? a))))
    
-   (let loop ((a1 (normalize-ast ast1))
-	      (a2 (normalize-ast ast2)))
-      (cond
-	 ((null? a1)
-	  (or (null? a2) (cons a1 a2)))
-	 ((null? a2)
-	  (cons a1 a2))
-	 ((ast-constant? a1)
-	  (or (ast-constant? a2) (cons a1 a2)))
-	 ((list? a1)
-	  (if (and (list? a2) (=fx (length a1) (length a2)))
-	      (let liip ((a1 a1)
-			 (a2 a2))
-		 (if (null? a1)
-		     #t
-		     (let ((t (loop (car a1) (car a2))))
-			(if (pair? t)
-			    t
-			    (liip (cdr a1) (cdr a2))))))
-	      (cons a1 a2)))
-	 ((xml-markup? a1)
-	  (if (and (xml-markup? a2)
-		   (eq? (xml-markup-tag a1) (xml-markup-tag a2)))
-	      (if (safe-attributes? a2)
-		  (loop (normalize-ast (xml-markup-body a1))
+   (cond
+      ((ast-constant? a1)
+       (unless (ast-constant? a2)
+	  (xml-compare-error a1 a2)))
+      ((list? a1)
+       (if (and (list? a2) (=fx (length a1) (length a2)))
+	   (let liip ((a1 a1)
+		      (a2 a2))
+	      (when (pair? a1)
+		 (xml-compare (normalize-ast (car a1)) (normalize-ast (car a2)))
+		 (liip (cdr a1) (cdr a2))))
+	   (xml-compare-error a1 a2)))
+      (else
+       (raise (instantiate::&io-parse-error
+		 (proc "comparse-ast")
+		 (msg "Illegal XML tree")
+		 (obj a1))))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-compare ::object ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (xml-compare a1::object a2::obj)
+   (unless (and (object? a2) (eq? (object-class a1) (object-class a2)))
+      (xml-compare-error a1 a2)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-compare ::xml-markup ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (xml-compare a1::xml-markup a2::obj)
+   (if (and (xml-markup? a2) (eq? (xml-markup-tag a1) (xml-markup-tag a2)))
+       (if (safe-attributes? a2)
+	   (xml-compare (normalize-ast (xml-markup-body a1))
 			(normalize-ast (xml-markup-body a2)))
-		  (raise (instantiate::&hop-injection-error
-			    (proc "default-security-manager")
-			    (msg "Illegal attributes")
-			    (obj (xml-markup-attributes a2)))))
-	      (cons a1 a2)))
-	 ((object? a1)
-	  (or (and (object? a2) (eq? (object-class a1) (object-class a2)))
-	      (cons a1 a2)))
-	 (else
-	  (raise (instantiate::&io-parse-error
-		    (proc "default-security-manager")
-		    (msg "Illegal XML tree")
-		    (obj a1)))))))
+	   (xml-compare-error a1 a2))
+       (xml-compare-error a1 a2)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-compare ::xml-tilde ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (xml-compare a1::xml-tilde a2)
+   (unless (and (xml-tilde? a1)
+		(xml-markup? a2)
+		(eq? (xml-markup-tag a2) 'script)
+		(pair? (xml-markup-body a2))
+		(string? (car (xml-markup-body a2)))
+		(null? (cdr (xml-markup-body a2))))
+      (xml-compare-error a1 a2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    safe-attributes? ...                                             */
@@ -223,17 +238,45 @@
 		   (loop (cddr a))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    normalize-ast ...                                                */
+;*---------------------------------------------------------------------*/
+(define (normalize-ast ast)
+   (if (pair? ast)
+       (match-case ast
+	  ((?x)
+	   (normalize-ast x))
+	  (else
+	   (let loop ((l (map normalize-ast ast)))
+	      (cond
+		 ((null? l)
+		  l)
+		 ((xml? (car l))
+		  (cons (car l) (loop (cdr l))))
+		 (else
+		  (loop (cdr l)))))))
+       ast))
+
+;*---------------------------------------------------------------------*/
 ;*    ast->string-list ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (ast->string-list ast)
    (cond
       ((or (string? ast) (number? ast))
-       "-")
+       "_")
       ((list? ast)
        (map ast->string-list ast))
       ((xml-markup? ast)
        (with-access::xml-markup ast (tag body)
-	  `(,(symbol-append '< tag '>) ,@(map ast->string-list body))))
+	  (let ((c (dom-get-attribute ast "class")))
+	     (if c
+		 `(,(symbol-append '< tag '>) :class
+		     ,(string-append "\"" c "\"")
+		     ,@(map ast->string-list body))
+		 `(,(symbol-append '< tag '>)
+		   ,@(map ast->string-list body))))))
+      ((xml-tilde? ast)
+       (with-access::xml-tilde ast (body)
+	  `(~ -)))
       ((symbol? ast)
        (symbol->string ast))
       (else

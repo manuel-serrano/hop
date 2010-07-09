@@ -1,91 +1,100 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-error.hss               */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-error.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jan 18 15:46:42 2006                          */
-/*    Last change :  Wed Aug 26 17:58:05 2009 (serrano)                */
-/*    Copyright   :  2006-09 Manuel Serrano                            */
+/*    Last change :  Fri Jul  9 10:31:54 2010 (serrano)                */
+/*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The CSS for showing errors.                                      */
 /*=====================================================================*/
 
-$(define border-color "#bbb")
-
 body {
-  background: #dfdfdf;
+  background: #ccc;
   font-family: arial;
   color: black;
 }
 
-img {
-  padding: 20px;
-}
-
-table.error {
-  width: 45em;
-  margin-top: 50px;
-  padding: 10px;
-  border: 1px solid $border-color;
+#body-center {
+  top: 3ex;
+  left: 4em;
+  right: 4em;
+  min-height: 75ex;
+  max-height: 75ex;
   background: white;
-  color: black;
-  -moz-border-radius: 0.5em;
+  border: 4px dashed;
+  position: absolute;
+  overflow: hidden;
 }
 
-table.error table {
-  width: 35em;
+body #body-center {
+  border-color: red;
 }
 
-td {
-  vertical-align: top;
+body.warning #body-center {
+  border-color: darkorange;
 }
 
-table.error td {
-  font-weight: bold;
+body.notfound #body-center {
+  border-color: blue;
 }
 
-table.error td.title {
+body.security #body-center {
+  border-color: #f00;
+}
+
+body.remote #body-center {
+  border-color: orange;
+}
+
+img#icon {
+  position: absolute;
+  left: 24px;
+  top: 20px;
+}
+
+div#message {
+  position: absolute;
+  left: 96px; 
+  top: 20px;
+  right: 1em;
+  bottom: 1ex;
+}
+  
+div#title {
   font-size: x-large;
   font-weight: bold;
-  padding-bottom: 1px;
+  border-bottom: 1px solid #bbb;
+  color: red;
 }
 
-table.error td.msg {
-  width: 35em;
+div#msg {
   margin-bottom: 20px;
   margin-top: 20px;
   padding-bottom: 20px;
   padding-top: 20px;
-  border-bottom: 1px solid $border-color;
-  border-top: 1px solid $border-color;
   font-family: sans-serif;
+  font-weight: bold;
 }
 
-table.error td.msg tt {
+div#msg tt {
+  font-weight: 200;
   font-size: large;
 }
 
-table.error td.dump {
-  padding-top: 20px;
+pre {
+  overflow: auto;
+  min-height: 80ex;
+  max-height: 80ex;
+  border: 1px dashed #bbb;
+  background-color: #ffe;
+  font-size: 8pt;
+  color: #333;
+  font-weight: 200;
+  padding-bottom: 5ex;
+  padding: 2px;
 }
 
-table.error td.dump pre {
-  font-size: large;
-}
-
-td.request-info {
-  padding-left: 10px;
-  text-align: left;
-}
-
-td.request-info table th {
-  font-size: small;
-}
-
-td.request-info tt {
-  font-size: large;
-  color: blue;
-}
-
-span.filenotfound {
+pre.notfound {
   color: blue;
 }

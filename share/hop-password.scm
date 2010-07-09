@@ -1,10 +1,10 @@
 ;; Generated file, don't edit
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/share/hop-password.scm            */
+;*    serrano/prgm/project/hop/2.1.x/runtime/password.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 29 10:14:56 2010                          */
-;*    Last change :  Sat Jun 19 06:35:15 2010 (serrano)                */
+;*    Last change :  Sat Jun 19 06:25:50 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Password encryption (shared by client and server code).          */

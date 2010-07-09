@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/http-error.scm            */
+;*    serrano/prgm/project/hop/2.2.x/runtime/http_error.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Apr 23 08:18:06 2010 (serrano)                */
+;*    Last change :  Fri Jul  9 10:31:37 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -31,9 +31,7 @@
 	    __hop_hop
 	    __hop_security)
    
-   (export  (http-request-error::%http-response ::&error)
-	    (http-error::%http-response ::obj ::http-request)
-	    (http-unknown-host host)
+   (export  (generic http-error::%http-response ::obj)
 	    (http-file-not-found file)
 	    (http-service-not-found file)
 	    (http-permission-denied file)
@@ -48,148 +46,7 @@
 	    (http-internal-warning e)
 	    (http-service-unavailable obj)
 	    (http-remote-error ::obj ::&exception)
-	    (http-gateway-timeout e)
-	    (http-security-error e::&hop-security-error)))
-
-;*---------------------------------------------------------------------*/
-;*    http-request-error ...                                           */
-;*---------------------------------------------------------------------*/
-(define (http-request-error e::&error)
-   (cond
-      ((&io-unknown-host-error? e)
-       (http-unknown-host (&error-obj e)))
-      ((&hop-method-error? e)
-       (http-method-error (&error-obj e)))
-      ((&io-error? e)
-       (http-io-error e))
-      (else
-       (http-bad-request
-	(with-error-to-string
-	   (lambda ()
-	      (error-notify e)))))))
-
-;*---------------------------------------------------------------------*/
-;*    http-error ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (http-error e::obj req::http-request)
-   (let* ((ths "text-align: right; color: #777")
-	  (msg (<TABLE> :style "font-size: 12pt"
-		  (<COLGROUP> (<COL> :width "0*"))
-		  (<TR>
-		     (<TD> :style ths "host:")
-		     (<TD> (<TT> :style "font-size: 10pt; font-weight: bold"
-			      (http-request-host req) ":" (http-request-port req))))
-		  (<TR>
-		     (<TD> :style ths "path:")
-		     (<TD> (<TT> :style "font-size: 9pt"
-			      (html-string-encode (http-request-path req))))))))
-      (cond
-	 ((&io-unknown-host-error? e)
-	  (http-unknown-host (&error-obj e)))
-	 ((&io-file-not-found-error? e)
-	  (http-file-not-found (&error-obj e)))
-	 ((&io-error? e)
-	  (http-io-error e))
-	 (else
-	  (http-internal-error e msg)))))
-
-;*---------------------------------------------------------------------*/
-;*    <ERRTABLE>                                                       */
-;*---------------------------------------------------------------------*/
-(define (<ERRTABLE> logo msg)
-   (<TABLE> :style "background: #FFFFF7; border-bottom: 1px solid #ccc; width: 100%; font-family: arial; font-size: 10pt"
-      (<TR>
-	 (<TD> :style "height: 64px; width: 64px; vertical-align: top; padding-top: 10px; text-align: center"
-	    logo)
-	 (<TD>
-	    (<TABLE> :style "width: 100%"
-	       (<TR> (<TD> :style "font-size: 20pt; font-weight: bold; color: red" "Server Error"))
-	       (<TR> (<TD> :class "msg" msg)))))))
-   
-;*---------------------------------------------------------------------*/
-;*    <EHEAD> ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (<EHEAD> req)
-   (if (http-proxy-request? req) 
-       ;; this is a proxy request
-       (<HEAD> :include "hop-error"
-	  :base (format "http://~a:~a" (hostname) (hop-port)))
-       ;; this is a local request
-       (<HEAD> :include "hop-error")))
-   
-;*---------------------------------------------------------------------*/
-;*    <EIMG> ...                                                       */
-;*---------------------------------------------------------------------*/
-(define (<EIMG> #!key src req)
-   (let* ((path (make-file-name (hop-icons-directory) src))
-	  (epath (format "http://~a:~a~a" (hostname) (hop-port) path))
-	  (js (format "this.src = ~s" epath)))
-      (<IMG> :src (img-base64-encode path)
-	 :alt src
-	 :onerror (secure-javascript-attr js))))
-
-;*---------------------------------------------------------------------*/
-;*    <ESPAN> ...                                                      */
-;*---------------------------------------------------------------------*/
-(define-xml-compound <ESPAN> ((class #f)
-			      body)
-   (<SPAN> :class class
-      (if (and (pair? body) (string? (car body)))
-	  (html-string-encode (car body))
-	  "")))
-
-;*---------------------------------------------------------------------*/
-;*    <ETD> ...                                                        */
-;*---------------------------------------------------------------------*/
-(define-xml-compound <ETD> ((id #unspecified string)
-			    (class #f)
-			    (style "" string)
-			    (valign 'middle)
-			    body)
-   (let* ((default (format "vertical-align: ~a; text-align: left;"
-			   valign))
-	  (add (cond
-		  ((not class)
-		   "")
-		  ((string=? class "title")
-		   "font-size: x-large;
-  font-weight: bold;
-  padding-bottom: 1px;
-  color: red;")
-		  ((string=? class "msg")
-		   "width: 35em;
-  margin-bottom: 20px;
-  margin-top: 20px;
-  padding-bottom: 20px;
-  padding-top: 20px;
-  font-family: sans-serif;")
-		  ((string=? class "dump")
-		   "padding-top: 20px;")
-		  (else
-		   ""))))
-      (apply <TD> :id (xml-make-id id 'ETD) :style (string-append style default add) body)))
-
-;*---------------------------------------------------------------------*/
-;*    <ETABLE> ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (<ETABLE> . args)
-   (<TABLE> :class "error"
-      :style "width: 50em; border: 1px solid #bbb; background: #fff; -moz-border-radius: 0.5em; border-radius: 0.5em; "
-      (<COLGROUP> (<COL> :width "0*"))
-      args))
-
-;*---------------------------------------------------------------------*/
-;*    <DUMP> ...                                                       */
-;*---------------------------------------------------------------------*/
-(define (<DUMP> obj)
-;*    (<PRE> :style "width: 70em; height: 50ex; overflow: auto; border: 1px dashed black; background-color: #ffe; padding: 4px; font-size: 8pt; color: #333; font-weight: 200;" obj)) */
-   (<PRE> :style "width: 100%; height: 80ex; border: 1px dashed #ccc; background-color: #ffe; overflow: auto; font-size: 8pt; color: #333; font-weight: 200;" obj))
-
-;*---------------------------------------------------------------------*/
-;*    title-style ...                                                  */
-;*---------------------------------------------------------------------*/
-(define title-style
-   "font-size: x-large; font-weight: bold; padding-bottom: 1px;")
+	    (http-gateway-timeout e)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *anonymous-request* ...                                          */
@@ -219,9 +76,27 @@
 	      ,(string-append "HTTP/1.1 " msg)))))
 
 ;*---------------------------------------------------------------------*/
-;*    http-unknown-host ...                                            */
+;*    http-error ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (http-unknown-host host)
+(define-generic (http-error e::obj)
+   (let* ((req (current-request))
+	  (ths "text-align: right; color: #777")
+	  (msg (<TABLE> :style "font-size: 12pt"
+		  (<COLGROUP> (<COL> :width "0*"))
+		  (<TR>
+		     (<TD> :style ths "host:")
+		     (<TD> (<TT> :style "font-size: 10pt; font-weight: bold"
+			      (http-request-host req) ":" (http-request-port req))))
+		  (<TR>
+		     (<TD> :style ths "path:")
+		     (<TD> (<TT> :style "font-size: 9pt"
+			      (html-string-encode (http-request-path req))))))))
+      (http-internal-error e msg)))
+
+;*---------------------------------------------------------------------*/
+;*    http-error ::&io-unknown-host-error ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (http-error e::&io-unknown-host-error)
    (let ((req (or (current-request) (anonymous-request))))
       (instantiate::http-response-hop
 	 (start-line (http-start-line req "404 Not Found"))
@@ -230,20 +105,82 @@
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (charset (hop-charset))
-	 (xml (<HTML>
-		 (<EHEAD> (current-request))
-		 (<BODY> :style "background: #ccc; padding-top: 3ex"
-		    (<CENTER>
-		       (<ETABLE>
-			  (<TR>
-			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src "error2.png" :req req))
-			     (<ETD>
-				(<TABLE> :width "100%"
-				   (<TR> (<ETD> :class "title" "Unknown Host"))
-				   (<TR> (<ETD> :class "msg"
-					    (<ESPAN> :class "filenotfound"
-					       host))))))))))))))
+	 (xml (<HTML-ERROR>
+		 :class "remote"
+		 :icon "error2.png"
+		 :title "Unknown Host!"
+		 :msg  (list (&error-msg e) ": "
+			     (<TT> :class "notfound" (&error-obj e)))
+		 (<PRE> (with-error-to-string
+			   (lambda ()
+			      (exception-notify e)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-error ::&io-file-not-found-error ...                        */
+;*---------------------------------------------------------------------*/
+(define-method (http-error e::&io-file-not-found-error)
+   (http-file-not-found (&error-obj e)))
+
+;*---------------------------------------------------------------------*/
+;*    http-error ::&io-error ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (http-error e::&io-error)
+   (http-io-error e))
+
+;*---------------------------------------------------------------------*/
+;*    http-error ::&hop-method-error ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (http-error e::&hop-method-error)
+   (http-method-error (&error-obj e)))
+
+;*---------------------------------------------------------------------*/
+;*    http-error ::&hop-security-error ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (http-error e::&hop-security-error)
+   (let ((s (with-error-to-string (lambda () (error-notify e))))
+	 (req (current-request)))
+      (instantiate::http-response-hop
+	 (request req)
+	 (start-line (http-start-line req "200 ok"))
+	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	 (backend (hop-xml-backend))
+	 (content-type (xml-backend-mime-type (hop-xml-backend)))
+	 (charset (hop-charset))
+	 (xml (<HTML-ERROR> :icon "privacy.png"
+		 :class "security"
+		 :title "Security Error"
+		 :msg (&error-msg e)
+		 (<PRE> (html-string-encode s)))))))
+
+;*---------------------------------------------------------------------*/
+;*    <HTML-ERROR> ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <HTML-ERROR> ((class "error")
+				   (icon "error.png")
+				   (title "error")
+				   (msg "")
+				   body)
+   (<HTML>
+      (let ((req (current-request)))
+	 (if (http-proxy-request? req) 
+	     ;; this is a proxy request
+	     (<HEAD> :include "hop-error"
+		:base (format "http://~a:~a" (hostname) (hop-port)))
+	     ;; this is a local request
+	     (<HEAD> :include "hop-error")))
+      (<BODY> :class class
+	 (<DIV> :id "body-center"
+	    (let* ((path (make-file-name (hop-icons-directory) icon))
+		   (epath (format "http://~a:~a~a" (hostname) (hop-port) path))
+		   (js (format "this.src = ~s" epath)))
+	       (<IMG> :src (img-base64-encode path)
+		  :id "icon"
+		  :alt icon
+		  :onerror (secure-javascript-attr js)))
+	    (<DIV> :id "message"
+	       (<DIV> :id "title" title)
+	       (<DIV> :id "msg" msg)
+	       body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-file-not-found ...                                          */
@@ -256,26 +193,17 @@
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (backend (hop-xml-backend))
 	 (charset (hop-charset))
-	 (xml (<HTML>
-		 (<EHEAD> (current-request))
-		 (<BODY> :style "background: #ccc; padding-top: 3ex"
-		    (<CENTER>
-		       (<ETABLE>
-			  (<TR>
-			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src "error2.png" :req req))
-			     (<ETD>
-				(<TABLE> :width "100%"
-				   (<TR> (<ETD> :class "title"
-					    "File not found!"))
-				   (<TR> (<ETD> :class "msg"
-					    (<ESPAN> :class "filenotfound"
-					       file))))))))))))))
+	 (xml (<HTML-ERROR>
+		 :class "notfound"
+		 :icon "error2.png"
+		 :title "File Not Found!"
+		 :msg (<TT> :class "notfound" file))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-service-not-found ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (http-service-not-found file)
+   
    (define (illegal-service key msg)
       (let ((req (or (current-request) (anonymous-request))))
 	 (instantiate::http-response-hop
@@ -284,24 +212,13 @@
 	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	    (backend (hop-xml-backend))
 	    (content-type (xml-backend-mime-type (hop-xml-backend)))
-	    (xml (<HTML>
-		    (<EHEAD> (current-request))
-		    (<BODY> :style "background: #ccc; padding-top: 3ex"
-		       (<CENTER>
-			  (<ETABLE>
-			     (<TR>
-				(<ETD> :class "logo" :valign 'top
-				   (<EIMG> :src "error.png" :req req))
-				(<ETD>
-				   (<TABLE> :width "100%"
-				      (<TR> (<ETD> :class "title"
-					       (format "~a service!"
-						       (string-capitalize key))))
-				      (<TR> (<ETD> :class "msg"
-					       (<ESPAN> :class "filenotfound"
-						  file)))
-				      (<TR> (<ETD> :class "dump"
-					       (<SPAN> msg))))))))))))))
+	    (xml (<HTML-ERROR>
+		    :class "notfound"
+		    :icon "error.png"
+		    :title (format "~a service!" (string-capitalize key))
+		    :msg (<TT> :class "notfound" file)
+		    msg)))))
+
    (define (illegal-service-message msg)
       (format "You are trying to execute an ~a service!
 <br><br>
@@ -309,6 +226,7 @@ This is generally due to a restart of the server.
 On restart the server invalidates all anonymous services that hence
 can no longer be executed.<br><br>
 Reloading the page is the only way to fix this problem." msg))
+   
    (let ((svc (make-file-name (hop-service-base) (hop-service-weblet-name))))
       (cond
 	 ((expired-service-path? file)
@@ -385,69 +303,30 @@ a timeout which has now expired. The service is then no longer available."))
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (charset (hop-charset))
-	 (xml (<HTML>
-		 (<EHEAD> (current-request))
-		 (<BODY> :style "background: #ccc; padding-top: 3ex"
-		    (<ERRTABLE>
-		       (<EIMG> :src (if (&io-timeout-error? e)
-					"timeout.png"
-					"error.png")
-			  :req req)
-		       msg)
-		    (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px; background: white; overflow: visible"
-		       (<DIV> :style "font-weight: bold" "Server message:")
-		       (<DUMP> (html-string-encode s)))))))))
+	 (xml (<HTML-ERROR>
+		 :icon (if (&io-timeout-error? e) "timeout.png" "error.png")
+		 :title "Internal Error"
+		 :msg msg
+		 (<PRE> (html-string-encode s)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    http-service-error ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (http-service-error req service m)
-   (let* ((ths "text-align: right; color: #777")
-	  (info (<TABLE>
-		  (<TR>
-		     (<ETD> "An error occured while responding to"))
-		  (<TR>
-		     (<ETD>
-			:class "request-info"
-			(<TABLE> :width "100%"
-			   (<COLGROUP> (<COL> :width "0*"))
-			   (<TR>
-			      (<TD> :style ths "host:")
-			      (<ETD> (<TT> (http-request-host req))))
-			   (<TR>
-			      (<TD> :style ths "port:")
-			      (<ETD> (<TT> (http-request-port req))))
-			   (<TR>
-			      (<TH> :style ths "service:")
-			      (<ETD> (<TT> service)))
-			   (<TR>
-			      (<TH> :style ths "filter:")
-			      (<ETD> (<TT> (hop-request-service-name req))))))))))
-      (instantiate::http-response-hop
-	 (request req)
-	 (start-line (http-start-line req "400 Bad Request"))
-	 (backend (hop-xml-backend))
-	 (content-type (xml-backend-mime-type (hop-xml-backend)))
-	 (charset (hop-charset))
-	 (xml (<HTML>
-		 (<EHEAD> req)
-		 (<BODY> :style "background: #ccc; padding-top: 3ex"
-		    (<CENTER>
-		       (<ETABLE>
-			  (<TR>
-			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src "error.png" :req req))
-			     (<ETD>
-				(<TABLE> :width "100%"
-				   (<TR>
-				      (<ETD> :class "title"
-					     "Hop service error"))
-				   (<TR>
-				      (<ETD> :class "msg"
-					     info))
-				   (<TR>
-				      (<ETD> :class "dump"
-					     (<DUMP> (html-string-encode m)))))))))))))))
+   (instantiate::http-response-hop
+      (request req)
+      (start-line (http-start-line req "400 Bad Request"))
+      (backend (hop-xml-backend))
+      (content-type (xml-backend-mime-type (hop-xml-backend)))
+      (charset (hop-charset))
+      (xml (<HTML-ERROR>
+	      :title "Hop Service Error"
+	      :msg (list "An error occured while responding to"
+			 (<TT> "http://" (http-request-host req)
+			       ":" (http-request-port req)
+			       (hop-service-base) service)
+			 ", " (<TT> (hop-request-service-name req)))
+	      (<PRE> (html-string-encode m))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-invalidated-service-error ...                               */
@@ -460,29 +339,16 @@ a timeout which has now expired. The service is then no longer available."))
       (backend (hop-xml-backend))
       (content-type (xml-backend-mime-type (hop-xml-backend)))
       (charset (hop-charset))
-      (xml (<HTML>
-	      (<EHEAD> req)
-	      (<BODY> :style "background: #ccc; padding-top: 3ex"
-		 (<CENTER>
-		    (<ETABLE>
-		       (<TR>
-			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "stop.png" :req req))
-			  (<ETD>
-			     (<TABLE> :width "100%"
-				(<TR> (<ETD> :class "title"
-					     "Invalidated service!"
-					     ))
-				(<TR> (<ETD> :class "msg"
-					     (<SPAN> :class "filenotfound"
-						     (<TT> "(service ...)"))))
-				(<TR> (<ETD> :class "dump"
-					     (<SPAN> "You are trying to executed an unexisting or invalidated service!
+      (xml (<HTML-ERROR>
+	      :icon "stop.png"
+	      :title "Invalidated service!"
+	      :msg (<TT> (http-request-path req))
+	      (<DIV> "You are trying to executed an unexisting or invalidated service!
 <br><br>
 This is generally due to a restart of the server.
 On restart the server invalidates all anonymous services that hence
 can no longer be executed.<br><br>
-Reloading the page is the only way to fix this problem.")))))))))))))
+Reloading the page is the only way to fix this problem.")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-corrupted-service-error ...                                 */
@@ -495,24 +361,9 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (backend (hop-xml-backend))
       (content-type (xml-backend-mime-type (hop-xml-backend)))
       (charset (hop-charset))
-      (xml (<HTML>
-	      (<EHEAD> req)
-	      (<BODY> :style "background: #ccc; padding-top: 3ex"
-		 (<CENTER>
-		    (<ETABLE>
-		       (<TR>
-			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "error.png" :req req))
-			  (<ETD>
-			     (<TABLE> :width "100%"
-				(<TR> (<ETD> :class "title"
-					     "Corrupted service!"
-					     ))
-				(<TR> (<ETD> :class "msg"
-					     (<SPAN> :class "filenotfound"
-						     (<TT> "(service ...)"))))
-				(<TR> (<ETD> :class "dump"
-					     (<SPAN> "You are trying to executed an corrupted service!")))))))))))))
+      (xml (<HTML-ERROR>
+	    :title (list "Corrupted service!" (<TT> (http-request-path req)))
+	    (<DIV> "You are trying to executed an corrupted service!")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-internal-warning ...                                        */
@@ -537,22 +388,12 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (charset (hop-charset))
-	 (xml (<HTML>
-		 (<EHEAD> (current-request))
-		 (<BODY> :style "background: #ccc; padding-top: 3ex"
-		    (<CENTER>
-		       (<ETABLE>
-			  (<TR>
-			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src "warning.png" :req req))
-			     (<ETD>
-				(<TABLE> :width "100%"
-				   (<TR> (<ETD> :class "title"
-					    "Warning"))
-				   (<TR> (<ETD> :class "msg"
-					    msg))
-				   (<TR> (<ETD> :class "dump"
-					    (or dump ""))))))))))))))
+	 (xml (<HTML-ERROR>
+		 :class "warning"
+		 :icon "warning.png"
+		 :title "Warning"
+		 :msg (<TT> msg)
+		 (<PRE> dump))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-service-unavailable ...                                     */
@@ -568,22 +409,12 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (charset (hop-charset))
-	 (xml (<HTML>
-		 (<EHEAD> (current-request))
-		 (<BODY> :style "background: #ccc; padding-top: 3ex"
-		    (<CENTER>
-		       (<ETABLE>
-			  (<TR>
-			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src "error.png" :req req))
-			     (<ETD>
-				(<TABLE> :width "100%"
-				   (<TR> (<ETD> :class "title" "Service Unavailable"))
-				   (<TR> (<ETD> :class "msg" ""))
-				   (<TR> (<ETD> :class "dump"
-					    (<DUMP> (if (http-request? e)
-							(http-request-path e)
-							e)))))))))))))))
+	 (xml (<HTML-ERROR>
+		 :title "Service Unavailable"
+		 :msg (if (http-request? e)
+			    (http-request-path e)
+			    e)
+		 "")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-remote-error ...                                            */
@@ -598,23 +429,13 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (charset (hop-charset))
-	 (xml (<HTML>
-		 (<EHEAD> (current-request))
-		 (<BODY> :style "background: #ccc; padding-top: 3ex"
-		    (<CENTER>
-		       (<ETABLE>
-			  (<TR>
-			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src (if (&io-timeout-error? e)
-						 "timeout.png"
-						 "error.png")
-				   :req req))
-			     (<ETD>
-				(<TABLE> :width "100%"
-				   (<TR> (<ETD> :class "title" "An error occured while talking to a remote host"))
-				   (<TR> (<ETD> :class "msg" host))
-				   (<TR> (<ETD> :class "dump"
-					    (<DUMP> (html-string-encode s)))))))))))))))
+	 (xml (<HTML-ERROR>
+		 :class "remote"
+		 :icon (if (&io-timeout-error? e) "timeout.png" "error.png")
+		 :title "Remote Error"
+		 :msg (list "An error occured while talking to a remote host: "
+			    (<TT> host))
+		 (<PRE> (html-string-encode s)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-io-error ...                                                */
@@ -629,25 +450,11 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (charset (hop-charset))
-	 (xml (<HTML>
-		 (<EHEAD> (current-request))
-		 (<BODY> :style "background: #ccc; padding-top: 3ex"
-		    (<CENTER>
-		       (<ETABLE>
-			  (<TR>
-			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src (if (&io-timeout-error? e)
-						 "error2.png"
-						 "error.png")
-				   :req req))
-			     (<ETD>
-				(<TABLE> :width "100%"
-				   (<TR> (<ETD> :class "title" "IO Error"))
-				   (<TR> (<ETD> :class "msg"
-					    (list "Error type: "
-						  (find-runtime-type e))))
-				   (<TR> (<ETD> :class "dump"
-					    (<DUMP> (html-string-encode s)))))))))))))))
+	 (xml (<HTML-ERROR>
+		 :icon (if (&io-timeout-error? e) "error2.png" "error.png")
+		 :title "IO Error"
+		 :msg (list "Error type: " (<TT> (find-runtime-type e)))
+		 (<PRE> (html-string-encode s)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-gateway-timeout ...                                         */
@@ -658,35 +465,3 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (start-line "HTTP/1.0 502 Bad Gateway")
       (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Gateway Timeout ~a</body></html>" e))))
-
-;*---------------------------------------------------------------------*/
-;*    http-security-error ...                                          */
-;*---------------------------------------------------------------------*/
-(define (http-security-error e)
-   (let ((s (with-error-to-string (lambda () (error-notify e))))
-	 (req (current-request)))
-      (instantiate::http-response-hop
-	 (request req)
-	 (start-line (http-start-line req "200 ok"))
-	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-	 (backend (hop-xml-backend))
-	 (content-type (xml-backend-mime-type (hop-xml-backend)))
-	 (charset (hop-charset))
-	 (xml (<HTML>
-		 (<EHEAD> (current-request))
-		 (<BODY> :style "background: #ccc; padding-top: 3ex"
-		    (<CENTER>
-		       (<ETABLE>
-			  (<TR>
-			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src "privacy.png" :req req))
-			     (<ETD>
-				(<TABLE> :width "100%"
-				   (<TR> (<ETD> :class "title"
-					    "Security Error"))
-				   (<TR> (<ETD> :class "msg"
-					    (list "Error type: "
-						  (find-runtime-type e))))
-				   (<TR> (<ETD> :class "dump"
-					    (<DUMP> (html-string-encode s)))))))))))))))
-

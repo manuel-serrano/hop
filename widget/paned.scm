@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/widget/paned.scm                  */
+;*    serrano/prgm/project/hop/2.2.x/widget/paned.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Jun 19 06:38:00 2010 (serrano)                */
+;*    Last change :  Fri Jul  9 10:55:45 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -69,7 +69,7 @@
 		      (attr)
 		      body)
    (instantiate::html-pan
-      (tag 'PAN)
+      (tag 'pan)
       (id (xml-make-id id 'PAN))
       (klass class)
       (attributes attr)
@@ -129,3 +129,35 @@
       (display ">" p)
       (xml-write body p backend)
       (display "</div>" p)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-compare ::html-paned ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (xml-compare a1::html-paned a2)
+   
+   (define (xml-compare-pan c1 c2)
+      (if (and (xml-markup? c2) (eq? (xml-markup-tag c2) 'div))
+	  (let ((c2a (dom-first-child c2)))
+	     (if (and (xml-markup? c2) (eq? (xml-markup-tag c2) 'div))
+		 (xml-compare c1 (dom-first-child c2a))
+		 (call-next-method)))
+	  (call-next-method)))
+   
+   (if (and (xml-markup? a2)
+	    (equal? (dom-get-attribute a2 "hssclass") "hop-paned"))
+       (and (xml-compare-pan (car (html-paned-body a1))
+			     (dom-first-child a2))
+	    (xml-compare-pan (cadr (html-paned-body a1))
+			     (cadr (dom-child-nodes a2))))
+       (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-compare ::html-pan ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (xml-compare a1::html-pan a2)
+   (if (and (xml-markup? a2)
+	    (eq? (xml-markup-tag a2) 'div)
+	    (equal? (dom-get-attribute a2 "class") "hop-pan"))
+       (xml-compare (dom-child-nodes a1) (dom-child-nodes a2))
+       (call-next-method)))
+

@@ -208,3 +208,34 @@
       (xml-write head p backend)
       (display "</span>" p)))
 
+;*---------------------------------------------------------------------*/
+;*    xml-compare ::xml-nphead-element ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (xml-compare a1::xml-nphead-element a2)
+   (if (and (xml-markup? a2)
+	    (eq? (xml-markup-tag a2) 'div)
+	    (equal? (dom-get-attribute a2 "class") "hop-nphead"))
+       (xml-compare (xml-markup-body a1) (xml-markup-body a2))
+       (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-compare ::xml-nptabhead-element ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (xml-compare a1::xml-nptabhead-element a2)
+   (if (and (xml-markup? a2)
+	    (eq? (xml-markup-tag a2) 'span)
+	    (equal? (dom-get-attribute a2 "hssclass") "hop-nptab-head"))
+       (xml-compare (xml-markup-body a1) (xml-markup-body a2))
+       (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-compare ::xml-nptab-element ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (xml-compare a1::xml-nptab-element a2)
+   (if (and (xml-markup? a2)
+	    (eq? (xml-markup-tag a2) 'span)
+	    (equal? (dom-get-attribute a2 "hssclass") "hop-nptab")
+	    (let ((head (dom-first-child a2))
+		  (body (cadr (dom-child-nodes a2))))
+	       (xml-compare (cadr (dom-child-nodes a1)) head)))
+       (call-next-method)))

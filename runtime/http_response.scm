@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Jul  7 08:44:43 2010 (serrano)                */
+;*    Last change :  Fri Jul  9 08:18:13 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -223,20 +223,15 @@
       (with-access::http-response-hop r (request
 					 start-line header
 					 content-type charset server
-					 content-length
 					 xml bodyp timeout
 					 backend)
 	 (let ((connection (http-request-connection request))
 	       (p (socket-output socket))
-	       (clen content-length)
 	       (chunked (eq? (http-request-http request) 'HTTP/1.1)))
 	    (output-timeout-set! p timeout)
 	    (http-write-line-string p start-line)
 	    (http-write-header p header)
 	    (cond
-	       ((>elong clen #e0)
-		(http-write-line p "Content-Length: " clen)
-		(set! chunked #f))
 	       ((not chunked)
 		(set! connection 'close))
 	       ((eq? connection 'close)

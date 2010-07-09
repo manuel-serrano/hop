@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/src/pipeline.scm                  */
+;*    serrano/prgm/project/hop/2.2.x/src/pipeline.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Sat Jun 19 06:53:09 2010 (serrano)                */
+;*    Last change :  Fri Jul  9 08:35:00 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -207,9 +207,7 @@
 		   #unspecified)
 		;; we will try to answer the error to the client
 		(unless (&io-sigpipe-error? e)
-		   (let ((resp ((or (hop-http-request-error)
-				    http-request-error)
-				e)))
+		   (let ((resp ((or (hop-http-request-error) http-error) e)))
 		      (http-response resp sock)))))))
    
    ;; decrement the keep-alive number

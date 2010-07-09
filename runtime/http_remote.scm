@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/http_remote.scm           */
+;*    serrano/prgm/project/hop/2.2.x/runtime/http_remote.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sat Jun 19 06:40:48 2010 (serrano)                */
+;*    Last change :  Fri Jul  9 10:21:31 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -73,39 +73,18 @@
 	    (let* ((host (or (hop-use-proxy-host) host))
 		   (port (or (hop-use-proxy-port) port))
 		   (ssl (eq? scheme 'https))
-		   (remote (remote-get-socket host port connection-timeout request ssl))
-		   (rp (connection-output remote))
-		   (sp (socket-input socket)))
-	       ;; verb
-	       (if (connection-keep-alive remote)
-		   (hop-verb 3
-			     (hop-color request request " REMOTE.ka")
-			     " (alive since "
-			     (connection-request-id remote)
-			     ") " host ":" port "\n")
-		   (hop-verb 3
-			     (hop-color request request " REMOTE")
-			     " " host ":" port "\n"))
-	       (when (>fx remote-timeout 0)
-		  (output-timeout-set! rp remote-timeout)
-		  (input-timeout-set! (connection-input remote) remote-timeout))
-	       ;; this unwind-protect is just here for debugging
-	       ;; when the keep-alive remote connection is complete,
-	       ;; remove the unwind-protected block.
+		   (remote #f))
 	       (with-handler
 		  (lambda (e)
-		     (tprint "REMOTE ERROR: " e)
-		     (unless (&io-error? e)
-			(error-notify e))
-;* 		     (tprint "connection: keep-alive: "               */
-;* 			     (connection-keep-alive remote)           */
-;* 			     " wstart=" (connection-wstart? remote))   */
-		     (with-trace 4 'connection-close@handler
-;* 			(trace-item "remote=" remote)                  */
-;* 			(tprint "connection close/error "              */
-;* 				(connection-id remote))                */
-			(connection-close! remote))
+		     (unless (&io-error? e) (error-notify e))
+		     (when remote
+			(with-trace 4 'connection-close@handler
+			   (connection-close! remote)))
 		     (cond
+			((&io-unknown-host-error? e)
+			 (http-response (http-error e) socket))
+			((not remote)
+			 (raise e))
 			((connection-wstart? remote)
 			 ;; If we have already sent characters to the client
 			 ;; it is no longer possible to repl with "resource
@@ -124,33 +103,48 @@
 			(else
 			 ;; This is an unrecoverable error
 			 (http-response (http-remote-error host e) socket))))
-		  ;; the header and the request
-		  (with-trace 4 'http-response-header
-		     (trace-item "start-line: "
-				 (response-remote-start-line r))
-		     (remote-header header rp r)
-		     ;; if a char is ready and is eof, it means that the
-		     ;; connection is closed
-		     (if (connection-down? remote)
-			 (begin
-			    (with-trace 4 "connection-close@down"
-			       (trace-item "remote=" remote)
-;* 			       (tprint "connection close/down "        */
-;* 				       (connection-id remote))         */
-			       (connection-close! remote))
-			    (loop))
-			 (begin
-			    ;; the content of the request
-			    (when (>elong content-length #e0)
-			       (trace-item "send-chars.1 cl=" content-length)
-			       (send-chars sp rp content-length))
-			    (flush-output-port rp)
-			    ;; capture dumping
-			    (when (output-port? (hop-capture-port))
-			       (log-capture request r))
-			    (if (assq :xhr-multipart header)
-				(remote-multipart-body r socket remote)
-				(remote-body r socket remote)))))))))))
+		  (begin
+		     (set! remote (remote-get-socket host port connection-timeout request ssl))
+		     ;; verb
+		     (if (connection-keep-alive remote)
+			 (hop-verb 3
+				   (hop-color request request " REMOTE.ka")
+				   " (alive since "
+				   (connection-request-id remote)
+				   ") " host ":" port "\n")
+			 (hop-verb 3
+				   (hop-color request request " REMOTE")
+				   " " host ":" port "\n"))
+		     (let ((rp (connection-output remote))
+			   (sp (socket-input socket)))
+			(when (>fx remote-timeout 0)
+			   (output-timeout-set! rp remote-timeout)
+			   (input-timeout-set! (connection-input remote) remote-timeout))
+			;; the header and the request
+			(with-trace 4 'http-response-header
+			   (trace-item "start-line: "
+				       (response-remote-start-line r))
+			   (remote-header header rp r)
+			   ;; if a char is ready and is eof, it means that the
+			   ;; connection is closed
+			   (if (connection-down? remote)
+			       (begin
+				  (with-trace 4 "connection-close@down"
+				     (trace-item "remote=" remote)
+				     (connection-close! remote))
+				  (loop))
+			       (begin
+				  ;; the content of the request
+				  (when (>elong content-length #e0)
+				     (trace-item "send-chars.1 cl=" content-length)
+				     (send-chars sp rp content-length))
+				  (flush-output-port rp)
+				  ;; capture dumping
+				  (when (output-port? (hop-capture-port))
+				     (log-capture request r))
+				  (if (assq :xhr-multipart header)
+				      (remote-multipart-body r socket remote)
+				      (remote-body r socket remote)))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    log-capture ...                                                  */

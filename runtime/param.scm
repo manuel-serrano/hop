@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Jul  6 11:50:45 2010 (serrano)                */
+;*    Last change :  Fri Jul  9 10:00:40 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -1188,62 +1188,6 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-accept-kill
    #f)
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    hop-security-manager ...                                         *} */
-;* {*    -------------------------------------------------------------    *} */
-;* {*    The security manager is applied to AST forming a Hop response.   *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-parameter hop-security-manager                              */
-;*    #f                                                               */
-;*    (lambda (v)                                                      */
-;*       (if (not *hop-filters-open*)                                  */
-;* 	  (error "hop-security-manager-set!" "Security manager closed" #f) */
-;* 	  v)))                                                         */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    hop-security-script-purifier ...                                 *} */
-;* {*    -------------------------------------------------------------    *} */
-;* {*    The script purifier is applied to all <SCRIPT> nodes (when       *} */
-;* {*    security activiated).                                            *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-parameter hop-security-script-purifier                      */
-;*    (lambda (s)                                                      */
-;*       (error "hop-security-script-purifier" "no purifier specified" s)) */
-;*    (lambda (v)                                                      */
-;*       (cond                                                         */
-;* 	 ((not *hop-filters-open*)                                     */
-;* 	  (error "hop-security-script-purifier-set!"                   */
-;* 		 "Security script-purifier closed"                     */
-;* 		 v))                                                   */
-;* 	 ((not (and (procedure? v) (correct-arity? v 1)))              */
-;* 	  (bigloo-type-error 'hop-security-script-purifier-set!        */
-;* 			     "xml -> xml"                              */
-;* 			     v))                                       */
-;* 	 (else                                                         */
-;* 	  v))))                                                        */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    hop-security-inline-purifier ...                                 *} */
-;* {*    -------------------------------------------------------------    *} */
-;* {*    The inline purifier is applied to <INLINE> nodes that a given    *} */
-;* {*    resource list.                                                   *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-parameter hop-security-inline-purifier                      */
-;*    (lambda (el)                                                     */
-;*       (error "hop-security-inline-purifier" "no purifier specified" el)) */
-;*    (lambda (v)                                                      */
-;*       (cond                                                         */
-;* 	 ((not *hop-filters-open*)                                     */
-;* 	  (error "hop-security-script-purifier-set!"                   */
-;* 		 "Security script-purifier closed"                     */
-;* 		 v))                                                   */
-;* 	 ((not (and (procedure? v) (correct-arity? v 1)))              */
-;* 	  (bigloo-type-error 'hop-security-inline-purifier-set!        */
-;* 			     "xml -> xml"                              */
-;* 			     v))                                       */
-;* 	 (else                                                         */
-;* 	  v))))                                                        */
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-proxy-sniffer ...                                     */
