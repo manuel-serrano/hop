@@ -16,6 +16,9 @@ import java.lang.String;
 import java.util.ArrayList;
 import java.net.URL;
 import java.net.HttpURLConnection;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.ProtocolException;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -405,6 +408,7 @@ class HopLogView extends TextView {
     private Thread mPollingThread;
 
     private ByteQueue mByteQueue;
+    private BufferedReader rd;
 
     /**
      * Used to temporarily hold data received from the remote process. Allocated
@@ -437,10 +441,14 @@ class HopLogView extends TextView {
         mReceiveBuffer = new byte[4 * 1024];
         mByteQueue = new ByteQueue(4 * 1024);
 
-        logcat= new HttpURLConnection (new URL ("http://localhost:8080/logcat"));
+        logcat= (HttpURLConnection) new URL ("http://localhost:8080/logcat").openConnection ();
+        logcat.connect ();
+        rd= new BufferedReader (new InputStreamReader (logcat.getInputStream()));
     }
 
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged (w, h, oldw, oldh);
+
         Log.v(Term.LOG_TAG, "onSizeChanged()" + w + ":" + h);
         if (!mKnownSize) {
             mKnownSize = true;
@@ -451,11 +459,11 @@ class HopLogView extends TextView {
 
                 public void run() {
                     try {
-                        while(true) {
-                            int read = logcat.read(mBuffer);
-                            mByteQueue.write(mBuffer, 0, read);
-                            mHandler.sendMessage(
-                                    mHandler.obtainMessage(UPDATE));
+                        String line= rd.readLine ();
+                        while (line!=null) {
+                            mByteQueue.write (line, 0, line.length);
+                            mHandler.sendMessage (mHandler.obtainMessage (UPDATE));
+                            line= rd.readLine ();
                         }
                     } catch (IOException e) {
                     } catch (InterruptedException e) {
@@ -466,7 +474,6 @@ class HopLogView extends TextView {
             mPollingThread.setName("Input reader");
             mPollingThread.start();
         }
-        super (w, h, oldw, oldh);
     }
 
     /**
