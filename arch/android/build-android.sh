@@ -19,7 +19,7 @@ prefix=/data/data/fr.inria.hop
 install_prefix=$(pwd)/arch/android/assets
 libdir=$install_prefix/hoplib
 bgl_version=$(awk -F '=' '/^RELEASE/ { print $2 }' $XBGL_PREFIX/Makefile.config)
-hop_version=$(awk -F '[ =]*' '/^HOPRELEASE/ { print $2 }' etc/Makefile.hopconfig)
+hop_version=$(awk -F '[ =]*' '/^HOPRELEASE/ { print $2 }' etc/Makefile.hopconfig) || hop_version='booting'
 # reroot to the installed version of bigloo
 export XBGL_PREFIX=$XBGL_PREFIX/arch/android/usr
 export XBGL_LIBDIR=$XBGL_PREFIX/lib/bigloo/$bgl_version
@@ -49,6 +49,14 @@ if [ "$1" == "configure" -o "$1" == "all" ]; then
   if [ "$1" == "configure" ]; then
     shift
   fi
+fi
+
+if [ "$hop_version" == "booting" ]; then
+    echo
+    echo "[WARN]: We configured for the first time. Please rerun the script with params [$@]."
+    # why doesn't this work?
+    # exec "$0" "$@"
+    exit 0
 fi
 
 if [ "$1" == "build" -o "$1" == "all" ]; then
