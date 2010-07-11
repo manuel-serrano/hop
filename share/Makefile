@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.1.x/share/Makefile                    */
+#*    serrano/prgm/project/hop/2.2.x/share/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sun Jun 13 09:06:09 2010 (serrano)                */
+#*    Last change :  Sun Jul 11 08:19:33 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -37,7 +37,7 @@ RTS		= $(RTSCONFIG)
 #*    -------------------------------------------------------------    */
 #*    See hopscheme/hop-runtime.scm to add new modules.                */
 #*---------------------------------------------------------------------*/
-EXTRA		= hop-error.hss hop.hss \
+EXTRA		= hop.hss \
                   hop-fx.js hop-fx.hss \
                   hop-paned.hss hop-paned.js \
                   hop-sorttable.hss hop-sorttable.js \
