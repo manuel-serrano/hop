@@ -150,7 +150,7 @@ if [ "$1" == "prepare" -o "$1" == "all" ]; then
   install share/icons/hop-128x128.png "arch/android/res/drawable/icon.png"
   # don't install all the weblets
   for file in weblets/{wizard,hop,hz,shutdown,info,color,dashboard,home,hopsh,wiki,weblets}; do
-    install "$file" "$install_prefix/hoplib/hop/$major/weblets/$(basename $file)"
+    install "$file" "$install_prefix/hoplib/hop/$hop_version/weblets/$(basename $file)"
   done
 
   # throw in bigloo's libs too
