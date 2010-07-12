@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Jul  9 10:55:45 2010 (serrano)                */
+;*    Last change :  Fri Jul  9 16:31:45 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -137,18 +137,19 @@
    
    (define (xml-compare-pan c1 c2)
       (if (and (xml-markup? c2) (eq? (xml-markup-tag c2) 'div))
-	  (let ((c2a (dom-first-child c2)))
-	     (if (and (xml-markup? c2) (eq? (xml-markup-tag c2) 'div))
-		 (xml-compare c1 (dom-first-child c2a))
-		 (call-next-method)))
-	  (call-next-method)))
+	  (xml-compare c1 (dom-first-child c2))
+	  (begin
+	     (tprint "PAS GLOP: " (ast->string-list c2))
+	     (call-next-method))))
    
    (if (and (xml-markup? a2)
+	    (eq? (xml-markup-tag a2) 'div)
 	    (equal? (dom-get-attribute a2 "hssclass") "hop-paned"))
-       (and (xml-compare-pan (car (html-paned-body a1))
-			     (dom-first-child a2))
-	    (xml-compare-pan (cadr (html-paned-body a1))
-			     (cadr (dom-child-nodes a2))))
+       (let ((b (dom-first-child a2)))
+	  (xml-compare-pan (car (html-paned-body a1))
+			   (dom-first-child b))
+	  (xml-compare-pan (cadr (html-paned-body a1))
+			   (caddr (dom-child-nodes b))))
        (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
@@ -160,4 +161,36 @@
 	    (equal? (dom-get-attribute a2 "class") "hop-pan"))
        (xml-compare (dom-child-nodes a1) (dom-child-nodes a2))
        (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    ast->string-list ...                                             */
+;*---------------------------------------------------------------------*/
+(define (ast->string-list ast)
+   (cond
+      ((or (string? ast) (number? ast))
+       "_")
+      ((list? ast)
+       (map ast->string-list ast))
+      ((xml-element? ast)
+       (with-access::xml-element ast (tag body id)
+	  (let ((c (dom-get-attribute ast "class")))
+	     (if c
+		 `(,(symbol-append '< tag '>) :class
+		     ,(string-append "\"" c "\"")
+		     :id ,id
+		     ,@(map ast->string-list body))
+		 `(,(symbol-append '< tag '>)
+		   :id ,id
+		   ,@(map ast->string-list body))))))
+      ((xml-markup? ast)
+       (with-access::xml-markup ast (tag body)
+	  `(,(symbol-append '< tag '>)
+	    ,@(map ast->string-list body))))
+      ((xml-tilde? ast)
+       (with-access::xml-tilde ast (body)
+	  `(~ -)))
+      ((symbol? ast)
+       (symbol->string ast))
+      (else
+       (find-runtime-type ast))))
 

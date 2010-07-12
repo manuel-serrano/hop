@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Jul  9 08:02:37 2010 (serrano)                */
+;*    Last change :  Sun Jul 11 07:50:38 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -139,6 +139,7 @@
 	    (xml-tilde->expression::bstring ::xml-tilde)
 	    (xml-tilde->statement::bstring ::xml-tilde)
 	    (xml-tilde->return::bstring ::xml-tilde)
+	    (xml-tilde->attribute::bstring ::xml-tilde)
 
 	    (xml-tilde->sexp ::xml-tilde)
 	    (sexp->xml-tilde::xml-tilde expr)
@@ -715,7 +716,10 @@
    (when (xml-event-handler-attribute? id)
       (display (keyword->string! id) p)
       (display "='" p)
-      (display (xml-tilde->attribute attr) p)
+      (let ((sm (xml-backend-security backend)))
+	 (if (security-manager? sm)
+	     (display ((security-manager-attribute-sanitize sm) attr id) p)
+	     (display (xml-tilde->attribute attr) p)))
       (display "'" p)))
    
 ;*---------------------------------------------------------------------*/

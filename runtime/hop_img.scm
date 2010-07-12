@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hop_img.scm               */
+;*    serrano/prgm/project/hop/2.2.x/runtime/hop_img.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Sat Jun 19 06:18:58 2010 (serrano)                */
+;*    Last change :  Fri Jul  9 15:35:57 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -126,7 +126,7 @@
       (instantiate::xml-empty-element
 	 (tag 'img)
 	 (id (xml-make-id id 'img))
-	 (attributes `(if alt `(:alt ,alt ,@attributes) attributes))
+	 (attributes (if alt `(:alt ,alt ,@attributes) attributes))
 	 (body '())))
    
    (define (onerror-img attributes src)

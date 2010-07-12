@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop.css                     */
+/*    serrano/prgm/project/hop/2.2.x/share/hop.hss                     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Fri Feb  5 08:02:29 2010 (serrano)                */
+/*    Last change :  Fri Jul  9 16:54:04 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
@@ -43,4 +43,96 @@ mi {
 
 mo {
   font-family: cmr10;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Errors                                                           */
+/*---------------------------------------------------------------------*/
+div[hssclass=hop-error] {
+  top: 0;
+  left: 0;
+  right: 0;
+  position: absolute;
+  overflow: hidden;
+  min-height: 75ex;
+  max-height: 75ex;
+}
+
+body[hssclass=hop-error] div[hssclass=hop-error] {
+  top: 3ex;
+  left: 4em;
+  right: 4em;
+  background: white;
+  border: 4px dashed;
+  position: absolute;
+  overflow: hidden;
+  border-color: red;
+}
+
+div[hssclass=hop-error].warning {
+  border-color: darkorange;
+}
+
+div[hssclass=hop-error].notfound {
+  border-color: blue;
+}
+
+div[hssclass=hop-error].security {
+  border-color: #f00;
+}
+
+div[hssclass=hop-error].remote {
+  border-color: orange;
+}
+
+div[hssclass=hop-error] > img {
+  position: absolute;
+  left: 24px;
+  top: 20px;
+}
+
+div[hssclass=hop-error] > div {
+  position: absolute;
+  left: 96px; 
+  top: 20px;
+  right: 1em;
+  bottom: 1ex;
+}
+  
+div[hssclass=hop-error-title] {
+  font-size: x-large;
+  font-weight: bold;
+  border-bottom: 1px solid #bbb;
+  color: red;
+}
+
+div[hssclass=hop-error-msg] {
+  margin-bottom: 20px;
+  margin-top: 20px;
+  padding-bottom: 20px;
+  padding-top: 20px;
+  font-family: sans-serif;
+  font-weight: bold;
+}
+
+div[hssclass=hop-error-msg] tt {
+  font-weight: 200;
+  font-size: large;
+}
+
+div[hssclass=hop-error] pre {
+  overflow: auto;
+  min-height: 80ex;
+  max-height: 80ex;
+  border: 1px dashed #bbb;
+  background-color: #ffe;
+  font-size: 8pt;
+  color: #333;
+  font-weight: 200;
+  padding-bottom: 5ex;
+  padding: 2px;
+}
+
+div[hssclass=hop-error] tt.notfound {
+  color: blue;
 }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Fri Jul  9 11:11:29 2010 (serrano)                */
+;*    Last change :  Sun Jul 11 08:13:41 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -26,6 +26,8 @@
 	    __hop_dom
 	    __hop_http-error)
 
+   (static  (class xml-secure-attribute::xml-tilde))
+
    (export  (secure-javascript-attr ::obj)
 
 	    (hop-xml-backend-secure::xml-backend)
@@ -35,15 +37,17 @@
 
 	    (xml-tree-compare::obj ::obj ::xml-backend)
 	    (generic xml-compare a1::obj a2::obj)
-	    (xml-attribute-sanitize ::obj ::obj)
-	    (xml-string-sanitize::bstring ::bstring)))
+	    (xml-string-sanitize::bstring ::bstring)
+	    (xml-attribute-sanitize::obj ::obj ::keyword)))
 
 ;*---------------------------------------------------------------------*/
 ;*    secure-javascript-attr ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (secure-javascript-attr obj)
    (if (and (>=fx (hop-security) 1) (string? obj))
-       (sexp->xml-tilde `(pragma ,obj))
+       (instantiate::xml-secure-attribute
+	  (body '())
+	  (%js-attribute obj))
        obj))
 
 ;*---------------------------------------------------------------------*/
@@ -79,9 +83,11 @@
       (string-sanitize (lambda (s) "_"))
       (inline-sanitize (lambda (n) n))
       (script-sanitize (lambda (n) n))
-      (attribute-sanitize (lambda (a id) "_"))
+      (attribute-sanitize (lambda (a id)
+			     (let ((a (xml-attribute-sanitize a id)))
+				"")))
       (runtime '())))
-
+ 
 ;*---------------------------------------------------------------------*/
 ;*    security-manager ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -108,13 +114,19 @@
 ;*    xml-attribute-sanitize ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (xml-attribute-sanitize attr id)
-   (if (and (string? attr) (attr-event-handler? id))
-       (raise
-	(instantiate::&hop-injection-error
-	   (proc id)
-	   (msg "Illegal handler attribute value type")
-	   (obj attr)))
-       (xml-attribute-encode attr)))
+   (cond
+      ((string? attr)
+       (if (and (attr-event-handler? id) (>fx (string-length attr) 0))
+	   (raise
+	    (instantiate::&hop-injection-error
+	       (proc id)
+	       (msg "Illegal handler attribute")
+	       (obj attr)))
+	   attr))
+      ((xml-tilde? attr)
+       (xml-tilde->attribute attr))
+      (else
+       attr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-tree-compare ...                                             */
@@ -213,6 +225,23 @@
        (xml-compare-error a1 a2)))
 
 ;*---------------------------------------------------------------------*/
+;*    xml-compare ::xml-element ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (xml-compare a1::xml-markup a2::obj)
+   (cond
+      ((and (xml-markup? a2) (eq? (xml-markup-tag a1) (xml-markup-tag a2)))
+       (if (safe-attributes? a2)
+	   (xml-compare (normalize-ast (xml-markup-body a1))
+			(normalize-ast (xml-markup-body a2)))
+	   (xml-compare-error a1 a2)))
+      ((and (any? xml-tilde? (dom-get-attributes a1))
+	    (pair? a2) (pair? (cdr a2)) (null? (cddr a2))
+	    (xml-cdata? (cadr a2)))
+       (xml-compare a1 (car a2)))
+      (else
+       (xml-compare-error a1 (car a2)))))
+
+;*---------------------------------------------------------------------*/
 ;*    xml-compare ::xml-tilde ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-compare a1::xml-tilde a2)
@@ -265,15 +294,21 @@
        "_")
       ((list? ast)
        (map ast->string-list ast))
-      ((xml-markup? ast)
-       (with-access::xml-markup ast (tag body)
+      ((xml-element? ast)
+       (with-access::xml-element ast (tag body id)
 	  (let ((c (dom-get-attribute ast "class")))
 	     (if c
 		 `(,(symbol-append '< tag '>) :class
 		     ,(string-append "\"" c "\"")
+		     :id ,(format "\"~a\"" id)
 		     ,@(map ast->string-list body))
 		 `(,(symbol-append '< tag '>)
+		   :id ,(format "\"~a\"" id)
 		   ,@(map ast->string-list body))))))
+      ((xml-markup? ast)
+       (with-access::xml-markup ast (tag body)
+	  `(,(symbol-append '< tag '>)
+	    ,@(map ast->string-list body))))
       ((xml-tilde? ast)
        (with-access::xml-tilde ast (body)
 	  `(~ -)))
