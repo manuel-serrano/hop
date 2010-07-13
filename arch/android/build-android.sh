@@ -36,6 +36,18 @@ function install {
     cp -vur "$src" "$dst"
 }
 
+# clean is not exec'ed with all
+if [ "$1" == "clean" ]; then
+  make clean
+  ( cd arch/android
+    ant clean
+    rm -rf assets/{bin,etc,hoplib,share}
+  )
+  if [ "$1" == "clean" ]; then
+    shift
+  fi
+fi
+
 if [ "$1" == "configure" -o "$1" == "all" ]; then
   ./configure \
     --prefix=$prefix \
@@ -173,7 +185,8 @@ if [ "$1" == "apk" -o "$1" == "all" ]; then
   (
     cd arch/android
     # build the .apk
-    ant debug
+    # -Xlint:unchecked
+    ant -Dbuild.compiler.fulldepend=true -Dbuild.compiler.compilerarg="-Xlint:unchecked" debug
   )
 
   if [ "$1" == "apk" ]; then
