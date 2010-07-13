@@ -262,16 +262,7 @@ public class Hop extends Object {
       // String[] progArray= { mAppRoot+"/bin/hop", "-v3", "--verbose-output buffer" };
       // TODO: append the args
       // String[] envArray= { "HOME=/data/data/fr.inria.hop/home" };
-      // Runtime.exec() does not support nohup, so hop dies at some point.
-      /*
-      try {
-         p= mRuntime.exec (progArray, envArray);
-         Log("Hop running...")
-      } catch (IOException e) {
-         Log("Could not run Hop!: "+e);
-      }
-      */
-      // we stick to termExec, which somehow manages to keep it alive
+
         // Some code from Android Term app
         // http://android.git.kernel.org/?p=platform/development.git;a=blob;f=apps/Term/src/com/android/term/Term.java;hb=HEAD
         // Copyright (C) 2007 The Android Open Source Project
