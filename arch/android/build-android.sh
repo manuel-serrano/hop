@@ -40,8 +40,10 @@ function install {
 if [ "$1" == "clean" ]; then
   make clean
   ( cd arch/android
-    ant clean
-    rm -rf assets/{bin,etc,hoplib,share}
+    # ant clean <-- does not work!
+    for path in assets/{bin,etc,hoplib,share} libs/armeabi/libterm.so bin/*; do
+      rm -rf $path
+    done
   )
   if [ "$1" == "clean" ]; then
     shift
