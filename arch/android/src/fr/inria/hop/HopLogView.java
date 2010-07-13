@@ -15,6 +15,7 @@ import android.widget.TextView;
 import android.os.Handler;
 import android.os.Message;
 import android.content.Context;
+import android.util.AttributeSet;
 
 // Some code from Android Term app
 // http://android.git.kernel.org/?p=platform/development.git;a=blob;f=apps/Term/src/com/android/term/Term.java;hb=HEAD
@@ -68,14 +69,30 @@ public class HopLogView extends TextView {
 
     private HttpURLConnection logcat;
 
+    public HopLogView (Context context, AttributeSet attrs) {
+        super (context, attrs);
+        Hop.Log("HopLogView(Context, AttrSet)");
+        this.init ();
+    }
+
+    public HopLogView (Context context, AttributeSet attrs, int defStyle) {
+        super (context, attrs, defStyle);
+        Hop.Log("HopLogView(Context, AttrSet, int)");
+        this.init ();
+    }
+
     public HopLogView (Context context) {
         super (context);
-        Hop.Log("HopLogView()");
-        // mReceiveBuffer = new byte[4 * 1024];
+        Hop.Log("HopLogView(Context)");
+        this.init ();
+    }
+
+    protected void init () {
         mStringQueue = new ArrayBlockingQueue<String>(10);
         rd= null;
 
         try {
+            // V/hop-installer(20564): HopLogView():java.net.ConnectException: localhost/127.0.0.1:8080 - Connection refused
             logcat= (HttpURLConnection) new URL ("http://localhost:8080/logcat").openConnection ();
             logcat.connect ();
             rd= new BufferedReader (new InputStreamReader (logcat.getInputStream()));
