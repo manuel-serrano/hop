@@ -19,6 +19,8 @@ import java.net.HttpURLConnection;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.ProtocolException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.net.MalformedURLException;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -29,9 +31,6 @@ import android.widget.TextView;
 import android.os.Handler;
 import android.os.Message;
 import android.content.Context;
-
-
-// import fr.inria.hop.Term;
 
 // some code based on MonoActivity
 // http://github.com/koush/androidmono/blob/master/MonoActivity/src/com/koushikdutta/mono/MonoActivity.java
@@ -51,9 +50,8 @@ public class Hop extends Object {
 
    Process p;
 
-   public void Log(String string) {
+   public static void Log(String string) {
       Log.v("hop-installer", string);
-      // mStatus.append(string+"\n");
    }
 
    public void copyStreams(InputStream is, FileOutputStream fos) {
@@ -292,9 +290,9 @@ public class Hop extends Object {
         Runnable watchForDeath = new Runnable() {
 
             public void run() {
-                Log.i(Term.LOG_TAG, "waiting for: " + procId);
+                Hop.Log("waiting for: " + procId);
                 int result = Exec.waitFor(procId);
-                Log.i(Term.LOG_TAG, "Subprocess exited: " + result);
+                Hop.Log("Subprocess exited: " + result);
                 handler.sendEmptyMessage(result);
             }
 
@@ -382,111 +380,4 @@ public class Hop extends Object {
         }
         Exec.createSubprocess(arg0, arg1, arg2, arg3, arg4, arg5, processId);
     }
-}
-
-// Some code from Android Term app
-// http://android.git.kernel.org/?p=platform/development.git;a=blob;f=apps/Term/src/com/android/term/Term.java;hb=HEAD
-// Copyright (C) 2007 The Android Open Source Project
-// Licensed under the Apache License, Version 2.0 (the "License")
-class HopLogView extends TextView {
-    /**
-     * We defer some initialization until we have been layed out in the view
-     * hierarchy. The boolean tracks when we know what our size is.
-     */
-    private boolean mKnownSize;
-
-    /**
-     * Our private message id, which we use to receive new input from the
-     * remote process.
-     */
-    private static final int UPDATE = 1;
-
-    /**
-     * Thread that polls for input from the remote process
-     */
-
-    private Thread mPollingThread;
-
-    private ByteQueue mByteQueue;
-    private BufferedReader rd;
-
-    /**
-     * Used to temporarily hold data received from the remote process. Allocated
-     * once and used permanently to minimize heap thrashing.
-     */
-    private byte[] mReceiveBuffer;
-
-    /**
-     * Our message handler class. Implements a periodic callback.
-     */
-    private final Handler mHandler = new Handler() {
-        /**
-         * Handle the callback message. Call our enclosing class's update
-         * method.
-         *
-         * @param msg The callback message.
-         */
-        @Override
-        public void handleMessage(Message msg) {
-            if (msg.what == UPDATE) {
-                update();
-            }
-        }
-    };
-
-    private HttpURLConnection logcat;
-
-    public HopLogView (Context context) {
-        super (context);
-        mReceiveBuffer = new byte[4 * 1024];
-        mByteQueue = new ByteQueue(4 * 1024);
-
-        logcat= (HttpURLConnection) new URL ("http://localhost:8080/logcat").openConnection ();
-        logcat.connect ();
-        rd= new BufferedReader (new InputStreamReader (logcat.getInputStream()));
-    }
-
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged (w, h, oldw, oldh);
-
-        Log.v(Term.LOG_TAG, "onSizeChanged()" + w + ":" + h);
-        if (!mKnownSize) {
-            mKnownSize = true;
-
-            // Set up a thread to read input from the socket
-
-            mPollingThread = new Thread(new Runnable() {
-
-                public void run() {
-                    try {
-                        String line= rd.readLine ();
-                        while (line!=null) {
-                            mByteQueue.write (line, 0, line.length);
-                            mHandler.sendMessage (mHandler.obtainMessage (UPDATE));
-                            line= rd.readLine ();
-                        }
-                    } catch (IOException e) {
-                    } catch (InterruptedException e) {
-                    }
-                }
-                private byte[] mBuffer = new byte[4096];
-            });
-            mPollingThread.setName("Input reader");
-            mPollingThread.start();
-        }
-    }
-
-    /**
-     * Look for new input from the ptty, send it to the terminal emulator.
-     */
-    private void update() {
-        int bytesAvailable = mByteQueue.getBytesAvailable();
-        int bytesToRead = Math.min(bytesAvailable, mReceiveBuffer.length);
-        try {
-            int bytesRead = mByteQueue.read(mReceiveBuffer, 0, bytesToRead);
-            append(mReceiveBuffer, 0, bytesRead);
-        } catch (InterruptedException e) {
-        }
-    }
-
 }
