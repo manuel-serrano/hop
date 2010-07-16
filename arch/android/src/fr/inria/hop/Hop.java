@@ -51,7 +51,7 @@ public class Hop extends Object {
    Process p;
 
    public static void Log(String string) {
-      Log.v("hop-installer", string);
+      Log.v("Hop", string);
    }
 
    public void copyStreams(InputStream is, FileOutputStream fos) {
@@ -341,12 +341,8 @@ public class Hop extends Object {
     }
 
     private void createSubprocess(int[] processId) {
-        String shell = mAppRoot+"/bin/hop -v3 --verbose-output buffer";
-        /*
-        if (shell == null) {
-            shell = DEFAULT_SHELL;
-        }
-        */
+        String shell = mAppRoot+"/bin/hop -v3 --verbose-output buffer --log-file /data/data/fr.inria.hop/etc/hop.log";
+        // V/hop-installer(11681): Subprocess exited: 1
         ArrayList<String> args = parse(shell);
         String arg0 = args.get(0);
         String arg1 = null;

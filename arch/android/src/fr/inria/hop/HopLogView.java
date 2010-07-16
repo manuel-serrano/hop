@@ -93,6 +93,7 @@ public class HopLogView extends TextView {
 
         try {
             // V/hop-installer(20564): HopLogView():java.net.ConnectException: localhost/127.0.0.1:8080 - Connection refused
+            // V/hop-installer( 7948): HopLogView():java.net.SocketException: The connection was reset
             logcat= (HttpURLConnection) new URL ("http://localhost:8080/logcat").openConnection ();
             logcat.connect ();
             rd= new BufferedReader (new InputStreamReader (logcat.getInputStream()));
