@@ -136,8 +136,10 @@
 	  (hop-capture-port-set! (open-output-file file)))
 	 (("--allow-service-override" (help "Allow service overriding (see -s)"))
 	  (hop-security-set! 0))
-	 (("--verbose-output" ?output (help "Use console or buffer based verbose output (default: console)"))
+	 (("--verbose-output" ?output (help "Use console, file or buffer based verbose output (default: console)"))
 	  (hop-verbose-output-set! (string->symbol output)))
+         (("--verbose-file" ?file (help "Path to the file where file verbose output should go"))
+          (hop-verbose-file-set! file))
 
 	 ;; Run
 	 (section "Run")
@@ -227,6 +229,8 @@
 	 ((buffer)
 	  (write-verb-set! write-verb-list)
 	  (hop-filter-add! logcat-filter))
+         ((file)
+          (write-verb-set! write-verb-file))
 	 (else
 	  (write-verb-set! write-verb-error-port)))
 
