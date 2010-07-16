@@ -216,6 +216,11 @@
 (define-parameter hop-log-file
    #f)
 
+;*---------------------------------------------------------------------*/
+;*    hop-verbose-output ...                                           */
+;*    -------------------------------------------------------------    */
+;*    where to write all the messages printed with hop-verb            */
+;*---------------------------------------------------------------------*/
 (define-parameter hop-verbose-output
    'console)
 

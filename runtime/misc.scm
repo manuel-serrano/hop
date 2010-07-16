@@ -15,7 +15,7 @@
 (module __hop_misc
 
    (include "param.sch")
-   
+
    (cond-expand
       (enable-ssl (library ssl)))
 
@@ -57,7 +57,8 @@
             (write-verb-error-port args)
             (write-verb-socket args)
             (write-verb-list args)
-            (logcat-filter req)))
+            (logcat-filter req)
+            (write-verb-file args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
@@ -140,6 +141,7 @@
 ;*---------------------------------------------------------------------*/
 (define (logcat-filter req)
    (with-access::http-request req (abspath query timeout)
+      ; TODO: make path configurable
       (when (string-prefix? "/logcat" abspath)
          (instantiate::http-response-procedure
             (request req)
@@ -148,6 +150,16 @@
             ;(content-type (mime-type path "text/plain"))
             (bodyp #t)
             (proc message-list)))))
+
+;*---------------------------------------------------------------------*/
+;     write-verb-file...                                               */
+;*---------------------------------------------------------------------*/
+(define (write-verb-file args)
+   (if (hop-verbose-file)
+      (begin
+         ; TODO: strip out the ()'s and the trailing \n
+         (fprint (hop-verbose-file) args)
+         (flush-output-port (hop-verbose-file)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-color ...                                                    */
