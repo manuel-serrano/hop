@@ -21,6 +21,7 @@ import java.io.InputStreamReader;
 import java.net.ProtocolException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.net.MalformedURLException;
+import java.io.FileDescriptor;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -48,7 +49,25 @@ public class Hop extends Object {
    final static String dot_afile = "dot.afile";
    final static File wizard_hop= new File (mAppRoot+"/home/.config/hop/wizard.hop");
 
+   private final static String DEFAULT_INITIAL_COMMANDS[] = {
+      "export HOME=/data/data/fr.inria.hop/home",
+      // at least we have exec
+      "/data/data/fr.inria.hop/bin/hop -v5 -g3 -w3 --verbose-output buffer --verbose-file /tmp/hop.log > /tmp/hop.run 2>&1",
+   };
+
    Process p;
+
+    /**
+     * The pseudo-teletype (pty) file descriptor that we use to communicate with
+     * another process, typically a shell.
+     */
+    private FileDescriptor mShellFd;
+
+   /**
+    * Used to send data to the remote process. Needed to implement the various
+    * "report" escape sequences.
+    */
+   private FileOutputStream mCommandFd;
 
    public static void Log(String string) {
       Log.v("Hop", string);
@@ -258,11 +277,28 @@ public class Hop extends Object {
       }
    }
 
-   final void run (String[] args) {
-      // String[] progArray= { mAppRoot+"/bin/hop", "-v3", "--verbose-output buffer" };
-      // TODO: append the args
-      // String[] envArray= { "HOME=/data/data/fr.inria.hop/home" };
+   private void sendInitialCommands () {
+      for (int i=0; i<DEFAULT_INITIAL_COMMANDS.length; i++) {
+         String command = DEFAULT_INITIAL_COMMANDS[i];
+         if (command.length() > 0) {
+            Log("PreComm: "+command);
+            write(command + '\r');
+         }
+      }
+   }
 
+   private void write(String data) {
+      try {
+         mCommandFd.write(data.getBytes());
+         mCommandFd.flush();
+      } catch (IOException e) {
+         // Ignore exception
+         // We don't really care if the receiver isn't listening.
+         // We just make a best effort to answer the query.
+      }
+   }
+
+   final void run (String[] args) {
         // Some code from Android Term app
         // http://android.git.kernel.org/?p=platform/development.git;a=blob;f=apps/Term/src/com/android/term/Term.java;hb=HEAD
         // Copyright (C) 2007 The Android Open Source Project
@@ -290,6 +326,8 @@ public class Hop extends Object {
         };
         Thread watcher = new Thread(watchForDeath);
         watcher.start();
+
+        sendInitialCommands ();
    }
 
     private ArrayList<String> parse(String cmd) {
@@ -341,8 +379,7 @@ public class Hop extends Object {
     }
 
     private void createSubprocess(int[] processId) {
-        String shell = mAppRoot+"/bin/hop -v3 --verbose-output buffer --log-file /data/data/fr.inria.hop/etc/hop.log";
-        // V/hop-installer(11681): Subprocess exited: 1
+        String shell = "/system/bin/sh -";
         ArrayList<String> args = parse(shell);
         String arg0 = args.get(0);
         String arg1 = null;
@@ -365,6 +402,7 @@ public class Hop extends Object {
         if (args.size() >= 6) {
             arg5 = args.get(5);
         }
-        Exec.createSubprocess(arg0, arg1, arg2, arg3, arg4, arg5, processId);
+        mShellFd= Exec.createSubprocess (arg0, arg1, arg2, arg3, arg4, arg5, processId);
+        mCommandFd= new FileOutputStream (mShellFd);
     }
 }
