@@ -298,7 +298,7 @@ public class Hop extends Object {
       }
    }
 
-   final void run (String[] args) {
+   final void run () {
         // Some code from Android Term app
         // http://android.git.kernel.org/?p=platform/development.git;a=blob;f=apps/Term/src/com/android/term/Term.java;hb=HEAD
         // Copyright (C) 2007 The Android Open Source Project

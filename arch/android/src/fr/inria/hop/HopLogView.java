@@ -110,27 +110,54 @@ public class HopLogView extends TextView {
         super.onSizeChanged (w, h, oldw, oldh);
 
         Hop.Log("onSizeChanged()" + w + ":" + h);
-        if (!mKnownSize && rd!=null) {
+        if (!mKnownSize) {
+            Hop.Log("onSizeChanged(): init");
             mKnownSize = true;
 
             // Set up a thread to read input from the socket
             mPollingThread = new Thread(new Runnable() {
 
                 public void run() {
-                    try {
-                        String line= rd.readLine ();
-                        while (line!=null) {
-                            mStringQueue.put (line);
-                            mHandler.sendMessage (mHandler.obtainMessage (UPDATE));
-                            line= rd.readLine ();
+                    Hop.Log("mPollingThread.run()");
+                    int lastId= 0;
+
+                    while (true) {
+                        try {
+                           Hop.Log("connecting...");
+                           // V/hop-installer(20564): HopLogView():java.net.ConnectException: localhost/127.0.0.1:8080 - Connection refused
+                           // V/hop-installer( 7948): HopLogView():java.net.SocketException: The connection was reset
+                           logcat= (HttpURLConnection) new URL ("http://localhost:8080/logcat").openConnection ();
+                           logcat.connect ();
+                           Hop.Log("connected to logcat!");
+                           rd= new BufferedReader (new InputStreamReader (logcat.getInputStream()));
+
+                           String data= rd.readLine ();
+                           Hop.Log("read: "+data);
+                           while (data!=null) {
+                              String[] lines= data.split ("\r");
+                              for (int i=0; i<lines.length; i++) { // that's lines array length
+                                 mStringQueue.put (lines[i]);
+                              }
+                              mHandler.sendMessage (mHandler.obtainMessage (UPDATE));
+                              data= rd.readLine ();
+                              Hop.Log("read: "+data);
+                           }
+                        } catch (MalformedURLException e) {
+                           Hop.Log("HopLogView():" + e);
+                           // TODO: FAIL
+                        } catch (IOException e) {
+                           Hop.Log("HopLogView():" + e);
+                           // TODO: FAIL
+                        } catch (InterruptedException e) {
+                           Hop.Log("HopLogView():" + e);
+                           // TODO: FAIL
                         }
-                    } catch (IOException e) {
-                    } catch (InterruptedException e) {
                     }
                 }
-                private byte[] mBuffer = new byte[4096];
+                // private byte[] mBuffer = new byte[4096];
             });
             mPollingThread.setName("Input reader");
+            Hop.Log("mPollingThread.start()");
             mPollingThread.start();
         }
     }
@@ -141,7 +168,8 @@ public class HopLogView extends TextView {
     private void update() {
         try {
             String line= mStringQueue.take ();
-            append(line);
+            Hop.Log("append! "+line);
+            append(line+"\n");
         } catch (InterruptedException e) {
         }
     }
