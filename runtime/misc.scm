@@ -133,8 +133,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    message-list ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (message-list port)
-   (fprint port verb-list))
+(define (message-list port last)
+   ;; print only the log ids bigger than last
+   (fprint port (find-tail (lambda (x) (> (car x) last)) verb-list)))
 
 ;*---------------------------------------------------------------------*/
 ;*    logcat-filter ...                                                */
@@ -143,13 +144,15 @@
    (with-access::http-request req (abspath query timeout)
       ; TODO: make path configurable
       (when (string-prefix? "/logcat" abspath)
-         (instantiate::http-response-procedure
-            (request req)
-            (timeout timeout)
-            (charset (hop-locale))
-            ;(content-type (mime-type path "text/plain"))
-            (bodyp #t)
-            (proc message-list)))))
+         (let ((last (string->number query)))
+            (instantiate::http-response-procedure
+               (request req)
+               (timeout timeout)
+               (charset (hop-locale))
+               ;(content-type (mime-type path "text/plain"))
+               (bodyp #t)
+               (proc (lambda (port)
+                             (message-list port last))))))))
 
 ;*---------------------------------------------------------------------*/
 ;     write-verb-file...                                               */
