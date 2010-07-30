@@ -124,9 +124,7 @@ public class HopLogView extends TextView {
                     while (true) {
                         try {
                            Hop.Log("connecting...");
-                           // V/hop-installer(20564): HopLogView():java.net.ConnectException: localhost/127.0.0.1:8080 - Connection refused
-                           // V/hop-installer( 7948): HopLogView():java.net.SocketException: The connection was reset
-                           logcat= (HttpURLConnection) new URL ("http://localhost:8080/logcat").openConnection ();
+                           logcat= (HttpURLConnection) new URL ("http://localhost:8080/logcat?"+lastId).openConnection ();
                            logcat.connect ();
                            Hop.Log("connected to logcat!");
                            rd= new BufferedReader (new InputStreamReader (logcat.getInputStream()));
@@ -142,6 +140,7 @@ public class HopLogView extends TextView {
                               data= rd.readLine ();
                               Hop.Log("read: "+data);
                            }
+
                         } catch (MalformedURLException e) {
                            Hop.Log("HopLogView():" + e);
                            // TODO: FAIL
@@ -151,6 +150,14 @@ public class HopLogView extends TextView {
                         } catch (InterruptedException e) {
                            Hop.Log("HopLogView():" + e);
                            // TODO: FAIL
+
+                        } finally {
+                           try {
+                              // polling...
+                              Thread.sleep (1000);
+                           } catch (InterruptedException e) {
+                              // ignore
+                           }
                         }
                     }
                 }

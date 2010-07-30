@@ -52,7 +52,8 @@ public class Hop extends Object {
    private final static String DEFAULT_INITIAL_COMMANDS[] = {
       "export HOME=/data/data/fr.inria.hop/home",
       // at least we have exec
-      "/data/data/fr.inria.hop/bin/hop -v5 -g3 -w3 --verbose-output buffer --verbose-file /tmp/hop.log > /tmp/hop.run 2>&1",
+      "/data/data/fr.inria.hop/bin/hop -v5 -g3 -w3 --verbose-output buffer > /tmp/hop.run 2>&1",
+      // "/data/data/fr.inria.hop/bin/hop -v5 -g3 -w3 > /tmp/hop.run 2>&1",
    };
 
    Process p;
@@ -258,8 +259,10 @@ public class Hop extends Object {
 
    final void init (Activity parent) {
       // TODO: what on updates?
+      // BUG: somehow it still thinks any new package is *completely* new
+      // can be a bug in 'prepare'
+      unpack ();
       if (firstTime ()) {
-         unpack ();
          String password= createAdminUser ();
 
          AlertDialog.Builder builder = new AlertDialog.Builder (parent);
