@@ -107,6 +107,8 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
         --bigloo=$BGL_PREFIX/bin/bigloo -L $XBS_HOPDIR/lib \
         --share-dir $pwd/share --
     done
+    # I don't know why, but hop.js is not built. so we build it by hand
+    make
   )
 
   # finish the compilation
