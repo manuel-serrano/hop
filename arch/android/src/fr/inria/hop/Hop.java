@@ -257,10 +257,11 @@ public class Hop extends Object {
       return ! wizard_hop.exists ();
    }
 
+   // entry point
    final void init (Activity parent) {
       // TODO: what on updates?
       // BUG: somehow it still thinks any new package is *completely* new
-      // can be a bug in 'prepare'
+      // can be a bug in 'prepare' or the dates in the zip/apk created
       unpack ();
       if (firstTime ()) {
          String password= createAdminUser ();
@@ -302,6 +303,7 @@ public class Hop extends Object {
    }
 
    final void run () {
+        // TODO: try to detect wether hop is already running or not before launching it.
         // Some code from Android Term app
         // http://android.git.kernel.org/?p=platform/development.git;a=blob;f=apps/Term/src/com/android/term/Term.java;hb=HEAD
         // Copyright (C) 2007 The Android Open Source Project

@@ -90,20 +90,6 @@ public class HopLogView extends TextView {
     protected void init () {
         mStringQueue = new ArrayBlockingQueue<String>(10);
         rd= null;
-
-        try {
-            // V/hop-installer(20564): HopLogView():java.net.ConnectException: localhost/127.0.0.1:8080 - Connection refused
-            // V/hop-installer( 7948): HopLogView():java.net.SocketException: The connection was reset
-            logcat= (HttpURLConnection) new URL ("http://localhost:8080/logcat").openConnection ();
-            logcat.connect ();
-            rd= new BufferedReader (new InputStreamReader (logcat.getInputStream()));
-        } catch (MalformedURLException e) {
-            // TODO: FAIL
-            Hop.Log("HopLogView():" + e);
-        } catch (IOException e) {
-            Hop.Log("HopLogView():" + e);
-            // TODO: FAIL
-        }
     }
 
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
