@@ -101,11 +101,11 @@ public class HopLogView extends TextView {
             mKnownSize = true;
 
             // Set up a thread to read input from the socket
+            // TODO: make it a proper class!
             mPollingThread = new Thread(new Runnable() {
 
                 public void run() {
                     Hop.Log("mPollingThread.run()");
-                    int lastId= 0;
 
                     while (true) {
                         try {
@@ -115,16 +115,13 @@ public class HopLogView extends TextView {
                            Hop.Log("connected to logcat!");
                            rd= new BufferedReader (new InputStreamReader (logcat.getInputStream()));
 
-                           String data= rd.readLine ();
-                           Hop.Log("read: "+data);
-                           while (data!=null) {
-                              String[] lines= data.split ("\r");
-                              for (int i=0; i<lines.length; i++) { // that's lines array length
-                                 mStringQueue.put (lines[i]);
-                              }
-                              mHandler.sendMessage (mHandler.obtainMessage (UPDATE));
-                              data= rd.readLine ();
-                              Hop.Log("read: "+data);
+                           String line= rd.readLine ();
+                           // Hop.Log("read: "+line);
+                           while (line!=null) {
+                              processLog (line);
+
+                              line= rd.readLine ();
+                              // Hop.Log("read: "+line);
                            }
 
                         } catch (MalformedURLException e) {
@@ -133,21 +130,55 @@ public class HopLogView extends TextView {
                         } catch (IOException e) {
                            Hop.Log("HopLogView():" + e);
                            // TODO: FAIL
-                        } catch (InterruptedException e) {
-                           Hop.Log("HopLogView():" + e);
-                           // TODO: FAIL
 
                         } finally {
                            try {
                               // polling...
-                              Thread.sleep (1000);
+                              Thread.sleep (5000);
                            } catch (InterruptedException e) {
-                              // ignore
+                              Hop.Log("HopLogView(): sleep() interrupted:" + e);
                            }
                         }
                     }
                 }
-                // private byte[] mBuffer = new byte[4096];
+
+               public void processLog (String line) {
+                  // line comes in 3 models:
+                  // ((## line
+                  // ) (## line
+                  // ))
+
+                  // String.substring behaves just like Python's string slicing
+                  // and don't try to use ==, use dead-brained .equals()
+                  if (line.substring (0, 2).equals ("((")) {
+                     line= line.substring (2);
+                  } else if (line.substring (0, 2).equals (") ")) {
+                     line= line.substring (3);
+                  } else if (line.substring (0, 2).equals ("))")) {
+                     line= null;
+                  }
+
+                  if (line!=null) {
+                     // now process the ## and update lastId
+                     String[] data= line.split (" ", 2);
+                     try {
+                        lastId= new Integer (data[0]);
+                        Hop.Log("lastId got up to: "+lastId);
+                        line= data[1];
+                     } catch (NumberFormatException e) {
+                        // ignore, line is kept intact
+                     }
+
+                     try {
+                        mStringQueue.put (line);
+                        mHandler.sendMessage (mHandler.obtainMessage (UPDATE));
+                     } catch (InterruptedException e) {
+                        Hop.Log("processLog(): put interrputed, there might be missing lines:" + e);
+                     }
+                  }
+               }
+
+               private Integer lastId= 0;
             });
             mPollingThread.setName("Input reader");
             Hop.Log("mPollingThread.start()");
