@@ -144,7 +144,9 @@
    (with-access::http-request req (abspath query timeout)
       ; TODO: make path configurable
       (when (string-prefix? "/logcat" abspath)
-         (let ((last (string->number query)))
+         (let ((last (if (null? query)
+                         0 ;; no query? output everything
+                         (string->number query))))
             (instantiate::http-response-procedure
                (request req)
                (timeout timeout)
