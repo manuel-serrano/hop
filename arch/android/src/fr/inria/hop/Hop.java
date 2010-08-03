@@ -48,12 +48,19 @@ public class Hop extends Object {
    final static String libraryInitSuffix = ".init";
    final static String dot_afile = "dot.afile";
    final static File wizard_hop= new File (mAppRoot+"/home/.config/hop/wizard.hop");
+   // TODO: let the user select tmpDir
+   // Moto Droid: we can write in /tmp and check with any file browser
+   final static String tmpDir= "/tmp";
+   // cupcake, donut: as we can shell is as root, it doesn't really matter what path we set
+   // final static String tmpDir= mAppRoot+"/tmp";
 
    private final static String DEFAULT_INITIAL_COMMANDS[] = {
       "export HOME=/data/data/fr.inria.hop/home",
+      // if we don't redirect the output, hop blocks because nobody reads it
+      // so we need tmpDir to exist
+      "mkdir "+tmpDir,
       // at least we have exec
-      "/data/data/fr.inria.hop/bin/hop -v5 -g3 -w3 --verbose-output buffer > /tmp/hop.run 2>&1",
-      // "/data/data/fr.inria.hop/bin/hop -v5 -g3 -w3 > /tmp/hop.run 2>&1",
+      "exec /data/data/fr.inria.hop/bin/hop -v5 -g3 -w3 --verbose-output buffer > "+tmpDir+"/hop.run 2>&1",
    };
 
    Process p;
