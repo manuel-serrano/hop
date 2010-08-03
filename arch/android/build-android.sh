@@ -83,6 +83,9 @@ if [ "$1" == "build" -o "$1" == "all" ]; then
   # because we don't have a way to detect and compile a static hop in the build system
   make || true
 
+  # TODO: etc/Makefile.hopconfig says:
+  # HOPC            = /home/mdione/src/works/inria/android/live/hop-hg/bin/hopc
+  # modify and use that
   # compile some stuff by hand
   ( cd widget
     mkdir -pv o
