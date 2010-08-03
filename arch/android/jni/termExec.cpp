@@ -126,7 +126,7 @@ static int create_subprocess(const char *cmd, const char *arg0, const char *arg1
 }
 
 
-static jobject android_os_Exec_createSubProcess(JNIEnv *env, jobject clazz,
+static jobject Hop_Exec_createSubProcess(JNIEnv *env, jobject clazz,
     jstring cmd, jstring arg0, jstring arg1, jstring arg2, jstring arg3,
     jstring arg4, jintArray processIdArray)
 {
@@ -212,7 +212,7 @@ static jobject android_os_Exec_createSubProcess(JNIEnv *env, jobject clazz,
 }
 
 
-static void android_os_Exec_setPtyWindowSize(JNIEnv *env, jobject clazz,
+static void Hop_Exec_setPtyWindowSize(JNIEnv *env, jobject clazz,
     jobject fileDescriptor, jint row, jint col, jint xpixel, jint ypixel)
 {
     int fd;
@@ -232,7 +232,7 @@ static void android_os_Exec_setPtyWindowSize(JNIEnv *env, jobject clazz,
     ioctl(fd, TIOCSWINSZ, &sz);
 }
 
-static int android_os_Exec_waitFor(JNIEnv *env, jobject clazz,
+static int Hop_Exec_waitFor(JNIEnv *env, jobject clazz,
     jint procId) {
     int status;
     waitpid(procId, &status, 0);
@@ -243,7 +243,7 @@ static int android_os_Exec_waitFor(JNIEnv *env, jobject clazz,
     return result;
 }
 
-static void android_os_Exec_close(JNIEnv *env, jobject clazz, jobject fileDescriptor)
+static void Hop_Exec_close(JNIEnv *env, jobject clazz, jobject fileDescriptor)
 {
     int fd;
     struct winsize sz;
@@ -283,17 +283,17 @@ static int register_FileDescriptor(JNIEnv *env)
 }
 
 
-static const char *classPathName = "fr/inria/hop/Exec";
+static const char *classPathName = "fr/inria/hop/HopExec";
 
 static JNINativeMethod method_table[] = {
     { "createSubprocess", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[I)Ljava/io/FileDescriptor;",
-        (void*) android_os_Exec_createSubProcess },
+        (void*) Hop_Exec_createSubProcess },
     { "setPtyWindowSize", "(Ljava/io/FileDescriptor;IIII)V",
-        (void*) android_os_Exec_setPtyWindowSize},
+        (void*) Hop_Exec_setPtyWindowSize},
     { "waitFor", "(I)I",
-        (void*) android_os_Exec_waitFor},
+        (void*) Hop_Exec_waitFor},
     { "close", "(Ljava/io/FileDescriptor;)V",
-        (void*) android_os_Exec_close}
+        (void*) Hop_Exec_close}
 };
 
 /*

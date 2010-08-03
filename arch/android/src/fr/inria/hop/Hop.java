@@ -330,7 +330,7 @@ public class Hop extends Object {
 
             public void run() {
                 Hop.Log("waiting for: " + procId);
-                int result = Exec.waitFor(procId);
+                int result = HopExec.waitFor(procId);
                 Hop.Log("Subprocess exited: " + result);
                 handler.sendEmptyMessage(result);
             }
@@ -414,7 +414,7 @@ public class Hop extends Object {
         if (args.size() >= 6) {
             arg5 = args.get(5);
         }
-        mShellFd= Exec.createSubprocess (arg0, arg1, arg2, arg3, arg4, arg5, processId);
+        mShellFd= HopExec.createSubprocess (arg0, arg1, arg2, arg3, arg4, arg5, processId);
         mCommandFd= new FileOutputStream (mShellFd);
     }
 }

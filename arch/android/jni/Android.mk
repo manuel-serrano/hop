@@ -23,7 +23,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := eng
 
 # This is the target being built.
-LOCAL_MODULE:= libterm
+LOCAL_MODULE:= libhoprun
 
 
 # All of the source files that we will compile.

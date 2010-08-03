@@ -27,10 +27,10 @@ import java.io.FileDescriptor;
  * java.io.FileDescriptor is changed.
  */
 
-public class Exec
+public class HopExec
 {
     static {
-        System.loadLibrary("term");
+        System.loadLibrary("hoprun");
     }
 
     /**
