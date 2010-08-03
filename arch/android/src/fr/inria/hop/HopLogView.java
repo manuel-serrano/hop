@@ -95,7 +95,7 @@ public class HopLogView extends TextView {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged (w, h, oldw, oldh);
 
-        Hop.Log("onSizeChanged()" + w + ":" + h);
+        // Hop.Log("onSizeChanged()" + w + ":" + h);
         if (!mKnownSize) {
             Hop.Log("onSizeChanged(): init");
             mKnownSize = true;
@@ -109,10 +109,10 @@ public class HopLogView extends TextView {
 
                     while (true) {
                         try {
-                           Hop.Log("connecting...");
+                           // Hop.Log("connecting...");
                            logcat= (HttpURLConnection) new URL ("http://localhost:8080/logcat?"+lastId).openConnection ();
                            logcat.connect ();
-                           Hop.Log("connected to logcat!");
+                           // Hop.Log("connected to logcat!");
                            rd= new BufferedReader (new InputStreamReader (logcat.getInputStream()));
 
                            String line= rd.readLine ();
@@ -163,7 +163,7 @@ public class HopLogView extends TextView {
                      String[] data= line.split (" ", 2);
                      try {
                         lastId= new Integer (data[0]);
-                        Hop.Log("lastId got up to: "+lastId);
+                        // Hop.Log("lastId got up to: "+lastId);
                         line= data[1];
                      } catch (NumberFormatException e) {
                         // ignore, line is kept intact
@@ -184,6 +184,7 @@ public class HopLogView extends TextView {
             Hop.Log("mPollingThread.start()");
             mPollingThread.start();
         }
+        // scrollTo (w, h);
     }
 
     /**
@@ -192,7 +193,7 @@ public class HopLogView extends TextView {
     private void update() {
         try {
             String line= mStringQueue.take ();
-            Hop.Log("append! "+line);
+            // Hop.Log("append! "+line);
             append(line+"\n");
         } catch (InterruptedException e) {
         }
