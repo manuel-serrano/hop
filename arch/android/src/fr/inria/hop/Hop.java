@@ -269,7 +269,7 @@ public class Hop extends Object {
       // TODO: what on updates?
       // BUG: somehow it still thinks any new package is *completely* new
       // can be a bug in 'prepare' or the dates in the zip/apk created
-      unpack ();
+      // unpack ();
       if (firstTime ()) {
          String password= createAdminUser ();
 

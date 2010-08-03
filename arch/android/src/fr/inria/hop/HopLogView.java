@@ -12,6 +12,7 @@ import java.net.MalformedURLException;
 import java.io.IOException;
 
 import android.widget.TextView;
+import android.widget.ScrollView;
 import android.os.Handler;
 import android.os.Message;
 import android.content.Context;
@@ -69,6 +70,8 @@ public class HopLogView extends TextView {
 
     private HttpURLConnection logcat;
 
+    private ScrollView mScroll;
+
     public HopLogView (Context context, AttributeSet attrs) {
         super (context, attrs);
         Hop.Log("HopLogView(Context, AttrSet)");
@@ -88,6 +91,7 @@ public class HopLogView extends TextView {
     }
 
     protected void init () {
+        Hop.Log("HopLogView.init()");
         mStringQueue = new ArrayBlockingQueue<String>(10);
         rd= null;
     }
@@ -113,7 +117,7 @@ public class HopLogView extends TextView {
                            logcat= (HttpURLConnection) new URL ("http://localhost:8080/logcat?"+lastId).openConnection ();
                            logcat.connect ();
                            // Hop.Log("connected to logcat!");
-                           rd= new BufferedReader (new InputStreamReader (logcat.getInputStream()));
+                           rd= new BufferedReader (new InputStreamReader (logcat.getInputStream()), 8196);
 
                            String line= rd.readLine ();
                            // Hop.Log("read: "+line);
@@ -184,7 +188,15 @@ public class HopLogView extends TextView {
             Hop.Log("mPollingThread.start()");
             mPollingThread.start();
         }
-        // scrollTo (w, h);
+
+        if (mScroll==null) {
+            mScroll= (ScrollView) getParent ();
+            // Hop.Log("HopLogView: "+mScroll);
+        }
+        if (mScroll!=null) {
+            // Hop.Log("scroll! "+h);
+            mScroll.scrollTo (0, h);
+        }
     }
 
     /**
