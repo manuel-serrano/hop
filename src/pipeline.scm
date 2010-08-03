@@ -109,14 +109,14 @@
    (define (http-connect-verb scd id sock req mode num)
       (with-access::http-request req (method scheme host port path user header)
          (when (not (and (eq? (hop-verbose-output) 'buffer)
-                         (string-prefix? path "/logcat")))
+                         (string-prefix? "/logcat" path)))
                (hop-verb 1 (if (http-proxy-request? req)
 			 (hop-color req req
 				    (if (eq? mode 'keep-alive)
 					(format " REQUEST.prox (+~a)" num)
 					" REQUEST.prox"))
 			 (hop-color req req
-				    (if (eq? mode 'keep-alive)
+                                       (if (eq? mode 'keep-alive)
 					(format " REQUEST.serv (+~a)" num)
 					" REQUEST.serv")))
 		   (if (>=fx (hop-verbose) 2)
@@ -235,7 +235,7 @@
 (define (stage-response scd thread id req)
    (current-request-set! thread req)
    (when (not (and (eq? (hop-verbose-output) 'buffer)
-                   (string-prefix? (http-request-path req) "/logcat")))
+                   (string-prefix? "/logcat" (http-request-path req))))
          (hop-verb 3 (hop-color id id " RESPONSE") (format " ~a" thread) "\n"))
    (with-stage-handler
       response-error-handler (scd req)
@@ -321,7 +321,7 @@
        (hop-verb 1 (hop-color req req " ABORT")
 		 " user: " (user-name (http-request-user req)) "\n")
        (when (not (and (eq? (hop-verbose-output) 'buffer)
-                       (string-prefix? (http-request-path req) "/logcat")))
+                       (string-prefix? "/logcat" (http-request-path req))))
              (hop-verb 3 (hop-color req req " EXEC")
 		 " load: " (scheduler-load scd)
 		 (scheduler-stat scd)
@@ -355,7 +355,7 @@
 			(=fx load 100))
 		    (when (and (>=fx (hop-verbose) 3)
                                (not (and (eq? (hop-verbose-output) 'buffer)
-                                         (string-prefix? (http-request-path req) "/logcat"))))
+                                         (string-prefix? "/logcat" (http-request-path req)))))
                           (stage-exec-verb scd thread req resp connection
 					  " END"))
 		    (socket-close sock)
@@ -377,7 +377,7 @@
 	    (else
 	     (when (and (>=fx (hop-verbose) 3)
                         (not (and (eq? (hop-verbose-output) 'buffer)
-                                  (string-prefix? (http-request-path req) "/logcat"))))
+                                  (string-prefix? "/logcat" (http-request-path req)))))
 		(stage-exec-verb scd thread req resp connection " END"))
 	     (socket-close sock)
 	     #f)))))
