@@ -194,8 +194,8 @@ public class HopLogView extends TextView {
             // Hop.Log("HopLogView: "+mScroll);
         }
         if (mScroll!=null) {
-            // Hop.Log("scroll! "+h);
-            mScroll.scrollTo (0, h);
+            Hop.Log("scroll! "+mScroll.getScrollY ()+" "+h+" "+mScroll.getHeight ());
+            mScroll.smoothScrollTo (0, h);
         }
     }
 
