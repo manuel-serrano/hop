@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Jun 19 06:26:58 2010 (serrano)                */
+;*    Last change :  Wed Aug  4 08:45:02 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -163,14 +163,12 @@
        base)
       ((all-keyword-string? vals)
        (let loop ((vals vals)
-		  (sep "?")
 		  (strs '()))
 	  (if (null? vals)
 	      (apply string-append base strs)
 	      (loop (cddr vals)
-		    "&"
 		    (let ((str (string-append
-				sep
+				(if (pair? (cddr vals)) "&" "?")
 				(keyword->string (car vals))
 				"="
 				(url-path-encode (cadr vals)))))
