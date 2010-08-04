@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Aug  4 12:33:38 2010 (serrano)                */
+#*    Last change :  Wed Aug  4 12:37:59 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -315,8 +315,7 @@ distrib-jvm:
 	   $(RM) -rf $(HOPTMPDIR)/hop-$$distrib/weblets/home/videos && \
            /bin/rm -f $(HOPDISTRIBDIR)/java/hop-$(HOPRELEASE)*.jar && \
            mv bin/hop.jar $(HOPDISTRIBDIR)/java/hop-$$distrib.jar) && \
-          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \
-        fi) || exit 1
+          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib) || exit 1
 
 distrib-tmp:
 	if [ -d $(HOPTMPDIR)/hop-tmp ]; then \
