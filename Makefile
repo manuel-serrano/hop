@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Aug  4 14:50:28 2010 (serrano)                */
+#*    Last change :  Wed Aug  4 14:51:49 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -274,7 +274,7 @@ distrib-pre:
           else \
             distrib=$$version-$$devel$$minor; \
           fi; \
-          (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision)
+          (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision || exit 0)
 
 distrib-native: distrib-tmp
 	(version=$(HOPRELEASE); \
