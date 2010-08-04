@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Aug  4 12:32:33 2010 (serrano)                */
+#*    Last change :  Wed Aug  4 12:33:16 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -261,7 +261,7 @@ distrib-inc-version:
 distrib-sans-version: distrib-native distrib-jvm
 
 distrib-native: distrib-tmp
-	(version=$(HOPRELEASE);
+	(version=$(HOPRELEASE); \
          devel=$(HOPDEVEL); \
           if [ -f .hoprelease ]; then \
              . ./.hoprelease; \
@@ -293,7 +293,7 @@ distrib-native: distrib-tmp
           fi) || exit 1
 
 distrib-jvm:
-	(version=$(HOPRELEASE);
+	(version=$(HOPRELEASE); \
          devel=$(HOPDEVEL); \
           if [ -f .hoprelease ]; then \
              . ./.hoprelease; \
