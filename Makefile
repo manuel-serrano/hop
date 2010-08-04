@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Aug  4 12:37:59 2010 (serrano)                */
+#*    Last change :  Wed Aug  4 14:52:45 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -213,7 +213,7 @@ cleanall: distclean
 #*    distrib:                                                         */
 #*---------------------------------------------------------------------*/
 .PHONY: distrib newdistrib distrib-inc-version distrib-sans-version
-.PHONY: distrib-tmp distrib-native distrib-jvm
+.PHONY: distrib-tmp distrib-pre distrib-native distrib-jvm
 
 distrib:
 	$(MAKE) distrib-sans-version
@@ -260,6 +260,20 @@ distrib-inc-version:
 
 distrib-sans-version: distrib-native distrib-jvm
 
+distrib-pre:
+	(version=$(HOPRELEASE); \
+         devel=$(HOPDEVEL); \
+          if [ -f .hoprelease ]; then \
+             . ./.hoprelease; \
+          fi; \
+          if [ "$$devel " = " " ]; then \
+            distrib=$$version; \
+            minor=; \
+          else \
+            distrib=$$version-$$devel$$minor; \
+          fi; \
+          (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision || exit 0)
+
 distrib-native: distrib-tmp
 	(version=$(HOPRELEASE); \
          devel=$(HOPDEVEL); \
@@ -272,8 +286,7 @@ distrib-native: distrib-tmp
           else \
             distrib=$$version-$$devel$$minor; \
           fi; \
-          (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision && \
-	  echo "Building hop-$(HOPRELEASE).tar.gz..."; \
+	  echo "Building hop-$(HOPRELEASE).tar.gz..." && \
           $(MAKE) clone CLONEDIR=$(HOPTMPDIR)/hop-tmp && \
 	  $(MAKE) changelog > $(HOPTMPDIR)/hop-tmp/ChangeLog && \
 	  $(RM) -rf $(HOPTMPDIR)/hop-tmp/weblets/home/talks && \
@@ -292,7 +305,7 @@ distrib-native: distrib-tmp
             fi \
           fi) || exit 1
 
-distrib-jvm:
+distrib-jvm: distrib-tmp
 	(version=$(HOPRELEASE); \
          devel=$(HOPDEVEL); \
           if [ -f .hoprelease ]; then \

@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.1.x/etc/Makefile.library              */
+#*    serrano/prgm/project/hop/2.2.x/etc/Makefile.library              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Sun Jun 20 13:37:11 2010 (serrano)                */
+#*    Last change :  Wed Aug  4 14:36:59 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -271,15 +271,19 @@ stdclean:
 	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
 	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a
 	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).a
 	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX)
 	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX)
 	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX)
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).zip
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).zip
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_eu-$(HOPRELEASE).zip
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).dll
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_eu-$(HOPRELEASE).dll
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).jheap
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).heap
 	$(RM) -rf $(CLASS_DIR)
