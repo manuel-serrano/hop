@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Aug  4 14:48:38 2010 (serrano)                */
+#*    Last change :  Wed Aug  4 14:50:28 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -213,6 +213,7 @@ cleanall: distclean
 #*    distrib:                                                         */
 #*---------------------------------------------------------------------*/
 .PHONY: distrib newdistrib distrib-inc-version distrib-sans-version
+.PHONY: distrib-tmp distrib-pre distrib-native distrib-jvm
 
 distrib:
 	$(MAKE) distrib-sans-version
@@ -257,7 +258,23 @@ distrib-inc-version:
           chmod a+rx .hoprelease; \
         fi
 
-distrib-sans-version: distrib-native distrib-jvm
+distrib-sans-version: distrib-pre
+	$(MAKE) distrib-native 
+	$(MAKE) distrib-jvm
+
+distrib-pre:
+	(version=$(HOPRELEASE); \
+         devel=$(HOPDEVEL); \
+          if [ -f .hoprelease ]; then \
+             . ./.hoprelease; \
+          fi; \
+          if [ "$$devel " = " " ]; then \
+            distrib=$$version; \
+            minor=; \
+          else \
+            distrib=$$version-$$devel$$minor; \
+          fi; \
+          (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision)
 
 distrib-native: distrib-tmp
 	(version=$(HOPRELEASE); \
@@ -271,7 +288,6 @@ distrib-native: distrib-tmp
           else \
             distrib=$$version-$$devel$$minor; \
           fi; \
-          (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision && \
 	  echo "Building hop-$(HOPRELEASE).tar.gz..." && \
           $(MAKE) clone CLONEDIR=$(HOPTMPDIR)/hop-tmp && \
 	  $(MAKE) changelog > $(HOPTMPDIR)/hop-tmp/ChangeLog && \
