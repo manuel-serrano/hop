@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Jul  9 16:54:47 2010 (serrano)                */
+;*    Last change :  Mon Jul 26 18:32:39 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -162,9 +162,11 @@
 				   body)
    (<HTML>
       (let ((req (current-request)))
-	 (if (http-proxy-request? req) 
+	 (if (http-proxy-request? req)
 	     ;; this is a proxy request
-	     (<HEAD> :base (format "http://~a:~a" (hostname) (hop-port)))
+	     (<HEAD> :base (format "http://~a:~a"
+				   (socket-hostname (http-request-socket req))
+				   (hop-port)))
 	     ;; this is a local request
 	     (<HEAD>)))
       (<BODY> :style "background: #000; font-family: arial; color: black;"

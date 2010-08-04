@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Fri Jul  9 10:21:31 2010 (serrano)                */
+;*    Last change :  Mon Jul 26 18:34:18 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -84,7 +84,9 @@
 			((&io-unknown-host-error? e)
 			 (http-response (http-error e) socket))
 			((not remote)
-			 (raise e))
+			 (if (&io-error? e)
+			     (http-response (http-remote-error host e) socket)
+			     (raise e)))
 			((connection-wstart? remote)
 			 ;; If we have already sent characters to the client
 			 ;; it is no longer possible to repl with "resource

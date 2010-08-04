@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Jul  9 10:00:40 2010 (serrano)                */
+;*    Last change :  Tue Jul 13 17:38:22 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -273,15 +273,6 @@
 	    (hop-accept-kill::bool)
 	    (hop-accept-kill-set! ::bool)
 
-;* 	    (hop-security-manager::obj)                                */
-;* 	    (hop-security-manager-set! ::obj)                          */
-;* 	                                                               */
-;* 	    (hop-security-script-purifier::obj)                        */
-;* 	    (hop-security-script-purifier-set! ::obj)                  */
-;* 	                                                               */
-;* 	    (hop-security-inline-purifier::obj)                        */
-;* 	    (hop-security-inline-purifier-set! ::obj)                  */
-	    
 	    (hop-enable-proxy-sniffer::bool)
 	    (hop-enable-proxy-sniffer-set! ::bool)
 	    
