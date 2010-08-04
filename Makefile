@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Aug  4 14:47:31 2010 (serrano)                */
+#*    Last change :  Wed Aug  4 14:48:38 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -257,16 +257,11 @@ distrib-inc-version:
           chmod a+rx .hoprelease; \
         fi
 
-distrib-sans-version:
-	if [ -d $(HOPTMPDIR)/hop-tmp ]; then \
-          echo "*** ERROR: $(HOPTMPDIR)/hop-tmp exists!"; \
-          exit 1; \
-        elif [ -d $(HOPTMPDIR)/hop-$(HOPRELEASE) ]; then \
-          echo "*** ERROR: $(HOPTMPDIR)/hop-$(HOPRELEASE) exists!"; \
-          exit 1; \
-        else \
-          version=$(HOPRELEASE); \
-          devel=$(HOPDEVEL); \
+distrib-sans-version: distrib-native distrib-jvm
+
+distrib-native: distrib-tmp
+	(version=$(HOPRELEASE); \
+         devel=$(HOPDEVEL); \
           if [ -f .hoprelease ]; then \
              . ./.hoprelease; \
           fi; \
@@ -294,6 +289,19 @@ distrib-sans-version:
               /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.tar.gz && \
               mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR); \
             fi \
+          fi) || exit 1
+
+distrib-jvm:
+	(version=$(HOPRELEASE); \
+         devel=$(HOPDEVEL); \
+          if [ -f .hoprelease ]; then \
+             . ./.hoprelease; \
+          fi; \
+          if [ "$$devel " = " " ]; then \
+            distrib=$$version; \
+            minor=; \
+          else \
+            distrib=$$version-$$devel$$minor; \
           fi; \
 	  echo "Building hop-$(HOPRELEASE).jar..."; \
           $(MAKE) clone CLONEDIR=$(HOPTMPDIR)/hop-tmp && \
@@ -306,7 +314,15 @@ distrib-sans-version:
 	   $(RM) -rf $(HOPTMPDIR)/hop-$$distrib/weblets/home/videos && \
            /bin/rm -f $(HOPDISTRIBDIR)/java/hop-$(HOPRELEASE)*.jar && \
            mv bin/hop.jar $(HOPDISTRIBDIR)/java/hop-$$distrib.jar) && \
-          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \
+          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib) || exit 1
+
+distrib-tmp:
+	if [ -d $(HOPTMPDIR)/hop-tmp ]; then \
+          echo "*** ERROR: $(HOPTMPDIR)/hop-tmp exists!"; \
+          exit 1; \
+        elif [ -d $(HOPTMPDIR)/hop-$(HOPRELEASE) ]; then \
+          echo "*** ERROR: $(HOPTMPDIR)/hop-$(HOPRELEASE) exists!"; \
+          exit 1; \
         fi
 
 #*---------------------------------------------------------------------*/
