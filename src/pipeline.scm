@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Fri Jul  9 08:35:00 2010 (serrano)                */
+;*    Last change :  Wed Aug  4 11:46:58 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -108,33 +108,34 @@
    ;; verbose function (only for log and debug)
    (define (http-connect-verb scd id sock req mode num)
       (with-access::http-request req (method scheme host port path user header)
-         (when (not (and (eq? (hop-verbose-output) 'buffer)
-                         (string-prefix? "/logcat" path)))
-               (hop-verb 1 (if (http-proxy-request? req)
-			 (hop-color req req
-				    (if (eq? mode 'keep-alive)
-					(format " REQUEST.prox (+~a)" num)
-					" REQUEST.prox"))
-			 (hop-color req req
+         (when (and (>=fx (hop-verbose) 1)
+		    (not (and (eq? (hop-verbose-output) 'buffer)
+			      (string-prefix? "/logcat" path))))
+	    (hop-verb 1 (if (http-proxy-request? req)
+			    (hop-color req req
+				       (if (eq? mode 'keep-alive)
+					   (format " REQUEST.prox (+~a)" num)
+					   " REQUEST.prox"))
+			    (hop-color req req
                                        (if (eq? mode 'keep-alive)
-					(format " REQUEST.serv (+~a)" num)
-					" REQUEST.serv")))
-		   (if (>=fx (hop-verbose) 2)
-		       (format " ~a~a: " thread (scheduler-stat scd))
-		       ": ")
-		   method " " scheme "://"
-		   (if (>=fx (hop-verbose) 2)
-		       (string-append (user-name user) "@")
-		       "")
-		   host ":"
-		   port (string-for-read path)
-		   " "
-		   (if (>=fx (hop-verbose) 2)
-		       (http-request-http req)
-		       "")
-		   "\n")
-               (hop-verb 4 (hop-color id id " CONNECT.header") ": "
-		         (with-output-to-string (lambda () (write header))) "\n"))))
+					   (format " REQUEST.serv (+~a)" num)
+					   " REQUEST.serv")))
+		      (if (>=fx (hop-verbose) 2)
+			  (format " ~a~a: " thread (scheduler-stat scd))
+			  ": ")
+		      method " " scheme "://"
+		      (if (>=fx (hop-verbose) 2)
+			  (string-append (user-name user) "@")
+			  "")
+		      host ":"
+		      port (string-for-read path)
+		      " "
+		      (if (>=fx (hop-verbose) 2)
+			  (http-request-http req)
+			  "")
+		      "\n")
+	    (hop-verb 4 (hop-color id id " CONNECT.header") ": "
+		      (with-output-to-string (lambda () (write header))) "\n"))))
 
    (let loop ((mode 'connect)
 	      (timeout timeout)
@@ -234,9 +235,10 @@
 ;*---------------------------------------------------------------------*/
 (define (stage-response scd thread id req)
    (current-request-set! thread req)
-   (when (not (and (eq? (hop-verbose-output) 'buffer)
-                   (string-prefix? "/logcat" (http-request-path req))))
-         (hop-verb 3 (hop-color id id " RESPONSE") (format " ~a" thread) "\n"))
+   (when (and (>=fx (hop-verbose) 3)
+	      (not (and (eq? (hop-verbose-output) 'buffer)
+			(string-prefix? "/logcat" (http-request-path req)))))
+      (hop-verb 3 (hop-color id id " RESPONSE") (format " ~a" thread) "\n"))
    (with-stage-handler
       response-error-handler (scd req)
       (let ((resp (with-time (request->response req thread) id "RESPONSE")))
@@ -322,12 +324,12 @@
 		 " user: " (user-name (http-request-user req)) "\n")
        (when (not (and (eq? (hop-verbose-output) 'buffer)
                        (string-prefix? "/logcat" (http-request-path req))))
-             (hop-verb 3 (hop-color req req " EXEC")
-		 " load: " (scheduler-load scd)
-		 (scheduler-stat scd)
-		 (format " ~a" thread)
-		 ": " (find-runtime-type resp)
-		 " " (user-name (http-request-user req)) "\n")))
+	  (hop-verb 3 (hop-color req req " EXEC")
+		    " load: " (scheduler-load scd)
+		    (scheduler-stat scd)
+		    (format " ~a" thread)
+		    ": " (find-runtime-type resp)
+		    " " (user-name (http-request-user req)) "\n")))
    (with-stage-handler
       exec-error-handler (scd req)
       (let* ((sock (http-request-socket req))
@@ -356,8 +358,8 @@
 		    (when (and (>=fx (hop-verbose) 3)
                                (not (and (eq? (hop-verbose-output) 'buffer)
                                          (string-prefix? "/logcat" (http-request-path req)))))
-                          (stage-exec-verb scd thread req resp connection
-					  " END"))
+		       (stage-exec-verb scd thread req resp connection
+					" END"))
 		    (socket-close sock)
 		    #f)
 		   ((>=fx load 80)

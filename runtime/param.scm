@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Jul 13 17:38:22 2010 (serrano)                */
+;*    Last change :  Wed Aug  4 11:48:37 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -73,6 +73,9 @@
 
 	    (hop-log::int)
 	    (hop-log-set! ::int)
+
+            (hop-verbose-file::obj)
+            (hop-verbose-file-set! ::obj)
 
 	    (hop-capture-port::obj)
 	    (hop-capture-port-set! ::obj)
@@ -444,6 +447,16 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-log
    0)
+
+;*---------------------------------------------------------------------*/
+;     hop-verbose-file ...                                             */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-verbose-file
+   #f
+   (lambda (path)
+      (if path
+          (open-output-file path)
+          #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-capture-port ...                                             */
