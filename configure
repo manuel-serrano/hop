@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Jul  3 07:14:00 2010 (serrano)                */
+#*    Last change :  Wed Aug  4 15:17:03 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -55,7 +55,7 @@ cssmimetype="text/css"
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
 version="2.2.0"
-devel=
+devel=pre
 
 hopc=$PWD/bin/hopc
 
