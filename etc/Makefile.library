@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Wed Aug  4 14:36:07 2010 (serrano)                */
+#*    Last change :  Wed Aug  4 14:37:20 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -279,9 +279,11 @@ stdclean:
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).zip
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).zip
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_eu-$(HOPRELEASE).zip
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).dll
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_eu-$(HOPRELEASE).dll
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).jheap
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).heap
 	$(RM) -rf $(CLASS_DIR)
