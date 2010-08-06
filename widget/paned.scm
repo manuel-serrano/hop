@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Jul  9 16:31:45 2010 (serrano)                */
+;*    Last change :  Fri Aug  6 09:40:14 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -138,9 +138,7 @@
    (define (xml-compare-pan c1 c2)
       (if (and (xml-markup? c2) (eq? (xml-markup-tag c2) 'div))
 	  (xml-compare c1 (dom-first-child c2))
-	  (begin
-	     (tprint "PAS GLOP: " (ast->string-list c2))
-	     (call-next-method))))
+	  (call-next-method)))
    
    (if (and (xml-markup? a2)
 	    (eq? (xml-markup-tag a2) 'div)

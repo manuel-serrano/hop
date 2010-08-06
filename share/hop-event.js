@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/share/hop-event.js                */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-event.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sun May  9 06:31:32 2010 (serrano)                */
+/*    Last change :  Fri Aug  6 12:20:22 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -475,6 +475,8 @@ function start_servevt_flash_proxy( key, host, port ) {
    var object_proxy = function() {
       return "<object id='" + hop_servevt_id + "' class='hop-servevt-proxy'" +
       " style='visibility: hidden; position: fixed; top: 0; right: 0'" +
+      " type='application/x-shockwave-flash'" +
+      " codebase='http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,22,0'" +
       " width='1px' height='1px' title='hop-servevt' classId='HopServevt.swf'>" +
       "<param name='movie' value='" + hop_share_directory() + "/flash/HopServevt.swf'/>" +
       "<param name='allowScriptAccess' value='always'/>" +
