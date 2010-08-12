@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Aug  6 12:20:22 2010 (serrano)                */
+/*    Last change :  Fri Aug  6 15:04:25 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -474,7 +474,7 @@ function start_servevt_ajax_proxy( key ) {
 function start_servevt_flash_proxy( key, host, port ) {
    var object_proxy = function() {
       return "<object id='" + hop_servevt_id + "' class='hop-servevt-proxy'" +
-      " style='visibility: hidden; position: fixed; top: 0; right: 0'" +
+      " style='visibility: visible; position: fixed; top: 0; right: 0'" +
       " type='application/x-shockwave-flash'" +
       " codebase='http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,22,0'" +
       " width='1px' height='1px' title='hop-servevt' classId='HopServevt.swf'>" +
@@ -510,7 +510,7 @@ function start_servevt_flash_proxy( key, host, port ) {
       
       return embed;
    }
-   
+
    var proxy = document.createElement( "div" );
 /*    node_style_set( proxy, "visibility", "hidden" );                 */
    node_style_set( proxy, "position", "fixed" );
@@ -656,7 +656,8 @@ function servevt_xhr_multipartp() {
 function servevt_flashp( port ) {
    return port &&
       (hop_config.flash_version >= 8) &&
-      (hop_config.flash_external_interface);
+      (hop_config.flash_external_interface) &&
+      (hop_config.navigator_family != "msie");
 }
       
 /*---------------------------------------------------------------------*/

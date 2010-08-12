@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Aug  4 14:52:45 2010 (serrano)                */
+#*    Last change :  Thu Aug 12 10:12:03 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -136,19 +136,19 @@ install-init: hop-dirs
 
 hop-dirs:
 	mkdir -p $(DESTDIR)$(HOPBINDIR) \
-         && chmod $(BMASK) $(DESTDIR)$(HOPBINDIR)
+         && chmod a+rx $(DESTDIR)$(HOPBINDIR)
 	mkdir -p $(DESTDIR)$(HOPLIBDIR) \
-         && chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)
+         && chmod a+rx $(DESTDIR)$(HOPLIBDIR)
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR) \
-         && chmod $(BMASK) $(DESTDIR)$(HOPSHAREDIR)
+         && chmod a+rx $(DESTDIR)$(HOPSHAREDIR)
 	mkdir -p $(DESTDIR)$(HOPETCDIR) \
-         && chmod $(BMASK) $(DESTDIR)$(HOPETCDIR)
+         && chmod a+rx $(DESTDIR)$(HOPETCDIR)
 	mkdir -p $(DESTDIR)$(HOPLIBDIR)/hop \
-         && chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/hop
+         && chmod a+rx $(DESTDIR)$(HOPLIBDIR)/hop
 	mkdir -p $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \
-         && chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)
+         && chmod a+rx $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)
 	mkdir -p $(DESTDIR)$(HOPWEBLETSDIR) \
-	 && chmod $(BMASK) $(DESTDIR)$(HOPWEBLETSDIR)
+	 && chmod a+rx $(DESTDIR)$(HOPWEBLETSDIR)
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */

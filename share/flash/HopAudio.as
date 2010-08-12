@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Aug 23 16:16:58 2007                          */
-/*    Last change :  Fri Aug  6 12:13:59 2010 (serrano)                */
+/*    Last change :  Fri Aug  6 16:54:48 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopAudio flash support.                                          */
@@ -70,6 +70,7 @@ class HopAudio {
 
       // loadSound
       var loadSound = function( u, stream ) {
+	 alert( "loadSound: " + u );
 	 url = u;
 
 	 snd.stream = stream;

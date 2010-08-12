@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/etc/hop-autoconf.js.in            */
+/*    serrano/prgm/project/hop/2.2.x/etc/hop-autoconf.js.in            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Jul  2 15:33:40 2010 (serrano)                */
+/*    Last change :  Fri Aug  6 14:01:14 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -68,6 +68,15 @@ function hop_get_flash_version() {
 	 if( (typeof d == "string") && (d.indexOf( "Shockwave Flash " ) == 0) ) {
 	    return parseFloat( d.substring( 16, d.indexOf( " ", 16 ) ) );
 	 }
+      }
+   } else {
+      try {
+	 axo = new ActiveXObject( "ShockwaveFlash.ShockwaveFlash.7" );
+	 var m = axo.GetVariable( "$version" ).match( /.+ ([0-9]+),/ );
+	 if( m != null ) {
+	    return m[ 1 ];
+	 }
+      } catch (e) {
       }
    }
 

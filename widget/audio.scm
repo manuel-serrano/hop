@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Aug  6 11:10:31 2010 (serrano)                */
+;*    Last change :  Fri Aug  6 16:51:29 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -217,6 +217,7 @@
 	    (format "var backend = document.getElementById( ~s );" id)
 	    "if( backend ) hop_audio_flash_init( backend );}")
 	 (<OBJECT> :id (string-append id "-object") :class "hop-audio"
+	    :style "visibility: visible; position: fixed; top: 0; right: 0; background: transparent"
 	    :width "1px" :height "1px"
 	    :title "hop-audio" :classId "HopAudio.swf"
 	    :type "application/x-shockwave-flash"
