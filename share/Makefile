@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Aug 12 12:10:09 2010 (serrano)                */
+#*    Last change :  Thu Aug 12 12:25:52 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -180,19 +180,19 @@ install:
 	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/icons ]; then \
 	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/icons && \
 	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/icons; \
-        fi; \
+        fi && \
         for p in $(ICONS:%=icons/%); do \
-	  if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p` ]; \
+	  if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p` ]; then \
             mkdir -p $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p` && \
 	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p`; \
-          fi; \
+          fi && \
 	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
 	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
         done
 	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/buttons ]; then \
 	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/buttons && \
 	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/buttons; \
-        fi; \
+        fi && \
         for p in $(BUTTONS:%=buttons/%); do \
 	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
 	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
@@ -200,11 +200,11 @@ install:
 	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/flash ]; then \
 	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/flash && \
 	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/flash; \
-        fi; \
+        fi && \
         for p in $(FLASHOBJS:%=flash/%); do \
 	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
-	  chmod $(MODIFLE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
-        done
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+        done && \
 	for p in $(FLASHOPT:%=flash/%); do \
 	  if [ -f $$p ]; then \
             $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
@@ -214,7 +214,7 @@ install:
 	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/editor ]; then \
 	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/editor && \
 	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/editor; \
-        fi; \
+        fi && \
 	for p in $(BUILDSHAREDIR)/editor/*; do \
           $(INSTALL) $$p $(DESTDIR)$(HOPSHAREDIR)/editor && \
           chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/editor/`basename $$p`; \

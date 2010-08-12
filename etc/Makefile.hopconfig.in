@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Thu Aug 12 11:42:28 2010 (serrano)                */
+#*    Last change :  Thu Aug 12 12:33:41 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -36,9 +36,9 @@ JAR		= @JAR@
 FLASHCC		= @FLASHCC@
 GZIP		= @GZIP@
 
-MODFILE		= 755
+MODFILE		= 644
 MODDIR		= 755
-MODEXE		= 644
+MODEXE		= 755
 
 INSTALL		= @INSTALL@
 

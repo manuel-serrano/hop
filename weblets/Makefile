@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Aug 12 12:11:22 2010 (serrano)                */
+#*    Last change :  Thu Aug 12 12:31:28 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
@@ -65,14 +65,19 @@ install-weblet:
               chmod $(MODDIR) $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR); \
         fi
 	for f in $(DIR)/*; do \
-          if [ ! -d $$f ]; then \
-            mkdir -p $$f chmod $(MODDIR) $$f || exit 1; \
+          if [ -d $$f ]; then \
+            $(MAKE) install-weblet DIR=$$f || exit 1; \
+          else \
+            if [ -f $$f ]; then \
+	      $(INSTALL) $$f $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) \
+                && chmod $(MODFILE) $(DESTDIR)$(HOPWEBLETSDIR)/$$f \
+                || exit 1; \
+            fi; \
           fi; \
-          $(INSTALL) $$f $(DESTDIR)$(HOPWEBLETSDIR)/$$f && \
-          chmod $(MODDIR) $(DESTDIR)$(HOPWEBLETSDIR)/$$f || exit 1; \
-        done && \
+        done; \
         if [ -f $(DIR)/.afile ]; then \
-          $(INSTALL) $(DIR)/.afile $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) && \
-          chmod $(MODFILE) $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR)/.afile || exit 1; \
-        fi;
+          $(INSTALL) $(DIR)/.afile $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) \
+            && chmod $(MODFILE) $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR)/.afile \
+            || exit 1; \
+        fi; \
 

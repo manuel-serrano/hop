@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Aug 12 11:47:28 2010 (serrano)                */
+#*    Last change :  Thu Aug 12 12:22:01 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -142,23 +142,23 @@ hop-dirs:
 	if [ ! -d $(DESTDIR)$(HOPLIBDIR) ]; then \
           mkdir -p $(DESTDIR)$(HOPLIBDIR) \
             && chmod $(MODDIR) $(DESTDIR)$(HOPLIBDIR); \
-        if
+        fi
 	if [ ! -d $(DESTDIR)$(HOPSHAREDIR) ]; then \
 	  mkdir -p $(DESTDIR)$(HOPSHAREDIR) \
             && chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR); \
-        if
+        fi
 	if [ ! -d $(DESTDIR)$(HOPETCDIR) ]; then \
 	  mkdir -p $(DESTDIR)$(HOPETCDIR) \
             && chmod $(MODDIR) $(DESTDIR)$(HOPETCDIR); \
-        if
+        fi
 	if [ ! -d $(DESTDIR)$(HOPLIBDIR)/hop ]; then \
 	  mkdir -p $(DESTDIR)$(HOPLIBDIR)/hop \
            && chmod $(MODDIR) $(DESTDIR)$(HOPLIBDIR)/hop; \
-        if
+        fi
 	if [ ! -d $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) ]; then \
 	  mkdir -p $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \
            && chmod $(MODDIR) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR); \
-        if
+        fi
 	if [ ! -d $(DESTDIR)$(HOPWEBLETSDIR) ]; then \
 	  mkdir -p $(DESTDIR)$(HOPWEBLETSDIR) \
 	   && chmod $(MODDIR) $(DESTDIR)$(HOPWEBLETSDIR); \
