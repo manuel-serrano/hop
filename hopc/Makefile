@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/hopc/Makefile                     */
+#*    serrano/prgm/project/hop/2.2.x/hopc/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Tue Jun 23 05:09:40 2009 (serrano)                */
+#*    Last change :  Thu Aug 12 12:05:38 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hopc                                    */
 #*=====================================================================*/
@@ -162,13 +162,12 @@ dep:
 install: install-$(BACKEND)
 
 install-native:
-	mkdir -p $(DESTDIR)$(HOPBINDIR)
 	$(INSTALL) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)
-	chmod $(BMASK) $(DESTDIR)$(HOPBINDIR)/$(EXEC)
+	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/$(EXEC)
 
 install-jvm:
-	mkdir -p $(DESTDIR)$(HOPBINDIR)
 	$(INSTALL) $(BUILDBINDIR)/$(EXEC).jar $(DESTDIR)$(HOPBINDIR)
+	chmod $(MODFILE) $(DESTDIR)$(HOPBINDIR)/$(EXEC).jar
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */

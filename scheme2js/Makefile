@@ -1,7 +1,7 @@
 #*=====================================================================*/
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Mon Jun  7 17:13:07 2010 (serrano)                */
+#*    Last change :  Thu Aug 12 12:13:07 2010 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -104,12 +104,16 @@ runtime-install:
 	mkdir -p $(DESTDIR)$(SCHEME2JSSHAREDIR) && \
 	$(INSTALL) $(SCHEME2JS_RUNTIME)/runtime.js \
                 $(DESTDIR)$(SCHEME2JSSHAREDIR) && \
+        chmod $(MODFILE) $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime.js && \
 	$(INSTALL) $(SCHEME2JS_RUNTIME)/runtime_callcc.js \
                 $(DESTDIR)$(SCHEME2JSSHAREDIR) && \
+        chmod $(MODFILE) $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime_callcc.js && \
 	$(INSTALL) $(SCHEME2JS_RUNTIME)/runtime_interface.js \
                 $(DESTDIR)$(SCHEME2JSSHAREDIR) && \
+        chmod $(MODFILE) $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime_interface.js && \
 	$(INSTALL) $(SCHEME2JS_RUNTIME)/runtime_interface_callcc.js \
-                $(DESTDIR)$(SCHEME2JSSHAREDIR)
+                $(DESTDIR)$(SCHEME2JSSHAREDIR) && \
+        chmod $(MODFILE) $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime_interface_callcc.js
 
 runtime-uninstall:
 	/bin/rm -f $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime.js && \

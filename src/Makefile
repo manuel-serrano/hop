@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.1.x/src/Makefile                      */
+#*    serrano/prgm/project/hop/2.2.x/src/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Tue Feb 16 07:54:18 2010 (serrano)                */
+#*    Last change :  Thu Aug 12 11:56:10 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -186,14 +186,13 @@ dep:
 install: install-$(BACKEND)
 
 install-native:
-	mkdir -p $(DESTDIR)$(HOPBINDIR)
 	$(INSTALL) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)/hop-$(HOPRELEASE)
-	chmod $(BMASK) $(DESTDIR)$(HOPBINDIR)/hop-$(HOPRELEASE)
+	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hop-$(HOPRELEASE)
 	(cd $(DESTDIR)$(HOPBINDIR) && $(RM) hop && ln hop-$(HOPRELEASE) hop)
 
 install-jvm:
-	mkdir -p $(DESTDIR)$(HOPBINDIR)
 	$(INSTALL) $(BUILDBINDIR)/$(EXEC).jar $(DESTDIR)$(HOPBINDIR)
+	chmod $(MODFILE) $(DESTDIR)$(HOPBINDIR)/$(EXEC).jar
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sun Jul 11 08:19:33 2010 (serrano)                */
+#*    Last change :  Thu Aug 12 12:10:09 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -158,46 +158,67 @@ hop-password.scm: ../runtime/password.scm
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
-	mkdir -p $(DESTDIR)$(HOPSHAREDIR) && \
-        chmod $(BMASK) $(DESTDIR)$(HOPSHAREDIR) && \
 	$(INSTALL) $(BUILDSHAREDIR)/.afile $(DESTDIR)$(HOPSHAREDIR)/.afile && \
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/.afile && \
 	$(INSTALL) $(BUILDSHAREDIR)/hop-runtime.sch $(DESTDIR)$(HOPSHAREDIR)/hop-runtime.sch && \
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/hop-runtime.sch && \
         for p in hop.js hop-autoconf.js $(RTS); do \
-	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
-	  $(GZIP) $(BUILDSHAREDIR)/$$p -c > $(DESTDIR)$(HOPSHAREDIR)/$$p.gz 2> /dev/null; \
-          chmod $(BMASK) $(DESTDIR)$(HOPSHAREDIR)/$$p.gz; \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p && \
+	  $(GZIP) $(BUILDSHAREDIR)/$$p -c > $(DESTDIR)$(HOPSHAREDIR)/$$p.gz 2> /dev/null && \
+          chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p.gz; \
         done
-	  $(INSTALL) ../scheme2js/runtime/runtime.js $(DESTDIR)$(HOPSHAREDIR)/runtime.js; \
-	  $(GZIP) ../scheme2js/runtime/runtime.js -c > $(DESTDIR)$(HOPSHAREDIR)/runtime.js.gz; \
-          chmod $(BMASK) $(DESTDIR)$(HOPSHAREDIR)/runtime.js.gz; \
+	$(INSTALL) ../scheme2js/runtime/runtime.js $(DESTDIR)$(HOPSHAREDIR)/runtime.js && \
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/runtime.js && \
+	$(INSTALL) ../scheme2js/runtime/runtime.js $(DESTDIR)$(HOPSHAREDIR)/runtime.js && \
+	$(GZIP) ../scheme2js/runtime/runtime.js -c > $(DESTDIR)$(HOPSHAREDIR)/runtime.js.gz && \
+        chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/runtime.js.gz; \
         for p in $(EXTRA); do \
-	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
         done
-	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/icons && \
-	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/icons && \
+	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/icons ]; then \
+	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/icons && \
+	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/icons; \
+        fi; \
         for p in $(ICONS:%=icons/%); do \
-          mkdir -p $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p` && \
-	  chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p` && \
-	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p` ]; \
+            mkdir -p $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p` && \
+	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p`; \
+          fi; \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
         done
-	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/buttons && \
-	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/buttons && \
+	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/buttons ]; then \
+	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/buttons && \
+	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/buttons; \
+        fi; \
         for p in $(BUTTONS:%=buttons/%); do \
-	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
         done
-	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/flash && \
-	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/flash && \
+	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/flash ]; then \
+	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/flash && \
+	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/flash; \
+        fi; \
         for p in $(FLASHOBJS:%=flash/%); do \
-	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
+	  chmod $(MODIFLE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
         done
 	for p in $(FLASHOPT:%=flash/%); do \
 	  if [ -f $$p ]; then \
-            $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+            $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
+            chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
           fi; \
         done
-	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/editor && \
-	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/editor && \
-	$(INSTALL) $(BUILDSHAREDIR)/editor/* $(DESTDIR)$(HOPSHAREDIR)/editor
+	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/editor ]; then \
+	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/editor && \
+	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/editor; \
+        fi; \
+	for p in $(BUILDSHAREDIR)/editor/*; do \
+          $(INSTALL) $$p $(DESTDIR)$(HOPSHAREDIR)/editor && \
+          chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/editor/`basename $$p`; \
+        done
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */

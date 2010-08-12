@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Aug 12 10:12:03 2010 (serrano)                */
+#*    Last change :  Thu Aug 12 11:47:28 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -126,29 +126,43 @@ install-quick: hop-dirs install-init
 
 install-init: hop-dirs
 	$(INSTALL) $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init && \
-        chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init;
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init;
 	$(INSTALL) $(BUILDLIBDIR)/hopwidget.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopwidget.init && \
-        chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopwidget.init;
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopwidget.init;
 	$(INSTALL) $(BUILDLIBDIR)/scheme2js.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/scheme2js.init && \
-        chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/scheme2js.init;
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/scheme2js.init;
 	$(INSTALL) $(BUILDLIBDIR)/hopscheme.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init && \
-        chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init;
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init;
 
 hop-dirs:
-	mkdir -p $(DESTDIR)$(HOPBINDIR) \
-         && chmod a+rx $(DESTDIR)$(HOPBINDIR)
-	mkdir -p $(DESTDIR)$(HOPLIBDIR) \
-         && chmod a+rx $(DESTDIR)$(HOPLIBDIR)
-	mkdir -p $(DESTDIR)$(HOPSHAREDIR) \
-         && chmod a+rx $(DESTDIR)$(HOPSHAREDIR)
-	mkdir -p $(DESTDIR)$(HOPETCDIR) \
-         && chmod a+rx $(DESTDIR)$(HOPETCDIR)
-	mkdir -p $(DESTDIR)$(HOPLIBDIR)/hop \
-         && chmod a+rx $(DESTDIR)$(HOPLIBDIR)/hop
-	mkdir -p $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \
-         && chmod a+rx $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)
-	mkdir -p $(DESTDIR)$(HOPWEBLETSDIR) \
-	 && chmod a+rx $(DESTDIR)$(HOPWEBLETSDIR)
+	if [ ! -d $(DESTDIR)$(HOPBINDIR) ]; then \
+          mkdir -p $(DESTDIR)$(HOPBINDIR) \
+            && chmod $(MODDIR) $(DESTDIR)$(HOPBINDIR); \
+        fi
+	if [ ! -d $(DESTDIR)$(HOPLIBDIR) ]; then \
+          mkdir -p $(DESTDIR)$(HOPLIBDIR) \
+            && chmod $(MODDIR) $(DESTDIR)$(HOPLIBDIR); \
+        if
+	if [ ! -d $(DESTDIR)$(HOPSHAREDIR) ]; then \
+	  mkdir -p $(DESTDIR)$(HOPSHAREDIR) \
+            && chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR); \
+        if
+	if [ ! -d $(DESTDIR)$(HOPETCDIR) ]; then \
+	  mkdir -p $(DESTDIR)$(HOPETCDIR) \
+            && chmod $(MODDIR) $(DESTDIR)$(HOPETCDIR); \
+        if
+	if [ ! -d $(DESTDIR)$(HOPLIBDIR)/hop ]; then \
+	  mkdir -p $(DESTDIR)$(HOPLIBDIR)/hop \
+           && chmod $(MODDIR) $(DESTDIR)$(HOPLIBDIR)/hop; \
+        if
+	if [ ! -d $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) ]; then \
+	  mkdir -p $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \
+           && chmod $(MODDIR) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR); \
+        if
+	if [ ! -d $(DESTDIR)$(HOPWEBLETSDIR) ]; then \
+	  mkdir -p $(DESTDIR)$(HOPWEBLETSDIR) \
+	   && chmod $(MODDIR) $(DESTDIR)$(HOPWEBLETSDIR); \
+        fi
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
