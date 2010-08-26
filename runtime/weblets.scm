@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/weblets.scm               */
+;*    serrano/prgm/project/hop/2.2.x/runtime/weblets.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Sat Jun 19 06:42:49 2010 (serrano)                */
+;*    Last change :  Fri Aug 20 12:12:08 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -297,6 +297,7 @@
 ;*    *autoloads* ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define *autoloads* '())
+(define *autoloads-loaded* '())
 
 ;*---------------------------------------------------------------------*/
 ;*    get-autoload-weblet-directories ...                              */
@@ -408,18 +409,35 @@
 		    ;; remove the autoaload (once loaded)
 		    (mutex-lock! *autoload-mutex*)
 		    (set! *autoloads* (remq! (car al) *autoloads*))
+		    (set! *autoloads-loaded* (cons (car al) *autoloads-loaded*))
 		    (mutex-unlock! *autoload-mutex*)
 		    #t)
 		 (loop (cdr al)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    autoload-loaded? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (autoload-loaded? req)
+   (mutex-lock! *autoload-mutex*)
+   (let loop ((al *autoloads-loaded*))
+      (cond
+	 ((null? al)
+	  (mutex-unlock! *autoload-mutex*)
+	  #f)
+	 (((%autoload-pred (car al)) req)
+	  (mutex-unlock! *autoload-mutex*)
+	  #t)
+	 (else
+	  (loop (cdr al))))))
+
+;*---------------------------------------------------------------------*/
 ;*    autoload-force-load! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (autoload-force-load! path)
-   (autoload-filter
-    (instantiate::http-server-request
-       (localclientp #t)
-       (port (hop-port))
-       (path path)
-       (abspath path))))
+   (let ((req (instantiate::http-server-request
+		 (localclientp #t)
+		 (port (hop-port))
+		 (path path)
+		 (abspath path))))
+      (or (autoload-filter req) (autoload-loaded? req))))
 

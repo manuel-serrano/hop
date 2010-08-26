@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Wed Aug  4 06:59:13 2010 (serrano)                */
+;*    Last change :  Fri Aug 13 18:45:03 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -94,10 +94,39 @@
 	      (,fun (lambda ,args ,mkurl))
 	      (,proc ,(if (pair? body)
 			  `(lambda ,args ,@body)
-			  `(lambda ,args
-			      (instantiate::http-response-remote
-				 (port (hop-port))
-				 (path ,mkurl)))))
+			  `(if (substring-at? ,path (hop-service-base) 0)
+			       ;; this is a local service, thus an autoload
+			       ;; that must replace the current service
+			       ,(let ((autoload (gensym))
+				      (loop (gensym)))
+				   `(let ((,autoload #unspecified))
+				       (lambda ,args
+					   (let ,loop ()
+						(cond
+						   ((eq? ,autoload #t)
+						    (instantiate::http-response-autoload
+						       (request (duplicate::http-server-request (current-request)
+								   (query (substring ,mkurl (+fx 1 (string-length ,path))))
+								   (abspath ,mkurl)
+								   (path ,mkurl)))))
+						   ((eq? ,autoload #f)
+						    (error "with-hop" "Not autoload found for local service" ,path))
+						   ((autoload-force-load! ,path)
+						    (set! ,autoload #t)
+						    (,loop))
+						   (else
+						    (error "with-hop" "Not autoload found for local service" ,path)))))))
+			       ,(let ((url (gensym)))
+				   `(lambda ,args
+				       (let ((,url ,mkurl))
+					  ;; a remote wrapper service
+					  (instantiate::http-response-remote
+					     (request (instantiate::http-request
+							 (port (hop-port))
+							 (path ,path)
+							 (abspath ,path)))
+					     (port (hop-port))
+					     (path ,url))))))))
 	      (,svc (instantiate::hop-service
 		       (wid ,(if (symbol? wid) `',wid wid))
 		       (id ,id)

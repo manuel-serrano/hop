@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -330,7 +330,7 @@ function sc_stringCIContains(s1,s2,start) {
            (peephole (hole 3 s ".substring(" start ", " end ")")))
 */
 function sc_substring(s, start, end) {
-    return s.substring(start, end);
+   return s.substring(start, end < 0 ? s.length : end);
 }
 
 /*** META ((export #t)

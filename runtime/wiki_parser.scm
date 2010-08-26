@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/wiki_parser.scm           */
+;*    serrano/prgm/project/hop/2.2.x/runtime/wiki_parser.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Thu Jul  1 11:53:35 2010 (serrano)                */
+;*    Last change :  Thu Aug 26 07:22:40 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -42,11 +42,13 @@
 			      env)
 	    (wiki-file->hop ::bstring #!key
 			    syntax
-			    (charset (hop-locale)))
+			    (charset (hop-locale))
+			    env)
 	    (wiki-input-port->hop ::input-port
 				  #!key
 				  syntax
-				  (charset (hop-locale)))
+				  (charset (hop-locale))
+				  env)
 	    (wiki-name::bstring ::obj)))
    
 ;*---------------------------------------------------------------------*/
@@ -76,24 +78,15 @@
 ;*    wiki-string->hop ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (wiki-string->hop string #!key syntax (charset (hop-locale)) env)
-   (with-input-from-string string
-      (lambda ()
-	 (read/rp *wiki-grammar*
-		  (current-input-port)
-		  (or syntax *default-syntax*)
-		  '()
-		  '()
-		  0
-		  0
-		  (if (procedure? charset)
-		      charset
-		      (charset-converter! charset (hop-charset)))
-		  env))))
+   (let ((ip (open-input-string string)))
+      (unwind-protect
+	 (wiki-input-port->hop ip :syntax syntax :charset charset :env env)
+	 (close-input-port ip))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-file->hop ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (wiki-file->hop file #!key syntax (charset (hop-locale)))
+(define (wiki-file->hop file #!key syntax (charset (hop-locale)) env)
    (with-input-from-loading-file file
       (lambda ()
 	 (wiki-input-port->hop (current-input-port)
@@ -103,41 +96,40 @@
 ;*---------------------------------------------------------------------*/
 ;*    wiki-input-port->hop ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (wiki-input-port->hop iport #!key syntax (charset (hop-locale)))
-   (cond
-      ((wiki-syntax? syntax)
-       (with-loading-file (input-port-name iport)
-          (lambda ()
-	     ((wiki-syntax-posthook syntax)
-	      (cons
-	       ((wiki-syntax-prehook syntax))
-	       (read/rp *wiki-grammar*
-			iport
-			syntax
-			'()
-			'()
-			0
-			0
-			(if (procedure? charset)
-			    charset
-			    (charset-converter! charset (hop-charset)))
-			#f))))))
-      ((not syntax)
-       (with-loading-file (input-port-name iport)
-          (lambda ()
-	     (read/rp *wiki-grammar*
-		      iport
-		      *default-syntax*
-		      '()
-		      '()
-		      0
-		      0
-		      (if (procedure? charset)
-			  charset
-			  (charset-converter! charset (hop-charset)))
-		      #f))))
-      (else
-       (error "wiki-input-port->hop" "Illegal syntax" syntax))))
+(define (wiki-input-port->hop iport #!key syntax (charset (hop-locale)) env)
+   (let ((conv (if (procedure? charset)
+		   charset
+		   (charset-converter! charset (hop-charset)))))
+      (cond
+	 ((wiki-syntax? syntax)
+	  (with-loading-file (input-port-name iport)
+			     (lambda ()
+				((wiki-syntax-posthook syntax)
+				 (cons
+				  ((wiki-syntax-prehook syntax))
+				  (read/rp *wiki-grammar*
+					   iport
+					   syntax
+					   '()
+					   '()
+					   0
+					   0
+					   conv
+					   env))))))
+	 ((not syntax)
+	  (with-loading-file (input-port-name iport)
+			     (lambda ()
+				(read/rp *wiki-grammar*
+					 iport
+					 *default-syntax*
+					 '()
+					 '()
+					 0
+					 0
+					 conv
+					 env))))
+	 (else
+	  (error "wiki-input-port->hop" "Illegal syntax" syntax)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-read-error ...                                              */

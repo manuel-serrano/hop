@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hop.scm                   */
+;*    serrano/prgm/project/hop/2.2.x/runtime/hop.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sat Jun 19 06:40:03 2010 (serrano)                */
+;*    Last change :  Fri Aug 13 18:46:58 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -25,7 +25,8 @@
 	    __hop_js-lib
 	    __hop_xml
 	    __hop_http-error
-	    __hop_http-lib)
+	    __hop_http-lib
+	    __hop_weblets)
    
    (with    __hop_hop-inline
 	    __hop_hop-extra
@@ -404,6 +405,19 @@
       (with-hop-remote url success fail :authorization auth)))
 
 ;*---------------------------------------------------------------------*/
+;*    with-hop-local ::http-response-autoload ...                      */
+;*    -------------------------------------------------------------    */
+;*    This method is used for imported local services (without body).  */
+;*---------------------------------------------------------------------*/
+(define-method (with-hop-local obj::http-response-autoload success fail auth)
+   (with-access::http-response-autoload obj (request)
+      (with-access::http-request request (path)
+	 (let ((rep (service-filter request)))
+	    (if (%http-response? rep)
+		(with-hop-local rep success fail auth)
+		(error "with-hop" "Bad auto-loaded local service" path))))))
+
+;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::xml ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::xml success fail auth)
@@ -413,10 +427,11 @@
 ;*    with-hop-local ::http-response-authentication ...                */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local o::http-response-authentication success fail aut)
-   (fail (instantiate::&error
-	       (proc 'with-hop)
-	       (msg "Authentication required")
-	       (obj o))))
+   (when (procedure? success)
+      (success (instantiate::&error
+		  (proc "with-hop")
+		  (msg "Authentication required")
+		  (obj o)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-string ...                        */

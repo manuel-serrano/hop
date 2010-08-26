@@ -308,7 +308,7 @@ function sc_stringCIContains(s1,s2,start) {
            (peephole (hole 3 s ".substring(" start ", " end ")")))
 */
 function sc_substring(s, start, end) {
-    return s.substring(start, end);
+   return s.substring(start, end < 0 ? s.length : end);
 }
 
 /*** META ((export #t) (arity -4))

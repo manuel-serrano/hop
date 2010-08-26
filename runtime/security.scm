@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Sun Jul 11 08:13:41 2010 (serrano)                */
+;*    Last change :  Fri Aug 13 18:28:20 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -44,7 +44,7 @@
 ;*    secure-javascript-attr ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (secure-javascript-attr obj)
-   (if (and (>=fx (hop-security) 1) (string? obj))
+   (if (and (>=fx (hop-security) 2) (string? obj))
        (instantiate::xml-secure-attribute
 	  (body '())
 	  (%js-attribute obj))
@@ -55,7 +55,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-xml-backend-secure)
    (let ((be (hop-xml-backend)))
-      (if (<fx (hop-security) 1)
+      (if (<fx (hop-security) 2)
 	  be
 	  (duplicate::xml-backend be
 	     (security (hop-security-manager))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Tue Jul  6 15:10:26 2010 (serrano)                */
+;*    Last change :  Fri Aug 13 18:27:58 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
@@ -52,7 +52,7 @@
    (cond
       ((not (string? src))
        (error "<INLINE>" "Missing :src attribute" src))
-      ((and (>=fx (hop-security) 1) (not unsafe))
+      ((and (>=fx (hop-security) 2) (not unsafe))
        (let ((el (instantiate::xml-element
 		    (tag 'DIV)
 		    (id (xml-make-id id))

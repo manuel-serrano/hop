@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sun Jul 11 07:50:38 2010 (serrano)                */
+;*    Last change :  Fri Aug 13 18:28:36 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -495,7 +495,7 @@
       (display tag p)
       (xml-write-attributes attributes p backend)
       (cond
-	 ((and (eq? tag 'head) (>fx (hop-security) 1))
+	 ((and (eq? tag 'head) (>=fx (hop-security) 3))
 	  (display ">" p)
 	  (for-each (lambda (b) (xml-write b p backend)) body)
 	  (with-access::xml-backend backend (security)
