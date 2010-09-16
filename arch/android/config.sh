@@ -14,7 +14,7 @@ if ! [ -d "$ANDROIDROOT" -a -d "$BS_BIGLOO" ]; then
 fi
 
 # Android NDK
-export ANDNDK=$ANDROIDROOT/android-ndk-r4
+export ANDNDK=$ANDROIDROOT/android-ndk-r4b
 
 # the prefix where the host bigloo is installed
 export BGL_PREFIX=$BS_BIGLOO
