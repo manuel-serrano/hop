@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Fri Jul  9 16:54:04 2010 (serrano)                */
+/*    Last change :  Mon Jul 26 18:29:52 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
@@ -54,8 +54,8 @@ div[hssclass=hop-error] {
   right: 0;
   position: absolute;
   overflow: hidden;
-  min-height: 75ex;
-  max-height: 75ex;
+  min-height: 60ex;
+  max-height: 60ex;
 }
 
 body[hssclass=hop-error] div[hssclass=hop-error] {

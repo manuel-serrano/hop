@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.1.x/Makefile                          */
+#*    serrano/prgm/project/hop/2.2.x/Makefile                          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Apr 13 13:02:42 2010 (serrano)                */
+#*    Last change :  Wed Aug  4 14:52:45 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -213,6 +213,7 @@ cleanall: distclean
 #*    distrib:                                                         */
 #*---------------------------------------------------------------------*/
 .PHONY: distrib newdistrib distrib-inc-version distrib-sans-version
+.PHONY: distrib-tmp distrib-pre distrib-native distrib-jvm
 
 distrib:
 	$(MAKE) distrib-sans-version
@@ -257,16 +258,11 @@ distrib-inc-version:
           chmod a+rx .hoprelease; \
         fi
 
-distrib-sans-version:
-	if [ -d $(HOPTMPDIR)/hop-tmp ]; then \
-          echo "*** ERROR: $(HOPTMPDIR)/hop-tmp exists!"; \
-          exit 1; \
-        elif [ -d $(HOPTMPDIR)/hop-$(HOPRELEASE) ]; then \
-          echo "*** ERROR: $(HOPTMPDIR)/hop-$(HOPRELEASE) exists!"; \
-          exit 1; \
-        else \
-          version=$(HOPRELEASE); \
-          devel=$(HOPDEVEL); \
+distrib-sans-version: distrib-native distrib-jvm
+
+distrib-pre:
+	(version=$(HOPRELEASE); \
+         devel=$(HOPDEVEL); \
           if [ -f .hoprelease ]; then \
              . ./.hoprelease; \
           fi; \
@@ -276,8 +272,21 @@ distrib-sans-version:
           else \
             distrib=$$version-$$devel$$minor; \
           fi; \
-          (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision && \
-	  echo "Building hop-$(HOPRELEASE).tar.gz..."; \
+          (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision || exit 0)
+
+distrib-native: distrib-tmp
+	(version=$(HOPRELEASE); \
+         devel=$(HOPDEVEL); \
+          if [ -f .hoprelease ]; then \
+             . ./.hoprelease; \
+          fi; \
+          if [ "$$devel " = " " ]; then \
+            distrib=$$version; \
+            minor=; \
+          else \
+            distrib=$$version-$$devel$$minor; \
+          fi; \
+	  echo "Building hop-$(HOPRELEASE).tar.gz..." && \
           $(MAKE) clone CLONEDIR=$(HOPTMPDIR)/hop-tmp && \
 	  $(MAKE) changelog > $(HOPTMPDIR)/hop-tmp/ChangeLog && \
 	  $(RM) -rf $(HOPTMPDIR)/hop-tmp/weblets/home/talks && \
@@ -294,6 +303,19 @@ distrib-sans-version:
               /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.tar.gz && \
               mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR); \
             fi \
+          fi) || exit 1
+
+distrib-jvm: distrib-tmp
+	(version=$(HOPRELEASE); \
+         devel=$(HOPDEVEL); \
+          if [ -f .hoprelease ]; then \
+             . ./.hoprelease; \
+          fi; \
+          if [ "$$devel " = " " ]; then \
+            distrib=$$version; \
+            minor=; \
+          else \
+            distrib=$$version-$$devel$$minor; \
           fi; \
 	  echo "Building hop-$(HOPRELEASE).jar..."; \
           $(MAKE) clone CLONEDIR=$(HOPTMPDIR)/hop-tmp && \
@@ -306,7 +328,15 @@ distrib-sans-version:
 	   $(RM) -rf $(HOPTMPDIR)/hop-$$distrib/weblets/home/videos && \
            /bin/rm -f $(HOPDISTRIBDIR)/java/hop-$(HOPRELEASE)*.jar && \
            mv bin/hop.jar $(HOPDISTRIBDIR)/java/hop-$$distrib.jar) && \
-          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \
+          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib) || exit 1
+
+distrib-tmp:
+	if [ -d $(HOPTMPDIR)/hop-tmp ]; then \
+          echo "*** ERROR: $(HOPTMPDIR)/hop-tmp exists!"; \
+          exit 1; \
+        elif [ -d $(HOPTMPDIR)/hop-$(HOPRELEASE) ]; then \
+          echo "*** ERROR: $(HOPTMPDIR)/hop-$(HOPRELEASE) exists!"; \
+          exit 1; \
         fi
 
 #*---------------------------------------------------------------------*/

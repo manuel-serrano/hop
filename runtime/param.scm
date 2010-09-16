@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Jul  9 10:00:40 2010 (serrano)                */
+;*    Last change :  Wed Aug  4 11:48:37 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -13,7 +13,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_param
-
+   
    (include "param.sch")
 
    (import  __hop_configure
@@ -24,7 +24,7 @@
 
 	    (hop-rc-directory::bstring)
 	    (hop-rc-directory-set! ::bstring)
-
+	    
 	    (hop-rc-file::bstring)
 	    (hop-rc-file-set! ::bstring)
 
@@ -42,7 +42,7 @@
 	    %%*hop-verbose*
 	    (inline hop-verbose::int)
 	    (hop-verbose-set! ::int)
-
+	    
 	    (hop-security::int)
 	    (hop-security-set! ::int)
 
@@ -54,20 +54,20 @@
 
 	    (hop-realm::bstring)
 	    (hop-realm-set! ::bstring)
-
+	    
 	    (hop-login-cookie-id::bstring)
 	    (hop-login-cookie-time::int)
 	    (hop-login-cookie-crypt-key::int)
-
+	    
 	    (hop-port::int)
 	    (hop-port-set! ::int)
-
+	    
 	    (hop-use-proxy::obj)
 	    (hop-use-proxy-set! ::obj)
-
+	    
 	    (hop-use-proxy-port::obj)
 	    (hop-use-proxy-port-set! ::obj)
-
+	    
 	    (hop-use-proxy-host::obj)
 	    (hop-use-proxy-host-set! ::obj)
 
@@ -85,16 +85,16 @@
 
 	    (hop-max-file-entry-cache::int)
 	    (hop-max-file-entry-cache-set! ::int)
-
+	    
 	    (hop-svg-img-cache-size::int)
 	    (hop-svg-img-cache-size-set! ::int)
-
+	    
 	    (hop-svg-img-max-file-size-cache::elong)
 	    (hop-svg-img-max-file-size-cache-set! ::elong)
-
+	    
 	    (hop-http-request-error::obj)
 	    (hop-http-request-error-set! ::obj)
-
+	    
 	    (hop-http-response-error::obj)
 	    (hop-http-response-error-set! ::obj)
 
@@ -106,32 +106,32 @@
 	    (hop-filter-remove! ::procedure)
 	    (hop-filter-add-always-first! ::procedure)
 	    (hop-filter-add-always-last! ::procedure)
-
+	    
 	    (hop-http-response-local-hooks::pair-nil)
 	    (hop-http-response-local-hooks-set! ::pair-nil)
 	    (hop-http-response-local-hook-add! ::procedure)
 	    (hop-http-response-local-hook-remove! ::procedure)
-
+	    
 	    (hop-http-response-remote-hooks::pair-nil)
 	    (hop-http-response-remote-hooks-set! ::pair-nil)
 	    (hop-http-response-remote-hook-add! ::procedure)
 	    (hop-http-response-remote-hook-remove! ::procedure)
-
+	    
 	    (hop-password::pair-nil)
 	    (hop-password-set! ::pair-nil)
-
+	    
 	    (hop-path::pair-nil)
 	    (hop-path-set! ::pair-nil)
-
+	    
 	    (hop-server-hostname::bstring)
 	    (hop-server-hostip::bstring)
 
 	    (hop-scm-compile-suffix::bstring)
 	    (hop-hss-compile-suffix::bstring)
-
+	    
 	    (hop-client-script-suffixes::pair-nil)
 	    (hop-module-suffixes::pair-nil)
-
+	    
 	    (hop-service-weblet-name::bstring)
 	    (hop-service-weblet-wid::symbol)
 
@@ -143,14 +143,14 @@
 
 	    (hop-enable-proxing::bool)
 	    (hop-enable-proxing-set! ::bool)
-
+	    
 	    (hop-server-aliases::pair-nil)
 	    (hop-server-aliases-set! ::pair-nil)
 	    (hop-server-aliases-add! ::bstring)
 
 	    (hop-mime-types::pair-nil)
 	    (hop-mime-types-set! ::pair-nil)
-
+	    
 	    (hop-default-mime-type::bstring)
 	    (hop-default-mime-type-set! ::bstring)
 
@@ -163,16 +163,16 @@
 
 	    (hop-authorize-service-hook::procedure)
 	    (hop-authorize-service-hook-set! ::procedure)
-
+	    
 	    (hop-authorize-request-hook::procedure)
 	    (hop-authorize-request-hook-set! ::procedure)
 
 	    (hop-hopaccess::bstring)
 	    (hop-hopaccess-set! ::bstring)
-
+	    
 	    (hop-charset::symbol)
 	    (hop-charset-set! ::symbol)
-
+	    
 	    (hop-locale::symbol)
 	    (hop-locale-set! ::symbol)
 
@@ -183,37 +183,37 @@
 
 	    (hop-upload-directory::bstring)
 	    (hop-upload-directory-set! ::bstring)
-
+	    
 	    (hop-job-file::bstring)
 	    (hop-job-file-set! ::bstring)
-
+	    
 	    (hop-job-restore::bool)
 	    (hop-job-restore-set! ::bool)
 
 	    (hop-server-name::bstring)
 	    (hop-server-name-set! ::bstring)
-
+	    
 	    (hop-icons-directory)
 
-	    (hop-connection-ttl::int)
+	    (hop-connection-ttl::int) 
 	    (hop-connection-ttl-set! ::int)
-
-	    (hop-connection-timeout::int)
+	    
+	    (hop-connection-timeout::int) 
 	    (hop-connection-timeout-set! ::int)
 
-	    (hop-read-timeout::int)
+	    (hop-read-timeout::int) 
 	    (hop-read-timeout-set! ::int)
 
-	    (hop-enable-keep-alive::bool)
+	    (hop-enable-keep-alive::bool) 
 	    (hop-enable-keep-alive-set! ::bool)
 
-	    (hop-enable-remote-keep-alive::bool)
+	    (hop-enable-remote-keep-alive::bool) 
 	    (hop-enable-remote-keep-alive-set! ::bool)
 
-	    (hop-keep-alive-timeout::int)
+	    (hop-keep-alive-timeout::int) 
 	    (hop-keep-alive-timeout-set! ::int)
 
-	    (hop-remote-keep-alive-timeout::int)
+	    (hop-remote-keep-alive-timeout::int) 
 	    (hop-remote-keep-alive-timeout-set! ::int)
 
 	    (hop-keep-alive-threshold::int)
@@ -222,7 +222,7 @@
 	    (hop-max-remote-keep-alive-connection::int)
 	    (hop-max-remote-keep-alive-connection-set! ::int)
 
-	    (hop-remanent-timeout::int)
+	    (hop-remanent-timeout::int) 
 	    (hop-remanent-timeout-set! ::int)
 
 	    (hop-weblets::pair-nil)
@@ -236,13 +236,13 @@
 
 	    (hop-clientc-debug-unbound::int)
 	    (hop-clientc-debug-unbound-set! ::int)
-
+	    
 	    (hop-read-pre-hook::procedure)
 	    (hop-read-pre-hook-set! ::procedure)
-
+	    
 	    (hop-read-post-hook::procedure)
 	    (hop-read-post-hook-set! ::procedure)
-
+	    
 	    (hop-path-access-control::procedure)
 	    (hop-path-access-control-set! ::procedure)
 
@@ -251,7 +251,7 @@
 
 	    (hop-service-default-timeout::long)
 	    (hop-service-default-timeout-set! ::long)
-
+	    
 	    (hop-service-flush-pace::long)
 	    (hop-service-flush-pace-set! ::long)
 
@@ -276,32 +276,23 @@
 	    (hop-accept-kill::bool)
 	    (hop-accept-kill-set! ::bool)
 
-;* 	    (hop-security-manager::obj)                                */
-;* 	    (hop-security-manager-set! ::obj)                          */
-;* 	                                                               */
-;* 	    (hop-security-script-purifier::obj)                        */
-;* 	    (hop-security-script-purifier-set! ::obj)                  */
-;* 	                                                               */
-;* 	    (hop-security-inline-purifier::obj)                        */
-;* 	    (hop-security-inline-purifier-set! ::obj)                  */
-
 	    (hop-enable-proxy-sniffer::bool)
 	    (hop-enable-proxy-sniffer-set! ::bool)
-
+	    
 	    (hop-proxy-sniffer::procedure)
 	    (hop-proxy-sniffer-set! ::procedure)
 	    (hop-proxy-sniffer-add! ::procedure)
 
 	    (hop-hz-resolver::procedure)
 	    (hop-hz-resolver-set! ::procedure)
-
+	    
 	    (hop-hz-package-suffix::bstring)
 	    (hop-hz-package-suffix-set! ::bstring)
 
 	    (hop-hz-repositories::pair-nil)
 	    (hop-hz-repositories-set! ::pair-nil)
 	    (hop-hz-repositories-add! ::bstring)
-
+	    
 	    (hop-runtime-extra::pair-nil)
 	    (hop-runtime-extra-set! ::pair-nil)
 	    (hop-runtime-extra-add! ::bstring)
@@ -342,7 +333,7 @@
    (lambda (v)
       (hop-path-set! (cons v (hop-path)))
       v))
-
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-file ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -444,7 +435,7 @@
 	  v)
 	 (else
 	  (error "hop-proxy-set!" "Illegal proxy" v)))))
-
+	  
 (define-parameter hop-use-proxy-host
    #f)
 
@@ -506,7 +497,7 @@
       (if (and v (or (not (procedure? v)) (not (correct-arity? v 2))))
 	  (error "hop-http-request-error" "Illegal value" v)
 	  v)))
-
+      
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-response-error ...                                      */
@@ -859,7 +850,7 @@
       (if (or (not (procedure? v)) (not (correct-arity? v 2)))
 	  (error "hop-authorized-service" "Illegal value" v)
 	  v)))
-
+      
 ;*---------------------------------------------------------------------*/
 ;*    hop-authorize-request-hook ...                                   */
 ;*---------------------------------------------------------------------*/
@@ -1006,7 +997,7 @@
    (cond-expand
       (enable-threads #t)
       (else #f)))
-
+   
 (define-parameter hop-keep-alive-timeout
    ;; the number of milli-seconds to wait for keep-alive connections
    ;; Don't change this value, it is an optimal value that is in phase
@@ -1022,7 +1013,7 @@
 (define-parameter hop-keep-alive-threshold
    ;; the max number of connections above which keep-alive are closed
    256)
-
+   
 (define-parameter hop-max-remote-keep-alive-connection
    ;; the max number of keep-alive remote (proxing) connections
    8
@@ -1253,7 +1244,7 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-hz-resolver
    (lambda (hz) #f))
-
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-hz-package-suffix ...                                        */
 ;*---------------------------------------------------------------------*/

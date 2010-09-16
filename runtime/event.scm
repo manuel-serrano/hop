@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/event.scm                 */
+;*    serrano/prgm/project/hop/2.2.x/runtime/event.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat Jun 19 06:17:27 2010 (serrano)                */
+;*    Last change :  Fri Aug  6 12:11:03 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -821,6 +821,7 @@
 ;*    flash-signal-value ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (flash-signal-value req name value)
+   (tprint "FLASH SIGNAL: " name)
    (let* ((s (http-request-socket req))
 	  (p (socket-output s)))
       (with-handler
@@ -1001,6 +1002,7 @@
        (lambda (l)
 	  (when (pair? l)
 	     (let ((val (multipart-value name value)))
+		(tprint "MULTIPART SIGNAL: " name)
 		(multipart-signal-value (car l) val)
 		#t)))))
 
@@ -1011,6 +1013,7 @@
        (lambda (l)
 	  (when (pair? l)
 	     (let ((val (websocket-value name value)))
+		(tprint "WEBSOCKET SIGNAL: " name)
 		(websocket-signal-value (car l) val)
 		#t)))))
 

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/share/hop-audio.js                */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-audio.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Thu May 27 16:36:57 2010 (serrano)                */
+/*    Last change :  Fri Aug  6 11:54:46 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -583,12 +583,10 @@ function hop_audio_server_init( backend ) {
 /*    the builtin initialization completes.                            */
 /*---------------------------------------------------------------------*/
 function hop_audio_flash_init( backend ) {
-   
    /* we are now sure that at least version 8 of flash is     */
    /* running because this function has been called by flash  */
    hop_flash_minversion_set( 8 );
    hop_flash_audio_set( true );
-
    backend.playlistindex = -1;
    backend.playlist = null;
    backend.loadedurl = false;
@@ -724,11 +722,14 @@ function hop_audio_flash_onended_callback( id ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_flash_onerror_callback ...                             */
 /*---------------------------------------------------------------------*/
-function hop_audio_flash_onerror_callback( id, play, msg ) {
+function hop_audio_flash_onerror_callback( id, src, msg ) {
+   var exc = new Error( msg );
+   exc.message = msg;
+   exc.name = "Flash";
+   exc.scObject = src;
    var backend = document.getElementById( id );
 
-   alert( "ERROR.flash");
-   hop_audio_invoke_listeners( backend.audio, "error" );
+   hop_audio_invoke_listeners( backend.audio, "error", exc );
 }
 
 /*---------------------------------------------------------------------*/

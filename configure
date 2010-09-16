@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Jul  3 07:14:00 2010 (serrano)                */
+#*    Last change :  Fri Aug  6 12:26:11 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -55,7 +55,7 @@ cssmimetype="text/css"
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
 version="2.2.0"
-devel=
+devel=pre
 
 hopc=$PWD/bin/hopc
 
@@ -548,9 +548,9 @@ else
 fi
 
 if [ "$threads " = "yes " ]; then
-  bigloopth="'bigloopth";
-  bigloopthlibs="-lbigloopth_s-$""(RELEASE)";
-  bigloopthlibu="-lbigloopth_u-$""(RELEASE)";
+  bigloopth="'bigloopthread";
+  bigloopthlibs="-lbigloopthread_s-$""(RELEASE)";
+  bigloopthlibu="-lbigloopthread_u-$""(RELEASE)";
 else
   bigloopth="";
   bigloopthlibs="";

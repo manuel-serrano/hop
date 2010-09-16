@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/flash/HopAudio.as           */
+/*    serrano/prgm/project/hop/2.2.x/share/flash/HopAudio.as           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Aug 23 16:16:58 2007                          */
-/*    Last change :  Sun Dec 13 10:37:07 2009 (serrano)                */
-/*    Copyright   :  2007-09 Manuel Serrano                            */
+/*    Last change :  Fri Aug  6 12:13:59 2010 (serrano)                */
+/*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopAudio flash support.                                          */
 /*                                                                     */
@@ -164,8 +164,7 @@ class HopAudio {
 	    }
 	 } else {
 	    if( onerror ) {
-	       ExternalInterface.call( onerror, domid, false,
-				       "Cannot load stream..." );
+	       ExternalInterface.call( onerror, domid, url, "Cannot load stream" );
 	    }
 	 }
       }
