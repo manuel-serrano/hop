@@ -5,7 +5,8 @@ Compiling Hop for Android requires several things:
 
  * Hop compiled for the host platform[1].
  * Bibloo compiled for the host and target platfoms.
- * The Android NDK[2].
+ * The Android SDK[3], which actually you must already have if you have bigloo
+   compiled for Android, and NDK[2].
  * Ant and Java 6/1.6, needed for building the .apk.
 
 Compiling:
@@ -14,7 +15,7 @@ Compiling:
 Copy 'arch/android/config.sh.sample' into 'arch/android/config.sh' and edit it,
 then just call the script:
 
-   ./arch/android/build-android.sh configure build prepare apk
+   ./arch/android/build-android.sh all
 
 This will generate the file 'arch/android/bni/hop-debug.apk'
 
@@ -31,7 +32,7 @@ Running:
 =======
 
 The instalation creates an icon in the 'Application tab' called 'hop'. When
-you run it for the first time it will run a procedire that decompresses
+you run it for the first time it will run a procedure that decompresses
 resource files. This can take 2 o 3 minutes (yes, minutes), but it only does
 it the first time and everytime you install a new version (with new files).
 Currently we're not showing any progress, so you'll only see a black screen.
@@ -47,7 +48,7 @@ Once Hop is shutdown, instead of finishing the task you'll get a shell in the
 terminal. We use this to do some debugging stuff. You can rerun Hop in two
 ways:
 
- * run '/data/data/fr.inria.hop/bin/hop' fromt the terinal (beware, there is
+ * run '/data/data/fr.inria.hop/bin/hop' from the terminal (beware, there is
    no TAB completion).
  * Force stop on the Hop app:
    * Press the home button until you reach the 'Desktop'.
@@ -62,5 +63,5 @@ ways:
 
 --
 [1] This is needed for executing 'hopc'.
-
 [2] http://developer.android.com/sdk/ndk/index.html
+[3] http://developer.android.com/sdk/index.html
