@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/share/flash/HopServevt.as         */
+/*    serrano/prgm/project/hop/2.2.x/share/flash/HopServevt.as         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Sep  7 15:31:58 2007                          */
-/*    Last change :  Fri Apr  9 14:44:06 2010 (serrano)                */
+/*    Last change :  Fri Aug  6 17:49:08 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    ActionScript server events runtime system.                       */
@@ -23,7 +23,7 @@ import flash.RegExp;
 /*    HopServevt ...                                                   */
 /*---------------------------------------------------------------------*/
 class HopServevt {
-   static var app : HopServevt;
+   static var app = new Array();
 
    function HopServevt( init, port, key, onevent, onclose, onerror ) {
       var socket:XMLSocket = new XMLSocket();
@@ -36,11 +36,11 @@ class HopServevt {
       var err = function( msg ) {
 	 return ExternalInterface.call( onerror, msg );
       }
-      
+
       var close = function() {
 	 socket.close();
       }
-   
+
       socket.onConnect = function( success ) {
 	 if( success ) {
 	    socket.send( "GET /hop/server-event/init?key="
@@ -49,7 +49,7 @@ class HopServevt {
 	    err( "Flash proxy: Cannot establish connection to server" );
 	 }
       }
-      
+
       socket.onClose = function() {
 	 ExternalInterface.call( onclose );
       }
@@ -58,36 +58,36 @@ class HopServevt {
 	 var s = str.split( char );
 	 var r = "";
 	 var i;
-	       
+
 	 for( i = 0; i < s.length - 1; i++ ) r = r.concat( s[ i ] + repl );
 	 r = r.concat( s[ i ] );
 
 	 return r;
       }
-      
+
       var encodeStringSlash = function( str ) {
 	 var s = str.split( "\\" );
 	 var r = "";
 	 var i;
-	       
+
 	 for( i = 0; i < s.length - 1; i++ ) r = r.concat( s[ i ] + "\\\\" );
 	 r = r.concat( s[ i ] );
 
 	 return encodeStringChar( encodeStringChar( r, "\n", "\\\n" ), "\r", "\\\r" );
       }
-      
+
       var encodeString = function( str ) {
 	 var s = str.split( "\"" );
 	 var r = "";
 	 var i;
-	       
+
 	 for( i = 0; i < s.length - 1; i++ )
 	    r = r.concat( encodeStringSlash( s[ i ] ) + '"' );
 	 r = r.concat( encodeStringSlash( s[ i ] ) );
 
 	 return r;
       }
-      
+
       socket.onData = function( evt ) {
 	 var e = (new XML( evt )).firstChild;
 
@@ -103,12 +103,11 @@ class HopServevt {
 	       return ExternalInterface.call( onevent, n, evt, c.nodeValue, false );
 	    }
 	 }
-	 
+
 	 if( e.nodeName == "acknowledge" ) {
 	    return ExternalInterface.call( init );
 	 }
       }
-      
 
       ExternalInterface.addCallback( 'close', this, close );
 
@@ -133,7 +132,7 @@ class HopServevt {
       //System.security.loadPolicyFile( url );
 
       // then we can opent the socket
-      app = new HopServevt( _root.init, _root.port, _root.key,
-			    _root.onevent, _root.onclose, _root.onerror );
+      app.push( new HopServevt( _root.init, _root.port, _root.key,
+				_root.onevent, _root.onclose, _root.onerror ) );
    }
 }

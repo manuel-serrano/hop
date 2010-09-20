@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Aug  6 11:10:31 2010 (serrano)                */
+;*    Last change :  Thu Sep  9 12:22:40 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -93,7 +93,7 @@
 			      (controls #f)
 			      (onload #f)
 			      (onprogress #f)
-			      (onerror (secure-javascript-attr "hop_report_exception( event.value )"))
+			      (onerror (secure-javascript-attr "hop_report_audio_exception( event )"))
 			      (onended #f)
 			      (onloadedmetadata #f)
 			      (onplay #f)
@@ -217,6 +217,7 @@
 	    (format "var backend = document.getElementById( ~s );" id)
 	    "if( backend ) hop_audio_flash_init( backend );}")
 	 (<OBJECT> :id (string-append id "-object") :class "hop-audio"
+	    :style "visibility: visible; position: fixed; top: 0; right: 0; background: transparent"
 	    :width "1px" :height "1px"
 	    :title "hop-audio" :classId "HopAudio.swf"
 	    :type "application/x-shockwave-flash"
@@ -697,8 +698,8 @@
 (define (audio-onstate event music as)
    (lambda (status)
       (with-trace 3 "audio-onstate"
-	 (trace-item "music=" (find-runtime-type music))
-	 (trace-item "as=" (find-runtime-type as))
+	 (trace-item "music=" (typeof music))
+	 (trace-item "as=" (typeof as))
 	 (let ((e (audio-status-event-value status (music-playlist-get music))))
 	    (audio-server-%errcount-set! as 0)
 	    (hop-event-broadcast! event e)))))
@@ -768,7 +769,7 @@
 		     (alist->id3 s))
 		    (else
 		     s))))
-	 (trace-item "s=" (if (string? s) s (find-runtime-type s)))
+	 (trace-item "s=" (if (string? s) s (typeof s)))
 	 (tprint "<<< signal meta: " (list 'meta tag))
 	 (hop-event-broadcast! event (list 'meta tag))))
    
@@ -782,8 +783,8 @@
 	 (set! %meta meta))
       ;; send the event
       (with-trace 3 "audio-onmeta"
-	 (trace-item "music=" (find-runtime-type music))
-	 (trace-item "as=" (find-runtime-type as))
+	 (trace-item "music=" (typeof music))
+	 (trace-item "as=" (typeof as))
 	 (audio-server-%errcount-set! as 0)
 	 (cond
 	    ((string? meta)
@@ -806,7 +807,7 @@
 (define (audio-onerror event music)
    (lambda (error)
       (with-trace 3 "audio-onerror"
-	 (trace-item "music=" (find-runtime-type music))
+	 (trace-item "music=" (typeof music))
 	 (hop-event-broadcast! event (list 'error error)))))
 
 ;*---------------------------------------------------------------------*/
@@ -815,7 +816,7 @@
 (define (audio-onvolume event music)
    (lambda (vol)
       (with-trace 3 "audio-onvolume"
-	 (trace-item "music=" (find-runtime-type music))
+	 (trace-item "music=" (typeof music))
 	 (hop-event-broadcast! event (list 'volume vol)))))
 
 ;*---------------------------------------------------------------------*/

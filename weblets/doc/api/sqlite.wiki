@@ -132,9 +132,8 @@ Examples:
 The function ++sqlite-exec++ //executes// an SQLite command. The
 command is the built by implicitly invoking ++sqlite-format++ on
 ++fmt++ and the optional ++arg<sub>0</sub>++ arguments. This function
-returns a possibly empty list.  The elements of the list are filled by
-the SQLite engine. In particular, on a query, each element of the list
-is a vector denoting a row of the searched tables.
+returns a possibly empty list. This function returns a single element,
+the first one returned by the SQL engine.
 
   (module example
      (library sqlite))
@@ -143,20 +142,9 @@ is a vector denoting a row of the searched tables.
 
   (sqlite-exec *db* "CREATE TABLE foo (x INTEGER, y INTEGER)")
   (for-each (lambda (x)
-  		(sqlite-exec *db*  "INSERT INTO foo VALUES(~A, ~A)" x (* x x)))
-	     (iota 10))
-  (sqlite-exec *db* "SELECT * FROM foo")
-     &#8658; '(#("0" "0")
-	#("1" "1")
-	#("2" "4")
-	#("3" "9")
-	#("4" "16")
-	#("5" "25")
-	#("6" "36")
-	#("7" "49")
-	#("8" "64")
-	#("9" "81"))
-
+               (sqlite-exec *db*  "INSERT INTO foo VALUES(~A, ~A)" x (* x x)))
+	    (iota 10))
+  (sqlite-exec *db* "SELECT * FROM foo") &#8658; 9
 </function>
 
 === ++(sqlite-eval db proc fmt arg<sub>0</sub> ...) ===

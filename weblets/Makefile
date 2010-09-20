@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/weblets/Makefile                  */
+#*    serrano/prgm/project/hop/2.2.x/weblets/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Nov 13 05:07:39 2009 (serrano)                */
-#*    Copyright   :  2004-09 Manuel Serrano                            */
+#*    Last change :  Thu Aug 12 12:31:28 2010 (serrano)                */
+#*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
 #*=====================================================================*/
@@ -60,20 +60,24 @@ uninstall:
 #*    install-weblet                                                   */
 #*---------------------------------------------------------------------*/
 install-weblet:
-	mkdir -p $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) && \
-        chmod a+rx,u+rwx $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) && \
+	if [ ! -d $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) ]; then \
+	   mkdir -p $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) && \
+              chmod $(MODDIR) $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR); \
+        fi
 	for f in $(DIR)/*; do \
           if [ -d $$f ]; then \
-            mkdir -p $$f || exit 1; \
-            chmod a+rx,u+rwx $$f || exit 1; \
             $(MAKE) install-weblet DIR=$$f || exit 1; \
           else \
             if [ -f $$f ]; then \
-	      $(INSTALL) $$f $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) || exit 1; \
+	      $(INSTALL) $$f $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) \
+                && chmod $(MODFILE) $(DESTDIR)$(HOPWEBLETSDIR)/$$f \
+                || exit 1; \
             fi; \
           fi; \
         done; \
         if [ -f $(DIR)/.afile ]; then \
-          $(INSTALL) $(DIR)/.afile $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) || exit 1; \
+          $(INSTALL) $(DIR)/.afile $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) \
+            && chmod $(MODFILE) $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR)/.afile \
+            || exit 1; \
         fi; \
 

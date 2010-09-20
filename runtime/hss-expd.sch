@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hss-expd.sch              */
+;*    serrano/prgm/project/hop/2.2.x/runtime/hss-expd.sch              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr  3 15:32:27 2009                          */
-;*    Last change :  Sat Jun 19 06:48:48 2010 (serrano)                */
+;*    Last change :  Fri Sep  3 09:46:50 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HSS expander                                                     */
@@ -23,8 +23,7 @@
 	       (string-downcase
 		(symbol->string id)))
 	    (lambda (,value ,(gensym))
-	       (hss-properties->ruleset-list
-		(begin ,@body)))))
+	       (hss-properties->ruleset-list (begin ,@body)))))
 	 ((define-hss-property ((and ?id (? symbol?))
 				(and ?value (? symbol?))
 				(and ?prio (? symbol?)))
@@ -34,8 +33,7 @@
 	       (string-downcase
 		(symbol->string id)))
 	    (lambda (,value ,prio)
-	       (hss-properties->ruleset-list
-		(begin ,@body)))))
+	       (hss-properties->ruleset-list (begin ,@body)))))
 	 (else
 	  (error "define-hss-type"
 		 "Illegal property compiler"

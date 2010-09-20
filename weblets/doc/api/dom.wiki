@@ -39,7 +39,7 @@ vectors.
 
 === server & client ===
 
-  (find-runtime-type obj)
+  (typeof obj)
   (dom-node-element? node)
   (dom-node-text? node)
   (dom-node-document? node)
@@ -104,9 +104,9 @@ vectors.
 <server>
 <client>
 
-=== ++(find-runtime-type obj)++ ===
-<function> find-runtime-type
-<procedure> find-runtime-type
+=== ++(typeof obj)++ ===
+<function> typeof
+<procedure> typeof
 <arguments>
 ^  arguments       ^   type       ^  short description               ^
 | obj             |  any type     | any value.                       |

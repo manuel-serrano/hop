@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Fri Jul  9 07:52:57 2010 (serrano)                */
+;*    Last change :  Fri Aug 13 14:35:24 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -77,6 +77,7 @@
 	   (class http-proxy-request)
 	   (class %http-response)
 	   (class http-response-remote)
+	   (class http-response-autoload)
 	   (class http-response-filter)
 	   (class http-response-hop)
 	   (class http-response-procedure)

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/share/hop-lib.js                  */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-lib.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Thu Jul  1 07:10:41 2010 (serrano)                */
+/*    Last change :  Wed Sep  8 09:04:23 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -345,8 +345,8 @@ function hop_update( node ) {
 /*    -------------------------------------------------------------    */
 /*    A wrapper for using typeof as a function in Hop.                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export find-runtime-type) (arity #t)) */
-function hop_find_runtime_type( obj ) {
+/*** META ((export typeof) (arity #t)) */
+function hop_typeof( obj ) {
    if( obj instanceof Object ) {
       if( obj instanceof Date ) {
 	 return "date";
@@ -354,8 +354,8 @@ function hop_find_runtime_type( obj ) {
 	 if( obj instanceof RegExp ) {
 	    return "regexp";
 	 } else {
-	    if( typeof obj.hop_find_runtime_type == "function" ) 
-	       return obj.hop_find_runtime_type();
+	    if( typeof obj.hop_typeof == "function" ) 
+	       return obj.hop_typeof();
 	    else
 	       return "object";
 	 }

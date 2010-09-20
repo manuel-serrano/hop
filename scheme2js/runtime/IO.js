@@ -189,14 +189,26 @@ sc_Tokenizer.prototype.nextToken = function() {
 	    }
 	}
     };
-    function readIdOrNumber(firstChar) {
+    function readIdNumberOrKeyword(firstChar) {
 	var res = firstChar;
 	while (isIdOrNumberChar(port.peekChar()))
 	    res += port.readChar();
-	if (isNaN(res))
+	if (isNaN(res)) {
+	    if (res.length > 1) {
+		colonCode = ':'.charCodeAt(0);
+		if (res.charCodeAt(0) == colonCode) {
+		    if (res.charCodeAt(1) != colonCode) {
+			return new sc_Token(21/*KEYWORD*/, res.substring(1, res.length));
+		    }
+		} else if (res.charCodeAt(res.length - 1) == colonCode &&
+			   res.charCodeAt(res.length - 2) != colonCode) {
+		    return new sc_Token(21/*KEYWORD*/, res.substring(0, res.length - 1));
+		}
+	    }
 	    return new sc_Token(9/*ID*/, res);
-	else
+	} else {
 	    return new sc_Token(12/*NUMBER*/, res - 0);
+	}
     };
     
     function skipWhitespaceAndComments() {
@@ -222,7 +234,7 @@ sc_Tokenizer.prototype.nextToken = function() {
 	if (isWhitespace(port.peekChar()))
 	    return new sc_Token(10/*DOT*/);
 	else
-	    return readIdOrNumber(".");
+	    return readIdNumberOrKeyword(".");
     };
 
     function readSharp() {
@@ -327,7 +339,7 @@ sc_Tokenizer.prototype.nextToken = function() {
 	return readString();
     default:
 	if (isIdOrNumberChar(curChar))
-	    return readIdOrNumber(curChar);
+	    return readIdNumberOrKeyword(curChar);
 	throw "unexpected character: " + curChar;
     }
 };
@@ -437,6 +449,8 @@ sc_Reader.prototype.read = function() {
 	return storeRefence.call(this, token.val);
     case 9/*ID*/:
 	return sc_jsstring2symbol(token.val);
+    case 21/*KEYWORD*/:
+	return sc_jsstring2keyword(token.val);
     case 0/*EOF*/:
     case 12/*NUMBER*/:
     case 15/*TRUE*/:

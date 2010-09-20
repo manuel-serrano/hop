@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/hopreplay/Makefile               */
+#*    serrano/prgm/project/hop/2.2.x/hopreplay/Makefile                */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Fri Nov 28 11:21:15 2008 (serrano)                */
+#*    Last change :  Thu Aug 12 12:04:24 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds HopReplay                               */
 #*=====================================================================*/
@@ -162,13 +162,12 @@ dep:
 install: install-$(BACKEND)
 
 install-native:
-	mkdir -p $(DESTDIR)$(HOPBINDIR)
 	$(INSTALL) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)
-	chmod $(BMASK) $(DESTDIR)$(HOPBINDIR)/$(EXEC)
+	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/$(EXEC)
 
 install-jvm:
-	mkdir -p $(DESTDIR)$(HOPBINDIR)
-	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC).jar $(DESTDIR)$(HOPBINDIR)
+	install $(BUILDBINDIR)/$(EXEC).jar $(DESTDIR)$(HOPBINDIR)
+	chmod $(MODFILE) $(DESTDIR)$(HOPBINDIR)/$(EXEC).jar
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */

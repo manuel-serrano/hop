@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/user.scm                  */
+;*    serrano/prgm/project/hop/2.2.x/runtime/user.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sat Jun 19 06:27:28 2010 (serrano)                */
+;*    Last change :  Fri Aug 27 08:00:22 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -506,7 +506,7 @@
 ;*---------------------------------------------------------------------*/
 (define (user-authorized-service? user service)
    (or (with-access::user user (services)
-	  (or (eq? services '*) (memq service services)))
+	  (or (eq? services '*) (and (pair? services) (memq service services))))
        ((hop-authorize-service-hook) user service)
        ;; flash sends anonymous requests so we have to access server-event/init
        ;; requests for all users

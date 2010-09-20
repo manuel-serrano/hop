@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Jul  9 08:50:43 2010 (serrano)                */
+;*    Last change :  Fri Aug 27 07:55:54 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -104,6 +104,8 @@
 
 	   (class http-response-authentication::%http-response-local
 	      (body read-only (default #f)))
+
+	   (class http-response-autoload::%http-response-local)
 
 	   (class http-response-hop::%http-response-local
 	      (backend read-only (default (hop-xml-backend)))

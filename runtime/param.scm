@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Aug  4 11:48:37 2010 (serrano)                */
+;*    Last change :  Wed Sep  8 09:00:52 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -363,7 +363,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-security ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-security 0)
+(define-parameter hop-security 1)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-authentication ...                                      */
@@ -1095,9 +1095,7 @@
 		 'hop-path-access-control-set!))
 	 ((not (procedure? v))
 	  (error "hop-path-access-control-set!"
-		 (bigloo-type-error-msg "Type"
-					"procedure"
-					(find-runtime-type v))
+		 (bigloo-type-error-msg "Type" "procedure" (typeof v))
 		 v))
 	 ((not (correct-arity? v 2))
 	  (error "hop-path-access-control-set!"
@@ -1122,9 +1120,7 @@
 		 'hop-service-access-control-set!))
 	 ((not (procedure? v))
 	  (error "hop-path-access-control-set!"
-		 (bigloo-type-error-msg "Type"
-					"procedure"
-					(find-runtime-type v))
+		 (bigloo-type-error-msg "Type" "procedure" (typeof v))
 		 v))
 	 ((not (correct-arity? v 2))
 	  (error "hop-service-access-control-set!"

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Fri Aug  6 11:54:46 2010 (serrano)                */
+/*    Last change :  Thu Sep  9 13:28:54 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -427,6 +427,22 @@ function hop_audio_invoke_listeners( audio, evname, value ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*                                                                     */
+/*    hop_report_audio_exception ...                                   */
+/*    -------------------------------------------------------------    */
+/*    This function is the default error handler given at the <AUDIO>  */
+/*    definition                                                       */
+/*---------------------------------------------------------------------*/
+function hop_report_audio_exception( e ) {
+   var exc = new Error();
+
+   exc.message = e.value;
+   exc.scObject = e.audio.backend.src;
+
+   hop_report_exception( exc );
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_audio_controls_listeners_init ...                            */
 /*    -------------------------------------------------------------    */
 /*    Install the default listener of the controllers                  */
@@ -506,6 +522,9 @@ function hop_audio_html5_init( backend ) {
 	    audio.backend = obackend;
 	    audio.browserbackend.url = false;
 	 }
+
+	 e.stopPropagation();
+	 e.isStopped = true;
       }
    }
 
@@ -540,7 +559,20 @@ function hop_audio_html5_init( backend ) {
 	    hop_audio_invoke_listeners( backend.audio, "loadedmetadata" );
 	 } ), true, true );
    backend.addEventListener( "error", make_html5listener( function( e ) {
-	    hop_audio_invoke_listeners( backend.audio, "error" );
+	    var msg;
+	    if( backend.error.code == backend.error.MEDIA_ERR_ABORTED ) {
+	       msg = "media aborted";
+	    } else if( backend.error.code == backend.error.MEDIA_ERR_NETWORK ) {
+	       msg = "network error";
+	    } else if( backend.error.code == backend.error.MEDIA_ERR_DECODE ) {
+	       msg = "decode error";
+	    } else if( backend.error.code == backend.error.MEDIA_ERR_NONE_SUPPORTED
+		       || backend.error.code == backend.error.MEDIA_ERR_SRC_NOT_SUPPORTED ) {
+	       msg = "audio format not supported";
+	    } else {
+	       msg = "unknown audio error";
+	    }
+	    hop_audio_invoke_listeners( backend.audio, "error", msg );
 	 } ), true, true );
    
    return backend;

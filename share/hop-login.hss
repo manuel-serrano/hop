@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/share/hop-login.hss               */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-login.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Mar  9 16:52:54 2008                          */
-/*    Last change :  Tue Apr  6 08:33:25 2010 (serrano)                */
+/*    Last change :  Fri Aug 20 09:48:19 2010 (serrano)                */
 /*    Copyright   :  2008-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop login                                                        */
@@ -17,10 +17,12 @@ $(module hoplogin_hss)
 /*---------------------------------------------------------------------*/
 /*    HSS declarations                                                 */
 /*---------------------------------------------------------------------*/
-$(define-hss-type hop-login-panel "div.hop-login-panel")
-$(define-hss-type hop-login "div.hop-login-panel table.hop-login-main-table")
-$(define-hss-type hop-login-message "div.hop-login-panel td.hop-login-message")
-$(define-hss-type hop-login-logo "div.hop-login-panel div.hop-login-logo")
+$(define-hss-type hop-login-panel "div[hssclass=hop-login-panel]")
+$(define-hss-type hop-login "table[hssclass=hop-login-main-table]")
+$(define-hss-type hop-login-message "td[hssclass=hop-login-message]")
+$(define-hss-type hop-login-logo "div[hssclass=hop-login-logo]")
+$(define-hss-type hop-login-prompt "table[hssclass=hop-login-prompt]")
+$(define-hss-type hop-login-buttons "table[hssclass=hop-login-buttons]")
 
 /*---------------------------------------------------------------------*/
 /*    login                                                            */
@@ -46,16 +48,16 @@ hop-login-panel td.hop-login-logo {
   height: 64px;
 }
 
-hop-login-message {
-  overflow: hidden;
-}
-
-hop-login-logo {
+hop-login-panel hop-login-logo {
   width: 64px;
   height: 64px;
   background-repeat: no-repeat;
   background-position: center;
   background-image: url( "icons/hop-login/login.png" );
+}
+
+hop-login-message {
+  overflow: hidden;
 }
 
 hop-login-panel div.hop-login-panel-background {
@@ -102,65 +104,65 @@ hop-login-panel div.hop-login-main-slow-gpu {
   background-color: #ffd;
 }
 
-hop-login-panel table.hop-login-main-table {
+hop-login-panel hop-login {
   border: 5px dashed blue;
   width: 100%;
   padding-left: 1em;
   padding-right: 1em;
-  -moz-border-radius: 0;
+  border-radius: 0;
 }
 
-hop-login-panel table.hop-login-main-table td.hop-login-logo {
+hop-login-panel hop-login td.hop-login-logo {
   text-align: left;
   vertical-align: top;
 }
 
-hop-login-panel table.hop-login-main-table table.hop-login-prompt {
+hop-login-panel hop-login hop-login-prompt {
   width: 100%;
 }
 
-hop-login-panel table.hop-login-prompt th {
+hop-login-panel hop-login-prompt th {
   text-align: left;
   white-space: nowrap;
 }
 
-hop-login-panel table.hop-login-prompt th:after {
+hop-login-panel hop-login-prompt th:after {
   content: ":";
 }
 
-hop-login-panel table.hop-login-prompt td {
+hop-login-panel hop-login-prompt td {
   text-align: left;
 }
 
-hop-login-panel table.hop-login-prompt th {
+hop-login-panel hop-login-prompt th {
   width: 9em;
 }
 
-hop-login-panel table.hop-login-prompt input {
+hop-login-panel hop-login-prompt input {
   min-width: 20em;
   max-width: 30em;
   border-width: 1px;
   font-size: 80%;
 }
 
-hop-login-panel table.hop-login-prompt tr.schema td {
+hop-login-panel hop-login-prompt tr.schema td {
   font-size: 75%;
   color: #555;
   text-align: left;
 }
 
-hop-login-panel table.hop-login-prompt input[type=radio] {
+hop-login-panel hop-login-prompt input[type=radio] {
   margin-right: 5ex;
   min-width: 2em;
   max-width: 2em;
 }
 
-hop-login-panel table.hop-login-prompt button {
+hop-login-panel hop-login-prompt button {
   border-width: 1px;
   width: 5em;
 }
 
-hop-login-panel table.hop-login-prompt button:hover {
+hop-login-panel hop-login-prompt button:hover {
   background-color: #eee;
   color: #00a;
 }

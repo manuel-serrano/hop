@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/etc/Makefile                      */
+#*    serrano/prgm/project/hop/2.2.x/etc/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Wed Jun 24 08:02:57 2009 (serrano)                */
-#*    Copyright   :  2006-09 Manuel Serrano                            */
+#*    Last change :  Thu Aug 12 11:49:32 2010 (serrano)                */
+#*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
 #*=====================================================================*/
@@ -18,7 +18,7 @@
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile Makefile.contrib Makefile.weblet \
+POPULATION	= Makefile Makefile.weblet \
                   Makefile.mercurial Makefile.version Makefile.library \
 		  Makefile.hopconfig.in \
                   configure.scm.in \
@@ -30,15 +30,18 @@ POPULATION	= Makefile Makefile.contrib Makefile.weblet \
 
 install:
 	cp Makefile.hopconfig $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
-	chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
+	chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
 	cp hoprc.hop $(DESTDIR)$(HOPETCDIR)/hoprc.hop
-	chmod $(BMASK) $(DESTDIR)$(HOPETCDIR)/hoprc.hop
+	chmod $(MODFILE) $(DESTDIR)$(HOPETCDIR)/hoprc.hop
 	cp hopshrc.hop $(DESTDIR)$(HOPETCDIR)/hopshrc.hop
-	chmod $(BMASK) $(DESTDIR)$(HOPETCDIR)/hopshrc.hop
-	mkdir -p $(DESTDIR)$(HOPMANDIR) && chmod $(BMASK) $(DESTDIR)$(HOPMANDIR)
+	chmod $(MODFILE) $(DESTDIR)$(HOPETCDIR)/hopshrc.hop
+	if [ ! -d $(DESTDIR)$(HOPMANDIR) ]; then \
+	  mkdir -p $(DESTDIR)$(HOPMANDIR) && \
+            chmod $(MODDIR) $(DESTDIR)$(HOPMANDIR); \
+        fi
 	for p in hop hopsh hopreplay; do \
           cp $$p.man $(DESTDIR)$(HOPMANDIR)/$$p.1 && \
-          chmod $(BMASK) $(DESTDIR)$(HOPMANDIR)/$$p.1; \
+          chmod $(MODFILE) $(DESTDIR)$(HOPMANDIR)/$$p.1; \
         done
 
 uninstall:

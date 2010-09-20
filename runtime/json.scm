@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/json.scm                  */
+;*    serrano/prgm/project/hop/2.2.x/runtime/json.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Tue Jun 22 18:37:12 2010 (serrano)                */
+;*    Last change :  Wed Sep  8 09:00:31 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -44,7 +44,7 @@
        (format "new Date( ~a000 )" (date->seconds obj)))
       (else
        (let ((comp (hop-clientc)))
-	  (tprint "hop->json: " (find-runtime-type obj))
+	  (tprint "hop->json: " (typeof obj))
 	  ((clientc-valuec comp) obj op hop->json #f)))))
 
 ;*---------------------------------------------------------------------*/

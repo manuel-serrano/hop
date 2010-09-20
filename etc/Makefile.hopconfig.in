@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.1.x/etc/Makefile.hopconfig.in         */
+#*    serrano/prgm/project/hop/2.2.x/etc/Makefile.hopconfig.in         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Sun Jun 20 12:18:11 2010 (serrano)                */
+#*    Last change :  Thu Aug 12 12:33:41 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -36,7 +36,10 @@ JAR		= @JAR@
 FLASHCC		= @FLASHCC@
 GZIP		= @GZIP@
 
-BMASK		= 755
+MODFILE		= 644
+MODDIR		= 755
+MODEXE		= 755
+
 INSTALL		= @INSTALL@
 
 #*---------------------------------------------------------------------*/

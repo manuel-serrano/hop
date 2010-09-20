@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/xml-expd.sch              */
+;*    serrano/prgm/project/hop/2.2.x/runtime/xml-expd.sch              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Sat Jun 19 07:13:01 2010 (serrano)                */
+;*    Last change :  Mon Sep 20 15:48:21 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -328,12 +328,13 @@
    (match-case x
       ((?- ?id ?bindings . ?body)
        (let* ((id2 (symbol-append '< id '>))
-	      (nf (expand-define-xml-compound id2 bindings body))
+	      (nf (expand-define-xml-compound id bindings body))
 	      (nm `(define-macro (,id . args)
 		      (list 'quasiquote
 			    (,id2 ,(list 'unquote-splicing 'args)))))
 	      (nx nm))
-	  (e (evepairify nx x) e)))
+	  (e (evepairify nx x) e)
+	  (e (evepairify nf x) e)))
       (else
        (error "define-xml-compound" "Illegal form" x))))
 

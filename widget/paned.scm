@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Aug  6 09:40:14 2010 (serrano)                */
+;*    Last change :  Wed Sep  8 09:03:52 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -190,5 +190,5 @@
       ((symbol? ast)
        (symbol->string ast))
       (else
-       (find-runtime-type ast))))
+       (typeof ast))))
 

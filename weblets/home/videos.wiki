@@ -1,3 +1,10 @@
+  * **Diffuse Programming (35 min): Diffuse programming, a French presentation given at the College de France, Paris, January 2010.
+    (<OBJECT> width: 320 height: 259
+      (<PARAM> name: "movie" value: "http://www.youtube.com/v/i7bc6yiJQ0I&hl=en&fs=1")
+      (<PARAM> name: "allowFullScreen" value: "true")
+      (<PARAM> name: "allowscriptaccess" value: "always")
+      (<EMBED> src: "http://www.college-de-france.fr/documents/video/gberry/cours2009/berry-serrano-20100120.mp4" type: "application/x-shockwave-flash" allowscriptaccess: "always" allowfullscreen: "true" width: "320" height: "240"))
+
   * **HopDiffuse** (45 min): Programming Diffuse Applications with HOP, a presentation given at Google Mountain View, January 2009.
  ,(<DIV> :style "margin-top: 1em; margin-bottom: 1em;"
     (<OBJECT> width: 320 height: 259
