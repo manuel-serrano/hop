@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/share/hop-spage.hss               */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-spage.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug 15 16:47:08 2009                          */
-/*    Last change :  Tue Mar  9 11:32:07 2010 (serrano)                */
+/*    Last change :  Thu Sep  9 14:27:40 2010 (serrano)                */
 /*    Copyright   :  2009-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Slide Pages                                                      */
@@ -21,8 +21,6 @@ $(define-hss-type spage "div[hssclass=hop-spage]"
 
   :body "div[hssclass=hop-spage-body]"
 
-  (define-hss-property (padding v)
-     (format "spbody { padding: ~l; }" v))
   (define-hss-property (margin v)
      (format "spbody { margin: ~l; }" v))
   (define-hss-property (effect v)
@@ -54,7 +52,7 @@ spage {
   background: #fff;
   position: relative;
   border: 1px solid darkorange;
-  padding: 2px;
+  padding: 0px;
   font-size: 12px;
   border-radius: 0.2em;
   effect: auto;
@@ -63,6 +61,7 @@ spage {
 spbody {
   overflow: auto;
   margin-top: 17px;
+  padding: 2px;
 }
 
 sphead {
@@ -106,11 +105,11 @@ spupdatebutton:before {
 }
 
 spprevbutton:before {
-  content: "\25c2";
+  content: "\25c4";
 }
 
 spupdatebutton:before {
-  content: "\25be";
+  content: "\25bc";
 }
 
 splink {
@@ -126,7 +125,7 @@ splink:hover {
 }
 
 splink:before {
-  content: "\25b8";
+  content: "\25ba";
   color: #555;
   font-size: 80%;
   vertical-align: top;

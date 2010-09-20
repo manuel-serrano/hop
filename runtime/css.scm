@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/css.scm                   */
+;*    serrano/prgm/project/hop/2.2.x/runtime/css.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sat Jun 19 06:53:28 2010 (serrano)                */
+;*    Last change :  Fri Sep  3 10:08:28 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -144,6 +144,23 @@
 	 (close-input-port p))))
    
 ;*---------------------------------------------------------------------*/
+;*    hss-parse-rulesets ...                                           */
+;*---------------------------------------------------------------------*/
+(define (hss-parse-rulesets s)
+   (let ((p (open-input-string s)))
+      (unwind-protect
+	 (let ((ast (css->ast p :extension hss-extension)))
+	    (if (not (css-stylesheet? ast))
+		(error "hss-string->rulset" "Illegal declaration list" s)
+		(with-access::css-stylesheet ast (rule*)
+		   (if (not (pair? rule*))
+		       (error "hss-string->rulset" "Illegal declaration list" s)
+		       (append-map (lambda (rule)
+				      (filter css-ruleset? rule))
+				   rule*)))))
+	 (close-input-port p))))
+   
+;*---------------------------------------------------------------------*/
 ;*    hss-property->declaration-list ...                               */
 ;*---------------------------------------------------------------------*/
 (define (hss-property->declaration-list val)
@@ -157,30 +174,32 @@
 ;*---------------------------------------------------------------------*/
 (define (hss-properties->ruleset-list val)
 
-   (define (hss-string->ruleset val)
+   (define (hss-string->ruleset::pair-nil val)
       (cond
 	 ((not (string-index val #\{))
 	  (let ((str (string-append "f{" val "}")))
-	     (duplicate::css-ruleset (hss-parse-ruleset str)
-		(selector+ (list
-			    (list
-			     (instantiate::css-selector
-				(element
-				 (instantiate::css-selector-name
-				    (name ""))))))))))
+	     (list
+	      (duplicate::css-ruleset (hss-parse-ruleset str)
+		 (selector+ (list
+			     (list
+			      (instantiate::css-selector
+				 (element
+				  (instantiate::css-selector-name
+				     (name "")))))))))))
 	 ((or (substring-at? val "+ " 0) (substring-at? val "> " 0))
 	  (let* ((str (string-append "f " val))
 		 (rs (hss-parse-ruleset str)))
-	     (duplicate::css-ruleset rs
-		(selector+ (list (cdr (car (css-ruleset-selector+ rs))))))))
+	     (list
+	      (duplicate::css-ruleset rs
+		 (selector+ (list (cdr (car (css-ruleset-selector+ rs)))))))))
 	 (else
-	  (hss-parse-ruleset val))))
+	  (hss-parse-rulesets val))))
 
    (cond
       ((string? val)
-       (list (hss-string->ruleset val)))
+       (hss-string->ruleset val))
       ((and (list? val) (every? string? val))
-       (map hss-string->ruleset val))
+       (append-map hss-string->ruleset val))
       (else
        (bigloo-type-error 'hss-property->ruleset-list
 			  "string or string-list"
@@ -562,6 +581,47 @@
 ;*    hss-compile-selector ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hss-compile-selector::pair o hc bodyp)
+   
+   (define (pseudo-attr? a)
+      (and (css-selector-pseudo? a)
+	   (not (css-selector-pseudo-fun a))
+	   (member (css-selector-pseudo-expr a)
+		   '("active" "focus" "before" "after"))))
+
+   (define (copy-compiler-selectors hc attr*)
+      ;; copy the virtual selector attribute only for the
+      ;; first element of the selector
+      (let ((npattr* (filter (lambda (a)
+				(and (css-selector-pseudo? a)
+				     (not (pseudo-attr? a))))
+			     attr*)))
+	 (let loop ((ls (hss-compiler-selector hc)))
+	    (let ((s (car ls)))
+	       (if (null? (cdr ls))
+		   (list (if (css-selector? s)
+			     (duplicate::css-selector s
+				(attr* (append (css-selector-attr* s) attr*)))
+			     s))
+		   (cons (if (css-selector? s)
+			     (duplicate::css-selector s
+				(attr* (append (css-selector-attr* s) npattr*)))
+			     s)
+			 (loop (cdr ls))))))))
+   
+   (with-access::css-selector o (element attr*)
+      (let ((el (css-selector-name-name element)))
+	 (if (and (hss-compiler-body hc) bodyp)
+	     (append
+	      (let ((attr* (filter (lambda (a) (not (pseudo-attr? a))) attr*)))
+		 (copy-compiler-selectors hc attr*))
+	      (list
+	       '| |
+	       (instantiate::css-selector
+		  (element (hss-compiler-body hc))
+		  (attr* (filter pseudo-attr? attr*)))))
+	     (copy-compiler-selectors hc attr*)))))
+
+(define (hss-compile-selector-TOBEREMOVED-2sep2010::pair o hc bodyp)
    
    (define (pseudo-attr? a)
       (and (css-selector-pseudo? a)

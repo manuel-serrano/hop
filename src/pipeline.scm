@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Wed Aug  4 11:46:58 2010 (serrano)                */
+;*    Last change :  Wed Sep  8 09:03:04 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -198,7 +198,7 @@
        (begin
 	  (when (&exception? e)
 	     (hop-verb 1 (hop-color id id " ABORT: ")
-		       " " (trace-color 1 (find-runtime-type e))
+		       " " (trace-color 1 (typeof e))
 		       "\n")
 	     (exception-notify e))
 	  (when (and (&io-unknown-host-error? e) (not (socket-down? sock)))
@@ -250,7 +250,7 @@
 					 (http-request-host req)
 					 (http-request-port req)
 					 (http-request-path req)
-					 (find-runtime-type resp)))
+					 (typeof resp)))
 	 (let ((proc (if (http-response-static? resp)
 			 stage-static-answer
 			 stage-dynamic-answer)))
@@ -304,7 +304,7 @@
 	     (format " ~a" thread)
 	     " load=" (scheduler-load scd)
 	     (scheduler-stat scd)
-	     ": " (find-runtime-type resp) " "
+	     ": " (typeof resp) " "
 	     " [" (current-date) "] "
 	     (if (and (eq? connection 'keep-alive) (>=fx (hop-verbose) 4))
 		 (format " keep-alive [open=~a/~a]"
@@ -328,7 +328,7 @@
 		    " load: " (scheduler-load scd)
 		    (scheduler-stat scd)
 		    (format " ~a" thread)
-		    ": " (find-runtime-type resp)
+		    ": " (typeof resp)
 		    " " (user-name (http-request-user req)) "\n")))
    (with-stage-handler
       exec-error-handler (scd req)
@@ -342,7 +342,7 @@
 					 (http-request-host req)
 					 (http-request-port req)
 					 (http-request-path req)
-					 (find-runtime-type resp)
+					 (typeof resp)
 					 connection))
 	 (case connection
 	    ((persistent)

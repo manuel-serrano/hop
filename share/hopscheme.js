@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hopscheme.js                */
+/*    serrano/prgm/project/hop/2.2.x/share/hopscheme.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Wed Sep 10 08:22:51 2008 (serrano)                */
-/*    Copyright   :  2007-08 Manuel Serrano                            */
+/*    Last change :  Wed Sep  8 09:02:27 2010 (serrano)                */
+/*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
 /*=====================================================================*/
@@ -34,45 +34,45 @@ sc_Pair.prototype.hop_bigloo_serialize = function() {
 };
 
 /*---------------------------------------------------------------------*/
-/*    find-runtime-type                                                */
+/*    typeof                                                           */
 /*---------------------------------------------------------------------*/
-sc_Pair.prototype.hop_find_runtime_type = function() {
+sc_Pair.prototype.hop_typeof = function() {
    return "pair";
 };
 
-sc_Vector.prototype.hop_find_runtime_type = function() {
+sc_Vector.prototype.hop_typeof = function() {
    return "vector";
 };
 
-sc_Struct.prototype.hop_find_runtime_type = function() {
+sc_Struct.prototype.hop_typeof = function() {
    return "struct";
 };
 
-sc_OutputPort.prototype.hop_find_runtime_type = function() {
+sc_OutputPort.prototype.hop_typeof = function() {
    return "output-port";
 };
 
-sc_StringOutputPort.prototype.hop_find_runtime_type = function() {
+sc_StringOutputPort.prototype.hop_typeof = function() {
    return "output-port";
 };
 
-sc_GenericOutputPort.prototype.hop_find_runtime_type = function() {
+sc_GenericOutputPort.prototype.hop_typeof = function() {
    return "output-port";
 };
 
-sc_InputPort.prototype.hop_find_runtime_type = function() {
+sc_InputPort.prototype.hop_typeof = function() {
    return "input-port";
 };
 
-Boolean.prototype.hop_find_runtime_type = function() {
+Boolean.prototype.hop_typeof = function() {
    return "bbool";
 };
 
-String.prototype.hop_find_runtime_type = function() {
-    return hop_find_runtime_type(this.toString());
+String.prototype.hop_typeof = function() {
+    return hop_typeof(this.toString());
 };
 
-sc_Char.prototype.hop_find_runtime_type = function() {
+sc_Char.prototype.hop_typeof = function() {
    return "bchar";
 };
 

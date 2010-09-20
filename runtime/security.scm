@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Fri Aug 13 18:28:20 2010 (serrano)                */
+;*    Last change :  Wed Sep  8 09:01:04 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -315,7 +315,7 @@
       ((symbol? ast)
        (symbol->string ast))
       (else
-       (find-runtime-type ast))))
+       (typeof ast))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string-substitute ...                                            */

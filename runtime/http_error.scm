@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Jul 26 18:32:39 2010 (serrano)                */
+;*    Last change :  Wed Sep  8 09:00:19 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -454,7 +454,7 @@ Reloading the page is the only way to fix this problem.")))))
 	 (xml (<HTML-ERROR>
 		 :icon (if (&io-timeout-error? e) "error2.png" "error.png")
 		 :title "IO Error"
-		 :msg (list "Error type: " (<TT> (find-runtime-type e)))
+		 :msg (list "Error type: " (<TT> (typeof e)))
 		 (<PRE> (html-string-encode s)))))))
 
 ;*---------------------------------------------------------------------*/

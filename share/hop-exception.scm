@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Fri Aug  6 09:52:01 2010 (serrano)                */
+;*    Last change :  Thu Sep 16 15:01:12 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -287,6 +287,8 @@
 
    (define (exception-message exc)
       (cond
+	 ((not (js-in? "message" exc))
+	  "unknwown error")     
 	 ((string? exc.message)
 	  (apply string-append
 		 (map (lambda (s)
@@ -309,7 +311,7 @@
 	  "unknwown error")))
 
    (let* ((message (exception-message exc))
-	  (msg (if (js-in? "scObject" exc)
+	  (msg (if (and exc (js-in? "scObject" exc))
 		   (list message " -- " (<TT> (obj->string exc.scObject #f)))
 		   message))
 	  (name (exception-name exc))
@@ -370,7 +372,18 @@
       ((and document.body (not (null? document.body)))
        ;; regular report
        (set! in-exception-report 'yes)
-       (dom-append-child! document.body (<EXCEPTION> exc)))
+       (let ((e (cond
+		   ((or (not exc) (eq? exc #unspecified))
+		    (let ((e (new Error)))
+		       (set! e.message "unknown error")
+		       e))
+		   ((string? exc)
+		    (let ((e (new Error)))
+		       (set! e.message exc)
+		       e))
+		   (else
+		    exc))))
+	  (dom-append-child! document.body (<EXCEPTION> e))))
       (else
        ;; the error might be raised even before document.body is bound
        (add-event-listener! window "load"
