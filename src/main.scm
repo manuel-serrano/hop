@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Jul  9 08:05:10 2010 (serrano)                */
+;*    Last change :  Tue Sep 21 08:10:29 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -191,7 +191,8 @@
 	 ;; preload all the forced services
 	 (for-each (lambda (svc)
 		      (let* ((path (string-append (hop-service-base) "/" svc))
-			     (req (instantiate::http-request
+			     (req (instantiate::http-server-request
+				     (user (anonymous-user))
 				     (localclientp #t)
 				     (path path)
 				     (abspath path)
@@ -202,8 +203,10 @@
 			       (exception-notify err)
 			       (fprintf (current-error-port)
 					"*** WARNING: Service \"~a\" cannot be pre-loaded.\n" svc))
-			    (autoload-filter req))))
+			    (current-request-set! #f req)
+			    (service-filter req))))
 		   (hop-preload-services))
+	 (current-request-set! #f #f)
 	 ;; start the main loop
 	 (scheduler-accept-loop (hop-scheduler) serv #t))))
 
