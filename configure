@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Aug  6 12:26:11 2010 (serrano)                */
+#*    Last change :  Fri Sep 24 16:53:51 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -159,6 +159,9 @@ while : ; do
 
     --bigloo=*)
       bigloo="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --bglafile=*)
+      afile="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --bigloolibdir=*)
       bigloolibdir="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -551,10 +554,12 @@ if [ "$threads " = "yes " ]; then
   bigloopth="'bigloopthread";
   bigloopthlibs="-lbigloopthread_s-$""(RELEASE)";
   bigloopthlibu="-lbigloopthread_u-$""(RELEASE)";
+  bigloogc="-lbigloogc_fth-$""(RELEASE)"
 else
   bigloopth="";
   bigloopthlibs="";
   bigloopthlibu="";
+  bigloogc="-lbigloogc-$""(RELEASE)"
 fi
 
 mkmf=etc/Makefile.hopconfig
@@ -616,6 +621,7 @@ cat $mkmf.in \
           -e "s|@BIGLOOPTHLIBU@|$bigloopthlibu|" \
           -e "s|@RTSCONFIG@|$rts|" \
           -e "s|@FELIX_JAR@|$felix|" \
+          -e "s|@HOPGCCLOSELIB@|$bigloogc|" \
     >> $mkmf
 
 # runtime/configure.scm
