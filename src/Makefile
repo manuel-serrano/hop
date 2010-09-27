@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Sep 27 14:44:46 2010 (serrano)                */
+#*    Last change :  Mon Sep 27 15:14:44 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -88,7 +88,7 @@ link.dynamic:
 	$(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $(DEST) $(OBJECTS))
 
 link.static:
-	$(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $(DEST) $(OBJECTS) $(STATICLIBS))
+	$(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -static-all-bigloo -o $(DEST) $(OBJECTS) $(STATICLIBS))
 
 link.library:
 	echo "***ERROR: link.library not currently supported!"
