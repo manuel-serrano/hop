@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Mon Sep 27 12:19:30 2010 (serrano)                */
+#*    Last change :  Mon Sep 27 14:46:46 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -22,6 +22,7 @@ HOPDATE		= @DATE@
 #*---------------------------------------------------------------------*/
 # the Bigloo compiler
 BIGLOO          = @BIGLOO@
+RELEASE		= @BIGLOOVERSION@
 HOPC		= @HOPC@
 HFLAGS		= --bigloo=$(BIGLOO) -L $(BUILDLIBDIR) --share-dir $(BUILDSHAREDIR) --
 BACKEND         = @BACKEND@

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Sep 27 14:31:27 2010 (serrano)                */
+#*    Last change :  Mon Sep 27 14:44:46 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -14,7 +14,6 @@ do: build
 #*---------------------------------------------------------------------*/
 -include ../etc/Makefile.hopconfig
 -include ../etc/Makefile.version
--include $(BIGLOOLIBDIR)/Makefile.config
 
 #*---------------------------------------------------------------------*/
 #*    Target and Project                                               */
@@ -108,8 +107,8 @@ FELIX_SOURCES = $(FELIX_MODULES:%=%.java)
 FELIX_CLASSES = $(FELIX_MODULES:%=$(CLASS_DIR)/%.class)
 
 $(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib $(FELIX_CLASSES)
-	@ $(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
-	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
+	$(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
+	@ $(call done,$(COLOR),"Jar ",$@," done.")
 
 jvm-stdlibs: o/class_s/lib/hop/$(HOPRELEASE)
 	for p in $(JVMZIPLIBS); do \
@@ -217,7 +216,7 @@ install: install-$(BACKEND)
 install-native:
 	$(INSTALL) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)/hop-$(HOPRELEASE)
 	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hop-$(HOPRELEASE)
-	(cd $(DESTDIR)$(HOPBINDIR) && $(RM) hop && ln hop-$(HOPRELEASE) hop)
+	(cd $(DESTDIR)$(HOPBINDIR) && $(RM) -f hop && ln hop-$(HOPRELEASE) hop)
 
 install-jvm:
 	$(INSTALL) $(BUILDBINDIR)/$(EXEC).jar $(DESTDIR)$(HOPBINDIR)

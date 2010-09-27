@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Sep 27 11:09:05 2010 (serrano)                */
+#*    Last change :  Mon Sep 27 14:47:14 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -575,6 +575,7 @@ cat $mkmf.in \
           -e "s|@DEVEL@|$devel|" \
           -e "s|@DEBUG@|$debug|" \
           -e "s|@BIGLOO@|$bigloo|" \
+          -e "s|@BIGLOOVERSION@|$bglversion|" \
           -e "s|@HOPC@|$hopc|" \
           -e "s|@BACKEND@|$backend|" \
           -e "s|@LINK@|$link|" \

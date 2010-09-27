@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Sep 27 11:01:19 2010 (serrano)                */
+#*    Last change :  Mon Sep 27 14:41:15 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hopc                                    */
 #*=====================================================================*/
@@ -62,12 +62,12 @@ $(CLASS_DIR):
 	mkdir -p $@
 
 $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
-	@ $(call compile,BIGLOO,BCFLAGS,-o $@ $(OBJECTS))
-	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
+	$(call compile,BIGLOO,BCFLAGS,-o $@ $(OBJECTS))
+	@ $(call done,$(COLOR),"Binary ",$@," done.")
 
 $(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-lib
-	@ $(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
-	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
+	$(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
+	@ $(call done,$(COLOR),"Jar ",$@," done.")
 
 jvm-stdlibs: o/class_s/lib/hop/$(HOPRELEASE)
 	for p in $(JVMZIPLIBS); do \
