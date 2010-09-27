@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Sep 27 14:47:14 2010 (serrano)                */
+#*    Last change :  Mon Sep 27 19:01:05 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -265,6 +265,9 @@ while : ; do
 
     --macosx-bundle|--macosx)
       arch=macosx;;
+
+    --android)
+      arch=android;;
 
     --apache-felix=*)
       felix="`echo $1 | sed 's/^[^=]*=//'`"
@@ -627,7 +630,7 @@ cat $mkmf.in \
     >> $mkmf
 
 # runtime/configure.scm
-for p in configure.scm configure-noarch.sch configure-macosx.sch; do
+for p in configure.scm configure-noarch.sch configure-macosx.sch configure-android.sch; do
   configure=runtime/$p
   rm -f $configure 2> /dev/null
   echo ";* Automatically generated file (don't edit) */" > $configure

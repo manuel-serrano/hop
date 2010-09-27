@@ -1,0 +1,49 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.0.x/etc/configure-noarch.sch.in       */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Tue May  5 09:54:10 2009                          */
+;*    Last change :  Fri Sep 25 16:45:29 2009 (serrano)                */
+;*    Copyright   :  2009 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Common arch HOP configuration                                    */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    Install directories ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (hop-etc-directory) "@ETCDIR@")
+(define-inline (hop-bin-directory) "@BINDIR@")
+(define-inline (hop-lib-directory) "@LIBDIR@")
+(define-inline (hop-share-directory) "@SHAREDIR@")
+(define-inline (hop-contribs-directory) "@CONTRIBSDIR@")
+(define-inline (hop-weblets-directory) "@WEBLETSDIR@")
+
+;*---------------------------------------------------------------------*/
+;*    hop-library-path ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hop-library-path)
+   (cond-expand
+      (bigloo-jvm
+       (cons* "/resource/bigloo" "@LIBPATH@" (bigloo-library-path)))
+      (else
+       (cons "@LIBPATH@" (bigloo-library-path)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-configure-rc-directory ...                                   */
+;*---------------------------------------------------------------------*/
+(define (hop-configure-rc-directory)
+   (make-file-name (dirname (hop-etc-directory)) "/data/data/fr.inria.hop/home"))
+
+;*---------------------------------------------------------------------*/
+;*    hop-configure-var-directory ...                                  */
+;*---------------------------------------------------------------------*/
+(define (hop-configure-var-directory)
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-configure-cache-directory ...                                */
+;*---------------------------------------------------------------------*/
+(define (hop-configure-cache-directory)
+   #f)
+
