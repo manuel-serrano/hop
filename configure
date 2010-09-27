@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Sep 24 16:53:51 2010 (serrano)                */
+#*    Last change :  Mon Sep 27 09:14:21 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -24,6 +24,7 @@ cc=
 flashcc=/usr/bin/mtasc
 fflags="-main -version 9 -cp /usr/share/mtasc/std -cp /usr/share/mtasc/std8 -swf"
 backend=native
+link=dynamic
 unzip=unzip
 gzip="gzip -9"
 install="install -m a+r,u+r"
@@ -169,8 +170,8 @@ while : ; do
     --backend=*)
       backend="`echo $1 | sed 's/^[^=]*=//'`";;
 
-    --cigloo=*)
-      cigloo="`echo $1 | sed 's/^[^=]*=//'`";;
+    --link=*)
+      link="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --afile=*)
       afile="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -289,7 +290,7 @@ while : ; do
       echo "   --bigloo=comp......... The Bigloo compiler ($bigloo)" >&2;
       echo "   --bigloolibdir=path... The Bigloo lib-dir path" >&2;
       echo "   --backend=backend..... The execution platform [native,jvm,dotnet]" >&2;
-      echo "   --cigloo=comp......... The Cigloo compiler" >&2;
+      echo "   --link=method......... The link method [static,dynamic]" >&2;
       echo "   --afile=afile......... The Bigloo afile tool" >&2;
       echo "   --btags=btags......... The Bigloo btags tool" >&2;
       echo "   --bdepend=bdepend..... The Bigloo dependence tool" >&2;
@@ -576,8 +577,8 @@ cat $mkmf.in \
           -e "s|@BIGLOO@|$bigloo|" \
           -e "s|@HOPC@|$hopc|" \
           -e "s|@BACKEND@|$backend|" \
+          -e "s|@LINK@|$link|" \
           -e "s|@BIGLOOLIBDIR@|$bigloolibdir|" \
-          -e "s|@CIGLOO@|$cigloo|" \
           -e "s|@AFILE@|$afile|" \
           -e "s|@JFILE@|$jfile|" \
           -e "s|@BTAGS@|$btags|" \
@@ -634,6 +635,7 @@ for p in configure.scm configure-noarch.sch configure-macosx.sch; do
             -e "s|@BIGLOOVERSION@|$bglversion|" \
             -e "s|@BRANCH@|$branch|" \
             -e "s|@BACKEND@|$backend|" \
+            -e "s|@LINK@|$link|" \
             -e "s|@URL@|$url|" \
             -e "s|@BINDIR@|$bindir|" \
             -e "s|@LIBDIR@|$libdir|" \
@@ -652,6 +654,35 @@ for p in configure.scm configure-noarch.sch configure-macosx.sch; do
             -e "s|@HOPARCH@|$arch|" \
       >> $configure
 done
+
+# runtime/make_lib.scm
+configure=runtime/make_lib.scm
+rm -f $configure 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $configure
+cat etc/$p.in >> $configure
+
+if [ "$link " = "static " ]; then
+echo "(cond-expand ((not hop-eval)" >> $init
+echo "(register-eval-srfi! 'hop-eval)" >> $init
+echo "" >> $init
+echo ";; define the Hop user macros" >> $init
+echo "(eval '(begin" >> $init
+cat runtime/xml-expd.sch >> $init
+echo "" >> $init
+cat runtime/param-expd.sch >> $init
+echo "" >> $init
+cat runtime/hss-expd.sch >> $init
+echo "" >> $init
+cat runtime/prefs-expd.sch >> $init
+echo "" >> $init
+cat runtime/service-expd.sch >> $init
+echo "" >> $init
+cat runtime/expanders.sch >> $init
+echo "" >> $init
+echo "(hop-install-expanders!)) (else #unspecified))" >> $init
+echo ")" >> $init
+chmod a-w $init
+fi
 
 # etc/hoprc.hop
 hoprc=etc/hoprc.hop
@@ -730,7 +761,6 @@ cat etc/hopwidget.init.in \
     >> $init
 echo "" >> $init
 
-
 # lib/scheme2js.init
 init=lib/scheme2js.init
 mkdir -p lib
@@ -771,6 +801,7 @@ cat etc/hop-autoconf.js.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
           -e "s|@BACKEND@|$backend|" \
+          -e "s|@LINK@|$link|" \
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
@@ -795,6 +826,7 @@ for p in etc/hop.man etc/hopsh.man etc/hopreplay.man; do
             -e "s|@DEBUG@|$debug|" \
             -e "s|@BIGLOO@|$bigloo|" \
             -e "s|@BACKEND@|$backend|" \
+            -e "s|@LINK@|$link|" \
       > $p
 done
 
@@ -834,6 +866,7 @@ echo "Release:"
 echo "  hop release number.................... $version $state$minor"
 echo "  bigloo................................ $bigloo ($bglversion)"
 echo "  backend............................... $backend"
+echo "  link.................................. $link"
 echo "  bigloo compilation flags.............. $bcflags"
 echo "  runtime compilation flags............. $bcflagsrts"
 echo

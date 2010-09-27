@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Thu Aug 12 11:56:10 2010 (serrano)                */
+#*    Last change :  Mon Sep 27 09:01:55 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -43,6 +43,21 @@ SOURCES 	= $(MODULES:%=%.scm)
 
 COLOR		= 32
 
+STATICLIBS	= $(BUILDLIBDIR)/libhop_s-$(HOPRELEASE).a \
+                  $(BUILDLIBDIR)/libhop_es-$(HOPRELEASE).a \
+                  $(BUILDLIBDIR)/libhopscheme_s-$(HOPRELEASE).a \
+                  $(BUILDLIBDIR)/libhopscheme_es-$(HOPRELEASE).a \
+                  $(BUILDLIBDIR)/libscheme2js_s-$(HOPRELEASE).a \
+                  $(BUILDLIBDIR)/libscheme2js_es-$(HOPRELEASE).a \
+                  $(BUILDLIBDIR)/libhopwidget_s-$(HOPRELEASE).a \
+                  $(BUILDLIBDIR)/libhopwidget_es-$(HOPRELEASE).a \
+                  $(BIGLOOLIBDIR)/libbiglooweb_s-$(RELEASE).a \
+                  $(BIGLOOLIBDIR)/libbiglooweb_es-$(RELEASE).a \
+                  $(BIGLOOLIBDIR)/libbigloomultimedia_s-$(RELEASE).a \
+                  $(BIGLOOLIBDIR)/libbigloomultimedia_es-$(RELEASE).a \
+                  $(BIGLOOLIBDIR)/libbigloopthread_s-$(RELEASE).a \
+                  $(BIGLOOLIBDIR)/libbigloopthread_es-$(RELEASE).a
+
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
@@ -51,7 +66,7 @@ POPULATION 	= $(INCLUDES) $(SOURCES) Makefile
 #*---------------------------------------------------------------------*/
 #*    The hop executable                                               */
 #*---------------------------------------------------------------------*/
-.PHONY: build dobuild
+.PHONY: build dobuild link.static link.dynamic link.library
 
 build:  o $(BACKEND)
 
@@ -65,11 +80,24 @@ $(CLASS_DIR):
 	mkdir -p $@
 
 $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
-	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $@ $(OBJECTS))
-	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
+	$(MAKE) link.$(LINK)
 
-# if we build for Apache Felix we must add the 3 java wrappers needed to run hop from a bundle
-# FELIX_JAR = /home/mdione/src/works/inria/orange/felix-framework-2.0.4/bin/felix.jar
+link.dymamic:
+	$(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $@ $(OBJECTS))
+	$(call done,$(COLOR),"Binary (dynamic) ",$@,"...done.")
+
+link.static:
+	$(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $@ $(OBJECTS) $(STATICLIBS))
+	$(call done,$(COLOR),"Binary (static) ",$@,"...done.")
+
+link.library:
+	echo "***ERROR: link.library not currently supported!"
+	exit 1
+
+# if we build for Apache Felix we must add the 3 java wrappers 
+# needed to run hop from a bundle
+# FELIX_JAR = 
+#    /home/mdione/src/works/inria/orange/felix-framework-2.0.4/bin/felix.jar
 ifdef FELIX_JAR
 FELIX_MODULES = HopRunner HopThread HopActivator
 else

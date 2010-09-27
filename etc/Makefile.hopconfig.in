@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Thu Aug 12 12:33:41 2010 (serrano)                */
+#*    Last change :  Mon Sep 27 08:52:19 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -25,6 +25,7 @@ BIGLOO          = @BIGLOO@
 HOPC		= @HOPC@
 HFLAGS		= --bigloo=$(BIGLOO) -L $(BUILDLIBDIR) --share-dir $(BUILDSHAREDIR) --
 BACKEND         = @BACKEND@
+LINK		= @LINK@
 BIGLOOLIBDIR	= @BIGLOOLIBDIR@
 CIGLOO		= @CIGLOO@
 AFILE		= @AFILE@
@@ -47,7 +48,7 @@ INSTALL		= @INSTALL@
 #*---------------------------------------------------------------------*/
 DEBUG		= @DEBUG@
 CCOMP		= @CC@
-BCFLAGS		= @BCFLAGS@ -cc $(CCOMP) -copt "$(CCFLAGS)" $(EFLAGS)
+BCFLAGS		= @BCFLAGS@ -cc $(CCOMP) -copt "$(CCFLAGS)" -srfi $(LINK) $(EFLAGS)
 BTFLAGS		= @BTFLAGS@
 BCFLAGSDEV	= @BCFLAGSDEV@
 BCFLAGSRTS	= @BCFLAGSRTS@

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Sep 21 08:10:29 2010 (serrano)                */
+;*    Last change :  Mon Sep 27 09:00:39 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -90,12 +90,13 @@
        (pragma "BGl_modulezd2initializa7ationz75zz__hopwidgetzd2makelibzd2(0,\"foo\")")
        ; TODO: pick the dir from the config
        (load "/data/data/fr.inria.hop/hoplib/hop.init"))
+      (library
+       (for-each (lambda (l)
+		    (eval `(library-load_e ',l)))
+		 (hop-preload-libraries)))
       (else
        (for-each (lambda (l)
-		    (cond-expand
-		       (hop-as-library (eval `(library-load_e ',l)))
-		       (static '())
-		       (else (eval `(library-load ',l)))))
+		    (eval `(library-load ',l)))
 		 (hop-preload-libraries))))
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)

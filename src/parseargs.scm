@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Jul  8 15:26:51 2010 (serrano)                */
+;*    Last change :  Fri Sep 24 17:35:42 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -237,9 +237,13 @@
       ;; mime types
       (when mimep
 	 (load-mime-types (hop-mime-types-file))
-	 (load-mime-types (if (string? mime-file)
-			      mime-file
-			      (make-file-name (getenv "HOME") ".mime.types"))))
+	 (cond
+	    ((string? mime-file)
+	     (load-mime-types mime-file))
+	    ((getenv "HOME")
+	     =>
+	     (lambda (p)
+		(load-mime-types (make-file-name p ".mime.types"))))))
 
       ;; clear al caches
       (when clear-cache

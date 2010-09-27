@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Aug 12 11:49:32 2010 (serrano)                */
+#*    Last change :  Mon Sep 27 09:11:21 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -26,7 +26,8 @@ POPULATION	= Makefile Makefile.weblet \
                   hoprc.hop.in hopshrc.hop.in \
 		  hop.init.in scheme2js.init.in hopscheme.init.in \
                   hop.man.in hopsh.man.in hopreplay.man.in \
-                  hopc.sh.in hopwidget.init.in
+                  hopc.sh.in hopwidget.init.in \
+                  make_lib.scm.in
 
 install:
 	cp Makefile.hopconfig $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
