@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Sep 27 10:30:08 2010 (serrano)                */
+#*    Last change :  Mon Sep 27 12:20:06 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -14,6 +14,7 @@ do: build
 #*---------------------------------------------------------------------*/
 -include ../etc/Makefile.hopconfig
 -include ../etc/Makefile.version
+-include $(BIGLOOLIBDIR)/Makefile.config
 
 #*---------------------------------------------------------------------*/
 #*    Target and Project                                               */

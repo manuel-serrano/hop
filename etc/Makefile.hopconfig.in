@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Mon Sep 27 08:52:19 2010 (serrano)                */
+#*    Last change :  Mon Sep 27 12:19:30 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -27,7 +27,6 @@ HFLAGS		= --bigloo=$(BIGLOO) -L $(BUILDLIBDIR) --share-dir $(BUILDSHAREDIR) --
 BACKEND         = @BACKEND@
 LINK		= @LINK@
 BIGLOOLIBDIR	= @BIGLOOLIBDIR@
-CIGLOO		= @CIGLOO@
 AFILE		= @AFILE@
 JFILE		= @JFILE@
 BTAGS		= @BTAGS@
