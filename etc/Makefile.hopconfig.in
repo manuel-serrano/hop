@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Mon Sep 27 14:46:46 2010 (serrano)                */
+#*    Last change :  Mon Sep 27 18:50:33 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -48,7 +48,7 @@ INSTALL		= @INSTALL@
 #*---------------------------------------------------------------------*/
 DEBUG		= @DEBUG@
 CCOMP		= @CC@
-BCFLAGS		= @BCFLAGS@ -cc $(CCOMP) -copt "$(CCFLAGS)" -srfi $(LINK) $(EFLAGS)
+BCFLAGS		= @BCFLAGS@ -cc $(CCOMP) -copt "$(CCFLAGS)" -srfi hop-$(LINK) $(EFLAGS)
 BTFLAGS		= @BTFLAGS@
 BCFLAGSDEV	= @BCFLAGSDEV@
 BCFLAGSRTS	= @BCFLAGSRTS@
