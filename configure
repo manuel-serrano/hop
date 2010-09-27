@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Sep 27 09:14:21 2010 (serrano)                */
+#*    Last change :  Mon Sep 27 11:09:05 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -655,35 +655,6 @@ for p in configure.scm configure-noarch.sch configure-macosx.sch; do
       >> $configure
 done
 
-# runtime/make_lib.scm
-configure=runtime/make_lib.scm
-rm -f $configure 2> /dev/null
-echo ";* Automatically generated file (don't edit) */" > $configure
-cat etc/$p.in >> $configure
-
-if [ "$link " = "static " ]; then
-echo "(cond-expand ((not hop-eval)" >> $init
-echo "(register-eval-srfi! 'hop-eval)" >> $init
-echo "" >> $init
-echo ";; define the Hop user macros" >> $init
-echo "(eval '(begin" >> $init
-cat runtime/xml-expd.sch >> $init
-echo "" >> $init
-cat runtime/param-expd.sch >> $init
-echo "" >> $init
-cat runtime/hss-expd.sch >> $init
-echo "" >> $init
-cat runtime/prefs-expd.sch >> $init
-echo "" >> $init
-cat runtime/service-expd.sch >> $init
-echo "" >> $init
-cat runtime/expanders.sch >> $init
-echo "" >> $init
-echo "(hop-install-expanders!)) (else #unspecified))" >> $init
-echo ")" >> $init
-chmod a-w $init
-fi
-
 # etc/hoprc.hop
 hoprc=etc/hoprc.hop
 rm -f $hoprc 2> /dev/null
@@ -730,8 +701,8 @@ cat etc/hop.init.in \
     >> $init
 echo "" >> $init
 
-echo "(cond-expand ((not hop-eval)" >> $init
-echo "(register-eval-srfi! 'hop-eval)" >> $init
+echo "(cond-expand" >> $init
+echo "   ((not hop-server)" >> $init
 cat runtime/xml-expd.sch >> $init
 echo "" >> $init
 cat runtime/param-expd.sch >> $init
@@ -744,7 +715,8 @@ cat runtime/service-expd.sch >> $init
 echo "" >> $init
 cat runtime/expanders.sch >> $init
 echo "" >> $init
-echo "(hop-install-expanders!)) (else #unspecified))" >> $init
+echo "(hop-install-expanders!)" >> $init
+echo "   ))" >> $init
 chmod a-w $init
 
 # lib/hopwidget.init

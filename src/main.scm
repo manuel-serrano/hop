@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Sep 27 09:00:39 2010 (serrano)                */
+;*    Last change :  Mon Sep 27 11:12:15 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -34,8 +34,8 @@
 	    hop_scheduler-accept-many)
 
    (cond-expand
-      (hop-as-library (extern (export main "hop_main"))
-		      (export (main x)))
+      (hop-library (extern (export main "hop_main"))
+		   (export (main x)))
       (boot-from-java
          ; java name is bigloo.hop.main.main (args)
          (export (main::int args::pair-nil)))
@@ -80,17 +80,17 @@
    ;; catch critical signals
    (signal-init!)
    ;; set the Hop cond-expand identification
-   (for-each register-eval-srfi! (hop-srfis))
+   (for-each register-srfi! (cons 'hop-server (hop-srfis)))
    ;; set the library load path
    (bigloo-library-path-set! (hop-library-path))
    ;; preload the hop libraries
    (cond-expand
-      (static
+      (hop-static
        (pragma "BGl_modulezd2initializa7ationz75zz__hop_makelibz00(0,\"foo\")")
        (pragma "BGl_modulezd2initializa7ationz75zz__hopwidgetzd2makelibzd2(0,\"foo\")")
        ; TODO: pick the dir from the config
-       (load "/data/data/fr.inria.hop/hoplib/hop.init"))
-      (library
+       '(load "/data/data/fr.inria.hop/hoplib/hop.init"))
+      (hop-library
        (for-each (lambda (l)
 		    (eval `(library-load_e ',l)))
 		 (hop-preload-libraries)))
@@ -98,6 +98,8 @@
        (for-each (lambda (l)
 		    (eval `(library-load ',l)))
 		 (hop-preload-libraries))))
+   ;; define the Hop macros
+   (hop-install-expanders!)
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set! (lambda (f) (hop-load-modified f :abase #f)))

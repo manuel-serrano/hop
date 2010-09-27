@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/hopc/main.scm                     */
+;*    serrano/prgm/project/hop/2.2.x/hopc/main.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Jun 18 21:18:07 2010 (serrano)                */
+;*    Last change :  Mon Sep 27 10:19:07 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -43,6 +43,7 @@
 ;*---------------------------------------------------------------------*/
 (define (main args)
    ;; set the Hop cond-expand identification
+   (register-srfi! 'hopc)
    (for-each register-eval-srfi! (hop-srfis))
    ;; set the library load path
    (bigloo-library-path-set! (hop-library-path))
@@ -144,7 +145,8 @@
       ((eq? (hopc-pass) 'client-js)
        (for-each compile-javascript (hopc-sources)))
       ((pair? (hopc-sources))
-       (for-each (lambda (s) (call-with-input-file s compile))
+       (for-each (lambda (s)
+		    (call-with-input-file s compile))
 		 (hopc-sources)))
       (else
        (compile (current-input-port)))))

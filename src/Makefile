@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Sep 27 09:01:55 2010 (serrano)                */
+#*    Last change :  Mon Sep 27 10:30:08 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -80,15 +80,14 @@ $(CLASS_DIR):
 	mkdir -p $@
 
 $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
-	$(MAKE) link.$(LINK)
+	$(MAKE) link.$(LINK) DEST=$@
+	@ $(call done,$(COLOR),"Binary \($(LINK)\) ",$@," done.")
 
-link.dymamic:
-	$(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $@ $(OBJECTS))
-	$(call done,$(COLOR),"Binary (dynamic) ",$@,"...done.")
+link.dynamic:
+	$(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $(DEST) $(OBJECTS))
 
 link.static:
-	$(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $@ $(OBJECTS) $(STATICLIBS))
-	$(call done,$(COLOR),"Binary (static) ",$@,"...done.")
+	$(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $(DEST) $(OBJECTS) $(STATICLIBS))
 
 link.library:
 	echo "***ERROR: link.library not currently supported!"

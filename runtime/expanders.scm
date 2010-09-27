@@ -21,7 +21,10 @@
 	    "xml-expd.sch"
 	    "expanders.sch")
 
-   (export  (hop-install-expanders!)))
+   (export  (hop-client-define-markup x e)
+	    (hop-client-define-xml-compound x e)
+	    
+	    (hop-install-expanders!)))
 
 
    

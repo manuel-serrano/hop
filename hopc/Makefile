@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Thu Aug 12 12:05:38 2010 (serrano)                */
+#*    Last change :  Mon Sep 27 11:01:19 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hopc                                    */
 #*=====================================================================*/
@@ -36,6 +36,8 @@ BGL_CLASSES	= $(MODULES:%=$(CLASS_DIR)/%.class)
 SOURCES 	= $(MODULES:%=%.scm)
 
 COLOR		= 32
+
+BHFLAGS		= -srfi hopc
 
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
@@ -122,10 +124,10 @@ o/class_s/lib/hop/$(HOPRELEASE):
 #*    The implicit `.scm.o' rule                                       */
 #*---------------------------------------------------------------------*/
 o/%.o: %.scm .afile
-	@ $(call compile,BIGLOO,BCFLAGS,$< -o $@ -c)
+	@ $(call compile2,BIGLOO,BCFLAGS,BHFLAGS,$< -o $@ -c)
 
 $(CLASS_DIR)/%.class: %.scm .afile
-	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
+	@ $(call compile2,BIGLOO,BJVMFLAGS,BHFLAGS,$< -o $@ -c)
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */

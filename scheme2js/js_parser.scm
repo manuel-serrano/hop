@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -15,20 +15,22 @@
 	   js-lexer)
    (export (parse::Node port::input-port next-pragma::procedure)))
 
-(define (my-error msg obj token)
-   (cond
-      ((not token)
-       (error "parser"
-	      msg
-	      obj))
-      ((epair? token)
-       (match-case (cer token)
-	  ((at ?fname ?loc)
-	   (error/location "parser" msg obj fname loc))
-	  (else
-	   (my-error msg obj #f))))
-      (else
-       (my-error msg obj #f))))
+(define (my-error ip msg obj token)
+   (let ((l (read-line ip)))
+      (let loop ((msg msg)
+		 (obj obj)
+		 (token token))
+	 (cond
+	    ((not token)
+	     (error "parser" msg (format "~a \"~a\"" obj l)))
+	    ((epair? token)
+	     (match-case (cer token)
+		((at ?fname ?loc)
+		 (error/location "parser" msg (format "~a \"~a\"" obj l) fname loc))
+		(else
+		 (loop msg obj #f))))
+	    (else
+	     (loop msg obj #f))))))
 
 (define (parse input-port next-pragma!)
    ;; fun-body at bottom of file
@@ -40,9 +42,9 @@
    (define (read-regexp intro-token)
       (let ((token (read/rp *Reg-exp-grammar* input-port)))
 	 (if (eq? (car token) 'EOF)
-	     (my-error "unfinished regular expression literal" #f token))
+	     (my-error input-port "unfinished regular expression literal" #f token))
 	 (if (eq? (car token) 'ERROR)
-	     (my-error "bad regular-expression literal" (cdr token) token))
+	     (my-error input-port "bad regular-expression literal" (cdr token) token))
 	 (string-append (symbol->string intro-token) (cdr token))))
    
    (define (peek-token)
@@ -72,7 +74,8 @@
       (let ((token (consume-any!)))
 	 (if (eq? (car token) type)
 	     (cdr token)
-	     (my-error (format "unexpected token. expected ~a got: " type)
+	     (my-error input-port
+		       (format "unexpected token. expected ~a got: " type)
 		       (car token)
 		       token))))
    
@@ -85,7 +88,7 @@
 	      (eq? (peek-token-type) 'EOF))
 	  'do-nothing)
 	 (else
-	  (my-error "unexpected token: " (peek-token) (peek-token)))))
+	  (my-error input-port "unexpected token: " (peek-token) (peek-token)))))
    
    (define (consume-any!)
       (let ((res (peek-token)))
@@ -113,7 +116,7 @@
 	 ((function) (function-declaration))
 	 ((ERROR EOF)
 	  (let ((t (consume-any!)))
-	     (my-error "eof or error" t t)))
+	     (my-error input-port "eof or error" t t)))
 	 (else (statement))))
 
    (define (statement)
@@ -156,7 +159,7 @@
 		     (loop (cons (var in-for-init?) rev-vars)))
 	    ((in) (cond
 		     ((not in-for-init?)
-		      (my-error "unexpected token"
+		      (my-error input-port "unexpected token"
 				"in"
 				(peek-token)))
 		     (else
@@ -168,7 +171,7 @@
 		      (instantiate::Var-Decl-List
 			 (vars (reverse! rev-vars)))
 		      (let ((t (consume-any!)))
-			 (my-error "unexpected token, error or EOF"
+			 (my-error input-port "unexpected token, error or EOF"
 				   (cdr t)
 				   t)))))))
 
@@ -254,7 +257,7 @@
 	    ((Var-Decl-List? lhs)
 	     (let ((lhs-vars (Var-Decl-List-vars lhs)))
 		(unless (null? (cdr lhs-vars))
-		   (my-error "Only one variable allowed in 'for ... in' loop"
+		   (my-error input-port "Only one variable allowed in 'for ... in' loop"
 			     (Ref-id (cadr lhs-vars))
 			     error-token))
 		(instantiate::For-In
@@ -266,7 +269,7 @@
 		 (Binary? lhs)
 		 (Unary? lhs)
 		 (Postfix? lhs))
-	     (my-error "Bad left-hand side in 'for ... in' loop construct"
+	     (my-error input-port "Bad left-hand side in 'for ... in' loop construct"
 		       (class-name (object-class lhs))
 		       error-token))
 	    (else
@@ -699,7 +702,7 @@
 	 ((true false) (instantiate::Bool (val (eq? (car (consume-any!)) 'true))))
 	 ((NUMBER) (instantiate::Number (val (consume! 'NUMBER)))) ;; still as string!
 	 ((STRING) (instantiate::String (val (consume! 'STRING))))
-	 ((EOF) (my-error "unexpected end of file" #f (peek-token)))
+	 ((EOF) (my-error input-port "unexpected end of file" #f (peek-token)))
 	 ((/ /=) (let ((pattern (read-regexp (peek-token-type))))
 		    ;; consume-any *must* be after having read the reg-exp,
 		    ;; so that the read-regexp works. Only then can we remove
@@ -708,7 +711,7 @@
 		    (instantiate::RegExp (pattern pattern))))
 	 (else
 	  (let ((t (peek-token)))
-	     (my-error "unexpected token: " t t)))))
+	     (my-error input-port "unexpected token: " t t)))))
 
    (define (js-pragma)
       (consume! 'PRAGMA)

@@ -270,8 +270,8 @@
 		     ,(string->symbol (format "hop-~a" (hop-branch)))
 		     ,(string->symbol (format "hop-~a" (hop-version))))
 	 :expanders `(labels match-case
-		      (define-markup . ,(eval 'hop-client-define-markup))
-		      (define-xml-compound . ,(eval 'hop-client-define-xml-compound))))
+		      (define-markup . ,hop-client-define-markup)
+		      (define-xml-compound . ,hop-client-define-xml-compound)))
       (init-clientc-compiler! :modulec hopscheme-compile-module
 	 :expressionc hopscheme-compile-expression
 	 :valuec hopscheme-compile-value
