@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/etc/configure-noarch.sch.in       */
+;*    serrano/prgm/project/hop/2.2.x/etc/configure-android.sch.in      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  5 09:54:10 2009                          */
-;*    Last change :  Fri Sep 25 16:45:29 2009 (serrano)                */
-;*    Copyright   :  2009 Manuel Serrano                               */
+;*    Last change :  Tue Sep 28 09:22:37 2010 (serrano)                */
+;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common arch HOP configuration                                    */
 ;*=====================================================================*/
@@ -33,7 +33,17 @@
 ;*    hop-configure-rc-directory ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (hop-configure-rc-directory)
-   (make-file-name (dirname (hop-etc-directory)) "/data/data/fr.inria.hop/home"))
+   (let ((home (or (getenv "HOME") "@ANDROIDHOME@"))
+	 (host (hostname))
+	 (pref ".config/hop"))
+      (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
+	 (when (string? host)
+	    (let ((home/h (make-file-name home (string-append pref "." host))))
+	       (if (and (file-exists? home/h) (directory? home/h))
+		   home/h
+		   (if (string=? (suffix host) "")
+		       (make-file-name home pref)
+		       (loop (prefix host)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-var-directory ...                                  */

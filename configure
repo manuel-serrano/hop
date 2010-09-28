@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Sep 27 19:01:05 2010 (serrano)                */
+#*    Last change :  Tue Sep 28 09:26:54 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -108,6 +108,7 @@ done
 
 arch=noarch
 
+androidhome=/data/data/fr.inria.fr/home
 felix=
 
 # Argument parsing
@@ -269,6 +270,9 @@ while : ; do
     --android)
       arch=android;;
 
+    --android-home=*)
+      androidhome="`echo $1 | sed 's/^[^=]*=//'`";;
+
     --apache-felix=*)
       felix="`echo $1 | sed 's/^[^=]*=//'`"
       hopsrfis="$hopsrfis boot-from-java"
@@ -317,8 +321,11 @@ while : ; do
       echo "   --disable-locevent.... Disables location event support" >&2;
       echo "   --enable-threads...... Enables multi-threading support (default)" >&2;
       echo "   --disable-threads..... Disables multi-threading support" >&2;
-      echo "   --srfi=sym............ Activate this srfi (during compilation and runtime)" >&2;
-      echo "   --macosx.............. Prepare the production of a MacOSX bundle" >&2;
+      echo "   --srfi=sym............ Activates this srfi (during compilation and runtime)" >&2;
+      echo "   --macosx.............. Prepares the production of a MacOSX bundle" >&2;
+      echo "   --android............. Prepares the production of an Android apk" >&2;
+      echo "   --android-home=path... Sets the Android default home path" >&2;
+      echo "   --macosx.............. Prepares the production of a MacOSX bundle" >&2;
       echo "   --apache-felix=path... Path to felix.jar" >&2;
       exit -1;
   esac
@@ -656,6 +663,7 @@ for p in configure.scm configure-noarch.sch configure-macosx.sch configure-andro
             -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
             -e "s|@HOPSRFIS@|$hopsrfis|" \
             -e "s|@HOPARCH@|$arch|" \
+            -e "s|@ANDROIDHOME@|$androidhome|" \
       >> $configure
 done
 
@@ -673,6 +681,7 @@ cat etc/hoprc.hop.in \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@MIMETYPES@|$mimetypes|" \
+          -e "s|@ANDROIDHOME@|$androidhome|" \
     >> $hoprc
 
 # etc/hopshrc.hop
@@ -689,6 +698,7 @@ cat etc/hopshrc.hop.in \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@MIMETYPES@|$mimetypes|" \
+          -e "s|@ANDROIDHOME@|$androidhome|" \
     >> $hopshrc
 
 # lib/hop.init
