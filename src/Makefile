@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Sep 27 15:14:44 2010 (serrano)                */
+#*    Last change :  Fri Oct  1 15:49:18 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -55,6 +55,12 @@ STATICLIBS	= $(BUILDLIBDIR)/libhop_s-$(HOPRELEASE).a \
                   $(BIGLOOLIBDIR)/libbiglooweb_es-$(RELEASE).a \
                   $(BIGLOOLIBDIR)/libbigloomultimedia_s-$(RELEASE).a \
                   $(BIGLOOLIBDIR)/libbigloomultimedia_es-$(RELEASE).a \
+                  $(BIGLOOLIBDIR)/libbigloomail_s-$(RELEASE).a \
+                  $(BIGLOOLIBDIR)/libbigloomail_es-$(RELEASE).a \
+                  $(BIGLOOLIBDIR)/libbigloocalendar_s-$(RELEASE).a \
+                  $(BIGLOOLIBDIR)/libbigloocalendar_es-$(RELEASE).a \
+                  $(BIGLOOLIBDIR)/libbiglootext_s-$(RELEASE).a \
+                  $(BIGLOOLIBDIR)/libbiglootext._es-$(RELEASE).a \
                   $(BIGLOOLIBDIR)/libbigloopthread_s-$(RELEASE).a \
                   $(BIGLOOLIBDIR)/libbigloopthread_es-$(RELEASE).a
 
