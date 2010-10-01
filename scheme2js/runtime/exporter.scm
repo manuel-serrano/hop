@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -166,7 +166,7 @@
 			 (filter (lambda (assoc)
 				    (not (eq? (car assoc) 'export)))
 				 meta))
-			(with-JS (if (assoc 'JS without-export)
+			(with-JS (if (assq 'JS without-export)
 				     ;; there is already a JS-clause
 				     without-export
 				     (cons (list 'JS var)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Sep 27 11:12:15 2010 (serrano)                */
+;*    Last change :  Fri Oct  1 15:44:55 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -86,10 +86,12 @@
    ;; preload the hop libraries
    (cond-expand
       (hop-static
-       (pragma "BGl_modulezd2initializa7ationz75zz__hop_makelibz00(0,\"foo\")")
-       (pragma "BGl_modulezd2initializa7ationz75zz__hopwidgetzd2makelibzd2(0,\"foo\")")
-       ; TODO: pick the dir from the config
-       '(load "/data/data/fr.inria.hop/hoplib/hop.init"))
+       ;; hop library
+       (pragma "BGl_modulezd2initializa7ationz75zz__hop_makelibz00(0,\"hop\")")
+       ;; widget library
+       (pragma "BGl_modulezd2initializa7ationz75zz__hopwidgetzd2makelibzd2(0,\"hop\")")
+       ;; web library
+       (pragma "BGl_modulezd2initializa7ationz75zz__web_makelibz00(0,\"hop\")"))
       (hop-library
        (for-each (lambda (l)
 		    (eval `(library-load_e ',l)))

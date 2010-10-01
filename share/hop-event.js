@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Aug  6 15:04:25 2010 (serrano)                */
+/*    Last change :  Tue Sep 28 16:07:47 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -33,7 +33,7 @@ function HopEvent( n, v ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export event-stopped?) (arity 1))) */
 function hop_event_stoppedp( e ) {
-   return this.isStopped = true;
+   return e.isStopped == true;
 }
 
 /*---------------------------------------------------------------------*/
