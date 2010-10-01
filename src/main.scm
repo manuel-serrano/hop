@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Oct  1 15:49:29 2010 (serrano)                */
+;*    Last change :  Fri Oct  1 15:54:04 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -91,15 +91,15 @@
        ;; widget library
        (pragma "BGl_modulezd2initializa7ationz75zz__hopwidgetzd2makelibzd2(0,\"hop\")")
        ;; web library
-       (pragma "BGl_modulezd2initializa7ationz75zz__web_makelibz00(0,\"hop\")"))
+       (pragma "BGl_modulezd2initializa7ationz75zz__web_makelibz00(0,\"hop\")")
        ;; multimedia library
-       (pragma "BGl_modulezd2initializa7ationz75zz__multimediazd2makelibzd2(0,\"hop\")"))
+       (pragma "BGl_modulezd2initializa7ationz75zz__multimediazd2makelibzd2(0,\"hop\")")
        ;; mail library
-       (pragma "BGl_modulezd2initializa7ationz75zz__mail_makelibz00(0,\"hop\")"))
+       (pragma "BGl_modulezd2initializa7ationz75zz__mail_makelibz00(0,\"hop\")")
        ;; pthread library
-       (pragma "BGl_modulezd2initializa7ationz75zz__pth_makelibz00(0,\"hop\")"))
+       (pragma "BGl_modulezd2initializa7ationz75zz__pth_makelibz00(0,\"hop\")")
        ;; calendar library
-       (pragma "BGl_modulezd2initializa7ationz75zz__calendar_makelibz00(0,\"hop\")"))
+       (pragma "BGl_modulezd2initializa7ationz75zz__calendar_makelibz00(0,\"hop\")")
        ;; text library
        (pragma "BGl_modulezd2initializa7ationz75zz__text_makelibz00(0,\"hop\")"))
       (hop-library
