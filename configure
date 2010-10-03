@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Sep 28 09:27:38 2010 (serrano)                */
+#*    Last change :  Sun Oct  3 16:01:30 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -51,6 +51,8 @@ blflags="-copt \$(CPICFLAGS) -L \$(BUILDLIBDIR)"
 mimetypes=/etc/mime.types
 jsmimetype="text/javascript"
 cssmimetype="text/css"
+
+libraries="hop hopwidget web hopscheme scheme2js multimedia"
 
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
@@ -265,6 +267,10 @@ while : ; do
     --srfi=*)
       hopsrfis="$hopsrfis `echo $1 | sed 's/^[^=]*=//'`";;
 
+    --library=*)
+      lib="$hopsrfis `echo $1 | sed 's/^[^=]*=//'`";
+      libraries="$libraries $lib";;
+
     --macosx-bundle|--macosx)
       arch=macosx;;
 
@@ -323,6 +329,7 @@ while : ; do
       echo "   --enable-threads...... Enables multi-threading support (default)" >&2;
       echo "   --disable-threads..... Disables multi-threading support" >&2;
       echo "   --srfi=sym............ Activates this srfi (during compilation and runtime)" >&2;
+      echo "   --library=lib......... Add extra lib to Hop" >&2;
       echo "   --macosx.............. Prepares the production of a MacOSX bundle" >&2;
       echo "   --android............. Prepares the production of an Android apk" >&2;
       echo "   --android-home=path... Sets the Android default home path" >&2;
@@ -402,6 +409,7 @@ if [ "$ssl" = "yes" ]; then
     exit 1;
   fi
 
+  libraries="ssl $libraries"
   hopsrfis="$hopsrfis enable-ssl"
 fi
 
@@ -427,6 +435,7 @@ if [ "$threads" = "yes" ]; then
     exit 1;
   fi
   hopsrfis="$hopsrfis enable-threads"
+  libraries="pthread $libraries"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -803,6 +812,18 @@ cat etc/hop-autoconf.js.in \
 echo "" >> $init
 chmod a-w $init
 
+# src/libraries.sch
+lib=src/libraries.sch
+rm -f $lib 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $lib
+
+cat etc/libraries.sch.in \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@LIBRARIES@|$libraries|" \
+    >> $lib
+echo "" >> $lib
+chmod a-w $lib
+
 # man pages
 for p in etc/hop.man etc/hopsh.man etc/hopreplay.man; do
   cat $p.in \
@@ -859,8 +880,8 @@ echo "  runtime compilation flags............. $bcflagsrts"
 echo
 echo "Directories where Hop will be installed:"
 echo "  etc directory......................... $etcdir"
-echo "  binaries.............................. $bindir"
-echo "  libraries............................. $libdir"
+echo "  bin directory......................... $bindir"
+echo "  lib directory......................... $libdir"
 echo "  share directory....................... $sharedir"
 echo "  man directory......................... $mandir"
 echo "  weblets directory..................... $webletsdir"

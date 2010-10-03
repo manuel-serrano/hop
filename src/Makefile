@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Fri Oct  1 16:39:58 2010 (serrano)                */
+#*    Last change :  Sun Oct  3 17:51:24 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -43,27 +43,6 @@ SOURCES 	= $(MODULES:%=%.scm)
 
 COLOR		= 32
 
-STATICLIBS	= $(BUILDLIBDIR)/libhop_s-$(HOPRELEASE).a \
-                  $(BUILDLIBDIR)/libhop_es-$(HOPRELEASE).a \
-                  $(BUILDLIBDIR)/libhopscheme_s-$(HOPRELEASE).a \
-                  $(BUILDLIBDIR)/libhopscheme_es-$(HOPRELEASE).a \
-                  $(BUILDLIBDIR)/libscheme2js_s-$(HOPRELEASE).a \
-                  $(BUILDLIBDIR)/libscheme2js_es-$(HOPRELEASE).a \
-                  $(BUILDLIBDIR)/libhopwidget_s-$(HOPRELEASE).a \
-                  $(BUILDLIBDIR)/libhopwidget_es-$(HOPRELEASE).a \
-                  $(BIGLOOLIBDIR)/libbiglooweb_s-$(RELEASE).a \
-                  $(BIGLOOLIBDIR)/libbiglooweb_es-$(RELEASE).a \
-                  $(BIGLOOLIBDIR)/libbigloomultimedia_s-$(RELEASE).a \
-                  $(BIGLOOLIBDIR)/libbigloomultimedia_es-$(RELEASE).a \
-                  $(BIGLOOLIBDIR)/libbigloomail_es-$(RELEASE).a \
-                  $(BIGLOOLIBDIR)/libbigloomail_s-$(RELEASE).a \
-                  $(BIGLOOLIBDIR)/libbigloocalendar_es-$(RELEASE).a \
-                  $(BIGLOOLIBDIR)/libbigloocalendar_s-$(RELEASE).a \
-                  $(BIGLOOLIBDIR)/libbiglootext_es-$(RELEASE).a \
-                  $(BIGLOOLIBDIR)/libbiglootext_s-$(RELEASE).a \
-                  $(BIGLOOLIBDIR)/libbigloopthread_s-$(RELEASE).a \
-                  $(BIGLOOLIBDIR)/libbigloopthread_es-$(RELEASE).a
-
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
@@ -91,10 +70,10 @@ $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 	@ $(call done,$(COLOR),"Binary \($(LINK)\) ",$@," done.")
 
 link.dynamic:
-	$(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $(DEST) $(OBJECTS))
+	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $(DEST) $(OBJECTS))
 
 link.static:
-	$(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -static-all-bigloo -o $(DEST) $(OBJECTS) $(STATICLIBS))
+	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -static-all-bigloo -o $(DEST) $(OBJECTS))
 
 link.library:
 	echo "***ERROR: link.library not currently supported!"
