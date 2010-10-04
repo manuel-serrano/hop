@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Oct  3 16:01:30 2010 (serrano)                */
+#*    Last change :  Mon Oct  4 09:54:32 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -281,7 +281,8 @@ while : ; do
       androidhome="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --apache-felix=*)
-      felix="`echo $1 | sed 's/^[^=]*=//'`"
+      felix="`echo $1 | sed 's/^[^=]*=//'`";
+      link=felix;
       hopsrfis="$hopsrfis boot-from-java"
       ;;
 
@@ -642,7 +643,6 @@ cat $mkmf.in \
           -e "s|@BIGLOOPTHLIBS@|$bigloopthlibs|" \
           -e "s|@BIGLOOPTHLIBU@|$bigloopthlibu|" \
           -e "s|@RTSCONFIG@|$rts|" \
-          -e "s|@FELIX_JAR@|$felix|" \
           -e "s|@HOPGCCLOSELIB@|$bigloogc|" \
     >> $mkmf
 

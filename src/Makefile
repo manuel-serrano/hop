@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sun Oct  3 17:51:24 2010 (serrano)                */
+#*    Last change :  Mon Oct  4 10:08:59 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -39,7 +39,10 @@ CLASS_DIR	= $(CLASS_PATH)/bigloo/hop
 OBJECTS 	= $(MODULES:%=o/%.o)
 BGL_CLASSES	= $(MODULES:%=$(CLASS_DIR)/%.class)
 
-SOURCES 	= $(MODULES:%=%.scm)
+FELIX_SOURCES	= HopRunner.java HopThread.java HopActivator.java
+FELIX_CLASSES	= $(FELIX_SOURCES:%.java=$(CLASS_DIR)/%.class)
+
+SOURCES 	= $(MODULES:%=%.scm) $(FELIX_SOURCES)
 
 COLOR		= 32
 
@@ -91,9 +94,15 @@ endif
 FELIX_SOURCES = $(FELIX_MODULES:%=%.java)
 FELIX_CLASSES = $(FELIX_MODULES:%=$(CLASS_DIR)/%.class)
 
-$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib $(FELIX_CLASSES)
-	$(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
+$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib
+	@ $(MAKE) jar.$(LINK) DEST=$@
 	@ $(call done,$(COLOR),"Jar ",$@," done.")
+
+$(BUILDBINDIR)/jar.dynamic: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib
+	$(JAR) $(DEST) META-INF/MANIFEST.MF -C o/class_s .
+
+$(BUILDBINDIR)/jar.felix: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib $(FELIX_CLASSES)
+	$(JAR) $(DEST) META-INF/MANIFEST.MF -C o/class_s .
 
 jvm-stdlibs: o/class_s/lib/hop/$(HOPRELEASE)
 	for p in $(JVMZIPLIBS); do \
@@ -136,6 +145,26 @@ jvm-lib: o/class_s/lib/hop/$(HOPRELEASE)
 
 
 o/class_s/lib/hop/$(HOPRELEASE):
+	mkdir -p $@
+
+META-INF/MANIFEST.MF: META-INF
+	@ $(MAKE) manifest.$(LINK) DEST=$@
+
+manifest.dynamic:
+	@ echo "Manifest-Version: 1.0" > $(DEST)
+	@ echo "Main-Class: bigloo/hop/main" >> $(DEST)
+	@ echo "Created-By: Hop $(VERSION)" >> $(DEST)
+
+manifest.felix:
+	@ $(MAKE) manifest.dynamic
+	@ echo "Bundle-Name: Hop controller" >> $(DEST)
+	@ echo "Bundle-Description: Manages a Hop instance." >> $(DEST)
+	@ echo "Bundle-Vendor: INRIA" >> $(DEST)
+	@ echo "Bundle-Version: 0.1" >> $(DEST)
+	@ echo "Bundle-Activator: bigloo.hop.HopActivator" >> $(DEST)
+	@ echo "Import-Package: org.osgi.framework" >> $(DEST)
+
+META-INF:
 	mkdir -p $@
 
 #*---------------------------------------------------------------------*/
