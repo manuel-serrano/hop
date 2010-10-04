@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Oct  4 10:08:59 2010 (serrano)                */
+#*    Last change :  Mon Oct  4 10:28:00 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -39,10 +39,7 @@ CLASS_DIR	= $(CLASS_PATH)/bigloo/hop
 OBJECTS 	= $(MODULES:%=o/%.o)
 BGL_CLASSES	= $(MODULES:%=$(CLASS_DIR)/%.class)
 
-FELIX_SOURCES	= HopRunner.java HopThread.java HopActivator.java
-FELIX_CLASSES	= $(FELIX_SOURCES:%.java=$(CLASS_DIR)/%.class)
-
-SOURCES 	= $(MODULES:%=%.scm) $(FELIX_SOURCES)
+SOURCES 	= $(MODULES:%=%.scm)
 
 COLOR		= 32
 
@@ -82,18 +79,6 @@ link.library:
 	echo "***ERROR: link.library not currently supported!"
 	exit 1
 
-# if we build for Apache Felix we must add the 3 java wrappers 
-# needed to run hop from a bundle
-# FELIX_JAR = 
-#    /home/mdione/src/works/inria/orange/felix-framework-2.0.4/bin/felix.jar
-ifdef FELIX_JAR
-FELIX_MODULES = HopRunner HopThread HopActivator
-else
-FELIX_MODULES =
-endif
-FELIX_SOURCES = $(FELIX_MODULES:%=%.java)
-FELIX_CLASSES = $(FELIX_MODULES:%=$(CLASS_DIR)/%.class)
-
 $(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib
 	@ $(MAKE) jar.$(LINK) DEST=$@
 	@ $(call done,$(COLOR),"Jar ",$@," done.")
@@ -101,7 +86,8 @@ $(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-
 $(BUILDBINDIR)/jar.dynamic: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib
 	$(JAR) $(DEST) META-INF/MANIFEST.MF -C o/class_s .
 
-$(BUILDBINDIR)/jar.felix: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib $(FELIX_CLASSES)
+$(BUILDBINDIR)/jar.felix: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib 
+	@ $(MAKE) -C $(BUILDDIR)/arch/felix
 	$(JAR) $(DEST) META-INF/MANIFEST.MF -C o/class_s .
 
 jvm-stdlibs: o/class_s/lib/hop/$(HOPRELEASE)
@@ -174,16 +160,13 @@ META-INF:
 .SUFFIXES: .scm .o
 
 #*---------------------------------------------------------------------*/
-#*    The implicit `.scm.o' rule                                       */
+#*    Implicit rules                                                   */
 #*---------------------------------------------------------------------*/
 o/%.o: %.scm .afile
 	@ $(call compile,BIGLOO,BCFLAGS,$< -o $@ -c)
 
 $(CLASS_DIR)/%.class: %.scm .afile
 	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
-
-$(CLASS_DIR)/%.class: %.java
-	/usr/lib/jvm/java-1.5.0-sun-1.5.0.17/bin/javac -classpath $(CLASS_PATH):$(FELIX_JAR) -d $(CLASS_PATH) $<
 
 o/main.o: main.scm
 	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV,$< -o $@ -c)

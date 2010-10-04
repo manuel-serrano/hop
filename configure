@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Oct  4 09:54:32 2010 (serrano)                */
+#*    Last change :  Mon Oct  4 10:13:59 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -29,6 +29,7 @@ unzip=unzip
 gzip="gzip -9"
 install="install -m a+r,u+r"
 jar="jar cfm"
+javac=javac
 
 debug=no
 
@@ -611,6 +612,7 @@ cat $mkmf.in \
           -e "s|@GZIP@|$gzip|" \
           -e "s|@INSTALL@|$install|" \
           -e "s|@JAR@|$jar|" \
+          -e "s|@JAVAC@|$javac|" \
           -e "s|@BCFLAGS@|$bcflags|" \
           -e "s|@BTFLAGS@|$btflags|" \
           -e "s|@BCFLAGSRTS@|$bcflagsrts|" \

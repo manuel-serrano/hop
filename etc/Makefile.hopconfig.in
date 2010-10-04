@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Mon Oct  4 09:54:04 2010 (serrano)                */
+#*    Last change :  Mon Oct  4 10:16:54 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -36,6 +36,7 @@ UNZIP		= @UNZIP@
 JAR		= @JAR@
 FLASHCC		= @FLASHCC@
 GZIP		= @GZIP@
+JAVAC		= @JAVAC@
 
 MODFILE		= 644
 MODDIR		= 755
@@ -86,6 +87,7 @@ BGLCLOSELIBS_U	= $(BIGLOOPTHLIBU) \
 #*---------------------------------------------------------------------*/
 #*    Build                                                            */
 #*---------------------------------------------------------------------*/
+BUILDDIR	= @BUILDIR@
 BUILDETCDIR	= @BUILDETCDIR@
 BUILDBINDIR	= @BUILDBINDIR@
 BUILDLIBDIR	= @BUILDLIBDIR@

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Sep 23 10:35:44 2010 (serrano)                */
+#*    Last change :  Mon Oct  4 10:23:42 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -20,6 +20,8 @@
 #*---------------------------------------------------------------------*/
 POPULATION = Makefile \
   macosx/Makefile.bundle macosx/Info.plist macosx/hop.icns
+
+POPDIRS = felix
 
 install:
 
