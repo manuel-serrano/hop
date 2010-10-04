@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Oct  3 15:30:50 2010 (serrano)                */
+;*    Last change :  Mon Oct  4 07:50:49 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -16,14 +16,6 @@
 
    (include "libraries.sch")
    
-;*    (cond-expand                                                     */
-;*       (enable-threads (library pthread)))                           */
-;*                                                                     */
-;*    (cond-expand                                                     */
-;*       (enable-ssl (library ssl)))                                   */
-;*                                                                     */
-;*    (library multimedia web hop hopscheme hopwidget scheme2js)       */
-;*                                                                     */
    (import  hop_parseargs
 	    hop_param
 	    hop_init
@@ -85,33 +77,6 @@
    (for-each register-srfi! (cons 'hop-server (hop-srfis)))
    ;; set the library load path
    (bigloo-library-path-set! (hop-library-path))
-   ;; preload the hop libraries
-;*    (cond-expand                                                     */
-;*       (hop-static                                                   */
-;*        ;; hop library                                               */
-;*        (pragma "BGl_modulezd2initializa7ationz75zz__hop_makelibz00(0,\"hop\")") */
-;*        ;; widget library                                            */
-;*        (pragma "BGl_modulezd2initializa7ationz75zz__hopwidgetzd2makelibzd2(0,\"hop\")") */
-;*        ;; web library                                               */
-;*        (pragma "BGl_modulezd2initializa7ationz75zz__web_makelibz00(0,\"hop\")") */
-;*        ;; multimedia library                                        */
-;*        (pragma "BGl_modulezd2initializa7ationz75zz__multimediazd2makelibzd2(0,\"hop\")") */
-;*        ;; mail library                                              */
-;*        (pragma "BGl_modulezd2initializa7ationz75zz__mail_makelibz00(0,\"hop\")") */
-;*        ;; pthread library                                           */
-;*        (pragma "BGl_modulezd2initializa7ationz75zz__pth_makelibz00(0,\"hop\")") */
-;*        ;; calendar library                                          */
-;*        (pragma "BGl_modulezd2initializa7ationz75zz__calendar_makelibz00(0,\"hop\")") */
-;*        ;; text library                                              */
-;*        (pragma "BGl_modulezd2initializa7ationz75zz__text_makelibz00(0,\"hop\")")) */
-;*       (hop-library                                                  */
-;*        (for-each (lambda (l)                                        */
-;* 		    (eval `(library-load_e ',l)))                      */
-;* 		 (hop-preload-libraries)))                             */
-;*       (else                                                         */
-;*        (for-each (lambda (l)                                        */
-;* 		    (eval `(library-load ',l)))                        */
-;* 		 (hop-preload-libraries))))                            */
    ;; define the Hop macros
    (hop-install-expanders!)
    ;; setup the hop readers
