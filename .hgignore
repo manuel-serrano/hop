@@ -17,9 +17,11 @@
 ^old/
 ^repository
 ^src/configure\.scm$
+^src/libraries\.sch$
 ^runtime/configure\.scm$
 ^runtime/configure-noarch\.sch$
 ^runtime/configure-macosx\.sch$
+^runtime/configure-configure\.sch$
 ^etc/hoprc\.hop$
 ^contribs/
 scheme2js/runtime/runtime-interface.js
