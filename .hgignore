@@ -21,7 +21,7 @@
 ^runtime/configure\.scm$
 ^runtime/configure-noarch\.sch$
 ^runtime/configure-macosx\.sch$
-^runtime/configure-configure\.sch$
+^runtime/configure-android\.sch$
 ^etc/hoprc\.hop$
 ^contribs/
 scheme2js/runtime/runtime-interface.js
