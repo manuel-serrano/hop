@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Oct  4 10:17:23 2010                          */
-#*    Last change :  Mon Oct  4 10:29:21 2010 (serrano)                */
+#*    Last change :  Mon Oct  4 10:30:17 2010 (serrano)                */
 #*    Copyright   :  2010 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Felix port                                                   */
@@ -29,7 +29,7 @@ CLASS_DIR = $(CLASS_PATH)/bigloo/hop
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION = $(SOURCES_SOURCES) Makefile
+POPULATION = $(FELIX_SOURCES) Makefile
 
 #*---------------------------------------------------------------------*/
 #*    Compile Felix classes                                            */
