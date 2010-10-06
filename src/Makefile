@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Oct  4 10:28:00 2010 (serrano)                */
+#*    Last change :  Mon Oct  4 10:39:57 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -79,14 +79,14 @@ link.library:
 	echo "***ERROR: link.library not currently supported!"
 	exit 1
 
-$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib
+$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib META-INF/MANIFEST.MF
 	@ $(MAKE) jar.$(LINK) DEST=$@
 	@ $(call done,$(COLOR),"Jar ",$@," done.")
 
-$(BUILDBINDIR)/jar.dynamic: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib
+jar.dynamic: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib
 	$(JAR) $(DEST) META-INF/MANIFEST.MF -C o/class_s .
 
-$(BUILDBINDIR)/jar.felix: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib 
+jar.felix: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib 
 	@ $(MAKE) -C $(BUILDDIR)/arch/felix
 	$(JAR) $(DEST) META-INF/MANIFEST.MF -C o/class_s .
 
@@ -238,6 +238,7 @@ clean:
 	/bin/rm -rf o
 	/bin/rm -f $(BUILDBINDIR)/$(EXEC)
 	/bin/rm -f $(BUILDBINDIR)/$(EXEC).jar
+	/bin/rm -f META-INF/MANIFEST.MF
 
 devclean: clean
 

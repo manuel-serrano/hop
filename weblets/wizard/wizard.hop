@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/weblets/wizard/wizard.hop         */
+;*    serrano/prgm/project/hop/2.2.x/weblets/wizard/wizard.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Apr  8 17:54:49 2010 (serrano)                */
+;*    Last change :  Wed Oct  6 18:45:44 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -29,6 +29,7 @@
 (define-service (wizard)
    (<HTML>
       (<HEAD>
+	 (<META> :name "viewport" :content "width=device-width, initial-scale=1.2")
 	 :title "Hop Wizard"
 	 :base (service-base-url wizard (current-request))
 	 :include "md5" "hop-fileselect" "hop-window" "hop-tree" "hop-notepad"
@@ -170,7 +171,7 @@
 ;*---------------------------------------------------------------------*/
 (define (<ADMIN-USER>)
    (<TABLE> :class "wizard-user wizard-admin"
-      (<TR> (<TD> (<IMG> :src (make-file-name "etc" "admin.png")))
+      (<TR> (<TD> :class "logo" (<IMG> :src (make-file-name "etc" "admin.png")))
 	    (<TD> (<TABLE>
 		     (<TR> (<TH> "Admin"))
 		     (<TR> (<TD> (<TABLE> :class "wizard-user-body"
@@ -189,7 +190,7 @@ He may install/uninstall softwares. He may add/delete users. Etc.])))))))
 ;*---------------------------------------------------------------------*/
 (define (<PLAIN-USER>)
    (<TABLE> :class "wizard-user wizard-regular"
-      (<TR> (<TD> (<IMG> :src (make-file-name "etc" "user.png")))
+      (<TR> (<TD> :class "logo" (<IMG> :src (make-file-name "etc" "user.png")))
 	    (<TD> (<TABLE>
 		     (<TR> (<TH> "Regular User"))
 		     (<TR> (<TD> (<TABLE> :class "wizard-user-body"
@@ -200,7 +201,7 @@ He may install/uninstall softwares. He may add/delete users. Etc.])))))))
 						:onkeypress
 						~(require "upasswd" this.value)
 						:id "uname"
-						:size 40)))
+						:size 20)))
 				    (<TR>
 				       (<TD> :class "legend" "password:")
 				       (<TD> (<INPUT> :type 'password
@@ -217,7 +218,7 @@ The regular user is likely to be the owner of the Hop process.])))))))
 ;*---------------------------------------------------------------------*/
 (define (<GUEST-USER>)
    (<TABLE> :class "wizard-user wizard-guest"
-      (<TR> (<TD> (<IMG> :src (make-file-name "etc" "guest.png")))
+      (<TR> (<TD> :class "logo" (<IMG> :src (make-file-name "etc" "guest.png")))
 	    (<TD> (<TABLE>
 		     (<TR> (<TH> "Guests"))
 		     (<TR> (<TD> (<TABLE> :class "wizard-user-body"
@@ -229,7 +230,7 @@ The regular user is likely to be the owner of the Hop process.])))))))
 						:onkeypress
 						~(require "gpasswd" this.value)
 						:value ""
-						:size 40)))
+						:size 20)))
 				    (<TR>
 				       (<TD> :class "legend" "password:")
 				       (<TD> (<INPUT> :type 'password
