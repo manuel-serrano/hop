@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Sep 24 17:35:42 2010 (serrano)                */
+;*    Last change :  Wed Oct  6 19:40:08 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -136,10 +136,6 @@
 	  (hop-capture-port-set! (open-output-file file)))
 	 (("--allow-service-override" (help "Allow service overriding (see -s)"))
 	  (hop-security-set! 0))
-	 (("--verbose-output" ?output (help "Use console, file or buffer based verbose output (default: console)"))
-	  (hop-verbose-output-set! (string->symbol output)))
-         (("--verbose-file" ?file (help "Path to the file where file verbose output should go"))
-          (hop-verbose-file-set! file))
 
 	 ;; Run
 	 (section "Run")
@@ -223,16 +219,6 @@
 	    (unless p
 	       (error "hop" "Cannot open log file" log-file))
 	    (hop-log-file-set! p)))
-
-      ;; install the verb functions
-      (case (hop-verbose-output)
-	 ((buffer)
-	  (write-verb-set! write-verb-list)
-	  (hop-filter-add! logcat-filter))
-         ((file)
-          (write-verb-set! write-verb-file))
-	 (else
-	  (write-verb-set! write-verb-error-port)))
 
       ;; mime types
       (when mimep

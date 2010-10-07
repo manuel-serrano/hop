@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/src/hop_param.scm                 */
+;*    serrano/prgm/project/hop/2.2.x/src/hop_param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Jun 19 06:36:17 2010 (serrano)                */
+;*    Last change :  Wed Oct  6 19:40:00 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -49,9 +49,6 @@
 
 	    (hop-log-file::obj)
 	    (hop-log-file-set! ::obj)
-
-            (hop-verbose-output::symbol)
-            (hop-verbose-output-set! ::symbol)
 
 	    (hop-scheduling::symbol)
 	    (hop-scheduling-set! ::symbol)
@@ -215,14 +212,6 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-log-file
    #f)
-
-;*---------------------------------------------------------------------*/
-;*    hop-verbose-output ...                                           */
-;*    -------------------------------------------------------------    */
-;*    where to write all the messages printed with hop-verb            */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-verbose-output
-   'console)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-scheduling ...                                               */

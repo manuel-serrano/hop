@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Wed Sep  8 09:03:04 2010 (serrano)                */
+;*    Last change :  Thu Oct  7 07:56:44 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -108,9 +108,7 @@
    ;; verbose function (only for log and debug)
    (define (http-connect-verb scd id sock req mode num)
       (with-access::http-request req (method scheme host port path user header)
-         (when (and (>=fx (hop-verbose) 1)
-		    (not (and (eq? (hop-verbose-output) 'buffer)
-			      (string=? (http-request-abspath req) "/logcat"))))
+         (when (>=fx (hop-verbose) 1)
 	    (hop-verb 1 (if (http-proxy-request? req)
 			    (hop-color req req
 				       (if (eq? mode 'keep-alive)
@@ -235,9 +233,7 @@
 ;*---------------------------------------------------------------------*/
 (define (stage-response scd thread id req)
    (current-request-set! thread req)
-   (when (not (and (eq? (hop-verbose-output) 'buffer)
-                   (string=? (http-request-abspath req) "/logcat")))
-         (hop-verb 3 (hop-color id id " RESPONSE") (format " ~a" thread) "\n"))
+   (hop-verb 3 (hop-color id id " RESPONSE") (format " ~a" thread) "\n")
    (with-stage-handler
       response-error-handler (scd req)
       (let ((resp (with-time (request->response req thread) id "RESPONSE")))
@@ -321,14 +317,12 @@
    (if (http-response-abort? resp)
        (hop-verb 1 (hop-color req req " ABORT")
 		 " user: " (user-name (http-request-user req)) "\n")
-       (when (not (and (eq? (hop-verbose-output) 'buffer)
-                       (string-prefix? "/logcat" (http-request-path req))))
-	  (hop-verb 3 (hop-color req req " EXEC")
-		    " load: " (scheduler-load scd)
-		    (scheduler-stat scd)
-		    (format " ~a" thread)
-		    ": " (typeof resp)
-		    " " (user-name (http-request-user req)) "\n")))
+       (hop-verb 3 (hop-color req req " EXEC")
+		 " load: " (scheduler-load scd)
+		 (scheduler-stat scd)
+		 (format " ~a" thread)
+		 ": " (typeof resp)
+		 " " (user-name (http-request-user req)) "\n"))
    (with-stage-handler
       exec-error-handler (scd req)
       (let* ((sock (http-request-socket req))
@@ -354,9 +348,7 @@
 		(cond
 		   ((or (>=fx (keep-alive) (hop-keep-alive-threshold))
 			(=fx load 100))
-		    (when (and (>=fx (hop-verbose) 3)
-                               (not (and (eq? (hop-verbose-output) 'buffer)
-                                         (string-prefix? "/logcat" (http-request-path req)))))
+		    (when (>=fx (hop-verbose) 3)
 		       (stage-exec-verb scd thread req resp connection
 					" END"))
 		    (socket-close sock)
@@ -376,9 +368,7 @@
 		    ;(stage scd thread stage-request id sock 'keep-alive (hop-keep-alive-timeout))
 		    (hop-keep-alive-timeout)))))
 	    (else
-	     (when (and (>=fx (hop-verbose) 3)
-                        (not (and (eq? (hop-verbose-output) 'buffer)
-                                  (string=? (http-request-abspath req) "/logcat"))))
+	     (when (>=fx (hop-verbose) 3)
 		(stage-exec-verb scd thread req resp connection " END"))
 	     (socket-close sock)
 	     #f)))))

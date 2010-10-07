@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Wed Jul  7 16:08:12 2010 (serrano)                */
+;*    Last change :  Wed Oct  6 19:42:22 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -49,16 +49,7 @@
 	    (inline input-timeout-set! ::input-port ::int)
 	    (inline output-timeout-set! ::output-port ::int)
 	    (inline socket-timeout-set! ::socket ::int ::int)
-	    (call-in-background ::procedure)
-	    (write-verb::obj)
-	    (write-verb-set! ::obj)
-	    (verb-socket::obj)
-	    (verb-socket-set! ::obj)
-            (write-verb-error-port args)
-            (write-verb-socket args)
-            (write-verb-list args)
-            (logcat-filter req)
-            (write-verb-file args)))
+	    (call-in-background ::procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
@@ -71,100 +62,9 @@
 (define (hop-verb level . args)
    (when (>=fx (hop-verbose) level)
       (with-lock *verb-mutex*
-	 (lambda () (*write-verb* args)))))
-
-;*---------------------------------------------------------------------*/
-;*    *write-verb* ...                                                 */
-;*---------------------------------------------------------------------*/
-(define-parameter write-verb
-   (lambda (args) #f))
-
-;*---------------------------------------------------------------------*/
-;*    write-verb-error-port ...                                        */
-;*    -------------------------------------------------------------    */
-;*    'console' verbose                                                */
-;*---------------------------------------------------------------------*/
-(define (write-verb-error-port args)
-   (for-each (lambda (a) (display a (current-error-port))) args)
-   (flush-output-port (current-error-port)))
-
-;*---------------------------------------------------------------------*/
-;*    verb-socket ...                                                  */
-;*---------------------------------------------------------------------*/
-(define-parameter verb-socket
-   #f)
-
-;*---------------------------------------------------------------------*/
-;*    write-verb-socket ...                                            */
-;*    -------------------------------------------------------------    */
-;*    write in the socket, in a best effort way                        */
-;*    that is, if we can't, we don't care                              */
-;*---------------------------------------------------------------------*/
-(define (write-verb-socket args)
-   (if (socket? verb-socket)
-       (with-handler
-	  (lambda (e)
-	     ;; on error, close the socket
-	     (socket-close (verb-socket))
-	     (verb-socket-set! #f))
-	  (fprint (socket-output (verb-socket)) args))))
-
-;*---------------------------------------------------------------------*/
-;*    verb-list ...                                                    */
-;*---------------------------------------------------------------------*/
-(define verb-list (list '()))
-(define verb-list-last 0)
-(define verb-list-length 25)
-
-;*---------------------------------------------------------------------*/
-;*    write-verb-list ...                                              */
-;*    -------------------------------------------------------------    */
-;*    TODO: filter out ASCII esc seqs?                                 */
-;*    add the last message and drop from the beginning the             */
-;*    'overflowing' messages append! concatenates two lists, that's    */
-;*    why the outer (list)                                             */
-;*---------------------------------------------------------------------*/
-(define (write-verb-list args)
-   (append! verb-list (list (cons verb-list-last args)))
-   (set! verb-list-last (+fx verb-list-last 1))
-   (when (>fx (length verb-list) verb-list-length)
-       (set! verb-list (drop verb-list (-fx (length verb-list) verb-list-length)))))
-
-;*---------------------------------------------------------------------*/
-;*    message-list ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (message-list port last)
-   ;; print only the log ids bigger than last
-   (fprint port (find-tail (lambda (x) (> (car x) last)) verb-list)))
-
-;*---------------------------------------------------------------------*/
-;*    logcat-filter ...                                                */
-;*---------------------------------------------------------------------*/
-(define (logcat-filter req)
-   (with-access::http-request req (abspath query timeout)
-      ; TODO: make path configurable
-      (when (string-prefix? "/logcat" abspath)
-         (let ((last (if (null? query)
-                         0 ;; no query? output everything
-                         (string->number query))))
-            (instantiate::http-response-procedure
-               (request req)
-               (timeout timeout)
-               (charset (hop-locale))
-               ;(content-type (mime-type path "text/plain"))
-               (bodyp #t)
-               (proc (lambda (port)
-                             (message-list port last))))))))
-
-;*---------------------------------------------------------------------*/
-;     write-verb-file...                                               */
-;*---------------------------------------------------------------------*/
-(define (write-verb-file args)
-   (if (hop-verbose-file)
-      (begin
-         ; TODO: strip out the ()'s and the trailing \n
-         (fprint (hop-verbose-file) args)
-         (flush-output-port (hop-verbose-file)))))
+	 (lambda ()
+	    (for-each (lambda (a) (display a (current-error-port))) args)
+	    (flush-output-port (current-error-port))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-color ...                                                    */
