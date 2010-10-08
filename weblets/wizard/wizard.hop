@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Oct  6 18:45:44 2010 (serrano)                */
+;*    Last change :  Fri Oct  8 05:36:25 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -29,7 +29,8 @@
 (define-service (wizard)
    (<HTML>
       (<HEAD>
-	 (<META> :name "viewport" :content "width=device-width, initial-scale=1.2")
+	 (<META> :name "viewport"
+	    :content "width=device-width, initial-scale=1.2")
 	 :title "Hop Wizard"
 	 :base (service-base-url wizard (current-request))
 	 :include "md5" "hop-fileselect" "hop-window" "hop-tree" "hop-notepad"
@@ -247,7 +248,7 @@ can only access the directory ,(<TT> "guest") of the Hop RC directory.])))))))
 (define (<INTERNET>)
    (<TABLE> :class "wizard-user wizard-internet"
       (<TR> (<TD>
-	       (<SPAN> :class "head" "Proxy for Hop remote Web accesses: ")
+	       (<SPAN> :class "legend" "Proxy for Hop remote Web accesses: ")
 	       (<INPUT> :type 'text
 		  :class "optional"
 		  :id "proxy"
@@ -313,7 +314,10 @@ of computers that are allowed to use this Hop as proxy.])))))
 		  (<INPUT> :type 'checkbox :id "webdav" :checked #f))
 	       (<TD> (<SPAN> "Enable "
 			     (<A> :href url "WebDAV")
-			     " services"))))))
+			     " services")))
+	 (<TR> (<TD>) (<TD> :class "comment"
+		      (<SPAN> [When selected, this allows Hop to act as a
+WebDAV server.]))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wizard/documentation ...                                         */
@@ -443,6 +447,6 @@ of computers that are allowed to use this Hop as proxy.])))))
 	       (newline)
 	       (newline))))
       (list 'save
-	    (format "Accounts for ~a saved in `~a'.<BR>You must now <A href='/hop/shutdown'>shutdown</a> and restart Hop!" accounts passwdfile))))
+	    (format "Accounts for ~a saved in `~a'.<BR>You must now <A href='/hop/shutdown&exitval=5'>shutdown</a> and restart Hop!" accounts passwdfile))))
 
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Oct  6 18:45:06 2010 (serrano)                */
+/*    Last change :  Fri Oct  8 05:25:23 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    history simple CSS                                               */
@@ -14,6 +14,8 @@ $(define border-color "#bbb")
 body {
   background: #e0e0e0;
   font-family: arial;
+  padding-left: 50px; 
+  padding-right: 50px;
 }
 
 table.wizard {
@@ -37,6 +39,7 @@ div#title {
   font-size: x-large;
   font-weight: bold;
   border-bottom: 1px solid $border-color;
+  text-shadow: #999 2px 2px 2px;
 }
 
 div#description {
@@ -123,7 +126,7 @@ table.wizard-user-body input.required {
   color: red;
 }
 
-td.legend {
+.legend {
   font-weight: bold;
 }
 
@@ -159,4 +162,5 @@ table.wizard-misc {
 
 span.head {
   font-weight: bold;
+  text-shadow: #ccc 2px 2px 2px;
 }

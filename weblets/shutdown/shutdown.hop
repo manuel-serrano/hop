@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/shutdown/shutdown.hop     */
+;*    serrano/prgm/project/hop/2.2.x/weblets/shutdown/shutdown.hop     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Oct 10 09:18:47 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Fri Oct  8 05:36:20 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
 ;*=====================================================================*/
@@ -21,26 +21,28 @@
 ;*---------------------------------------------------------------------*/
 ;*    shutdown ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-service (shutdown)
+(define-service (shutdown #!key (exitval 0))
    (let ((req (current-request)))
       (if (or (authorized-service? req 'admin) (authorized-service? req 'shutdown))
-	  (<SHUTDOWN> req (<SPAN> "Shutdown the serving HOP broker..."))
+	  (<SHUTDOWN> req exitval (<SPAN> "Shutdown the serving HOP broker..."))
 	  (user-access-denied req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    shutdown/kill ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-service (shutdown/kill #!key key)
+(define-service (shutdown/kill #!key key (exitval 0))
    (when (and (equal? key (hop-process-key)) (hop-accept-kill))
       (hop-verb 1 "shutdown/kill...\n")
-      (exit 0)))
+      (exit exitval)))
        
 ;*---------------------------------------------------------------------*/
 ;*    <SHUTDOWN> ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (<SHUTDOWN> req msg)
+(define (<SHUTDOWN> req exitval msg)
    (<HTML>
       (<HEAD>
+	 (<META> :name "viewport"
+	    :content "width=device-width, initial-scale=1.")
 	 :title "Hop Shutdown weblet"
 	 :base (service-base-url shutdown req)
 	 :css "shutdown.hss"
@@ -81,7 +83,7 @@
 					    (begin
 					       (innerHTML-set! $msg "System down...")
 					       (innerHTML-set! but "0s")
-					       (with-hop ($(service () (exit 0)))
+					       (with-hop ($(service () (exit exitval)))
 						  (lambda (_) #f)
 						  (lambda (e) #f))))))
 				 "Shutdown"))))))))
