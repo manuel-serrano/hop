@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Oct  9 07:45:02 2010 (serrano)                */
+;*    Last change :  Sat Oct  9 08:55:14 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
@@ -21,10 +21,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    shutdown ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-service (shutdown #!key exitval)
+(define-service (shutdown #!key exitval restart)
    (let ((req (current-request)))
       (if (or (authorized-service? req 'admin) (authorized-service? req 'shutdown))
-	  (<SHUTDOWN> req exitval (<SPAN> "Shutdown the serving HOP broker..."))
+	  (<SHUTDOWN> req exitval restart
+		      (<SPAN> "Shutdown the serving HOP broker..."))
 	  (user-access-denied req))))
 
 ;*---------------------------------------------------------------------*/
@@ -38,7 +39,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    <SHUTDOWN> ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (<SHUTDOWN> req exitval msg)
+(define (<SHUTDOWN> req exitval restart msg)
    (<HTML>
       (<HEAD>
 	 (<META> :name "viewport"
@@ -94,7 +95,12 @@
 								 (hop-verb 1 "Hop shutdown, exit value: " v "\n")
 								 (exit v))))
 						  (lambda (_) #f)
-						  (lambda (e) #f))))))
+						  (lambda (e)
+						     (when $restart
+							(innerHTML-set! $msg "Restarting...")
+							(after 5000 (lambda ()
+								       (set! location.href "/hop")))
+							#f)))))))
 				 "Shutdown"))))))))
 	 (<FOOT>))))
 
