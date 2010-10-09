@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Oct  8 17:49:30 2010 (serrano)                */
+;*    Last change :  Sat Oct  9 06:24:37 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
@@ -24,7 +24,7 @@
 (define-service (shutdown #!key exitval)
    (let ((req (current-request)))
       (if (or (authorized-service? req 'admin) (authorized-service? req 'shutdown))
-	  (<SHUTDOWN> req (or exitval 0) (<SPAN> "Shutdown the serving HOP broker..."))
+	  (<SHUTDOWN> req exitval (<SPAN> "Shutdown the serving HOP broker..."))
 	  (user-access-denied req))))
 
 ;*---------------------------------------------------------------------*/
@@ -33,13 +33,12 @@
 (define-service (shutdown/kill #!key key exitval)
    (when (and (equal? key (hop-process-key)) (hop-accept-kill))
       (hop-verb 1 "shutdown/kill...\n")
-      (exit (or exitval 0))))
+      (exit exitval)))
        
 ;*---------------------------------------------------------------------*/
 ;*    <SHUTDOWN> ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (<SHUTDOWN> req exitval msg)
-   (tprint "SHUT=" exitval)
    (<HTML>
       (<HEAD>
 	 (<META> :name "viewport"
@@ -84,7 +83,15 @@
 					    (begin
 					       (innerHTML-set! $msg "System down...")
 					       (innerHTML-set! but "0s")
-					       (with-hop ($(service () (exit exitval)))
+					       (with-hop ($(service ()
+							      (exit
+							       (cond
+								  ((integer? exitval)
+								   exitval)
+								  ((string? exitval)
+								   (string->integer exitval))
+								  (else
+								   0)))))
 						  (lambda (_) #f)
 						  (lambda (e) #f))))))
 				 "Shutdown"))))))))
