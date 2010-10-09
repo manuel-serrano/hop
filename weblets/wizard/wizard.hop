@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Oct  8 17:36:09 2010 (serrano)                */
+;*    Last change :  Sat Oct  9 08:56:40 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -447,6 +447,6 @@ WebDAV server.]))))))
 	       (newline)
 	       (newline))))
       (list 'save
-	    (format "Accounts for ~a saved in `~a'.<BR>You must now <A href='/hop/shutdown?exitval=5'>shutdown</a> and restart Hop!" accounts passwdfile))))
+	    (format "Accounts for ~a saved in `~a'.<BR>You must now <A href='/hop/shutdown?exitval=5&restart=yes'>shutdown</a> and restart Hop!" accounts passwdfile))))
 
 
