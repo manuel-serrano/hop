@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Oct  9 06:24:37 2010 (serrano)                */
+;*    Last change :  Sat Oct  9 07:42:57 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
@@ -84,14 +84,15 @@
 					       (innerHTML-set! $msg "System down...")
 					       (innerHTML-set! but "0s")
 					       (with-hop ($(service ()
-							      (exit
-							       (cond
-								  ((integer? exitval)
-								   exitval)
-								  ((string? exitval)
-								   (string->integer exitval))
-								  (else
-								   0)))))
+							      (let ((v (cond
+									  ((integer? exitval)
+									   exitval)
+									  ((string? exitval)
+									   (string->integer exitval))
+									  (else
+									   0))))
+								 (hop-verb 1 "Exiting with value: " v)
+								 (exit v))))
 						  (lambda (_) #f)
 						  (lambda (e) #f))))))
 				 "Shutdown"))))))))
