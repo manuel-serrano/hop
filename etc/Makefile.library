@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Thu Aug 12 11:43:05 2010 (serrano)                */
+#*    Last change :  Mon Oct 11 07:49:34 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -337,7 +337,7 @@ install-native:
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
                 LN=lib$(TARGETNAME)_s-$(HOPRELEASE) \
-                LIB=lib$(TARGETNAME)_u-$(HOPRELEASE)
+                LIB=lib$(TARGETNAME)_u-$(HOPRELEASE) && \
         $(MAKE) install-link-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
