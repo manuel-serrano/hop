@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Mon Oct 11 07:49:34 2010 (serrano)                */
+#*    Last change :  Mon Oct 11 08:22:23 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -117,19 +117,6 @@ lib-c.$(SHAREDSUFFIX): \
    $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX) \
    $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX)
 
-# unsafe runtime
-$(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX): \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX)
-	@ $(MAKE) shared-link-lib \
-             LDINSTALLNAMEDIR=$(LDINSTALLNAMEDIRROOT)/hop/$(HOPRELEASE) \
-             BOOTLIBDIR=$(BUILDLIBDIR) \
-             FORCELD=true \
-             LIBDEST=$@ \
-             LIBSRC=$< \
-             SONAME=lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX) \
-             CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U)"
-	@ $(call done,$(COLOR),"",$@,"...done.")
-
 # safe runtime
 $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX): \
    .afile $(OBJECTS)
@@ -155,15 +142,29 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX): \
              CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS_S) $(HOPCLOSELIBS_ES)"
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
+# unsafe runtime
+$(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX): \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX)
+	@ $(MAKE) shared-link-lib \
+             LDINSTALLNAMEDIR=$(LDINSTALLNAMEDIRROOT)/hop/$(HOPRELEASE) \
+             BOOTLIBDIR=$(BUILDLIBDIR) \
+             FORCELD=true \
+             LIBDEST=$@ \
+             LIBSRC=$< \
+             SONAME=lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX) \
+             CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U)"
+	@ $(call done,$(COLOR),"",$@,"...done.")
+
 # unsafe evaltime
 $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX): \
-   .afile $(EOBJECTS)
-	@ $(MAKE) shared-lib \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX)
+	@ $(MAKE) shared-link-lib \
              LDINSTALLNAMEDIR=$(LDINSTALLNAMEDIRROOT)/hop/$(HOPRELEASE) \
              BOOTLIBDIR=$(BUILDLIBDIR) \
              OBJECTS=$(EOBJECTS) \
              FORCELD=true \
              LIBDEST=$@ \
+             LIBSRC=$< \
              SONAME=lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX) \
              CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U) $(HOPCLOSELIBS_EU)"
 	@ $(call done,$(COLOR),"",$@,"...done.")
@@ -325,7 +326,7 @@ install-native:
                 FILDIR=$(HOPFILDIR)\
                 LIBDIR=$(DESTDIR)$(HOPLIBDIR)\
                 LIB=lib$(TARGETNAME)_s-$(HOPRELEASE) && \
-        $(MAKE) install-shared-lib \
+        $(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
