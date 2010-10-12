@@ -52,6 +52,7 @@ table.main {
   border: 1px solid $border-color;
   background: white;
   border-radius: 0.5em;
+  box-shadow: 3px 3px 3px #555;
 }
 
 table.main td.weblet-title {
@@ -61,6 +62,7 @@ table.main td.weblet-title {
   margin-bottom: 20px;
   padding-bottom: 1px;
   text-transform: capitalize;
+  text-shadow: #999 2px 2px 2px;
 }
 
 table td {

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Tue Oct 12 18:08:53 2010 (serrano)                */
+;*    Last change :  Tue Oct 12 18:21:24 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOPANDROID heap file.               */
@@ -22,5 +22,3 @@
    (eval   (export-all)
 	   (class androidphone)
 	   (class androidmusic)))
-
-(tprint "hopandroid make_libs...")
