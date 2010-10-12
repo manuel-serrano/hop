@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Oct  4 10:13:59 2010 (serrano)                */
+#*    Last change :  Tue Oct 12 08:18:44 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -111,7 +111,7 @@ done
 
 arch=noarch
 
-androidhome=/data/data/fr.inria.fr/home
+androidhome=/sdcard/home
 
 felix=
 
