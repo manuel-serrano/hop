@@ -1,0 +1,93 @@
+;*=====================================================================*/
+;*    .../project/hop/2.2.x/arch/android/androidemo/androidemo.hop     */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
+;*    Last change :  Tue Oct 12 15:21:02 2010 (serrano)                */
+;*    Copyright   :  2010 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The Android Demonstration                                        */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module androidemo
+   (library phone hopandroid))
+
+;*---------------------------------------------------------------------*/
+;*    Phone descriptor ...                                             */
+;*---------------------------------------------------------------------*/
+(define androidphone (instantiate::phoneandroid))
+(define androidmusic (instantiate::musicandroid))
+
+;*---------------------------------------------------------------------*/
+;*    androidemo ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-service (androidemo)
+   (<HTML>
+      (<HEAD> :title "Hop controlled Android Phone"
+	 :favicon (service-resource androidemo "etc/favicon.png")
+	 :base (service-base-url androidemo (current-request))
+	 :path (androidemo-dir)
+	 :include "androidemo")
+      (<ANDROIDEMO:BODY> :header "Androidemo"
+	 (<BUTTON> :onclick ~(with-hop ($(service () (phone-vibrate phone 1000))))
+	    "Vibrate"))))
+
+;*---------------------------------------------------------------------*/
+;*    androidemo/proxy ...                                             */
+;*---------------------------------------------------------------------*/
+(define-service (androidemo/proxy src)
+   (multiple-value-bind (scheme uinfo host port abspath)
+      (http-url-parse src)
+      (instantiate::http-response-remote
+	 (host host)
+	 (port port)
+	 (path abspath)
+	 (header `((Host: . ,host)))
+	 (request (current-request)))))
+
+;*---------------------------------------------------------------------*/
+;*    <ANDROIDEMO:BODY> ...                                            */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <ANDROIDEMO:BODY> ((class "androidemo")
+					(header string "")
+					body)
+   (<BODY> :class class
+      (<DIV> :align "center"
+	 (<TABLE> :class "main"
+	    (<TR>
+	       (<TD> :class "buttons"
+		  (<IMG> :class "logo" :src "etc/logo.png")
+		  (<DIV> :class "version"
+		     (<DIV> "androidemo v " (androidemo-version))
+		     (<DIV> (androidemo-date)))
+		  (<DIV> :class "buttons"
+		     (<DIV> :class "button doc"
+			(<A> :title "Documentation"
+			   :class "doc"
+			   :href "documentation"
+			   :onclick ~(set! this.href ($androidemo/documentation))
+			   :target "_blank"
+			   :title "androidemo documentation"
+			   (<IMG> :class "doc"
+			      :inline #t
+			      :src (service-resource androidemo "etc/doc.png"))
+			   "Help"))))
+	       (<TD>
+		  (<TABLE> :class "body"
+		     (<TR> (<TD> :class "weblet-title"
+			      (format "ANDROIDEMO - Hop Controlled Android Phone")))
+		     (<TR> (<TD> :class "body" body)))))))
+      (<FOOT>)))
+
+;*---------------------------------------------------------------------*/
+;*    androidemo/documentation ...                                     */
+;*---------------------------------------------------------------------*/
+(define-service (androidemo/documentation)
+   (let* ((file (service-resource androidemo/documentation "etc/androidemo.wiki"))
+	  (url (format "/hop/doc/weblet?weblet=~a" file)))
+      (instantiate::http-response-string
+	 (start-line "HTTP/1.0 301 Moved Permanently")
+	 (header (list (cons 'location: url))))))
