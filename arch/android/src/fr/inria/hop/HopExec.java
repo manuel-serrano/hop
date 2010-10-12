@@ -30,7 +30,7 @@ import java.io.FileDescriptor;
 public class HopExec
 {
     static {
-        System.loadLibrary("hoprun");
+        System.loadLibrary( "hoprun" );
     }
 
     /**

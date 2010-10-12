@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Oct 11 07:59:42 2010 (serrano)                */
+#*    Last change :  Tue Oct 12 14:02:42 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -30,9 +30,10 @@ POPDIRS		= runtime hopscheme scheme2js src hopc hopsh hopreplay \
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-.PHONY: bindir libdir lib widget share weblets bin share-afile scheme2js
+.PHONY: bindir libdir lib widget share weblets bin share-afile scheme2js \
+  android
 
-build: showflags bindir libdir lib weblets widget bin share $(BUILD-SPECIFIC)
+build: showflags bindir libdir lib weblets widget bin share $(BUILDSPECIFIC)
 
 bindir:
 	mkdir -p bin
@@ -43,57 +44,60 @@ libdir:
 bin: bindir hopc-bin src-bin hopsh-bin hopreplay-bin
 
 hopc-bin: lib
-	(cd hopc && $(MAKE) build)
+	$(MAKE) -C hopc build
 
 src-bin: lib widget
-	(cd src && $(MAKE) build)
+	$(MAKE) -C src build
 
 hopsh-bin: lib
-	(cd hopsh && $(MAKE) build)
+	$(MAKE) -C hopsh build
 
 hopreplay-bin: lib
-	(cd hopreplay && $(MAKE) build)
+	$(MAKE) -C hopreplay build
 
 lib: libdir scheme2js
-	(cd hopscheme && $(MAKE) build)
-	(cd runtime && $(MAKE) build)
+	$(MAKE) -C hopscheme build
+	$(MAKE) -C runtime build
 
 widget: libdir hopc-bin share-afile
-	(cd widget && $(MAKE) build)
+	$(MAKE) -C widget build
 
 share-afile: scheme2js
-	(cd share && $(MAKE) .afile)
+	$(MAKE) -C share .afile
 
 share: bin hopc-bin scheme2js
-	(cd share && $(MAKE) build)
+	$(MAKE) -C share build
 
 weblets: lib
-	(cd weblets && $(MAKE) build)
+	$(MAKE) -C weblets build
 
 scheme2js:
-	(cd scheme2js && $(MAKE) build)
+	$(MAKE) -C scheme2js build
+
+build-android:
+	$(MAKE) -C arch/android build
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */
 #*---------------------------------------------------------------------*/
 dep:
-	(cd scheme2js; $(MAKE) dep)
-	(cd hopscheme; $(MAKE) dep)
-	(cd runtime; $(MAKE) dep)
-	(cd src; $(MAKE) dep)
-	(cd hopsh; $(MAKE) dep)
-	(cd hopreplay; $(MAKE) dep)
+	$(MAKE) -C scheme2js dep
+	$(MAKE) -C hopscheme dep
+	$(MAKE) -C runtime dep
+	$(MAKE) -C src dep
+	$(MAKE) -C hopsh dep
+	$(MAKE) -C hopreplay dep
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */
 #*---------------------------------------------------------------------*/
 ude:
-	(cd scheme2js; $(MAKE) ude)
-	(cd hopscheme; $(MAKE) ude)
-	(cd runtime; $(MAKE) ude)
-	(cd src; $(MAKE) ude)
-	(cd hopsh; $(MAKE) ude)
-	(cd hopreplay; $(MAKE) ude)
+	$(MAKE) -C scheme2js ude
+	$(MAKE) -C hopscheme ude
+	$(MAKE) -C runtime ude
+	$(MAKE) -C src ude
+	$(MAKE) -C hopsh ude
+	$(MAKE) -C hopreplay ude
 
 #*---------------------------------------------------------------------*/
 #*    changelog                                                        */
@@ -106,23 +110,23 @@ changelog:
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
-install: install-quick $(INSTALL-SPECIFIC) install-share install-weblets
+install: install-quick install-share install-weblets $(INSTALLSPECIFIC)
 
 install-share:
-	(cd share && $(MAKE) install)
+	$(MAKE) -C share install
 
 install-weblets:
-	(cd weblets && $(MAKE) install)
+	$(MAKE) -C weblets install
 
 install-quick: hop-dirs install-init
-	(cd runtime && $(MAKE) install) && \
-	(cd widget && $(MAKE) install) && \
-	(cd scheme2js && $(MAKE) install) && \
-	(cd hopscheme && $(MAKE) install) && \
-	(cd src && $(MAKE) install) && \
-	(cd hopsh && $(MAKE) install) && \
-	(cd hopc && $(MAKE) install) && \
-	(cd etc && $(MAKE) install)
+	$(MAKE) -C runtime install && \
+	$(MAKE) -C widget install && \
+	$(MAKE) -C scheme2js install && \
+	$(MAKE) -C hopscheme install && \
+	$(MAKE) -C src install && \
+	$(MAKE) -C hopsh install && \
+	$(MAKE) -C hopc install && \
+	$(MAKE) -C etc install
 
 install-init: hop-dirs
 	$(INSTALL) $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init && \
@@ -164,53 +168,58 @@ hop-dirs:
 	   && chmod $(MODDIR) $(DESTDIR)$(HOPWEBLETSDIR); \
         fi
 
+install-android: hop-dirs
+	$(INSTALL) $(BUILDLIBDIR)/hopandroid.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopandroid.init && \
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopandroid.init;
+	$(MAKE) -C arch/android install
+
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
-	(cd etc; $(MAKE) uninstall)
-	(cd src; $(MAKE) uninstall)
-	(cd hopsh; $(MAKE) uninstall)
-	(cd runtime; $(MAKE) uninstall)
-	(cd widget; $(MAKE) uninstall)
-	(cd scheme2js; $(MAKE) uninstall)
-	(cd hopscheme; $(MAKE) uninstall)
+	$(MAKE) -C etc uninstall
+	$(MAKE) -C src uninstall
+	$(MAKE) -C hopsh uninstall
+	$(MAKE) -C runtime uninstall
+	$(MAKE) -C widget uninstall
+	$(MAKE) -C scheme2js uninstall
+	$(MAKE) -C hopscheme uninstall
 	/bin/rm -rf $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
 #*---------------------------------------------------------------------*/
 clean-quick:
-	(cd runtime; $(MAKE) clean)
-	(cd src; $(MAKE) clean)
-	(cd hopsh; $(MAKE) clean)
-	(cd hopc; $(MAKE) clean)
-	(cd hopreplay; $(MAKE) clean)
-	(cd weblets; $(MAKE) clean)
-	(cd widget; $(MAKE) clean)
-	(cd share; $(MAKE) clean)
+	$(MAKE) -C runtime clean
+	$(MAKE) -C src clean
+	$(MAKE) -C hopsh clean
+	$(MAKE) -C hopc clean
+	$(MAKE) -C hopreplay clean
+	$(MAKE) -C weblets clean
+	$(MAKE) -C widget clean
+	$(MAKE) -C share clean
 
 clean:
-	(cd runtime; $(MAKE) clean)
-	(cd scheme2js; $(MAKE) clean)
-	(cd hopscheme; $(MAKE) clean)
-	(cd src; $(MAKE) clean)
-	(cd hopsh; $(MAKE) clean)
-	(cd hopc; $(MAKE) clean)
-	(cd hopreplay; $(MAKE) clean)
-	(cd etc; $(MAKE) clean)
-	(cd weblets; $(MAKE) clean)
-	(cd widget; $(MAKE) clean)
-	(cd share; $(MAKE) clean)
+	$(MAKE) -C runtime clean
+	$(MAKE) -C scheme2js clean
+	$(MAKE) -C hopscheme clean
+	$(MAKE) -C src clean
+	$(MAKE) -C hopsh clean
+	$(MAKE) -C hopc clean
+	$(MAKE) -C hopreplay clean
+	$(MAKE) -C etc clean
+	$(MAKE) -C weblets clean
+	$(MAKE) -C widget clean
+	$(MAKE) -C share clean
 
 devclean:
-	(cd runtime; $(MAKE) devclean)
-	(cd src; $(MAKE) devclean)
-	(cd hopc; $(MAKE) devclean)
-	(cd hopsh; $(MAKE) devclean)
-	(cd hopreplay; $(MAKE) devclean)
-	(cd widget; $(MAKE) devclean)
-	(cd share; $(MAKE) devclean)
+	$(MAKE) -C runtime devclean
+	$(MAKE) -C src devclean
+	$(MAKE) -C hopc devclean
+	$(MAKE) -C hopsh devclean
+	$(MAKE) -C hopreplay devclean
+	$(MAKE) -C widget devclean
+	$(MAKE) -C share devclean
 
 distclean: clean devclean
 	/bin/rm -f etc/Makefile.hopconfig
