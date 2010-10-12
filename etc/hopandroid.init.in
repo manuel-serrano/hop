@@ -24,7 +24,7 @@
 ;*---------------------------------------------------------------------*/
 (cond-expand
    (bigloo-compile
-    ;; required libraries for HOPANDROIDS
+    ;; required libraries for HOPANDROID
     (set! *additional-bigloo-libraries*
 	  (cons* 'bigloomultimedia
 		 'bigloophone
