@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Tue Oct 12 15:21:02 2010 (serrano)                */
+;*    Last change :  Tue Oct 12 17:38:15 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -18,8 +18,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    Phone descriptor ...                                             */
 ;*---------------------------------------------------------------------*/
-(define androidphone (instantiate::phoneandroid))
-(define androidmusic (instantiate::musicandroid))
+(define androidphone (instantiate::androidphone))
+(define androidmusic (instantiate::androidmusic))
 
 ;*---------------------------------------------------------------------*/
 ;*    androidemo ...                                                   */
