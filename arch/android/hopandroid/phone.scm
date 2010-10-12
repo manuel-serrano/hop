@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Tue Oct 12 14:08:52 2010 (serrano)                */
+;*    Last change :  Tue Oct 12 14:40:45 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -34,7 +34,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (phone-vibrate p::androidphone duration::obj)
    (with-access::androidphone p (protocol %socket)
-      (let ((op (socket-output-port %socket)))
+      (let ((op (socket-output %socket)))
 	 (write-byte protocol op)
 	 (write-char #\V op)
 	 (flush-output-port op))))

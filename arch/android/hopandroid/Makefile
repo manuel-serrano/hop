@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Tue Oct 12 13:47:08 2010 (serrano)                */
+#*    Last change :  Tue Oct 12 14:50:20 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopandroid library.                    */
@@ -25,13 +25,13 @@ do: build
 # the library name
 TARGETNAME = hopandroid
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
-  -lphone_s-$(HOPRELEASE) -lmultimedia_s-$(HOPRELEASE)
+  -lbigloophone_s-$(RELEASE) -lbigloomultimedia_s-$(RELEASE)
 HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
-  -lphone_u-$(HOPRELEASE) -lmultimedia_u-$(HOPRELEASE)
+  -lbigloophone_u-$(RELEASE) -lbigloomultimedia_u-$(RELEASE)
 HOPCLOSELIBS_ES = $(BGLCLOSELIBS_ES) \
-  -lphone_s-$(HOPRELEASE) -lmultimedia_s-$(HOPRELEASE)
+  -lbigloophone_s-$(RELEASE) -lbigloomultimedia_s-$(RELEASE)
 HOPCLOSELIBS_EU = $(BGLCLOSELIBS_EU) \
-  -lphone_u-$(HOPRELEASE) -lmultimedia_u-$(HOPRELEASE)
+  -lbigloophone_u-$(RELEASE) -lbigloomultimedia_u-$(RELEASE)
 
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */

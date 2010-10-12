@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Oct 12 14:34:43 2010 (serrano)                */
+#*    Last change :  Tue Oct 12 14:53:06 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -794,6 +794,23 @@ cat etc/hopscheme.init.in \
 echo "" >> $init
 chmod a-w $init
 
+# lib/hopandroid.init
+if [ "$arch " = "android " ]; then
+  init=lib/hopandroid.init
+  mkdir -p lib
+  mkdir -p hopandroid/o
+
+  rm -f $init 2> /dev/null
+  echo ";* Automatically generated file (don't edit) */" > $init
+ 
+  cat etc/hopandroid.init.in \
+      | sed -e "s|@VERSION@|$version|" \
+            -e "s|@BRANCH@|$branch|" \
+      >> $init
+  echo "" >> $init
+  chmod a-w $init
+fi
+  
 # share/hop-autoconf.js
 init=share/hop-autoconf.js
 mkdir -p share
