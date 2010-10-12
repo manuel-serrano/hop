@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Tue Oct 12 17:51:23 2010 (serrano)                */
+;*    Last change :  Tue Oct 12 18:08:19 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -19,8 +19,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    Phone descriptor ...                                             */
 ;*---------------------------------------------------------------------*/
-(define androidphone (instantiate::androidphone))
-(define androidmusic (instantiate::androidmusic))
+(define aphone (instantiate::androidphone))
+(define amusic (instantiate::androidmusic))
 
 (define _dir (dirname (the-loading-file)))
 (define (androidemo-dir)
@@ -37,7 +37,8 @@
 	 :path (androidemo-dir)
 	 :include "androidemo")
       (<ANDROIDEMO:BODY> :header "Androidemo"
-	 (<BUTTON> :onclick ~(with-hop ($(service () (phone-vibrate phone 1000))))
+	 (<BUTTON> :onclick ~(with-hop ($(service ()
+					    (phone-vibrate aphone 1000))))
 	    "Vibrate"))))
 
 ;*---------------------------------------------------------------------*/
