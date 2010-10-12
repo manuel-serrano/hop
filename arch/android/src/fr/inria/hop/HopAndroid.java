@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Oct 12 15:44:39 2010 (serrano)                */
+/*    Last change :  Tue Oct 12 17:47:44 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -48,12 +48,6 @@ public class HopAndroid extends Thread {
       } catch( IOException e ) {
 	 Log.v( "HopAndroid", "server error" + e.toString() );
 	 handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_HOPANDROID_FAIL, e ) );
-      } finally {
-	 try {
-	    serv.close();
-	 } catch( IOException e ) {
-	    ;
-	 }
       }
    }
       
@@ -95,6 +89,12 @@ public class HopAndroid extends Thread {
 	 }
       } catch( IOException e ) {
 	 ;
+      } finally {
+	 try {
+	    serv.close();
+	 } catch( IOException e ) {
+	    ;
+	 }
       }
    }
 

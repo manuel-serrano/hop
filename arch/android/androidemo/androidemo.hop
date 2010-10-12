@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Tue Oct 12 17:38:15 2010 (serrano)                */
+;*    Last change :  Tue Oct 12 17:51:23 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -13,6 +13,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module androidemo
+   (import androidemo_config)
    (library phone hopandroid))
 
 ;*---------------------------------------------------------------------*/
@@ -20,6 +21,10 @@
 ;*---------------------------------------------------------------------*/
 (define androidphone (instantiate::androidphone))
 (define androidmusic (instantiate::androidmusic))
+
+(define _dir (dirname (the-loading-file)))
+(define (androidemo-dir)
+   _dir)
 
 ;*---------------------------------------------------------------------*/
 ;*    androidemo ...                                                   */
