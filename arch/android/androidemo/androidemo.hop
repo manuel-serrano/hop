@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Tue Oct 12 18:36:08 2010 (serrano)                */
+;*    Last change :  Tue Oct 12 18:43:24 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -39,7 +39,8 @@
       (<ANDROIDEMO:BODY> :header "Androidemo"
 	 (<BUTTON> :onclick ~(with-hop ($(service ()
 					    (phone-vibrate aphone 1000))))
-	    "Vibrate"))))
+	    "Vibrate")
+	 )))
 
 ;*---------------------------------------------------------------------*/
 ;*    androidemo/proxy ...                                             */
