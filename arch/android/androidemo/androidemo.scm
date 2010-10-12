@@ -1,24 +1,15 @@
 ;*=====================================================================*/
-;*    .../project/hop/2.2.x/arch/android/hopandroid/make_lib.scm       */
+;*    .../project/hop/2.2.x/arch/android/androidemo/androidemo.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
-;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Tue Oct 12 18:35:53 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Creation    :  Fri Apr  2 11:16:07 2010                          */
+;*    Last change :  Tue Oct 12 18:35:19 2010 (serrano)                */
+;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
-;*    The module used to build the HOPANDROID heap file.               */
+;*    Client side part of the AndroidDemo                              */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hopandroid-makelib
-
-   (library phone multimedia)
-   
-   (import __hopandroid-phone
-	   __hopandroid-music)
-
-   (eval   (export-all)
-	   (class androidphone)
-	   (class androidmusic)))
+(module androidemo_client)

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Oct 12 17:59:07 2010 (serrano)                */
+#*    Last change :  Tue Oct 12 18:36:02 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Generic Makefile to build Hop weblets.                           */
@@ -25,7 +25,7 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 SOURCES = androidemo.hop config.hop.in
 
-POPULATION = Makefile androidemo.hss \
+POPULATION = Makefile androidemo.hss androidemo.scm \
   etc/weblet.info.in etc/androidemo.wiki.in \
   etc/logo.png etc/favicon.png etc/doc.png \
   $(SOURCES)

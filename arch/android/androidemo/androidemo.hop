@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Tue Oct 12 18:28:05 2010 (serrano)                */
+;*    Last change :  Tue Oct 12 18:36:08 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -15,8 +15,6 @@
 (module androidemo
    (import androidemo_config)
    (library phone hopandroid))
-
-(tprint "make-androidphone=" make-androidphone)
 
 ;*---------------------------------------------------------------------*/
 ;*    Phone descriptor ...                                             */
