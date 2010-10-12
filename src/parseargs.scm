@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Oct 12 09:16:47 2010 (serrano)                */
+;*    Last change :  Tue Oct 12 17:12:12 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -170,6 +170,8 @@
 	  (hop-accept-kill-set! #f))
 	 ((("-k" "--kill") (help "Kill the running local HOP and exit"))
 	  (set! killp #t))
+	 (("--no-user" (help "Don't attempt to set the Hop process owner"))
+	  (hop-user-set! #f))
 
 	 ;; Paths
 	 (section "Paths")

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Tue Oct 12 15:44:04 2010 (serrano)                */
+/*    Last change :  Tue Oct 12 15:53:01 2010 (serrano)                */
 /*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -40,6 +40,9 @@ public class HopLauncher extends Activity {
    public static final int MSG_CONFIGURE = 7;
    public static final int MSG_RESTART = 8;
    public static final int MSG_HOPANDROID_FAIL = 9;
+
+   // instance variables
+   boolean infinish = false;
    
    final Activity activity = this;
    HopInstaller hopinstaller;
@@ -48,63 +51,67 @@ public class HopLauncher extends Activity {
    ScrollView scrollview;
    final ArrayBlockingQueue<String> queue =
       new ArrayBlockingQueue<String>( 10 );
+   
    final Handler handler = new Handler() {
 	 @Override public void handleMessage( Message msg ) {
 	    
 	    if( msg.what != MSG_OUTPUT_AVAILABLE )
 	       Log.i( "Hop", "message=" + msg.what );
-	    
-	    switch( msg.what ) {
-	       case MSG_OUTPUT_AVAILABLE:
-		  try {
-		     String line = queue.take();
-		     synchronized( textview ) {
-			textview.append( line );
-			scrollview.smoothScrollTo( 0, scrollview.getHeight() );
+
+	    if( !infinish ) {
+	       switch( msg.what ) {
+		  case MSG_OUTPUT_AVAILABLE:
+		     try {
+			String line = queue.take();
+			synchronized( textview ) {
+			   textview.append( line );
+			   scrollview.smoothScrollTo( 0, scrollview.getHeight() );
+			}
+		     } catch (InterruptedException e) {
+			;
 		     }
-		  } catch (InterruptedException e) {
-		     ;
-		  }
-		  break;
+		     break;
 
-	       case MSG_PROC_END:
-		  activity.finish();
-		  break;
+		  case MSG_PROC_END:
+		     infinish = true;
+		     activity.finish();
+		     break;
 
-	       case MSG_RUN_WIZARD:
-		  progress.dismiss();
-		  progress = null;
+		  case MSG_RUN_WIZARD:
+		     progress.dismiss();
+		     progress = null;
 
-		  Uri uri = Uri.parse( "http://localhost:" + hop.port + "/hop/wizard" );
-		  Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-		  startActivity( intent );
-		  break;
+		     Uri uri = Uri.parse( "http://localhost:" + hop.port + "/hop/wizard" );
+		     Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+		     startActivity( intent );
+		     break;
 
-	       case MSG_INSTALL_FAIL:
-		  HopUiUtils.fail( hop.activity, "Installation", "failed", (Exception)msg.obj );
-		  break;
+		  case MSG_INSTALL_FAIL:
+		     HopUiUtils.fail( hop.activity, "Installation", "failed", (Exception)msg.obj );
+		     break;
 
-	       case MSG_CONFIGURE_FAIL:
-		  HopUiUtils.fail( hop.activity, "Configuration", "failed", (Exception)msg.obj );
-		  break;
+		  case MSG_CONFIGURE_FAIL:
+		     HopUiUtils.fail( hop.activity, "Configuration", "failed", (Exception)msg.obj );
+		     break;
 
-	       case MSG_RUN_FAIL:
-		  HopUiUtils.fail( hop.activity, "Run", "failed", (Exception)msg.obj );
-		  break;
+		  case MSG_RUN_FAIL:
+		     HopUiUtils.fail( hop.activity, "Run", "failed", (Exception)msg.obj );
+		     break;
 
-	       case MSG_CONFIGURE:
-		  progress.setMessage( "Configuring..." );
-		  break;
+		  case MSG_CONFIGURE:
+		     progress.setMessage( "Configuring..." );
+		     break;
 
-	       case MSG_RESTART:
-		  setContentView( R.layout.main );
-		  break;
+		  case MSG_RESTART:
+		     setContentView( R.layout.main );
+		     break;
 
-	       case MSG_HOPANDROID_FAIL:
-		  HopUiUtils.fail( hop.activity, "HopAndroid", "failed", (Exception)msg.obj );
-		  break;
+		  case MSG_HOPANDROID_FAIL:
+		     HopUiUtils.fail( hop.activity, "HopAndroid", "failed", (Exception)msg.obj );
+		     break;
 
-	       default:
+		  default:
+	       }
 	    }
 	 }
       };
@@ -148,6 +155,7 @@ public class HopLauncher extends Activity {
 	       synchronized( textview ) {
 		  textview.append( "Exiting..." );
 
+		  infinish = true;
 		  activity.finish();
 	       }
 	    }

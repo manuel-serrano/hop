@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Oct 12 15:30:45 2010 (serrano)                */
+#*    Last change :  Tue Oct 12 15:48:32 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Generic Makefile to build Hop weblets.                           */
@@ -15,7 +15,7 @@ do: build
 #*---------------------------------------------------------------------*/
 TITLE = androidemo
 VERSION = 1.0.0
-MINHOP = $(HOPRELEASE) 
+MINHOP = $(HOPRELEASE)
 MAXHOP = $(HOPRELEASE)
 CATEGORY = devel
 DATE = $(HOPDATE)
