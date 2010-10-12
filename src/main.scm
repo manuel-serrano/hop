@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Oct 12 17:11:13 2010 (serrano)                */
+;*    Last change :  Tue Oct 12 17:23:01 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -215,6 +215,8 @@
 	  (if (pair? pw)
 	      (setuid (caddr pw))
 	      (error "set-hop-owner!" "Cannot find HOP system user" user))))
+      (user
+       (err))
       (else
        #unspecified)))
 
