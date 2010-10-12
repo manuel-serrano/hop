@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Tue Oct 12 18:43:24 2010 (serrano)                */
+;*    Last change :  Tue Oct 12 18:48:41 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -20,7 +20,8 @@
 ;*    Phone descriptor ...                                             */
 ;*---------------------------------------------------------------------*/
 (define aphone (instantiate::androidphone))
-(define amusic (instantiate::androidmusic))
+(define amusic (instantiate::androidmusic
+		  (phone aphone)))
 
 (define _dir (dirname (the-loading-file)))
 (define (androidemo-dir)
@@ -40,6 +41,9 @@
 	 (<BUTTON> :onclick ~(with-hop ($(service ()
 					    (phone-vibrate aphone 1000))))
 	    "Vibrate")
+	 (<BUTTON> :onclick ~(with-hop ($(service ()
+					    (music-play amusic))))
+	    "Music")
 	 )))
 
 ;*---------------------------------------------------------------------*/
