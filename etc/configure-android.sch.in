@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  5 09:54:10 2009                          */
-;*    Last change :  Tue Sep 28 09:22:37 2010 (serrano)                */
+;*    Last change :  Tue Oct 12 09:05:00 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common arch HOP configuration                                    */
@@ -33,17 +33,18 @@
 ;*    hop-configure-rc-directory ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (hop-configure-rc-directory)
-   (let ((home (or (getenv "HOME") "@ANDROIDHOME@"))
+   (let ((home (or (getenv "HOME") "/"))
 	 (host (hostname))
-	 (pref ".config/hop"))
+	 (pref (make-file-name ".config" "hop")))
       (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
-	 (when (string? host)
-	    (let ((home/h (make-file-name home (string-append pref "." host))))
-	       (if (and (file-exists? home/h) (directory? home/h))
-		   home/h
-		   (if (string=? (suffix host) "")
-		       (make-file-name home pref)
-		       (loop (prefix host)))))))))
+	 (if (string? host)
+	     (let ((home/h (make-file-name home (string-append pref "." host))))
+		(if (and (file-exists? home/h) (directory? home/h))
+		    home/h
+		    (if (string=? (suffix host) "")
+			(make-file-name home pref)
+			(loop (prefix host)))))
+	     (make-file-name home pref)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-var-directory ...                                  */

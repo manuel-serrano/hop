@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Sep  8 09:00:52 2010 (serrano)                */
+;*    Last change :  Tue Oct 12 09:14:33 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -310,10 +310,7 @@
 ;*    hop-rc-directory ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-rc-directory
-   (let loop ((d (hop-configure-rc-directory)))
-      (if (directory? d)
-	  d
-	  (loop (dirname d)))))
+   (hop-configure-rc-directory))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-var-directory ...                                            */

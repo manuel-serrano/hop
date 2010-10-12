@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Oct  6 19:40:08 2010 (serrano)                */
+;*    Last change :  Tue Oct 12 09:16:47 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -70,7 +70,8 @@
 	 (("--rc-file" ?file (help "Load alternate rc file"))
 	  (set! rc-file file))
 	 (("--rc-dir" ?dir (help "Set rc directory"))
-	  (hop-rc-directory-set! dir))
+	  (hop-rc-directory-set! dir)
+	  (hop-cache-directory-set! (make-file-name dir "cache")))
 	 (("--var-dir" ?dir (help "Set var directory"))
 	  (hop-var-directory-set! dir)
 	  (hop-upload-directory-set! (make-file-name dir "upload")))
