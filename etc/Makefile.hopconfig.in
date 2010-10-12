@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Mon Oct  4 10:16:54 2010 (serrano)                */
+#*    Last change :  Tue Oct 12 14:36:27 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -87,11 +87,15 @@ BGLCLOSELIBS_U	= $(BIGLOOPTHLIBU) \
 #*---------------------------------------------------------------------*/
 #*    Build                                                            */
 #*---------------------------------------------------------------------*/
-BUILDDIR	= @BUILDIR@
+BUILDDIR	= @BUILDDIR@
 BUILDETCDIR	= @BUILDETCDIR@
 BUILDBINDIR	= @BUILDBINDIR@
 BUILDLIBDIR	= @BUILDLIBDIR@
 BUILDSHAREDIR	= @BUILDSHAREDIR@
+
+BUILDSPECIFIC   = @BUILDSPECIFIC@
+INSTALLSPECIFIC = @INSTALLSPECIFIC@
+
 DISTRIBDIR	= @DISTRIBDIR@
 
 #*---------------------------------------------------------------------*/

@@ -5,7 +5,7 @@
       android:versionName="@HOPVERSION@">
     <application android:label="@string/hop"
                  android:screenOrientation="nosensor"
-                 android:icon="@drawable/icon">
+                 android:icon="@drawable/logo">
         <activity android:name="fr.inria.hop.hop"
                   android:launchMode="singleInstance"
                   android:label="@string/hop">

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Tue Oct 12 12:06:57 2010 (serrano)                */
+#*    Last change :  Tue Oct 12 14:34:00 2010 (serrano)                */
 #*    Copyright   :  2010 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -156,7 +156,9 @@ if [ $action_configure = "yes" ]; then
       --android-home=$INSTALLHOME \
       --library=mail \
       --library=calendar \
-      --library=text) || exit 1
+      --library=text \
+      --library=phone \
+      --library=hopandroid) || exit 1
 fi
 
 #*---------------------------------------------------------------------*/
