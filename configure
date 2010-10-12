@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Oct 12 14:01:08 2010 (serrano)                */
+#*    Last change :  Tue Oct 12 14:23:22 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -281,6 +281,7 @@ while : ; do
     --android)
       buildspecific=build-android;
       installspecific=install-android;
+      libraries="$libraries phone hopandroid";
       arch=android;;
 
     --android-home=*)
