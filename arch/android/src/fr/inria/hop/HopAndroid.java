@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../hop/linux/android/src/fr/inria/hop/HopAndroid.java           */
+/*    .../hop/2.2.x/arch/android/src/fr/inria/hop/HopAndroid.java      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Mon Oct 11 17:01:30 2010 (serrano)                */
+/*    Last change :  Tue Oct 12 14:16:48 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -58,18 +58,48 @@ public class HopAndroid extends Thread {
 	 while( true ) {
 	    sock = serv.accept();
 	    Log.i( "HopAndroid", "accept" + sock );
-	    sock.close();
-	    Vibrator v = (Vibrator)activity.getSystemService( Context.VIBRATOR_SERVICE );
+	    InputStream ip = sock.getInputStream();
+	    OutputStream op = sock.getOutputStream();
 
-	    long milliseconds = 1000;
-	    v.vibrate( milliseconds );
-	    
-	    MediaPlayer mp = MediaPlayer.create( activity, Uri.fromFile( new File( "/data/data/fr.inria.hop/hoplib/hop/2.2.0/weblets/test/sound-test.mp3" ) ) );
-	    mp.start();
-	    
+	    // get the protocol version
+	    int version = ip.read();
+	    int cmd = ip.read();
+
+	    while( cmd != -1 ) {
+	       // get the command
+	       switch( cmd ) {
+		  case (byte) 'V':
+		     vibrate();
+		     break;
+		     
+		  case (byte) 'M':
+		     music();
+		     break;
+		     
+		  default:
+		     ;
+	       }
+	       
+	       cmd = ip.read();
+	    }
+
+	    sock.close();
 	 }
       } catch( IOException e ) {
+	 ;
       }
+   }
+
+   private void vibrate() {
+      Vibrator v = (Vibrator)activity.getSystemService( Context.VIBRATOR_SERVICE );
+
+      long milliseconds = 1000;
+      v.vibrate( milliseconds );
+   }
+
+   private void music() {
+      MediaPlayer mp = MediaPlayer.create( activity, Uri.fromFile( new File( "/data/data/fr.inria.hop/hoplib/hop/2.2.0/weblets/test/sound-test.mp3" ) ) );
+      mp.start();
    }
 }
       

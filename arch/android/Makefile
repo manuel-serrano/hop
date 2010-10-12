@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Tue Oct 12 14:03:18 2010 (serrano)                */
+#*    Last change :  Tue Oct 12 14:21:04 2010 (serrano)                */
 #*    Copyright   :  2010 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -27,7 +27,8 @@ ANDROID_JNI = jni/Android.mk jni/termExec.cpp
 
 ANDROID_RES = res/drawable/logo.png \
   res/layout/main.xml \
-  res/values/hopstyle.xml res/values/strings.xml.in
+  res/preferences.xml \
+  res/values/hopstyle.xml res/values/arrays.xml res/values/strings.xml.in
 
 ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java HopUiUtils.java \
   HopAndroid.java HopExec.java HopLauncher.java
