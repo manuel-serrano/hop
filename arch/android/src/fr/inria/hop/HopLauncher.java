@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../hop/linux/android/src/fr/inria/hop/HopLauncher.java          */
+/*    .../hop/2.2.x/arch/android/src/fr/inria/hop/HopLauncher.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Tue Oct 12 07:38:43 2010 (serrano)                */
+/*    Last change :  Tue Oct 12 15:44:04 2010 (serrano)                */
 /*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -21,7 +21,6 @@ import android.content.*;
 import android.widget.*;
 import android.view.*;
 import android.view.View.*;
-import android.webkit.*;
 import android.net.*;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -40,6 +39,7 @@ public class HopLauncher extends Activity {
    public static final int MSG_RUN_FAIL = 6;
    public static final int MSG_CONFIGURE = 7;
    public static final int MSG_RESTART = 8;
+   public static final int MSG_HOPANDROID_FAIL = 9;
    
    final Activity activity = this;
    HopInstaller hopinstaller;
@@ -78,12 +78,6 @@ public class HopLauncher extends Activity {
 		  Uri uri = Uri.parse( "http://localhost:" + hop.port + "/hop/wizard" );
 		  Intent intent = new Intent(Intent.ACTION_VIEW, uri);
 		  startActivity( intent );
-
-/* 		  WebView webview = new WebView( activity );           */
-/* 		  webview.getSettings().setJavaScriptEnabled( true );  */
-/* 		  setContentView( webview );                           */
-/*                                                                     */
-/* 		  webview.loadUrl( "http://localhost:" + hop.port + "/hop/wizard" ); */
 		  break;
 
 	       case MSG_INSTALL_FAIL:
@@ -104,6 +98,10 @@ public class HopLauncher extends Activity {
 
 	       case MSG_RESTART:
 		  setContentView( R.layout.main );
+		  break;
+
+	       case MSG_HOPANDROID_FAIL:
+		  HopUiUtils.fail( hop.activity, "HopAndroid", "failed", (Exception)msg.obj );
 		  break;
 
 	       default:
@@ -236,6 +234,7 @@ public class HopLauncher extends Activity {
    public void onDestroy() {
       Log.i( "HopLauncher", "onDestroy" );
       hop.kill();
+      hopandroid.interrupt();
       super.onDestroy();
    }
 
