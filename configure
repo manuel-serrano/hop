@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Oct 12 14:53:06 2010 (serrano)                */
+#*    Last change :  Tue Oct 12 15:05:43 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -633,6 +633,7 @@ cat $mkmf.in \
           -e "s|@BUILDBINDIR@|$PWD/bin|" \
           -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
           -e "s|@BUILDSPECIFIC@|$buildspecific|" \
+          -e "s|@INSTALLSPECIFIC@|$installspecific|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
