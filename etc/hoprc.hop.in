@@ -110,7 +110,8 @@
 ;*    it was started by.  If set to the symbol 'root, HOP will not     */
 ;*    drop root privileges at all (not recommended).                   */
 ;*---------------------------------------------------------------------*/
-(hop-user-set! (or (getenv "HOP_USER") "hop"))
+(unless (eq? (hop-user) #f)
+   (hop-user-set! (or (getenv "HOP_USER") "hop")))
 
 ;*---------------------------------------------------------------------*/
 ;*    welcome message ...                                              */
