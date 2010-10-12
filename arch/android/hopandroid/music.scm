@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Tue Oct 12 18:52:47 2010 (serrano)                */
+;*    Last change :  Tue Oct 12 18:57:13 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -25,7 +25,7 @@
 ;*    music-play ::androidmusic ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (music-play m::androidmusic . song)
-   (with-access::androidphone (androidmusic-hone m) (protocol %socket)
+   (with-access::androidphone (androidmusic-phone m) (protocol %socket)
       (let ((op (socket-output %socket)))
 	 (write-byte protocol op)
 	 (write-char #\M op)
