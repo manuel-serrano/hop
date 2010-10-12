@@ -14,10 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (declare-library! 'hopandroid
 		  :version "@VERSION@"
-                  :module-init '__hopandroid-init
-		  :module-eval '__hopandroid-makelib
-		  :class-init "bigloo.hop.init"
-		  :class-eval "bigloo.hop.make_lib")
+                  :module-init '__hopandroid-phone
+		  :module-eval '__hopandroid-makelib)
 
 ;*---------------------------------------------------------------------*/
 ;*    Link option                                                      */
