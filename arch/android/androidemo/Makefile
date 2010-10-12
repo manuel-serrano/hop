@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Oct 12 17:57:38 2010 (serrano)                */
+#*    Last change :  Tue Oct 12 17:58:11 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Generic Makefile to build Hop weblets.                           */
@@ -50,29 +50,3 @@ distclean:
 -include ../../../etc/Makefile.version
 -include ../../../etc/Makefile.weblet
 -include $(BIGLOOLIBDIR)/Makefile.config
-
-#*---------------------------------------------------------------------*/
-#*    Dependencies                                                     */
-#*---------------------------------------------------------------------*/
-etc/weblet.info: etc/weblet.info.in Makefile
-	cat $< | sed -e "s|@HZ@|$(HZ)|" \
-                     -e "s|@TITLE@|$(TITLE)|" \
-                     -e "s|@VERSION@|$(VERSION)|" \
-                     -e "s|@MINHOP@|$(MINHOP)|" \
-                     -e "s|@MAXHOP@|$(MAXHOP)|" \
-                     -e "s|@PUBLISHER@|$(PUBLISHER)|" \
-                     -e "s|@DATE@|$(DATE)|" \
-                     -e "s|@PRIVATEHOST@|$(PRIVATEHOST)|" \
-                     -e "s|@PUBLICHOST@|$(PUBLICKHOST)|" \
-                     -e "s|@CATEGORY@|$(CATEGORY)|" > $@
-
-%.wiki: %.wiki.in Makefile
-	cat $< | sed -e "s|@VERSION@|$(VERSION)|" \
-                     -e "s|@MINHOP@|$(MINHOP)|" \
-                     -e "s|@HZ@|$(HZ)|" \
-                     -e "s|@MAXHOP@|$(MAXHOP)|" \
-                     -e "s|@HOST@|$(PRIVATEHOST)|" \
-                     -e "s|@DATE@|$(DATE)|" \
-                     -e "s|@PUBLISHER@|$(PUBLISHER)|" \
-                     -e "s|@TITLE@|$(TITLE)|" \
-                     -e "s|@CATEGORY@|$(CATEGORY)|" > $@
