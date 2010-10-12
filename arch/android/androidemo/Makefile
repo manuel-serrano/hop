@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Oct 12 17:52:28 2010 (serrano)                */
+#*    Last change :  Tue Oct 12 17:57:38 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Generic Makefile to build Hop weblets.                           */
@@ -48,6 +48,7 @@ distclean:
 #*---------------------------------------------------------------------*/
 -include ../../../etc/Makefile.hopconfig
 -include ../../../etc/Makefile.version
+-include ../../../etc/Makefile.weblet
 -include $(BIGLOOLIBDIR)/Makefile.config
 
 #*---------------------------------------------------------------------*/
