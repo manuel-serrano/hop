@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Tue Oct 12 15:53:01 2010 (serrano)                */
+/*    Last change :  Wed Oct 13 14:11:45 2010 (serrano)                */
 /*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -65,7 +65,7 @@ public class HopLauncher extends Activity {
 			String line = queue.take();
 			synchronized( textview ) {
 			   textview.append( line );
-			   scrollview.smoothScrollTo( 0, scrollview.getHeight() );
+			   // scrollview.smoothScrollTo( 0, scrollview.getHeight() );
 			}
 		     } catch (InterruptedException e) {
 			;

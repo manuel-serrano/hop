@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Oct 13 09:23:27 2010 (serrano)                */
+;*    Last change :  Wed Oct 13 14:53:24 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -702,7 +702,7 @@
 	 (trace-item "as=" (typeof as))
 	 (let ((e (audio-status-event-value status (music-playlist-get music))))
 	    (audio-server-%errcount-set! as 0)
-	    (hop-event-broadcast! event e)))))
+	    (audio-event-broadcast! event e)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-update-metadata ...                                        */
@@ -771,7 +771,7 @@
 		     s))))
 	 (trace-item "s=" (if (string? s) s (typeof s)))
 	 (tprint "<<< signal meta: " (list 'meta tag))
-	 (hop-event-broadcast! event (list 'meta tag))))
+	 (audio-event-broadcast! event (list 'meta tag))))
    
    (define (audio-onfile-name meta)
       (let ((url (url-decode meta)))
@@ -808,7 +808,7 @@
    (lambda (error)
       (with-trace 3 "audio-onerror"
 	 (trace-item "music=" (typeof music))
-	 (hop-event-broadcast! event (list 'error error)))))
+	 (audio-event-broadcast! event (list 'error error)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-onvolume ...                                               */
@@ -817,7 +817,7 @@
    (lambda (vol)
       (with-trace 3 "audio-onvolume"
 	 (trace-item "music=" (typeof music))
-	 (hop-event-broadcast! event (list 'volume vol)))))
+	 (audio-event-broadcast! event (list 'volume vol)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript ::%audio-server ...                              */
@@ -863,7 +863,7 @@
 	       (set! playlistid (+fx playlistid 1))
 	       (set! playlistlength (length a1)))
 	    (with-access::audio-server audioserver (%event)
-	       (hop-event-broadcast! %event (list 'cmdplaylistset a1)))))))
+	       (audio-event-broadcast! %event (list 'cmdplaylistset a1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-clear! ::webmusic ...                             */
@@ -876,7 +876,7 @@
 	       (set! playlistlength 0))
 	    (with-access::audio-server audioserver (%event)
 	       (set! playlist '())
-	       (hop-event-broadcast! %event (list 'cmdplaylistclear)))))))
+	       (audio-event-broadcast! %event (list 'cmdplaylistclear)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-add! ::webmusic ...                               */
@@ -890,7 +890,7 @@
 	       (set! playlistlength (+fx playlistlength 1)))
 	    (with-access::audio-server audioserver (%event)
 	       (set! playlist (append playlist (list s)))
-	       (hop-event-broadcast! %event (list 'cmdplaylistadd s)))))))
+	       (audio-event-broadcast! %event (list 'cmdplaylistadd s)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-get ::webmusic ...                                */
@@ -905,7 +905,7 @@
 (define-method (music-play o::webmusic . song)
    (with-access::webmusic o (audioserver)
       (with-access::audio-server audioserver (%event)
-	 (hop-event-broadcast! %event (list 'cmdplay (if (pair? song) (car song) 0))))))
+	 (audio-event-broadcast! %event (list 'cmdplay (if (pair? song) (car song) 0))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-seek ::webmusic ...                                        */
@@ -913,7 +913,7 @@
 (define-method (music-seek o::webmusic p . song)
    (with-access::webmusic o (audioserver)
       (with-access::audio-server audioserver (%event)
-	 (hop-event-broadcast! %event (list 'cmdseek (cons p (if (pair? song) (car song) #f)))))))
+	 (audio-event-broadcast! %event (list 'cmdseek (cons p (if (pair? song) (car song) #f)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    music-stop ::webmusic ...                                        */
@@ -921,7 +921,7 @@
 (define-method (music-stop o::webmusic)
    (with-access::webmusic o (audioserver)
       (with-access::audio-server audioserver (%event)
-	 (hop-event-broadcast! %event (list 'cmdstop)))))
+	 (audio-event-broadcast! %event (list 'cmdstop)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-pause ::webmusic ...                                       */
@@ -929,7 +929,7 @@
 (define-method (music-pause o::webmusic)
    (with-access::webmusic o (audioserver)
       (with-access::audio-server audioserver (%event)
-	 (hop-event-broadcast! %event (list 'cmdpause)))))
+	 (audio-event-broadcast! %event (list 'cmdpause)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-status ::webmusic ...                                      */
@@ -983,7 +983,7 @@
 (define-method (music-volume-set! o::webmusic volume)
    (with-access::webmusic o (audioserver)
       (with-access::audio-server audioserver (%event)
-	 (hop-event-broadcast! %event (list 'cmdvolume volume)))))
+	 (audio-event-broadcast! %event (list 'cmdvolume volume)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    webmusic-ackstate! ...                                           */
@@ -1015,5 +1015,21 @@
 	 (lambda ()
 	    (musicstatus-volume-set! %status volume)))))
 
+;*---------------------------------------------------------------------*/
+;*    event-mutex ...                                                  */
+;*---------------------------------------------------------------------*/
+(define event-mutex (make-mutex))
+(define old-event #f)
+(define old-value #f)
 
-
+;*---------------------------------------------------------------------*/
+;*    audio-event-broadcast! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (audio-event-broadcast! event value)
+   (mutex-lock! event-mutex)
+   (unless (and (eq? event old-event)
+		(equal? value old-value))
+      (set! old-event event)
+      (set! old-value value)
+      (hop-event-broadcast! event value))
+   (mutex-unlock! event-mutex))

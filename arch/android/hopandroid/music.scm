@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Wed Oct 13 08:54:16 2010 (serrano)                */
+;*    Last change :  Wed Oct 13 16:53:32 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -144,6 +144,7 @@
 ;*    music-play ::androidmusic ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (music-play o::androidmusic . song)
+   (tprint "MUSIC-PLAY: " song)
    (with-access::androidmusic o (%mutex %open %status phone)
       (with-lock %mutex
 	 (lambda ()
@@ -191,72 +192,59 @@
 		      (android-send-command phone #\M #\b))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    music-update-status! ::androidmusic ...                              */
+;*    music-update-status! ::androidmusic ...                          */
 ;*---------------------------------------------------------------------*/
-;* (define-method (music-update-status! o::androidmusic status::musicstatus) */
-;*    (with-access::androidmusic o (%mutex %pipeline)                  */
-;*       (with-access::musicstatus status (state songpos songlength volume) */
-;* 	 (mutex-lock! %mutex)                                          */
-;* 	 (if (gst-element? %pipeline)                                  */
-;* 	     (begin                                                    */
-;* 		(set! songpos (music-position o))                      */
-;* 		(set! songlength (music-duration o))                   */
-;* 		(set! volume (music-volume-get o)))                    */
-;* 	     (musicstatus-state-set! status 'stop))                    */
-;* 	 (mutex-unlock! %mutex)                                        */
-;* 	 status)))                                                     */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    music-status ...                                                 *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (music-status o::androidmusic)                       */
-;*    (let ((status (music-%status o)))                                */
-;*       (music-update-status! o status)                               */
-;*       status))                                                      */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    music-song ::androidmusic ...                                        *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (music-song o::androidmusic)                         */
-;*    (with-access::androidmusic o (%mutex %status)                    */
-;*       (with-lock %mutex                                             */
-;* 	 (lambda ()                                                    */
-;* 	    (musicstatus-song %status)))))                             */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    music-songpos ::androidmusic ...                                     *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (music-songpos o::androidmusic)                      */
-;*    ;; this function assumes that %pipeline is still valid (i.e., the */
-;*    ;; gstmm music player has not been closed yet)                   */
-;*    (llong->fixnum                                                   */
-;*     (/llong (gst-element-query-position (androidmusic-%pipeline o)) */
-;* 	    #l1000000000)))                                            */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    music-meta ...                                                   *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (music-meta o::androidmusic)                         */
-;*    (with-access::androidmusic o (%meta)                             */
-;*       %meta))                                                       */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    music-volume-get ::androidmusic ...                                  *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (music-volume-get o::androidmusic)                   */
-;*    (with-access::androidmusic o (%status %audiomixer)               */
-;*       (if (gst-element? %audiomixer)                                */
-;* 	  (let ((vol (inexact->exact                                   */
-;* 		      (* 100 (gst-object-property %audiomixer :volume))))) */
-;* 	     (musicstatus-volume-set! %status vol)                     */
-;* 	     vol)                                                      */
-;* 	  0)))                                                         */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    music-volume-set! ::androidmusic ...                                 *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (music-volume-set! o::androidmusic vol)              */
-;*    (with-access::androidmusic o (%status %audiomixer)               */
-;*       (when (gst-element? %audiomixer)                              */
-;* 	 (gst-object-property-set! %audiomixer :volume (/ vol 100))    */
-;* 	 (musicstatus-volume-set! %status vol))))                      */
+(define-method (music-update-status! o::androidmusic status::musicstatus)
+   (with-access::androidmusic o (%mutex phone %status)
+      (musicstatus-state-set! status 'init)
+      (tprint "status=" (android-send-command/result phone #\M #\S))
+      status))
+
+;*---------------------------------------------------------------------*/
+;*    music-status ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-method (music-status o::androidmusic)
+   (let ((status (music-%status o)))
+      (music-update-status! o status)
+      status))
+
+;*---------------------------------------------------------------------*/
+;*    music-song ::androidmusic ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (music-song o::androidmusic)
+   (with-access::androidmusic o (%mutex %status)
+      (with-lock %mutex
+	 (lambda ()
+	    (musicstatus-song %status)))))
+
+;*---------------------------------------------------------------------*/
+;*    music-songpos ::androidmusic ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (music-songpos o::androidmusic)
+   ;; this function assumes that %pipeline is still valid (i.e., the
+   ;; gstmm music player has not been closed yet)
+   (with-access::androidmusic o (%status)
+      (music-update-status! o %status)
+      (musicstatus-songpos %status)))
+
+;*---------------------------------------------------------------------*/
+;*    music-meta ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-method (music-meta o::androidmusic)
+   (with-access::androidmusic o (%meta)
+      %meta))
+
+;*---------------------------------------------------------------------*/
+;*    music-volume-get ::androidmusic ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (music-volume-get o::androidmusic)
+   (with-access::androidmusic o (%status)
+      (musicstatus-volume %status)))
+
+;*---------------------------------------------------------------------*/
+;*    music-volume-set! ::androidmusic ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (music-volume-set! o::androidmusic vol)
+   (with-access::androidmusic o (%status phone)
+      (musicstatus-volume-set! %status vol)
+      (android-send-command phone #\M #\v vol vol)))

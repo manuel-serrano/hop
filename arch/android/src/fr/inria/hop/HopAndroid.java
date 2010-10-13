@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Oct 13 09:11:54 2010 (serrano)                */
+/*    Last change :  Wed Oct 13 16:55:48 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -46,95 +46,86 @@ public class HopAndroid extends Thread {
       try {
 	 Log.i( "HopAndroid", "starting server port=" + p );
 	 serv = new ServerSocket( p );
-      } catch( IOException e ) {
+      } catch( BindException e ) {
 	 Log.v( "HopAndroid", "server error" + e.toString() );
+      } catch( IOException e ) {
+	 Log.v( "HopAndroid", "server error" + e.toString() + " exception=" +
+	    e.getClass().getName() );
 	 handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_HOPANDROID_FAIL, e ) );
       }
    }
       
    // run hop
    public void run() {
-      Log.i( "HopAndroid", "run" );
-
-      // before running our own server, check first if none already exists
-      try {
-	 Socket sock = new Socket( "localhost", port );
-	 OutputStream op = sock.getOutputStream();
-	 InputStream ip = sock.getInputStream();
-
+      if( serv != null ) {
+	 Log.i( "HopAndroid", "run" );
 	 try {
-	    op.write( (byte)'P' );
-	    op.flush();
+	    while( true ) {
+	       final Socket sock = serv.accept();
 
-	    if( ip.read() == (byte)'G' ) {
-	       // that's fine, we already have an active HopAndroid server
-	       return;
+	       Log.i( "HopAndroid", "accept" + sock );
+	       // handle the session in a background thread (normally very
+	       // few of these threads are created so there is no need
+	       // to use a complexe machinery based on thread pool).
+	       new Thread( new Runnable() {
+		     public void run() {
+			server( sock );
+		     }
+		  } ).start();
 	    }
-	 } finally {
-	    sock.close();
-	 }
-      } catch( IOException _ ) {
-	 ;
-      }
-
-      try {
-	 while( true ) {
-	    final Socket sock = serv.accept();
-
-	    // handle the session in a background thread (normally very
-	    // few of these threads are created so there is no need
-	    // to use a complexe machinery based on thread pool).
-	    new Thread( new Runnable() {
-		  public void run() {
-		     server( sock );
-		  }
-	       } ).start();
-	 }
-      } catch( IOException e ) {
-	 ;
-      } finally {
-	 try {
-	    serv.close();
 	 } catch( IOException e ) {
 	    ;
+	 } finally {
+	    try {
+	       serv.close();
+	    } catch( IOException e ) {
+	       ;
+	    }
 	 }
       }
    }
 
    // handle a session with one client connected to the HopAndroid server
    private void server( Socket sock ) {
-      Log.i( "HopAndroid", "accept" + sock );
+      Log.i( "HopAndroid", "server" + sock );
       try {
 	 InputStream ip = sock.getInputStream();
 	 OutputStream op = sock.getOutputStream();
 
-	 // get the protocol version
-	 int version = ip.read();
+	 while( true ) {
+	    int version = ip.read();
+	    int svc = ip.read();
 
-	 // loop over the command
-	 for( int svc = ip.read(); svc != -1; svc = ip.read() ) {
+	    if( version == -1 || svc == -1 ) return;
+						
 	    switch( svc ) {
 	       case (byte)'V':
+		  // vibrate
+		  Log.v( "HopAndroid", "vibrate..." ); 
 		  vibrate( ip );
 		  break;
 		     
 	       case (byte)'M':
 		  // music
-		  music( ip );
+		  Log.v( "HopAndroid", "music..." ); 
+		  music( ip, op );
 		  break;
 		     
 	       case (byte)'X':
 		  // reset
+		  Log.v( "HopAndroid", "reset..." ); 
 		  return;
 	       
 	       case (byte)'P':
 		  // ping
+		  Log.v( "HopAndroid", "ping..." ); 
 		  op.write( 'G' );
 		  op.flush();
 		  return;
 	       
 	       default:
-		  ;
+		  Log.v( "HopAndroid", "unknown service svc="
+			 + Integer.toHexString( svc ) );
 	    }
 	 }
       } catch( IOException e ) {
@@ -159,7 +150,7 @@ public class HopAndroid extends Thread {
    }
 
    // music service
-   private void music( InputStream ip ) throws IOException {
+   private void music( InputStream ip, OutputStream op ) throws IOException {
       switch( ip.read() ) {
 	 case (byte)'x':
 	    // exit
@@ -195,14 +186,56 @@ public class HopAndroid extends Thread {
 
 	 case (byte)'u':
 	    // url
-	    if( mplayer != null ) {
+	    if( mplayer == null ) {
 	       mplayer = new MediaPlayer();
+	    } else {
+	       mplayer.reset();
 	    }
 	    String uri = read_string( ip );
 
 	    Log.v( "HopAndroid", "mediaplayer src=" + uri );
-	    mplayer.setDataSource( activity, Uri.fromFile( new File( uri ) ) );
-	    mplayer.prepareAsync();
+
+	    File file = new File( uri );
+
+	    if( file.exists() ) {
+	       mplayer.setDataSource( activity, Uri.fromFile( file ) );
+	       mplayer.prepare();
+	    } else {
+	       mplayer.setDataSource( activity, Uri.parse( uri ) );
+	       mplayer.prepareAsync();
+	    }
+	    mplayer.start();
+	    return;
+
+	 case (byte)'v':
+	    // set volume
+	    if( mplayer == null ) {
+	       mplayer = new MediaPlayer();
+	    }
+
+	    int voll = read_int32( ip );
+	    int volr = read_int32( ip );
+
+	    mplayer.setVolume( (float)voll/100, (float)volr/100 );
+	    return;
+	    
+	 case (byte)'S':
+	    // get status: state, songlength, songpos
+	    if( mplayer == null ) {
+	       op.write( "(unspecified 0 0)".getBytes() );
+	    } else {
+	       Log.v( "HopAndroid", "player is playing: " + mplayer.isPlaying() );
+	       if( mplayer.isPlaying() ) {
+		  op.write( "(play ".getBytes() );
+		  op.write( Integer.toString( mplayer.getDuration() ).getBytes() );
+		  op.write( " ".getBytes() );
+		  op.write( Integer.toString( mplayer.getCurrentPosition() ).getBytes() );
+		  op.write( ")".getBytes() );
+	       } else {
+		  op.write( "(unspecified 0 0)".getBytes() );
+	       }
+	       op.flush();
+	    }
 	    return;
       }
    }
@@ -214,7 +247,7 @@ public class HopAndroid extends Thread {
       int b2 = ip.read();
       int b3 = ip.read();
 
-      return b0 << 24 | b1 << 16 | b2 << 8 | b3;
+      return (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
    }
 
    // read_string
