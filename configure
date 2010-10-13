@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Oct 12 15:05:43 2010 (serrano)                */
+#*    Last change :  Wed Oct 13 08:29:57 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -113,8 +113,6 @@ for p in $rts; do
 done
 
 arch=noarch
-
-androidhome=/sdcard/home
 
 felix=
 
@@ -281,9 +279,6 @@ while : ; do
       buildspecific=build-android;
       installspecific=install-android;
       arch=android;;
-
-    --android-home=*)
-      androidhome="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --apache-felix=*)
       felix="`echo $1 | sed 's/^[^=]*=//'`";
@@ -681,7 +676,6 @@ for p in configure.scm configure-noarch.sch configure-macosx.sch configure-andro
             -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
             -e "s|@HOPSRFIS@|$hopsrfis|" \
             -e "s|@HOPARCH@|$arch|" \
-            -e "s|@ANDROIDHOME@|$androidhome|" \
       >> $configure
 done
 
@@ -699,7 +693,6 @@ cat etc/hoprc.hop.in \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@MIMETYPES@|$mimetypes|" \
-          -e "s|@ANDROIDHOME@|$androidhome|" \
     >> $hoprc
 
 # etc/hopshrc.hop
@@ -716,7 +709,6 @@ cat etc/hopshrc.hop.in \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@MIMETYPES@|$mimetypes|" \
-          -e "s|@ANDROIDHOME@|$androidhome|" \
     >> $hopshrc
 
 # lib/hop.init

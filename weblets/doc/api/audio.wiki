@@ -134,7 +134,7 @@ Example:
 
   (<AUDIO> :controls #t
      :src "http://www.m-base.org/tao_of_mad_phat_mp3_files/the_tao_of_mad_phat.mp3"
-     :backend 'none
+     :browser 'none
      :server audio-server)
 
 

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/linux/android/src/fr/inria/hop/Hop.java     */
+/*    .../project/hop/2.2.x/arch/android/src/fr/inria/hop/Hop.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Tue Oct 12 10:08:18 2010 (serrano)                */
+/*    Last change :  Wed Oct 13 08:35:03 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -34,7 +34,7 @@ import java.lang.String;
 public class Hop extends Thread {
    // global constants
    final static String ROOT = "/data/data/fr.inria.hop";
-   final static String HOME = "/sdcard/home";
+   final static File HOME = new File( Environment.getExternalStorageDirectory(), "home" );
    final static String HOP = ROOT + "/bin/hop";
    final static String HOPARGS = "-v2 --no-color";
    final static String APKPATH = "/data/app/fr.inria.hop.apk";
@@ -43,7 +43,7 @@ public class Hop extends Thread {
 
    // instance variables
    Activity activity;
-   String home;
+   File home;
    String root;
    String apk;
    String msg;
@@ -68,7 +68,7 @@ public class Hop extends Thread {
 
    // is hop already configured
    public boolean configured() {
-      return new File( HOME ).exists();
+      return HOME.exists();
    }
 
    // run hop
@@ -76,7 +76,7 @@ public class Hop extends Thread {
       synchronized( pid ) {
 	 if( pid[ 0 ] == 0 ) {
 	    String sh = SHELL;
-	    String cmd = "export HOME=" + HOME +
+	    String cmd = "export HOME=" + HOME.getAbsolutePath() +
 	       "; exec " + HOP + " " + HOPARGS + " -p " + port;
 
 	    Log.i( "Hop", "executing [" + sh + " -c " + cmd );

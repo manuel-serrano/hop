@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Tue Oct 12 15:10:28 2010 (serrano)                */
+#*    Last change :  Wed Oct 13 08:30:22 2010 (serrano)                */
 #*    Copyright   :  2010 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -31,7 +31,6 @@ ANDROIDBIGLOOLIB=$ANDROIDROOT/local/lib/bigloo/$BIGLOOVERSION
 CC=$ANDROIDROOT/bigloo$BIGLOOVERSION/arch/android/droid-gcc
 
 PREFIX=/data/data/fr.inria.hop
-INSTALLHOME=/sdcard/home
 
 REPOSITORY=/users/serrano/prgm/distrib
 if [ "$REPODIR " != " " ]; then
@@ -74,9 +73,6 @@ while : ; do
 
     --androidndk=*)
       ANDROIDNDK="`echo $1 | sed 's/^[^=]*=//'`";;
-
-    --installhome=*)
-      INSTALLHOME="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --droid-gcc=*)
       CC="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -153,7 +149,6 @@ if [ $action_configure = "yes" ]; then
       --bigloolibdir=$ANDROIDBIGLOOLIB \
       --link=static\
       --android \
-      --android-home=$INSTALLHOME \
       --library=mail \
       --library=calendar \
       --library=text \

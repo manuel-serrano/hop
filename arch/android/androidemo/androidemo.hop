@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Tue Oct 12 18:48:41 2010 (serrano)                */
+;*    Last change :  Wed Oct 13 09:27:51 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -17,15 +17,16 @@
    (library phone hopandroid))
 
 ;*---------------------------------------------------------------------*/
-;*    Phone descriptor ...                                             */
+;*    Local configuration                                              */
 ;*---------------------------------------------------------------------*/
-(define aphone (instantiate::androidphone))
-(define amusic (instantiate::androidmusic
-		  (phone aphone)))
-
 (define _dir (dirname (the-loading-file)))
 (define (androidemo-dir)
    _dir)
+
+;*---------------------------------------------------------------------*/
+;*    Phone descriptor ...                                             */
+;*---------------------------------------------------------------------*/
+(define aphone (instantiate::androidphone))
 
 ;*---------------------------------------------------------------------*/
 ;*    androidemo ...                                                   */
@@ -36,15 +37,23 @@
 	 :favicon (service-resource androidemo "etc/favicon.png")
 	 :base (service-base-url androidemo (current-request))
 	 :path (androidemo-dir)
-	 :include "androidemo")
+	 :include "hop-audio" "androidemo")
       (<ANDROIDEMO:BODY> :header "Androidemo"
+	 (<H2> "Phone control")
 	 (<BUTTON> :onclick ~(with-hop ($(service ()
 					    (phone-vibrate aphone 1000))))
 	    "Vibrate")
-	 (<BUTTON> :onclick ~(with-hop ($(service ()
-					    (music-play amusic))))
-	    "Music")
-	 )))
+	 (<H2> "Multimedia")
+	 (<AUDIO>
+	    :controls #t
+	    :src "http://www.m-base.org/motherland_pulse_mp3_files/motherland_pulse.mp3"
+	    :browser 'none
+	    :server (instantiate::audio-server
+		       (music (instantiate::androidmusic
+				 (phone aphone)))))
+	 (<DIV> :style "font-size: 10px; font-style: italic"
+	    "Thanks to " (<A> :href "http://www.m-base.com" "Steve Coleman")
+	    " for making his music freely available on-line."))))
 
 ;*---------------------------------------------------------------------*/
 ;*    androidemo/proxy ...                                             */
@@ -72,7 +81,7 @@
 	       (<TD> :class "buttons"
 		  (<IMG> :class "logo" :src "etc/logo.png")
 		  (<DIV> :class "version"
-		     (<DIV> "androidemo v " (androidemo-version))
+		     (<DIV> "AndroiDemo v " (androidemo-version))
 		     (<DIV> (androidemo-date)))
 		  (<DIV> :class "buttons"
 		     (<DIV> :class "button doc"
@@ -89,7 +98,7 @@
 	       (<TD>
 		  (<TABLE> :class "body"
 		     (<TR> (<TD> :class "weblet-title"
-			      (format "ANDROIDEMO - Hop Controlled Android Phone")))
+			      (format "AndroiDemo - Hop Controlled Android Phone")))
 		     (<TR> (<TD> :class "body" body)))))))
       (<FOOT>)))
 

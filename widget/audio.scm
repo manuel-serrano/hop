@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Thu Sep  9 12:22:40 2010 (serrano)                */
+;*    Last change :  Wed Oct 13 09:23:27 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -260,7 +260,7 @@
 	   (lambda (op)
 	      (display "audio.serverbackend = new HopAudioServerBackend( audio, " op)
 	      (obj->javascript server op #f)
-	      (display "hop_audio_server_init( audio.serverbackend );" op)
+	      (display "); hop_audio_server_init( audio.serverbackend );" op)
 	      (display "audio.backend = audio.serverbackend;" op)))
 	  "audio.serverbackend = false; audio.backend = audio.browserbackend;")
       "audio.paused = false;"

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/weblets/androidemo/androidemo.hss       */
+/*    .../project/hop/2.2.x/arch/android/androidemo/androidemo.hss     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Mar  2 07:38:26 2010                          */
-/*    Last change :  Tue Oct 12 11:14:46 2010 (serrano)                */
+/*    Last change :  Wed Oct 13 08:47:26 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    POPART css                                                       */
@@ -63,6 +63,11 @@ table.main td.weblet-title {
   padding-bottom: 1px;
   text-transform: capitalize;
   text-shadow: #999 2px 2px 2px;
+}
+
+h2 {
+  text-shadow: #999 2px 2px 2px;
+  border-bottom: 1px dashed $border-color;
 }
 
 table td {
