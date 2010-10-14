@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Thu Oct 14 18:43:52 2010 (serrano)                */
+;*    Last change :  Thu Oct 14 19:38:22 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -48,11 +48,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    phone-vibrate-stop ::androidphone ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (phone-vibrate-stop p::androidphone vibration::obj repeat)
+(define-method (phone-vibrate-stop p::androidphone)
       (android-send-command p #\V #\e))
 
 ;*---------------------------------------------------------------------*/
-;*    sensor ...                                                       */
+;*    phone-sensor ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-sensor p::androidphone type . ttl)
    (let ((t (case type
