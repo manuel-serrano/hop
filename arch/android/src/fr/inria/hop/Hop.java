@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Wed Oct 13 16:27:01 2010 (serrano)                */
+/*    Last change :  Thu Oct 14 18:19:26 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -35,6 +35,7 @@ public class Hop extends Thread {
    // global constants
    final static String ROOT = "/data/data/fr.inria.hop";
    final static File HOME = new File( Environment.getExternalStorageDirectory(), "home" );
+   //final static File HOME = new File( ROOT + "/home" );
    final static String HOP = ROOT + "/bin/hop";
    final static String HOPARGS = "-v2 --no-color";
    final static String APKPATH = "/data/app/fr.inria.hop.apk";
@@ -113,7 +114,7 @@ public class Hop extends Thread {
 	       try {
 		  for( l = fin.read( buffer ); l > 0; l = fin.read( buffer ) ) {
 		     String s = new String( buffer, 0, l );
-/* 		     Log.v( "Hop", s );                                */
+		     // Log.v( "Hop", s );
 		     queue.put( s );
 		     handler.sendEmptyMessage( HopLauncher.MSG_OUTPUT_AVAILABLE );
 		  }

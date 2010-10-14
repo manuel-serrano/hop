@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Tue Oct 12 15:00:10 2010 (serrano)                */
+#*    Last change :  Thu Oct 14 09:54:25 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopandroid library.                    */
@@ -34,7 +34,7 @@ HOPCLOSELIBS_EU = -lhopandroid_u-$(HOPRELEASE)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_BGL_OBJECTS = phone music
+_BGL_OBJECTS = phone music multimedia
 
 _OBJECTS = $(_BGL_OBJECTS)
 

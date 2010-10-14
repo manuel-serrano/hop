@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../hop/linux/android/src/fr/inria/hop/HopConfigurer.java        */
+/*    .../2.2.x/arch/android/src/fr/inria/hop/HopConfigurer.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  8 15:35:26 2010                          */
-/*    Last change :  Fri Oct  8 18:07:26 2010 (serrano)                */
+/*    Last change :  Thu Oct 14 15:49:28 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Configuring Hop                                                  */
@@ -48,12 +48,13 @@ public class HopConfigurer extends Thread {
 
    // is hop already configured
    public static boolean configured( Hop hop ) {
-      return new File( hop.home + "/.config/hop/wizard.hop" ).exists();
+      File path = new File( hop.home, ".config/hop/wizard.hop" );
+      Log.v( "HopConfigurer", "checking file: " + path + "..." +
+	     (path.exists() ? "exists" : "missing") );
+      return path.exists();
    }
 
    public void run() {
-      Log.i( "HopConfigurer", "configuring" );
-      
       try {
 	 HttpURLConnection conn = (HttpURLConnection)new URL( url ).openConnection();
 

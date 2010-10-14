@@ -43,4 +43,8 @@
     <uses-permission android:name="android.permission.INSTALL_PACKAGES"></uses-permission>
     <uses-permission android:name="android.permission.STATUS_BAR"></uses-permission>
     <uses-permission android:name="android.permission.VIBRATE"></uses-permission>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"></uses-permission>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"></uses-permission>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"></uses-permission>
+    <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS"></uses-permission>
 </manifest>

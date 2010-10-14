@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Wed Oct 13 14:11:45 2010 (serrano)                */
+/*    Last change :  Thu Oct 14 15:43:48 2010 (serrano)                */
 /*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -165,7 +165,7 @@ public class HopLauncher extends Activity {
       textview = (TextView)activity.findViewById( R.id.textview );
       scrollview = (ScrollView)activity.findViewById( R.id.scrollview );
       Log.i( "HopLauncher", textview + "" );
-	 
+
       try {
 	 if( !HopInstaller.installed( hop ) ) {
 	    // The install scheduler is a mere thread that waits for
@@ -218,7 +218,8 @@ public class HopLauncher extends Activity {
 	 HopConfigurer hopconfigurer =
 	    new HopConfigurer( hop, handler,
 			       "http://localhost:" + hop.port + "/hop/wizard" );
-	 
+
+	 Log.i( "HopLauncher", "sending configure..." );
 	 handler.sendEmptyMessage( MSG_CONFIGURE );
 	 hopconfigurer.start();
       } else {

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Mar  2 07:38:26 2010                          */
-/*    Last change :  Wed Oct 13 08:47:26 2010 (serrano)                */
+/*    Last change :  Thu Oct 14 10:42:52 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    POPART css                                                       */
@@ -197,3 +197,8 @@ input {
   width: 30em;
 }
 
+div.note {
+  margin-bottom: 3ex;
+  color: #555;
+  text-align: justify;
+}

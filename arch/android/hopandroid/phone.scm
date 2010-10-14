@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed Oct 13 16:57:07 2010 (serrano)                */
+;*    Last change :  Thu Oct 14 18:43:52 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopandroid-phone
 
-   (library phone)
+   (library phone pthread)
 
    (export (class androidphone::phone
 	      (host::bstring read-only (default "localhost"))
@@ -22,7 +22,7 @@
 	      (protocol::byte read-only (default 1))
 	      (%socket (default #unspecified))
 	      (%mutex::mutex read-only (default (make-mutex))))
-
+	   
 	   (android-send-command ::androidphone ::char ::char . args)
 	   (android-send-command/result ::androidphone ::char ::char . args)))
 
@@ -32,6 +32,38 @@
 (define-method (phone-init p::androidphone)
    (with-access::androidphone p (port host %socket)
       (set! %socket (make-client-socket host port))))
+
+;*---------------------------------------------------------------------*/
+;*    phone-vibrate ::androidphone ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (phone-vibrate p::androidphone vibration::obj repeat)
+   (cond
+      ((vector? vibration)
+       (android-send-command p #\V #\p vibration repeat))
+      ((integer? vibration)
+       (android-send-command p #\V #\b vibration))
+      (else
+       (android-send-command p #\V #\b 2))))
+
+;*---------------------------------------------------------------------*/
+;*    phone-vibrate-stop ::androidphone ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (phone-vibrate-stop p::androidphone vibration::obj repeat)
+      (android-send-command p #\V #\e))
+
+;*---------------------------------------------------------------------*/
+;*    sensor ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-method (phone-sensor p::androidphone type . ttl)
+   (let ((t (case type
+	       ((orientation) 0)
+	       ((light) 1)
+	       ((magnetic-field) 2)
+	       ((proximity) 3)
+	       ((temperature) 4)
+	       ((tricorder) 5)
+	       (else (error "sensor" "unknown sensor type" type)))))
+      (android-send-command/result p #\S #\b t (if (pair? ttl) (car ttl) 100))))
 
 ;*---------------------------------------------------------------------*/
 ;*    send ...                                                         */
@@ -48,25 +80,46 @@
       (write-byte (bit-and (bit-rsh i 8) #xff) op)
       (write-byte (bit-and i #xff) op))
    
+   (define (send-int64 i::llong op::output-port)
+      (write-byte (llong->fixnum (bit-andllong (bit-rshllong i 54) #lxff)) op)
+      (write-byte (llong->fixnum (bit-andllong (bit-rshllong i 48) #lxff)) op)
+      (write-byte (llong->fixnum (bit-andllong (bit-rshllong i 40) #lxff)) op)
+      (write-byte (llong->fixnum (bit-andllong (bit-rshllong i 32) #lxff)) op)
+      (write-byte (llong->fixnum (bit-andllong (bit-rshllong i 24) #lxff)) op)
+      (write-byte (llong->fixnum (bit-andllong (bit-rshllong i 16) #lxff)) op)
+      (write-byte (llong->fixnum (bit-andllong (bit-rshllong i 8) #lxff)) op)
+      (write-byte (llong->fixnum (bit-andllong i #lxff)) op))
+   
    (define (send-boolean b::bool op::output-port)
       (write-byte (if b 1 0) op))
    
    (define (send-char b::char op::output-port)
       (write-byte (char->integer b) op))
    
+   (define (send-vector v::vector op::output-port)
+      (let ((l (vector-length v)))
+	 (send-int32 l op)
+	 (let loop ((i 0))
+	    (when (<fx i l)
+	       (send (vector-ref v i) op)
+	       (loop (+fx i 1))))))
+
+   (define (send o::obj op::output-port)
+      (cond
+	 ((string? o) (send-string o op))
+	 ((llong? o) (send-int64 o op))
+	 ((integer? o) (send-int32 o op))
+	 ((boolean? o) (send-boolean o op))
+	 ((char? o) (send-char o op))
+	 ((vector? o) (send-vector o op))))
+
+   
    (with-access::androidphone p (protocol %socket %mutex)
       (let ((op (socket-output %socket)))
 	 (write-byte protocol op)
 	 (write-char service op)
 	 (write-char cmd op)
-	 (when (pair? args)
-	    (for-each (lambda (a)
-			 (cond
-			    ((string? a) (send-string a op))
-			    ((integer? a) (send-int32 a op))
-			    ((boolean? a) (send-boolean a op))
-			    ((char? a) (send-char a op))))
-		      args))
+	 (for-each (lambda (o) (send o op)) args)
 	 (flush-output-port op))))
 
 ;*---------------------------------------------------------------------*/
@@ -89,8 +142,3 @@
 	    (let ((ip (socket-input %socket)))
 	       (read ip))))))
 
-;*---------------------------------------------------------------------*/
-;*    phone-vibrate ::androidphone ...                                 */
-;*---------------------------------------------------------------------*/
-(define-method (phone-vibrate p::androidphone duration::obj)
-   (android-send-command p #\V #\b))

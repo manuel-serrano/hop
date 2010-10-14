@@ -48,6 +48,7 @@ table.shutdown {
   border: 1px solid $border-color;
   background: white;
   border-radius: 0.5em;
+  box-shadow: 3px 3px 3px #555;
 }
 
 table.shutdown td {

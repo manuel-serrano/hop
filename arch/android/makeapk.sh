@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Wed Oct 13 08:30:22 2010 (serrano)                */
+#*    Last change :  Thu Oct 14 08:06:39 2010 (serrano)                */
 #*    Copyright   :  2010 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -48,7 +48,11 @@ ant=/usr/share/java/apache-ant/bin/ant
 
 branch=`echo $HOPVERSION | sed -e "s/[-].*$//g"`
 
-makeopt=-j4
+if [ "$MAKEJOBS " = " " ]; then
+  MAKEJOBS=2
+fi
+
+makeopt=-j$MAKEJOBS
 
 #*---------------------------------------------------------------------*/
 #*    actions                                                          */

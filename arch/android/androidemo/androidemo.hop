@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Wed Oct 13 16:30:41 2010 (serrano)                */
+;*    Last change :  Thu Oct 14 18:46:17 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -26,7 +26,34 @@
 ;*---------------------------------------------------------------------*/
 ;*    Phone descriptor ...                                             */
 ;*---------------------------------------------------------------------*/
-(define aphone (instantiate::androidphone))
+(define android (instantiate::androidphone))
+(define amusic (instantiate::androidmusic (phone android)))
+
+(define sos-vibrations
+   (let ((dot #l200)
+	 (dash #l500)
+	 (short-gap #l200)
+	 (medium-gap #l500)
+	 (long-gap #l1000))
+      `#(#l0
+	 ;; S
+	 ,dot ,short-gap ,dot ,short-gap ,dot
+	 ,medium-gap
+	 ;; O
+	 ,dash ,short-gap ,dash ,short-gap ,dash
+	 ,medium-gap
+	 ;; S
+	 ,dot ,short-gap ,dot ,short-gap ,dot
+	 ,long-gap)))
+
+;*---------------------------------------------------------------------*/
+;*    audio-volume-magnetic-set! ...                                   */
+;*---------------------------------------------------------------------*/
+(define (audio-volume-magnetic-set! val)
+   (let* ((v (inexact->exact (round val)))
+	  (d (max 0 (-fx v 17)))
+	  (vol (*fx d 10)))
+      (music-volume-set! amusic (min 100 vol))))
 
 ;*---------------------------------------------------------------------*/
 ;*    androidemo ...                                                   */
@@ -39,18 +66,63 @@
 	 :path (androidemo-dir)
 	 :include "hop-audio" "androidemo")
       (<ANDROIDEMO:BODY> :header "Androidemo"
+	 (<DIV> :class "note"
+	    "To better understand the purpose of these
+demonstrations it is adviced to run them from a PC, although they can be
+executed by the Web browsers running on the Android device.")
 	 (<H2> "Phone control")
 	 (<BUTTON> :onclick ~(with-hop ($(service ()
-					    (phone-vibrate aphone 1000))))
-	    "Vibrate")
+					    (phone-vibrate android sos-vibrations))))
+	    "Vibrate (SOS)")
+	 (<H2> "Sensors")
+	 ~(define active-sensors #f)
+	 (<BUTTON> :onclick ~(if active-sensors
+				 (begin
+				    (innerHTML-set! this "Activate sensors")
+				    (set! active-sensors #f))
+				 (begin
+				    (innerHTML-set! this "Deactive sensors")
+				    (set! active-sensors #t)
+				    (let loop ()
+				       (with-hop ($(service ()
+						      (let ((mag (phone-sensor android 'magnetic-field)))
+							 (when (pair? mag)
+							    (audio-volume-magnetic-set! (car mag)))
+							 (list (cons 'magnetic
+								     mag)
+							       (cons 'temperature
+								     (phone-sensor android 'temperature))
+							       (cons 'light
+								     (phone-sensor android 'light))
+							       (cons 'orientation
+								     (phone-sensor android 'orientation))
+							       (cons 'tricorder
+								     (phone-sensor android 'tricorder))
+							       (cons 'proximity
+								     (phone-sensor android'proximity))))))
+					  (lambda (l)
+					     (innerHTML-set!
+					      "sensors"
+					      (<TABLE> (map (lambda (r)
+							       (<TR>
+								  (<TD> (symbol->string (car r)))
+								  (<TD> (if (pair? (cdr r))
+									    (<TT> (map (lambda (v)
+											  (list v " " ))
+										       (cdr r)))
+									    ""))))
+							    l)))
+					     (when active-sensors
+						(after 200 loop)))))))
+	    "Activate sensors")
+	 (<DIV> :id "sensors")
 	 (<H2> "Multimedia")
 	 (<AUDIO>
 	    :controls #t
 	    :src "http://www.m-base.org/motherland_pulse_mp3_files/motherland_pulse.mp3"
 	    :browser 'none
 	    :server (instantiate::audio-server
-		       (music (instantiate::androidmusic
-				 (phone aphone)))))
+		       (music amusic)))
 	 (<DIV> :style "font-size: 10px; font-style: italic"
 	    "Thanks to " (<A> :href "http://www.m-base.com" "Steve Coleman")
 	    " for making his music freely available on-line."))))
@@ -81,7 +153,7 @@
 	       (<TD> :class "buttons"
 		  (<IMG> :class "logo" :src "etc/logo.png")
 		  (<DIV> :class "version"
-		     (<DIV> "AndroiDemo v " (androidemo-version))
+		     (<DIV> "Androidemo v " (androidemo-version))
 		     (<DIV> (androidemo-date)))
 		  (<DIV> :class "buttons"
 		     (<DIV> :class "button doc"
@@ -98,7 +170,7 @@
 	       (<TD>
 		  (<TABLE> :class "body"
 		     (<TR> (<TD> :class "weblet-title"
-			      (format "AndroiDemo - Hop Controlled Android Phone")))
+			      (format "Androidemo - Hop Controlled Android Phone")))
 		     (<TR> (<TD> :class "body" body)))))))
       (<FOOT>)))
 

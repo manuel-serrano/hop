@@ -3,10 +3,17 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Oct 13 16:55:48 2010 (serrano)                */
+/*    Last change :  Thu Oct 14 14:56:36 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
+/*    -------------------------------------------------------------    */
+/*    The protocol it uses is as follows:                              */
+/*      byte 0 = protocol-version                                      */
+/*      byte 1 = service (typically 'V', 'M', 'R', 'X', ...)           */
+/*                                                                     */
+/*    The following bytes depends on the service. Some expect          */
+/*    extra parameter. Some don't.                                     */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
@@ -33,7 +40,10 @@ public class HopAndroid extends Thread {
    int port;
    ServerSocket serv;
    Handler handler;
-   MediaPlayer mplayer = null;
+   HopAndroidMusicPlayer hopmplayer = null;
+   HopAndroidAudioRecorder hoparecorder = null;
+   HopAndroidVibrator hopvibrator = null;
+   HopAndroidSensor hopsensor = null;
 
    // constructor
    public HopAndroid( Activity a, int p, Handler h ) {
@@ -44,7 +54,7 @@ public class HopAndroid extends Thread {
       handler = h;
 
       try {
-	 Log.i( "HopAndroid", "starting server port=" + p );
+	 Log.i( "HopAndroid", "starting servers port=" + p );
 	 serv = new ServerSocket( p );
       } catch( BindException e ) {
 	 Log.v( "HopAndroid", "server error" + e.toString() );
@@ -101,26 +111,49 @@ public class HopAndroid extends Thread {
 	    switch( svc ) {
 	       case (byte)'V':
 		  // vibrate
-		  Log.v( "HopAndroid", "vibrate..." ); 
-		  vibrate( ip );
+		  if( hopvibrator == null ) {
+		     hopvibrator = new HopAndroidVibrator( activity );
+		  }
+		  hopvibrator.server( ip, op );
 		  break;
 		     
 	       case (byte)'M':
-		  // music
-		  Log.v( "HopAndroid", "music..." ); 
-		  music( ip, op );
+		  // musicplayer
+		  if( hopmplayer == null ) {
+		     hopmplayer = new HopAndroidMusicPlayer( activity );
+		  }
+
+		  hopmplayer.server( ip, op );
 		  break;
 		     
-	       case (byte)'X':
-		  // reset
-		  Log.v( "HopAndroid", "reset..." ); 
-		  return;
+	       case (byte)'R':
+		  // musicrecorder
+		  if( hoparecorder == null ) {
+		     hoparecorder = new HopAndroidAudioRecorder( activity );
+		  }
+
+		  hoparecorder.server( ip, op );
+		  break;
+		     
+	       case (byte)'S':
+		  // sensor
+		  if( hopsensor == null ) {
+		     hopsensor = new HopAndroidSensor( activity );
+		  }
+
+		  hopsensor.server( ip, op );
+		  break;
 	       
 	       case (byte)'P':
 		  // ping
 		  Log.v( "HopAndroid", "ping..." ); 
 		  op.write( 'G' );
 		  op.flush();
+		  break;
+	       
+	       case (byte)'X':
+		  // reset
+		  Log.v( "HopAndroid", "reset..." ); 
 		  return;
 	       
 	       default:
@@ -138,110 +171,9 @@ public class HopAndroid extends Thread {
 	 }
       }
    }
-   
-   private void vibrate( InputStream ip ) throws IOException {
-      switch( ip.read() ) {
-	 default:
-	    Vibrator v = (Vibrator)activity.getSystemService( Context.VIBRATOR_SERVICE );
-
-	    long milliseconds = 1000;
-	    v.vibrate( milliseconds );
-      }
-   }
-
-   // music service
-   private void music( InputStream ip, OutputStream op ) throws IOException {
-      switch( ip.read() ) {
-	 case (byte)'x':
-	    // exit
-	    if( mplayer != null ) {
-	       mplayer.release();
-	       mplayer = null;
-	       return;
-	    }
-
-	 case (byte)'b':
-	    // start
-	    Log.v( "HopAndroid", "mediaplayer start" );
-	    if( mplayer != null ) {
-	       mplayer.start();
-	       return;
-	    }
-
-	 case (byte)'e':
-	    // stop
-	    Log.v( "HopAndroid", "mediaplayer stop" );
-	    if( mplayer != null ) {
-	       mplayer.stop();
-	       return;
-	    }
-
-	 case (byte)'p':
-	    // pause
-	    Log.v( "HopAndroid", "mediaplayer pause" );
-	    if( mplayer != null ) {
-	       mplayer.pause();
-	       return;
-	    }
-
-	 case (byte)'u':
-	    // url
-	    if( mplayer == null ) {
-	       mplayer = new MediaPlayer();
-	    } else {
-	       mplayer.reset();
-	    }
-	    String uri = read_string( ip );
-
-	    Log.v( "HopAndroid", "mediaplayer src=" + uri );
-
-	    File file = new File( uri );
-
-	    if( file.exists() ) {
-	       mplayer.setDataSource( activity, Uri.fromFile( file ) );
-	       mplayer.prepare();
-	    } else {
-	       mplayer.setDataSource( activity, Uri.parse( uri ) );
-	       mplayer.prepareAsync();
-	    }
-	    mplayer.start();
-	    return;
-
-	 case (byte)'v':
-	    // set volume
-	    if( mplayer == null ) {
-	       mplayer = new MediaPlayer();
-	    }
-
-	    int voll = read_int32( ip );
-	    int volr = read_int32( ip );
-
-	    mplayer.setVolume( (float)voll/100, (float)volr/100 );
-	    return;
-	    
-	 case (byte)'S':
-	    // get status: state, songlength, songpos
-	    if( mplayer == null ) {
-	       op.write( "(unspecified 0 0)".getBytes() );
-	    } else {
-	       Log.v( "HopAndroid", "player is playing: " + mplayer.isPlaying() );
-	       if( mplayer.isPlaying() ) {
-		  op.write( "(play ".getBytes() );
-		  op.write( Integer.toString( mplayer.getDuration() ).getBytes() );
-		  op.write( " ".getBytes() );
-		  op.write( Integer.toString( mplayer.getCurrentPosition() ).getBytes() );
-		  op.write( ")".getBytes() );
-	       } else {
-		  op.write( "(unspecified 0 0)".getBytes() );
-	       }
-	       op.flush();
-	    }
-	    return;
-      }
-   }
 
    // read_int32
-   private int read_int32( InputStream ip ) throws IOException {
+   protected static int read_int32( InputStream ip ) throws IOException {
       int b0 = ip.read();
       int b1 = ip.read();
       int b2 = ip.read();
@@ -250,8 +182,16 @@ public class HopAndroid extends Thread {
       return (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
    }
 
+   // read_int64
+   protected static long read_int64( InputStream ip ) throws IOException {
+      int i0 = read_int32( ip );
+      int i1 = read_int32( ip );
+
+      return ((long)i0) << 32 | i1;
+   }
+
    // read_string
-   private String read_string( InputStream ip ) throws IOException {
+   protected static String read_string( InputStream ip ) throws IOException {
       int sz = read_int32( ip );
       byte[] buf = new byte[ sz ];
 

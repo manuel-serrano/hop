@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Wed Oct 13 16:53:32 2010 (serrano)                */
+;*    Last change :  Thu Oct 14 17:53:24 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -186,18 +186,22 @@
 	       (if (eq? state 'pause)
 		   (begin
 		      (set! state 'play)
-		      (android-send-command phone #\M #\p))
+		      (android-send-command phone #\M #\b))
 		   (begin
 		      (set! state 'pause)
-		      (android-send-command phone #\M #\b))))))))
+		      (android-send-command phone #\M #\p))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-update-status! ::androidmusic ...                          */
 ;*---------------------------------------------------------------------*/
 (define-method (music-update-status! o::androidmusic status::musicstatus)
    (with-access::androidmusic o (%mutex phone %status)
-      (musicstatus-state-set! status 'init)
-      (tprint "status=" (android-send-command/result phone #\M #\S))
+      (let ((s (android-send-command/result phone #\M #\S)))
+	 (tprint "music-update-status s=" s)
+	 (when (pair? s)
+	    (musicstatus-state-set! status (car s))
+	    (musicstatus-songlength-set! status (cadr s))
+	    (musicstatus-songpos-set! status (caddr s))))
       status))
 
 ;*---------------------------------------------------------------------*/

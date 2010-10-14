@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Oct 12 14:21:59 2010 (serrano)                */
+#*    Last change :  Thu Oct 14 08:06:34 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -46,7 +46,7 @@ bin: bindir hopc-bin src-bin hopsh-bin hopreplay-bin
 hopc-bin: lib
 	$(MAKE) -C hopc build
 
-src-bin: lib widget
+src-bin: lib widget $(BUILDSPECIFIC) 
 	$(MAKE) -C src build
 
 hopsh-bin: lib
