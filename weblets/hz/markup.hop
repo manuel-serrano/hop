@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Fri Oct 15 12:04:08 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 14:07:33 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ markups set                                                   */
@@ -58,6 +58,7 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hz/resolver url)
    (hop-hz-server-set! url)
+   (hop-verbose 1 "Switching to hz server: " url)
    url)
 
 ;*---------------------------------------------------------------------*/
