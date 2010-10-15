@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Fri Oct 15 14:57:49 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 15:19:30 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets distribution weblet.                                 */
@@ -120,7 +120,7 @@
    ;; if we can, return the URL of the actual weblet
    (let ((path (hz-resolve-name weblet (list (weblets-repository)))))
       (when (and (string? path) (file-exists? path))
-	 (basename path))))
+	 (string-append "\"" (basename path) "\""))))
 
 ;*---------------------------------------------------------------------*/
 ;*    update-alist! ...                                                */
