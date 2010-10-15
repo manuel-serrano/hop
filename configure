@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Oct 13 08:29:57 2010 (serrano)                */
+#*    Last change :  Fri Oct 15 12:09:08 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -333,7 +333,6 @@ while : ; do
       echo "   --library=lib......... Add extra lib to Hop" >&2;
       echo "   --macosx.............. Prepares the production of a MacOSX bundle" >&2;
       echo "   --android............. Prepares the production of an Android apk" >&2;
-      echo "   --android-home=path... Sets the Android default home path" >&2;
       echo "   --macosx.............. Prepares the production of a MacOSX bundle" >&2;
       echo "   --apache-felix=path... Path to felix.jar" >&2;
       exit -1;

@@ -33,7 +33,7 @@
 ;*    hop-configure-rc-directory ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (hop-configure-rc-directory)
-   (let ((home (or (getenv "HOME") "/"))
+   (let ((home (or (getenv "HOME") "/sdcard/home"))
 	 (host (hostname))
 	 (pref (make-file-name ".config" "hop")))
       (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
