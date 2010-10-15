@@ -78,6 +78,8 @@
               android:scrollbarAlwaysDrawVerticalTrack="true"
               android:background="#fff">
    <TextView android:id="@+id/textview"
+             android:bufferType="editable"
+             android:editable="true"
              android:background="#fff"
              android:textColor="#000"
              android:maxLines="500"
