@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Oct 15 14:21:27 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 14:59:30 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -157,9 +157,16 @@
 				 ((file-exists? url)
 				  url)
 				 ((string=? scheme "*")
-				  (string-append
-				   (hop-hz-server)
-				   "/hop/weblets/resolve?weblet=" url))
+				  (let ((url (string-append
+					      (hop-hz-server)
+					      "/hop/weblets/resolve?weblet=" url)))
+				     (call-with-input-file url
+					(lambda (basename)
+					   (set! dir
+						 (make-file-name dest
+								 (prefix basename)))
+					   (string-append (hop-hz-server)
+							  "/hop/weblets/download?weblet=" basename)))))
 				 (else
 				  (error "hz" "Cannot find module" url)))))
 		     (tprint "HZ-DOWNLOAD-TO-CACHE: url=" url " file=" file)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Oct 14 15:43:48 2010 (serrano)                */
+/*    Last change :  Fri Oct 15 14:49:31 2010 (serrano)                */
 /*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -65,7 +65,12 @@ public class HopLauncher extends Activity {
 			String line = queue.take();
 			synchronized( textview ) {
 			   textview.append( line );
-			   // scrollview.smoothScrollTo( 0, scrollview.getHeight() );
+			   if( textview.hasFocus()
+			       || textview.hasWindowFocus() ) {
+			      int y = textview.getLineHeight()
+				 * (1 + textview.getLineCount());
+			      scrollview.scrollTo( 0, y );
+			   }
 			}
 		     } catch (InterruptedException e) {
 			;
@@ -141,6 +146,7 @@ public class HopLauncher extends Activity {
 	       
 	       synchronized( textview ) {
 		  textview.append( "killing session..." );
+		  textview.moveCursorToVisibleOffset();
 		  hop.restart( true );
 	       }
 	    }
@@ -154,6 +160,7 @@ public class HopLauncher extends Activity {
 	       
 	       synchronized( textview ) {
 		  textview.append( "Exiting..." );
+		  textview.moveCursorToVisibleOffset();
 
 		  infinish = true;
 		  activity.finish();

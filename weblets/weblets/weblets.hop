@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Fri Oct 15 12:38:51 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 14:57:49 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets distribution weblet.                                 */
@@ -113,22 +113,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    weblets/resolve ...                                              */
 ;*    -------------------------------------------------------------    */
-;*    Same as download but accepts star in the weblet names.           */
+;*    Returns a URL usable by weblets/download                         */
 ;*---------------------------------------------------------------------*/
 (define-service (weblets/resolve #!key weblet)
    ;; check if we can resolve a weblet name (containing stars) and
    ;; if we can, return the URL of the actual weblet
-   (let ((path (hz-resolve-name weblet (list (weblets-repository))))
-	 (req (current-request)))
-      (cond
-	 ((not (authorized-path? req path))
-	  (user-access-denied req))
-	 ((not (file-exists? path))
-	  (http-file-not-found weblet))
-	 (else
-	  (instantiate::http-response-file
-	     (file path))))))
-	  
+   (let ((path (hz-resolve-name weblet (list (weblets-repository)))))
+      (when (and (string? path) (file-exists? path))
+	 (basename path))))
+
 ;*---------------------------------------------------------------------*/
 ;*    update-alist! ...                                                */
 ;*---------------------------------------------------------------------*/
