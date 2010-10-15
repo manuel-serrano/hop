@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Oct 15 15:41:46 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 15:54:02 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -140,9 +140,11 @@
 ;*    hz-download-to-cache ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hz-download-to-cache url)
+   (tprint "HZ-DOWNLOAD-TO-CACHE url=" url)
    (multiple-value-bind (scheme _ host port abspath)
       (url-parse url)
       (let ((apath (abspath->filename abspath)))
+	 (tprint "HZ-DOWNLOAD-TO-CACHE apath=" apath)
 	 (multiple-value-bind (base version)
 	    (hz-package-name-parse apath)
 	    (let* ((dest (make-cache-name "api"))
@@ -152,6 +154,7 @@
 						    host port
 						    (prefix (basename apath))))
 			    (make-file-name dest (prefix (basename apath))))))
+	       (tprint "HZ-DOWNLOAD-TO-CACHE dir.1=" dir)
 	       (unless (directory? dir)
 		  (let ((file (cond
 				 ((file-exists? url)
