@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 11:11:23 2010                          */
-/*    Last change :  Thu Oct 14 18:40:12 2010 (serrano)                */
+/*    Last change :  Fri Oct 15 08:31:09 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Dealing with the sensors available on the phone.                 */
@@ -46,9 +46,11 @@ public class HopAndroidSensor {
    // instance variables
    Activity activity;
    SensorManager sensormanager;
-   final SensorListener[] listeners =
-      new SensorListener[ TYPE_TRICORDER + 1 ];
-   final boolean[] activelisteners =
+   final SensorEventListener[] listeners =
+      new SensorEventListener[ TYPE_TRICORDER + 1 ];
+   final int[] activelisteners =
+      new boolean[ TYPE_TRICORDER + 1 ];
+   final int[] delays =
       new boolean[ TYPE_TRICORDER + 1 ];
    final int[] counters =
       new int[ TYPE_TRICORDER + 1 ];
@@ -81,9 +83,54 @@ public class HopAndroidSensor {
 	    sensormanager = null;
 	    return;
 
+	 case (byte)'i':
+	    // get sensors info
+	    if( sensormanager == null ) {
+	       sensormanager =
+		  (SensorManager)activity.getSystemService( Context.SENSOR_SERVICE );
+	    }
+	    List<Sensor> sensors = sensorManager.getSensorList( Sensor.TYPE_ALL );
+	    synchronized( op ) {
+	       for( int i = 0 ; i < sensors.size() ; i++ ) {
+		  Sensor s = sensors.get( i );
+		  op.write( "(".getBytes() );
+		  switch( sensor.getType() ) {
+		     case TYPE_ACCELEROMETER: op.write( "accelerometer ".getBytes() ); break;
+		     case TYPE_GYROSCOPE: op.write( "gyroscope ".getBytes() ); break;
+		     case TYPE_LIGHT: op.write( "light ".getBytes() ); break;
+		     case TYPE_MAGNETIC_FIELD: op.write( "magnetic-field ".getBytes() ); break;
+		     case TYPE_ORIENTATION: op.write( "orientation ".getBytes() ); break;
+		     case TYPE_PRESSURE: op.write( "pressure ".getBytes() ); break;
+		     case TYPE_PROXIMITY: op.write( "proximity ".getBytes() ); break;
+		     case TYPE_TEMPERATURE: op.write( "temperature ".getBytes() ); break;
+		     default: op.write( "unknown ".getBytes() ); break;
+		  }
+		  op.write( "\"".getBytes() );
+		  op.write( sensor.getName() );
+		  op.write( "\" ".getBytes() );
+		  op.write( sensor.getMaximumRange().toString().getBytes() );
+		  op.write( " ".getBytes() );
+		  op.write( sensor.getResolution().toString().getBytes() );
+		  op.write( " ".getBytes() );
+		  op.write( sensor.getPower().toString().getBytes() );
+		  op.write( " ".getBytes() );
+		  op.write( ")\n".getBytes() );
+	       }
+	       op.flush();
+	    }
+	    break;
+
 	 case (byte)'b':
 	    final int type = HopAndroid.read_int32( ip );
+	    int delay = SensorManager.SENSOR_DELAY_NORMAL;
 	    ttl = HopAndroid.read_int32( ip );
+	    
+	    switch( HopAndroid.read_int32( ip ) ) {
+	       case 0: delay = SensorManager.SENSOR_DELAY_FASTEST; break;
+	       case 1: delay = SensorManager.SENSOR_DELAY_GAME; break;
+	       case 2: delay = SensorManager.SENSOR_DELAY_NORMAL; break;
+	       case 3: delay = SensorManager.SENSOR_DELAY_UI; break;
+	    }
 	    
 	    // create the global sensormanager
 	    if( sensormanager == null ) {
@@ -91,46 +138,56 @@ public class HopAndroidSensor {
 		  (SensorManager)activity.getSystemService( Context.SENSOR_SERVICE );
 	    }
 
-	    // add the listener if it does not exist
+	    // add the listener if it is not bound yet
 	    synchronized( listeners ) {
-	       if( listeners[ type ] == null ) {
-		  values[ type ] = null;
-		  counters[ type ] = -1;
+		  if( listeners[ type ] == null ) {
+		     values[ type ] = null;
+		     counters[ type ] = -1;
 
-		  Log.d( "HopAndroidSensor", "installing sensor listener: " + type );
-		  listeners[ type ] = new SensorListener() {
-			public void onSensorChanged( int sensor, float[] v ) {
-			   boolean drop;
+		     Log.d( "HopAndroidSensor", "installing sensor listener: " + type );
+		     listeners[ type ] = new SensorEventListener() {
+			   public void onSensorChanged( SensorEvent event ) {
+			      boolean drop;
 			   
-			   synchronized( counters ) {
-			      drop = counters[ type ]++ > ttl;
-			   }
+			      synchronized( counters ) {
+				 drop = counters[ type ]++ > ttl;
+			      }
 
-			   if( drop ) {
-			      // we have dropped ten values, get rid of that listener
-			      Log.d( "HopAndroidSensor", "dropping...sensor=" + sensor + " type=" + type );
-			      synchronized( activelisteners ) {
-				 activelisteners[ type ] = false;
-				 sensormanager.unregisterListener( listeners[ type ] );
-			      }
-			   } else {
-			      synchronized( values ) {
-				 values[ type ] = v;			      
+			      if( drop ) {
+				 // we have dropped ten values, get rid of that listener
+				 Log.d( "HopAndroidSensor", "dropping...sensor=" + sensor + " type=" + type );
+				 synchronized( activelisteners ) {
+				    if( activelisteners[ type ] ) {
+				       activelisteners[ type ] = false;
+				       sensormanager.unregisterListener( listeners[ type ] );
+				    }
+				 }
+			      } else {
+				 synchronized( values ) {
+				    values[ type ] = event.values;			      
+				 }
 			      }
 			   }
-			}
 	 
-			public void onAccuracyChanged( int sensor, int accuracy ) {
-			}
-		     };
-	       }
+			   public void onAccuracyChanged( Sensor sensor, int accuracy ) {
+			   }
+			};
+		  }
 	    }
 
 	    // activate the listener now we have one
 	    synchronized( activelisteners ) {
 	       if( !activelisteners[ type ] ) {
 		  activelisteners[ type ] = true;
-		  sensormanager.registerListener( listeners[ type ], SENSORTYPES[ type ], SensorManager.SENSOR_DELAY_NORMAL );
+		  sensormanager.registerListener( listeners[ type ], SENSORTYPES[ type ], delay );
+	       } else {
+		  synchronized( delays ) {
+		     if( delays[ type ] != delay ) {
+			delays[ type ] = delay;
+			sensormanager.unregisterListener( listeners[ type ]);
+			sensormanager.registerListener( listeners[ type ], SENSORTYPES[ type ], delay );
+		     }
+		  }
 	       }
 	    }
 

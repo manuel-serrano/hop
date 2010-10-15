@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Thu Oct 14 18:46:17 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 08:46:56 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module androidemo
+   ~(import (osm-api_server "osm-api-1.0.*.hz"))
+   ~(import (osm-api_client "osm-api-1.0.*.hz"))
    (import androidemo_config)
    (library phone hopandroid))
 
@@ -80,22 +82,28 @@ executed by the Web browsers running on the Android device.")
 				 (begin
 				    (innerHTML-set! this "Activate sensors")
 				    (set! active-sensors #f))
-				 (begin
+				 (let ((osm (dom-get-element-by-id "osm"))
+				       (PI/2 (* 2 (atan 1))))
 				    (innerHTML-set! this "Deactive sensors")
 				    (set! active-sensors #t)
 				    (let loop ()
 				       (with-hop ($(service ()
-						      (let ((mag (phone-sensor android 'magnetic-field)))
+						      (let ((mag (phone-sensor android 'magnetic-field))
+							    (ori (phone-sensor android 'orientation)))
 							 (when (pair? mag)
 							    (audio-volume-magnetic-set! (car mag)))
+							 (when (pair? ori)
+							    (let ((r (format "rotate(~a)" (* PI/2 e.val))))
+							       (node-style-set! osm :MozTransform r)))
 							 (list (cons 'magnetic
 								     mag)
+							       (cons 'orientation
+								     ori)
 							       (cons 'temperature
 								     (phone-sensor android 'temperature))
 							       (cons 'light
 								     (phone-sensor android 'light))
-							       (cons 'orientation
-								     (phone-sensor android 'orientation))
+							       
 							       (cons 'tricorder
 								     (phone-sensor android 'tricorder))
 							       (cons 'proximity
@@ -116,6 +124,15 @@ executed by the Web browsers running on the Android device.")
 						(after 200 loop)))))))
 	    "Activate sensors")
 	 (<DIV> :id "sensors")
+	 (<OSM:MAP> :id "osm"
+	    :style "width: 300px; height: 300px; border: 1px solid red"
+	    :latitude 43.619779 :longitude 7.049575)
+	 ~(navigator.geolocation.getCurrentPosition
+	   (lambda (p)
+	      (add-event-listener! window "ready"
+		 (lambda (e)
+		    (let ((osm (dom-get-element-by-id "osm")))
+		       (osm-set-center osm p.latitude p.longitude))))))
 	 (<H2> "Multimedia")
 	 (<AUDIO>
 	    :controls #t

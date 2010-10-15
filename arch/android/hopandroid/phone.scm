@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Thu Oct 14 19:38:22 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 08:32:25 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -52,10 +52,17 @@
       (android-send-command p #\V #\e))
 
 ;*---------------------------------------------------------------------*/
+;*    phone-sensor-list ::androidphone ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (phone-sensor-list p::androidphone)
+   (android-send-command/result p #\S #\b i))
+
+;*---------------------------------------------------------------------*/
 ;*    phone-sensor ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (phone-sensor p::androidphone type . ttl)
+(define-method (phone-sensor p::androidphone type . delay)
    (let ((t (case type
+	       ((accelerometer) 0)
 	       ((orientation) 0)
 	       ((light) 1)
 	       ((magnetic-field) 2)
@@ -63,7 +70,9 @@
 	       ((temperature) 4)
 	       ((tricorder) 5)
 	       (else (error "sensor" "unknown sensor type" type)))))
-      (android-send-command/result p #\S #\b t (if (pair? ttl) (car ttl) 100))))
+      (android-send-command/result p #\S #\b t
+				   (phone-sensor-ttl p)
+				   (if (pair? delay) (car delay) 0))))
 
 ;*---------------------------------------------------------------------*/
 ;*    send ...                                                         */
