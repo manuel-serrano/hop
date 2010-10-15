@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Fri Oct 15 08:32:25 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 09:55:00 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -55,7 +55,7 @@
 ;*    phone-sensor-list ::androidphone ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-sensor-list p::androidphone)
-   (android-send-command/result p #\S #\b i))
+   (android-send-command/result p #\S #\b #\i))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-sensor ...                                                 */
