@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Fri Oct 15 08:46:56 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 08:50:09 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -78,6 +78,12 @@ executed by the Web browsers running on the Android device.")
 	    "Vibrate (SOS)")
 	 (<H2> "Sensors")
 	 ~(define active-sensors #f)
+	 (<DIV> "Sensor list:")
+	 (<PRE> (map (lambda (l)
+			(with-output-to-string
+			   (lambda ()
+			      (write l))))
+		     (phone-sensor-list android)))
 	 (<BUTTON> :onclick ~(if active-sensors
 				 (begin
 				    (innerHTML-set! this "Activate sensors")
