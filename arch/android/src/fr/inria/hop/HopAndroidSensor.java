@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 11:11:23 2010                          */
-/*    Last change :  Fri Oct 15 17:45:52 2010 (serrano)                */
+/*    Last change :  Fri Oct 15 18:10:24 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Dealing with the sensors available on the phone.                 */
@@ -104,7 +104,6 @@ public class HopAndroidSensor {
 	    // get sensors info
 	    init_sensormanager();
 
-	    Log.d( "HopAndroidSensor", "Get list of sensors..." );
 	    synchronized( op ) {
 	       op.write( "(".getBytes() );
 	       for( int j = 0; j < TYPE_TRICORDER; j++ ) {
@@ -132,7 +131,6 @@ public class HopAndroidSensor {
 			default:
 			   op.write( "unknown ".getBytes() );
 		     }
-		     Log.d( "HopAndroidSensor", "sensor=" + s.getName() );
 		     op.write( "\"".getBytes() );
 		     op.write( s.getName().getBytes() );
 		     op.write( "\" ".getBytes() );

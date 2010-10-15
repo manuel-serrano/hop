@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Oct 15 16:54:51 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 18:08:35 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -167,12 +167,10 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-cache-path url)
    (let ((cache (hz-resolve-name url (list (make-cache-name "api")))))
-      (tprint "HZ-CACHE cache=" cache)
       (if (directory? cache)
 	  (multiple-value-bind (base version)
 	     (hz-package-name-parse (basename url))
 	     (let ((cachedir (make-file-name cache base)))
-		(tprint "HZ-CACHE cachedir=" cachedir)
 		(when (directory? cachedir)
 		   cachedir))))))
 
@@ -186,7 +184,6 @@
 	  (let ((apath (abspath->filename abspath)))
 	     (multiple-value-bind (base version)
 		(hz-package-name-parse apath)
-		(tprint "HZ-DOWNLOAD-TO-CACHE base=" base)
 		(let* ((dest (make-cache-name "api"))
 		       (dir (if host
 				(make-file-name dest
@@ -194,13 +191,10 @@
 							host port
 							(prefix (basename apath))))
 				(make-file-name dest (prefix (basename apath))))))
-		   (tprint "HZ-DOWNLOAD-TO-CACHE dir=" dir)
 		   (cond
 		      ((directory? dir)
-		       (tprint "HZ-DOWNLOAD-TO-CACHE yes.1")
 		       (make-file-name dir base))
 		      ((file-exists? url)
-		       (tprint "HZ-DOWNLOAD-TO-CACHE yes.2")
 		       (download-url url dir)
 		       (make-file-name dir base))
 		      ((not (string=? scheme "*"))
@@ -211,7 +205,6 @@
 			      (url (string-append
 				    (hop-hz-server)
 				    "/hop/weblets/download?weblet=" name)))
-			  (tprint "HZ-DOWNLOAD-TO-CACHE yes.3 name=" name " dir=" dir " url=" url)
 			  (download-url url dir)
 			  (make-file-name dir base))))))))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Fri Oct 15 17:42:56 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 18:10:12 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -140,12 +140,12 @@ executed by the Web browsers running on the Android device.")
 		    (let ((osm (dom-get-element-by-id "osm")))
 		       (osm-set-center osm p.latitude p.longitude))))))
 	 (<H2> "Multimedia")
-;* 	 (<AUDIO>                                                      */
-;* 	    :controls #t                                               */
-;* 	    :src "http://www.m-base.org/motherland_pulse_mp3_files/motherland_pulse.mp3" */
-;* 	    :browser 'none                                             */
-;* 	    :server (instantiate::audio-server                         */
-;* 		       (music amusic)))                                */
+	 (<AUDIO>
+	    :controls #t
+	    :src "http://www.m-base.org/motherland_pulse_mp3_files/motherland_pulse.mp3"
+	    :browser 'none
+	    :server (instantiate::audio-server
+		       (music amusic)))
 	 (<DIV> :style "font-size: 10px; font-style: italic"
 	    "Thanks to " (<A> :href "http://www.m-base.com" "Steve Coleman")
 	    " for making his music freely available on-line."))))
