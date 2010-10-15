@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/module.scm                */
+;*    serrano/prgm/project/hop/2.2.x/runtime/module.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Thu Apr 29 18:05:59 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 11:24:27 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
@@ -88,11 +88,13 @@
    ;; feed the cache
    (let* ((url (hz-resolve-name url (hop-hz-repositories)))
 	  (dir (hz-download-to-cache url)))
-      ;; resolve the module
-      (let ((afile (make-file-path dir ".afile")))
-	 (when (file-exists? afile)
-	    (module-load-access-file afile)
-	    (module-abase-set! dir))
-	 (initial-resolver module dir))))
+      (if (and (string? dir) (directory? dir))
+	  ;; resolve the module
+	  (let ((afile (make-file-path dir ".afile")))
+	     (when (file-exists? afile)
+		(module-load-access-file afile)
+		(module-abase-set! dir))
+	     (initial-resolver module dir))
+	  '())))
 		    
 

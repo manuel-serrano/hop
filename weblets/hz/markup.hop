@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/hz/markup.hop             */
+;*    serrano/prgm/project/hop/2.2.x/weblets/hz/markup.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Fri Feb  5 11:34:01 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 12:04:08 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ markups set                                                   */
@@ -54,6 +54,13 @@
        #t)))
 
 ;*---------------------------------------------------------------------*/
+;*    hz/resolver ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-service (hz/resolver url)
+   (hop-hz-server-set! url)
+   url)
+
+;*---------------------------------------------------------------------*/
 ;*    <HZ> ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (<HZ> req #!key (weblet #f))
@@ -70,6 +77,11 @@
 	     (with-hop ($hz/publishers url action)
 		(lambda (h)
 		   (innerHTML-set! "hz-publishers" h))))
+	 
+	 ~(define (hz-resolver url)
+	     (with-hop ($hz/resolver url)
+		(lambda (h)
+		   #t)))
 	 
 	 (<NOTEPAD> :id "hz-notepad"
 	    (<NPTAB> :id "hz-weblets-pan"
@@ -196,10 +208,12 @@
 ;*    <HZ:PREFERENCES> ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (<HZ:PREFERENCES>)
-   (<DIV>
-      (<BUTTON> :onclick ~(preferences-save "hz-preferences" $(hz-prefs))
-	 "Save preferences")
-      (hz-preferences-edit :id "hz-preferences")))
+   (list
+    (<DIV>
+       (<BUTTON> :onclick ~(preferences-save "hz-preferences" $(hz-prefs))
+	  "Save preferences")
+       (hz-preferences-edit :id "hz-preferences"))
+    (<HZ:RESOLVER>)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:PUBLISHERS> ...                                              */
@@ -240,6 +254,29 @@
 				   :onclick ~(hz-publishers $url 'remove)
 				   "Remove")))))
 		    (hz-publishers)))))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:RESOLVER> ...                                                */
+;*---------------------------------------------------------------------*/
+(define (<HZ:RESOLVER>)
+   
+   (let ((inp (<INPUT> :name "resolver" :type "text"
+		 :value (hop-hz-server)
+		 :onchange ~(hz-resolver this.value))))
+      
+      (<DIV> :id "hz-resolver"
+	 (<TABLE> :class "hz-resolver"
+	    (<COLGROUP> (<COL> :class "col1") (<COL>))
+	    (<TR> (<TD> (<BUTTON> :onclick ~(hz-resolver $inp.value)
+			   "Use preferences")))
+	    (<TR> (<TH> :class "label" :colspan 2 "Server"))
+	    (<TR> (<TD> "Module server:") (<TD> inp)))
+	 (<DIV> :id "hz-resolver-comment"
+	    "The HZ module server is used to find Hop module embedded inside
+HZ packages. Modifying here the resolver will only apply to the current
+sessions. To change it permanently, modify the "
+	    (<TT> (make-file-name (hop-rc-directory) (hop-rc-file))) " to
+add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")") "."))))
    
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:SYNC> ...                                                    */

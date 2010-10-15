@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/weblets/hz/hz.hss                 */
+/*    serrano/prgm/project/hop/2.2.x/weblets/hz/hz.hss                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Fri Feb  5 11:33:46 2010 (serrano)                */
+/*    Last change :  Fri Oct 15 12:02:57 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
@@ -604,11 +604,6 @@ preferences {
   font-size: small;
 }
 
-preferences col.col1 {
-  width: 30%;
-  border: 1px solid red;
-}
-
 preferences th {
   text-align: left;
 }
@@ -639,7 +634,29 @@ preferences input.pref_applied {
 preferences input.pref_saved {
   color: blue;
 }
-  
+
+div#hz-resolver {
+  margin-top: 2ex;
+  border-top: 1px solid $border-color;
+}
+
+table.hz-resolver {
+  width: 100%;
+}
+
+table.hz-resolver input {
+  width: 100%;
+}
+
+table.hz-resolver col.col1 {
+  width: 10em;
+}
+
+#hz-resolver-comment {
+  font-size: 90%;
+  margin-top: 2ex;
+}
+
 /*--- publishers ------------------------------------------------------*/
 div.hz-publishers {
   margin: 2px;

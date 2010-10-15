@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hz.scm                    */
+;*    serrano/prgm/project/hop/2.2.x/runtime/hz.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Sat Jun 19 06:23:13 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 11:35:13 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -140,7 +140,7 @@
 ;*    hz-download-to-cache ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hz-download-to-cache url)
-   (multiple-value-bind (_ _ host port abspath)
+   (multiple-value-bind (scheme _ host port abspath)
       (url-parse url)
       (let ((apath (abspath->filename abspath)))
 	 (multiple-value-bind (base version)
@@ -153,13 +153,27 @@
 						    (prefix (basename apath))))
 			    (make-file-name dest (prefix (basename apath))))))
 	       (unless (directory? dir)
-		  (call-with-input-file url
-		     (lambda (iport)
-			(make-directories dir)
-			(let* ((p (open-input-gzip-port iport)))
-			   (unwind-protect
-			      (untar p :directory dir)
-			      (close-input-port iport))))))
+		  (let ((file (cond
+				 ((file-exists? url)
+				  url)
+				 ((string=? scheme "*")
+				  (string-append
+				   (hop-hz-server)
+				   "/hop/weblets/resolve?weblet=" url))
+				 (else
+				  (error "hz" "Cannot find module" url)))))
+		     (with-handler
+			(lambda (e)
+			   (delete-directory dir)
+			   (error "hz" "Cannot find HZ package" url))
+			(call-with-input-file file
+			   (lambda (iport)
+			      (begin
+				 (make-directories dir)
+				 (let* ((p (open-input-gzip-port iport)))
+				    (unwind-protect
+				       (untar p :directory dir)
+				       (close-input-port iport)))))))))
 	       (make-file-name dir base))))))
 
 ;*---------------------------------------------------------------------*/

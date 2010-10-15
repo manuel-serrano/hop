@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Oct 12 09:14:33 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 11:35:08 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -285,6 +285,9 @@
 
 	    (hop-hz-resolver::procedure)
 	    (hop-hz-resolver-set! ::procedure)
+	    
+	    (hop-hz-server::bstring)
+	    (hop-hz-server-set! ::bstring)
 	    
 	    (hop-hz-package-suffix::bstring)
 	    (hop-hz-package-suffix-set! ::bstring)
@@ -1237,7 +1240,13 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-hz-resolver
    (lambda (hz) #f))
-   
+
+;*---------------------------------------------------------------------*/
+;*    hop-hz-server ...                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hz-server
+   (hop-url))
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-hz-package-suffix ...                                        */
 ;*---------------------------------------------------------------------*/

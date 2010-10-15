@@ -1,12 +1,16 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/weblets/weblets/weblets.hop       */
+;*    serrano/prgm/project/hop/2.2.x/weblets/weblets/weblets.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Fri Mar 26 09:58:01 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 11:18:47 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets distribution weblet.                                 */
+;*    -------------------------------------------------------------    */
+;*    This weblet is used to implement a weblet server. It is not      */
+;*    to be used by regular clients. Clients who wish to install       */
+;*    Weblets must use HZ.                                             */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -23,6 +27,7 @@
 	    weblets/list
 	    weblets/synclist
 	    weblets/rss
+	    weblets/resolve
 	    (get-weblets dir #!optional weblet)))
 
 ;*---------------------------------------------------------------------*/
@@ -238,6 +243,16 @@
 				 (>=fx (string-natural-compare3 v1 v2) 0)))
 			   elements)))))))
 
+;*---------------------------------------------------------------------*/
+;*    weblets/resolve ...                                              */
+;*---------------------------------------------------------------------*/
+(define-service (weblets/resolve #!key weblet)
+   ;; check if we can resolve a weblet name (containing stars) and
+   ;; if we can, return the URL of the actual weblet
+   (let ((path (hz-resolve-name weblet (list (weblets-repository)))))
+      (when (file-exists? path)
+	 path)))
+	  
 ;*---------------------------------------------------------------------*/
 ;*    The user configuration                                           */
 ;*---------------------------------------------------------------------*/
