@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Fri Oct 15 08:50:09 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 16:11:09 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -66,7 +66,7 @@
 	 :favicon (service-resource androidemo "etc/favicon.png")
 	 :base (service-base-url androidemo (current-request))
 	 :path (androidemo-dir)
-	 :include "hop-audio" "androidemo")
+	 :include "hop-audio" "androidemo" "osm-api-1.0.*.hz")
       (<ANDROIDEMO:BODY> :header "Androidemo"
 	 (<DIV> :class "note"
 	    "To better understand the purpose of these

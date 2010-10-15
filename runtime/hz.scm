@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Oct 15 15:54:02 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 16:09:31 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -140,11 +140,9 @@
 ;*    hz-download-to-cache ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hz-download-to-cache url)
-   (tprint "HZ-DOWNLOAD-TO-CACHE url=" url)
    (multiple-value-bind (scheme _ host port abspath)
       (url-parse url)
       (let ((apath (abspath->filename abspath)))
-	 (tprint "HZ-DOWNLOAD-TO-CACHE apath=" apath)
 	 (multiple-value-bind (base version)
 	    (hz-package-name-parse apath)
 	    (let* ((dest (make-cache-name "api"))
@@ -154,7 +152,6 @@
 						    host port
 						    (prefix (basename apath))))
 			    (make-file-name dest (prefix (basename apath))))))
-	       (tprint "HZ-DOWNLOAD-TO-CACHE dir.1=" dir)
 	       (unless (directory? dir)
 		  (let ((file (cond
 				 ((file-exists? url)
@@ -166,7 +163,6 @@
 				     (call-with-input-file url
 					(lambda (p)
 					   (let ((basename (read-string p)))
-					      (tprint "BASENAME=" basename " " (typeof basename))
 					      (when (string? basename)
 						 (set! dir
 						       (make-file-name dest
@@ -175,16 +171,13 @@
 								"/hop/weblets/download?weblet=" basename)))))))
 				 (else
 				  (error "hz" "Cannot find module" url)))))
-		     (tprint "HZ-DOWNLOAD-TO-CACHE: url=" url " file=" file)
 		     (with-handler
 			(lambda (e)
-			   (tprint "ERROR: " e)
 			   (delete-directory dir)
 			   (error "hz" "Cannot find HZ package" url))
 			(if (string? file)
 			    (call-with-input-file file
 			       (lambda (iport)
-				  (tprint "CREATING DIR: " dir)
 				  (make-directories dir)
 				  (let* ((p (open-input-gzip-port iport)))
 				     (unwind-protect

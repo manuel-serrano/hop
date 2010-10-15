@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Fri Oct 15 11:24:27 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 16:08:52 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
@@ -85,16 +85,32 @@
 ;*    hz-module-resolver ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hz-module-resolver module url)
+   
+   (define (resolve-in-dir dir)
+      (let ((afile (make-file-path dir ".afile")))
+	 (when (file-exists? afile)
+	    (module-load-access-file afile)
+	    (module-abase-set! dir))
+	 (initial-resolver module dir)))
+   
+   (define (resolve-default)
+      (let* ((url (hz-resolve-name url (hop-hz-repositories)))
+	     (dir (hz-download-to-cache url)))
+	 (if (directory? dir)
+	     ;; resolve the module
+	     (resolve-in-dir dir)
+	     '())))
+   
    ;; feed the cache
-   (let* ((url (hz-resolve-name url (hop-hz-repositories)))
-	  (dir (hz-download-to-cache url)))
-      (if (and (string? dir) (directory? dir))
-	  ;; resolve the module
-	  (let ((afile (make-file-path dir ".afile")))
-	     (when (file-exists? afile)
-		(module-load-access-file afile)
-		(module-abase-set! dir))
-	     (initial-resolver module dir))
-	  '())))
+   (let ((cache (hz-resolve-name url (list (make-cache-name "api")))))
+      (tprint "CACHE: " cache " " (directory? cache))
+      (if (directory? cache)
+	  (multiple-value-bind (base version)
+	     (hz-package-name-parse (basename url))
+	     (let ((cachedir (make-file-name cache base)))
+		(if (directory? cachedir)
+		    (resolve-in-dir cachedir)
+		    (resolve-default))))
+	  (resolve-default))))
 		    
 
