@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Oct 15 12:37:23 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 14:21:27 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -162,18 +162,20 @@
 				   "/hop/weblets/resolve?weblet=" url))
 				 (else
 				  (error "hz" "Cannot find module" url)))))
+		     (tprint "HZ-DOWNLOAD-TO-CACHE: url=" url " file=" file)
 		     (with-handler
 			(lambda (e)
+			   (tprint "ERROR: " e)
 			   (delete-directory dir)
 			   (error "hz" "Cannot find HZ package" url))
 			(call-with-input-file file
 			   (lambda (iport)
-			      (begin
-				 (make-directories dir)
-				 (let* ((p (open-input-gzip-port iport)))
-				    (unwind-protect
-				       (untar p :directory dir)
-				       (close-input-port iport)))))))))
+			      (tprint "CREATING DIR: " dir)
+			      (make-directories dir)
+			      (let* ((p (open-input-gzip-port iport)))
+				 (unwind-protect
+				    (untar p :directory dir)
+				    (close-input-port iport))))))))
 	       (make-file-name dir base))))))
 
 ;*---------------------------------------------------------------------*/
