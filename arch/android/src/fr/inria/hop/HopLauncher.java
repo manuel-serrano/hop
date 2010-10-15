@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Oct 15 15:39:41 2010 (serrano)                */
+/*    Last change :  Fri Oct 15 16:33:17 2010 (serrano)                */
 /*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -65,10 +65,17 @@ public class HopLauncher extends Activity {
 			String line = queue.take();
 			
 			synchronized( textview ) {
+			   int lc = textview.getLineCount();
+
+			   if( lc > 500 ) {
+			      CharSequence t = textview.getText();
+			      textview.setText( t.subSequence( 0, t.length() < 1024 ? t.length() : 1024 ) );
+			      lc = textview.getLineCount();
+			   }
+			   
 			   textview.append( line );
 			   if( !textview.hasFocus() ) {
-			      int y = textview.getLineHeight()
-				 * textview.getLineCount();
+			      int y = textview.getLineHeight() * lc;
 			      scrollview.scrollTo( 0, y );
 			   }
 			}
