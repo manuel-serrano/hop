@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Oct 15 15:17:23 2010 (serrano)                */
+/*    Last change :  Fri Oct 15 15:39:41 2010 (serrano)                */
 /*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -63,6 +63,7 @@ public class HopLauncher extends Activity {
 		  case MSG_OUTPUT_AVAILABLE:
 		     try {
 			String line = queue.take();
+			
 			synchronized( textview ) {
 			   textview.append( line );
 			   if( !textview.hasFocus() ) {

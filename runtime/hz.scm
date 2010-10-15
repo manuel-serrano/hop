@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Oct 15 15:24:34 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 15:41:46 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -162,7 +162,7 @@
 					      "/hop/weblets/resolve?weblet=" url)))
 				     (call-with-input-file url
 					(lambda (p)
-					   (let ((basename (read p)))
+					   (let ((basename (read-string p)))
 					      (tprint "BASENAME=" basename " " (typeof basename))
 					      (when (string? basename)
 						 (set! dir
