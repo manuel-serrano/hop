@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Fri Oct 15 16:11:09 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 17:10:07 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -13,10 +13,10 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module androidemo
-   ~(import (osm-api_server "osm-api-1.0.*.hz"))
+   (library phone hopandroid)
+   (import (osm-api_server "osm-api-1.0.*.hz"))
    ~(import (osm-api_client "osm-api-1.0.*.hz"))
-   (import androidemo_config)
-   (library phone hopandroid))
+   (import androidemo_config))
 
 ;*---------------------------------------------------------------------*/
 ;*    Local configuration                                              */
@@ -109,7 +109,7 @@ executed by the Web browsers running on the Android device.")
 								     (phone-sensor android 'temperature))
 							       (cons 'light
 								     (phone-sensor android 'light))
-							       
+
 							       (cons 'tricorder
 								     (phone-sensor android 'tricorder))
 							       (cons 'proximity
