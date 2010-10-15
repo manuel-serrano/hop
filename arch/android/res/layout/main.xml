@@ -86,6 +86,7 @@
              android:typeface="monospace"
              android:textSize="10px"
              android:padding="2px"
+             android:focusable="true"
              android:text=""/>
   </ScrollView>
 </LinearLayout>

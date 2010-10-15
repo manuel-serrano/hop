@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Oct 15 14:59:30 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 15:12:13 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -161,12 +161,15 @@
 					      (hop-hz-server)
 					      "/hop/weblets/resolve?weblet=" url)))
 				     (call-with-input-file url
-					(lambda (basename)
-					   (set! dir
-						 (make-file-name dest
-								 (prefix basename)))
-					   (string-append (hop-hz-server)
-							  "/hop/weblets/download?weblet=" basename)))))
+					(lambda (p)
+					   (let ((basename (read p)))
+					      (tprint "BASENAME=" basename)
+					      (when (string? basename)
+						 (set! dir
+						       (make-file-name dest
+								       (prefix basename)))
+						 (string-append (hop-hz-server)
+								"/hop/weblets/download?weblet=" basename)))))))
 				 (else
 				  (error "hz" "Cannot find module" url)))))
 		     (tprint "HZ-DOWNLOAD-TO-CACHE: url=" url " file=" file)
@@ -175,14 +178,16 @@
 			   (tprint "ERROR: " e)
 			   (delete-directory dir)
 			   (error "hz" "Cannot find HZ package" url))
-			(call-with-input-file file
-			   (lambda (iport)
-			      (tprint "CREATING DIR: " dir)
-			      (make-directories dir)
-			      (let* ((p (open-input-gzip-port iport)))
-				 (unwind-protect
-				    (untar p :directory dir)
-				    (close-input-port iport))))))))
+			(if (string? file)
+			    (call-with-input-file file
+			       (lambda (iport)
+				  (tprint "CREATING DIR: " dir)
+				  (make-directories dir)
+				  (let* ((p (open-input-gzip-port iport)))
+				     (unwind-protect
+					(untar p :directory dir)
+					(close-input-port iport)))))
+			    (error "hz" "Cannot find HZ package" url)))))
 	       (make-file-name dir base))))))
 
 ;*---------------------------------------------------------------------*/
