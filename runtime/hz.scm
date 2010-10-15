@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Oct 15 16:09:31 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 16:23:57 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -137,14 +137,41 @@
 	  abspath)))
 
 ;*---------------------------------------------------------------------*/
+;*    download-url ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (download-url url dir)
+   (with-handler
+      (lambda (e)
+	 (delete-directory dir)
+	 (error "hz" "Cannot find HZ package" url))
+      (call-with-input-file url
+	 (lambda (iport)
+	    (make-directories dir)
+	    (let* ((p (open-input-gzip-port iport)))
+	       (unwind-protect
+		  (untar p :directory dir)
+		  (close-input-port iport)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-server-resolve-name ...                                       */
+;*---------------------------------------------------------------------*/
+(define (hz-server-resolve-name url)
+   (let ((u (string-append (hop-hz-server) "/hop/weblets/resolve?weblet=" url)))
+      (call-with-input-file u
+	 (lambda (p)
+	    (basename (read-string p))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    hz-download-to-cache ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hz-download-to-cache url)
+   (tprint "HZ-DOWNLOAD-TO-CACHE url=" url)
    (multiple-value-bind (scheme _ host port abspath)
       (url-parse url)
       (let ((apath (abspath->filename abspath)))
 	 (multiple-value-bind (base version)
 	    (hz-package-name-parse apath)
+	    (tprint "HZ-DOWNLOAD-TO-CACHE base=" base)
 	    (let* ((dest (make-cache-name "api"))
 		   (dir (if host
 			    (make-file-name dest
@@ -152,39 +179,26 @@
 						    host port
 						    (prefix (basename apath))))
 			    (make-file-name dest (prefix (basename apath))))))
-	       (unless (directory? dir)
-		  (let ((file (cond
-				 ((file-exists? url)
-				  url)
-				 ((string=? scheme "*")
-				  (let ((url (string-append
-					      (hop-hz-server)
-					      "/hop/weblets/resolve?weblet=" url)))
-				     (call-with-input-file url
-					(lambda (p)
-					   (let ((basename (read-string p)))
-					      (when (string? basename)
-						 (set! dir
-						       (make-file-name dest
-								       (prefix basename)))
-						 (string-append (hop-hz-server)
-								"/hop/weblets/download?weblet=" basename)))))))
-				 (else
-				  (error "hz" "Cannot find module" url)))))
-		     (with-handler
-			(lambda (e)
-			   (delete-directory dir)
-			   (error "hz" "Cannot find HZ package" url))
-			(if (string? file)
-			    (call-with-input-file file
-			       (lambda (iport)
-				  (make-directories dir)
-				  (let* ((p (open-input-gzip-port iport)))
-				     (unwind-protect
-					(untar p :directory dir)
-					(close-input-port iport)))))
-			    (error "hz" "Cannot find HZ package" url)))))
-	       (make-file-name dir base))))))
+	       (tprint "HZ-DOWNLOAD-TO-CACHE dir=" dir)
+	       (cond
+		  ((directory? dir)
+		   (tprint "HZ-DOWNLOAD-TO-CACHE yes.1")
+		   (make-file-name dir base))
+		  ((file-exists? url)
+		   (tprint "HZ-DOWNLOAD-TO-CACHE yes.2")
+		   (download-url url dir)
+		   (make-file-name dir base))
+		  ((not (string=? scheme "*"))
+		   (error "hz" "Cannot find module" url))
+		  (else
+		   (let* ((name (hz-server-resolve-name url))
+			  (dir (make-file-name dest (prefix name)))
+			  (url (string-append
+				(hop-hz-server)
+				"/hop/weblets/download?weblet=" name)))
+		      (tprint "HZ-DOWNLOAD-TO-CACHE yes.3 name=" name " dir=" dir " url=" url)
+		      (download-url url dir)
+		      (make-file-name dir base)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-resolve-name ...                                              */

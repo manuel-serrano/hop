@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Fri Oct 15 16:08:52 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 16:17:03 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
@@ -87,6 +87,7 @@
 (define (hz-module-resolver module url)
    
    (define (resolve-in-dir dir)
+      (tprint "RESOLVE-IN-DIR dir=" dir)
       (let ((afile (make-file-path dir ".afile")))
 	 (when (file-exists? afile)
 	    (module-load-access-file afile)
@@ -100,14 +101,16 @@
 	     ;; resolve the module
 	     (resolve-in-dir dir)
 	     '())))
-   
+
+   (tprint "HZ-MODULE-RESOLVER: module=" module " url=" url)
    ;; feed the cache
    (let ((cache (hz-resolve-name url (list (make-cache-name "api")))))
-      (tprint "CACHE: " cache " " (directory? cache))
+      (tprint "HZ-MODULE-RESOLVER cache=" cache)
       (if (directory? cache)
 	  (multiple-value-bind (base version)
 	     (hz-package-name-parse (basename url))
 	     (let ((cachedir (make-file-name cache base)))
+		(tprint "HZ-MODULE-RESOLVER cachedir=" cachedir)
 		(if (directory? cachedir)
 		    (resolve-in-dir cachedir)
 		    (resolve-default))))
