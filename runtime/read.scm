@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Sep 27 09:55:05 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 16:54:05 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -870,19 +870,25 @@
        (hop-load-file file-name env menv mode charset abase)))
 
 ;*---------------------------------------------------------------------*/
+;*    hz-dir ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (hz-dir fname)
+   (or (hz-cache-path fname)
+       (let ((url (hz-resolve-name fname (hop-hz-repositories))))
+	  (hz-download-to-cache url))))
+       
+;*---------------------------------------------------------------------*/
 ;*    hop-load-hz ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-hz fname env menv mode charset abase)
    ;; feed the cache
-   (let* ((url (hz-resolve-name fname (hop-hz-repositories)))
-	  (dir (hz-download-to-cache url)))
+   (let ((dir (hz-dir fname)))
       ;; load the afile
       (let ((afile (make-file-path dir ".afile")))
 	 (when (file-exists? afile)
 	    (module-load-access-file afile)))
       ;; load the .hop source file
-      (multiple-value-bind (base version)
-	 (hz-package-name-parse url)
+      (let ((base (basename dir)))
 	 (let ((fname (string-append (make-file-name dir base) ".hop")))
 	    (hop-load-file fname env menv mode charset abase)))))
 

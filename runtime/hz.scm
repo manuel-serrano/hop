@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Oct 15 16:23:57 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 16:54:51 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -23,6 +23,7 @@
 	   (hz-package-name-parse ::bstring)
 	   (hz-package-url-parse ::bstring)
 	   (hz-package-info ::bstring)
+	   (hz-cache-path ::bstring)
 	   (hz-download-to-cache ::bstring)
 	   (hz-resolve-name ::bstring ::pair-nil)))
 
@@ -160,45 +161,59 @@
       (call-with-input-file u
 	 (lambda (p)
 	    (basename (read-string p))))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    hz-cache-path ...                                                */
+;*---------------------------------------------------------------------*/
+(define (hz-cache-path url)
+   (let ((cache (hz-resolve-name url (list (make-cache-name "api")))))
+      (tprint "HZ-CACHE cache=" cache)
+      (if (directory? cache)
+	  (multiple-value-bind (base version)
+	     (hz-package-name-parse (basename url))
+	     (let ((cachedir (make-file-name cache base)))
+		(tprint "HZ-CACHE cachedir=" cachedir)
+		(when (directory? cachedir)
+		   cachedir))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    hz-download-to-cache ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hz-download-to-cache url)
-   (tprint "HZ-DOWNLOAD-TO-CACHE url=" url)
-   (multiple-value-bind (scheme _ host port abspath)
-      (url-parse url)
-      (let ((apath (abspath->filename abspath)))
-	 (multiple-value-bind (base version)
-	    (hz-package-name-parse apath)
-	    (tprint "HZ-DOWNLOAD-TO-CACHE base=" base)
-	    (let* ((dest (make-cache-name "api"))
-		   (dir (if host
-			    (make-file-name dest
-					    (format "~a_~a~a"
-						    host port
-						    (prefix (basename apath))))
-			    (make-file-name dest (prefix (basename apath))))))
-	       (tprint "HZ-DOWNLOAD-TO-CACHE dir=" dir)
-	       (cond
-		  ((directory? dir)
-		   (tprint "HZ-DOWNLOAD-TO-CACHE yes.1")
-		   (make-file-name dir base))
-		  ((file-exists? url)
-		   (tprint "HZ-DOWNLOAD-TO-CACHE yes.2")
-		   (download-url url dir)
-		   (make-file-name dir base))
-		  ((not (string=? scheme "*"))
-		   (error "hz" "Cannot find module" url))
-		  (else
-		   (let* ((name (hz-server-resolve-name url))
-			  (dir (make-file-name dest (prefix name)))
-			  (url (string-append
-				(hop-hz-server)
-				"/hop/weblets/download?weblet=" name)))
-		      (tprint "HZ-DOWNLOAD-TO-CACHE yes.3 name=" name " dir=" dir " url=" url)
-		      (download-url url dir)
-		      (make-file-name dir base)))))))))
+   (or (hz-cache-path url)
+       (multiple-value-bind (scheme _ host port abspath)
+	  (url-parse url)
+	  (let ((apath (abspath->filename abspath)))
+	     (multiple-value-bind (base version)
+		(hz-package-name-parse apath)
+		(tprint "HZ-DOWNLOAD-TO-CACHE base=" base)
+		(let* ((dest (make-cache-name "api"))
+		       (dir (if host
+				(make-file-name dest
+						(format "~a_~a~a"
+							host port
+							(prefix (basename apath))))
+				(make-file-name dest (prefix (basename apath))))))
+		   (tprint "HZ-DOWNLOAD-TO-CACHE dir=" dir)
+		   (cond
+		      ((directory? dir)
+		       (tprint "HZ-DOWNLOAD-TO-CACHE yes.1")
+		       (make-file-name dir base))
+		      ((file-exists? url)
+		       (tprint "HZ-DOWNLOAD-TO-CACHE yes.2")
+		       (download-url url dir)
+		       (make-file-name dir base))
+		      ((not (string=? scheme "*"))
+		       (error "hz" "Cannot find module" url))
+		      (else
+		       (let* ((name (hz-server-resolve-name url))
+			      (dir (make-file-name dest (prefix name)))
+			      (url (string-append
+				    (hop-hz-server)
+				    "/hop/weblets/download?weblet=" name)))
+			  (tprint "HZ-DOWNLOAD-TO-CACHE yes.3 name=" name " dir=" dir " url=" url)
+			  (download-url url dir)
+			  (make-file-name dir base))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-resolve-name ...                                              */
