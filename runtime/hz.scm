@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Oct 15 15:12:13 2010 (serrano)                */
+;*    Last change :  Fri Oct 15 15:24:34 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -163,7 +163,7 @@
 				     (call-with-input-file url
 					(lambda (p)
 					   (let ((basename (read p)))
-					      (tprint "BASENAME=" basename)
+					      (tprint "BASENAME=" basename " " (typeof basename))
 					      (when (string? basename)
 						 (set! dir
 						       (make-file-name dest
