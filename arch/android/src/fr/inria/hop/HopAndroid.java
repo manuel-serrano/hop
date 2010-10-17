@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Thu Oct 14 14:56:36 2010 (serrano)                */
+/*    Last change :  Sun Oct 17 19:09:07 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -44,6 +44,7 @@ public class HopAndroid extends Thread {
    HopAndroidAudioRecorder hoparecorder = null;
    HopAndroidVibrator hopvibrator = null;
    HopAndroidSensor hopsensor = null;
+   HopAndroidSms hopsms = null;
 
    // constructor
    public HopAndroid( Activity a, int p, Handler h ) {
@@ -142,6 +143,16 @@ public class HopAndroid extends Thread {
 		  }
 
 		  hopsensor.server( ip, op );
+		  break;
+
+	       case (byte)'M':
+		  // SMS
+		  // sensor
+		  if( hopsms == null ) {
+		     hopsms = new HopAndroidSms( activity );
+		  }
+
+		  hopsms.server( ip, op );
 		  break;
 	       
 	       case (byte)'P':

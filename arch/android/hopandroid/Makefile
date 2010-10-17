@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Thu Oct 14 09:54:25 2010 (serrano)                */
+#*    Last change :  Sun Oct 17 19:28:03 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopandroid library.                    */

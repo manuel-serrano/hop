@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Fri Oct 15 18:04:59 2010 (serrano)                */
+;*    Last change :  Sun Oct 17 19:05:05 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -55,7 +55,6 @@
 ;*    phone-sensor-list ::androidphone ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-sensor-list p::androidphone)
-   (tprint "PHONE-SENSOR-LIST...")
    (android-send-command/result p #\S #\i))
 
 ;*---------------------------------------------------------------------*/
@@ -74,6 +73,12 @@
       (android-send-command/result p #\S #\b t
 				   (phone-sensor-ttl p)
 				   (if (pair? delay) (car delay) 0))))
+
+;*---------------------------------------------------------------------*/
+;*    phone-sms-send ::androidphone ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (phone-sms-send p::androidphone no::bstring msg::bstring)
+   (android-send-command p #\M #\s no msg))
 
 ;*---------------------------------------------------------------------*/
 ;*    send ...                                                         */

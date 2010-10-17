@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Fri Oct 15 12:10:50 2010 (serrano)                */
+/*    Last change :  Sat Oct 16 08:52:48 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -51,8 +51,7 @@ public class Hop extends Thread {
    FileDescriptor HopFd;
    Handler handler;
    ArrayBlockingQueue<String> queue;
-   final int[] pid = new int[ 1 ];
-   final boolean[] errno = new boolean[ 1 ];
+   final int[] currentpid = new int[ 1 ];
 
    // constructor
    public Hop( Activity a, ArrayBlockingQueue<String>q, Handler h ) {
@@ -73,29 +72,29 @@ public class Hop extends Thread {
 
    // run hop
    public void run() {
-      synchronized( pid ) {
-	 if( pid[ 0 ] == 0 ) {
-	    String sh = SHELL;
-	    String cmd = "export HOME=" + HOME.getAbsolutePath() +
-	       "; exec " + HOP + " " + HOPARGS + " -p " + port;
+      final int[] pid = new int[ 1 ];
+      String sh = SHELL;
+      String cmd = "export HOME=" + HOME.getAbsolutePath() +
+	 "; exec " + HOP + " " + HOPARGS + " -p " + port;
 
-	    Log.i( "Hop", "executing [" + sh + " -c " + cmd );
-	    synchronized( errno ) { errno[ 0 ] = false; }
-	    HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
-	 }
+      Log.i( "Hop", "executing [" + sh + " -c " + cmd );
+      HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
+
+      synchronized( currentpid ) {
+	 currentpid[ 0 ] = pid[ 0 ];
       }
-      
+
       // background threads
       Thread watcher = new Thread( new Runnable() {
 	    public void run() {
 	       int result = HopExec.waitFor( pid[ 0 ] );
-	       Log.i( "Hop", "process exited: " + result );
+	       Log.i( "Hop", "process exited (pid="
+		      + pid[ 0 ] + ") with result=" + result );
 	       if( result == HOP_RESTART ) {
-		  restart( false );
-		  handler.sendEmptyMessage( HopLauncher.MSG_RESTART );
+		  run();
 	       } else {
-		  synchronized( errno ) {
-		     if( errno[ 0 ] == false ) {
+		  synchronized( currentpid ) {
+		     if( currentpid[ 0 ] == pid[ 0 ] ) {
 			handler.sendEmptyMessage( HopLauncher.MSG_PROC_END );
 		     }
 		  }
@@ -118,9 +117,13 @@ public class Hop extends Thread {
 		     handler.sendEmptyMessage( HopLauncher.MSG_OUTPUT_AVAILABLE );
 		  }
 	       } catch( Exception e ) {
-		  Log.e( "Hop", "process exception: " +  e.getClass().getName() );
-		  synchronized( errno ) { errno[ 0 ] = true; }
-		  handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_RUN_FAIL, e ) );
+		  Log.e( "Hop", "process exception (pid=" + pid[ 0 ]
+			 + ") exception=" +  e.getClass().getName() );
+		  synchronized( currentpid ) {
+		     if( currentpid[ 0 ] == pid[ 0 ] ) {
+			handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_RUN_FAIL, e ) );
+		     }
+		  }
 	       }
 	    }
 	 } );
@@ -130,23 +133,19 @@ public class Hop extends Thread {
    }
 
    // restart
-   public void restart( Boolean kill ) {
-      synchronized( pid ) {
-	 if( kill ) android.os.Process.killProcess( pid[ 0 ] );
-	 pid[ 0 ] = 0;
-      }
-
+   public void restart() {
+      kill();
       run();
    }
    
    // kill
    public void kill() {
-      synchronized( pid ) {
-	 if( pid[ 0 ] != 0 ) {
-	    Log.i( "Hop", "kill process: " +  pid[ 0 ] );
-	    android.os.Process.killProcess( pid[ 0 ] );
+      synchronized( currentpid ) {
+	 if( currentpid[ 0 ] != 0 ) {
+	    Log.i( "Hop", "kill (pid=" + currentpid[ 0 ] + ")" );
+	    android.os.Process.killProcess( currentpid[ 0 ] );
 	 }
-	 pid[ 0 ] = 0;
+	 currentpid[ 0 ] = 0;
       }
    }
 }

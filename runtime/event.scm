@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Aug  6 12:11:03 2010 (serrano)                */
+;*    Last change :  Sat Oct 16 07:46:59 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -54,12 +54,23 @@
 	       (head::pair-nil (default '()))
 	       (tail::pair-nil (default '()))))
 	    
-   (export  (hop-event-init! ::obj)
+   (export  (generic add-event-listener! ::obj ::obj ::procedure ::bool)
+
+	    (hop-event-init! ::obj)
 	    (hop-event-tables)
 	    (hop-event-signal! ::bstring ::obj)
 	    (hop-event-broadcast! ::bstring ::obj)
 	    (hop-event-client-ready? ::bstring)
 	    (hop-event-policy-file ::http-request)))
+
+;*---------------------------------------------------------------------*/
+;*    add-event-listener! ::obj ...                                    */
+;*    -------------------------------------------------------------    */
+;*    This generic function is for the time being not used in the Hop  */
+;*    server but it acts as a placeholder for future implementations   */
+;*    that might need to signal asynchronously event to the server.    */
+;*---------------------------------------------------------------------*/
+(define-generic (add-event-listener! obj::obj event proc capture))
 
 ;*---------------------------------------------------------------------*/
 ;*    *event-mutex* ...                                                */

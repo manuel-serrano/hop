@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Thu Oct 14 11:10:54 2010 (serrano)                */
+#*    Last change :  Sun Oct 17 19:15:27 2010 (serrano)                */
 #*    Copyright   :  2010 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -33,7 +33,8 @@ ANDROID_RES = res/drawable/logo.png \
 ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java HopUiUtils.java \
   HopExec.java HopLauncher.java \
   HopAndroid.java HopAndroidMusicPlayer.java HopAndroidVibrator.java \
-  HopAndroidAudioRecorder.java HopAndroidSensor.java
+  HopAndroidAudioRecorder.java HopAndroidSensor.java HopAndroidSms.java \
+  HopSms.java
 
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */

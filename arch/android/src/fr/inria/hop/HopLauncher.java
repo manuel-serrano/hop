@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Oct 15 16:33:17 2010 (serrano)                */
+/*    Last change :  Sat Oct 16 09:10:37 2010 (serrano)                */
 /*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -47,6 +47,10 @@ public class HopLauncher extends Activity {
    final Activity activity = this;
    HopInstaller hopinstaller;
    ProgressDialog progress = null;
+
+   int maxlines = 0;
+   StringBuffer textbuffer = new StringBuffer( 2048 );
+   CheckBox checkbox;
    TextView textview;
    ScrollView scrollview;
    final ArrayBlockingQueue<String> queue =
@@ -62,24 +66,8 @@ public class HopLauncher extends Activity {
 	       switch( msg.what ) {
 		  case MSG_OUTPUT_AVAILABLE:
 		     try {
-			String line = queue.take();
-			
-			synchronized( textview ) {
-			   int lc = textview.getLineCount();
-
-			   if( lc > 500 ) {
-			      CharSequence t = textview.getText();
-			      textview.setText( t.subSequence( 0, t.length() < 1024 ? t.length() : 1024 ) );
-			      lc = textview.getLineCount();
-			   }
-			   
-			   textview.append( line );
-			   if( !textview.hasFocus() ) {
-			      int y = textview.getLineHeight() * lc;
-			      scrollview.scrollTo( 0, y );
-			   }
-			}
-		     } catch (InterruptedException e) {
+			write_console( queue.take() );
+		     } catch( InterruptedException _ ) {
 			;
 		     }
 		     break;
@@ -114,10 +102,6 @@ public class HopLauncher extends Activity {
 		     progress.setMessage( "Configuring..." );
 		     break;
 
-		  case MSG_RESTART:
-		     setContentView( R.layout.main );
-		     break;
-
 		  case MSG_HOPANDROID_FAIL:
 		     HopUiUtils.fail( hop.activity, "HopAndroid", "failed", (Exception)msg.obj );
 		     break;
@@ -149,13 +133,10 @@ public class HopLauncher extends Activity {
       Button buttonr = (Button)findViewById( R.id.restart );
       buttonr.setOnClickListener( new OnClickListener() {
 	    public void onClick( View v ) {
-	       Log.i( "HopLauncher", "killing background hop" );
-	       
-	       synchronized( textview ) {
-		  textview.append( "killing session..." );
-		  textview.moveCursorToVisibleOffset();
-		  hop.restart( true );
-	       }
+	       Log.i( "HopLauncher", "restarting" );
+
+	       write_console( "\n\nRestarting session...\n" );
+	       hop.restart();
 	    }
 	 } );
 
@@ -163,22 +144,37 @@ public class HopLauncher extends Activity {
       Button buttone = (Button)findViewById( R.id.exit );
       buttone.setOnClickListener( new OnClickListener() {
 	    public void onClick( View v ) {
-	       Log.i( "HopLauncher", "exiting..." );
-	       
-	       synchronized( textview ) {
-		  textview.append( "Exiting..." );
-		  textview.moveCursorToVisibleOffset();
+	       Log.i( "HopLauncher", "exit" );
 
-		  infinish = true;
-		  activity.finish();
-	       }
+	       write_console( "Exiting...\n" );
+	       infinish = true;
+	       
+	       hop.kill();
+	       activity.finish();
 	    }
 	 } );
 
+      // setup the clear button
+      Button buttonc = (Button)findViewById( R.id.clearconsole );
+      buttonc.setOnClickListener( new OnClickListener() {
+	    public void onClick( View v ) {
+	       textbuffer.delete( 0, textbuffer.length() - 1 );
+	       write_console( "" );
+	    }
+	 } );
+      
+      // setup the scroll button
+      checkbox = (CheckBox)findViewById( R.id.scrollconsole );
+      checkbox.setChecked( true );
+      
       // grab the text for the output log
       textview = (TextView)activity.findViewById( R.id.textview );
       scrollview = (ScrollView)activity.findViewById( R.id.scrollview );
-      Log.i( "HopLauncher", textview + "" );
+      
+      //maxlines = textview.getResources().getInteger( R.styleable.TextView_maxLines );
+      maxlines = 500;
+
+      Log.i( "HopLauncher", textview + " maxlines=" + maxlines );
 
       try {
 	 if( !HopInstaller.installed( hop ) ) {
@@ -226,6 +222,42 @@ public class HopLauncher extends Activity {
       }
    }
 
+   // write a line on Hop console
+   private void write_console( String line ) {
+      synchronized( textview ) {
+	 textbuffer.append( line );
+	 textview.setText( textbuffer );
+			   
+	 int lc = textview.getLineCount();
+
+	 if( lc > maxlines - 20 ) {
+	    int index = 0;
+
+	    for( int counter = 0; counter < 20; counter++ ) {
+	       int i = textbuffer.indexOf( "\n", index );
+
+	       if( i > 0 ) {
+		  index = i;
+	       } else {
+		  break;
+	       }
+	    }
+
+	    // if no lines found remove a bunch of chars
+	    if( index == 0 ) index = 1024;
+
+	    textbuffer.delete( 0, index );
+	    textview.setText( textbuffer );
+	    lc = textview.getLineCount();
+	 }
+			   
+	 if( checkbox.isChecked() ) {
+	    int y = textview.getLineHeight() * lc;
+	    scrollview.scrollTo( 0, y );
+	 }
+      }
+   }
+   
    private void configure() {
       // configure Hop if needed
       if( !HopConfigurer.configured( hop ) ) {

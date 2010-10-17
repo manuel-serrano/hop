@@ -71,22 +71,41 @@
             android:text="Exit Hop"/>
    </FrameLayout>
   </LinearLayout>
-  <ScrollView android:id="@+id/scrollview"
-              android:orientation="vertical"
+  <LinearLayout android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+   <LinearLayout android:orientation="horizontal"
+                 android:layout_width="fill_parent"
+                 android:layout_height="wrap_content"
+                 android:gravity="center_horizontal">
+    <CheckBox android:id="@+id/scrollconsole"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:textSize="10px"
+              android:paddingRight="20sp"
+              android:text="Enable scrolling"/>
+    <Button android:id="@+id/clearconsole"
+            android:layout_width="120sp"
+            android:layout_height="wrap_content"
+            android:textSize="10px"
+            android:text="Clear console"/>
+   </LinearLayout>
+   <ScrollView android:id="@+id/scrollview"
+               android:orientation="vertical"
+               android:layout_width="fill_parent"
+               android:layout_height="fill_parent"
+               android:scrollbarAlwaysDrawVerticalTrack="true"
+               android:background="#fff">
+    <TextView android:id="@+id/textview"
+              android:background="#fff"
+              android:textColor="#000"
+              android:maxLines="500"
               android:layout_width="fill_parent"
               android:layout_height="fill_parent"
-              android:scrollbarAlwaysDrawVerticalTrack="true"
-              android:background="#fff">
-   <EditText android:id="@+id/textview"
-             android:background="#fff"
-             android:textColor="#000"
-             android:maxLines="500"
-             android:layout_width="fill_parent"
-             android:layout_height="fill_parent"
-             android:typeface="monospace"
-             android:textSize="10px"
-             android:padding="2px"
-             android:focusable="true"
-             android:text=""/>
-  </ScrollView>
+              android:typeface="monospace"
+              android:textSize="10px"
+              android:padding="2px"
+              android:text=""/>
+   </ScrollView>
+  </LinearLayout>
 </LinearLayout>
