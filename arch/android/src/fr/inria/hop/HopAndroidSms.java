@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Sun Oct 17 19:23:57 2010 (serrano)                */
+/*    Last change :  Mon Oct 18 13:33:10 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Dealing with SMS                                                 */
@@ -14,13 +14,14 @@
 /*---------------------------------------------------------------------*/
 package fr.inria.hop;
  
+import android.app.*;
 import android.content.*;
-import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
-import android.telephony.gsm.SmsMessage;
+import android.telephony.*;
+import android.util.Log;
 
-import android.widget.Toast;
+
+import java.io.*;
 
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
@@ -54,57 +55,50 @@ public class HopAndroidSms {
 	    String msg = HopAndroid.read_string( ip );
 
 	    // the SMS has been sent
-	    registerReceiver( new BroadcastReceiver() {
+	    activity.registerReceiver( new BroadcastReceiver() {
 		  @Override
 		  public void onReceive( Context arg0, Intent arg1 ) {
 		     switch( getResultCode() ) {
 			case Activity.RESULT_OK:
-			   Toast.makeText( getBaseContext(), "SMS sent", 
-					   Toast.LENGTH_SHORT ).show();
+			   Log.v( "HopAndroidSms", "SMS sent" );
 			   break;
 			   
 			case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-			   Toast.makeText( getBaseContext(), "Generic failure", 
-					   Toast.LENGTH_SHORT ).show();
+			   Log.v( "HopAndroidSms", "Generic failure" );
 			   break;
 			   
 			case SmsManager.RESULT_ERROR_NO_SERVICE:
-			   Toast.makeText( getBaseContext(), "No service", 
-					  Toast.LENGTH_SHORT ).show();
+			   Log.v( "HopAndroidSms", "No service" );
 			   break;
 			   
 			case SmsManager.RESULT_ERROR_NULL_PDU:
-			   Toast.makeText( getBaseContext(), "Null PDU", 
-					   Toast.LENGTH_SHORT ).show();
+			   Log.v( "HopAndroidSms", "null PDU" );
 			   break;
 			   
 			case SmsManager.RESULT_ERROR_RADIO_OFF:
-			   Toast.makeText( getBaseContext(), "Radio off", 
-					   Toast.LENGTH_SHORT ).show();
+			   Log.v( "HopAndroidSms", "Radio off" );
 			   break;
 		     }
 		  }
 	       }, new IntentFilter( SENT ) );
 
 	    // the SMS has been delivered
-	    registerReceiver( new BroadcastReceiver() {
+	    activity.registerReceiver( new BroadcastReceiver() {
 		  @Override
 		  public void onReceive( Context arg0, Intent arg1 ) {
 		     switch( getResultCode() ) {
 			case Activity.RESULT_OK:
-			   Toast.makeText( getBaseContext(), "SMS delivered", 
-					   Toast.LENGTH_SHORT ).show();
+			   Log.v( "HopAndroidSms", "SMS delivered" );
 			   break;
 			   
 			case Activity.RESULT_CANCELED:
-			   Toast.makeText( getBaseContext(), "SMS not delivered", 
-					   Toast.LENGTH_SHORT ).show();
+			   Log.v( "HopAndroidSms", "SMS not delivered" );
 			   break;                        
 		     }
 		  }
 	       }, new IntentFilter( DELIVERED ) );
 	    
-	    sms.sendTextMessage( no, null, msg, sendpi, deliveredpi );     
+	    sms.sendTextMessage( no, null, msg, sentpi, deliveredpi );     
 	    return;
       }
    }

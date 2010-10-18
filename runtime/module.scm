@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Fri Oct 15 18:08:49 2010 (serrano)                */
+;*    Last change :  Mon Oct 18 15:43:14 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
@@ -103,6 +103,6 @@
    
    ;; feed the cache
    (let ((cache (hz-cache-path url)))
-      (if (directory? cache)
+      (if (and (string? cache) (directory? cache))
 	  (resolve-in-dir cache)
 	  (resolve-default))))

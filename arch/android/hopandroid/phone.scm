@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Sun Oct 17 19:05:05 2010 (serrano)                */
+;*    Last change :  Mon Oct 18 13:29:11 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -78,7 +78,7 @@
 ;*    phone-sms-send ::androidphone ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-sms-send p::androidphone no::bstring msg::bstring)
-   (android-send-command p #\M #\s no msg))
+   (android-send-command p #\T #\s no msg))
 
 ;*---------------------------------------------------------------------*/
 ;*    send ...                                                         */
