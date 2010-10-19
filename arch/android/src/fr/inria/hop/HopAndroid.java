@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Oct 19 19:06:01 2010 (serrano)                */
+/*    Last change :  Tue Oct 19 19:12:00 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -91,6 +91,7 @@ public class HopAndroid extends Thread {
 	 } finally {
 	    try {
 	       serv1.close();
+	       serv2.close();
 	    } catch( IOException e ) {
 	       ;
 	    }
