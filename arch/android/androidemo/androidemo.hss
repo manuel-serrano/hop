@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Mar  2 07:38:26 2010                          */
-/*    Last change :  Thu Oct 14 10:42:52 2010 (serrano)                */
+/*    Last change :  Tue Oct 19 18:27:48 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    POPART css                                                       */
@@ -202,3 +202,22 @@ div.note {
   color: #555;
   text-align: justify;
 }
+
+div.sms-send {
+  margin-top: 1ex;
+}
+
+input#smsno {
+  width: 8em;
+  font-family: monospace;
+  border: 1px solid black;
+  background: #ffe;
+}
+
+textarea#smstext {
+  font-size: small;
+  width: 35em;
+  height: 4;
+  background: #ffe;
+}
+  

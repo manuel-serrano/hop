@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Tue Oct 19 11:36:58 2010 (serrano)                */
+;*    Last change :  Tue Oct 19 18:34:55 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopandroid-phone
 
-   (library phone pthread)
+   (library phone pthread hop)
 
    (export (class androidphone::phone
 	      (host::bstring read-only (default "localhost"))
@@ -37,18 +37,16 @@
 ;*---------------------------------------------------------------------*/
 (define vibrate-plugin #f)
 (define sensor-plugin #f)
+(define sms-plugin #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-init ::androidphone ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-init p::androidphone)
-   (tprint "PHONE INIT")
    (with-access::androidphone p (port host %socket)
       (set! %socket (make-client-socket host port)))
-   (tprint "REGISTER VIBRATE")
    (unless vibrate-plugin
       (set! vibrate-plugin (android-load-plugin p "vibrate")))
-   (tprint "REGISTER SENSOR")
    (unless sensor-plugin
       (set! sensor-plugin (android-load-plugin p "sensor"))))
 
@@ -58,20 +56,20 @@
 (define (android-load-plugin p::androidphone name)
    (with-lock android-plugin-mutex
       (lambda ()
-	 (tprint "loading plugin name=" name)
+	 (hop-verb 2 "Loading android plugin \"" name "\"")
 	 (let ((n (android-send-command/result p 0 name)))
-	    (tprint "android-load-plugin name=" name " n=" n)
 	    (if (>=fx n 0)
 		n
 		(error "android-load-plugin"
 		       (case n
-			  ((-1) "Class not found")
-			  ((-2) "Constructor not found")
-			  ((-3) "Security exception")
-			  ((-4) "Cannot create instance")
-			  ((-5) "Illegal access")
-			  ((-6) "Illegal argument")
-			  ((-7) "Invocation target")
+			  ((-1) "Plugin not found")
+			  ((-2) "Class not found")
+			  ((-3) "Constructor not found")
+			  ((-4) "Security exception")
+			  ((-5) "Cannot create instance")
+			  ((-6) "Illegal access")
+			  ((-7) "Illegal argument")
+			  ((-8) "Invocation target")
 			  (else "Cannot load plugin"))
 		       name))))))
 
@@ -120,7 +118,9 @@
 ;*    phone-sms-send ::androidphone ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-sms-send p::androidphone no::bstring msg::bstring)
-   '(android-send-command p #\T #\s no msg))
+   (unless sms-plugin
+      (set! sms-plugin (android-load-plugin p "sms")))
+   (android-send-command p sms-plugin #\s no msg))
 
 ;*---------------------------------------------------------------------*/
 ;*    send ...                                                         */
@@ -170,11 +170,10 @@
 	 ((char? o) (send-char o op))
 	 ((vector? o) (send-vector o op))))
 
-   (tprint "SEND plugin=" plugin " args=" args)
    (with-access::androidphone p (protocol %socket %mutex)
       (let ((op (socket-output %socket)))
 	 (write-byte protocol op)
-	 (display-fixnum plugin op)
+	 (send-int32 plugin op)
 	 (for-each (lambda (o) (send o op)) args)
 	 (flush-output-port op))))
 
@@ -197,4 +196,5 @@
 	    (apply send p plugin args)
 	    (let ((ip (socket-input %socket)))
 	       (read ip))))))
+
 

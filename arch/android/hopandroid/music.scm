@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Tue Oct 19 11:18:05 2010 (serrano)                */
+;*    Last change :  Tue Oct 19 16:41:03 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -205,7 +205,6 @@
 (define-method (music-update-status! o::androidmusic status::musicstatus)
    (with-access::androidmusic o (%mutex phone %status)
       (let ((s (android-send-command/result phone music-plugin #\S)))
-	 (tprint "music-update-status s=" s)
 	 (when (pair? s)
 	    (musicstatus-state-set! status (car s))
 	    (musicstatus-songlength-set! status (cadr s))

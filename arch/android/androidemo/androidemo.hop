@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Tue Oct 19 11:30:03 2010 (serrano)                */
+;*    Last change :  Tue Oct 19 18:27:30 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -72,10 +72,20 @@
 	    "To better understand the purpose of these
 demonstrations it is adviced to run them from a PC, although they can be
 executed by the Web browsers running on the Android device.")
-	 (<H2> "Phone control")
+	 (<H2> "Telephony")
 	 (<BUTTON> :onclick ~(with-hop ($(service ()
-					    (phone-vibrate android sos-vibrations))))
+					    (phone-vibrate android sos-vibrations -1))))
 	    "Vibrate (SOS)")
+	 (<DIV> :id "sms-send"
+	    (<BUTTON> :onclick ~(with-hop ($(service (no text)
+					       (phone-sms-send android no text))
+					    (let ((no (dom-get-element-by-id "smsno")))
+					       no.value)
+					    (let ((txt (dom-get-element-by-id "smstext")))
+					       txt.value)))
+	       "Send SMS")
+	    (<INPUT> :id "smsno")
+	    (<TEXTAREA> :id "smstext" ""))
 	 (<H2> "Sensors")
 	 ~(define active-sensors #f)
 	 (<DIV> "Sensor list:")
