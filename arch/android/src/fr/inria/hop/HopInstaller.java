@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../hop/linux/android/src/fr/inria/hop/HopInstaller.java         */
+/*    .../2.2.x/arch/android/src/fr/inria/hop/HopInstaller.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Fri Oct  8 15:39:30 2010 (serrano)                */
+/*    Last change :  Tue Oct 19 08:01:01 2010 (serrano)                */
 /*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
@@ -53,7 +53,7 @@ public class HopInstaller extends Thread {
 
    // static method
    public static boolean installed( Hop hop ) {
-      return new File( hop.root + "/hoplib" ).exists();
+      return new File( hop.root, "/bin/hop" ).exists();
    }
    
    // chmodflush
@@ -182,10 +182,24 @@ public class HopInstaller extends Thread {
       chmodflush();
    }
 
+   // create the externalstorage.hop file which is read by Hop at starttime
+   // (see configure-android.sch.in) which contains the path of the
+   // external storage.
+   void externalstorage() throws IOException {
+      File op = new File( hop.root, "etc/" + "externalstorage.hop" );
+      op.write( ";; generated file (HopInstaller), don't edit\n".getBytes() );
+      op.write( "\"".getBytes() );
+      op.write( Environment.getExternalStorageDirectory().getBytes() );
+      op.write( "\"\n".getBytes() );
+      op.flush();
+      op.close();
+   }
+
    public void run() {
       try {
 	 Log.i( "HopInstaller", "unpacking" );
 	 unpack();
+	 externalstorage();
       } catch( Exception e ) {
 	 String msg = e.getMessage();
 	 if( msg == null ) msg = e.getClass().getName();

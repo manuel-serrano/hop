@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  5 09:54:10 2009                          */
-;*    Last change :  Tue Oct 12 09:05:00 2010 (serrano)                */
+;*    Last change :  Tue Oct 19 07:57:24 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common arch HOP configuration                                    */
@@ -30,10 +30,19 @@
        (cons "@LIBPATH@" (bigloo-library-path)))))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-android-home ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hop-android-home)
+   (let ((es (make-file-name (hop-etc-directory) "externalstorage.hop")))
+      (if (file-exists? es)
+	  (string-append (file->string es) "/home")
+	  "/sdcard/home")))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-configure-rc-directory ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (hop-configure-rc-directory)
-   (let ((home (or (getenv "HOME") "/sdcard/home"))
+   (let ((home (or (getenv "HOME") (hop-android-home)))
 	 (host (hostname))
 	 (pref (make-file-name ".config" "hop")))
       (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
