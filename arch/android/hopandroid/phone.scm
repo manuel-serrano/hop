@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Mon Oct 18 13:29:11 2010 (serrano)                */
+;*    Last change :  Tue Oct 19 11:36:58 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -22,16 +22,58 @@
 	      (protocol::byte read-only (default 1))
 	      (%socket (default #unspecified))
 	      (%mutex::mutex read-only (default (make-mutex))))
-	   
-	   (android-send-command ::androidphone ::char ::char . args)
-	   (android-send-command/result ::androidphone ::char ::char . args)))
+
+	   (android-load-plugin::int ::androidphone ::bstring)
+	   (android-send-command ::androidphone ::int . args)
+	   (android-send-command/result ::androidphone ::int . args)))
+
+;*---------------------------------------------------------------------*/
+;*    android-plugin-mutex ...                                         */
+;*---------------------------------------------------------------------*/
+(define android-plugin-mutex (make-mutex "android-plugin"))
+
+;*---------------------------------------------------------------------*/
+;*    Standard plugins                                                 */
+;*---------------------------------------------------------------------*/
+(define vibrate-plugin #f)
+(define sensor-plugin #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-init ::androidphone ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-init p::androidphone)
+   (tprint "PHONE INIT")
    (with-access::androidphone p (port host %socket)
-      (set! %socket (make-client-socket host port))))
+      (set! %socket (make-client-socket host port)))
+   (tprint "REGISTER VIBRATE")
+   (unless vibrate-plugin
+      (set! vibrate-plugin (android-load-plugin p "vibrate")))
+   (tprint "REGISTER SENSOR")
+   (unless sensor-plugin
+      (set! sensor-plugin (android-load-plugin p "sensor"))))
+
+;*---------------------------------------------------------------------*/
+;*    android-load-plugin ...                                          */
+;*---------------------------------------------------------------------*/
+(define (android-load-plugin p::androidphone name)
+   (with-lock android-plugin-mutex
+      (lambda ()
+	 (tprint "loading plugin name=" name)
+	 (let ((n (android-send-command/result p 0 name)))
+	    (tprint "android-load-plugin name=" name " n=" n)
+	    (if (>=fx n 0)
+		n
+		(error "android-load-plugin"
+		       (case n
+			  ((-1) "Class not found")
+			  ((-2) "Constructor not found")
+			  ((-3) "Security exception")
+			  ((-4) "Cannot create instance")
+			  ((-5) "Illegal access")
+			  ((-6) "Illegal argument")
+			  ((-7) "Invocation target")
+			  (else "Cannot load plugin"))
+		       name))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-vibrate ::androidphone ...                                 */
@@ -39,23 +81,23 @@
 (define-method (phone-vibrate p::androidphone vibration::obj repeat)
    (cond
       ((vector? vibration)
-       (android-send-command p #\V #\p vibration repeat))
+       (android-send-command p vibrate-plugin #\p vibration repeat))
       ((integer? vibration)
-       (android-send-command p #\V #\b vibration))
+       (android-send-command p vibrate-plugin #\b vibration))
       (else
-       (android-send-command p #\V #\b 2))))
+       (android-send-command p vibrate-plugin #\b 2))))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-vibrate-stop ::androidphone ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-vibrate-stop p::androidphone)
-      (android-send-command p #\V #\e))
+   (android-send-command p vibrate-plugin #\e))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-sensor-list ::androidphone ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-sensor-list p::androidphone)
-   (android-send-command/result p #\S #\i))
+   (android-send-command/result p sensor-plugin #\i))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-sensor ...                                                 */
@@ -70,7 +112,7 @@
 	       ((temperature) 4)
 	       ((tricorder) 5)
 	       (else (error "sensor" "unknown sensor type" type)))))
-      (android-send-command/result p #\S #\b t
+      (android-send-command/result p sensor-plugin #\b t
 				   (phone-sensor-ttl p)
 				   (if (pair? delay) (car delay) 0))))
 
@@ -78,12 +120,12 @@
 ;*    phone-sms-send ::androidphone ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-sms-send p::androidphone no::bstring msg::bstring)
-   (android-send-command p #\T #\s no msg))
+   '(android-send-command p #\T #\s no msg))
 
 ;*---------------------------------------------------------------------*/
 ;*    send ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define (send p::androidphone service::char cmd::char . args)
+(define (send p::androidphone plugin::int . args)
    
    (define (send-string s::bstring op::output-port)
       (send-int32 (string-length s) op)
@@ -128,32 +170,31 @@
 	 ((char? o) (send-char o op))
 	 ((vector? o) (send-vector o op))))
 
-   
+   (tprint "SEND plugin=" plugin " args=" args)
    (with-access::androidphone p (protocol %socket %mutex)
       (let ((op (socket-output %socket)))
 	 (write-byte protocol op)
-	 (write-char service op)
-	 (write-char cmd op)
+	 (display-fixnum plugin op)
 	 (for-each (lambda (o) (send o op)) args)
 	 (flush-output-port op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    android-send-command ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (android-send-command p::androidphone service::char cmd::char . args)
+(define (android-send-command p::androidphone plugin::int . args)
    (with-access::androidphone p (%mutex)
       (with-lock %mutex
 	 (lambda ()
-	    (apply send p service cmd args)))))
+	    (apply send p plugin args)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    android-send-command/result ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (android-send-command/result p::androidphone service::char cmd::char . args)
+(define (android-send-command/result p::androidphone plugin::int . args)
    (with-access::androidphone p (%mutex %socket)
       (with-lock %mutex
 	 (lambda ()
-	    (apply send p service cmd args)
+	    (apply send p plugin args)
 	    (let ((ip (socket-input %socket)))
 	       (read ip))))))
 

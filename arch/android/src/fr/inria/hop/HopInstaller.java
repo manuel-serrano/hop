@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Tue Oct 19 08:01:57 2010 (serrano)                */
+/*    Last change :  Tue Oct 19 08:43:13 2010 (serrano)                */
 /*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
@@ -14,14 +14,15 @@
 /*---------------------------------------------------------------------*/
 package fr.inria.hop;
 
-import java.util.*;
-import java.util.zip.*;
-import java.io.*;
-
 import android.app.Activity;
 import android.util.Log;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.os.*;
+
+import java.util.*;
+import java.util.zip.*;
+import java.io.*;
 
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
@@ -186,10 +187,10 @@ public class HopInstaller extends Thread {
    // (see configure-android.sch.in). It contains the path of the
    // external storage so that hop can avoid using the explicit "/sdcard" path.
    void externalstorage() throws IOException {
-      File op = new File( hop.root, "etc/" + "externalstorage.hop" );
+      OutputStream op = new FileOutputStream( new File( hop.root, "etc/" + "externalstorage.hop" ) );
       op.write( ";; generated file (HopInstaller), don't edit\n".getBytes() );
       op.write( "\"".getBytes() );
-      op.write( Environment.getExternalStorageDirectory().getBytes() );
+      op.write( Environment.getExternalStorageDirectory().getAbsolutePath().getBytes() );
       op.write( "\"\n".getBytes() );
       op.flush();
       op.close();

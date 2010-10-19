@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Thu Oct 14 17:53:24 2010 (serrano)                */
+;*    Last change :  Tue Oct 19 11:18:05 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -27,9 +27,17 @@
 	      (%tag::obj (default '())))))
 
 ;*---------------------------------------------------------------------*/
+;*    Standard plugins                                                 */
+;*---------------------------------------------------------------------*/
+(define music-plugin #f)
+
+;*---------------------------------------------------------------------*/
 ;*    music-init ::androidmusic ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (music-init o::androidmusic)
+   (unless music-plugin
+      (set! music-plugin
+	    (android-load-plugin (androidmusic-phone o) "musicplayer")))
    (call-next-method))
 
 ;*---------------------------------------------------------------------*/
@@ -44,7 +52,7 @@
 	       (set! %meta '())
 	       (set! %tag #unspecified)
 	       (set! %playlist '())
-	       (android-send-command phone #\M #\x)
+	       (android-send-command phone music-plugin #\x)
 	       (call-next-method))))))
 
 ;*---------------------------------------------------------------------*/
@@ -162,7 +170,7 @@
 			   (set-song! o (musicstatus-song %status)))))
 	       (when (string? url)
 		  (let ((uri (charset-convert url)))
-		     (android-send-command phone #\M #\u uri)
+		     (android-send-command phone music-plugin #\u uri)
 		     (with-access::musicstatus %status (state)
 			(set! state 'play)))))))))
 
@@ -171,7 +179,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (music-stop o::androidmusic)
    (with-access::androidmusic o (phone %status)
-      (android-send-command phone #\M #\e)
+      (android-send-command phone music-plugin #\e)
       (with-access::musicstatus %status (state)
 	 (set! state 'stop))))
 
@@ -186,17 +194,17 @@
 	       (if (eq? state 'pause)
 		   (begin
 		      (set! state 'play)
-		      (android-send-command phone #\M #\b))
+		      (android-send-command phone music-plugin #\b))
 		   (begin
 		      (set! state 'pause)
-		      (android-send-command phone #\M #\p))))))))
+		      (android-send-command phone music-plugin #\p))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-update-status! ::androidmusic ...                          */
 ;*---------------------------------------------------------------------*/
 (define-method (music-update-status! o::androidmusic status::musicstatus)
    (with-access::androidmusic o (%mutex phone %status)
-      (let ((s (android-send-command/result phone #\M #\S)))
+      (let ((s (android-send-command/result phone music-plugin #\S)))
 	 (tprint "music-update-status s=" s)
 	 (when (pair? s)
 	    (musicstatus-state-set! status (car s))
@@ -251,4 +259,4 @@
 (define-method (music-volume-set! o::androidmusic vol)
    (with-access::androidmusic o (%status phone)
       (musicstatus-volume-set! %status vol)
-      (android-send-command phone #\M #\v vol vol)))
+      (android-send-command phone music-plugin #\v vol vol)))

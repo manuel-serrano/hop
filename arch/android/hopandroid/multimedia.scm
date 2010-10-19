@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 14 09:54:12 2010                          */
-;*    Last change :  Thu Oct 14 10:40:41 2010 (serrano)                */
+;*    Last change :  Tue Oct 19 11:20:31 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Access and control multimedia resources of an Android phone      */
@@ -26,17 +26,17 @@
 ;*    audio-record-close ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (audio-record-close phone)
-   (android-send-command phone #\R #\x))
+   '(android-send-command phone #\R #\x))
    
 ;*---------------------------------------------------------------------*/
 ;*    audio-record-start ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (audio-record-start phone path #!optional (quality 0))
-   (android-send-command phone #\R #\b quality))
+   '(android-send-command phone #\R #\b quality))
    
 ;*---------------------------------------------------------------------*/
 ;*    audio-record-stop ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (audio-record-stop phone)
-   (android-send-command phone #\R #\e))
+   '(android-send-command phone #\R #\e))
    
