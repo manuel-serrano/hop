@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Oct 14 08:06:34 2010 (serrano)                */
+#*    Last change :  Tue Oct 19 19:16:12 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -74,7 +74,7 @@ weblets: lib
 scheme2js:
 	$(MAKE) -C scheme2js build
 
-build-android:
+build-android: lib
 	$(MAKE) -C arch/android build
 
 #*---------------------------------------------------------------------*/
