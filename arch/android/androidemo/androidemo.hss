@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Mar  2 07:38:26 2010                          */
-/*    Last change :  Tue Oct 19 18:27:48 2010 (serrano)                */
+/*    Last change :  Wed Oct 20 12:39:34 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    POPART css                                                       */
@@ -217,7 +217,7 @@ input#smsno {
 textarea#smstext {
   font-size: small;
   width: 35em;
-  height: 4;
+  height: 4ex;
   background: #ffe;
 }
   

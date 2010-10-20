@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Oct 20 10:58:51 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 18:26:34 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -58,7 +58,8 @@
    (export  (abstract-class event
 	       (name::bstring read-only)
 	       (target::obj read-only)
-	       (stopped?::bool (default #f)))
+	       (stopped?::bool (default #f))
+	       (value::obj (default #unspecified)))
 	    
 	    (generic add-event-listener! ::obj ::obj ::procedure . l)
 	    (generic remove-event-listener! ::obj ::obj ::procedure . l)

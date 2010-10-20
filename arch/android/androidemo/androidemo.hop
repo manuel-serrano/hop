@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Wed Oct 20 10:58:20 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 18:25:07 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -49,26 +49,19 @@
 	 ,long-gap)))
 
 ;*---------------------------------------------------------------------*/
-;*    audio-volume-magnetic-set! ...                                   */
-;*---------------------------------------------------------------------*/
-(define (audio-volume-magnetic-set! val)
-   (let* ((v (inexact->exact (round val)))
-	  (d (max 0 (-fx v 17)))
-	  (vol (*fx d 10)))
-      (music-volume-set! amusic (min 100 vol))))
-
-;*---------------------------------------------------------------------*/
 ;*    server listener                                                  */
 ;*---------------------------------------------------------------------*/
 (add-event-listener! android "sms-delivered"
    (lambda (e)
-      (tprint "sms-delivered: " e)
-      (hop-broadcast-event! "sms-delivered" #t))
+      (hop-event-broadcast! "sms-delivered" #t))
    #t)
 (add-event-listener! android "sms-sent"
    (lambda (e)
-      (tprint "sms-sent: " e)
-      (hop-broadcast-event! "sms-sent" #t))
+      (hop-event-broadcast! "sms-sent" #t))
+   #t)
+(add-event-listener! android "sms-received"
+   (lambda (e)
+      (hop-event-broadcast! "sms-received" e))
    #t)
 
 ;*---------------------------------------------------------------------*/
@@ -87,16 +80,18 @@
 demonstrations it is adviced to run them from a PC, although they can be
 executed by the Web browsers running on the Android device.")
 	 (<H2> "Telephony")
-	 (<BUTTON> :onclick ~(with-hop ($(service ()
-					    (phone-vibrate android sos-vibrations -1))))
-	    "Vibrate (SOS)")
+	 
 	 (<DIV> :id "sms-send"
 	    ~(add-event-listener! "sms-sent" "server"
 		(lambda (e)
 		   (innerHTML-set! "sms-status" "sent")))
-	    ~(add-event-listener! "sms-sent" "server"
+	    ~(add-event-listener! "sms-delivered" "server"
 		(lambda (e)
 		   (innerHTML-set! "sms-status" "delivered")))
+	    ~(add-event-listener! "sms-received" "server"
+		(lambda (e)
+		   (innerHTML-set! "sms-no" (car e.value))
+		   (innerHTML-set! "sms-text" (cadr e.value))))
 	    
 	    (<DIV>
 	       (<BUTTON> :onclick ~(with-hop ($(service (no text)
@@ -109,45 +104,55 @@ executed by the Web browsers running on the Android device.")
 	       (<INPUT> :id "smsno"))
 	    (<TEXTAREA> :id "smstext" "")
 	    (<DIV> :id "sms-status" ""))
-	 (<H2> "Sensors")
+
+	 (<DIV> :id "sms-received")
+	 (<DI> :id "sms-recevied-no")
+	 (<PRE> :id "sms-received-text" "This box will display the content of incoming SMS")
+	 
+	 (<H2> "Hardware")
+	 (<BUTTON> :onclick ~(with-hop ($(service ()
+					    (phone-vibrate android sos-vibrations -1))))
+	    "Vibrate (SOS)")
 	 ~(define active-sensors #f)
 	 (<DIV> "Sensor list:")
 	 (<PRE> (map (lambda (l)
 			(with-output-to-string
 			   (lambda ()
-			      (write l))))
+			      (write l)
+			      (newline))))
 		     (phone-sensor-list android)))
 	 (<BUTTON> :onclick ~(if active-sensors
 				 (begin
 				    (innerHTML-set! this "Activate sensors")
 				    (set! active-sensors #f))
 				 (let ((osm (dom-get-element-by-id "osm"))
-				       (PI/2 (* 2 (atan 1))))
+				       (2PI (* 4 (atan 1))))
 				    (innerHTML-set! this "Deactive sensors")
 				    (set! active-sensors #t)
 				    (let loop ()
 				       (with-hop ($(service ()
 						      (let ((mag (phone-sensor android 'magnetic-field))
 							    (ori (phone-sensor android 'orientation)))
-							 (when (pair? mag)
-							    (audio-volume-magnetic-set! (car mag)))
-							 (when (pair? ori)
-							    (let ((r (format "rotate(~a)" (* PI/2 e.val))))
-							       (node-style-set! osm :MozTransform r)))
-							 (list (cons 'magnetic
-								     mag)
-							       (cons 'orientation
+							 (list (cons 'orientation
 								     ori)
+							       (cons 'magnetic
+								     mag)
+							       (cons 'accelerometer
+								     (phone-sensor android 'accelerometer))
 							       (cons 'temperature
 								     (phone-sensor android 'temperature))
 							       (cons 'light
 								     (phone-sensor android 'light))
-
-							       (cons 'tricorder
-								     (phone-sensor android 'tricorder))
+							       (cons 'pressure
+								     (phone-sensor android 'pressure))
 							       (cons 'proximity
-								     (phone-sensor android'proximity))))))
+								     (phone-sensor android 'proximity))))))
 					  (lambda (l)
+					     (let ((ori (cdar l)))
+						(when (pair? ori)
+						   (let ((r (format "rotate(-~adeg)" (car ori))))
+						      (innerHTML-set! "ori" r)
+						      (node-style-set! "osm" :MozTransform r))))
 					     (innerHTML-set!
 					      "sensors"
 					      (<TABLE> (map (lambda (r)
@@ -163,6 +168,7 @@ executed by the Web browsers running on the Android device.")
 						(after 200 loop)))))))
 	    "Activate sensors")
 	 (<DIV> :id "sensors")
+	 (<DIV> :id "ori")
 	 (<OSM:MAP> :id "osm"
 	    :style "width: 300px; height: 300px; border: 1px solid red"
 	    :latitude 43.619779 :longitude 7.049575)

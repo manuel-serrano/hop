@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed Oct 20 10:59:12 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 18:27:01 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -27,8 +27,7 @@
 	      (%evtable (default #unspecified))
 	      (%mutex::mutex read-only (default (make-mutex))))
 
-	   (class androidevent::event
-	      (args::obj (default #unspecified)))
+	   (class androidevent::event)
 
 	   (android-load-plugin::int ::androidphone ::bstring)
 	   (android-send-command ::androidphone ::int . args)
@@ -104,18 +103,20 @@
 	    (let ((name (read ip)))
 	       (unless (eof-object? name)
 		  (let ((args (read ip)))
-		     (with-lock %mutex
-			(lambda ()
-			   (let ((procs (hashtable-get %evtable name))
-				 (event (instantiate::androidevent
-					   (name name)
-					   (target p)
-					   (args args))))
-			      (let loop ((procs procs))
-				 (when (pair? procs)
-				    ((car procs) event)
-				    (unless (event-stopped? event)
-				       (loop (cdr procs))))))))))))
+		     (unless (eof-object? args)
+			(let ((procs (with-lock %mutex
+					(lambda ()
+					   (hashtable-get %evtable name))))
+			      (event (instantiate::androidevent
+					(name name)
+					(target p)
+					(value args))))
+			   (let liip ((procs procs))
+			      (when (pair? procs)
+				 ((car procs) event)
+				 (unless (event-stopped? event)
+				    (liip (cdr procs)))))))))
+	       (loop)))
 	 (with-lock %mutex
 	    (lambda ()
 	       (socket-close %socket2)
@@ -174,13 +175,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (phone-sensor p::androidphone type . delay)
    (let ((t (case type
-	       ((accelerometer) 0)
 	       ((orientation) 0)
 	       ((light) 1)
 	       ((magnetic-field) 2)
 	       ((proximity) 3)
 	       ((temperature) 4)
-	       ((tricorder) 5)
+	       ((accelerometer) 5)
+	       ((pressure) 6)
 	       (else (error "sensor" "unknown sensor type" type)))))
       (android-send-command/result p sensor-plugin #\b t
 				   (phone-sensor-ttl p)

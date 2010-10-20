@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 11:11:23 2010                          */
-/*    Last change :  Tue Oct 19 19:07:38 2010 (serrano)                */
+/*    Last change :  Wed Oct 20 17:45:34 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Dealing with the sensors available on the phone.                 */
@@ -34,14 +34,16 @@ public class HopPluginSensor extends HopPlugin {
    final int TYPE_MAGNETICFIELD = 2;
    final int TYPE_PROXIMITY = 3;
    final int TYPE_TEMPERATURE = 4;
-   final int TYPE_TRICORDER = 5;
+   final int TYPE_ACCELEROMETER = 5;
+   final int TYPE_PRESSURE = 6;
    final int[] SENSORTYPES = {
-      SensorManager.SENSOR_ORIENTATION,
-      SensorManager.SENSOR_LIGHT,
-      SensorManager.SENSOR_MAGNETIC_FIELD,
-      SensorManager.SENSOR_PROXIMITY,
-      SensorManager.SENSOR_TEMPERATURE,
-      SensorManager.SENSOR_TRICORDER
+      Sensor.TYPE_ORIENTATION,
+      Sensor.TYPE_LIGHT,
+      Sensor.TYPE_MAGNETIC_FIELD,
+      Sensor.TYPE_PROXIMITY,
+      Sensor.TYPE_TEMPERATURE,
+      Sensor.TYPE_ACCELEROMETER,
+      Sensor.TYPE_PRESSURE,
    };
 
    // constructor
@@ -52,17 +54,17 @@ public class HopPluginSensor extends HopPlugin {
    // instance variables
    SensorManager sensormanager;
    final SensorEventListener[] listeners =
-      new SensorEventListener[ TYPE_TRICORDER + 1 ];
+      new SensorEventListener[ TYPE_PRESSURE + 1 ];
    final Object[] sensors =
-      new Object[ TYPE_TRICORDER + 1 ];
+      new Object[ TYPE_PRESSURE + 1 ];
    final boolean[] activelisteners =
-      new boolean[ TYPE_TRICORDER + 1 ];
+      new boolean[ TYPE_PRESSURE + 1 ];
    final int[] delays =
-      new int[ TYPE_TRICORDER + 1 ];
+      new int[ TYPE_PRESSURE + 1 ];
    final int[] counters =
-      new int[ TYPE_TRICORDER + 1 ];
+      new int[ TYPE_PRESSURE + 1 ];
    final Object[] values =
-      new Object[ TYPE_TRICORDER + 1 ];
+      new Object[ TYPE_PRESSURE + 1 ];
    int ttl = 100;
    
    // utility
@@ -74,11 +76,9 @@ public class HopPluginSensor extends HopPlugin {
    // create the sensor manager and get all the sensors
    private void init_sensormanager() {
       if( sensormanager == null ) {
-	 if( sensormanager == null ) {
-	    sensormanager =
-	       (SensorManager)activity.getSystemService( Context.SENSOR_SERVICE );
-	 }
-	 for( int i = 0; i < TYPE_TRICORDER; i++ ) {
+	 sensormanager =
+	    (SensorManager)activity.getSystemService( Context.SENSOR_SERVICE );
+	 for( int i = 0; i < TYPE_PRESSURE + 1; i++ ) {
 	    sensors[ i ] = sensormanager.getSensorList( SENSORTYPES[ i ] );
 	 }
       }
@@ -91,7 +91,7 @@ public class HopPluginSensor extends HopPlugin {
       switch( ip.read() ) {
 	 case (byte)'x':
 	    // exit
-	    for( int i = 0; i < TYPE_TRICORDER + 1; i++ ) {
+	    for( int i = 0; i < TYPE_PRESSURE + 1; i++ ) {
 	       if( listeners[ i ] != null ) {
 		  sensormanager.unregisterListener( listeners[ i ] );
 	       }
@@ -105,8 +105,9 @@ public class HopPluginSensor extends HopPlugin {
 
 	    synchronized( op ) {
 	       op.write( "(".getBytes() );
-	       for( int j = 0; j < TYPE_TRICORDER; j++ ) {
+	       for( int j = 0; j < TYPE_PRESSURE + 1; j++ ) {
 		  List<Sensor> l = (List<Sensor>)sensors[ j ];
+		  Log.v( "HopPluginSensor", "sensor type=" + j + " number=" + l.size() );
 		  for( int i = 0 ; i < l.size() ; i++ ) {
 		     Sensor s = l.get( i );
 		     op.write( "(".getBytes() );
@@ -143,34 +144,28 @@ public class HopPluginSensor extends HopPlugin {
 		  }
 	       }
 	       op.write( ")".getBytes() );
-	       op.flush();
 	    }
 	    break;
 
 	 case (byte)'b':
 	    init_sensormanager();
 	    final int type = HopAndroid.read_int32( ip );
+	    int delay = SensorManager.SENSOR_DELAY_NORMAL;
+	    
+	    ttl = HopAndroid.read_int32( ip );
+	    
+	    switch( HopAndroid.read_int32( ip ) ) {
+	       case 0: delay = SensorManager.SENSOR_DELAY_NORMAL; break;
+	       case 1: delay = SensorManager.SENSOR_DELAY_UI; break;
+	       case 2: delay = SensorManager.SENSOR_DELAY_GAME; break;
+	       case 3: delay = SensorManager.SENSOR_DELAY_FASTEST; break;
+	    }
 	    
 	    if( ((List<Sensor>)sensors[ type ]).size() > 0 ) {
 	       final Sensor sensor = ((List<Sensor>)sensors[ type ]).get( 0 );
-	       int delay = SensorManager.SENSOR_DELAY_NORMAL;
-	       ttl = HopAndroid.read_int32( ip );
 	    
-	       switch( HopAndroid.read_int32( ip ) ) {
-		  case 0: delay = SensorManager.SENSOR_DELAY_FASTEST; break;
-		  case 1: delay = SensorManager.SENSOR_DELAY_GAME; break;
-		  case 2: delay = SensorManager.SENSOR_DELAY_NORMAL; break;
-		  case 3: delay = SensorManager.SENSOR_DELAY_UI; break;
-	       }
-	    
-	       // create the global sensormanager
-	       if( sensormanager == null ) {
-		  sensormanager =
-		     (SensorManager)activity.getSystemService( Context.SENSOR_SERVICE );
-	       }
-
 	       // add the listener if it is not bound yet
-	       synchronized( listeners ) {
+	       synchronized( activelisteners ) {
 		  if( listeners[ type ] == null ) {
 		     values[ type ] = null;
 		     counters[ type ] = -1;
@@ -191,7 +186,8 @@ public class HopPluginSensor extends HopPlugin {
 				 synchronized( activelisteners ) {
 				    if( activelisteners[ type ] ) {
 				       activelisteners[ type ] = false;
-				       sensormanager.unregisterListener( listeners[ type ], sensor );
+				       Log.d( "HopAndroidSensor", "unregister type=" + type );
+				       sensormanager.unregisterListener( this );
 				    }
 				 }
 			      } else {
@@ -216,7 +212,7 @@ public class HopPluginSensor extends HopPlugin {
 		     synchronized( delays ) {
 			if( delays[ type ] != delay ) {
 			   delays[ type ] = delay;
-			   sensormanager.unregisterListener( listeners[ type ], sensor );
+			   sensormanager.unregisterListener( listeners[ type ] );
 			   sensormanager.registerListener( listeners[ type ], sensor, delay );
 			}
 		     }
@@ -234,10 +230,13 @@ public class HopPluginSensor extends HopPlugin {
 		     if( values[ type ] != null ) {
 			op.write( values_to_sexp( (float [])values[ type ] ) );
 		     } else {
-			op.write( "#f ".getBytes() );
+			op.write( "#f".getBytes() );
 		     }
-		     op.flush();
 		  }
+	       }
+	    } else {
+	       synchronized( op ) {
+		  op.write( "#unspecified".getBytes() );
 	       }
 	    }
 

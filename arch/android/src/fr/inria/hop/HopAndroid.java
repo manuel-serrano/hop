@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Oct 20 10:45:59 2010 (serrano)                */
+/*    Last change :  Wed Oct 20 18:28:04 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -32,6 +32,7 @@ import java.util.*;
 public class HopAndroid extends Thread {
    // static variables
    static Vector plugins = new Vector( 10 );
+   static HopAndroid hopandroid = null;
 
    // instance variables
    Activity activity;
@@ -48,6 +49,8 @@ public class HopAndroid extends Thread {
       activity = a;
       port = p;
       handler = h;
+
+      hopandroid = this;
 
       try {
 	 Log.i( "HopAndroid", "starting servers port=" + p );
@@ -77,6 +80,16 @@ public class HopAndroid extends Thread {
       }
    }
 
+   // kill
+   public void kill() {
+      try {
+	 if( !serv1.isClosed() ) serv1.close();
+	 if( !serv2.isClosed() ) serv2.close();
+      } catch( Exception _ ) {
+	 ;
+      }
+   }
+      
    // run hop
    public void run() {
       if( serv1 != null ) {
@@ -99,12 +112,7 @@ public class HopAndroid extends Thread {
 	 } catch( IOException e ) {
 	    ;
 	 } finally {
-	    try {
-	       serv1.close();
-	       serv2.close();
-	    } catch( IOException e ) {
-	       ;
-	    }
+	    kill();
 	 }
       }
    }
@@ -115,24 +123,21 @@ public class HopAndroid extends Thread {
 	    public void run() {
 	       try {
 		  while( true ) {
-		     final Socket sock = serv2.accept();
+		     final Socket sock2 = serv2.accept();
+		     Log.i( "HopAndroid", "accept2 " + sock2 );
 		     // handle the session in a background thread (normally very
 		     // few of these threads are created so there is no need
 		     // to use a complexe machinery based on thread pool).
 		     new Thread( new Runnable() {
 			   public void run() {
-			      serverEvent( sock );
+			      serverEvent( sock2 );
 			   }
 			} ).start();
 		  }
 	       } catch( IOException e ) {
 		  ;
 	       } finally {
-		  try {
-		     serv1.close();
-		  } catch( IOException e ) {
-		     ;
-		  }
+		  kill();
 	       }
 	    }
 	 } ).start();
@@ -196,37 +201,42 @@ public class HopAndroid extends Thread {
    }
 	    
    // registerEvent
-   private void serverEvent( Socket sock ) {
-      Log.i( "HopAndroid", "serverEvent " + sock );
+   private void serverEvent( Socket sock2 ) {
+      Log.i( "HopAndroid", "serverEvent " + sock2 );
       try {
-	 InputStream ip = sock.getInputStream();
+	 InputStream ip = sock2.getInputStream();
 
 	 while( true ) {
 	    String event = read_string( ip );
 	    int a = ip.read();
-	    Hashtable ht = (Hashtable)eventtable.get( event );
 	    
-	    // a == 1, add an event listener. a == 0, remove listener
-	    if( ht == null ) {
-	       if( a == 1 ) {
-		  ht = new Hashtable( 2 );
-		  ht.put( sock, new Integer( 1 ) );
-		  eventtable.put( event, ht );
-	       }
-	    } else {
-	       Integer i = (Integer)ht.get( sock );
-	       
-	       if( i == null ) {
+	    synchronized( eventtable ) {
+	       Hashtable ht = (Hashtable)eventtable.get( event );
+	    
+	       Log.i( "HopAndroid", (a == 1 ? "register" : "unregister") +
+		      " event [" + event + "]" );
+	       // a == 1, add an event listener. a == 0, remove listener
+	       if( ht == null ) {
 		  if( a == 1 ) {
-		     ht.put( sock, new Integer( 1 ) );
+		     ht = new Hashtable( 2 );
+		     ht.put( sock2, new Integer( 1 ) );
+		     eventtable.put( event, ht );
 		  }
 	       } else {
-		  int ni = i + a == 1 ? 1 : -1;
-		  
-		  if( i == 0 ) {
-		     ht.remove( sock );
+		  Integer i = (Integer)ht.get( sock2 );
+	       
+		  if( i == null ) {
+		     if( a == 1 ) {
+			ht.put( sock2, new Integer( 1 ) );
+		     }
 		  } else {
-		     ht.put( sock, new Integer( ni ) );
+		     int ni = i + a == 1 ? 1 : -1;
+		  
+		     if( i == 0 ) {
+			ht.remove( sock2 );
+		     } else {
+			ht.put( sock2, new Integer( ni ) );
+		     }
 		  }
 	       }
 	    }
@@ -235,34 +245,40 @@ public class HopAndroid extends Thread {
 	 Log.v( "HopAndroid", "Plugin IOException: " + e.getMessage() );
       } finally {
 	 try {
-	    sock.close();
+	    sock2.close();
 	 } catch( IOException _ ) {
 	    ;
 	 }
       }
    }
 
+   static void hopPushEvent( String event, String value ) {
+      hopandroid.pushevent( event, value );
+   }
+   
    // pushEvent
    void pushEvent( String event, String value ) {
-      Hashtable ht = (Hashtable)eventtable.get( event );
-      
-      if( ht != null ) {
-	 Enumeration s = ht.elements();
+      synchronized( eventtable ) {
+	 Hashtable ht = (Hashtable)eventtable.get( event );
 
-	 while( s.hasMoreElements() ) {
-	    Socket sock = (Socket)s.nextElement();
-	    try {
-	       OutputStream op = sock.getOutputStream();
-	       op.write( "\"".getBytes() );
-	       op.write( event.getBytes() );
-	       op.write( "\" ".getBytes() );
-	       op.write( value.getBytes() );
-	       op.write( " ".getBytes() );
-	       op.flush();
-	    } catch( IOException e ) {
-	       Log.e( "HopAndroid", "pushEvent error: "
-		      + sock + " " + e.getMessage() );
-	       ht.remove( sock );
+	 if( ht != null ) {
+	    Enumeration s = ht.keys();
+
+	    while( s.hasMoreElements() ) {
+	       Socket sock = (Socket)s.nextElement();
+	       try {
+		  OutputStream op = sock.getOutputStream();
+		  op.write( "\"".getBytes() );
+		  op.write( event.getBytes() );
+		  op.write( "\" ".getBytes() );
+		  op.write( value.getBytes() );
+		  op.write( " ".getBytes() );
+		  op.flush();
+	       } catch( IOException e ) {
+		  Log.e( "HopAndroid", "pushEvent error: "
+			 + sock + " " + e.getMessage() );
+		  ht.remove( sock );
+	       }
 	    }
 	 }
       }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Wed Oct 20 10:17:45 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 13:27:09 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -152,7 +152,6 @@
 ;*    music-play ::androidmusic ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (music-play o::androidmusic . song)
-   (tprint "MUSIC-PLAY: " song)
    (with-access::androidmusic o (%mutex %open %status phone)
       (with-lock %mutex
 	 (lambda ()

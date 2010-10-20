@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Sun Oct 17 19:27:25 2010 (serrano)                */
+/*    Last change :  Wed Oct 20 18:25:21 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    SMS receiver                                                     */
@@ -15,33 +15,31 @@
 package fr.inria.hop;
  
 import android.content.*;
-import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.telephony.gsm.SmsMessage;
+import android.util.Log;
 
-import android.widget.Toast;
- 
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
 public class HopSms extends BroadcastReceiver {
+   
    @Override public void onReceive( Context context, Intent intent ) {
-      // a new SMS showed up
       Bundle bundle = intent.getExtras();
       SmsMessage[] msgs = null;
-      String str = "";
+      
       if( bundle != null ) {
-	 Object[] pdus = (Object[]) bundle.get( "pdus" );
+	 Object[] pdus = (Object[])bundle.get( "pdus" );
 	 msgs = new SmsMessage[ pdus.length ];
+	 
 	 for( int i = 0; i < msgs.length; i++ ) {
+	    String sms = "(\"";
 	    msgs[ i ] = SmsMessage.createFromPdu( (byte[])pdus[ i ] );
-	    str += "SMS from " + msgs[ i ].getOriginatingAddress();
-	    str += " :";
-	    str += msgs[ i ].getMessageBody().toString();
-	    str += "\n";
+	    sms += msgs[ i ].getOriginatingAddress() + "\" \""
+	       + msgs[ i ].getMessageBody().toString() + "\")";
+	    
+	    hopPushEvent( "sms-received", sms );
 	 }
-	 Toast.makeText( context, str, Toast.LENGTH_SHORT ).show();
       }
    }
 }

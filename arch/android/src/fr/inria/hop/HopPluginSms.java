@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Tue Oct 19 19:11:06 2010 (serrano)                */
+/*    Last change :  Wed Oct 20 11:25:21 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Dealing with SMS                                                 */
@@ -103,11 +103,11 @@ public class HopPluginSms extends HopPlugin {
 	       }, new IntentFilter( DELIVERED ) );
 
 	    if( msg.length() > 10 ) {
-	       Log.v( "HopPluginSms", "sms send to" + no + " \""
+	       Log.v( "HopPluginSms", "sms send to " + no + " \""
 		      + msg.substring( 0, 10 ) 
 		      + "...\"" );
 	    } else {
-	       Log.v( "HopPluginSms", "sms send to" + no + " \""
+	       Log.v( "HopPluginSms", "sms send to " + no + " \""
 		      + msg.substring( 0, msg.length() ) 
 		      + "\"" );
 	    }
