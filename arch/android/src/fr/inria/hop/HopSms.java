@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Wed Oct 20 18:25:21 2010 (serrano)                */
+/*    Last change :  Wed Oct 20 18:47:56 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    SMS receiver                                                     */
@@ -38,7 +38,7 @@ public class HopSms extends BroadcastReceiver {
 	    sms += msgs[ i ].getOriginatingAddress() + "\" \""
 	       + msgs[ i ].getMessageBody().toString() + "\")";
 	    
-	    hopPushEvent( "sms-received", sms );
+	    HopAndroid.hopPushEvent( "sms-received", sms );
 	 }
       }
    }

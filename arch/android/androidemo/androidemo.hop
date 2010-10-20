@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Wed Oct 20 18:25:07 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 19:16:42 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -61,7 +61,7 @@
    #t)
 (add-event-listener! android "sms-received"
    (lambda (e)
-      (hop-event-broadcast! "sms-received" e))
+      (hop-event-broadcast! "sms-received" (event-value e)))
    #t)
 
 ;*---------------------------------------------------------------------*/
@@ -90,8 +90,9 @@ executed by the Web browsers running on the Android device.")
 		   (innerHTML-set! "sms-status" "delivered")))
 	    ~(add-event-listener! "sms-received" "server"
 		(lambda (e)
-		   (innerHTML-set! "sms-no" (car e.value))
-		   (innerHTML-set! "sms-text" (cadr e.value))))
+		   (alert "SMS-RECEIVED: " e.value)
+		   (innerHTML-set! "sms-received-no" (car e.value))
+		   (innerHTML-set! "sms-received-text" (cadr e.value))))
 	    
 	    (<DIV>
 	       (<BUTTON> :onclick ~(with-hop ($(service (no text)
@@ -105,8 +106,8 @@ executed by the Web browsers running on the Android device.")
 	    (<TEXTAREA> :id "smstext" "")
 	    (<DIV> :id "sms-status" ""))
 
-	 (<DIV> :id "sms-received")
-	 (<DI> :id "sms-recevied-no")
+	 (<H3> "Incoming SMS")
+	 (<DIV> "From: " (<SPAN> :id "sms-received-no"))
 	 (<PRE> :id "sms-received-text" "This box will display the content of incoming SMS")
 	 
 	 (<H2> "Hardware")
