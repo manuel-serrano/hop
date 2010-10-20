@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat Oct 16 07:46:59 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 06:24:02 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -54,7 +54,13 @@
 	       (head::pair-nil (default '()))
 	       (tail::pair-nil (default '()))))
 	    
-   (export  (generic add-event-listener! ::obj ::obj ::procedure ::bool)
+   (export  (abstract-class event
+	       (name::bstring read-only)
+	       (target::obj read-only)
+	       (stopped?::bool (default #f)))
+	    (generic add-event-listener! ::obj ::obj ::procedure ::bool)
+	    (generic remove-event-listener! ::obj ::obj ::procedure ::bool)
+	    (generic stop-event-propagation ::event ::bool)
 
 	    (hop-event-init! ::obj)
 	    (hop-event-tables)
@@ -71,6 +77,10 @@
 ;*    that might need to signal asynchronously event to the server.    */
 ;*---------------------------------------------------------------------*/
 (define-generic (add-event-listener! obj::obj event proc capture))
+(define-generic (remove-event-listener! obj::obj event proc capture))
+
+(define-generic (stop-event-propagation event::event default::bool)
+   #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    *event-mutex* ...                                                */

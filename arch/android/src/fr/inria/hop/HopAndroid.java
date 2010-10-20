@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Oct 19 19:12:00 2010 (serrano)                */
+/*    Last change :  Wed Oct 20 05:30:41 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -192,8 +192,8 @@ public class HopAndroid extends Thread {
 	 InputStream ip = sock.getInputStream();
 
 	 while( true ) {
-	    int a = ip.read();
 	    String event = read_string( ip );
+	    int a = ip.read();
 	    Hashtable ht = (Hashtable)eventtable.get( event );
 	    
 	    // a == 1, add an event listener. a == 0, remove listener
