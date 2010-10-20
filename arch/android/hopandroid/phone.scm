@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed Oct 20 06:45:32 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 10:17:20 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -60,7 +60,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::androidphone ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (add-event-listener! o::androidphone event proc capture)
+(define-method (add-event-listener! p::androidphone event proc capture)
    (with-access::androidphone p (host %mutex port2 %socket2 %evthread %evtable)
       (with-lock %mutex
 	 (lambda ()
@@ -82,7 +82,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    remove-event-listener! ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (remove-event-listener! o::androidphone event proc capture)
+(define-method (remove-event-listener! p::androidphone event proc capture)
    (with-access::androidphone p (host %mutex port2 %socket2 %evthread %evtable)
       (with-lock %mutex
 	 (lambda ()
@@ -98,11 +98,11 @@
 ;*    android-event-listener ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (android-event-listener p::androidphone)
-   (with-access::androidphone p (%mutex %socket2 %evtable)
+   (with-access::androidphone p (%mutex %socket2 %evtable %evthread)
       (let ((ip (socket-input %socket2)))
 	 (let loop ()
 	    (let ((name (read ip)))
-	       (unless (eof-object? o)
+	       (unless (eof-object? name)
 		  (let ((args (read ip)))
 		     (with-lock %mutex
 			(lambda ()
@@ -233,7 +233,13 @@
 ;*    send-char ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (send-char b::char op::output-port)
-   (write-byte (char->integer b) op))
+   (send-byte (char->integer b) op))
+
+;*---------------------------------------------------------------------*/
+;*    send-byte ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (send-byte b::byte op::output-port)
+   (write-byte b op))
 
 ;*---------------------------------------------------------------------*/
 ;*    send-vector ...                                                  */

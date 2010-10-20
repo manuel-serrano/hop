@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Tue Oct 19 16:41:03 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 10:17:45 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopandroid-music
    
-   (library multimedia phone)
+   (library multimedia phone hop)
    
    (import __hopandroid-phone)
    

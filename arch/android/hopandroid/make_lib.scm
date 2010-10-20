@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sun Oct 17 19:28:07 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 10:15:03 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOPANDROID heap file.               */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopandroid-makelib
 
-   (library phone multimedia)
+   (library phone multimedia hop)
    
    (import __hopandroid-phone
 	   __hopandroid-music

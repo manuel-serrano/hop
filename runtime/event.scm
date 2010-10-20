@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Oct 20 09:36:45 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 10:12:33 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -59,6 +59,7 @@
 	       (name::bstring read-only)
 	       (target::obj read-only)
 	       (stopped?::bool (default #f)))
+	    
 	    (generic add-event-listener! ::obj ::obj ::procedure ::bool)
 	    (generic remove-event-listener! ::obj ::obj ::procedure ::bool)
 	    (generic stop-event-propagation ::event ::bool)

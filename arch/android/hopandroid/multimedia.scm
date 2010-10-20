@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 14 09:54:12 2010                          */
-;*    Last change :  Tue Oct 19 11:20:31 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 10:19:14 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Access and control multimedia resources of an Android phone      */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopandroid-multimedia
    
-   (library multimedia phone)
+   (library multimedia phone hop)
    
    (import __hopandroid-phone)
 
