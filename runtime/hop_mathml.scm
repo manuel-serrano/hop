@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hop_mathml.scm            */
+;*    serrano/prgm/project/hop/2.2.x/runtime/hop_mathml.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:24:08 2007                          */
-;*    Last change :  Sat Jun 19 06:40:17 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:36:17 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop MATHML support.                                              */
@@ -18,6 +18,7 @@
 
    (import  __hop_param
 	    __hop_types
+	    __hop_xml-types
 	    __hop_xml
 	    __hop_misc
 	    __hop_js-lib

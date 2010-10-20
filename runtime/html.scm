@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/html.scm                  */
+;*    serrano/prgm/project/hop/2.2.x/runtime/html.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Tue May 11 06:16:29 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:27:39 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -17,7 +17,8 @@
    (include "param.sch"
 	    "xml.sch")
 
-   (import  __hop_xml)
+   (import  __hop_xml-types
+	    __hop_xml)
 
    (export  (<A> . ::obj)
 	    (<ABBR> . ::obj)

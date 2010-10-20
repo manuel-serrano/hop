@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Aug 27 07:55:54 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:25:08 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -14,9 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_types
    
-   (import __hop_param)
-
-   (use    __hop_xml)
+   (import __hop_param
+	   __hop_xml-types)
    
    (export (class user
 	      (name::bstring read-only)

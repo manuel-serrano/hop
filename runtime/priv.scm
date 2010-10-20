@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/priv.scm                  */
+;*    serrano/prgm/project/hop/2.2.x/runtime/priv.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 14:41:13 2009                          */
-;*    Last change :  Wed Mar 31 14:51:49 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:16:44 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private tools functions                                          */

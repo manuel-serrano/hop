@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/wiki-toc.scm              */
+;*    serrano/prgm/project/hop/2.2.x/runtime/wiki_toc.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 12 15:53:32 2006                          */
-;*    Last change :  Tue May 11 06:23:58 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:32:36 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki toc                                                         */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_wiki-toc
 
-   (import  __hop_xml
+   (import  __hop_xml-types
 	    __hop_html
 	    __hop_read
 	    __hop_dom)

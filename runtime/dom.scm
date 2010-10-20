@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/dom.scm                   */
+;*    serrano/prgm/project/hop/2.2.x/runtime/dom.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Sat Jun 19 06:17:18 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:28:48 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_dom
 
-   (import __hop_xml
+   (import __hop_xml-types
+	   __hop_xml
 	   __hop_priv)
 
    (export (dom-get-attributes::pair-nil ::obj)
@@ -75,10 +76,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    %xml-constructor ::xml-document ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (%xml-constructor doc::xml-document)
-   (with-access::xml-document doc (body %idtable)
-      (doc-update-idtable! doc body)
-      doc))
+;* (define-method (%xml-constructor doc::xml-document)                 */
+;*    (with-access::xml-document doc (body %idtable)                   */
+;*       (doc-update-idtable! doc body)                                */
+;*       doc))                                                         */
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-element-by-id ...                                        */
@@ -448,7 +449,7 @@
        (duplicate::xml-markup node
 	  (attributes (dom-clone-node (xml-markup-attributes node) deep))
 	  (body (dom-clone-node (xml-markup-body node) deep)))))
-       
+
 ;*---------------------------------------------------------------------*/
 ;*    dom-clone-node ::xml-element ...                                 */
 ;*---------------------------------------------------------------------*/

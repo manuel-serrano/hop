@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Oct 15 16:54:05 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:28:34 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -25,11 +25,11 @@
 	    __hop_css
 	    __hop_charset
 	    __hop_clientc
-	    __hop_hz)
-
-   (use     __hop_types
+	    __hop_hz
+	    __hop_types
+	    __hop_xml-types
 	    __hop_xml)
-   
+
    (export  (loading-file-set! ::obj)
 	    (the-loading-file)
 	    (the-loading-dir)

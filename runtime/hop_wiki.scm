@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hop_wiki.scm              */
+;*    serrano/prgm/project/hop/2.2.x/runtime/hop_wiki.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  6 07:37:32 2006                          */
-;*    Last change :  Sat Jun 19 06:22:34 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:31:59 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The wiki markup                                                  */
@@ -17,6 +17,7 @@
    (include "xml.sch")
 
    (import  __hop_param
+	    __hop_xml-types
 	    __hop_xml
 	    __hop_read
 	    __hop_cache

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Fri Aug 20 12:12:08 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:36:57 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -19,6 +19,7 @@
    (import __hop_configure
 	   __hop_param
 	   __hop_types
+	   __hop_xml-types
 	   __hop_xml
 	   __hop_service
 	   __hop_misc

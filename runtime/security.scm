@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Wed Sep  8 09:01:04 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:37:32 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -22,6 +22,7 @@
 	    __hop_configure
 	    __hop_types
 	    __hop_misc
+	    __hop_xml-types
 	    __hop_xml
 	    __hop_dom
 	    __hop_http-error)

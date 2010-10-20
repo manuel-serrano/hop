@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Fri Sep  3 10:08:28 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:29:12 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -25,15 +25,13 @@
 	    __hop_cache
 	    __hop_configure
 	    __hop_http-error
-	    __hop_xml)
-
-   (use	    __hop_user
-	    __hop_hop
-	    __hop_cgi
-	    __hop_misc
-	    __hop_service
+	    __hop_types
+	    __hop_xml-types
+	    __hop_xml
+	    __hop_param
 	    __hop_mime
-	    __hop_types)
+	    __hop_misc
+	    __hop_user)
 
    (static  (class css-ruleset-unfold
 	       (ruleset+::pair read-only)))

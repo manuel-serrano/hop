@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hop-rss.scm               */
+;*    serrano/prgm/project/hop/2.2.x/runtime/hop_rss.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan  8 08:36:26 2007                          */
-;*    Last change :  Tue May 11 06:25:45 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:35:33 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP RSS bindings                                                 */
@@ -18,6 +18,7 @@
 
    (import  __hop_param
 	    __hop_types
+	    __hop_xml-types
 	    __hop_xml
 	    __hop_misc
 	    __hop_js-lib

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/http-webdav.scm           */
+;*    serrano/prgm/project/hop/2.2.x/runtime/http_webdav.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Tue May 11 06:24:23 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:34:01 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
@@ -28,6 +28,7 @@
 	    __hop_http-response
 	    __hop_user
 	    __hop_misc
+            __hop_xml-types
             __hop_xml
 	    __hop_http-error
 	    __hop_priv)

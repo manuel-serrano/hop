@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Fri Jul  9 15:35:57 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:34:45 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -22,14 +22,15 @@
    (import  __hop_types
 	    __hop_mime
 	    __hop_misc
+	    __hop_priv
 	    __hop_param
 	    __hop_configure
+	    __hop_charset
+	    __hop_xml-types
 	    __hop_xml
 	    __hop_hop
-	    __hop_user
 	    __hop_cache
-	    __hop_charset
-	    __hop_priv
+	    __hop_user
 	    __hop_security)
 
    (export  (<IMG> . ::obj)

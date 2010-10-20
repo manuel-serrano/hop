@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Aug 13 18:28:36 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:26:47 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -20,11 +20,11 @@
 	    "xml.sch")
 
    (import  __hop_types
+	    __hop_xml-types
 	    __hop_mime
 	    __hop_misc
 	    __hop_param
 	    __hop_configure
-	    __hop_css
 	    __hop_clientc
 	    __hop_priv
 	    __hop_read-js
@@ -32,81 +32,7 @@
 
    (use     __hop_js-lib)
 
-   (export  (class xml-backend
-	       (id::symbol read-only)
-	       (mime-type::bstring read-only)
-	       (doctype::bstring read-only)
-	       (header-format::bstring read-only)
-	       (html-attributes::pair-nil read-only (default '()))
-	       (no-end-tags-elements::pair-nil read-only (default '()))
-	       (cdata-start (default #f))
-	       (cdata-stop (default #f))
-	       (css-start (default #f))
-	       (css-stop (default #f))
-	       (meta-format::bstring read-only)
-	       (abbrev-emptyp::bool (default #f))
-	       (security::obj read-only (default #f)))
-
-	    (class security-manager
-	       (name::bstring read-only (default "*"))
-	       (xml-sanitize::procedure read-only (default (lambda (xml) xml)))
-	       (string-sanitize::procedure read-only (default (lambda (s) s)))
-	       (attribute-sanitize::procedure read-only (default (lambda (a i) a)))
-	       (inline-sanitize::procedure read-only (default (lambda (n) n)))
-	       (script-sanitize::procedure read-only (default (lambda (n) n)))
-	       (runtime::pair-nil read-only (default '())))
-
-	    (class xml
-	       (%xml-constructor))
-
-	    (class xml-verbatim::xml
-	       (body::bstring read-only))
-	    
-	    (class css::xml)
-	    
-	    (class xml-if::xml
-	       (test::procedure read-only)
-	       (then read-only)
-	       (otherwise read-only))
-	    
-	    (class xml-delay::xml
-	       (id read-only (default #unspecified))
-	       (thunk::procedure read-only)
-	       (value::obj (default #f)))
-
-	    (class xml-markup::xml
-	       (tag::symbol read-only)
-	       (attributes::pair-nil (default '()))
-	       body::pair-nil)
-
-	    (class xml-html::xml-markup)
-
-	    (class xml-document::xml-markup
-	       (id read-only)
-	       (%idtable read-only (default (make-hashtable))))
-
-	    (class xml-element::xml-markup
-	       (id read-only (default #unspecified))
-	       (parent (default #f)))
-
-	    (class xml-empty-element::xml-element)
-
-	    (class xml-cdata::xml-element)
-	    
-	    (class xml-tilde::xml
-	       (body read-only)
-	       (parent (default #f))
-	       (src read-only (default #f))
-	       (loc read-only (default #f))
-	       (%js-expression (default #f))
-	       (%js-statement (default #f))
-	       (%js-return (default #f))
-	       (%js-attribute (default #f)))
-
-	    (class xml-meta::xml-markup)
-
-	    (generic %xml-constructor ::xml)
-	    (xml-constructor-add! ::symbol ::procedure)
+   (export  (xml-constructor-add! ::symbol ::procedure)
 	    (%make-xml-element ::symbol ::pair-nil)
 
 	    (xml-markup-is? ::obj ::symbol)
@@ -146,25 +72,6 @@
 
 	    (<TILDE> ::obj #!key src loc)
 	    (<DELAY> . ::obj)))
-
-;*---------------------------------------------------------------------*/
-;*    object-print ::xml-element ...                                   */
-;*    -------------------------------------------------------------    */
-;*    Because of their parent slot xml-element are cyclic and cannot   */
-;*    thus be display as is.                                           */
-;*---------------------------------------------------------------------*/
-(define-method (object-print o::xml-element p print-slot)
-   (with-access::xml-element o (tag attributes body id)
-      (display "#|xml-element tag=" p)
-      (print-slot tag p)
-      (display " id=" p)
-      (print-slot id p)
-      (display " parent=..." p)
-      (display " attributes=" p)
-      (print-slot attributes p)
-      (display " body=" p)
-      (print-slot body p)
-      (display "|" p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-javascript-mime-type ...                                     */
@@ -270,12 +177,6 @@
    (if (not (correct-arity? proc 1))
        (error "xml-constructor-add!" "Illegal constructor" proc)
        (hashtable-put! *xml-constructors* id proc)))
-
-;*---------------------------------------------------------------------*/
-;*    %xml-constructor ...                                             */
-;*---------------------------------------------------------------------*/
-(define-generic (%xml-constructor o::xml)
-   o)
 
 ;*---------------------------------------------------------------------*/
 ;*    %xml-constructor ...                                             */

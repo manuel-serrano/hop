@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/wiki-syntax.scm           */
+;*    serrano/prgm/project/hop/2.2.x/runtime/wiki_syntax.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Fri May 21 11:39:35 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:32:13 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -16,7 +16,7 @@
    
    (library web)
    
-   (import  __hop_xml
+   (import  __hop_xml-types
 	    __hop_param
 	    __hop_read
 	    __hop_charset

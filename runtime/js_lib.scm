@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/js_lib.scm                */
+;*    serrano/prgm/project/hop/2.2.x/runtime/js_lib.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Tue Jun 22 18:44:24 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:30:31 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -19,7 +19,7 @@
    (import  __hop_param
 	    __hop_types
 	    __hop_hop-inline
-	    __hop_dom
+	    __hop_xml-types
 	    __hop_xml
 	    __hop_service
 	    __hop_charset

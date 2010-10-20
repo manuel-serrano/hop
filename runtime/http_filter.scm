@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/http-filter.scm           */
+;*    serrano/prgm/project/hop/2.2.x/runtime/http_filter.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Wed Apr  8 14:03:37 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Wed Oct 20 09:34:28 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
 ;*=====================================================================*/
@@ -22,7 +22,7 @@
 	    __hop_configure
 	    __hop_types
 	    __hop_misc
-	    __hop_xml
+	    __hop_xml-types
 	    __hop_http-lib
 	    __hop_http-error
 	    __hop_http-response

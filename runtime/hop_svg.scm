@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/hop_svg.scm               */
+;*    serrano/prgm/project/hop/2.2.x/runtime/hop_svg.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Sat Jun 19 06:22:13 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:36:07 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -20,6 +20,7 @@
    
    (import  __hop_param
 	    __hop_types
+	    __hop_xml-types
 	    __hop_xml
 	    __hop_html
 	    __hop_misc

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Wed Sep  8 09:00:31 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:30:54 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -18,7 +18,7 @@
 	    __hop_types
 	    __hop_hop-inline
 	    __hop_dom
-	    __hop_xml
+	    __hop_xml-types
 	    __hop_service
 	    __hop_charset
 	    __hop_clientc)

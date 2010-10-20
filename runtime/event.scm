@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Oct 20 06:43:31 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:36:45 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -23,6 +23,7 @@
    (import  __hop_param
 	    __hop_types
 	    __hop_user
+	    __hop_xml-types
 	    __hop_xml
 	    __hop_hop-extra
 	    __hop_misc

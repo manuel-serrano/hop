@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/clientc.scm               */
+;*    serrano/prgm/project/hop/2.2.x/runtime/clientc.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Fri Jul  2 07:31:53 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:30:43 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -21,17 +21,14 @@
    
    (import  __hop_read
 	    __hop_param
-	    __hop_cache)
-   
-   (use	    __hop_user
-	    __hop_hop
-	    __hop_cgi
+	    __hop_cache
+	    __hop_types
+	    __hop_xml-types
+	    __hop_xml
 	    __hop_misc
-	    __hop_service
 	    __hop_mime
 	    __hop_types
-	    __hop_http-error
-	    __hop_xml)
+	    __hop_hop)
    
    (export  (class clientc
 	       (filec::procedure read-only)

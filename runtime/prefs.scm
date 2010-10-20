@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/prefs.scm                 */
+;*    serrano/prgm/project/hop/2.2.x/runtime/prefs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Wed Jun 23 05:44:44 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 09:37:10 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -21,6 +21,7 @@
 	    __hop_configure
 	    __hop_types
 	    __hop_misc
+	    __hop_xml-types
 	    __hop_xml
 	    __hop_html
 	    __hop_hop-extra
