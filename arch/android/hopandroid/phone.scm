@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed Oct 20 06:21:25 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 06:45:32 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -26,6 +26,9 @@
 	      (%evthread (default #unspecified))
 	      (%evtable (default #unspecified))
 	      (%mutex::mutex read-only (default (make-mutex))))
+
+	   (class androidevent::event
+	      (args::obj (default #unspecified)))
 
 	   (android-load-plugin::int ::androidphone ::bstring)
 	   (android-send-command ::androidphone ::int . args)
@@ -104,10 +107,14 @@
 		     (with-lock %mutex
 			(lambda ()
 			   (let ((procs (hashtable-get %evtable name))
-				 (event args))
+				 (event (instantiate::androidevent
+					   (name name)
+					   (target p)
+					   (args args))))
 			      (let loop ((procs procs))
 				 (when (pair? procs)
-				    (let ((r ((car procs) event)))
+				    ((car procs) event)
+				    (unless (event-stopped? event)
 				       (loop (cdr procs))))))))))))
 	 (with-lock %mutex
 	    (lambda ()

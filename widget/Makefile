@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.1.x/widget/Makefile                   */
+#*    serrano/prgm/project/hop/2.2.x/widget/Makefile                   */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sun Jun 20 12:15:14 2010 (serrano)                */
+#*    Last change :  Wed Oct 20 06:38:47 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -101,7 +101,18 @@ getsources:
 #*---------------------------------------------------------------------*/
 #*    predistrib                                                       */
 #*---------------------------------------------------------------------*/
-predistrib: $(SOURCES:%.hop=%.scm)
+.PHONY: predistrib predistrib-src predistrib-clean
+
+predistrib:
+	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
+         export LD_LIBRARY_PATH; \
+         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
+         export DYLD_LIBRARY_PATH; \
+         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
+         export PATH; \
+	 $(MAKE) predistrib-src)
+
+predistrib-src: $(SOURCES:%.hop=%.scm)
 
 predistrib-clean:
 	$(RM) -f $(patsubst %.hop,%.scm,$(filter %hop, $(SOURCES)))

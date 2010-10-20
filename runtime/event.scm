@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Oct 20 06:24:02 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 06:43:31 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -80,7 +80,7 @@
 (define-generic (remove-event-listener! obj::obj event proc capture))
 
 (define-generic (stop-event-propagation event::event default::bool)
-   #unspecified)
+   (event-stopped?-set! event #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    *event-mutex* ...                                                */
