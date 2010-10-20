@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun Oct 17 19:15:27 2010 (serrano)                */
+#*    Last change :  Wed Oct 20 11:01:43 2010 (serrano)                */
 #*    Copyright   :  2010 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -27,14 +27,14 @@ ANDROID_JNI = jni/Android.mk jni/termExec.cpp
 
 ANDROID_RES = res/drawable/logo.png \
   res/layout/main.xml \
-  res/preferences.xml \
+  res/xml/preferences.xml \
   res/values/hopstyle.xml res/values/arrays.xml res/values/strings.xml.in
 
 ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java HopUiUtils.java \
   HopExec.java HopLauncher.java \
-  HopAndroid.java HopAndroidMusicPlayer.java HopAndroidVibrator.java \
-  HopAndroidAudioRecorder.java HopAndroidSensor.java HopAndroidSms.java \
-  HopSms.java
+  HopAndroid.java HopPluginInit.java HopPluginMusicPlayer.java \
+  HopPluginVibrate.java HopPluginSensor.java HopPluginSms.java \
+  HopAndroidAudioRecorder.java HopSms.java
 
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */

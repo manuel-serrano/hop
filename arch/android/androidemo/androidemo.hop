@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Tue Oct 19 18:27:30 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 10:58:20 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -58,6 +58,20 @@
       (music-volume-set! amusic (min 100 vol))))
 
 ;*---------------------------------------------------------------------*/
+;*    server listener                                                  */
+;*---------------------------------------------------------------------*/
+(add-event-listener! android "sms-delivered"
+   (lambda (e)
+      (tprint "sms-delivered: " e)
+      (hop-broadcast-event! "sms-delivered" #t))
+   #t)
+(add-event-listener! android "sms-sent"
+   (lambda (e)
+      (tprint "sms-sent: " e)
+      (hop-broadcast-event! "sms-sent" #t))
+   #t)
+
+;*---------------------------------------------------------------------*/
 ;*    androidemo ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-service (androidemo)
@@ -77,15 +91,24 @@ executed by the Web browsers running on the Android device.")
 					    (phone-vibrate android sos-vibrations -1))))
 	    "Vibrate (SOS)")
 	 (<DIV> :id "sms-send"
-	    (<BUTTON> :onclick ~(with-hop ($(service (no text)
-					       (phone-sms-send android no text))
-					    (let ((no (dom-get-element-by-id "smsno")))
-					       no.value)
-					    (let ((txt (dom-get-element-by-id "smstext")))
-					       txt.value)))
-	       "Send SMS")
-	    (<INPUT> :id "smsno")
-	    (<TEXTAREA> :id "smstext" ""))
+	    ~(add-event-listener! "sms-sent" "server"
+		(lambda (e)
+		   (innerHTML-set! "sms-status" "sent")))
+	    ~(add-event-listener! "sms-sent" "server"
+		(lambda (e)
+		   (innerHTML-set! "sms-status" "delivered")))
+	    
+	    (<DIV>
+	       (<BUTTON> :onclick ~(with-hop ($(service (no text)
+						  (phone-sms-send android no text))
+					       (let ((no (dom-get-element-by-id "smsno")))
+						  no.value)
+					       (let ((txt (dom-get-element-by-id "smstext")))
+						  txt.value)))
+		  "Send SMS")
+	       (<INPUT> :id "smsno"))
+	    (<TEXTAREA> :id "smstext" "")
+	    (<DIV> :id "sms-status" ""))
 	 (<H2> "Sensors")
 	 ~(define active-sensors #f)
 	 (<DIV> "Sensor list:")

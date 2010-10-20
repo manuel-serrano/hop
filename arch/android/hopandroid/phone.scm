@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed Oct 20 10:17:20 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 10:59:12 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -60,7 +60,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::androidphone ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (add-event-listener! p::androidphone event proc capture)
+(define-method (add-event-listener! p::androidphone event proc . capture)
    (with-access::androidphone p (host %mutex port2 %socket2 %evthread %evtable)
       (with-lock %mutex
 	 (lambda ()
@@ -82,7 +82,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    remove-event-listener! ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (remove-event-listener! p::androidphone event proc capture)
+(define-method (remove-event-listener! p::androidphone event proc . capture)
    (with-access::androidphone p (host %mutex port2 %socket2 %evthread %evtable)
       (with-lock %mutex
 	 (lambda ()

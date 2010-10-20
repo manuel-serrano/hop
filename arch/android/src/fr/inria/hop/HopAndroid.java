@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Oct 20 05:30:41 2010 (serrano)                */
+/*    Last change :  Wed Oct 20 10:45:59 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -51,8 +51,18 @@ public class HopAndroid extends Thread {
 
       try {
 	 Log.i( "HopAndroid", "starting servers port=" + p );
-	 serv1 = new ServerSocket( p );
-	 serv2 = new ServerSocket( p + 1 );
+	 try {
+	    serv1 = new ServerSocket( p );
+	 } catch( Exception e ) {
+	    Log.e( "HopAndroid", "Cannot start server localhost:" + p );
+	    throw e;
+	 }
+	 try {
+	    serv2 = new ServerSocket( p + 1 );
+	 } catch( Exception e ) {
+	    Log.e( "HopAndroid", "Cannot start server localhost:" + (p + 1) );
+	    throw e;
+	 }
 
 	 // register the initial plugins
 	 registerPlugin( new HopPluginInit( this, activity, "init" ) );

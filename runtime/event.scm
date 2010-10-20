@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Oct 20 10:12:33 2010 (serrano)                */
+;*    Last change :  Wed Oct 20 10:58:51 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -60,8 +60,8 @@
 	       (target::obj read-only)
 	       (stopped?::bool (default #f)))
 	    
-	    (generic add-event-listener! ::obj ::obj ::procedure ::bool)
-	    (generic remove-event-listener! ::obj ::obj ::procedure ::bool)
+	    (generic add-event-listener! ::obj ::obj ::procedure . l)
+	    (generic remove-event-listener! ::obj ::obj ::procedure . l)
 	    (generic stop-event-propagation ::event ::bool)
 
 	    (hop-event-init! ::obj)
@@ -78,8 +78,8 @@
 ;*    server but it acts as a placeholder for future implementations   */
 ;*    that might need to signal asynchronously event to the server.    */
 ;*---------------------------------------------------------------------*/
-(define-generic (add-event-listener! obj::obj event proc capture))
-(define-generic (remove-event-listener! obj::obj event proc capture))
+(define-generic (add-event-listener! obj::obj event proc . capture))
+(define-generic (remove-event-listener! obj::obj event proc . capture))
 
 (define-generic (stop-event-propagation event::event default::bool)
    (event-stopped?-set! event #t))
