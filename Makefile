@@ -112,10 +112,10 @@ changelog:
 #*---------------------------------------------------------------------*/
 install: install-quick install-share install-weblets $(INSTALLSPECIFIC)
 
-install-share:
+install-share: hop-dirs
 	$(MAKE) -C share install
 
-install-weblets:
+install-weblets: hop-dirs
 	$(MAKE) -C weblets install
 
 install-quick: hop-dirs install-init
