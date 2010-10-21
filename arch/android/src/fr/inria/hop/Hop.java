@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Thu Oct 21 19:45:19 2010 (serrano)                */
+/*    Last change :  Thu Oct 21 19:55:53 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -81,6 +81,7 @@ public class Hop extends Thread {
       HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
 
       synchronized( currentpid ) {
+	 Log.i( "Hop", "new hop process start pid=" + pid[ 0 ] );
 	 currentpid[ 0 ] = pid[ 0 ];
       }
 
@@ -91,7 +92,8 @@ public class Hop extends Thread {
 	       Log.i( "Hop", "process exited (pid="
 		      + pid[ 0 ] + ") with result=" + result );
 	       if( result == HOP_RESTART ) {
-		  run();
+		  Log.i( "Hop", "restarting hop..." );
+		  rerun();
 	       } else {
 		  synchronized( currentpid ) {
 		     if( currentpid[ 0 ] == pid[ 0 ] ) {
@@ -118,6 +120,7 @@ public class Hop extends Thread {
 		  }
 	       } catch( Exception e ) {
 		  Log.e( "Hop", "process exception (pid=" + pid[ 0 ]
+			 + " currentpid=" + currentpid[ 0 ] 
 			 + ") exception=" +  e.getClass().getName() );
 		  synchronized( currentpid ) {
 		     if( currentpid[ 0 ] == pid[ 0 ] ) {
@@ -132,6 +135,14 @@ public class Hop extends Thread {
       logger.start();
    }
 
+   // rerun
+   private void rerun() {
+      synchronized( currentpid ) {
+	 currentpid[ 0 ] = 0;
+      }
+      run();
+   }
+   
    // restart
    public void restart() {
       kill();

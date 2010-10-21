@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Oct 21 19:39:07 2010 (serrano)                */
+/*    Last change :  Thu Oct 21 19:47:07 2010 (serrano)                */
 /*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -194,6 +194,7 @@ public class HopLauncher extends Activity {
 
 		     TextView port = (TextView)activity.findViewById( R.id.port );
 		     hop.port = port.getText().toString();
+		     Log.v( "HopLauncher", "starting hop (install)" );
 		     hop.start();
 		     configure();
 		  }
@@ -212,6 +213,7 @@ public class HopLauncher extends Activity {
 	    hopinstaller.start();
 	    installscheduler.start();
 	 } else {
+	    Log.v( "HopLauncher", "starting hop (install)" );
 	    hop.start();
 	    configure();
 	 }
