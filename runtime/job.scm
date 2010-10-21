@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/job.scm                   */
+;*    serrano/prgm/project/hop/2.2.x/runtime/job.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 14 14:53:17 2005                          */
-;*    Last change :  Mon May  4 13:47:13 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Thu Oct 21 19:20:26 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop JOB management                                               */
 ;*=====================================================================*/
@@ -83,7 +83,8 @@
 	     (t (make-thread (lambda () (proc job)) name)))
 	 (set! %thread t)
 	 (set! *jobs-run* (cons job *jobs-run*))
-	 (jobs-dump)
+	 (when (pair? *jobs-queue*)
+	    (jobs-dump))
 	 (thread-cleanup-set! t (lambda (t)
 				   (with-lock *job-mutex*
 				      (lambda ()

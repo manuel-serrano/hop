@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Oct 15 11:35:08 2010 (serrano)                */
+;*    Last change :  Thu Oct 21 19:19:04 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -952,7 +952,7 @@
 ;*    hop-job-file ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-job-file
-   "JOBS.scm")
+   "jobs.hop")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-job-restore ...                                              */
