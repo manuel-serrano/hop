@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../project/hop/2.2.x/arch/android/androidemo/androidemo.hss     */
+/*    .../hop/2.2.x/arch/android/androidvoice/androidvoice.hss         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Mar  2 07:38:26 2010                          */
-/*    Last change :  Fri Oct 22 08:56:30 2010 (serrano)                */
+/*    Last change :  Fri Oct 22 10:00:16 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    POPART css                                                       */
@@ -12,7 +12,7 @@
 /*---------------------------------------------------------------------*/
 /*    The module                                                       */
 /*---------------------------------------------------------------------*/
-$(module androidemo_hss)
+$(module androidvoice_hss)
 
 /*---------------------------------------------------------------------*/
 /*    Global configuration                                             */
@@ -210,21 +210,15 @@ div.short-note {
   font-style: italic;
 }
 
-div.sms-send {
-  margin-top: 1ex;
-}
-
-input#smsno {
-  width: 8em;
-  font-family: monospace;
+div#voicetext {
+  display: inline-block;
+  width: 40em;
+  height: 10ex;
   border: 1px solid black;
-  background: #ffe;
+  border-radius: 5px;
+  padding: 4px;
+  background: #eef;
 }
 
-textarea#smstext {
-  font-size: small;
-  width: 35em;
-  height: 4ex;
-  background: #ffe;
-}
+
   

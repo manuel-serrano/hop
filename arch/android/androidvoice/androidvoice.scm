@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../project/hop/2.2.x/arch/android/androidemo/androidemo.scm     */
+;*    .../hop/2.2.x/arch/android/androidvoice/androidvoice.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr  2 11:16:07 2010                          */
-;*    Last change :  Fri Oct 22 09:44:12 2010 (serrano)                */
+;*    Last change :  Fri Oct 22 09:43:58 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client side part of the AndroidDemo                              */
@@ -12,4 +12,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module androidemo_client)
+(module androidvoice_client)
+
+	   

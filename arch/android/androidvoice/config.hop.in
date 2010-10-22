@@ -1,0 +1,38 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/androidvoice/config.hop.in      */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Apr  2 07:40:38 2010                          */
+;*    Last change :  Fri Apr  2 07:41:12 2010 (serrano)                */
+;*    Copyright   :  2010 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Configuration                                                    */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module androidvoice_config
+   (export (androidvoice-version::bstring)
+	   (androidvoice-date::bstring)
+	   (androidvoice-author::bstring)
+	   (androidvoice-dir::bstring)
+	   (androidvoice-rc-directory::bstring)
+	   
+	   (androidvoice-preferences-edit . obj)
+	   (androidvoice-preferences-save file)))
+
+(define (androidvoice-version)
+   "@VERSION@")
+(define (androidvoice-date)
+   "@DATE@")
+(define (androidvoice-author)
+   "@AUTHOR@")
+
+(define _dir (dirname (the-loading-file)))
+(define (androidvoice-dir)
+   _dir)
+(define (androidvoice-rc-directory)
+   (make-file-name (hop-rc-directory) "androidvoice"))
+
+(define-preferences androidvoice-preferences)

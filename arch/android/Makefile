@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed Oct 20 11:01:43 2010 (serrano)                */
+#*    Last change :  Fri Oct 22 10:38:53 2010 (serrano)                */
 #*    Copyright   :  2010 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -43,7 +43,7 @@ POPULATION = Makefile makeapk.sh \
   $(ANDROID_BUILD) $(ANDROID_JNI) $(ANDROID_RES) \
   $(ANDROID_JAVA:%=src/fr/inria/hop/%) \
 
-POPDIRS = hopandroid androidemo
+POPDIRS = hopandroid androidemo androidvoice
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
@@ -51,13 +51,15 @@ POPDIRS = hopandroid androidemo
 build:
 	$(MAKE) -C hopandroid build
 	$(MAKE) -C androidemo build
+	$(MAKE) -C androidvoice build
 
 install:
 	$(MAKE) -C hopandroid install
 	$(MAKE) install-weblet DIR=androidemo
+	$(MAKE) install-weblet DIR=androidvoice
 
 uninstall:
-	$(MAKE) -C hopandroid uninstall
+	$(MAKE) -C hopandroid androidvoice uninstall
 
 #*---------------------------------------------------------------------*/
 #*    install-weblet                                                   */

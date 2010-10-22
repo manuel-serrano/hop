@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Wed Oct 20 11:25:21 2010 (serrano)                */
+/*    Last change :  Fri Oct 22 10:33:29 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Dealing with SMS                                                 */
@@ -19,7 +19,6 @@ import android.content.*;
 import android.os.Bundle;
 import android.telephony.*;
 import android.util.Log;
-
 
 import java.io.*;
 

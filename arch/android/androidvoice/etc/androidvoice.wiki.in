@@ -1,0 +1,97 @@
+<doc> ANDROIDVOICE -- Android Voice Recognition demonstration
+
+== Description ==
+
+[[/hop/androidvoice|ANDROIDVOICE]] This HOP library provides a new tag
+++<POPART:IMG>++ that apply color filters to images mimicing a //popart//
+like transformation.
+
+
+~~
+,(<TABLE> :class "weblet-facts"
+  (<TR> (<TD> :rowspan 6 :class "logo"
+	   (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png")))
+        (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
+  (<TR> (<TH> "Hop min version") (<TD> "@MINHOP@"))
+  (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
+  (<TR> (<TH> "Date") (<TD> "@DATE@"))
+  (<TR> (<TH> "Category") (<TD> "@CATEGORY@"))
+  (<TR> (<TH> "License") (<TD> "@LICENSE@")))
+
+
+== Synopsis ==
+
+=== Server and Client ===
+
+  (<POPART:IMG> arg ...)
+
+=== Client ===
+
+  (popart-img-src-set! img src [colors])
+
+=== Requirements ===
+
+~~ Server codes using popart must //imports// the module implementing the
+binding and must //include// the client-side library in the HTML documents. 
+This must be done with a module import clause such as:
+
+
+  (module mymodule
+    (import (androidvoice "@DOWNLOAD@")))
+
+  (<HEAD> :include "androidvoice")
+
+
+== Server and Client Definitions ==
+<server>
+<client>
+
+=== ++<POPART:API>++ ===
+<markup> <POPART:API>
+
+<arguments>
+^  arguments   ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| :src         |  string   |  _           | The image source url.       |
+| :colors      |  vector   |              | A color map.                |
+</arguments>
+
+
+~~ Example:
+
+  (<POPART:IMG> :src "http://foo.nowhere.org/foo.jpg"
+     :colors '("#fc1b00" "#7da781" "#ff7a0a"))
+
+
+~~ The ++<POPART:API>++ elements are three colors images. Each pixel of the
+initial image is colorized according to its dominant component.
+</markup>
+
+</client>
+</server>
+
+== Client Definitions ==
+<client>
+
+=== ++(popart-img-src-set! img src [colors])++ ===
+<procedure> popart-img-src-set!
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| img         |  img or string       | the popart image.      |
+| src         |  string              | the new image URL.     |
+| colors      |  #f or list          | an optional list of three colors.    |
+</arguments>
+
+This function changes the content of a popart image.
+
+  * The ++src++ argument is the URL of the new image.
+  * The optional ++colors++ argument can be used to change the colors that
+have been specified when popart element has been created.
+
+</procedure>
+
+</client>
+
+
+</doc>

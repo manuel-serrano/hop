@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Wed Oct 20 19:16:42 2010 (serrano)                */
+;*    Last change :  Fri Oct 22 09:57:53 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -17,13 +17,6 @@
    (import (osm-api_server "osm-api-1.0.*.hz"))
    ~(import (osm-api_client "osm-api-1.0.*.hz"))
    (import androidemo_config))
-
-;*---------------------------------------------------------------------*/
-;*    Local configuration                                              */
-;*---------------------------------------------------------------------*/
-(define _dir (dirname (the-loading-file)))
-(define (androidemo-dir)
-   _dir)
 
 ;*---------------------------------------------------------------------*/
 ;*    Phone descriptor ...                                             */
@@ -107,10 +100,20 @@ executed by the Web browsers running on the Android device.")
 	    (<DIV> :id "sms-status" ""))
 
 	 (<H3> "Incoming SMS")
+	 (<DIV> :class "short-note"
+	    "This demonstrates the ability to the running Hop to react to
+incoming SMS. In that demonstration, when a SMS is received, the server code
+intercepts that message and broadcasts it to clients (i.e., web browsers) that
+display information relative to that message.")
 	 (<DIV> "From: " (<SPAN> :id "sms-received-no"))
 	 (<PRE> :id "sms-received-text" "This box will display the content of incoming SMS")
 	 
 	 (<H2> "Hardware")
+	 (<DIV> :class "short-note"
+	    "This small demonstrations illustrate the ability of the server
+side to use the hardware sensors and activators of the phone. Each time a
+button of this web interface is clicked, the corresponding order is send
+to the server to directly controls the phone.")
 	 (<BUTTON> :onclick ~(with-hop ($(service ()
 					    (phone-vibrate android sos-vibrations -1))))
 	    "Vibrate (SOS)")
@@ -180,6 +183,12 @@ executed by the Web browsers running on the Android device.")
 		    (let ((osm (dom-get-element-by-id "osm")))
 		       (osm-set-center osm p.latitude p.longitude))))))
 	 (<H2> "Multimedia")
+	 (<DIV> :class "short-note"
+	    "This shows that the server side can control the multimedia
+resources of the phone. When the control buttons of the followin music player
+are clicked (for instance the play button below), the corresponding order
+is sent to the server that directly controls the multimedia player of the
+Android phone. This demonstration does not use any HTML5 facility.")
 	 (<AUDIO>
 	    :controls #t
 	    :src "http://www.m-base.org/motherland_pulse_mp3_files/motherland_pulse.mp3"
@@ -189,19 +198,6 @@ executed by the Web browsers running on the Android device.")
 	 (<DIV> :style "font-size: 10px; font-style: italic"
 	    "Thanks to " (<A> :href "http://www.m-base.com" "Steve Coleman")
 	    " for making his music freely available on-line."))))
-
-;*---------------------------------------------------------------------*/
-;*    androidemo/proxy ...                                             */
-;*---------------------------------------------------------------------*/
-(define-service (androidemo/proxy src)
-   (multiple-value-bind (scheme uinfo host port abspath)
-      (http-url-parse src)
-      (instantiate::http-response-remote
-	 (host host)
-	 (port port)
-	 (path abspath)
-	 (header `((Host: . ,host)))
-	 (request (current-request)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:BODY> ...                                            */
