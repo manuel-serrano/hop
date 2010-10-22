@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Fri Oct 22 10:49:07 2010 (serrano)                */
+/*    Last change :  Fri Oct 22 11:35:53 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Voice Recognition for Hop                                        */
@@ -18,10 +18,13 @@ import fr.inria.hop.*;
 
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.speech.RecognizerIntent;
 import android.util.Log;
+import android.content.Intent;
 
 import java.io.*;
+import java.util.List;
 
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
@@ -34,8 +37,8 @@ public class HopPluginVoice extends HopPlugin {
       PackageManager pm;
       List<ResolveInfo> activities;
       
-      pm = getPackageManager();
-      actitivies = pm.queryIntentActivities(
+      pm = hopandroid.getPackageManager();
+      List<ResolveInfo> actitivies = pm.queryIntentActivities(
 	 new Intent( RecognizerIntent.ACTION_RECOGNIZE_SPEECH ), 0 );
       voiceRecognitionEnabled = (activities.size() != 0);
       
@@ -57,7 +60,7 @@ public class HopPluginVoice extends HopPlugin {
 	    if( voiceRecognitionEnabled ) {
 	       op.write( "#f".getBytes() );
 	    } else {
-	       startVoiceRecognitionActivity();
+	       hopandroid.startVoiceRecognitionActivity();
 	       op.write( "#t".getBytes() );
 	    }
 	    return;
@@ -94,14 +97,8 @@ class HopPluginVoiceActivity extends Activity {
        
         if( requestCode == VOICE_RECOGNITION_REQUEST_CODE
 	    && resultCode == RESULT_OK ) {
-	   String[] matches = data.getStringExtra(
-	      RecognizerIntent.EXTRA_RESULTS );
-	   String s = "";
-
-	   for( int i = 0; i < matches.length(); i++ ) {
-	      s += "\"" + matches[ i ] + "\"";
-	   }
-	      
+	   String s = data.getStringExtra( RecognizerIntent.EXTRA_RESULTS );
+	   
 	   handroid.pushEvent( "voice", "(" + s + ")" );
         }
 
