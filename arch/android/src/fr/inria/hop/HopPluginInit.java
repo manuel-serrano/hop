@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:44:16 2010                          */
-/*    Last change :  Wed Oct 20 05:15:27 2010 (serrano)                */
+/*    Last change :  Fri Oct 22 14:37:42 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The initial plugin that allows plugin installation               */
@@ -16,6 +16,8 @@ package fr.inria.hop;
 
 import android.app.*;
 import android.util.Log;
+
+import dalvik.system.*;
 
 import java.lang.*;
 import java.io.*;
@@ -51,7 +53,16 @@ public class HopPluginInit extends HopPlugin {
       if( id < 0 ) {
 	 // we don't have loaded that plugin yet
 	 try {
-	    Class clazz = HopAndroid.class.getClassLoader().loadClass( name );
+	    int i = name.lastIndexOf( '/', 0 );
+	    int j = name.lastIndexOf( '.', i < 0 ? 0 : i);
+	    String cname = name.substring( i < 0 ? 0 : i,
+					   j < 0 ? name.length() : j );
+	    Log.v( "HopPluginInit", "Loading dex file: " + name );
+	    DexClassLoader dexLoader = new DexClassLoader(
+	       name, "/tmp", null, HopAndroid.class.getClassLoader() );
+	    Log.v( "HopPluginInit", "Loading class: " + cname );
+	    Class<?> clazz = dexLoader.loadClass( cname );
+	    
 	    Constructor constr = clazz.getConstructor( classes );
 	    Object[] args = { activity, name };
 	    HopPlugin p = (HopPlugin)constr.newInstance( args );
