@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Fri Oct 22 11:35:53 2010 (serrano)                */
+/*    Last change :  Fri Oct 22 11:44:57 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Voice Recognition for Hop                                        */
@@ -37,7 +37,7 @@ public class HopPluginVoice extends HopPlugin {
       PackageManager pm;
       List<ResolveInfo> activities;
       
-      pm = hopandroid.getPackageManager();
+      pm = activity.getPackageManager();
       List<ResolveInfo> actitivies = pm.queryIntentActivities(
 	 new Intent( RecognizerIntent.ACTION_RECOGNIZE_SPEECH ), 0 );
       voiceRecognitionEnabled = (activities.size() != 0);
@@ -51,7 +51,7 @@ public class HopPluginVoice extends HopPlugin {
    }
 
    // server
-   protected void server( final InputStream ip, final OutputStream op )
+   void server( final InputStream ip, final OutputStream op )
       throws IOException {
       
       switch( ip.read() ) {
@@ -60,13 +60,12 @@ public class HopPluginVoice extends HopPlugin {
 	    if( voiceRecognitionEnabled ) {
 	       op.write( "#f".getBytes() );
 	    } else {
-	       hopandroid.startVoiceRecognitionActivity();
+	       activity.startVoiceRecognitionActivity();
 	       op.write( "#t".getBytes() );
 	    }
 	    return;
       }
    }
-
 }
 
 

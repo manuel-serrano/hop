@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Tue Oct 19 19:06:59 2010 (serrano)                */
+/*    Last change :  Fri Oct 22 11:44:39 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
@@ -22,8 +22,8 @@ import java.io.*;
 /*---------------------------------------------------------------------*/
 public abstract class HopPlugin {
    // instance variables
-   HopAndroid handroid;
-   Activity activity;
+   public HopAndroid handroid;
+   public Activity activity;
    public String name;
 
    HopPlugin( HopAndroid h, Activity a, String n ) {

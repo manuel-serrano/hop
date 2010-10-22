@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Oct 22 11:28:59 2010 (serrano)                */
+#*    Last change :  Fri Oct 22 11:40:32 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Generic Makefile to build Hop weblets.                           */
@@ -53,5 +53,5 @@ include ../../../etc/Makefile.weblet
 #*    Compiling the Java file                                          */
 #*---------------------------------------------------------------------*/
 etc/HopPluginVoice.dex: etc/HopPluginVoice.java
-	(cd etc && javac -classpath $(BUILDDIR)/arch/android/src -classpath $(DROIDROOT)/out/target/common/obj/JAVA_LIBRARIES/android_stubs_current_intermediates/classes HopPluginVoice.java)
+	(cd etc && javac -classpath $(BUILDDIR)/arch/android/src:$(DROIDROOT)/out/target/common/obj/JAVA_LIBRARIES/android_stubs_current_intermediates/classes HopPluginVoice.java)
 
