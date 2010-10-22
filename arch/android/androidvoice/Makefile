@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Oct 22 10:55:52 2010 (serrano)                */
+#*    Last change :  Fri Oct 22 11:28:59 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Generic Makefile to build Hop weblets.                           */
@@ -34,8 +34,7 @@ POPULATION = Makefile androidvoice.hss androidvoice.scm \
 #*---------------------------------------------------------------------*/
 #*    Targets                                                          */
 #*---------------------------------------------------------------------*/
-build: etc/weblet.info etc/$(HZ).wiki config.hop .afile \
-  etc/HopPluginVoice.dex
+build: etc/HopPluginVoice.dex etc/weblet.info etc/$(HZ).wiki config.hop .afile
 
 clean:
 
@@ -48,10 +47,11 @@ distclean:
 -include ../../../etc/Makefile.hopconfig
 -include ../../../etc/Makefile.version
 include ../../../etc/Makefile.weblet
+-include $(BIGLOOLIBDIR)/Makefile.config
 
 #*---------------------------------------------------------------------*/
 #*    Compiling the Java file                                          */
 #*---------------------------------------------------------------------*/
 etc/HopPluginVoice.dex: etc/HopPluginVoice.java
-	java -classpath etc:$(BUILDDIR)/arch/android/src:$(DROIDROOT)/out/target/common/obj/JAVA_LIBRARIES/android_stubs_current_intermediates/classes
+	(cd etc && javac -classpath $(BUILDDIR)/arch/android/src -classpath $(DROIDROOT)/out/target/common/obj/JAVA_LIBRARIES/android_stubs_current_intermediates/classes HopPluginVoice.java)
 
