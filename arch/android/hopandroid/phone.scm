@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Fri Oct 22 14:35:21 2010 (serrano)                */
+;*    Last change :  Sat Oct 23 11:14:19 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -86,7 +86,8 @@
       (with-lock %mutex
 	 (lambda ()
 	    (when (hashtable? %evtable)
-	       (hashtable-update! %evtable event delete! '()))
+	       (hashtable-update! %evtable event
+				  (lambda (l) (remq! proc l)) '()))
 	    (when (socket? %socket2)
 	       (let ((op (socket-output %socket2)))
 		  (send-string event op)

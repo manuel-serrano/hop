@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Sat Oct 23 07:53:25 2010 (serrano)                */
+/*    Last change :  Sat Oct 23 11:02:48 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -288,7 +288,7 @@ public class HopAndroid extends Thread {
    }
    
    // read_int32
-   protected static int read_int32( InputStream ip ) throws IOException {
+   public static int read_int32( InputStream ip ) throws IOException {
       int b0 = ip.read();
       int b1 = ip.read();
       int b2 = ip.read();
@@ -298,7 +298,7 @@ public class HopAndroid extends Thread {
    }
 
    // read_int64
-   protected static long read_int64( InputStream ip ) throws IOException {
+   public static long read_int64( InputStream ip ) throws IOException {
       int i0 = read_int32( ip );
       int i1 = read_int32( ip );
 
@@ -306,7 +306,7 @@ public class HopAndroid extends Thread {
    }
 
    // read_string
-   protected static String read_string( InputStream ip ) throws IOException {
+   public static String read_string( InputStream ip ) throws IOException {
       int sz = read_int32( ip );
       byte[] buf = new byte[ sz ];
 

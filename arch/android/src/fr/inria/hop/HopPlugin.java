@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Sat Oct 23 08:09:42 2010 (serrano)                */
+/*    Last change :  Sat Oct 23 10:43:33 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
@@ -15,14 +15,18 @@
 package fr.inria.hop;
 
 import android.app.*;
+import android.content.Intent;
+
 import java.io.*;
+import java.lang.*;
+import java.util.*;
 
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
 public abstract class HopPlugin {
    // static variables
-   static private key = 1000;
+   static private int key = 1000;
    static private Hashtable atable = new Hashtable();
    
    // instance variables
@@ -42,11 +46,11 @@ public abstract class HopPlugin {
    // onActivityResult (called by HopLauncher)
    static public void onActivityResult( int key, int result, Intent intent ) {
       synchronized( atable ) {
-	 HopPlugin p = (HopPlug)atable.get( key );
+	 HopPlugin p = (HopPlugin)atable.get( key );
 
 	 if( p != null ) {
-	    atable.delete( p );
-	    p.onHopActivityresult( result, intent );
+	    atable.remove( key );
+	    p.onHopActivityResult( result, intent );
 	 }
       }
    }
@@ -59,16 +63,16 @@ public abstract class HopPlugin {
    }
    
    // startHopActivityForResult
-   void startHopActivityForResult( Intent intent ) {
+   public void startHopActivityForResult( Intent intent ) {
       int key = getKey();
-      activity.startActivityForResult( key, Intent intent );
+      activity.startActivityForResult( intent, key );
       synchronized( atable ) {
 	 atable.put( key, this );
       }
    }
 
    // onHopActivityResult (super method of plugins)
-   public void onHopActivityResult( result, intent ) {
+   public void onHopActivityResult( int result, Intent intent ) {
       ;
    }
 }

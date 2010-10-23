@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sat Oct 23 07:49:08 2010 (serrano)                */
+/*    Last change :  Sat Oct 23 10:06:25 2010 (serrano)                */
 /*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -309,7 +309,7 @@ public class HopLauncher extends Activity {
    }
 
    protected void onActivityResult( int reqcode, int rescode, Intent intent ) {
-      hopandroid.onActivityResult( reqcode, rescode, intent );
+      HopPlugin.onActivityResult( reqcode, rescode, intent );
       super.onActivityResult( reqcode, rescode, intent );
    }
 }
