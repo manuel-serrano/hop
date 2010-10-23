@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Thu Oct 21 19:55:53 2010 (serrano)                */
+/*    Last change :  Sat Oct 23 07:42:38 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -95,10 +95,15 @@ public class Hop extends Thread {
 		  Log.i( "Hop", "restarting hop..." );
 		  rerun();
 	       } else {
+		  boolean tosend = false;
+		  
 		  synchronized( currentpid ) {
 		     if( currentpid[ 0 ] == pid[ 0 ] ) {
-			handler.sendEmptyMessage( HopLauncher.MSG_PROC_END );
+			tosend = true;
 		     }
+		  }
+		  if( tosend ) {
+		     handler.sendEmptyMessage( HopLauncher.MSG_PROC_END );
 		  }
 	       };
 	    }
@@ -119,13 +124,19 @@ public class Hop extends Thread {
 		     handler.sendEmptyMessage( HopLauncher.MSG_OUTPUT_AVAILABLE );
 		  }
 	       } catch( Exception e ) {
+		  boolean tosend = false;
+		  
 		  Log.e( "Hop", "process exception (pid=" + pid[ 0 ]
 			 + " currentpid=" + currentpid[ 0 ] 
 			 + ") exception=" +  e.getClass().getName() );
 		  synchronized( currentpid ) {
 		     if( currentpid[ 0 ] == pid[ 0 ] ) {
-			handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_RUN_FAIL, e ) );
+			tosend = true;
 		     }
+		  }
+
+		  if( tosend ) {
+		     handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_RUN_FAIL, e ) );
 		  }
 	       }
 	    }
@@ -151,13 +162,15 @@ public class Hop extends Thread {
    
    // kill
    public void kill() {
+      Log.v( "Hop", "killing..." );
       synchronized( currentpid ) {
 	 if( currentpid[ 0 ] != 0 ) {
 	    Log.i( "Hop", "kill (pid=" + currentpid[ 0 ] + ")" );
 	    android.os.Process.killProcess( currentpid[ 0 ] );
+	    currentpid[ 0 ] = 0;
 	 }
-	 currentpid[ 0 ] = 0;
       }
+      Log.v( "Hop", "killed." );
    }
 }
    

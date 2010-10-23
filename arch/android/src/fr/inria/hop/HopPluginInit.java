@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:44:16 2010                          */
-/*    Last change :  Fri Oct 22 14:37:42 2010 (serrano)                */
+/*    Last change :  Fri Oct 22 17:20:09 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The initial plugin that allows plugin installation               */
@@ -15,6 +15,7 @@
 package fr.inria.hop;
 
 import android.app.*;
+import android.os.*;
 import android.util.Log;
 
 import dalvik.system.*;
@@ -52,41 +53,52 @@ public class HopPluginInit extends HopPlugin {
 
       if( id < 0 ) {
 	 // we don't have loaded that plugin yet
+	 int i = name.lastIndexOf( '/' );
+	 int j = name.lastIndexOf( '.' );
+	 String cname = "fr.inria.hop."
+	    + name.substring( (i < 0 ? 0 : i + 1), (j < i ? name.length() : j) );
+		 
+	 String tmp =
+	    Environment.getExternalStorageDirectory().getAbsolutePath() + "/tmp";
+	    
 	 try {
-	    int i = name.lastIndexOf( '/', 0 );
-	    int j = name.lastIndexOf( '.', i < 0 ? 0 : i);
-	    String cname = name.substring( i < 0 ? 0 : i,
-					   j < 0 ? name.length() : j );
-	    Log.v( "HopPluginInit", "Loading dex file: " + name );
 	    DexClassLoader dexLoader = new DexClassLoader(
-	       name, "/tmp", null, HopAndroid.class.getClassLoader() );
-	    Log.v( "HopPluginInit", "Loading class: " + cname );
+	       name, tmp, null, HopAndroid.class.getClassLoader() );
+	    Log.v( "HopPluginInit", "Loading class \"" + cname + "\""
+		   + " from JAR file \"" + name + "\"" );
 	    Class<?> clazz = dexLoader.loadClass( cname );
 	    
 	    Constructor constr = clazz.getConstructor( classes );
-	    Object[] args = { activity, name };
+	    Object[] args = { handroid, activity, name };
 	    HopPlugin p = (HopPlugin)constr.newInstance( args );
 
 	    id = HopAndroid.registerPlugin( p );
 	 } catch( ClassNotFoundException e ) {
+	    Log.e( "HopPlugInit", "Class Not Found: " + cname );
 	    op.write( "-2".getBytes() );
 	    return;
 	 } catch( NoSuchMethodException e ) {
+	    Log.e( "HopPlugInit", "No such method: " + cname );
 	    op.write( "-3".getBytes() );
 	    return;
 	 } catch( SecurityException e ) {
+	    Log.e( "HopPlugInit", "Security exception: " + cname );
 	    op.write( "-4".getBytes() );
 	    return;
 	 } catch( InstantiationException e ) {
+	    Log.e( "HopPlugInit", "Instantiate exception: " + cname );
 	    op.write( "-5".getBytes() );
 	    return;
 	 } catch( IllegalAccessException e ) {
+	    Log.e( "HopPlugInit", "Illegal access: " + cname );
 	    op.write( "-6".getBytes() );
 	    return;
 	 } catch( IllegalArgumentException e ) {
+	    Log.e( "HopPlugInit", "Illegal argument: " + cname );
 	    op.write( "-7".getBytes() );
 	    return;
 	 } catch( InvocationTargetException e ) {
+	    Log.e( "HopPlugInit", "Invocation target exception: " + cname );
 	    op.write( "-8".getBytes() );
 	    return;
 	 }

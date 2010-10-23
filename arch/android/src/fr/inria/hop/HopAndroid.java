@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Fri Oct 22 11:57:56 2010 (serrano)                */
+/*    Last change :  Sat Oct 23 07:53:25 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -186,6 +186,8 @@ public class HopAndroid extends Thread {
 	       op.flush();
 	    } catch( ArrayIndexOutOfBoundsException _ ) {
 	       Log.e( "HopAndroid", "plugin not found: " + id );
+	       // we got an eof, escape from here
+	       if( id == -1 ) return;
 	       ;
 	    }
 	 }
@@ -252,6 +254,7 @@ public class HopAndroid extends Thread {
       }
    }
 
+   // hopPushEvent
    static void hopPushEvent( String event, String value ) {
       hopandroid.pushEvent( event, value );
    }

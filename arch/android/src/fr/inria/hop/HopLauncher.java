@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Oct 21 19:47:07 2010 (serrano)                */
+/*    Last change :  Sat Oct 23 07:49:08 2010 (serrano)                */
 /*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -278,6 +278,20 @@ public class HopLauncher extends Activity {
       }
    }
    
+   public void setupHostname() {
+      TextView hostname = (TextView)activity.findViewById( R.id.hostname );
+      TextView hostip = (TextView)activity.findViewById( R.id.hostip );
+      
+      try {
+	 InetAddress addr = java.net.InetAddress.getLocalHost();
+	 hostname.append( addr.getCanonicalHostName() );
+	 hostip.append( addr.getHostAddress() );
+      } catch( Exception _ ) {
+	 hostname.append( "" );
+	 hostip.append( "" );
+      }
+   }
+   
    public void onStart() {
       super.onStart();
 
@@ -294,17 +308,8 @@ public class HopLauncher extends Activity {
       super.onDestroy();
    }
 
-   public void setupHostname() {
-      TextView hostname = (TextView)activity.findViewById( R.id.hostname );
-      TextView hostip = (TextView)activity.findViewById( R.id.hostip );
-      
-      try {
-	 InetAddress addr = java.net.InetAddress.getLocalHost();
-	 hostname.append( addr.getCanonicalHostName() );
-	 hostip.append( addr.getHostAddress() );
-      } catch( Exception _ ) {
-	 hostname.append( "" );
-	 hostip.append( "" );
-      }
+   protected void onActivityResult( int reqcode, int rescode, Intent intent ) {
+      hopandroid.onActivityResult( reqcode, rescode, intent );
+      super.onActivityResult( reqcode, rescode, intent );
    }
 }
