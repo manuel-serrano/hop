@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Fri Oct 22 12:03:46 2010 (serrano)                */
+#*    Last change :  Sun Oct 24 08:12:00 2010 (serrano)                */
 #*    Copyright   :  2010 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -43,7 +43,7 @@ POPULATION = Makefile makeapk.sh \
   $(ANDROID_BUILD) $(ANDROID_JNI) $(ANDROID_RES) \
   $(ANDROID_JAVA:%=src/fr/inria/hop/%) \
 
-POPDIRS = hopandroid androidemo
+POPDIRS = hopdroid androidemo
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */

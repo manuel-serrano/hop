@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Fri Oct 22 09:57:53 2010 (serrano)                */
+;*    Last change :  Sun Oct 24 08:13:09 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -13,7 +13,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module androidemo
-   (library phone hopandroid)
+   (library phone hopdroid)
    (import (osm-api_server "osm-api-1.0.*.hz"))
    ~(import (osm-api_client "osm-api-1.0.*.hz"))
    (import androidemo_config))

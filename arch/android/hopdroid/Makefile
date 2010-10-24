@@ -1,12 +1,12 @@
 #*=====================================================================*/
-#*    .../prgm/project/hop/2.2.x/arch/android/hopandroid/Makefile      */
+#*    .../prgm/project/hop/2.2.x/arch/android/hopdroid/Makefile        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Wed Oct 20 10:36:19 2010 (serrano)                */
+#*    Last change :  Sun Oct 24 08:12:40 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
-#*    The Makefile to build the hopandroid library.                    */
+#*    The Makefile to build the hopdroid library.                      */
 #*=====================================================================*/
 .PHONY: do
 
@@ -23,15 +23,15 @@ do: build
 #*    Compilers, Tools and Destinations                                */
 #*---------------------------------------------------------------------*/
 # the library name
-TARGETNAME = hopandroid
+TARGETNAME = hopdroid
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
   -lbigloophone_s-$(RELEASE) -lbigloomultimedia_s-$(RELEASE) \
   -lhop_s-$(HOPRELEASE) 
 HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
   -lbigloophone_u-$(RELEASE) -lbigloomultimedia_u-$(RELEASE) \
   -lhop_u-$(HOPRELEASE)
-HOPCLOSELIBS_ES = -lhopandroid_s-$(HOPRELEASE)
-HOPCLOSELIBS_EU = -lhopandroid_u-$(HOPRELEASE)
+HOPCLOSELIBS_ES = -lhopdroid_s-$(HOPRELEASE)
+HOPCLOSELIBS_EU = -lhopdroid_u-$(HOPRELEASE)
 
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
