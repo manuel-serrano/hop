@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:44:16 2010                          */
-/*    Last change :  Sat Oct 23 12:10:08 2010 (serrano)                */
+/*    Last change :  Mon Oct 25 10:16:11 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The initial plugin that allows plugin installation               */
@@ -30,11 +30,11 @@ import java.lang.reflect.*;
 public class HopPluginInit extends HopPlugin {
    final Class[] classes = new Class[ 3 ];
    
-   HopPluginInit( HopAndroid h, Activity a, String n ) throws ClassNotFoundException {
+   HopPluginInit( HopDroid h, Activity a, String n ) throws ClassNotFoundException {
       super( h, a, n );
 
       try {
-	 classes[ 0 ] = Class.forName( "fr.inria.hop.HopAndroid" );
+	 classes[ 0 ] = Class.forName( "fr.inria.hop.HopDroid" );
 	 classes[ 1 ] = Class.forName( "android.app.Activity" );
 	 classes[ 2 ] = Class.forName( "java.lang.String" );
       } catch( ClassNotFoundException e ) {
@@ -46,10 +46,8 @@ public class HopPluginInit extends HopPlugin {
    
    // static variables
    void server( InputStream ip, OutputStream op ) throws IOException {
-      String name = HopAndroid.read_string( ip );
-      int id = HopAndroid.getPlugin( name );
-
-      Log.v( "HopPluginInit", "name=" + name + " id=" + id );
+      String name = HopDroid.read_string( ip );
+      int id = HopDroid.getPlugin( name );
 
       if( id < 0 ) {
 	 // we don't have loaded that plugin yet
@@ -63,7 +61,7 @@ public class HopPluginInit extends HopPlugin {
 	    
 	 try {
 	    DexClassLoader dexLoader = new DexClassLoader(
-	       name, tmp, null, HopAndroid.class.getClassLoader() );
+	       name, tmp, null, HopDroid.class.getClassLoader() );
 	    Log.v( "HopPluginInit", "Loading class \"" + cname + "\""
 		   + " from JAR file \"" + name + "\"" );
 	    Class<?> clazz = dexLoader.loadClass( cname );
@@ -72,7 +70,7 @@ public class HopPluginInit extends HopPlugin {
 	    Object[] args = { handroid, activity, name };
 	    HopPlugin p = (HopPlugin)constr.newInstance( args );
 
-	    id = HopAndroid.registerPlugin( p );
+	    id = HopDroid.registerPlugin( p );
 	 } catch( ClassNotFoundException e ) {
 	    Log.e( "HopPlugInit", "Class Not Found: " + cname );
 	    op.write( "-2".getBytes() );

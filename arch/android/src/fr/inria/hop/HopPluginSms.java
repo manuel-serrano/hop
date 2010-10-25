@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Fri Oct 22 10:33:29 2010 (serrano)                */
+/*    Last change :  Mon Oct 25 10:17:23 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Dealing with SMS                                                 */
@@ -30,7 +30,7 @@ public class HopPluginSms extends HopPlugin {
    final static String DELIVERED = "SMS_DELIVERED";
  
    // constructor
-   public HopPluginSms( HopAndroid h, Activity a, String n ) {
+   public HopPluginSms( HopDroid h, Activity a, String n ) {
       super( h, a, n );
    }
 
@@ -47,8 +47,8 @@ public class HopPluginSms extends HopPlugin {
 	       activity, 0, new Intent( DELIVERED ), 0 );
  
 	    SmsManager sms = SmsManager.getDefault();
-	    String no = HopAndroid.read_string( ip );
-	    String msg = HopAndroid.read_string( ip );
+	    String no = HopDroid.read_string( ip );
+	    String msg = HopDroid.read_string( ip );
 
 	    // the SMS has been sent
 	    activity.registerReceiver( new BroadcastReceiver() {

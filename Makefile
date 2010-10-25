@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Oct 19 19:16:12 2010 (serrano)                */
+#*    Last change :  Mon Oct 25 10:34:38 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -169,8 +169,8 @@ hop-dirs:
         fi
 
 install-android: hop-dirs
-	$(INSTALL) $(BUILDLIBDIR)/hopandroid.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopandroid.init && \
-        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopandroid.init;
+	$(INSTALL) $(BUILDLIBDIR)/hopdroid.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopdroid.init && \
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopdroid.init;
 	$(MAKE) -C arch/android install
 
 #*---------------------------------------------------------------------*/

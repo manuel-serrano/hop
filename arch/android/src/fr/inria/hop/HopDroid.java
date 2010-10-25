@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../hop/2.2.x/arch/android/src/fr/inria/hop/HopAndroid.java      */
+/*    .../hop/2.2.x/arch/android/src/fr/inria/hop/HopDroid.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Sat Oct 23 11:02:48 2010 (serrano)                */
+/*    Last change :  Mon Oct 25 10:13:21 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -29,10 +29,10 @@ import java.util.*;
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
-public class HopAndroid extends Thread {
+public class HopDroid extends Thread {
    // static variables
    static Vector plugins = new Vector( 10 );
-   static HopAndroid hopandroid = null;
+   static HopDroid hopdroid = null;
 
    // instance variables
    Activity activity;
@@ -43,27 +43,27 @@ public class HopAndroid extends Thread {
    final Hashtable eventtable = new Hashtable();
    
    // constructor
-   public HopAndroid( Activity a, int p, Handler h ) {
+   public HopDroid( Activity a, int p, Handler h ) {
       super();
 
       activity = a;
       port = p;
       handler = h;
 
-      hopandroid = this;
+      hopdroid = this;
 
       try {
-	 Log.i( "HopAndroid", "starting servers port=" + p );
+	 Log.i( "HopDroid", "starting servers port=" + p );
 	 try {
 	    serv1 = new ServerSocket( p );
 	 } catch( Exception e ) {
-	    Log.e( "HopAndroid", "Cannot start server localhost:" + p );
+	    Log.e( "HopDroid", "Cannot start server localhost:" + p );
 	    throw e;
 	 }
 	 try {
 	    serv2 = new ServerSocket( p + 1 );
 	 } catch( Exception e ) {
-	    Log.e( "HopAndroid", "Cannot start server localhost:" + (p + 1) );
+	    Log.e( "HopDroid", "Cannot start server localhost:" + (p + 1) );
 	    throw e;
 	 }
 
@@ -74,9 +74,9 @@ public class HopAndroid extends Thread {
 	 registerPlugin( new HopPluginMusicPlayer( this, activity, "musicplayer" ) );
 	 registerPlugin( new HopPluginSms( this, activity, "sms" ) );
       } catch( Exception e ) {
-	 Log.v( "HopAndroid", "server error" + e.toString() + " exception=" +
+	 Log.v( "HopDroid", "server error" + e.toString() + " exception=" +
 	    e.getClass().getName() );
-	 handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_HOPANDROID_FAIL, e ) );
+	 handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_HOPDROID_FAIL, e ) );
       }
    }
 
@@ -93,13 +93,13 @@ public class HopAndroid extends Thread {
    // run hop
    public void run() {
       if( serv1 != null ) {
-	 Log.i( "HopAndroid", "run" );
+	 Log.i( "HopDroid", "run" );
 	 runPushEvent();
 	 try {
 	    while( true ) {
 	       final Socket sock = serv1.accept();
 
-	       Log.i( "HopAndroid", "accept" + sock );
+	       Log.i( "HopDroid", "accept" + sock );
 	       // handle the session in a background thread (normally very
 	       // few of these threads are created so there is no need
 	       // to use a complexe machinery based on thread pool).
@@ -124,7 +124,7 @@ public class HopAndroid extends Thread {
 	       try {
 		  while( true ) {
 		     final Socket sock2 = serv2.accept();
-		     Log.i( "HopAndroid", "accept2 " + sock2 );
+		     Log.i( "HopDroid", "accept2 " + sock2 );
 		     // handle the session in a background thread (normally very
 		     // few of these threads are created so there is no need
 		     // to use a complexe machinery based on thread pool).
@@ -167,9 +167,9 @@ public class HopAndroid extends Thread {
       }
    }
    
-   // handle a session with one client connected to the HopAndroid server
+   // handle a session with one client connected to the HopDroid server
    private void server( Socket sock ) {
-      Log.i( "HopAndroid", "server " + sock );
+      Log.i( "HopDroid", "server " + sock );
       try {
 	 InputStream ip = sock.getInputStream();
 	 OutputStream op = sock.getOutputStream();
@@ -185,14 +185,14 @@ public class HopAndroid extends Thread {
 	       op.write( " ".getBytes() );
 	       op.flush();
 	    } catch( ArrayIndexOutOfBoundsException _ ) {
-	       Log.e( "HopAndroid", "plugin not found: " + id );
+	       Log.e( "HopDroid", "plugin not found: " + id );
 	       // we got an eof, escape from here
 	       if( id == -1 ) return;
 	       ;
 	    }
 	 }
       } catch( IOException e ) {
-	 Log.v( "HopAndroid", "Plugin IOException: " + e.getMessage() );
+	 Log.v( "HopDroid", "Plugin IOException: " + e.getMessage() );
       } finally {
 	 try {
 	    sock.close();
@@ -204,7 +204,7 @@ public class HopAndroid extends Thread {
 	    
    // registerEvent
    private void serverEvent( Socket sock2 ) {
-      Log.i( "HopAndroid", "serverEvent " + sock2 );
+      Log.i( "HopDroid", "serverEvent " + sock2 );
       try {
 	 InputStream ip = sock2.getInputStream();
 
@@ -215,7 +215,7 @@ public class HopAndroid extends Thread {
 	    synchronized( eventtable ) {
 	       Hashtable ht = (Hashtable)eventtable.get( event );
 	    
-	       Log.i( "HopAndroid", (a == 1 ? "register" : "unregister") +
+	       Log.i( "HopDroid", (a == 1 ? "register" : "unregister") +
 		      " event [" + event + "]" );
 	       // a == 1, add an event listener. a == 0, remove listener
 	       if( ht == null ) {
@@ -244,7 +244,7 @@ public class HopAndroid extends Thread {
 	    }
 	 }
       } catch( IOException e ) {
-	 Log.v( "HopAndroid", "Plugin IOException: " + e.getMessage() );
+	 Log.v( "HopDroid", "Plugin IOException: " + e.getMessage() );
       } finally {
 	 try {
 	    sock2.close();
@@ -256,7 +256,7 @@ public class HopAndroid extends Thread {
 
    // hopPushEvent
    static void hopPushEvent( String event, String value ) {
-      hopandroid.pushEvent( event, value );
+      hopdroid.pushEvent( event, value );
    }
    
    // pushEvent
@@ -278,7 +278,7 @@ public class HopAndroid extends Thread {
 		  op.write( " ".getBytes() );
 		  op.flush();
 	       } catch( IOException e ) {
-		  Log.e( "HopAndroid", "pushEvent error: "
+		  Log.e( "HopDroid", "pushEvent error: "
 			 + sock + " " + e.getMessage() );
 		  ht.remove( sock );
 	       }

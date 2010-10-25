@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Mon Oct 25 09:59:05 2010 (serrano)                */
+/*    Last change :  Mon Oct 25 10:15:51 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -30,7 +30,7 @@ import java.util.*;
 public class HopPluginContact extends HopPlugin {
    
    // constructor
-   HopPluginContact( HopAndroid h, Activity a, String n ) {
+   HopPluginContact( HopDroid h, Activity a, String n ) {
       super( h, a, n );
    }
 
@@ -51,21 +51,19 @@ public class HopPluginContact extends HopPlugin {
       Cursor cur = managedQuery( uri, null, null, null, null );
 
       if( cur.moveToFirst() ) {
-        String name; 
-        String phoneNumber; 
-        int nameColumn = cur.getColumnIndex(People.NAME); 
-        int phoneColumn = cur.getColumnIndex(People.NUMBER);
-        String imagePath; 
-    
+	 op.write( "(".getBytes() );
         do {
-            // Get the field values
-            name = cur.getString(nameColumn);
-            phoneNumber = cur.getString(phoneColumn);
-           
-            // Do something with the values. 
-            ... 
-
+	   op.write( "(".getBytes() );
+	   for( int = 0; i < cur.getColumnCount(); i++ ) {
+	      op.write( "(\"".getBytes() );
+	      op.write( cur.getColumnName( i ).getBytes() );
+	      op.write( "\" \"".getBytes() );
+	      op.write( cur.getColumnString( i ).getBytes() );
+	      op.write( "\")".getBytes() );
+	   }
+	   op.write( ")\n".getBytes() );
         } while( cur.moveToNext() );
+	 op.write( ")".getBytes() );
       } else {
 	 op.write( "()".getBytes() );
       }

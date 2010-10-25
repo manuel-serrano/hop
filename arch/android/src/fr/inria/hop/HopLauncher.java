@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sat Oct 23 10:06:25 2010 (serrano)                */
+/*    Last change :  Mon Oct 25 10:14:59 2010 (serrano)                */
 /*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -39,7 +39,7 @@ public class HopLauncher extends Activity {
    public static final int MSG_RUN_FAIL = 6;
    public static final int MSG_CONFIGURE = 7;
    public static final int MSG_RESTART = 8;
-   public static final int MSG_HOPANDROID_FAIL = 9;
+   public static final int MSG_HOPDROID_FAIL = 9;
 
    // instance variables
    boolean infinish = false;
@@ -102,8 +102,8 @@ public class HopLauncher extends Activity {
 		     progress.setMessage( "Configuring..." );
 		     break;
 
-		  case MSG_HOPANDROID_FAIL:
-		     HopUiUtils.fail( hop.activity, "HopAndroid", "failed", (Exception)msg.obj );
+		  case MSG_HOPDROID_FAIL:
+		     HopUiUtils.fail( hop.activity, "Hopdroid", "failed", (Exception)msg.obj );
 		     break;
 
 		  default:
@@ -112,7 +112,7 @@ public class HopLauncher extends Activity {
 	 }
       };
    final Hop hop = new Hop( activity, queue, handler );
-   final HopAndroid hopandroid = new HopAndroid( activity, 8081, handler );
+   final HopDroid hopdroid = new HopDroid( activity, 8081, handler );
 
    @Override public void onCreate( Bundle bundle ) {
       super.onCreate( bundle );
@@ -218,7 +218,7 @@ public class HopLauncher extends Activity {
 	    configure();
 	 }
 
-	 hopandroid.start();
+	 hopdroid.start();
       } catch( Exception e ) {
 	 HopUiUtils.fail( activity, "HopLauncher", " failed", e );
       }

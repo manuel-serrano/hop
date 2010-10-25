@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 11:11:23 2010                          */
-/*    Last change :  Wed Oct 20 17:45:34 2010 (serrano)                */
+/*    Last change :  Mon Oct 25 10:17:07 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Dealing with the sensors available on the phone.                 */
@@ -47,7 +47,7 @@ public class HopPluginSensor extends HopPlugin {
    };
 
    // constructor
-   HopPluginSensor( HopAndroid h, Activity a, String n ) {
+   HopPluginSensor( HopDroid h, Activity a, String n ) {
       super( h, a, n );
    }
 
@@ -149,12 +149,12 @@ public class HopPluginSensor extends HopPlugin {
 
 	 case (byte)'b':
 	    init_sensormanager();
-	    final int type = HopAndroid.read_int32( ip );
+	    final int type = HopDroid.read_int32( ip );
 	    int delay = SensorManager.SENSOR_DELAY_NORMAL;
 	    
-	    ttl = HopAndroid.read_int32( ip );
+	    ttl = HopDroid.read_int32( ip );
 	    
-	    switch( HopAndroid.read_int32( ip ) ) {
+	    switch( HopDroid.read_int32( ip ) ) {
 	       case 0: delay = SensorManager.SENSOR_DELAY_NORMAL; break;
 	       case 1: delay = SensorManager.SENSOR_DELAY_UI; break;
 	       case 2: delay = SensorManager.SENSOR_DELAY_GAME; break;
@@ -170,7 +170,7 @@ public class HopPluginSensor extends HopPlugin {
 		     values[ type ] = null;
 		     counters[ type ] = -1;
 
-		     Log.d( "HopAndroidSensor", "installing sensor listener: " + type );
+		     Log.d( "HopDroidSensor", "installing sensor listener: " + type );
 		     listeners[ type ] = new SensorEventListener() {
 			   public void onSensorChanged( SensorEvent event ) {
 			      boolean drop;
@@ -181,12 +181,12 @@ public class HopPluginSensor extends HopPlugin {
 
 			      if( drop ) {
 				 // we have dropped ten values, get rid of that listener
-				 Log.d( "HopAndroidSensor", "dropping...sensor=" + event.sensor.getName()
+				 Log.d( "HopDroidSensor", "dropping...sensor=" + event.sensor.getName()
 					+ " type=" + type );
 				 synchronized( activelisteners ) {
 				    if( activelisteners[ type ] ) {
 				       activelisteners[ type ] = false;
-				       Log.d( "HopAndroidSensor", "unregister type=" + type );
+				       Log.d( "HopDroidSensor", "unregister type=" + type );
 				       sensormanager.unregisterListener( this );
 				    }
 				 }

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:47:19 2010                          */
-/*    Last change :  Tue Oct 19 19:07:25 2010 (serrano)                */
+/*    Last change :  Mon Oct 25 10:17:41 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Vibrator                                                 */
@@ -31,7 +31,7 @@ public class HopPluginVibrate extends HopPlugin {
    Vibrator vibrator = null;
    
    // constructor
-   HopPluginVibrate( HopAndroid h, Activity a, String n ) {
+   HopPluginVibrate( HopDroid h, Activity a, String n ) {
       super( h, a, n );
    }
 
@@ -57,7 +57,7 @@ public class HopPluginVibrate extends HopPlugin {
 
 	 case (byte) 'b':
 	    // vibrate
-	    long ms = HopAndroid.read_int64( ip );
+	    long ms = HopDroid.read_int64( ip );
 	    
 	    if( vibrator == null ) vibrator = make_vibrator();
 	    
@@ -65,12 +65,12 @@ public class HopPluginVibrate extends HopPlugin {
 	    
 	 case (byte) 'p':
 	    // pattern vibrate
-	    int sz = HopAndroid.read_int32( ip );
+	    int sz = HopDroid.read_int32( ip );
 	    long[] vibs = new long[ sz ];
 	    for( int i = 0; i < sz; i++ ) {
-	       vibs[ i ] = HopAndroid.read_int64( ip );
+	       vibs[ i ] = HopDroid.read_int64( ip );
 	    }
-	    int repeat = HopAndroid.read_int32( ip );
+	    int repeat = HopDroid.read_int32( ip );
 	    
 	    if( vibrator == null ) vibrator = make_vibrator();
 	    

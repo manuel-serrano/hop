@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 25 09:16:32 2010                          */
-;*    Last change :  Mon Oct 25 09:20:15 2010 (serrano)                */
+;*    Last change :  Mon Oct 25 10:10:59 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android contact binding                                          */
@@ -21,7 +21,14 @@
    (export (concat-get-list::pair-nil ::phone)))
 
 ;*---------------------------------------------------------------------*/
+;*    Contact plugin                                                   */
+;*---------------------------------------------------------------------*/
+(define contact-plugin #f)
+
+;*---------------------------------------------------------------------*/
 ;*    concat-get-list ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (concat-get-list p::phone)
+   (unless contact-plugin
+      (set! contact-plugin (android-load-plugin p "contact")))
    '())
