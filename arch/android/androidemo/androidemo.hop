@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Mon Oct 25 11:39:43 2010 (serrano)                */
+;*    Last change :  Mon Oct 25 18:47:19 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -262,12 +262,14 @@ display information relative to that message.")
 ;*    <ANDROIDEMO:CONTACT> ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (<ANDROIDEMO:CONTACT>)
-   (<TABLE>
-      (map (lambda (l)
-	      (<TR> (map (lambda (row)
-			    (<TD> (apply list row))))
-		    l))
-	   (contact-get-list android))))
+   (map (lambda (l)
+	   (<DIV> (map (lambda (row)
+			  (<TABLE>
+			     (map (lambda (v)
+				     (<TR> (<TH> (car v)) (<TD> (cadr v))))
+				  row)))
+		       l)))
+	(contact-get-list android)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:MULTIMEDIA> ...                                      */

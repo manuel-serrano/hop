@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Mon Oct 25 11:50:06 2010 (serrano)                */
+;*    Last change :  Mon Oct 25 19:17:18 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -130,7 +130,7 @@
 (define (android-load-plugin p::androidphone name)
    (with-lock android-plugin-mutex
       (lambda ()
-	 (hop-verb 2 "Loading android plugin \"" name "\"\n")
+	 (hop-verb 2 "Loading android plugin \"" name "\"...\n")
 	 (let ((n (android-send-command/result p 0 name)))
 	    (if (>=fx n 0)
 		n

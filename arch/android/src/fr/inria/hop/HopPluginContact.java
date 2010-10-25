@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Mon Oct 25 10:53:37 2010 (serrano)                */
+/*    Last change :  Mon Oct 25 14:12:08 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -54,17 +54,20 @@ public class HopPluginContact extends HopPlugin {
 
       if( cur.moveToFirst() ) {
 	 op.write( "(".getBytes() );
-        do {
-	   op.write( "(".getBytes() );
-	   for( int i = 0; i < cur.getColumnCount(); i++ ) {
-	      op.write( "(\"".getBytes() );
-	      op.write( cur.getColumnName( i ).getBytes() );
-	      op.write( "\" \"".getBytes() );
-	      op.write( cur.getString( i ).getBytes() );
-	      op.write( "\")".getBytes() );
-	   }
-	   op.write( ")\n".getBytes() );
-        } while( cur.moveToNext() );
+	 do {
+	    op.write( "(".getBytes() );
+	    for( int i = 0; i < cur.getColumnCount(); i++ ) {
+	       if( cur.getString( i ) != null ) {
+		  Log.v( "HopPluginContact", "i=" + i + " name=" + cur.getColumnName( i ) );
+		  op.write( "(\"".getBytes() );
+		  op.write( cur.getColumnName( i ).getBytes() );
+		  op.write( "\" \"".getBytes() );
+		  op.write( cur.getString( i ).getBytes() );
+		  op.write( "\")".getBytes() );
+	       }
+	    }
+	    op.write( ")\n".getBytes() );
+	 } while( cur.moveToNext() );
 	 op.write( ")".getBytes() );
       } else {
 	 op.write( "()".getBytes() );
