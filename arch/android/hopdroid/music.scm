@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.2.x/arch/android/hopandroid/music.scm     */
+;*    .../prgm/project/hop/2.2.x/arch/android/hopdroid/music.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Wed Oct 20 13:27:09 2010 (serrano)                */
+;*    Last change :  Mon Oct 25 09:17:03 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -12,11 +12,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hopandroid-music
+(module __hopdroid-music
    
    (library multimedia phone hop)
    
-   (import __hopandroid-phone)
+   (import __hopdroid-phone)
    
    (export (class androidmusic::music
 	      (phone::androidphone read-only)

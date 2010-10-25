@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.2.x/arch/android/hopandroid/phone.scm     */
+;*    .../prgm/project/hop/2.2.x/arch/android/hopdroid/phone.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Sat Oct 23 11:14:19 2010 (serrano)                */
+;*    Last change :  Mon Oct 25 09:16:51 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -12,7 +12,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hopandroid-phone
+(module __hopdroid-phone
 
    (library phone pthread hop)
 

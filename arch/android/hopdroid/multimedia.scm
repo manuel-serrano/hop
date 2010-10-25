@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../project/hop/2.2.x/arch/android/hopandroid/multimedia.scm     */
+;*    .../project/hop/2.2.x/arch/android/hopdroid/multimedia.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 14 09:54:12 2010                          */
-;*    Last change :  Wed Oct 20 10:19:14 2010 (serrano)                */
+;*    Last change :  Mon Oct 25 09:17:29 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Access and control multimedia resources of an Android phone      */
@@ -12,11 +12,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hopandroid-multimedia
+(module __hopdroid-multimedia
    
    (library multimedia phone hop)
    
-   (import __hopandroid-phone)
+   (import __hopdroid-phone)
 
    (export (audio-record-close phone)
 	   (audio-record-start phone path #!optional (quality 0))

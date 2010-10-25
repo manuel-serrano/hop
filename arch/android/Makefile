@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun Oct 24 08:12:00 2010 (serrano)                */
+#*    Last change :  Mon Oct 25 09:18:27 2010 (serrano)                */
 #*    Copyright   :  2010 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -49,15 +49,15 @@ POPDIRS = hopdroid androidemo
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
 build:
-	$(MAKE) -C hopandroid build
+	$(MAKE) -C hopdroid build
 	$(MAKE) -C androidemo build
 
 install:
-	$(MAKE) -C hopandroid install
+	$(MAKE) -C hopdroid install
 	$(MAKE) install-weblet DIR=androidemo
 
 uninstall:
-	$(MAKE) -C hopandroid uninstall
+	$(MAKE) -C hopdroid uninstall
 
 #*---------------------------------------------------------------------*/
 #*    install-weblet                                                   */
