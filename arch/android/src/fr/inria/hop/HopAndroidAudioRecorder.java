@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 09:43:58 2010                          */
-/*    Last change :  Thu Oct 14 10:30:45 2010 (serrano)                */
+/*    Last change :  Mon Oct 25 10:48:13 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Use the embedded microphone                                      */
@@ -68,7 +68,7 @@ public class HopAndroidAudioRecorder {
 	       recorder = make_recorder();
 	    }
 
-	    String path = HopAndroid.read_string( ip );
+	    String path = HopDroid.read_string( ip );
 	    int quality = ip.read();
 
 	    // get the quality

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Mon Oct 25 09:17:43 2010 (serrano)                */
+;*    Last change :  Mon Oct 25 11:50:21 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOPDROID heap file.                 */
@@ -18,7 +18,8 @@
    
    (import __hopdroid-phone
 	   __hopdroid-music
-	   __hopdroid-multimedia)
+	   __hopdroid-multimedia
+	   __hopdroid-contact)
 
    (eval   (export-all)
 	   (class androidphone)

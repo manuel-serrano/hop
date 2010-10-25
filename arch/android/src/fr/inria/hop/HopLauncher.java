@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Mon Oct 25 10:14:59 2010 (serrano)                */
+/*    Last change :  Mon Oct 25 12:07:24 2010 (serrano)                */
 /*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -305,6 +305,7 @@ public class HopLauncher extends Activity {
    public void onDestroy() {
       Log.i( "HopLauncher", "onDestroy" );
       hop.kill();
+      hopdroid.kill();
       super.onDestroy();
    }
 

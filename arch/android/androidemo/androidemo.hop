@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Sun Oct 24 08:13:09 2010 (serrano)                */
+;*    Last change :  Mon Oct 25 11:39:43 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -46,16 +46,13 @@
 ;*---------------------------------------------------------------------*/
 (add-event-listener! android "sms-delivered"
    (lambda (e)
-      (hop-event-broadcast! "sms-delivered" #t))
-   #t)
+      (hop-event-broadcast! "sms-delivered" #t)))
 (add-event-listener! android "sms-sent"
    (lambda (e)
-      (hop-event-broadcast! "sms-sent" #t))
-   #t)
+      (hop-event-broadcast! "sms-sent" #t)))
 (add-event-listener! android "sms-received"
    (lambda (e)
-      (hop-event-broadcast! "sms-received" (event-value e)))
-   #t)
+      (hop-event-broadcast! "sms-received" (event-value e))))
 
 ;*---------------------------------------------------------------------*/
 ;*    androidemo ...                                                   */
@@ -72,41 +69,9 @@
 	    "To better understand the purpose of these
 demonstrations it is adviced to run them from a PC, although they can be
 executed by the Web browsers running on the Android device.")
-	 (<H2> "Telephony")
 	 
-	 (<DIV> :id "sms-send"
-	    ~(add-event-listener! "sms-sent" "server"
-		(lambda (e)
-		   (innerHTML-set! "sms-status" "sent")))
-	    ~(add-event-listener! "sms-delivered" "server"
-		(lambda (e)
-		   (innerHTML-set! "sms-status" "delivered")))
-	    ~(add-event-listener! "sms-received" "server"
-		(lambda (e)
-		   (alert "SMS-RECEIVED: " e.value)
-		   (innerHTML-set! "sms-received-no" (car e.value))
-		   (innerHTML-set! "sms-received-text" (cadr e.value))))
-	    
-	    (<DIV>
-	       (<BUTTON> :onclick ~(with-hop ($(service (no text)
-						  (phone-sms-send android no text))
-					       (let ((no (dom-get-element-by-id "smsno")))
-						  no.value)
-					       (let ((txt (dom-get-element-by-id "smstext")))
-						  txt.value)))
-		  "Send SMS")
-	       (<INPUT> :id "smsno"))
-	    (<TEXTAREA> :id "smstext" "")
-	    (<DIV> :id "sms-status" ""))
-
-	 (<H3> "Incoming SMS")
-	 (<DIV> :class "short-note"
-	    "This demonstrates the ability to the running Hop to react to
-incoming SMS. In that demonstration, when a SMS is received, the server code
-intercepts that message and broadcasts it to clients (i.e., web browsers) that
-display information relative to that message.")
-	 (<DIV> "From: " (<SPAN> :id "sms-received-no"))
-	 (<PRE> :id "sms-received-text" "This box will display the content of incoming SMS")
+	 (<H2> "Telephony")
+;* 	 (<ANDROIDEMO:TELEPHONY>)                                      */
 	 
 	 (<H2> "Hardware")
 	 (<DIV> :class "short-note"
@@ -114,74 +79,12 @@ display information relative to that message.")
 side to use the hardware sensors and activators of the phone. Each time a
 button of this web interface is clicked, the corresponding order is send
 to the server to directly controls the phone.")
-	 (<BUTTON> :onclick ~(with-hop ($(service ()
-					    (phone-vibrate android sos-vibrations -1))))
-	    "Vibrate (SOS)")
-	 ~(define active-sensors #f)
-	 (<DIV> "Sensor list:")
-	 (<PRE> (map (lambda (l)
-			(with-output-to-string
-			   (lambda ()
-			      (write l)
-			      (newline))))
-		     (phone-sensor-list android)))
-	 (<BUTTON> :onclick ~(if active-sensors
-				 (begin
-				    (innerHTML-set! this "Activate sensors")
-				    (set! active-sensors #f))
-				 (let ((osm (dom-get-element-by-id "osm"))
-				       (2PI (* 4 (atan 1))))
-				    (innerHTML-set! this "Deactive sensors")
-				    (set! active-sensors #t)
-				    (let loop ()
-				       (with-hop ($(service ()
-						      (let ((mag (phone-sensor android 'magnetic-field))
-							    (ori (phone-sensor android 'orientation)))
-							 (list (cons 'orientation
-								     ori)
-							       (cons 'magnetic
-								     mag)
-							       (cons 'accelerometer
-								     (phone-sensor android 'accelerometer))
-							       (cons 'temperature
-								     (phone-sensor android 'temperature))
-							       (cons 'light
-								     (phone-sensor android 'light))
-							       (cons 'pressure
-								     (phone-sensor android 'pressure))
-							       (cons 'proximity
-								     (phone-sensor android 'proximity))))))
-					  (lambda (l)
-					     (let ((ori (cdar l)))
-						(when (pair? ori)
-						   (let ((r (format "rotate(-~adeg)" (car ori))))
-						      (innerHTML-set! "ori" r)
-						      (node-style-set! "osm" :MozTransform r))))
-					     (innerHTML-set!
-					      "sensors"
-					      (<TABLE> (map (lambda (r)
-							       (<TR>
-								  (<TD> (symbol->string (car r)))
-								  (<TD> (if (pair? (cdr r))
-									    (<TT> (map (lambda (v)
-											  (list v " " ))
-										       (cdr r)))
-									    ""))))
-							    l)))
-					     (when active-sensors
-						(after 200 loop)))))))
-	    "Activate sensors")
-	 (<DIV> :id "sensors")
-	 (<DIV> :id "ori")
-	 (<OSM:MAP> :id "osm"
-	    :style "width: 300px; height: 300px; border: 1px solid red"
-	    :latitude 43.619779 :longitude 7.049575)
-	 ~(navigator.geolocation.getCurrentPosition
-	   (lambda (p)
-	      (add-event-listener! window "ready"
-		 (lambda (e)
-		    (let ((osm (dom-get-element-by-id "osm")))
-		       (osm-set-center osm p.latitude p.longitude))))))
+;* 	 (<ANDROIDEMO:HARDWARE>)                                       */
+	 
+	 (<H2> "Contact")
+	 (<DIV> :class "short-note"
+	    (<ANDROIDEMO:CONTACT>))
+	 
 	 (<H2> "Multimedia")
 	 (<DIV> :class "short-note"
 	    "This shows that the server side can control the multimedia
@@ -189,15 +92,27 @@ resources of the phone. When the control buttons of the followin music player
 are clicked (for instance the play button below), the corresponding order
 is sent to the server that directly controls the multimedia player of the
 Android phone. This demonstration does not use any HTML5 facility.")
-	 (<AUDIO>
-	    :controls #t
-	    :src "http://www.m-base.org/motherland_pulse_mp3_files/motherland_pulse.mp3"
-	    :browser 'none
-	    :server (instantiate::audio-server
-		       (music amusic)))
-	 (<DIV> :style "font-size: 10px; font-style: italic"
-	    "Thanks to " (<A> :href "http://www.m-base.com" "Steve Coleman")
-	    " for making his music freely available on-line."))))
+;* 	 (<ANDROIDEMO:MULTIMEDIA>)                                     */
+	 )))
+
+;*---------------------------------------------------------------------*/
+;*    androidemo/sensors ...                                           */
+;*---------------------------------------------------------------------*/
+(define-service (androidemo/sensors)
+   (list (cons 'orientation
+	       (phone-sensor android 'orientation))
+	 (cons 'magnetic
+	       (phone-sensor android 'magnetic-field))
+	 (cons 'accelerometer
+	       (phone-sensor android 'accelerometer))
+	 (cons 'temperature
+	       (phone-sensor android 'temperature))
+	 (cons 'light
+	       (phone-sensor android 'light))
+	 (cons 'pressure
+	       (phone-sensor android 'pressure))
+	 (cons 'proximity
+	       (phone-sensor android 'proximity))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:BODY> ...                                            */
@@ -233,6 +148,142 @@ Android phone. This demonstration does not use any HTML5 facility.")
 		     (<TR> (<TD> :class "body" body)))))))
       (<FOOT>)))
 
+;*---------------------------------------------------------------------*/
+;*    <ANDROIDEMO:TELEPHONY> ...                                       */
+;*---------------------------------------------------------------------*/
+(define (<ANDROIDEMO:TELEPHONY>)
+   (list
+    (<DIV> :id "sms-send"
+       ~(add-event-listener! "sms-sent" "server"
+	   (lambda (e)
+	      (innerHTML-set! "sms-status" "sent")))
+       ~(add-event-listener! "sms-delivered" "server"
+	   (lambda (e)
+	      (innerHTML-set! "sms-status" "delivered")))
+       ~(add-event-listener! "sms-received" "server"
+	   (lambda (e)
+	      (alert "SMS-RECEIVED: " e.value)
+	      (innerHTML-set! "sms-received-no" (car e.value))
+	      (innerHTML-set! "sms-received-text" (cadr e.value))))
+       
+       (<DIV>
+	  (<BUTTON> :onclick ~(with-hop ($(service (no text)
+					     (phone-sms-send android no text))
+					  (let ((no (dom-get-element-by-id "smsno")))
+					     no.value)
+					  (let ((txt (dom-get-element-by-id "smstext")))
+					     txt.value)))
+	     "Send SMS")
+	  (<INPUT> :id "smsno"))
+       (<TEXTAREA> :id "smstext" "")
+       (<DIV> :id "sms-status" ""))
+    (<H3> "Incoming SMS")
+    (<DIV> :class "short-note"
+       "This demonstrates the ability to the running Hop to react to
+incoming SMS. In that demonstration, when a SMS is received, the server code
+intercepts that message and broadcasts it to clients (i.e., web browsers) that
+display information relative to that message.")
+    (<DIV> "From: " (<SPAN> :id "sms-received-no"))
+    (<PRE> :id "sms-received-text" "This box will display the content of incoming SMS")))
+
+;*---------------------------------------------------------------------*/
+;*    <ANDROIDEMO:HARDWARE> ...                                        */
+;*---------------------------------------------------------------------*/
+(define (<ANDROIDEMO:HARDWARE>)
+   (list
+    (<BUTTON> :onclick ~(with-hop ($(service ()
+				       (phone-vibrate android sos-vibrations -1))))
+       "Vibrate (SOS)")
+    (<ANDROIDEMO:SENSORS>)))
+
+;*---------------------------------------------------------------------*/
+;*    <ANDROIDEMO:SENSORS> ...                                         */
+;*---------------------------------------------------------------------*/
+(define (<ANDROIDEMO:SENSORS>)
+   (list
+    ~(define active-sensors #f)
+    
+    (<DIV> "Sensor list:")
+    
+    (<PRE> (map (lambda (l)
+		   (with-output-to-string
+		      (lambda ()
+			 (write l)
+			 (newline))))
+		(phone-sensor-list android)))
+    
+    (<BUTTON> :onclick ~(if active-sensors
+			    (begin
+			       (innerHTML-set! this "Activate sensors")
+			       (set! active-sensors #f))
+			    (let ((osm (dom-get-element-by-id "osm"))
+				  (2PI (* 4 (atan 1))))
+			       (innerHTML-set! this "Deactive sensors")
+			       (set! active-sensors #t)
+			       (let loop ()
+				  (with-hop ($androidemo/sensors)
+				     (lambda (l)
+					(let ((ori (cdar l)))
+					   (when (pair? ori)
+					      (let ((r (format "rotate(-~adeg)" (car ori))))
+						 (innerHTML-set! "ori" r)
+						 (node-style-set! "osm" :MozTransform r))))
+					(innerHTML-set!
+					 "sensors"
+					 (<TABLE> (map (lambda (r)
+							  (<TR>
+							     (<TD> (symbol->string (car r)))
+							     (<TD> (if (pair? (cdr r))
+								       (<TT> (map (lambda (v)
+										     (list v " " ))
+										  (cdr r)))
+								       ""))))
+						       l)))
+					(when active-sensors
+					   (after 200 loop)))))))
+       "Activate sensors")
+    
+    (<DIV> :id "sensors")
+    
+    (<DIV> :id "ori")
+    
+    (<OSM:MAP> :id "osm"
+       :style "width: 300px; height: 300px; border: 1px solid red"
+       :latitude 43.619779 :longitude 7.049575)
+    
+    ~(navigator.geolocation.getCurrentPosition
+      (lambda (p)
+	 (add-event-listener! window "ready"
+	    (lambda (e)
+	       (let ((osm (dom-get-element-by-id "osm")))
+		  (osm-set-center osm p.latitude p.longitude))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <ANDROIDEMO:CONTACT> ...                                         */
+;*---------------------------------------------------------------------*/
+(define (<ANDROIDEMO:CONTACT>)
+   (<TABLE>
+      (map (lambda (l)
+	      (<TR> (map (lambda (row)
+			    (<TD> (apply list row))))
+		    l))
+	   (contact-get-list android))))
+
+;*---------------------------------------------------------------------*/
+;*    <ANDROIDEMO:MULTIMEDIA> ...                                      */
+;*---------------------------------------------------------------------*/
+(define (<ANDROIDEMO:MULTIMEDIA>)
+   (list
+    (<AUDIO>
+       :controls #t
+       :src "http://www.m-base.org/motherland_pulse_mp3_files/motherland_pulse.mp3"
+       :browser 'none
+       :server (instantiate::audio-server
+		  (music amusic)))
+    (<DIV> :style "font-size: 10px; font-style: italic"
+       "Thanks to " (<A> :href "http://www.m-base.com" "Steve Coleman")
+       " for making his music freely available on-line.")))
+	   
 ;*---------------------------------------------------------------------*/
 ;*    androidemo/documentation ...                                     */
 ;*---------------------------------------------------------------------*/
