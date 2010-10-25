@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 25 09:16:32 2010                          */
-;*    Last change :  Mon Oct 25 12:20:59 2010 (serrano)                */
+;*    Last change :  Mon Oct 25 13:08:31 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android contact binding                                          */
@@ -18,7 +18,7 @@
 
    (import  __hopdroid-phone)
 
-   (export (concat-get-list::obj ::phone)))
+   (export (contact-get-list::obj ::phone)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Contact plugin                                                   */
@@ -26,10 +26,10 @@
 (define contact-plugin #f)
 
 ;*---------------------------------------------------------------------*/
-;*    concat-get-list ...                                              */
+;*    contact-get-list ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (concat-get-list p::phone)
+(define (contact-get-list p::phone)
    (unless contact-plugin
       (set! contact-plugin (android-load-plugin p "contact")))
    (when contact-plugin
-      (android-send-command/result contact-plugin #\l))) 
+      (android-send-command/result p contact-plugin #\l))) 
