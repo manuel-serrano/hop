@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Wed Oct 27 09:56:36 2010 (serrano)                */
+/*    Last change :  Wed Oct 27 14:01:17 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Accessing CallLog database                                       */
@@ -55,7 +55,8 @@ public class HopPluginCallLog extends HopPlugin {
 	 Calls.TYPE,
 	 Calls.NUMBER,
 	 Calls.DATE,
-	 Calls.DURATION
+	 Calls.DURATION,
+	 Calls.CACHED_NAME,
       };
       Uri uri = Calls.CONTENT_URI;
       String order = Calls.DATE + " DESC";
@@ -65,19 +66,45 @@ public class HopPluginCallLog extends HopPlugin {
       if( cur.moveToFirst() ) {
 	 op.write( "(".getBytes() );
 	 do {
+	    op.write( "(".getBytes() );
+	    
 	    // type
-	    op.write( cur.getString( 0 ).getBytes() );
+	    switch( cur.getInt( 0 ) ) {
+	       case Calls.INCOMING_TYPE: 
+		  op.write( "incoming".getBytes() );
+		  break;
+	       case Calls.MISSED_TYPE: 
+		  op.write( "missed".getBytes() );
+		  break;
+	       case Calls.OUTGOING_TYPE: 
+		  op.write( "missed".getBytes() );
+		  break;
+	       default:
+		  op.write( "unknown".getBytes() );
+		  break;
+	    }
 	    op.write( " ".getBytes() );
+	    
 	    // number
 	    op.write( "\"".getBytes() );
 	    op.write( cur.getString( 1 ).getBytes() );
 	    op.write( "\" ".getBytes() );
+	    
 	    // date
 	    op.write( cur.getString( 2 ).getBytes() );
 	    op.write( " ".getBytes() );
+	    
 	    // duration
+	    op.write( "#e".getBytes() );
 	    op.write( cur.getString( 3 ).getBytes() );
 	    op.write( " ".getBytes() );
+
+	    // cached name
+	    String cn = cur.getString( 4 );
+	    byte[] cnb = (cn == null) ? "\"\"".getBytes() : cn.getBytes();
+	    op.write( cnb );
+	    op.write( ")".getBytes() );
+	    
 	 } while( cur.moveToNext() );
 	 op.write( ")".getBytes() );
       } else {
