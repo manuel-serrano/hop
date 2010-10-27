@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Wed Oct 20 09:34:01 2010 (serrano)                */
+;*    Last change :  Wed Oct 27 13:50:27 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
@@ -571,9 +571,12 @@
    
    (define (mv-dir overwrite depth src dst)
       (let* ((mod (file-mode src))
-	     (dir (if (directory? dst) dst (dirname dst)))
-	     (dst (make-file-name dir (basename dst))))
+	     (dir (if (directory? dst) dst (dirname dst))))
 	 (cond
+	    ((and (not (file-exists? dir)) (directory? src))
+	     (if (rename-file src dst)
+		 (resp "HTTP/1.1 204 No Content")
+		 (resp "HTTP/1.1 409 Conflict")))
 	    ((not (directory? dir))
 	     (resp "HTTP/1.1 409 Conflict"))
 	    ((and (file-exists? dst) (string=? overwrite "F"))

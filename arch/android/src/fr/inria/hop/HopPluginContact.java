@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Wed Oct 27 08:33:59 2010 (serrano)                */
+/*    Last change :  Wed Oct 27 13:37:46 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -127,12 +127,9 @@ public class HopPluginContact extends HopPlugin {
 	 StructuredName.CONTENT_ITEM_TYPE );
 
       if( cur.moveToFirst() ) {
-	 op.write( "\"".getBytes() );
-	 op.write( cur.getString( 0 ).getBytes() );
-	 op.write( "\" ".getBytes() );
-	 op.write( "\"".getBytes() );
-	 op.write( cur.getString( 1 ).getBytes() );
-	 op.write( "\"".getBytes() );
+	 writeOptionalString( op, cur, 0 );
+	 op.write( " ".getBytes() );
+	 writeOptionalString( op, cur, 1 );
       } else {
 	 op.write( "\"".getBytes() );
 	 op.write( name.getBytes() );
@@ -176,15 +173,21 @@ public class HopPluginContact extends HopPlugin {
 	 Nickname.CONTENT_ITEM_TYPE );
 
       if( cur.moveToFirst() ) {
-	 op.write( "(\"".getBytes() );
-	 op.write( cur.getString( 0 ).getBytes() );
-	 op.write( "\"".getBytes() );
-	 while( cur.moveToNext() ) {
-	    op.write( " \"".getBytes() );
-	    op.write( cur.getString( 0 ).getBytes() );
+	 String s0 = cur.getString( 0 );
+	 if( s0 == null ) {
+	    op.write( "nil".getBytes() );
+	    return;
+	 } else {
+	    op.write( "(\"".getBytes() );
+	    op.write( s0.getBytes() );
 	    op.write( "\"".getBytes() );
+	    while( cur.moveToNext() ) {
+	       op.write( " \"".getBytes() );
+	       op.write( cur.getString( 0 ).getBytes() );
+	       op.write( "\"".getBytes() );
+	    }
+	    op.write( ")".getBytes() );
 	 }
-	 op.write( ")".getBytes() );
       } else {
 	 op.write( "nil".getBytes() );
       }
