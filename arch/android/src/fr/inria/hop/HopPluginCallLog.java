@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Wed Oct 27 09:01:58 2010 (serrano)                */
+/*    Last change :  Wed Oct 27 09:56:36 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Accessing CallLog database                                       */
@@ -58,7 +58,8 @@ public class HopPluginCallLog extends HopPlugin {
 	 Calls.DURATION
       };
       Uri uri = Calls.CONTENT_URI;
-      String limit = (i > 0) ? ("Limit " + i) : null;
+      String order = Calls.DATE + " DESC";
+      String limit = (i > 0) ? (order + " LIMIT " + i) : order;
       Cursor cur = activity.managedQuery( uri, projection, null, null, limit );
 
       if( cur.moveToFirst() ) {

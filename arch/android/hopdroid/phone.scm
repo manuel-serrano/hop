@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed Oct 27 08:30:26 2010 (serrano)                */
+;*    Last change :  Wed Oct 27 10:06:14 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -204,7 +204,7 @@
    (unless call-log-plugin
       (set! call-log-plugin (android-load-plugin p "calllog")))
    (let ((n (if (pair? optional) (car optional) -1)))
-      (android-send-command p call-log-plugin #\l n)))
+      (android-send-command/result p call-log-plugin #\l n)))
 
 ;*---------------------------------------------------------------------*/
 ;*    send-string ...                                                  */

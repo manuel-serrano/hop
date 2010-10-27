@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Oct 12 07:42:18 2010 (serrano)                */
+;*    Last change :  Wed Oct 27 11:15:36 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -53,6 +53,7 @@
 		    (apasswd (dom-get-element-by-id document "apasswd").value)
 		    (uname (dom-get-element-by-id document "uname").value)
 		    (upasswd (dom-get-element-by-id document "upasswd").value)
+		    (udir (dom-get-element-by-id document "udir").value)
 		    (gname (dom-get-element-by-id document "gname").value)
 		    (gpasswd (dom-get-element-by-id document "gpasswd").value)
 		    (cadmin (crypt "admin" apasswd))
@@ -80,7 +81,8 @@
 		   ((and (not (string=? gname "")) (string=? gpasswd ""))
 		    (alert "Missing password for `guest' user!"))
 		   (else
-		    (with-hop ($wizard/save #f cadmin uname cuser gname cguest
+		    (with-hop ($wizard/save #f cadmin uname cuser udir
+					    gname cguest
 					    proxy proxyu proxya proxyr proxym
 					    webdav)
 		       (lambda (h)
@@ -90,7 +92,9 @@
 					  "The file `" (cadr h)
 					  "' alread exists. Overide it ?")))
 				 (if (confirm msg)
-				     (with-hop ($wizard/save #t cadmin uname cuser gname cguest
+				     (with-hop ($wizard/save #t cadmin
+							     uname cuser udir
+							     gname cguest
 							     proxy
 							     proxyu proxya
 							     proxyr proxym
@@ -181,7 +185,7 @@
 				       (<TD> (<INPUT> :type 'password
 						:class "required"
 						:id "apasswd"
-						:size 20))))))
+						:size 30))))))
 		     (<TR> (<TD> :class "comment"
 			      [This user is granted administration permissions.
 He may install/uninstall softwares. He may add/delete users. Etc.])))))))
@@ -190,6 +194,13 @@ He may install/uninstall softwares. He may add/delete users. Etc.])))))))
 ;*    <PLAIN-USER> ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (<PLAIN-USER>)
+   
+   (define (home)
+      (let ((h (getenv "HOME")))
+	 (if (string? h)
+	     h
+	     (dirname (dirname (hop-rc-directory))))))
+      
    (<TABLE> :class "wizard-user wizard-regular"
       (<TR> (<TD> :class "logo" (<IMG> :src (make-file-name "etc" "user.png")))
 	    (<TD> (<TABLE>
@@ -202,17 +213,25 @@ He may install/uninstall softwares. He may add/delete users. Etc.])))))))
 						:onkeypress
 						~(require "upasswd" this.value)
 						:id "uname"
-						:size 20)))
+						:size 30)))
 				    (<TR>
 				       (<TD> :class "legend" "password:")
 				       (<TD> (<INPUT> :type 'password
 						:class "optional"
 						:id "upasswd"
-						:size 20))))))
+						:size 30)))
+				    (<TR>
+				       (<TD> :class "legend" "path:")
+				       (<TD> (<INPUT> :type 'text
+						:class "optional"
+						:id "udir"
+						:size 30
+						:value (home)))))))
 		     (<TR> (<TD> :class "comment"
 			      [This user is the regular user, that is the
-user that executes most Hop weblets. It can access the entire disk system.
-The regular user is likely to be the owner of the Hop process.])))))))
+user that executes most Hop weblets. It can access the part disk system
+specified by path (,(<TT> "*") grants access to all disks). The regular user is
+likely to be the owner of the Hop process.])))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <GUEST-USER> ...                                                 */
@@ -231,13 +250,13 @@ The regular user is likely to be the owner of the Hop process.])))))))
 						:onkeypress
 						~(require "gpasswd" this.value)
 						:value ""
-						:size 20)))
+						:size 30)))
 				    (<TR>
 				       (<TD> :class "legend" "password:")
 				       (<TD> (<INPUT> :type 'password
 						:class "optional"
 						:id "gpasswd"
-						:size 20))))))
+						:size 30))))))
 		     (<TR> (<TD> :class "comment"
 			      [This account is used for guest users. Guests
 can only access the directory ,(<TT> "guest") of the Hop RC directory.])))))))
@@ -333,24 +352,24 @@ WebDAV server.]))))))
 ;*    wizard/save ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-service (wizard/save force
-			     apasswd uname upasswd gname gpasswd
+			     apasswd uname upasswd udir
+			     gname gpasswd
 			     proxy
 			     user-proxy anonymous-proxy
 			     remote-proxy proxy-mask
 			     webdav)
-   (let* ((home (getenv "HOME"))
-	  (rc (make-file-name (hoprc-dir) (hop-rc-file)))
+   (let* ((rc (make-file-name (hoprc-dir) (hop-rc-file)))
 	  (wd (make-file-name (hoprc-dir) "wizard.hop")))
       (cond
 	 (force
-	  (save (hoprc-dir) rc wd apasswd uname upasswd gname gpasswd
+	  (save (hoprc-dir) rc wd apasswd uname upasswd udir gname gpasswd
 		proxy user-proxy anonymous-proxy remote-proxy proxy-mask))
 	 ((file-exists? rc)
 	  (list 'query (format "File exists ~a" rc)))
 	 ((file-exists? wd)
 	  (list 'query (format "File exists ~a" wd)))
 	 (else
-	  (save (hoprc-dir) rc wd apasswd uname upasswd gname gpasswd
+	  (save (hoprc-dir) rc wd apasswd uname upasswd udir gname gpasswd
 		proxy user-proxy anonymous-proxy remote-proxy proxy-mask
 		webdav)))))
 
@@ -358,7 +377,7 @@ WebDAV server.]))))))
 ;*    save ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (save rcdir rcfile passwdfile
-	      apasswd uname upasswd gname gpasswd
+	      apasswd uname upasswd udir gname gpasswd
 	      proxy uproxy anonymous-proxy remote-proxy proxy-mask
 	      webdav)
    (unless (and (file-exists? rcdir) (directory? rcdir))
@@ -429,7 +448,10 @@ WebDAV server.]))))))
 	       (write `(add-user! ,uname
 				  :groups '(exec)
 				  :password ,upasswd
-				  :directories (cons (getenv "HOME") (hop-path))
+				  :directories (cons ,(if (equal? udir "*")
+							  '*
+							  udir)
+						     (hop-path))
 				  :services '*))
 	       (newline)
 	       (newline))
