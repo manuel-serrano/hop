@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Mon Oct 25 19:17:18 2010 (serrano)                */
+;*    Last change :  Wed Oct 27 08:30:26 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -44,6 +44,7 @@
 (define vibrate-plugin #f)
 (define sensor-plugin #f)
 (define sms-plugin #f)
+(define call-log-plugin #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-init ::androidphone ...                                    */
@@ -197,6 +198,15 @@
    (android-send-command p sms-plugin #\s no msg))
 
 ;*---------------------------------------------------------------------*/
+;*    phone-call-log ::androidphone ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (phone-call-log p::androidphone . optional)
+   (unless call-log-plugin
+      (set! call-log-plugin (android-load-plugin p "calllog")))
+   (let ((n (if (pair? optional) (car optional) -1)))
+      (android-send-command p call-log-plugin #\l n)))
+
+;*---------------------------------------------------------------------*/
 ;*    send-string ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (send-string s::bstring op::output-port)
@@ -296,5 +306,3 @@
 	    (android-send p plugin args)
 	    (let ((ip (socket-input %socket1)))
 	       (read ip))))))
-
-

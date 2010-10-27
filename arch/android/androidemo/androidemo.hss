@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Mar  2 07:38:26 2010                          */
-/*    Last change :  Fri Oct 22 08:56:30 2010 (serrano)                */
+/*    Last change :  Tue Oct 26 18:29:29 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    POPART css                                                       */
@@ -228,3 +228,10 @@ textarea#smstext {
   background: #ffe;
 }
   
+pre.contact {
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  background-color: #efe;
+  font-size: 90%;
+  margin-bottom: 1ex;
+}

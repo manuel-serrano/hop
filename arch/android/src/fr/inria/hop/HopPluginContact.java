@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Mon Oct 25 14:12:08 2010 (serrano)                */
+/*    Last change :  Wed Oct 27 08:33:59 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -21,6 +21,15 @@ import android.util.Log;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract.*;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.CommonDataKinds.StructuredPostal;
+import android.provider.ContactsContract.CommonDataKinds.StructuredName;
+import android.provider.ContactsContract.CommonDataKinds.Nickname;
+import android.provider.ContactsContract.CommonDataKinds.Organization;
+import android.provider.ContactsContract.CommonDataKinds.Website;
+import android.provider.ContactsContract.CommonDataKinds.Note;
 
 import java.net.*;
 import java.io.*;
@@ -36,41 +45,317 @@ public class HopPluginContact extends HopPlugin {
       super( h, a, n );
    }
 
-    // sensor manager
+    // contact manager
    protected void server( final InputStream ip, final OutputStream op )
       throws IOException {
       
        switch( ip.read() ) {
 	 case (byte)'l':
-	    getContactList( op );
+	    writeContactList( op );
+	    break;
        }
    }
 
-   // getContactList
-   void getContactList( final OutputStream op ) throws IOException {
+   // writeContactList
+   void writeContactList( final OutputStream op ) throws IOException {
       // Run query
+      final String[] projection = new String[] {
+	 ContactsContract.Contacts._ID,
+	 ContactsContract.Contacts.DISPLAY_NAME
+      };
       Uri uri = ContactsContract.Contacts.CONTENT_URI;
-      Cursor cur = activity.managedQuery( uri, null, null, null, null );
+      Cursor cur = activity.managedQuery( uri, projection, null, null, null );
 
       if( cur.moveToFirst() ) {
 	 op.write( "(".getBytes() );
 	 do {
-	    op.write( "(".getBytes() );
-	    for( int i = 0; i < cur.getColumnCount(); i++ ) {
-	       if( cur.getString( i ) != null ) {
-		  Log.v( "HopPluginContact", "i=" + i + " name=" + cur.getColumnName( i ) );
-		  op.write( "(\"".getBytes() );
-		  op.write( cur.getColumnName( i ).getBytes() );
-		  op.write( "\" \"".getBytes() );
-		  op.write( cur.getString( i ).getBytes() );
-		  op.write( "\")".getBytes() );
-	       }
-	    }
-	    op.write( ")\n".getBytes() );
+	    writeContact( op, cur );
 	 } while( cur.moveToNext() );
 	 op.write( ")".getBytes() );
       } else {
 	 op.write( "()".getBytes() );
+      }
+   }
+
+   // writeContact
+   void writeContact( final OutputStream op, final Cursor cur )
+      throws IOException {
+      int id = cur.getInt( 0 );
+      String name = cur.getString( 1 );
+
+      op.write( "[".getBytes() );
+
+      // name
+      writeContactName( op, id, name );
+      op.write( " ".getBytes() );
+
+      // nicknames
+      writeContactNicknames( op, id );
+      op.write( " ".getBytes() );
+      
+      // organization
+      writeContactOrganization( op, id );
+      op.write( " ".getBytes() );
+
+      // phones
+      writeContactPhones( op, id );
+      op.write( " " .getBytes() );
+
+      // addresses
+      writeContactAddresses( op, id );
+      op.write( " " .getBytes() );
+
+      // emails
+      writeContactEmails( op, id );
+      op.write( " ".getBytes() );
+
+      // notes
+      writeContactNotes( op, id );
+
+      op.write( " nil".getBytes() );
+      op.write( "]\n".getBytes() );
+   }
+
+   // writeContactName
+   void writeContactName( final OutputStream op, int id, String name ) throws IOException {
+      Cursor cur = getCursor(
+	 id, 
+	 new String[] {
+	    StructuredName.GIVEN_NAME,
+	    StructuredName.FAMILY_NAME,
+	 },
+	 StructuredName.CONTENT_ITEM_TYPE );
+
+      if( cur.moveToFirst() ) {
+	 op.write( "\"".getBytes() );
+	 op.write( cur.getString( 0 ).getBytes() );
+	 op.write( "\" ".getBytes() );
+	 op.write( "\"".getBytes() );
+	 op.write( cur.getString( 1 ).getBytes() );
+	 op.write( "\"".getBytes() );
+      } else {
+	 op.write( "\"".getBytes() );
+	 op.write( name.getBytes() );
+	 op.write( "\" \"\"".getBytes() );
+      }
+   }
+
+   // writeContactPhones
+   void writeContactPhones( final OutputStream op, int id ) throws IOException {
+      Cursor cur = getCursor( 
+	 id, 
+	 new String[] {
+	    Phone.LABEL,
+	    Phone.NUMBER
+	 },
+	 Phone.CONTENT_ITEM_TYPE );
+
+      if( cur.moveToFirst() ) {
+	 op.write( "(".getBytes() );
+	 do {
+	    op.write( "[\"".getBytes() );
+	    op.write( getBytes( cur, 0 ) );
+	    op.write( "\" \"".getBytes() );
+	    op.write( cur.getString( 1 ).getBytes() );
+	    op.write( "\"]".getBytes() );
+	 } while( cur.moveToNext() );
+	 op.write( ")".getBytes() );
+      } else {
+	 op.write( "nil".getBytes() );
+      }
+   }
+
+   // writeContactNicknames
+   void writeContactNicknames( final OutputStream op, int id )
+      throws IOException {
+      Cursor cur = getCursor( 
+	 id, 
+	 new String[] {
+	    Nickname.NAME,
+	 },
+	 Nickname.CONTENT_ITEM_TYPE );
+
+      if( cur.moveToFirst() ) {
+	 op.write( "(\"".getBytes() );
+	 op.write( cur.getString( 0 ).getBytes() );
+	 op.write( "\"".getBytes() );
+	 while( cur.moveToNext() ) {
+	    op.write( " \"".getBytes() );
+	    op.write( cur.getString( 0 ).getBytes() );
+	    op.write( "\"".getBytes() );
+	 }
+	 op.write( ")".getBytes() );
+      } else {
+	 op.write( "nil".getBytes() );
+      }
+   }
+
+   // writeContactOrganization
+   void writeContactOrganization( final OutputStream op, int id )
+      throws IOException {
+      Cursor cur = getCursor( 
+	 id, 
+	 new String[] {
+	    Organization.COMPANY,
+	 },
+	 Organization.CONTENT_ITEM_TYPE );
+
+      if( cur.moveToFirst() ) {
+	 op.write( "\"".getBytes() );
+	 op.write( cur.getString( 0 ).getBytes() );
+	 op.write( "\"".getBytes() );
+      } else {
+	 op.write( "nil".getBytes() );
+      }
+   }
+
+   // writeContactAddresses
+   void writeContactAddresses( final OutputStream op, int id ) throws IOException {
+      Cursor cur = getCursor( 
+	 id,
+	 new String[] {
+	    StructuredPostal.LABEL,
+	    StructuredPostal.STREET,
+	    StructuredPostal.POBOX,
+	    StructuredPostal.CITY,
+	    StructuredPostal.REGION,
+	    StructuredPostal.POSTCODE,
+	    StructuredPostal.COUNTRY
+	 },
+	 StructuredPostal.CONTENT_ITEM_TYPE );
+
+      if( cur.moveToFirst() ) {
+	 op.write( "(".getBytes() );
+	 do {
+	    op.write( "[\"".getBytes() );
+	    op.write( getBytes( cur, 0, "home" ) );
+	    op.write( "\" (".getBytes() );
+	    writeOptionalString( op, cur, 1 );
+	    op.write( " ".getBytes() );
+	    writeOptionalString( op, cur, 2 );
+	    op.write( " ".getBytes() );
+	    writeOptionalString( op, cur, 3 );
+	    op.write( " ".getBytes() );
+	    writeOptionalString( op, cur, 4 );
+	    op.write( " ".getBytes() );
+	    writeOptionalString( op, cur, 5 );
+	    op.write( ")]".getBytes() );
+	 } while( cur.moveToNext() );
+	 op.write( ")".getBytes() );
+      } else {
+	 op.write( "nil".getBytes() );
+      }
+   }
+
+   // writeContactEmails
+   void writeContactEmails( final OutputStream op, int id ) throws IOException {
+      Cursor cur = getCursor( 
+	 id,
+	 new String[] {
+	    Email.DATA,
+	 },
+	 Email.CONTENT_ITEM_TYPE );
+
+      if( cur.moveToFirst() ) {
+	 op.write( "(\"".getBytes() );
+	 op.write( cur.getString( 0 ).getBytes() );
+	 op.write( "\"".getBytes() );
+	 while( cur.moveToNext() ) {
+	    op.write( " \"".getBytes() );
+	    op.write( cur.getString( 0 ).getBytes() );
+	    op.write( "\"".getBytes() );
+	 } 
+	 op.write( ")".getBytes() );
+      } else {
+	 op.write( "nil".getBytes() );
+      }
+   }
+      
+   // writeContactNotes
+   void writeContactNotes( final OutputStream op, int id ) throws IOException {
+      Cursor cur = getCursor( 
+	 id,
+	 new String[] {
+	    Website.URL,
+	 },
+	 Website.CONTENT_ITEM_TYPE );
+
+      op.write( "(".getBytes() );
+      
+      // id
+      op.write( "(id".getBytes() );
+      op.write( " . \"".getBytes() );
+      op.write( Integer.toString( id ).getBytes() );
+      op.write( "\")".getBytes() );
+      
+      // website
+      if( cur.moveToFirst() ) {
+	 op.write( " (url".getBytes() );
+	 op.write( " . \"".getBytes() );
+	 op.write( cur.getString( 0 ).getBytes() );
+	 op.write( "\")".getBytes() );
+      }
+
+      // note
+      cur = getCursor( 
+	 id,
+	 new String[] {
+	    Note.NOTE,
+	 },
+	 Note.CONTENT_ITEM_TYPE );
+
+      if( cur.moveToFirst() ) {
+	 op.write( " ".getBytes() );
+	 op.write( cur.getString( 0 ).getBytes() );
+      }
+      
+      op.write( ")".getBytes() );
+   }
+      
+   // getCursor
+   Cursor getCursor( int id, String[] projection, String mimetype ) throws IOException {
+      Cursor cur = activity.managedQuery(
+	 Data.CONTENT_URI, projection,
+	 Data.CONTACT_ID + "=?" + " AND "
+	 + Data.MIMETYPE + "='" + mimetype + "'",
+	 new String[] {
+	    String.valueOf( id )
+	 },
+	 null );
+
+      return cur;
+   }
+   
+   // getBytes
+   static byte[] getBytes( Cursor cur, int i ) {
+      String s = cur.getString( i );
+      if( s == null ) {
+	 return "default".getBytes();
+      } else {
+	 return s.getBytes();
+      }
+   }
+   
+   // getBytes
+   static byte[] getBytes( Cursor cur, int i, String def ) {
+      String s = cur.getString( i );
+      if( s == null ) {
+	 return def.getBytes();
+      } else {
+	 return s.getBytes();
+      }
+   }
+   
+   // writeOptionalString
+   static void writeOptionalString( final OutputStream op, Cursor cur, int i )
+      throws IOException {
+      String s = cur.getString( i );
+      if( s == null ) {
+	 return ;
+      } else {
+	 op.write( "\"".getBytes() );
+	 op.write( s.getBytes() );
+	 op.write( "\"".getBytes() );
       }
    }
 }

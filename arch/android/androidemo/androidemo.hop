@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Mon Oct 25 18:47:19 2010 (serrano)                */
+;*    Last change :  Wed Oct 27 08:35:07 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -84,6 +84,10 @@ to the server to directly controls the phone.")
 	 (<H2> "Contact")
 	 (<DIV> :class "short-note"
 	    (<ANDROIDEMO:CONTACT>))
+	 
+	 (<H2> "Call Log")
+	 (<DIV> :class "short-note"
+	    (<ANDROIDEMO:CALLLOG>))
 	 
 	 (<H2> "Multimedia")
 	 (<DIV> :class "short-note"
@@ -262,14 +266,23 @@ display information relative to that message.")
 ;*    <ANDROIDEMO:CONTACT> ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (<ANDROIDEMO:CONTACT>)
-   (map (lambda (l)
-	   (<DIV> (map (lambda (row)
-			  (<TABLE>
-			     (map (lambda (v)
-				     (<TR> (<TH> (car v)) (<TD> (cadr v))))
-				  row)))
-		       l)))
+   (map (lambda (entry)
+	   (<PRE> :class "contact"
+	      (with-output-to-string
+		 (lambda ()
+		    (write entry)))))
 	(contact-get-list android)))
+
+;*---------------------------------------------------------------------*/
+;*    <ANDROIDEMO:CALLLOG> ...                                         */
+;*---------------------------------------------------------------------*/
+(define (<ANDROIDEMO:CALLLOG>)
+   (map (lambda (entry)
+	   (<PRE> :class "calllog"
+	      (with-output-to-string
+		 (lambda ()
+		    (write entry)))))
+	(phone-call-log android 10)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:MULTIMEDIA> ...                                      */
