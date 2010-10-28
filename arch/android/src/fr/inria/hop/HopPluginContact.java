@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Thu Oct 28 06:42:48 2010 (serrano)                */
+/*    Last change :  Thu Oct 28 06:56:36 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -290,7 +290,7 @@ public class HopPluginContact extends HopPlugin {
       op.write( "(".getBytes() );
       
       // id
-      op.write( "(id".getBytes() );
+      op.write( "(android-id".getBytes() );
       op.write( " . \"".getBytes() );
       op.write( Integer.toString( id ).getBytes() );
       op.write( "\")".getBytes() );

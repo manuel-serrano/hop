@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Thu Oct 28 06:17:59 2010 (serrano)                */
+;*    Last change :  Thu Oct 28 07:07:03 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -268,12 +268,30 @@ missed.")
 ;*    <ANDROIDEMO:CONTACT> ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (<ANDROIDEMO:CONTACT>)
-   (map (lambda (entry)
-	   (<PRE> :class "contact"
-	      (with-output-to-string
-		 (lambda ()
-		    (write entry)))))
-	(contact-get-list android)))
+
+   (define (<RBUTTON> id)
+      (<BUTTON> :onclick ~(with-hop ($(service (id)
+					 (phone-contact-remove! android id)))
+			     $id)
+	 "remove"))
+   
+   (<TABLE>
+      (map (lambda (entry)
+	      (match-case entry
+		 ((?first ?family ?akas ?comp ?phones ?adds ?emails ?notes ?-)
+		  (let ((row (list (<TH> first)
+				   (<TH> family)
+				   (<TD> (->string akas))
+				   (<TD> comp)
+				   (<TD> (->string phones))
+				   (<TD> (->string adds))
+				   (<TD> (<TT> (->string emails)))
+				   (<TD> (<PRE> (->string notes))))))
+		     (let ((c (assq 'android-id notes)))
+			(<TR> (if (pair? c)
+				  (cons (<TD> (<RBUTTON> (cdr c))) row)
+				  (cons (<TD>) row))))))))
+	   (phone-contact android))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:CALLLOG> ...                                         */
