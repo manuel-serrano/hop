@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Thu Oct 28 06:19:28 2010 (serrano)                */
+;*    Last change :  Thu Oct 28 07:15:55 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -210,7 +210,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    phone-contact-remove! ::androidphone ...                         */
 ;*---------------------------------------------------------------------*/
-(define-method (phone-contact-remove! p::androidphone id::bstring)
+(define-method (phone-contact-remove! p::androidphone id::obj)
    (unless contact-plugin
       (set! contact-plugin (android-load-plugin p "contact")))
    (when contact-plugin
