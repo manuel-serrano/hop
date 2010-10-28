@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed Oct 27 10:06:14 2010 (serrano)                */
+;*    Last change :  Thu Oct 28 06:19:28 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -44,6 +44,7 @@
 (define vibrate-plugin #f)
 (define sensor-plugin #f)
 (define sms-plugin #f)
+(define contact-plugin #f)
 (define call-log-plugin #f)
 
 ;*---------------------------------------------------------------------*/
@@ -197,6 +198,24 @@
       (set! sms-plugin (android-load-plugin p "sms")))
    (android-send-command p sms-plugin #\s no msg))
 
+;*---------------------------------------------------------------------*/
+;*    phone-contact ::androidphone ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (phone-contact p::androidphone)
+   (unless contact-plugin
+      (set! contact-plugin (android-load-plugin p "contact")))
+   (when contact-plugin
+      (android-send-command/result p contact-plugin #\l)))
+
+;*---------------------------------------------------------------------*/
+;*    phone-contact-remove! ::androidphone ...                         */
+;*---------------------------------------------------------------------*/
+(define-method (phone-contact-remove! p::androidphone id::bstring)
+   (unless contact-plugin
+      (set! contact-plugin (android-load-plugin p "contact")))
+   (when contact-plugin
+      (android-send-command/result p contact-plugin #\r id)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    phone-call-log ::androidphone ...                                */
 ;*---------------------------------------------------------------------*/

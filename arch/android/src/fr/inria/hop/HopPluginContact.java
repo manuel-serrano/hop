@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Wed Oct 27 13:37:46 2010 (serrano)                */
+/*    Last change :  Thu Oct 28 06:42:48 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -52,6 +52,10 @@ public class HopPluginContact extends HopPlugin {
        switch( ip.read() ) {
 	 case (byte)'l':
 	    writeContactList( op );
+	    break;
+	    
+	 case (byte)'r':
+	    removeContact( op, ip );
 	    break;
        }
    }
@@ -328,7 +332,7 @@ public class HopPluginContact extends HopPlugin {
 
       return cur;
    }
-   
+
    // getBytes
    static byte[] getBytes( Cursor cur, int i ) {
       String s = cur.getString( i );
@@ -360,6 +364,39 @@ public class HopPluginContact extends HopPlugin {
 	 op.write( s.getBytes() );
 	 op.write( "\"".getBytes() );
       }
+   }
+
+
+   // removeContact
+   void removeContact( final OutputStream op, final InputStream ip )
+      throws IOException {
+      String id = HopDroid.read_string( ip );
+      ContentResolver cr = activity.getContentResolver();
+      
+      // remove from the sub-tables
+      removeCursor( cr, Nickname.CONTENT_ITEM_TYPE, id );
+      removeCursor( cr, Organization.CONTENT_ITEM_TYPE, id );
+      removeCursor( cr, Phone.CONTENT_ITEM_TYPE, id );
+      removeCursor( cr, StructuredPostal.CONTENT_ITEM_TYPE, id );
+      removeCursor( cr, Email.CONTENT_ITEM_TYPE, id );
+      removeCursor( cr, Website.CONTENT_ITEM_TYPE, id );
+      removeCursor( cr, Note.CONTENT_ITEM_TYPE, id );
+
+      cr.delete(
+	 Uri.withAppendedPath( ContactsContract.Contacts.CONTENT_URI, id),
+	 null, null );
+
+      op.write( "#t".getBytes() );
+      return;
+   }
+	 
+   // removeCursor
+   static void removeCursor( ContentResolver cr, String mimetype, String id ) {
+      cr.delete( 
+	 Data.CONTENT_URI, 
+	 Data.CONTACT_ID + "=?" + " AND "
+	 + Data.MIMETYPE + "='" + mimetype + "'",
+	 null );
    }
 }
 

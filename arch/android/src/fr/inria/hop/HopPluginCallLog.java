@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Wed Oct 27 14:01:17 2010 (serrano)                */
+/*    Last change :  Wed Oct 27 16:41:03 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Accessing CallLog database                                       */
@@ -77,7 +77,7 @@ public class HopPluginCallLog extends HopPlugin {
 		  op.write( "missed".getBytes() );
 		  break;
 	       case Calls.OUTGOING_TYPE: 
-		  op.write( "missed".getBytes() );
+		  op.write( "outgoing".getBytes() );
 		  break;
 	       default:
 		  op.write( "unknown".getBytes() );
@@ -91,11 +91,11 @@ public class HopPluginCallLog extends HopPlugin {
 	    op.write( "\" ".getBytes() );
 	    
 	    // date
-	    op.write( cur.getString( 2 ).getBytes() );
+	    op.write( "#e".getBytes() );
+	    op.write( (Long.toString( cur.getLong( 2 ) / 1000 )).getBytes() );
 	    op.write( " ".getBytes() );
 	    
 	    // duration
-	    op.write( "#e".getBytes() );
 	    op.write( cur.getString( 3 ).getBytes() );
 	    op.write( " ".getBytes() );
 

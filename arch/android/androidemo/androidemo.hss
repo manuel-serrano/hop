@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Mar  2 07:38:26 2010                          */
-/*    Last change :  Tue Oct 26 18:29:29 2010 (serrano)                */
+/*    Last change :  Thu Oct 28 06:20:52 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    POPART css                                                       */
@@ -68,6 +68,11 @@ table.main td.weblet-title {
 h2 {
   text-shadow: #999 2px 2px 2px;
   border-bottom: 1px dashed $border-color;
+}
+
+h3 {
+  text-shadow: #999 2px 2px 2px;
+  font-size: 105%;
 }
 
 table td {
@@ -149,43 +154,6 @@ a.doc:hover {
 /*---------------------------------------------------------------------*/
 /*    Misc                                                             */
 /*---------------------------------------------------------------------*/
-div.selector {
-  background: black;
-  margin-bottom: 10px;
-}
-
-div.selector img {
-  margin: 10px;
-  border: 2px solid transparent;
-}
-
-div.selector img:hover {
-  border: 2px solid red;
-}
-
-div.warhol {
-  padding: 20px;
-  background: black;
-  display: inline-block;
-}
-
-div.warhol table {
-  border-collapse: collapse;
-}
-
-div.warhol table td {
-  padding: 0;
-  margin: 0;
-  border: 0;
-}
-
-p {
-  text-align: justify;
-  font-style: italic;
-  color: #333;
-  font-size: 90%;
-}
-
 pre {
   border-radius: 4px;
   border: 1px solid #bbb;
@@ -228,10 +196,39 @@ textarea#smstext {
   background: #ffe;
 }
   
-pre.contact {
+table.contact {
   border: 1px solid #ccc;
   border-radius: 2px;
   background-color: #efe;
   font-size: 90%;
   margin-bottom: 1ex;
+}
+
+table.calllog {
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  background-color: #eef;
+  font-size: 90%;
+  padding: 2px;
+}
+
+table.calllog th {
+  text-align: center;
+
+tr.incoming tt:before {
+  color: green;
+  font-weight: bold;
+  content: "i: ";
+}
+
+tr.missed tt:before {
+  color: red;
+  font-weight: bold;
+  content: "m: ";
+}
+
+tr.outoing tt:before {
+  color: orange;
+  font-weight: bold;
+  content: "o: ";
 }

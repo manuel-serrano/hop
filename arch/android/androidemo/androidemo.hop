@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Wed Oct 27 08:35:07 2010 (serrano)                */
+;*    Last change :  Thu Oct 28 06:17:59 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -71,7 +71,7 @@ demonstrations it is adviced to run them from a PC, although they can be
 executed by the Web browsers running on the Android device.")
 	 
 	 (<H2> "Telephony")
-;* 	 (<ANDROIDEMO:TELEPHONY>)                                      */
+	 (<ANDROIDEMO:TELEPHONY>)
 	 
 	 (<H2> "Hardware")
 	 (<DIV> :class "short-note"
@@ -83,11 +83,9 @@ to the server to directly controls the phone.")
 	 
 	 (<H2> "Contact")
 	 (<DIV> :class "short-note"
-	    (<ANDROIDEMO:CONTACT>))
-	 
-	 (<H2> "Call Log")
-	 (<DIV> :class "short-note"
-	    (<ANDROIDEMO:CALLLOG>))
+	    "This illustrates the ability of the Hop to re-use the on-device
+contacts.")
+	 (<ANDROIDEMO:CONTACT>)
 	 
 	 (<H2> "Multimedia")
 	 (<DIV> :class "short-note"
@@ -166,7 +164,6 @@ Android phone. This demonstration does not use any HTML5 facility.")
 	      (innerHTML-set! "sms-status" "delivered")))
        ~(add-event-listener! "sms-received" "server"
 	   (lambda (e)
-	      (alert "SMS-RECEIVED: " e.value)
 	      (innerHTML-set! "sms-received-no" (car e.value))
 	      (innerHTML-set! "sms-received-text" (cadr e.value))))
        
@@ -188,7 +185,12 @@ incoming SMS. In that demonstration, when a SMS is received, the server code
 intercepts that message and broadcasts it to clients (i.e., web browsers) that
 display information relative to that message.")
     (<DIV> "From: " (<SPAN> :id "sms-received-no"))
-    (<PRE> :id "sms-received-text" "This box will display the content of incoming SMS")))
+    (<PRE> :id "sms-received-text" "This box will display the content of incoming SMS")
+    (<H3> "Call Log")
+    (<DIV> :class "short-note"
+       "This shows the log of the recent calls, received, placed, and
+missed.")
+    (<ANDROIDEMO:CALLLOG>)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:HARDWARE> ...                                        */
@@ -277,12 +279,17 @@ display information relative to that message.")
 ;*    <ANDROIDEMO:CALLLOG> ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (<ANDROIDEMO:CALLLOG>)
-   (map (lambda (entry)
-	   (<PRE> :class "calllog"
-	      (with-output-to-string
-		 (lambda ()
-		    (write entry)))))
-	(phone-call-log android 10)))
+   (<TABLE> :class "calllog"
+      (<TR> (<TH> "number") (<TH> "date") (<TH> "duration") (<TH> "name"))
+      (map (lambda (entry)
+	      (match-case entry
+		 ((?type ?number ?date ?duration ?name)
+		  (<TR> :class (symbol->string type)
+		     (<TD> (<TT> number))
+		     (<TD> (seconds->date date))
+		     (<TD> duration)
+		     (<TD> name)))))
+	   (phone-call-log android 10))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:MULTIMEDIA> ...                                      */
