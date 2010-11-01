@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Fri Oct 29 19:35:07 2010 (serrano)                */
+;*    Last change :  Mon Nov  1 11:40:52 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -65,6 +65,9 @@ END:VCARD"))
 (add-event-listener! android "sms-received"
    (lambda (e)
       (hop-event-broadcast! "sms-received" (event-value e))))
+(add-event-listener! android "battery"
+   (lambda (e)
+      (hop-event-broadcast! "battery" (event-value e))))
 
 ;*---------------------------------------------------------------------*/
 ;*    androidemo ...                                                   */
@@ -75,7 +78,7 @@ END:VCARD"))
 	 :favicon (service-resource androidemo "etc/favicon.png")
 	 :base (service-base-url androidemo (current-request))
 	 :path (androidemo-dir)
-	 :include "hop-audio" "androidemo" "osm-api-1.0.*.hz")
+	 :include "hop-gauge" "hop-audio" "androidemo" "osm-api-1.0.*.hz")
       (<ANDROIDEMO:BODY> :header "Androidemo"
 	 (<DIV> :class "note"
 	    "To better understand the purpose of these
@@ -212,7 +215,9 @@ missed.")
     (<BUTTON> :onclick ~(with-hop ($(service ()
 				       (phone-vibrate android sos-vibrations -1))))
        "Vibrate (SOS)")
-    (<ANDROIDEMO:SENSORS>)))
+    (<ANDROIDEMO:SENSORS>)
+    (<H3> "Battery")
+    (<ANDROIDEMO:BATTERY>)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:SENSORS> ...                                         */
@@ -275,6 +280,33 @@ missed.")
 	    (lambda (e)
 	       (let ((osm (dom-get-element-by-id "osm")))
 		  (osm-set-center osm p.latitude p.longitude))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <ANDROIDEMO:BATTERY> ...                                         */
+;*---------------------------------------------------------------------*/
+(define (<ANDROIDEMO:BATTERY>)
+   (list
+    ~(add-event-listener! "battery" "server"
+	(lambda (e)
+	   (let ((val (event-value e)))
+	      (gauge-value-set! "bat-level" (car val))
+	      (innerHTML-set! "bat-status" (caddr val))
+	      (innerHTML-set! "bat-plug" (cadddr val))
+	      (innerHTML-set! "bat-health" (cadr (cdddr val)))
+	      (innerHTML-set! "bat-voltage" (caddr (cdddr val))))))
+    (<TABLE>
+       (<TR>
+	  (<TH> "charge level")
+	  (<TH> "status")
+	  (<TH> "plug")
+	  (<TH> "health")
+	  (<TH> "voltage"))
+       (<TR>
+	  (<TD> "bat-level" (<GAUGE> :id "bat-level"))
+	  (<TD> :id "bat-status" "")
+	  (<TD> :id "bat-plug" "")
+	  (<TD> :id "bat-health" "")
+	  (<TD> :id "bat-voltage" "")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:CONTACT> ...                                         */
