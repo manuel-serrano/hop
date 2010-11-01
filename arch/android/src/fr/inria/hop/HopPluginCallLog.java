@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Wed Oct 27 16:41:03 2010 (serrano)                */
+/*    Last change :  Thu Oct 28 09:00:06 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Accessing CallLog database                                       */
@@ -42,7 +42,7 @@ public class HopPluginCallLog extends HopPlugin {
       
        switch( ip.read() ) {
 	 case (byte)'l':
-	    int i = ip.read();
+	    int i = HopDroid.read_int32( ip );
 	    writeCallLogList( op, i );
 	    break;
        }

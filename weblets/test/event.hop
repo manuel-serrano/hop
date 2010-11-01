@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/weblets/test/event.hop            */
+;*    serrano/prgm/project/hop/2.2.x/weblets/test/event.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Fri Jul  2 14:51:20 2010 (serrano)                */
+;*    Last change :  Mon Nov  1 10:06:33 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
@@ -122,17 +122,17 @@ events succeeded, you should see an acknowledge.")
 			  (set! e.value "A"))
 			 ((equal? e.value $evt3)
 			  (set! e.value "B")))))
-	       ~(add-event-listener! document "serverready"
-		   (lambda (e)
-		      (with-hop ($(service :ttl 1 ()
-				     (hop-event-signal!
-				      evt1 evt1)
-				     (hop-event-signal!
-				      evt2 evt2)
-				     (hop-event-signal!
-				      evt3 evt3)
-				     (hop-event-signal!
-				      evt4 (list "foo" "\"" "bar")))))))
+;* 	       ~(add-event-listener! document "serverready"            */
+;* 		   (lambda (e)                                         */
+;* 		      (with-hop ($(service :ttl 1 ()                   */
+;* 				     (hop-event-signal!                */
+;* 				      evt1 evt1)                       */
+;* 				     (hop-event-signal!                */
+;* 				      evt2 evt2)                       */
+;* 				     (hop-event-signal!                */
+;* 				      evt3 evt3)                       */
+;* 				     (hop-event-signal!                */
+;* 				      evt4 (list "foo" "\"" "bar"))))))) */
 	       (<H4> "Client events")
 	       b
 	       b2

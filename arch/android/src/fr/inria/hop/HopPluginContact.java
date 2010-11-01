@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Thu Oct 28 06:56:36 2010 (serrano)                */
+/*    Last change :  Sun Oct 31 10:52:05 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -30,6 +30,8 @@ import android.provider.ContactsContract.CommonDataKinds.Nickname;
 import android.provider.ContactsContract.CommonDataKinds.Organization;
 import android.provider.ContactsContract.CommonDataKinds.Website;
 import android.provider.ContactsContract.CommonDataKinds.Note;
+import android.provider.Contacts;
+import android.provider.Contacts.People;
 
 import java.net.*;
 import java.io.*;
@@ -56,6 +58,10 @@ public class HopPluginContact extends HopPlugin {
 	    
 	 case (byte)'r':
 	    removeContact( op, ip );
+	    break;
+	    
+	 case (byte)'a':
+	    addContact( op, ip );
 	    break;
        }
    }
@@ -116,7 +122,7 @@ public class HopPluginContact extends HopPlugin {
       // notes
       writeContactNotes( op, id );
 
-      op.write( " nil".getBytes() );
+      op.write( " ()".getBytes() );
       op.write( "]\n".getBytes() );
    }
 
@@ -162,7 +168,7 @@ public class HopPluginContact extends HopPlugin {
 	 } while( cur.moveToNext() );
 	 op.write( ")".getBytes() );
       } else {
-	 op.write( "nil".getBytes() );
+	 op.write( "()".getBytes() );
       }
    }
 
@@ -179,7 +185,7 @@ public class HopPluginContact extends HopPlugin {
       if( cur.moveToFirst() ) {
 	 String s0 = cur.getString( 0 );
 	 if( s0 == null ) {
-	    op.write( "nil".getBytes() );
+	    op.write( "()".getBytes() );
 	    return;
 	 } else {
 	    op.write( "(\"".getBytes() );
@@ -193,7 +199,7 @@ public class HopPluginContact extends HopPlugin {
 	    op.write( ")".getBytes() );
 	 }
       } else {
-	 op.write( "nil".getBytes() );
+	 op.write( "()".getBytes() );
       }
    }
 
@@ -212,7 +218,7 @@ public class HopPluginContact extends HopPlugin {
 	 op.write( cur.getString( 0 ).getBytes() );
 	 op.write( "\"".getBytes() );
       } else {
-	 op.write( "nil".getBytes() );
+	 op.write( "()".getBytes() );
       }
    }
 
@@ -250,7 +256,7 @@ public class HopPluginContact extends HopPlugin {
 	 } while( cur.moveToNext() );
 	 op.write( ")".getBytes() );
       } else {
-	 op.write( "nil".getBytes() );
+	 op.write( "()".getBytes() );
       }
    }
 
@@ -274,7 +280,7 @@ public class HopPluginContact extends HopPlugin {
 	 } 
 	 op.write( ")".getBytes() );
       } else {
-	 op.write( "nil".getBytes() );
+	 op.write( "()".getBytes() );
       }
    }
       
@@ -366,14 +372,17 @@ public class HopPluginContact extends HopPlugin {
       }
    }
 
-
    // removeContact
    void removeContact( final OutputStream op, final InputStream ip )
       throws IOException {
       String id = HopDroid.read_string( ip );
       ContentResolver cr = activity.getContentResolver();
       
-      // remove from the sub-tables
+      // remove from the sub-tables (MS 30oct2010: I'm not sure
+      // this is useful. The Android documentation contains the following
+      // warning: "Be careful with deleting Contacts! Deleting an aggregate
+      // contact deletes all constituent raw contacts" but I'm not sure
+      // what it exactly means.
       removeCursor( cr, Nickname.CONTENT_ITEM_TYPE, id );
       removeCursor( cr, Organization.CONTENT_ITEM_TYPE, id );
       removeCursor( cr, Phone.CONTENT_ITEM_TYPE, id );
@@ -383,7 +392,7 @@ public class HopPluginContact extends HopPlugin {
       removeCursor( cr, Note.CONTENT_ITEM_TYPE, id );
 
       cr.delete(
-	 Uri.withAppendedPath( ContactsContract.Contacts.CONTENT_URI, id),
+	 Uri.withAppendedPath( ContactsContract.Contacts.CONTENT_URI, id ),
 	 null, null );
 
       op.write( "#t".getBytes() );
@@ -397,6 +406,35 @@ public class HopPluginContact extends HopPlugin {
 	 Data.CONTACT_ID + "=?" + " AND "
 	 + Data.MIMETYPE + "='" + mimetype + "'",
 	 null );
+   }
+
+   // addContact
+   void addContact( final OutputStream op, final InputStream ip )
+      throws IOException {
+      ContentResolver cr = activity.getContentResolver();
+      ContentValues values = new ContentValues();
+      String first = HopDroid.read_string( ip );
+      String family = HopDroid.read_string( ip );
+      String org = HopDroid.read_string( ip );
+      String url = HopDroid.read_string( ip );
+      String[] emails = HopDroid.read_stringv( ip );
+
+      // bind the new person
+      values.put( ContactsContract.Contacts.DISPLAY_NAME, first + " " + family );
+      Uri uri = cr.insert( People.CONTENT_URI, values );
+
+      // the emails
+      Uri emailUri = Uri.withAppendedPath( uri, People.ContactMethods.CONTENT_DIRECTORY );
+      values.clear();
+
+      for( int i = 0; i < emails.length; i++ ) {
+	 values.put( People.ContactMethods.KIND, Contacts.KIND_EMAIL );
+	 values.put( People.ContactMethods.DATA, emails[ i ] );
+	 values.put( People.ContactMethods.TYPE, People.ContactMethods.TYPE_HOME );
+      }
+      cr.insert( emailUri, values );   
+      
+      return;
    }
 }
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Oct 20 09:25:08 2010 (serrano)                */
+;*    Last change :  Mon Nov  1 08:35:29 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -134,7 +134,8 @@
 	      (connection::symbol read-only (default 'Upgrade))
 	      (origin::bstring read-only)
 	      (location::bstring read-only)
-	      (protocol::obj read-only))
+	      (protocol::obj read-only)
+	      (sec read-only (default #f)))
 
 	   (class http-response-error::http-response-string)
 
@@ -142,6 +143,9 @@
 	      (cgibin::bstring read-only))
 
 	   (class http-response-persistent::%http-response
+	      (body (default #f)))
+	   
+	   (class http-response-chunked::%http-response
 	      (body (default #f)))
 	   
 	   (class http-response-put::%http-response-local

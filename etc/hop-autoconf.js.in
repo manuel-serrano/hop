@@ -106,9 +106,6 @@ function hop_Config() {
   /* pointing device */
   this.is_tablet = ( navigator.userAgent.indexOf( "Tablet" ) >= 0 );
 
-  /* flash version */
-  this.flash_version = hop_get_flash_version();
-
   /* html5 */
   var audio = document.createElement( "audio" );
   this.html5_video = "play" in document.createElement( "video" );
@@ -120,14 +117,18 @@ function hop_Config() {
        ("play" in audio) && (audio.constructor === window[ "HTMLAudioElement" ]);
   }
 
+  /* flash version */
+  this.flash_version = hop_get_flash_version();
+  this.flash_external_interface = false;
+  this.flash_audio = false;
+  this.flash_markup = "embed";
+
   /* Geolocation */
   this.geolocation = (navigator.geolocation ? true : false);
 
   /* default navigator setting */
   this.mouse_left_button = 0;
-  this.flash_external_interface = false;
-  this.flash_audio = false;
-  this.flash_markup = "embed";
+
   this.inline_image = false;
   this.filtered_errors = [];
   this.css = 2.1;

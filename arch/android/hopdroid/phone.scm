@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Thu Oct 28 07:15:55 2010 (serrano)                */
+;*    Last change :  Fri Oct 29 19:31:15 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopdroid-phone
 
-   (library phone pthread hop)
+   (library phone mail pthread hop)
 
    (export (class androidphone::phone
 	      (host::bstring read-only (default "localhost"))
@@ -134,7 +134,7 @@
       (lambda ()
 	 (hop-verb 2 "Loading android plugin \"" name "\"...\n")
 	 (let ((n (android-send-command/result p 0 name)))
-	    (if (>=fx n 0)
+	    (if (and (fixnum? n) (>=fx n 0))
 		n
 		(error "android-load-plugin"
 		       (case n
@@ -205,8 +205,49 @@
    (unless contact-plugin
       (set! contact-plugin (android-load-plugin p "contact")))
    (when contact-plugin
-      (android-send-command/result p contact-plugin #\l)))
+      (map! (lambda (e)
+	       (match-case e
+		  ((?first ?family ?akas ?comp ?phones ?addrs ?emails ?notes ?-)
+		   (let* ((face (let ((c (assq 'face notes)))
+				   (when (pair? c)
+				      (set! notes (remq! c notes))
+				      (cdr c))))
+			  (url (let ((c (assq 'url notes)))
+				  (when (pair? c)
+				     (set! notes (remq! c notes))
+				     (cdr c))))
+			  (notes (if (pair? akas)
+				     (cons (cons 'akas akas) notes)
+				     notes))
+			  (fn (if (string? first)
+				  (if (string? family)
+				      (string-append first " " family)
+				      first)
+				  (if (string? family)
+				      family
+				      ""))))
+		      (instantiate::vcard
+			 (fn fn)
+			 (familyname family)
+			 (firstname first)
+			 (org comp)
+			 (face face)
+			 (url url)
+			 (phones phones)
+			 (addresses addrs)
+			 (emails emails)
+			 (notes notes))))))
+	    (android-send-command/result p contact-plugin #\l))))
 
+;*---------------------------------------------------------------------*/
+;*    phone-contact-add! ::androidphone ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (phone-contact-add! p::androidphone vcard::obj)
+   (unless contact-plugin
+      (set! contact-plugin (android-load-plugin p "contact")))
+   (when contact-plugin
+      (android-send-command/result p contact-plugin #\a vcard)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    phone-contact-remove! ::androidphone ...                         */
 ;*---------------------------------------------------------------------*/
@@ -286,14 +327,35 @@
 ;*---------------------------------------------------------------------*/
 ;*    send-obj ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (send-obj o::obj op::output-port)
-      (cond
-	 ((string? o) (send-string o op))
-	 ((llong? o) (send-int64 o op))
-	 ((integer? o) (send-int32 o op))
-	 ((boolean? o) (send-boolean o op))
-	 ((char? o) (send-char o op))
-	 ((vector? o) (send-vector o op))))
+(define-generic (send-obj o::obj op::output-port)
+   (cond
+      ((string? o) (send-string o op))
+      ((llong? o) (send-int64 o op))
+      ((integer? o) (send-int32 o op))
+      ((boolean? o) (send-boolean o op))
+      ((char? o) (send-char o op))
+      ((vector? o) (send-vector o op))
+      ((and (pair? o) (pair? (cdr o))) (send-obj (list->vector o) op))
+      ((pair? o) (send-obj (car o) op) (send-obj (cdr o) op))
+      ((symbol? o) (send-string (symbol->string! o) op))))
+
+;*---------------------------------------------------------------------*/
+;*    send-obj ::vcard ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (send-obj o::vcard op)
+   (with-access::vcard o (firstname
+			  familyname org url phones
+			  addresses emails notes)
+      (tprint "ADDING first=" firstname " fam=" familyname " org=" org
+	      " url=" url " emails=" emails " phones=" phones)
+      (send-string (or firstname "") op)
+      (send-string (or familyname "") op)
+      (send-string (or org "") op)
+      (send-string (or url "") op)
+      (send-obj emails op)))
+;*       (send-string phones op)                                       */
+;*       (send-string addresses op)                                    */
+;*       (send-string notes op)))                                      */
 
 ;*---------------------------------------------------------------------*/
 ;*    android-send ...                                                 */
@@ -304,6 +366,7 @@
 	 (write-byte protocol op)
 	 (send-int32 plugin op)
 	 (for-each (lambda (o) (send-obj o op)) args)
+	 (send-char #a127 op)
 	 (flush-output-port op))))
 
 ;*---------------------------------------------------------------------*/

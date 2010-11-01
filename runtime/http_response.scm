@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Oct 20 09:33:13 2010 (serrano)                */
+;*    Last change :  Mon Nov  1 09:58:13 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -69,8 +69,7 @@
 	    (http-write-header p header)
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type #f)
-	    (when server
-	       (http-write-line-string p "Server: " server))
+	    (http-write-line-string p "Server: " server)
 	    (when (string? body)
 	       (http-write-line p "Content-Length: " (string-length body)))
 	    (http-write-line p)
@@ -90,9 +89,9 @@
 					    bodyp body
 					    timeout request)
 	 (let* ((p (socket-output socket))
-		(s body)
+		(body body)
 		(connection (http-request-connection request))
-		(l (string-length s))
+		(l (string-length body))
 		(clen (if (=elong content-length #e-1)
 			  l
 			  content-length)))
@@ -104,9 +103,9 @@
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type charset)
-	    (when server (http-write-line-string p "Server: " server))
+	    (http-write-line-string p "Server: " server)
 	    (http-write-line p)
-	    (when bodyp (display s p))
+	    (when bodyp (display body p))
 	    (flush-output-port p)
 	    connection))))
 
@@ -126,16 +125,35 @@
 					       origin
 					       location
 					       timeout
-					       protocol)
+					       protocol
+					       sec)
 	 (let ((p (socket-output socket)))
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	    (http-write-line-string p start-line)
 	    (http-write-line-string p "Upgrade: WebSocket")
 	    (http-write-line p "Connection: " connection)
-	    (http-write-line p "WebSocket-Origin: " origin)
-	    (http-write-line p "WebSocket-Location: " location)
-	    (when protocol (http-write-line p "WebSocket-Protocol: " protocol))
- 	    (http-write-line p)
+	    (if sec
+		(begin
+		   (tprint "websocket handshake:\n"
+			   start-line "\n"
+			   "Upgrade: WebSocket\n"
+			   "Connection: " connection "\n"
+			   "Sec-WebSocket-Origin: " origin "\n"
+			   "Sec-WebSocket-Location: " location "\n"
+			   "Sec-WebSocket-Protocol: " protocol "\n\n"
+			   sec)
+		   (http-write-line p "Sec-WebSocket-Origin: " origin)
+		   (http-write-line p "Sec-WebSocket-Location: " location)
+		   (when protocol
+		      (http-write-line p "Sec-WebSocket-Protocol: " protocol))
+		   (http-write-line p)
+		   (display sec p))
+		(begin
+		   (http-write-line p "WebSocket-Origin: " origin)
+		   (http-write-line p "WebSocket-Location: " location)
+		   (when protocol
+		      (http-write-line p "WebSocket-Protocol: " protocol))
+		   (http-write-line p)))
 	    (flush-output-port p)
 	    'persistent))))
 
@@ -159,8 +177,7 @@
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p (or content-type (hop-json-mime-type)) charset)
-	    (when server
-	       (http-write-line-string p "Server: " server))
+	    (http-write-line-string p "Server: " server)
 	    (http-write-line-string p "Hop-Serialize: "
 				    (symbol->string! serializer))
 	    (http-write-line p)
@@ -242,8 +259,7 @@
 	    (http-write-line p "Connection: " connection)
 	    (let ((ctype (or content-type (xml-backend-mime-type backend))))
 	       (http-write-content-type p ctype charset))
-	    (when server
-	       (http-write-line-string p "Server: " server))
+	    (http-write-line-string p "Server: " server)
 	    (http-write-line-string p "Hhop: true")
 	    (if chunked
 		(begin
@@ -284,8 +300,7 @@
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type charset)
-	    (when server
-	       (http-write-line-string p "Server: " server))
+	    (http-write-line-string p "Server: " server)
 	    (http-write-line p)
 	    (flush-output-port p)
 	    ;; the body
@@ -332,7 +347,7 @@
 	 (http-write-header p header)
 	 (http-write-line p "Connection: " conn)
 	 (http-write-content-type p content-type charset)
-	 (when server (http-write-line-string p "Server: " server))
+	 (http-write-line-string p "Server: " server)
 	 (let ((dt (date->rfc2822-date (current-date))))
 	    (http-write-line p "Date: " dt)
 	    (http-write-line p "Last-Modified: " dt))
@@ -409,7 +424,7 @@
 		(http-write-header p header)
 		(http-write-line p "Connection: " connection)
 		(http-write-content-type p content-type charset)
-		(when server (http-write-line-string p "Server: " server))
+		(http-write-line-string p "Server: " server)
 		(unless (eq? connection 'close)
 		   (display "Content-Length: " p)
 		   (display-elong size p)
@@ -527,8 +542,7 @@
 		(http-write-header p header)
 		(http-write-line p "Connection: close")
 		(http-write-content-type p content-type charset)
-		(when server
-		   (http-write-line-string p "Server: " server))
+		(http-write-line-string p "Server: " server)
 		(http-write-line p)
 		;; the body
 		(with-trace 4 'http-response-cgi-process
@@ -577,8 +591,7 @@
 		      (http-write-header p header)
 		      (http-write-line p "Connection: close")
 		      (http-write-content-type p content-type charset)
-		      (when server
-			 (http-write-line-string p "Server: " server))
+		      (http-write-line-string p "Server: " server)
 		      (http-write-line p)
 		      ;; the body
 		      (with-trace 4 'http-response-put-process
@@ -619,12 +632,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-persistent socket)
    (with-trace 3 'http-response::http-response-persistent
-      (with-access::http-response-persistent r (body)
+      (with-access::http-response-persistent r (body request)
 	 (when (string? body)
 	    (let ((p (socket-output socket)))
 	       (display body p)
-	       (flush-output-port p))))
-      'persistent))
+	       (flush-output-port p)))
+	 (tprint "PERSISTENT: " (http-request-connection request))
+	 'persistent)))
 
 ;*---------------------------------------------------------------------*/
 ;*    response-is-xml? ...                                             */

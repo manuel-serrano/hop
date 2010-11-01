@@ -154,6 +154,7 @@ div#title {
   font-weight: bold;
   padding-bottom: 1px;
   text-align: left;
+  text-shadow: #999 2px 2px 2px;
 }
 
 /*--- weblet ----------------------------------------------------------*/

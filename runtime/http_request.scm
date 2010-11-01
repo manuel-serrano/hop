@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/http_request.scm          */
+;*    serrano/prgm/project/hop/2.2.x/runtime/http_request.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Jun 19 06:41:16 2010 (serrano)                */
+;*    Last change :  Sun Oct 31 08:48:08 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -106,14 +106,14 @@
       (let (scheme hostname port path http-version userinfo)
 	 (multiple-value-bind (s u h p a)
 	    (http-url-parse pi)
-	    (trace-item "scheme=" s " user=" u
-			" hostname=" h " port=" p " path=[" a "]")
 	    (set! scheme (string->symbol s))
 	    (set! hostname h)
 	    (set! port p)
 	    (set! path a)
 	    (set! userinfo u)
 	    (set! http-version (read/rp http-version-grammar pi))
+	    (trace-item "http=" http-version " scheme=" s " user=" u
+			" hostname=" h " port=" p " path=[" a "]")
 	    (when (input-string-port? pi)
 	       (close-input-port pi)))
 	 (multiple-value-bind (header actual-host actual-port cl te auth pauth co)
@@ -142,8 +142,9 @@
 				   'close)))
 	       (trace-item "abspath=" abspath
 			   " query=" query
-			   " connection=" connection)
-
+			   " connection=" connection
+			   " content-length=" cl
+			   " header=" header)
 	       (let* ((ip (input-port-name pi))
 		      (user (or (and (string? auth)
 				     (find-authenticated-user auth abspath method ip))

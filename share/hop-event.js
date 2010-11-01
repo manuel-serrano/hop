@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Tue Sep 28 16:07:47 2010 (serrano)                */
+/*    Last change :  Mon Nov  1 09:58:46 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -213,6 +213,7 @@ function hop_servevt_enveloppe_parse( val, xhr, server_ready ) {
 	    hop_trigger_servevt( id, t[ 1 ], t[ 1 ], true );
 	 }
       } else if( k == "r" ) {
+	 // register, first event listener added to the server
 	 if( !server_ready ) {
 	    hop_trigger_serverready_event( new HopServerReadyEvent() );
 	 }
@@ -249,8 +250,6 @@ function start_servevt_websocket_proxy( key, host, port ) {
 	 hop_service_base() + "/server-event/websocket?key=" + key;
 /*       var url = "ws://" + host + ":" + 8788 + "/echo";              */
 
-      var ws = new WebSocket( url );
-
       var register = function( id ) {
 	 var svc = hop_service_base() +
 	 "/server-event/register?event=" + id +
@@ -273,8 +272,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
 			   false, [] );
       };
 
-      // complete the proxy definition
-      hop_servevt_proxy.websocket = ws;
+      var ws = new WebSocket( url );
 
       ws.onopen = function() {
 	 // we are ready to register now
@@ -296,6 +294,9 @@ function start_servevt_websocket_proxy( key, host, port ) {
 	 e.responseText = e.data;
 	 hop_servevt_enveloppe_parse( e.data, e, true );
       }
+      
+      // complete the proxy definition
+      hop_servevt_proxy.websocket = ws;
    }
 }
 

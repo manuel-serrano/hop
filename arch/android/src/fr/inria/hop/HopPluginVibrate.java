@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:47:19 2010                          */
-/*    Last change :  Mon Oct 25 10:17:41 2010 (serrano)                */
+/*    Last change :  Fri Oct 29 19:01:58 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Vibrator                                                 */
@@ -65,11 +65,7 @@ public class HopPluginVibrate extends HopPlugin {
 	    
 	 case (byte) 'p':
 	    // pattern vibrate
-	    int sz = HopDroid.read_int32( ip );
-	    long[] vibs = new long[ sz ];
-	    for( int i = 0; i < sz; i++ ) {
-	       vibs[ i ] = HopDroid.read_int64( ip );
-	    }
+	    long[] vibs = HopDroid.read_int64v( ip );
 	    int repeat = HopDroid.read_int32( ip );
 	    
 	    if( vibrator == null ) vibrator = make_vibrator();

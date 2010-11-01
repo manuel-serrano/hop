@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Oct 27 08:30:22 2010 (serrano)                */
+/*    Last change :  Fri Oct 29 18:25:16 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -185,6 +185,10 @@ public class HopDroid extends Thread {
 
 	       p.server( ip, op );
 	       op.write( " ".getBytes() );
+
+	       if( ip.read() != 127 ) {
+		  Log.e( "HopDroid", "Pluging protocol error: " + p.name );
+	       }
 	       op.flush();
 	    } catch( ArrayIndexOutOfBoundsException _ ) {
 	       Log.e( "HopDroid", "plugin not found: " + id );
@@ -315,6 +319,30 @@ public class HopDroid extends Thread {
       ip.read( buf, 0, sz );
 
       return new String( buf );
+   }
+
+   // read_int64v
+   public static long[] read_int64v( InputStream ip ) throws IOException {
+      int sz = read_int32( ip );
+      long[] v = new long[ sz ];
+      
+      for( int i = 0; i < sz; i++ ) {
+	 v[ i ] = HopDroid.read_int64( ip );
+      }
+
+      return v;
+   }
+   
+   // read_stringv
+   public static String[] read_stringv( InputStream ip ) throws IOException {
+      int sz = read_int32( ip );
+      String[] v = new String[ sz ];
+      
+      for( int i = 0; i < sz; i++ ) {
+	 v[ i ] = HopDroid.read_string( ip );
+      }
+
+      return v;
    }
 }
       

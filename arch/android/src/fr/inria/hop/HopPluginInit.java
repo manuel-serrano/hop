@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:44:16 2010                          */
-/*    Last change :  Mon Oct 25 10:16:11 2010 (serrano)                */
+/*    Last change :  Thu Oct 28 09:00:35 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The initial plugin that allows plugin installation               */
@@ -53,6 +53,7 @@ public class HopPluginInit extends HopPlugin {
 	 // we don't have loaded that plugin yet
 	 int i = name.lastIndexOf( '/' );
 	 int j = name.lastIndexOf( '.' );
+	 Log.v( "HopPluginInit" , "name=[" + name + "] i=" + i + " j=" + j );
 	 String cname = "fr.inria.hop."
 	    + name.substring( (i < 0 ? 0 : i + 1), (j < i ? name.length() : j) );
 		 

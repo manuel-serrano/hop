@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Mar  2 07:38:26 2010                          */
-/*    Last change :  Thu Oct 28 06:20:52 2010 (serrano)                */
+/*    Last change :  Fri Oct 29 07:58:55 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    POPART css                                                       */
@@ -202,6 +202,17 @@ table.contact {
   background-color: #efe;
   font-size: 90%;
   margin-bottom: 1ex;
+  border-collapse: collapse;
+}
+
+table.contact td {
+  border-top: 1px dashed black;
+  border-bottom: 1px dashed black;
+  vertical-align: top;
+}
+
+table.contact th {
+  border-bottom: 2px solid black;
 }
 
 table.calllog {
@@ -214,6 +225,7 @@ table.calllog {
 
 table.calllog th {
   text-align: center;
+}
 
 tr.incoming tt:before {
   color: green;

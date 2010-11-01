@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Oct 20 18:26:34 2010 (serrano)                */
+;*    Last change :  Mon Nov  1 10:02:19 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -341,6 +341,60 @@
 	      (or host (format "~a:~a" (hostname) (hop-port)))
 	      (hop-initial-weblet)
 	      key))
+
+   (define (protocol76-key-value s)
+      (let ((l (string-length s)))
+	 (let loop ((i 0)
+		    (n #l0)
+		    (b #l0))
+	    (if (=fx i l)
+		(/llong n b)
+		(let ((c (string-ref s i)))
+		   (cond
+		      ((char-numeric? c)
+		       (let ((k (fixnum->llong
+				 (-fx (char->integer c) (char->integer #\0)))))
+			  (loop (+fx i 1) (+llong (*llong n #l10) k) b)))
+		      ((char=? c #\space)
+		       (loop (+fx i 1) n (+llong b #l1)))
+		      (else
+		       (loop (+fx i 1) n b))))))))
+
+   (define (blit-string-int32-big-endian! n::llong buf::bstring o::int)
+      (let ((b3 (llong->fixnum (bit-andllong n #l255)))
+	    (b2 (llong->fixnum (bit-andllong (bit-rshllong n 8) #l255)))
+	    (b1 (llong->fixnum (bit-andllong (bit-rshllong n 16) #l255)))
+	    (b0 (llong->fixnum (bit-andllong (bit-urshllong n 24) #l255))))
+	 (string-set! buf (+fx o 3) (integer->char b3))
+	 (string-set! buf (+fx o 2) (integer->char b2))
+	 (string-set! buf (+fx o 1) (integer->char b1))
+	 (string-set! buf o (integer->char b0))))
+		
+   (define (webwocket-protocol76 key1 key2 req)
+      ;; Handshake known as draft-hixie-thewebsocketprotocol-76
+      ;; see http://www.whatwg.org/specs/web-socket-protocol/
+      ;; http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-03
+      ;; for each key, compute the following:
+      ;;   extract numerics (0-9) from value, and convert to int base 10.
+      ;;   Divide by number of space characters in value!
+      (let ((k1 (protocol76-key-value key1))
+	    (k2 (protocol76-key-value key2))
+	    (key3 (read-chars 8 (socket-input (http-request-socket req))))
+	    (buf (make-string 16 #\0)))
+	 (blit-string-int32-big-endian! k1 buf 0)
+	 (blit-string-int32-big-endian! k2 buf 4)
+	 (blit-string! key3 0 buf 8 8)
+	 (string-hex-intern! (md5sum buf))))
+	    
+   (define (websocket-sec-challenge req header)
+      ;; newer websocket protocols includes a 3 keys challenge
+      ;; we check which version we are asked.
+      (let ((key1 (get-header header sec-websocket-key1: #f)))
+	 (when key1
+	    (let ((key2 (get-header header sec-websocket-key2: #f)))
+	       (when key2
+		  (webwocket-protocol76 key1 key2 req))))))
+      
    
    ;; register the websocket
    (with-lock *event-mutex*
@@ -353,12 +407,17 @@
    
    (with-access::http-request req (header connection socket)
       (let ((host (get-header header host: #f)))
+	 ;; see http_response.scm for the source code that actually sends
+	 ;; the bytes of the response to the client.
+	 (let ((key1 (get-header header sec-websocket-key1: #f)))
+	    
 	 (instantiate::http-response-websocket
 	    (start-line "HTTP/1.1 101 Web Socket Protocol Handshake")
 	    (location (websocket-server-location host))
 	    (origin (get-header header origin: "localhost"))
 	    (protocol (get-header header WebSocket-Protocol: #f))
-	    (connection 'Upgrade)))))
+	    (connection 'Upgrade)
+	    (sec (websocket-sec-challenge req header)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-init! ...                                              */
@@ -526,112 +585,125 @@
 ;*---------------------------------------------------------------------*/
 (define (server-event-register event key mode)
    
-   (define (ajax-register-event! req name key)
-;*       (tprint "***** ajax-register-event, name=" name " key=" key)  */
-      (let ((conn (ajax-find-connection-by-key key)))
-	 (if conn
-	     (with-lock (ajax-connection-mutex conn)
-		(lambda ()
-		   ;; mark the conn for protecting it from being collected
-		   (ajax-connection-marktime-set! conn (current-seconds))
-		   (ajax-connection-pingtime-set! conn #e0)
-		   (unless (string=? name "")
-		      ;; this is not an automatic re-registry
-		      (ajax-connection-add-event! conn name))
-		   (let ((vals (ajax-connection-event-pop-all! conn)))
-		      (if (pair? vals)
-			  (scheme->response vals req)
-			  (begin
-			     (ajax-connection-abandon-for! conn req)
-			     (instantiate::http-response-persistent
-				(request req)))))))
-	     (let ((conn (ajax-register-new-connection! req key)))
-		;; increment the number of connected client
-		(set! *clients-number* (+fx 1 *clients-number*))
-		(ajax-connection-add-event! conn name)
-		(instantiate::http-response-persistent
-		   (request req))))))
+   (define (ajax-register-event! req key name)
+      (with-trace 3 "ajax-register-event!"
+	 (let ((conn (ajax-find-connection-by-key key)))
+	    (if conn
+		(with-lock (ajax-connection-mutex conn)
+		   (lambda ()
+		      ;; mark the conn for protecting it from being collected
+		      (ajax-connection-marktime-set! conn (current-seconds))
+		      (ajax-connection-pingtime-set! conn #e0)
+		      (unless (string=? name "")
+			 ;; this is not an automatic re-registry
+			 (ajax-connection-add-event! conn name))
+		      (let ((vals (ajax-connection-event-pop-all! conn)))
+			 (if (pair? vals)
+			     (scheme->response vals req)
+			     (begin
+				(ajax-connection-abandon-for! conn req)
+				(instantiate::http-response-persistent
+				   (request req)))))))
+		(let ((conn (ajax-register-new-connection! req key)))
+		   ;; increment the number of connected client
+		   (set! *clients-number* (+fx 1 *clients-number*))
+		   (ajax-connection-add-event! conn name)
+		   (instantiate::http-response-persistent
+		      (request req)))))))
    
-   (define (flash-register-event! req name)
-;*       (tprint "***** flash-register-event, name=" name)             */
-      (hashtable-update! *flash-socket-table*
-			 name
-			 (lambda (l) (cons req l))
-			 (list req))
-      (instantiate::http-response-string
-	 (request req)))
+   (define (flash-register-event! req key name)
+      (with-trace 3 "flash-register-event!"
+	 (let ((req (cadr (assq key *flash-request-list*))))
+	    (hashtable-update! *flash-socket-table*
+			       name
+			       (lambda (l) (cons req l))
+			       (list req))
+	    (instantiate::http-response-string
+	       (request req)))))
 
-   (define (multipart-register-event! req name)
-      
-      (define (server-multipart-register-event! req name)
-	 (instantiate::http-response-persistent
-	    (body (format "HTTP/1.1 200 Ok\r\nContent-type: multipart/x-mixed-replace; boundary=\"~a\"\n\n--~a\nContent-type: text/xml\n\n<r name='~a'></r>\n--~a\n"
-			  hop-multipart-key hop-multipart-key name hop-multipart-key))
-	    (request req)))
+   (define (multipart-register-event! req key name)
+      (with-trace 3 "multipart-register-event!"
+	 (let ((content (format "--~a\nContent-type: text/xml\n\n<r name='~a'></r>\n--~a\n"
+				hop-multipart-key name hop-multipart-key))
+	       (c (assq key *multipart-request-list*)))
+	    (if (pair? c)
+		(let ((oreq (cdr c)))
+		   ;; we already have a connection for that
+		   ;; client, we simply re-use it
+		   (hashtable-update! *multipart-socket-table*
+				      name
+				      (lambda (l) (cons oreq l))
+				      (list oreq))
+		   ;; we must response as a multipart response because
+		   ;; that's the way we have configured the xhr
+		   ;; on the client side but we must close the connection
+		   (instantiate::http-response-string
+		      (request req)
+		      (header '((Transfer-Encoding: . "chunked")))
+		      (content-length #e-2)
+		      (content-type (format "multipart/x-mixed-replace; boundary=\"~a\"" hop-multipart-key))
+		      (body (format "~a\r\n~a" (integer->string (string-length content) 16) content))))
+		;; we create a new connection for that client
+		;; multipart never sends a complete answer. In order to
+		;; traverse proxy, we use a chunked response
+		(begin
+		   (output-port-flush-hook-set!
+		    (socket-output (http-request-socket req))
+		    (lambda (port size)
+		       (output-port-flush-hook-set! port chunked-flush-hook)
+		       ""))
+		   (set! *multipart-request-list*
+			 (cons (cons key req)
+			       *multipart-request-list*))
+		   (hashtable-update! *multipart-socket-table*
+				      name
+				      (lambda (l) (cons req l))
+				      (list req))
+		   (instantiate::http-response-persistent
+		      (request req)
+		      (body (format "HTTP/1.1 200 Ok\r\nTransfer-Encoding: chunked\r\nContent-type: multipart/x-mixed-replace; boundary=\"~a\"\r\n\r\n~a\r\n~a"
+				    hop-multipart-key
+				    (integer->string (string-length content) 16)
+				    content))))))))
+   
+   (define (websocket-register-event! req key name)
+      (with-trace 3 "websocket-register-event!"
+	 (let ((c (assq key *websocket-request-list*)))
+	    (if (pair? c)
+		(let ((req (cdr c)))
+		   (hashtable-update! *websocket-socket-table*
+				      name
+				      (lambda (l) (cons req l))
+				      (list req))
+		   (instantiate::http-response-string
+		      (request req)))
+		(error "server-event-register" "Illegal websocket entry" key)))))
 
-      (define (proxy-multipart-register-event! req name)
-	 ;; multipart never sends a complete answer. In order to traverse
-	 ;; proxy, we use a chunked response
-	 (let ((p (socket-output (http-request-socket req)))
-	       (content (format "--~a\nContent-type: text/xml\n\n<r name='~a'></r>\n--~a\n"
-				hop-multipart-key name hop-multipart-key)))
-	    (output-port-flush-hook-set!
-	     p (lambda (port size)
-		  (output-port-flush-hook-set! port chunked-flush-hook)
-		  ""))
-	    (instantiate::http-response-persistent
-	       (body (format "HTTP/1.1 200 Ok\r\nTransfer-Encoding: chunked\r\nContent-type: multipart/x-mixed-replace; boundary=\"~a\"\r\n\r\n~a\r\n~a"
-			     hop-multipart-key 
-			     (integer->string (string-length content) 16)
-			     content))
-	       (request req))))
-
-;*       (tprint "***** multipart-register-event, name=" name)         */
-      (hashtable-update! *multipart-socket-table*
-			 name
-			 (lambda (l) (cons req l))
-			 (list req))
-      ;; if it is possible to discover that we are not accessing the server
-      ;; via a proxy, use server-multipart-register-event!
-      (proxy-multipart-register-event! req name))
-
-   (define (websocket-register-event! req name key)
-;*       (tprint "***** websocket-register-event, name=" name " key=" key) */
-;*       (tprint " list=" *websocket-request-list*)                    */
-      (let ((c (assq key *websocket-request-list*)))
-	 (if (pair? c)
-	     (let ((req (cdr c)))
-		(hashtable-update! *websocket-socket-table*
-				   name
-				   (lambda (l) (cons req l))
-				   (list req))
-		(instantiate::http-response-string
-		   (request req)))
-	     (error "server-event-register" "Illegal websocket entry" key))))
-
-   (with-lock *event-mutex*
-      (lambda ()
-	 (if (<fx *clients-number* (hop-event-max-clients))
-	     (let ((req (current-request))
-		   (key (string->symbol key)))
-		;; set an output timeout on the socket
-		(output-timeout-set! (socket-output (http-request-socket req))
-				     (hop-connection-timeout))
-		;; register the client
-		(let ((r (cond
-			    ((string=? mode "xhr-multipart")
-			     (multipart-register-event! req event))
-			    ((string=? mode "websocket")
-			     (websocket-register-event! req event key))
-			    ((string=? mode "flash")
-			     (let ((req (cadr (assq key *flash-request-list*))))
-				(flash-register-event! req event)))
-			    (else
-			     (ajax-register-event! req event key)))))
-		   ;; cleanup the current connections
-		   (server-event-gc)
-		   r))
-	     (http-service-unavailable event)))))
+   (with-trace 2 "server-register-event!"
+      (with-lock *event-mutex*
+	 (lambda ()
+	    (if (<fx *clients-number* (hop-event-max-clients))
+		(let ((req (current-request))
+		      (key (string->symbol key)))
+		   (trace-item "event=" event " key=" key)
+		   ;; set an output timeout on the socket
+		   (output-timeout-set!
+		    (socket-output (http-request-socket req))
+		    (hop-connection-timeout))
+		   ;; register the client
+		   (let ((r (cond
+			       ((string=? mode "xhr-multipart")
+				(multipart-register-event! req key event))
+			       ((string=? mode "websocket")
+				(websocket-register-event! req key event))
+			       ((string=? mode "flash")
+				(flash-register-event! req key event))
+			       (else
+				(ajax-register-event! req key event)))))
+		      ;; cleanup the current connections
+		      (server-event-gc)
+		      r))
+		(http-service-unavailable event))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    server-event-unregister ...                                      */
