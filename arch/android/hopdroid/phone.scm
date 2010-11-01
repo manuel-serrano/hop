@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Fri Oct 29 19:31:15 2010 (serrano)                */
+;*    Last change :  Mon Nov  1 14:11:14 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -25,7 +25,8 @@
 	      (%socket2 (default #unspecified))
 	      (%evthread (default #unspecified))
 	      (%evtable (default #unspecified))
-	      (%mutex::mutex read-only (default (make-mutex))))
+	      (%mutex::mutex read-only (default (make-mutex)))
+	      (%mutex-listener::mutex read-only (default (make-mutex))))
 
 	   (class androidevent::event)
 
@@ -46,6 +47,7 @@
 (define sms-plugin #f)
 (define contact-plugin #f)
 (define call-log-plugin #f)
+(define battery-plugin #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-init ::androidphone ...                                    */
@@ -62,8 +64,9 @@
 ;*    add-event-listener! ::androidphone ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (add-event-listener! p::androidphone event proc . capture)
-   (with-access::androidphone p (host %mutex port2 %socket2 %evthread %evtable)
-      (with-lock %mutex
+   (with-access::androidphone p (host %mutex-listener port2 %socket2
+				      %evthread %evtable)
+      (with-lock %mutex-listener
 	 (lambda ()
 	    (unless (hashtable? %evtable)
 	       (set! %evtable (make-hashtable 8)))
@@ -78,23 +81,42 @@
 	    (let ((op (socket-output %socket2)))
 	       (send-string event op)
 	       (send-byte 1 op)
-	       (flush-output-port op))))))
+	       (flush-output-port op))
+	    (when (string=? event "battery")
+	       (register-battery-listener! p))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remove-event-listener! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (remove-event-listener! p::androidphone event proc . capture)
-   (with-access::androidphone p (host %mutex port2 %socket2 %evthread %evtable)
-      (with-lock %mutex
+   (with-access::androidphone p (%mutex-listener %socket2 %evthread %evtable)
+      (with-lock %mutex-listener
 	 (lambda ()
 	    (when (hashtable? %evtable)
 	       (hashtable-update! %evtable event
-				  (lambda (l) (remq! proc l)) '()))
+				  (lambda (l)
+				     (when (string=? event "battery")
+					(remove-battery-listener! p))
+				     (remq! proc l)) '()))
 	    (when (socket? %socket2)
 	       (let ((op (socket-output %socket2)))
 		  (send-string event op)
 		  (send-byte 0 op)
 		  (flush-output-port op)))))))
+
+;*---------------------------------------------------------------------*/
+;*    register-battery-listener! ...                                   */
+;*---------------------------------------------------------------------*/
+(define (register-battery-listener! p::androidphone)
+   (unless battery-plugin
+      (set! battery-plugin (android-load-plugin p "battery")))
+   (android-send-command p battery-plugin #\b))
+
+;*---------------------------------------------------------------------*/
+;*    remove-battery-listener! ...                                     */
+;*---------------------------------------------------------------------*/
+(define (remove-battery-listener! p::androidphone)
+   (android-send-command p battery-plugin #\e))
 
 ;*---------------------------------------------------------------------*/
 ;*    android-event-listener ...                                       */

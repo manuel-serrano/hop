@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Nov  1 09:58:13 2010 (serrano)                */
+;*    Last change :  Mon Nov  1 12:22:57 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -134,14 +134,6 @@
 	    (http-write-line p "Connection: " connection)
 	    (if sec
 		(begin
-		   (tprint "websocket handshake:\n"
-			   start-line "\n"
-			   "Upgrade: WebSocket\n"
-			   "Connection: " connection "\n"
-			   "Sec-WebSocket-Origin: " origin "\n"
-			   "Sec-WebSocket-Location: " location "\n"
-			   "Sec-WebSocket-Protocol: " protocol "\n\n"
-			   sec)
 		   (http-write-line p "Sec-WebSocket-Origin: " origin)
 		   (http-write-line p "Sec-WebSocket-Location: " location)
 		   (when protocol

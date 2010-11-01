@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Mon Nov  1 11:40:52 2010 (serrano)                */
+;*    Last change :  Mon Nov  1 14:16:06 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -41,17 +41,17 @@
 	 ,dot ,short-gap ,dot ,short-gap ,dot
 	 ,long-gap)))
 
-(define contact
-   (string->vcard "BEGIN:VCARD
-VERSION:2.1
-N:Jean;Dupont;;;
-FN:Jean Dupont
-TEL;HOME;VOICE:09 29 48 32 28
-TEL;WORK: 01 46 32 22 22
-EMAIL;HOME:foo@bar.org
-ADR;HOME:;;22 Rue De La Poste;Paris;France;75001;
-URL:http://nowhere.org
-END:VCARD"))
+;* (define contact                                                     */
+;*    (string->vcard "BEGIN:VCARD                                      */
+;* VERSION:2.1                                                         */
+;* N:Jean;Dupont;;;                                                    */
+;* FN:Jean Dupont                                                      */
+;* TEL;HOME;VOICE:09 29 48 32 28                                       */
+;* TEL;WORK: 01 46 32 22 22                                            */
+;* EMAIL;HOME:foo@bar.org                                              */
+;* ADR;HOME:;;22 Rue De La Poste;Paris;France;75001;                   */
+;* URL:http://nowhere.org                                              */
+;* END:VCARD"))                                                        */
 
 ;*---------------------------------------------------------------------*/
 ;*    server listener                                                  */
@@ -94,13 +94,13 @@ executed by the Web browsers running on the Android device.")
 side to use the hardware sensors and activators of the phone. Each time a
 button of this web interface is clicked, the corresponding order is send
 to the server to directly controls the phone.")
-;* 	 (<ANDROIDEMO:HARDWARE>)                                       */
+	 (<ANDROIDEMO:HARDWARE>)
 	 
 	 (<H2> "Contact")
 	 (<DIV> :class "short-note"
 	    "This illustrates the ability of the Hop to use the on-device
 contacts.")
-	 (<ANDROIDEMO:CONTACT>)
+;* 	 (<ANDROIDEMO:CONTACT>)                                        */
 	 
 	 (<H2> "Multimedia")
 	 (<DIV> :class "short-note"
@@ -290,9 +290,9 @@ missed.")
 	(lambda (e)
 	   (let ((val (event-value e)))
 	      (gauge-value-set! "bat-level" (car val))
-	      (innerHTML-set! "bat-status" (caddr val))
-	      (innerHTML-set! "bat-plug" (cadddr val))
-	      (innerHTML-set! "bat-health" (cadr (cdddr val)))
+	      (innerHTML-set! "bat-status" (symbol->string (caddr val)))
+	      (innerHTML-set! "bat-plug" (symbol->string (cadddr val)))
+	      (innerHTML-set! "bat-health" (symbol->string (cadr (cdddr val))))
 	      (innerHTML-set! "bat-voltage" (caddr (cdddr val))))))
     (<TABLE>
        (<TR>
@@ -302,7 +302,7 @@ missed.")
 	  (<TH> "health")
 	  (<TH> "voltage"))
        (<TR>
-	  (<TD> "bat-level" (<GAUGE> :id "bat-level"))
+	  (<TD> (<GAUGE> :id "bat-level"))
 	  (<TD> :id "bat-status" "")
 	  (<TD> :id "bat-plug" "")
 	  (<TD> :id "bat-health" "")
@@ -311,73 +311,72 @@ missed.")
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:CONTACT> ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (<ANDROIDEMO:CONTACT>)
-   
-   (define (->string obj)
-      (if (eq? obj 'nil)
-	  ""
-	  (with-output-to-string
-	     (lambda () (write obj)))))
-   
-   (define (->list obj)
-      (if (pair? obj)
-	  obj
-	  '()))
-   
-   (define (<RBUTTON> id)
-      (<BUTTON> :onclick ~(with-hop ($(service (id)
-					 ;; remove the entry
-					 (phone-contact-remove! android id)
-					 ;; request the new contact list
-					 (<CONTACT> (phone-contact android)))
-				      $id)
-			     (lambda (l)
-				(innerHTML-set! "contact-list" l)))
-	 "remove"))
-   
-   (define (<CONTACT-ENTRY> vcard)
-      (with-access::vcard vcard (firstname
-				 familyname org url phones
-				 addresses emails notes)
-	 (let ((row (list (<TD> firstname " " familyname)
-			  (<TD> org)
-			  (<TD> (map (lambda (p)
-					(<DIV> (car p) ": " (cadr p)))
-				     (->list phones)))
-			  (<TD> (map (lambda (a)
-					(list
-					 (car a)
-					 (map <DIV> (cadr a))))
-				     (->list addresses)))
-			  (<TD> (map (lambda (e) (<DIV> (<TT> e)))
-				     (->list emails)))
-			  (<TD> (map (lambda (n)
-					(<DIV> (<TT> (->string n))))
-				     (->list notes))))))
-	    (let ((c (assq 'android-id notes)))
-	       (<TR> (if (pair? c)
-			 (cons (<TD> (<RBUTTON> (cdr c))) row)
-			 (cons (<TD>) row)))))))
-   
-   (define (<CONTACT> l)
-      (<TABLE> :class "contact"
-	 (<TR> (<TH>)
-	       (<TH> "Name")
-	       (<TH> "Company")
-	       (<TH> "Phones")
-	       (<TH> "Addresses")
-	       (<TH> "Emails")
-	       (<TH> "Notes"))
-	 (map <CONTACT-ENTRY> l)))
-   
-   (<DIV> :id "contact-list"
-      (<CONTACT> (phone-contact android))
-      (<BUTTON> :onclick ~(with-hop ($(service ()
-					 (phone-contact-add! android contact))
-				      (lambda (l)
-					 (innerHTML-set! "contact-list" l))))
-	 "Add entry")))
-		
+;* (define (<ANDROIDEMO:CONTACT>)                                      */
+;*                                                                     */
+;*    (define (->string obj)                                           */
+;*       (if (eq? obj 'nil)                                            */
+;* 	  ""                                                           */
+;* 	  (with-output-to-string                                       */
+;* 	     (lambda () (write obj)))))                                */
+;*                                                                     */
+;*    (define (->list obj)                                             */
+;*       (if (pair? obj)                                               */
+;* 	  obj                                                          */
+;* 	  '()))                                                        */
+;*                                                                     */
+;*    (define (<RBUTTON> id)                                           */
+;*       (<BUTTON> :onclick ~(with-hop ($(service (id)                 */
+;* 					 ;; remove the entry           */
+;* 					 (phone-contact-remove! android id) */
+;* 					 ;; request the new contact list */
+;* 					 (<CONTACT> (phone-contact android))) */
+;* 				      $id)                             */
+;* 			     (lambda (l)                               */
+;* 				(innerHTML-set! "contact-list" l)))    */
+;* 	 "remove"))                                                    */
+;*                                                                     */
+;*    (define (<CONTACT-ENTRY> vcard)                                  */
+;*       (with-access::vcard vcard (firstname                          */
+;* 				 familyname org url phones             */
+;* 				 addresses emails notes)               */
+;* 	 (let ((row (list (<TD> firstname " " familyname)              */
+;* 			  (<TD> org)                                   */
+;* 			  (<TD> (map (lambda (p)                       */
+;* 					(<DIV> (car p) ": " (cadr p))) */
+;* 				     (->list phones)))                 */
+;* 			  (<TD> (map (lambda (a)                       */
+;* 					(list                          */
+;* 					 (car a)                       */
+;* 					 (map <DIV> (cadr a))))        */
+;* 				     (->list addresses)))              */
+;* 			  (<TD> (map (lambda (e) (<DIV> (<TT> e)))     */
+;* 				     (->list emails)))                 */
+;* 			  (<TD> (map (lambda (n)                       */
+;* 					(<DIV> (<TT> (->string n))))   */
+;* 				     (->list notes))))))               */
+;* 	    (let ((c (assq 'android-id notes)))                        */
+;* 	       (<TR> (if (pair? c)                                     */
+;* 			 (cons (<TD> (<RBUTTON> (cdr c))) row)         */
+;* 			 (cons (<TD>) row)))))))                       */
+;*                                                                     */
+;*    (define (<CONTACT> l)                                            */
+;*       (<TABLE> :class "contact"                                     */
+;* 	 (<TR> (<TH>)                                                  */
+;* 	       (<TH> "Name")                                           */
+;* 	       (<TH> "Company")                                        */
+;* 	       (<TH> "Phones")                                         */
+;* 	       (<TH> "Addresses")                                      */
+;* 	       (<TH> "Emails")                                         */
+;* 	       (<TH> "Notes"))                                         */
+;* 	 (map <CONTACT-ENTRY> l)))                                     */
+;*                                                                     */
+;*    (<DIV> :id "contact-list"                                        */
+;*       (<CONTACT> (phone-contact android))                           */
+;*       (<BUTTON> :onclick ~(with-hop ($(service ()                   */
+;* 					 (phone-contact-add! android contact)) */
+;* 				      (lambda (l)                      */
+;* 					 (innerHTML-set! "contact-list" l)))) */
+;* 	 "Add entry")))                                                */
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:CALLLOG> ...                                         */

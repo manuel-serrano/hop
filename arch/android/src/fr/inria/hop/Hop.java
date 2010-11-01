@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Thu Oct 28 08:39:29 2010 (serrano)                */
+/*    Last change :  Mon Nov  1 14:03:31 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -119,7 +119,7 @@ public class Hop extends Thread {
 	       try {
 		  for( l = fin.read( buffer ); l > 0; l = fin.read( buffer ) ) {
 		     String s = new String( buffer, 0, l );
-		     Log.v( "Hop", s );
+		     // Log.v( "Hop", s );
 		     queue.put( s );
 		     handler.sendEmptyMessage( HopLauncher.MSG_OUTPUT_AVAILABLE );
 		  }

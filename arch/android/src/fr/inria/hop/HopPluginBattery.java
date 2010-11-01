@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Mon Nov  1 11:34:20 2010 (serrano)                */
+/*    Last change :  Mon Nov  1 14:18:37 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Dealing with SMS                                                 */
@@ -24,7 +24,7 @@ import java.io.*;
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
-public class HopPluginBattery extends BroadcastReceiver {
+public class HopPluginBattery extends HopPlugin {
    // instance variables
    int count = 0;
    BroadcastReceiver receiver = null;
@@ -42,11 +42,11 @@ public class HopPluginBattery extends BroadcastReceiver {
 	 case (byte)'b':
 	    // send a SMS
 	    if( count++ == 0 ) {
-	       int scale = intent.getIntExtra( BatteryManager.EXTRA_SCALE, 0 );
-
 	       receiver = new BroadcastReceiver() {
 		     @Override
-		     public void onReceive( Context arg0, Intent arg1 ) {
+		     public void onReceive( Context arg0, Intent intent ) {
+			int scale = intent.getIntExtra( BatteryManager.EXTRA_SCALE, 0 );
+	       
 			int level = intent.getIntExtra( BatteryManager.EXTRA_LEVEL, 0 );
 			int voltage = intent.getIntExtra( BatteryManager.EXTRA_VOLTAGE, 0 );
 			String health;
@@ -73,7 +73,7 @@ public class HopPluginBattery extends BroadcastReceiver {
 			      health = "failure";
 			      break;
 			   default:
-			      healt = "unknown";
+			      health = "unknown";
 			}
 
 			switch( intent.getIntExtra( BatteryManager.EXTRA_PLUGGED, 0 ) ) {
@@ -88,16 +88,16 @@ public class HopPluginBattery extends BroadcastReceiver {
 			}
 			      
 			switch( intent.getIntExtra( BatteryManager.EXTRA_STATUS, 0 ) ) {
-			   case BatteryManager.BATTERY_STATUS_CHARGING;
+			   case BatteryManager.BATTERY_STATUS_CHARGING:
 			      status = "charging";
 			      break;
-			   case BatteryManager.BATTERY_STATUS_DISCHARGING;
+			   case BatteryManager.BATTERY_STATUS_DISCHARGING:
 			      status = "discharging";
 			      break;
-			   case BatteryManager.BATTERY_STATUS_FULL;
+			   case BatteryManager.BATTERY_STATUS_FULL:
 			      status = "full";
 			      break;
-			   case BatteryManager.BATTERY_STATUS_NOT_CHARGING;
+			   case BatteryManager.BATTERY_STATUS_NOT_CHARGING:
 			      status = "not-charging";
 			      break;
 			   default:
@@ -119,7 +119,7 @@ public class HopPluginBattery extends BroadcastReceiver {
 	 case (byte)'e':
 	    if( --count == 0 ) {
 	       // unregister the recevier
-	       if( recevier != null ) {
+	       if( receiver != null ) {
 		  activity.unregisterReceiver( receiver );
 	       }
 	    }

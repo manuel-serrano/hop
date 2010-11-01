@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Mon Nov  1 09:58:46 2010 (serrano)                */
+/*    Last change :  Mon Nov  1 12:28:17 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -249,6 +249,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
       var url = "ws://" + host + ":" + port +
 	 hop_service_base() + "/server-event/websocket?key=" + key;
 /*       var url = "ws://" + host + ":" + 8788 + "/echo";              */
+      var ws = new WebSocket( url );
 
       var register = function( id ) {
 	 var svc = hop_service_base() +
@@ -271,8 +272,6 @@ function start_servevt_websocket_proxy( key, host, port ) {
 			   function() { ; }, false,
 			   false, [] );
       };
-
-      var ws = new WebSocket( url );
 
       ws.onopen = function() {
 	 // we are ready to register now

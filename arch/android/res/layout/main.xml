@@ -83,7 +83,7 @@
               android:layout_height="wrap_content"
               android:textSize="10px"
               android:paddingRight="20sp"
-              android:text="Enable scrolling"/>
+              android:text="Scroll"/>
     <Button android:id="@+id/clearconsole"
             android:layout_width="120sp"
             android:layout_height="wrap_content"
