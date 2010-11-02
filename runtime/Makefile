@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Oct 20 09:23:41 2010 (serrano)                */
+#*    Last change :  Tue Nov  2 07:07:24 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -101,8 +101,8 @@ ude:
 	@ $(JFILE) -suffix hop -o .jfile \
                    -pbase $(PBASE) $(SOURCES) configure.scm make_lib.scm
 
-.etags: $(SOURCES)
-	@ $(BTAGS) -o .etags $(SOURCES) configure.scm
+.etags: $(SOURCES) $(INCLUDES)
+	@ $(BTAGS) -o .etags $(SOURCES) $(INCLUDES) configure.scm
 
 getsources:
 	@ echo $(SOURCES)

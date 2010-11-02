@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Mon Nov  1 14:16:06 2010 (serrano)                */
+;*    Last change :  Mon Nov  1 14:25:34 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -294,7 +294,7 @@ missed.")
 	      (innerHTML-set! "bat-plug" (symbol->string (cadddr val)))
 	      (innerHTML-set! "bat-health" (symbol->string (cadr (cdddr val))))
 	      (innerHTML-set! "bat-voltage" (caddr (cdddr val))))))
-    (<TABLE>
+    (<TABLE> :id "battery"
        (<TR>
 	  (<TH> "charge level")
 	  (<TH> "status")

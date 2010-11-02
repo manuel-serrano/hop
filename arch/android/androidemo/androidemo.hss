@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Mar  2 07:38:26 2010                          */
-/*    Last change :  Fri Oct 29 07:58:55 2010 (serrano)                */
+/*    Last change :  Mon Nov  1 14:25:52 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    POPART css                                                       */
@@ -243,4 +243,9 @@ tr.outoing tt:before {
   color: orange;
   font-weight: bold;
   content: "o: ";
+}
+
+table.battery td,
+table.battery th {
+  text-align: center;
 }
