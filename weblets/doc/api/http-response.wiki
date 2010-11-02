@@ -278,7 +278,7 @@ client according to the [[http://www.shoutcast.com/|shoutcast]] protocol.
 ^  fields              ^   access  ^       type        ^  default value        ^  short description                          ^
 | ...                  |    ...    |        ...        |     ...               | fields from ::%http-response-local          |
 | backend              |    r      |      xml-backend  |  ++(hop-xml-backend)++  | the response xml backend.                |
-| body                 |    r      |       obj         |      _                | the object to be returned.                  |
+| value                |    r      |       obj         |      _                | the object to be returned.                  |
 </fields>
 
 The class ::http-response-js is used to transmit values to
