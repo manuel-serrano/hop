@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -33,4 +33,5 @@
 
 (install-expander!
  'cond-expand
- (lambda (x e) (expand-cond-expand x e *scheme2js-features*)))
+ (lambda (x e)
+    (expand-cond-expand x e *scheme2js-features*)))

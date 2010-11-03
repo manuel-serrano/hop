@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.1.x/etc/Makefile.mercurial            */
+#*    serrano/prgm/project/hop/2.2.x/etc/Makefile.mercurial            */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:43:37 2006                          */
-#*    Last change :  Mon Jun  7 17:19:32 2010 (serrano)                */
+#*    Last change :  Wed Nov  3 12:09:17 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Mercurial config                                                 */
@@ -16,6 +16,6 @@ VM-PUSH		= hg push
 VM-PULL		= hg pull
 VM-CLONE	= hg clone
 VM-TAG		= hg tag
-VM-LOG		= hg log -l 100 --style changelog
 VM-BRANCH	= hg update
 VM-PUSH-BRANCH	= -r
+VM-LOG          = hg log --template "(\"{date|shortdate}\" \"{author}\" \"{files}\" \"{desc|fill68|urlescape}\" \"{node|short}\" \"{branches}\")"

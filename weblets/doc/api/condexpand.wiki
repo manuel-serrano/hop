@@ -1,4 +1,4 @@
-<doc> Condition Compilation
+<doc> Conditional Compilation
 
 == Description ==
 
@@ -40,7 +40,8 @@ underlying host, and to distinguish client-side code and server-side code.
 ~~ In addition, client-side defines additional features that allows source code
 to behave differently on the server and on the client:
 
-  * scheme2js
+  * hop-client
+  * hop-server
 
 
 ~~ Each loaded dynamic library defines a new feature identifier that matches
@@ -65,8 +66,9 @@ server-side and client-side code. First, let us consider a simple module
   (define (cond-expand-div)
      (<DIV>
         (cond-expand
-           (scheme2js "client")
-           (else "server"))))
+           (hop-client "client")
+           (hop-server "server")
+           (else "unknown"))))
 
 
 The function ++cond-expand-div++ returns a newly allocated ++<DIV>++ whose
@@ -88,7 +90,7 @@ definitions actually differ.
   (define-service (foo)
      (let ((div (cond-expand-div)))
         (<HTML>
-           (<HEAD> :jscript (service-resource foo "bar.hop"))
+           (<HEAD> :jscript (service-resource foo "mod1.hop"))
            (<BODY>
               (<DIV>
                  div
