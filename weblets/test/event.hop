@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Mon Nov  1 14:44:53 2010 (serrano)                */
+;*    Last change :  Fri Nov  5 12:03:57 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
@@ -20,10 +20,10 @@
 ;*    test/events ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-service (test/events)
-   (let ((evt1 (symbol->string (gensym "event")))
-	 (evt2 (symbol->string (gensym "event")))
-	 (evt3 (symbol->string (gensym "event")))
-	 (evt4 (symbol->string (gensym "event"))))
+   (let ((evt1 (symbol->string (gensym "event-ok")))
+	 (evt2 (symbol->string (gensym "event-a")))
+	 (evt3 (symbol->string (gensym "event-b")))
+	 (evt4 (symbol->string (gensym "event-ready"))))
       (<TEST-HTML>
 	 :source (service-resource test/events "event.hop")
 	 (<DIV> :class "comment"
@@ -140,7 +140,7 @@ events succeeded, you should see an acknowledge.")
 	       (<DIV> "client-side implementation: " b6)
 	       (<DIV> "Server event: " b3
 		      ", Server event 2 (AB or BA when okay): " b4)
-	       (<DIV> "Server string event: should be [foo\"bar]: " b5)
+	       (<DIV> "Server string event should be [foo\"bar]: " b5)
 	       (<H4> "Orientation (browser dependent)")
 	       (<DIV> :style "border: 1px solid black; text-align: center;"
 		  (<SPAN> :id "orientation" "Move your device"))

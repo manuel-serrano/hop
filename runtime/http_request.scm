@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Oct 31 08:48:08 2010 (serrano)                */
+;*    Last change :  Fri Nov  5 16:53:50 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -165,7 +165,7 @@
 			 (query query)
 			 (header header)
 			 (port (or actual-port port (hop-port)))
-			 (host (or actual-host hostname "localhost"))
+			 (host (or actual-host hostname))
 			 (content-length cl)
 			 (transfer-encoding te)
 			 (authorization pauth)
@@ -182,7 +182,7 @@
 			 (query query)
 			 (header header)
 			 (port (or actual-port port (hop-port)))
-			 (host (or actual-host hostname "localhost"))
+			 (host (or actual-host (hostname)))
 			 (content-length cl)
 			 (transfer-encoding te)
 			 (authorization auth)

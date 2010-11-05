@@ -127,26 +127,26 @@
 have started Hop without any configuration file and without any user
 account. At that stage, the only services that you are allowed to run are:
 the Hop
-,(<A> :href (format "http://~a:~a/hop/wizard" (hostname) (hop-port))
+,(<A> :href (format "http://~a:~a/hop/wizard" (http-request-host req) (http-request-port req))
    "wizard"),
 the Hop
-,(<A> :href (format "http://~a:~a/hop/doc" (hostname) (hop-port))
+,(<A> :href (format "http://~a:~a/hop/doc" (http-request-host req) (http-request-port req))
    "documentation")
 application, and the Hop passwords
-,(<A> :href (format "http://~a:~a/hop/epassword" (hostname) (hop-port))
+,(<A> :href (format "http://~a:~a/hop/epassword" (http-request-host req) (http-request-port req))
    "encryption")
 weblet.
 
 ,(<P>)
 You must fix that in order to be able to use Hop. New comers are
 encouraged to use the Hop
-,(<A> :href (format "http://~a:~a/hop/wizard" (hostname) (hop-port))
+,(<A> :href (format "http://~a:~a/hop/wizard" (http-request-host req) (http-request-port req))
     "wizard") for creating a simple Hop configuration file.]
 		      
 		      [
 Alternatively, for those that feel more confident, you can generate
 the configuration file by hand. The Hop
-,(<A> :href (format "http://~a:~a/hop/doc" (hostname) (hop-port))
+,(<A> :href (format "http://~a:~a/hop/doc" (http-request-host req) (http-request-port req))
 "documentation") teaches how to proceed.
 ,(<P>)
 A good starting point is probably to copy the file

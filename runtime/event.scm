@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Nov  1 10:02:19 2010 (serrano)                */
+;*    Last change :  Fri Nov  5 16:41:11 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -338,7 +338,7 @@
    
    (define (websocket-server-location host)
       (format "ws://~a/~a/server-event/websocket?key=~a"
-	      (or host (format "~a:~a" (hostname) (hop-port)))
+	      (or host (format "~a:~a" (http-request-host req) (http-request-port req)))
 	      (hop-initial-weblet)
 	      key))
 
@@ -409,15 +409,13 @@
       (let ((host (get-header header host: #f)))
 	 ;; see http_response.scm for the source code that actually sends
 	 ;; the bytes of the response to the client.
-	 (let ((key1 (get-header header sec-websocket-key1: #f)))
-	    
 	 (instantiate::http-response-websocket
 	    (start-line "HTTP/1.1 101 Web Socket Protocol Handshake")
 	    (location (websocket-server-location host))
 	    (origin (get-header header origin: "localhost"))
 	    (protocol (get-header header WebSocket-Protocol: #f))
 	    (connection 'Upgrade)
-	    (sec (websocket-sec-challenge req header)))))))
+	    (sec (websocket-sec-challenge req header))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-init! ...                                              */
@@ -439,14 +437,16 @@
 	    
 	    (set! *port-service*
 		  (service :name "server-event/info" ()
-		     (let* ((hd (http-request-header (current-request)))
+		     (let* ((req (current-request))
+			    (hd (http-request-header req))
 			    (host (assq host: hd))
-			    (key (get-server-event-key (or port 0))))
+			    (key (get-server-event-key req))
+			    (port (http-request-port req)))
 ;* 			(tprint "server-info key=" key)                */
 			(if (pair? host)
 			    (let ((s (string-split (cdr host) ":")))
 			       (vector (car s) port key))
-			    (vector (hostname) port key)))))
+			    (vector (http-request-host req) port key)))))
 	    
 	    (set! *init-service*
 		  (service :name "server-event/init" (#!key key)
@@ -892,10 +892,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    get-server-event-key ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (get-server-event-key port)
+(define (get-server-event-key req::http-request)
    (mutex-lock! *event-mutex*)
    (set! *client-key* (+fx 1 *client-key*))
-   (let ((key (format "~a:~a://~a" (hostname) port *client-key*)))
+   (let ((key (format "~a:~a://~a"
+		      (http-request-host req)
+		      (http-request-port req)
+		      *client-key*)))
       (mutex-unlock! *event-mutex*)
       key))
 

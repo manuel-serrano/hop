@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Oct 20 09:34:16 2010 (serrano)                */
+;*    Last change :  Fri Nov  5 16:58:59 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -166,23 +166,26 @@
 	 (if (http-proxy-request? req)
 	     ;; this is a proxy request
 	     (<HEAD> :base (format "http://~a:~a"
-				   (socket-hostname (http-request-socket req))
-				   (hop-port)))
+				   (http-request-host req)
+				   (http-request-port req)))
 	     ;; this is a local request
-	     (<HEAD>)))
-      (<BODY> :style "background: #000; font-family: arial; color: black;"
-	 :hssclass "hop-error"
-	 (<DIV> :hssclass "hop-error" :class class
-	    (let* ((path (make-file-name (hop-icons-directory) icon))
-		   (epath (format "http://~a:~a~a" (hostname) (hop-port) path))
-		   (js (format "this.src = ~s" epath)))
-	       (<IMG> :src (img-base64-encode path)
-		  :alt icon
-		  :onerror (secure-javascript-attr js)))
-	    (<DIV> 
-	       (<DIV> :hssclass "hop-error-title" title)
-	       (<DIV> :hssclass "hop-error-msg" msg)
-	       body)))))
+	     (<HEAD>))
+	 (<BODY> :style "background: #000; font-family: arial; color: black;"
+	    :hssclass "hop-error"
+	    (<DIV> :hssclass "hop-error" :class class
+	       (let* ((path (make-file-name (hop-icons-directory) icon))
+		      (epath (format "http://~a:~a~a"
+				     (http-request-host req)
+				     (http-request-port req)
+				     path))
+		      (js (format "this.src = ~s" epath)))
+		  (<IMG> :src (img-base64-encode path)
+		     :alt icon
+		     :onerror (secure-javascript-attr js)))
+	       (<DIV> 
+		  (<DIV> :hssclass "hop-error-title" title)
+		  (<DIV> :hssclass "hop-error-msg" msg)
+		  body))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-file-not-found ...                                          */
