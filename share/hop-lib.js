@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Tue Oct  5 12:06:55 2010 (serrano)                */
+/*    Last change :  Mon Nov  8 14:33:47 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -24,6 +24,7 @@
 /*** META ((export hop-realm) (JS hop_realm)) */
 /*** META ((export md5sum) (JS md5sum)) */
 /*** META ((export md5sum-string) (JS hdex_md5)) */
+/*** META ((export hop-debug) (JS hop_debug)) */
 
 /*---------------------------------------------------------------------*/
 /*    hop_callback ...                                                 */

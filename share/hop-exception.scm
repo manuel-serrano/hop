@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Thu Sep 16 15:01:12 2010 (serrano)                */
+;*    Last change :  Mon Nov  8 14:20:09 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -420,12 +420,12 @@
 	  ;; report the error
 	  (hop-report-exception exc)
 	  ;; don't propagate the error
-	  (< (debug) 2))))
+	  (< (hop-debug) 2))))
 
 ;*---------------------------------------------------------------------*/
 ;*    install the default error handler ...                            */
 ;*---------------------------------------------------------------------*/
-(when (> (debug) 0)
+(when (> (hop-debug) 0)
    ;; on debug install the Hop error handler
    (error-hook-set!
     (lambda (exc _)
