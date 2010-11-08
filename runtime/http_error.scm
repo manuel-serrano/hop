@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Nov  7 09:12:27 2010 (serrano)                */
+;*    Last change :  Mon Nov  8 14:46:06 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -170,7 +170,7 @@
 				   (http-request-port req)))
 	     ;; this is a local request
 	     (<HEAD>))
-	 (<BODY> :style "background: #000; font-family: arial; color: black;"
+	 (<BODY> :style "background: #222; font-family: arial; color: black;"
 	    :hssclass "hop-error"
 	    (<DIV> :hssclass "hop-error" :class class
 	       (let* ((path (make-file-name (hop-icons-directory) icon))

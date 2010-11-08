@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Mon Nov  8 14:20:09 2010 (serrano)                */
+;*    Last change :  Mon Nov  8 14:59:20 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -44,7 +44,7 @@
    "position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     opacity: 0.8;
-    background: #141111;
+    background: #242222;
     z-index: 1000000")
 
 (define (hop-exception-frame-style)
