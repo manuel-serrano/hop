@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/service.sch                     */
+;*    serrano/prgm/project/hop/2.2.x/runtime/service.sch               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Thu Dec  7 07:31:11 2006 (serrano)                */
-;*    Copyright   :  2005-06 Manuel Serrano                            */
+;*    Last change :  Sun Nov  7 08:58:46 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
 ;*=====================================================================*/
@@ -12,7 +12,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    directives                                                       */
 ;*---------------------------------------------------------------------*/
-(directives (option (loadq "service-expd.sch")))
+(directives (option (loadq "service_expd.sch")))
 
 ;*---------------------------------------------------------------------*/
 ;*    define-service ...                                               */

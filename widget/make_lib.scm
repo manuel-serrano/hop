@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/widget/make-lib.scm               */
+;*    serrano/prgm/project/hop/2.2.x/widget/make_lib.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Tue Apr 13 09:12:58 2010 (serrano)                */
+;*    Last change :  Sun Nov  7 08:55:46 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOPWIDGET heap file.                */
@@ -31,7 +31,10 @@
 	   __hopwidget-spinbutton
 	   __hopwidget-lframe
 	   __hopwidget-spage
-	   __hopwidget-gauge)
+	   __hopwidget-gauge
+	   __hopwidget-sym
+	   __hopwidget-foot
+	   __hopwidget-sorttable)
 
    (eval   (export-all)
 	   (class audio-server)

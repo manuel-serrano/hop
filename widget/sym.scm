@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/hop_sym.scm               */
+;*    serrano/prgm/project/hop/2.2.x/widget/sym.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 27 09:39:08 2006                          */
-;*    Last change :  Wed Oct 20 09:35:47 2010 (serrano)                */
+;*    Last change :  Sun Nov  7 08:36:40 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML symbols (special characters).                               */
@@ -12,9 +12,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hop_hop-sym
+(module __hopwidget-sym
 
-   (import  __hop_xml-types)
+   (library hop)
    
    (export  (<SYM> ::obj)
 	    (hop-symbol-alist)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Wed Oct 20 09:34:28 2010 (serrano)                */
+;*    Last change :  Sun Nov  7 08:57:17 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_http-filter
 
-   (include "http-lib.sch")
+   (include "http_lib.sch")
 
    (library web)
    

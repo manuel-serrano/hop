@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/etc/configure.scm.in              */
+;*    serrano/prgm/project/hop/2.2.x/etc/configure.scm.in              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Tue May  5 10:02:57 2009 (serrano)                */
+;*    Last change :  Sun Nov  7 09:00:32 2010 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration                                                */
 ;*=====================================================================*/
@@ -13,7 +13,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_configure
    
-   (include "configure-@HOPARCH@.sch")
+   (include "configure_@HOPARCH@.sch")
    
    (export  (hop-configure ::bstring)
 	    (hop-name)

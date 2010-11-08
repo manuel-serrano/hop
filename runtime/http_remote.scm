@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Mon Jul 26 18:34:18 2010 (serrano)                */
+;*    Last change :  Sun Nov  7 08:57:46 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_http-remote
 
-   (include "http-lib.sch")
+   (include "http_lib.sch")
 
    (library web)
    

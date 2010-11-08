@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Oct 20 09:26:47 2010 (serrano)                */
+;*    Last change :  Sun Nov  7 08:40:58 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -71,7 +71,8 @@
 	    (sexp->xml-tilde::xml-tilde expr)
 
 	    (<TILDE> ::obj #!key src loc)
-	    (<DELAY> . ::obj)))
+	    (<DELAY> . ::obj)
+	    (<PRAGMA> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-javascript-mime-type ...                                     */
@@ -838,6 +839,18 @@
 	  (id (xml-make-id id))
 	  (thunk (car body)))
        (error "<DELAY>" "Illegal delay's thunk" (car body))))
+
+;*---------------------------------------------------------------------*/
+;*    <PRAGMA> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<PRAGMA> . obj)
+   (cond
+      ((and (pair? obj) (null? (cdr obj)) (string? (car obj)))
+       (instantiate::xml-verbatim (body (car obj))))
+      ((every? string? obj)
+       (instantiate::xml-verbatim (body (apply string-append obj))))
+      (else
+       (error "<PRAGMA>" "Illegal arguments" obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-expression ...                                         */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/param-expd.sch            */
+;*    serrano/prgm/project/hop/2.2.x/runtime/param_expd.sch            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:17:19 2006                          */
-;*    Last change :  Sat Jun 19 06:49:24 2010 (serrano)                */
+;*    Last change :  Sun Nov  7 09:01:24 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Parameters expander                                              */

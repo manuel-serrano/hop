@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/weblets/hop/hop.hss               */
+/*    serrano/prgm/project/hop/2.2.x/weblets/hop/hop.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat Jun 12 07:34:45 2010 (serrano)                */
+/*    Last change :  Sat Nov  6 07:42:46 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -35,15 +35,19 @@ $(define deep-magenta "#7a459e")
 $(define deep-magenta2 "#4a346c")
 $(define deep-orange "#ffae2b")
 
-$(define hop-width "85%")
-
 /*---------------------------------------------------------------------*/
 /*    Common CSS rules                                                 */
 /*---------------------------------------------------------------------*/
 body {
   background-color: #e0e0e0;
+  background-image: -moz-linear-gradient( -90deg, #f3f3f3, #c3c3c3 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#f3f3f3), to(#c3c3c3));
+
   font-family: $font-family;
   overflow: auto;
+  padding-top: 4ex;
+  padding-left: 5em;
+  padding-right: 5em;
 }
 
 img.logo {
@@ -140,12 +144,17 @@ table.weblet-incompatible td.legend {
 
 /*--- <HOP> -----------------------------------------------------------*/
 table.hop {
-  width: $hop-width;
-  margin-top: 20px;
+  width: 100%;
   padding: 10px;
   border: 1px solid $border-color;
   background-color: white;
   border-radius: 0.4em;
+}
+
+td.main-logo {
+  width: 78px;
+  vertical-align: top;
+  text-align: center;
 }
 
 div#title {
@@ -167,4 +176,24 @@ table.directory th.title {
   font-size: large;
   color: #00a;
 }
-  
+
+@media all and (max-width: 900px) {
+  body {
+    padding: 5px;
+    margin: 0;
+  }
+
+  table.hop {
+    padding: 4px;
+    margin: 0;
+  }
+
+  td.main-logo {
+    width: 54px;
+    padding-top: 15px;
+  }
+
+  td.main-logo img {
+    padding: 0;
+  }
+}

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 12 15:53:32 2006                          */
-;*    Last change :  Wed Oct 20 09:32:36 2010 (serrano)                */
+;*    Last change :  Sun Nov  7 09:11:34 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki toc                                                         */
@@ -15,7 +15,7 @@
 (module __hop_wiki-toc
 
    (import  __hop_xml-types
-	    __hop_html
+	    __hop_html-base
 	    __hop_read
 	    __hop_dom)
 

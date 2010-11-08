@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Oct 20 09:31:07 2010 (serrano)                */
+;*    Last change :  Sun Nov  7 09:05:40 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -28,9 +28,7 @@
 	    __hop_http-lib
 	    __hop_weblets)
    
-   (with    __hop_hop-inline
-	    __hop_hop-extra
-	    __hop_event)
+   (with    __hop_event)
    
    (export  (generic thread-request ::obj)
 	    (generic thread-request-set! ::obj ::obj)

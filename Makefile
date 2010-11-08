@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Oct 25 10:34:38 2010 (serrano)                */
+#*    Last change :  Sun Nov  7 08:50:16 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -229,6 +229,9 @@ distclean: clean devclean
 	/bin/rm -f lib/hop.init
 	/bin/rm -f lib/scheme2js.init
 	/bin/rm -f lib/hopscheme.init
+	/bin/rm -f runtime/configure_android.sch
+	/bin/rm -f runtime/configure_macosx.sch
+	/bin/rm -f runtime/configure_noarch.sch
 
 cleanall: distclean
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Nov  1 12:22:57 2010 (serrano)                */
+;*    Last change :  Sun Nov  7 09:12:02 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -16,7 +16,7 @@
 
    (library web)
    
-   (include "http-lib.sch")
+   (include "http_lib.sch")
    
    (import  __hop_param
 	    __hop_configure
@@ -24,9 +24,9 @@
 	    __hop_misc
 	    __hop_xml-types
 	    __hop_xml
-	    __hop_html
+	    __hop_html-base
+	    __hop_html-head
 	    __hop_charset
-	    __hop_hop-extra
 	    __hop_http-lib
 	    __hop_http-error
 	    __hop_http-filter

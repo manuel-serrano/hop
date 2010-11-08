@@ -489,23 +489,23 @@ function with_hop( svc, success, failure, sync, anim, timeout ) {
 	 (cond
 	    ((null? rest)
 	     `((@ hop_send_request _)
-	                        ,svc
-				,sync
-				,(or success '(lambda (h) h))
-				,(or fail '(@ hop_default_failure _))
-				,anim
-				((@ hop_serialize_request_env _))
-				,(cond
-				    (authorization
-				     authorization)
-				    ((and (string? user)
-					  (string? password))
-				     (string-append
-				      "Basic "
-				      (base64-encode
-				       (string-append
-					user ":" password)))))
-				timeout))
+	       ,svc
+	       ,sync
+	       ,(or success '(lambda (h) h))
+	       ,(or fail '(@ hop_default_failure _))
+	       ,anim
+	       ((@ hop_serialize_request_env _))
+	       ,(cond
+		   (authorization
+		    authorization)
+		   ((and (string? user)
+			 (string? password))
+		    (string-append
+		     "Basic "
+		     (base64-encode
+		      (string-append
+		       user ":" password)))))
+	       ,timeout))
 	    ((eq? (car rest) :anim)
 	     (if (null? (cdr rest))
 		 (error 'with-hop "Illegal :anim argument" rest)

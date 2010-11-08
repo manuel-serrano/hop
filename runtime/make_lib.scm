@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Wed Oct 20 10:08:18 2010 (serrano)                */
+;*    Last change :  Sun Nov  7 08:56:43 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -22,8 +22,9 @@
 	   __hop_types
 	   __hop_xml-types
 	   __hop_xml
-	   __hop_html
-	   __hop_img
+	   __hop_html-base
+	   __hop_html-img
+	   __hop_html-head
 	   __hop_charset
 	   __hop_dom
 	   __hop_read
@@ -46,12 +47,10 @@
 	   __hop_http-shoutcast
 	   __hop_http-webdav
 	   __hop_http-error
-	   __hop_hop-extra
 	   __hop_hop-inline
-	   __hop_hop-sym
 	   __hop_hop-rss
-	   __hop_hop-svg
-	   __hop_hop-mathml
+	   __hop_svg
+	   __hop_mathml
 	   __hop_event
 	   __hop_color
 	   __hop_prefs

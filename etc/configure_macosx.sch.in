@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/etc/configure-macosx.sch.in       */
+;*    serrano/prgm/project/hop/2.2.x/etc/configure_macosx.sch.in       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Mon Sep  7 19:14:37 2009 (serrano)                */
+;*    Last change :  Sun Nov  7 08:59:35 2010 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration (tuned for MacOSX bundle)                      */
 ;*=====================================================================*/

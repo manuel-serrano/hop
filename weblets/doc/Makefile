@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.1.x/weblets/doc/Makefile              */
+#*    serrano/prgm/project/hop/2.2.x/weblets/doc/Makefile              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Sun Jun 27 08:16:39 2010 (serrano)                */
+#*    Last change :  Sun Nov  7 08:23:57 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -35,7 +35,7 @@ API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
                   param-rc.wiki parameter.wiki \
                   read.wiki service.wiki slider.wiki sorttable.wiki \
                   sqlite.wiki multimedia.wiki tabslider.wiki \
-                  timeout.wiki tooltip.wiki tree.wiki url.wiki wiki.wiki \
+                  timeout.wiki tree.wiki url.wiki wiki.wiki \
                   window.wiki xml.wiki symbol.wiki rss.wiki history.wiki \
                   regexp.wiki output.wiki webdav.wiki \
                   charset.wiki svg.wiki mathml.wiki canvas.wiki login.wiki \
@@ -54,7 +54,7 @@ EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   service-2.hop service-3.hop service-4.hop \
                   service-5.hop service-6.hop slider-1.hop slider-2.hop \
                   sorttable.hop tabslider-1.hop tabslider-2.hop \
-                  tooltip-1.hop tree-1.hop tree-2.hop \
+                  tree-1.hop tree-2.hop \
                   prefs-1.hop \
                   wiki.hop wiki2.hop window.hop history-1.hop history-2.hop \
                   cookie.hop webdav.hop svg.hop svg2.hop svg3.hop mathml.hop \

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Wed Oct 27 13:50:27 2010 (serrano)                */
+;*    Last change :  Sun Nov  7 08:58:12 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
@@ -19,7 +19,7 @@
 
    (library web)
    
-   (include "http-lib.sch"
+   (include "http_lib.sch"
 	    "xml.sch")
    
    (import  __hop_param

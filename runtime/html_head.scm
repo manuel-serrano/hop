@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/hop_extra.scm             */
+;*    serrano/prgm/project/hop/2.2.x/runtime/html_head.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Oct 20 09:34:57 2010 (serrano)                */
+;*    Last change :  Mon Nov  8 12:09:33 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -12,9 +12,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hop_hop-extra
+(module __hop_html-head
 
-   (include "xml.sch")
+   (include "xml.sch"
+	    "service.sch")
 
    (library web)
 
@@ -24,8 +25,9 @@
 	    __hop_misc
 	    __hop_xml-types
 	    __hop_xml
-	    __hop_html
-	    __hop_img
+	    __hop_dom
+	    __hop_html-base
+	    __hop_html-img
 	    __hop_js-lib
 	    __hop_hop
 	    __hop_user
@@ -34,23 +36,17 @@
 	    __hop_hz
 	    __hop_priv
 	    __hop_read
+	    __hop_service
 	    __hop_security)
 
    (export  (<HTML> . ::obj)
 	    (<HEAD> . ::obj)
 	    (head-parse args)
-	    (<FOOT> . ::obj)
-	    (<FOOT-BUTTON> . ::obj)
 
 	    (<LINK> . ::obj)
 	    (<SCRIPT> . ::obj)
-	    (<STYLE> . ::obj)
-	    (<INPUT> . ::obj)
+	    (<STYLE> . ::obj)))
 
-	    (<PRAGMA> . ::obj)
-	    
-	    (<TOOLTIP> . ::obj)
-	    (<SORTTABLE> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    head-runtime-system-packed ...                                   */
@@ -127,12 +123,12 @@ function hop_realm() { return \"" (hop-realm) "\"; }
        (preload-css (string-append base p) #f))))
 
 ;*---------------------------------------------------------------------*/
-;*    init-extra! ...                                                  */
+;*    init-head! ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (init-extra!)
+(define (init-head!)
    ;; this is used for non-inlined header on common regular browsers
    (unless head-runtime-system-packed
-      (let ((hopcss (make-file-name (hop-share-directory) "hop.hss")))
+      (let ((hopcss (make-file-path (hop-share-directory) "hop.hss")))
 	 ;; force loading to evaluate hop hss types
 	 (preload-css hopcss #f)
 	 (set! head-runtime-system-packed 
@@ -160,7 +156,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 				 (<SCRIPT> :inline #f
 				    :type (hop-configure-javascript-mime-type)
 				    :src p)))
-			   (append (hop-runtime-system) (hop-runtime-extra)))))
+			   (append (hop-runtime-system-files) (hop-runtime-extra)))))
 	 ;; this is used for inlined headers
 	 (set! head-runtime-system-inline
 	       (cons* (<HOP-SETUP>)
@@ -453,7 +449,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 ;*    Move the base on top of the HEAD body.                           */
 ;*---------------------------------------------------------------------*/
 (define (<HEAD> . args)
-   (init-extra!)
+   (init-head!)
    (let* ((body0 (head-parse args))
 	  (ubase (filter (lambda (x)
 			    (xml-markup-is? x 'base))
@@ -464,7 +460,10 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 				       (not (xml-markup-is? x 'base)))
 				    body0))
 		     body0))
-	  (body2 (if (not (any? (lambda (x) (xml-markup-is? x 'meta)) body0))
+	  (body2 (if (not (any? (lambda (x)
+				   (and (xml-markup-is? x 'meta)
+					(dom-get-attribute x "http-equiv")))
+				body0))
 		     (let ((meta (<META> :http-equiv "Content-Type")))
 			(cons meta body1))
 		     body1)))
@@ -472,79 +471,6 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 	 (tag 'head)
 	 (attributes '())
 	 (body body2))))
-
-;*---------------------------------------------------------------------*/
-;*    <FOOT> ...                                                       */
-;*---------------------------------------------------------------------*/
-(define-markup <FOOT> ((id #unspecified string)
-		       (class "foot" string)
-		       (inline #f)
-		       body)
-   (<DIV> :id (xml-make-id id 'FOOT)
-      :class class
-      (<DIV> :align "center"
-	 :class "foot-buttons"
-	 (<FOOT-BUTTON>
-	    :href "http://hop.inria.fr"
-	    :title "HOP home page"
-	    :inline inline
-	    :src "hop.png")
-	 body)))
-
-;*---------------------------------------------------------------------*/
-;*    <FOOT-BUTTON> ...                                                */
-;*---------------------------------------------------------------------*/
-(define-markup <FOOT-BUTTON> ((id #unspecified string)
-			      (class "foot-button")
-			      (href #f string)
-			      (title #f string)
-			      (path #f)
-			      (inline #f)
-			      (src #f))
-   (<A> :class class
-      :href href
-      :title title
-      (<IMG> :alt title
-	 :inline inline
-	 :src (cond
-		 ((string? path)
-		  path)
-		 ((string? src)
-		  (if (string=? (dirname src) ".")
-		      (format "~a/buttons/~a"
-			      (url-path-encode (hop-share-directory))
-			      src)
-		      src))
-		 (else
-		  (error "<FOOT-BUTTON>" "Illegal source" src))))))
-				     
-;*---------------------------------------------------------------------*/
-;*    <TOOLTIP> ...                                                    */
-;*---------------------------------------------------------------------*/
-(define-markup <TOOLTIP> ((id #unspecified string)
-			  (onclick 0)
-			  (onmouseout 0)
-			  body)
-   (<DIV> :id (xml-make-id id 'TOOLTIP)
-      :class "hoptooltip"
-      :onclick (format "~a; hop_tooltip_hide()" onclick)
-      :onmouseout (format "~a; hop_tooltip_hide()" onmouseout)
-      body))
-	  
-;*---------------------------------------------------------------------*/
-;*    <SORTTABLE> ...                                                  */
-;*    -------------------------------------------------------------    */
-;*    See __hop_css for HSS type.                                      */
-;*---------------------------------------------------------------------*/
-(define-markup <SORTTABLE> ((id #unspecified string)
-			    (attributes)
-			    body)
-   (let ((i (xml-make-id)))
-      (<SPAN> :id i 
-	 :class "hop-sorttable"
-	 (<TABLE> :id (if (string? id) id (xml-make-id 'SORTTABLE))
-	    attributes body)
-	 (<SCRIPT> (format "hop_sorttable( '~a' )" i)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    LINK ...                                                         */
@@ -579,7 +505,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 		    (body '())))
 		(else
 		 (default href))))))
-
+   
    (if (string-suffix? ".hss" href)
        ;; this is a file that need compilation
        (if (and inline (null? body) (file-exists? href))
@@ -661,45 +587,3 @@ function hop_realm() { return \"" (hop-realm) "\"; }
       (attributes `(:type ,type ,@attributes))
       (body body)))
 
-;*---------------------------------------------------------------------*/
-;*    <INPUT> ...                                                      */
-;*---------------------------------------------------------------------*/
-(define-markup <INPUT> ((id #unspecified string)
-			(type 'text)
-			(onkeydown #f)
-			(attributes))
-   (if (or (eq? type 'url) (equal? type "url"))
-       (let* ((id (xml-make-id id 'input))
-	      (comp "hop_inputurl_keydown( this, event )")
-	      (onkeydown (if onkeydown
-			     (format "~a; ~a" comp
-				     (if (xml-tilde? onkeydown)
-					 (xml-tilde->statement onkeydown)
-					 onkeydown))
-			     comp)))
-	  (instantiate::xml-empty-element
-	     (tag 'input)
-	     (id id)
-	     (attributes `(:type ,type
-				 :onkeydown ,(secure-javascript-attr onkeydown)
-				 ,@attributes))
-	     (body '())))
-       (instantiate::xml-empty-element
-	  (tag 'input)
-	  (id (xml-make-id id 'input))
-	  (attributes `(type: ,type
-			      ,@(if onkeydown `(onkeydown: ,(secure-javascript-attr onkeydown)) '())
-			      ,@attributes))
-	  (body '()))))
-
-;*---------------------------------------------------------------------*/
-;*    <PRAGMA> ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (<PRAGMA> . obj)
-   (cond
-      ((and (pair? obj) (null? (cdr obj)) (string? (car obj)))
-       (instantiate::xml-verbatim (body (car obj))))
-      ((every? string? obj)
-       (instantiate::xml-verbatim (body (apply string-append obj))))
-      (else
-       (error "<PRAGMA>" "Illegal arguments" obj))))

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Wed Nov  3 11:45:16 2010 (serrano)                */
+#*    Last change :  Sun Nov  7 08:48:57 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -22,8 +22,8 @@ POPULATION	= Makefile Makefile.weblet \
                   Makefile.mercurial Makefile.version Makefile.library \
 		  Makefile.hopconfig.in \
                   configure.scm.in libraries.sch.in \
-                  configure-noarch.sch.in configure-macosx.sch.in \
-                  configure-android.sch.in \
+                  configure_noarch.sch.in configure_macosx.sch.in \
+                  configure_android.sch.in \
                   hoprc.hop.in hopshrc.hop.in \
 		  hop.init.in scheme2js.init.in hopscheme.init.in \
                   hopdroid.init.in \

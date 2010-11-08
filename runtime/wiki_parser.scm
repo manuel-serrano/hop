@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed Oct 20 09:32:25 2010 (serrano)                */
+;*    Last change :  Sun Nov  7 09:11:09 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -17,14 +17,13 @@
    (library web)
    
    (import  __hop_xml-types
-	    __hop_html
+	    __hop_html-base
+	    __hop_html-img
+	    __hop_mathml
 	    __hop_param
 	    __hop_read
 	    __hop_charset
-	    __hop_img
-	    __hop_hop-mathml
-	    __hop_wiki-syntax
-	    __hop_hop-sym)
+	    __hop_wiki-syntax)
    
    (static  (class state
 	       markup::symbol

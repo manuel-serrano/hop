@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/hss.sch                   */
+;*    serrano/prgm/project/hop/2.2.x/runtime/hss.sch                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr  3 15:33:01 2009                          */
-;*    Last change :  Fri Jun 26 11:50:15 2009 (serrano)                */
-;*    Copyright   :  2009 Manuel Serrano                               */
+;*    Last change :  Sun Nov  7 09:05:00 2010 (serrano)                */
+;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the HSS macros                                 */
 ;*=====================================================================*/
@@ -12,7 +12,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    directives                                                       */
 ;*---------------------------------------------------------------------*/
-(directives (option (loadq "hss-expd.sch")))
+(directives (option (loadq "hss_expd.sch")))
 
 ;*---------------------------------------------------------------------*/
 ;*    define-hss-type ...                                              */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/html.scm                  */
+;*    serrano/prgm/project/hop/2.2.x/runtime/html_base.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Wed Oct 20 09:27:39 2010 (serrano)                */
+;*    Last change :  Sun Nov  7 09:02:57 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -12,13 +12,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hop_html
+(module __hop_html-base
 
    (include "param.sch"
 	    "xml.sch")
 
    (import  __hop_xml-types
-	    __hop_xml)
+	    __hop_xml
+	    __hop_security)
 
    (export  (<A> . ::obj)
 	    (<ABBR> . ::obj)
@@ -65,6 +66,7 @@
 	    (<HR> . ::obj)
 	    (<I> . ::obj)
 	    (<IFRAME> . ::obj)
+	    (<INPUT> . ::obj)
 	    (<INS> . ::obj)
 	    (<ISINDEX> . ::obj)
 	    (<KBD> . ::obj)
@@ -237,4 +239,35 @@
 	 (id (xml-make-id id 'FORM))
 	 (attributes attrs)
 	 (body body))))
+
+;*---------------------------------------------------------------------*/
+;*    <INPUT> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-markup <INPUT> ((id #unspecified string)
+			(type 'text)
+			(onkeydown #f)
+			(attributes))
+   (if (or (eq? type 'url) (equal? type "url"))
+       (let* ((id (xml-make-id id 'input))
+	      (comp "hop_inputurl_keydown( this, event )")
+	      (onkeydown (if onkeydown
+			     (format "~a; ~a" comp
+				     (if (xml-tilde? onkeydown)
+					 (xml-tilde->statement onkeydown)
+					 onkeydown))
+			     comp)))
+	  (instantiate::xml-empty-element
+	     (tag 'input)
+	     (id id)
+	     (attributes `(:type ,type
+				 :onkeydown ,(secure-javascript-attr onkeydown)
+				 ,@attributes))
+	     (body '())))
+       (instantiate::xml-empty-element
+	  (tag 'input)
+	  (id (xml-make-id id 'input))
+	  (attributes `(type: ,type
+			      ,@(if onkeydown `(onkeydown: ,(secure-javascript-attr onkeydown)) '())
+			      ,@attributes))
+	  (body '()))))
 
