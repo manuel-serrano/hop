@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.1.x/weblets/home/Makefile             */
+#*    serrano/prgm/project/hop/2.2.x/weblets/home/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Feb 19 07:41:18 2010 (serrano)                */
+#*    Last change :  Wed Nov 10 11:30:03 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -47,6 +47,7 @@ HOP_DEMOS	= minesweeper/minesweeper.hop \
                   set/util.hop \
                   set/game.hop \
 	          set/set.scm \
+	          popart/popart.hop \
                   source/source.hop \
                   sudoku/sudoku.hop \
                   sudoku/sudoku.scm \

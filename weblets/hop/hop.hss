@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat Nov  6 07:42:46 2010 (serrano)                */
+/*    Last change :  Mon Nov  8 16:13:41 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -39,15 +39,14 @@ $(define deep-orange "#ffae2b")
 /*    Common CSS rules                                                 */
 /*---------------------------------------------------------------------*/
 body {
-  background-color: #e0e0e0;
-  background-image: -moz-linear-gradient( -90deg, #f3f3f3, #c3c3c3 );
-  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#f3f3f3), to(#c3c3c3));
-
+  background-color: #c3c3c3;
   font-family: $font-family;
   overflow: auto;
   padding-top: 4ex;
   padding-left: 5em;
   padding-right: 5em;
+  background-image: -moz-linear-gradient( -90deg, #f3f3f3, #c0c0c0, #f3f3f3 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#f3f3f3), color-stop(0.5,#c3c3c3), to(#f3f3f3));
 }
 
 img.logo {

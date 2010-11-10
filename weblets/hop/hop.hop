@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Sat Nov  6 07:09:16 2010 (serrano)                */
+;*    Last change :  Mon Nov  8 16:00:50 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -218,7 +218,7 @@
 	 (<META> :name "viewport"
 	    :content "width=device-width, initial-scale=1."))
       (<BODY>
-	 (<DIV> :align "center"
+	 (<DIV> :class "body"
 	    (<TABLE> :class "hop"
 	       (<TR>
 		  (<TD> :class "main-logo"

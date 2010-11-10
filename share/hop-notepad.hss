@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/share/hop-notepad.hss             */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-notepad.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan 17 18:56:22 2005                          */
-/*    Last change :  Wed Mar  3 08:49:20 2010 (serrano)                */
+/*    Last change :  Wed Nov 10 09:55:05 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad CSS                                                  */
@@ -40,6 +40,7 @@ notepad table[hssclass=hop-notepad] {
   height: 100%;
   border-collapse: collapse;
   border: 0;
+  border-spacing: 0;
 }
 
 /*--- tabs line -------------------------------------------------------*/

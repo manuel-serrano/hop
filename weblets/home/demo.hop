@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/weblets/home/demo.hop             */
+;*    serrano/prgm/project/hop/2.2.x/weblets/home/demo.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Thu Apr  8 10:00:42 2010 (serrano)                */
+;*    Last change :  Wed Nov 10 12:26:13 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -23,6 +23,7 @@
 	   hophome_demos-wiki
 	   hophome_demos-rewrite
 	   hophome_demos-set
+	   hophome_demos-popart
 	   hophome_demos-music
 	   hophome_demos-video)
    (export (<DEMO> request)))
@@ -55,8 +56,8 @@
 			320 320)))
 	       (<TR>
 		  (<TD> :align "left"
-		     (<ZIMG> (home/demos/set)
-			"set-32x32.png" "set-48x48.png" inl
+		     (<ZIMG> (home/demos/popart)
+			"popart-32x32.png" "popart-48x48.png" inl
 			500 550)))
 	       (<TR>
 		  (<TD> :align "left"

@@ -3,7 +3,7 @@
 
 (define *source-directory* (dirname (the-loading-file)))
 
-(define (file->string f)
+(define (source->string f)
    (with-input-from-file f
       (lambda ()
 	 (html-string-encode (read-string (current-input-port))))))
@@ -25,7 +25,7 @@
 							    :align "center"
 							    (<IMG> :inline #t :src qf)))
 						      (service ()
-							 (<PRE> (file->string qf))))))
+							 (<PRE> (source->string qf))))))
 					   ~(with-hop ($svc)
 					       (lambda (h)
 						  (innerHTML-set! $disp h))))

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/weblets/doc/doc.hss               */
+/*    serrano/prgm/project/hop/2.2.x/weblets/doc/doc.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Jan 13 08:47:58 2010 (serrano)                */
+/*    Last change :  Tue Nov  9 09:55:34 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -153,6 +153,7 @@ div#title {
   margin-bottom: 20px;
   padding-bottom: 1px;
   text-align: left;
+  text-shadow: #999 2px 2px 2px;
 }
 
 div#result {

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/weblets/home/home.hss             */
+/*    serrano/prgm/project/hop/2.2.x/weblets/home/home.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat Apr 24 07:35:52 2010 (serrano)                */
+/*    Last change :  Wed Nov 10 11:25:11 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -12,11 +12,12 @@
 /*---------------------------------------------------------------------*/
 /*    User configuration                                               */
 /*---------------------------------------------------------------------*/
-$(define font-family "Lucida Grande, Verdana, Lucida, Helvetica, Arial")
 $(define typewriter "Bitstream Vera Sans Mono, Andale Mono, monospace")
-$(define background "#e0e0e0")
+$(define background "#c7c7c7")
 $(define border-color "#bbb")
-$(define home-color "#f9f9f9")
+$(define notepad-color "#EFF9BE")
+$(set! notepad-color "#F8FFCC")
+
 $(define header-color "#fffff0")
 $(define title-color "#ddd")
 $(define pagearea-color "#fff")
@@ -58,8 +59,11 @@ $(define button-padding "padding-left: 5px;
 /*---------------------------------------------------------------------*/
 body {
   background-color: $background;
-  font-family: $font-family;
-  overflow: scroll;
+  font-family: Arial, Lucida Grande, Verdana, Lucida, Helvetica;
+  font-size: 11pt;
+  overflow: auto;
+  padding: 0;
+  margin: 0;
 }
 
 img.logo {
@@ -73,7 +77,8 @@ tt {
 }
 
 h1 {
-  font-size: 100%;
+  font-size: 110%;
+  text-shadow: #aaa 2px 2px 2px;
 }
 
 h2 {
@@ -82,6 +87,125 @@ h2 {
 
 table td {
   text-align: left;
+}
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/*---------------------------------------------------------------------*/
+/*    title and main element                                           */
+/*---------------------------------------------------------------------*/
+div#title {
+  width: 100%;
+  font-size: 150%;
+  font-weight: bold;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 20px;
+  padding-bottom: 1px;
+  text-shadow: #999 2px 2px 2px;
+}
+
+div#body {
+  background-image: -moz-linear-gradient( -90deg, $(color-lighter background 2), $background );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter background 2)), to($background));
+  min-width: 45em;
+  padding-left: 4em;
+  padding-right: 4em;
+  padding-top: 4ex;
+}
+
+table#home {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100em;
+  width: 100%;
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid $border-color;
+  background-color: white;
+  border-radius: 5px;
+  box-shadow: 4px 4px 4px #666;
+}
+
+table#acm-award {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/*---------------------------------------------------------------------*/
+/*    notepad                                                          */
+/*---------------------------------------------------------------------*/
+notepad {
+  font-size: 100%;
+  width: 100%;
+}
+
+notepad-tabs {
+  background-color: transparent;
+  padding: 0;
+  padding-left: 10px;
+  height: 22px;
+  vertical-align: bottom;
+}
+
+nptab {
+  font-size: small;
+  border-color: $border-color;
+  border-bottom-color: $notepad-color;
+  margin: 0 4px 0 0;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  top: 0;
+}
+
+nptab img {
+  vertical-align: middle;
+  padding-right: 2px;
+}
+
+nptab-active {
+  background-color: $notepad-color;
+  border-bottom-color: $notepad-color;
+  background-image: -moz-linear-gradient( -90deg, $(color-lighter notepad-color 1), $notepad-color );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter notepad-color 1)), to($notepad-color));
+  color: black;
+  text-shadow: #999 2px 2px 2px;
+}
+
+nptab-inactive:hover {
+  color: black;
+  text-shadow: #999 2px 2px 2px;
+}
+
+nptab-body {
+  border-color: $border-color;
+  background: transparent;
+}
+
+notepad-body {
+  border: 1px solid $border-color;
+  padding: 10px;
+  background-color: $notepad-color;
+  background-image: -moz-linear-gradient( -90deg, $(color-lighter notepad-color 0), $(color-lighter notepad-color 1) );
+}
+
+div.hop-tab {
+  background: white;
+  background-repeat: no-repeat;
+  background-position: 50% 250px;
+  background-image: url( "etc/icons/logo-bg-128x128.png" );
+  min-width: 200px;
+  min-height: 200px;
+  margin-top: 0px;
+  border: 1px solid $border-color;
+  padding: 4px;
+  font-size: 11pt;
+  height: 100%;
 }
 
 /*--- forms -----------------------------------------------------------*/
@@ -120,23 +244,6 @@ input[type=radio]#share {
   color: red;
 }
 
-table.home {
-  width: 48em;
-  margin-top: 20px;
-  padding: 10px;
-  border: 1px solid $border-color;
-  background-color: white;
-}
-
-div#title {
-  width: 40em;
-  font-size: x-large;
-  font-weight: bold;
-  border-bottom: 1px solid $border-color;
-  margin-bottom: 20px;
-  padding-bottom: 1px;
-}
-
 div#result {
   text-align: center;
   width: 40em;
@@ -149,45 +256,6 @@ div#result {
 }  
 
 /*--- notepad ---------------------------------------------------------*/
-notepad-tabs {
-  background-color: transparent;
-  padding: 0;
-  padding-left: 10px;
-  margin-left: 10px;
-  margin-right: 0;
-  height: 22px;
-  vertical-align: bottom;
-}
-
-nptab {
-  font-size: small;
-  border-color: $border-color;
-  border-bottom: 0;
-  margin: 0 4px 0 0;
-  padding-top: 1px;
-}
-
-nptab img {
-  vertical-align: bottom;
-  padding-right: 2px;
-}
-
-nptab-active {
-  background-color: $home-color;
-  border-bottom-color: $home-color;
-  color: #8381de;
-}
-
-nptab-body {
-  border-color: $border-color;
-}
-
-notepad-body {
-  border: 1px solid $border-color;
-  padding: 10px;
-  font-size: small;
-  background-color: $home-color;
-}
 
 /*--- doc -------------------------------------------------------------*/
 table.hop-doc {
@@ -276,37 +344,25 @@ iframe.weblets {
 }
 
 /*---------------------------------------------------------------------*/
-/*    Presentation                                                     */
-/*---------------------------------------------------------------------*/
-div.hop-tab {
-  background: white;
-  background-repeat: no-repeat;
-  background-position: 50% 250px;
-  background-image: url( "etc/icons/logo-bg-128x128.png" );
-  min-width: 200px;
-  min-height: 200px;
-  margin-top: 5px;
-  border: 1px solid $border-color;
-  padding: 2px;
-}
-
-/*---------------------------------------------------------------------*/
 /*    Demo                                                             */
 /*---------------------------------------------------------------------*/
-$(hop-hss-type! "demo" "div.demo")
-$(define demo-background "#496bce")
+$(define demo-background "#FFDA61")
 $(define toolbar-opacity "0.9")
-$(define toolbar-background (color-lighter "#496bce"))
+$(define toolbar-background (color-lighter demo-background))
 
-demo {
+#home-notepad-tab-body-2 div.hop-tab {
+  padding: 0;
+}
+
+div.demo {
   width: 100%;
   height: 700px;
-  background-color: #496bce;
+  background-color: $demo-background;
   overflow: auto;
   z-index: 1001;
 }
   
-demo div.toolbar {
+div.demo div.toolbar {
   position: relative;
   left: 0px;
   top: 50px;
@@ -469,3 +525,45 @@ div.app span.iddn a.iddn:hover {
   text-decoration: underline;
   color: #777;
 }
+
+/*---------------------------------------------------------------------*/
+/*    video                                                            */
+/*---------------------------------------------------------------------*/
+#home-notepad-tab-body-1 div.hop-tab {
+  border: 0;
+  background: transparent;
+}
+
+div.video {
+  float: left;
+  width: 320px;
+  height: 320px;
+  border: 1px solid white;
+  border-radius: 4px;
+  padding: 10px;
+  background: black;
+  color: white;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+div.video-title {
+  font-weight: bold;
+  font-size: 110%;
+  color: #FFF800;
+}
+
+div.video-legend {
+  font-size: 90%;
+}
+
+div.video-alternate {
+  font-family: $typewriter;
+  font-size: 70%;
+}
+
+div.video a {
+  color: white;
+}
+

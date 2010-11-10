@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/widget/video.scm                  */
+;*    serrano/prgm/project/hop/2.2.x/widget/video.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue May 11 06:29:18 2010 (serrano)                */
+;*    Last change :  Wed Nov 10 10:27:24 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Video support.                                               */
@@ -35,7 +35,7 @@
 			      body)
    
    (define (<flash> src vid bool)
-      (let ((tmp (gensym 'video-flash)))
+      (let ((tmp (gensym 'flv)))
 	 (<SCRIPT> :type "text/javascript"
 	    (format "if( ~a || !hop_config.html5_video ) {
                  var ~a = new SWFObject('~a','~a','~a','~a','9','#FFFFFF');"

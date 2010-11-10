@@ -1,31 +1,39 @@
-  * **Diffuse Programming (35 min): Diffuse programming, a French presentation given at the College de France, Paris, January 2010.
-    (<OBJECT> width: 320 height: 259
-      (<PARAM> name: "movie" value: "http://www.youtube.com/v/i7bc6yiJQ0I&hl=en&fs=1")
-      (<PARAM> name: "allowFullScreen" value: "true")
-      (<PARAM> name: "allowscriptaccess" value: "always")
-      (<EMBED> src: "http://www.college-de-france.fr/documents/video/gberry/cours2009/berry-serrano-20100120.mp4" type: "application/x-shockwave-flash" allowscriptaccess: "always" allowfullscreen: "true" width: "320" height: "240"))
+,(<DIV> :class "video"
+    (<DIV> :class "video-title" "Diffuse Programming (35 min)")
+    (<DIV> :class "video-legend" "College de France, Paris, January 2010")
+    (<DIV> :class "video-alternate"
+       (<A> :href "http://www.college-de-france.fr/default/EN/all/cha_inf2009/Cours_et_seminaire_du_20_janvi.jsp" "http://www.college-de-france.fr"))
+    (<VIDEO> :controls #t
+       :width 320 :height 200
+       :backend 'flash
+       :src "http://www.college-de-france.fr/documents/video/gberry/cours2009/berry-serrano-20100120.mp4"))
 
-  * **HopDiffuse** (45 min): Programming Diffuse Applications with HOP, a presentation given at Google Mountain View, January 2009.
- ,(<DIV> :style "margin-top: 1em; margin-bottom: 1em;"
-    (<OBJECT> width: 320 height: 259
-      (<PARAM> name: "movie" value: "http://www.youtube.com/v/i7bc6yiJQ0I&hl=en&fs=1")
-      (<PARAM> name: "allowFullScreen" value: "true")
-      (<PARAM> name: "allowscriptaccess" value: "always")
-      (<EMBED> src: "http://www.youtube.com/v/i7bc6yiJQ0I&hl=en&fs=1" type: "application/x-shockwave-flash" allowscriptaccess: "always" allowfullscreen: "true" width: "320" height: "259")))
-See also the companion ,(<A> :href "/talks/hopdiffuse.xhtml.gz" "slides")
-and the genuine ,(<A> :href "http://www.youtube.com/watch?v=i7bc6yiJQ0I"
-"YouTube") page.
-  * **HopX10** (2 min): Your House in your pocket (or Home Automation with Hop),September 2009.
- ,(<DIV> :style "margin-top: 1em; margin-bottom: 1em;"
+,(<DIV> :class "video"
+    (<DIV> :class "video-title" "Hop Diffuse (45 min)")
+    (<DIV> :class "video-legend" "Google Labs, Mountain View, January 2009")
+    (<DIV> :style "margin-top: 1em; margin-bottom: 1em;"
+       (<OBJECT> :width 320 :height 259
+	  (<PARAM> name: "movie" value: "http://www.youtube.com/v/i7bc6yiJQ0I&hl=en&fs=1")
+	  (<PARAM> name: "allowFullScreen" value: "true")
+	  (<PARAM> name: "allowscriptaccess" value: "always")
+	  (<EMBED> src: "http://www.youtube.com/v/i7bc6yiJQ0I&hl=en&fs=1" type: "application/x-shockwave-flash" allowscriptaccess: "always" allowfullscreen: "true" width: "320" height: "259"))))
+
+,(<DIV> :class "video"
+    (<DIV> :class "video-title" "Hop House Automation (2 min)")
+    (<DIV> :class "video-legend" "Inria, September 2009")
     (<VIDEO> :controls #t
        (<SOURCE> :src (make-file-name (home-dir) "videos/hopx10.ogv")
           :type "video/ogg")
        (<SOURCE> :src (make-file-name (home-dir) "videos/hopx10.flv")
           :type "video/x-flv")
        :width 320 :height 200))
-  * **SLUG 07** (45 min): 
- ,(<A> :href "http://video.google.ca/videoplay?docid=6867885938648486821"
-          "Programming multimedia applications with HOP"), presentation given
- at the Montreal Scheme and Lisp User Group, October 2007.
- ,(<DIV> :style "margin-top: 1em; margin-bottom: 1em;"
-   (<EMBED> id: "VideoPlayback" src: "http://video.google.ca/googleplayer.swf?docid=6867885938648486821&hl=en&fs=true" style: "width:320px"))
+
+,(<DIV> :class "video"
+    (<DIV> :class "video-title" "Multimedia applications with Hop (45 min)")
+    (<DIV> :class "video-legend" "SLUG'07 meeting, Montreal, October 2007")
+    (<DIV> :class "video-alternate"
+       (<A> :href  "http://video.google.ca"
+	  "http://video.google.ca/videoplay?docid=6867885938648486821"))
+    (<EMBED> :id "VideoPlayback"
+       :src "http://video.google.ca/googleplayer.swf?docid=6867885938648486821&hl=en&fs=true"
+       :style "width:320px"))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon Nov  8 12:09:33 2010 (serrano)                */
+;*    Last change :  Mon Nov  8 16:32:55 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -102,7 +102,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 ;*---------------------------------------------------------------------*/
 ;*    preload-css ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (preload-css p base)
+(define (preload-css p::bstring base::obj)
    
    (define (preload-http p)
       (with-access::http-request (current-request) (scheme host port)
@@ -214,7 +214,8 @@ function hop_realm() { return \"" (hop-realm) "\"; }
    (define (css p base inl)
       ;; force pre-loading the hss file in order to force
       ;; pre-evaluating hss type declarations.
-      (preload-css p base)
+      (when (string-suffix? ".hss" p)
+	 (preload-css p base))
       (<LINK> :inline inl
 	 :rel "stylesheet"
 	 :type (hop-configure-css-mime-type)

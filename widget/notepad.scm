@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue Jul  6 18:57:58 2010 (serrano)                */
+;*    Last change :  Wed Nov 10 10:55:56 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -102,7 +102,7 @@
 	    (set! attributes `(:lang "delay" ,@attributes)))
 	 (<DIV> :hssclass "hop-notepad-tab-body"
 	    :style (if (=fx i 0) "display: block" "display: none")
-	    :id (string-append id "-notepad-tab-body")
+	    :id (string-append id "-tab-body-" (number->string i))
 	    (cond
 	       ((=fx i 0)
 		(nptab-get-body tab))
