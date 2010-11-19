@@ -2,21 +2,23 @@
    (export (home/demos/music)))
 
 (define-service (home/demos/music)
-   (let ((audio (<AUDIO> :controls #t))
+   (let ((audio (<AUDIO> :controls #t
+		   :src "http://www.vorbis.com/music/Epoq-Lepidoptera.ogg"))
 	 (input (<INPUT> :name "podcast" :id "podcast" :type 'text
 		   :size 50
 		   :value "http://www.vorbis.com/music/Epoq-Lepidoptera.ogg")))
       (<HTML>
-	 (<HEAD> :title "Audio demo"
+	 (<HEAD> :title "Audio Demo"
 	    :include "hop-audio"
 	    :css (service-resource home/demos/music "music.hss"))
 	 (<BODY>
-	    (<H3> "Audio demo") audio
+	    (<H1> "Audio demo") audio
+	    (<BR>)
 	    (<BR>)
 	    (<DIV> "Enter a music URL:"
 	       input " "
 	       (<BUTTON> "load" :onclick ~(audio-load $audio $input.value #t)))
-	    (<DIV> :style "margin-top: 2ex; font-size: 70%; font-style: italic; border: 1px solid black; padding: 2px; background: #efe;" [Disclaimer: the file format
+	    (<DIV> :class "disclaimer" [Disclaimer: the file format
 to be used by the audio player, depends on the browser you use. With Firefox, you
 music provide an ,(<TT> ".ogg") file, with other browser you must provide a ,(<TT> ".mp3").
 Hop can be used to convert music files on the fly (e.g., from ,(<TT> ".ogg")

@@ -1,9 +1,20 @@
+,(define (<ARTICLE> #!key class author title date body url)
+    (<A> :class (if (string? class)
+		    (string-append "doc-article " class)
+		    "doc-article")
+       :href url
+       (<DIV> :class "doc-article"
+	  (<DIV> :class "doc-article-title" title)
+          (<DIV> :class "doc-article-date" date)
+	  (<DIV> :class "doc-article-author" author)
+	  (<DIV> :class "doc-article-body" body))))
+
 == Installation Guides ==
 
   * [[/hop/home/install|HOP Installation page]]
   * [[/hop/home/install-jvm|Running HOP with a Java Virtual Machine]]
 
-== Development Guides ==
+== Programming Manual ==
 
   * [[/hop/doc|Development kit APIs & Tutorials]]
 
@@ -19,4 +30,7 @@
           "Programming Web Multimedia Applications with the Hop development kit"), October 2007
   * ,(<A> :href (make-file-name (home-dir) "articles/hop-perfs/article.html")
           "Hop, a Fast Server for the Diffuse Web"), May 2009
-
+  * ,(<A> :href (make-file-name (home-dir) "articles/semantics/article.pdf")
+          "Towards Reasoning for Web Applications: An Operational Semantics for Hop"), Jun 2010
+  * ,(<A> :href (make-file-name (home-dir) "articles/hss/article.xhtml")
+          "HSS: a Compiler for Cascading Style Sheets"), Jul 2010

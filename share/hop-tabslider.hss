@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/share/hop-tabslider.hss           */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-tabslider.hss           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Sep 14 09:25:00 2005                              */
-/*    Last change :  Tue Feb 16 12:30:44 2010 (serrano)                */
+/*    Last change :  Wed Nov 10 15:31:11 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tabslide CSS                                                 */
@@ -27,7 +27,7 @@ $(define-hss-type tabslider "div.hop-tabslider")
 tabslider {
   width: 300px;
   height: 500px;
-  overflow: auto;
+  overflow: hidden;
   background: #fff;
   margin: 0;
   padding: 0;
@@ -47,6 +47,7 @@ tabslider div.hop-tabslider-head {
   border-bottom: 0;
   padding: 2px 10px 2px 10px;
   border-radius: 0.2em 0.2em 0 0.2em;
+  overflow: hidden;
 }
 
 tabslider div.hop-tabslider-head-inactive {

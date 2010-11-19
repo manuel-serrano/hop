@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Wed Nov 10 12:26:13 2010 (serrano)                */
+;*    Last change :  Wed Nov 10 16:21:40 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -24,6 +24,7 @@
 	   hophome_demos-rewrite
 	   hophome_demos-set
 	   hophome_demos-popart
+	   hophome_demos-map
 	   hophome_demos-music
 	   hophome_demos-video)
    (export (<DEMO> request)))
@@ -56,9 +57,14 @@
 			320 320)))
 	       (<TR>
 		  (<TD> :align "left"
+		     (<ZIMG> (home/demos/map)
+			"map-32x32.png" "map-48x48.png" inl
+			600 500)))
+	       (<TR>
+		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/popart)
 			"popart-32x32.png" "popart-48x48.png" inl
-			500 550)))
+			700 600)))
 	       (<TR>
 		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/music)
@@ -99,7 +105,7 @@
 	 :base (service-base-url home/demos/tips (current-request))
 	 :css "tips.hss")
       (<BODY>
-       (<H1> "This is the HOP demonstration playground.")
+       (<H1> "This is the HOP demonstration playground!")
        (<P> [It illustrates various features provided by HOP. It shows
 some of the HTML extensions provided by HOP (for instance for implementing
 his simple window manager). It shows how to programs application where
@@ -107,24 +113,37 @@ his simple window manager). It shows how to programs application where
 simultaneously involved. It also illustrates some of the HOP libraries
 such as libraries for accessing and parsing ressources over the network. This
 playground contains the following demonstrations:])
+       (<IMG> :src "etc/icons/games1-32x32.png")
        (<H2> "Sudoku")
        (<P> :class "descr" [This implements a ,(<EM> "Sudoku") game.
  The programs show how client side and server side computations coexist])
+       (<IMG> :src "etc/icons/mines-32x32.png")
        (<H2> "Minesweeper")
        (<P> :class "descr" [This demonstration implements a simple
  ,(<EM> "Minesweeper") game. It shows how to program client side applications
  in HOP.])
-       (<H2> "Set")
-       (<P> :class "descr" [This demonstration implements a simple
- ,(<EM> "set") game. It shows how to program distributed applications
- in HOP.])
+       (<IMG> :src "etc/icons/map-32x32.png")
+       (<H2> "Map")
+       (<P> :class "descr"
+	  [This demonstration shows how to use JavaScript library with Hop.
+		This demonstration uses the browser geolocation and the
+		OpenStreetMap JavaScript client side api.])
+       (<IMG> :src "etc/icons/popart-32x32.png")
+       (<H2> "Popart")
+       (<P> :class "descr"
+	  [This demonstration shows how to use the canvas for implementing
+dynamic effects on pictures. It uses the Hop proxy to gain full access
+to the data composing the image.])
+       (<IMG> :src "etc/icons/music-32x32.png")
        (<H2> "Audio")
        (<P> :class "descr" [This demonstration implements a simple
  ,(<EM> "audio") player. It shows how to program multimedia applications
  in HOP.])
+       (<IMG> :src "etc/icons/video-32x32.png")
        (<H2> "Video")
        (<P> :class "descr" [This demonstration shows how use HTML 5 videos
 in HOP to implement live special effects.])
+       (<IMG> :src "etc/icons/news-32x32.png")
        (<H2> "Rss")
        (<P> :class "descr" [This implements a ,(<EM> "RSS") reader. It
  illustrates the HOP widget for ,(<EM> "fold lists"). It shows how to use
@@ -132,18 +151,17 @@ in HOP to implement live special effects.])
  demonstration, RSS feeds are fetched from the network and parsed only
  when items are unfolded. This demonstration also shows how to
  program applications that uses third party servers.])
+       (<IMG> :src "etc/icons/wiki-32x32.png")
        (<H2> "Wiki")
        (<P> :class "descr" [This demonstration uses the HOP Wiki library. It
-also shows how HOP ,(<EM> "signals") can be deployed for allowing external
-clients to be notified by servers.])
+also shows how HOP can ,(<EM> "push") signals towards clients.])
+       (<IMG> :src "etc/icons/utilities-32x32.png")
        (<H2> "Rewrite")
        (<P> :class "descr" [This demonstration shows how the client and the
 server can cooperate to operate on distant documents. In this simple
 demonstration remote pages are changed on-the-fly by the server that acts
 as a proxy.])
-       (<H2> "Set")
-       (<P> :class "descr" [This demonstration implements another
-game. It shows how to use events to synchronize multiple clients in HOP.])
+       (<IMG> :src "etc/icons/computer-32x32.png")
        (<H2> "Source")
        (<P> :class "descr" [This demonstration uses HOP ,(<EM> "trees") and
 ,(<EM> "pan"). It implements a simple file browser. This browsers may
@@ -214,7 +232,8 @@ be used to access the whole source code of this playground.]))))
 	  (p2 (img->data i2 inl))
 	  (w (if (pair? r) (car r) "200"))
 	  (h (if (and (pair? r) (pair? (cdr r))) (cadr r) "200"))
-	  (t (string-capitalize (basename svc))))
+	  (j (string-index svc #\?))
+	  (t (string-capitalize (basename (if j (substring svc 0 j) svc)))))
       (<IMG> :id id
 	 :src p1
 	 :inline #t

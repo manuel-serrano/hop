@@ -1,25 +1,12 @@
 body {
-  background: #ddf;
-}
-
-body.view {
-  margin: 0;
-  padding: 0;
-  border: 0;
+  background: #ebfe86;
+  font-family: Arial;
 }
 
 h1 {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: bold;
-}
-
-a {
-  font-size: 11px;
-  font-weight: bold;
-}
-
-div.main {
-  background: #ddf;
+  text-shadow: #aaa 2px 2px 2px;
 }
 
 textarea.playground {
@@ -28,7 +15,9 @@ textarea.playground {
   width: 95%;
   color: blue;
   border: 1px solid #ccc;
-  background-color: #eff;
+  background-color: #Feff98;
+  padding: 2px;
+  box-shadow: 4px 4px 4px #666;
 }
 
 div.view {
@@ -40,19 +29,10 @@ div.view {
   background-color: #ffe;
   padding: 0;
   margin: 0;
+  box-shadow: 4px 4px 4px #666;
 }
 
-iframe.view {
-  font-size: small;
-  width: 95%;
-  height: 170px;
-  border: 0;
-  padding: 0;
-  margin: 0;
-}
-
-span.click {
-  text-decoration: underline;
-  cursor: default;
-  font-size: small;
+p {
+  font-size: 80%;
+  font-style: italic;
 }

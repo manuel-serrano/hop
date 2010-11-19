@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/weblets/home/home.hop             */
+;*    serrano/prgm/project/hop/2.2.x/weblets/home/home.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Thu Apr  8 10:15:15 2010 (serrano)                */
+;*    Last change :  Thu Nov 18 07:37:24 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -13,11 +13,12 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hophome
-   (import  hophome_config
-	    hophome_widgets
-	    hophome_demo
-	    hophome_wiki)
-   (export  home))
+   (import (qrcode-api "qrcode-api-1.0.*.hz")
+	   hophome_config
+	   hophome_widgets
+	   hophome_demo
+	   hophome_wiki)
+   (export home))
 
 ;*---------------------------------------------------------------------*/
 ;*    logs ...                                                         */
@@ -107,98 +108,98 @@
       (<NOTEPAD>
 	 :id "home-notepad"
 	 (<NPTAB> :id "Presentation"
-		  (<NPTABHEAD>
-		     (<IMG> :inline #f
-			:src (service-resource home "etc/gohome.png"))
-		     "Main")
-		  (<DELAY>
-		     (lambda ()
-			(download-versions-set!)
-			(<DIV> :class "hop-tab"
-			   (wiki->hop "presentation.wiki")))))
-	 (<NPTAB> :id "videos"
-		  (<NPTABHEAD>
-		     (<IMG> :inline #f
-			:src (service-resource home "etc/video.png"))
-		     "Videos")
-		  (<DELAY>
-		     (lambda ()
-			(<DIV> :class "hop-tab"
-			   (wiki->hop "videos.wiki")))))
-	 (<NPTAB> :id "demo-tab"
-		  (<NPTABHEAD>
-		     (<IMG> :inline #f
-			:src (service-resource home "etc/demos.png"))
-		     "Demos")
-		  (<DELAY>
-		     (lambda ()
-			(<DIV> :class "hop-tab"
-			   (<DEMO> req)))))
+	    (<NPTABHEAD>
+	       (<IMG> :inline #f
+		  :src (service-resource home "etc/gohome.png"))
+	       "Main")
+	    (<DELAY>
+	       (lambda ()
+		  (download-versions-set!)
+		  (<DIV> :class "hop-tab"
+		     (wiki->hop "presentation.wiki")))))
+	 (<NPTAB> :id "demo"
+	    (<NPTABHEAD>
+	       (<IMG> :inline #f
+		  :src (service-resource home "etc/demos.png"))
+	       "Demos")
+	    (<DELAY>
+	       (lambda ()
+		  (<DIV> :class "hop-tab"
+		     (<DEMO> req)))))
 	 (<NPTAB> :id "download"
-		  (<NPTABHEAD>
-		     (<IMG> :inline #f
-			:src (service-resource home "etc/download.png"))
-		     "Download")
-		  (<DELAY>
-		     (lambda ()
-			(download-versions-set!)
-			(<DIV> :class "hop-tab"
-			   (wiki->hop-no-cache "download.wiki")))))
+	    (<NPTABHEAD>
+	       (<IMG> :inline #f
+		  :src (service-resource home "etc/download.png"))
+	       "Download")
+	    (<DELAY>
+	       (lambda ()
+		  (download-versions-set!)
+		  (<DIV> :class "hop-tab"
+		     (wiki->hop-no-cache "download.wiki")))))
 	 (<NPTAB> :id "weblets"
-		  (<NPTABHEAD>
-		     (<IMG> :inline #f
-			:src (service-resource home "etc/package.png"))
-		     "Weblets")
-		  (<DELAY>
-		     (lambda ()
-			(<DIV> :class "hop-tab"
-			   (wiki->hop "weblets.wiki")))))
+	    (<NPTABHEAD>
+	       (<IMG> :inline #f
+		  :src (service-resource home "etc/package.png"))
+	       "Weblets")
+	    (<DELAY>
+	       (lambda ()
+		  (<DIV> :class "hop-tab"
+		     (wiki->hop "weblets.wiki")))))
 	 (<NPTAB> :id "documentation"
-		  (<NPTABHEAD>
-		     (<IMG> :inline #f
-			:src (service-resource home "etc/doc.png"))
-		     "Docs")
-		  (<DELAY>
-		     (lambda ()
-			(<DIV> :class "hop-tab"
-			   (wiki->hop "docs.wiki")))))
+	    (<NPTABHEAD>
+	       (<IMG> :inline #f
+		  :src (service-resource home "etc/doc.png"))
+	       "Docs")
+	    (<DELAY>
+	       (lambda ()
+		  (<DIV> :class "hop-tab"
+		     (wiki->hop "docs.wiki")))))
+	 (<NPTAB> :id "video"
+	    (<NPTABHEAD>
+	       (<IMG> :inline #f
+		  :src (service-resource home "etc/video.png"))
+	       "Videos")
+	    (<DELAY>
+	       (lambda ()
+		  (<DIV> :class "hop-tab"
+		     (wiki->hop "videos.wiki")))))
 	 (<NPTAB> :id "faq"
-		  (<NPTABHEAD>
-		     (<IMG> :inline #f
-			:src (service-resource home "etc/faq.png"))
-		     "Faq&nbsp;&nbsp;&nbsp;")
-		  (<DELAY>
-		     (lambda ()
-			(<DIV> :class "hop-tab"
-			   (wiki->hop "faq.wiki")))))
+	    (<NPTABHEAD>
+	       (<IMG> :inline #f
+		  :src (service-resource home "etc/faq.png"))
+	       "Faq&nbsp;&nbsp;&nbsp;")
+	    (<DELAY>
+	       (lambda ()
+		  (<DIV> :class "hop-tab"
+		     (wiki->hop "faq.wiki")))))
 	 (<NPTAB> :id "community"
-		  (<NPTABHEAD>
-		     (<IMG> :inline #f
-			:src (service-resource home "etc/people.png"))
-		     "Community")
-		  (<DELAY>
-		     (lambda ()
-			(<DIV> :class "hop-tab"
-			   (wiki->hop "community.wiki")))))
+	    (<NPTABHEAD>
+	       (<IMG> :inline #f
+		  :src (service-resource home "etc/people.png"))
+	       "Community")
+	    (<DELAY>
+	       (lambda ()
+		  (<DIV> :class "hop-tab"
+		     (wiki->hop "community.wiki")))))
 	 (<NPTAB> :id "stats"
-		  (<NPTABHEAD>
-		     (<IMG> :inline #f
-			:src (service-resource home "etc/statistics.png"))
-		     "Stats")
-		  (<DELAY>
-		     (lambda ()
-			(<DIV> :class "hop-tab"
-			   [The HOP (v,(hop-version)) server running this home page is up since
-				,(<SPAN> :class "uptime" (hop-uptime)).
-				,(<P>)
-				The HOP home page has been served
-				,(<SPAN> :class "uptime" (home-statistics))
-				times.
-				,(let ((f (make-file-path (home-dir) "motd")))
-				    (if (file-exists? f)
-					(<DIV> :class "motd"
-					   (with-input-from-file f read-string))
-					""))])))))))
+	    (<NPTABHEAD>
+	       (<IMG> :inline #f
+		  :src (service-resource home "etc/statistics.png"))
+	       "Stats")
+	    (<DELAY>
+	       (lambda ()
+		  (<DIV> :class "hop-tab"
+		     [The HOP (v,(hop-version)) server running this home page is up since
+			  ,(<SPAN> :class "uptime" (hop-uptime)).
+			  ,(<P>)
+			  The HOP home page has been served
+			  ,(<SPAN> :class "uptime" (home-statistics))
+			  times.
+			  ,(let ((f (make-file-path (home-dir) "motd")))
+			      (if (file-exists? f)
+				  (<DIV> :class "motd"
+				     (with-input-from-file f read-string))
+				  ""))])))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    home/maemo/hop.install ...                                       */
@@ -230,21 +231,17 @@ components = ~a" catalogues catalogues (home-ftp-hop-url) distrib component))))
 ;*    home/install ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-service (home/install)
-   (<HTML>
-      (<HEAD> :base (service-base-url home/install (current-request))
-	 :css "home.hss")
-      (<BODY> :style "background: white; font-size: small"
-	      (wiki->hop "install.wiki"))))
+   (<HOME>
+      (service-base-url home (current-request))
+      (wiki->hop "install.wiki")))
 
 ;*---------------------------------------------------------------------*/
 ;*    home/install-jvm ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-service (home/install-jvm)
-   (<HTML>
-      (<HEAD> :base (service-base-url home/install (current-request))
-	 :css "home.hss")
-      (<BODY> :style "background: white; font-size: small"
-	      (wiki->hop "install-jvm.wiki"))))
+   (<HOME>
+      (service-base-url home (current-request))
+      (wiki->hop "install-jvm.wiki")))
 
 ;*---------------------------------------------------------------------*/
 ;*    home/submit-hz ...                                               */
@@ -252,6 +249,12 @@ components = ~a" catalogues catalogues (home-ftp-hop-url) distrib component))))
 (define-service (home/submit-hz file)
    (let ((path (cgi-post-arg-field :file file)))
       (home-main (current-request))))
+
+;*---------------------------------------------------------------------*/
+;*    make-download-url ...                                            */
+;*---------------------------------------------------------------------*/
+(define (make-download-url base file)
+   (make-file-path (home-ftp-hop-url) base file))
 
 ;*---------------------------------------------------------------------*/
 ;*    downloads ...                                                    */
@@ -326,5 +329,4 @@ components = ~a" catalogues catalogues (home-ftp-hop-url) distrib component))))
 	    (if (string? *stable-jar*)
 		(make-file-name (home-ftp-hop-url) *stable-jar*)
 		"not available"))))
-
 

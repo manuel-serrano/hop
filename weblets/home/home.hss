@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Nov 10 11:25:11 2010 (serrano)                */
+/*    Last change :  Wed Nov 17 16:13:51 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -91,6 +91,7 @@ table td {
 
 a {
   text-decoration: none;
+  color: #00a;
 }
 
 a:hover {
@@ -191,7 +192,8 @@ notepad-body {
   border: 1px solid $border-color;
   padding: 10px;
   background-color: $notepad-color;
-  background-image: -moz-linear-gradient( -90deg, $(color-lighter notepad-color 0), $(color-lighter notepad-color 1) );
+  background-image: -moz-linear-gradient( -90deg, $notepad-color, $(color-lighter notepad-color 1) );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($notepad-color), to($(color-lighter notepad-color 1)));
 }
 
 div.hop-tab {
@@ -200,9 +202,10 @@ div.hop-tab {
   background-position: 50% 250px;
   background-image: url( "etc/icons/logo-bg-128x128.png" );
   min-width: 200px;
-  min-height: 200px;
+  min-height: 400px;
   margin-top: 0px;
-  border: 1px solid $border-color;
+  border: 1px solid $(color-lighter border-color 2);
+  border-radius: 3px;
   padding: 4px;
   font-size: 11pt;
   height: 100%;
@@ -255,27 +258,6 @@ div#result {
   padding-top: 10px;
 }  
 
-/*--- notepad ---------------------------------------------------------*/
-
-/*--- doc -------------------------------------------------------------*/
-table.hop-doc {
-  font-size: small;
-}
-
-table.hop-doc th {
-  vertical-align: top;
-}
-  
-table.hop-doc th:after {
-  content: ":";
-}
-
-table.hop-doc td {
-  font-family: monospace;
-  font-size: large;
-  vertical-align: bottom;
-}
-
 /*---------------------------------------------------------------------*/
 /*    Misc                                                             */
 /*---------------------------------------------------------------------*/
@@ -311,7 +293,7 @@ div.motd {
 
 span.feature {
   color: #ff6c00;
-  font-style: italic;
+/*   font-style: italic;                                               */
 }
 
 /*---------------------------------------------------------------------*/
@@ -350,7 +332,7 @@ $(define demo-background "#FFDA61")
 $(define toolbar-opacity "0.9")
 $(define toolbar-background (color-lighter demo-background))
 
-#home-notepad-tab-body-2 div.hop-tab {
+nptab-body#demo div.hop-tab {
   padding: 0;
 }
 
@@ -367,7 +349,7 @@ div.demo div.toolbar {
   left: 0px;
   top: 50px;
   width: 50px;
-  height: 500px;
+  height: 550px;
   background: $toolbar-background;
   border-right: 1px outset #ccc;
   border-top: 1px outset #ccc;
@@ -403,13 +385,116 @@ span.icon {
 /*---------------------------------------------------------------------*/
 /*    Download                                                         */
 /*---------------------------------------------------------------------*/
+$(define download-color "#e6ffbd")
+$(define download-devel-color "#feffb4")
+
+/* logos and sections */
+img.download-logo {
+  padding-right: 4px;
+  float: left;
+  width: 32px;
+  height: 32px;
+}
+
+/* download button */
+a.download-button {
+  color: black;
+}
+
+a.download-button:hover {
+  text-decoration: none;
+}
+  
+div.download-button {
+  display: inline-block;
+  text-decoration: none;
+  padding: 0 8px 0 8px;
+  font-size: 90%;
+  width: 14em;
+  border: 1px solid #ddd;
+  border-bottom-color: #777;
+  border-right-color: #777;
+  border-radius: 4px;
+}
+
+a.download-button:hover div.download-button {
+  text-decoration: none;
+  text-shadow: #aaa 2px 2px 2px;
+}
+
+img.download-button {
+  margin-right: 8px;
+  border: 0;
+}
+
+table.download-button {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th.download-button,
+td.download-button {
+  white-space: nowrap;
+  text-align: left;
+}  
+
+/* stable source */
+a.download-stable div.download-button {
+  background: $download-color;
+  background-image: -moz-linear-gradient( -90deg, $(color-lighter download-color 2), $download-color );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter download-color 2)), to( $download-color ));
+}
+
+a.download-stable:hover div.download-button {
+  box-shadow: 0px 0px 12px $(color-darker download-color 4);
+}
+  
+a.download-stable td.download-button {
+  color: $(color-darker download-color 8);
+}
+
+/* devel source */
+a.download-devel div.download-button {
+  background: $download-color;
+  background-image: -moz-linear-gradient( -90deg, $(color-lighter download-devel-color 2), $download-devel-color );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter download-devel-color 2)), to( $download-devel-color ));
+}
+
+a.download-devel:hover div.download-button {
+  box-shadow: 0px 0px 12px $(color-darker download-devel-color 4);
+}
+
+a.download-devel td.download-button {
+  color: $(color-darker download-devel-color 7);
+}
+
+/* download-source */
+table#download-source {
+  margin-left: 1em;
+}
+
+td.download-source {
+  width: 16em;
+  text-align: center;
+  vertical-align: top;
+}
+
+/* download-android */
+qrcode#download-android {
+  cell-size: 2px;
+}
+
+/* download-maemo */
+qrcode#download-maemo {
+  cell-size: 2px;
+}
+
 div.os-download {
   width: 100%;
   padding-top: 0.5ex;
 }
 
 div.download-header {
-  text-decoration: underline;
   font-weight: bold;
   padding-bottom: 1ex;
 }
@@ -423,8 +508,11 @@ table.os-download {
 
 table.os-download-stable {
   width: 50em;
-  background: #E6FFBD;
   margin-bottom: 5ex;
+  background: #e6ffbd;
+  background-image: -moz-linear-gradient( -90deg, $(color-lighter "#e6ffbd"), #e6ffbd );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter "#e6ffbd")), to( #e6ffbd ));
+  box-shadow: 3px 3px 3px #666;
 }
 
 table.os-download-maemo {
@@ -435,8 +523,11 @@ table.os-download-maemo {
 
 table.os-download-unstable {
   width: 35em;
-  background: #ffe;
   margin-bottom: 2ex;
+  background: #ffe;
+  background-image: -moz-linear-gradient( -90deg, $(color-lighter "#feffb4"), #feffb4 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter "#feffb4")), to( #feffb4 ));
+  box-shadow: 3px 3px 3px #666;
 }
 
 table.os-download td.type {
@@ -470,6 +561,10 @@ table.download span.stable {
 table.download span.old {
   font-weight: bold;
   color: #ff8010;
+}
+
+nptab-body#download pre {
+  font-size: 75%;
 }
 
 /*---------------------------------------------------------------------*/
@@ -529,7 +624,7 @@ div.app span.iddn a.iddn:hover {
 /*---------------------------------------------------------------------*/
 /*    video                                                            */
 /*---------------------------------------------------------------------*/
-#home-notepad-tab-body-1 div.hop-tab {
+nptab-body#video div.hop-tab {
   border: 0;
   background: transparent;
 }
@@ -565,5 +660,56 @@ div.video-alternate {
 
 div.video a {
   color: white;
+}
+
+/*---------------------------------------------------------------------*/
+/*    doc                                                              */
+/*---------------------------------------------------------------------*/
+a.doc-article {
+  color: black;
+  background-color: #ffe;
+}
+
+div.doc-article {
+  box-shadow: 4px 4px 4px #333;
+  border: 1px solid #777;
+  background-color: white;
+  border-radius: 2px;
+  font-size: 80%;
+  width: 12em;
+  height: 10ex;
+  padding: 2px;
+}
+
+div.doc-article-title {
+  text-shadow: #aaa 2px 2px 2px;
+  font-weight: bold;
+  font-size: 110%;
+}
+
+div.doc-article-date {
+  font-size: 85%;
+}
+
+div.doc-article-body {
+  padding-top: 1ex;
+}
+
+table.hop-doc {
+  font-size: small;
+}
+
+table.hop-doc th {
+  vertical-align: top;
+}
+  
+table.hop-doc th:after {
+  content: ":";
+}
+
+table.hop-doc td {
+  font-family: monospace;
+  font-size: large;
+  vertical-align: bottom;
 }
 

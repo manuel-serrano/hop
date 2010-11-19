@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun Nov  7 09:12:02 2010 (serrano)                */
+;*    Last change :  Wed Nov 17 08:38:38 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -629,7 +629,6 @@
 	    (let ((p (socket-output socket)))
 	       (display body p)
 	       (flush-output-port p)))
-	 (tprint "PERSISTENT: " (http-request-connection request))
 	 'persistent)))
 
 ;*---------------------------------------------------------------------*/

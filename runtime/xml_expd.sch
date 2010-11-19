@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/xml-expd.sch              */
+;*    serrano/prgm/project/hop/2.2.x/runtime/xml_expd.sch              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Mon Sep 20 15:48:21 2010 (serrano)                */
+;*    Last change :  Thu Nov 18 10:25:02 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -225,7 +225,8 @@
 ;*---------------------------------------------------------------------*/
 (define (define-compound m el bindings body)
    (let ((args (gensym 'args))
-	 (loop (gensym 'loop)))
+	 (loop (gensym 'loop))
+	 (name (symbol->string m)))
       `(define (,m . ,args)
 	  (let ,(map (lambda (b)
 			(match-case b
@@ -236,7 +237,7 @@
 			   (else
 			    (if (symbol? b)
 				`(,b '())
-				(error (symbol->string m) "Illegal binding" b)))))
+				(error name "Illegal binding" b)))))
 		     bindings)
 	     (let ,loop ((,args ,args))
 		  (cond
@@ -281,15 +282,16 @@
 				  ((? symbol?)
 				   `((not (keyword? (car ,args)))
 				     (if (pair? (car ,args))
-					 (set! ,b (append (reverse (car ,args)) ,b))
-					 (set! ,b (cons (car ,args) ,b)))
-				     (,loop (cdr ,args))))
+					 (,loop (append (car ,args) (cdr ,args)))
+					 (begin
+					    (set! ,b (cons (car ,args) ,b))
+					    (,loop (cdr ,args))))))
 				  (else
 				   `((pair? (car ,args))
 				     (,loop (append (car ,args) (cdr ,args)))))))
 			    bindings)
 		     (else
-		      (error ,(symbol->string m) "Illegal argument" (car ,args)))))))))
+		      (error ,name "Illegal argument" (car ,args)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-define-xml-compound ...                                   */

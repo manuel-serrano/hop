@@ -1,71 +1,60 @@
-== Getting Hop ==
+,(define (<DOWNLOAD> #!key class src legend url name)
+    (<A> :class (string-append "download-button " class)
+       :href url
+       (<DIV> :class "download-button"
+	  (<TABLE> :class "download-button"
+	     (<TR> 
+		(<TD> :rowspan 2 :class "download-button"
+		   (<IMG> :class "download-button" :inline #t :src src))
+		(<TH> :class "download-button" legend))
+	     (<TR> (<TD> :class "download-button" (or name (basename url))))))))
 
-,(<DIV> :class "os-download" :align 'center
-  (<DIV> :class "download-header" "Stable versions")
-  (<TABLE> :class "os-download os-download-stable"
-     (<COLGROUP> 
-        (<COL>)
-        (<COL> :width "20%")
-        (<COL>)
-        (<COL> :width "20%")
-        (<COL>)
-        (<COL> :width "20%"))
-     (<TR> 
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "linux.png")))
-        (<TH> "Linux")
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")))
-        (<TH> "Maemo")
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "macos.png")))
-        (<TH> "MacOS X")
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "windows.png")))
-        (<TH> "Windows"))
-     (<TR> 
-         (<TD> (<A> :href *stable-tar-url* *stable-tar-gz*))
-         (<TD> (<A> :href *maemo-fremantle-free-url* "Fremantle"))
-         (<TD> (<A> :href *stable-dmg-url* (basename *stable-dmg*)))
-         (<TD> (<A> :href *stable-jar-url* (basename *stable-jar*))))))
+== Source code ==
 
-,(<DIV> :class "os-download" :align 'center
-  (<DIV> :class "download-header" "Unstable versions")
-  (<TABLE> :class "os-download os-download-unstable"
-     (<COLGROUP> 
-        (<COL>)
-        (<COL> :width "50%")
-        (<COL>)
-        (<COL> :width "50%"))
-     (<TR> 
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "package.png")))
-        (<TH> "Source")
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "java.png")))
-        (<TH> "Pre-compiled JVM"))
-     (<TR> 
-         (<TD> (<A> :href *devel-tar-url* *devel-tar-gz*))
-         (<TD> (<A> :href *devel-jar-url* *devel-jar*)))))
+,(<TABLE> :id "download-source"
+    (<TR>
+       (<TD> :class "download-source"
+	  (<DOWNLOAD> :class "download-stable"
+	     :legend "Stable source"
+	     :src (make-file-path (home-dir) "etc" "icons" "package.png")
+	     :url *stable-tar-url*))
+       (<TD> :class "download-source"
+	  (<DOWNLOAD> :class "download-devel"
+	     :legend "Devel source"
+	     :src (make-file-path (home-dir) "etc" "icons" "package.png")
+	     :url *devel-tar-url*))))
+
+~~ Older versions may be download by ftp at:
+[[,(home-ftp-hop-url)|,(home-ftp-hop-url)]].
+
+~~ In order to install HOP from the source (for significantly improving
+performance), the ,(<A> :href (home-bigloo-url) "Bigloo") compiler has
+first to be installed. Bigloo version **3.5a** or higher is required to
+compile HOP.
+
+~~ Bigloo versions may be downloaded
+from: ,(<A> :href (home-ftp-bigloo-url) (home-ftp-bigloo-url)).
 
 
-,(<TABLE>
-   :class "download"
-   (<TR> (<TD> "&nbsp;"))
-   (<TR> (<TH> [Older versions may be download by ,(<SPAN> :class "old" "ftp") at:]
-         (<A> :href (home-ftp-hop-url) (home-ftp-hop-url))))
-   (<TR> (<TD> "&nbsp;"))
-   (<TR> (<TD> 
-[Linux users ,(<B> "should") prefer the native version built
-from the source code to the pre-compiled JVM version because it gives 
-much better performance. On Linux, the JVM version should only be considered
-for quick Hop experiments.])))
+== Android ==
+
+,(let* ((apk (format "hop-~a.apk" (home-hop-stable-version)))
+	(url (make-download-url (make-file-name "android" "2.1") apk)))
+    (<TABLE> :id "download-source"
+       (<TR>
+	  (<TD> :class "download-source"
+	     (<DOWNLOAD> :class "download-stable"
+		:legend "Android 2.1"
+		:src (make-file-path (home-dir) "etc" "icons" "android-market.png")
+		:url url))
+	  (<TD> 
+	     (<QRCODE> :typenumber 4 :id "download-android" url)))))
+
+~~ Information specific to the Android port may be found 
+[[/hop/android|here]].
+
+
+== Linux ==
 
 ~~ HOP is shipped with some **Linux distributions** on which it can be
 used without downloading and installing the source code manually:
@@ -74,80 +63,61 @@ used without downloading and installing the source code manually:
   * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "gentoo-16x16.png")) [[http://www.gentoo.org|Gentoo]]
 
 
-~~ We provide some pre-compiled packages for non-standard architectures:
+== Maemo ==
 
-  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "maemo-16x16.png")) [[http://maemo.org|Maemo]]
-
-,(<DIV> :class "os-download" :align 'center
-  (<DIV> :class "download-header" "Stable Maemo")
-  (<TABLE> :class "os-download os-download-maemo"
-     (<COLGROUP> 
-        (<COL>)
-        (<COL> :width "50%")
-        (<COL>)
-        (<COL> :width "50%"))
-     (<TR> 
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")))
-        (<TH> "OS2008")
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")))
-        (<TH> "Maemo5"))
-     (<TR> 
-         (<TD> (<A> :href *maemo-chinook-free-url* "Chinook"))
-         (<TD> (<A> :href *maemo-fremantle-free-url* "Fremantle")))))
-
-,(<DIV> :class "os-download" :align 'center
-  (<DIV> :class "download-header" "Unstable Maemo")
-  (<TABLE> :class "os-download os-download-unstable"
-     (<COLGROUP> 
-        (<COL>)
-        (<COL> :width "50%")
-        (<COL>)
-        (<COL> :width "50%"))
-     (<TR> 
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")))
-        (<TH> "OS2008")
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")))
-        (<TH> "Maemo5"))
-     (<TR> 
-         (<TD> (<A> :href *maemo-chinook-unstable-url* "Chinook"))
-         (<TD> (<A> :href *maemo-fremantle-unstable-url* "Fremantle")))))
+,(let ((fremantle (home/maemo/hop.install "fremantle" "hop" "free"))
+       (chinook (home/maemo/hop.install "chinook" "hop" "free")))
+    (<TABLE> :id "download-source"
+       (<TR>
+	  (<TD> :class "download-source"
+	     (<DOWNLOAD> :class "download-stable"
+		:legend "Fremantle"
+		:src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")
+		:url (format "hop-~a.deb" (home-hop-stable-version))))
+	  (<TD> :class "download-source"
+	     (<DOWNLOAD> :class "download-stable"
+		:legend "Chinook"
+		:src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")
+		:url (format "hop-~a.deb" (home-hop-stable-version))))
+	  (<TD> 
+	     (<QRCODE> :typenumber 6 :id "download-maemo" fremantle)))))
 
 
-== Getting Bigloo ==
+== MacOS X ==
 
-In order to install HOP from the source (for significantly improving
-performance), the ,(<A> :href (home-bigloo-url) "Bigloo") compiler has
-first to be installed. Bigloo version **3.4a** or higher is required for
-compiling HOP.
+,(let* ((dmg (format "hop-~a.dmg" (home-hop-stable-version)))
+	(url (make-download-url "macosx" dmg)))
+    (<TABLE> :id "download-source"
+       (<TR>
+	  (<TD> :class "download-source"
+	     (<DOWNLOAD> :class "download-stable"
+		:legend "MacOS 10.6 x86/64"
+		:src (make-file-path (home-dir) "etc" "icons" "macos.png")
+		:url dmg)))))
 
-~~ Bigloo versions may be downloaded
-from: ,(<A> :href (home-ftp-bigloo-url) (home-ftp-bigloo-url)).
 
-== Browsing the code ==
+== Virtual Machines ==
 
-The HOP source code may be browsed 
-,(<A> :href (home-source-url) "here").
-
-== ChangeLog ==
-
-~~ Want to find out what we have been doing lately on Hop?
-
-,(<DIV> :style "text-align: center; margin-left: auto; margin-right: auto"
-   (<VIDEO> :controls #t
-      (<SOURCE> :src (make-file-name (home-dir) "videos/changelog.ogv")
-         :type "video/ogg")
-      (<SOURCE> :src (make-file-name (home-dir) "videos/changelog.flv")
-         :type "video/x-flv")
-      :width 640 :height 480))
-
+,(let* ((qemu (format "hop-~a.dmg" (home-hop-stable-version)))
+	(vbox (format "hop-~a.img" (home-hop-stable-version)))
+	(vmware (format "hop-~a.img" (home-hop-stable-version))))
+    (<TABLE> :id "download-source"
+       (<TR>
+	  (<TD> :class "download-source"
+	     (<DOWNLOAD> :class "download-stable"
+		:legend "QEmu"
+		:src (make-file-path (home-dir) "etc" "icons" "linux.png")
+		:url (make-download-url "virtual" qemu)))
+	  (<TD> :class "download-source"
+	     (<DOWNLOAD> :class "download-stable"
+		:legend "Virtual-box"
+		:src (make-file-path (home-dir) "etc" "icons" "linux.png")
+		:url (make-download-url "virtual" vbox)))
+	  (<TD> :class "download-source"
+	     (<DOWNLOAD> :class "download-stable"
+		:legend "VMware"
+		:src (make-file-path (home-dir) "etc" "icons" "linux.png")
+		:url (make-download-url "virtual" vmware))))))
 
 == License ==
 

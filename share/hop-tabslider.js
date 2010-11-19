@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/share/hop-tabslider.js            */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-tabslider.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio [eg@essi.fr]                       */
 /*    Creation    :  14-Sep-2005 09:24 (eg)                            */
-/*    Last change :  Wed Jun 30 18:21:05 2010 (serrano)                */
+/*    Last change :  Wed Nov 10 15:29:12 2010 (serrano)                */
 /*    Copyright   :  2006-10 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    HOP tabslider implementation                                     */
@@ -86,7 +86,7 @@ function hop_tabslider_select_inner( parent, item ) {
 
    /* Set the height of the selected item */
    var i = 0;
-   var height = (totalHeight - titlesHeight) - (2*(1+parent.childNodes.length));
+   var height = (totalHeight - titlesHeight) - parent.childNodes.length;
 
    if( old ) {
       old.style.display = "block";

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Tue Nov  9 09:55:34 2010 (serrano)                */
+/*    Last change :  Tue Nov 16 17:37:14 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -154,6 +154,7 @@ div#title {
   padding-bottom: 1px;
   text-align: left;
   text-shadow: #999 2px 2px 2px;
+  font-family: Arial, Lucida Grande, Verdana, Lucida, Helvetica;
 }
 
 div#result {

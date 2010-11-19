@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 28 06:23:39 2007                          */
-/*    Last change :  Fri Aug  6 13:29:08 2010 (serrano)                */
+/*    Last change :  Wed Nov 10 14:26:32 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Audio's cascade style sheet.                                 */
@@ -48,27 +48,36 @@ $(define-hss-type audiobutton "div[hssclass=hop-audio-button]"
 audio {
   font-family: Verdana, Bitstream Vera Sans;
   font-size: 11pt;
-  background: #f7f3f0;
   padding: 4px;
   width: 350px;
-  height: 90px;
+  height: 92px;
   border: 1px solid #999;
+  background: #f7f3f0;
+  background-image: -moz-linear-gradient( -90deg, #f7f3f0, $(color-darker "#f7f3f0" 2) );
+  background:  -webkit-gradient(linear, 0% 0%, 0% 100%, from(#f7f3f0), to($(color-darker "#f7f3f0" 2)));
 }
 
 audiobutton {
   width: 14px;
-  height: 14px;
+  height: 12px;
   padding: 1px 4px 1px 4px;
   cursor: default;
-  border: 1px solid #777; 
-  border-top: 1px solid #aaa; 
-  border-left: 1px solid #aaa; 
   margin-left: 2px;
-  background-color: #e0e0e0;
+  border-top: 1px solid $(color-lighter "#e0e0e0" 3);
+  border-left: 1px solid $(color-lighter "#e0e0e0" 3);
+  border-right: 1px solid $(color-darker "#e0e0e0" 5); 
+  border-bottom: 1px solid $(color-darker "#e0e0e0" 5); 
+  -hop-background-gradient: #e0e0e0;
+  -hop-background-gradient: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter "#e0e0e0" 1)), to($(color-darker "#e0e0e0" 4)));
+  -hop-background-gradient: -moz-linear-gradient( -45deg, $(color-lighter "#e0e0e0" 3), $(color-darker "#e0e0e0" 4) );
 }
 
 audiobutton:hover {
-  background-color: #eeeeee;
+  box-shadow: 0px 0px 6px #f7f3f0;
+  border-top: 1px solid #e0e0e0;
+  border-left: 1px solid #e0e0e0;
+  border-right: 1px solid $(color-darker "#e0e0e0" 8); 
+  border-bottom: 1px solid $(color-darker "#e0e0e0" 8); 
 }
 /* </public> */
 
@@ -84,13 +93,6 @@ $(define hopaudio-monospace "DejaVu Sans Mono, Andale Mono, Bitstream Vera Sans 
 div.hop-audio {
   display: inline-block;
 }
-
-/* object.hop-audio {                                                  */
-/* {*   visibility: hidden;                                               *} */
-/*   position: fixed;                                                  */
-/*   top: 0;                                                           */
-/*   right: 0;                                                         */
-/* }                                                                   */
 
 /*---------------------------------------------------------------------*/
 /*    hop-audio-panel                                                  */
@@ -133,7 +135,6 @@ audiobutton {
   display: inline-block;
   background-repeat: no-repeat;
   background-position: center center;
-  background-color: transparent;
 }
 
 audiobutton.hop-audio-button-prev {

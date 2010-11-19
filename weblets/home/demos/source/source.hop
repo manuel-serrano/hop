@@ -38,10 +38,11 @@
 	 :include "hop-paned" "hop-tree"
 	 :css (service-resource home/demos/source "source.hss"))
       (<BODY> 
-	 (<H3> "Source code browser")
+	 (<H1> "Source code browser")
+	 (<P> [This demonstration let you browse the whole souce code of the Hop web site.])
 	 (let ((disp (<DIV> :class "file" ""))
 	       (d (dirname (dirname *source-directory*))))
-	    (<PANED> :fraction 40 :style "position: absolute; top: 3em; bottom: 10px; left: 10px; right: 10px; width: auto; height: auto;"
+	    (<PANED> :fraction 40 
 	       (<PAN>
 		  (<DIV> :class "tree"
 		     (directory->tree d (basename d) #t disp)))

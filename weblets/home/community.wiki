@@ -1,4 +1,20 @@
-== HOP mailing List ==
+== Browsing the code ==
+
+The HOP source code may be browsed on-line from our Mercurial
+,(<A> :href (home-source-url) "repository").
+
+~~ Want to find out what we have been doing lately? Check the video!
+
+,(<DIV> :style "margin-left: 4em"
+   (<VIDEO> :controls #t
+      (<SOURCE> :src (make-file-name (home-dir) "videos/changelog.ogv")
+         :type "video/ogg")
+      (<SOURCE> :src (make-file-name (home-dir) "videos/changelog.flv")
+         :type "video/x-flv")
+      :width 320 :height 240))
+
+
+== Mailing List ==
 
 The HOP mailing list is now hosted by 
 [[http://www-sop.inria.fr|INRIA Sophia Antipolis]]. Its email address is 

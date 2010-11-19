@@ -4,6 +4,8 @@
 (define-service (home/demos/video)
    (<HTML>
       (<HEAD> :include "hop-canvas"
+	 :css (service-resource home/demos/video "video.hss")
+
 	 
 	 ~(define video #unspecified)
 	 ~(define c1 #unspecified)
@@ -59,9 +61,9 @@
 	 
 	 ~(add-event-listener! window "load" init))
       
-      (<BODY> :style "background: black"
+      (<BODY>
+	 (<H1> "A video with a reflection effect")
 	 (<DIV> :style "text-align: center"
-	    (<DIV> :style "color: white" "A video with a reflection effect")
 	    (<VIDEO> :id "video" :src
 	       (service-resource home/demos/video "/../../../videos/hopx10.ogv")
 	       :width 320 :height 200

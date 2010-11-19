@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon Nov  8 16:32:55 2010 (serrano)                */
+;*    Last change :  Thu Nov 18 09:55:13 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -405,11 +405,13 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 	 ((string? (car a))
 	  (case mode
 	     ((:css)
-	      (loop (cdr a) mode rts dir path base inl packed 
-		    (cons (css (absolute-path (car a) dir) base inl) els)))
+	      (let ((file (or (find-file/path (car a) path) (car a))))
+		 (loop (cdr a) mode rts dir path base inl packed 
+		       (cons (css (absolute-path file dir) base inl) els))))
 	     ((:jscript)
-	      (loop (cdr a) mode rts dir path base inl packed 
-		    (cons (script (absolute-path (car a) dir) inl) els)))
+	      (let ((file (or (find-file/path (car a) path) (car a))))
+		 (loop (cdr a) mode rts dir path base inl packed 
+		       (cons (script (absolute-path file dir) inl) els))))
 	     ((:include)
 	      (cond
 		 ((member (car a) incs)

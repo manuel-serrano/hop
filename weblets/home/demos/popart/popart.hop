@@ -5,12 +5,14 @@
 
 (define-service (home/demos/popart)
    (<HTML>
-      (<HEAD> :include "popart-api-1.0.*.hz")
+      (<HEAD> :include "popart-api-1.0.*.hz"
+	 :css (service-resource home/demos/popart "popart.hss"))
       (<BODY>
 	 ~(define (local-url src)
 	     (if (string-prefix? "http://" src)
 		 ($home/demos/popart/proxy src)
 		 src))
+	 (<H1> "HTML5 Canvas Image Modifications")
 	 (<DIV> "Url: "
 		(<INPUT> :type 'text :id "URL")
 		" " 
@@ -59,6 +61,7 @@
 (define (<ICON> #!key src)
    (let ((id (symbol->string (gensym))))
       (<IMG> :id id
+	 :class "icon"
 	 :onclick ~(for-each (lambda (e)
 				(popart-img-src-set! e (local-url $src)))
 			     '("img1" "img2" "img3" "img4"))

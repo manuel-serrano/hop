@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed Nov 10 11:30:03 2010 (serrano)                */
+#*    Last change :  Thu Nov 18 17:45:47 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -28,30 +28,32 @@ HOP_POP		= presentation.wiki docs.wiki license.wiki faq.wiki \
                   download.wiki weblets.wiki install.wiki install-jvm.wiki \
                   community.wiki videos.wiki
 VIDEOS		= # hopx10.ogv hopx10.flv
+
 TALKS		= hopdiffuse.xhtml.gz
+
+ARTICLES	= hss/article.xhtml semantics/article.pdf
+
 POPULATION	= Makefile home.hss tips.hss \
                   demos etc/icons articles etc/weblet.info.in etc/home.wiki.in \
                   etc/logo.png etc/favicon.png etc/video.png \
-                  etc/icons/maemo_install.png \
+                  etc/icons/maemo_install.png etc/icons/android-market.png \
                   $(VIDEOS:%=videos/%) \
                   $(TALKS:%=talks/%) \
+                  $(ARTICLES:%=articles/%) \
                   $(SOURCES) $(HOP_POP) config.hop.in
 
 HOP_DEMOS	= minesweeper/minesweeper.hop \
 	          minesweeper/minesweeper.scm \
                   music/music.hop music/music.hss \
                   video/video.hop video/video.hss \
-                  rewrite/rewrite.hop \
-                  rss/rss.hop \
-                  set/set.hop \
-                  set/util.hop \
-                  set/game.hop \
-	          set/set.scm \
-	          popart/popart.hop \
-                  source/source.hop \
-                  sudoku/sudoku.hop \
-                  sudoku/sudoku.scm \
-                  wiki/wiki.hop
+                  rewrite/rewrite.hop rewrite/rewrite.hss \
+                  rss/rss.hop rss/rss.hss \
+                  set/set.hop set/set.scm set/util.hop set/game.hop \
+	          popart/popart.hop popart/popart.hss \
+	          map/map.hop map/map.hss \
+                  source/source.hop source/source.hss \
+                  sudoku/sudoku.hop sudoku/sudoku.scm \
+                  wiki/wiki.hop wiki/wiki.hss
 
                  
 build: .afile license.wiki install.wiki install-jvm.wiki release.info \

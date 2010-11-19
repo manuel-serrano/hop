@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Sat Nov  6 06:36:13 2010 (serrano)                */
+;*    Last change :  Thu Nov 18 10:02:06 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -361,7 +361,7 @@
 	 (let loop ((body body))
 	    (cond
 	       ((null? body)
-		(error "dom-replace-child" "old not a child" node))
+		(error "dom-replace-child!" "not a child" old))
 	       ((eq? (car body) old)
 		(set-car! body new))
 	       (else

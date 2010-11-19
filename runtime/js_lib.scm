@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Wed Oct 20 09:30:31 2010 (serrano)                */
+;*    Last change :  Fri Nov 19 08:52:18 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -45,8 +45,9 @@
        (fprintf op "new Date( ~a000 )" (date->seconds obj)))
       (else
        (let ((comp (hop-clientc))
-	     (foreign-out (lambda (obj op)
-			     (obj->javascript obj op isrep))))
+	     (foreign-out (lambda (obj2 op)
+			     (unless (eq? obj obj2)
+				(obj->javascript obj2 op isrep)))))
 	  ((clientc-valuec comp) obj op foreign-out #f)))))
 
 ;*---------------------------------------------------------------------*/

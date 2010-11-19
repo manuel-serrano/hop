@@ -32,18 +32,21 @@
 	    (lambda ()
 	       (feed-parse (current-input-port) make-rss make-channel make-item))))))
 
-;; main function
 (define-service (home/demos/rss)
    (<HTML>
       (<HEAD>
 	 :title "Home Rss demo"
-	 :include "hop-foldlist"
+	 :include "hop-foldlist" "hop-tabslider"
 	 :css (service-resource home/demos/rss "rss.hss"))
       (<BODY>
-	 (<FL>
+	 (<H1> "RSS stream reader")
+	 (<P> [This demonstration download lazyly. It uses the HOP broker to
+		    download the streams. It uses the TABSLIDER and FLITEM
+		    HOP widget to display the articles.])
+	 (<TABSLIDER>
 	    (map (lambda (url)
-		    (<FLITEM>
-		       (<FLHEAD> (cadr url))
+		    (<TSPAN>
+		       (<TSHEAD> (cadr url))
 		       (<DELAY>
 			  (lambda ()
 			     (rss->html (car url))))))

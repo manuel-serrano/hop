@@ -1,7 +1,6 @@
 ;; A live //Wiki//
 (define wikiedit-event
    (symbol->string (gensym)))
-      (name "wikiedit")))
 
 (define-service (wikiedit/update src)
    (hop-event-broadcast! wikiedit-event (wikiedit-compile src)))
@@ -26,9 +25,9 @@
       (<HTML>
 	 (<HEAD>)
 	 (<BODY>
-	    ~(add-event-listener $wikiedit-event "server"
-				 (lambda (e)
-				    (innerHTML-set! $d (event-response-text e))))
+	    ~(add-event-listener! $wikiedit-event "server"
+		(lambda (e)
+		   (innerHTML-set! $d (event-response-text e))))
 	    d))))
 
 (define (wikiedit-compile src)
