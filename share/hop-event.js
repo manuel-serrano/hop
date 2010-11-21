@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Nov  5 11:11:37 2010 (serrano)                */
+/*    Last change :  Sun Nov 21 08:20:57 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -204,7 +204,7 @@ function hop_servevt_enveloppe_parse( val, xhr, server_ready ) {
       } else if( k == "f" ) {
 	 hop_trigger_servevt( id, text, parseFloat( text ), false );
       } else if( k == "s" ) {
-	 hop_trigger_servevt( id, text, text, false );
+	 hop_trigger_servevt( id, text, decodeURIComponent( text ), false );
       } else if( k == "x" ) {
 	 hop_trigger_servevt( id, text, hop_create_element( text ), false );
       } else if( k == "j" ) {

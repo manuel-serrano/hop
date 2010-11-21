@@ -472,3 +472,15 @@ function sc_string_capitalize(s) {
 	 return w.charAt(0).toUpperCase() + w.substr(1).toLowerCase();
       });
 }
+
+/*** META ((export #t) (arity 1)) */
+function sc_prefix(s) {
+   var i = s.lastIndexOf(".");
+   return i ? s.substring(0, i) : s;
+}   
+
+/*** META ((export #t) (arity 1)) */
+function sc_suffix(s) {
+   var i = s.lastIndexOf(".");
+   return i ? s.substring(i+1,i.length) : s;
+}

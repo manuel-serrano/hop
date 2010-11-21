@@ -30,8 +30,8 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-builtin-weblets
    '("wizard" "epassword" "hz" "doc" "info" "webfilter"
-     "hopsh" "test" "dashboard" "wiki" "weblets" "trace" "hzbuilder" 
-     "color" "shutdown"))
+     "hopsh" "test" "dashboard" "wiki" "weblets" "trace" "workbench" 
+     "hzbuilder" "color" "shutdown"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-view-by-category? ...                                        */

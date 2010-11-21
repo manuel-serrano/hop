@@ -1,0 +1,6 @@
+((name "devel")
+ (author "M. Serrano")
+ (version "@VERSION@")
+ (date "@DATE@")
+ (title "A minimal workbench for testing Hop programs interactively."))
+

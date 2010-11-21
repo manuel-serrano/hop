@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sun Nov  7 09:12:56 2010 (serrano)                */
+;*    Last change :  Sun Nov 21 08:23:15 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -991,7 +991,7 @@
       ((xml? value)
        (format "<x name='~a'>~a</x>" name (xml->string value (hop-xml-backend))))
       ((string? value)
-       (format "<s name='~a'>~a</s>" name value))
+       (format "<s name='~a'>~a</s>" name (url-path-encode value)))
       ((integer? value)
        (format "<i name='~a'>~a</i>" name value))
       ((real? value)

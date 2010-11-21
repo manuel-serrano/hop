@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-paned.hss               */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-paned.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:51 2005                          */
-/*    Last change :  Thu Feb  4 06:58:08 2010 (serrano)                */
+/*    Last change :  Sat Nov 20 16:17:45 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned CSS                                                    */
@@ -64,7 +64,7 @@ paned-pan {
 /*---------------------------------------------------------------------*/
 /*    Common configuration                                             */
 /*---------------------------------------------------------------------*/
-div[hssclass=hop-paned] {
+paned {
   width: 300px;
   height: 200px;
   position: relative;

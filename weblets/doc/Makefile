@@ -47,6 +47,7 @@ JS_POP		= js-interface.wiki
 EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   canvas.hop canvas2.hop canvas3.hop canvas4.hop canvas5.hop \
                   filebrowse.hop filebrowse2.hop \
+                  filebrowse3.hop filebrowse4.hop\
                   filter-1.hop filter-2.hop \
                   foldlist-1.hop foldlist-2.hop hook-1.hop inline.hop \
                   iwindow.hop notepad-1.hop notepad-2.hop notepad-3.hop \

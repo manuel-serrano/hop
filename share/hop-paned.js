@@ -162,12 +162,12 @@ function hop_init_paned( id, fraction, handler ) {
    var delmousemove = function( e ) {
       hop_remove_event_listener( document, "mousemove", mousemove, false );
    };
-   
+
    var mousedown = function( e ) {
       hop_add_event_listener( document, "mousemove", mousemove, false );
       hop_add_event_listener( document, "mouseup", delmousemove, false );
       hop_add_event_listener( document, "onblur", delmousemove, false );
-      
+
       hop_stop_propagation( e );
    }
 
@@ -215,15 +215,16 @@ function hop_init_paned_vertical( id, fraction, onresize ) {
 /*---------------------------------------------------------------------*/
 function hop_init_paned_horizontal( id, fraction, onresize ) {
    var paned = hop_init_paned( id, fraction, hop_hpaned_mousemove );
-   
+
    // setup the initial fraction
    paned.fraction_set = hop_hpaned_fraction_set;
    hop_paned_onresize_set( paned, onresize );
-      
+
    // postponed initialization
    hop_add_event_listener( window, "ready",
 			   function( e ) {
-			      paned.fraction_set( paned, fraction ); } );
+			      paned.fraction_set( paned, fraction );
+			   } );
    
    return paned;
 }

@@ -1,0 +1,177 @@
+;*=====================================================================*/
+;*    .../prgm/project/hop/2.2.x/weblets/workbench/workbench.hop       */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Sat Nov 20 07:04:35 2010                          */
+;*    Last change :  Sun Nov 21 12:24:13 2010 (serrano)                */
+;*    Copyright   :  2010 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The Hop workbench                                                */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module workbench
+   ~(import workbench_client)
+   (import workbench_config)
+   (export workbench/load
+	   workbench/run))
+
+;*---------------------------------------------------------------------*/
+;*    workbench ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-service (workbench)
+   (let ((event-key (symbol->string (gensym))))
+      (<HTML>
+	 (<HEAD> :title "Hop workbench"
+	    :base (service-base-url workbench (current-request))
+	    :favicon "etc/favicon.png"
+	    :include "hop-paned" "hop-file" "hop-window" "hop-window-orange"
+	    :path (workbench-dir)
+	    :include "workbench")
+	 ~(event-key-set! $event-key)
+	 ~(add-event-listener! $event-key "server" server-event-handler)
+	 (<DIV> :orientation 'horizontal :id "main"
+	    (<DIV> :id "selector"
+	       (<TABLE>
+		  (<TR>
+		     (<TD> :id "logo" :rowspan 2
+			(<IMG> :src "etc/logo.png"))
+		     (<TH> "source file: ")
+		     (<TD>
+			(<INPUT> :type 'url
+			   :title "[tab]: auto-complete, [double tab]: browse, [ret]: load"
+			   :onkeydown ~(url-keydown-handler this event)
+			   :id "src"
+			   :value (preference-get 'workbench/load :default "")))
+		     (<TD> :class "button"
+			(<BUTTON:LOAD>)))
+		  (<TR>
+		     (<TH> "service: ")
+		     (<TD>
+			(<INPUT> :type 'text :id "url"
+			   :title "[ret]: run"
+			   :onkeydown ~(when (=fx (event-key-code event) 13)
+					  (run this.value))
+			   :value (let ((s (preference-get 'workbench/load)))
+				     (if (string? s)
+					 (make-file-path
+					  (hop-service-base) (prefix (basename s)))
+					 ""))))
+		     (<TD> :class "button"
+			(<BUTTON:RUN>)))))
+	    (<PANED> :orientation 'horizontal
+	       :fraction 20
+	       :id "workbench-paned"
+	       (<PAN>
+		  (<TABLE> :id "console-head"
+		     (<TR>
+			(<TD> :id "msg" "")
+			(<TH> :id "log" :title "Disable logging"
+			   :class "logon"
+			   :onclick ~(if (string=? this.className "logoff")
+					 (begin
+					    (set-log! #t)
+					    (set! this.title "Disable logging")
+					    (set! this.className "logon"))
+					 (begin
+					    (set-log! #f)
+					    (set! this.title "Enable logging")
+					    (set! this.className "logoff")))
+			   " ")
+			(<TH> :id "clear" :title "Clear console"
+			   :onclick ~(let ((el (dom-get-element-by-id "console")))
+					(set! el.value ""))
+			   " ")))
+		  (<DIV> :id "consolep"
+		     (<TEXTAREA> :id "console" "")))
+	       (<PAN>
+		  (<DIV> :id "iframemask" "")
+		  (<IFRAME> :id "iframe" :src (workbench/dummy))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <BUTTON:LOAD> ...                                                */
+;*---------------------------------------------------------------------*/
+(define (<BUTTON:LOAD>)
+   (<BUTTON> :onclick ~(let ((file (dom-get-element-by-id "src")))
+			  (load file.value))
+      :class "selector"
+      "load"))
+
+;*---------------------------------------------------------------------*/
+;*    <BUTTON:RUN> ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (<BUTTON:RUN>)
+   (<BUTTON> :onclick ~(let ((url (dom-get-element-by-id "url")))
+			  (run url.value))
+      :class "selector"
+      "run"))
+
+;*---------------------------------------------------------------------*/
+;*    redirect-io! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (redirect-io! key thunk)
+   (let ((port (open-output-procedure
+		(lambda (s)
+		   (hop-event-broadcast! key s)))))
+      (unwind-protect
+	 (with-handler
+	    (lambda (e)
+	       (exception-notify e))
+	    (with-output-to-port port
+	       (lambda ()
+		  (with-error-to-port port
+		     thunk))))
+	 (close-output-port port))))
+
+;*---------------------------------------------------------------------*/
+;*    workbench/load ...                                               */
+;*---------------------------------------------------------------------*/
+(define-service (workbench/load file key)
+   (preference-store! 'workbench/load file)
+   (let ((res #f))
+      (redirect-io! key
+		    (lambda ()
+		       (hop-load file)
+		       (set! res #t)))
+      res))
+
+;*---------------------------------------------------------------------*/
+;*    workbench/dummy ...                                              */
+;*---------------------------------------------------------------------*/
+(define-service (workbench/dummy)
+   (<HTML>
+      (<BODY> "")))
+
+;*---------------------------------------------------------------------*/
+;*    workbench/run ...                                                */
+;*---------------------------------------------------------------------*/
+(define-service (workbench/run path key)
+   (let* ((query #f)
+	  (i (string-index path #\?))
+	  (abspath (cond
+		      ((not i)
+		       ;; file name canonicalization is needed
+		       ;; for authentication
+		       (file-name-canonicalize! (url-decode! path)))
+		      ((>fx i 0)
+		       (let ((l (string-length path)))
+			  (set! query (substring path (+fx i 1) l)))
+		       (let ((p (url-decode! (substring path 0 i))))
+			  (file-name-canonicalize! p)))
+		      (else
+		       (let ((l (string-length path)))
+			  (set! query (substring path 1 l)))   
+		       "/")))
+	  (req (duplicate::http-server-request (current-request)
+		  (path path)
+		  (abspath abspath)
+		  (query query)))
+	  (thunk (lambda () (request->response req (current-thread)))))
+      (redirect-io! key thunk)))
+
+;*---------------------------------------------------------------------*/
+;*    The user configuration                                           */
+;*---------------------------------------------------------------------*/
+(hop-load-rc "workbenchrc.hop")

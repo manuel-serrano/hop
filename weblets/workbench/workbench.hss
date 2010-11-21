@@ -1,0 +1,242 @@
+/*=====================================================================*/
+/*    .../prgm/project/hop/2.2.x/weblets/workbench/workbench.hss       */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sat Nov 20 07:16:13 2010                          */
+/*    Last change :  Sun Nov 21 12:29:19 2010 (serrano)                */
+/*    Copyright   :  2010 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Workbench HSS                                                    */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module workbench_hss)
+
+/*---------------------------------------------------------------------*/
+/*    Global graphical configuration                                   */
+/*---------------------------------------------------------------------*/
+body {
+  font-family: Arial, Lucida Grande, Verdana, Lucida, Helvetica;
+  font-size: 10pt;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid #a3a3a3;
+}
+
+/*---------------------------------------------------------------------*/
+/*    main frame                                                       */
+/*---------------------------------------------------------------------*/
+#main {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: auto;
+  height: auto;
+}
+
+paned#workbench-paned {
+  border-left: 0;
+  border-right: 0;
+  border-top: 1px solid #ffffff;
+  inner-border: 5px solid #d7d7d7;
+  position: absolute;
+  top: 64px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: auto;
+  height: auto;
+}  
+
+paned#workbench-paned paned-cursor {
+  background-color: #d7d7d7;
+}
+  
+/*---------------------------------------------------------------------*/
+/*    selector                                                         */
+/*---------------------------------------------------------------------*/
+div#selector {
+  border-top: 1px solid #ffffff;
+  border-bottom: 1px solid #a3a3a3;
+  background: #ebebeb;
+  background-image: -moz-linear-gradient( -90deg, #ebebeb, #dadada );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#ebebeb), to(#dadada));
+  height: 62px;
+}
+
+div#selector table {
+  width: 100%;
+}
+
+div#selector td#logo {
+  width: 48px;
+  text-align: left;
+}
+
+div#selector th {
+  width: 6em;
+  text-align: right;
+  font-size: 90%;
+  color: #333;
+}
+
+div#selector input,
+div#selector input[type=file] {
+  border: 1px solid #ffffff;
+  border-top-color: #a3a3a3;
+  border-left-color: #a3a3a3;
+  background: #fdfefd;
+}
+
+div#selector input {
+  width: 100%;
+}
+
+div#selector td.button {
+  text-align: center;
+  width: 7em;
+}
+
+div#selector button {
+  width: 6em;
+}
+
+window#filebrowser {
+  background-color: #eeeeee;
+}
+
+filechooser {
+  border: 0;
+}
+
+button.selector {
+  font-size: 80%;
+  border: 1px solid #ffffff;
+  border-bottom-color: #a3a3a3;
+  border-right-color: #a3a3a3;
+  color: black;
+  border-radius: 4px;
+  padding-left: 1em;
+  padding-right: 1em;
+  background: #e7e7e7;
+  background-image: -moz-linear-gradient( -90deg, #f7f7f7, #e7e7e7 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#f7f7f7), to(#e7e7e7));
+}  
+
+button.selector:hover {
+  text-shadow: #222 1px 1px 2px;
+  color: white;
+  background: #c7c7c7;
+}
+
+/*---------------------------------------------------------------------*/
+/*    iframe                                                           */
+/*---------------------------------------------------------------------*/
+#iframe {
+  border-width: 0;
+  position: absolute;
+  display: block;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+#iframemask {
+  border-width: 0;
+  position: absolute;
+  display: none;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.4;
+  background: #222211;
+  z-index: 2;
+}
+
+/*---------------------------------------------------------------------*/
+/*    console                                                          */
+/*---------------------------------------------------------------------*/
+#console-head {
+  background: #fcfefd;
+  height: 3ex;
+  border-bottom: 1px solid #aaa;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#console-head th {
+  border-left: 1px solid #aaa;
+  width: 22px;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+#console-head th:hover {
+  background-color: #f3fef3;
+}
+#console-head td {
+  text-align: left;
+}
+
+#msg {
+  height: 3ex;
+  padding-left: 2px;
+}
+
+#msg span {
+  font-size: 85%;
+}
+
+#msg span.failure {
+  color: red;
+}
+
+#msg span.failure:after {
+  content: " failed";
+}
+
+#msg span.success:after {
+  content: " succeeded";
+}
+
+#consolep {
+  font-family: monospace;
+  background: #f7fff7;
+  display: inline-block;
+  position: absolute;
+  top: 3ex;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+#console {
+  background: #fafbfe;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+#console-head #clear {
+  background-image: url( "etc/clear.png" );
+}
+
+#console-head #log.logon {
+  background-image: url( "etc/log1.png" );
+}
+
+#console-head #log.logoff {
+  background-image: url( "etc/log2.png" );
+}
+

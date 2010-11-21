@@ -79,6 +79,10 @@ audiobutton:hover {
   border-right: 1px solid $(color-darker "#e0e0e0" 8); 
   border-bottom: 1px solid $(color-darker "#e0e0e0" 8); 
 }
+
+audio slidercursor:hover {
+  box-shadow: 0px 0px 4px #f7f3f0;
+}
 /* </public> */
 
 /*---------------------------------------------------------------------*/

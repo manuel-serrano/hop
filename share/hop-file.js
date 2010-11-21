@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/share/hop-file.js                 */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-file.js                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 07:05:30 2008                          */
-/*    Last change :  Wed Mar 17 14:27:44 2010 (serrano)                */
+/*    Last change :  Sat Nov 20 17:06:10 2010 (serrano)                */
 /*    Copyright   :  2008-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side support for url browsers.                            */
@@ -45,9 +45,10 @@ function hop_inputurl_keydown( obj, event ) {
       hop_stop_propagation( event, false );
 
       if( !(obj.completion instanceof Array ) ) {
-	 // the name of the service is defined in runtime/hop-file.scm
-	 var svc = hop_apply_url( hop_service_base() + "/server-file/completion",
-				  [ obj.value ] );
+	 // the name of the service is defined in widget/file.scm
+	 var svc = hop_apply_url(
+	    hop_service_base() + "/server-file/completion",
+	    [ obj.value ] );
 	 
 	 with_hop( svc, callback );
       } else {
@@ -74,7 +75,7 @@ function hop_filechooser_button_push( button, id, url ) {
    el.button = button;
 
    // get the files content
-   // the name of the service is defined in runtime/hop-file.scm
+   // the name of the service is defined in widget/file.scm
    var svc = hop_apply_url( hop_service_base() + "/server-file/files",
 			    [ id, url, fe.value, he.checked ] );
 
@@ -117,7 +118,7 @@ function hop_filechooser_open( id, url ) {
    var fe = document.getElementById( id + "-filters" );
    var he = document.getElementById( id + "-hidden" );
    
-   // the name of the service is defined in runtime/hop-file.scm
+   // the name of the service is defined in widget/file.scm
    var svc = hop_apply_url( hop_service_base() + "/server-file/files",
 			    [ id, url, fe.value, he.checked ] );
 
@@ -139,7 +140,7 @@ function hop_filechooser_open( id, url ) {
 function hop_filechooser_add( id ) {
    var el = document.getElementById( id );
 
-   // the name of the service is defined in runtime/hop-file.scm
+   // the name of the service is defined in wdiget/file.scm
    var svc = hop_apply_url( hop_service_base() + "/server-file/addplace",
 			    [ id, el.value ] );
 
@@ -156,7 +157,7 @@ function hop_filechooser_add( id ) {
 function hop_filechooser_remove( id ) {
    var el = document.getElementById( id );
 
-   // the name of the service is defined in runtime/hop-file.scm
+   // the name of the service is defined in widget/file.scm
    var svc = hop_apply_url( hop_service_base() + "/server-file/removeplace",
 			    [ id, el.value ] );
 
@@ -176,7 +177,7 @@ function hop_filechooser_toggle_location( span, id ) {
    var flag = (cname.indexOf( "filechooser-button-selected" ) == 0);
    var l = document.getElementById( id + "-location" );
 
-   // the name of the service is defined in runtime/hop-file.scm
+   // the name of the service is defined in widget/file.scm
    var svc = hop_apply_url( hop_service_base() + "/server-file/togglelocation",
 			    [ id, flag ] );
 
@@ -321,7 +322,7 @@ function hop_filechooser_key( table, event, id, pep, pid, nep, nid ) {
 /*    hop_filechooser ...                                              */
 /*---------------------------------------------------------------------*/
 function hop_filechooser( args ) {
-   // the name of the service is defined in runtime/hop-file.scm
+   // the name of the service is defined in widget/file.scm
    return hop_apply_url( hop_service_base() + "/server-file/filechooser",
 			 [ args ] );
 }

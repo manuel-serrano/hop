@@ -104,7 +104,10 @@
 ;*---------------------------------------------------------------------*/
 (define (abspath-completion req path)
    (let ((dir (dirname path)))
-      (if (and (file-exists? dir) (directory? dir) (authorized-path? req dir))
+      (if (and (file-exists? dir)
+	       (directory? dir)
+	       (authorized-path? req dir)
+	       (>fx (string-length path) 0))
 	  (let ((base (if (char=? (string-ref path (-fx (string-length path) 1))
 				  (file-separator))
 			  ""
@@ -248,26 +251,28 @@
 	  (format "~a://~a@~a:~a" scheme user host port))
 	 (else
 	  (format "~a://~a:~a" scheme host port))))
-   
-   (multiple-value-bind (scheme user host port abspath)
-      (url-parse url)
-      (let loop ((url (initial-url scheme user host port))
-		 (dirs (file-name->list abspath))
-		 (buts '()))
-	 (if (pair? dirs)
-	     (let ((dir ((hop-locale->charset) (car dirs))))
-		(let ((url (make-file-name url dir)))
-		   (loop url
-			 (cdr dirs)
-			 (cons (<BUT> dir url id) buts))))
-	     (<DIV> :class "filechooser-path"
-		(<SPAN> :class (location-classname
-				(preference-get 'filechooser/show-location))
-		   :onclick (secure-javascript-attr
-			     (format "hop_filechooser_toggle_location( this, ~s )"
-				     id ))
-		   "  ")
-		(reverse! buts))))))
+
+   (if (>fx (string-length url) 0)
+       (multiple-value-bind (scheme user host port abspath)
+	  (url-parse url)
+	  (let loop ((url (initial-url scheme user host port))
+		     (dirs (file-name->list abspath))
+		     (buts '()))
+	     (if (pair? dirs)
+		 (let ((dir ((hop-locale->charset) (car dirs))))
+		    (let ((url (make-file-name url dir)))
+		       (loop url
+			     (cdr dirs)
+			     (cons (<BUT> dir url id) buts))))
+		 (<DIV> :class "filechooser-path"
+		    (<SPAN> :class (location-classname
+				    (preference-get 'filechooser/show-location))
+		       :onclick (secure-javascript-attr
+				 (format "hop_filechooser_toggle_location( this, ~s )"
+					 id ))
+		       "  ")
+		    (reverse! buts)))))
+       '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    <FILECHOOSER:LOCATION> ...                                       */

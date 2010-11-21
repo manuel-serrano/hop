@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sun Nov  7 08:50:16 2010 (serrano)                */
+#*    Last change :  Fri Nov 19 08:59:46 2010 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -285,7 +285,7 @@ distrib-inc-version:
 	  $(MAKE) revision LOGMSG="New distrib $$version-$$devel$$min"; \
         fi
 
-distrib-sans-version: distrib-native distrib-jvm
+distrib-sans-version: distrib-native # distrib-jvm
 
 distrib-pre:
 	(version=$(HOPRELEASE); \

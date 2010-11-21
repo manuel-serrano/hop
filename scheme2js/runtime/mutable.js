@@ -330,7 +330,7 @@ function sc_stringCIContains(s1,s2,start) {
            (peephole (hole 3 s ".substring(" start ", " end ")")))
 */
 function sc_substring(s, start, end) {
-   return s.substring(start, end < 0 ? s.length : end);
+   return s.val.substring(start, end < 0 ? s.length : end);
 }
 
 /*** META ((export #t)
@@ -512,4 +512,16 @@ function sc_string_capitalize_bang(s) {
 	 return w.charAt(0).toUpperCase() + w.substr(1).toLowerCase();
       });
    return s;
+}
+
+/*** META ((export #t) (arity 1)) */
+function sc_prefix(s) {
+   var i = s.val.lastIndexOf(".");
+   return i ? s.val.substring(0, i) : s;
+}   
+
+/*** META ((export #t) (arity 1)) */
+function sc_suffix(s) {
+   var i = s.val.lastIndexOf(".");
+   return i ? s.val.substring(i+1,i.length) : s;
 }
