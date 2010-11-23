@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Oct 20 09:29:12 2010 (serrano)                */
+;*    Last change :  Tue Nov 23 09:06:26 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -281,16 +281,16 @@
 		 (lambda (comp)
 		    ;; A global property that have to be processes again
 		    ;; unless the generated property is the initial one
-		    (let liip ((l (comp (args->string-args expr) prio))
+		    (let liip ((rules (comp (args->string-args expr) prio))
 			       (decl (cdr decl))
 			       (old old))
 		       (cond
-			  ((null? l)
+			  ((null? rules)
 			   (loop decl old nrules))
-			  ((equal? property (css-declaration-property (car l)))
-			   (liip (cdr l) decl (cons (car l) old)))
+			  ((equal? property (css-declaration-property (car rules)))
+			   (liip (cdr rules) decl (cons (car rules) old)))
 			  (else
-			   (liip (cdr l) (cons (car l) decl) old))))))
+			   (liip (cdr rules) (cons (car rules) decl) old))))))
 		(else
 		 (loop (cdr decl) (cons (car decl) old) nrules)))))))
 
@@ -564,11 +564,12 @@
 	     ;; have generated unnormalized expressions. The recursion is
 	     ;; stopped is the generated property is the same as the initial
 	     ;; one.
-	     (append-map (lambda (o)
+	     (append-map (lambda (o2)
 			    (if (equal? property (css-declaration-property o))
-				(list
-				 (duplicate::css-declaration o
-				    (expr (hss-compile expr penv))))
+				(with-access::css-declaration o2 ((expr2 expr))
+				   (list
+				    (duplicate::css-declaration o2
+				       (expr (hss-compile expr2 penv)))))
 				(hss-compile o penv)))
 			 (comp expr prio))
 	     (list
@@ -612,34 +613,6 @@
 	     (append
 	      (let ((attr* (filter (lambda (a) (not (pseudo-attr? a))) attr*)))
 		 (copy-compiler-selectors hc attr*))
-	      (list
-	       '| |
-	       (instantiate::css-selector
-		  (element (hss-compiler-body hc))
-		  (attr* (filter pseudo-attr? attr*)))))
-	     (copy-compiler-selectors hc attr*)))))
-
-(define (hss-compile-selector-TOBEREMOVED-2sep2010::pair o hc bodyp)
-   
-   (define (pseudo-attr? a)
-      (and (css-selector-pseudo? a)
-	   (not (css-selector-pseudo-fun a))
-	   (member (css-selector-pseudo-expr a)
-		   '("first-child" "first-line" "first-letter"))))
-
-   (define (copy-compiler-selectors hc attr*)
-      (map (lambda (s)
-	      (if (css-selector? s)
-		  (duplicate::css-selector s
-		     (attr* (append (css-selector-attr* s) attr*)))
-		  s))
-	   (hss-compiler-selector hc)))
-   
-   (with-access::css-selector o (element attr*)
-      (let ((el (css-selector-name-name element)))
-	 (if (and (hss-compiler-body hc) (or bodyp (any? pseudo-attr? attr*)))
-	     (append
-	      (copy-compiler-selectors hc attr*)
 	      (list
 	       '| |
 	       (instantiate::css-selector
@@ -775,6 +748,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    HSS Global compilers ...                                         */
 ;*---------------------------------------------------------------------*/
+;; display
+(define-hss-property (display v p)
+   (if (equal? v '("box"))
+       (format "display: box ~a;
+  display: -moz-box ~a;
+  display: -webkit-box ~a;
+  display: -o-box ~a;"
+	       p p p p p)
+       (format "display: ~l ~a;" v p)))
+
 ;; border-radius
 (define-hss-property (border-radius v p)
    (match-case v
@@ -823,8 +806,9 @@
    (format "user-select: ~l;
   -moz-user-select: ~l;
   -khtml-user-select: ~l;
-  -webkit-user-select: ~l;"
-	   v v v v))
+  -webkit-user-select: ~l;
+  -o-user-select: ~l;"
+	   v v v v v))
 
 ;; multi-column
 (define-hss-property (column-width v p)
@@ -859,71 +843,121 @@
 (define-hss-property (transform v p)
    (format "transform: ~l;
   -moz-transform: ~l;
-  -webkit-transform: ~l;"
-	   v v v))
+  -webkit-transform: ~l;
+  -o-transform: ~l;"
+	   v v v v))
+
+;; transition
+(define-hss-property (transition v p)
+   (format "transition: ~l ~a;
+  -moz-transition: ~l ~a;
+  -webkit-transition: ~l ~a;
+  -o-transition: ~l ~a;"
+	   v p v p v p v p))
+
+;; transition-property
+(define-hss-property (transition-property v p)
+   (format "transition: ~l ~a;
+  -moz-transition-property: ~l ~a;
+  -webkit-transition-property: ~l ~a;
+  -o-transition-property: ~l ~a;"
+	   v p v p v p v p))
+
+;; transition-duration
+(define-hss-property (transition-duration v p)
+   (format "transition-duration: ~l ~a;
+  -moz-transition-duration: ~l ~a;
+  -webkit-transition-duration: ~l ~a;
+  -o-transition-duration: ~l ~a;"
+	   v p v p v p v p))
+
+;; transition-delay
+(define-hss-property (transition-delay v p)
+   (format "transition-delay: ~l ~a;
+  -moz-transition-delay: ~l ~a;
+  -webkit-transition-delay: ~l ~a;
+  -o-transition-delay: ~l ~a;"
+	   v p v p v p v p))
+
+;; transition-timing-function
+(define-hss-property (transition-timing-function v p)
+   (format "transition-timing-function: ~l ~a;
+  -moz-transition-timing-function: ~l ~a;
+  -webkit-transition-timing-function: ~l ~a;
+  -o-transition-timing-function: ~l ~a;"
+	   v p v p v p v p))
 
 ;; box-align
 (define-hss-property (box-align v p)
    (format "box-align: ~l;
   -moz-box-align: ~l;
-  -webkit-box-align: ~l;"
-	   v v v))
+  -webkit-box-align: ~l;
+  -o-box-align: ~l;"
+	   v v v v))
 
 ;; box-direction
 (define-hss-property (box-direction v p)
    (format "box-direction: ~l;
   -moz-box-direction: ~l;
-  -webkit-box-direction: ~l;"
-	   v v v))
+  -webkit-box-direction: ~l;
+  -o-box-direction: ~l;"
+	   v v v v))
 
 ;; box-flex
 (define-hss-property (box-flex v p)
    (format "box-flex: ~l;
   -moz-box-flex: ~l;
-  -webkit-box-flex: ~l;"
-	   v v v))
+  -webkit-box-flex: ~l;
+  -o-box-flex: ~l;"
+	   v v v v))
 
 ;; box-flexgroup
 (define-hss-property (box-flexgroup v p)
    (format "box-flexgroup: ~l;
   -moz-box-flexgroup: ~l;
-  -webkit-box-flexgroup: ~l;"
-	   v v v))
+  -webkit-box-flexgroup: ~l;
+  -o-box-flexgroup: ~l;"
+	   v v v v))
 
 ;; box-ordinal-group
 (define-hss-property (box-ordinal-group v p)
    (format "box-ordinal-group: ~l;
   -moz-box-ordinal-group: ~l;
-  -webkit-box-ordinal-group: ~l;"
-	   v v v))
+  -webkit-box-ordinal-group: ~l;
+  -o-box-ordinal-group: ~l;"
+	   v v v v))
 
 ;; box-orient
 (define-hss-property (box-orient v p)
    (format "box-orient: ~l;
   -moz-box-orient: ~l;
-  -webkit-box-orient: ~l;"
-	   v v v))
+  -webkit-box-orient: ~l;
+  -o-box-orient: ~l;"
+	   v v v v))
 
 ;; box-pack
 (define-hss-property (box-pack v p)
    (format "box-pack: ~l;
   -moz-box-pack: ~l;
-  -webkit-box-pack: ~l;"
-	   v v v))
+  -webkit-box-pack: ~l;
+  -o-box-pack: ~l;"
+	   v v v v))
 
 ;; box-shadow
 (define-hss-property (box-shadow v p)
    (format "box-shadow: ~l;
   -moz-box-shadow: ~l;
-  -webkit-box-shadow: ~l;"
-	   v v v))
+  -webkit-box-shadow: ~l;
+  -o-box-shadow: ~l;"
+	   v v v v))
 
 ;; box-sizing
 (define-hss-property (box-sizing v p)
    (format "box-sizing: ~l;
   -moz-box-sizing: ~l;
-  -webkit-box-sizing: ~l;"
-	   v v v))
+  -webkit-box-sizing: ~l;
+  -o-box-sizing: ~l;"
+	   v v v v))
 
 ;; hsv
 (define-hss-function (hsv h s v)

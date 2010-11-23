@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Sun Nov  7 09:02:57 2010 (serrano)                */
+;*    Last change :  Tue Nov 23 08:18:04 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -89,6 +89,7 @@
 	    (<Q> . ::obj)
 	    (<S> . ::obj)
 	    (<SAMP> . ::obj)
+	    (<SECTION> . ::obj)
 	    (<SELECT> . ::obj)
 	    (<SMALL> . ::obj)
 	    (<SOURCE> . ::obj)
@@ -180,6 +181,7 @@
 (define-xml-element <Q>)
 (define-xml-element <S>)
 (define-xml-element <SAMP>)
+(define-xml-element <SECTION>)
 (define-xml-element <SELECT>)
 (define-xml-element <SMALL>)
 (define-xml-element <SOURCE>)

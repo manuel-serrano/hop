@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Mon Nov  1 14:25:34 2010 (serrano)                */
+;*    Last change :  Mon Nov 22 16:06:04 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -109,7 +109,7 @@ resources of the phone. When the control buttons of the followin music player
 are clicked (for instance the play button below), the corresponding order
 is sent to the server that directly controls the multimedia player of the
 Android phone. This demonstration does not use any HTML5 facility.")
-;* 	 (<ANDROIDEMO:MULTIMEDIA>)                                     */
+	 (<ANDROIDEMO:MULTIMEDIA>)
 	 )))
 
 ;*---------------------------------------------------------------------*/

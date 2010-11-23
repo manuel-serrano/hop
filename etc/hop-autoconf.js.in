@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Aug  6 14:01:14 2010 (serrano)                */
+/*    Last change :  Tue Nov 23 08:23:43 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -132,6 +132,7 @@ function hop_Config() {
   this.inline_image = false;
   this.filtered_errors = [];
   this.css = 2.1;
+  this.css_transition = false;
   this.xhr_multipart = false; // see hop_make_xml_http_request conf
   this.clone_innerHTML = false; // see hop_create_element (hop-dom.js)
   this.eval_innerHTML = true;
@@ -168,6 +169,7 @@ function hop_Config() {
      this.flash_markup = "embed";
      this.inline_image = true;
      this.css = 3;
+     this.css_transition = true;
      this.clone_innerHTML = true;
      if( ! "Window" in window || window.Window === undefined ) {
        window.Window = window.constructor;
@@ -200,6 +202,11 @@ function hop_Config() {
      this.clone_innerHTML = true;
   } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
      if( navigator.userAgent.match( /3.[56][^ ]*$/ ) ) {
+        /* Firefox 4.0 */
+        this.js_speed = 100;	    
+        this.css = 3;
+        this.css_transition = true;
+     } else if( navigator.userAgent.match( /3.[56][^ ]*$/ ) ) {
         /* Firefox 3.5, 3.6 */
         this.js_speed = 75;	    
         this.css = 3;

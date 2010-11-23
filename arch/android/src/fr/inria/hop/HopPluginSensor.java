@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 11:11:23 2010                          */
-/*    Last change :  Mon Oct 25 10:17:07 2010 (serrano)                */
+/*    Last change :  Mon Nov 22 19:48:40 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Dealing with the sensors available on the phone.                 */
@@ -149,6 +149,7 @@ public class HopPluginSensor extends HopPlugin {
 
 	 case (byte)'b':
 	    init_sensormanager();
+	    
 	    final int type = HopDroid.read_int32( ip );
 	    int delay = SensorManager.SENSOR_DELAY_NORMAL;
 	    

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/widget/gauge.hop                  */
+;*    serrano/prgm/project/hop/2.2.x/widget/gauge.hop                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 13 05:44:41 2010                          */
-;*    Last change :  Tue Apr 20 09:57:11 2010 (serrano)                */
+;*    Last change :  Mon Nov 22 18:13:27 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Gauge server-side implementation                                 */
@@ -43,6 +43,7 @@
 	 (<DIV> :hssclass "hop-gauge-text" :id tid "0")
 	 ~(add-event-listener! window "ready"
 	     (lambda (e)
-		(gauge-init! $id $fid $tid $value $min $max $fmt $listener))))))
+		(gauge-init! $id $fid $tid $value $min $max $fmt $listener)))
+	 body)))
       
       
