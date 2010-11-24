@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/widget/tabslider.scm              */
+;*    serrano/prgm/project/hop/2.2.x/widget/tabslider.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Jun 19 06:38:19 2010 (serrano)                */
+;*    Last change :  Wed Nov 24 13:51:08 2010 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -16,12 +16,12 @@
    (library hop)
    
    (static  (class html-tabslider::xml-element
+	       (clazz (default #f))
 	       (width (default #f))
 	       (height (default #f))
 	       (index (default 0))
 	       (onchange (default #f))
-	       (history read-only (default #t))
-	       (speed read-only (default 14)))
+	       (history read-only (default #t)))
 	    (class html-tspan::xml-element)
 	    (class html-tshead::xml-element))
 
@@ -33,12 +33,12 @@
 ;*    <TABSLIDER> ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-markup <TABSLIDER> ((id #unspecified string)
+			    (class #unspecified string)
 			    (width #f)
 			    (height #f)
 			    (index 0)
 			    (onchange #f)
 			    (history #unspecified)
-			    (speed 20 integer)
 			    body)
    
    ;; Verify that the body is a list of <TSPAN>
@@ -51,11 +51,13 @@
    (instantiate::html-tabslider
       (tag 'tabslider)
       (id (xml-make-id id 'TABSLIDER))
+      (clazz (if (string? class)
+		 (string-append class " uninitialized")
+		 "uninitialized"))
       (width width)
       (height height)
       (index index)
       (onchange onchange)
-      (speed speed)
       (history (if (boolean? history) history (not (eq? id #unspecified))))
       (body body)))
 
@@ -63,8 +65,8 @@
 ;*    xml-write ::html-tabslider ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-tabslider p backend)
-   (with-access::html-tabslider obj (id width height body index history onchange speed)
-      (fprintf p "<div class='hop-tabslider' id='~a'" id)
+   (with-access::html-tabslider obj (clazz id width height body index history onchange)
+      (fprintf p "<div hssclass='hop-tabslider' class='~a' id='~a'" clazz id)
       (when (or width height)
 	 (fprintf p " style=\"~a~a\""
 		  (if width  (format "width: ~a;" width) "")
@@ -73,12 +75,11 @@
       (xml-write body p backend)
       (display "</div>" p)
       (fprintf p
-	       "<script type='~a'>hop_tabslider_init('~a', ~a, ~a, ~a, ~a)</script>"
+	       "<script type='~a'>hop_tabslider_init('~a', ~a, ~a, ~a)</script>"
 	       (hop-javascript-mime-type)
 	       id index
 	       (if history "true" "false")
-	       (hop->js-callback onchange)
-	       speed)))
+	       (hop->js-callback onchange))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TSPAN> ...                                                      */
@@ -105,7 +106,8 @@
 	     (body (list (car body)
 			 (<DIV>
 			    :id id
-			    :class "hop-tabslider-content"
+			    :hssclass "hop-tabslider-pan"
+			    :class "inactive"
 			    :lang "delay"
 			    :onkeyup (secure-javascript-attr
 				      (format "return ~a;"
@@ -125,7 +127,8 @@
 	     (body (list (car body)
 			 (apply <DIV>
 				:id id
-				:class "hop-tabslider-content"
+				:hssclass "hop-tabslider-pan"
+				:class "inactive"
 				(tspan-onselect id onselect)
 				(cdr body)))))))))
 
@@ -139,5 +142,6 @@
 ;*    <TSHEAD> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-xml-alias <TSHEAD> <DIV>
-   :class "hop-tabslider-head"
+   :hssclass "hop-tabslider-head"
+   :class "inactive"
    :onclick (secure-javascript-attr "hop_tabslider_select( this )"))

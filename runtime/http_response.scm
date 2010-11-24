@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Nov 17 08:38:38 2010 (serrano)                */
+;*    Last change :  Tue Nov 23 14:10:54 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -799,8 +799,8 @@
 (define (make-proxy-socket proxy timeout)
    (let ((i (string-index proxy #\:)))
       (if (and (fixnum? i) (>fx i 0))
-	  (let* ((proxy (substring proxy 0 i))
-		 (len (string-length proxy))
+	  (let* ((len (string-length proxy))
+		 (proxy (substring proxy 0 i))
 		 (port (string->integer (substring proxy (+fx i 1) len))))
 	     (make-client-socket proxy port :timeout timeout))
 	  (make-client-socket proxy 80 :timeout timeout))))

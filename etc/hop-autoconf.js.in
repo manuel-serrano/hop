@@ -201,7 +201,7 @@ function hop_Config() {
      this.inline_image = true;
      this.clone_innerHTML = true;
   } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
-     if( navigator.userAgent.match( /3.[56][^ ]*$/ ) ) {
+     if( navigator.userAgent.match( /4.[0-9][^ ]*$/ ) ) {
         /* Firefox 4.0 */
         this.js_speed = 100;	    
         this.css = 3;

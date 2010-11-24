@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Jul  6 11:27:59 2010 (serrano)                */
+/*    Last change :  Tue Nov 23 20:24:52 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -647,6 +647,27 @@ function dom_create_sorttable() {
 /*---------------------------------------------------------------------*/
 /*    DOM functional interface ...                                     */
 /*---------------------------------------------------------------------*/
+/*** META ((export dom-add-class!)
+           (arity #t)) */
+function dom_add_class( obj, string ) {
+   if( (obj instanceof String) || (typeof obj === "string") )
+      obj = document.getElementById( obj );
+
+   if( obj.className.search( new RegExp( string + "\\b" ) ) < 0 ) {
+      obj.className = obj.className + " " + string;
+   }
+}
+	   
+/*** META ((export dom-remove-class!)
+           (arity #t)) */
+function dom_remove_class( obj, string ) {
+   if( (obj instanceof String) || (typeof obj === "string") )
+      obj = document.getElementById( obj );
+
+   var re = new RegExp( "[ \\t]*" + string + "\\b" );
+   obj.className = obj.className.replace( re, "" );
+}
+	   
 /*** META ((export dom-has-attributes?)
            (arity #t)
            (type bool)

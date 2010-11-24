@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/weblets/test/tabslider.hop        */
+;*    serrano/prgm/project/hop/2.2.x/weblets/test/tabslider.hop        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
-;*    Last change :  Tue Feb 16 12:31:13 2010 (serrano)                */
+;*    Last change :  Wed Nov 24 13:39:30 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Tabsliders testing                                               */
@@ -26,10 +26,12 @@
 	 "This test checks tabsliders. If the test succeeds you should
 be able to fold/unfold all the tabs of the tabsliders below.")
       (<H3> "A static tabslider")
+      (<DIV> :id "console" "")
       (<TABSLIDER> :width "200px" :height "150px"
 	 (<TSPAN> (<TSHEAD> "tab1") "body1")
 	 (<TSPAN> (<TSHEAD> "tab2") "body2")
-	 (<TSPAN> (<TSHEAD> "tab3") "body3"))
+	 (<TSPAN> (<TSHEAD> "tab3") "body3")
+	 (<TSPAN> (<TSHEAD> "tab4") "body4"))
       (<H3> "A dynamic tabslider")
       (let ((count 0))
 	 (<TABSLIDER> :width "200px" :height "100px"

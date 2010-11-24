@@ -46,6 +46,8 @@ vectors.
   (dom-node-comment? node)
   (dom-node-document-fragment? node)
   (dom-node-attr? node)
+  (dom-add-class! node string)
+  (dom-remove-class! node string)
   (dom-has-attributes? node)
   (dom-get-attributes node)
   (dom-has-attribute? node string)
@@ -114,6 +116,25 @@ vectors.
 
 Returns a string of character denoting the type of ++obj++.
 </procedure>
+</function>
+
+=== ++(dom-add-class! node class)++ ===
+=== ++(dom-remove-class! node class)++ ===
+<function> dom-add-class!
+<function> dom-remove-class!
+<procedure> dom-add-class!
+<procedure> dom-remove-class!
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+| class            |  string      | a class name.  |
+</arguments>
+
+These functions add and remove a class name to an element.
+</procedure>
+</procedure>
+</function>
 </function>
 
 === ++(dom-has-attributes? node)++ ===

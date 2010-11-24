@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Thu Nov 18 10:02:06 2010 (serrano)                */
+;*    Last change :  Tue Nov 23 19:11:00 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -35,6 +35,8 @@
 	   (dom-replace-child! node new old)
 	   (dom-insert-before! node new ref)
 	   (generic dom-clone-node ::obj ::bool)
+	   (dom-add-class! node ::bstring)
+	   (dom-remove-class! node ::bstring)
 	   (dom-has-attributes? node)
 	   (dom-has-child-nodes? node)
 	   (dom-normalize! node)
@@ -469,7 +471,28 @@
        (duplicate::xml-html node
 	  (attributes (dom-clone-node (xml-html-attributes node) deep))
 	  (body (dom-clone-node (xml-html-body node) deep)))))
-       
+
+;*---------------------------------------------------------------------*/
+;*    dom-add-class! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (dom-add-class! node name)
+   (when (xml-markup? node)
+      (let ((cname (dom-get-attribute node "class")))
+	 (if (not (string? cname))
+	     (dom-set-attribute! node "class" name)
+	     (let ((regexp (string-append name "\\b")))
+		(unless (pregexp-match regexp cname)
+		   (dom-set-attribute! node "class" (string-append cname " " name))))))))
+
+;*---------------------------------------------------------------------*/
+;*    dom-remove-class! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (dom-remove-class! node name)
+   (when (xml-markup? node)
+      (let ((cname (dom-get-attribute node "class"))
+	    (regexp (string-append "[ \\t]*" name "\\b")))
+	 (dom-set-attribute! node "class" (pregexp-replace regexp cname "")))))
+
 ;*---------------------------------------------------------------------*/
 ;*    dom-has-attributes? ...                                          */
 ;*---------------------------------------------------------------------*/
@@ -579,9 +602,11 @@
 (define (dom-set-attribute! node name value)
    (when (xml-markup? node)
       (with-access::xml-markup node (attributes)
-	 (let ((a (plist-assq (string->keyword name) attributes)))
-	    (when a
-	       (set-car! (cdr a) value))))))
+	 (let* ((key (string->keyword name))
+		(a (plist-assq key attributes)))
+	    (if a
+		(set-car! (cdr a) value)
+		(set! attributes (cons* key value attributes)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-node-element? ...                                            */
