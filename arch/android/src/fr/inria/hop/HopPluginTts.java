@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Mon Nov 29 11:38:39 2010 (serrano)                */
+/*    Last change :  Mon Nov 29 16:35:11 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -19,6 +19,7 @@ import android.content.*;
 import android.os.Bundle;
 import android.util.*;
 import android.speech.tts.TextToSpeech;
+import java.util.Locale;
 
 import java.io.*;
 
@@ -35,7 +36,7 @@ public class HopPluginTts extends HopPlugin {
    }
 
    // initialization on demand
-   private void ttsInitp( String s ) {
+   private void ttsInit( String s ) {
       Intent checkIntent = new Intent();
       checkIntent.setAction( TextToSpeech.Engine.ACTION_CHECK_TTS_DATA );
       startHopActivityForResult( checkIntent );
@@ -71,15 +72,15 @@ public class HopPluginTts extends HopPlugin {
 	 Intent installIntent = new Intent();
 	 installIntent.setAction(
 	    TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA );
-	 startActivity( installIntent );
+	 activity.startActivity( installIntent );
       }
    }
 
    // speak
    private void speak( String s ) {
       // success, create the TTS instance
-      TextToSpeeach tts = new TextToSpeech( activity, new TextToSpeech.OnInitListener() {
-	    void onInit( int status ) {
+      TextToSpeech tts = new TextToSpeech( activity, new TextToSpeech.OnInitListener() {
+	    public void onInit( int status ) {
 	       ;
 	    }
 	 } );
