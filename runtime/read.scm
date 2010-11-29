@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Oct 20 09:28:34 2010 (serrano)                */
+;*    Last change :  Mon Nov 29 11:11:31 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -129,7 +129,7 @@
 		       (laap (+fx i 1)))
 		    obj))))
 	 ((struct? obj)
-	  (let ((len (vector-length obj)))
+	  (let ((len (struct-length obj)))
 	     (let laap ((i 0))
 		(if (<fx i len)
 		    (begin

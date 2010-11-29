@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Thu Nov 25 18:12:42 2010 (serrano)                */
+/*    Last change :  Mon Nov 29 11:29:13 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -35,7 +35,7 @@ public class HopPluginTts extends HopPlugin {
    }
 
    // initialization on demand
-   private ttsInitp( String s ) {
+   private void ttsInitp( String s ) {
       Intent checkIntent = new Intent();
       checkIntent.setAction( TextToSpeech.Engine.ACTION_CHECK_TTS_DATA );
       startHopActivityForResult( checkIntent );
