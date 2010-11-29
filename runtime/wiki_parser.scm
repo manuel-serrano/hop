@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sun Nov  7 09:11:09 2010 (serrano)                */
+;*    Last change :  Fri Nov 26 15:07:49 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -352,7 +352,7 @@
 			     (if (or class id)
 				 (lambda l
 				    (apply (wiki-syntax-table syn)
-					   :ident id :class class
+					   :id id :class class
 					   l))
 				 (wiki-syntax-table syn))
 			     #f #f))
@@ -513,7 +513,7 @@
 		       '()
 		       (multiple-value-bind (ident class)
 			  (wiki-parse-ident (the-substring 3 (the-length)))
-			  `(:class ,class :ident ,ident)))))
+			  `(:class ,class :id ,ident)))))
 	  (enter-block! 'p
 			(lambda expr
 			   (let ((rev (reverse! expr)))
@@ -545,7 +545,7 @@
 							     (+fx i 1)
 							     (the-length)))
 				(lambda l
-				   (apply hx (cons* :ident id :class cla l))))
+				   (apply hx (cons* :id id :class cla l))))
 			     hx))
 		     (sx (case lv
 			    ((3) (wiki-syntax-section4 syn))
