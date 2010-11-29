@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../2.2.x/arch/android/src/fr/inria/hop/HopPluginTts.java        */
+/*    .../hop/2.2.x/arch/android/src/fr/inria/hop/HopTts.java          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Mon Nov 29 11:38:39 2010 (serrano)                */
+/*    Last change :  Mon Nov 29 11:35:56 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -26,7 +26,7 @@ import java.io.*;
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
 public class HopPluginTts extends HopPlugin {
-   static boolean ttsInitp = false;
+   static boolean initp = false;
    private String inittext = null;
 
    // constructor
@@ -51,7 +51,7 @@ public class HopPluginTts extends HopPlugin {
 	 case (byte)'s':
 	    String s = HopDroid.read_string( ip );
 
-	    if( ttsInitp ) {
+	    if( initp ) {
 	       speak( s );
 	    } else {
 	       ttsInit( s );
@@ -78,11 +78,7 @@ public class HopPluginTts extends HopPlugin {
    // speak
    private void speak( String s ) {
       // success, create the TTS instance
-      TextToSpeeach tts = new TextToSpeech( activity, new TextToSpeech.OnInitListener() {
-	    void onInit( int status ) {
-	       ;
-	    }
-	 } );
+      TextToSpeeach tts = new TextToSpeech( this, this );
       
       tts.setLanguage( Locale.FRANCE );
 
