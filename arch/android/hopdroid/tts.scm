@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 29 16:36:58 2010                          */
-;*    Last change :  Mon Nov 29 16:39:37 2010 (serrano)                */
+;*    Last change :  Tue Nov 30 11:14:46 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Text-to-speech                                                   */
@@ -16,7 +16,9 @@
 
    (library multimedia phone hop)
 
-   (import __hopdroid-phone))
+   (import __hopdroid-phone)
+
+   (export (speak ::androidphone ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Standard plugins                                                 */
@@ -26,14 +28,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    tts-init ::androidtts ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (tts-init)
+(define (tts-init p)
    (unless tts-plugin
-      (set! tts-plugin (android-load-plugin (androidtts-phone o) "tts"))))
+      (set! tts-plugin (android-load-plugin p "tts"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    speak ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define (speak o::android text)
-   (tts-init)
+(define (speak p::androidphone text)
+   (tts-init p)
    (android-send-command p tts-plugin #\s text))
 

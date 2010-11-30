@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Tue Nov 30 10:34:21 2010 (serrano)                */
+;*    Last change :  Tue Nov 30 11:07:27 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -406,11 +406,11 @@ missed.")
 (define (<ANDROIDEMO:SPEECH>)
    (list
     (<TEXTAREA> :id "speech"
-       ""))
-   (<BUTTON> 
-      :onclick ~(let ((el (dom-get-element-by-id "speech")))
-		   (with-hop ($(service (text) (speak android text)) el.value)))
-      "Speak"))
+       "")
+    (<BUTTON> 
+       :onclick ~(let ((el (dom-get-element-by-id "speech")))
+		    (with-hop ($(service (text) (speak android text)) el.value)))
+       "Speak")))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:MULTIMEDIA> ...                                      */
