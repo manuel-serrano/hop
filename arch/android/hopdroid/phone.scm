@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Mon Nov  1 14:11:14 2010 (serrano)                */
+;*    Last change :  Tue Nov 30 17:47:43 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -32,7 +32,11 @@
 
 	   (android-load-plugin::int ::androidphone ::bstring)
 	   (android-send-command ::androidphone ::int . args)
-	   (android-send-command/result ::androidphone ::int . args)))
+	   (android-send-command/result ::androidphone ::int . args))
+
+   (cond-expand
+      (bigloo3.5a
+       (export (generic (phone-locales ::phone))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    android-plugin-mutex ...                                         */
@@ -48,6 +52,7 @@
 (define contact-plugin #f)
 (define call-log-plugin #f)
 (define battery-plugin #f)
+(define locale-plugin #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-init ::androidphone ...                                    */
@@ -59,6 +64,19 @@
       (set! vibrate-plugin (android-load-plugin p "vibrate")))
    (unless sensor-plugin
       (set! sensor-plugin (android-load-plugin p "sensor"))))
+
+;*---------------------------------------------------------------------*/
+;*    phone-locales ::androidphone ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (phone-locales p::androidphone)
+   (unless locale-plugin
+      (set! locale-plugin (android-load-plugin p "locale")))
+   (android-send-command/result p locale #\l))
+
+;; backward compatibility
+(cond-expand
+   (bigloo3.5a
+    (define-generic (phone-locales p::phone)))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::androidphone ...                           */

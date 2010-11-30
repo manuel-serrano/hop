@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Mon Nov 29 16:35:11 2010 (serrano)                */
+/*    Last change :  Tue Nov 30 15:58:40 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -19,6 +19,8 @@ import android.content.*;
 import android.os.Bundle;
 import android.util.*;
 import android.speech.tts.TextToSpeech;
+import android.util.Log;
+
 import java.util.Locale;
 
 import java.io.*;
@@ -26,9 +28,12 @@ import java.io.*;
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
-public class HopPluginTts extends HopPlugin {
+public class HopPluginTts extends HopPlugin
+   implements TextToSpeech.OnInitListener {
    static boolean ttsInitp = false;
    private String inittext = null;
+   TextToSpeech tts;
+   String string;
 
    // constructor
    public HopPluginTts( HopDroid h, Activity a, String n ) {
@@ -66,8 +71,10 @@ public class HopPluginTts extends HopPlugin {
       if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS ) {
 	 String s = inittext;
 	 inittext = null;
+	 Log.v( "onHopActivityResult", "check voice data pass" );
 	 speak( s );
       } else {
+	 Log.v( "onHopActivityResult", "missing data" );
 	 // missing data, install it
 	 Intent installIntent = new Intent();
 	 installIntent.setAction(
@@ -76,19 +83,25 @@ public class HopPluginTts extends HopPlugin {
       }
    }
 
+   // oninit
+   public void onInit( int status ) {
+      if( status == TextToSpeech.SUCCESS ) {
+	 Log.v( "HopPluginTts", "oninit, success" );
+	 tts.setLanguage( Locale.FRANCE );
+		  
+	 Log.v( "HopPluginTts", "say [" + string + "]" );
+	 tts.speak( string, TextToSpeech.QUEUE_FLUSH, null );
+		  
+      } else {
+	 Log.v( "HopPluginTts", "could not initialize tts" );
+      }
+   }
+   
    // speak
-   private void speak( String s ) {
+   private void speak( final String s ) {
       // success, create the TTS instance
-      TextToSpeech tts = new TextToSpeech( activity, new TextToSpeech.OnInitListener() {
-	    public void onInit( int status ) {
-	       ;
-	    }
-	 } );
-      
-      tts.setLanguage( Locale.FRANCE );
-
-      tts.speak( s, TextToSpeech.QUEUE_FLUSH, null );
-      
+      string = s;
+      tts = new TextToSpeech( activity, this );
       tts.shutdown();
    }
 }
