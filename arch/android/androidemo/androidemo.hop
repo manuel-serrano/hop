@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Mon Nov 22 16:06:04 2010 (serrano)                */
+;*    Last change :  Tue Nov 30 10:34:21 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -101,6 +101,12 @@ to the server to directly controls the phone.")
 	    "This illustrates the ability of the Hop to use the on-device
 contacts.")
 ;* 	 (<ANDROIDEMO:CONTACT>)                                        */
+
+	 (<H2> "Speech")
+	 (<DIV> :class "short-note"
+	    "This shows the Android ability to synthesizes speech from
+text for immediate playback or to create a sound file.")
+	 (<ANDROIDEMO:SPEECH>)
 	 
 	 (<H2> "Multimedia")
 	 (<DIV> :class "short-note"
@@ -393,6 +399,18 @@ missed.")
 		     (<TD> duration)
 		     (<TD> name)))))
 	   (phone-call-log android 10))))
+
+;*---------------------------------------------------------------------*/
+;*    <ANDROIDEMO:SPEECH> ...                                          */
+;*---------------------------------------------------------------------*/
+(define (<ANDROIDEMO:SPEECH>)
+   (list
+    (<TEXTAREA> :id "speech"
+       ""))
+   (<BUTTON> 
+      :onclick ~(let ((el (dom-get-element-by-id "speech")))
+		   (with-hop ($(service (text) (speak android text)) el.value)))
+      "Speak"))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:MULTIMEDIA> ...                                      */
