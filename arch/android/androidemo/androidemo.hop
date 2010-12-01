@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Tue Nov 30 11:07:27 2010 (serrano)                */
+;*    Last change :  Wed Dec  1 08:20:03 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -405,6 +405,10 @@ missed.")
 ;*---------------------------------------------------------------------*/
 (define (<ANDROIDEMO:SPEECH>)
    (list
+    (<TABLE>
+       (map (lambda (l)
+	       (<TR> (<TD> l)))
+	    (phone-locales android)))
     (<TEXTAREA> :id "speech"
        "")
     (<BUTTON> 

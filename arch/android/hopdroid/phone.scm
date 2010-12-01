@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Tue Nov 30 17:47:43 2010 (serrano)                */
+;*    Last change :  Tue Nov 30 17:49:08 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -39,6 +39,13 @@
        (export (generic (phone-locales ::phone))))))
 
 ;*---------------------------------------------------------------------*/
+;*    backward compatibility                                           */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (bigloo3.5a
+    (define-generic (phone-locales p::phone)))
+
+;*---------------------------------------------------------------------*/
 ;*    android-plugin-mutex ...                                         */
 ;*---------------------------------------------------------------------*/
 (define android-plugin-mutex (make-mutex "android-plugin"))
@@ -72,11 +79,6 @@
    (unless locale-plugin
       (set! locale-plugin (android-load-plugin p "locale")))
    (android-send-command/result p locale #\l))
-
-;; backward compatibility
-(cond-expand
-   (bigloo3.5a
-    (define-generic (phone-locales p::phone)))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::androidphone ...                           */
