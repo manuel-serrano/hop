@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Wed Dec  1 08:19:52 2010 (serrano)                */
+/*    Last change :  Wed Dec  1 15:21:14 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Get the phone locales                                            */
@@ -52,19 +52,34 @@ public class HopPluginLocale extends HopPlugin {
 	    return;
 	 // set current locale
 	 case (byte)'s':
+	    Locale.setDefault( HopPluginLocale.read_locale( ip ) );
 	    return;
       }
    }
 
-   // writeLocale
-   void writeLocale( OutputStream op, Locale l ) throws IOException {
-      op.write( " (".getBytes() );
-/*       op.write( l.getISOLanguages().getBytes() );                   */
-/*       op.write( "_".getBytes() );                                   */
-/*       op.write( l.getISOCountries().getBytes() );                   */
-/*       op.write( " ".getBytes() );                                   */
-      op.write( l.getDisplayName().getBytes() );
-      op.write( ")\n".getBytes() );
+   // read_locale
+   public static Locale read_locale( InputStream ip ) throws IOException {
+      String[] v = HopDroid.read_stringv( ip );
+      switch( v.length ) {
+	 case 1:
+	    return new Locale( v[ 0 ] );
+	 case 2:
+	    if( v[ 1 ].length() == 0 ) {
+	       return new Locale( v[ 0 ] );
+	    } else {
+	       return new Locale( v[ 0 ], v[ 1 ] );
+	    }
+	 default:
+	    if( v[ 1 ].length() == 0 ) {
+	       return new Locale( v[ 0 ] );
+	    } else {
+	       if( v[ 2 ].length() == 0 ) {
+		  return new Locale( v[ 0 ], v[ 1 ] );
+	       } else {
+		  return new Locale( v[ 0 ], v[ 1 ], v[ 3 ] );
+	       }
+	    }
+      }
    }
    
    // writeLocales
@@ -77,6 +92,21 @@ public class HopPluginLocale extends HopPlugin {
       
       op.write( ")".getBytes() );
    }
+   
+   // writeLocale
+   public static void writeLocale( OutputStream op, Locale l )
+      throws IOException {
+      op.write( "(\"".getBytes() );
+      op.write( l.getLanguage().getBytes() );
+      op.write( "\" \"".getBytes() );
+      op.write( l.getCountry().getBytes() );
+      op.write( "\" \"".getBytes() );
+      op.write( l.getVariant().getBytes() );
+      op.write( "\" \"".getBytes() );
+      op.write( l.getDisplayName().getBytes() );
+      op.write( "\")".getBytes() );
+   }
+   
 }
       
 	 

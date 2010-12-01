@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sun Nov 21 08:23:15 2010 (serrano)                */
+;*    Last change :  Wed Dec  1 13:05:15 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -792,7 +792,7 @@
    (socket-close (http-request-socket req))
    ;; remove the request from the *multipart-request-list*
    (set! *multipart-request-list*
-	 (filter! (lambda (e) (not (eq? (cadr e) req)))
+	 (filter! (lambda (e) (not (eq? (cdr e) req)))
 		  *multipart-request-list*))
    ;; remove the request from the *multipart-socket-table*
    (hashtable-for-each *multipart-socket-table*

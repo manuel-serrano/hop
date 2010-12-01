@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Tue Nov 30 15:58:40 2010 (serrano)                */
+/*    Last change :  Wed Dec  1 18:11:49 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -20,8 +20,10 @@ import android.os.Bundle;
 import android.util.*;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
+import android.media.AudioManager;
 
 import java.util.Locale;
+import java.util.HashMap;
 
 import java.io.*;
 
@@ -29,80 +31,236 @@ import java.io.*;
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
 public class HopPluginTts extends HopPlugin
-   implements TextToSpeech.OnInitListener {
-   static boolean ttsInitp = false;
-   private String inittext = null;
-   TextToSpeech tts;
-   String string;
+   implements TextToSpeech.OnInitListener,
+   TextToSpeech.OnUtteranceCompletedListener {
+   static boolean pushevent = false;
+   static int[] streams = {
+      0,
+      0,
+      AudioManager.STREAM_ALARM,
+      AudioManager.STREAM_DTMF,
+      AudioManager.STREAM_MUSIC,
+      AudioManager.STREAM_NOTIFICATION,
+      AudioManager.STREAM_RING,
+      AudioManager.STREAM_SYSTEM,
+      AudioManager.STREAM_VOICE_CALL
+   };
+			    
+   TextToSpeech tts = null;
+   Object condv = new Object();
+   String initstatus = null;
 
    // constructor
    public HopPluginTts( HopDroid h, Activity a, String n ) {
       super( h, a, n );
    }
 
-   // initialization on demand
-   private void ttsInit( String s ) {
-      Intent checkIntent = new Intent();
-      checkIntent.setAction( TextToSpeech.Engine.ACTION_CHECK_TTS_DATA );
-      startHopActivityForResult( checkIntent );
-
-      inittext = s;
-   }
-
-   // server
-   void server( InputStream ip, OutputStream op ) throws IOException {
-      
-      switch( ip.read() ) {
-	 // begin
-	 case (byte)'s':
-	    String s = HopDroid.read_string( ip );
-
-	    if( ttsInitp ) {
-	       speak( s );
-	    } else {
-	       ttsInit( s );
-	    }
-	    return;
+   // ondemand initialization
+   private void initTts() {
+      synchronized( condv ) {
+	 Intent checkIntent = new Intent();
+	 checkIntent.setAction( TextToSpeech.Engine.ACTION_CHECK_TTS_DATA );
+	 startHopActivityForResult( checkIntent );
+	 try {
+	    condv.wait();
+	 } catch( InterruptedException _ ) {
+	    initstatus = "initialization interrupted";
+	 }
       }
    }
 
    // onActivityResult
    public void onHopActivityResult( int result, Intent intent ) {
       if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS ) {
-	 String s = inittext;
-	 inittext = null;
-	 Log.v( "onHopActivityResult", "check voice data pass" );
-	 speak( s );
+	 tts = new TextToSpeech( activity, this );
       } else {
-	 Log.v( "onHopActivityResult", "missing data" );
-	 // missing data, install it
-	 Intent installIntent = new Intent();
-	 installIntent.setAction(
-	    TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA );
-	 activity.startActivity( installIntent );
+	 synchronized( condv ) {
+	    // missing data, install it
+	    Intent installIntent = new Intent();
+	    installIntent.setAction( TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA );
+	    activity.startActivity( installIntent );
+	    initstatus = "missing data";
+	    condv.notify();
+	 }
       }
    }
 
    // oninit
    public void onInit( int status ) {
-      if( status == TextToSpeech.SUCCESS ) {
-	 Log.v( "HopPluginTts", "oninit, success" );
-	 tts.setLanguage( Locale.FRANCE );
-		  
-	 Log.v( "HopPluginTts", "say [" + string + "]" );
-	 tts.speak( string, TextToSpeech.QUEUE_FLUSH, null );
-		  
-      } else {
-	 Log.v( "HopPluginTts", "could not initialize tts" );
+      synchronized( condv ) {
+	 if( status == TextToSpeech.SUCCESS ) {
+	    initstatus = "success";
+	 } else {
+	    tts = null;
+	    initstatus = "could not initialize tts";
+	 }
+	 condv.notify();
       }
    }
-   
-   // speak
-   private void speak( final String s ) {
-      // success, create the TTS instance
-      string = s;
-      tts = new TextToSpeech( activity, this );
-      tts.shutdown();
+
+   // speak completed
+   public void onUtteranceCompleted( String value ) {
+      handroid.pushEvent( "tts-completed", value );
+   }
+
+   // server
+   synchronized void server( InputStream ip, OutputStream op )
+      throws IOException {
+
+      switch( ip.read() ) {
+	 case (byte)'i':
+	    // init
+	    initTts();
+	    op.write( "\"".getBytes() );
+	    op.write( initstatus.getBytes() );
+	    op.write( "\"".getBytes() );
+	    return;
+		  
+	 case (byte)'c':
+	    // close
+	    if( tts != null ) {
+	       tts.shutdown();
+	    }
+	    return;
+	    
+	 case (byte)'b':
+	    // start pushing events
+	    pushevent = true;
+	    return;
+	    
+	 case (byte)'e':
+	    // end pushing events
+	    pushevent = false;
+	    return;
+	    
+	 case (byte)'l':
+	    // get locale
+	    if( tts != null ) {
+	       HopPluginLocale.writeLocale( op, tts.getLanguage() );
+	    }
+	    return;
+	    
+	 case (byte)'L':
+	    // set locale
+	    if( tts != null ) {
+	       tts.setLanguage( HopPluginLocale.read_locale( ip ) );
+	    }
+	    return;
+	    
+	 case (byte)'a':
+	    // locale available
+	    if( tts != null ) {
+	       switch( tts.isLanguageAvailable( HopPluginLocale.read_locale( ip ) ) ) {
+		  case TextToSpeech.LANG_AVAILABLE:
+		     op.write( "lang".getBytes() );
+		     return;
+
+		  case TextToSpeech.LANG_COUNTRY_AVAILABLE:
+		     op.write( "lang-country".getBytes() );
+		     return;
+
+		  case TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE:
+		     op.write( "lang-country-var".getBytes() );
+		     return;
+
+		  case TextToSpeech.LANG_MISSING_DATA:
+		     op.write( "missing-data".getBytes() );
+		     return;
+		     
+		  case TextToSpeech.LANG_NOT_SUPPORTED:
+		     op.write( "lang-not-supported".getBytes() );
+		     return;
+		     
+		  default:
+		     op.write( "error".getBytes() );
+		     return;
+	       }
+	    } else {
+	       op.write( "error".getBytes() );
+	       return;
+	    }
+
+	 case (byte)'r':
+	    // set rate
+	    if( tts != null ) {
+	       tts.setSpeechRate( HopDroid.read_float( ip ) );
+	    }
+	    return;
+	    
+	 case (byte)'p':
+	    // set pitch
+	    if( tts != null ) {
+	       tts.setPitch( HopDroid.read_float( ip ) );
+	    }
+	    return;
+	    
+	 case (byte)'s':
+	    // speak
+	    if( tts != null ) {
+	       HashMap<String, String> opt = null;
+	       String s = HopDroid.read_string( ip );
+	       int qm = ip.read() == 1 ?
+		  TextToSpeech.QUEUE_ADD : TextToSpeech.QUEUE_FLUSH;
+	       int stream = ip.read();
+
+	       Log.v( "HopPlugTts", "speak [" + s + "] qm=" + qm + " stream="
+		      + stream );
+
+	       if( pushevent ) {
+		  opt = new HashMap();
+		  opt.put( TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, s );
+	       }
+		  
+	       if( (stream > 1) && (stream < streams.length) ) {
+		  if( opt == null ) opt = new HashMap();
+		  opt.put( TextToSpeech.Engine.KEY_PARAM_STREAM,
+			   String.valueOf( streams[ stream ] ) );
+	       }
+	       
+	       tts.speak( s, qm, opt );
+	    }
+	    return;
+	    
+	 case (byte)' ':
+	    // silence
+	    if( tts != null ) {
+	       HashMap<String, String> opt = null;
+	       int ms = HopDroid.read_int32( ip );
+	       int qm = ip.read() == 1 ?
+		  TextToSpeech.QUEUE_ADD : TextToSpeech.QUEUE_FLUSH;
+	       int stream = ip.read();
+	       
+	       if( pushevent ) {
+		  opt = new HashMap();
+		  opt.put( TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, " " );
+	       }
+
+	       if( (stream > 1) && (stream < streams.length) ) {
+		  if( opt == null ) opt = new HashMap();
+		  opt.put( TextToSpeech.Engine.KEY_PARAM_STREAM,
+			   String.valueOf( streams[ stream ] ) );
+	       }
+	       
+	       tts.playSilence( ms, qm, opt );
+	    }
+	    return;
+	    
+	 case (byte)'?':
+	    // is speaking
+	    if( tts != null && tts.isSpeaking() ) {
+	       op.write( "#t".getBytes() );
+	    } else {
+	       op.write( "#f".getBytes() );
+	    }
+	    return;
+	    
+	 case (byte)'h':
+	    // stop
+	    if( tts != null ) {
+	       tts.stop();
+	    }
+	    return;
+      }
    }
 }
 

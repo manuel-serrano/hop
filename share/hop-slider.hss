@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/share/hop-slider.hss              */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-slider.hss              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:04:10 2005                          */
-/*    Last change :  Tue Jun 29 09:59:48 2010 (serrano)                */
+/*    Last change :  Wed Dec  1 16:41:55 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider CSS                                                   */
@@ -74,6 +74,8 @@ slidercaption {
   font-family: Arial, Helvetica, sans-serif;
   font-weight: bold;
   text-align: center;
+  overflow: hidden;
+  max-width: 14px;
 }
 
 slidercursor {

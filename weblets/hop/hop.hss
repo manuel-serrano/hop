@@ -45,8 +45,8 @@ body {
   padding-top: 4ex;
   padding-left: 5em;
   padding-right: 5em;
-  background-image: -moz-linear-gradient( -90deg, #f3f3f3, #c0c0c0, #f3f3f3 );
-  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#f3f3f3), color-stop(0.5,#c3c3c3), to(#f3f3f3));
+  background-image: -moz-linear-gradient( -90deg, #e7e7e7, #c3c3c3 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#efefef), to(#c3c3c3));
 }
 
 img.logo {

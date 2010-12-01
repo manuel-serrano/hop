@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Tue Nov 30 17:49:08 2010 (serrano)                */
+;*    Last change :  Wed Dec  1 17:25:40 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -16,6 +16,8 @@
 
    (library phone mail pthread hop)
 
+   (import __hopdroid-tts)
+   
    (export (class androidphone::phone
 	      (host::bstring read-only (default "localhost"))
 	      (port1::int read-only (default 8081))
@@ -36,19 +38,18 @@
 
    (cond-expand
       (bigloo3.5a
-       (export (generic (phone-locales ::phone))))))
+       (export (generic (phone-locales ::phone))
+	       (generic (phone-current-locale ::phone))
+	       (generic (phone-current-locale-set! ::phone ::obj))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    backward compatibility                                           */
 ;*---------------------------------------------------------------------*/
 (cond-expand
    (bigloo3.5a
-    (define-generic (phone-locales p::phone)))
-
-;*---------------------------------------------------------------------*/
-;*    android-plugin-mutex ...                                         */
-;*---------------------------------------------------------------------*/
-(define android-plugin-mutex (make-mutex "android-plugin"))
+    (define-generic (phone-current-locale ::phone))
+    (define-generic (phone-current-locale-set! ::phone ::obj))
+    (define-generic (phone-locales p::phone))))
 
 ;*---------------------------------------------------------------------*/
 ;*    Standard plugins                                                 */
@@ -78,7 +79,25 @@
 (define-method (phone-locales p::androidphone)
    (unless locale-plugin
       (set! locale-plugin (android-load-plugin p "locale")))
-   (android-send-command/result p locale #\l))
+   (android-send-command/result p locale-plugin #\l))
+
+;*---------------------------------------------------------------------*/
+;*    phone-current-locale ::androidphone ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (phone-current-locale p::androidphone)
+   (unless locale-plugin
+      (set! locale-plugin (android-load-plugin p "locale")))
+   (android-send-command/result p locale-plugin #\c))
+
+;*---------------------------------------------------------------------*/
+;*    phone-current-locale ::androidphone ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (phone-current-locale-set! p::androidphone l)
+   (unless locale-plugin
+      (set! locale-plugin (android-load-plugin p "locale")))
+   (if (and (list? l) (every? string? l))
+       (android-send-command p locale-plugin #\s l)
+       (error "phone-current-locale-set!" "Illegal locale" l)))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::androidphone ...                           */
@@ -102,8 +121,11 @@
 	       (send-string event op)
 	       (send-byte 1 op)
 	       (flush-output-port op))
-	    (when (string=? event "battery")
-	       (register-battery-listener! p))))))
+	    (cond
+	       ((string=? event "battery")
+		(register-battery-listener! p))
+	       ((string=? event "tts")
+		(register-tts-listener! p)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remove-event-listener! ...                                       */
@@ -115,8 +137,11 @@
 	    (when (hashtable? %evtable)
 	       (hashtable-update! %evtable event
 				  (lambda (l)
-				     (when (string=? event "battery")
-					(remove-battery-listener! p))
+				     (cond
+					((string=? event "battery")
+					 (remove-battery-listener! p))
+					((string=? event "tts")
+					 (remove-tts-listener! p)))
 				     (remq! proc l)) '()))
 	    (when (socket? %socket2)
 	       (let ((op (socket-output %socket2)))
@@ -172,24 +197,22 @@
 ;*    android-load-plugin ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (android-load-plugin p::androidphone name)
-   (with-lock android-plugin-mutex
-      (lambda ()
-	 (hop-verb 2 "Loading android plugin \"" name "\"...\n")
-	 (let ((n (android-send-command/result p 0 name)))
-	    (if (and (fixnum? n) (>=fx n 0))
-		n
-		(error "android-load-plugin"
-		       (case n
-			  ((-1) "Plugin not found")
-			  ((-2) "Class not found")
-			  ((-3) "Constructor not found")
-			  ((-4) "Security exception")
-			  ((-5) "Cannot create instance")
-			  ((-6) "Illegal access")
-			  ((-7) "Illegal argument")
-			  ((-8) "Invocation target")
-			  (else "Cannot load plugin"))
-		       name))))))
+   (hop-verb 2 "Loading android plugin \"" name "\"...\n")
+   (let ((n (android-send-command/result p 0 name)))
+      (if (and (fixnum? n) (>=fx n 0))
+	  n
+	  (error "android-load-plugin"
+		 (case n
+		    ((-1) "Plugin not found")
+		    ((-2) "Class not found")
+		    ((-3) "Constructor not found")
+		    ((-4) "Security exception")
+		    ((-5) "Cannot create instance")
+		    ((-6) "Illegal access")
+		    ((-7) "Illegal argument")
+		    ((-8) "Invocation target")
+		    (else "Cannot load plugin"))
+		 name))))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-vibrate ::androidphone ...                                 */
@@ -374,12 +397,14 @@
       ((string? o) (send-string o op))
       ((llong? o) (send-int64 o op))
       ((integer? o) (send-int32 o op))
+      ((real? o) (send-string (real->string o) op))
       ((boolean? o) (send-boolean o op))
       ((char? o) (send-char o op))
       ((vector? o) (send-vector o op))
       ((and (pair? o) (pair? (cdr o))) (send-obj (list->vector o) op))
       ((pair? o) (send-obj (car o) op) (send-obj (cdr o) op))
-      ((symbol? o) (send-string (symbol->string! o) op))))
+      ((symbol? o) (send-string (symbol->string! o) op))
+      (else (error "send-obj" "cannot serialize value" o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    send-obj ::vcard ...                                             */
