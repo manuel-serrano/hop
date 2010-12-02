@@ -96,6 +96,23 @@ slidercursor {
 slidercursor:hover {
   background-color: #999;
 }
+
+@media all and (max-device-width: 800px) {
+  slider {
+    line-height: 10px;
+  }
+
+  slidercursor {
+    height: 14px;
+    width: 18px;
+  }
+
+  slidercaption {
+    color: black;
+    font-size: 12px;
+  }
+}
+      
 /* </public> */
 
 /*---------------------------------------------------------------------*/
