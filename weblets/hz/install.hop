@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/hz/install.hop            */
+;*    serrano/prgm/project/hop/2.2.x/weblets/hz/install.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Wed May  6 10:25:34 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Sat Dec  4 07:00:59 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
 ;*=====================================================================*/
@@ -124,7 +124,7 @@
 			     (src (make-file-path
 				   tmp name (string-append name ".hop"))))
 			 (if (file-exists? src)
-			     (hop-load src)
+			     (hop-load-weblet src)
 			     (error 'hz-load "Cannot find HOP source" path)))
 		      (error 'hz-load "Cannot find HOP source" path)))
 	       (begin

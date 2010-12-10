@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Tue Nov 23 18:26:12 2010 (serrano)                */
+;*    Last change :  Sun Dec  5 09:09:18 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -40,6 +40,7 @@
 	       (selector::pair read-only)
 	       (body::obj read-only)
 	       (properties::pair-nil read-only (default '())))
+	    
 	    (init-hss-compiler! ::int)
 	    (hss-extension ::char ::input-port)
 	    (hss-bind-type-compiler! ::symbol ::bstring ::obj ::pair-nil)
@@ -50,10 +51,10 @@
 	    (hss-response::%http-response ::http-request ::bstring)
 	    (hss->css ::bstring)
 	    (hss->css-url ::bstring)
+	    (hss-compile ::obj)
 	    (hop-get-hss ::bstring)
 	    (hop-load-hss ::bstring)
 	    (hop-read-hss ::input-port)
-
 	    (hop-hss-type! ::bstring ::bstring)))
   
 ;*---------------------------------------------------------------------*/
@@ -215,9 +216,9 @@
    
    (define (compile-alias decl alias)
       (let ((nsel (compose-selectors selector (css-ruleset-selector+ alias))))
-	 (hss-compile (duplicate::css-ruleset alias
-			 (selector+ (list nsel)))
-		      penv)))
+	 (compile (duplicate::css-ruleset alias
+		     (selector+ (list nsel)))
+		  penv)))
 
    (define (empty-selector? selector+)
       (and (null? (cdr selector+))
@@ -399,7 +400,7 @@
 			  (with-error-to-string
 			     (lambda ()
 				(error-notify e))))
-		       (css-compile (hop-read-hss p))))
+		       (hss-compile (hop-read-hss p))))
 		 (begin
 		    (when mod (eval-module-set! mod))
 		    (close-input-port p)
@@ -452,19 +453,19 @@
    (for-each (lambda (o) (css-write o p)) (css-ruleset-unfold-ruleset+ o)))
 
 ;*---------------------------------------------------------------------*/
-;*    css-compile ...                                                  */
+;*    hss-compile ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (css-compile o::css-stylesheet)
+(define (hss-compile o)
    (duplicate::css-stylesheet o
-      (import* (map css-compile-import (css-stylesheet-import* o)))
+      (import* (map hss-compile-import (css-stylesheet-import* o)))
       (rule* (map (lambda (r)
-		     (hss-compile r *hss-property-env*))
+		     (compile r *hss-property-env*))
 		  (css-stylesheet-rule* o)))))
 
 ;*---------------------------------------------------------------------*/
-;*    css-compile-import ...                                           */
+;*    hss-compile-import ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (css-compile-import import)
+(define (hss-compile-import import)
    (with-access::css-import (car import) (value)
       (cond
 	 ((and (string? value) (string-suffix? ".hss\"" value))
@@ -480,44 +481,44 @@
 	  import))))
 
 ;*---------------------------------------------------------------------*/
-;*    hss-compile ...                                                  */
+;*    compile ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-generic (hss-compile r penv)
+(define-generic (compile r penv)
    (if (pair? r)
-       (map (lambda (r) (hss-compile r penv)) r)
+       (map (lambda (r) (compile r penv)) r)
        r))
 
 ;*---------------------------------------------------------------------*/
-;*    hss-compile ::css-media ...                                      */
+;*    compile ::css-media ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (hss-compile o::css-media penv)
+(define-method (compile o::css-media penv)
    (duplicate::css-media o
-      (ruleset* (hss-compile (css-media-ruleset* o) penv))))
+      (ruleset* (compile (css-media-ruleset* o) penv))))
 
 ;*---------------------------------------------------------------------*/
-;*    hss-compile ::css-page ...                                       */
+;*    compile ::css-page ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (hss-compile o::css-page penv)
+(define-method (compile o::css-page penv)
    (duplicate::css-page o
-      (declaration* (hss-compile (css-page-declaration* o) penv))))
+      (declaration* (compile (css-page-declaration* o) penv))))
 
 ;*---------------------------------------------------------------------*/
-;*    hss-compile ::css-fontface ...                                   */
+;*    compile ::css-fontface ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (hss-compile o::css-fontface penv)
+(define-method (compile o::css-fontface penv)
    (duplicate::css-fontface o
-      (declaration* (hss-compile (css-fontface-declaration* o) penv))))
+      (declaration* (compile (css-fontface-declaration* o) penv))))
 
 ;*---------------------------------------------------------------------*/
-;*    hss-compile ::css-pseudopage ...                                 */
+;*    compile ::css-pseudopage ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (hss-compile o::css-pseudopage penv)
+(define-method (compile o::css-pseudopage penv)
    (duplicate::css-pseudopage o))
 
 ;*---------------------------------------------------------------------*/
-;*    hss-compile ::css-ruleset ...                                    */
+;*    compile ::css-ruleset ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (hss-compile o::css-ruleset penv)
+(define-method (compile o::css-ruleset penv)
 
    (define (find-compiler selector)
       (let ((hc (find-selector-compiler selector)))
@@ -531,7 +532,7 @@
 		(let* ((lenv (hss-compiler-properties hc))
 		       (nselector (hss-compile-selector* (car selector+))))
 		   (hss-compile-declaration* nselector declaration* lenv penv))
-		(let ((ndecl* (apply append (hss-compile declaration* penv))))
+		(let ((ndecl* (apply append (compile declaration* penv))))
 		   (duplicate::css-ruleset o
 		      (selector+ (map hss-compile-selector* selector+))
 		      (declaration* ndecl*)))))))
@@ -548,19 +549,19 @@
 	     (ruleset+ (map (lambda (s)
 			       (compile-rule
 				(instantiate::css-ruleset
-				   (selector+ (list (hss-compile s penv)))
+				   (selector+ (list (compile s penv)))
 				   (declaration* declaration*))))
 			    selector+)))
 	  (compile-rule o))))
 
 ;*---------------------------------------------------------------------*/
-;*    hss-compile ::css-declaration ...                                */
+;*    compile ::css-declaration ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (hss-compile o::css-declaration penv)
+(define-method (compile o::css-declaration penv)
    (with-access::css-declaration o (property expr prio)
       (let ((comp (find-property-compiler property penv)))
 	 (if comp
-	     ;; call hss-compile recursively because the compilation might
+	     ;; call compile recursively because the compilation might
 	     ;; have generated unnormalized expressions. The recursion is
 	     ;; stopped is the generated property is the same as the initial
 	     ;; one.
@@ -569,12 +570,12 @@
 				(with-access::css-declaration o2 ((expr2 expr))
 				   (list
 				    (duplicate::css-declaration o2
-				       (expr (hss-compile expr2 penv)))))
-				(hss-compile o penv)))
+				       (expr (compile expr2 penv)))))
+				(compile o penv)))
 			 (comp expr prio))
 	     (list
 	      (duplicate::css-declaration o
-		 (expr (hss-compile expr penv))))))))
+		 (expr (compile expr penv))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile-selector ...                                         */
@@ -648,14 +649,14 @@
 	 (close-input-port p))))
    
 ;*---------------------------------------------------------------------*/
-;*    hss-compile ::css-function ...                                   */
+;*    compile ::css-function ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (hss-compile o::css-function penv)
+(define-method (compile o::css-function penv)
    (with-access::css-function o (fun expr)
       (let ((comp (with-lock *hss-compiler-mutex*
 		     (lambda ()
 			(hashtable-get *hss-function-env* fun))))
-	    (nexpr (hss-compile expr penv)))
+	    (nexpr (compile expr penv)))
 	 (if comp
 	     (let ((args (filter (lambda (o) (not (equal? o ","))) nexpr)))
 		(hss-parse-function fun (apply comp args)))

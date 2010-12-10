@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Thu Nov 18 10:25:02 2010 (serrano)                */
+;*    Last change :  Thu Dec  9 21:20:57 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -45,7 +45,7 @@
        (let loop ((args args)
 		  (attr ',(reverse attr))
 		  (body '())
-		  (id   #unspecified))
+		  (id #unspecified))
 	  (cond
 	     ((null? args)
 	      ,(if (null? exp)

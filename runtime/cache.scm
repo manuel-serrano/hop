@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/cache.scm                 */
+;*    serrano/prgm/project/hop/2.2.x/runtime/cache.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Sat Jun 19 06:16:30 2010 (serrano)                */
+;*    Last change :  Fri Dec  3 11:22:52 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
@@ -259,24 +259,26 @@
       (let ((omap (with-input-from-file map read))
 	    (t (make-hashtable)))
 	 (delete-file map)
-	 (set! uid (car omap))
-	 (for-each (lambda (e)
-		      (match-case e
-			 ((?upath ?sig ?value)
-			  (when (and (file-exists? upath) (file-exists? value))
-			     (let ((ce (instantiate::cache-entry
-					  (value value)
-					  (signature sig)
-					  (upath upath))))
-				(when (validity ce upath)
-				   (cache-add-entry! c ce)
-				   (hashtable-put! t value #t)))))))
-		   (cadr omap))
-	 (hashtable-put! t (make-file-name path "cache.map") #t)
-	 (for-each (lambda (f)
-		      (unless (hashtable-get t f)
-			 (delete-file f)))
-		   (directory->path-list path)))))
+	 (when (pair? omap)
+	    (set! uid (car omap))
+	    (for-each (lambda (e)
+			 (match-case e
+			    ((?upath ?sig ?value)
+			     (when (and (file-exists? upath)
+					(file-exists? value))
+				(let ((ce (instantiate::cache-entry
+					     (value value)
+					     (signature sig)
+					     (upath upath))))
+				   (when (validity ce upath)
+				      (cache-add-entry! c ce)
+				      (hashtable-put! t value #t)))))))
+		      (cadr omap))
+	    (hashtable-put! t (make-file-name path "cache.map") #t)
+	    (for-each (lambda (f)
+			 (unless (hashtable-get t f)
+			    (delete-file f)))
+		      (directory->path-list path))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    cache-put! ::cache ...                                           */

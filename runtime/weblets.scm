@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Wed Oct 20 09:36:57 2010 (serrano)                */
+;*    Last change :  Fri Dec 10 08:17:17 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -39,6 +39,7 @@
 	       (info::pair-nil read-only)))
    
    (export  (find-weblets-in-directory ::bstring)
+	    (weblet-compatible?::bool ::pair-nil)
 	    (reset-autoload!)
 	    (get-autoload-directories::pair-nil)
 	    (get-autoload-weblet-directories::pair-nil)
@@ -72,6 +73,67 @@
 	     (if web
 		 (loop (cdr files) (cons web res))
 		 (loop (cdr files) res))))))
+
+;*---------------------------------------------------------------------*/
+;*    weblet-compatible? ...                                           */
+;*---------------------------------------------------------------------*/
+(define (weblet-compatible? info)
+   (or (null? info)
+       (and (weblet-version-compatible? info)
+	    (weblet-features-supported? info))))
+
+;*---------------------------------------------------------------------*/
+;*    weblet-incomatible-error-msg ...                                 */
+;*---------------------------------------------------------------------*/
+(define (weblet-incomatible-error-msg info)
+   (cond
+      ((not (weblet-version-compatible? info))
+       (weblet-version-error-msg info))
+      ((not (weblet-features-supported? info))
+       (weblet-features-error-msg info))
+      (else
+       "incompatible weblet")))
+      
+;*---------------------------------------------------------------------*/
+;*    weblet-version-compatible? ...                                   */
+;*---------------------------------------------------------------------*/
+(define (weblet-version-compatible? x)
+   
+   (define (cmpversion version cmp)
+      (or (not (pair? version))
+	  (not (string? (cadr version)))
+	  (string=? (cadr version) "")
+	  (cmp (hop-version) (cadr version))))
+   
+   (and (cmpversion (assq 'minhop x) string>=?)
+	(cmpversion (assq 'maxhop x) string<=?)))
+
+;*---------------------------------------------------------------------*/
+;*    weblet-version-error-msg ...                                     */
+;*---------------------------------------------------------------------*/
+(define (weblet-version-error-msg x)
+   (format "Hop ~s incompatible with version requirements min: ~a, max: ~a"
+	   (hop-version)
+	   (let ((c (assq 'minhop x)))
+	      (if (pair? c) (cadr c) "*"))
+	   (let ((c (assq 'maxhop x)))
+	      (if (pair? c) (cadr c) "*"))))
+
+;*---------------------------------------------------------------------*/
+;*    weblet-features-supported? ...                                   */
+;*---------------------------------------------------------------------*/
+(define (weblet-features-supported? x)
+   (let ((features (assq 'features x)))
+      (or (not features) (every? eval-srfi? (cadr features)))))
+
+;*---------------------------------------------------------------------*/
+;*    weblet-features-error-msg ...                                    */
+;*---------------------------------------------------------------------*/
+(define (weblet-features-error-msg x)
+   (format "Hop does not support features: ~l"
+	   (filter (lambda (f)
+		      (not (eval-srfi? f)))
+		   (cadr (assq 'features x)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-weblet-info ...                                              */
@@ -136,14 +198,23 @@
    (let* ((dir (dirname path))
 	  (name (basename (prefix path))))
       (if (file-exists? path)
-	  (begin
-	     (hop-load path)
-	     (let* ((winfoname (make-file-path name "etc" "weblet.info"))
-		    (winfo (if (file-exists? winfoname)
-			       (with-input-from-file winfoname read)
-			       '()))
-		    (url (string-append "/hop/" name)))
-		(install-weblet-dashboard! name dir winfo url)))
+	  (let* ((winfoname (make-file-path dir "etc" "weblet.info"))
+		 (winfo (if (file-exists? winfoname)
+			    (with-input-from-file winfoname read)
+			    '()))
+		 (url (string-append "/hop/" name)))
+	     (cond
+		((not (weblet-version-compatible? winfo))
+		 (error "hop-load-weblet"
+			(weblet-version-error-msg winfo)
+			name))
+		((not (weblet-features-supported? winfo))
+		 (error "hop-load-weblet"
+			(weblet-features-error-msg winfo)
+			name))
+		(else
+		 (hop-load path)
+		 (install-weblet-dashboard! name dir winfo url))))
 	  (error "hop-load-weblet" "Cannot find HOP source" path))))
 
 ;*---------------------------------------------------------------------*/
@@ -199,35 +270,6 @@
 		   opath
 		   npath))))
 
-   (define (hop-compatible? x)
-      
-      (define (cmpversion version cmp)
-	 (or (not (pair? version))
-	     (not (string? (cadr version)))
-	     (string=? (cadr version) "")
-	     (cmp (hop-version) (cadr version))))
-
-      (and (cmpversion (assq 'minhop x) string>=?)
-	   (cmpversion (assq 'maxhop x) string<=?)))
-
-   (define (make-incompatible-url name x)
-      (make-url-name (hop-service-base)
-		     (format "~a/incompatible?minhop=~a&maxhop=~a"
-			     name
-			     (let ((c (assq 'minhop x)))
-				(if (pair? c) (cadr c) "*"))
-			     (let ((c (assq 'maxhop x)))
-				(if (pair? c) (cadr c) "*")))))
-
-   (define (warn-incompatible name x)
-      (warning name
-	       (format " -- Hop ~s incompatible with min: ~a, max: ~a"
-		       (hop-version)
-		       (let ((c (assq 'minhop x)))
-			  (if (pair? c) (cadr c) "*"))
-		       (let ((c (assq 'maxhop x)))
-			  (if (pair? c) (cadr c) "*")))))
-   
    (define (maybe-autoload x)
       (let ((cname (assq 'name x)))
 	 (if (pair? cname)
@@ -250,8 +292,9 @@
 		(cond
 		   ((string? opath)
 		    (warn name opath path))
-		   ((not (hop-compatible? x))
-		    (warn-incompatible name x)
+		   ((not (weblet-compatible? x))
+		    (when (> (bigloo-warning) 1)
+		       (warning name (weblet-incomatible-error-msg x)))
 		    (autoload-incompatible path (autoload-prefix url) name x))
 		   ((pair? autopred)
 		    (when (cadr autopred)
@@ -373,15 +416,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (autoload-load! a::%autoload-incompatible req)
    (with-access::%autoload-incompatible a (name info)
-      (let* ((min (assq 'minhop info))
-	     (minhop (if (pair? min) (cadr min) "*"))
-	     (max (assq 'max info))
-	     (maxhop (if (pair? max) (cadr max) "*")))
-	 (raise
-	  (instantiate::&hop-autoload-error
-	     (proc name)
-	     (msg (format "Hop \"~a\" cannot run this weblet" (hop-version)))
-	     (obj (format "min-hop: ~a, max-hop: ~a" minhop maxhop)))))))
+      (raise
+       (instantiate::&hop-autoload-error
+	  (proc "autoload-load")
+	  (msg (weblet-incomatible-error-msg info))
+	  (obj name)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload-filter ...                                              */
@@ -398,21 +437,24 @@
 	     #f)
 	  (with-access::%autoload (car al) (pred)
 	     (if (pred req)
-		 (begin
-		    (mutex-unlock! *autoload-mutex*)
-		    ;; the autoload cannot be removed until read, otherwise
-		    ;; parallel requests to the autoloaded service will raise
-		    ;; a service not found error
-		    (autoload-load! (car al) req)
-		    ;; add all the file associated with the autoload in
-		    ;; the service path table (see __hop_service).
-		    (service-etc-path-table-fill! (%autoload-path (car al)))
-		    ;; remove the autoaload (once loaded)
-		    (mutex-lock! *autoload-mutex*)
-		    (set! *autoloads* (remq! (car al) *autoloads*))
-		    (set! *autoloads-loaded* (cons (car al) *autoloads-loaded*))
-		    (mutex-unlock! *autoload-mutex*)
-		    #t)
+		 (with-handler
+		    (lambda (e)
+		       e)
+		    (begin
+		       (mutex-unlock! *autoload-mutex*)
+		       ;; the autoload cannot be removed until read, otherwise
+		       ;; parallel requests to the autoloaded service will raise
+		       ;; a service not found error
+		       (autoload-load! (car al) req)
+		       ;; add all the file associated with the autoload in
+		       ;; the service path table (see __hop_service).
+		       (service-etc-path-table-fill! (%autoload-path (car al)))
+		       ;; remove the autoaload (once loaded)
+		       (mutex-lock! *autoload-mutex*)
+		       (set! *autoloads* (remq! (car al) *autoloads*))
+		       (set! *autoloads-loaded* (cons (car al) *autoloads-loaded*))
+		       (mutex-unlock! *autoload-mutex*)
+		       #t))
 		 (loop (cdr al)))))))
 
 ;*---------------------------------------------------------------------*/

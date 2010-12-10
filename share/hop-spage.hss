@@ -2,11 +2,11 @@
 /*    serrano/prgm/project/hop/2.2.x/share/hop-spage.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
-/*    Creation    :  Sat Aug 15 16:47:08 2009                          */
-/*    Last change :  Thu Sep  9 14:27:40 2010 (serrano)                */
-/*    Copyright   :  2009-10 Manuel Serrano                            */
+/*    Creation    :  Mon Dec  6 17:10:05 2010                          */
+/*    Last change :  Wed Dec  8 18:54:19 2010 (serrano)                */
+/*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
-/*    Slide Pages                                                      */
+/*    HSS for spage tag                                                */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
@@ -18,146 +18,188 @@ $(module __hss-spage)
 /*    HSS declarations                                                 */
 /*---------------------------------------------------------------------*/
 $(define-hss-type spage "div[hssclass=hop-spage]"
+    (define-hss-property (transition-style v)
+       (cond
+	  ((string=? (car v) "slide")
+           (format "span[hssclass=hop-spstyle] { cursor: move; }"))
+	  ((string=? (car v) "fade")
+           (format "span[hssclass=hop-spstyle] { cursor: help; }"))
+	  ((string=? (car v) "none")
+           (format "span[hssclass=hop-spstyle] { cusor: wait; }"))
+	  ((string=? (car v) "auto")
+           (format "span[hssclass=hop-spstyle] { cursor: auto; }"))
+	  (else
+           (format "span[hssclass=hop-spstyle] { cursor: default; }")))))
 
-  :body "div[hssclass=hop-spage-body]"
+$(define-hss-type sphead "div[hssclass=hop-sphead]"
+    (define-hss-property (button-visibility v)
+       (format "div[hssclass=hop-sppopbutton] { visibility: ~l; }" v))
+    (define-hss-property (button-text-visibility v)
+       (format "div[hssclass=hop-sppopbutton] > span { visibility: ~l; }" v))
+    (define-hss-property (button-content v)
+       (format "div[hssclass=hop-sppopbutton]:before { content: ~l; }" v))
+    (define-hss-property (button-width v)
+       (format "div[hssclass=hop-sppopbutton] { width: ~l; }" v)))
 
-  (define-hss-property (margin v)
-     (format "spbody { margin: ~l; }" v))
-  (define-hss-property (effect v)
-     (cond
-        ((string=? (car v) "slide") (format "content: \"slide\";"))
-        ((string=? (car v) "fade") (format "content: \"fade\";"))
-        ((string=? (car v) "none") (format "content: \"none\";"))
-        ((string=? (car v) "auto") (format "content: \"auto\";"))
-        (else (format "content: \"auto\";")))))
+$(define-hss-type sptab "div[hssclass=hop-spbody]")
 
-$(define-hss-type sphead "div[hssclass=hop-spage-head]")
-$(define-hss-type spbody "div[hssclass=hop-spage-body]")
-$(define-hss-type splink "span[hssclass=hop-spage-link]")
-$(define-hss-type spprevbutton "span[hssclass=hop-spage-prev]")
-$(define-hss-type spupdatebutton "span[hssclass=hop-spage-update]")
-
-$(define border-color "#ccc")
-$(define border (format "1px solid ~a" border-color))
-$(define font-family "Verdana, Arial, sans-serif")
+$(define-hss-type sptabhead "div[hssclass=hop-sptabhead]"
+    (define-hss-property (button-visibility v)
+       (format "div[hssclass=hop-sppushbutton] { visibility: ~l; }" v))
+    (define-hss-property (button-align v)
+       (cond 
+           ((string=? (car v) "left")
+            (list 
+             "padding-left: 1.5em;"
+             "div[hssclass=hop-sppushbutton] { left: 0; right: auto;}"))
+           ((string=? (car v) "right")
+            "div[hssclass=hop-sppushbutton] { left: auto; right: 0;}")
+           (else
+            (list 
+             (format "padding-left: ~a;" (car v))
+             "div[hssclass=hop-sppushbutton] { left: 0; right: auto;}"))))
+    (define-hss-property (button-content v)
+       (format "div[hssclass=hop-sppushbutton]:before { content: ~l; }" v)))
 
 /*---------------------------------------------------------------------*/
 /*    public declarations                                              */
 /*---------------------------------------------------------------------*/
 /* <public> */
 spage {
-  overflow: hidden;
-  width: 300px;
-  height: 400px;
-  background: #fff;
-  position: relative;
+  padding: 0; 
+  margin: 0;
+  transition-style: slide;
+  font-size: 10pt;
   border: 1px solid darkorange;
-  padding: 0px;
-  font-size: 12px;
-  border-radius: 0.2em;
-  effect: auto;
-}
-
-spbody {
-  overflow: auto;
-  margin-top: 17px;
-  padding: 2px;
 }
 
 sphead {
-  height: 16px;
-  border-bottom: $border;
-  font-family: $font-family;
-  font-weight: bold;
-  white-space: nospace;
-  color: darkorange;
-  background: #f7f7f7;
-}
-
-spprevbutton,
-spupdatebutton {
-  height: 100%;
+  button-visibility: visible;
+  button-text-visibility: hidden;
+  button-content: "\00ab";
+  button-width: 1.6em;
   color: black;
-  background: #ddd;
-  border-right: $border;
-  padding-left: 10px;
-  padding-right: 12px;
-  cursor: default;
-  margin-right: 2px;
-  user-select: none;
-  margin-top: 0;
-  margin-bottom: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  display: inline-block;
-}
-
-spprevbutton:hover,
-spupdatebutton:hover {
-  background: #ffedb3;
-  color: darkmagenta;
-}
-
-spprevbutton:before,
-spupdatebutton:before {
-  font-size: 80%;
-  vertical-align: top;
-}
-
-spprevbutton:before {
-  content: "\25c4";
-}
-
-spupdatebutton:before {
-  content: "\25bc";
-}
-
-splink {
-  white-space: nowrap;
-  cursor: default;
   font-weight: bold;
-  font-family: $font-family;
-  color: #6547FF;
+  font-family: Arial, sans-serif;
+  font-size: 11pt;
+  text-align: left;
+  padding-left: 2em;
+  white-space: nospace;
+  background: #f7f7f7;
+  background-image: -moz-linear-gradient( -90deg, #f7f7f7, #e7e7e7 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#f7f7f7), to(#e7e7e7) );
+  border-bottom: 1px solid #ccc;
 }
 
-splink:hover {
-  color: darkorange;
+sptabhead {
+  button-visibility: visible;
+  button-content: "\00bb";
+  button-align: right;
+  font-family: Arial, sans-serif;
+  font-size: 10pt;
+  font-weight: bold;
+  text-align: left;
+  color: black;
+  background: inherit;
+  border-top: 0;
+  position: relative;
+  cursor: pointer;
 }
 
-splink:before {
-  content: "\25ba";
-  color: #555;
-  font-size: 80%;
-  vertical-align: top;
-  margin-right: 4px;
+sptabhead:hover {
+  background: #8CB3DE;
+  background-image: -moz-linear-gradient( -0deg, #8CB3DE, #BAD0E8 );
+  background: -webkit-gradient(linear, 0% 0%, 100% 0%, from(#8CB3DE), to(#BAD0E8) );
+  color: white;
 }
-  
+
+sptab {
+  overflow: auto;
+}  
 /* </public> */
 
 /*---------------------------------------------------------------------*/
 /*    private declarations                                             */
 /*---------------------------------------------------------------------*/
-div[hssclass=hop-spage] div[hssclass=hop-spage] {
+spage {
+  position: relative;
+  overflow: hidden;
+}
+
+spage span[hssclass=hop-spstyle] {
+  display: none;
+}
+
+sphead {
+  position: relative;
+}
+
+sptabhead > div[hssclass=hop-sppushbutton] {
   position: absolute;
-  top: 0;
   right: 0;
-  bottom: 0;
+  top: 0;
+  width: 2em;
+  font-weight: normal;
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 110%;
+  color: #777;
+  vertical-align: bottom;
+}
+
+div[hssclass=hop-spviewport] {
+  position: relative;
+  transition: none 0.4s ease-in;
+  margin: 0;
   border: 0;
 }
-
-div[hssclass=hop-spage] > div[hssclass=hop-spage] {
-  height: 100%;
-}
   
-div[hssclass=hop-spage] div[hssclass=hop-spage] spbody {
-  border-left: 4px solid darkorange;
-}
-
-div[hssclass=hop-spage] spbody {
+div[hssclass=hop-spbody] {
+  transition: none 0.4s ease-in;
   position: absolute;
+  float: left;
+  vertical-align: top;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+ 
+div[hssclass=hop-sppopbutton] {
+  user-select: none;
+  display: none;
+  position: absolute;
+  left: 0;
   top: 0;
   bottom: 0;
-  left: 0;
-  right: 0;
+  background: #f7f7f7;
+  border-right: 1px solid #ccc;
+  text-align: left;
+  padding-left: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  font-size: 80%;
+  color: black;
+  padding-bottom: 2px;
+}
+
+div[hssclass=hop-sppopbutton]:before {
+  font-size: 140%;
+  font-weight: normal;
+  margin-right: 2px;
+  text-shadow: 1px -1px #999;
+}
+
+div[hssclass=hop-sppopbutton]:hover {
+  background: #bbb;
+  color: white;
+}
+
+div[hssclass=hop-sppopbutton].visible {
+  display: block;
+}
+
+div[hssclass=hop-sptab-static] > div[hssclass=hop-spbody]  {
+  display: none;
 }
   

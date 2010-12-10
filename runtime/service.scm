@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sun Nov  7 09:23:56 2010 (serrano)                */
+;*    Last change :  Sat Dec  4 07:35:21 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -361,8 +361,7 @@
       (with-access::http-server-request req (abspath user service method)
 	 (when (hop-service-path? abspath)
 	    (mutex-lock! *service-mutex*)
-	    (let loop ((svc (hashtable-get *service-table* abspath))
-		       (armed #f))
+	    (let loop ((svc (hashtable-get *service-table* abspath)))
 	       (mutex-unlock! *service-mutex*)
 	       (cond
 		  ((hop-service? svc)
@@ -398,11 +397,20 @@
 			  ;; resume the hop loop in order to autoload
 			  ;; the initial weblet
 			  'hop-resume)
-			 (armed
-			  (http-service-not-found abspath))
 			 ((autoload-filter req)
-			  (mutex-lock! *service-mutex*)
-			  (loop (hashtable-get *service-table* abspath) #t))
+			  =>
+			  (lambda (o)
+			     (cond
+				((not o)
+				 (http-service-not-found abspath))
+				((eq? o #t)
+				 (mutex-lock! *service-mutex*)
+				 (let ((s (hashtable-get *service-table* abspath)))
+				    (if (not s)
+					(http-service-not-found abspath)
+					(loop s))))
+				(else
+				 (http-error o)))))
 			 (else
 			  (http-service-not-found abspath)))))))))))
 

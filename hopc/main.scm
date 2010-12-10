@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Sep 27 10:19:07 2010 (serrano)                */
+;*    Last change :  Wed Dec  8 10:55:22 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -51,6 +51,9 @@
    (parse-args args)
    ;; preload the hop library
    (eval `(library-load 'hop))
+   ;; setup the hop module resolvers
+   (bigloo-module-extension-handler-set! (hop-module-extension-handler exp))
+   (bigloo-module-resolver-set! (make-hop-module-resolver (bigloo-module-resolver)))
    ;; setup the client-side compiler
    (setup-client-compiler!)
    ;; turn on debug to get line information
@@ -104,7 +107,11 @@
 	 (let loop ()
 	    (let ((exp (hop-read in)))
 	       (unless (eof-object? exp)
-		  (pp exp out)
+		  (match-case exp
+		     ((module . ?-)
+		      (pp (hop-module-extension-handler exp) out))
+		     (else
+		      (pp exp out)))
 		  (loop)))))
       
       (if (string? (hopc-destination))
@@ -140,7 +147,7 @@
       (if (eq? (hopc-pass) 'bigloo)
 	  (generate-bigloo in)
 	  (compile-bigloo in)))
-   
+
    (cond
       ((eq? (hopc-pass) 'client-js)
        (for-each compile-javascript (hopc-sources)))

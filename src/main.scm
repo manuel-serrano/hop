@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Oct 12 17:23:01 2010 (serrano)                */
+;*    Last change :  Wed Dec  8 10:22:06 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -82,33 +82,13 @@
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set! (lambda (f) (hop-load-modified f :abase #f)))
+   ;; setup the hop module resolvers
    (bigloo-module-extension-handler-set! hop-module-extension-handler)
    (bigloo-module-resolver-set! (make-hop-module-resolver (bigloo-module-resolver)))
    ;; parse the command line
    (parse-args args)
    ;; set the hop process owner
    (set-hop-owner! (hop-user))
-   ;; hello world
-   (hop-verb 1 "Hop v" (hop-version))
-   (hop-verb 2
-	     " (" (hop-backend)
-	     (cond-expand
-		(enable-threads
-		 (format ", ~a scheduler" (hop-scheduling)))
-		(else
-		 ", single-threaded"))
-	     ")")
-   (hop-verb 1 ", "
-	     (if (hop-enable-https)
-		   (format "https (~a):" (hop-https-protocol)) "http:")
-	     (hop-port)
-	     (if (hop-enable-fast-server-event)
-		 (format ", comet-port:~a" (hop-fast-server-event-port))
-		 "")
-	     ", security:" (security-manager-name (hop-security-manager))
-	     " [" (hop-security) "]")
-   (hop-verb 3 ", session:" (hop-session))
-   (hop-verb 1 "\n")
    ;; install the builtin filters
    (hop-filter-add! service-filter)
    ;; prepare the regular http handling

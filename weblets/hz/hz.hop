@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/hz/hz.hop                 */
+;*    serrano/prgm/project/hop/2.2.x/weblets/hz/hz.hop                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Thu Jan 14 08:04:54 2010 (serrano)                */
+;*    Last change :  Sat Dec  4 06:47:00 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -84,9 +84,13 @@
 (define-service (hz/run #!key url)
    (multiple-value-bind (name version)
       (package-url-parse url)
-      (hz-load url)
-      (<HTML>
-	 ~(set! document.location (string-append "/hop/" $name)))))
+      (with-handler
+	 (lambda (e)
+	    (http-error e))
+	 (begin
+	    (hz-load url)
+	    (<HTML>
+	       ~(set! document.location (string-append "/hop/" $name)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/check ...                                                     */

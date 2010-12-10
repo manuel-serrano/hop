@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Nov  8 16:13:41 2010 (serrano)                */
+/*    Last change :  Fri Dec  3 10:09:15 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -19,7 +19,7 @@ $(module hop_hss)
 /*---------------------------------------------------------------------*/
 $(define font-family "Arial, Lucida Grande, Verdana, Lucida, Helvetica")
 $(define typewriter "Bitstream Vera Sans Mono, Andale Mono, monospace")
-$(define border-color "#bbb")
+$(define border-color "#8f8a7f")
 $(define home-color "#f9f9f9")
 $(define header-color "#fffff0")
 $(define title-color "#ddd")
@@ -35,18 +35,30 @@ $(define deep-magenta "#7a459e")
 $(define deep-magenta2 "#4a346c")
 $(define deep-orange "#ffae2b")
 
+$(define bg-color "#efe7d4")
+$(define bg-color2 "#fcecca")
+
+$(define hover-color "#d7cfbe")
+$(define hover-color2 "#c4b99f")
+
 /*---------------------------------------------------------------------*/
 /*    Common CSS rules                                                 */
 /*---------------------------------------------------------------------*/
 body {
-  background-color: #c3c3c3;
   font-family: $font-family;
   overflow: auto;
+  background: $bg-color2;
+  padding: 0;
+  margin: 0;
+}
+
+div.body {
+  background: $bg-color;
+  background-image: -moz-linear-gradient( -90deg, $bg-color, $bg-color2 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($bg-color), to($bg-color2));
   padding-top: 4ex;
   padding-left: 5em;
   padding-right: 5em;
-  background-image: -moz-linear-gradient( -90deg, #e7e7e7, #c3c3c3 );
-  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#efefef), to(#c3c3c3));
 }
 
 img.logo {
@@ -115,8 +127,11 @@ table.weblet td.logo {
 }
 
 table.weblet td.logo:hover {
-  border: 1px outset #777;
-  background-color: #fbffe1;
+  border: 1px outset $border-color;
+  background: $hover-color;
+  background-image: -moz-linear-gradient( -90deg, $hover-color, $hover-color2 );
+  background-image: -moz-linear-gradient( -90deg, $hover-color, $hover-color2 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($hover-color), to($hover-color2));
   border-radius: 0.2em;
 }
 
@@ -146,8 +161,9 @@ table.hop {
   width: 100%;
   padding: 10px;
   border: 1px solid $border-color;
-  background-color: white;
+  background-color: #f7f3e9;
   border-radius: 0.4em;
+  box-shadow: 6px 6px 5px #555;
 }
 
 td.main-logo {

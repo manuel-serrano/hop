@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sun Nov  7 08:58:56 2010 (serrano)                */
+;*    Last change :  Fri Dec  3 11:24:04 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -74,9 +74,8 @@
 	    (else
 	     (error "service" "Illegal definition" id)))))
 
-   (let* ((proc (if (symbol? wid) (symbol-append wid '%) 'proc))
-	  (hdl (if (symbol? wid) (symbol-append wid '-handler) 'hdl))
-	  (svc (if (symbol? wid) (symbol-append wid '-svc) 'svc))
+   (let* ((proc (if (symbol? id) id 'svc%))
+	  (svc (if (symbol? id) (symbol-append id '-svc) 'svc))
 	  (errid (if (symbol? wid) `',wid wid))
 	  (id (if (symbol? id) `',id `(string->symbol ,url)))
 	  (path (gensym 'path))

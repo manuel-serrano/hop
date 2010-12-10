@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Nov 29 11:11:31 2010 (serrano)                */
+;*    Last change :  Sun Dec  5 08:36:29 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -571,10 +571,6 @@
 	  (read-char (the-port))
 	  v))
       
-      ;; hss (this reads up to the closing bracket).
-      ("@{"
-       (hop-read-hss (the-port)))
-      
       ("~"
        (let* ((loc (list 'at
 			 (input-port-name (the-port))
@@ -866,7 +862,7 @@
 		  (charset (hop-locale))
 		  (abase #t))
    (if (hz-package-filename? file-name)
-       (hop-load-hz file-name env menv mode charset abase)
+       (hop-load-from-hz file-name env menv mode charset abase)
        (hop-load-file file-name env menv mode charset abase)))
 
 ;*---------------------------------------------------------------------*/
@@ -878,9 +874,9 @@
 	  (hz-download-to-cache url))))
        
 ;*---------------------------------------------------------------------*/
-;*    hop-load-hz ...                                                  */
+;*    hop-load-from-hz ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (hop-load-hz fname env menv mode charset abase)
+(define (hop-load-from-hz fname env menv mode charset abase)
    ;; feed the cache
    (let ((dir (hz-dir fname)))
       ;; load the afile

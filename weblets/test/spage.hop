@@ -1,0 +1,72 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.2.x/weblets/test/spage.hop            */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Wed Dec  8 11:12:06 2010                          */
+;*    Last change :  Wed Dec  8 13:22:50 2010 (serrano)                */
+;*    Copyright   :  2010 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Spages                                                           */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-spage
+   (import weblet_test)
+   (export test/spage))
+
+;*---------------------------------------------------------------------*/
+;*    test/spage ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-service (test/spage)
+   (<TEST-HTML> :include '("hop-spage" "hop-spage-iphone")
+      :source (service-resource test/spage "spage.hop")
+      (<DIV> :class "comment"
+	 "This test checks spages.")
+      (<DIV> :id "console" :style "padding: 0 0 16px 16px" "-")
+      (<SPAGE> :style "width: 400px; height: 400px; border: 1px solid black"
+	 :onchange ~(innerHTML-set! "console"
+				    (let ((head (spage-head this)))
+				       (format "selected tab: ~a"
+					       head.innerHTML)))
+	 (<SPHEAD> "Computing")
+	 (<DIV> :style "padding: 4px; font-style: italic" "A blob")
+	 (<SPTAB>
+	    (<SPTABHEAD> "Language")
+	    (<DIV> :class "spbody"
+	       (<UL>
+		  (<LI> (<SPTAB>
+			   (<SPTABHEAD> "Functional")
+			   (<UL>
+			      (<LI> (<SPTAB>
+				       (<SPTABHEAD> "Lisp")
+				       (<UL>
+					  (<LI> "Scheme")
+					  (<LI> "Common Lisp")
+					  (<LI> "LeLisp"))))
+			      (<LI> "ML")
+			      (<LI> "HASKELL"))))
+		  (<LI> "Imperative")
+		  (<LI> "Object"))))
+	 (<SPTAB>
+	    (<SPTABHEAD> "Operating Systems")
+	    (<UL>
+	       (<LI> (<SPTAB>
+			(<SPTABHEAD> "Unix")
+			(<UL>
+			   (<LI> "Linux")
+			   (<LI> "BSD")
+			   (<LI> "SunOS")
+			   (<LI> "MacOS"))))
+	       (<LI> "Windows")))
+	 (<SPTAB>
+	    (<SPTABHEAD> "Random")
+	    (<DELAY>
+	       (lambda ()
+		  (<DIV>
+		     (<DIV>
+			"This tab contains a random number, generated
+by the server, each time the tab is selected.")
+		     (random 100))))))))
+

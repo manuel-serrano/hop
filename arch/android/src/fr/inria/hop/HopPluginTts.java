@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Wed Dec  1 18:11:49 2010 (serrano)                */
+/*    Last change :  Thu Dec  2 06:52:19 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -57,12 +57,15 @@ public class HopPluginTts extends HopPlugin
 
    // ondemand initialization
    private void initTts() {
+      Log.v( "HopPluginTts", "initTts" );
       synchronized( condv ) {
 	 Intent checkIntent = new Intent();
 	 checkIntent.setAction( TextToSpeech.Engine.ACTION_CHECK_TTS_DATA );
+	 Log.v( "HopPluginTts", "initTts: starting activity..." );
 	 startHopActivityForResult( checkIntent );
 	 try {
 	    condv.wait();
+	    Log.v( "HopPluginTts", "initTts completed" + initstatus );
 	 } catch( InterruptedException _ ) {
 	    initstatus = "initialization interrupted";
 	 }
@@ -71,13 +74,17 @@ public class HopPluginTts extends HopPlugin
 
    // onActivityResult
    public void onHopActivityResult( int result, Intent intent ) {
+      Log.v( "HopPluginTts", "initTts: activity started" );
       if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS ) {
+	 Log.v( "HopPluginTts", "initTts: creating TextToSpeech" );
 	 tts = new TextToSpeech( activity, this );
       } else {
 	 synchronized( condv ) {
 	    // missing data, install it
+	    Log.v( "HopPluginTts", "initTts: missing data..." );
 	    Intent installIntent = new Intent();
 	    installIntent.setAction( TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA );
+	    Log.v( "HopPluginTts", "initTts: starting activity for installing..." );
 	    activity.startActivity( installIntent );
 	    initstatus = "missing data";
 	    condv.notify();
@@ -87,6 +94,7 @@ public class HopPluginTts extends HopPlugin
 
    // oninit
    public void onInit( int status ) {
+      Log.v( "HopPluginTts", "initTts: onInit..." );
       synchronized( condv ) {
 	 if( status == TextToSpeech.SUCCESS ) {
 	    initstatus = "success";
@@ -218,6 +226,22 @@ public class HopPluginTts extends HopPlugin
 	       }
 	       
 	       tts.speak( s, qm, opt );
+	    }
+	    return;
+	    
+	 case (byte)'z':
+	    // synthesize
+	    if( tts != null ) {
+	       HashMap<String, String> opt = null;
+	       String s = HopDroid.read_string( ip );
+	       String p = HopDroid.read_string( ip );
+
+	       if( pushevent ) {
+		  opt = new HashMap();
+		  opt.put( TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, s );
+	       }
+	       tts.synthesizeToFile( s, opt, p );
+	       tts.addSpeech( s, p );
 	    }
 	    return;
 	    

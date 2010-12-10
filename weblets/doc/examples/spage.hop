@@ -1,14 +1,46 @@
-;; a simple spage
-(<SPAGE> :title "languages" :id "lang"
-   (<DIV>
-      (<SPAGE> :title "functional" :id "fun" :parent "lang"
+;; several spages
+(<SPAGE> :id "spage2" :style "width: 200px; height: 400px"
+   :onchange ~(alert "changed...")
+   (<SPHEAD> "Computing")
+   (<TABLE>
+      (map (lambda (i)
+	      (<TR> (map <TD> (iota 10))))
+	   (iota 10)))
+   (<SPTAB>
+      (<SPTABHEAD> "Language")
+      (<DIV> :class "spbody"
 	 (<UL>
-	    (<LI> "Lisp")
-	    (<LI> "ML")
-	    (<LI> "Haskell"))))
-   (<DIV>
-      (<SPAGE> :title "sequential" :id "seq" :parent "lang"
-	 (<UL>
-	    (<LI> "Fortran")
-	    (<LI> "Pascal")
-	    (<LI> "C")))))
+	    (<LI> (<SPTAB>
+		     (<SPTABHEAD> "Functional")
+		     (<UL>
+			(<LI> (<SPTAB>
+				 (<SPTABHEAD> "Lisp")
+				 (<UL>
+				    (<LI> "Scheme")
+				    (<LI> "Common Lisp")
+				    (<LI> "LeLisp"))))
+			(<LI> "ML")
+			(<LI> "Haskell"))))
+	    (<LI> "Imperative")
+	    (<LI> "Object"))))
+   (<SPTAB>
+      (<SPTABHEAD> "Operating Systems")
+      (<UL>
+	 (<LI> (<SPTAB>
+		  (<SPTABHEAD> "Unix")
+		  (<UL>
+		     (<LI> "BSD")
+		     (<LI> "Linux")
+		     (<LI> "SunOS")
+		     (<LI> "MacOS X"))))
+	 (<LI> "Windows")))
+   (<SPTAB>
+      (<SPTABHEAD> "Random")
+      (<DELAY>
+	 (lambda ()
+	    (<DIV>
+	       (<DIV>
+		  "This tab contains a random number, generated
+by the server, each time the tab is selected.")
+	       (random 100))))))
+

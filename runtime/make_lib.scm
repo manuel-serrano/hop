@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sun Nov  7 08:56:43 2010 (serrano)                */
+;*    Last change :  Sun Dec  5 09:26:36 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -65,8 +65,6 @@
 	   
    (eval   (export-all)
 
-	   (class job)
-	   
 	   (class user)
 
 	   (class %http-message)

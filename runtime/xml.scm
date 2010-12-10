@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sun Nov  7 08:40:58 2010 (serrano)                */
+;*    Last change :  Thu Dec  9 21:22:12 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -28,7 +28,8 @@
 	    __hop_clientc
 	    __hop_priv
 	    __hop_read-js
-	    __hop_http-error)
+	    __hop_http-error
+	    __hop_css)
 
    (use     __hop_js-lib)
 
@@ -238,7 +239,7 @@
 		     "Illegal attribute"
 		     (car a)))
 	     ((eq? (car a) :id)
-	      (if (string? (cadr a))
+	      (if (or (string? (cadr a)) (not (cadr a)))
 		  (loop (cddr a) attr body (cadr a))
 		  (bigloo-type-error el "string" (cadr a))))
 	     (else
@@ -360,6 +361,38 @@
 	 (unless (or (not body) (null? body))
 	    (when cdata-start (display cdata-start p))
 	    (xml-write body p backend)
+	    (when cdata-stop (display cdata-stop p)))
+	 (display "</" p)
+	 (display tag p)
+	 (display ">\n" p))))
+   
+;*---------------------------------------------------------------------*/
+;*    xml-write ::xml-style ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::xml-style p backend)
+   
+   (define (xml-write-style el p)
+      (call-with-input-string el
+	 (lambda (ip)
+	    (let ((hss (hop-read-hss ip)))
+	       (if (css-stylesheet? hss)
+		   (css-write (hss-compile hss) p)
+		   (error "xml-write" "Illegal style sheet" el))))))
+
+   (with-access::xml-style obj (tag body attributes)
+      (with-access::xml-backend backend (cdata-start cdata-stop)
+	 (display "<" p)
+	 (display tag p)
+	 (xml-write-attributes attributes p backend)
+	 (display ">" p)
+	 (unless (or (not body) (null? body))
+	    (when cdata-start (display cdata-start p))
+	    (xml-write body p backend)
+	    (for-each (lambda (el)
+			 (if (string? el)
+			     (xml-write-style el p)
+			     (xml-write el p backend)))
+		      body)
 	    (when cdata-stop (display cdata-stop p)))
 	 (display "</" p)
 	 (display tag p)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 28 06:23:39 2007                          */
-/*    Last change :  Wed Nov 10 14:26:32 2010 (serrano)                */
+/*    Last change :  Thu Dec  2 05:45:28 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Audio's cascade style sheet.                                 */
@@ -52,9 +52,9 @@ audio {
   width: 350px;
   height: 92px;
   border: 1px solid #999;
-  background: #f7f3f0;
-  background-image: -moz-linear-gradient( -90deg, #f7f3f0, $(color-darker "#f7f3f0" 2) );
-  background:  -webkit-gradient(linear, 0% 0%, 0% 100%, from(#f7f3f0), to($(color-darker "#f7f3f0" 2)));
+  background-color: #d1c8b4;
+  background-image: -moz-linear-gradient( -90deg, #f2e8d3, #d1c8b4 );
+  background:  -webkit-gradient(linear, 0% 0%, 0% 100%, from(#f2e8d3), to(#d1c8b4));
 }
 
 audiobutton {

@@ -13,8 +13,10 @@
 /*    User configuration                                               */
 /*---------------------------------------------------------------------*/
 $(define typewriter "Bitstream Vera Sans Mono, Andale Mono, monospace")
-$(define background "#c7c7c7")
-$(define border-color "#bbb")
+
+$(define bg-color "#DCDAD5")
+$(define bg-color2 (color-lighter bg-color))
+$(define border-color "#8f8a7f")
 $(define notepad-color "#EFF9BE")
 $(set! notepad-color "#F8FFCC")
 
@@ -58,7 +60,7 @@ $(define button-padding "padding-left: 5px;
 /*    Common CSS rules                                                 */
 /*---------------------------------------------------------------------*/
 body {
-  background-color: $background;
+  background-color: $bg-color2;
   font-family: Arial, Lucida Grande, Verdana, Lucida, Helvetica;
   font-size: 11pt;
   overflow: auto;
@@ -112,8 +114,9 @@ div#title {
 }
 
 div#body {
-  background-image: -moz-linear-gradient( -90deg, $(color-lighter background 2), $background );
-  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter background 2)), to($background));
+  background: $bg-color2;
+  background-image: -moz-linear-gradient( -90deg, $bg-color, $bg-color2 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($bg-color), to($bg-color2));
   min-width: 45em;
   padding-left: 4em;
   padding-right: 4em;

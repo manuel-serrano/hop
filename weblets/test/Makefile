@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.1.x/weblets/test/Makefile             */
+#*    serrano/prgm/project/hop/2.2.x/weblets/test/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Apr 13 10:28:10 2010 (serrano)                */
+#*    Last change :  Wed Dec  8 11:11:37 2010 (serrano)                */
 #*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the wizard weblet                                */
@@ -28,7 +28,7 @@ SOURCES		= test.hop dom.hop \
                   tabslider.hop slider.hop canvas.hop \
                   busy.hop audio.hop fselector.hop window.hop \
                   xhtml.hop svg.hop mathml.hop spinbutton.hop \
-                  colorchooser.hop widget.hop gauge.hop
+                  colorchooser.hop widget.hop gauge.hop spage.hop
 
 POPULATION	= Makefile test.hss hss.hss window.hss \
                   canvas-test.jpg \

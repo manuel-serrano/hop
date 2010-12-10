@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sun Nov 21 06:10:07 2010 (serrano)                */
+;*    Last change :  Sun Dec  5 08:32:36 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -585,7 +585,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 (define-markup <STYLE> ((type (hop-configure-css-mime-type) string)
 			(attributes)
 			body)
-   (instantiate::xml-cdata
+   (instantiate::xml-style
       (tag 'style)
       (attributes `(:type ,type ,@attributes))
       (body body)))

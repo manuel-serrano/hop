@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Fri Nov 26 15:07:49 2010 (serrano)                */
+;*    Last change :  Thu Dec  9 21:19:10 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -527,6 +527,7 @@
       ;; sections
       ((bol (: (>= 2 #\=) (? (: #\: (+ (out " \t\n"))))))
        (let* ((str (the-string))
+	      (len (the-length))
 	      (i (string-index str #\:))
 	      (lv (if i (-fx i 2) (-fx (the-length) 2))))
 	  (if (> lv 4)

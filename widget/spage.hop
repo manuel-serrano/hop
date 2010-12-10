@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/widget/spage.hop                  */
+;*    serrano/prgm/project/hop/2.2.x/widget/spage.hop                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Mon Feb  8 17:46:37 2010 (serrano)                */
+;*    Last change :  Wed Dec  8 16:39:17 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -14,52 +14,87 @@
 ;*---------------------------------------------------------------------*/
 (module __hopwidget-spage
 
-   (library hop)
+   (static (class xml-sphead-element::xml-element)
+	   (class xml-sptabhead-element::xml-element))
 
-   (export  (<SPAGE> . ::obj)))
+   (export (<SPAGE> . obj)
+	   (<SPHEAD> . obj)
+	   (<SPTAB> . obj)
+	   (<SPTABHEAD> . obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    <SPAGE> ...                                                      */
+;*    SPAGE ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <SPAGE> ((id (xml-make-id 'SPAGE) string)
-			      (parent #f)
-			      (title #f)
-			      (attrs)
+			      (onchange #f)
+			      (attr)
 			      body)
-   (cond
-      ((not title)
-       (error '<SPAGE> "\"title\" missing" id))
-      (parent
-       (let ((svc (service ()
-		     (make-spage id attrs title body parent))))
-	  (<SPAN> :hssclass "hop-spage-link" :id id
-	     attrs 
-	     :onclick ~(spage-push this $parent $svc)
-	     title)))
-      (else
-       (make-spage id attrs title body #f))))
+   (let ((head (filter xml-sphead-element? body))
+	 (body (filter (lambda (x) (not (xml-sphead-element? x))) body)))
+      (instantiate::xml-element
+	 (tag 'div)
+	 (id id)
+	 (attributes `(:hssclass "hop-spage" ,@attr))
+	 (body (list (if (null? head) (<SPHEAD> "?") (car head))
+		     (<SPAN> :hssclass "hop-spstyle" " ")
+		     (<DIV> :hssclass "hop-spviewport"
+			(<DIV> :hssclass "hop-spbody"
+			   body))
+		     ~(add-event-listener! window "ready"
+			 (lambda (e)
+			    (spage-init $id
+					$(when (xml-tilde? onchange)
+					    (sexp->xml-tilde
+					     `(lambda (event)
+						 ,(xml-tilde->sexp onchange))))))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    make-spage ...                                                   */
+;*    SPHEAD ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (make-spage id attrs title body parent)
-   (<DIV> :id id :hssclass "hop-spage"
-      :title title
-      (<DIV> :hssclass "hop-spage-head"
-	 (if parent
-	     (<SPAN> :hssclass "hop-spage-prev"
-		:onclick ~(spage-pop $id)
-		"")
-	     (let ((svc (service ()
-			   (make-spage id attrs title body parent))))
-		(<SPAN> :hssclass "hop-spage-update"
-		   :onclick ~(let ((el (dom-get-element-by-id $id)))
-				(set! el.svc $svc)
-				(spage-update el))
-		   :title title
-		   "")))
-	 (<SPAN> :hsslcass "hop-spage-title"
-	    title))
-      (<DIV> :hssclass "hop-spage-body"
-	 attrs
-	 body)))
+(define-xml-compound <SPHEAD> ((id (xml-make-id 'SPHEAD) string)
+			       (attr)
+			       body)
+   (instantiate::xml-sphead-element
+      (tag 'div)
+      (attributes `(:hssclass "hop-sphead" ,@attr))
+      (id id)
+      (body (list (<DIV> body)
+		  (<DIV> :hssclass "hop-sppopbutton"
+		     :onclick ~(spage-pop-update this)
+		     (<SPAN> ""))))))
+
+;*---------------------------------------------------------------------*/
+;*    SPTAB ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <SPTAB> ((id (xml-make-id 'SPTAB) string)
+			      (attr)
+			      body)
+   (let* ((head (filter xml-sphead-element? body))
+	  (body (filter (lambda (x) (not (xml-sphead-element? x))) body)))
+      (if (and (pair? body) (null? (cdr body)) (xml-delay? (car body)))
+	  ;; a dynamic tab
+	  (let ((svc (service ()
+			(<DIV> :hssclass "hop-spbody"
+			   attr
+			   body))))
+	     (<DIV> :hssclass "hop-sptab" :id id
+		:onclick ~(spage-push-service this $svc)
+		(if (null? head) "?" (car head))))
+	  ;; a static tab
+	  (<DIV> :hssclass "hop-sptab-static"
+	     (<DIV> :hssclass "hop-spbody" attr body)
+	     (<DIV> :hssclass "hop-sptab" :id id
+		:onclick ~(spage-push-node this (dom-previous-sibling this))
+		(if (null? head) "?" (car head)))))))
+
+;*---------------------------------------------------------------------*/
+;*    SPTABHEAD ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <SPTABHEAD> ((id (xml-make-id 'SPTABHEAD) string)
+				  (attr)
+				  body)
+   (instantiate::xml-sphead-element
+      (tag 'div)
+      (attributes `(:hssclass "hop-sptabhead" ,@attr))
+      (id id)
+      (body (list (<DIV> body) (<DIV> :hssclass "hop-sppushbutton" "")))))

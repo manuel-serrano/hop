@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Wed Dec  1 18:16:54 2010 (serrano)                */
+;*    Last change :  Thu Dec  2 05:48:06 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -434,15 +434,18 @@ missed.")
 				  :selected (equal? l locale)
 				  (list-ref l 3))))
 			 (phone-locales android)))))
-    (<TABLE> :style "width: 100%"
+    (<TABLE> :id "speech-conf"
        (<TR>
-	  (<TD> :style "width: 50%"
-	     "pitch: "
+	  (<TH>
+	     "pitch: ")
+	  (<TD>
 	     (<SLIDER> :min 0.2 :max 2.0 :step 0.1 :value (tts-pitch atts)
 		:onchange ~(with-hop ($(service (v) (tts-pitch-set! atts v))
-				       this.value))))
-	  (<TD> :style "width: 50%"
-	     "rate: "
+				       this.value)))))
+       (<TR>
+	  (<TH>
+	     "rate: ")
+	  (<TD>
 	     (<SLIDER> :min 0.2 :max 2.0 :step 0.1 :value (tts-rate atts)
 		:onchange ~(with-hop ($(service (v) (tts-rate-set! atts v))
 				       this.value))))))

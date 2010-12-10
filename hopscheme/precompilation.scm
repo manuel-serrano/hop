@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/hopscheme/precompilation.scm      */
+;*    serrano/prgm/project/hop/2.2.x/hopscheme/precompilation.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Tue Mar  9 05:13:01 2010                          */
-;*    Last change :  Sat Jun 19 06:15:33 2010 (serrano)                */
+;*    Last change :  Wed Dec  8 11:03:06 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Module pre-compilation                                           */
@@ -71,31 +71,6 @@
 			      (cons (precompile-module (car import-names)
 						       (bigloo-module-resolver))
 				    rev-imports))))))
-		(else
-		 (loop (cdr headers)
-		       rev-imports
-		       (cons header rev-others))))))))
-
-#;(define (precompile-headers.TO-BE-REMOVED-8mar2010 headers)
-   (let loop ((headers headers)
-	      (rev-imports '())
-	      (rev-others '()))
-      (if (null? headers)
-	  `(merge-first ,@(reverse! rev-others)
-			(import ,@(reverse! rev-imports)))
-	  (let ((header (car headers)))
-	     (match-case header
-		((import ?i1 . ?Lis)
-		 (let liip ((import-names (cdr header))
-			    (rev-imports rev-imports))
-		    (if (null? import-names)
-			(loop (cdr headers)
-			      rev-imports
-			      rev-others)
-			(liip (cdr import-names)
-			      (cons (precompile-module (car import-names)
-						       (bigloo-module-resolver))
-				    rev-imports)))))
 		(else
 		 (loop (cdr headers)
 		       rev-imports

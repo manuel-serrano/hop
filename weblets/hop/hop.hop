@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon Nov  8 16:00:50 2010 (serrano)                */
+;*    Last change :  Sat Dec  4 08:00:11 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -266,9 +266,13 @@
 	     (not (string? (cadr version)))
 	     (string=? (cadr version) "")
 	     (cmp (hop-version) (cadr version))))
+
+      (define (features-supported? features)
+	 (or (not features) (every? eval-srfi? (cadr features))))
       
       (or (not (cmpversion (assq 'minhop x) string>=?))
-	  (not (cmpversion (assq 'maxhop x) string<=?))))
+	  (not (cmpversion (assq 'maxhop x) string<=?))
+	  (not (features-supported? (assq 'features x)))))
    
    (map! (lambda (a)
 	    (let* ((hz (cadr (assq 'name a)))
@@ -283,7 +287,7 @@
 			     w))))
 	       (<WEBLET> (dirname (dirname w)) :hz hz :svc svc :title d
 			 :showtitle showtitle
-			 :incompatible (hop-incompatible? a)
+			 :incompatible (not (weblet-compatible? a))
 			 :width width :height height :icons icons :open open)))
 	 (sort ws (lambda (a b)
 		     (let ((namea (cadr (assq 'name a)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Wed Oct 20 09:26:33 2010 (serrano)                */
+;*    Last change :  Sun Dec  5 08:32:25 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
@@ -74,6 +74,8 @@
 	    (class xml-empty-element::xml-element)
 
 	    (class xml-cdata::xml-element)
+	    
+	    (class xml-style::xml-cdata)
 	    
 	    (class xml-tilde::xml
 	       (body read-only)

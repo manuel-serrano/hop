@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 29 16:36:58 2010                          */
-;*    Last change :  Wed Dec  1 18:14:59 2010 (serrano)                */
+;*    Last change :  Thu Dec  2 06:43:35 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Text-to-speech                                                   */
@@ -40,6 +40,7 @@
 	   (tts-pitch-set! ::androidtts ::obj)
 	   (tts-rate::double ::androidtts)
 	   (tts-rate-set! ::androidtts ::obj)
+	   (tts-synthesize ::androidtts ::bstring ::bstring)
 	   (tts-speak ::androidtts ::bstring #!key stream mode)
 	   (tts-silence ::androidtts ::int #!key stream mode)
 	   (tts-is-speaking?::bool ::androidtts)
@@ -189,6 +190,16 @@
 	 ((null? l) #a001)
 	 ((eq? (car l) s) (integer->char i))
 	 (else (loop (cdr l) (+fx i 1))))))
+
+;*---------------------------------------------------------------------*/
+;*    tts-synthesize ...                                               */
+;*---------------------------------------------------------------------*/
+(define (tts-synthesize t::androidtts text path)
+   (with-access::androidtts t (phone %mutex %open)
+      (with-lock %mutex
+	 (lambda ()
+	    (when %open
+	       (android-send-command phone tts-plugin #\z text path))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tts-speak ...                                                    */

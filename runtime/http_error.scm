@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Nov  8 14:46:06 2010 (serrano)                */
+;*    Last change :  Sat Dec  4 07:41:52 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -81,7 +81,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (http-error e::obj)
    (let* ((req (current-request))
-	  (ths "text-align: right; color: #777")
+	  (ths "text-align: right; color: #777; vertical-align: top;")
 	  (msg (<TABLE> :style "font-size: 12pt"
 		  (<COLGROUP> (<COL> :width "0*"))
 		  (<TR>
@@ -150,6 +150,25 @@
 	 (xml (<HTML-ERROR> :icon "privacy.png"
 		 :class "security"
 		 :title "Security Error"
+		 :msg (&error-msg e)
+		 (<PRE> (html-string-encode s)))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-error ::&hop-autoload-error ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (http-error e::&hop-autoload-error)
+   (let ((s (with-error-to-string (lambda () (error-notify e))))
+	 (req (current-request)))
+      (instantiate::http-response-hop
+	 (request req)
+	 (start-line (http-start-line req "200 ok"))
+	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	 (backend (hop-xml-backend))
+	 (content-type (xml-backend-mime-type (hop-xml-backend)))
+	 (charset (hop-charset))
+	 (xml (<HTML-ERROR> :icon "error.png"
+		 :class "service"
+		 :title "Service Autoload Error"
 		 :msg (&error-msg e)
 		 (<PRE> (html-string-encode s)))))))
 

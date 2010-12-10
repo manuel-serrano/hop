@@ -103,24 +103,19 @@ function sc_symbol2number(s, radix) {
 /*** META ((export #t) (arity -2)) */
 var sc_string2number = sc_jsstring2number;
 
-/*** META ((export #t)
-           (arity -2)
-           (peephole (prefix "+")))
-           ;; peephole will only apply if no radix is given.
+/*** META ((export #t) (arity -2)
+           (peephole (hole 2 "parseInt(" s "," radix ")")))
 */
 function sc_string2integer(s, radix) {
-    if (!radix) return +s;
-    return parseInt(s, radix);
+   return parseInt(s, radix);
 }
 
-/*** META ((export #t)
-           (arity #t)
-           (peephole (prefix "+")))
+/*** META ((export #t) (arity #t)
+           (peephole (hole 1 "parseFloat(" s ")")))
 */
 function sc_string2real(s) {
-    return +s;
+   return parseFloat(s);
 }
-
 
 /*** META ((export #t)
            (arity #t)

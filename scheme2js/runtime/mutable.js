@@ -148,22 +148,18 @@ function sc_string2number(s, radix) {
     return sc_symbol2number(s.val, radix);
 }
 
-/*** META ((export #t)
-           (arity -2)
-           (peephole (hole 1 "+" s ".val")))
-           ;; peephole will only apply if no radix is given.
-*/
+/*** META ((export #t) (arity -2)
+           (peephole (hole 2 "parseInt(" s "," radix ")")))
+*/	   
 function sc_string2integer(s, radix) {
-    if (!radix) return +s.val;
     return parseInt(s.val, radix);
 }
 
-/*** META ((export #t)
-           (arity #t)
-           (peephole (hole 1 "+" s ".val")))
-*/
+/*** META ((export #t) (arity #t)
+           (peephole (hole 1 "parseFloat(" s ")")))
+*/	   
 function sc_string2real(s) {
-    return +s.val;
+    return parseFloat(s.val);
 }
 
 /*** META ((export #t)

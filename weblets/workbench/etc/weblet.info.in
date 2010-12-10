@@ -1,4 +1,4 @@
-((name "devel")
+((name "workbench")
  (author "M. Serrano")
  (version "@VERSION@")
  (date "@DATE@")

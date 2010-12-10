@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Nov 23 20:24:52 2010 (serrano)                */
+/*    Last change :  Tue Dec  7 08:38:38 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1019,10 +1019,9 @@ function hop_node_eval( node, text ) {
 function node_style_get( obj, prop ) {
    if( (obj instanceof String) || (typeof obj === "string") )
       obj = document.getElementById( obj );
-   else {
-      if( sc_isKeyword( prop ) )
-	 prop = sc_keyword2jsstring( prop );
-   }
+
+   if( sc_isKeyword( prop ) )
+      prop = sc_keyword2jsstring( prop );
    
    return obj.style[ prop ];
 }
@@ -1036,11 +1035,10 @@ function node_style_get( obj, prop ) {
 function node_computed_style_get( obj, prop ) {
    if( (obj instanceof String) || (typeof obj === "string") )
       obj = document.getElementById( obj );
-   else {
-      if( sc_isKeyword( prop ) )
-	 prop = sc_keyword2jsstring( prop );
-   }
    
+   if( sc_isKeyword( prop ) )
+      prop = sc_keyword2jsstring( prop );
+
    return window.getComputedStyle( obj, null )[ prop ];
 }
 

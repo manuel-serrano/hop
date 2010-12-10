@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Oct 12 17:12:12 2010 (serrano)                */
+;*    Last change :  Sat Dec  4 08:04:44 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -289,6 +289,9 @@
 		(error "hop-kill" "Cannot find process key" (key-filepath p)))
 	    (exit 0)))
 
+      ;; hello world
+      (hello-world)
+      
       ;; default backend
       (when (string? be) (hop-xml-backend-set! (string->symbol be)))
 
@@ -337,6 +340,31 @@
 				  ret))
 
       #unspecified))
+
+;*---------------------------------------------------------------------*/
+;*    hello-world ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (hello-world)
+   (hop-verb 1 "Hop v" (hop-version))
+   (hop-verb 2
+	     " (" (hop-backend)
+	     (cond-expand
+		(enable-threads
+		 (format ", ~a scheduler" (hop-scheduling)))
+		(else
+		 ", single-threaded"))
+	     ")")
+   (hop-verb 1 ", "
+	     (if (hop-enable-https)
+		   (format "https (~a):" (hop-https-protocol)) "http:")
+	     (hop-port)
+	     (if (hop-enable-fast-server-event)
+		 (format ", comet-port:~a" (hop-fast-server-event-port))
+		 "")
+	     ", security:" (security-manager-name (hop-security-manager))
+	     " [" (hop-security) "]")
+   (hop-verb 3 ", session:" (hop-session))
+   (hop-verb 1 "\n"))
 
 ;*---------------------------------------------------------------------*/
 ;*    load-weblet ...                                                  */
