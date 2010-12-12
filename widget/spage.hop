@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Wed Dec  8 16:39:17 2010 (serrano)                */
+;*    Last change :  Sun Dec 12 10:19:28 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopwidget-spage
+
+   (library hop)
 
    (static (class xml-sphead-element::xml-element)
 	   (class xml-sptabhead-element::xml-element))
