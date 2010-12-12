@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Dec 12 07:02:35 2010 (serrano)                */
+;*    Last change :  Sun Dec 12 09:59:08 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -124,7 +124,7 @@
 	       (unless (eof-object? exp)
 		  (match-case exp
 		     ((module . ?-)
-		      (pp (compile-module exp)))
+		      (pp (compile-module exp) out))
 		     (else
 		      (pp exp out)))
 		  (loop)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Wed Dec  8 19:24:25 2010 (serrano)                */
+;*    Last change :  Sun Dec 12 07:17:20 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -249,7 +249,7 @@
 	 ((hop-config 'css_transition)
 	  (spage-push-slide spage spviewport tab))
 	 (else
-	  (spage-push-fade spage spviewport tab))))
+	  (spage-push-plain spage spviewport tab))))
    
    (let* ((spage (if (string? spage) (dom-get-element-by-id spage) spage))
 	  (spviewport spage.spviewport)
@@ -332,7 +332,7 @@
 	 ((hop-config 'css_transition)
 	  (spage-pop-slide spage spviewport tab))
 	 (else
-	  (spage-pop-fade spage spviewport tab))))
+	  (spage-pop-plain spage spviewport tab))))
    
    (let* ((spage (if (string? spage) (dom-get-element-by-id spage) spage))
 	  (spviewport spage.spviewport))
