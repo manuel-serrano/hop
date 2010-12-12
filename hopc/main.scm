@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Dec  8 10:55:22 2010 (serrano)                */
+;*    Last change :  Sun Dec 12 07:02:35 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -101,6 +101,21 @@
       (let ((s (hopscheme-compile-file p '())))
 	 (call-with-output-file (hopc-destination) (lambda (p) (display s p)))))
 
+   (define (compile-module exp)
+      (match-case exp
+	 ((module ?id . ?clauses)
+	  ;; this produces a side effect
+	  (hop-module-extension-handler exp)
+	  ;; generate the new module clause
+	  (let ((nclauses (filter (lambda (c)
+				     (match-case c
+					((<TILDE> . ?-) #f)
+					(else #t)))
+				  clauses)))
+	     `(module ,id ,@nclauses)))
+	 (else
+	  (error "hopc" "Illegal module" exp))))
+      
    (define (generate-bigloo in)
       
       (define (generate out)
@@ -109,7 +124,7 @@
 	       (unless (eof-object? exp)
 		  (match-case exp
 		     ((module . ?-)
-		      (pp (hop-module-extension-handler exp) out))
+		      (pp (compile-module exp)))
 		     (else
 		      (pp exp out)))
 		  (loop)))))
@@ -139,7 +154,11 @@
 	    (let loop ()
 	       (let ((exp (hop-read in)))
 		  (unless (eof-object? exp)
-		     (write (obj->string exp) out)
+		     (match-case exp
+			((module . ?-)
+			 (write (obj->string (compile-module exp)) out))
+			(else
+			 (write (obj->string exp) out)))
 		     (loop))))
 	    (close-output-port out))))
    
