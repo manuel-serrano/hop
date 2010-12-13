@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Dec  6 17:10:05 2010                          */
-/*    Last change :  Wed Dec  8 18:54:19 2010 (serrano)                */
+/*    Last change :  Mon Dec 13 09:54:42 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HSS for spage tag                                                */
@@ -41,7 +41,8 @@ $(define-hss-type sphead "div[hssclass=hop-sphead]"
     (define-hss-property (button-width v)
        (format "div[hssclass=hop-sppopbutton] { width: ~l; }" v)))
 
-$(define-hss-type sptab "div[hssclass=hop-spbody]")
+$(define-hss-type sptab "div[hssclass=hop-sptab]")
+$(define-hss-type spbody "div[hssclass=hop-spbody]")
 
 $(define-hss-type sptabhead "div[hssclass=hop-sptabhead]"
     (define-hss-property (button-visibility v)
@@ -66,11 +67,11 @@ $(define-hss-type sptabhead "div[hssclass=hop-sptabhead]"
 /*---------------------------------------------------------------------*/
 /* <public> */
 spage {
+  transition-style: slide;
+  height: 400px;
   padding: 0; 
   margin: 0;
-  transition-style: slide;
   font-size: 10pt;
-  border: 1px solid darkorange;
 }
 
 sphead {
@@ -100,9 +101,7 @@ sptabhead {
   font-weight: bold;
   text-align: left;
   color: black;
-  background: inherit;
   border-top: 0;
-  position: relative;
   cursor: pointer;
 }
 
@@ -113,9 +112,8 @@ sptabhead:hover {
   color: white;
 }
 
-sptab {
-  overflow: auto;
-}  
+spbody {
+}
 /* </public> */
 
 /*---------------------------------------------------------------------*/
@@ -134,6 +132,10 @@ sphead {
   position: relative;
 }
 
+sptabhead {
+  position: relative;
+}
+
 sptabhead > div[hssclass=hop-sppushbutton] {
   position: absolute;
   right: 0;
@@ -148,13 +150,14 @@ sptabhead > div[hssclass=hop-sppushbutton] {
 }
 
 div[hssclass=hop-spviewport] {
-  position: relative;
+  position: absolute;
   transition: none 0.4s ease-in;
   margin: 0;
   border: 0;
 }
   
-div[hssclass=hop-spbody] {
+spbody {
+  overflow: auto;
   transition: none 0.4s ease-in;
   position: absolute;
   float: left;
