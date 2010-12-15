@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Dec  8 11:16:21 2010                          */
-/*    Last change :  Wed Dec  8 16:49:48 2010 (serrano)                */
+/*    Last change :  Mon Dec 13 16:51:05 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Spage with an iphone-like look-and-feel.                         */
@@ -17,7 +17,6 @@ $(module __hss-spage-iphone)
 spage {
   padding: 0; 
   margin: 0;
-  transition-style: slide;
 }
 
 sphead {

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 11:12:06 2010                          */
-;*    Last change :  Wed Dec  8 13:22:50 2010 (serrano)                */
+;*    Last change :  Mon Dec 13 08:19:47 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Spages                                                           */
@@ -34,21 +34,24 @@
 	 (<DIV> :style "padding: 4px; font-style: italic" "A blob")
 	 (<SPTAB>
 	    (<SPTABHEAD> "Language")
-	    (<DIV> :class "spbody"
-	       (<UL>
-		  (<LI> (<SPTAB>
-			   (<SPTABHEAD> "Functional")
-			   (<UL>
-			      (<LI> (<SPTAB>
-				       (<SPTABHEAD> "Lisp")
-				       (<UL>
-					  (<LI> "Scheme")
-					  (<LI> "Common Lisp")
-					  (<LI> "LeLisp"))))
-			      (<LI> "ML")
-			      (<LI> "HASKELL"))))
-		  (<LI> "Imperative")
-		  (<LI> "Object"))))
+	    (<DIV> :style "padding: 3ex 0 3ex 0; font-style: italic; text-align: center"
+	       "This tab shows general programming language families")
+	    (<UL>
+	       (<LI> (<SPTAB>
+			(<SPTABHEAD> "Functional")
+			(<DIV> :style "padding: 4px; font-style: italic"
+			   "Here we focus on functional languages")
+			(<UL>
+			   (<LI> (<SPTAB>
+				    (<SPTABHEAD> "Lisp")
+				    (<UL>
+				       (<LI> "Scheme")
+				       (<LI> "Common Lisp")
+				       (<LI> "LeLisp"))))
+			   (<LI> "ML")
+			   (<LI> "HASKELL"))))
+	       (<LI> "Imperative")
+	       (<LI> "Object")))
 	 (<SPTAB>
 	    (<SPTABHEAD> "Operating Systems")
 	    (<UL>

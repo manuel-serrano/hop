@@ -100,7 +100,12 @@ be a ++<SPTABHEAD>++.
 A //sptab// may be //inlined// or //on-demand//. Inlined sptabs
 receive their content at creation time. On-demand sptabs ask the
 server a new content each time they are selected. Tabs body of
-on-demand //spage// must use the ++<DELAY>++ markup.
+on-demand //spage// must use the ++<DELAY>++ markup. The argument
+:onselect is an listener invoked each time the tab is pushed. The
+target of the event sent to this listener is the new selected tab. The
+field ++action++ is either ++"push"++ or ++"pop"++ depending on how
+the tab has been selected. Onselect listeners can also be installed
+via ++add-event-listener!++:
 
 </markup>
 
