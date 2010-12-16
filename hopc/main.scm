@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Dec 16 19:53:29 2010 (serrano)                */
+;*    Last change :  Thu Dec 16 20:05:33 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -47,12 +47,12 @@
    (for-each register-eval-srfi! (hop-srfis))
    ;; set the library load path
    (bigloo-library-path-set! (hop-library-path))
+   ;; preload the hop library
+   (eval `(library-load 'hop))
    ;; setup the client-side compiler
    (setup-client-compiler!)
    ;; parse the command line
    (parse-args args)
-   ;; preload the hop library
-   (eval `(library-load 'hop))
    ;; setup the hop module resolvers
    (bigloo-module-extension-handler-set! (hop-module-extension-handler exp))
    (bigloo-module-resolver-set! (make-hop-module-resolver (bigloo-module-resolver)))
