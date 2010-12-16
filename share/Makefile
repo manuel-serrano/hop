@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Dec  8 11:15:21 2010 (serrano)                */
+#*    Last change :  Thu Dec 16 07:29:18 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -64,7 +64,8 @@ EXTRA		= hop.hss \
                   hop-spage.scm hop-spage.hss hop-spage-iphone.hss\
                   hop-gauge.scm hop-gauge.hss \
                   hop-font.scm \
-                  hop-password.scm
+                  hop-password.scm \
+                  hop-foot.hss
 
 #*---------------------------------------------------------------------*/
 #*    AUDIO and ICONS                                                  */

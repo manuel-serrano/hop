@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/color/color.hop           */
+;*    serrano/prgm/project/hop/2.2.x/weblets/color/color.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Feb  8 10:44:35 2010 (serrano)                */
+;*    Last change :  Thu Dec 16 07:36:51 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP color                                                        */
@@ -39,7 +39,7 @@
 	 (<HEAD> :title "Color"
 	    :favicon (service-resource color "etc/favicon.png")
 	    :base (service-base-url color (current-request))
-	    :include "hop-color"
+	    :include "hop-color" "hop-foot"
 	    :css "color.hss")
 	 (<BODY>
 	    (<DIV> :align 'center
@@ -145,6 +145,7 @@
    (<HTML> :class "dashboard"
       (<HEAD> :include "hop-color"
 	 :base (service-base-url color (current-request))
+	 :include "hop-foot"
 	 :css "color.hss")
       (<BODY>
 	 

@@ -3,36 +3,11 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Mon Jul 26 18:29:52 2010 (serrano)                */
+/*    Last change :  Thu Dec 16 10:51:15 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
 /*=====================================================================*/
-
-/*---------------------------------------------------------------------*/
-/*    Foot                                                             */
-/*---------------------------------------------------------------------*/
-div.foot-buttons {
-  margin-top: 1ex;
-}
-
-a.foot-button {
-  opacity: 0.3;
-  background-color: inherit;
-  color: inherit;
-  text-decoration: none;
-}
-
-a.foot-button:hover {
-  opacity: 1;
-}
-
-a.foot-button img {
-  border-width: 0;
-  background: transparent;
-  padding-left: 5px;
-  padding-right: 5px;
-}
 
 /*---------------------------------------------------------------------*/
 /*    Math                                                             */
@@ -48,25 +23,36 @@ mo {
 /*---------------------------------------------------------------------*/
 /*    Errors                                                           */
 /*---------------------------------------------------------------------*/
-div[hssclass=hop-error] {
-  top: 0;
-  left: 0;
-  right: 0;
+body[hssclass=hop-error] {
+  background-color: #efe7d4;
+  background-color: black;
+  top: 0; bottom: 0;
+  left: 0; right: 0;
   position: absolute;
-  overflow: hidden;
-  min-height: 60ex;
-  max-height: 60ex;
 }
 
-body[hssclass=hop-error] div[hssclass=hop-error] {
-  top: 3ex;
-  left: 4em;
-  right: 4em;
+div[hssclass=hop-error-frame] {
+  background-color: #efe7d4;
+  background-color: #000;
+  top: 0; bottom: 0;
+  left: 0; right: 0;
+  position: absolute;
+  opacity: 0.7;
+}
+
+div[hssclass=hop-error] {
+  overflow: auto;
   background: white;
   border: 4px dashed;
-  position: absolute;
-  overflow: hidden;
   border-color: red;
+  opacity: 1;
+}
+
+div[hssclass=hop-error] {
+  margin: 100px;
+  top: 0; bottom: 0;
+  left: 0; right: 0;
+  position: absolute;
 }
 
 div[hssclass=hop-error].warning {
@@ -74,7 +60,7 @@ div[hssclass=hop-error].warning {
 }
 
 div[hssclass=hop-error].notfound {
-  border-color: blue;
+  border-color: goldenrod;
 }
 
 div[hssclass=hop-error].security {
@@ -100,6 +86,7 @@ div[hssclass=hop-error] > div {
 }
   
 div[hssclass=hop-error-title] {
+  font-family: sans-serif;
   font-size: x-large;
   font-weight: bold;
   border-bottom: 1px solid #bbb;
@@ -120,19 +107,35 @@ div[hssclass=hop-error-msg] tt {
   font-size: large;
 }
 
-div[hssclass=hop-error] pre {
-  overflow: auto;
-  min-height: 80ex;
-  max-height: 80ex;
-  border: 1px dashed #bbb;
-  background-color: #ffe;
-  font-size: 8pt;
-  color: #333;
-  font-weight: 200;
-  padding-bottom: 5ex;
-  padding: 2px;
-}
-
 div[hssclass=hop-error] tt.notfound {
   color: blue;
+  font-weight: bold;
+  font-family: monospace;
+  font-size: 120%;
 }
+
+div[hssclass=hop-error-trace] {
+  border-top: 1px dashed #bbb;
+  background-color: inherit;
+  padding-top: 2ex;
+  padding-bottom: 2ex;
+  font-weight: bold;
+  font-size: 9pt;
+  color: black;
+}
+
+div[hssclass=hop-error-trace] pre {
+  color: #00a;
+  font-weight: normal;
+  padding-left: 1em;
+}
+
+/*---------------------------------------------------------------------*/
+/*    small screens                                                    */
+/*---------------------------------------------------------------------*/
+@media all and (max-width: 1024px) {
+  div[hssclass=hop-error] {
+     margin: 0;
+  }
+}
+

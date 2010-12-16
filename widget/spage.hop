@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Mon Dec 13 09:58:01 2010 (serrano)                */
+;*    Last change :  Wed Dec 15 16:55:41 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -73,6 +73,7 @@
 ;*    SPTAB ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <SPTAB> ((id (xml-make-id 'SPTAB) string)
+			      (onselect #f)
 			      (class #f)
 			      (attr)
 			      body)
@@ -87,13 +88,27 @@
 			   body))))
 	     (<DIV> :hssclass "hop-sptab" :class class  :id id
 		:onclick ~(spage-push-service this $svc)
-		(if (null? head) "?" (car head))))
+		(if (null? head) "?" (car head))
+		~(let ((el (dom-get-element-by-id $id)))
+		    (set! el.hop_add_event_listener sptab-add-event-listener!))
+		(when (xml-tilde? onselect)
+		   (sexp->xml-tilde
+		    `(let ((el (dom-get-element-by-id ,id))
+			   (p (lambda (event) ,(xml-tilde->sexp onselect))))
+			(set! el.onselect p))))))
 	  ;; a static tab
 	  (<DIV> :hssclass "hop-sptab-static"
-	     (<DIV> :hssclass "hop-spbody" attr body)
+	     (<DIV> :hssclass "hop-spbody":class class attr body)
 	     (<DIV> :hssclass "hop-sptab" :class class :id id
 		:onclick ~(spage-push-node this (dom-previous-sibling this))
-		(if (null? head) "?" (car head)))))))
+		(if (null? head) "?" (car head))
+		~(let ((el (dom-get-element-by-id $id)))
+		    (set! el.hop_add_event_listener sptab-add-event-listener!))
+		(when (xml-tilde? onselect)
+		   (sexp->xml-tilde
+		    `(let ((el (dom-get-element-by-id ,id))
+			   (p (lambda (event) ,(xml-tilde->sexp onselect))))
+			(set! el.onselect p)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    SPTABHEAD ...                                                    */
@@ -105,4 +120,5 @@
       (tag 'div)
       (attributes `(:hssclass "hop-sptabhead" ,@attr))
       (id id)
-      (body (list (<DIV> body) (<DIV> :hssclass "hop-sppushbutton" "")))))
+      (body (list (<SPAN> body)
+		  (<DIV> :hssclass "hop-sppushbutton" "")))))

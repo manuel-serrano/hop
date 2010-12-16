@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.0.x/weblets/hzbuilder/hzbuilder.hop       */
+;*    .../prgm/project/hop/2.2.x/weblets/hzbuilder/hzbuilder.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Jan  7 14:51:13 2010 (serrano)                */
+;*    Last change :  Thu Dec 16 07:36:27 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZBUILDER weblet                                                 */
@@ -35,7 +35,7 @@
 	 (<HEAD> :title "HzBuilder"
 	    :favicon (service-resource hzbuilder "etc/favicon.png")
 	    :base (service-base-url hzbuilder (current-request))
-	    :include "hop-paned" "hop-file" "hop-window"
+	    :include "hop-paned" "hop-file" "hop-window" "hop-foot"
 	    :css "hzbuilder.hss")
 	 (<BODY>
 	    
@@ -164,7 +164,7 @@
 	 (<HEAD> :title "Hzbuilder"
 	    :favicon (service-resource hzbuilder "etc/favicon.png")
 	    :base (service-base-url hzbuilder (current-request))
-	    :include "hop-prefs" 
+	    :include "hop-prefs" "hop-foot"
 	    :css "hzbuilder.hss")
 	 (<BODY>
 	    (<DIV> :align "center"

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Mon Nov 15 08:53:27 2010 (serrano)                */
+;*    Last change :  Thu Dec 16 10:52:53 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -179,13 +179,12 @@
 ;*    <EXCEPTION-FRAME> ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (<EXCEPTION-FRAME> . args)
-   (let ((mask (<DIV> :style (hop-exception-mask-style) ""))
-	 (frame (<DIV> :style (hop-exception-frame-style)
-		   (<DIV> :style "overflow: auto" args))))
-      (<DIV> :onclick (begin
-			 (set! in-exception-report 'no)
-			 (dom-remove-child! (dom-parent-node this) this))
-	 mask frame)))
+   (<DIV> :onclick (begin
+		      (set! in-exception-report 'no)
+		      (dom-remove-child! (dom-parent-node this) this))
+      (list
+       (<DIV> :hssclass "hop-error-frame")
+       args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->string ...                                                  */
@@ -222,10 +221,9 @@
 ;*    <EXCEPTION-STACK> ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (<EXCEPTION-STACK> stack)
-   (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px"
-      (<DIV> :style "font-weight: bold; margin-bttom: 1ex;" "Hop client stack:")
-      (<PRE> :style "font-size: 9pt; padding-left: 1em;"
-	 :onclick (stop-event-propagation event)
+   (<DIV> :hssclass "hop-error-trace"
+      (<DIV> "Hop client stack:")
+      (<PRE> :onclick (stop-event-propagation event)
 	 (map (lambda (frame)
 		 (list (obj->string (car frame) #t) "\n"))
 	      stack))))
@@ -265,7 +263,7 @@
 	 ((null? l)
 	  "")
 	 ((= s 0)
-	  (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px"
+	  (<DIV> :hssclass "hop-error-trace"
 	     (<DIV> :style "font-weight: bold" "JavaScript stack:")
 	     (<PRE> :style "font-size: 9pt; padding-left: 1em"
 		:onclick (stop-event-propagation event)
@@ -289,7 +287,7 @@
 	 ((string? exc.name) exc.name)
 	 ((eq? exc.name #unspecified) "HopClientSideError")
 	 (else (obj->string exc.name #f))))
-
+   
    (define (exception-message exc)
       (cond
 	 ((not (js-in? "message" exc))
@@ -314,15 +312,15 @@
 		      (string-split exc.description "\n "))))
 	 (else
 	  "unknwown error")))
-
+   
    (let* ((message (exception-message exc))
 	  (msg (if (and exc (js-in? "scObject" exc))
 		   (list message " -- " (<TT> (obj->string exc.scObject #f)))
 		   message))
 	  (name (exception-name exc))
 	  (url (if (string? exc.fileName) exc.fileName document.location.href))
-	  (location (if (string? exc.hopLocation)
-			exc.hopLocation
+	  (errtitle (if (string? exc.hopLocation)
+			(string-append "Client Error: " exc.hopLocation)
 			"Client Error"))
 	  (src (cond
 		  ((and exc.lineNumber (not (eq? exc.lineNumber #unspecified)))
@@ -331,39 +329,34 @@
 		   (list (<A> :href url url) ", line " exc.line))
 		  (else
 		   (<A> :href url)))))
-
+      
       (<EXCEPTION-FRAME>
-	 (<TABLE> :style "width: 100%; font-family: arial; font-size: 10pt; background: #FFFFF7; border-bottom: 1px solid #ccc; overflow: visible"
-	    (<COLGROUP>
-	       (<COL> :width "64px"))
-	    (<TR>
-	       (<TD> :style "height: 64px; vertical-align: top; padding-top: 10px; text-align: center"
-		  (<IMG> :src (hop-error-icon) :alt "Error"))
-	       (<TD> :style "margin:0; padding: 0"
-		  (<TABLE> :style "width: 100%"
-		     (<TR> (<TD> :style "font-size: 20pt; padding-bottom: 4px"
-			      (<SPAN> :style "color: red; font-weight: bold" location)))
-		     (<TR> (<TD> :style "font-size: 11pt" (<SPAN> :style "color: #777; font-weight: bold" name) ": "
-			      msg))
-		     (<TR> (<TD> :style "font-family: monospace; font-size: 10pt" src))
-		     (<TR> (<TD> :style "font-family: monospace; color: #777" (properties->string exc)))))))
-	 (<DIV> :style "font-family: arial; font-size: 10pt; overflow: visible"
-	    (when (and exc.hopService (not (eq? exc.hopService #unspecified)))
-	       (<DIV> :style "font-family: arial; font-size: 10pt; padding: 5px"
-		  (<DIV> :style "font-weight: bold" "Service:")
-		  (<TABLE> :style "width: 100%; font-size: 9pt; overflow: visible; padding-left: 1em"
-		     (<TR> (<TD> :style "font-size: 10pt"
-			      (obj->string exc.hopService #f))))))
-	    (when (pair? exc.hopStack)
-	       (<DIV> :style (if (and exc.hopService (not (eq? exc.hopService #unspecified)))
-				 "border-top: 1px dashed #ccc; margin-top: 2ex"
-				 "margin-top: 2ex")
-		  (<EXCEPTION-STACK> exc.hopStack)))
-	    (when (string? exc.stack)
-	       (<DIV> :style (if (or (and exc.hopService (not (eq? exc.hopService #unspecified)))
-				     (pair? exc.hopStack))
-				 "border-top: 1px dashed #ccc; margin-top: 2ex"
-				 "margin-top: 2ex")
+	 (<DIV> :hssclass "hop-error"
+	    (<IMG> :src (hop-error-icon) :alt "Error")
+	    (<DIV>
+	       (<DIV> :hssclass "hop-error-title" errtitle)
+	       (<DIV> :hssclass "hop-error-msg"
+		  (<TABLE> :style "font-weight: normal"
+		     (<TR>
+			(<TD>
+			   (<SPAN> :style "color: #777; font-weight: bold" name)
+			   ": "
+			   (<TT> :style "font-size: 140%" msg)))
+		     (<TR>
+			(<TD>
+			   src))
+		     (<TR>
+			(<TD> :style "color: #777"
+			   (properties->string exc)))))
+	       (when (and exc.hopService (not (eq? exc.hopService #unspecified)))
+		  (<DIV> :hssclass "hop-error-trace"
+		     (<DIV> :style "font-weight: bold" "Service:")
+		     (<TABLE> :style "padding-left: 1em"
+			(<TR> (<TD> :style "font-size: 120%; font-family: monospace; font-weight: normal"
+				 (obj->string exc.hopService #f))))))
+	       (when (pair? exc.hopStack)
+		  (<EXCEPTION-STACK> exc.hopStack))
+	       (when (string? exc.stack)
 		  (<EXCEPTION-JSSTACK> exc.stack 2)))))))
 
 ;*---------------------------------------------------------------------*/

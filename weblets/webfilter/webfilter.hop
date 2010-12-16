@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.1.x/weblets/webfilter/webfilter.hop       */
+;*    .../prgm/project/hop/2.2.x/weblets/webfilter/webfilter.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Jul  1 05:34:52 2010 (serrano)                */
+;*    Last change :  Thu Dec 16 07:33:11 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -88,7 +88,7 @@
       (<HEAD>
 	 :favicon (service-resource webfilter "etc/favicon.png")
 	 :title "Hop Webfilter"
-	 :include "hop-notepad" "hop-sorttable" "hop-prefs"
+	 :include "hop-notepad" "hop-sorttable" "hop-prefs" "hop-foot"
 	 :base (service-base-url webfilter (current-request))
 	 :css "webfilter.hss")
       (<BODY>

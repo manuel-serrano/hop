@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Thu Dec  2 06:57:23 2010 (serrano)                */
+#*    Last change :  Tue Dec 14 18:02:40 2010 (serrano)                */
 #*    Copyright   :  2010 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -13,7 +13,7 @@
 #*---------------------------------------------------------------------*/
 #*    Global user configuration                                        */
 #*---------------------------------------------------------------------*/
-HOPVERSION=2.2.0-rc3
+HOPVERSION=2.2.0-rc4
 HOPURL=http://hop.inria.fr
 BIGLOOVERSION=3.5b
 ANDROID=2.1
@@ -42,11 +42,8 @@ fi
 #*---------------------------------------------------------------------*/
 basedir=`dirname $0`
 tmp=`pwd`/build.hop
-android=$tmp/hop-$HOPVERSION/android
 
 ant=/usr/share/java/apache-ant/bin/ant
-
-branch=`echo $HOPVERSION | sed -e "s/[-].*$//g"`
 
 if [ "$MAKEJOBS " = " " ]; then
   MAKEJOBS=2
@@ -68,6 +65,9 @@ while : ; do
   case $1 in
     "")
       break;;
+
+    --hopversion=*)
+      HOPVERSION="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --androidroot=*)
       ANDROIDROOT="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -106,6 +106,7 @@ while : ; do
       echo "*** makeapk, unknown option $1" >&2;
       echo >&2;
       echo "Usage: makeapk [options]" >&2;
+      echo "   --hopversion=version.... hop version to install" >&2;
       echo "   --androidroot=dir....... android root directory" >&2;
       echo "   --androidsdk=dir........ sdk path (defaults androidroot/android-sdk-linux_x86)" >&2;
       echo "   --androidndk=dir........ ndk path (defaults androidroot/android-ndk-r4b)" >&2;
@@ -128,6 +129,9 @@ while : ; do
   esac
   shift
 done
+
+android=$tmp/hop-$HOPVERSION/android
+branch=`echo $HOPVERSION | sed -e "s/[-].*$//g"`
 
 #*---------------------------------------------------------------------*/
 #*    Install the Hop source code                                      */

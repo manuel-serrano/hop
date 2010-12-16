@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Dec  6 17:10:05 2010                          */
-/*    Last change :  Mon Dec 13 09:54:42 2010 (serrano)                */
+/*    Last change :  Mon Dec 13 18:00:31 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HSS for spage tag                                                */
@@ -25,7 +25,7 @@ $(define-hss-type spage "div[hssclass=hop-spage]"
 	  ((string=? (car v) "fade")
            (format "span[hssclass=hop-spstyle] { cursor: help; }"))
 	  ((string=? (car v) "none")
-           (format "span[hssclass=hop-spstyle] { cusor: wait; }"))
+           (format "span[hssclass=hop-spstyle] { cursor: wait; }"))
 	  ((string=? (car v) "auto")
            (format "span[hssclass=hop-spstyle] { cursor: auto; }"))
 	  (else
@@ -68,7 +68,6 @@ $(define-hss-type sptabhead "div[hssclass=hop-sptabhead]"
 /* <public> */
 spage {
   transition-style: slide;
-  height: 400px;
   padding: 0; 
   margin: 0;
   font-size: 10pt;
@@ -150,22 +149,21 @@ sptabhead > div[hssclass=hop-sppushbutton] {
 }
 
 div[hssclass=hop-spviewport] {
-  position: absolute;
-  transition: none 0.4s ease-in;
+  position: relative;
+  transition: left 0.4s ease-in;
   margin: 0;
   border: 0;
+  bottom: 0;
+  height: 100%;
 }
   
 spbody {
   overflow: auto;
   transition: none 0.4s ease-in;
-  position: absolute;
+  position: relative;
   float: left;
-  vertical-align: top;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  clear: none;
+  z-index: 0;
 }
  
 div[hssclass=hop-sppopbutton] {

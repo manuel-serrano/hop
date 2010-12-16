@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Thu Oct  7 07:56:44 2010 (serrano)                */
+;*    Last change :  Wed Dec 15 15:18:10 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -272,7 +272,7 @@
 	     (exception-notify e)
 	     ;; generate a legal response for the next stage (although
 	     ;; this response denotes the error).
-	     (let ((resp ((or (hop-http-response-error) http-error) e req))
+	     (let ((resp ((or (hop-http-response-error) http-error) e))
 		   (sock (http-request-socket req)))
 		(http-response resp sock)
 		;; abort this request
