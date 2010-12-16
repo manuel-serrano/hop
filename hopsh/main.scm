@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/hopsh/main.scm                    */
+;*    serrano/prgm/project/hop/2.2.x/hopsh/main.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon May  4 16:32:40 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Thu Dec 16 19:54:08 2010 (serrano)                */
+;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPSH entry point                                            */
 ;*=====================================================================*/
@@ -49,6 +49,8 @@
    (bigloo-library-path-set! (hop-library-path))
    ;; preload the hop library
    (eval `(library-load 'hop))
+   ;; setup the client-side compiler
+   (setup-client-compiler!)
    ;; parse the command line
    (parse-args args)
    (hop-verb 1 "Starting hopsh (v" (hop-version) "):\n")
@@ -62,3 +64,34 @@
       (unwind-protect
 	 (hopsh-repl)
 	 (newline))))
+
+;*---------------------------------------------------------------------*/
+;*    setup-client-compiler! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (setup-client-compiler!)
+   ;; disable cache clearing otherwise parallel
+   ;; invocations of hopc are impossible because one removes
+   ;; the file of the other.
+   (hop-clientc-clear-cache-set! #f)
+   (init-hopscheme! :reader (lambda (p v) (hop-read p))
+      :verbose (hop-verbose)
+      :eval (lambda (e) (let ((op (open-output-string)))
+			   (obj->javascript (eval e) op #f)
+			   (close-output-port op)))
+      :hop-compile (lambda (e p) (obj->javascript e p #f))
+      :features `(hop
+		  ,(string->symbol (format "hop-~a" (hop-branch)))
+		  ,(string->symbol (format "hop-~a" (hop-version))))
+      :expanders `(labels match-case
+			(define-markup . ,(eval 'hop-client-define-markup))))
+   (init-clientc-compiler! :modulec hopscheme-compile-module
+      :expressionc hopscheme-compile-expression
+      :valuec hopscheme-compile-value 
+      :macroe hopscheme-create-empty-macro-environment
+      :filec hopscheme-compile-file
+      :sexp->precompiled sexp->hopscheme
+      :precompiled->sexp hopscheme->sexp
+      :precompiled->JS-expression hopscheme->JS-expression
+      :precompiled->JS-statement hopscheme->JS-statement
+      :precompiled->JS-return hopscheme->JS-return))
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Dec  5 08:36:29 2010 (serrano)                */
+;*    Last change :  Thu Dec 16 19:59:31 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -839,11 +839,12 @@
 	 (call-with-input-file f
 	    (lambda (p)
 	       (let loop ((e (hop-read p)))
-		  (match-case e
-		     ((module ?module-name . ?-)
-		      (module-add-access! module-name (list f) abase))
-		     ($
-		      (loop (hop-read p)))))))))
+		  (unless (eof-object? e)
+		     (match-case e
+			((module ?module-name . ?-)
+			 (module-add-access! module-name (list f) abase))
+			(else
+			 (loop (hop-read p))))))))))
    
    (for-each (lambda (f)
 		(when (member (suffix f) (hop-module-suffixes))

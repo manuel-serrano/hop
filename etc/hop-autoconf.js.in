@@ -107,14 +107,17 @@ function hop_Config() {
   this.is_tablet = ( navigator.userAgent.indexOf( "Tablet" ) >= 0 );
 
   /* html5 */
-  var audio = document.createElement( "audio" );
   this.html5_video = "play" in document.createElement( "video" );
+  var audio = document.createElement( "audio" );
 
   if( !"HTMLAudioElement" in window ) {
      this.html5_audio = false;
   } else {
     this.html5_audio = 
-       ("play" in audio) && (audio.constructor === window[ "HTMLAudioElement" ]);
+       ("play" in audio) 
+       && (audio.constructor === window[ "HTMLAudioElement" ])
+       && ((audio.canPlayType( "audio/ogg" ) != "")
+           || (audio.canPlayType( "audio/mpeg" ) != ""));
   }
 
   /* flash version */
