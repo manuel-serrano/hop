@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Dec 16 11:30:50 2010 (serrano)                */
+;*    Last change :  Fri Dec 17 08:42:25 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -137,7 +137,7 @@
 ;*    http-error ::&hop-security-error ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (http-error e::&hop-security-error)
-   (let ((s (with-error-to-string (lambda () (error-notify e))))
+   (let ((s (with-error-to-string (lambda () (exception-notify e))))
 	 (req (current-request)))
       (instantiate::http-response-hop
 	 (request req)
@@ -156,7 +156,12 @@
 ;*    http-error ::&hop-autoload-error ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (http-error e::&hop-autoload-error)
-   (let ((s (with-error-to-string (lambda () (error-notify e))))
+   (let ((s (with-error-to-string
+	       (lambda ()
+		  (with-access::&hop-autoload-error e (obj)
+		     (if (&exception? obj)
+			 (exception-notify obj)
+			 (exception-notify e))))))
 	 (req (current-request)))
       (instantiate::http-response-hop
 	 (request req)
@@ -445,7 +450,7 @@ Reloading the page is the only way to fix this problem.")))))
 ;*    http-remote-error ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-remote-error host e)
-   (let ((s (with-error-to-string (lambda () (error-notify e))))
+   (let ((s (with-error-to-string (lambda () (exception-notify e))))
 	 (req (current-request)))
       (instantiate::http-response-hop
 	 (request req)
@@ -466,7 +471,7 @@ Reloading the page is the only way to fix this problem.")))))
 ;*    http-io-error ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (http-io-error e)
-   (let ((s (with-error-to-string (lambda () (error-notify e))))
+   (let ((s (with-error-to-string (lambda () (exception-notify e))))
 	 (req (current-request)))
       (instantiate::http-response-hop
 	 (request req)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Wed Dec 15 16:28:09 2010 (serrano)                */
+;*    Last change :  Fri Dec 17 11:05:07 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -495,4 +495,3 @@
 ;*---------------------------------------------------------------------*/
 (define (spage-tab spage)
    (dom-first-child spage.spcontent))
-

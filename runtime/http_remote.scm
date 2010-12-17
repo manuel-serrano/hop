@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Thu Dec 16 11:24:05 2010 (serrano)                */
+;*    Last change :  Fri Dec 17 08:42:32 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -76,7 +76,8 @@
 		   (remote #f))
 	       (with-handler
 		  (lambda (e)
-		     (unless (&io-error? e) (error-notify e))
+		     (unless (&io-error? e)
+			(exception-notify e))
 		     (when remote
 			(with-trace 4 'connection-close@handler
 			   (connection-close! remote)))

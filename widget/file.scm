@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Fri Jul  9 17:29:30 2010 (serrano)                */
+;*    Last change :  Fri Dec 17 08:19:22 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -411,7 +411,11 @@
 		       (if (webdav? url)
 			   (with-handler
 			      (lambda (e)
-				 '())
+				 (if (&io-error? e)
+				     (begin
+					(exception-notify e)
+					'())
+				     (raise e)))
 			      (map! url-encode
 				    (webdav-directory->path-list
 				     (url-encode url))))

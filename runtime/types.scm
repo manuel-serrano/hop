@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Nov  1 08:35:29 2010 (serrano)                */
+;*    Last change :  Fri Dec 17 09:12:31 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -238,3 +238,11 @@
 				       rep2
 				       rep)))
 			  (old-hook res)))))))
+
+;*---------------------------------------------------------------------*/
+;*    exception-notify ::&hop-autoload-error ...                       */
+;*---------------------------------------------------------------------*/
+(define-method (exception-notify exc::&hop-autoload-error)
+   (with-access::&hop-autoload-error exc (proc obj msg)
+      (fprintf (current-error-port) "~a: cannot autoload ~s\n" proc msg)
+      (exception-notify obj)))

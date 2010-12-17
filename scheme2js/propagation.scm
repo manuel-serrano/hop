@@ -550,7 +550,9 @@
 		      (keyword? fst-operand)
 		      (eq? fst-operand #unspecified))
 		  (with-handler
-		     (lambda (e) #f)
+		     (lambda (e)
+			(exception-notify e)
+			#f)
 		     (instantiate::Const
 			(location location)
 			(value (apply equal? (map operand->val operands)))))
@@ -569,7 +571,9 @@
 	    string->keyword string-ref string-copy
 	    bit-not bit-and bit-or bit-xor bit-lsh bit-rsh bit-ursh length)
        (with-handler
-	  (lambda (e) #f)
+	  (lambda (e)
+	     (exception-notify e)
+	     #f)
 	  (let ((res (eval `(,op ,@(map operand->val operands)))))
 	     (instantiate::Const
 		(location location)
@@ -578,7 +582,9 @@
 	    cadar cddar caaar cdaar caddr cdddr caadr cdadr
 	    member memq memv length assoc assq assv)
        (with-handler
-	  (lambda (e) #f)
+	  (lambda (e)
+	     (exception-notify e)
+	     #f)
 	  (let ((res (eval `(,op ,@(map operand->val operands)))))
 	     ;; if the result is a pair, ... we ignore it. (in case it has been
 	     ;; shared... ex: (cdr '(1 2)) would yield '(2). But when producing

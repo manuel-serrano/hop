@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Wed Oct 20 09:37:32 2010 (serrano)                */
+;*    Last change :  Fri Dec 17 07:44:43 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -140,15 +140,6 @@
 	     (ast (skip-declaration (string->html s))))
 	 (with-handler
 	    (lambda (e)
-	       (when (&hop-injection-error? e)
-		  (let ((p (open-output-file "/tmp/FOO.good")))
-		     (xml-write xml p (duplicate::xml-backend backend
-					 (security security-manager-tree-compare)))
-		     (close-output-port p))
-		  (let ((p (open-output-file "/tmp/FOO.bad")))
-		     (xml-write ast p (duplicate::xml-backend backend
-					 (security security-manager-tree-compare)))
-		     (close-output-port p)))
 	       (let ((rep (http-error e)))
 		  (if (http-response-hop? rep)
 		      (begin

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Tue Nov 23 14:12:43 2010 (serrano)                */
+;*    Last change :  Fri Dec 17 08:42:14 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -365,7 +365,7 @@
 					  (let ((op (open-output-string)))
 					     (with-error-to-port op
 						(lambda ()
-						   (error-notify e)))
+						   (exception-notify e)))
 					     (close-output-port op))
 					  "connection refused"))
 			      (ip (open-input-string strerr)))
