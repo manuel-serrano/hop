@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sat Dec 18 06:25:18 2010 (serrano)                */
+;*    Last change :  Sun Dec 19 07:45:21 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -303,6 +303,7 @@
 			      (host (or host path))
 			      (port (or port (scheme-default-port s)))
 			      (header header)
+			      (connection-timeout timeout)
 			      (timeout timeout)
 			      (path (if host path "/"))))
 			(suc (if (procedure? success) success (lambda (x) x)))

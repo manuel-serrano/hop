@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sat Dec 18 06:23:49 2010 (serrano)                */
+;*    Last change :  Sun Dec 19 07:48:17 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -728,23 +728,25 @@
 ;*---------------------------------------------------------------------*/
 (define (http-send-request req::http-request proc::procedure)
    (with-trace 3 "http-send-request"
-      (with-access::http-request req (scheme method path (httpv http) host port header socket userinfo timeout)
+      (with-access::http-request req (scheme method path (httpv http) host port header socket userinfo timeout connection-timeout)
 	 (let ((ssl (eq? scheme 'https)))
 	    (let loop ((host host)
 		       (port port)
 		       (user userinfo)
 		       (path path))
+	       (tprint "TIMEOUT=" timeout)
 	       (trace-item "scheme=" scheme " host=" host " port=" port)
 	       (trace-item "method=" method " path=" path)
 	       (let* ((sock (if (and (not ssl) (hop-use-proxy))
-				(make-proxy-socket (hop-use-proxy) timeout)
-				(make-client-socket/timeout host port
-							    timeout req ssl)))
+				(make-proxy-socket
+				 (hop-use-proxy) connection-timeout)
+				(make-client-socket/timeout
+				 host port connection-timeout req ssl)))
 		      (out (socket-output sock))
 		      (in (socket-input sock)))
 		  (when (> timeout 0)
-		     (output-port-timeout-set! out timeout)
-		     (input-port-timeout-set! in timeout))
+		     (output-timeout-set! out timeout)
+		     (input-timeout-set! in timeout))
 		  (with-handler
 		     (lambda (e)
 			(if (&http-redirection? e)
@@ -797,10 +799,11 @@
 ;*    make-proxy-socket ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (make-proxy-socket proxy timeout)
-   (let ((i (string-index proxy #\:)))
+   (let ((i (string-index proxy #\:))
+	 (tmt (micro-seconds timeout)))
       (if (and (fixnum? i) (>fx i 0))
 	  (let* ((len (string-length proxy))
 		 (proxy (substring proxy 0 i))
 		 (port (string->integer (substring proxy (+fx i 1) len))))
-	     (make-client-socket proxy port :timeout timeout))
-	  (make-client-socket proxy 80 :timeout timeout))))
+	     (make-client-socket proxy port :timeout tmt))
+	  (make-client-socket proxy 80 :timeout tmt))))

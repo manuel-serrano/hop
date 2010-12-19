@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Sun Dec 19 06:53:22 2010 (serrano)                */
+;*    Last change :  Sun Dec 19 08:54:59 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ configuration                                                 */
@@ -96,7 +96,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-connection-timeout ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-parameter hz-connection-timeout (*fx 30000 1000))
+(define-parameter hz-connection-timeout 30000)
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-publishers ...                                                */
