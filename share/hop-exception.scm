@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Thu Dec 16 10:52:53 2010 (serrano)                */
+;*    Last change :  Sat Dec 18 11:54:27 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -341,7 +341,7 @@
 			(<TD>
 			   (<SPAN> :style "color: #777; font-weight: bold" name)
 			   ": "
-			   (<TT> :style "font-size: 140%" msg)))
+			   (<TT> msg)))
 		     (<TR>
 			(<TD>
 			   src))
@@ -352,7 +352,7 @@
 		  (<DIV> :hssclass "hop-error-trace"
 		     (<DIV> :style "font-weight: bold" "Service:")
 		     (<TABLE> :style "padding-left: 1em"
-			(<TR> (<TD> :style "font-size: 120%; font-family: monospace; font-weight: normal"
+			(<TR> (<TD> :style "font-size: 110%; font-family: monospace; font-weight: normal"
 				 (obj->string exc.hopService #f))))))
 	       (when (pair? exc.hopStack)
 		  (<EXCEPTION-STACK> exc.hopStack))

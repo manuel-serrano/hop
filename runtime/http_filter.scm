@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Sun Nov  7 08:57:17 2010 (serrano)                */
+;*    Last change :  Sat Dec 18 06:22:35 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
@@ -56,7 +56,7 @@
 	 (unwind-protect
 	    (begin
 	       ;; the header
-	       (with-trace 4 'http-response-header
+	       (with-trace 4 "http-response-header"
 		  (http-write-line rp (response-remote-start-line r))
 		  (http-write-header rp (http-filter-proxy-header header))
 		  (http-write-line rp)
@@ -66,7 +66,7 @@
 		     (send-chars sp rp content-length))
 		  (flush-output-port rp))
 	       ;; the body
-	       (with-trace 4 'http-response-body
+	       (with-trace 4 "http-response-body"
 		  (let* ((ip (socket-input rsock))
 			 (op (socket-output socket))
 			 (statusf (http-response-filter-statusf f))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Dec  1 17:51:42 2010 (serrano)                */
+/*    Last change :  Sun Dec 19 07:02:45 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -87,12 +87,14 @@ public class HopDroid extends Thread {
 
    // kill
    public void kill() {
+      Log.v( "HopDroid", "killing..." );
       try {
 	 if( !serv1.isClosed() ) serv1.close();
 	 if( !serv2.isClosed() ) serv2.close();
       } catch( Exception _ ) {
 	 ;
       }
+      Log.v( "HopDroid", "killed..." );
    }
       
    // run hop

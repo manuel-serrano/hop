@@ -1,0 +1,798 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.2.x/weblets/hz/xml.hop                */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
+;*    Last change :  Sat Dec 18 06:51:03 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    HZ xml extensions                                                */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hz_xml
+
+   (import hz_config
+	   hz
+	   hz_install
+	   hz_weblet
+	   hz_db
+	   hz_sync)
+   
+   (export (<HZ> req #!key (weblet #f))
+	   (<HZ:BODY> . content)
+	   (<HZ:PREFERENCES> prefs)
+	   (<HZ:PUBLISHERS>)))
+
+;*---------------------------------------------------------------------*/
+;*    hz/publishers ...                                                */
+;*---------------------------------------------------------------------*/
+(define-service (hz/publishers url action)
+   (case action
+      ((add)
+       (hz-publisher-add! url)
+       (<HZ:PUBLISHERS>))
+      ((remove)
+       (hz-publishers-set! (filter! (lambda (x)
+				       (cond
+					  ((string? x)
+					   (not (string=? x url)))
+					  ((pair? x)
+					   (not (string=? (car x) url)))
+					  (else
+					   #t)))
+				    (hz-publishers)))
+       (hz-preferences-save (hz-prefs))
+       (<HZ:PUBLISHERS>))
+      ((enable)
+       (hz-publisher-enable! url #t)
+       #t)
+      ((disable)
+       (hz-publisher-enable! url #f)
+       #t)))
+
+;*---------------------------------------------------------------------*/
+;*    hz/resolver ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-service (hz/resolver url)
+   (hop-hz-server-set! url)
+   (hop-verb 1 "Switching to hz server: " url "\n")
+   url)
+
+;*---------------------------------------------------------------------*/
+;*    <HZ> ...                                                         */
+;*---------------------------------------------------------------------*/
+(define (<HZ> req #!key (weblet #f))
+   (<HTML>
+      (<HEAD> :title "Hop Hz"
+	 :include "hop-notepad" "hop-paned" "hop-tree" "hop-foldlist"
+	 :include "hop-window" "hop-login" "hop-prefs" "hop-foot"
+	 :base (service-base-url hz req)
+	 :favicon "etc/favicon.png"
+	 :css "hz.hss")
+      (<HZ:BODY>
+	 
+	 ~(define (hz-publishers url action)
+	     (with-hop ($hz/publishers url action)
+		(lambda (h)
+		   (innerHTML-set! "hz-publishers" h))))
+	 
+	 ~(define (hz-resolver url)
+	     (with-hop ($hz/resolver url)
+		(lambda (h)
+		   #t)))
+	 
+	 (<NOTEPAD> :id "hz-notepad"
+	    (<NPTAB> :id "hz-weblets-pan"
+	       (<NPTABHEAD> "Weblets")
+	       (<DELAY>
+		  (lambda ()
+		     (<HZ:WEBLETS> :weblet weblet))))
+	    (<NPTAB>
+	       (<NPTABHEAD> "Synchronize")
+	       (<HZ:SYNC>))
+	    (<NPTAB>
+	       (<NPTABHEAD> "Publishers")
+	       (<DELAY>
+		  (lambda ()
+		     (<HZ:PUBLISHERS>))))
+	    (<NPTAB>
+	       (<NPTABHEAD> "Cache")
+	       (<DELAY>
+		  (lambda ()
+		     (<HZ:CACHE>))))
+	    (<NPTAB>
+	       (<NPTABHEAD> "Preferences")
+	       (<DELAY>
+		  (lambda ()
+		     (<HZ:PREFERENCES>))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:BODY> ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (<HZ:BODY> . content)
+   (<BODY>
+      
+      ~(define (authenticate e url)
+	  (with-hop ($(service (url user passwd)
+			 (hz-sync-authenticate! url user passwd))
+		      url e.user e.password)
+	     (lambda (e)
+		(sync))))
+      
+      ~(define (sync-callback h)
+	  (if (pair? h)
+	      (let ((url (cdr h)))
+		 (login-panel
+		  :message (<DIV> :class "authenticate-message"
+			      "Authentication required for " (<SPAN> url))
+		  :onlogin (lambda (e) (authenticate e url))))
+	      (innerHTML-set! "update" h)))
+      
+      ~(define (sync)
+	  (with-hop ($(service ()
+			 (let ((sync (hz-sync!)))
+			    (if (list? sync)
+				(<HZ:SYNC-UPDATE> sync)
+				(cons 'login sync)))))
+	     sync-callback))
+      
+      (<DIV> :align "center"
+	 (<TABLE> :class "main"
+	    (<TR>
+	       (<TD> :class "logo" (<IMG> :class "logo" :src "etc/logo.png"))
+	       (<TD> :class "main" :valign 'top
+		  (<TABLE>
+		     (<TR> (<TD> (<DIV> :id "title" "Hz -- Hop Weblets Manager")))
+		     (<TR> (apply <TD> content)))))))
+      (<HZ:FOOT>)))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:FOOT> ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (<HZ:FOOT>)
+   (<FOOT>
+      (<FOOT-BUTTON>
+	 :href "http://www.gnu.org/licenses/gpl.html"
+	 :title "Gnu GPL"
+	 :src "gpl.png")
+      (<FOOT-BUTTON>
+	 :href "http://jigsaw.w3.org/css-validator/check/referer"
+	 :title "Valid CSS"
+	 :src "html401.png")
+      (<FOOT-BUTTON>
+	 :href "http://jigsaw.w3.org/css-validator/check/referer"
+	 :title "Valid CSS"
+	 :src "css.png"))) 
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:CACHE> ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (<HZ:CACHE>)
+   (define rm
+      (service (file)
+	 (delete-path (make-file-name (hz-download-directory) file))
+	 (<CACHE>)))
+   (define rm-all
+      (service ()
+	 (for-each delete-path (directory->path-list (hz-download-directory)))
+	 (<CACHE>)))
+   (define (<CACHE>)
+      (let ((c 0))
+	 (<TABLE> :class "hz-cache"
+	    (map (lambda (file)
+		    (<TR> :class (if (odd? c) "odd" "even")
+		       (<TD> file)
+		       (<TD> :class "button"
+			  (<BUTTON>
+			     :onclick ~(with-hop ($rm $file)
+					  (lambda (h)
+					     (innerHTML-set! "hz-cache" h)))
+			     "Remove"))))
+		 (directory->list (hz-download-directory))))))
+   (<DIV>
+      (<TABLE> :id "hz-remove-all"
+	 (<TR>
+	    (<TD> "Clear cache: "
+		  (<SPAN> :id "hz-repo" (hz-download-directory)))
+	    (<TD> :class "button"
+	       (<BUTTON> :onclick ~(with-hop ($rm-all)
+				      (lambda (h)
+					 (innerHTML-set! "hz-cache" h)))
+		  "Remove"))))
+      (<DIV> :id "hz-cache"
+	 (<CACHE>))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:PREFERENCES> ...                                             */
+;*---------------------------------------------------------------------*/
+(define (<HZ:PREFERENCES>)
+   (list
+    (<DIV>
+       (<BUTTON> :onclick ~(preferences-save "hz-preferences" $(hz-prefs))
+	  "Save preferences")
+       (hz-preferences-edit :id "hz-preferences"))
+    (<HZ:RESOLVER>)))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:PUBLISHERS> ...                                              */
+;*---------------------------------------------------------------------*/
+(define (<HZ:PUBLISHERS>)
+   
+   (<DIV> :id "hz-publishers"
+      
+      (let ((inp (<INPUT> :size 70 :name "url" :type "text"
+		    :onchange ~(hz-publishers this.value 'add))))
+	 
+	 (<TABLE> :class "hz-publishers"
+	    (<TR> (<TH> :class "label" :colspan 3 "Add new publisher URL"))
+	    (<TR> (<TD> :colspan 2 inp)
+		  (<TD> (<BUTTON>
+			   :onclick ~(hz-publishers $inp.value #t)
+			   "add")))
+	    (<TR> (<TH> :class "label" :colspan 3 "Publishers URL"))
+	    (let ((c 0))
+	       (map (lambda (x)
+		       (let ((url (if (pair? x) (car x) x))
+			     (checked (if (pair? x) (cadr x) #t)))
+			  (set! c (+fx c 1))
+			  (<TR> :class (if (odd? c) "odd" "even")
+			     (<TD> :class "hz-publishers-enable"
+				(<INPUT> :type 'checkbox
+				   :checked checked
+				   :onclick ~(with-hop ($hz/publishers
+							$url
+							(if this.checked
+							    'enable
+							    'disable)))
+				   :title "Enable/Disable"))
+			     (<TD> (<TT> url))
+			     (<TD> :class "hz-publishers-button"
+				(<BUTTON>
+				   :title "Remove from publishers list"
+				   :onclick ~(hz-publishers $url 'remove)
+				   "Remove")))))
+		    (hz-publishers)))))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:RESOLVER> ...                                                */
+;*---------------------------------------------------------------------*/
+(define (<HZ:RESOLVER>)
+   
+   (let ((inp (<INPUT> :name "resolver" :type "text"
+		 :value (hop-hz-server)
+		 :onchange ~(hz-resolver this.value))))
+      
+      (<DIV> :id "hz-resolver"
+	 (<TABLE> :class "hz-resolver"
+	    (<COLGROUP> (<COL> :class "col1") (<COL>))
+	    (<TR> (<TD> (<BUTTON> :onclick ~(hz-resolver $inp.value)
+			   "Use preferences")))
+	    (<TR> (<TH> :class "label" :colspan 2 "Server"))
+	    (<TR> (<TD> "Module server:") (<TD> inp)))
+	 (<DIV> :id "hz-resolver-comment"
+	    "The HZ module server is used to find Hop module embedded inside
+HZ packages. Modifying here the resolver will only apply to the current
+sessions. To change it permanently, modify the "
+	    (<TT> (make-file-name (hop-rc-directory) (hop-rc-file))) " to
+add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")") "."))))
+   
+;*---------------------------------------------------------------------*/
+;*    <HZ:SYNC> ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (<HZ:SYNC>)
+   (let ((install (service (url auth)
+		     (let ((o (hz-install-url url :auth auth)))
+			(if (weblet? o)
+			    (<DIV> (<TT> url) " successfully installed")
+			    o)))))
+      (<DIV>
+	 
+	 ~(define (install-callback h)
+	     (if (pair? h)
+		 (if (eq? (car h) 401)
+		     (let ((url (cadr h)))
+			(login-panel
+			 :message (<DIV> :class "authenticate-message"
+				     "Authentication required for " (<SPAN> url))
+			 :onlogin (lambda (e)
+				     (with-hop ($install url (cons e.user e.password))
+					install-callback))))
+		     (apply error h))
+		 (innerHTML-set! "update" h)))
+
+	 (<TABLE> :class "hz-direct-install"
+	    (<TR>
+	       (<TH> "Weblet URL: "
+		     (<INPUT> :size 70
+			:name "url" :class "direct-url" :id "install-url"
+			:type "text"
+			:onkeyup ~(when (= event.keyCode 13)
+				     (with-hop ($install this.value #f)
+					install-callback))
+			:value ""))
+	       (<TD> :class "install-button"
+		  (<BUTTON> :class "install"
+		     :title "Install weblet from ULR"
+		     :onclick ~(let ((e (dom-get-element-by-id "install-url")))
+				  (with-hop ($install e.value #f)
+				     install-callback))
+		     "Install"))))
+	 (<DIV> :id "update"
+	    (<HZ:SYNC-UPDATE> '())))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:SYNC-UPDATE> ...                                             */
+;*---------------------------------------------------------------------*/
+(define (<HZ:SYNC-UPDATE> errs)
+   (<DIV>
+    (<TABLE> :class "sync"
+       (<TR> (<TH> "Last sync: "
+		   (<SPAN> :class "update" (hz-db-sync-date)))
+	     (<TD> :class "sync-button"
+		(<BUTTON> :class "sync"
+		   :title "Synchronize publishers' list"
+		   :onclick ~(sync)
+		   "Sync"))))
+    (<TABLE> :class "update"
+       (<COLGROUP> (<COL> :span 3 :width "33%"))
+       (<TR>
+	  (<TH> :class "new" "News:")
+	  (<TH> :class "update" "Updates:")
+	  (<TH> :class "error" "Errors:"))
+       (<TR>
+	  (<TD> (map <HZ:GOTO-WEBLET> (hz-db-find-new)))
+	  (<TD> (map <HZ:GOTO-WEBLET> (hz-db-find-update)))
+	  (<TD> :class "error"
+	     (map (lambda (x)
+		     (<DIV> :class "error"
+			(<DIV> (<A> :href (car x) (<TT> (car x))))
+			(<DIV> :class "error-msg" (cdr x))))
+		  errs))))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/goto-weblet ...                                               */
+;*---------------------------------------------------------------------*/
+(define-service (hz/goto-weblet name category)
+   (let ((w (hz-db-find name category)))
+      (<HZ:WEBLET> w)))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:GOTO-WEBLET> ...                                             */
+;*---------------------------------------------------------------------*/
+(define (<HZ:GOTO-WEBLET> w)
+   (with-access::weblet w (name version category title)
+      (<DIV> :onclick ~(with-hop ($hz/goto-weblet $name $category)
+			  (lambda (h)
+			     (notepad-select "hz-notepad"
+					     "hz-weblets-pan"
+					     #t
+					     (lambda ()
+						(innerHTML-set!
+						 "hz-weblet" h)))))
+	 (<SPAN> :class "name" name "-" version) " (" category ")")))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLETS> ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLETS> #!key weblet)
+   (<DIV> :class "weblets"
+      (<HZ:WEBLETS-SEARCH>)
+      (<HZ:WEBLETS-PAN> (if weblet (<HZ:WEBLET> weblet) ""))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLETS-SEARCH> ...                                          */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLETS-SEARCH>)
+   (let* ((<search> (lambda (fmt entries)
+		       (<TABLE> :class "search-result"
+			  (<TR> (<TH> (format fmt (length entries))))
+			  (map (lambda (e)
+				  (let ((s (service () (<HZ:WEBLET> e))))
+				     (<TR>
+					(<TD> :onclick
+					   ~(with-hop ($s)
+					       (lambda (h)
+						  (innerHTML-set! "hz-weblet" h)))
+					   (<SPAN> :class "name"
+					      (weblet-name e)
+					      "-" (weblet-version e))
+					   " (" (weblet-category e)
+					   ") -- "
+					   (<SPAN> :class "descr"
+					      (weblet-title e))))))
+			       entries))))
+	  (search (service (value)
+		     (let ((fmt (format "`~a' matches ~~a weblets" value)))
+			(<search> fmt (hz-db-find-keyword value)))))
+	  (searchn (service ()
+		      (let ((fmt "~a new weblets found"))
+			 (<search> fmt (hz-db-find-new)))))
+	  (searcho (service ()
+		      (let ((fmt "~a update weblets found"))
+			 (<search> fmt (hz-db-find-update))))))
+      (list
+       (<TABLE> :class "search"
+	  (<TR>
+	     (<TD> "search:")
+	     (<TD> (<INPUT>
+		      :type "text"
+		      :title "Hit [Return] to search"
+		      :size 20
+		      :onkeyup ~(if (= event.keyCode 13)
+				    (window-open :id "Hop Weblets Hz Query"
+				       :title "Hop Weblets Hz Query"
+				       :src ($search this.value)
+				       :width 430 :height 300
+				       :left (- window.innerWidth 450)
+				       :top 100
+				       :parent document.body))))
+	     (<TD> (<BUTTON> :onclick ~(window-open :id "Hop Weblets Hz Query"
+					  :title  "Hop Weblets Hz Query"
+					  :src ($searcho)
+					  :width 430  :height 300
+					  :left (- window.innerWidth 450)
+					  :top 100
+					  :parent document.body)
+		      :title "Show weblets update"
+		      "Update"))
+	     (<TD> (<BUTTON> :onclick ~(window-open :id "Hop Weblets Hz Query"
+					  :title "Hop Weblets Hz Query"
+					  :src ($searchn)
+					  :width 430 :height 300
+					  :left (- window.innerWidth 450)
+					  :top 100
+					  :parent document.body)
+		      :title "Show new available weblets"
+		      "New")))))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLETS-PAN> ...                                             */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLETS-PAN> weblet)
+   (<PANED> :fraction 35
+      (<PAN>
+	 (<TREE> :id "main-tree" :open #t
+	    (<TRHEAD>
+	       (let ((dt (hz-db-sync-date)))
+		  (format "~a ~a ~a"
+			  (date-day dt)
+			  (month-aname (date-month dt))
+			  (date-year dt))))
+	    (<TRBODY>
+	       (map (lambda (c)
+		       (<TREE>
+			  (<TRHEAD> :value c c)
+			  (<TRBODY>
+			     (<DELAY>
+				(lambda ()
+				   (<HZ:WEBLETS-CATEGORY> c))))))
+		    (hz-db-get-categories)))))
+      (<PAN> (<DIV> :class "weblet" :id "hz-weblet" weblet))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLETS-CATEGORY> ...                                        */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLETS-CATEGORY> c)
+   (let* ((icon (cond
+		   ((assoc c (hz-category-icons)) => cdr)
+		   (else "package.png")))
+	  (ifile (make-file-path "etc" "icons" icon)))
+      (map (lambda (e)
+	      (with-access::weblet e (name category)
+		 (let ((s (service ()
+			     (let ((ne (hz-db-get-entry-by-name-category
+					name category)))
+				(when (weblet? ne)
+				   (<HZ:WEBLET> ne))))))
+		    (<TRLEAF> :icon ifile
+		       (<SPAN> :class "weblet"
+			  :onclick ~(with-hop ($s)
+				       (lambda (h)
+					  (innerHTML-set! "hz-weblet" h)))
+			  name)))))
+	   (hz-db-get-entries-by-category c))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLET> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLET> w)
+   (with-access::weblet w (name version author title comment home install url)
+      (<VBOX> :class "weblet"
+	 (<VBOX-BLOCK> (<SPAN> :class "title" name " " version))
+	 (<VBOX-SEPARATOR>)
+	 (<VBOX-BLOCK>
+	    (<TABLE> :class "weblet"
+	       (<TR> (<TD> :class "author" "By " author))
+	       (unless (or (not (string? home)) (string=? home ""))
+		  (<TR> (<TD> :class "homepage" 
+			   (<A> :href home :title home (<TT> home)))))
+	       (<TR> (<TD> (<P> :class "title" title)))
+	       (<TR> (<TD> (<P> :class "comment" comment)))
+	       (<TR> (<TD> "&#160;"))
+	       (<TR> (<TD> :class "action"
+			(<DIV> :class "action"
+			   (let ((id (xml-make-id)))
+			      (<DIV> :id id
+				 (<TABLE>
+				    (<HZ:WEBLET-ACTION> id w)))))))
+	       (unless (string=? install "")
+		  (<TR> :class "lastrow"
+		     (<TD> :class "update" "Currently installed version: "
+			(<SPAN> :class "old-version" install)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLET-ACTION> ...                                           */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLET-ACTION> id w)
+   (with-access::weblet w (minhop maxhop driver version install)
+      (cond
+	 ((and (not (string-null? minhop))
+	       (< (string-natural-compare3 (hop-version) minhop) 0))
+	  (<HZ:WEBLET-ACTION-INCOMPATIBLE> id w (format "> ~a" minhop)))
+	 ((string=? driver "standard")
+	  (<HZ:WEBLET-ACTION-UNMANAGED> id w))
+	 ((and (not (string-null? maxhop))
+	       (> (string-natural-compare3 (hop-version) maxhop) 0))
+	  (<HZ:WEBLET-ACTION-INCOMPATIBLE> id w (format "< ~a" maxhop)))
+	 ((=fx (string-length install) 0)
+	  (<HZ:WEBLET-ACTION-INSTALL> id w))
+	 ((string=? version install)
+	  (if (string=? driver "hz")
+	      (<HZ:WEBLET-ACTION-UNINSTALL> id w)
+	      (<HZ:WEBLET-ACTION-REMOVE> id w)))
+	 (else
+	  (<HZ:WEBLET-ACTION-UPDATE> id w)))))
+
+;*---------------------------------------------------------------------*/
+;*    action ...                                                       */
+;*---------------------------------------------------------------------*/
+(define action
+   (service (action id name cat)
+      (<TABLE>
+	 (let ((w (hz-db-find name cat)))
+	    (cond
+	       ((not (weblet? w))
+		(error 'hz "Cannot find weblet" (format "~a/~a" name cat)))
+	       ((string=? action "install")
+		(hz-install-weblet w)
+		(<HZ:WEBLET-ACTION-DONE> id name cat action))
+	       ((string=? action "uninstall")
+		;; uninstallation
+		(hz-uninstall-weblet w)
+		;; db update
+		(hz-db-add-or-update! w)
+		(<HZ:WEBLET-ACTION-DONE> id name cat action))
+	       ((string=? action "remove")
+		(hz-uninstall-weblet w)
+		(hz-db-remove-weblet db w)
+		(<HZ:WEBLET-ACTION-DONE> id name cat action))
+	       ((string=? action "refresh")
+		(<HZ:WEBLET-ACTION> id w))
+	       (else
+		;; update
+		(hz-uninstall-weblet w)
+		(hz-install-weblet w)
+		(hz-db-add-or-update! w)
+		(<HZ:WEBLET-ACTION-DONE> id name cat action)))))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLET-ACTION-DONE> ...                                      */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLET-ACTION-DONE> id name cat act)
+   (<TR>
+      (<TD> :class "icon" (<IMG> :src "etc/icons/apply.png"))
+      (<TD> :class "action"
+	 (<SPAN> :onclick ~(with-hop ($action "refresh" $id $name $cat)
+			      (lambda (h)
+				 (innerHTML-set! $id h)))
+	    act " completed"))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLET-ACTION-INSTALL> ...                                   */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLET-ACTION-INSTALL> id w)      
+   (<TR>
+      (<TD> :class "icon" (<IMG> :src "etc/icons/package.png"))
+      (<TD> :class "action"
+	 (<SPAN> :onclick ~(with-hop ($action "install" $id
+					      $(weblet-name w)
+					      $(weblet-category w))
+			      (lambda (h)
+				 (innerHTML-set! $id h)))
+	    :title (format "Install the weblet from ~a" (weblet-url w))
+	    "Install"))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLET-RUN> ...                                              */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLET-RUN> id w)
+   (list
+    (<TD> :class "icon" (<IMG> :src "etc/icons/run.png"))
+    (<TD> :class "action"
+       (<SPAN> :onclick ~(window-open :title $(weblet-name w)
+			    :src $(format "~a/~a"
+					  (hop-service-base)
+					  (weblet-name w)))
+	  
+	  :title "Run the weblet in a new window"
+	  "Run"))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLET-PREF> ...                                             */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLET-PREF> id w)
+   (list
+    (<TD> :class "icon" (<IMG> :src "etc/icons/config.png"))
+    (<TD>
+       :class "action"
+       (<SPAN>
+	  :onclick ~(window-open :title $(weblet-name w)
+		       :src $(format "~a/~a/preferences"
+				     (hop-service-base)
+				     (weblet-name w)))
+	  :title "Run the weblet in a new window"
+	  "Configure"))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLET-DOC> ...                                              */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLET-DOC> id w)
+   (list
+    (<TD> :class "icon" (<IMG> :src "etc/icons/doc.png"))
+    (<TD> :class "action"
+       (<SPAN>
+	  :onclick ~(window-open :title $(weblet-name w)
+		       :src $(format "~a/~a/documentation"
+				     (hop-service-base)
+				     (weblet-name w)))
+	  :title "Run the weblet in a new window"
+	  "Documentation"))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLET-REMOVE> ...                                           */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLET-REMOVE> id w)
+   (list
+    (<TD> :class "icon" (<IMG> :src "etc/icons/remove.png"))
+    (<TD> :class "action"
+       (<SPAN>
+	  :onclick ~(with-hop ($action "remove" $id
+				       $(weblet-name w)
+				       $(weblet-category w))
+		       (lambda (h)
+			  (innerHTML-set! $id h)))
+	  :title "Uninstall and remove the weblet from the database"
+	  "Remove"))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLET-UNINSTALL> ...                                        */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLET-UNINSTALL> id w)
+   (list
+    (<TD> :class "icon" (<IMG> :src "etc/icons/delete.png"))
+    (<TD> :class "action"
+       (<SPAN>
+	  :onclick ~(with-hop ($action "uninstall" $id
+				       $(weblet-name w)
+				       $(weblet-category w))
+		       (lambda (h)
+			  (innerHTML-set! $id h)))
+	  :title "Uninstall the weblet"
+	  "Uninstall"))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLET-UPDATE> ...                                           */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLET-UPDATE> id w)
+   (list 
+    (<TD> :class "icon" (<IMG> :src "etc/icons/update.png"))
+    (<TD> :class "action"
+       (<SPAN>
+	  :onclick ~(with-hop ($action "update" $id
+				       $(weblet-name w)
+				       $(weblet-category w))
+		       (lambda (h)
+			  (innerHTML-set! $id h)))
+	  :title "Update the weblet"
+	  "Update"))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLET-ACTION-UNMANAGED> ...                                 */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLET-ACTION-UNMANAGED> id w)
+   (<TR>
+      (<HZ:WEBLET-RUN> id w)
+      (<TD> "&#160;")
+      (<HZ:WEBLET-PREF> id w)
+      (<TD> "&#160;")
+      (<HZ:WEBLET-DOC> id w)))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLET-ACTION-UNINSTALL> ...                                 */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLET-ACTION-UNINSTALL> id w)
+   (<TR>
+      (<HZ:WEBLET-RUN> id w)
+      (<TD> "&#160;")
+      (<HZ:WEBLET-PREF> id w)
+      (<TD> "&#160;")
+      (<HZ:WEBLET-DOC> id w)
+      (<TD> "&#160;")
+      (<HZ:WEBLET-UNINSTALL> id w)))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLET-ACTION-REMOVE> ...                                    */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLET-ACTION-REMOVE> id w)
+   (<TR>
+      (<HZ:WEBLET-RUN> id w)
+      (<TD> "&#160;")
+      (<HZ:WEBLET-PREF> id w)
+      (<TD> "&#160;")
+      (<HZ:WEBLET-DOC> id w)
+      (<TD> "&#160;")
+      (<HZ:WEBLET-UNINSTALL> id w)
+      (<TD> "&#160;")
+      (<HZ:WEBLET-REMOVE> id w)))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLET-ACTION-UPDATE> ...                                    */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLET-ACTION-UPDATE> id w)
+   (<TR>
+      (<HZ:WEBLET-RUN> id w)
+      (<TD> "&#160;")
+      (<HZ:WEBLET-PREF> id w)
+      (<TD> "&#160;")
+      (<HZ:WEBLET-DOC> id w)
+      (<TD> "&#160;")
+      (<HZ:WEBLET-UPDATE> id w)
+      (<TD> "&#160;")
+      (<HZ:WEBLET-UNINSTALL> id w)))
+
+;*---------------------------------------------------------------------*/
+;*    <HZ:WEBLET-ACTION-INCOMPATIBLE> ...                              */
+;*---------------------------------------------------------------------*/
+(define (<HZ:WEBLET-ACTION-INCOMPATIBLE> id w msg)
+   (<TR>
+      (<TD>
+	 :class "icon"
+	 (<IMG> :src "etc/icons/warning.png"))
+      (<TD>
+	 (<SPAN>
+	    "HOP " (hop-version) " incompatible, required " msg " by weblet "
+	    (weblet-name w)))))
+
+;*---------------------------------------------------------------------*/
+;*    VBOX ...                                                         */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <VBOX> ((id #f)
+			     (class #f)
+			     body)
+   (<TABLE> :class (if class (string-append "vbox " class) "vbox")
+      :id (or id (xml-make-id))
+      :border 0 (map <TR> body)))
+
+;*---------------------------------------------------------------------*/
+;*    <VBOX-BLOCK> ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <VBOX-BLOCK> ((id #f)
+				   (class #f)
+				   body)
+   (let ((b (if (or id class)
+		(<DIV> :class (or class "vbox-block")
+		   :id (or id (xml-make-id))
+		   body)
+		body)))
+      (<TD> :class "vbox-block" b)))
+
+;*---------------------------------------------------------------------*/
+;*    <VBOX-SEPARATOR> ...                                             */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <VBOX-SEPARATOR> ((id #f)
+				       (class #f))
+   (<TD> :class (or class "vbox-separator") :id (or id (xml-make-id))
+      (<DIV> "")))

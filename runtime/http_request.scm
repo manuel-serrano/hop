@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Nov  5 16:53:50 2010 (serrano)                */
+;*    Last change :  Sat Dec 18 06:22:48 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -102,7 +102,7 @@
 ;*    http-parse-method-request ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (http-parse-method-request method pi::input-port po::output-port id)
-   (with-trace 3 'http-parse-method-request
+   (with-trace 3 "http-parse-method-request"
       (let (scheme hostname port path http-version userinfo)
 	 (multiple-value-bind (s u h p a)
 	    (http-url-parse pi)

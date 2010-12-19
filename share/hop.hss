@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Fri Dec 17 08:02:05 2010 (serrano)                */
+/*    Last change :  Sat Dec 18 18:48:48 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
@@ -24,19 +24,18 @@ mo {
 /*    Errors                                                           */
 /*---------------------------------------------------------------------*/
 body[hssclass=hop-error] {
-  background-color: #efe7d4;
-  background-color: #223;
+  background-color: #555558;
   top: 0; bottom: 0;
   left: 0; right: 0;
-  position: absolute;
+  z-index: 100000;
 }
 
 div[hssclass=hop-error-frame] {
-  background-color: #efe7d4;
-  background-color: #000;
+  background-color: #222225;
   top: 0; bottom: 0;
   left: 0; right: 0;
-  position: absolute;
+  position: fixed;
+  z-index: 100001;
   opacity: 0.7;
 }
 
@@ -46,13 +45,15 @@ div[hssclass=hop-error] {
   border: 4px dashed;
   border-color: red;
   opacity: 1;
+  color: black;
 }
 
 div[hssclass=hop-error] {
   margin: 100px;
   top: 0; bottom: 0;
   left: 0; right: 0;
-  position: absolute;
+  position: fixed;
+  z-index: 100002;
 }
 
 div[hssclass=hop-error].warning {
@@ -73,11 +74,13 @@ div[hssclass=hop-error].remote {
 
 div[hssclass=hop-error] > img {
   position: absolute;
+  z-index: 100003;
   left: 24px;
   top: 20px;
 }
 
 div[hssclass=hop-error] > div {
+  z-index: 100003;
   position: absolute;
   left: 96px; 
   top: 20px;
@@ -104,14 +107,14 @@ div[hssclass=hop-error-msg] {
 
 div[hssclass=hop-error-msg] tt {
   font-weight: 200;
-  font-size: large;
+  font-size: 105%;
+  color: inherit;
 }
 
 div[hssclass=hop-error] tt.notfound {
-  color: blue;
   font-weight: bold;
   font-family: monospace;
-  font-size: 120%;
+  font-size: 105%;
 }
 
 div[hssclass=hop-error-trace] {

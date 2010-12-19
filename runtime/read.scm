@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Dec 17 07:44:04 2010 (serrano)                */
+;*    Last change :  Sat Dec 18 06:24:10 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -966,7 +966,7 @@
 ;*    reloaded.                                                        */
 ;*---------------------------------------------------------------------*/
 (define (%hop-load-once file env menv charset modifiedp abase)
-   (with-trace 1 '%hop-load-once
+   (with-trace 1 "%hop-load-once"
       (trace-item "file=" file)
       (trace-item "env=" (if (evmodule? env) (evmodule-name env) ""))
       (trace-item "modifiedp=" modifiedp)

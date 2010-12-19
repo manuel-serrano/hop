@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun Nov  7 08:58:04 2010 (serrano)                */
+;*    Last change :  Sat Dec 18 06:24:00 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -29,7 +29,7 @@
 ;*    http-response ::http-response-shoutcast ...                      */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-shoutcast socket)
-   (with-trace 3 'http-response::http-response-shoutcast
+   (with-trace 3 "http-response::http-response-shoutcast"
       (with-access::http-response-shoutcast r (request file)
 	 (if (authorized-path? request file)
 	     (shoutcast r socket)
@@ -79,7 +79,7 @@
 		(http-write-line p "icy-name: " name)
 		(http-write-line p)
 		;; the body
-		(with-trace 4 'http-response-shoutcast
+		(with-trace 4 "http-response-shoutcast"
 		   (unwind-protect
 		      (call-in-background
 		       (lambda ()
