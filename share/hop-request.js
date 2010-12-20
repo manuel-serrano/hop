@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Dec 16 10:26:38 2010 (serrano)                */
+/*    Last change :  Mon Dec 20 12:38:22 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -157,7 +157,7 @@ function hop_anim_16_16( title ) {
       img.className = "hop-busy-anim";
 
       if( !hop_config.inline_image ) {
-	 img.src = hop_share_directory() + "/icons/busy-anim-16.gif";
+	 img.src = hop_share_directory() + "/icons/anims/busy-anim-16.gif";
       } else {
 	 img.src = hop_busy_anim_16_16;
       }
@@ -187,7 +187,7 @@ function hop_anim_32_32( title ) {
       img.className = "hop-busy-anim";
 
       if( !hop_config.inline_image ) {
-	 img.src = hop_share_directory() + "/icons/busy-anim-32.gif";
+	 img.src = hop_share_directory() + "/icons/anims/busy-anim-32.gif";
       } else {
 	 img.src = hop_busy_anim_32_32;
       }
@@ -429,7 +429,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
    try {
       xhr.send( null );
 
-      if( anim ) {
+      if( anim !== "false" ) {
 	 var a = (anim instanceof Function) ? anim : hop_default_anim_get();
 	 
 	 if( hop_has_setInterval ) {
@@ -476,7 +476,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 function with_hop( svc, success, failure, sync, anim, timeout ) {
    return hop_send_request( svc, sync,
 			    success, failure,
-			    true, hop_serialize_request_env(), false, timeout );
+			    anim, hop_serialize_request_env(), false, timeout );
 }
 
 /*---------------------------------------------------------------------*/

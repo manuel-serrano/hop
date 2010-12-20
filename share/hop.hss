@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Sat Dec 18 18:48:48 2010 (serrano)                */
+/*    Last change :  Mon Dec 20 08:04:48 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
@@ -19,6 +19,28 @@ mi {
 mo {
   font-family: cmr10;
 }
+
+/*---------------------------------------------------------------------*/
+/*    url ...                                                          */
+/*    -------------------------------------------------------------    */
+/*    Some browsers (IE in particular) does not support inlined        */
+/*    image inside a URL specification. Hence, window icons cannot     */
+/*    be cached. Once these browsers are fixed, the inlining could     */
+/*    be enabled.                                                      */
+/*---------------------------------------------------------------------*/
+$(define (url file)
+    (let ((fname (make-file-name (hop-share-directory) file))
+          (enable-image-inlining #f))
+       (if (and enable-image-inlining (file-exists? fname))
+	   (let ((p (open-input-file fname)))
+	      (if (input-port? p)
+		  (unwind-protect
+		     (format "url( \"data:~a;base64,~a\" )"
+			     (mime-type file (format "image/~a" (suffix file)))
+			     (base64-encode (read-string p) 0))
+		     (close-input-port p))
+		  (format "url( ~s )" file)))
+	   (format "url( ~s )" file))))
 
 /*---------------------------------------------------------------------*/
 /*    Errors                                                           */
@@ -56,27 +78,17 @@ div[hssclass=hop-error] {
   z-index: 100002;
 }
 
-div[hssclass=hop-error].warning {
-  border-color: darkorange;
-}
-
-div[hssclass=hop-error].notfound {
-  border-color: goldenrod;
-}
-
-div[hssclass=hop-error].security {
-  border-color: #f00;
-}
-
-div[hssclass=hop-error].remote {
-  border-color: orange;
-}
-
-div[hssclass=hop-error] > img {
+span[hssclass=hop-error-img] {
+  display: inline-block;
   position: absolute;
   z-index: 100003;
   left: 24px;
   top: 20px;
+  width: 64px;
+  height: 64px;
+  background-image: url( "icons/error.png" );
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
 }
 
 div[hssclass=hop-error] > div {
@@ -106,15 +118,11 @@ div[hssclass=hop-error-msg] {
 }
 
 div[hssclass=hop-error-msg] tt {
+  font-weight: bold;
+  font-family: monospace;
   font-weight: 200;
   font-size: 105%;
   color: inherit;
-}
-
-div[hssclass=hop-error] tt.notfound {
-  font-weight: bold;
-  font-family: monospace;
-  font-size: 105%;
 }
 
 div[hssclass=hop-error-trace] {
@@ -131,6 +139,34 @@ div[hssclass=hop-error-trace] pre {
   color: #00a;
   font-weight: normal;
   padding-left: 1em;
+}
+
+div[hssclass=hop-error].warning {
+  border-color: darkorange;
+}
+
+div[hssclass=hop-error].warning div[hssclass=hop-error-title] {
+  border-color: darkorange;
+}
+
+div[hssclass=hop-error].warning span[hssclass=hop-error-img] {
+  background-image: url( "icons/warning.png" );
+}
+
+div[hssclass=hop-error].notfound {
+  border-color: #f1d630;
+}
+
+div[hssclass=hop-error].notfound div[hssclass=hop-error-title] {
+  color: #f1d630;
+}
+
+div[hssclass=hop-error].notfound span[hssclass=hop-error-img] {
+  background-image: url( "icons/notfound.png" );
+}
+
+div[hssclass=hop-error].remote span[hssclass=hop-error-img] {
+  background-image: url( "icons/error2.png" );
 }
 
 /*---------------------------------------------------------------------*/

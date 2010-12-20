@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun Dec 19 07:48:17 2010 (serrano)                */
+;*    Last change :  Sun Dec 19 14:10:48 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -734,7 +734,6 @@
 		       (port port)
 		       (user userinfo)
 		       (path path))
-	       (tprint "TIMEOUT=" timeout)
 	       (trace-item "scheme=" scheme " host=" host " port=" port)
 	       (trace-item "method=" method " path=" path)
 	       (let* ((sock (if (and (not ssl) (hop-use-proxy))

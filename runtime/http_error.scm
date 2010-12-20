@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Dec 17 08:42:25 2010 (serrano)                */
+;*    Last change :  Mon Dec 20 08:02:41 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -107,7 +107,6 @@
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (charset (hop-charset))
 	 (xml (<HTML-ERROR> :class "remote"
-		 :icon "error2.png"
 		 :title "Unknown Host!"
 		 :msg  (list (&error-msg e) ": "
 			     (<TT> :class "notfound" (&error-obj e)))
@@ -180,7 +179,6 @@
 ;*    <HTML-ERROR> ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <HTML-ERROR> ((class "error")
-				   (icon "error.png")
 				   (title "error")
 				   (msg "")
 				   body)
@@ -196,15 +194,7 @@
 	     (<HEAD>))
 	 (<BODY> :hssclass "hop-error"
 	    (<DIV> :hssclass "hop-error" :class class
-	       (let* ((path (make-file-name (hop-icons-directory) icon))
-		      (epath (format "http://~a:~a~a"
-				     (http-request-host req)
-				     (http-request-port req)
-				     path))
-		      (js (format "this.src = ~s" epath)))
-		  (<IMG> :src (img-base64-encode path)
-		     :alt icon
-		     :onerror (secure-javascript-attr js)))
+	       (<SPAN> :hssclass "hop-error-img")
 	       (<DIV> :id "hop-error"
 		  (<DIV> :hssclass "hop-error-title" title)
 		  (<DIV> :hssclass "hop-error-msg" msg)
@@ -221,9 +211,7 @@
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (backend (hop-xml-backend))
 	 (charset (hop-charset))
-	 (xml (<HTML-ERROR>
-		 :class "notfound"
-		 :icon "error2.png"
+	 (xml (<HTML-ERROR> :class "notfound"
 		 :title "File Not Found!"
 		 :msg (<TT> :class "notfound" file))))))
 
@@ -241,7 +229,6 @@
 	    (backend (hop-xml-backend))
 	    (content-type (xml-backend-mime-type (hop-xml-backend)))
 	    (xml (<HTML-ERROR> :class "notfound"
-		    :icon "error.png"
 		    :title (format "~a Service!" (string-capitalize key))
 		    :msg (<TT> :class "notfound" file)
 		    msg)))))
@@ -331,7 +318,7 @@ a timeout which has now expired. The service is then no longer available."))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (charset (hop-charset))
 	 (xml (<HTML-ERROR>
-		 :icon (if (&io-timeout-error? e) "timeout.png" "error.png")
+		 :class (if (&io-timeout-error? e) "timeour" "error")
 		 :title "Server Error"
 		 :msg msg
 		 (<DIV> :hssclass "hop-error-trace"
@@ -369,8 +356,7 @@ a timeout which has now expired. The service is then no longer available."))
       (backend (hop-xml-backend))
       (content-type (xml-backend-mime-type (hop-xml-backend)))
       (charset (hop-charset))
-      (xml (<HTML-ERROR>
-	      :icon "stop.png"
+      (xml (<HTML-ERROR> :class "stop"
 	      :title "Invalidated service!"
 	      :msg (<TT> (http-request-path req))
 	      (<DIV> "You are trying to executed an unexisting or invalidated service!
@@ -418,9 +404,7 @@ Reloading the page is the only way to fix this problem.")))))
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (charset (hop-charset))
-	 (xml (<HTML-ERROR>
-		 :class "warning"
-		 :icon "warning.png"
+	 (xml (<HTML-ERROR> :class "warning"
 		 :title "Warning"
 		 :msg (<TT> msg)
 		 (<PRE> dump))))))
@@ -460,8 +444,7 @@ Reloading the page is the only way to fix this problem.")))))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (charset (hop-charset))
 	 (xml (<HTML-ERROR>
-		 :class "remote"
-		 :icon (if (&io-timeout-error? e) "timeout.png" "error.png")
+		 :class (if (&io-timeout-error? e) "timeout" "remote")
 		 :title "Remote Error"
 		 :msg (list "An error occured while talking to a remote host: "
 			    (<TT> host))
@@ -481,7 +464,7 @@ Reloading the page is the only way to fix this problem.")))))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (charset (hop-charset))
 	 (xml (<HTML-ERROR>
-		 :icon (if (&io-timeout-error? e) "error2.png" "error.png")
+		 :class (if (&io-timeout-error? e) "timeout" "error")
 		 :title "IO Error"
 		 :msg (list "Error type: " (<TT> (typeof e)))
 		 (<PRE> (html-string-encode s)))))))
