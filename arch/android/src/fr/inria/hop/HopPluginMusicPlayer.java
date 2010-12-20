@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:29:16 2010                          */
-/*    Last change :  Mon Oct 25 10:16:45 2010 (serrano)                */
+/*    Last change :  Mon Dec 20 19:23:19 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Music Player                                             */
@@ -103,6 +103,15 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	       return;
 	    }
 
+	 case (byte)'k':
+	    // seek
+	    if( mplayer != null ) {
+	       int sec = HopDroid.read_int32( ip );
+	       Log.v( "HopDroidMusicPlayer", "mediaplayer seek: " + sec );
+	       mplayer.seekTo( sec * 1000 );
+	       return;
+	    }
+
 	 case (byte)'e':
 	    // stop
 	    Log.v( "HopDroidMusicPlayer", "mediaplayer stop" );
@@ -165,21 +174,28 @@ public class HopPluginMusicPlayer extends HopPlugin {
 		  if( mplayer.isPlaying() ) {
 		     switch( mplayerstate ) {
 			case MPLAYER_STATE_UNSPECIFIED:
+			   Log.v( "HopDroidMusicPlayer", "state unspecified" );
 			   op.write( "(unspecified ".getBytes() );
 			   break;
 			case MPLAYER_STATE_PLAY:
+			   Log.v( "HopDroidMusicPlayer", "state play " +
+			      Integer.toString( mplayer.getCurrentPosition() / 1000 ) );
 			   op.write( "(play ".getBytes() );
 			   break;
 			case MPLAYER_STATE_PAUSE:
+			   Log.v( "HopDroidMusicPlayer", "state pause" );
 			   op.write( "(pause ".getBytes() );
 			   break;
 			case MPLAYER_STATE_STOP:
+			   Log.v( "HopDroidMusicPlayer", "state stop" );
 			   op.write( "(stop ".getBytes() );
 			   break;
 			case MPLAYER_STATE_CLOSE:
+			   Log.v( "HopDroidMusicPlayer", "state close" );
 			   op.write( "(close ".getBytes() );
 			   break;
 			default:
+			   Log.v( "HopDroidMusicPlayer", "state unspecified" );
 			   op.write( "(unspecified ".getBytes() );
 			   break;
 		     }

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Mon Dec 20 07:24:28 2010 (serrano)                */
+/*    Last change :  Mon Dec 20 16:29:43 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
@@ -86,7 +86,7 @@ span[hssclass=hop-error-img] {
   top: 20px;
   width: 64px;
   height: 64px;
-  background-image: url( "icons/error.png" );
+  background-image: url( "icons/errors/error.png" );
   background-repeat: no-repeat;
   background-position: 50% 50%;
 }
@@ -98,6 +98,7 @@ div[hssclass=hop-error] > div {
   top: 20px;
   right: 1em;
   bottom: 1ex;
+  font-size: 14pt;
 }
   
 div[hssclass=hop-error-title] {
@@ -106,42 +107,6 @@ div[hssclass=hop-error-title] {
   font-weight: bold;
   border-bottom: 1px solid #bbb;
   color: red;
-}
-
-div[hssclass=hop-error].warning {
-  border-color: darkorange;
-}
-
-div[hssclass=hop-error].warning div[hssclass=hop-error-title] {
-  border-color: darkorange;
-}
-
-div[hssclass=hop-error].warning span[hssclass=hop-error-img] {
-  background-image: url( "icons/warning.png" );
-}
-
-div[hssclass=hop-error].notfound {
-  border-color: orange;
-}
-
-div[hssclass=hop-error].notfound div[hssclass=hop-error-title] {
-  color: orange;
-}
-
-div[hssclass=hop-error].notfound span[hssclass=hop-error-img] {
-  background-image: url( "icons/error2.png" );
-}
-
-div[hssclass=hop-error].remote {
-  border-color: orange;
-}
-
-div[hssclass=hop-error].remote div[hssclass=hop-error-title] {
-  color: orange;
-}
-
-div[hssclass=hop-error].remote span[hssclass=hop-error-img] {
-  background-image: url( "icons/error2.png" );
 }
 
 div[hssclass=hop-error-msg] {
@@ -154,15 +119,11 @@ div[hssclass=hop-error-msg] {
 }
 
 div[hssclass=hop-error-msg] tt {
+  font-weight: bold;
+  font-family: monospace;
   font-weight: 200;
   font-size: 105%;
   color: inherit;
-}
-
-div[hssclass=hop-error] tt.notfound {
-  font-weight: bold;
-  font-family: monospace;
-  font-size: 105%;
 }
 
 div[hssclass=hop-error-trace] {
@@ -179,6 +140,34 @@ div[hssclass=hop-error-trace] pre {
   color: #00a;
   font-weight: normal;
   padding-left: 1em;
+}
+
+div[hssclass=hop-error].warning {
+  border-color: darkorange;
+}
+
+div[hssclass=hop-error].warning div[hssclass=hop-error-title] {
+  border-color: darkorange;
+}
+
+div[hssclass=hop-error].warning span[hssclass=hop-error-img] {
+  background-image: url( "icons/errors/warning.png" );
+}
+
+div[hssclass=hop-error].notfound {
+  border-color: #f1d630;
+}
+
+div[hssclass=hop-error].notfound div[hssclass=hop-error-title] {
+  color: #f1d630;
+}
+
+div[hssclass=hop-error].notfound span[hssclass=hop-error-img] {
+  background-image: url( "icons/errors/notfound.png" );
+}
+
+div[hssclass=hop-error].remote span[hssclass=hop-error-img] {
+  background-image: url( "icons/errors/error2.png" );
 }
 
 /*---------------------------------------------------------------------*/

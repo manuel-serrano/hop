@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Thu Sep  9 13:28:54 2010 (serrano)                */
+/*    Last change :  Mon Dec 20 19:30:03 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -29,6 +29,7 @@ var Serror = sc_jsstring2symbol( "error" );
 var Sabort = sc_jsstring2symbol( "abort" );
 var Sstatus = sc_jsstring2symbol( "status" );
 var Smetadata = sc_jsstring2symbol( "metadata" );
+var Spoll = sc_jsstring2symbol( "poll" );
 
 var Sbrowser = sc_jsstring2symbol( "browser" );
 var Sserver = sc_jsstring2symbol( "server" );
@@ -591,21 +592,51 @@ function hop_audio_server_init( backend ) {
    backend.playlistindex = -1;
 
    // install the server listener...
-   hop_add_event_listener( backend.url, "server", function( evt ) {
-	 if( backend.audio.backend === backend ) 
-	    return hop_audio_server_event_listener( evt, backend );
-      } );
-   hop_add_event_listener( document, "serverclose", function( evt ) {
-	 hop_audio_invoke_listeners( backend.audio, "error", "Connection closed by server" );
-	 if( backend.audio.backend === backend && !backend.state === Sclose ) {
-	    backend.state = Sclose;
-	    hop_audio_invoke_listeners( backend.audio, "close", false );
-	 }
-      } );
-   hop_add_event_listener( document, "serverready", function( evt ) {
-	 // we are ready to handle signals, ask for a metadata update
-	 with_hop( hop_apply_url( backend.url, [ Smetadata, false ] ), backend.err );
-      } );
+   if( hop_config.websocket || hop_config.xhr_multipart ) {
+      // the client supports efficient server push
+      hop_add_event_listener( backend.url, "server", function( evt ) {
+	    if( backend.audio.backend === backend ) 
+	       return hop_audio_server_event_listener( evt, backend );
+	 } );
+      hop_add_event_listener( document, "serverclose", function( evt ) {
+	    hop_audio_invoke_listeners( backend.audio, "error", "Connection closed by server" );
+	    if( backend.audio.backend === backend && !backend.state === Sclose ) {
+	       backend.state = Sclose;
+	       hop_audio_invoke_listeners( backend.audio, "close", false );
+	    }
+	 } );
+      hop_add_event_listener( document, "serverready", function( evt ) {
+	    // we are ready to handle signals, ask for a metadata update
+	    with_hop( hop_apply_url( backend.url, [ Smetadata, false ] ), backend.err );
+	 } );
+   } else {
+      var period = 2013;
+      var stamp = -1;
+      
+      // the client does not support efficient server push, no need to
+      // use Ajax long polling
+      var poll = function () {
+	 clearInterval( backend.interval );
+	 with_hop( hop_apply_url( backend.url, [ Spoll, false ] ),
+		   function( l ) {
+		      while( sc_isPair( l ) ) {
+			 var v = l.car.car;
+			 var s = l.car.cdr;
+
+			 if( s > stamp ) {
+			    // only consider events not yet recieved
+			    stamp = s;
+			    
+			    hop_audio_server_event_listener( {value: v}, backend );
+			 }
+			 l = l.cdr;
+		      }
+		      backend.interval = setInterval( poll, period );
+		   },
+		   false, false, "false" );
+      };
+      backend.interval = setInterval( poll, period );
+   }
 }
 
 /*---------------------------------------------------------------------*/

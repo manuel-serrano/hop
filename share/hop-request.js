@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Dec 20 07:39:23 2010 (serrano)                */
+/*    Last change :  Mon Dec 20 16:20:39 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -111,7 +111,7 @@ function hop_default_failure( xhr ) {
 	       div.innerHTML = "foo: " + t;
 	    }
 	 } else {
-	    div.innerHTML = "Status: " + xhr.status + " -- " + xhr.statusText;
+	    div.innerHTML = "<div hssclass='hop-error'><span hssclass='hop-error-img'></span><div hssclass='hop-error-msg'>Status: " + xhr.status + " -- " + xhr.statusText + "</div></div>";
 	 }
       }
 
@@ -429,7 +429,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
    try {
       xhr.send( null );
 
-      if( anim ) {
+      if( anim !== "false" ) {
 	 var a = (anim instanceof Function) ? anim : hop_default_anim_get();
 	 
 	 if( hop_has_setInterval ) {
@@ -476,7 +476,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 function with_hop( svc, success, failure, sync, anim, timeout ) {
    return hop_send_request( svc, sync,
 			    success, failure,
-			    true, hop_serialize_request_env(), false, timeout );
+			    anim, hop_serialize_request_env(), false, timeout );
 }
 
 /*---------------------------------------------------------------------*/

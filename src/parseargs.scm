@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Dec  4 08:04:44 2010 (serrano)                */
+;*    Last change :  Mon Dec 20 08:24:04 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -377,8 +377,7 @@
 			(char=? (string-ref f 0) (file-separator)))
 		   f)
 		  (else
-		   (file-name-canonicalize!
-		    (make-file-name (pwd) f))))))
+		   (file-name-canonicalize! (make-file-name (pwd) f))))))
       (cond
 	 ((string-suffix? ".hz" path)
 	  ;; this is a weblet
