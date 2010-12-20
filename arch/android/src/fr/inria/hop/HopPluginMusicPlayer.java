@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:29:16 2010                          */
-/*    Last change :  Mon Dec 20 18:00:04 2010 (serrano)                */
+/*    Last change :  Mon Dec 20 18:22:32 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Music Player                                             */
@@ -105,9 +105,9 @@ public class HopPluginMusicPlayer extends HopPlugin {
 
 	 case (byte)'k':
 	    // seek
-	    Log.v( "HopDroidMusicPlayer", "mediaplayer seek" );
 	    if( mplayer != null ) {
 	       int sec = HopDroid.read_int32( ip );
+	       Log.v( "HopDroidMusicPlayer", "mediaplayer seek: " + sec );
 	       mplayer.seekTo( sec * 1000 );
 	       return;
 	    }
