@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Mon Dec 20 16:30:35 2010 (serrano)                */
+/*    Last change :  Mon Dec 20 19:49:26 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -14,6 +14,7 @@
 /*---------------------------------------------------------------------*/
 var Splay = sc_jsstring2symbol( "play" );
 var Sinit = sc_jsstring2symbol( "init" );
+var Sended = sc_jsstring2symbol( "ended" );
 var Sstart = sc_jsstring2symbol( "start" );
 var Spause = sc_jsstring2symbol( "pause" );
 var Sstop = sc_jsstring2symbol( "stop" );
@@ -627,15 +628,6 @@ function hop_audio_server_init( backend ) {
 			    // only consider events not yet recieved
 			    stamp = s;
 			    
-			    if( sc_isPair( v ) && (v.car === Splay) ) {
-			       if( !(backend.audio.ctime >= 0) ) {
-				  backend.audio.ctime = 0;
-			       }
-			       // patch the current position otherwise the
-			       // client think the audio player is stuck
-			       var rest = v.cdr;
-			       rest.cdr.car = backend.audio.ctime;
-			    }
 			    hop_audio_server_event_listener( {value: v}, backend );
 			 }
 			 l = l.cdr;
@@ -865,7 +857,11 @@ function hop_audio_server_event_listener( e, backend ) {
 	    
 	 hop_audio_invoke_listeners( backend.audio, "volume" );
       } else if( k === Sinit ) {
+	 // init
 	 hop_audio_invoke_listeners( backend.audio, "stop" );
+      } else if( k === Sended ) {
+	 // ended
+	 hop_audio_invoke_listeners( backend.audio, "ended" );
       } else if( k == Serror ) {
 	 // error
 	 alert( "ERROR(hop-audio.js) " + e.value );
@@ -873,7 +869,6 @@ function hop_audio_server_event_listener( e, backend ) {
       } else if( k == Sabort ) {
 	 // abort
 	 hop_audio_close( backend.audio );
-/* 	 alert( "ERROR(hop-audio.js) " + e.value );                    */
 	 hop_audio_invoke_listeners( backend.audio, "error", rest.car );
       } else if( k == Sclose ) {
 	 // close
