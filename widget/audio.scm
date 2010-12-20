@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Dec 20 16:30:49 2010 (serrano)                */
+;*    Last change :  Mon Dec 20 17:13:44 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -1055,7 +1055,6 @@
 (define (audio-event-poll)
    (mutex-lock! event-mutex)
    (let ((l (take old-events 5)))
-      (tprint "<<< signal poll: " (map (lambda (v) (cons (caar v) (cdr v))) l))
       (mutex-unlock! event-mutex)
       l))
    
