@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Dec 20 18:20:04 2010 (serrano)                */
+;*    Last change :  Mon Dec 20 18:52:50 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -699,6 +699,7 @@
 ;*---------------------------------------------------------------------*/
 (define (audio-onstate event music as)
    (lambda (status)
+      (tprint "ONSTATE status=" status)
       (with-trace 3 "audio-onstate"
 	 (trace-item "music=" (typeof music))
 	 (trace-item "as=" (typeof as))
