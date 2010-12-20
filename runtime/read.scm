@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Dec 20 09:29:33 2010 (serrano)                */
+;*    Last change :  Mon Dec 20 17:50:09 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -41,7 +41,8 @@
 	    (hop-read #!optional
 		      (iport::input-port (current-input-port))
 		      (charset (hop-locale))
-		      (menv #f))
+		      (menv #f)
+		      location)
 	    (hop-load ::bstring #!key
 		      (env (interaction-environment))
 		      (menv #f)
@@ -185,7 +186,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    collect-upto ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (collect-upto ignore kind port)
+(define (collect-upto ignore kind port location)
    
    (define (collect-upto.debug ignore kind port)
       ;; move one character backward for the open-parenthesis
@@ -211,7 +212,7 @@
 		       acc
 		       (loop (cons item acc))))))))
    
-   (if (>fx (bigloo-debug) 0)
+   (if (or (>fx (bigloo-debug) 0) location)
        (collect-upto.debug ignore kind port)
        (collect-upto.optim ignore kind port)))
 
@@ -345,7 +346,7 @@
 		     (kid      (or digit letter kspecial))
 		     (blank    (in #\Space #\Tab #a012 #a013))
 		     
-		     cycles par-open bra-open par-poses bra-poses cset menv)
+		     cycles par-open bra-open par-poses bra-poses cset menv location)
       
       ;; newlines
       ((+ #\Newline)
@@ -493,7 +494,7 @@
        (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
 			     par-poses))
        ;; and then, we compute the result list...
-       (make-list! (collect-upto ignore "list" (the-port)) (the-port)))
+       (make-list! (collect-upto ignore "list" (the-port) location) (the-port)))
       (")"
        ;; we decrement the number of open parenthesis
        (set! par-open (-fx par-open 1))
@@ -521,7 +522,7 @@
        (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
 			     par-poses))
        (list->vector
-	(reverse! (collect-upto ignore "vector" (the-port)))))
+	(reverse! (collect-upto ignore "vector" (the-port) location))))
 
       ;; typed vectors
       ((: "#" letterid "(")
@@ -532,37 +533,37 @@
 	  (cond
 	     ((string=? s "s8")
 	      (list->s8vector
-	       (reverse! (collect-upto ignore "s8vector" (the-port)))))
+	       (reverse! (collect-upto ignore "s8vector" (the-port) location))))
 	     ((string=? s "u8")
 	      (list->u8vector
-	       (reverse! (collect-upto ignore "u8vector" (the-port)))))
+	       (reverse! (collect-upto ignore "u8vector" (the-port) location))))
 	     ((string=? s "s16")
 	      (list->s16vector
-	       (reverse! (collect-upto ignore "s16vector" (the-port)))))
+	       (reverse! (collect-upto ignore "s16vector" (the-port) location))))
 	     ((string=? s "u16")
 	      (list->u16vector
-	       (reverse! (collect-upto ignore "u16vector" (the-port)))))
+	       (reverse! (collect-upto ignore "u16vector" (the-port) location))))
 	     ((string=? s "s32")
 	      (list->s32vector
-	       (reverse! (collect-upto ignore "s32vector" (the-port)))))
+	       (reverse! (collect-upto ignore "s32vector" (the-port) location))))
 	     ((string=? s "u32")
 	      (list->u32vector
-	       (reverse! (collect-upto ignore "u32vector" (the-port)))))
+	       (reverse! (collect-upto ignore "u32vector" (the-port) location))))
 	     ((string=? s "s64")
 	      (list->s64vector
-	       (reverse! (collect-upto ignore "s64vector" (the-port)))))
+	       (reverse! (collect-upto ignore "s64vector" (the-port) location))))
 	     ((string=? s "u64")
 	      (list->u64vector
-	       (reverse! (collect-upto ignore "u64vector" (the-port)))))
+	       (reverse! (collect-upto ignore "u64vector" (the-port) location))))
 	     ((string=? s "f32")
 	      (list->f32vector
-	       (reverse! (collect-upto ignore "f32vector" (the-port)))))
+	       (reverse! (collect-upto ignore "f32vector" (the-port) location))))
 	     ((string=? s "f64")
 	      (list->f64vector
-	       (reverse! (collect-upto ignore "f64vector" (the-port)))))
+	       (reverse! (collect-upto ignore "f64vector" (the-port) location))))
 	     (else
 	      (let* ((id (string->symbol s))
-		     (l (reverse! (collect-upto ignore "vector" (the-port)))))
+		     (l (reverse! (collect-upto ignore "vector" (the-port) location))))
 		 (list->tvector id l))))))
       
       ;; javascript (this reads up to the closing bracket).
@@ -591,7 +592,7 @@
        (set! bra-open (+fx 1 bra-open))
        (set! bra-poses (cons (-fx (input-port-position (the-port)) 1)
 			     bra-poses))
-       (let ((l (reverse! (collect-upto ignore "structure" (the-port)))))
+       (let ((l (reverse! (collect-upto ignore "structure" (the-port) location))))
 	  (cons '_structure_ l)))
       ("}"
        (set! bra-open (-fx bra-open 1))
@@ -697,7 +698,8 @@
 	      (item (cset (the-substring 0 (-fx (the-length) 1))))
 	      (sexp (read/rp *hop-grammar* (the-port)
 			     cycles par-open bra-open
-			     par-poses bra-poses cset menv))
+			     par-poses bra-poses cset menv
+			     #f))
 	      (rest (ignore)))
 	  (if (string=? item "")
 	      (cons (list 'unquote sexp) rest)
@@ -739,14 +741,15 @@
 (define (hop-read #!optional
 		  (iport::input-port (current-input-port))
 		  (charset (hop-locale))
-		  (menv #f))
+		  (menv #f)
+		  location)
    (if (closed-input-port? iport)
        (error "hop-read" "Illegal closed input port" iport)
        (begin
 	  ((hop-read-pre-hook) iport)
 	  (let* ((cset (charset-converter! charset (hop-charset)))
 		 (menv (or menv ((clientc-macroe (hop-clientc)))))
-		 (e (read/rp *hop-grammar* iport '() 0 0 '() '() cset menv)))
+		 (e (read/rp *hop-grammar* iport '() 0 0 '() '() cset menv location)))
 	     ((hop-read-post-hook) iport)
 	     e))))
 
@@ -913,8 +916,12 @@
 			  (loading-file-set! path)
 			  (case mode
 			     ((load)
-			      (let loop ((last #unspecified))
-				 (let ((sexp (hop-read port charset menv)))
+			      (let loop ((last #unspecified)
+					 (loc #t))
+				 ;; always read the first expression
+				 ;; in debug mod to enforce location in side
+				 ;; the module clause
+				 (let ((sexp (hop-read port charset menv loc)))
 				    (if (eof-object? sexp)
 					last
 					(let ((val (eval! sexp env)))
@@ -928,14 +935,15 @@
 						       (else #f)))
 					       'hop-load
 					       "Useless ~ expression"))
-					   (loop val))))))
+					   (loop val #f))))))
 			     ((include)
-			      (let loop ((res '()))
-				 (let ((sexp (hop-read port charset menv)))
+			      (let loop ((res '())
+					 (loc #t))
+				 (let ((sexp (hop-read port charset menv loc)))
 				    (if (eof-object? sexp)
 					(reverse! res)
 					(let ((val (eval! sexp env)))
-					   (loop (cons val res)))))))
+					   (loop (cons val res) #f))))))
 			     (else
 			      (error "hop-load" "Illegal mode" mode))))
 		       (begin
