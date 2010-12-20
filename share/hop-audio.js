@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Mon Dec 20 12:41:44 2010 (serrano)                */
+/*    Last change :  Mon Dec 20 16:30:35 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -611,6 +611,8 @@ function hop_audio_server_init( backend ) {
 	 } );
    } else {
       var period = 2013;
+      var stamp = -1;
+      
       // the client does not support efficient server push, no need to
       // use Ajax long polling
       var poll = function () {
@@ -618,16 +620,24 @@ function hop_audio_server_init( backend ) {
 	 with_hop( hop_apply_url( backend.url, [ Spoll, false ] ),
 		   function( l ) {
 		      while( sc_isPair( l ) ) {
-			 if( sc_isPair( l.car ) && (l.car.car === Splay) ) {
-			    if( !(backend.audio.ctime >= 0) ) {
-			       backend.audio.ctime = 0;
+			 var v = l.car.car;
+			 var s = l.car.cdr;
+
+			 if( s > stamp ) {
+			    // only consider events not yet recieved
+			    stamp = s;
+			    
+			    if( sc_isPair( v ) && (v.car === Splay) ) {
+			       if( !(backend.audio.ctime >= 0) ) {
+				  backend.audio.ctime = 0;
+			       }
+			       // patch the current position otherwise the
+			       // client think the audio player is stuck
+			       var rest = v.cdr;
+			       rest.cdr.car = backend.audio.ctime;
 			    }
-			    // patch the current position otherwise the client
-			    // think the audio player is stuck
-			    var rest = l.car.cdr;
-			    rest.cdr.car = backend.audio.ctime;
+			    hop_audio_server_event_listener( {value: v}, backend );
 			 }
-			 hop_audio_server_event_listener( {value: l.car}, backend );
 			 l = l.cdr;
 		      }
 		      backend.interval = setInterval( poll, period );

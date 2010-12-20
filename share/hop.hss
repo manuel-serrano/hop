@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Mon Dec 20 15:09:04 2010 (serrano)                */
+/*    Last change :  Mon Dec 20 16:29:43 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
@@ -86,7 +86,7 @@ span[hssclass=hop-error-img] {
   top: 20px;
   width: 64px;
   height: 64px;
-  background-image: url( "icons/error.png" );
+  background-image: url( "icons/errors/error.png" );
   background-repeat: no-repeat;
   background-position: 50% 50%;
 }
@@ -98,6 +98,7 @@ div[hssclass=hop-error] > div {
   top: 20px;
   right: 1em;
   bottom: 1ex;
+  font-size: 14pt;
 }
   
 div[hssclass=hop-error-title] {

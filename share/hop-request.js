@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Dec 20 12:38:22 2010 (serrano)                */
+/*    Last change :  Mon Dec 20 16:20:39 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -111,7 +111,7 @@ function hop_default_failure( xhr ) {
 	       div.innerHTML = "foo: " + t;
 	    }
 	 } else {
-	    div.innerHTML = "Status: " + xhr.status + " -- " + xhr.statusText;
+	    div.innerHTML = "<div hssclass='hop-error'><span hssclass='hop-error-img'></span><div hssclass='hop-error-msg'>Status: " + xhr.status + " -- " + xhr.statusText + "</div></div>";
 	 }
       }
 

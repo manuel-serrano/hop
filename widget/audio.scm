@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Dec 20 12:05:25 2010 (serrano)                */
+;*    Last change :  Mon Dec 20 16:30:49 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -1025,8 +1025,12 @@
 (define old-event #f)
 (define old-value #f)
 
+(define old-stamp 0)
+
 (define old-events
-   (let ((l (make-list 5 '(volume 0))))
+   (let ((l (map (lambda (x)
+		    (cons '(volume 0) 0))
+		 (iota 5))))
       (set-cdr! (last-pair l) l)
       l))
 
@@ -1038,7 +1042,9 @@
    (unless (and (eq? event old-event) (equal? value old-value))
       (set! old-event event)
       (set! old-value value)
-      (set-car! old-events value)
+      (set! old-stamp (+fx 1 old-stamp))
+      (set-car! (car old-events) value)
+      (set-cdr! (car old-events) old-stamp)
       (set! old-events (cdr old-events))
       (hop-event-broadcast! event value))
    (mutex-unlock! event-mutex))
@@ -1049,7 +1055,7 @@
 (define (audio-event-poll)
    (mutex-lock! event-mutex)
    (let ((l (take old-events 5)))
-      (tprint "<<< signal poll: " (map car l))
+      (tprint "<<< signal poll: " (map (lambda (v) (cons (caar v) (cdr v))) l))
       (mutex-unlock! event-mutex)
       l))
    
