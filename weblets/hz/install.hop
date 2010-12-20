@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Sat Dec  4 07:00:59 2010 (serrano)                */
+;*    Last change :  Sun Dec 19 09:01:51 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -19,7 +19,7 @@
 	   hz_weblet
 	   hz_db)
    
-   (export (hz-install-url ::bstring #!key auth)
+   (export (hz-install-url ::bstring #!key auth weblet)
 	   (hz-install-weblet ::weblet)
 	   (hz-load ::bstring)
 	   (hz-uninstall-weblet ::weblet)))
@@ -66,6 +66,9 @@
 		     ;; raise an error to stop everything
 		     (let* ((iport (xml-http-request-input-port xhr))
 			    (msg (read-string iport)))
+			;; WARNING, MS 19dec2010: this code is incorrect,
+			;; READ-STRING is not correct. A true parsing
+			;; (with content-length) should be needed here.
 			(list (xml-http-request-status xhr) url msg)))
 	    :timeout (hz-connection-timeout)
 	    :header header))))

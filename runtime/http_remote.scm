@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sun Nov  7 08:57:46 2010 (serrano)                */
+;*    Last change :  Sat Dec 18 06:24:52 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -64,7 +64,7 @@
 ;*    http-response ::http-response-remote ...                         */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-remote socket)
-   (with-trace 3 'http-response::http-response-remote
+   (with-trace 3 "http-response::http-response-remote"
       (let loop ()
 	 (with-access::http-response-remote r (scheme host port header content-length remote-timeout request connection-timeout)
 	    (trace-item "remotehost=" host
@@ -76,9 +76,10 @@
 		   (remote #f))
 	       (with-handler
 		  (lambda (e)
-		     (unless (&io-error? e) (error-notify e))
+		     (unless (&io-error? e)
+			(exception-notify e))
 		     (when remote
-			(with-trace 4 'connection-close@handler
+			(with-trace 4 "connection-close@handler"
 			   (connection-close! remote)))
 		     (cond
 			((&io-unknown-host-error? e)
@@ -123,7 +124,7 @@
 			   (output-timeout-set! rp remote-timeout)
 			   (input-timeout-set! (connection-input remote) remote-timeout))
 			;; the header and the request
-			(with-trace 4 'http-response-header
+			(with-trace 4 "http-response-header"
 			   (trace-item "start-line: "
 				       (response-remote-start-line r))
 			   (remote-header header rp r)
@@ -194,7 +195,7 @@
 (define (remote-body r::http-response-remote socket remote::connection)
    (with-access::http-response-remote r (host port timeout request)
       ;; the body
-      (with-trace 4 'http-response-body
+      (with-trace 4 "http-response-body"
 	 (let* ((wstart #f)
 		(ip (connection-input remote))
 		(op (socket-output socket)))
@@ -238,7 +239,7 @@
 						(flush-output-port snif)
 						(flush-output-port op)))
 					    op)))
-				(with-trace 4 'http-snif
+				(with-trace 4 "http-snif"
 				   (trace-item "request=" request))
 				(unwind-protect
 				   (if (eq? te 'chunked)
@@ -269,7 +270,7 @@
 			  (and (not connection)
 			       (string=? http-version "HTTP/1.0"))
 			  (not (hop-enable-remote-keep-alive)))
-		      (with-trace 4 'connection-close@remote-body
+		      (with-trace 4 "connection-close@remote-body"
 			 (trace-item "remote=" remote)
 			 (connection-close! remote))
 		      (connection-keep-alive! remote))
@@ -406,7 +407,7 @@
    
    [assert () (not (symbol? (mutex-state *remote-lock*)))]
    
-   (with-trace 5 'filter-connection-table!
+   (with-trace 5 "filter-connection-table!"
       ;; create a new hashtable
       (let ((otable *connection-table*))
 	 (set! *connection-table* (make-hashtable))
@@ -431,7 +432,7 @@
 (define (remote-get-socket host port timeout request ssl)
    
    (define (make-new-connection key id)
-      (with-trace 4 'make-new-connection
+      (with-trace 4 "make-new-connection"
 	 (let ((s (make-client-socket/timeout host port timeout request ssl)))
 ;* 	    (tprint "make-new-connection id=" id)                      */
 	    (instantiate::connection
@@ -459,7 +460,7 @@
 		   (mutex-unlock! *remote-lock*)
 		   (make-new-connection key id))))))
 
-   (with-trace 4 'remote-get-connection
+   (with-trace 4 "remote-get-connection"
       (trace-item "host=" host)
       (if (not (hop-enable-remote-keep-alive))
 	  (let ((id (+fx 1 *connection-id*)))

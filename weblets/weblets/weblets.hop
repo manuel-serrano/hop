@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Fri Oct 15 15:41:32 2010 (serrano)                */
+;*    Last change :  Thu Dec 16 07:35:48 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets distribution weblet.                                 */
@@ -37,6 +37,7 @@
    (<HTML>
       (<HEAD> :favicon (service-resource weblets "etc/favicon.png")
 	 :title "Hop Weblets"
+	 :include "hop-foot"
 	 :jscript (make-file-path (hop-weblets-directory) "hz" "hz-install.js")
 	 (<LINK> :rel "alternate" :type "application/rss+xml"
 	    :title "Latest HOP weblets"
@@ -86,6 +87,7 @@
    (<HTML>
       (<HEAD> :favicon (service-resource weblets "etc/favicon.png")
 	 :title "Hop Weblets"
+	 :include "hop-foot"
 	 :jscript (make-file-path (hop-weblets-directory) "hz" "hz-install.js")
 	 :css (service-resource weblets "weblets.hss"))
       (<BODY>

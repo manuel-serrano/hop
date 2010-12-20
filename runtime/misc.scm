@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Wed Oct  6 19:42:22 2010 (serrano)                */
+;*    Last change :  Sun Dec 19 06:28:39 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -37,7 +37,6 @@
 	    (suffix-member-ci ::bstring ::pair-nil)
 	    (string-member? ::bstring ::bstring)
 	    (string-member-ci? ::bstring ::bstring)
-	    (is-local?::bool ::bstring)
 	    (string-escape::bstring ::bstring ::char)
 	    (delete-path ::bstring)
 	    (make-cache-name::bstring #!optional name)
@@ -232,13 +231,6 @@
 	     #t)
 	    (else
 	     (loop (+fx i 1)))))))
-
-;*---------------------------------------------------------------------*/
-;*    is-local? ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (is-local? dest)
-   (or (string=? dest (hop-server-hostname))
-       (member dest (hop-server-aliases))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string-escape ...                                                */

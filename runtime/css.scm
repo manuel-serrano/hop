@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sun Dec  5 09:09:18 2010 (serrano)                */
+;*    Last change :  Fri Dec 17 08:42:06 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -399,7 +399,7 @@
 			     (exception-notify e))
 			  (with-error-to-string
 			     (lambda ()
-				(error-notify e))))
+				(exception-notify e))))
 		       (hss-compile (hop-read-hss p))))
 		 (begin
 		    (when mod (eval-module-set! mod))

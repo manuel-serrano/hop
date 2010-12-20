@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Sat Dec  4 06:47:00 2010 (serrano)                */
+;*    Last change :  Sun Dec 19 08:54:27 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -15,8 +15,9 @@
 (module hz
    
    (import hz_config
-	   hz_markup
+	   hz_xml
 	   hz_db
+	   hz_weblet
 	   hz_install
 	   hz_package)
    
@@ -61,7 +62,7 @@
 		:title "Hop Hz Preferences"
 		:base (service-base-url hz/preferences req)
 		:favicon "etc/favicon.png"
-		:include "hop-prefs"
+		:include "hop-foot" "hop-prefs"
 		:css "hz.hss")
 	     (<HZ:BODY>
 		(<DIV> :id "body"
@@ -81,16 +82,45 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz/run ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-service (hz/run #!key url)
+(define-service (hz/run #!key url install service #!rest args)
+   
+   (define (run name version)
+      (<HTML>
+	 (let ((svc (string-append "/hop/"
+				   (if service
+				       (string-append name "/" service)
+				       name))))
+	    ~(set! document.location $(hop-apply-nice-url svc args)))))
+   
    (multiple-value-bind (name version)
       (package-url-parse url)
       (with-handler
 	 (lambda (e)
 	    (http-error e))
 	 (begin
-	    (hz-load url)
-	    (<HTML>
-	       ~(set! document.location (string-append "/hop/" $name)))))))
+	    (if install
+		(let ((w (hz-install-url url)))
+		   (cond
+		      ((weblet? w)
+		       (run name version))
+		      ((not (pair? w))
+		       (http-error w))
+		      (else
+		       (case (car w)
+			  ((404)
+			   (http-error (instantiate::&io-file-not-found-error
+					  (proc "hz/run")
+					  (msg "File not found")
+					  (obj url))))
+			  (else
+			   (http-error (instantiate::&io-error
+					  (proc "hz/run")
+					  (msg (format "File not found (~a)"
+						       (car w)))
+					  (obj url))))))))
+		(begin
+		   (hz-load url)
+		   (run name version)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/check ...                                                     */

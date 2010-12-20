@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/hopsh/repl.scm                    */
+;*    serrano/prgm/project/hop/2.2.x/hopsh/repl.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Sat Jun 19 06:16:18 2010 (serrano)                */
+;*    Last change :  Fri Dec 17 08:41:56 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
@@ -32,7 +32,7 @@
       (lambda (e)
 	 (if (&error? e)
 	     (begin
-		(error-notify e)
+		(exception-notify e)
 		(when (eof-object? (&error-obj e))
 		   (reset-eof (current-input-port)))
 		(sigsetmask 0)

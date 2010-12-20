@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Tue Nov 23 14:12:43 2010 (serrano)                */
+;*    Last change :  Sun Dec 19 07:45:21 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -261,7 +261,7 @@
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-URL")
 	     ": " url "\n")
-   (with-trace 2 'with-url
+   (with-trace 2 "with-url"
       (trace-item "url=" url)
       (trace-item "header=" header)
       (cond
@@ -303,6 +303,7 @@
 			      (host (or host path))
 			      (port (or port (scheme-default-port s)))
 			      (header header)
+			      (connection-timeout timeout)
 			      (timeout timeout)
 			      (path (if host path "/"))))
 			(suc (if (procedure? success) success (lambda (x) x)))
@@ -338,7 +339,7 @@
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
 	     ": " path "\n")
-   (with-trace 2 'with-hop
+   (with-trace 2 "with-hop"
       (trace-item "host=" host " port=" port " path=" path " abspath=" abspath)
       (trace-item "authorization=" authorization)
       (cond
@@ -365,7 +366,7 @@
 					  (let ((op (open-output-string)))
 					     (with-error-to-port op
 						(lambda ()
-						   (error-notify e)))
+						   (exception-notify e)))
 					     (close-output-port op))
 					  "connection refused"))
 			      (ip (open-input-string strerr)))

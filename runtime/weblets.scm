@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Fri Dec 10 08:17:17 2010 (serrano)                */
+;*    Last change :  Fri Dec 17 08:12:33 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -399,12 +399,11 @@
 	    ;; load the autoloaded file
 	    (with-handler
 	       (lambda (e)
-		  (exception-notify e)
 		  (raise
 		   (instantiate::&hop-autoload-error
 		      (proc "autoload-load!")
-		      (msg "Cannot autoload file")
-		      (obj path))))
+		      (msg path)
+		      (obj e))))
 	       (hop-load-modified path))
 	    ;; execute the hooks
 	    (for-each (lambda (h) (h req)) hooks)
@@ -437,24 +436,21 @@
 	     #f)
 	  (with-access::%autoload (car al) (pred)
 	     (if (pred req)
-		 (with-handler
-		    (lambda (e)
-		       e)
-		    (begin
-		       (mutex-unlock! *autoload-mutex*)
-		       ;; the autoload cannot be removed until read, otherwise
-		       ;; parallel requests to the autoloaded service will raise
-		       ;; a service not found error
-		       (autoload-load! (car al) req)
-		       ;; add all the file associated with the autoload in
-		       ;; the service path table (see __hop_service).
-		       (service-etc-path-table-fill! (%autoload-path (car al)))
-		       ;; remove the autoaload (once loaded)
-		       (mutex-lock! *autoload-mutex*)
-		       (set! *autoloads* (remq! (car al) *autoloads*))
-		       (set! *autoloads-loaded* (cons (car al) *autoloads-loaded*))
-		       (mutex-unlock! *autoload-mutex*)
-		       #t))
+		 (begin
+		    (mutex-unlock! *autoload-mutex*)
+		    ;; the autoload cannot be removed until read, otherwise
+		    ;; parallel requests to the autoloaded service will raise
+		    ;; a service not found error
+		    (autoload-load! (car al) req)
+		    ;; add all the file associated with the autoload in
+		    ;; the service path table (see __hop_service).
+		    (service-etc-path-table-fill! (%autoload-path (car al)))
+		    ;; remove the autoaload (once loaded)
+		    (mutex-lock! *autoload-mutex*)
+		    (set! *autoloads* (remq! (car al) *autoloads*))
+		    (set! *autoloads-loaded* (cons (car al) *autoloads-loaded*))
+		    (mutex-unlock! *autoload-mutex*)
+		    #t)
 		 (loop (cdr al)))))))
 
 ;*---------------------------------------------------------------------*/

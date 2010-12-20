@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Dec  7 08:38:38 2010 (serrano)                */
+/*    Last change :  Fri Dec 17 11:06:05 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -642,6 +642,22 @@ function dom_create_slider() {
 /*** META ((export <SORTTABLE>)) */
 function dom_create_sorttable() {
    return ( "*** Hop Error, `sorttable' can only be created on server" );
+}
+/*** META ((export <SPAGE>)) */
+function dom_create_spage() {
+   return ( "*** Hop Error, `spage' can only be created on server" );
+}
+/*** META ((export <SPHEAD>)) */
+function dom_create_sphead() {
+   return ( "*** Hop Error, `sptab' can only be created on server" );
+}
+/*** META ((export <SPTAB>)) */
+function dom_create_sptab() {
+   return ( "*** Hop Error, `sptab' can only be created on server" );
+}
+/*** META ((export <SPTABHEAD>)) */
+function dom_create_sptabhead() {
+   return ( "*** Hop Error, `sptabhead' can only be created on server" );
 }
 
 /*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Nov  1 08:35:29 2010 (serrano)                */
+;*    Last change :  Sun Dec 19 07:44:32 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -58,7 +58,8 @@
 	      (abspath::bstring (default ""))
 	      (query::obj (default #f))
 	      (connection::symbol (default 'keep-alive))
-	      (authorization (default #f)))
+	      (authorization (default #f))
+	      (connection-timeout::int (default 0)))
 
 	   (final-class http-server-request::http-request
 	      (service::obj (default #unspecified)))
@@ -238,3 +239,11 @@
 				       rep2
 				       rep)))
 			  (old-hook res)))))))
+
+;*---------------------------------------------------------------------*/
+;*    exception-notify ::&hop-autoload-error ...                       */
+;*---------------------------------------------------------------------*/
+(define-method (exception-notify exc::&hop-autoload-error)
+   (with-access::&hop-autoload-error exc (proc obj msg)
+      (fprintf (current-error-port) "~a: cannot autoload ~s\n" proc msg)
+      (exception-notify obj)))

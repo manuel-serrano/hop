@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/weblets/doc/widgets.hop           */
+;*    serrano/prgm/project/hop/2.2.x/weblets/doc/widgets.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Fri Mar  5 18:08:40 2010 (serrano)                */
+;*    Last change :  Thu Dec 16 07:32:43 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -38,7 +38,7 @@
       (<HEAD>
 	 :title "Hop documentation center (APIs &amp; libraries)"
 	 :include "hop-notepad" "hop-tree" "hop-sorttable" "hop-foldlist" 
-	 :include "hop-window" "hop-fx" (doc-dashboard)
+	 :include "hop-window" "hop-fx" "hop-foot" (doc-dashboard)
 	 :css (string-append (doc-dir) "/../wiki/wiki.hss")
 	 :favicon (string-append (doc-dir) "/etc/favicon.png")
 	 :css (string-append (doc-dir) "/doc.hss")

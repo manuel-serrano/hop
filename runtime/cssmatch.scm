@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 19 14:53:16 2010                          */
-;*    Last change :  Wed Oct 20 09:29:48 2010 (serrano)                */
+;*    Last change :  Fri Dec 17 07:38:34 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Parsing and dealing with CSS.                                    */
@@ -236,7 +236,9 @@
 		 (p (open-input-string s)))
 	     (with-handler
 		(lambda (e)
-		   '())
+		   (if (&io-parse-error? e)
+		       '()
+		       (raise e)))
 		(let ((css (css->ast p :extension hss-extension)))
 		   ;; extract and patch the ruleset
 		   (with-access::css-stylesheet css (rule*)

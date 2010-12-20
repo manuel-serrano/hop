@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/hz/config.hop             */
+;*    serrano/prgm/project/hop/2.2.x/weblets/hz/config.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Wed May  6 10:24:14 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Sun Dec 19 08:54:59 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ configuration                                                 */
 ;*=====================================================================*/
@@ -96,7 +96,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-connection-timeout ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-parameter hz-connection-timeout (*fx 3000 1000))
+(define-parameter hz-connection-timeout 30000)
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-publishers ...                                                */

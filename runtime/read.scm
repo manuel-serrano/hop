@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Dec  5 08:36:29 2010 (serrano)                */
+;*    Last change :  Sat Dec 18 06:24:10 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -834,15 +834,14 @@
 (define (get-directory-module-access dir)
    
    (define (get-file-module-access f abase)
-      (with-handler
-	 (lambda (e) #f)
-	 (call-with-input-file f
-	    (lambda (p)
-	       (let loop ((e (hop-read p)))
+      (call-with-input-file f
+	 (lambda (p)
+	    (let loop ((e (hop-read p)))
+	       (unless (eof-object? e)
 		  (match-case e
 		     ((module ?module-name . ?-)
 		      (module-add-access! module-name (list f) abase))
-		     ($
+		     (else
 		      (loop (hop-read p)))))))))
    
    (for-each (lambda (f)
@@ -967,7 +966,7 @@
 ;*    reloaded.                                                        */
 ;*---------------------------------------------------------------------*/
 (define (%hop-load-once file env menv charset modifiedp abase)
-   (with-trace 1 '%hop-load-once
+   (with-trace 1 "%hop-load-once"
       (trace-item "file=" file)
       (trace-item "env=" (if (evmodule? env) (evmodule-name env) ""))
       (trace-item "modifiedp=" modifiedp)

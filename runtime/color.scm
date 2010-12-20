@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/color.scm                 */
+;*    serrano/prgm/project/hop/2.2.x/runtime/color.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Feb  2 15:42:45 2006                          */
-;*    Last change :  Fri Jun 26 14:44:00 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Fri Dec 17 07:36:48 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple color tools                                               */
 ;*=====================================================================*/
@@ -35,7 +35,10 @@
 ;*---------------------------------------------------------------------*/
 (define (color-lighter color #!optional (coef 1))
    (with-handler
-      (lambda (e) color)
+      (lambda (e)
+	 (if (&io-parse-error? e)
+	     color
+	     (raise e)))
       (multiple-value-bind (r g b)
 	 (parse-web-color color)
 	 (change-luminance r g b (/fl (fixnum->flonum coef) 10.)))))
@@ -45,7 +48,10 @@
 ;*---------------------------------------------------------------------*/
 (define (color-darker color #!optional (coef 1))
    (with-handler
-      (lambda (e) color)
+      (lambda (e)
+	 (if (&io-parse-error? e)
+	     color
+	     (raise e)))
       (multiple-value-bind (r g b)
 	 (parse-web-color color)
 	 (change-luminance r g b (negfl (/fl (fixnum->flonum coef) 10.))))))

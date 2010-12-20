@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Wed Dec 15 12:39:57 2010 (serrano)                */
+;*    Last change :  Fri Dec 17 07:35:45 2010 (serrano)                */
 ;*    Copyright   :  2003-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -47,7 +47,10 @@
 				     (string-length ctype))))
 		       (cons path
 			     (with-handler
-				(lambda (e) '())
+				(lambda (e)
+				   (if (&io-parse-error? e)
+				       '()
+				       (raise e)))
 				(cgi-multipart->list (hop-upload-directory)
 						     pi
 						     content-length

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Nov  1 09:44:41 2010 (serrano)                */
+/*    Last change :  Mon Dec 20 07:39:23 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -85,8 +85,6 @@ function hop_default_failure( xhr ) {
    if( !document ) return;
 
    var div = document.createElement( "div" );
-   var hstack = xhr.hopStack ? hop_make_exception_stack( xhr.hopStack ) : false;
-   var jsstack = xhr.jsStack ? hop_make_exception_stack( xhr.jsStack ) : false;
    
    if( "exception" in xhr ) {
       hop_report_exception( xhr.exception );
@@ -117,8 +115,17 @@ function hop_default_failure( xhr ) {
 	 }
       }
 
-      document.body.appendChild(
-	 hop_make_exception_frame( div, hstack, jsstack ) );
+      document.body.appendChild( hop_make_exception_frame( div ) );
+
+      /* add the client side stack */
+      if( xhr.hopStack ) {
+	 var el = document.getElementById( "hop-error" );
+	 if( el ) {
+	    el.appendChild( hop_make_exception_stack( xhr.hopStack ) );
+	 } else {
+	    div.appendChild( hop_make_exception_stack( xhr.hopStack ) );
+	 }
+      }
    }
 }
 
@@ -150,7 +157,7 @@ function hop_anim_16_16( title ) {
       img.className = "hop-busy-anim";
 
       if( !hop_config.inline_image ) {
-	 img.src = hop_share_directory() + "/icons/busy-anim-16.gif";
+	 img.src = hop_share_directory() + "/icons/anims/busy-anim-16.gif";
       } else {
 	 img.src = hop_busy_anim_16_16;
       }
@@ -180,7 +187,7 @@ function hop_anim_32_32( title ) {
       img.className = "hop-busy-anim";
 
       if( !hop_config.inline_image ) {
-	 img.src = hop_share_directory() + "/icons/busy-anim-32.gif";
+	 img.src = hop_share_directory() + "/icons/anims/busy-anim-32.gif";
       } else {
 	 img.src = hop_busy_anim_32_32;
       }
@@ -282,12 +289,12 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
    var fail = (typeof failure === "function") ? failure : hop_default_failure;
    var hstack = hop_debug() > 0 ? hop_get_stack( 1 ) : false;
 
+   xhr.hopStack = hstack;
+
    function onreadystatechange() {
       if( xhr.readyState == 4 ) {
 	 try {
 	    var status = xhr.status;
-
-	    xhr.hopStack = hstack;
 
 	    switch( status ) {
 	       case 200:

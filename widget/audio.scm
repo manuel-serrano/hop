@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Oct 13 14:53:24 2010 (serrano)                */
+;*    Last change :  Fri Dec 17 08:42:48 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -489,7 +489,7 @@
 	  (s (service :name p (a0 a1)
 		(with-handler
 		   (lambda (e)
-		      (error-notify e)
+		      (exception-notify e)
 		      #f)
 		   (with-access::audio-server as (%music %hmutex %state)
 		      (with-lock %hmutex

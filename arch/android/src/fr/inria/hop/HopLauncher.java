@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Mon Oct 25 12:07:24 2010 (serrano)                */
+/*    Last change :  Sun Dec 19 07:32:01 2010 (serrano)                */
 /*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -148,9 +148,14 @@ public class HopLauncher extends Activity {
 
 	       write_console( "Exiting...\n" );
 	       infinish = true;
-	       
+
+	       // the documentation for onDestroy says that the method is
+	       // not necessarily invoked when the application is finished
+	       // so we force killing hop and hopdroid first.
 	       hop.kill();
-	       activity.finish();
+	       hopdroid.kill();
+	       Log.v( "HopLauncher", "Finishing activity...\n" );
+	       finish();
 	    }
 	 } );
 

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/weblets/info/info.hop             */
+;*    serrano/prgm/project/hop/2.2.x/weblets/info/info.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Jun  3 07:08:38 2010 (serrano)                */
+;*    Last change :  Thu Dec 16 07:32:57 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -140,7 +140,7 @@
 	     (<HEAD> :favicon (service-resource info "etc/favicon.png")
 		:title "Hop Info weblet"
 		:base (service-base-url info req)
-		:include "hop-notepad" "hop-sorttable" "hop-font"
+		:include "hop-notepad" "hop-sorttable" "hop-font" "hop-foot"
 		:css "info.hss")
 	     (<BODY>
 		:onunload ~(with-hop ($(service ()

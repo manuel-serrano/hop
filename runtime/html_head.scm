@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sun Dec  5 08:32:36 2010 (serrano)                */
+;*    Last change :  Fri Dec 17 07:42:24 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -198,15 +198,15 @@ function hop_realm() { return \"" (hop-realm) "\"; }
       (<SCRIPT> :type (hop-javascript-mime-type) :inline inl :src p))
    
    (define (find-head p)
-      (with-handler
-	 (lambda (e) '())
-	 (call-with-input-file p
-	    (lambda (in)
-	       (let loop ((hd (hop-read in)))
-		  (match-case hd
-		     ((<HEAD> . ?head) head)
-		     ((module (? symbol?) . ?-) (loop (hop-read in)))
-		     (else '())))))))
+      (call-with-input-file p
+	 (lambda (in)
+	    (let loop ((hd (hop-read in)))
+	       (if (eof-object? hd)
+		   '()
+		   (match-case hd
+		      ((<HEAD> . ?head) head)
+		      ((module (? symbol?) . ?-) (loop (hop-read in)))
+		      (else '())))))))
 
    (define (favicon p inl)
       (<LINK> :rel "shortcut icon" :href p :inline inl))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Dec  4 07:35:21 2010 (serrano)                */
+;*    Last change :  Sat Dec 18 08:38:49 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -143,7 +143,7 @@
 ;*    hop-apply-nice-url ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    This is used for fix arity function in order to build nice URLS. */
-;*    When at least an argument is not a string, it falls back to      */
+;*    When at least one argument is not a string, it falls back to     */
 ;*    hop-apply-url.                                                   */
 ;*---------------------------------------------------------------------*/
 (define (hop-apply-nice-url base vals)

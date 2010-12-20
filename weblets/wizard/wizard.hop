@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Oct 27 11:15:36 2010 (serrano)                */
+;*    Last change :  Thu Dec 16 07:31:16 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -34,7 +34,7 @@
 	 :title "Hop Wizard"
 	 :base (service-base-url wizard (current-request))
 	 :include "md5" "hop-fileselect" "hop-window" "hop-tree" "hop-notepad"
-	 :include "hop-password"
+	 :include "hop-password" "hop-foot"
 	 :css "wizard.hss"
 	 :favicon "etc/favicon.png")
       (<BODY>

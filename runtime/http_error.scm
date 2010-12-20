@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Dec  4 07:41:52 2010 (serrano)                */
+;*    Last change :  Mon Dec 20 07:24:06 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -106,9 +106,7 @@
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (charset (hop-charset))
-	 (xml (<HTML-ERROR>
-		 :class "remote"
-		 :icon "error2.png"
+	 (xml (<HTML-ERROR> :class "remote"
 		 :title "Unknown Host!"
 		 :msg  (list (&error-msg e) ": "
 			     (<TT> :class "notfound" (&error-obj e)))
@@ -138,7 +136,7 @@
 ;*    http-error ::&hop-security-error ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (http-error e::&hop-security-error)
-   (let ((s (with-error-to-string (lambda () (error-notify e))))
+   (let ((s (with-error-to-string (lambda () (exception-notify e))))
 	 (req (current-request)))
       (instantiate::http-response-hop
 	 (request req)
@@ -157,7 +155,12 @@
 ;*    http-error ::&hop-autoload-error ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (http-error e::&hop-autoload-error)
-   (let ((s (with-error-to-string (lambda () (error-notify e))))
+   (let ((s (with-error-to-string
+	       (lambda ()
+		  (with-access::&hop-autoload-error e (obj)
+		     (if (&exception? obj)
+			 (exception-notify obj)
+			 (exception-notify e))))))
 	 (req (current-request)))
       (instantiate::http-response-hop
 	 (request req)
@@ -176,32 +179,23 @@
 ;*    <HTML-ERROR> ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <HTML-ERROR> ((class "error")
-				   (icon "error.png")
 				   (title "error")
 				   (msg "")
 				   body)
-   (<HTML>
-      (let ((req (current-request)))
+   (let ((req (current-request)))
+      (<HTML>
 	 (if (http-proxy-request? req)
 	     ;; this is a proxy request
-	     (<HEAD> :base (format "http://~a:~a"
-				   (http-request-host req)
-				   (http-request-port req)))
+	     (let ((s (http-request-socket req)))
+		(<HEAD> :base (format "http://~a:~a"
+				      (socket-hostname s)
+				      (hop-port))))
 	     ;; this is a local request
 	     (<HEAD>))
-	 (<BODY> :style "background: #222; font-family: arial; color: black;"
-	    :hssclass "hop-error"
+	 (<BODY> :hssclass "hop-error"
 	    (<DIV> :hssclass "hop-error" :class class
-	       (let* ((path (make-file-name (hop-icons-directory) icon))
-		      (epath (format "http://~a:~a~a"
-				     (http-request-host req)
-				     (http-request-port req)
-				     path))
-		      (js (format "this.src = ~s" epath)))
-		  (<IMG> :src (img-base64-encode path)
-		     :alt icon
-		     :onerror (secure-javascript-attr js)))
-	       (<DIV> 
+	       (<SPAN> :hssclass "hop-error-img")
+	       (<DIV> :id "hop-error"
 		  (<DIV> :hssclass "hop-error-title" title)
 		  (<DIV> :hssclass "hop-error-msg" msg)
 		  body))))))
@@ -219,7 +213,6 @@
 	 (charset (hop-charset))
 	 (xml (<HTML-ERROR>
 		 :class "notfound"
-		 :icon "error2.png"
 		 :title "File Not Found!"
 		 :msg (<TT> :class "notfound" file))))))
 
@@ -236,10 +229,8 @@
 	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	    (backend (hop-xml-backend))
 	    (content-type (xml-backend-mime-type (hop-xml-backend)))
-	    (xml (<HTML-ERROR>
-		    :class "notfound"
-		    :icon "error.png"
-		    :title (format "~a service!" (string-capitalize key))
+	    (xml (<HTML-ERROR> :class "notfound"
+		    :title (format "~a Service!" (string-capitalize key))
 		    :msg (<TT> :class "notfound" file)
 		    msg)))))
 
@@ -264,7 +255,7 @@ a timeout which has now expired. The service is then no longer available."))
 			   (illegal-service-message "invalidated")))
 	 (else
 	  (illegal-service "unbound"
-			   "You are trying to execute an unknown service!")))))
+			   "This service is unknown!")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-permission-denied ...                                       */
@@ -329,9 +320,12 @@ a timeout which has now expired. The service is then no longer available."))
 	 (charset (hop-charset))
 	 (xml (<HTML-ERROR>
 		 :icon (if (&io-timeout-error? e) "timeout.png" "error.png")
-		 :title "Internal Error"
+		 :title "Server Error"
 		 :msg msg
-		 (<PRE> (html-string-encode s)))))))
+		 (<DIV> :hssclass "hop-error-trace"
+		    (<DIV> "Hop server stack:")
+		    (<PRE>
+		       (html-string-encode s))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    http-service-error ...                                           */
@@ -444,7 +438,7 @@ Reloading the page is the only way to fix this problem.")))))
 ;*    http-remote-error ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-remote-error host e)
-   (let ((s (with-error-to-string (lambda () (error-notify e))))
+   (let ((s (with-error-to-string (lambda () (exception-notify e))))
 	 (req (current-request)))
       (instantiate::http-response-hop
 	 (request req)
@@ -465,7 +459,7 @@ Reloading the page is the only way to fix this problem.")))))
 ;*    http-io-error ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (http-io-error e)
-   (let ((s (with-error-to-string (lambda () (error-notify e))))
+   (let ((s (with-error-to-string (lambda () (exception-notify e))))
 	 (req (current-request)))
       (instantiate::http-response-hop
 	 (request req)

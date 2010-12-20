@@ -189,7 +189,7 @@
       (lambda (e)
 	 (if (&error? e)
 	     (begin
-		(error-notify e)
+		(exception-notify e)
 		#unspecified)
 	     (raise e)))
       (*hop-eval* e)))

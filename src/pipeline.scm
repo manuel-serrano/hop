@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Wed Dec 15 15:18:10 2010 (serrano)                */
+;*    Last change :  Fri Dec 17 08:42:40 2010 (serrano)                */
 ;*    Copyright   :  2008-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -204,7 +204,7 @@
 		(lambda (e)
 		   ;; this error handler is invoked when the attempt to
 		   ;; notify the previous error to the client fails
-		   (when (&error? e) (error-notify e))
+		   (when (&error? e) (exception-notify e))
 		   #unspecified)
 		;; we will try to answer the error to the client
 		(unless (&io-sigpipe-error? e)
