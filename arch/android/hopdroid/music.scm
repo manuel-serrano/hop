@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Mon Dec 20 18:00:23 2010 (serrano)                */
+;*    Last change :  Mon Dec 20 18:10:15 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -177,7 +177,7 @@
 ;*    music-seek ::androidmusic ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (music-seek o::androidmusic pos . song)
-   (with-access::android o (%mutex phone)
+   (with-access::androidmusic o (%mutex phone)
       (with-lock %mutex
 	 (lambda ()
 	    (when (pair? song)
