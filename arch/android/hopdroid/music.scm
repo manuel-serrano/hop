@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Mon Oct 25 09:17:03 2010 (serrano)                */
+;*    Last change :  Mon Dec 20 18:00:23 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -172,6 +172,20 @@
 		     (android-send-command phone music-plugin #\u uri)
 		     (with-access::musicstatus %status (state)
 			(set! state 'play)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    music-seek ::androidmusic ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (music-seek o::androidmusic pos . song)
+   (with-access::android o (%mutex phone)
+      (with-lock %mutex
+	 (lambda ()
+	    (when (pair? song)
+	       (if (not (integer? (car song)))
+		   (bigloo-type-error "|music-seek ::androidmusic"
+				      'int (car song))
+		   (set-song! o (car song))))
+	    (android-send-command phone music-plugin #\k pos)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-stop ::androidmusic ...                                    */
