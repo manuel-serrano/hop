@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Dec 20 07:42:57 2010 (serrano)                */
+#*    Last change :  Mon Dec 20 07:44:34 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -114,7 +114,7 @@ ICONS_ACTIONS   = cancel.png ok.png run.png open.png
 
 ICONS		= $(ICONS_HOP:%=hop/%) \
                   $(ICONS_ERRORS:%=errors/%) \
-                  $(ICONS_ANIMS:%=anims/%)
+                  $(ICONS_ANIMS:%=anims/%) \
 		  $(ICONS_AUDIO:%=hop-audio/%) \
                   $(ICONS_PANED:%=hop-paned/%) \
                   $(ICONS_SLIDER:%=hop-slider/%) \
