@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Tue Dec 21 09:36:58 2010 (serrano)                */
+/*    Last change :  Tue Dec 21 10:43:21 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
@@ -42,6 +42,20 @@ $(define (url file)
 		  (format "url( ~s )" file)))
 	   (format "url( ~s )" file))))
 
+/*---------------------------------------------------------------------*/
+/*    Busy animation                                                   */
+/*---------------------------------------------------------------------*/
+div.hop-busy-anim {
+  position: fixed;
+  top: 5px;
+  right: 5px;
+  z-index: 1000000;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  border: 0;
+}      
+  
 /*---------------------------------------------------------------------*/
 /*    Errors                                                           */
 /*---------------------------------------------------------------------*/
