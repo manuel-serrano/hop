@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Tue Dec 21 10:43:21 2010 (serrano)                */
+/*    Last change :  Tue Dec 21 11:08:43 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
@@ -93,7 +93,7 @@ span[hssclass=hop-error-img] {
   display: inline-block;
   position: absolute;
   z-index: 100003;
-  left: 24px;
+  left: 20px;
   top: 20px;
   width: 64px;
   height: 64px;
@@ -179,6 +179,10 @@ div[hssclass=hop-error].notfound span[hssclass=hop-error-img] {
 
 div[hssclass=hop-error].remote span[hssclass=hop-error-img] {
   background-image: url( "icons/errors/error2.png" );
+}
+
+div[hssclass=hop-error].client span[hssclass=hop-error-img] {
+  background-image: url( "icons/errors/client-error.png" );
 }
 
 /*---------------------------------------------------------------------*/
