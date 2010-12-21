@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Tue Dec 21 09:45:50 2010 (serrano)                */
+;*    Last change :  Tue Dec 21 09:52:23 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -104,8 +104,8 @@
 				(tprint "HZ-DB-FIND-BY-URL, W=" w)
 				(when (and (weblet? w)
 					   (directory? (weblet-directory? w)))
-				    w))
-			     (hz-install-url ur :override #fl))))
+				   w))
+			     (hz-install-url ur))))
 		   (cond
 		      ((weblet? w)
 		       (run name version))
