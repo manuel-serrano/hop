@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:29:16 2010                          */
-/*    Last change :  Mon Dec 20 19:23:19 2010 (serrano)                */
+/*    Last change :  Mon Dec 20 20:47:54 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Music Player                                             */
@@ -42,6 +42,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
    // instance variables
    MediaPlayer mplayer = null;
    int mplayerstate = MPLAYER_STATE_UNSPECIFIED;
+   boolean ended = false;
 
    // constructor
    public HopPluginMusicPlayer( HopDroid h, Activity a, String n ) {
@@ -75,6 +76,13 @@ public class HopPluginMusicPlayer extends HopPlugin {
 		  return true;
 	       else
 		  return false;
+	    }
+	 } );
+
+      mplayer.setOnCompletionListener( new MediaPlayer.OnCompletionListener() {
+	    public void onCompletion( MediaPlayer mp ) {
+	       Log.v( "HopDroidMusicPlayer", "mediaplayer completion" );
+	       ended = true;
 	    }
 	 } );
 
@@ -203,7 +211,12 @@ public class HopPluginMusicPlayer extends HopPlugin {
 		     op.write( " ".getBytes() );
 		     op.write( Integer.toString( mplayer.getCurrentPosition() / 1000 ).getBytes() );
 		     op.write( ")".getBytes() );
+		  } else if( ended ) {
+		     ended = false;
+		     Log.v( "HopDroidMusicPlayer", "state ended" );
+		     op.write( "(ended 0 0)".getBytes() );
 		  } else {
+		     Log.v( "HopDroidMusicPlayer", "state stop" );
 		     op.write( "(stop 0 0)".getBytes() );
 		  }
 	       }
