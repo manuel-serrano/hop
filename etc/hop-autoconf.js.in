@@ -289,12 +289,10 @@ function hop_flash_audio_set( v ) {
 /*---------------------------------------------------------------------*/
 /*    hop_innerHTML_need_evalp ...                                     */
 /*    -------------------------------------------------------------    */
-/*    This test sets the variable hop_innerHTML_need_eval to           */
+/*    This test sets the variable hop_config.eval_innerHTML to         */
 /*    false if innerHTML evaluates the scripts contained in the        */
 /*    DOM nodes it receives as argument.                               */
 /*---------------------------------------------------------------------*/
-var hop_innerHTML_need_evalp = true;
-
 var tmp = document.createElement( "div" );
 
 try {
