@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/hz/weblet.hop             */
+;*    serrano/prgm/project/hop/2.2.x/weblets/hz/weblet.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Wed May  6 10:26:25 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Last change :  Tue Dec 21 09:48:55 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with weblets.                              */
 ;*=====================================================================*/
@@ -32,10 +32,11 @@
 	      (title::bstring read-only)
 	      (comment::bstring read-only (info "BLOB"))
 	      (signature::bstring read-only (default ""))
-	      (authorization read-only (default #f)))
+	      (authorization read-only (default #f))
+	      (directory::bstring read-only (default "")))
 
 	   (weblet->list::pair ::weblet)
-	   (info->weblet::weblet ::pair #!key name version url authorization)))
+	   (info->weblet::weblet ::pair #!key name version url authorization dir)))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblet->list ...                                                 */
@@ -64,7 +65,7 @@
 ;*                                                                     */
 ;*    Extra fields are simply ignored by HZ.                           */
 ;*---------------------------------------------------------------------*/
-(define (info->weblet info::pair #!key name version url authorization)
+(define (info->weblet info::pair #!key name version url authorization (dir ""))
 
    (define (find key default)
       (cond
@@ -123,4 +124,5 @@
 	 (maxhop (find 'maxhop "z"))
 	 (title (convert (find 'title "")))
 	 (comment (convert (find 'comment "")))
-	 (authorization authorization))))
+	 (authorization authorization)
+	 (directory dir))))

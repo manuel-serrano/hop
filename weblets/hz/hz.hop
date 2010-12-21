@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Tue Dec 21 07:44:22 2010 (serrano)                */
+;*    Last change :  Tue Dec 21 09:45:50 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -100,7 +100,11 @@
 	    (http-error e))
 	 (begin
 	    (if install
-		(let ((w (or (hz-db-find-by-url url)
+		(let ((w (or (let ((w (hz-db-find-by-url url)))
+				(tprint "HZ-DB-FIND-BY-URL, W=" w)
+				(when (and (weblet? w)
+					   (directory? (weblet-directory? w)))
+				    w))
 			     (hz-install-url ur :override #fl))))
 		   (cond
 		      ((weblet? w)

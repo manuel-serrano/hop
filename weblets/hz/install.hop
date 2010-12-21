@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Tue Dec 21 07:41:20 2010 (serrano)                */
+;*    Last change :  Tue Dec 21 09:47:32 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -77,11 +77,12 @@
 ;*    hz->weblet ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (hz->weblet name version url)
-   (let* ((p (make-file-path (hz-weblets-directory) name "etc" "weblet.info"))
+   (let* ((dir (make-file-name (hz-weblets-directory) name))
+	  (p  (make-file-path dir "etc" "weblet.info"))
 	  (i (if (file-exists? p)
 		 (with-input-from-file p read)
 		 `((name ,name) (version ,version)))))
-      (info->weblet i :name name :version version :url url)))
+      (info->weblet i :name name :version version :url url :dir dir)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-install-file ...                                              */
