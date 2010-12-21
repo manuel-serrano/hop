@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
-;*    Last change :  Tue Dec 21 07:45:34 2010 (serrano)                */
+;*    Last change :  Tue Dec 21 09:18:32 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
@@ -195,7 +195,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-db-find-by-url url)
    (sqlite-eval *db* hz-make-weblet
-      "SELECT ~a FROM weblets WHERE (url=~a)"
+      "SELECT ~a FROM weblets WHERE (url=~q)"
       (hz-db-row) url))
 
 ;*---------------------------------------------------------------------*/

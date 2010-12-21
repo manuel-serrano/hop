@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:29:16 2010                          */
-/*    Last change :  Tue Dec 21 07:29:13 2010 (serrano)                */
+/*    Last change :  Tue Dec 21 09:12:52 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Music Player                                             */
@@ -179,7 +179,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	       if( mplayer == null ) {
 		  ended = false;
 		  op.write( "(unspecified 0 0)".getBytes() );
-	       } else if( mplayer.state == MPLAYER_STATE_CLOSE ) {
+	       } else if( mplayerstate == MPLAYER_STATE_CLOSE ) {
 		  Log.v( "HopDroidMusicPlayer", "state close" );
 		  op.write( "(close 0 0)".getBytes() );
 		  break;
