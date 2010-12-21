@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Tue Dec 21 11:09:53 2010 (serrano)                */
+;*    Last change :  Tue Dec 21 12:10:27 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -172,7 +172,7 @@
 		     (list
 		      (<SPAN> :style "color: #777" 
 			 (<A> :style "color: inherit"
-			    :href (cadr m) (cadr m) "!" (caddr m))
+			    :href (cadr m) (cadr m) "@" (caddr m))
 			 ", ")
 		      "(" name " ...)")
 		     (list "(" name " ...)")))
@@ -217,7 +217,7 @@
 			    (list
 			     (<SPAN> :style "color: #777" 
 				(<A> :style "color: inherit"
-				   :href (caddr m) (cadr m) "!" (caddr m)
+				   :href (caddr m) (cadr m) "@" (caddr m)
 				   (cadddr m))
 				", ")
 			     "(" (cadr m)  " ...)\n")
