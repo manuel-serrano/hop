@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/hz/db.hop                 */
+;*    serrano/prgm/project/hop/2.2.x/weblets/hz/db.hop                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
-;*    Last change :  Wed May  6 10:24:29 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Tue Dec 21 07:45:34 2010 (serrano)                */
+;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
 ;*=====================================================================*/
@@ -27,6 +27,7 @@
 	   (hz-db-sync-date::date)
 	   (hz-db-sync-date-update! ::date)
 	   (hz-db-find ::bstring ::bstring)
+	   (hz-db-find-by-url ::bstring)
 	   (hz-db-find-new::pair-nil)
 	   (hz-db-find-update::pair-nil)
 	   (hz-db-find-keyword::pair-nil ::bstring)
@@ -188,6 +189,14 @@
    (sqlite-eval *db* hz-make-weblet
       "SELECT ~a FROM weblets WHERE (name=~q) AND (category=~q)"
       (hz-db-row) name category))
+
+;*---------------------------------------------------------------------*/
+;*    hz-db-find-by-url ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hz-db-find-by-url url)
+   (sqlite-eval *db* hz-make-weblet
+      "SELECT ~a FROM weblets WHERE (url=~a)"
+      (hz-db-row) url))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-find-new ...                                               */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Tue Dec 21 06:20:40 2010 (serrano)                */
+/*    Last change :  Tue Dec 21 07:33:02 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -611,11 +611,11 @@ function hop_audio_server_init( backend ) {
 	    with_hop( hop_apply_url( backend.url, [ Smetadata, false ] ), backend.err );
 	 } );
    } else {
-      var period = 2013;
-      var stamp = -1;
-      
       // the client does not support efficient server push, no need to
       // use Ajax long polling
+      var period = 2013;
+      var stamp = -1;
+
       var poll = function () {
 	 clearInterval( backend.interval );
 	 with_hop( hop_apply_url( backend.url, [ Spoll, false ] ),
@@ -627,7 +627,8 @@ function hop_audio_server_init( backend ) {
 			 if( s > stamp ) {
 			    // only consider events not yet recieved
 			    stamp = s;
-			    
+
+			    alert( "hop-audio.js event=" + v.car );
 			    hop_audio_server_event_listener( {value: v}, backend );
 			 }
 			 l = l.cdr;
@@ -636,7 +637,19 @@ function hop_audio_server_init( backend ) {
 		   },
 		   false, false, "false" );
       };
-      backend.interval = setInterval( poll, period );
+
+      // we first connect to flush all the current events
+      with_hop( hop_apply_url( backend.url, [ Spoll, false ] ),
+		function( l ) {
+		   // flush out the events
+		   while( sc_isPair( l ) ) {
+		      stamp = l.car.cdr;
+		      l = l.cdr;
+		   }
+
+		   // start polling
+		   backend.interval = setInterval( poll, period );
+		} );
    }
 }
 
