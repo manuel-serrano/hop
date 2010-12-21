@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Fri Dec 17 11:05:07 2010 (serrano)                */
+;*    Last change :  Tue Dec 21 17:21:47 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -322,7 +322,7 @@
 
    (define (invoke-listeners spage tbody)
       (spage-invoke-onchange-listener! spage tbody)
-      (when tbody.tab
+      (when (and tbody.tab (not (eq? tbody.tab #unspecified)))
 	 (sptab-invoke-onselect-listener! tbody.tab tbody "pop")))
    
    (define (spage-pop-none spage spviewport tbody)
@@ -384,7 +384,8 @@
 	    (set! spage.tabs (cdr spage.tabs))
 	    (set! spage.spoffset (-fx spage.spoffset spage.spwidth))
 	    ;; invoke the listener before removing any node
-	    (invoke-listeners spage tbody)
+	    (when (pair? spage.tabs)
+	       (invoke-listeners spage (car spage.tabs)))
 	    ;; pop the element from the gui
 	    (case (spage-transition-style spage)
 	       ((move)

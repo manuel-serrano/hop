@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Fri Dec 17 10:47:19 2010 (serrano)                */
+;*    Last change :  Tue Dec 21 18:15:40 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -77,6 +77,21 @@
 			      (class #f)
 			      (attr)
 			      body)
+   
+   (define (init-sptab id onselect)
+      (sexp->xml-tilde
+       `(let loop ()
+	   (let ((el (dom-get-element-by-id ,id)))
+	      (if (not el)
+		  (after 10 loop)
+		  (begin
+		     (set! el.hop_add_event_listener sptab-add-event-listener!)
+		     ,(when (xml-tilde? onselect)
+			 `(set! el.onselect
+				(lambda (event)
+				   ,(xml-tilde->sexp onselect))))
+		     #unspecified))))))
+   
    (let* ((head (filter xml-sphead-element? body))
 	  (body (filter (lambda (x) (not (xml-sphead-element? x))) body)))
       (if (and (pair? body) (null? (cdr body)) (xml-delay? (car body)))
@@ -89,26 +104,14 @@
 	     (<DIV> :hssclass "hop-sptab" :class class  :id id
 		:onclick ~(spage-push-service this $svc)
 		(if (null? head) "?" (car head))
-		~(let ((el (dom-get-element-by-id $id)))
-		    (set! el.hop_add_event_listener sptab-add-event-listener!))
-		(when (xml-tilde? onselect)
-		   (sexp->xml-tilde
-		    `(let ((el (dom-get-element-by-id ,id))
-			   (p (lambda (event) ,(xml-tilde->sexp onselect))))
-			(set! el.onselect p))))))
+		(init-sptab id onselect)))
 	  ;; a static tab
 	  (<DIV> :hssclass "hop-sptab-static"
 	     (<DIV> :hssclass "hop-spbody":class class attr body)
 	     (<DIV> :hssclass "hop-sptab" :class class :id id
 		:onclick ~(spage-push-node this (dom-previous-sibling this))
 		(if (null? head) "?" (car head))
-		~(let ((el (dom-get-element-by-id $id)))
-		    (set! el.hop_add_event_listener sptab-add-event-listener!))
-		(when (xml-tilde? onselect)
-		   (sexp->xml-tilde
-		    `(let ((el (dom-get-element-by-id ,id))
-			   (p (lambda (event) ,(xml-tilde->sexp onselect))))
-			(set! el.onselect p)))))))))
+		(init-sptab id onselect))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    SPTABHEAD ...                                                    */
