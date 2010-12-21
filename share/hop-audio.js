@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Tue Dec 21 10:56:14 2010 (serrano)                */
+/*    Last change :  Tue Dec 21 11:32:00 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -635,7 +635,7 @@ function hop_audio_server_init( backend ) {
 		      }
 		      backend.interval = setInterval( poll, period );
 		   },
-		   false, false, "false" );
+		   false, false, false );
       };
 
       // we first connect to flush all the current events

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Dec 21 10:43:10 2010 (serrano)                */
+/*    Last change :  Tue Dec 21 11:31:10 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -409,7 +409,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
    try {
       xhr.send( null );
 
-      if( anim !== "false" ) {
+      if( anim ) {
 	 var a = (anim instanceof Function) ? anim : hop_default_anim_get();
 	 
 	 if( hop_has_setInterval ) {
