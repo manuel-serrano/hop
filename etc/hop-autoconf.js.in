@@ -186,6 +186,7 @@ function hop_Config() {
      this.flash_markup = "embed";
      this.inline_image = true;
      this.clone_innerHTML = true;
+     this.css_transition = true;
   } else if( navigator.userAgent.indexOf( "WebKit" ) >= 0 ) {
      this.navigator_family = "webkit";
      this.js_speed = 80;
@@ -195,6 +196,7 @@ function hop_Config() {
      this.flash_markup = "embed";
      this.inline_image = true;
      this.clone_innerHTML = true;
+     this.css_transition = true;
   } else if( navigator.userAgent.indexOf( "KHTML" ) >= 0 ) {
      this.navigator_family = "khtml";
      this.mouse_left_button = 1;
