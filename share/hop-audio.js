@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Tue Dec 21 11:32:00 2010 (serrano)                */
+/*    Last change :  Wed Dec 22 07:02:22 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -628,7 +628,6 @@ function hop_audio_server_init( backend ) {
 			    // only consider events not yet processed
 			    stamp = s;
 
-			    alert( "hop-audio.js event..." );
 			    hop_audio_server_event_listener( {value: v}, backend );
 			 }
 			 l = l.cdr;
