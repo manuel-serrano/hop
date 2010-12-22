@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Wed Dec 22 07:02:22 2010 (serrano)                */
+/*    Last change :  Wed Dec 22 08:25:01 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -873,7 +873,6 @@ function hop_audio_server_event_listener( e, backend ) {
 	 hop_audio_invoke_listeners( backend.audio, "stop" );
       } else if( k === Sended ) {
 	 // ended
-	 alert( "hop-audio.js: ended..." );
 	 hop_audio_invoke_listeners( backend.audio, "ended" );
       } else if( k === Serror ) {
 	 // error
