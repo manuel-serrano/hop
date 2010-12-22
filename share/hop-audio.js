@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Mon Dec 20 19:49:26 2010 (serrano)                */
+/*    Last change :  Wed Dec 22 08:25:01 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -611,11 +611,11 @@ function hop_audio_server_init( backend ) {
 	    with_hop( hop_apply_url( backend.url, [ Smetadata, false ] ), backend.err );
 	 } );
    } else {
-      var period = 2013;
-      var stamp = -1;
-      
       // the client does not support efficient server push, no need to
       // use Ajax long polling
+      var period = 2013;
+      var stamp = -1;
+
       var poll = function () {
 	 clearInterval( backend.interval );
 	 with_hop( hop_apply_url( backend.url, [ Spoll, false ] ),
@@ -625,18 +625,30 @@ function hop_audio_server_init( backend ) {
 			 var s = l.car.cdr;
 
 			 if( s > stamp ) {
-			    // only consider events not yet recieved
+			    // only consider events not yet processed
 			    stamp = s;
-			    
+
 			    hop_audio_server_event_listener( {value: v}, backend );
 			 }
 			 l = l.cdr;
 		      }
 		      backend.interval = setInterval( poll, period );
 		   },
-		   false, false, "false" );
+		   false, false, false );
       };
-      backend.interval = setInterval( poll, period );
+
+      // we first connect to flush all the current events
+      with_hop( hop_apply_url( backend.url, [ Spoll, false ] ),
+		function( l ) {
+		   // flush out the events
+		   while( sc_isPair( l ) ) {
+		      stamp = l.car.cdr;
+		      l = l.cdr;
+		   }
+
+		   // start polling
+		   backend.interval = setInterval( poll, period );
+		} );
    }
 }
 
@@ -822,7 +834,7 @@ function hop_audio_server_event_listener( e, backend ) {
 	    backend.playlistindex = li;
 	    hop_audio_invoke_listeners( backend.audio, "play" );
 	 }
-      } else if( k == Spause ) {
+      } else if( k === Spause ) {
 	 // pause
 	 backend.current_duration = rest.car;
 	 backend.current_position = rest.cdr.car;
@@ -837,7 +849,7 @@ function hop_audio_server_event_listener( e, backend ) {
 	    backend.state = Spause;
 	 hop_audio_invoke_listeners( backend.audio, "pause" );
 	 }
-      } if( k == Sstop ) {
+      } if( k === Sstop ) {
 	 // stop
 	 backend.current_duration = rest.car;
 	 backend.current_position = rest.cdr.car;
@@ -852,7 +864,7 @@ function hop_audio_server_event_listener( e, backend ) {
 	    backend.state = Sstop;
 	    hop_audio_invoke_listeners( backend.audio, "stop" );
 	 }
-      } else if( k == Svolume ) {
+      } else if( k === Svolume ) {
 	 backend.current_volume = rest.car;
 	    
 	 hop_audio_invoke_listeners( backend.audio, "volume" );
@@ -862,18 +874,18 @@ function hop_audio_server_event_listener( e, backend ) {
       } else if( k === Sended ) {
 	 // ended
 	 hop_audio_invoke_listeners( backend.audio, "ended" );
-      } else if( k == Serror ) {
+      } else if( k === Serror ) {
 	 // error
 	 alert( "ERROR(hop-audio.js) " + e.value );
 	 hop_audio_invoke_listeners( backend.audio, "error", rest.car );
-      } else if( k == Sabort ) {
+      } else if( k === Sabort ) {
 	 // abort
 	 hop_audio_close( backend.audio );
 	 hop_audio_invoke_listeners( backend.audio, "error", rest.car );
-      } else if( k == Sclose ) {
+      } else if( k === Sclose ) {
 	 // close
 	 hop_audio_invoke_listeners( backend.audio, "close", false );
-      } else if( k == Smeta ) {
+      } else if( k === Smeta ) {
 	 // meta
 	 var val = rest.car;
 

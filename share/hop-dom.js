@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Dec 17 11:06:05 2010 (serrano)                */
+/*    Last change :  Tue Dec 21 18:10:15 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -843,9 +843,9 @@ function dom_get_element_by_id( doc, id ) {
       var res = document.getElementById( doc );
       if( res == null ) {
 	 return false;
-      }
-      else
+      } else {
 	 return res;
+      }
    } else {
       var res = doc.getElementById( id );
       if( res == null )

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Dec 20 16:20:39 2010 (serrano)                */
+/*    Last change :  Tue Dec 21 11:31:10 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -135,22 +135,7 @@ function hop_default_failure( xhr ) {
 function hop_anim_16_16( title ) {
    if( !hop_busy_vis_16_16 ) {
       var vis = document.createElement( "div" );
-      
-      node_style_set( vis, "position", "fixed" );
-      node_style_set( vis, "top", "5px" );
-      node_style_set( vis, "right", "5px" );
-      node_style_set( vis, "z-index", "100" );
-      node_style_set( vis, "background", "#eeeeee" );
-      node_style_set( vis, "border-color", "black" );
-      node_style_set( vis, "border-style", "outset" );
-      node_style_set( vis, "border-width", "1px" );
-      node_style_set( vis, "padding-top", "3px" );
-      node_style_set( vis, "width", "20px" );
-      node_style_set( vis, "height", "20px" );
-      node_style_set( vis, "-moz-border-radius", "0.2em" );
-      node_style_set( vis, "-moz-opacity", "0.7" );
-      
-      vis.align = "center";
+      vis.className = "hop-busy-anim";
       vis.count = false;
 
       var img = document.createElement( "img" );
@@ -175,12 +160,7 @@ function hop_anim_16_16( title ) {
 function hop_anim_32_32( title ) {
    if( !hop_busy_vis_32_32 ) {
       var vis = document.createElement( "div" );
-      
-      node_style_set( vis, "position", "fixed" );
-      node_style_set( vis, "top", "5px" );
-      node_style_set( vis, "right", "5px" );
-      
-      vis.align = "center";
+      vis.className = "hop-busy-anim";
       vis.count = false;
 
       var img = document.createElement( "img" );
@@ -429,7 +409,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
    try {
       xhr.send( null );
 
-      if( anim !== "false" ) {
+      if( anim ) {
 	 var a = (anim instanceof Function) ? anim : hop_default_anim_get();
 	 
 	 if( hop_has_setInterval ) {

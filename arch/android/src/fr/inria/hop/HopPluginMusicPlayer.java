@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:29:16 2010                          */
-/*    Last change :  Mon Dec 20 19:52:49 2010 (serrano)                */
+/*    Last change :  Tue Dec 21 09:12:52 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Music Player                                             */
@@ -80,7 +80,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	 } );
 
       mplayer.setOnCompletionListener( new MediaPlayer.OnCompletionListener() {
-	    public boolean onCompletion( MediaPlayer mp ) {
+	    public void onCompletion( MediaPlayer mp ) {
 	       Log.v( "HopDroidMusicPlayer", "mediaplayer completion" );
 	       ended = true;
 	    }
@@ -177,30 +177,25 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    // status: state, songlength, songpos
 	    synchronized( op ) {
 	       if( mplayer == null ) {
+		  ended = false;
 		  op.write( "(unspecified 0 0)".getBytes() );
+	       } else if( mplayerstate == MPLAYER_STATE_CLOSE ) {
+		  Log.v( "HopDroidMusicPlayer", "state close" );
+		  op.write( "(close 0 0)".getBytes() );
+		  break;
 	       } else {
 		  if( mplayer.isPlaying() ) {
+		     ended = false;
 		     switch( mplayerstate ) {
-			case MPLAYER_STATE_UNSPECIFIED:
-			   Log.v( "HopDroidMusicPlayer", "state unspecified" );
-			   op.write( "(unspecified ".getBytes() );
-			   break;
 			case MPLAYER_STATE_PLAY:
 			   Log.v( "HopDroidMusicPlayer", "state play " +
-			      Integer.toString( mplayer.getCurrentPosition() / 1000 ) );
+				  Integer.toString( mplayer.getCurrentPosition() / 1000 ) +
+				  "/" + Integer.toString( mplayer.getDuration() / 1000 ) );
 			   op.write( "(play ".getBytes() );
 			   break;
 			case MPLAYER_STATE_PAUSE:
 			   Log.v( "HopDroidMusicPlayer", "state pause" );
 			   op.write( "(pause ".getBytes() );
-			   break;
-			case MPLAYER_STATE_STOP:
-			   Log.v( "HopDroidMusicPlayer", "state stop" );
-			   op.write( "(stop ".getBytes() );
-			   break;
-			case MPLAYER_STATE_CLOSE:
-			   Log.v( "HopDroidMusicPlayer", "state close" );
-			   op.write( "(close ".getBytes() );
 			   break;
 			default:
 			   Log.v( "HopDroidMusicPlayer", "state unspecified" );
@@ -212,7 +207,6 @@ public class HopPluginMusicPlayer extends HopPlugin {
 		     op.write( Integer.toString( mplayer.getCurrentPosition() / 1000 ).getBytes() );
 		     op.write( ")".getBytes() );
 		  } else if( ended ) {
-		     ended = false;
 		     Log.v( "HopDroidMusicPlayer", "state ended" );
 		     op.write( "(ended 0 0)".getBytes() );
 		  } else {

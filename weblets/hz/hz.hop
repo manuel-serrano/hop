@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Sun Dec 19 08:54:27 2010 (serrano)                */
+;*    Last change :  Wed Dec 22 09:11:14 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -92,6 +92,7 @@
 				       name))))
 	    ~(set! document.location $(hop-apply-nice-url svc args)))))
    
+   (hz-db-init!)
    (multiple-value-bind (name version)
       (package-url-parse url)
       (with-handler
@@ -99,7 +100,11 @@
 	    (http-error e))
 	 (begin
 	    (if install
-		(let ((w (hz-install-url url)))
+		(let ((w (or (let ((w (hz-db-find-by-url url)))
+				(when (and (weblet? w)
+					   (directory? (weblet-directory w)))
+				   w))
+			     (hz-install-url url))))
 		   (cond
 		      ((weblet? w)
 		       (run name version))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Sat Dec 18 11:54:27 2010 (serrano)                */
+;*    Last change :  Tue Dec 21 12:10:27 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -30,39 +30,6 @@
 		     (bigloo-demangle (JS "hop_demangle"))
 		     (<EXCEPTION-STACK> (JS "hop_make_exception_stack"))
 		     (<EXCEPTION-FRAME> (JS "hop_make_exception_frame"))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-error-icon ...                                               */
-;*---------------------------------------------------------------------*/
-(define (hop-error-icon)
-   "data:image/png;base64,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")
-
-;*---------------------------------------------------------------------*/
-;*    Exception style                                                  */
-;*---------------------------------------------------------------------*/
-(define (hop-exception-mask-style)
-   "position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    opacity: 0.8;
-    background: #242222;
-    z-index: 1000000")
-
-(define (hop-exception-frame-style)
-   "position: fixed;
-    top: 60px;
-    bottom: 60px;
-    left: 150px;
-    right: 150px;
-    min-width: 20em;
-    max-width: 100em;
-    opacity: 0.97;
-    background: white;
-    z-index: 10000001;
-    text-align: left;
-    border: 3px dashed red; padding: 4px;
-    color: black;
-    overflow: hidden;
-    overflow-y: auto;")
 
 ;*---------------------------------------------------------------------*/
 ;*    bigloo-mangled? ...                                              */
@@ -205,7 +172,7 @@
 		     (list
 		      (<SPAN> :style "color: #777" 
 			 (<A> :style "color: inherit"
-			    :href (cadr m) (cadr m) "!" (caddr m))
+			    :href (cadr m) (cadr m) "@" (caddr m))
 			 ", ")
 		      "(" name " ...)")
 		     (list "(" name " ...)")))
@@ -250,7 +217,7 @@
 			    (list
 			     (<SPAN> :style "color: #777" 
 				(<A> :style "color: inherit"
-				   :href (caddr m) (cadr m) "!" (caddr m)
+				   :href (caddr m) (cadr m) "@" (caddr m)
 				   (cadddr m))
 				", ")
 			     "(" (cadr m)  " ...)\n")
@@ -331,8 +298,8 @@
 		   (<A> :href url)))))
       
       (<EXCEPTION-FRAME>
-	 (<DIV> :hssclass "hop-error"
-	    (<IMG> :src (hop-error-icon) :alt "Error")
+	 (<DIV> :hssclass "hop-error" :class "client"
+	    (<SPAN> :hssclass "hop-error-img")
 	    (<DIV>
 	       (<DIV> :hssclass "hop-error-title" errtitle)
 	       (<DIV> :hssclass "hop-error-msg"

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Mon Dec 20 16:29:43 2010 (serrano)                */
+/*    Last change :  Tue Dec 21 11:08:43 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
@@ -43,6 +43,20 @@ $(define (url file)
 	   (format "url( ~s )" file))))
 
 /*---------------------------------------------------------------------*/
+/*    Busy animation                                                   */
+/*---------------------------------------------------------------------*/
+div.hop-busy-anim {
+  position: fixed;
+  top: 5px;
+  right: 5px;
+  z-index: 1000000;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  border: 0;
+}      
+  
+/*---------------------------------------------------------------------*/
 /*    Errors                                                           */
 /*---------------------------------------------------------------------*/
 body[hssclass=hop-error] {
@@ -68,21 +82,18 @@ div[hssclass=hop-error] {
   border-color: red;
   opacity: 1;
   color: black;
-}
-
-div[hssclass=hop-error] {
-  margin: 100px;
   top: 0; bottom: 0;
   left: 0; right: 0;
   position: fixed;
   z-index: 100002;
+  margin: 100px;
 }
 
 span[hssclass=hop-error-img] {
   display: inline-block;
   position: absolute;
   z-index: 100003;
-  left: 24px;
+  left: 20px;
   top: 20px;
   width: 64px;
   height: 64px;
@@ -168,6 +179,10 @@ div[hssclass=hop-error].notfound span[hssclass=hop-error-img] {
 
 div[hssclass=hop-error].remote span[hssclass=hop-error-img] {
   background-image: url( "icons/errors/error2.png" );
+}
+
+div[hssclass=hop-error].client span[hssclass=hop-error-img] {
+  background-image: url( "icons/errors/client-error.png" );
 }
 
 /*---------------------------------------------------------------------*/
