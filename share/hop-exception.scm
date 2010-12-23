@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Tue Dec 21 12:10:27 2010 (serrano)                */
+;*    Last change :  Thu Dec 23 07:46:01 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -30,6 +30,12 @@
 		     (bigloo-demangle (JS "hop_demangle"))
 		     (<EXCEPTION-STACK> (JS "hop_make_exception_stack"))
 		     (<EXCEPTION-FRAME> (JS "hop_make_exception_frame"))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-name-aliases ...                                             */
+;*---------------------------------------------------------------------*/
+(define hop-name-aliases
+   '(("hop_send_request" . "with-hop")))
 
 ;*---------------------------------------------------------------------*/
 ;*    bigloo-mangled? ...                                              */
@@ -104,7 +110,10 @@
 	       (string-append id "@" module))))
       (cond
 	 ((not (bigloo-mangled? string))
-	  string)
+	  (let ((a (assoc string hop-name-aliases)))
+	     (if (pair? a)
+		 (cdr a)
+		 string)))
 	 ((substring=? string "BgL_" 4)
 	  (bigloo-demangle-simple))
 	 ((substring=? string "BGl_" 4)
@@ -120,7 +129,7 @@
    (let loop ((proc (@ arguments _).callee)
 	      (offset offset))
       (cond
-	 ((= offset 0)
+	 ((= offset -1)
 	  ;; grab depth frame of the stack
 	  (let loop ((caller proc)
 		     (n (if (pair? depth) (car depth) 10))
@@ -154,16 +163,17 @@
        args)))
 
 ;*---------------------------------------------------------------------*/
-;*    obj->string ...                                                  */
+;*    obj->name ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (obj->string o longp)
+(define (obj->name o longp)
    (cond
       ((procedure? o)
        (let ((name (cond
 		      ((not (string? o.name))
-		       (with-output-to-string (lambda () (write o))))
+		       (bigloo-demangle
+			(with-output-to-string (lambda () (write o)))))
 		      ((> (string-length o.name) 0)
-		       o.name)
+		       (bigloo-demangle o.name))
 		      (else
 		       (<I> "anonymous")))))
 	  (if (and longp (string? o.location))
@@ -192,7 +202,7 @@
       (<DIV> "Hop client stack:")
       (<PRE> :onclick (stop-event-propagation event)
 	 (map (lambda (frame)
-		 (list (obj->string (car frame) #t) "\n"))
+		 (list (obj->name (car frame) #t) "\n"))
 	      stack))))
 
 ;*---------------------------------------------------------------------*/
@@ -253,7 +263,7 @@
       (cond
 	 ((string? exc.name) exc.name)
 	 ((eq? exc.name #unspecified) "HopClientSideError")
-	 (else (obj->string exc.name #f))))
+	 (else (obj->name exc.name #f))))
    
    (define (exception-message exc)
       (cond
@@ -271,7 +281,7 @@
 	 ((number? exc.message)
 	  exc.message)
 	 ((not (eq? exc.message #unspecified))
-	  (obj->string exc.message #f))
+	  (obj->name exc.message #f))
 	 ((string? exc.description)
 	  (apply string-append
 		 (map (lambda (s)
@@ -282,7 +292,7 @@
    
    (let* ((message (exception-message exc))
 	  (msg (if (and exc (js-in? "scObject" exc))
-		   (list message " -- " (<TT> (obj->string exc.scObject #f)))
+		   (list message " -- " (<TT> (obj->name exc.scObject #f)))
 		   message))
 	  (name (exception-name exc))
 	  (url (if (string? exc.fileName) exc.fileName document.location.href))
@@ -311,16 +321,13 @@
 			   (<TT> msg)))
 		     (<TR>
 			(<TD>
-			   src))
-		     (<TR>
-			(<TD> :style "color: #777"
-			   (properties->string exc)))))
+			   src))))
 	       (when (and exc.hopService (not (eq? exc.hopService #unspecified)))
 		  (<DIV> :hssclass "hop-error-trace"
 		     (<DIV> :style "font-weight: bold" "Service:")
 		     (<TABLE> :style "padding-left: 1em"
 			(<TR> (<TD> :style "font-size: 110%; font-family: monospace; font-weight: normal"
-				 (obj->string exc.hopService #f))))))
+				 (obj->name exc.hopService #f))))))
 	       (when (pair? exc.hopStack)
 		  (<EXCEPTION-STACK> exc.hopStack))
 	       (when (string? exc.stack)

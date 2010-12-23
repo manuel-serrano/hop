@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Dec 21 11:31:10 2010 (serrano)                */
+/*    Last change :  Thu Dec 23 07:44:22 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -267,9 +267,8 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
    var hop_header_serialize = hop_header_hop_serialize;
    var succ = (typeof success === "function") ? success : hop_default_success;
    var fail = (typeof failure === "function") ? failure : hop_default_failure;
-   var hstack = hop_debug() > 0 ? hop_get_stack( 1 ) : false;
-
-   xhr.hopStack = hstack;
+   
+   xhr.hopStack = hop_debug() > 0 ? hop_get_stack( 0 ) : false;
 
    function onreadystatechange() {
       if( xhr.readyState == 4 ) {
@@ -300,10 +299,11 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 					serialize );
 			   }
 			} catch( exc ) {
+			   exc.hopService = svc;
+			   exc.message = xhr.responseText;
+			   
 			   xhr.exception = exc;
-			   xhr.exception.hopStack = hstack;
-			   xhr.exception.hopService = svc;
-			   xhr.exception.message = xhr.responseText;
+
 			   fail( xhr );
 			   expr = false;
 			}
@@ -318,9 +318,23 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 			return succ( xhr.responseText, xhr );
 		     }
 		  } catch( exc ) {
-		     xhr.exception = exc;
-		     xhr.exception.hopStack = hstack;
-		     xhr.exception.hopService = svc;
+		     // Exception are read-only in Firefox, duplicate then
+		     var frame = sc_cons( succ, sc_cons( xhr, null ) );
+		     var nexc = new Error( exc.name );
+
+		     nexc.name = exc.name;
+		     nexc.message = exc.message;
+		     nexc.description = exc.description;
+		     nexc.fileName = exc.fileName;
+		     nexc.lineNumber = exc.lineNumber;
+		     nexc.line = exc.line;
+		     nexc.hopLocation = exc.hopLocation;
+		     nexc.scObject = exc.scObject;
+		     nexc.hopStack = sc_cons( frame, xhr.hopStack );
+		     nexc.hopService = svc;
+		     
+		     xhr.exception = nexc;
+
 		     fail( xhr );
 		     return false;
 		  }
@@ -356,7 +370,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 	    }
 	 } catch( exc ) {
 	    xhr.exception = exc;
-	    xhr.exception.hopStack = hstack;
+	    xhr.exception.hopStack = xhr.hopStack;
 	    xhr.exception.hopService = svc;
 	    fail( xhr );
 	    return false;
