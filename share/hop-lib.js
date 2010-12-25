@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Sun Dec 12 18:41:40 2010 (serrano)                */
+/*    Last change :  Fri Dec 24 06:49:11 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -45,7 +45,7 @@ function hop_callback( proc ) {
       } else {
 	 var hstack =
 	    ((typeof hop_get_stack) === "function") ?
-	    hop_get_stack( 2 ) : null;
+	    hop_get_stack( 1 ) : null;
 	 
 	 return function( e ) {
 	    try {

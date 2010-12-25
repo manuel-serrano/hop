@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Dec 18 08:38:49 2010 (serrano)                */
+;*    Last change :  Sat Dec 25 07:23:03 2010 (serrano)                */
 ;*    Copyright   :  2006-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -404,11 +404,13 @@
 				((not o)
 				 (http-service-not-found abspath))
 				((eq? o #t)
-				 (mutex-lock! *service-mutex*)
+				 
 				 (let ((s (hashtable-get *service-table* abspath)))
 				    (if (not s)
 					(http-service-not-found abspath)
-					(loop s))))
+					(begin
+					   (mutex-lock! *service-mutex*)
+					   (loop s)))))
 				(else
 				 (http-error o)))))
 			 (else

@@ -718,7 +718,7 @@ function sc_toWriteString(o) {
     else if (o === this.window)
         return "window";
     else if (typeof o === 'function')
-        return "#<procedure " + (o.name ? o.name : "anonymous") + " " + (o.location != "#f" ? o.location : "") + ":" + sc_hash(o) + ">";
+        return "#<procedure " + (o.sc_name ? o.sc_name : "anonymous") + " " + (o.sc_location != "#f" ? o.sc_location : "") + ":" + sc_hash(o) + ">";
     else if (o.sc_toWriteString)
 	return o.sc_toWriteString();
     else
@@ -782,7 +782,7 @@ function sc_toDisplayString(o) {
     else if (o === this.window)
         return "window";
     else if (typeof o === 'function')
-        return "#<procedure " + (o.name ? o.name : "anonymous") + " " + (o.location != "#f" ? o.location : "") + ":" + sc_hash(o) + ">";
+        return "#<procedure " + (o.sc_name ? o.sc_name : "anonymous") + " " + (o.sc_location != "#f" ? o.sc_location : "") + ":" + sc_hash(o) + ">";
     else if (o.sc_toDisplayString)
 	return o.sc_toDisplayString();
     else

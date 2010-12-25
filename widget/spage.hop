@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Tue Dec 21 18:15:40 2010 (serrano)                */
+;*    Last change :  Thu Dec 23 06:35:49 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -96,7 +96,7 @@
 	  (body (filter (lambda (x) (not (xml-sphead-element? x))) body)))
       (if (and (pair? body) (null? (cdr body)) (xml-delay? (car body)))
 	  ;; a dynamic tab
-	  (let ((svc (service ()
+	  (let ((svc (service :name (format "sptab/~a" id) ()
 			(<DIV> :hssclass "hop-spbody"
 			   :class class
 			   attr

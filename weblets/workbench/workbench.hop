@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 20 07:04:35 2010                          */
-;*    Last change :  Sun Nov 21 12:24:13 2010 (serrano)                */
+;*    Last change :  Sat Dec 25 18:39:06 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop workbench                                                */
@@ -82,10 +82,10 @@
 			   " ")
 			(<TH> :id "clear" :title "Clear console"
 			   :onclick ~(let ((el (dom-get-element-by-id "console")))
-					(set! el.value ""))
+					(innerHTML-set! el ""))
 			   " ")))
 		  (<DIV> :id "consolep"
-		     (<TEXTAREA> :id "console" "")))
+		     (<PRE> :id "console" "")))
 	       (<PAN>
 		  (<DIV> :id "iframemask" "")
 		  (<IFRAME> :id "iframe" :src (workbench/dummy))))))))

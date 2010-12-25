@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Dec  9 21:22:12 2010 (serrano)                */
+;*    Last change :  Fri Dec 24 06:58:43 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -804,10 +804,16 @@
 ;*    xml-tilde->statement ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (xml-tilde->statement::bstring obj)
+   
+   (define (js-catch-error stmt)
+      (format "try { ~a } catch( e ) { hop_report_exception( e ); }" stmt))
+   
    (with-access::xml-tilde obj (%js-statement body)
       (when (not (string? %js-statement))
-	 (set! %js-statement
-	       ((clientc-precompiled->JS-statement (hop-clientc)) body)))
+	 (let ((stmt ((clientc-precompiled->JS-statement (hop-clientc)) body)))
+	    (if (>fx (bigloo-debug) 0)
+		(set! %js-statement (js-catch-error stmt))
+		(set! %js-statement stmt))))
       %js-statement))
 
 ;*---------------------------------------------------------------------*/

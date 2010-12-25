@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Nov  8 14:14:34 2010 (serrano)                */
+#*    Last change :  Sat Dec 25 06:19:19 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -37,8 +37,8 @@ bcflags="-O2 -fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
 btflags="-gtrace"
 
 bcflagsdev=""
-bcflagsdbg="-copt -g"
-bcflagsdbg2="-g -O2 -cg"
+bcflagsdbg="-copt -g -O2"
+bcflagsdbg2="-g -cg"
 bcflagspmem="-pmem -O2 -fno-user-inlining"
 bcflagspmem2="-pmem2 -O2 -fno-user-inlining"
 bcflagsopt="-unsafe -O3"
@@ -96,7 +96,7 @@ else
 fi
 
 # User controlled optional features
-ssl="no"
+ssl=""
 locevent="true"
 threads=""
 
@@ -409,8 +409,8 @@ if [ "$ssl" = "yes" ]; then
     exit 1;
   fi
 
-  libraries="ssl $libraries"
   hopsrfis="$hopsrfis enable-ssl"
+  libraries="ssl $libraries"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -434,6 +434,7 @@ if [ "$threads" = "yes" ]; then
     echo "or re-configure and re-install your Bigloo compiler."
     exit 1;
   fi
+
   hopsrfis="$hopsrfis enable-threads"
   libraries="pthread $libraries"
 fi

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue Nov 23 08:23:43 2010 (serrano)                */
+/*    Last change :  Fri Dec 24 06:45:01 2010 (serrano)                */
 /*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -589,7 +589,7 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
 /*---------------------------------------------------------------------*/
 function node_style_set_native( el, prop, value ) {
    var obj = el;
-   
+
    if( (el instanceof String) || (typeof el === "string") )
       obj = document.getElementById( el );
 
@@ -600,28 +600,13 @@ function node_style_set_native( el, prop, value ) {
       if( sc_isKeyword( p ) )
 	 p = sc_keyword2jsstring( p );
    
-      if( !(v instanceof String) && (typeof v !== "string") ) {
-	 if( !v && (v != 0) ) {
-	    sc_error( "node-style-set!", "Illegal \"" + p + "\" value: " + v, el );
-	 } else {
-	    v = v.toString();
-	 }
-      }
+      if( !(v instanceof String) && (typeof v !== "string") )
+	 v = v.toString();
 
-      if( !obj || !obj.style ) {
-	 sc_error( "node-style-set!",
-		   "Illegal object while setting \"" + p + ": " + v + "\"",
-		   el );
-      }
-
-      try {
-	 if( p in obj.style ) {
-	    obj.style[ p ] =  v;
-	 } else {
-	    obj.style.setProperty( p, v, "" );
-	 }
-      } catch( e ) {
-	 sc_error( "node-style-set!", "Can't set property \"" + p + "\"", el );
+      if( p in obj.style ) {
+	 obj.style[ p ] =  v;
+      } else {
+	 obj.style.setProperty( p, v, "" );
       }
    }
 }
@@ -639,13 +624,8 @@ function node_style_set_array( el, prop, value ) {
       if( sc_isKeyword( p ) )
 	 p = sc_keyword2jsstring( p );
    
-      if( !(v instanceof String) && (typeof v !== "string") ) {
-	 if( !v && (v != 0) ) {
-	    sc_error( "node-style-set!", "Illegal \"" + p + "\" value: "+ v, el );
-	 } else {
-	    v = v.toString();
-	 }
-      }
+      if( !(v instanceof String) && (typeof v !== "string") )
+	 v = v.toString();
    
       obj.style[ p ] = v;
    }
@@ -654,9 +634,10 @@ function node_style_set_array( el, prop, value ) {
 /*** META ((export node-style-set!) (arity -3)) */
 var node_style_set = function( el, prop, value ) {
    var obj = el;
-   
-   if( (el instanceof String) || (typeof el === "string") )
+
+   if( (el instanceof String) || (typeof el === "string") ) {
       obj = document.getElementById( el );
+   }
 
    try {
       if( "setProperty" in obj.style ) {
@@ -666,8 +647,10 @@ var node_style_set = function( el, prop, value ) {
 	 node_style_set = node_style_set_array;
 	 return node_style_set_array.apply( null, arguments );
       }
-   } catch( e ) {
-      sc_error( "node-style-set!", "Can't set property \"" + prop + "\"", el );
+   } catch( exc ) {
+      var msg = "message" in exc ? exc.message : "Cannot set style";
+
+      sc_error( "node-style-set!", msg, el );
   }
 }
 

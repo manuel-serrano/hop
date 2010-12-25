@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Dec 20 18:52:50 2010 (serrano)                */
+;*    Last change :  Thu Dec 23 12:02:22 2010 (serrano)                */
 ;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -167,7 +167,7 @@
 		  body))
 
    (if native
-       (<AUDIO:HTML5> :id id body)
+       (<AUDIO:HTML5> :id id :controls controls :src src body)
        (<DIV> :id id :class "hop-audio"
 	  (when controls (<controls>))
 	  (case browser
@@ -197,11 +197,11 @@
 ;*    The native attribute is a hack to let AUDIO nodes be comparable  */
 ;*    by the tree comparison security manager.                         */
 ;*---------------------------------------------------------------------*/
-(define (<AUDIO:HTML5> #!key id  #!rest body)
+(define (<AUDIO:HTML5> #!key id controls src src #!rest body)
    (instantiate::xml-element
       (id id)
       (tag 'audio)
-      (attributes '(:controls #f :autoplay #f :native #t))
+      (attributes `(:controls ,controls :autoplay #f :native #t :src ,src))
       (body body)))
    
 ;*---------------------------------------------------------------------*/

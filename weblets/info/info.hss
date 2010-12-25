@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/weblets/info/info.hss             */
+/*    serrano/prgm/project/hop/2.2.x/weblets/info/info.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Mar  8 10:03:16 2010 (serrano)                */
+/*    Last change :  Sat Dec 25 10:29:15 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    INFO HOP CSS                                                     */
@@ -20,7 +20,11 @@ body {
 
 div.body {
   position: absolute;
-  top: 10px; right: 20px; bottom: 30px; left: 10px;
+  top: 10px; right: 20px; bottom: 40px; left: 10px;
+  box-shadow: 6px 6px 5px #555;
+  border: 1px solid $border-color;
+  border-radius: 0.5em;
+  background: white;
 }
 
 div.foot {
@@ -28,7 +32,7 @@ div.foot {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 20px;
+  height: 35px;
 }
 
 button {
@@ -47,9 +51,6 @@ table.info {
   width: 100%;
   height: 100%;
   padding: 10px;
-  border: 1px solid $border-color;
-  background: white;
-  border-radius: 0.5em;
 }
 
 table.info td#logo {
@@ -70,6 +71,8 @@ div#title {
   border-bottom: 1px solid $border-color;
   margin-bottom: 20px;
   padding-bottom: 1px;
+  text-shadow: #999 2px 2px 2px;
+  
 }
 
 div#result {

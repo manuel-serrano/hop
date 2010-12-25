@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Tue Dec 21 11:08:43 2010 (serrano)                */
+/*    Last change :  Thu Dec 23 12:10:43 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
@@ -82,8 +82,8 @@ div[hssclass=hop-error] {
   border-color: red;
   opacity: 1;
   color: black;
-  top: 0; bottom: 0;
-  left: 0; right: 0;
+  top: 10px; bottom: 10px;
+  left: 10px; right: 10px;
   position: fixed;
   z-index: 100002;
   margin: 100px;
