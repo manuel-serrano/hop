@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat Dec 25 10:29:15 2010 (serrano)                */
+/*    Last change :  Sat Dec 25 19:26:09 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    INFO HOP CSS                                                     */
@@ -19,20 +19,14 @@ body {
 }
 
 div.body {
-  position: absolute;
-  top: 10px; right: 20px; bottom: 40px; left: 10px;
+  margin-top: 2ex;
+  margin-left: auto;
+  margin-right: auto;
+  width: 90%;
   box-shadow: 6px 6px 5px #555;
   border: 1px solid $border-color;
   border-radius: 0.5em;
   background: white;
-}
-
-div.foot {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 35px;
 }
 
 button {
@@ -111,6 +105,7 @@ nptab-active {
 
 nptab-body {
   background-color: $info-color;
+  overflow: auto;
 }  
 
 table.hop-info {
@@ -358,4 +353,19 @@ table.info-font-user {
   padding-bottom: 2ex;
   margin-bottom: 2ex;
   border-collapse: collapse;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Sections                                                         */
+/*---------------------------------------------------------------------*/
+h1 {
+  font-size: 110%;
+  font-weight: bold;
+  text-shadow: #999 1px 1px 1px;
+}
+
+h2 {
+  font-size: 105%;
+  font-weight: bold;
+  text-shadow: #999 1px 1px 1px;
 }

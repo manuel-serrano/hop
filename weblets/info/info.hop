@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Dec 16 07:32:57 2010 (serrano)                */
+;*    Last change :  Sat Dec 25 19:36:53 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -12,7 +12,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module weblet_info)
+(module weblet_info
+   ~(import weblet_info-client
+	    maze))
 
 ;*---------------------------------------------------------------------*/
 ;*    info-event ...                                                   */
@@ -141,7 +143,8 @@
 		:title "Hop Info weblet"
 		:base (service-base-url info req)
 		:include "hop-notepad" "hop-sorttable" "hop-font" "hop-foot"
-		:css "info.hss")
+		:css "info.hss"
+		:jscript "info.scm" "etc/maze.scm")
 	     (<BODY>
 		:onunload ~(with-hop ($(service ()
 					  (set! traffic-hookingp #f))))
@@ -177,12 +180,12 @@
 						 (lambda ()
 						    (<CONFIG:SERVER>))))
 					   (<NPTAB>
-					      (<NPTABHEAD> "client")
+					      (<NPTABHEAD> "Client")
 					      (<DELAY>
 						 (lambda ()
 						    (<CONFIG:CLIENT>))))
 					   (<NPTAB>
-					      (<NPTABHEAD> "fonts")
+					      (<NPTABHEAD> "Fonts")
 					      (<DELAY>
 						 (lambda ()
 						    (<CONFIG:FONT>))))
@@ -205,7 +208,12 @@
 					      (<NPTABHEAD> "Traffic")
 					      (<DELAY>
 						 (lambda ()
-						    (<TRAFFIC>)))))))))))))
+						    (<TRAFFIC>))))
+					   (<NPTAB>
+					      (<NPTABHEAD> "Perfs")
+					      (<DELAY>
+						 (lambda ()
+						    (<PERFS>)))))))))))))
 		(<FOOT>)))
 	  (user-access-denied req))))
 
@@ -481,6 +489,35 @@ mmmmmmmmmmlil"))))
 						      (string-append
 						       $traffic.innerHTML t)))))
 	  (<SORTTABLE> traffic)))))
+
+;*---------------------------------------------------------------------*/
+;*    info/perfs/server ...                                            */
+;*---------------------------------------------------------------------*/
+(define-service (info/perfs/server)
+   (multiple-value-bind (res rtime stime utime)
+      (time (lambda () (maze 35)))
+      (+ stime utime)))
+
+;*---------------------------------------------------------------------*/
+;*    <PERFS> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (<PERFS>)
+   (list
+    (<H1> "Server side performance")
+    (<BUTTON> :onclick ~(with-hop ($info/perfs/server)
+			   (lambda (h)
+			      (alert "server performance: " h)))
+       "Run server benchmark")
+    (<H1> "Client side performance")
+    (<BUTTON> :onclick ~(multiple-value-bind (res rtime stime utime)
+			   (time (lambda () (maze 35)))
+			   (alert "client performance: " (+ stime utime)))
+       "Run server benchmark")
+    (<DIV>
+       (<PRE> :id "console" "")
+       (<BUTTON> :onclick ~(innerHTML-set! "console"
+					   (apply string-append (maze 10)))
+	  "CLICK"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <EVENTS> ...                                                     */
