@@ -660,6 +660,9 @@
 (define (random-state n)
   (cons n #f))
 
+(define (rangeint val)
+   (bit-and val (-fx (bit-lsh 1 29) 1)))
+
 (define (rand state)
   (let ((seed (car state))
 	(A 48271)
@@ -668,8 +671,8 @@
 	(R 3399))
     (let* ((hi (/fx seed Q))
 	   (lo (modulofx seed Q))
-	   (test (-fx (*fx A lo) (*fx R hi)))
-	   (val (if (>fx test 0) test (+fx test M))))
+	   (test (-fx (rangeint (*fx A lo)) (rangeint (*fx R hi))))
+	   (val (if (>fx test 0) test (rangeint (+fx test M)))))
       (set-car! state val)
       val)))
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat Dec 25 19:26:09 2010 (serrano)                */
+/*    Last change :  Tue Dec 28 14:50:03 2010 (serrano)                */
 /*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    INFO HOP CSS                                                     */
@@ -16,6 +16,15 @@ $(define title-color "#ddd")
 body {
   background: #e0e0e0;
   font-family: arial;
+}
+
+/* to be removed when chromium bug fixed */
+gauge {
+  width: 300px;
+}
+
+gaugefill {
+  background: #14a3eb;
 }
 
 div.body {
@@ -218,7 +227,6 @@ table.cache-files {
 div.autoload {
   min-height: 150px;
   overflow: auto;
-  background: white;
   width: 100%;
 }
 
@@ -368,4 +376,141 @@ h2 {
   font-size: 105%;
   font-weight: bold;
   text-shadow: #999 1px 1px 1px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Perfs                                                            */
+/*---------------------------------------------------------------------*/
+table#perfs-base-config {
+  font-size: 85%;
+}
+
+table#perfs-base-config th {
+  text-align: right;
+  color: #777;
+}
+
+table#perfs-base-config td {
+  font-weight: normal;
+  text-align: left;
+  font-style: italic;
+}
+
+table#perfs-base-config th:after {
+  content: ":";
+}
+
+table.perfs-results caption {
+  caption-side: bottom;
+  font-style: italic;
+  color: #555;
+}
+
+table.perfs-results {
+  border: 1px solid $border-color;
+  padding: 4px;
+  font-size: 90%;
+  border-collapse: collapse;
+  font-weight: normal;
+}
+
+table.perfs-results th.perfs-head {
+}
+
+table.perfs-results th {
+  width: 10em;
+  border-color: $border-color;
+  border-style: solid;
+  border-right-width: 1px;
+  border-left-width: 0;
+  border-top-width: 0;
+  border-bottom-width: 1px;
+  text-align: center;
+  background-color: #dddddd;
+  padding: 1px;
+}
+
+table.perfs-results tr.perfs-subhead th {
+  width: 5em;
+  font-size: 75%;
+}
+
+table.perfs-results td {
+  width: 5em;
+  background-color: white;
+  text-align: center;
+  font-weight: normal;
+}
+
+table.perfs-results td.perfs-val {
+  border-color: $border-color;
+  border-style: solid;
+  border-right-width: 0px;
+  border-left-width: 1px;
+  border-top-width: 0px;
+  border-bottom-width: 1px;
+  font-style: italic;
+}
+
+table.perfs-results td.perfs-score {
+  border-color: $border-color;
+  border-style: solid;
+  border-left-width: 0px;
+  border-right-width: 1px;
+  border-top-width: 0px;
+  border-bottom-width: 1px;
+}
+
+table.perfs-results td.perfs-fast {
+  font-weight: bold;
+}
+
+table.perfs-results td.perfs-slow {
+  font-weight: normal;
+}
+
+table.perfs-results td.perfs-error {
+  color: #ff0000;
+  font-weight: bold;
+}
+
+div#perfs-div {
+  display: none;
+}
+
+img#perfs-img {
+  display: none;
+}
+
+iframe#perfs-iframe {
+  display: none;
+}
+
+#perfs-benchmark-name {
+  color: #777;
+  width: 12em;
+  font-style: italic;
+  text-align: right;
+  font-weight: normal;
+}
+
+div.perfs-buttons button {
+  margin-right: 2em;
+  font-size: 85%;
+}
+
+div.perfs-buttons button.perfs-all {
+  font-weight: bold;
+}
+
+/*---------------------------------------------------------------------*/
+/*    small screens                                                    */
+/*---------------------------------------------------------------------*/
+@media all and (max-width: 1024px) {
+  div.body {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
 }

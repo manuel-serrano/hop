@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Fri Dec 24 06:49:11 2010 (serrano)                */
+/*    Last change :  Sun Dec 26 07:08:51 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -15,7 +15,6 @@
 /*** META ((export Math) (JS Math)) */
 /*** META ((export navigator) (JS navigator)) */
 /*** META ((export eval) (JS eval)) */
-/*** META ((export hop_update) (JS hop_update)) */
 /*** META ((export confirm) (JS confirm)) */
 /*** META ((export setInterval) (JS setInterval)) */
 /*** META ((export clearInterval) (JS clearInterval)) */
@@ -301,26 +300,6 @@ var hop_window_onload_add = function( proc ) {
    /* backward compatibility */
    return hop_add_event_listener( window, "load", proc );
 }
-
-/*    var oldonload = window.onload;                                   */
-/*    var wproc = hop_callback( proc );                                */
-/*                                                                     */
-/*    if( typeof oldonload != 'function' ) {                           */
-/*       window.onload = wproc;                                        */
-/*    } else {                                                         */
-/*       window.onload = function( e ) {                               */
-/* 	 oldonload( e );                                               */
-/* 	 wproc( e );                                                   */
-/*       }                                                             */
-/*    }                                                                */
-/* }                                                                   */
-/*                                                                     */
-/* hop_window_onload_add( function( e ) {                              */
-/*       {* once the window is loaded, onload handlers *}              */
-/*       {* must be invoked eargly                     *}              */
-/*       hop_window_onload_add = function( proc ) { proc( e ); }       */
-/*    } );                                                             */
-/*                                                                     */
 
 /*---------------------------------------------------------------------*/
 /*    hop_update ...                                                   */

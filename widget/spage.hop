@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Thu Dec 23 06:35:49 2010 (serrano)                */
+;*    Last change :  Sun Dec 26 17:16:40 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -80,17 +80,15 @@
    
    (define (init-sptab id onselect)
       (sexp->xml-tilde
-       `(let loop ()
-	   (let ((el (dom-get-element-by-id ,id)))
-	      (if (not el)
-		  (after 10 loop)
-		  (begin
-		     (set! el.hop_add_event_listener sptab-add-event-listener!)
-		     ,(when (xml-tilde? onselect)
-			 `(set! el.onselect
-				(lambda (event)
-				   ,(xml-tilde->sexp onselect))))
-		     #unspecified))))))
+       `(add-event-listener! ,id "ready"
+	   (lambda (event)
+	      (let ((el this))
+		 (set! el.hop_add_event_listener sptab-add-event-listener!)
+		 ,(when (xml-tilde? onselect)
+		     `(set! el.onselect
+			    (lambda (event)
+			       ,(xml-tilde->sexp onselect))))
+		 #unspecified)))))
    
    (let* ((head (filter xml-sphead-element? body))
 	  (body (filter (lambda (x) (not (xml-sphead-element? x))) body)))

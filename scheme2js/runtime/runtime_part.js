@@ -2147,6 +2147,16 @@ function sc_currentMicroseconds() {
    return (new Date()).getTime();
 }
 
+/*** META ((export #t) (arity #t)) 
+*/
+function sc_time(proc) {
+   var start = sc_currentMicroseconds();
+   var res = proc();
+   var stop = sc_currentMicroseconds();
+
+   return sc_values( res, stop - start, 0, 0 );
+}
+
 function sc_Hashtable() {
 }
 sc_Hashtable.prototype.toString = function() {

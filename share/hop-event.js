@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sun Nov 21 08:20:57 2010 (serrano)                */
+/*    Last change :  Tue Dec 28 08:45:03 2010 (serrano)                */
 /*    Copyright   :  2007-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -56,18 +56,29 @@ function hop_add_event_listener( obj, event, proc, capture ) {
    if( event === "timeout" )
       return hop_add_timeout_listener( obj, proc );
 
-   if( ("hop_add_event_listener" in obj) &&
-       (obj.hop_add_event_listener != hop_add_event_listener) )
-      return obj.hop_add_event_listener( event, proc, capture );
-
    if( event === "ready" ) {
-      if( hop_is_ready ) {
-	 return proc( new function() { this.name = 'ready' } );
+      if( obj === window ) {
+	 if( hop_is_ready ) {
+	    window.ready = proc;
+	    return window.ready( new HopEvent( "ready", window ) );
+	 } else {
+	    return hop_add_native_event_listener( window, "load", proc, capture );
+	 }
+      } else if( typeof obj === "string" ) {
+	 /* wait for a node to be created and added to the document */
+	 return after( 1, function() { hop_add_ready_listener( obj, proc ) } );
       } else {
-	 return hop_add_native_event_listener( window, "load", proc, capture );
+	 return sc_error( "add-event-listener!",
+			  "Illegal \"ready\" event for object",
+			  obj );
       }
    }
    
+   if( ("hop_add_event_listener" in obj) &&
+       (obj.hop_add_event_listener != hop_add_event_listener) ) {
+      return obj.hop_add_event_listener( event, proc, capture );
+   }
+
    return hop_add_native_event_listener( obj, event, proc, capture );
 }
 
@@ -97,6 +108,20 @@ function hop_remove_event_listener( obj, event, proc, capture ) {
 
    return hop_remove_native_event_listener( obj, event, proc, capture );
 } 
+
+/*---------------------------------------------------------------------*/
+/*    hop_add_ready_listener ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_add_ready_listener( obj, proc ) {
+   var el = document.getElementById( obj );
+
+   if( !el ) {
+      after( 10, function() { return hop_add_ready_listener( obj, proc ); } );
+   } else {
+      el.ready = proc;
+      el.ready( new HopEvent( "ready", el ) );
+   }
+}
 
 /*---------------------------------------------------------------------*/
 /*    hop_add_active_location_listener ...                             */

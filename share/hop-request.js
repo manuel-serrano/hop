@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Dec 23 07:44:22 2010 (serrano)                */
+/*    Last change :  Sun Dec 26 08:00:56 2010 (serrano)                */
 /*    Copyright   :  2004-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -268,7 +268,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
    var succ = (typeof success === "function") ? success : hop_default_success;
    var fail = (typeof failure === "function") ? failure : hop_default_failure;
    
-   xhr.hopStack = hop_debug() > 0 ? hop_get_stack( 0 ) : false;
+   xhr.hopStack = hop_debug() > 0 ? hop_get_stack( 0 ) : null;
 
    function onreadystatechange() {
       if( xhr.readyState == 4 ) {
