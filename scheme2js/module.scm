@@ -300,7 +300,7 @@
 (define (create-module-from-expr expr override-headers)
    (let ((m (instantiate::Compilation-Unit
 	       (name (gensym 'module))
-	       (top-level (list expr))
+	       (top-level (list (tree-copy expr)))
 	       (exported-macros '())
 	       (exports '())
 	       (declared-module? #f)))

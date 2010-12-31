@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Wed Dec 22 19:50:35 2010 (serrano)                */
+;*    Last change :  Thu Dec 30 16:47:22 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -396,7 +396,6 @@
 		(spage-pop-auto spage spviewport tbody))
 	       (else
 		(spage-pop-none spage spviewport tbody)))))))
-	    ))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-spage ...                                                   */

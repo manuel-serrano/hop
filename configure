@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Dec 25 06:19:19 2010 (serrano)                */
+#*    Last change :  Wed Dec 29 06:22:50 2010 (serrano)                */
 #*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -305,7 +305,7 @@ while : ; do
       echo "   --bigloo=comp......... The Bigloo compiler ($bigloo)" >&2;
       echo "   --bigloolibdir=path... The Bigloo lib-dir path" >&2;
       echo "   --backend=backend..... The execution platform [native,jvm,dotnet]" >&2;
-      echo "   --link=method......... The link method [static,dynamic]" >&2;
+      echo "   --link=method......... The link method [static,dynamic,library,felix]" >&2;
       echo "   --afile=afile......... The Bigloo afile tool" >&2;
       echo "   --btags=btags......... The Bigloo btags tool" >&2;
       echo "   --bdepend=bdepend..... The Bigloo dependence tool" >&2;

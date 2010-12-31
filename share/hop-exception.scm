@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Sun Dec 26 08:01:47 2010 (serrano)                */
+;*    Last change :  Thu Dec 30 15:25:22 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -290,7 +290,7 @@
 		      (string-split exc.description "\n "))))
 	 (else
 	  "unknwown error")))
-   
+
    (let* ((message (exception-message exc))
 	  (msg (if (and exc (js-in? "scObject" exc))
 		   (list message " -- " (<TT> (obj->name exc.scObject #f)))
@@ -356,6 +356,7 @@
 		       e))
 		   (else
 		    exc))))
+	  (set! e.hopStack (hop-get-stack 1))
 	  (dom-append-child! document.body (<EXCEPTION> e))))
       (else
        ;; the error might be raised even before document.body is bound

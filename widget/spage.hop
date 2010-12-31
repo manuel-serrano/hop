@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Sun Dec 26 17:16:40 2010 (serrano)                */
+;*    Last change :  Fri Dec 31 10:00:56 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -46,7 +46,7 @@
 			(<DIV> :hssclass "hop-spbody"
 			   :class class
 			   body))
-		     ~(add-event-listener! window "ready"
+		     ~(add-event-listener! $id "ready"
 			 (lambda (e)
 			    (spage-init $id
 					$(when (xml-tilde? onchange)
@@ -70,6 +70,19 @@
 		     (<SPAN> ""))))))
 
 ;*---------------------------------------------------------------------*/
+;*    svc-stamp ...                                                    */
+;*---------------------------------------------------------------------*/
+(define svc-stamp 0)
+
+;*---------------------------------------------------------------------*/
+;*    get-svc-stamp ...                                                */
+;*---------------------------------------------------------------------*/
+(define (get-svc-stamp)
+   (let ((s svc-stamp))
+      (set! svc-stamp (+fx 1 svc-stamp))
+      s))
+
+;*---------------------------------------------------------------------*/
 ;*    SPTAB ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <SPTAB> ((id (xml-make-id 'SPTAB) string)
@@ -89,12 +102,12 @@
 			    (lambda (event)
 			       ,(xml-tilde->sexp onselect))))
 		 #unspecified)))))
-   
+
    (let* ((head (filter xml-sphead-element? body))
 	  (body (filter (lambda (x) (not (xml-sphead-element? x))) body)))
       (if (and (pair? body) (null? (cdr body)) (xml-delay? (car body)))
 	  ;; a dynamic tab
-	  (let ((svc (service :name (format "sptab/~a" id) ()
+	  (let ((svc (service :name (format "sptab/~a/~a" id (get-svc-stamp)) ()
 			(<DIV> :hssclass "hop-spbody"
 			   :class class
 			   attr

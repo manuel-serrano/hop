@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/hopscheme/tilde_escape.scm        */
+;*    serrano/prgm/project/hop/2.2.x/hopscheme/tilde_escape.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:09:56 2010                          */
-;*    Last change :  Sat Jun 19 06:15:56 2010 (serrano)                */
+;*    Last change :  Fri Dec 31 14:00:23 2010 (serrano)                */
 ;*    Copyright   :  2010 Florian Loitsch and Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    Interface between Scheme2JS and Hop.                             */

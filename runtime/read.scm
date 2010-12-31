@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Dec 20 17:50:09 2010 (serrano)                */
+;*    Last change :  Fri Dec 31 13:58:17 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -579,10 +579,10 @@
 	      (expr (ignore))
 	      (src (tree-copy expr))
 	      (js ((clientc-expressionc (hop-clientc))
-		      expr
-		      (current-module-clientc-import)
-		      menv
-		      hop-read-javascript-string)))
+		   expr
+		   (current-module-clientc-import)
+		   menv
+		   hop-read-javascript-string)))
 	  (econs '<TILDE> (list js :src `',src :loc `',loc) loc)))
       
       ;; structures
@@ -808,6 +808,7 @@
 ;*---------------------------------------------------------------------*/
 (define *afile-dirs* '())
 (define *afile-mutex* (make-mutex "hop-afile"))
+(define *afile-table* (make-hashtable))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-afile ...                                               */
@@ -816,10 +817,12 @@
 ;*    access table.                                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-afile dir)
+   
    (define (add-dir f)
       (if (or (string=? f "") (char=? (string-ref f 0) #\/))
 	  f
 	  (make-file-name dir f)))
+   
    (mutex-lock! *afile-mutex*)
    (if (memq dir *afile-dirs*)
        (mutex-unlock! *afile-mutex*)
@@ -837,15 +840,15 @@
 (define (get-directory-module-access dir)
    
    (define (get-file-module-access f abase)
-      (call-with-input-file f
-	 (lambda (p)
-	    (let loop ((e (hop-read p)))
-	       (unless (eof-object? e)
-		  (match-case e
-		     ((module ?module-name . ?-)
-		      (module-add-access! module-name (list f) abase))
-		     (else
-		      (loop (hop-read p)))))))))
+      (mutex-lock! *afile-mutex*)
+      (unless (hashtable-get *afile-table* f)
+	 (hashtable-put! *afile-table* f #t)
+	 (call-with-input-file f
+	    (lambda (p)
+	       (match-case (hop-read p)
+		  ((module ?module-name . ?-)
+		   (module-add-access! module-name (list f) abase))))))
+      (mutex-unlock! *afile-mutex*))
    
    (for-each (lambda (f)
 		(when (member (suffix f) (hop-module-suffixes))

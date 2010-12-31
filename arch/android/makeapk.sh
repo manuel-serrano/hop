@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Sat Dec 25 20:00:38 2010 (serrano)                */
+#*    Last change :  Wed Dec 29 06:20:35 2010 (serrano)                */
 #*    Copyright   :  2010 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -50,6 +50,9 @@ if [ "$MAKEJOBS " = " " ]; then
 fi
 
 makeopt=-j$MAKEJOBS
+
+# link should be set to "library" as soon as the GC support dynamic loading
+link=static
 
 #*---------------------------------------------------------------------*/
 #*    actions                                                          */
@@ -155,7 +158,7 @@ if [ $action_configure = "yes" ]; then
       --libdir=$PREFIX/hoplib \
       --cc=$CC \
       --bigloolibdir=$ANDROIDBIGLOOLIB \
-      --link=static\
+      --link=$link \
       --disable-ssl \
       --android \
       --library=mail \
@@ -185,13 +188,15 @@ if [ $action_install = "yes" ]; then
     || exit 1
   
   # cleanup useless file
-  /bin/rm $android/assets/bin/hop-$branch
-  /bin/rm $android/assets/bin/hopc
-  /bin/rm $android/assets/bin/hopsh
-  /bin/rm $android/assets/hoplib/hop/$branch/*.so
-  /bin/rm $android/assets/hoplib/hop/$branch/*.heap
-  /bin/rm $android/assets/hoplib/hop/$branch/*.a
-  /bin/rm $android/assets/hoplib/*.so
+  if [ "$link" = "static" ]; then
+    /bin/rm $android/assets/bin/hop-$branch
+    /bin/rm $android/assets/bin/hopc
+    /bin/rm $android/assets/bin/hopsh
+    /bin/rm $android/assets/hoplib/hop/$branch/*.so
+    /bin/rm $android/assets/hoplib/hop/$branch/*.heap
+    /bin/rm $android/assets/hoplib/hop/$branch/*.a
+    /bin/rm $android/assets/hoplib/*.so
+  fi
   
   /bin/rm -rf $android/assets/man
   /bin/rm -rf $android/assets/hoplib/hop/$branch/weblets/home

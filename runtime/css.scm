@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Fri Dec 17 08:42:06 2010 (serrano)                */
+;*    Last change :  Fri Dec 31 06:28:42 2010 (serrano)                */
 ;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -816,29 +816,33 @@
    (format "column-width: ~l;
   -moz-column-width: ~l;
   -khtml-column-width: ~l;
-  -webkit-column-width: ~l;"
-	   v v v v))
+  -webkit-column-width: ~l;
+  -o-column-width: ~l;"
+	   v v v v v))
 
 (define-hss-property (column-count v p)
    (format "column-count: ~l;
   -moz-column-count: ~l;
   -khtml-column-count: ~l;
-  -webkit-column-count: ~l;"
-	   v v v v))
+  -webkit-column-count: ~l;
+  -o-column-count: ~l;"
+	   v v v v v))
 
 (define-hss-property (column-gap v p)
    (format "column-gap: ~l;
   -moz-column-gap: ~l;
   -khtml-column-gap: ~l;
-  -webkit-column-gap: ~l;"
-	   v v v v))
+  -webkit-column-gap: ~l;
+  -o-column-gap: ~l;"
+	   v v v v v))
 
 (define-hss-property (column-rule v p)
    (format "column-rule: ~l;
   -moz-column-rule: ~l;
   -khtml-column-rule: ~l;
-  -webkit-column-rule: ~l;"
-	   v v v v))
+  -webkit-column-rule: ~l;
+  -o-column-rule: ~l;"
+	   v v v v v))
 
 ;; transform
 (define-hss-property (transform v p)
