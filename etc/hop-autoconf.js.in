@@ -929,13 +929,13 @@ function hop_screen_dimensions( unit ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export iframe-scroll-height) (arity #t)) */
 function hop_iframe_scroll_height( e ) {
-   if( "contentDocument" in e ) {
+   if( "contentDocument" in e && e.contentDocument != undefined ) {
       return e.contentDocument.body.scrollHeight;
    } else {
-      if( "document" in e ) {
+      if( "document" in e && e.document != undefined ) {
 	 return e.document.body.scrollHeight;
       } else {
-	 return iframe.height;
+	 return e.scrollHeight;
       }
    }
 }
@@ -945,13 +945,13 @@ function hop_iframe_scroll_height( e ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export iframe-scroll-width) (arity #t)) */
 function hop_iframe_scroll_width( e ) {
-   if( "contentDocument" in e ) {
+   if( "contentDocument" in e && e.contentDocument != undefined ) {
       return e.contentDocument.body.scrollWidth;
    } else {
-      if( "document" in e ) {
+      if( "document" in e && e.document != undefined ) {
 	 return e.document.body.scrollWidth;
       } else {
-	 return iframe.width;
+	 return e.scrollWidth;
       }
    }
 }

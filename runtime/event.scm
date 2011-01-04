@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Dec  1 13:05:15 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Mon Jan  3 18:01:25 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -323,7 +323,6 @@
 		  (key key)
 		  (req req))))
       (hashtable-put! *ajax-connection-key-table* key conn)))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-register-new-connection! ...                           */

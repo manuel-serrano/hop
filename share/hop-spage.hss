@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Dec  6 17:10:05 2010                          */
-/*    Last change :  Thu Dec 30 16:09:10 2010 (serrano)                */
-/*    Copyright   :  2010 Manuel Serrano                               */
+/*    Last change :  Tue Jan  4 08:57:35 2011 (serrano)                */
+/*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for spage tag                                                */
 /*=====================================================================*/
@@ -152,6 +152,15 @@ sptabhead > div[hssclass=hop-sppushbutton] {
   vertical-align: bottom;
 }
 
+div[hssclass=hop-spwindow] {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+}
+
 div[hssclass=hop-spviewport] {
   position: relative;
   transition: left 0.4s ease-in;
@@ -204,7 +213,6 @@ div[hssclass=hop-sppopbutton].visible {
   display: block;
 }
 
-div[hssclass=hop-sptab-static] > spbody  {
+div[hssclass=hop-sptab-static] {
   display: none;
 }
-  

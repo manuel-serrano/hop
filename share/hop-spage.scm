@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Thu Dec 30 16:47:22 2010 (serrano)                */
-;*    Copyright   :  2010 Manuel Serrano                               */
+;*    Last change :  Tue Jan  4 09:36:45 2011 (serrano)                */
+;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
 ;*=====================================================================*/
@@ -38,7 +38,8 @@
 	  (childs (dom-child-nodes spage)))
       (set! spage.sphead (car childs))
       (set! spage.spstyle (cadr childs))
-      (set! spage.spviewport (caddr childs))
+      (set! spage.spwindow (caddr childs))
+      (set! spage.spviewport (dom-first-child spage.spwindow))
       (set! spage.num 0)
       (set! spage.tabs (list (dom-first-child spage.spviewport)))
       (set! spage.heads '())
@@ -67,11 +68,14 @@
 ;*    spage-resize ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (spage-resize spage)
-   (let ((spage (if (string? spage) (dom-get-element-by-id spage) spage))
-	 (spbody (car (dom-child-nodes spage.spviewport))))
-      (set! spage.spwidth spage.clientWidth)
-      (set! spage.spbodywidth (- spage.clientWidth (frameBorderWidth spbody)))
-      (set! spage.spbodyheight (- spage.clientHeight (frameBorderHeight spbody)
+   (let* ((spage (if (string? spage) (dom-get-element-by-id spage) spage))
+	  (spbody (car (dom-child-nodes spage.spviewport)))
+	  (parent (dom-parent-node spage))
+	  (cwidth (- spage.clientWidth (frameBorderWidth spage)))
+	  (cheight (- spage.clientHeight (frameBorderHeight spage))))
+      (set! spage.spwidth cwidth)
+      (set! spage.spbodywidth (- cwidth (frameBorderWidth spbody)))
+      (set! spage.spbodyheight (- parent.clientHeight (frameBorderHeight spbody)
 				  spage.sphead.offsetHeight))
       ;; webkit got the animation wrong if the viewport is just not
       ;; larger enough before adding a new tab
@@ -79,8 +83,8 @@
       (set! spage.spoffset (*fx spage.num spage.spwidth))
       ;; we have to enforce the page size otherwise the browsers
       ;; use the viewport width for the containing block width
-      (node-style-set! spage
-	 :width (format "~apx" spage.spwidth))
+      (node-style-set! spage.spwindow
+	 :width (format "~apx" cwidth))
       (node-style-set! spage.spviewport
 	 :width (format "~apx" spage.spscrollwidth))
       (node-style-set! (dom-first-child spage.spviewport)
@@ -282,6 +286,8 @@
 	  (tab (if (string? tab) (dom-get-element-by-id tab) tab))
 	  (spviewport spage.spviewport)
 	  (tbody (if (string? tbody) (dom-get-element-by-id tbody) tbody)))
+      ;; adjust the size of the viewport
+      (spage-resize spage)
       ;; increment the number of pushed elements
       (set! spage.num (+fx spage.num 1))
       (set! spage.tabs (cons tbody spage.tabs))
@@ -325,11 +331,18 @@
       (when (and tbody.tab (not (eq? tbody.tab #unspecified)))
 	 (sptab-invoke-onselect-listener! tbody.tab tbody "pop")))
    
+   (define (restore-static-body tab)
+      (unless (eq? tab.static-node #unspecified)
+	 (let ((p tab.static-body)
+	       (n tab.static-node))
+	    (dom-append-child! p n))))
+   
    (define (spage-pop-none spage spviewport tbody)
       (dom-remove-child! spviewport tbody)
+      (restore-static-body tbody.tab)
       (node-style-set! (car spage.tabs) :opacity 1)
       (shrink-viewport spviewport))
-   
+
    (define (spage-pop-fade spage spviewport tbody)
       (if (hop-config 'css_transition)
 	  (let ((d (css-transition-duration tbody)))
@@ -343,10 +356,12 @@
 		      :-moz-transition-property "none"
 		      :-o-transition-property "none")
 		   (dom-remove-child! spviewport tbody)
+		   (restore-static-body tbody.tab)
 		   (shrink-viewport spviewport))))
 	  (fade tbody (car spage.tabs) (or (css-transition-duration tbody) 400) 1 0
 		(lambda (tbody)
 		   (dom-remove-child! (dom-parent-node tbody) tbody)
+		   (restore-static-body tbody.tab)
 		   (shrink-viewport spviewport)))))
    
    (define (spage-pop-slide spage spviewport tbody)
@@ -357,6 +372,7 @@
 	     (after (+ 100 (round (* 1000 d)))
 		(lambda ()
 		   (dom-remove-child! spviewport tbody)
+		   (restore-static-body tbody.tab)
 		   (node-style-set! spviewport
 		      :width (format "~apx" spage.spscrollwidth)))))
 	  (let ((offset0 (+ spage.spoffset spage.spwidth))
@@ -364,6 +380,7 @@
 	     (slide spviewport (or (css-transition-duration tbody) 400) offset0 offset1
 		    (lambda (el)
 		       (dom-remove-child! (dom-parent-node tbody) tbody)
+		       (restore-static-body tbody.tab)
 		       (shrink-viewport spviewport))))))
 
    (define (spage-pop-auto spage spviewport tbody)
@@ -438,6 +455,7 @@
 		(spheadbutton (dom-last-child sphead))
 		(tabhead (dom-first-child (dom-first-child tab))))
 	    (set! tab.svc svc)
+	    (set! tab.static-node #unspecified)
 	    (set! spage.heads (cons (cons spheadbutton.innerHTML
 					  spheadcontent.innerHTML)
 				    spage.heads))
@@ -450,8 +468,7 @@
 ;*    spage-push-node ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (spage-push-node tab node)
-   (let* ((body (dom-clone-node node #t))
-	  (spage (find-spage tab))
+   (let* ((spage (find-spage tab))
 	  (sphead spage.sphead)
 	  (spheadcontent (dom-first-child sphead))
 	  (spheadbutton (dom-last-child sphead))
@@ -462,7 +479,13 @@
       (innerHTML-set! (dom-first-child spheadbutton) spheadcontent.innerHTML)
       (innerHTML-set! spheadcontent tabhead.innerHTML)
       (set! spheadbutton.className "visible")
-      (spage-push spage tab body)))
+      ;; save the static-body that will be restore when poped
+      (let ((p (dom-parent-node node)))
+	 (set! tab.static-node node)
+	 (set! tab.static-body p)
+	 (dom-remove-child! p node))
+      ;; push the new tab
+      (spage-push spage tab node)))
 	    
 ;*---------------------------------------------------------------------*/
 ;*    spage-tab-update ...                                             */

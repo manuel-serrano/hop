@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Tue Dec 28 08:45:03 2010 (serrano)                */
-/*    Copyright   :  2007-10 Manuel Serrano                            */
+/*    Last change :  Mon Jan  3 18:02:11 2011 (serrano)                */
+/*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
 /*=====================================================================*/
@@ -273,7 +273,6 @@ function start_servevt_websocket_proxy( key, host, port ) {
    if( !hop_servevt_proxy.websocket ) {
       var url = "ws://" + host + ":" + port +
 	 hop_service_base() + "/server-event/websocket?key=" + key;
-/*       var url = "ws://" + host + ":" + 8788 + "/echo";              */
       var ws = new WebSocket( url );
 
       var register = function( id ) {

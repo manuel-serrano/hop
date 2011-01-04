@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Sun Dec 26 07:08:51 2010 (serrano)                */
-/*    Copyright   :  2007-10 Manuel Serrano                            */
+/*    Last change :  Mon Jan  3 10:18:32 2011 (serrano)                */
+/*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
 /*=====================================================================*/
@@ -312,12 +312,15 @@ var hop_window_onload_add = function( proc ) {
 /*---------------------------------------------------------------------*/
 function hop_update( node ) {
    /* update the children recursively */
-   if( node.hop_update != undefined ) {
-      node.hop_update();
-   }
-   /* traverse the all tree */
-   for( var i = 0; i < node.childNodes.length; i++ ) {
-      hop_update( node.childNodes[ i ] );
+   if( hop_is_html_element( node ) ) {
+      if( "hop_update" in node ) {
+	 node.hop_update();
+      }
+
+      /* traverse the children */
+      for( var c in node.childNodes ) {
+	 hop_update( c );
+      }
    }
 }
 

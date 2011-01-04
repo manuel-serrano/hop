@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 11:12:06 2010                          */
-;*    Last change :  Mon Dec 13 08:19:47 2010 (serrano)                */
-;*    Copyright   :  2010 Manuel Serrano                               */
+;*    Last change :  Sat Jan  1 08:53:56 2011 (serrano)                */
+;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spages                                                           */
 ;*=====================================================================*/
@@ -62,7 +62,16 @@
 			   (<LI> "BSD")
 			   (<LI> "SunOS")
 			   (<LI> "MacOS"))))
-	       (<LI> "Windows")))
+	       (<LI> "Windows")
+	       (<LI> (<SPTAB>
+			(<SPTABHEAD> "Random")
+			(<DELAY>
+			   (lambda ()
+			      (<DIV>
+				 (<DIV>
+				    "This tab contains a random number, generated
+by the server, each time the tab is selected.")
+				 (random 100))))))))
 	 (<SPTAB>
 	    (<SPTABHEAD> "Random")
 	    (<DELAY>
