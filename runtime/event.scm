@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Jan  3 18:01:25 2011 (serrano)                */
+;*    Last change :  Tue Jan  4 18:08:53 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -45,7 +45,8 @@
 	       key::symbol
 	       (buffers::pair-nil (default '()))
 	       (marktime::elong (default (current-seconds)))
-	       (pingtime::elong (default #e0)))
+	       (pingtime::elong (default #e0))
+	       (padding::obj (default #f)))
 	    
 	    (class buffer
 	       (buffer-init)
@@ -281,7 +282,7 @@
 ;*    ajax-connection-abandon-for! ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (ajax-connection-abandon-for! conn nreq)
-   (with-access::ajax-connection conn (req mutex)
+   (with-access::ajax-connection conn (req mutex padding)
       (when (http-request? req)
 	 (ajax-signal-value req (scheme->response '() req)))
       (set! req nreq)))
@@ -318,10 +319,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    ajax-register-new-connection! ...                                */
 ;*---------------------------------------------------------------------*/
-(define (ajax-register-new-connection! req key)
+(define (ajax-register-new-connection! req key padding)
    (let ((conn (instantiate::ajax-connection
 		  (key key)
-		  (req req))))
+		  (req req)
+		  (padding padding))))
       (hashtable-put! *ajax-connection-key-table* key conn)))
 
 ;*---------------------------------------------------------------------*/
@@ -489,8 +491,8 @@
 		     (server-event-unregister event key)))
 	    
 	    (set! *register-service*
-		  (service :name "server-event/register" (#!key event key mode)
-		     (server-event-register event key mode)))))))
+		  (service :name "server-event/register" (#!key event key mode padding)
+		     (server-event-register event key mode padding)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dump-ajax-table ...                                              */
@@ -582,9 +584,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    server-event-register ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (server-event-register event key mode)
+(define (server-event-register event key mode padding)
    
-   (define (ajax-register-event! req key name)
+   (define (ajax-register-event! req key name padding)
       (with-trace 3 "ajax-register-event!"
 	 (let ((conn (ajax-find-connection-by-key key)))
 	    (if conn
@@ -598,12 +600,16 @@
 			 (ajax-connection-add-event! conn name))
 		      (let ((vals (ajax-connection-event-pop-all! conn)))
 			 (if (pair? vals)
-			     (scheme->response vals req)
+			     (let ((val (scheme->response vals req)))
+				(with-access::ajax-connection conn (padding)
+				   (when padding
+				      (http-response-js-padding-set! val padding))
+				   val))
 			     (begin
 				(ajax-connection-abandon-for! conn req)
 				(instantiate::http-response-persistent
 				   (request req)))))))
-		(let ((conn (ajax-register-new-connection! req key)))
+		(let ((conn (ajax-register-new-connection! req key padding)))
 		   ;; increment the number of connected client
 		   (set! *clients-number* (+fx 1 *clients-number*))
 		   (ajax-connection-add-event! conn name)
@@ -698,7 +704,7 @@
 			       ((string=? mode "flash")
 				(flash-register-event! req key event))
 			       (else
-				(ajax-register-event! req key event)))))
+				(ajax-register-event! req key event padding)))))
 		      ;; cleanup the current connections
 		      (server-event-gc)
 		      r))
@@ -919,7 +925,6 @@
 ;*    flash-signal-value ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (flash-signal-value req name value)
-   (tprint "FLASH SIGNAL: " name)
    (let* ((s (http-request-socket req))
 	  (p (socket-output s)))
       (with-handler
@@ -1057,7 +1062,7 @@
       (let ((conns (ajax-find-connections-by-name name)))
 	 (let loop ((l conns))
 	    (if (pair? l)
-		(with-access::ajax-connection (car l) (req mutex)
+		(with-access::ajax-connection (car l) (req mutex padding)
 		   (mutex-lock! mutex)
 		   (if (http-request? req)
 		       (let* ((r req)
@@ -1067,14 +1072,14 @@
 				      (begin
 					 (set! req #f)
 					 (mutex-unlock! mutex)))))
-			  (tprint "AJAX SIGNAL: " name)
+			  (http-response-js-padding-set! val padding)
 			  (or (ajax-signal-value r val)
 			      (loop (cdr l))))
 		       (begin
 			  (mutex-unlock! mutex)
 			  (loop (cdr l)))))
 		(when (pair? conns)
-		   (tprint "PUSHING: " value)
+		   (tprint "PUSHING: " name " value=" value)
 		   (let* ((conn (car conns))
 			  (mutex (ajax-connection-mutex conn)))
 		      (mutex-lock! mutex)
@@ -1159,7 +1164,7 @@
    
    (define (ajax-event-broadcast! name value)
       (for-each (lambda (conn)
-		   (with-access::ajax-connection conn (req mutex)
+		   (with-access::ajax-connection conn (req mutex padding)
 		      (with-lock mutex
 			 (lambda ()
 			    (if (http-request? req)
@@ -1167,6 +1172,7 @@
 					    (list (list name value)) req)))
 				   (tprint ">>> hop-event-broadcast, ajax broadcast: " name " "
 					   (http-request-socket req))
+				   (http-response-js-padding-set! val padding)
 				   (ajax-signal-value req val)
 				   (set! req #f))
 				(ajax-connection-event-push! conn name value))))))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Fri Nov  5 12:03:57 2010 (serrano)                */
-;*    Copyright   :  2007-10 Manuel Serrano                            */
+;*    Last change :  Tue Jan  4 18:05:05 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
 ;*=====================================================================*/
@@ -95,15 +95,9 @@ events succeeded, you should see an acknowledge.")
 		      (innerHTML-set! $b5 (apply string-append e.value))))
 	       ~(add-event-listener! window "ready"
 		   (lambda (e)
-		      (let ((imp (cond
-				    ((hop-config 'websocket)
-				     "websocket")
-				    ((hop-config 'xhr_multipart)
-				     "xhr/multipart")
-				    ((hop-config 'flash_external_interface)
-				     "flash")
-				    (else
-				     "long polling"))))
+		      (let ((imp (if (string? (hop-config "server_event"))
+				     (hop-config "server_event")
+				     "long polling")))
 			 (innerHTML-set! $b6 imp))))
 	       ~(add-event-listener! $evt1 "server"
 		   (lambda (e)
@@ -125,12 +119,16 @@ events succeeded, you should see an acknowledge.")
 	       ~(add-event-listener! document "serverready"
 		   (lambda (e)
 		      (with-hop ($(service :ttl 1 ()
+				     (tprint "EVT.1: " evt1)
 				     (hop-event-signal!
 				      evt1 evt1)
+				     (tprint "EVT.2: " evt2)
 				     (hop-event-signal!
 				      evt2 evt2)
+				     (tprint "EVT.3: " evt3)
 				     (hop-event-signal!
 				      evt3 evt3)
+				     (tprint "EVT.4: " evt4)
 				     (hop-event-signal!
 				      evt4 (list "foo" "\"" "bar")))))))
 	       (<H4> "Client events")

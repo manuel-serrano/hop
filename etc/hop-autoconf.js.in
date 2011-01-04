@@ -140,6 +140,7 @@ function hop_Config() {
   this.clone_innerHTML = false; // see hop_create_element (hop-dom.js)
   this.eval_innerHTML = true;
   this.websocket = false;
+  this.server_event = "long polling";
 
   /* navigator specific configuration */
   if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {
@@ -451,6 +452,7 @@ if( "XMLHttpRequest" in window ) {
    }
    if( "multipart" in req ) {
       hop_config.xhr_multipart = true;
+      if( !hop_config.server_event ) hop_config.server_event = "xhr_multipart";
    }
 } else {
    if( "ActiveXObject" in window ) {
@@ -519,6 +521,7 @@ if( "XMLHttpRequest" in window ) {
 /*    web socket                                                       */
 /*---------------------------------------------------------------------*/
 if( "WebSocket" in window ) {
+   if( !hop_config.server_event ) hop_config.server_event = "websocket";
    hop_config.websocket = true;
 }
 
