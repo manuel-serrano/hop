@@ -11,9 +11,23 @@ These are used for user server-side customizations and configurations.
 
   (define-parameter name obj [proc])
   (define-preferences name ...)
+  (preference-get ::symbol [default] [request])
+  (preference-set! ::symbol value [request])
+  (preference-store! ::symbol value [request])
+  (preference-update! ::symbol value [request] [kons] [init])
+  (user-preference-get ::user ::symbol [default] [request])
+  (user-preference-set! ::user ::symbol value [request])
+  (user-preference-store! ::user ::symbol value [request])
+  (user-preference-update! ::user ::symbol value [request] [kons] [init])
+  (user-write-preferences ::user)
+  (<PREFS> ...)
+  (<PR> ...)
+  (<PRLABEL> ...)
+  (<PRSEP> ...)
+  
 
 == Examples ==
-<example>define-parameter, define-lazy-parameter</example>
+<example>define-parameter, define-lazy-parameter, <PR>, <PRLABEL>, <PRSEP>, <PREFS></example>
 
 == Server Definitions ==
 <server>
@@ -80,8 +94,10 @@ The ++//type//++ of the last two clauses can be one of:
   * ++(text rows cols)++: a text displayed in a ++rows x cols++ text area.
   * ++expr++: any HOP value.
   * ++bool++: a //yes-no// value.
-  * ++(bool //yes-label// //no-label//)++: a //yes-no// value with user 
+  * ++(bool //yes-label// //no-label//)++: a //yes-no// value with user .
   * ++(enum //key1// //key2// //key3// ...)++: an enumeration.
+  * ++(slider //min// //max// //step//)++: a numerical slider (require ++hop-slider++, see
+++<SLIDER>++).
 
 
 This special form defines three functions named after ++name++.
@@ -102,6 +118,95 @@ no argument) that is evaluated once the parameter file saved by
 ++name//-save//++ is loaded back.
 
 </function>
+
+
+=== ++(preference-get symbol ...)++ ===
+<function> preference-get
+</function>
+
+=== ++(preference-set! symbol value ...)++ ===
+<function> preference-set!
+</function>
+
+=== ++(preference-store! symbol value ...)++ ===
+<function> preference-store!
+</function>
+
+=== ++(preference-update! symbol value ...)++ ===
+<function> preference-update!
+</function>
+
+=== ++(user-preference-set! symbol value ...)++ ===
+<function> user-preference-set!
+</function>
+
+=== ++(user-preference-store! symbol value ...)++ ===
+<function> user-preference-store!
+</function>
+
+=== ++(user-preference-update! symbol value ...)++ ===
+<function> user-preference-update!
+</function>
+
+=== ++(user-write-preferences user)
+<function> user-write-preferences
+</function>
+
+=== ++<PREFS>++ ===
+<markup> <PREFS>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+This function creates a preferences panel used to edit/save
+user preferences (not to be confused with parameters).
+</markup>
+
+=== ++<PRLABEL>++ ===
+<markup> <PRLABEL>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+This function creates a label inside a preferences panel.
+</markup>
+
+=== ++<PRSEP>++ ===
+<markup> <PRSEP>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+This function creates a label inside a preferences panel.
+</markup>
+
+=== ++<PR>++ ===
+<markup> <PR>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| :pref        |   obj     |              | preference identifier.      |
+| :default     |   obj     |              | default value.              |
+| :param       |   obj     |              | optional parameter.         |
+| :type        |  symbol   |  //string//  | the type of the configuration.  |
+| :validate    | procedure |              | a validation function.      |
+| :parse       | procedure |              | a parser.                   |
+| :title       |  string   |              | the title.                  |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+This function creates a label inside a preferences panel.
+</markup>
 
 </server>
 
