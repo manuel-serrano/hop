@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-prefs.hss               */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-prefs.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Apr 21 11:33:24 2008                          */
-/*    Last change :  Sat Jun  6 19:05:19 2009 (serrano)                */
-/*    Copyright   :  2008-09 Manuel Serrano                            */
+/*    Last change :  Wed Jan  5 15:11:11 2011 (serrano)                */
+/*    Copyright   :  2008-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for <PREFS> markups                                          */
 /*=====================================================================*/
@@ -71,6 +71,10 @@ pr-editor-expr.hop-pr-changed {
 pr-editor-text {
   width: 100%;
   color: #00c;
+}
+
+slider.hop-pr-editor-slider {
+  width: 100%;
 }
 
 /*---------------------------------------------------------------------*/

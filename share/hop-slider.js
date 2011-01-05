@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Wed Dec  1 16:51:14 2010 (serrano)                */
-/*    Copyright   :  2005-10 Manuel Serrano                            */
+/*    Last change :  Wed Jan  5 16:30:09 2011 (serrano)                */
+/*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
 /*=====================================================================*/
@@ -53,7 +53,9 @@ function hop_slider_mousemove( e, slider ) {
 	      / slider.offsetWidth) * (slider.max - slider.min);
    hop_slider_value_set( slider, val + slider.min );
 	 
-   if( slider.onchange != undefined ) slider.onchange();
+   if( slider.onchange != undefined ) {
+      slider.onchange( { value: slider.value, target: slider } );
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -205,13 +207,14 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 			      if( value != undefined ) {
 				 if( value < min ) value = min;
 				 if( value > max ) value = max;
-				 hop_slider_value_set( slider, value );
+				 after( 1, function() { hop_slider_value_set( slider, value ); });
 			      } else {
-				 hop_slider_value_set( slider, min );
+				 after( 1, function() { hop_slider_value_set( slider, min ); });
 			      }
 			   });
 
-   if( slider.onchange != undefined ) slider.onchange();
+   if( slider.onchange != undefined )
+      slider.onchange( {value : value, target: slider } );
 
    return slider;
 }

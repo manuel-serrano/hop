@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sun Nov  7 08:55:46 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Wed Jan  5 14:12:58 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOPWIDGET heap file.                */
 ;*=====================================================================*/
@@ -34,7 +34,8 @@
 	   __hopwidget-gauge
 	   __hopwidget-sym
 	   __hopwidget-foot
-	   __hopwidget-sorttable)
+	   __hopwidget-sorttable
+	   __hopwidget-prefs)
 
    (eval   (export-all)
 	   (class audio-server)

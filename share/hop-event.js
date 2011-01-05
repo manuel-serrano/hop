@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Tue Jan  4 18:13:00 2011 (serrano)                */
+/*    Last change :  Wed Jan  5 14:59:19 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -66,7 +66,7 @@ function hop_add_event_listener( obj, event, proc, capture ) {
 	 }
       } else if( typeof obj === "string" ) {
 	 /* wait for a node to be created and added to the document */
-	 return after( 1, function() { hop_add_ready_listener( obj, proc ) } );
+	 return after( 1, function() { hop_add_ready_listener( obj, proc, 20 ) } );
       } else {
 	 return sc_error( "add-event-listener!",
 			  "Illegal \"ready\" event for object",
@@ -112,11 +112,17 @@ function hop_remove_event_listener( obj, event, proc, capture ) {
 /*---------------------------------------------------------------------*/
 /*    hop_add_ready_listener ...                                       */
 /*---------------------------------------------------------------------*/
-function hop_add_ready_listener( obj, proc ) {
+function hop_add_ready_listener( obj, proc, ttl ) {
    var el = document.getElementById( obj );
 
    if( !el ) {
-      after( 10, function() { return hop_add_ready_listener( obj, proc ); } );
+      if( ttl > 0 ) {
+	 after( 10, function() { return hop_add_ready_listener( obj, proc, ttl - 1 ); } );
+      } else {
+	 return sc_error( "add-event-listener!",
+			  "Timeout when getting \"ready\" object",
+			  obj );
+      }
    } else {
       el.ready = proc;
       el.ready( new HopEvent( "ready", el ) );

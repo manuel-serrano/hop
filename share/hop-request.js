@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sun Dec 26 08:00:56 2010 (serrano)                */
-/*    Copyright   :  2004-10 Manuel Serrano                            */
+/*    Last change :  Wed Jan  5 15:04:26 2011 (serrano)                */
+/*    Copyright   :  2004-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
 /*=====================================================================*/
