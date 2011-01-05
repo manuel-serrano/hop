@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Wed Jan  5 10:21:07 2011 (serrano)                */
+;*    Last change :  Wed Jan  5 13:45:04 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -297,16 +297,18 @@
       ;; increment the number of pushed elements
       (set! spage.num (+fx spage.num 1))
       (set! spage.tabs (cons tbody spage.tabs))
-      (set! spage.spoffset (*fx spage.num spage.spwidth))
       (set! tbody.tab tab)
       ;; expand the body div when necessary
-      (set! spage.spscrollwidth (*fx (+fx spage.num 2) spage.spwidth))
+      (set! spage.spoffset (*fx spage.num spage.spwidth))
+      (set! spage.spscrollwidth (*fx (+fx spage.num 1) spage.spwidth))
       (node-style-set! spviewport
 	 :width (format "~apx" spage.spscrollwidth))
       ;; set the tab dimension
-      (dom-append-child! spviewport tbody)
+      (node-style-set! (dom-first-child spviewport)
+	 :width (format "~apx" spage.spbodywidth))
       (node-style-set! tbody
 	 :width (format "~apx" spage.spbodywidth))
+      (dom-append-child! spviewport tbody)
       ;; the event listeners
       (spage-invoke-onchange-listener! spage tbody)
       (when tbody.tab
