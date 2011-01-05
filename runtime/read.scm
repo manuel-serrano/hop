@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Dec 31 13:58:17 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Wed Jan  5 09:39:59 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -317,15 +317,6 @@
 	  (if (char? c)
 	      (read-error "Illegal char" c (the-port))
 	      (read-error "Illegal token" (string #\# c) (the-port)))))))
-
-;*---------------------------------------------------------------------*/
-;*    current-module-clientc-import ...                                */
-;*---------------------------------------------------------------------*/
-(define (current-module-clientc-import)
-   (let ((mod (eval-module)))
-      (if (evmodule? mod)
-	  (evmodule-extension mod)
-	  '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    *hop-grammar* ...                                                */

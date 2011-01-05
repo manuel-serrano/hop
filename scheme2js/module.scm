@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -366,7 +366,7 @@
 	     (cond
 		((not (list? override))
 		 (scheme2js-error "scheme2js-module"
-				  "invalid override-header"
+				  "invalid override header"
 				  override
 				  o-headers))
 		((not (and (symbol? (car override))

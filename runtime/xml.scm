@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Dec 31 10:45:06 2010 (serrano)                */
-;*    Copyright   :  2004-10 Manuel Serrano                            */
+;*    Last change :  Wed Jan  5 10:04:02 2011 (serrano)                */
+;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -69,7 +69,7 @@
 	    (xml-tilde->attribute::bstring ::xml-tilde)
 
 	    (xml-tilde->sexp ::xml-tilde)
-	    (sexp->xml-tilde::xml-tilde expr)
+	    (sexp->xml-tilde::xml-tilde expr #!optional env menv)
 
 	    (<TILDE> ::obj #!key src loc)
 	    (<DELAY> . ::obj)
@@ -853,8 +853,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    sexp->xml-tilde ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (sexp->xml-tilde obj)
-   (let ((c ((clientc-sexp->precompiled (hop-clientc)) obj)))
+(define (sexp->xml-tilde obj #!optional env menv)
+   (let* ((env (or env (current-module-clientc-import)))
+	  (menv (or menv ((clientc-macroe (hop-clientc)))))
+	  (c ((clientc-sexp->precompiled (hop-clientc)) obj env menv)))
       (<TILDE> c :src obj)))
 
 ;*---------------------------------------------------------------------*/

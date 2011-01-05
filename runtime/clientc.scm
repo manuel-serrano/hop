@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Wed Oct 20 09:30:43 2010 (serrano)                */
-;*    Copyright   :  2009-10 Manuel Serrano                            */
+;*    Last change :  Wed Jan  5 09:39:54 2011 (serrano)                */
+;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
 ;*=====================================================================*/
@@ -55,6 +55,8 @@
 				    precompiled-declared-variables
 				    precompiled-free-variables)
 
+	    (current-module-clientc-import)
+	    
 	    (clientc-url ::bstring)
 	    (clientc-response::%http-response ::http-request ::bstring)
 	    (get-clientc-compiled-file ::bstring)))
@@ -109,6 +111,15 @@
        (precompiled-declared-variables (or precompiled-declared-variables null))
        (precompiled-free-variables (or precompiled-free-variables null)))))
    
+;*---------------------------------------------------------------------*/
+;*    current-module-clientc-import ...                                */
+;*---------------------------------------------------------------------*/
+(define (current-module-clientc-import)
+   (let ((mod (eval-module)))
+      (if (evmodule? mod)
+	  (evmodule-extension mod)
+	  '())))
+
 ;*---------------------------------------------------------------------*/
 ;*    clientc-url ...                                                  */
 ;*---------------------------------------------------------------------*/
