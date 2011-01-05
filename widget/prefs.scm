@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan  5 14:11:23 2011                          */
-;*    Last change :  Wed Jan  5 17:05:16 2011 (serrano)                */
+;*    Last change :  Wed Jan  5 21:01:31 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -16,7 +16,8 @@
 
    (library hop)
 
-   (import  __hopwidget-slider)
+   (import  __hopwidget-slider
+	    __hopwidget-spinbutton)
 
    (export (<PREFS> . ::obj)
 	   (<PRLABEL> . ::obj)
@@ -237,6 +238,8 @@
 	   (error "pr-editor" "Illegal syntax" type))))
       ((slider . ?-)
        pr-editor-slider)
+      ((spinbutton . ?-)
+       pr-editor-spinbutton)
       (else
        pr-editor-input)))
 
@@ -336,7 +339,24 @@
 	     :step step
 	     :value value
 	     :onchange (secure-javascript-attr
-			(format "hop_prefs_editor_slider( event, event.value.toString(), \"~a\", ~a, \"~a\", \"~a\" )"
+			(format "hop_prefs_editor_number( event, event.value.toString(), \"~a\", ~a, \"~a\", \"~a\" )"
 				name (hop->js-callback parse) 'real key)))))
       (else
        (error "<PR>" "Wrong \"slider\" declaration" type))))
+
+;*---------------------------------------------------------------------*/
+;*    pr-editor-spinbutton ...                                         */
+;*---------------------------------------------------------------------*/
+(define (pr-editor-spinbutton name type value title parse key)
+   (match-case type
+      ((?- ?min ?max)
+       (let ((name (symbol->string name)))
+	  (<SPINBUTTON> :class "hop-pr-editor-spinbutton"
+	     :min min
+	     :max max
+	     :value value
+	     :onchange (secure-javascript-attr
+			(format "hop_prefs_editor_number( event, this.value.toString(), \"~a\", ~a, \"~a\", \"~a\" )"
+				name (hop->js-callback parse) 'integer key)))))
+      (else
+       (error "<PR>" "Wrong \"spinbutton\" declaration" type))))

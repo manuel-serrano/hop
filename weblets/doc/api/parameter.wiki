@@ -24,7 +24,7 @@ These are used for user server-side customizations and configurations.
   (<PR> ...)
   (<PRLABEL> ...)
   (<PRSEP> ...)
-  
+
 
 == Examples ==
 <example>define-parameter, define-lazy-parameter, <PR>, <PRLABEL>, <PRSEP>, <PREFS></example>
@@ -134,6 +134,10 @@ no argument) that is evaluated once the parameter file saved by
 
 === ++(preference-update! symbol value ...)++ ===
 <function> preference-update!
+</function>
+
+=== ++(user-preference-get symbol value ...)++ ===
+<function> user-preference-get
 </function>
 
 === ++(user-preference-set! symbol value ...)++ ===
