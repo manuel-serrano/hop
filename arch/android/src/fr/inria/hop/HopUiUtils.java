@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hop/linux/android/src/fr/inria/hop/HopUiUtils.java           */
+/*    .../hop/2.2.x/arch/android/src/fr/inria/hop/HopUiUtils.java      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  1 09:13:38 2010                          */
-/*    Last change :  Sat Oct  9 07:11:27 2010 (serrano)                */
-/*    Copyright   :  2010 Manuel Serrano                               */
+/*    Last change :  Thu Jan  6 16:41:28 2011 (serrano)                */
+/*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    UI Utility functions                                             */
 /*=====================================================================*/
@@ -53,8 +53,7 @@ public class HopUiUtils {
 			    final String msg,
 			    final Exception e,
 			    final boolean exit ) {
-      String emsg = e.getMessage();
-      if( emsg == null ) emsg = e.getClass().getName();
+      String emsg = e.getClass().getName() + ": " + e.getMessage();
       String m = task + " " + msg + ": " + emsg;
 
       Log.e( task, m );

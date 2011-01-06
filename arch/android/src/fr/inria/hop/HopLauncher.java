@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Jan  6 12:25:18 2011 (serrano)                */
+/*    Last change :  Thu Jan  6 17:15:13 2011 (serrano)                */
 /*    Copyright   :  2010-11 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -87,14 +87,17 @@ public class HopLauncher extends Activity {
 		     break;
 
 		  case MSG_INSTALL_FAIL:
+		     Log.e( "Hop", "installation failed..." );
 		     HopUiUtils.fail( hop.activity, "Installation", "failed", (Exception)msg.obj );
 		     break;
 
 		  case MSG_CONFIGURE_FAIL:
+		     Log.e( "Hop", "configuration failed..." );
 		     HopUiUtils.fail( hop.activity, "Configuration", "failed", (Exception)msg.obj );
 		     break;
 
 		  case MSG_RUN_FAIL:
+		     Log.e( "Hop", "run failed..." );
 		     HopUiUtils.fail( hop.activity, "Run", "failed", (Exception)msg.obj );
 		     break;
 
@@ -111,6 +114,7 @@ public class HopLauncher extends Activity {
 	    }
 	 }
       };
+   
    final Hop hop = new Hop( activity, queue, handler );
    final HopDroid hopdroid = new HopDroid( activity, 8081, handler );
 
@@ -179,10 +183,14 @@ public class HopLauncher extends Activity {
       //maxlines = textview.getResources().getInteger( R.styleable.TextView_maxLines );
       maxlines = 500;
 
-      Log.i( "HopLauncher", textview + " maxlines=" + maxlines );
-
       try {
+	 // now that the activity is fully initialized, it's possible
+	 // to get the disk location of the package
+	 hop.apk = activity.getApplicationInfo().sourceDir;
+	 hop.root = activity.getApplicationInfo().dataDir;
+	 
 	 if( !HopInstaller.installed( hop ) ) {
+
 	    // The install scheduler is a mere thread that waits for
 	    // the  installer to complete. It then notifies the application.
 	    Thread installscheduler = new Thread( new Runnable () {

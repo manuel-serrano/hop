@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Thu Jan  6 14:50:05 2011 (serrano)                */
+/*    Last change :  Thu Jan  6 17:22:33 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -33,11 +33,9 @@ import java.lang.String;
 /*---------------------------------------------------------------------*/
 public class Hop extends Thread {
    // global constants
-   final static String ROOT = "/data/data/fr.inria.hop";
    final static File HOME = new File( Environment.getExternalStorageDirectory(), "home" );
-   final static String HOP = ROOT + "/bin/hop";
+   final static String HOP = "/bin/hop";
    final static String HOPARGS = "-v2 --no-color";
-   final static String APKPATH = "/data/app/fr.inria.hop.apk";
    final static String SHELL = "/system/bin/sh";
    final static int HOP_RESTART = 5;
 
@@ -56,11 +54,15 @@ public class Hop extends Thread {
    // constructor
    public Hop( Activity a, ArrayBlockingQueue<String>q, Handler h ) {
       super();
+
+      // at this stage activity is not fully installation and it's
+      // not possible to use it to get the ApplictionInfo used to
+      // find the actual values of root and apk
+      apk = null;
+      root = null;
       
       activity = a;
       home = HOME;
-      root = ROOT;
-      apk = APKPATH;
       queue = q;
       handler = h;
    }
@@ -75,7 +77,7 @@ public class Hop extends Thread {
       final int[] pid = new int[ 1 ];
       String sh = SHELL;
       String cmd = "export HOME=" + HOME.getAbsolutePath() +
-	 "; exec " + HOP + " " + HOPARGS + " -p " + port;
+	 "; exec " + root + HOP + " " + HOPARGS + " -p " + port;
 
       Log.i( "Hop", "executing [" + sh + " -c " + cmd );
       HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
