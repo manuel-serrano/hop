@@ -2,10 +2,16 @@
 
 == Description ==
 
-This page describes the form ++define-parameter++ and ++define-preferences++.
-These are used for user server-side customizations and configurations.
+This page describes the form ++define-parameter++, ++define-preferences++,
+and preferences. These are used for user server-side customizations and
+user preferences.
 
 == Synopsis ==
+
+Parameters, introduces by ++define-parameter++ define common server-side
+configurations accessible to users. Preferences, accessed by ++preference-get++,
+are associated to users. Each user has its own preferences set.
+
 
 === Server ===
 
