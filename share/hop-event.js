@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Thu Jan  6 13:57:15 2011 (serrano)                */
+/*    Last change :  Thu Jan  6 14:51:10 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -580,7 +580,7 @@ function start_servevt_script_proxy( key ) {
 	 }
 	 
 	 // hook the new script after a small timeout to avoid busy icons
-	 after( 1, function () { document.body.appendChild( script ) } );
+	 after( 10, function () { document.body.appendChild( script ) } );
       }
 
       var unregister = function( id ) {

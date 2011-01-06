@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Thu Jan  6 14:05:49 2011 (serrano)                */
+;*    Last change :  Thu Jan  6 14:36:28 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -23,7 +23,7 @@
 ;*---------------------------------------------------------------------*/
 (define android (instantiate::androidphone))
 (define amusic (instantiate::androidmusic (phone android)))
-;* (define atts (instantiate::androidtts (phone android)))             */
+(define atts (instantiate::androidtts (phone android)))
 
 (define sos-vibrations
    (let ((dot #l200)
@@ -69,9 +69,9 @@
 (add-event-listener! android "battery"
    (lambda (e)
       (hop-event-broadcast! "battery" (event-value e))))
-;* (add-event-listener! android "tts"                                  */
-;*    (lambda (e)                                                      */
-;*       (hop-event-broadcast! "tts" (event-value e))))                */
+(add-event-listener! android "tts"
+   (lambda (e)
+      (hop-event-broadcast! "tts" (event-value e))))
 
 ;*---------------------------------------------------------------------*/
 ;*    androidemo ...                                                   */
@@ -108,11 +108,11 @@ to the server to directly controls the phone.")
 ;* contacts.")                                                         */
 ;* {* 	 (<ANDROIDEMO:CONTACT>)                                        *} */
 ;*                                                                     */
-;* 	 (<H2> "Speech")                                               */
-;* 	 (<DIV> :class "short-note"                                    */
-;* 	    "This shows the Android ability to synthesizes speech from */
-;* text for immediate playback or to create a sound file.")            */
-;* 	 (<ANDROIDEMO:SPEECH>)                                         */
+	 (<H2> "Speech")
+	 (<DIV> :class "short-note"
+	    "This shows the Android ability to synthesizes speech from
+text for immediate playback or to create a sound file.")
+	 (<ANDROIDEMO:SPEECH>)
 	 
 	 (<H2> "Multimedia")
 	 (<DIV> :class "short-note"
@@ -408,51 +408,51 @@ missed.")
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:SPEECH> ...                                          */
 ;*---------------------------------------------------------------------*/
-;* (define (<ANDROIDEMO:SPEECH>)                                       */
-;*    (list                                                            */
-;*     ~(add-event-listener! "tts" "server"                            */
-;* 	(lambda (e)                                                    */
-;* 	   (alert "tts done: " (event-value e))))                      */
-;*     (<TEXTAREA> :id "speech"                                        */
-;*        "")                                                          */
-;*     (<DIV>                                                          */
-;*        "language: "                                                 */
-;*        (let ((locale (phone-current-locale android)))               */
-;* 	  (<SELECT> :id "language"                                     */
-;* 	     :onchange ~(with-hop ($(service (s)                       */
-;* 				       (let ((l (call-with-input-string s read))) */
-;* 					  (tts-locale-set! atts l)))   */
-;* 				    this.value))                       */
-;* 	     (filter-map (lambda (l)                                   */
-;* 			    (when (memq (tts-locale-check atts l)      */
-;* 					'(lang-country lang-country-var)) */
-;* 			       (tprint "OPTION: " l " " (equal? l locale)) */
-;* 			       (<OPTION> :label (list-ref l 3)         */
-;* 				  :value (with-output-to-string        */
-;* 					    (lambda ()                 */
-;* 					       (write l)))             */
-;* 				  :selected (equal? l locale)          */
-;* 				  (list-ref l 3))))                    */
-;* 			 (phone-locales android)))))                   */
-;*     (<TABLE> :id "speech-conf"                                      */
-;*        (<TR>                                                        */
-;* 	  (<TH>                                                        */
-;* 	     "pitch: ")                                                */
-;* 	  (<TD>                                                        */
-;* 	     (<SLIDER> :min 0.2 :max 2.0 :step 0.1 :value (tts-pitch atts) */
-;* 		:onchange ~(with-hop ($(service (v) (tts-pitch-set! atts v)) */
-;* 				       this.value)))))                 */
-;*        (<TR>                                                        */
-;* 	  (<TH>                                                        */
-;* 	     "rate: ")                                                 */
-;* 	  (<TD>                                                        */
-;* 	     (<SLIDER> :min 0.2 :max 2.0 :step 0.1 :value (tts-rate atts) */
-;* 		:onchange ~(with-hop ($(service (v) (tts-rate-set! atts v)) */
-;* 				       this.value))))))                */
-;*     (<BUTTON>                                                       */
-;*        :onclick ~(let ((el (dom-get-element-by-id "speech")))       */
-;* 		    (with-hop ($(service (text) (tts-speak atts text)) el.value))) */
-;*        "Speak")))                                                   */
+(define (<ANDROIDEMO:SPEECH>)
+   (list
+    ~(add-event-listener! "tts" "server"
+	(lambda (e)
+	   (alert "tts done: " (event-value e))))
+    (<TEXTAREA> :id "speech"
+       "")
+    (<DIV>
+       "language: "
+       (let ((locale (phone-current-locale android)))
+	  (<SELECT> :id "language"
+	     :onchange ~(with-hop ($(service (s)
+				       (let ((l (call-with-input-string s read)))
+					  (tts-locale-set! atts l)))
+				    this.value))
+	     (filter-map (lambda (l)
+			    (when (memq (tts-locale-check atts l)
+					'(lang-country lang-country-var))
+			       (tprint "OPTION: " l " " (equal? l locale))
+			       (<OPTION> :label (list-ref l 3)
+				  :value (with-output-to-string
+					    (lambda ()
+					       (write l)))
+				  :selected (equal? l locale)
+				  (list-ref l 3))))
+			 (phone-locales android)))))
+    (<TABLE> :id "speech-conf"
+       (<TR>
+	  (<TH>
+	     "pitch: ")
+	  (<TD>
+	     (<SLIDER> :min 0.2 :max 2.0 :step 0.1 :value (tts-pitch atts)
+		:onchange ~(with-hop ($(service (v) (tts-pitch-set! atts v))
+				       this.value)))))
+       (<TR>
+	  (<TH>
+	     "rate: ")
+	  (<TD>
+	     (<SLIDER> :min 0.2 :max 2.0 :step 0.1 :value (tts-rate atts)
+		:onchange ~(with-hop ($(service (v) (tts-rate-set! atts v))
+				       this.value))))))
+    (<BUTTON>
+       :onclick ~(let ((el (dom-get-element-by-id "speech")))
+		    (with-hop ($(service (text) (tts-speak atts text)) el.value)))
+       "Speak")))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:MULTIMEDIA> ...                                      */
