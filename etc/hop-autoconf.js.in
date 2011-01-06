@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Dec 24 06:45:01 2010 (serrano)                */
-/*    Copyright   :  2006-10 Manuel Serrano                            */
+/*    Last change :  Thu Jan  6 13:59:25 2011 (serrano)                */
+/*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
@@ -452,7 +452,8 @@ if( "XMLHttpRequest" in window ) {
    }
    if( "multipart" in req ) {
       hop_config.xhr_multipart = true;
-      if( !hop_config.server_event ) hop_config.server_event = "xhr_multipart";
+      if( hop_config.server_event === "long polling" ) 
+         hop_config.server_event = "xhr_multipart";
    }
 } else {
    if( "ActiveXObject" in window ) {
@@ -521,7 +522,8 @@ if( "XMLHttpRequest" in window ) {
 /*    web socket                                                       */
 /*---------------------------------------------------------------------*/
 if( "WebSocket" in window ) {
-   if( !hop_config.server_event ) hop_config.server_event = "websocket";
+   if( hop_config.server_event === "long polling" ) 
+      hop_config.server_event = "websocket";
    hop_config.websocket = true;
 }
 

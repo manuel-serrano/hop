@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Mon Oct 25 10:15:35 2010 (serrano)                */
-/*    Copyright   :  2010 Manuel Serrano                               */
+/*    Last change :  Thu Jan  6 12:24:32 2011 (serrano)                */
+/*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
 /*=====================================================================*/
@@ -16,6 +16,7 @@ package fr.inria.hop;
 
 import android.app.*;
 import android.content.Intent;
+import android.util.Log;
 
 import java.io.*;
 import java.lang.*;
@@ -45,6 +46,7 @@ public abstract class HopPlugin {
 
    // onActivityResult (called by HopLauncher)
    static public void onActivityResult( int key, int result, Intent intent ) {
+      Log.v( "HopPlugin", "onActivityResult key=" + key );
       synchronized( atable ) {
 	 HopPlugin p = (HopPlugin)atable.get( key );
 
@@ -65,9 +67,12 @@ public abstract class HopPlugin {
    // startHopActivityForResult
    public void startHopActivityForResult( Intent intent ) {
       int key = getKey();
-      activity.startActivityForResult( intent, key );
+      
       synchronized( atable ) {
 	 atable.put( key, this );
+
+	 Log.v( "HopPlugin", "Starting activity key=" + key );
+	 activity.startActivityForResult( intent, key );
       }
    }
 

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Thu Dec  2 06:52:19 2010 (serrano)                */
-/*    Copyright   :  2010 Manuel Serrano                               */
+/*    Last change :  Thu Jan  6 12:17:04 2011 (serrano)                */
+/*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
 /*=====================================================================*/
@@ -64,6 +64,7 @@ public class HopPluginTts extends HopPlugin
 	 Log.v( "HopPluginTts", "initTts: starting activity..." );
 	 startHopActivityForResult( checkIntent );
 	 try {
+	    Log.v( "HopPluginTts", "initTts: waiting for activity..." );
 	    condv.wait();
 	    Log.v( "HopPluginTts", "initTts completed" + initstatus );
 	 } catch( InterruptedException _ ) {
@@ -84,7 +85,7 @@ public class HopPluginTts extends HopPlugin
 	    Log.v( "HopPluginTts", "initTts: missing data..." );
 	    Intent installIntent = new Intent();
 	    installIntent.setAction( TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA );
-	    Log.v( "HopPluginTts", "initTts: starting activity for installing..." );
+	    Log.v( "HopPluginTts", "initTts: starting activity for install..." );
 	    activity.startActivity( installIntent );
 	    initstatus = "missing data";
 	    condv.notify();

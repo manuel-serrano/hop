@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Wed Jan  5 07:24:50 2011 (serrano)                */
+;*    Last change :  Thu Jan  6 13:57:38 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
@@ -95,8 +95,8 @@ events succeeded, you should see an acknowledge.")
 		      (innerHTML-set! $b5 (apply string-append e.value))))
 	       ~(add-event-listener! window "ready"
 		   (lambda (e)
-		      (let ((imp (if (string? (hop-config "server_event"))
-				     (hop-config "server_event")
+		      (let ((imp (if (string? (hop-config :server_event))
+				     (hop-config :server_event)
 				     "long polling")))
 			 (innerHTML-set! $b6 imp))))
 	       ~(add-event-listener! $evt1 "server"
