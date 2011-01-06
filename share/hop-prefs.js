@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Apr 21 11:52:04 2008                          */
-/*    Last change :  Wed Jan  5 20:37:00 2011 (serrano)                */
+/*    Last change :  Thu Jan  6 10:11:51 2011 (serrano)                */
 /*    Copyright   :  2008-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    PREFS client-side runtime.                                       */
@@ -34,15 +34,23 @@ function hop_prefs_editor_expr( event, inp, name, parse, type, key ) {
       inp.className = inp.className.replace( /hop-pr-changed/, "hop-pr-saved" );
       if( !parse || parse( inp.value ) ) {
 	 var svc = hop_apply_url( hop_prefs_edit_svc,
-				  [ name,
-				    type,
-				    inp.value,
-				    key ] );
+				  [ name, type, inp.value, key ] );
       
 	 with_hop( svc, hop_prefs_callback );
       }
    } else {
       inp.className = inp.className.replace( /hop-pr-saved/, "hop-pr-changed" );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_prefs_editor_list_item ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_prefs_editor_list_item( event, value, name, parse, type, key ) {
+   if( !parse || parse( value ) ) {
+      var svc = hop_apply_url( hop_prefs_edit_svc, [ name, type, value, key ] );
+      
+      with_hop( svc, hop_prefs_callback );
    }
 }
 
@@ -62,11 +70,7 @@ function hop_prefs_editor_number( event, value, name, parse, type, key ) {
 /*---------------------------------------------------------------------*/
 function hop_prefs_editor_bool( event, inp, name, parse, type, key ) {
    if( !parse || parse( inp.value ) ) {
-      var svc = hop_apply_url( hop_prefs_edit_svc,
-			       [ name,
-				 type,
-				 inp,
-				 key ] );
+      var svc = hop_apply_url( hop_prefs_edit_svc, [ name, type, inp.value, key ] );
       
       with_hop( svc, hop_prefs_callback );
    }

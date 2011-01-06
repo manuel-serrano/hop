@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Wed Jan  5 16:56:57 2011 (serrano)                */
+;*    Last change :  Thu Jan  6 10:29:54 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -119,11 +119,10 @@
    (set! *prefs-edit-svc*
 	 (service :name "admin/preferences/edit" (name type value key)
 	    (if (and name type value key)
-		(begin
+		(multiple-value-bind (pref value)
+		   (prefs-decode-value name value type)
 		   (mutex-lock! (preferences-mutex))
-		   (let* ((pref (string->symbol name))
-			  (value (string->value (string->symbol type) value))
-			  (valid (hashtable-get *pref-validator-table* pref)))
+		   (let ((valid (hashtable-get *pref-validator-table* pref)))
 		      (mutex-unlock! (preferences-mutex))
 		      (when (or (not valid) (valid value))
 			 (if (string=? key "pref")
@@ -152,6 +151,88 @@
 			     (save file ov)
 			     (user-access-denied req)))))
 		(http-bad-request "admin/preferences/save")))))
+
+;*---------------------------------------------------------------------*/
+;*    prefs-decode-value ...                                           */
+;*---------------------------------------------------------------------*/
+(define (prefs-decode-value name value type)
+   (match-case (with-input-from-string name read)
+      ((? symbol?)
+       (values name
+	       (string->value (string->symbol type) value)))
+      ((add ?name)
+       (values name
+	       (cons (string->value (string->symbol type) value)
+		     (preference-get name :default '()))))
+      ((aaddk ?name)
+       (let ((def (preference-get name :default '())))
+	  (values name
+		  (if (and (pair? def) (eq? (caar def) #unspecified))
+		      (cons (list (string->value (string->symbol type) value)
+				  (cadar def))
+			    (cdr def))
+		      (cons (list (string->value (string->symbol type) value)
+				  #unspecified)
+			    def)))))
+      ((aaddv ?name)
+       (let ((def (preference-get name :default '())))
+	  (values name
+		  (if (and (pair? def) (eq? (cadr (car def)) #unspecified))
+		      (cons (list (caar def)
+				  (string->value (string->symbol type) value))
+			    (cdr def))
+		      (cons (list #unspecified
+				  (string->value (string->symbol type) value))
+			    def)))))
+      ((set ?i ?name)
+       (values name
+	       (let loop ((l (preference-get name :default '())))
+		  (cond
+		     ((null? l)
+		      l)
+		     ((=fx i 0)
+		      (cons (string->value (string->symbol type) value)
+			    (cdr l)))
+		     (else
+		      (cons (car l) (loop (cdr l))))))))
+      ((asetk ?i ?name)
+       (values name
+	       (let loop ((l (preference-get name :default '())))
+		  (cond
+		     ((null? l)
+		      l)
+		     ((=fx i 0)
+		      (cons (list (string->value (string->symbol type) value)
+				  (cadar l))
+			    (cdr l)))
+		     (else
+		      (cons (car l) (loop (cdr l))))))))
+      ((asetv ?i ?name)
+       (values name
+	       (let loop ((l (preference-get name :default '()))
+			  (i i))
+		  (cond
+		     ((null? l)
+		      l)
+		     ((=fx i 0)
+		      (cons (list (caar l)
+				  (string->value (string->symbol type) value))
+			    (cdr l)))
+		     (else
+		      (cons (car l) (loop (cdr l) (- i 1))))))))
+      ((del ?i ?name)
+       (values name
+	       (let loop ((l (preference-get name :default '()))
+			  (i i))
+		  (cond
+		     ((null? l)
+		      l)
+		     ((=fx i 0)
+		      (cdr l))
+		     (else
+		      (cons (car l) (loop (cdr l) (- i 1))))))))
+      (else
+       (error "<PR>" "Illegal prefs name" name))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string->value ...                                                */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan  5 14:11:23 2011                          */
-;*    Last change :  Wed Jan  5 21:01:31 2011 (serrano)                */
+;*    Last change :  Thu Jan  6 10:22:35 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -240,6 +240,10 @@
        pr-editor-slider)
       ((spinbutton . ?-)
        pr-editor-spinbutton)
+      ((list . ?-)
+       pr-editor-list)
+      ((alist . ?-)
+       pr-editor-alist)
       (else
        pr-editor-input)))
 
@@ -339,7 +343,7 @@
 	     :step step
 	     :value value
 	     :onchange (secure-javascript-attr
-			(format "hop_prefs_editor_number( event, event.value.toString(), \"~a\", ~a, \"~a\", \"~a\" )"
+			(format "hop_prefs_editor_number( event, this.value.toString(), \"~a\", ~a, \"~a\", \"~a\" )"
 				name (hop->js-callback parse) 'real key)))))
       (else
        (error "<PR>" "Wrong \"slider\" declaration" type))))
@@ -360,3 +364,63 @@
 				name (hop->js-callback parse) 'integer key)))))
       (else
        (error "<PR>" "Wrong \"spinbutton\" declaration" type))))
+
+;*---------------------------------------------------------------------*/
+;*    pr-editor-list ...                                               */
+;*---------------------------------------------------------------------*/
+(define (pr-editor-list name type value title parse key)
+   (match-case type
+      ((?- ?type . ?def)
+       (<DIV> :class "hop-pr-editor-list"
+	  (<TABLE> 
+	     (<TR> :class "hop-pr-editor-list-add"
+		(<TD>
+		   ((pr-editor type) (list 'add name) type (if (pair? def) (car def) "") title parse key))
+		(<TD> :class "hop-pr-editor-list-button"))
+	     (map (lambda (v i)
+		     (let ((edit ((pr-editor type) (list 'set i name) type v title parse key)))
+			(<TR>
+			   (<TD> edit)
+			   (<TD> :class "hop-pr-editor-list-button"
+			      (<BUTTON> :onclick
+				 (secure-javascript-attr
+				  (format "node_style_set( this.parentNode.parentNode, 'opacity', '0.2' ); hop_prefs_editor_list_item( event, \"\", \"(del ~a ~a)\", false, \"~a\", \"~a\" )"
+					  i name
+					  type key))
+				 "Delete")))))
+		  value
+		  (iota (length value))))))
+      (else
+       (error "<PR>" "Wrong \"list\" declaration" type))))
+
+;*---------------------------------------------------------------------*/
+;*    pr-editor-alist ...                                              */
+;*---------------------------------------------------------------------*/
+(define (pr-editor-alist name type value title parse key)
+   (match-case type
+      ((?- ?typek ?typev . ?def)
+       (<DIV> :class "hop-pr-editor-alist"
+	  (<TABLE>
+	     (<TR> :class "hop-pr-editor-list-add"
+		(<TH>
+		   ((pr-editor typek) (list 'aaddk name) typek (if (pair? def) (car def) "") title parse key))
+		(<TD>
+		   ((pr-editor typev) (list 'aaddv name) typev (if (and (pair? def) (pair? (cdr def))) (cadr def) "") title parse key))
+		(<TD> :class "hop-pr-editor-list-button"))
+	     (map (lambda (v i)
+		     (let ((editk ((pr-editor typek) (list 'asetk i name) typek (car v) title parse key))
+			   (editv ((pr-editor typev) (list 'asetv i name) typev (cadr v) title parse key)))
+			(<TR>
+			   (<TH> editk)
+			   (<TD> editv)
+			   (<TD> :class "hop-pr-editor-list-button"
+			      (<BUTTON> :onclick
+				    (secure-javascript-attr
+				     (format "node_style_set( this.parentNode.parentNode, 'opacity', '0.2' ); hop_prefs_editor_list_item( event, \"\", \"(del ~a ~a)\", false, \"~a\", \"~a\" )"
+					     i name
+					     typev key))
+				    "Delete")))))
+		  value
+		  (iota (length value))))))
+      (else
+       (error "<PR>" "Wrong \"alist\" declaration" type))))
