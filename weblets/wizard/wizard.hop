@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Dec 16 07:31:16 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Thu Jan  6 18:08:05 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
 ;*=====================================================================*/
@@ -448,10 +448,11 @@ WebDAV server.]))))))
 	       (write `(add-user! ,uname
 				  :groups '(exec)
 				  :password ,upasswd
-				  :directories (cons ,(if (equal? udir "*")
-							  '*
-							  udir)
-						     (hop-path))
+				  :directories (cons* ,(if (equal? udir "*")
+							   '*
+							   udir)
+						      "/tmp"
+  						      (hop-path))
 				  :services '*))
 	       (newline)
 	       (newline))
@@ -465,6 +466,7 @@ WebDAV server.]))))))
 						(make-file-name
 						 (hop-rc-directory)
 						 "guest")
+						"/tmp"
 						(hop-path))))
 	       (newline)
 	       (newline))))
