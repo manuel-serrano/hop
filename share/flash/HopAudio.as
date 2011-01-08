@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Aug 23 16:16:58 2007                          */
-/*    Last change :  Sat Jan  8 07:31:43 2011 (serrano)                */
+/*    Last change :  Sat Jan  8 08:22:06 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopAudio flash support.                                          */
@@ -48,11 +48,11 @@ class HopAudio {
 	    if( onplayintervalid )
 	       clearInterval( onplayintervalid );
 
-	    var wait_play = function {
+	    var wait_play = function() {
 	       if( snd.position > p ) {
 		  clearInterval( onplayintervalid )
 		  onplayintervalid = false
-		  ExternalInterface.call( onload, domid, snd.stream );
+		  ExternalInterface.call( onplay, domid, snd.stream );
 	       }
 	    }
 	       
@@ -181,7 +181,8 @@ class HopAudio {
 
       // setOnEnded
       var setOnEnded = function( proc, id ) {
-	 endedpos = snd.position;
+	 if( snd.position > 0 ) endedpos = snd.position;
+	 
 	 snd.onSoundComplete = function() {
 	    if( !seek ) ExternalInterface.call( proc, id );
 	 }
@@ -202,7 +203,8 @@ class HopAudio {
 
       // initial configuration
       setVolume( 50 );
-      
+      endedpos = 0;
+
       // External interface binding
       ExternalInterface.addCallback( 'load', this, loadSound );
       ExternalInterface.addCallback( 'flash_play', this, playSound );

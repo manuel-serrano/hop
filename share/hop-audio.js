@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Fri Jan  7 20:03:57 2011 (serrano)                */
+/*    Last change :  Sat Jan  8 08:23:25 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -764,6 +764,7 @@ function hop_audio_flash_init( backend ) {
    }
 
    flash.onload_set( "hop_audio_flash_onload_callback", backend.id );
+   flash.onplay_set( "hop_audio_flash_onplay_callback", backend.id );
    flash.onerror_set( "hop_audio_flash_onerror_callback", backend.id );
    flash.onended_set( "hop_audio_flash_onended_callback", backend.id );
 
@@ -775,9 +776,17 @@ function hop_audio_flash_init( backend ) {
 /*---------------------------------------------------------------------*/
 function hop_audio_flash_onload_callback( id, play ) {
    var backend = document.getElementById( id );
-   backend.state = Splay;
 
    hop_audio_invoke_listeners( backend.audio, "load" );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_flash_onplay_callback ...                              */
+/*---------------------------------------------------------------------*/
+function hop_audio_flash_onplay_callback( id, play ) {
+   var backend = document.getElementById( id );
+   backend.state = Splay;
+
    hop_audio_invoke_listeners( backend.audio, "play" );
 }
 
