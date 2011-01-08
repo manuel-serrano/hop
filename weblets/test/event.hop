@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Thu Jan  6 13:57:38 2011 (serrano)                */
+;*    Last change :  Thu Jan  6 22:52:06 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
@@ -148,6 +148,9 @@ events succeeded, you should see an acknowledge.")
 			    (oy 1)
 			    (oz 1)
 			    (PI/2 (* 2 (atan 1))))
+			 (add-event-listener! window "orientationchange"
+			    (lambda (e)
+			       (tprint "orientationchange...")))
 			 (add-event-listener! window "MozOrientation"
 			    (lambda (e)
 			       (when (or (> (abs (- e.x ox)) 0.05)

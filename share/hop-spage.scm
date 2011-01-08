@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Wed Jan  5 14:40:20 2011 (serrano)                */
+;*    Last change :  Fri Jan  7 08:05:32 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -235,16 +235,23 @@
 ;*---------------------------------------------------------------------*/
 (define (spage-push spage tab tbody)
    
-   (define (spage-push-none spage spviewport tbody)
+   (define (spage-push-none spage spviewport tbody otab)
       ;; mark the transition style (needed on resize)
       (set! spage.transitionstyle 'none)
-      (node-style-set! (cadr spage.tabs)
-	 :opacity 0)
-      (node-style-set! tbody
-	 :z-index spage.num
-	 :left (format "-~apx" (* spage.num spage.spwidth))))
-
-   (define (spage-push-slide spage spviewport tbody)
+      (node-style-set! otab :display "none"))
+;*       (node-style-set! (cadr tbody) :display "none")                */
+;*       (node-style-set! tbody                                        */
+;* 	 :-webkit-transition-property "none"                           */
+;* 	 :-moz-transition-property "none"                              */
+;* 	 :-o-transition-property "none")                               */
+;*       (node-style-set! spviewport                                   */
+;* 	 :-webkit-transition-property "none"                           */
+;* 	 :-moz-transition-property "none"                              */
+;* 	 :-o-transition-property "none"                                */
+;* 	 :z-index spage.num                                            */
+;* 	 :left (format "-~apx" spage.spoffset)))                       */
+   
+   (define (spage-push-slide spage spviewport tbody otab)
       ;; mark the transition style (needed on resize)
       (set! spage.transitionstyle 'slide)
       (if (hop-config 'css_transition)
@@ -253,8 +260,8 @@
 	  (let ((offset0 (- spage.spoffset spage.spwidth))
 		(offset1 spage.spoffset))
 	     (slide spviewport (or (css-transition-duration tbody) 400) offset0 offset1 #f))))
-
-   (define (spage-push-fade spage spviewport tbody)
+   
+   (define (spage-push-fade spage spviewport tbody otab)
       ;; mark the transition style (needed on resize)
       (set! spage.transitionstyle 'fade)
       (node-style-set! tbody
@@ -263,7 +270,8 @@
 	 :-o-transition-property "none"
 	 :opacity 0
 	 :z-index spage.num
-	 :left (format "-~apx" (* spage.num spage.spwidth)))
+	 :top 0
+	 :left (format "-~apx" spage.spoffset))
       (if (hop-config 'css_transition)
 	  (after 1 (lambda ()
 		      (node-style-set! tbody
@@ -278,20 +286,21 @@
 			 :opacity 0)))
 	  (fade tbody (cadr spage.tabs)
 		(or (css-transition-duration tbody) 400) 0 1 #f)))
-
-   (define (spage-push-auto spage spviewport tbody)
+   
+   (define (spage-push-auto spage spviewport tbody otab)
       (cond
 	 ((< (hop-config :cpu_speed) 60)
-	  (spage-push-none spage spviewport tbody))
+	  (spage-push-none spage spviewport tbody otab))
 	 ((hop-config 'css_transition)
-	  (spage-push-slide spage spviewport tbody))
+	  (spage-push-slide spage spviewport tbody otab))
 	 (else
-	  (spage-push-none spage spviewport tbody))))
+	  (spage-push-none spage spviewport tbody otab))))
    
    (let* ((spage (if (string? spage) (dom-get-element-by-id spage) spage))
 	  (tab (if (string? tab) (dom-get-element-by-id tab) tab))
 	  (spviewport spage.spviewport)
-	  (tbody (if (string? tbody) (dom-get-element-by-id tbody) tbody)))
+	  (tbody (if (string? tbody) (dom-get-element-by-id tbody) tbody))
+	  (otab (car spage.tabs)))
       ;; adjust the size of the viewport
       (spage-resize spage)
       ;; increment the number of pushed elements
@@ -302,10 +311,12 @@
       (set! spage.spoffset (*fx spage.num spage.spwidth))
       (set! spage.spscrollwidth (*fx (+fx spage.num 1) spage.spwidth))
       ;; set the tab and viewport dimensions
+      ;; webkit requires spviewport to larger that the sum of the bodies
+      ;; we provision it with an extra body width
       (node-style-set! spviewport
-	 :width (format "~apx" spage.spscrollwidth))
-      (node-style-set! (dom-first-child spviewport)
-	 :width (format "~apx" spage.spbodywidth))
+	 :width (format "~apx" (+ spage.spbodywidth spage.spscrollwidth)))
+      (node-style-set! otab
+	     :width (format "~apx" spage.spbodywidth))
       (node-style-set! tbody
 	 :width (format "~apx" spage.spbodywidth))
       ;; add the new tab
@@ -317,13 +328,13 @@
       ;; show the new tbody
       (case (spage-transition-style spage)
 	 ((move)
-	  (spage-push-slide spage spviewport tbody))
+	  (spage-push-slide spage spviewport tbody otab))
 	 ((help)
-	  (spage-push-fade spage spviewport tbody))
+	  (spage-push-fade spage spviewport tbody otab))
 	 ((auto)
-	  (spage-push-auto spage spviewport tbody))
+	  (spage-push-auto spage spviewport tbody otab))
 	 (else
-	  (spage-push-none spage spviewport tbody)))))
+	  (spage-push-none spage spviewport tbody otab)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-pop ...                                                    */
@@ -346,13 +357,13 @@
 	       (n tab.static-node))
 	    (dom-append-child! p n))))
    
-   (define (spage-pop-none spage spviewport tbody)
+   (define (spage-pop-none spage spviewport tbody otab)
       (dom-remove-child! spviewport tbody)
       (restore-static-body tbody.tab)
-      (node-style-set! (car spage.tabs) :opacity 1)
-      (shrink-viewport spviewport))
+      (shrink-viewport spviewport)
+      (node-style-set! otab :display "block"))
 
-   (define (spage-pop-fade spage spviewport tbody)
+   (define (spage-pop-fade spage spviewport tbody otab)
       (if (hop-config 'css_transition)
 	  (let ((d (css-transition-duration tbody)))
 	     (begin
@@ -373,7 +384,7 @@
 		   (restore-static-body tbody.tab)
 		   (shrink-viewport spviewport)))))
    
-   (define (spage-pop-slide spage spviewport tbody)
+   (define (spage-pop-slide spage spviewport tbody otab)
       (if (hop-config 'css_transition)
 	  (let ((d (css-transition-duration tbody)))
 	     (node-style-set! spviewport
@@ -392,19 +403,20 @@
 		       (restore-static-body tbody.tab)
 		       (shrink-viewport spviewport))))))
 
-   (define (spage-pop-auto spage spviewport tbody)
+   (define (spage-pop-auto spage spviewport tbody otab)
       (cond
 	 ((< (hop-config :cpu_speed) 60)
-	  (spage-pop-none spage spviewport tbody))
+	  (spage-pop-none spage spviewport tbody otab))
 	 ((hop-config 'css_transition)
-	  (spage-pop-slide spage spviewport tbody))
+	  (spage-pop-slide spage spviewport tbody otab))
 	 (else
-	  (spage-pop-none spage spviewport tbody))))
+	  (spage-pop-none spage spviewport tbody otab))))
    
    (let* ((spage (if (string? spage) (dom-get-element-by-id spage) spage))
 	  (spviewport spage.spviewport))
       (when (pair? spage.tabs)
-	 (let ((tbody (car spage.tabs)))
+	 (let ((tbody (car spage.tabs))
+	       (otab (cadr spage.tabs)))
 	    ;; decrement the number of pushed elements
 	    (set! spage.num (-fx spage.num 1))
 	    (set! spage.tabs (cdr spage.tabs))
@@ -415,13 +427,13 @@
 	    ;; pop the element from the gui
 	    (case (spage-transition-style spage)
 	       ((move)
-		(spage-pop-slide spage spviewport tbody))
+		(spage-pop-slide spage spviewport tbody otab))
 	       ((help)
-		(spage-pop-fade spage spviewport tbody))
+		(spage-pop-fade spage spviewport tbody otab))
 	       ((auto)
-		(spage-pop-auto spage spviewport tbody))
+		(spage-pop-auto spage spviewport tbody otab))
 	       (else
-		(spage-pop-none spage spviewport tbody)))))))
+		(spage-pop-none spage spviewport tbody otab)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-spage ...                                                   */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Thu Jan  6 13:59:25 2011 (serrano)                */
+/*    Last change :  Thu Jan  6 22:58:20 2011 (serrano)                */
 /*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -148,7 +148,7 @@ function hop_Config() {
      this.navigator_family = "msie";
      this.mouse_left_button = 1;
      this.flash_external_interface = true;
-     this.flash_audio = false;
+     this.flash_audio = true;
      this.flash_markup = "object";
      this.inline_image = false;
      this.clone_innerHTML = true;
@@ -169,7 +169,7 @@ function hop_Config() {
      this.navigator_family = "chrome";
      this.mouse_left_button = 0;
      this.flash_external_interface = true;
-     this.flash_audio = false;
+     this.flash_audio = true;
      this.flash_markup = "embed";
      this.inline_image = true;
      this.css = 3;
@@ -183,7 +183,7 @@ function hop_Config() {
      this.navigator_family = "safari";
      this.mouse_left_button = 0;
      this.flash_external_interface = true;
-     this.flash_audio = false;
+     this.flash_audio = true;
      this.flash_markup = "embed";
      this.inline_image = true;
      this.clone_innerHTML = true;
@@ -193,7 +193,7 @@ function hop_Config() {
      this.js_speed = 80;
      this.mouse_left_button = 0;
      this.flash_external_interface = true;
-     this.flash_audio = false;
+     this.flash_audio = true;
      this.flash_markup = "embed";
      this.inline_image = true;
      this.clone_innerHTML = true;
@@ -202,7 +202,7 @@ function hop_Config() {
      this.navigator_family = "khtml";
      this.mouse_left_button = 1;
      this.flash_external_interface = true;
-     this.flash_audio = false;
+     this.flash_audio = true;
      this.flash_markup = "embed";
      this.inline_image = true;
      this.clone_innerHTML = true;

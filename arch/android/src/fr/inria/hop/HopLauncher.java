@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Jan  6 17:15:13 2011 (serrano)                */
+/*    Last change :  Sat Jan  8 07:10:21 2011 (serrano)                */
 /*    Copyright   :  2010-11 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -50,7 +50,7 @@ public class HopLauncher extends Activity {
 
    int maxlines = 0;
    StringBuffer textbuffer = new StringBuffer( 2048 );
-   CheckBox checkbox;
+   CheckBox checkbox, checkbox2;
    TextView textview;
    ScrollView scrollview;
    final ArrayBlockingQueue<String> queue =
@@ -176,6 +176,10 @@ public class HopLauncher extends Activity {
       checkbox = (CheckBox)findViewById( R.id.scrollconsole );
       checkbox.setChecked( true );
       
+      // setup the debug button
+      checkbox2 = (CheckBox)findViewById( R.id.log );
+      checkbox2.setChecked( false );
+      
       // grab the text for the output log
       textview = (TextView)activity.findViewById( R.id.textview );
       scrollview = (ScrollView)activity.findViewById( R.id.scrollview );
@@ -270,6 +274,8 @@ public class HopLauncher extends Activity {
 	    int y = textview.getLineHeight() * lc;
 	    scrollview.scrollTo( 0, y );
 	 }
+	 
+	 hop.log = checkbox2.isChecked();
       }
    }
    

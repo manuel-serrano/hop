@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Thu Jan  6 17:22:33 2011 (serrano)                */
+/*    Last change :  Sat Jan  8 07:10:05 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -50,6 +50,7 @@ public class Hop extends Thread {
    Handler handler;
    ArrayBlockingQueue<String> queue;
    final int[] currentpid = new int[ 1 ];
+   boolean log = false;
 
    // constructor
    public Hop( Activity a, ArrayBlockingQueue<String>q, Handler h ) {
@@ -121,7 +122,7 @@ public class Hop extends Thread {
 	       try {
 		  for( l = fin.read( buffer ); l > 0; l = fin.read( buffer ) ) {
 		     String s = new String( buffer, 0, l );
-		     //Log.v( "Hop", s );
+		     if( log ) Log.v( "Hop", s );
 		     queue.put( s );
 		     handler.sendEmptyMessage( HopLauncher.MSG_OUTPUT_AVAILABLE );
 		  }

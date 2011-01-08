@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Dec  6 17:10:05 2010                          */
-/*    Last change :  Wed Jan  5 13:45:01 2011 (serrano)                */
+/*    Last change :  Fri Jan  7 07:31:25 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for spage tag                                                */
@@ -71,7 +71,7 @@ $(define-hss-type sptabhead "div[hssclass=hop-sptabhead]"
 /*---------------------------------------------------------------------*/
 /* <public> */
 spage {
-  transition-style: slide;
+  transition-style: auto;
   padding: 0; 
   margin: 0;
   font-size: 10pt;
