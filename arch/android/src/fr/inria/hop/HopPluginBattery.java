@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Mon Nov  1 14:18:37 2010 (serrano)                */
-/*    Copyright   :  2010 Manuel Serrano                               */
+/*    Last change :  Sun Jan  9 09:49:51 2011 (serrano)                */
+/*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with SMS                                                 */
 /*=====================================================================*/
@@ -40,7 +40,7 @@ public class HopPluginBattery extends HopPlugin {
       
       switch( ip.read() ) {
 	 case (byte)'b':
-	    // send a SMS
+	    // register battery listener
 	    if( count++ == 0 ) {
 	       receiver = new BroadcastReceiver() {
 		     @Override

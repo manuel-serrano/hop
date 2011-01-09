@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed Dec  1 17:25:40 2010 (serrano)                */
-;*    Copyright   :  2010 Manuel Serrano                               */
+;*    Last change :  Sun Jan  9 09:51:13 2011 (serrano)                */
+;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
 ;*=====================================================================*/
@@ -58,7 +58,7 @@
 (define sensor-plugin #f)
 (define sms-plugin #f)
 (define contact-plugin #f)
-(define call-log-plugin #f)
+(define call-plugin #f)
 (define battery-plugin #f)
 (define locale-plugin #f)
 
@@ -326,10 +326,10 @@
 ;*    phone-call-log ::androidphone ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-call-log p::androidphone . optional)
-   (unless call-log-plugin
-      (set! call-log-plugin (android-load-plugin p "calllog")))
+   (unless call-plugin
+      (set! call-plugin (android-load-plugin p "call")))
    (let ((n (if (pair? optional) (car optional) -1)))
-      (android-send-command/result p call-log-plugin #\l n)))
+      (android-send-command/result p call-plugin #\l n)))
 
 ;*---------------------------------------------------------------------*/
 ;*    send-string ...                                                  */
