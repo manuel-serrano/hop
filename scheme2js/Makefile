@@ -1,7 +1,7 @@
 #*=====================================================================*/
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Thu Jan  6 14:18:58 2011 (serrano)                */
+#*    Last change :  Sun Jan  9 17:46:06 2011 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -51,7 +51,7 @@ _BGL_OBJECTS = main scheme2js srfi0 \
 	trampoline \
 	pipe_port \
 	js_pp js_lexer js_parser js_nodes js_out \
-	pragma dsssl
+	pragma
 
 _OBJECTS = $(_BGL_OBJECTS)
 
@@ -73,7 +73,7 @@ INCLUDES = mapping.sch
 #*---------------------------------------------------------------------*/
 POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile \
              runtime/exporter.scm \
-             runtime/runtime_callcc.js runtime/dsssl.js 
+             runtime/runtime_callcc.js runtime/dsssl.js runtime/dsssl.scm
 
 -include ../etc/Makefile.library
 
