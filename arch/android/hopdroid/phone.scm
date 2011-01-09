@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Sun Jan  9 09:51:13 2011 (serrano)                */
+;*    Last change :  Sun Jan  9 15:50:23 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -125,7 +125,9 @@
 	       ((string=? event "battery")
 		(register-battery-listener! p))
 	       ((string=? event "tts")
-		(register-tts-listener! p)))))))
+		(register-tts-listener! p))
+	       ((string=? event "call")
+		(register-call-listener! p)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remove-event-listener! ...                                       */
@@ -141,7 +143,9 @@
 					((string=? event "battery")
 					 (remove-battery-listener! p))
 					((string=? event "tts")
-					 (remove-tts-listener! p)))
+					 (remove-tts-listener! p))
+					((string=? event "call")
+					 (remove-call-listener! p)))
 				     (remq! proc l)) '()))
 	    (when (socket? %socket2)
 	       (let ((op (socket-output %socket2)))
@@ -330,6 +334,47 @@
       (set! call-plugin (android-load-plugin p "call")))
    (let ((n (if (pair? optional) (car optional) -1)))
       (android-send-command/result p call-plugin #\l n)))
+
+;*---------------------------------------------------------------------*/
+;*    phone-call-info ::androidphone ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (phone-call-info p::androidphone)
+   (unless call-plugin
+      (set! call-plugin (android-load-plugin p "call")))
+      (android-send-command/result p call-plugin #\i))
+
+;*---------------------------------------------------------------------*/
+;*    register-call-listener! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (register-call-listener! p::androidphone)
+   (unless call-plugin
+      (set! call-plugin (android-load-plugin p "call")))
+   (android-send-command p call-plugin #\b))
+
+;*---------------------------------------------------------------------*/
+;*    remove-call-listener! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (remove-call-listener! p::androidphone)
+   (unless call-plugin
+      (set! call-plugin (android-load-plugin p "call")))
+   (android-send-command p call-plugin #\e))
+
+;*---------------------------------------------------------------------*/
+;*    phone-call-start ::androidphone ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (phone-call-start p::androidphone n::bstring . optional)
+   (unless call-plugin
+      (set! call-plugin (android-load-plugin p "call")))
+   (let ((window (if (pair? optional) (car optional) #f)))
+      (android-send-command p call-plugin #\c n window)))
+
+;*---------------------------------------------------------------------*/
+;*    phone-call-stop ::androidphone ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (phone-call-stop p::androidphone)
+   (when call-plugin
+      (let ((window (if (pair? optional) (car optional) #f)))
+	 (android-send-command p call-plugin #\k n window))))
 
 ;*---------------------------------------------------------------------*/
 ;*    send-string ...                                                  */

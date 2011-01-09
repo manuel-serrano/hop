@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Sun Jan  9 10:47:24 2011 (serrano)                */
+/*    Last change :  Sun Jan  9 15:29:23 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with phone Calls                                         */
@@ -31,6 +31,8 @@ import java.util.*;
 /*---------------------------------------------------------------------*/
 public class HopPluginCall extends HopPlugin {
    TelephonyManager tm = null;
+   intent ci = null;
+   int ca = 0;
 
    // PhoneStateListenr
    PhoneStateListener pl = new PhoneStateListener() {
@@ -127,6 +129,16 @@ public class HopPluginCall extends HopPlugin {
 	 case (byte)'i':
 	    // register call listener
 	    writeCallState( op );
+	    break;
+	    
+	 case (byte)'c':
+	    // start a new call
+	    startCall( ip, op );
+	    break;
+	    
+	 case (byte)'k':
+	    // stop a call
+	    stopCall();
 	    break;
        }
    }
@@ -282,6 +294,30 @@ public class HopPluginCall extends HopPlugin {
       op.write( "\")".getBytes() );
 
       op.write( ")".getBytes() );
+   }
+
+   // startCall
+   void startCall( final InputStream ip, final OutputStream op ) throws IOException {
+      String number = HopDroid.read_string( ip );
+      boolean activity = ip.read() != 0;
+
+      intent callIntent = new Intent( Intent.ACTION_CALL );
+      callIntent.setData( Uri.parse( "tel:" + number ) );
+
+      if( activity ) {
+	 ci = null;
+	 ca = startHopActivityForResult( callIntent );
+      } else {
+	 ci = callIntent;
+	 ca = 0;
+	 startService( callIntent );
+      }
+   }
+
+   // stopCall
+   void stopCall() {
+      if( ci ) stopService( ci );
+      if( ca > 0 ) finishActivity( ca );
    }
    
    // writeCallLogList

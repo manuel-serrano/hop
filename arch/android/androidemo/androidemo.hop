@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Thu Jan  6 14:36:28 2011 (serrano)                */
+;*    Last change :  Sun Jan  9 15:52:56 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -72,6 +72,9 @@
 (add-event-listener! android "tts"
    (lambda (e)
       (hop-event-broadcast! "tts" (event-value e))))
+(add-event-listener! android "call"
+   (lambda (e)
+      (hop-event-broadcast! "call" (event-value e))))
 
 ;*---------------------------------------------------------------------*/
 ;*    androidemo ...                                                   */
@@ -217,6 +220,7 @@ display information relative to that message.")
     (<DIV> :class "short-note"
        "This shows the log of the recent calls, received, placed, and
 missed.")
+    (<ANDROIDEMO:CALLINFO>)
     (<ANDROIDEMO:CALLLOG>)))
 
 ;*---------------------------------------------------------------------*/
@@ -388,6 +392,24 @@ missed.")
 ;* 				      (lambda (l)                      */
 ;* 					 (innerHTML-set! "contact-list" l)))) */
 ;* 	 "Add entry")))                                                */
+
+;*---------------------------------------------------------------------*/
+;*    <ANDROIDEMO:CALLINFO> ...                                        */
+;*---------------------------------------------------------------------*/
+(define (<ANDROIDEMO:CALLINFO>)
+   (list
+    ~(add-event-listener! "call" "server"
+	(lambda (e)
+	   (let* ((el (dom-get-elemet-by-id "callinfo-state"))
+		  (s (with-output-to-string
+			(lambda () (write e.value)))))
+	      (innerHTML-set! el (<PRE> s)))))
+    (<TABLE> :class "callinfo"
+       (map (lambda (e)
+	       (<TR> (<TH> (symbol->string (car e))) (<TD> (cadr e))))
+	    (phone-call-info android)))
+    (<H3> "Call events")
+    (<DIV> :id "callinfo-state" "")))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:CALLLOG> ...                                         */

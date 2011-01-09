@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Thu Jan  6 12:24:32 2011 (serrano)                */
+/*    Last change :  Sun Jan  9 15:28:29 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
@@ -65,7 +65,7 @@ public abstract class HopPlugin {
    }
    
    // startHopActivityForResult
-   public void startHopActivityForResult( Intent intent ) {
+   public int startHopActivityForResult( Intent intent ) {
       int key = getKey();
       
       synchronized( atable ) {
@@ -74,6 +74,8 @@ public abstract class HopPlugin {
 	 Log.v( "HopPlugin", "Starting activity key=" + key );
 	 activity.startActivityForResult( intent, key );
       }
+
+      return key;
    }
 
    // onHopActivityResult (super method of plugins)
