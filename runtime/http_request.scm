@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Dec 18 06:22:48 2010 (serrano)                */
-;*    Copyright   :  2004-10 Manuel Serrano                            */
+;*    Last change :  Sun Jan  9 06:45:07 2011 (serrano)                */
+;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
 ;*    -------------------------------------------------------------    */
@@ -103,17 +103,17 @@
 ;*---------------------------------------------------------------------*/
 (define (http-parse-method-request method pi::input-port po::output-port id)
    (with-trace 3 "http-parse-method-request"
-      (let (scheme hostname port path http-version userinfo)
+      (let (scheme host port path http-version userinfo)
 	 (multiple-value-bind (s u h p a)
 	    (http-url-parse pi)
 	    (set! scheme (string->symbol s))
-	    (set! hostname h)
+	    (set! host h)
 	    (set! port p)
 	    (set! path a)
 	    (set! userinfo u)
 	    (set! http-version (read/rp http-version-grammar pi))
 	    (trace-item "http=" http-version " scheme=" s " user=" u
-			" hostname=" h " port=" p " path=[" a "]")
+			" host=" h " port=" p " path=[" a "]")
 	    (when (input-string-port? pi)
 	       (close-input-port pi)))
 	 (multiple-value-bind (header actual-host actual-port cl te auth pauth co)
@@ -153,7 +153,7 @@
 				(and (string? userinfo)
 				     (find-authenticated-user userinfo abspath method ip))
 				(anonymous-user))))
-		  (if (string? hostname)
+		  (if (string? host)
 		      (instantiate::http-proxy-request
 			 (id id)
 			 (method method)
@@ -165,7 +165,7 @@
 			 (query query)
 			 (header header)
 			 (port (or actual-port port (hop-port)))
-			 (host (or actual-host hostname))
+			 (host (or actual-host host))
 			 (content-length cl)
 			 (transfer-encoding te)
 			 (authorization pauth)

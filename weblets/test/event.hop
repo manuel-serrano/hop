@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Thu Jan  6 22:52:06 2011 (serrano)                */
+;*    Last change :  Sun Jan  9 07:03:46 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
@@ -93,12 +93,6 @@ events succeeded, you should see an acknowledge.")
 	       ~(define (add-text e)
 		   (when e.value
 		      (innerHTML-set! $b5 (apply string-append e.value))))
-	       ~(add-event-listener! window "ready"
-		   (lambda (e)
-		      (let ((imp (if (string? (hop-config :server_event))
-				     (hop-config :server_event)
-				     "long polling")))
-			 (innerHTML-set! $b6 imp))))
 	       ~(add-event-listener! $evt1 "server"
 		   (lambda (e)
 		      (when e.value
@@ -118,6 +112,10 @@ events succeeded, you should see an acknowledge.")
 			  (set! e.value "B")))))
 	       ~(add-event-listener! document "serverready"
 		   (lambda (e)
+		      (let ((imp (if (string? (hop-config :server_event))
+				     (hop-config :server_event)
+				     "long polling")))
+			 (innerHTML-set! $b6 imp))
 		      (with-hop ($(service :ttl 1 ()
 				     (tprint "EVT.1: " evt1)
 				     (hop-event-signal!

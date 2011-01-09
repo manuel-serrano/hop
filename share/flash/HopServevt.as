@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Sep  7 15:31:58 2007                          */
-/*    Last change :  Fri Aug  6 17:49:08 2010 (serrano)                */
-/*    Copyright   :  2007-10 Manuel Serrano                            */
+/*    Last change :  Sun Jan  9 07:58:33 2011 (serrano)                */
+/*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    ActionScript server events runtime system.                       */
 /*    To be compiled with:                                             */

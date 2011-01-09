@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Fri Dec 17 08:42:40 2010 (serrano)                */
-;*    Copyright   :  2008-10 Manuel Serrano                            */
+;*    Last change :  Sun Jan  9 06:34:09 2011 (serrano)                */
+;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
 ;*=====================================================================*/
@@ -260,8 +260,11 @@
    (hop-verb 2 (scheduler-stat scd))
    (hop-verb 1 ": " (trace-color 1 e) "\n")
    ;; when the error is a response, we transmit it to the next stage
+   ;; when the error is an exception, we create a response that it
+   ;; then transmitted to the next stage
    (with-handler
       (lambda (e)
+	 (exception-notify e)
 	 ;; there is nothing we can do but aborting the request
 	 (socket-close (http-request-socket req))
 	 (raise (instantiate::&ignore-exception)))

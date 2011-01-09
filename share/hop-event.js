@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Thu Jan  6 14:51:10 2011 (serrano)                */
+/*    Last change :  Sun Jan  9 08:05:31 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -546,7 +546,7 @@ function start_servevt_script_proxy( key ) {
       var register = function( id ) {
 	 var script = document.createElement( "script" );
 	 var cache = nocache++
-	    
+
 	 script.className = "hop_servevt_script";
 	 script.error_ttl = ttl;
 	 script.src = servevt_script_url( id, key, cache );
@@ -617,6 +617,7 @@ function start_servevt_script_proxy( key ) {
 /*    start_servevt_flash_proxy ...                                    */
 /*---------------------------------------------------------------------*/
 function start_servevt_flash_proxy( key, host, port ) {
+   
    var object_proxy = function() {
       return "<object id='" + hop_servevt_id + "' class='hop-servevt-proxy'" +
       " style='visibility: visible; position: fixed; top: 0; right: 0'" +
@@ -662,6 +663,8 @@ function start_servevt_flash_proxy( key, host, port ) {
    node_style_set( proxy, "top", "0" );
    node_style_set( proxy, "right", "0" );
    node_style_set( proxy, "background", "transparent" );
+   
+   proxy.ready = false;
 
    if( hop_config.flash_markup === "embed" ) {
       proxy.appendChild( embed_proxy() );
@@ -669,12 +672,33 @@ function start_servevt_flash_proxy( key, host, port ) {
       proxy.innerHTML = object_proxy();
    }
 
-   if( !hop_config.server_event ) hop_config.server_event = "flash";
-   
    document.body.appendChild( proxy );
    document.getElementById( hop_servevt_id ).key = key;
 
+   /* give 4 seconds to flash to succeed or switch to long polling */
+   after( 4000, function() {
+	 if( !proxy.ready ) {
+	    document.body.removeChild( proxy );
+	    start_long_polling_proxy( key, host, port );
+	 }
+      } );
+      
    return proxy;
+}
+
+/*---------------------------------------------------------------------*/
+/*    start_long_polling_proxy ...                                     */
+/*---------------------------------------------------------------------*/
+function start_long_polling_proxy( key, host, port ) {
+   hop_config.server_event = "long polling";
+
+   if( servevt_scriptp() ) {
+      // script polling
+      start_servevt_script_proxy( key );
+   } else {
+      // fallback xhr backend
+      start_servevt_ajax_proxy( key );
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -698,10 +722,12 @@ function hop_servevt_onerror( msg ) {
 function hop_servevt_proxy_flash_init() {
    /* if we are here, we are sure that Flash v8 or better is running */
    hop_flash_minversion_set( 8 );
+   hop_config.server_event = "flash";
 
    var pending_events = 0;
 
    hop_servevt_proxy = document.getElementById( hop_servevt_id );
+   hop_servevt_proxy.ready = true;
 
    var abort = function( id ) {
       var svc = hop_service_base() +
@@ -848,11 +874,8 @@ function hop_start_servevt_proxy() {
 			   } catch( e ) {
 			      throw( e );
 			   }
-			} else if( servevt_scriptp() ) {
-			   start_servevt_script_proxy( key );
 			} else {
-			   // fallback xhr backend
-			   start_servevt_ajax_proxy( key );
+			   start_long_polling_proxy( key, host, port );
 			}
 		     },
 		     // failure callback

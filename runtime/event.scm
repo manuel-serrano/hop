@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Jan  4 18:08:53 2011 (serrano)                */
+;*    Last change :  Sun Jan  9 07:37:55 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -687,6 +687,7 @@
    (with-trace 2 "server-register-event!"
       (with-lock *event-mutex*
 	 (lambda ()
+	    (tprint "SERVER-EVENT-REGISTER: " event " " key " " mode " " padding)
 	    (if (<fx *clients-number* (hop-event-max-clients))
 		(let ((req (current-request))
 		      (key (string->symbol key)))
@@ -1241,6 +1242,7 @@
 (define (hop-event-policy-file req)
    (instantiate::http-response-raw
       (request req)
+      (connection 'close)
       (proc (lambda (p)
 	       (display (hop-event-policy (http-request-port req)) p)
 	       (write-char #a000 p)))))

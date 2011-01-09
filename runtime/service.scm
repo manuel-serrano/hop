@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Jan  5 14:13:51 2011 (serrano)                */
+;*    Last change :  Sun Jan  9 06:41:27 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -351,7 +351,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    service-filter ...                                               */
 ;*    -------------------------------------------------------------    */
-;*    This filter is executed after the AUTOLOAD-FILTER. Hence         */
+;*    This filter is executes after the AUTOLOAD-FILTER. Hence         */
 ;*    when the default service is selected, the entire HOP loop        */
 ;*    has to be re-executed in order to properly autoload the          */
 ;*    initial weblet.                                                  */
