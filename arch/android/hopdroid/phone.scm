@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Sun Jan  9 15:50:23 2011 (serrano)                */
+;*    Last change :  Sun Jan  9 17:43:09 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -373,8 +373,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (phone-call-stop p::androidphone)
    (when call-plugin
-      (let ((window (if (pair? optional) (car optional) #f)))
-	 (android-send-command p call-plugin #\k n window))))
+      (android-send-command p call-plugin #\k)))
 
 ;*---------------------------------------------------------------------*/
 ;*    send-string ...                                                  */
