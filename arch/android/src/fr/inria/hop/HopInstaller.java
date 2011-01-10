@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Thu Jan  6 16:40:40 2011 (serrano)                */
+/*    Last change :  Mon Jan 10 09:18:08 2011 (serrano)                */
 /*    Copyright   :  2010-11 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
@@ -193,7 +193,9 @@ public class HopInstaller extends Thread {
    // (see configure-android.sch.in). It contains the path of the
    // external storage so that hop can avoid using the explicit "/sdcard" path.
    void externalstorage() throws IOException {
-      OutputStream op = new FileOutputStream( new File( hop.root, "etc/" + "externalstorage.hop" ) );
+      File file = new File( hop.root, "etc/" + "externalstorage.hop" );
+      OutputStream op = new FileOutputStream( file );
+      
       op.write( ";; generated file (HopInstaller), don't edit\n".getBytes() );
       op.write( "\"".getBytes() );
       op.write( Environment.getExternalStorageDirectory().getAbsolutePath().getBytes() );

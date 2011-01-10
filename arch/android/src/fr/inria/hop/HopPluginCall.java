@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Sun Jan  9 15:29:23 2011 (serrano)                */
+/*    Last change :  Mon Jan 10 09:02:56 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with phone Calls                                         */
@@ -31,7 +31,7 @@ import java.util.*;
 /*---------------------------------------------------------------------*/
 public class HopPluginCall extends HopPlugin {
    TelephonyManager tm = null;
-   intent ci = null;
+   Intent ci = null;
    int ca = 0;
 
    // PhoneStateListenr
@@ -178,10 +178,12 @@ public class HopPluginCall extends HopPlugin {
       op.write( " (device-software-version \"".getBytes() );
       op.write( tm.getDeviceSoftwareVersion().getBytes() );
       op.write( "\")".getBytes() );
-      
-      op.write( " (device-line1-number \"".getBytes() );
-      op.write( tm.getLine1Number().getBytes() );
-      op.write( "\")".getBytes() );
+
+      if( tm.getLine1Number() != null ) {
+	 op.write( " (device-line1-number \"".getBytes() );
+	 op.write( tm.getLine1Number().getBytes() );
+	 op.write( "\")".getBytes() );
+      }
       
       op.write( " (network-country-iso \"".getBytes() );
       op.write( tm.getNetworkCountryIso().getBytes() );
@@ -299,25 +301,28 @@ public class HopPluginCall extends HopPlugin {
    // startCall
    void startCall( final InputStream ip, final OutputStream op ) throws IOException {
       String number = HopDroid.read_string( ip );
-      boolean activity = ip.read() != 0;
+      boolean newactivity = ip.read() != 0;
 
-      intent callIntent = new Intent( Intent.ACTION_CALL );
+      Log.d( "HopPluginCall", "Creating indent" );
+      Intent callIntent = new Intent( Intent.ACTION_CALL );
       callIntent.setData( Uri.parse( "tel:" + number ) );
 
-      if( activity ) {
+      Log.d( "HopPluginCall", "Intent created..." );
+
+      if( true || newactivity ) {
 	 ci = null;
 	 ca = startHopActivityForResult( callIntent );
       } else {
 	 ci = callIntent;
 	 ca = 0;
-	 startService( callIntent );
+	 activity.startService( callIntent );
       }
    }
 
    // stopCall
    void stopCall() {
-      if( ci ) stopService( ci );
-      if( ca > 0 ) finishActivity( ca );
+      if( ci != null ) activity.stopService( ci );
+      if( ca > 0 ) activity.finishActivity( ca );
    }
    
    // writeCallLogList

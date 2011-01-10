@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Sun Jan  9 15:52:56 2011 (serrano)                */
+;*    Last change :  Sun Jan  9 19:45:39 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -14,8 +14,6 @@
 ;*---------------------------------------------------------------------*/
 (module androidemo
    (library mail phone hopdroid)
-   (import (osm-api_server "osm-api-1.0.*.hz"))
-   ~(import (osm-api_client "osm-api-1.0.*.hz"))
    (import androidemo_config))
 
 ;*---------------------------------------------------------------------*/
@@ -86,8 +84,7 @@
 	 :base (service-base-url androidemo (current-request))
 	 :path (androidemo-dir)
 	 :include "hop-gauge" "hop-audio" "hop-slider"
-	 :include "androidemo"
-	 :include "osm-api-1.0.*.hz")
+	 :include "androidemo")
       (<ANDROIDEMO:BODY> :header "Androidemo"
 	 (<DIV> :class "note"
 	    "To better understand the purpose of these
@@ -220,8 +217,15 @@ display information relative to that message.")
     (<DIV> :class "short-note"
        "This shows the log of the recent calls, received, placed, and
 missed.")
+    (<ANDROIDEMO:CALLLOG>)
+    (<H3> "Call status")
+    (<DIV> :class "short-note"
+       "This shows the status of the phone and call events.")
     (<ANDROIDEMO:CALLINFO>)
-    (<ANDROIDEMO:CALLLOG>)))
+    (<H3> "Call")
+    (<DIV> :class "short-note"
+       "This shows how to place a phone call.")
+    (<ANDROIDEMO:CALL>)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:HARDWARE> ...                                        */
@@ -255,7 +259,7 @@ missed.")
 			    (begin
 			       (innerHTML-set! this "Activate sensors")
 			       (set! active-sensors #f))
-			    (let ((osm (dom-get-element-by-id "osm"))
+			    (let ((img (dom-get-element-by-id "img"))
 				  (2PI (* 4 (atan 1))))
 			       (innerHTML-set! this "Deactive sensors")
 			       (set! active-sensors #t)
@@ -266,7 +270,9 @@ missed.")
 					   (when (pair? ori)
 					      (let ((r (format "rotate(-~adeg)" (car ori))))
 						 (innerHTML-set! "ori" r)
-						 (node-style-set! "osm" :MozTransform r))))
+						 (node-style-set! "img"
+						    :MozTransform r
+						    :webkitTransform r))))
 					(innerHTML-set!
 					 "sensors"
 					 (<TABLE> (map (lambda (r)
@@ -285,16 +291,9 @@ missed.")
     (<DIV> :id "sensors")
     
     (<DIV> :id "ori")
-    (<OSM:MAP> :id "osm"
-       :style "width: 300px; height: 300px; border: 1px solid red"
-       :latitude 43.619779 :longitude 7.049575)
-
-    ~(navigator.geolocation.getCurrentPosition
-      (lambda (p)
-	 (add-event-listener! window "ready"
-	    (lambda (e)
-	       (let ((osm (dom-get-element-by-id "osm")))
-		  (osm-set-center osm p.latitude p.longitude))))))))
+    (<IMG> :id "img"
+       :src (make-file-path (hop-share-directory)
+			    "icons" "hop" "hop-128x128.png"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:BATTERY> ...                                         */
@@ -400,7 +399,7 @@ missed.")
    (list
     ~(add-event-listener! "call" "server"
 	(lambda (e)
-	   (let* ((el (dom-get-elemet-by-id "callinfo-state"))
+	   (let* ((el (dom-get-element-by-id "callinfo-state"))
 		  (s (with-output-to-string
 			(lambda () (write e.value)))))
 	      (innerHTML-set! el (<PRE> s)))))
@@ -408,9 +407,31 @@ missed.")
        (map (lambda (e)
 	       (<TR> (<TH> (symbol->string (car e))) (<TD> (cadr e))))
 	    (phone-call-info android)))
-    (<H3> "Call events")
+    (<BR>)
+    (<DIV> :class "short-note"
+       "Call Events")
     (<DIV> :id "callinfo-state" "")))
 
+;*---------------------------------------------------------------------*/
+;*    <ANDROIDEMO:CALL> ...                                            */
+;*---------------------------------------------------------------------*/
+(define (<ANDROIDEMO:CALL>)
+   (list
+    (<TEXTAREA> :id "call-number"
+       "")
+    (<TEXTAREA> :id "call-speech"
+       "")
+    (<DIV>
+       (<BUTTON> :onclick ~(let ((eln (dom-get-element-by-id "call-number"))
+				 (elt(dom-get-element-by-id "call-speech")))
+			      (with-hop ($(service (number text)
+					     (phone-call-start android  number))
+					  eln.value elt.value)))
+	  "Place call")
+       (<BUTTON> :onclick ~(with-hop ($(service ()
+					  (phone-call-stop android))))
+	  "Stop call"))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:CALLLOG> ...                                         */
 ;*---------------------------------------------------------------------*/
