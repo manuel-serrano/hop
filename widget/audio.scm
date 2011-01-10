@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Jan 10 12:06:58 2011 (serrano)                */
+;*    Last change :  Mon Jan 10 12:16:32 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -166,11 +166,11 @@
 				     src))))))
 		  body))
 
-   (tprint "AUDIO: native=" native " browser=" browser " server=" (typeof server))
    (if native
        (<AUDIO:HTML5> :id id :controls controls :src src body)
        (<DIV> :id id :class "hop-audio"
 	  (when controls (<controls>))
+	  (tprint "BROWSER: " browser)
 	  (case browser
 	     ((flash)
 	      (list (<audio:init> :backendid fid
@@ -191,8 +191,7 @@
 		       :backend
 		       (format "document.getElementById( ~s )" fid))
 		    (<AUDIO:HTML5> :id hid)
-		    (<AUDIO:FLASH> :id fid)
-		    (<AUDIO:SERVER> :id id)))
+		    (<AUDIO:FLASH> :id fid)))
 	     (else
 	      (error "<AUDIO>" "Illegal backend" browser))))))
 
