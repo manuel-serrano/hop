@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Sun Jan  9 19:45:39 2011 (serrano)                */
+;*    Last change :  Mon Jan 10 18:06:27 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -430,7 +430,7 @@ missed.")
 	  "Place call")
        (<BUTTON> :onclick ~(with-hop ($(service ()
 					  (phone-call-stop android))))
-	  "Stop call"))))
+	  "End call"))))
    
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:CALLLOG> ...                                         */

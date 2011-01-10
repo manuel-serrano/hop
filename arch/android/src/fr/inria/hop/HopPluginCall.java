@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Mon Jan 10 09:39:17 2011 (serrano)                */
+/*    Last change :  Mon Jan 10 18:06:07 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with phone Calls                                         */
@@ -170,32 +170,13 @@ public class HopPluginCall extends HopPlugin {
       initTelephoneManager();
       
       op.write( "(".getBytes() );
-      
-      op.write( " (device-id \"".getBytes() );
-      op.write( tm.getDeviceId().getBytes() );
-      op.write( "\")".getBytes() );
-      
-      op.write( " (device-software-version \"".getBytes() );
-      op.write( tm.getDeviceSoftwareVersion().getBytes() );
-      op.write( "\")".getBytes() );
 
-      if( tm.getLine1Number() != null ) {
-	 op.write( " (device-line1-number \"".getBytes() );
-	 op.write( tm.getLine1Number().getBytes() );
-	 op.write( "\")".getBytes() );
-      }
-      
-      op.write( " (network-country-iso \"".getBytes() );
-      op.write( tm.getNetworkCountryIso().getBytes() );
-      op.write( "\")".getBytes() );
-      
-      op.write( " (network-operator \"".getBytes() );
-      op.write( tm.getNetworkOperator().getBytes() );
-      op.write( "\")".getBytes() );
-      
-      op.write( " (network-operator-name \"".getBytes() );
-      op.write( tm.getNetworkOperatorName().getBytes() );
-      op.write( "\")".getBytes() );
+      writeInfo( "device-id", tm.getDeviceId(), op );
+      writeInfo( "device-software-version", tm.getDeviceSoftwareVersion(), op );
+      writeInfo( "device-line1-number", tm.getLine1Number(), op );
+      writeInfo( "network-country-iso", tm.getNetworkCountryIso(), op );
+      writeInfo( "network-operator", tm.getNetworkOperator(), op );
+      writeInfo( "network-operator-name", tm.getNetworkOperatorName(), op );
       
       op.write( " (network-type ".getBytes() );
       switch( tm.getNetworkType() ) {
@@ -252,21 +233,10 @@ public class HopPluginCall extends HopPlugin {
       }
       op.write( ")".getBytes() );
 
-      op.write( " (sim-country-iso \"".getBytes() );
-      op.write( tm.getSimCountryIso().getBytes() );
-      op.write( "\")".getBytes() );
-
-      op.write( " (sim-operator \"".getBytes() );
-      op.write( tm.getSimOperator().getBytes() );
-      op.write( "\")".getBytes() );
-
-      op.write( " (sim-operator-name \"".getBytes() );
-      op.write( tm.getSimOperatorName().getBytes() );
-      op.write( "\")".getBytes() );
-
-      op.write( " (sim-serial-number \"".getBytes() );
-      op.write( tm.getSimSerialNumber().getBytes() );
-      op.write( "\")".getBytes() );
+      writeInfo( "sim-country-iso", tm.getSimCountryIso(), op );
+      writeInfo( "sim-operator", tm.getSimOperator(), op );
+      writeInfo( "sim-operator-name", tm.getSimOperatorName(), op );
+      writeInfo( "sim-serial-number", tm.getSimSerialNumber(), op );
 
       op.write( " (sim-state ".getBytes() );
       switch( tm.getSimState() ) {
@@ -291,11 +261,20 @@ public class HopPluginCall extends HopPlugin {
       }
       op.write( ")".getBytes() );
 
-      op.write( " (voice-mail-number \"".getBytes() );
-      op.write( tm.getVoiceMailNumber().getBytes() );
-      op.write( "\")".getBytes() );
+      writeInfo( "voice-mail-number", tm.getVoiceMailNumber(), op );
 
       op.write( ")".getBytes() );
+   }
+
+   // write infod field
+   void writeInfo( String key, String value, final OutputStream op ) throws IOException {
+      if( value != null ) {
+	 op.write( " (".getBytes() );
+	 op.write( key.getBytes() );
+	 op.write( " \"".getBytes() );
+	 op.write( value.getBytes() );
+	 op.write( "\")".getBytes() );
+      }
    }
 
    // startCall
@@ -309,11 +288,12 @@ public class HopPluginCall extends HopPlugin {
 
       Log.d( "HopPluginCall", "Intent created..." );
 
-      if( newactivity ) {
+      if( true || newactivity ) {
 	 ci = null;
 	 ca = startHopActivityForResult( callIntent );
 	 Log.d( "HopPluginCall", "Activity started..." );
       } else {
+	 
 	 ci = callIntent;
 	 ca = 0;
 	 activity.startService( callIntent );
@@ -329,6 +309,22 @@ public class HopPluginCall extends HopPlugin {
       }
       if( ca > 0 ) {
 	 Log.d( "HopPluginCall", "Finishing activity: " + ca );
+	 android.provider.Settings.System.putInt(
+	    activity.getContentResolver(),
+	    android.provider.Settings.System.AIRPLANE_MODE_ON, 1 );
+
+	 Intent intent = new Intent( Intent.ACTION_AIRPLANE_MODE_CHANGED );
+	 intent.putExtra( "state", 1 );
+	 activity.sendBroadcast( new Intent( "android.intent.action.AIRPLANE_MODE" ) );
+	 activity.sendBroadcast( intent );
+	 android.provider.Settings.System.putInt(
+	    activity.getContentResolver(),
+	    android.provider.Settings.System.AIRPLANE_MODE_ON,
+	    0 );
+
+	 intent.putExtra( "state", 0 );
+	 activity.sendBroadcast( new Intent( "android.intent.action.AIRPLANE_MODE" ) );
+	 activity.sendBroadcast( intent );
 	 activity.finishActivity( ca );
 	 Log.d( "HopPluginCall", "Activity finished" );
       }
