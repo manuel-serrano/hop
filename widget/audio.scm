@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Jan  7 17:09:07 2011 (serrano)                */
+;*    Last change :  Mon Jan 10 12:06:58 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -165,7 +165,8 @@
 				     (list type src)
 				     src))))))
 		  body))
-   
+
+   (tprint "AUDIO: native=" native " browser=" browser " server=" (typeof server))
    (if native
        (<AUDIO:HTML5> :id id :controls controls :src src body)
        (<DIV> :id id :class "hop-audio"
@@ -180,7 +181,8 @@
 		       :backend (format "document.getElementById( ~s )" hid))
 		    (<AUDIO:HTML5> :id hid)))
 	     ((none)
-	      (<audio:init> :backendid fid :backend "false"))
+	      (list (<audio:init> :backendid id :backend "false")
+		    (<AUDIO:SERVER> :id id)))
 	     ((auto)
 	      (list (<audio:init> :backendid hid
 		       :backend
@@ -189,9 +191,18 @@
 		       :backend
 		       (format "document.getElementById( ~s )" fid))
 		    (<AUDIO:HTML5> :id hid)
-		    (<AUDIO:FLASH> :id fid)))
+		    (<AUDIO:FLASH> :id fid)
+		    (<AUDIO:SERVER> :id id)))
 	     (else
 	      (error "<AUDIO>" "Illegal backend" browser))))))
+
+;*---------------------------------------------------------------------*/
+;*    <AUDIO:SERVER> ...                                               */
+;*---------------------------------------------------------------------*/
+(define (<AUDIO:SERVER> #!key id)
+   (<SCRIPT>
+      (format "hop_add_event_listener( window, 'ready', function (e) {" id)
+      (format "hop_audio_init[ '~a' ]( document.getElementById( '~a' ) );} )" id id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO:HTML5> ...                                                */

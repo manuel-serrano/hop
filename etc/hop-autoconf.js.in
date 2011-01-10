@@ -242,7 +242,14 @@ function hop_Config() {
   this.screen_available_height = screen.availHeight;
   this.screen_color_depth = screen.colorDepth;
   
-     
+  /* Android 2.1 webkit adjustments */
+  if( this.flash_audio ) {
+    if( navigator.userAgent.indexOf( "Android 2.1" ) ||
+        navigator.userAgent.indexOf( "Android 2.0" ) ) {
+       this.flash_audio = false;
+    }
+  }
+
   this.version = hop_version();
   this.backend = hop_backend();
 }

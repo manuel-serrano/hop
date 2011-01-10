@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Mon Jan 10 09:02:56 2011 (serrano)                */
+/*    Last change :  Mon Jan 10 09:39:17 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with phone Calls                                         */
@@ -309,9 +309,10 @@ public class HopPluginCall extends HopPlugin {
 
       Log.d( "HopPluginCall", "Intent created..." );
 
-      if( true || newactivity ) {
+      if( newactivity ) {
 	 ci = null;
 	 ca = startHopActivityForResult( callIntent );
+	 Log.d( "HopPluginCall", "Activity started..." );
       } else {
 	 ci = callIntent;
 	 ca = 0;
@@ -321,8 +322,16 @@ public class HopPluginCall extends HopPlugin {
 
    // stopCall
    void stopCall() {
-      if( ci != null ) activity.stopService( ci );
-      if( ca > 0 ) activity.finishActivity( ca );
+      if( ci != null ) {
+	 Log.d( "HopPluginCall", "stopping service..." );
+	 activity.stopService( ci );
+	 Log.d( "HopPluginCall", "service stopped." );
+      }
+      if( ca > 0 ) {
+	 Log.d( "HopPluginCall", "Finishing activity: " + ca );
+	 activity.finishActivity( ca );
+	 Log.d( "HopPluginCall", "Activity finished" );
+      }
    }
    
    // writeCallLogList
