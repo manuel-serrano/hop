@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Dec 28 14:49:39 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Mon Jan 10 09:27:56 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
 ;*=====================================================================*/
@@ -34,12 +34,12 @@
      (navigator: "firefox 3.6.13")))
 
 (define perfs-base-val
-   '((server-script: 140)
-     (client-script: 140)
-     (client-dom: 19)
-     (network-keep-alive: 8)
-     (network-close: 11)
-     (network-file: 50)
+   '((server-script: 39.88)
+     (client-script: 66.26)
+     (client-dom: 8.95)
+     (network-keep-alive: 5.83)
+     (network-close: 4.1)
+     (network-file: 28.12)
      (network-with-hop: 0.01)))
      
 ;*---------------------------------------------------------------------*/
