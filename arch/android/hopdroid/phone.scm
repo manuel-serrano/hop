@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Sun Jan  9 19:11:53 2011 (serrano)                */
+;*    Last change :  Tue Jan 11 10:42:18 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -440,8 +440,8 @@
    (cond
       ((string? o) (send-string o op))
       ((llong? o) (send-int64 o op))
-      ((integer? o) (send-int32 o op))
-      ((real? o) (send-string (real->string o) op))
+      ((fixnum? o) (send-int32 o op))
+      ((flonum? o) (send-string (real->string o) op))
       ((boolean? o) (send-boolean o op))
       ((char? o) (send-char o op))
       ((vector? o) (send-vector o op))
