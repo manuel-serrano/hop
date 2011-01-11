@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 11:11:23 2010                          */
-/*    Last change :  Tue Jan 11 18:37:10 2011 (serrano)                */
+/*    Last change :  Tue Jan 11 18:41:43 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with the sensors available on the phone.                 */
@@ -89,7 +89,7 @@ public class HopPluginSensor extends HopPlugin {
       return "(" + v[ 0 ] + " " + " " + v[ 1 ] + " " + v[ 2 ] + ")";
    }
 
-   private static boolean values_equal( float[] v1, float v2 ) {
+   private static boolean values_equal( float[] v1, float[] v2 ) {
       if( v1 == null ) return false;
       if( v1.length != v2.length ) return false;
       return ( v1[ 0 ] == v2[ 0 ] &&
