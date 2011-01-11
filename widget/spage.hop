@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Tue Jan  4 08:54:14 2011 (serrano)                */
+;*    Last change :  Tue Jan 11 08:18:28 2011 (serrano)                */
 ;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -53,7 +53,9 @@
 					$(when (xml-tilde? onchange)
 					    (sexp->xml-tilde
 					     `(lambda (event)
-						 ,(xml-tilde->sexp onchange))))))))))))
+						 ,(xml-tilde->sexp onchange))
+					     (xml-tilde-env onchange)
+					     (xml-tilde-menv onchange)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    SPHEAD ...                                                       */
@@ -93,16 +95,23 @@
 			      body)
    
    (define (init-sptab id onselect)
-      (sexp->xml-tilde
-       `(add-event-listener! ,id "ready"
-	   (lambda (event)
-	      (let ((el this))
-		 (set! el.hop_add_event_listener sptab-add-event-listener!)
-		 ,(when (xml-tilde? onselect)
-		     `(set! el.onselect
-			    (lambda (event)
-			       ,(xml-tilde->sexp onselect))))
-		 #unspecified)))))
+      (if (xml-tilde? onselect)
+	  (sexp->xml-tilde
+	   `(add-event-listener! ,id "ready"
+	       (lambda (event)
+		  (let ((el this))
+		     (set! el.hop_add_event_listener sptab-add-event-listener!)
+		     (set! el.onselect
+			   (lambda (event)
+			      ,(xml-tilde->sexp onselect)))
+		     #unspecified)))
+	   (xml-tilde-env onselect)
+	   (xml-tilde-menv onselect))
+	  (sexp->xml-tilde
+	   `(add-event-listener! ,id "ready"
+	       (lambda (event)
+		  (set! this.hop_add_event_listener sptab-add-event-listener!)
+		  #unspecified)))))
    
    (let* ((head (filter xml-sphead-element? body))
 	  (body (filter (lambda (x) (not (xml-sphead-element? x))) body)))

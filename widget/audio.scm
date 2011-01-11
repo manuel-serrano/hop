@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Jan 10 12:16:32 2011 (serrano)                */
+;*    Last change :  Tue Jan 11 07:06:23 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -191,7 +191,7 @@
 		       :backend
 		       (format "document.getElementById( ~s )" fid))
 		    (<AUDIO:HTML5> :id hid)
-		    (<AUDIO:FLASH> :id fid)))
+		    (<AUDIO:FLASH> :id fid :guard "!hop_config.html5_audio")))
 	     (else
 	      (error "<AUDIO>" "Illegal backend" browser))))))
 
@@ -209,29 +209,31 @@
 ;*    The native attribute is a hack to let AUDIO nodes be comparable  */
 ;*    by the tree comparison security manager.                         */
 ;*---------------------------------------------------------------------*/
-(define (<AUDIO:HTML5> #!key id controls src src #!rest body)
+(define (<AUDIO:HTML5> #!key id controls src src guard #!rest body)
    (list (instantiate::xml-element
 	    (id id)
 	    (tag 'audio)
 	    (attributes `(:controls ,controls :autoplay #f :native #t :src ,src))
 	    (body body))
 	 (<SCRIPT>
+	    (format "if( ~a && hop_config.html5_audio ) {" (or guard "true"))
 	    "hop_add_event_listener( window, 'ready', function(e) { "
 	    (format "var backend = document.getElementById( ~s );" id)
-	    (format "if( hop_config.html5_audio ) {hop_audio_html5_init( backend ); hop_audio_init[ '~a' ]( backend ); }}, false );" id))))
+	    (format "hop_audio_html5_init( backend ); hop_audio_init[ '~a' ]( backend ); }, false );};" id))))
    
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO:FLASH> ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (<AUDIO:FLASH> #!key id)
+(define (<AUDIO:FLASH> #!key id guard)
    (let* ((swf (make-file-path (hop-share-directory) "flash" "HopAudio.swf"))
 	  (init (string-append "hop_audio_flash_init_" id))
 	  (fvar (string-append "arg=" init)))
       (<DIV> :id id
 	 (<SCRIPT>
 	    (format "function ~a() {" init)
+	    (if guard (format "if( ~a ) {" guard "{"))
 	    (format "var backend = document.getElementById( ~s );" id)
-	    (format "hop_audio_flash_init( backend ); hop_audio_init[ '~a' ]( backend );}" id id))
+	    (format "hop_audio_flash_init( backend ); hop_audio_init[ '~a' ]( backend );}}" id id))
 	 (<OBJECT> :id (string-append id "-object") :class "hop-audio"
 	    :style "visibility: visible; position: fixed; top: 0; right: 0; background: transparent"
 	    :width "1px" :height "1px"

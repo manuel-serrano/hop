@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/weblets/markup.hop        */
+;*    serrano/prgm/project/hop/2.2.x/weblets/weblets/markup.hop        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec  7 09:54:35 2007                          */
-;*    Last change :  Thu Sep 18 19:30:16 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Tue Jan 11 08:59:27 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    weblets markups                                                  */
 ;*=====================================================================*/
@@ -99,37 +99,40 @@
 ;*    <WEBLET> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (<WEBLET> path auth category)
-   
-   (let* ((info (with-input-from-string (package-info path) read))
-	  (url (if (string? auth)
-		   (format "http://~a@~a:~a~a" auth (hostname) (hop-port) path)
-		   (format "http://~a:~a~a" (hostname) (hop-port) path))))
 
-      (when (or (string=? category "all")
-		(string=? (find-info info 'category "other") category))
-	 (<DIV> :class "weblet"
-	    (<DIV> :class "package"
-	       (<SPAN> :class "name"
-		  (find-info info 'name (basename path))
-		  "-"
-		  (find-info info 'version ""))
-	       " - " (find-info info 'title ""))
-	    (<WEBLET-INSTALL> url)
-	    (<DIV> :class "author" (find-info info 'author ""))
-	    (let ((home (find-info info 'home #f)))
-	       (when home
-		  (<DIV> :class "home"
-		     (list "home: " (<A> :href home (<TT> home))))))
-	    (let ((minhop (find-info info 'minhop ""))
-		  (maxhop (find-info info 'maxhop "")))
-	       (<DIV> :class "hop"
-		  (when (> (string-length minhop) 0)
-		     (<DIV> "Min hop: " (<SPAN> :class "min" minhop)))
-		  (when (> (string-length maxhop) 0)
-		     (<DIV> "Max hop: " (<SPAN> :class "max" maxhop)))
-		  (<DIV> "md5: "
-			 (<SPAN> :class "signature" (md5sum path)))))
-	    (<DIV> :class "comment" (find-info info 'comment ""))))))
+   (tprint "hostname=" (hostname) " " )
+
+   (with-access::http-request (current-request) (host port)
+      (let* ((info (with-input-from-string (package-info path) read))
+	     (url (if (string? auth)
+		      (format "http://~a@~a:~a~a" auth host port path)
+		      (format "http://~a:~a~a" host port path))))
+	 
+	 (when (or (string=? category "all")
+		   (string=? (find-info info 'category "other") category))
+	    (<DIV> :class "weblet"
+	       (<DIV> :class "package"
+		  (<SPAN> :class "name"
+		     (find-info info 'name (basename path))
+		     "-"
+		     (find-info info 'version ""))
+		  " - " (find-info info 'title ""))
+	       (<WEBLET-INSTALL> url)
+	       (<DIV> :class "author" (find-info info 'author ""))
+	       (let ((home (find-info info 'home #f)))
+		  (when home
+		     (<DIV> :class "home"
+			(list "home: " (<A> :href home (<TT> home))))))
+	       (let ((minhop (find-info info 'minhop ""))
+		     (maxhop (find-info info 'maxhop "")))
+		  (<DIV> :class "hop"
+		     (when (> (string-length minhop) 0)
+			(<DIV> "Min hop: " (<SPAN> :class "min" minhop)))
+		     (when (> (string-length maxhop) 0)
+			(<DIV> "Max hop: " (<SPAN> :class "max" maxhop)))
+		     (<DIV> "md5: "
+			    (<SPAN> :class "signature" (md5sum path)))))
+	       (<DIV> :class "comment" (find-info info 'comment "")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLET-INSTALL> ...                                             */

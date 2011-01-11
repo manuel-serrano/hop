@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Wed Dec 22 09:11:14 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Tue Jan 11 08:52:44 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
 ;*=====================================================================*/
@@ -77,7 +77,19 @@
 	  (user-access-denied req)
 	  (begin
 	     (when (file-exists? (hz-prefs)) (hz-preferences-load (hz-prefs)))
-	     (<HZ> req :weblet (hz-install-url url))))))
+	     (let ((w (hz-install-url url)))
+		(cond
+		   ((weblet? w)
+		    (<HZ> req :weblet w))
+		   ((list? w)
+		    (match-case w
+		       ((?status ?url ?msg)
+			(http-error
+			 (format "Cannot install weblet from ~s\n~a" url msg)))
+		       (else
+			(http-error w))))
+		   (else
+		    (http-error w))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/run ...                                                       */

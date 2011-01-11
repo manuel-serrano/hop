@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Thu Jan  6 10:29:54 2011 (serrano)                */
+;*    Last change :  Tue Jan 11 09:17:31 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -157,7 +157,7 @@
 ;*---------------------------------------------------------------------*/
 (define (prefs-decode-value name value type)
    (match-case (with-input-from-string name read)
-      ((? symbol?)
+      ((and ?name (? symbol?))
        (values name
 	       (string->value (string->symbol type) value)))
       ((add ?name)

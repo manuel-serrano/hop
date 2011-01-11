@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Mon Jan 10 18:06:07 2011 (serrano)                */
+/*    Last change :  Mon Jan 10 18:16:26 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with phone Calls                                         */
@@ -309,6 +309,8 @@ public class HopPluginCall extends HopPlugin {
       }
       if( ca > 0 ) {
 	 Log.d( "HopPluginCall", "Finishing activity: " + ca );
+	 // as of 10 Jan 2010, switching to airplane mode is apparantly
+	 // the only way to abort a phone call
 	 android.provider.Settings.System.putInt(
 	    activity.getContentResolver(),
 	    android.provider.Settings.System.AIRPLANE_MODE_ON, 1 );
