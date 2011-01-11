@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Sun Jan  9 15:28:29 2011 (serrano)                */
+/*    Last change :  Tue Jan 11 17:12:54 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
@@ -41,6 +41,11 @@ public abstract class HopPlugin {
       name = n;
    }
 
+   // cleanup
+   public void kill() {
+      Log.v( "HopPlugin", "killing plugin: " + name );
+   }
+   
    // the server
    abstract void server( InputStream ip, OutputStream op ) throws IOException;
 
@@ -72,8 +77,8 @@ public abstract class HopPlugin {
 	 atable.put( key, this );
 
 	 Log.v( "HopPlugin", "Starting activity key=" + key );
-	 activity.startActivityForResult( intent, key );
       }
+      activity.startActivityForResult( intent, key );
 
       return key;
    }

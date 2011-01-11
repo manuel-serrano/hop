@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Mon Jan 10 18:06:27 2011 (serrano)                */
+;*    Last change :  Tue Jan 11 18:09:19 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -73,6 +73,9 @@
 (add-event-listener! android "call"
    (lambda (e)
       (hop-event-broadcast! "call" (event-value e))))
+(add-event-listener! android "orientation"
+   (lambda (e)
+      (hop-event-broadcast! "orientation" (event-value e))))
 
 ;*---------------------------------------------------------------------*/
 ;*    androidemo ...                                                   */
@@ -193,6 +196,12 @@ Android phone. This demonstration does not use any HTML5 facility.")
 	   (lambda (e)
 	      (innerHTML-set! "sms-received-no" (car e.value))
 	      (innerHTML-set! "sms-received-text" (cadr e.value))))
+       ~(add-event-listener! "orientation" "server"
+	   (lambda (e)
+	      (let ((r (format "rotate(~adeg)" (car e.value))))
+		 (node-style-set! "img-ori"
+		    :MozTransform r
+		    :webkitTransform r))))
        
        (<DIV>
 	  (<BUTTON> :onclick ~(with-hop ($(service (no text)
@@ -266,13 +275,6 @@ missed.")
 			       (let loop ()
 				  (with-hop ($androidemo/sensors)
 				     (lambda (l)
-					(let ((ori (cdar l)))
-					   (when (pair? ori)
-					      (let ((r (format "rotate(-~adeg)" (car ori))))
-						 (innerHTML-set! "ori" r)
-						 (node-style-set! "img"
-						    :MozTransform r
-						    :webkitTransform r))))
 					(innerHTML-set!
 					 "sensors"
 					 (<TABLE> (map (lambda (r)
@@ -289,9 +291,7 @@ missed.")
        "Activate sensors")
     
     (<DIV> :id "sensors")
-    
-    (<DIV> :id "ori")
-    (<IMG> :id "img"
+    (<IMG> :id "img-ori"
        :src (make-file-path (hop-share-directory)
 			    "icons" "hop" "hop-128x128.png"))))
 
@@ -425,7 +425,14 @@ missed.")
        (<BUTTON> :onclick ~(let ((eln (dom-get-element-by-id "call-number"))
 				 (elt(dom-get-element-by-id "call-speech")))
 			      (with-hop ($(service (number text)
-					     (phone-call-start android  number))
+					     (when (and (string? text) (>fx (string-length text) 0))
+						(letrec ((h (lambda (e)
+							       (match-case (event-value e)
+								  ((call-state offhook)
+								   (remove-event-listener! android "call" h)
+								   (tts-speak atts "text"))))))
+						   (add-event-listener! android "call" h)
+						   (phone-call-start android number))))
 					  eln.value elt.value)))
 	  "Place call")
        (<BUTTON> :onclick ~(with-hop ($(service ()

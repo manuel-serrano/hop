@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Thu Jan  6 12:17:04 2011 (serrano)                */
+/*    Last change :  Tue Jan 11 17:28:10 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -55,18 +55,27 @@ public class HopPluginTts extends HopPlugin
       super( h, a, n );
    }
 
+   // cleanup
+   public void kill() {
+      super.kill();
+
+      if( tts != null ) tts.shutdown();
+   }
+   
    // ondemand initialization
    private void initTts() {
-      Log.v( "HopPluginTts", "initTts" );
+      Log.v( "HopPluginTts", "initTts.1" );
       synchronized( condv ) {
 	 Intent checkIntent = new Intent();
+	 Log.v( "HopPluginTts", "initTts.2" );
+	 
 	 checkIntent.setAction( TextToSpeech.Engine.ACTION_CHECK_TTS_DATA );
-	 Log.v( "HopPluginTts", "initTts: starting activity..." );
+	 Log.v( "HopPluginTts", "initTts.3: starting activity..." );
 	 startHopActivityForResult( checkIntent );
 	 try {
-	    Log.v( "HopPluginTts", "initTts: waiting for activity..." );
+	    Log.v( "HopPluginTts", "initTts.4: waiting for activity..." );
 	    condv.wait();
-	    Log.v( "HopPluginTts", "initTts completed" + initstatus );
+	    Log.v( "HopPluginTts", "initTts.5: completed" + initstatus );
 	 } catch( InterruptedException _ ) {
 	    initstatus = "initialization interrupted";
 	 }
@@ -75,17 +84,17 @@ public class HopPluginTts extends HopPlugin
 
    // onActivityResult
    public void onHopActivityResult( int result, Intent intent ) {
-      Log.v( "HopPluginTts", "initTts: activity started" );
+      Log.v( "HopPluginTts", "onHopActivityResult.1: activity started" );
       if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS ) {
-	 Log.v( "HopPluginTts", "initTts: creating TextToSpeech" );
+	 Log.v( "HopPluginTts", "onHopActivityResult.2: creating TextToSpeech" );
 	 tts = new TextToSpeech( activity, this );
       } else {
 	 synchronized( condv ) {
 	    // missing data, install it
-	    Log.v( "HopPluginTts", "initTts: missing data..." );
+	    Log.v( "HopPluginTts", "onHopActivityResult.3: missing data..." );
 	    Intent installIntent = new Intent();
 	    installIntent.setAction( TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA );
-	    Log.v( "HopPluginTts", "initTts: starting activity for install..." );
+	    Log.v( "HopPluginTts", "onHopActivityResult.4: starting activity for install..." );
 	    activity.startActivity( installIntent );
 	    initstatus = "missing data";
 	    condv.notify();
@@ -95,12 +104,15 @@ public class HopPluginTts extends HopPlugin
 
    // oninit
    public void onInit( int status ) {
-      Log.v( "HopPluginTts", "initTts: onInit..." );
+      Log.v( "HopPluginTts", "onInit.1" );
       synchronized( condv ) {
+	 Log.v( "HopPluginTts", "onInit.2" );
 	 if( status == TextToSpeech.SUCCESS ) {
+	    Log.v( "HopPluginTts", "onInit.3: success" );
 	    initstatus = "success";
 	 } else {
 	    tts = null;
+	    Log.v( "HopPluginTts", "onInit.4: fail" );
 	    initstatus = "could not initialize tts";
 	 }
 	 condv.notify();
@@ -116,7 +128,7 @@ public class HopPluginTts extends HopPlugin
    synchronized void server( InputStream ip, OutputStream op )
       throws IOException {
 
-      switch( ip.read() ) {
+      switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'i':
 	    // init
 	    initTts();
@@ -208,9 +220,9 @@ public class HopPluginTts extends HopPlugin
 	    if( tts != null ) {
 	       HashMap<String, String> opt = null;
 	       String s = HopDroid.read_string( ip );
-	       int qm = ip.read() == 1 ?
+	       int qm = HopDroid.read_int( ip ) == 1 ?
 		  TextToSpeech.QUEUE_ADD : TextToSpeech.QUEUE_FLUSH;
-	       int stream = ip.read();
+	       int stream = HopDroid.read_int( ip );
 
 	       Log.v( "HopPlugTts", "speak [" + s + "] qm=" + qm + " stream="
 		      + stream );
@@ -251,9 +263,9 @@ public class HopPluginTts extends HopPlugin
 	    if( tts != null ) {
 	       HashMap<String, String> opt = null;
 	       int ms = HopDroid.read_int32( ip );
-	       int qm = ip.read() == 1 ?
+	       int qm = HopDroid.read_int( ip ) == 1 ?
 		  TextToSpeech.QUEUE_ADD : TextToSpeech.QUEUE_FLUSH;
-	       int stream = ip.read();
+	       int stream = HopDroid.read_int( ip );
 	       
 	       if( pushevent ) {
 		  opt = new HashMap();

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Tue Jan 11 10:42:18 2011 (serrano)                */
+;*    Last change :  Tue Jan 11 18:00:07 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -116,7 +116,9 @@
 		     (thread-start!
 		      (instantiate::pthread
 			 (body (lambda () (android-event-listener p)))))))
-	    (hashtable-update! %evtable event cons (list proc))
+	    (hashtable-update! %evtable event
+			       (lambda (v) (cons proc v))
+			       (list proc))
 	    (let ((op (socket-output %socket2)))
 	       (send-string event op)
 	       (send-byte 1 op)
@@ -127,7 +129,9 @@
 	       ((string=? event "tts")
 		(register-tts-listener! p))
 	       ((string=? event "call")
-		(register-call-listener! p)))))))
+		(register-call-listener! p))
+	       ((string=? event "orientation")
+		(register-orientation-listener! p)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remove-event-listener! ...                                       */
@@ -145,8 +149,11 @@
 					((string=? event "tts")
 					 (remove-tts-listener! p))
 					((string=? event "call")
+					 (remove-call-listener! p))
+					((string=? event "orientation")
 					 (remove-call-listener! p)))
-				     (remq! proc l)) '()))
+				     (remq! proc l))
+				  '()))
 	    (when (socket? %socket2)
 	       (let ((op (socket-output %socket2)))
 		  (send-string event op)
@@ -243,21 +250,39 @@
    (android-send-command/result p sensor-plugin #\i))
 
 ;*---------------------------------------------------------------------*/
+;*    sensor-type-number ...                                           */
+;*---------------------------------------------------------------------*/
+(define (sensor-type-number type)
+   (case type
+      ((orientation) 0)
+      ((light) 1)
+      ((magnetic-field) 2)
+      ((proximity) 3)
+      ((temperature) 4)
+      ((accelerometer) 5)
+      ((pressure) 6)
+      (else (error "sensor" "unknown sensor type" type))))
+
+;*---------------------------------------------------------------------*/
 ;*    phone-sensor ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-sensor p::androidphone type . delay)
-   (let ((t (case type
-	       ((orientation) 0)
-	       ((light) 1)
-	       ((magnetic-field) 2)
-	       ((proximity) 3)
-	       ((temperature) 4)
-	       ((accelerometer) 5)
-	       ((pressure) 6)
-	       (else (error "sensor" "unknown sensor type" type)))))
-      (android-send-command/result p sensor-plugin #\b t
-				   (phone-sensor-ttl p)
-				   (if (pair? delay) (car delay) 0))))
+   (android-send-command/result p sensor-plugin #\b
+				(sensor-type-number type)
+				(phone-sensor-ttl p)
+				(if (pair? delay) (car delay) 0)))
+
+;*---------------------------------------------------------------------*/
+;*    register-orientation-listener! ...                               */
+;*---------------------------------------------------------------------*/
+(define (register-orientation-listener! p::androidphone)
+   (android-send-command p sensor-plugin #\a (sensor-type-number 'orientation)))
+
+;*---------------------------------------------------------------------*/
+;*    remove-orientation-listener! ...                                 */
+;*---------------------------------------------------------------------*/
+(define (remove-orientation-listener! p::androidphone)
+   (android-send-command p sensor-plugin #\r (sensor-type-number 'orientation)))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-sms-send ::androidphone ...                                */
@@ -438,17 +463,28 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (send-obj o::obj op::output-port)
    (cond
-      ((string? o) (send-string o op))
-      ((llong? o) (send-int64 o op))
-      ((fixnum? o) (send-int32 o op))
-      ((flonum? o) (send-string (real->string o) op))
-      ((boolean? o) (send-boolean o op))
-      ((char? o) (send-char o op))
-      ((vector? o) (send-vector o op))
-      ((and (pair? o) (pair? (cdr o))) (send-obj (list->vector o) op))
-      ((pair? o) (send-obj (car o) op) (send-obj (cdr o) op))
-      ((symbol? o) (send-string (symbol->string! o) op))
-      (else (error "send-obj" "cannot serialize value" o))))
+      ((string? o)
+       (send-string o op))
+      ((llong? o)
+       (send-int64 o op))
+      ((fixnum? o)
+       (send-int32 o op))
+      ((flonum? o)
+       (send-string (real->string o) op))
+      ((boolean? o)
+       (send-boolean o op))
+      ((char? o)
+       (send-char o op))
+      ((vector? o)
+       (send-vector o op))
+      ((and (pair? o) (or (null? (cdr o)) (pair? (cdr o))))
+       (send-obj (list->vector o) op))
+      ((pair? o)
+       (send-obj (car o) op) (send-obj (cdr o) op))
+      ((symbol? o)
+       (send-string (symbol->string! o) op))
+      (else
+       (error "send-obj" "cannot serialize value" o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    send-obj ::vcard ...                                             */

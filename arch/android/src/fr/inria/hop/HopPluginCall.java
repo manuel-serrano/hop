@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Mon Jan 10 18:16:26 2011 (serrano)                */
+/*    Last change :  Tue Jan 11 17:31:57 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with phone Calls                                         */
@@ -40,15 +40,12 @@ public class HopPluginCall extends HopPlugin {
 	    switch( state ) {
 	       case TelephonyManager.CALL_STATE_RINGING:
 		  handroid.pushEvent( "call", "(call-state ringing " + in + " )" );
-		  Log.d( "HopPluginCall", "state changed: ringing" );
 		  break;
 	       case TelephonyManager.CALL_STATE_OFFHOOK:
 		  handroid.pushEvent( "call", "(call-state offhook " + in + " )" );
-		  Log.d( "HopPluginCall", "state changed: offhook" );
 		  break;
 	       case TelephonyManager.CALL_STATE_IDLE:
 		  handroid.pushEvent( "call", "(call-state idle " + in + " )" );
-		  Log.d( "HopPluginCall", "state changed: idle" );
 		  break;
 	       default:
 		  Log.d( "HopPluginCall", "Unknown phone state=" + state );
@@ -59,19 +56,15 @@ public class HopPluginCall extends HopPlugin {
 	    switch( state ) {
 	       case TelephonyManager.DATA_DISCONNECTED:
 		  handroid.pushEvent( "call", "(data disconnected)" );
-		  Log.d( "HopPluginCall", "data state changed: disconected" );
 		  break;
 	       case TelephonyManager.DATA_CONNECTING:
 		  handroid.pushEvent( "call", "(data connecting)" );
-		  Log.d( "HopPluginCall", "data state changed: connecting" );
 		  break;
 	       case TelephonyManager.DATA_CONNECTED:
 		  handroid.pushEvent( "call", "(data connected)" );
-		  Log.d( "HopPluginCall", "data state changed: connected" );
 		  break;
 	       case TelephonyManager.DATA_SUSPENDED:
 		  handroid.pushEvent( "call", "(data suspended)" );
-		  Log.d( "HopPluginCall", "data state changed: suspended" );
 		  break;
 	       default:
 		  Log.d( "HopPluginCall", "Unknown phone state=" + state );
@@ -82,18 +75,14 @@ public class HopPluginCall extends HopPlugin {
 	    switch( sstate.getState() ) {
 	       case ServiceState.STATE_EMERGENCY_ONLY:
 		  handroid.pushEvent( "call", "(state emergency-only)" );
-		  Log.d( "HopPluginCall", "state: emergency-only" );
 		  break;
 	       case ServiceState.STATE_IN_SERVICE:
 		  handroid.pushEvent( "call", "(state in-service)" );
-		  Log.d( "HopPluginCall", "state: in-service" );
 		  break;
 	       case ServiceState.STATE_OUT_OF_SERVICE:
 		  handroid.pushEvent( "call", "(state out-of-service)" );
-		  Log.d( "HopPluginCall", "state: out-of-service" );
 		  break;
 	       case ServiceState.STATE_POWER_OFF:
-		  handroid.pushEvent( "call", "(state power-off)" );
 		  Log.d( "HopPluginCall", "state: power-off" );
 		  break;
 	    }
@@ -109,7 +98,7 @@ public class HopPluginCall extends HopPlugin {
    protected void server( final InputStream ip, final OutputStream op )
       throws IOException {
       
-       switch( ip.read() ) {
+      switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'l':
 	    // get call log
 	    int i = HopDroid.read_int32( ip );
@@ -122,7 +111,7 @@ public class HopPluginCall extends HopPlugin {
 	    break;
 	    
 	 case (byte)'e':
-	    // register call listener
+	    // unregister call listener
 	    unregisterCallListener();
 	    break;
 	    
@@ -140,7 +129,7 @@ public class HopPluginCall extends HopPlugin {
 	    // stop a call
 	    stopCall();
 	    break;
-       }
+      }
    }
 
    // initTelephoneManager
@@ -280,7 +269,7 @@ public class HopPluginCall extends HopPlugin {
    // startCall
    void startCall( final InputStream ip, final OutputStream op ) throws IOException {
       String number = HopDroid.read_string( ip );
-      boolean newactivity = ip.read() != 0;
+      boolean newactivity = HopDroid.read_int( ip ) != 0;
 
       Log.d( "HopPluginCall", "Creating indent" );
       Intent callIntent = new Intent( Intent.ACTION_CALL );
@@ -348,6 +337,7 @@ public class HopPluginCall extends HopPlugin {
       Cursor cur = activity.managedQuery( uri, projection, null, null, limit );
 
       if( cur.moveToFirst() ) {
+	 
 	 op.write( "(".getBytes() );
 	 do {
 	    op.write( "(".getBytes() );

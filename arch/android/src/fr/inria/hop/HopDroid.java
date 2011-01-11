@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Mon Jan 10 12:14:27 2011 (serrano)                */
+/*    Last change :  Tue Jan 11 17:59:15 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -86,7 +86,12 @@ public class HopDroid extends Thread {
    }
 
    // kill
-   public void kill() {
+   synchronized public void kill() {
+      if( plugins != null ) {
+	 Log.v( "HopDroid", "killing...plugins" );
+	 killPlugins();
+      }
+      
       try {
 	 if( serv1 != null && !serv1.isClosed() ) {
 	    Log.v( "HopDroid", "killing...serv1" );
@@ -179,6 +184,21 @@ public class HopDroid extends Thread {
 	 return plugins.size() - 1;
       }
    }
+
+   // kill plugin
+   private void killPlugins() {
+      synchronized( plugins ) {
+	 int s = plugins.size();
+
+	 for( int i = 0; i < s; i++ ) {
+	    HopPlugin p = (HopPlugin)plugins.get( i );
+	    p.kill();
+	 }
+
+	 plugins = null;
+      }
+   }
+   
    
    // handle a session with one client connected to the HopDroid server
    private void server( Socket sock ) {
@@ -209,10 +229,14 @@ public class HopDroid extends Thread {
 	    }
 	 }
       } catch( IOException e ) {
-	 Log.v( "HopDroid", "Plugin IOException: " + e.getMessage() );
+	 if( !sock.isClosed() ) {
+	    Log.v( "HopDroid", "Plugin IOException: " + e.getMessage() );
+	 }
       } finally {
 	 try {
-	    sock.close();
+	    if( !sock.isClosed() ) {
+	       sock.close();
+	    }
 	 } catch( IOException _ ) {
 	    ;
 	 }
@@ -228,6 +252,9 @@ public class HopDroid extends Thread {
 	 while( true ) {
 	    String event = read_string( ip );
 	    int a = ip.read();
+
+	    // eof?
+	    if( a == -1 ) break;
 	    
 	    synchronized( eventtable ) {
 	       Hashtable ht = (Hashtable)eventtable.get( event );
@@ -261,10 +288,12 @@ public class HopDroid extends Thread {
 	    }
 	 }
       } catch( IOException e ) {
-	 Log.v( "HopDroid", "Plugin IOException: " + e.getMessage() );
+	 if( !sock2.isClosed() ) {
+	    Log.v( "HopDroid", "Plugin IOException: " + e.getMessage() );
+	 }
       } finally {
 	 try {
-	    sock2.close();
+	    if(! sock2.isClosed() ) sock2.close();
 	 } catch( IOException _ ) {
 	    ;
 	 }
@@ -303,7 +332,18 @@ public class HopDroid extends Thread {
 	 }
       }
    }
-   
+
+   // read_int
+   public static int read_int( InputStream ip ) throws IOException {
+      int c = ip.read();
+
+      if( c < 0 ) {
+	 throw new IOException( "read_int: end-of-file" );
+      }
+
+      return c;
+   }
+
    // read_int32
    public static int read_int32( InputStream ip ) throws IOException {
       int b0 = ip.read();
@@ -311,6 +351,10 @@ public class HopDroid extends Thread {
       int b2 = ip.read();
       int b3 = ip.read();
 
+      if( b0 < 0 || b1 < 0 || b2 < 0 || b3 < 0 ) {
+	 throw new IOException( "read_int32: end-of-file" );
+      }
+	 
       return (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
    }
 
@@ -332,7 +376,8 @@ public class HopDroid extends Thread {
       int sz = read_int32( ip );
       byte[] buf = new byte[ sz ];
 
-      ip.read( buf, 0, sz );
+      if( ip.read( buf, 0, sz ) < 0 )
+	 throw new IOException( "read_string: end-of-file" );
 
       return new String( buf );
    }

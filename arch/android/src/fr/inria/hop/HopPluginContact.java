@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Sun Oct 31 10:52:05 2010 (serrano)                */
-/*    Copyright   :  2010 Manuel Serrano                               */
+/*    Last change :  Tue Jan 11 17:30:40 2011 (serrano)                */
+/*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
 /*=====================================================================*/
@@ -51,7 +51,7 @@ public class HopPluginContact extends HopPlugin {
    protected void server( final InputStream ip, final OutputStream op )
       throws IOException {
       
-       switch( ip.read() ) {
+      switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'l':
 	    writeContactList( op );
 	    break;
