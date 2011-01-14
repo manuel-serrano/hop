@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Fri Dec 17 08:19:22 2010 (serrano)                */
-;*    Copyright   :  2008-10 Manuel Serrano                            */
+;*    Last change :  Fri Jan 14 15:51:51 2011 (serrano)                */
+;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
 ;*=====================================================================*/
@@ -178,8 +178,8 @@
 	 :onkeydown (secure-javascript-attr
 		     (format "hop_filechooser_key( this, ~s )" id))
 	 (<SCRIPT>
-	    (format "hop_add_event_listener( window, 'ready', function( e ) { var el = document.getElementById( ~s ); ~a; ~a; ~a; ~a; }, false )"
-		    id
+	    (format "hop_add_event_listener( '~a', 'ready', function( e ) { var el = document.getElementById( ~s ); ~a; ~a; ~a; ~a; }, false )"
+		    id id
 		    (if onselect
 			(format "el.select = ~a" (obj->proc onselect))
 			"false")
