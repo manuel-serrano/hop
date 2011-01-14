@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Fri Dec 31 06:28:42 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Fri Jan 14 10:42:04 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
 ;*=====================================================================*/
@@ -315,8 +315,8 @@
 	 (let ((cache (cache-get hss-cache path)))
 	    (if (string? cache)
 		(with-input-from-file cache read-string)
-		(let* ((hss (hop-get-hss path))
-		       (cache (cache-put! hss-cache path hss)))
+		(let ((hss (hop-load-hss path)))
+		   (cache-put! hss-cache path hss)
 		   (let ((p (open-output-string)))
 		      (css-write hss p)
 		      (close-output-port p))))))))

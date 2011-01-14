@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Fri Dec  3 11:22:52 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Fri Jan 14 10:31:27 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
 ;*=====================================================================*/
@@ -292,8 +292,9 @@
    (with-access::cache-disk c (%table %head %tail %mutex
 				      max-entries current-entries uid
 				      path max-file-size out)
-      (when (or (<=elong max-file-size #e0)
-		(<elong (file-size upath) max-file-size))
+      (when (and (hop-cache-enable)
+		 (or (<=elong max-file-size #e0)
+		     (<elong (file-size upath) max-file-size)))
 	 (mutex-lock! %mutex)
 	 (let* ((name (format "~a-~a" uid (basename upath)))
 		(cpath (make-file-name path name))
@@ -327,8 +328,9 @@
    (with-access::cache-memory c (%table %head %tail %mutex
 					max-entries
 					max-file-size)
-      (when (or (<=elong max-file-size #e0)
-		(<elong (file-size upath) max-file-size))
+      (when (and (hop-cache-enable)
+		 (or (<=elong max-file-size #e0)
+		     (<elong (file-size upath) max-file-size)))
 	 (let ((ce (instantiate::cache-entry
 		      (value value)
 		      (upath upath)

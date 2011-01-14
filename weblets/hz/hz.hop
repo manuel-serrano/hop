@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Tue Jan 11 08:52:44 2011 (serrano)                */
+;*    Last change :  Fri Jan 14 09:36:40 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -62,6 +62,8 @@
 		:title "Hop Hz Preferences"
 		:base (service-base-url hz/preferences req)
 		:favicon "etc/favicon.png"
+		(<META> :name "viewport"
+		   :content "width=device-width, initial-scale=1.")
 		:include "hop-foot" "hop-prefs"
 		:css "hz.hss")
 	     (<HZ:BODY>

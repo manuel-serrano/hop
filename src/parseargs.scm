@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Dec 31 12:02:46 2010 (serrano)                */
-;*    Copyright   :  2004-10 Manuel Serrano                            */
+;*    Last change :  Fri Jan 14 10:29:04 2011 (serrano)                */
+;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -120,6 +120,11 @@
 		 (bigloo-debug-module-set! l)
 		 (bigloo-debug-set! l)
 		 (hop-clientc-debug-unbound-set! l)))))
+	 (("--devel" (help "Enable devel mode"))
+	  (set! clear-cache #t)
+	  (hop-cache-enable-set! #f)
+	  (hop-allow-redefine-service-set! #t)
+	  (hop-force-reload-service-set! #t))
 	 (("--time" (help "Report execution time"))
 	  (hop-report-execution-time-set! #t))
 	 (("-w?level" (help "Increase/set warning level (-w0 no warning)"))

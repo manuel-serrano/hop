@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sun Jan  9 06:41:27 2011 (serrano)                */
+;*    Last change :  Fri Jan 14 10:22:03 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -80,6 +80,12 @@
 ;*---------------------------------------------------------------------*/
 (define *service-table*
    (make-hashtable #unspecified #unspecified equal-path? hash-path))
+
+;*---------------------------------------------------------------------*/
+;*    *service-source-table* ...                                       */
+;*---------------------------------------------------------------------*/
+(define *service-source-table*
+   (make-hashtable 4))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-all-services ...                                             */
@@ -365,6 +371,8 @@
 	       (mutex-unlock! *service-mutex*)
 	       (cond
 		  ((hop-service? svc)
+		   (when (hop-force-reload-service)
+		      (set! svc (force-reload-service svc)))
 		   (set! service svc)
 		   (with-access::hop-service svc (ttl path id wid)
 		      (cond
@@ -417,6 +425,37 @@
 			  (http-service-not-found abspath)))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    force-reload-service ...                                         */
+;*---------------------------------------------------------------------*/
+(define (force-reload-service svc)
+   (with-access::hop-service svc (resource source path)
+      (if (and (string? resource) (string? source))
+	  (let ((file (make-file-path resource source)))
+	     (if (file-exists? file)
+		 (begin
+		    (mutex-lock! *service-mutex*)
+		    (let* ((ct (file-modification-time file))
+			   (ot (hashtable-get *service-source-table* file)))
+		       (cond
+			  ((not ot)
+			   (hashtable-put! *service-source-table* file ct)
+			   (mutex-unlock! *service-mutex*)
+			   svc)
+			  ((=elong ct ot)
+			   (mutex-unlock! *service-mutex*)
+			   svc)
+			  (else
+			   (hashtable-put! *service-source-table* file ct)
+			   (mutex-unlock! *service-mutex*)
+			   (hop-load file)
+			   (mutex-lock! *service-mutex*)
+			   (let ((svc (hashtable-get *service-table* path)))
+			      (mutex-unlock! *service-mutex*)
+			      svc)))))
+		 svc))
+	  svc)))
+
+;*---------------------------------------------------------------------*/
 ;*    register-service! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (register-service! svc)
@@ -430,12 +469,13 @@
 	 ;; be for
 	 (when (hashtable-get *service-table* path)
 	    (cond
-	       ((>fx (bigloo-debug) 0)
-		(warning 'register-service! "Service re-defined -- " id))
-	       ((>fx (hop-security) 0)
+	       ((not (hop-allow-redefine-service))
+		(mutex-lock! *service-mutex*)
 		(error id
 		       "Service re-definition not permitted"
-		       "use `-g' or `-s0' options to enable re-definitions"))))
+		       "use `--devel' or `-s0' options to enable re-definitions"))
+	       ((>fx (bigloo-debug) 0)
+		(warning 'register-service! "Service re-defined -- " id))))
 	 (hashtable-put! *service-table* path svc)
 	 (unless (char=? #\/ (string-ref path (-fx (string-length path) 1)))
 	    (hashtable-put! *service-table* (string-append path "/") svc))

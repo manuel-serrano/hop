@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sun Jan  9 07:37:55 2011 (serrano)                */
+;*    Last change :  Wed Jan 12 08:05:35 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -1154,11 +1154,6 @@
    #unspecified)
 
 ;*---------------------------------------------------------------------*/
-;*    hop-broadcast-id ...                                             */
-;*---------------------------------------------------------------------*/
-(define hop-broadcast-id 0)
-
-;*---------------------------------------------------------------------*/
 ;*    hop-event-broadcast! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hop-event-broadcast! name value)
@@ -1212,11 +1207,6 @@
 			     (multipart-signal-value req val))
 			  l))))))
 
-   (set! hop-broadcast-id (-fx hop-broadcast-id 1))
-   (hop-verb 2 (hop-color hop-broadcast-id hop-broadcast-id " BROADCAST")
-	     ": " name)
-   (hop-verb 3 " value=" (with-output-to-string (lambda () (write-circle value))))
-   (hop-verb 2 "\n")
    (mutex-lock! *event-mutex*)
    (unwind-protect
       (begin

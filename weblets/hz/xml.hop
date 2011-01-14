@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Sat Dec 18 06:51:03 2010 (serrano)                */
-;*    Copyright   :  2007-10 Manuel Serrano                            */
+;*    Last change :  Fri Jan 14 09:36:51 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ xml extensions                                                */
 ;*=====================================================================*/
@@ -71,6 +71,8 @@
 	 :include "hop-window" "hop-login" "hop-prefs" "hop-foot"
 	 :base (service-base-url hz req)
 	 :favicon "etc/favicon.png"
+	 (<META> :name "viewport"
+	    :content "width=device-width, initial-scale=1.")
 	 :css "hz.hss")
       (<HZ:BODY>
 	 

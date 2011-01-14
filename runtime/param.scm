@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Oct 21 19:19:04 2010 (serrano)                */
-;*    Copyright   :  2004-10 Manuel Serrano                            */
+;*    Last change :  Fri Jan 14 10:16:58 2011 (serrano)                */
+;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -33,6 +33,9 @@
 
 	    (hop-cache-directory::bstring)
 	    (hop-cache-directory-set! ::bstring)
+
+	    (hop-cache-enable::bool)
+	    (hop-cache-enable-set! ::bool)
 
 	    (hop-load-preferences::bool)
 	    (hop-load-preferences-set! ::bool)
@@ -137,6 +140,12 @@
 
 	    (hop-initial-weblet::bstring)
 	    (hop-initial-weblet-set! ::bstring)
+
+	    (hop-force-reload-service::bool)
+	    (hop-force-reload-service-set! ::bool)
+
+	    (hop-allow-redefine-service::bool)
+	    (hop-allow-redefine-service-set! ::bool)
 
 	    (hop-hss-theme::bstring)
 	    (hop-hss-theme-set! ::bstring)
@@ -333,7 +342,13 @@
    (lambda (v)
       (hop-path-set! (cons v (hop-path)))
       v))
-   
+
+;*---------------------------------------------------------------------*/
+;*    hop-cache-enable ...                                             */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-cache-enable
+   #t)
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-file ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -734,6 +749,24 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-initial-weblet
    "hop")
+
+;*---------------------------------------------------------------------*/
+;*    hop-force-reload-service ...                                     */
+;*    -------------------------------------------------------------    */
+;*    When set to #t each time a service is invoked, it's source       */
+;*    file is checked. When modified, it is automatically reloaded     */
+;*    before the service is executed. See --devel mode.                */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-force-reload-service
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-allow-redefine-service ...                                   */
+;*    -------------------------------------------------------------    */
+;*    This facilitie should only be used in "devel" mode.              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-allow-redefine-service
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-hss-theme ...                                                */
