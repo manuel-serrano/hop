@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Jan 11 17:59:15 2011 (serrano)                */
+/*    Last change :  Mon Jan 17 17:46:56 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -31,7 +31,7 @@ import java.util.*;
 /*---------------------------------------------------------------------*/
 public class HopDroid extends Thread {
    // static variables
-   static Vector plugins = new Vector( 10 );
+   static Vector plugins = null;
    static HopDroid hopdroid = null;
 
    // instance variables
@@ -50,10 +50,12 @@ public class HopDroid extends Thread {
       port = p;
       handler = h;
 
+      plugins = new Vector( 16 );
+
       hopdroid = this;
 
       try {
-	 Log.i( "HopDroid", "starting servers port=" + p );
+	 Log.i( "HopDroid", "starting servers port=" + p + ", " + (p+1) );
 	 try {
 	    serv1 = new ServerSocket( p );
 	 } catch( Exception e ) {
@@ -79,7 +81,7 @@ public class HopDroid extends Thread {
 	 registerPlugin( new HopPluginBattery( this, activity, "battery" ) );
 	 registerPlugin( new HopPluginTts( this, activity, "tts" ) );
       } catch( Exception e ) {
-	 Log.v( "HopDroid", "server error" + e.toString() + " exception=" +
+	 Log.v( "HopDroid", "init error: " + e.toString() + " exception=" +
 	    e.getClass().getName() );
 	 handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_HOPDROID_FAIL, e ) );
       }

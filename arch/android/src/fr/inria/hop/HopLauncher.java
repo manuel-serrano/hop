@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Mon Jan 17 16:37:29 2011 (serrano)                */
+/*    Last change :  Mon Jan 17 17:24:24 2011 (serrano)                */
 /*    Copyright   :  2010-11 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -59,7 +59,7 @@ public class HopLauncher extends Activity {
    final Handler handler = new Handler() {
 	 @Override public void handleMessage( Message msg ) {
 
-	    synchronize( activity ) {
+	    synchronized( activity ) {
 	       if( msg.what != MSG_OUTPUT_AVAILABLE )
 		  Log.i( "Hop", "message=" + msg.what );
 
@@ -91,18 +91,18 @@ public class HopLauncher extends Activity {
 
 		     case MSG_INSTALL_FAIL:
 			Log.e( "HopLauncher", "installation failed..." );
-			HopUiUtils.fail( hop.activity, "Installation", "failed", (Exception)msg.obj );
+			HopUiUtils.fail( hop.activity, "HopInstaller", "failed", (Exception)msg.obj );
 			break;
 
 		     case MSG_CONFIGURE_FAIL:
 			Log.e( "HopLauncher", "configuration failed..." );
-			HopUiUtils.fail( hop.activity, "Configuration", "failed", (Exception)msg.obj );
+			HopUiUtils.fail( hop.activity, "HopConfigurer", "failed", (Exception)msg.obj );
 			break;
 
 		     case MSG_RUN_FAIL:
 			Log.e( "HopLauncher", "run failed..." );
 			infinish = true;
-			HopUiUtils.fail( hop.activity, "HopLauncer", "failed", (Exception)msg.obj );
+			HopUiUtils.fail( hop.activity, "HopDroid", "failed", (Exception)msg.obj );
 			break;
 
 		     case MSG_CONFIGURE:
@@ -110,7 +110,7 @@ public class HopLauncher extends Activity {
 			break;
 
 		     case MSG_HOPDROID_FAIL:
-			HopUiUtils.fail( hop.activity, "Hopdroid", "failed", (Exception)msg.obj );
+			HopUiUtils.fail( hop.activity, "HopDroid", "failed", (Exception)msg.obj );
 			break;
 
 		     default:
@@ -327,10 +327,13 @@ public class HopLauncher extends Activity {
    }
 
    public void onDestroy() {
+      Log.i( "HopLauncher", "destroying.1..." );
       hop.kill();
+      Log.i( "HopLauncher", "destroying.2..." );
       hopdroid.kill();
-      Log.i( "HopLauncher", "destroying..." );
+      Log.i( "HopLauncher", "destroying.3..." );
       super.onDestroy();
+      Log.i( "HopLauncher", "destroying.4..." );
    }
 
    protected void onActivityResult( int reqcode, int rescode, Intent intent ) {

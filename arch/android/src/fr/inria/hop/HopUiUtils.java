@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  1 09:13:38 2010                          */
-/*    Last change :  Thu Jan  6 16:41:28 2011 (serrano)                */
+/*    Last change :  Mon Jan 17 16:56:25 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    UI Utility functions                                             */
@@ -34,7 +34,10 @@ public class HopUiUtils {
 	 .setPositiveButton( ok, new DialogInterface.OnClickListener() {
 	       public void onClick( DialogInterface dialog, int id ) {
 		  dialog.dismiss();
-		  if( exit ) activity.finish();
+		  if( exit ) {
+		     activity.setResult( activity.RESULT_CANCELED );
+		     activity.finish();
+		  }
 	       }
 	    } );
       AlertDialog alert = builder.create();
