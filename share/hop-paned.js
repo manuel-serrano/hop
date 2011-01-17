@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/share/hop-paned.js                */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-paned.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Wed Mar 17 14:07:17 2010 (serrano)                */
-/*    Copyright   :  2005-10 Manuel Serrano                            */
+/*    Last change :  Mon Jan 17 14:12:23 2011 (serrano)                */
+/*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
 /*=====================================================================*/
@@ -186,6 +186,46 @@ function hop_init_paned( id, fraction, handler ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_paned_get_fraction ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_paned_get_fraction( id, dim ) {
+   var el = document.getElementById( id );
+   var fel = document.getElementById( id + "-fraction" );
+   var style = node_computed_style_get( fel, "width" );
+
+   if( style == "" ) {
+      return 30;
+   }
+
+   if( typeof style != "string" ) {
+      return style;
+   }
+
+   var re = /^([0-9]+)px$/;
+   var r = style.match( re );
+
+   if( r != null ) {
+      var w = parseInt( r[ 0 ] );
+      var cw = el[ dim ];
+
+      if( w > cw ) {
+	 return 100;
+      } else {
+	 return Math.round( (w / cw) * 100 );
+      }
+   }
+
+   re = /^([0-9]+)%$/;
+   r = style.match( re );
+
+   if( r != null ) {
+      return parseInt( r[ 0 ] );
+   }
+
+   return 30;
+}
+      
+/*---------------------------------------------------------------------*/
 /*    hop_init_paned_vertical ...                                      */
 /*---------------------------------------------------------------------*/
 function hop_init_paned_vertical( id, fraction, onresize ) {
@@ -201,10 +241,14 @@ function hop_init_paned_vertical( id, fraction, onresize ) {
    // setup the initial fraction
    paned.fraction_set = hop_vpaned_fraction_set;
    hop_paned_onresize_set( paned, onresize );
-   
+
    // postponed initialization
-   hop_add_event_listener( window, "ready",
+   hop_add_event_listener( paned.id, "ready",
 			   function( e ) {
+			      if( !fraction ) {
+				 fraction = hop_paned_get_fraction( id, "clientWidth"  );
+			      }
+				 
 			      paned.fraction_set( paned, fraction ); } );
    
    return paned;
@@ -221,8 +265,12 @@ function hop_init_paned_horizontal( id, fraction, onresize ) {
    hop_paned_onresize_set( paned, onresize );
 
    // postponed initialization
-   hop_add_event_listener( window, "ready",
+   hop_add_event_listener( paned.id, "ready",
 			   function( e ) {
+			      if( !fraction ) {
+				 fraction = hop_paned_get_fraction( id, "clientHeight" );
+			      }
+				 
 			      paned.fraction_set( paned, fraction );
 			   } );
    

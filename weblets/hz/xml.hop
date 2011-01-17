@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Fri Jan 14 09:36:51 2011 (serrano)                */
+;*    Last change :  Mon Jan 17 13:38:13 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ xml extensions                                                */
@@ -93,7 +93,7 @@
 		  (lambda ()
 		     (<HZ:WEBLETS> :weblet weblet))))
 	    (<NPTAB>
-	       (<NPTABHEAD> "Synchronize")
+	       (<NPTABHEAD> "Sync")
 	       (<HZ:SYNC>))
 	    (<NPTAB>
 	       (<NPTABHEAD> "Publishers")
@@ -106,7 +106,7 @@
 		  (lambda ()
 		     (<HZ:CACHE>))))
 	    (<NPTAB>
-	       (<NPTABHEAD> "Preferences")
+	       (<NPTABHEAD> "Prefs")
 	       (<DELAY>
 		  (lambda ()
 		     (<HZ:PREFERENCES>))))))))
@@ -141,12 +141,12 @@
 				(cons 'login sync)))))
 	     sync-callback))
       
-      (<DIV> :align "center"
+      (<DIV> :class "body"
 	 (<TABLE> :class "main"
 	    (<TR>
 	       (<TD> :class "logo" (<IMG> :class "logo" :src "etc/logo.png"))
 	       (<TD> :class "main" :valign 'top
-		  (<TABLE>
+		  (<TABLE> :class "content"
 		     (<TR> (<TD> (<DIV> :id "title" "Hz -- Hop Weblets Manager")))
 		     (<TR> (apply <TD> content)))))))
       (<HZ:FOOT>)))
@@ -454,24 +454,25 @@ add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")"
 ;*    <HZ:WEBLETS-PAN> ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (<HZ:WEBLETS-PAN> weblet)
-   (<PANED> :fraction 35
+   (<PANED> :class "weblets-pan"
       (<PAN>
-	 (<TREE> :id "main-tree" :open #t
-	    (<TRHEAD>
-	       (let ((dt (hz-db-sync-date)))
-		  (format "~a ~a ~a"
-			  (date-day dt)
-			  (month-aname (date-month dt))
-			  (date-year dt))))
-	    (<TRBODY>
-	       (map (lambda (c)
-		       (<TREE>
-			  (<TRHEAD> :value c c)
-			  (<TRBODY>
-			     (<DELAY>
-				(lambda ()
-				   (<HZ:WEBLETS-CATEGORY> c))))))
-		    (hz-db-get-categories)))))
+	 (<DIV> :style "overflow: hidden"
+	    (<TREE> :id "main-tree" :open #t
+	       (<TRHEAD>
+		  (let ((dt (hz-db-sync-date)))
+		     (format "~a ~a ~a"
+			     (date-day dt)
+			     (month-aname (date-month dt))
+			     (date-year dt))))
+	       (<TRBODY>
+		  (map (lambda (c)
+			  (<TREE>
+			     (<TRHEAD> :value c c)
+			     (<TRBODY>
+				(<DELAY>
+				   (lambda ()
+				      (<HZ:WEBLETS-CATEGORY> c))))))
+		       (hz-db-get-categories))))))
       (<PAN> (<DIV> :class "weblet" :id "hz-weblet" weblet))))
 
 ;*---------------------------------------------------------------------*/

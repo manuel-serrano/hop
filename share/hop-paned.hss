@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:51 2005                          */
-/*    Last change :  Sat Nov 20 16:17:45 2010 (serrano)                */
-/*    Copyright   :  2005-10 Manuel Serrano                            */
+/*    Last change :  Mon Jan 17 13:39:21 2011 (serrano)                */
+/*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned CSS                                                    */
 /*=====================================================================*/
@@ -26,7 +26,9 @@ $(define-hss-type paned "div[hssclass=hop-paned]"
    (define-hss-property (pan-border v)
       (format "div.hop-paned-pan { border: ~l; }" v))
    (define-hss-property (padding v)
-      (format "div.hop-paned-pan { padding: ~l; }" v)))
+      (format "div.hop-paned-pan { padding: ~l; }" v))
+   (define-hss-property (fraction v)
+      (format "span.hop-paned-fraction { width: ~l; }" v)))
 
 $(define-hss-type paned-cursor "div.hop-paned-cursor")
 
@@ -42,6 +44,7 @@ paned {
   pan-border: 1px inset #333;
   background: white;
   padding: 0;
+  fraction: 30%;
 }
 
 paned-cursor {
@@ -84,6 +87,10 @@ div.hop-pan {
   bottom: 0;
   left: 0;
   right: 0;
+}
+
+span.hop-paned-fraction {
+  display: none;
 }
 
 /*---------------------------------------------------------------------*/
