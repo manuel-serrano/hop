@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec  7 09:54:35 2007                          */
-;*    Last change :  Tue Jan 11 08:59:27 2011 (serrano)                */
+;*    Last change :  Mon Jan 17 16:02:54 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    weblets markups                                                  */
@@ -99,9 +99,6 @@
 ;*    <WEBLET> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (<WEBLET> path auth category)
-
-   (tprint "hostname=" (hostname) " " )
-
    (with-access::http-request (current-request) (host port)
       (let* ((info (with-input-from-string (package-info path) read))
 	     (url (if (string? auth)

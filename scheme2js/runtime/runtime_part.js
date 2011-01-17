@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -380,7 +380,7 @@ function sc_multi() {
     return product;
 }
 
-/*** META ((export - -fx -fl)
+/*** META ((export - -fx -fl negfx negfl)
            (peephole (minus))
            (arity -2))
 */
@@ -422,7 +422,7 @@ function sc_quotient(x, y) {
     return parseInt(x / y);
 }
 
-/*** META ((export #t) (arity #t)
+/*** META ((export remainder remainderfl) (arity #t)
            (peephole (infix 2 2 "%")))
 */
 function sc_remainder(x, y) {

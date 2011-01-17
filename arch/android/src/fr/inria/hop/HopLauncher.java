@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sat Jan  8 07:10:21 2011 (serrano)                */
+/*    Last change :  Mon Jan 17 16:37:29 2011 (serrano)                */
 /*    Copyright   :  2010-11 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -58,58 +58,63 @@ public class HopLauncher extends Activity {
    
    final Handler handler = new Handler() {
 	 @Override public void handleMessage( Message msg ) {
-	    
-	    if( msg.what != MSG_OUTPUT_AVAILABLE )
-	       Log.i( "Hop", "message=" + msg.what );
 
-	    if( !infinish ) {
-	       switch( msg.what ) {
-		  case MSG_OUTPUT_AVAILABLE:
-		     try {
-			write_console( queue.take() );
-		     } catch( InterruptedException _ ) {
-			;
-		     }
-		     break;
+	    synchronize( activity ) {
+	       if( msg.what != MSG_OUTPUT_AVAILABLE )
+		  Log.i( "Hop", "message=" + msg.what );
 
-		  case MSG_PROC_END:
-		     infinish = true;
-		     activity.finish();
-		     break;
+	       if( !infinish ) {
+		  switch( msg.what ) {
+		     case MSG_OUTPUT_AVAILABLE:
+			try {
+			   write_console( queue.take() );
+			} catch( InterruptedException _ ) {
+			   ;
+			}
+			break;
 
-		  case MSG_RUN_WIZARD:
-		     progress.dismiss();
-		     progress = null;
+		     case MSG_PROC_END:
+			if( !infinish ) {
+			   infinish = true;
+			   activity.finish();
+			}
+			break;
 
-		     Uri uri = Uri.parse( "http://localhost:" + hop.port + "/hop/wizard" );
-		     Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-		     startActivity( intent );
-		     break;
+		     case MSG_RUN_WIZARD:
+			progress.dismiss();
+			progress = null;
 
-		  case MSG_INSTALL_FAIL:
-		     Log.e( "Hop", "installation failed..." );
-		     HopUiUtils.fail( hop.activity, "Installation", "failed", (Exception)msg.obj );
-		     break;
+			Uri uri = Uri.parse( "http://localhost:" + hop.port + "/hop/wizard" );
+			Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+			startActivity( intent );
+			break;
 
-		  case MSG_CONFIGURE_FAIL:
-		     Log.e( "Hop", "configuration failed..." );
-		     HopUiUtils.fail( hop.activity, "Configuration", "failed", (Exception)msg.obj );
-		     break;
+		     case MSG_INSTALL_FAIL:
+			Log.e( "HopLauncher", "installation failed..." );
+			HopUiUtils.fail( hop.activity, "Installation", "failed", (Exception)msg.obj );
+			break;
 
-		  case MSG_RUN_FAIL:
-		     Log.e( "Hop", "run failed..." );
-		     HopUiUtils.fail( hop.activity, "Run", "failed", (Exception)msg.obj );
-		     break;
+		     case MSG_CONFIGURE_FAIL:
+			Log.e( "HopLauncher", "configuration failed..." );
+			HopUiUtils.fail( hop.activity, "Configuration", "failed", (Exception)msg.obj );
+			break;
 
-		  case MSG_CONFIGURE:
-		     progress.setMessage( "Configuring..." );
-		     break;
+		     case MSG_RUN_FAIL:
+			Log.e( "HopLauncher", "run failed..." );
+			infinish = true;
+			HopUiUtils.fail( hop.activity, "HopLauncer", "failed", (Exception)msg.obj );
+			break;
 
-		  case MSG_HOPDROID_FAIL:
-		     HopUiUtils.fail( hop.activity, "Hopdroid", "failed", (Exception)msg.obj );
-		     break;
+		     case MSG_CONFIGURE:
+			progress.setMessage( "Configuring..." );
+			break;
 
-		  default:
+		     case MSG_HOPDROID_FAIL:
+			HopUiUtils.fail( hop.activity, "Hopdroid", "failed", (Exception)msg.obj );
+			break;
+
+		     default:
+		  }
 	       }
 	    }
 	 }
