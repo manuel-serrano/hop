@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Dec  9 21:22:12 2010 (serrano)                */
-;*    Copyright   :  2004-10 Manuel Serrano                            */
+;*    Last change :  Tue Jan 11 08:03:57 2011 (serrano)                */
+;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -69,9 +69,9 @@
 	    (xml-tilde->attribute::bstring ::xml-tilde)
 
 	    (xml-tilde->sexp ::xml-tilde)
-	    (sexp->xml-tilde::xml-tilde expr)
+	    (sexp->xml-tilde::xml-tilde expr #!optional env menv)
 
-	    (<TILDE> ::obj #!key src loc)
+	    (<TILDE> ::obj #!key src loc env menv)
 	    (<DELAY> . ::obj)
 	    (<PRAGMA> . ::obj)))
 
@@ -678,7 +678,7 @@
 	       ((null? attrs)
 		(when var
 		   (when cdata-stop (display cdata-stop p))
-		   (display "</script>\n" p)))
+		   (display "}, false );</script>\n" p)))
 	       ((and (xml-tilde? (cadr attrs))
 		     (not (xml-event-handler-attribute? (car attrs))))
 		(if var
@@ -691,11 +691,12 @@
 		       (display (hop-javascript-mime-type) p)
 		       (display "'>" p)
 		       (when cdata-start (display cdata-start p))
+		       (display "hop_add_event_listener( \"" p)
+		       (display id p)
+		       (display "\", \"ready\", function (e) {" p)
 		       (display "var " p)
 		       (display var p)
-		       (display " = document.getElementById( \"" p)
-		       (display id p)
-		       (display "\" );" p)
+		       (display " = e.value;" p)
 		       (loop attrs var))))
 	       (else
 		(loop (cddr attrs) var)))))))
@@ -804,10 +805,16 @@
 ;*    xml-tilde->statement ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (xml-tilde->statement::bstring obj)
+   
+   (define (js-catch-error stmt)
+      (format "try { ~a } catch( e ) { hop_report_exception( e ); }" stmt))
+   
    (with-access::xml-tilde obj (%js-statement body)
       (when (not (string? %js-statement))
-	 (set! %js-statement
-	       ((clientc-precompiled->JS-statement (hop-clientc)) body)))
+	 (let ((stmt ((clientc-precompiled->JS-statement (hop-clientc)) body)))
+	    (if (>fx (bigloo-debug) 0)
+		(set! %js-statement (js-catch-error stmt))
+		(set! %js-statement stmt))))
       %js-statement))
 
 ;*---------------------------------------------------------------------*/
@@ -847,18 +854,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    sexp->xml-tilde ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (sexp->xml-tilde obj)
-   (let ((c ((clientc-sexp->precompiled (hop-clientc)) obj)))
-      (<TILDE> c :src obj)))
+(define (sexp->xml-tilde obj #!optional env menv)
+   (let* ((env (or env (current-module-clientc-import)))
+	  (menv (or menv ((clientc-macroe (hop-clientc)))))
+	  (c ((clientc-sexp->precompiled (hop-clientc)) obj env menv)))
+      (<TILDE> c :src obj :env env :menv menv)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TILDE> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (<TILDE> body #!key src loc)
+(define (<TILDE> body #!key src loc env menv)
    (instantiate::xml-tilde
       (body body)
       (src src)
-      (loc loc)))
+      (loc loc)
+      (env env)
+      (menv menv)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <DELAY> ...                                                      */

@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Tue Nov 30 17:37:13 2010 (serrano)                */
-#*    Copyright   :  2010 Manuel Serrano                               */
+#*    Last change :  Mon Jan 10 12:09:53 2011 (serrano)                */
+#*    Copyright   :  2010-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
 #*=====================================================================*/
@@ -34,9 +34,9 @@ ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java HopUiUtils.java \
   HopExec.java HopLauncher.java \
   HopDroid.java HopPlugin.java HopPluginInit.java HopPluginLocale.java \
   HopPluginMusicPlayer.java HopPluginVibrate.java HopPluginSensor.java \
-  HopPluginSms.java HopPluginContact.java HopPluginCallLog.java \
+  HopPluginSms.java HopPluginContact.java \
   HopPluginBattery.java HopPluginSms.java HopPluginTts.java \
-  HopAndroidAudioRecorder.java 
+  HopPluginCall.java HopAndroidAudioRecorder.java 
 
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */

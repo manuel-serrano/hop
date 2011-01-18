@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/hopscheme/tilde_escape.scm        */
+;*    serrano/prgm/project/hop/2.2.x/hopscheme/tilde_escape.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:09:56 2010                          */
-;*    Last change :  Sat Jun 19 06:15:56 2010 (serrano)                */
-;*    Copyright   :  2010 Florian Loitsch and Manuel Serrano           */
+;*    Last change :  Wed Jan  5 09:56:24 2011 (serrano)                */
+;*    Copyright   :  2010-11 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Interface between Scheme2JS and Hop.                             */
 ;*=====================================================================*/
@@ -25,7 +25,7 @@
 	   (hopscheme->JS-return::bstring ::vector)
 	   (hopscheme-declared::pair-nil ::vector)
 	   (hopscheme-free::pair-nil ::vector)
-	   (sexp->hopscheme::vector ::obj)
+	   (sexp->hopscheme::vector ::obj ::obj ::obj)
 	   (hopscheme->sexp::obj ::vector ::procedure))
    
    (import __hopscheme_config
@@ -190,15 +190,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    sexp->hopscheme ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (sexp->hopscheme e)
+(define (sexp->hopscheme e env menv)
    
-   (let ((menv (instantiate::Compilation-Unit
+   (let ((s-port (open-output-string))
+	 (menv (instantiate::Compilation-Unit
 		  (name (gensym 'macro))
 		  (top-level '())
 		  (exported-macros (create-hashtable :size 1))
 		  (exports '())))
-	 (env '())
-	 (s-port (open-output-string))
 	 (assig-var (gensym 'result)))
       (receive (expr dollar-map)
 	 (dollar-extraction! e)

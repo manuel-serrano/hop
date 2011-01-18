@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Wed Dec 15 15:05:19 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Fri Jan 14 09:25:30 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
 ;*    at compile-time and runtime-time.                                */
@@ -138,7 +138,6 @@
 		       (ttl ,ttl)
 		       (resource (and (string? ,file) (dirname ,file)))
 		       (source (and (string? ,file) (basename ,file))))))
-
 	  ,(when (pair? body)
 	     `(register-service! ,svc))
 	  

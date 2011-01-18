@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Dec 20 18:52:50 2010 (serrano)                */
-;*    Copyright   :  2007-10 Manuel Serrano                            */
+;*    Last change :  Tue Jan 11 07:06:23 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
 ;*=====================================================================*/
@@ -119,7 +119,7 @@
 			      (native #f)
 			      (attr)
 			      body)
-
+   
    (set! id (xml-make-id id 'hopaudio))
    (define hid (xml-make-id 'html5))
    (define fid (xml-make-id 'flash))
@@ -138,9 +138,9 @@
 	 :onpodcastclick onpodcastclick
 	 :onmuteclick onmuteclick))
    
-   (define (<init> backendid init)
+   (define (<audio:init> #!key backendid backend)
       (<AUDIO:INIT> :id id :backendid backendid
-	 :init init
+	 :backend backend
 	 :server server
 	 :src src :playlist (playlist body)
 	 :autoplay autoplay :start start
@@ -154,7 +154,7 @@
 	 :onloadedmetadata (hop->js-callback onloadedmetadata)
 	 :onclose (hop->js-callback onclose)
 	 :onbackend (hop->js-callback onbackend)))
-
+   
    (define (playlist suffixes)
       (filter-map (lambda (x)
 		     (when (xml-markup-is? x 'source)
@@ -167,29 +167,41 @@
 		  body))
 
    (if native
-       (<AUDIO:HTML5> :id id body)
+       (<AUDIO:HTML5> :id id :controls controls :src src body)
        (<DIV> :id id :class "hop-audio"
 	  (when controls (<controls>))
+	  (tprint "BROWSER: " browser)
 	  (case browser
 	     ((flash)
-	      (list (<init> fid "audio.browserbackend = browserbackend;")
+	      (list (<audio:init> :backendid fid
+		       :backend (format "document.getElementById( ~s )" fid))
 		    (<AUDIO:FLASH> :id fid)))
 	     ((html5)
-	      (list (<init> hid
-			    "audio.browserbackend = hop_audio_html5_init(browserbackend);")
+	      (list (<audio:init> :backendid hid
+		       :backend (format "document.getElementById( ~s )" hid))
 		    (<AUDIO:HTML5> :id hid)))
 	     ((none)
-	      (<init> fid "audio.browserbackend = false;"))
+	      (list (<audio:init> :backendid id :backend "false")
+		    (<AUDIO:SERVER> :id id)))
 	     ((auto)
-	      (list (<init> hid
-			    (format "if(hop_config.html5_audio ) {
-                                   hop_audio_html5_init(browserbackend);
-                                   audio.browserbackend = browserbackend;
-                                 } else 
-                                  audio.browserbackend = document.getElementById( '~a' );" fid))
-		    (<AUDIO:HTML5> :id hid (<AUDIO:FLASH> :id fid))))
+	      (list (<audio:init> :backendid hid
+		       :backend
+		       (format "document.getElementById( ~s )" hid))
+		    (<audio:init> :backendid fid
+		       :backend
+		       (format "document.getElementById( ~s )" fid))
+		    (<AUDIO:HTML5> :id hid)
+		    (<AUDIO:FLASH> :id fid :guard "!hop_config.html5_audio")))
 	     (else
 	      (error "<AUDIO>" "Illegal backend" browser))))))
+
+;*---------------------------------------------------------------------*/
+;*    <AUDIO:SERVER> ...                                               */
+;*---------------------------------------------------------------------*/
+(define (<AUDIO:SERVER> #!key id)
+   (<SCRIPT>
+      (format "hop_add_event_listener( window, 'ready', function (e) {" id)
+      (format "hop_audio_init[ '~a' ]( document.getElementById( '~a' ) );} )" id id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO:HTML5> ...                                                */
@@ -197,25 +209,31 @@
 ;*    The native attribute is a hack to let AUDIO nodes be comparable  */
 ;*    by the tree comparison security manager.                         */
 ;*---------------------------------------------------------------------*/
-(define (<AUDIO:HTML5> #!key id  #!rest body)
-   (instantiate::xml-element
-      (id id)
-      (tag 'audio)
-      (attributes '(:controls #f :autoplay #f :native #t))
-      (body body)))
+(define (<AUDIO:HTML5> #!key id controls src src guard #!rest body)
+   (list (instantiate::xml-element
+	    (id id)
+	    (tag 'audio)
+	    (attributes `(:controls ,controls :autoplay #f :native #t :src ,src))
+	    (body body))
+	 (<SCRIPT>
+	    (format "if( ~a && hop_config.html5_audio ) {" (or guard "true"))
+	    "hop_add_event_listener( window, 'ready', function(e) { "
+	    (format "var backend = document.getElementById( ~s );" id)
+	    (format "hop_audio_html5_init( backend ); hop_audio_init[ '~a' ]( backend ); }, false );};" id))))
    
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO:FLASH> ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (<AUDIO:FLASH> #!key id)
+(define (<AUDIO:FLASH> #!key id guard)
    (let* ((swf (make-file-path (hop-share-directory) "flash" "HopAudio.swf"))
 	  (init (string-append "hop_audio_flash_init_" id))
 	  (fvar (string-append "arg=" init)))
       (<DIV> :id id
 	 (<SCRIPT>
 	    (format "function ~a() {" init)
+	    (if guard (format "if( ~a ) {" guard "{"))
 	    (format "var backend = document.getElementById( ~s );" id)
-	    "if( backend ) hop_audio_flash_init( backend );}")
+	    (format "hop_audio_flash_init( backend ); hop_audio_init[ '~a' ]( backend );}}" id id))
 	 (<OBJECT> :id (string-append id "-object") :class "hop-audio"
 	    :style "visibility: visible; position: fixed; top: 0; right: 0; background: transparent"
 	    :width "1px" :height "1px"
@@ -242,19 +260,18 @@
 ;*    <AUDIO:INIT> ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (<AUDIO:INIT> #!key id backendid
+		      backend
 		      server
-		      init
 		      src playlist
 		      autoplay start
 		      onplay onstop onpause onload onerror onended onprogress
 		      onloaded onloadedmetadata onclose onbackend)
    (<SCRIPT>
-      (format "hop_audio_init[ '~a' ] = function (_) {" id)
+      (format "hop_audio_init[ '~a' ] = function ( backend ) {" backendid)
       (format "var audio = document.getElementById( '~a' );" id)
-      "if( audio.browserbackend ) return;"
-      (format "var browserbackend = document.getElementById( '~a' );" backendid)
-      init
-      (format "if( audio.browserbackend ) audio.browserbackend.audio = audio;")
+      "if( 'browserbackend' in audio ) return;"
+      (format "audio.browserbackend = ~a;" backend)
+      "if( audio.browserbackend ) audio.browserbackend.audio = audio;"
       (if server
 	  (call-with-output-string
 	   (lambda (op)
@@ -292,8 +309,7 @@
 	     (display " );" op))))
       (when autoplay
 	 "hop_audio_playlist_play( audio, 0 );")
-      "};\n"
-      (format "hop_add_event_listener( window, 'load', hop_audio_init[ '~a' ] );" id)))
+      "};\n"))
 
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO:CONTROLS> ...                                             */

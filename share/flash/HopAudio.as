@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Aug 23 16:16:58 2007                          */
-/*    Last change :  Fri Aug  6 16:54:48 2010 (serrano)                */
-/*    Copyright   :  2007-10 Manuel Serrano                            */
+/*    Last change :  Mon Jan 10 16:42:02 2011 (serrano)                */
+/*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopAudio flash support.                                          */
 /*                                                                     */
@@ -31,19 +31,42 @@ class HopAudio {
       var paused_pos = 0;
       var domid = false;
       var onload = false;
+      var onplay = false;
       var onerror = false;
       var seek = false;
+      var endedpos = 0;
+      var onplayintervalid = false;
 
       // debug
       var alert = function( s ) {
 	 return ExternalInterface.call( "alert", s );
       }
 
+      // waitPlay
+      var waitPlay = function( p ) {
+	 if( onplay ) {
+	    if( onplayintervalid )
+	       clearInterval( onplayintervalid );
+
+	    var wait_play = function() {
+	       if( snd.position > p ) {
+		  clearInterval( onplayintervalid )
+		  onplayintervalid = false
+		  ExternalInterface.call( onplay, domid, snd.stream );
+	       }
+	    }
+	       
+	    onplayintervalid = setInterval( wait_play, 1000 );
+	 }
+      }
+      
       // playSound
       var playSound = function( offset ) {
 	 if( url ) {
 	    paused = false;
+	    endedpos = snd.position;
 	    snd.start( offset ? offset : 0 );
+	    waitPlay( endedpos );
 	    return true;
 	 } else {
 	    return false;
@@ -61,8 +84,9 @@ class HopAudio {
 	 if( paused == true ) {
 	    paused = false;
 	    snd.start( paused_pos );
+	    waitPlay( endedpos );
 	 } else {
-	    paused_pos = Math.floor( snd.getPosition() / 1000 );
+	    paused_pos = Math.floor( snd.position / 1000 ) - endedpos;
 	    paused = true;
 	    snd.stop();
 	 }
@@ -70,13 +94,16 @@ class HopAudio {
 
       // loadSound
       var loadSound = function( u, stream ) {
-	 alert( "loadSound: " + u );
 	 url = u;
 
 	 snd.stream = stream;
-	 if( snd.getPosition() > 0 ) stopSound();
+	 if( snd.position > 0 ) stopSound();
 
 	 snd.loadSound( u, stream );
+	 if( stream ) {
+	    endedpos = snd.position;
+	    waitPlay( endedpos );
+	 }
       }
 
       // setVolume
@@ -112,7 +139,7 @@ class HopAudio {
 
       // getPosition
       var getPosition = function() {
-	 var pos = snd.getPosition();
+	 var pos = snd.position - endedpos;
 	 
 	 if( pos > 0 ) {
 	    return Math.floor( pos / 1000 );
@@ -144,6 +171,12 @@ class HopAudio {
 	 domid = id;
       }
 
+      // setOnPlay
+      var setOnPlay = function( proc, id ) {
+	 onplay = proc;
+	 domid = id;
+      }
+
       // setOnError
       var setOnError = function( proc, id ) {
 	 onerror = proc;
@@ -152,6 +185,8 @@ class HopAudio {
 
       // setOnEnded
       var setOnEnded = function( proc, id ) {
+	 if( snd.position > 0 ) endedpos = snd.position;
+	 
 	 snd.onSoundComplete = function() {
 	    if( !seek ) ExternalInterface.call( proc, id );
 	 }
@@ -172,7 +207,8 @@ class HopAudio {
 
       // initial configuration
       setVolume( 50 );
-      
+      endedpos = 0;
+
       // External interface binding
       ExternalInterface.addCallback( 'load', this, loadSound );
       ExternalInterface.addCallback( 'flash_play', this, playSound );
@@ -186,6 +222,7 @@ class HopAudio {
       ExternalInterface.addCallback( 'position_set', this, setPosition );
       ExternalInterface.addCallback( 'position_get', this, getPosition );
       ExternalInterface.addCallback( 'id3_get', this, getId3 );
+      ExternalInterface.addCallback( 'onplay_set', this, setOnPlay );
       ExternalInterface.addCallback( 'onload_set', this, setOnLoad );
       ExternalInterface.addCallback( 'onerror_set', this, setOnError );
       ExternalInterface.addCallback( 'onended_set', this, setOnEnded );

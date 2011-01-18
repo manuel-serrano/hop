@@ -4,14 +4,17 @@
       android:versionCode="2"
       android:versionName="@HOPVERSION@">
     <application android:label="@string/hop"
-                 android:screenOrientation="nosensor"
+                 android:screenOrientation="landscape"
+                 android:persistent="true"
                  android:icon="@drawable/logo">
         <activity android:name="fr.inria.hop.hop"
+                  android:screenOrientation="landscape"
                   android:launchMode="singleInstance"
                   android:label="@string/hop">
         </activity>
         <activity android:name="fr.inria.hop.HopLauncher"
-                  android:configChanges="keyboardHidden|orientation"
+                  android:screenOrientation="landscape"
+                  android:configChanges="keyboard|keyboardHidden|orientation|screenLayout"
                   android:label="@string/hop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -28,7 +31,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"></uses-permission>
     <uses-permission android:name="android.permission.INTERNET"></uses-permission>
-    <uses-permission android:name="android.permission.REBOOT"></uses-permission>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"></uses-permission>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"></uses-permission>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"></uses-permission>
@@ -37,6 +39,10 @@
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"></uses-permission>
     <uses-permission android:name="android.permission.CHANGE_CONFIGURATION"></uses-permission>
     <uses-permission android:name="android.permission.READ_PHONE_STATE"></uses-permission>
+    <uses-permission android:name="android.permission.CALL_PHONE"></uses-permission>
+    <uses-permission android:name="android.permission.CALL_PRIVILEGED"></uses-permission>
+    <uses-permission android:name="android.permission.MODIFY_PHONE_STATE"></uses-permission>
+    <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS"></uses-permission>
     <uses-permission android:name="android.permission.BATTERY_STATS"></uses-permission>
     <uses-permission android:name="android.permission.DEVICE_POWER"></uses-permission>
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD"></uses-permission>
@@ -58,4 +64,5 @@
     <uses-permission android:name="android.permission.WRITE_CONTACTS" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <uses-permission android:name="android.permission.FLASHLIGHT" />
 </manifest>

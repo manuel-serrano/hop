@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Tue Oct 19 08:43:13 2010 (serrano)                */
-/*    Copyright   :  2010 Marcos Dione & Manuel Serrano                */
+/*    Last change :  Mon Jan 10 09:18:08 2011 (serrano)                */
+/*    Copyright   :  2010-11 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
 /*=====================================================================*/
@@ -134,6 +134,12 @@ public class HopInstaller extends Thread {
    // unpacking the zip file
    public void unpack() throws IOException {
       File zipFile = new File( hop.apk );
+
+      if( !zipFile.exists() ) {
+	 Log.e( "HopInstaller", "file not found: " + hop.apk );
+	 throw new FileNotFoundException( hop.apk );
+      }
+      
       long zipLastModified = zipFile.lastModified();
       ZipFile zip = new ZipFile( hop.apk );
       Vector<ZipEntry> files = filesFromZip( zip );
@@ -187,7 +193,9 @@ public class HopInstaller extends Thread {
    // (see configure-android.sch.in). It contains the path of the
    // external storage so that hop can avoid using the explicit "/sdcard" path.
    void externalstorage() throws IOException {
-      OutputStream op = new FileOutputStream( new File( hop.root, "etc/" + "externalstorage.hop" ) );
+      File file = new File( hop.root, "etc/" + "externalstorage.hop" );
+      OutputStream op = new FileOutputStream( file );
+      
       op.write( ";; generated file (HopInstaller), don't edit\n".getBytes() );
       op.write( "\"".getBytes() );
       op.write( Environment.getExternalStorageDirectory().getAbsolutePath().getBytes() );
@@ -207,6 +215,16 @@ public class HopInstaller extends Thread {
 	 
 	 Log.e( "HopInstaller", msg );
 	 hop.handler.sendMessage( android.os.Message.obtain( hop.handler, HopLauncher.MSG_INSTALL_FAIL, e ) );
+
+	 // loop for ever
+	 while( true ) {
+	    try{
+	       Thread.currentThread().sleep( 10000000 );
+	    }
+	    catch( Exception _) {
+	       ;
+	    }
+	 }
       }
    }
 }

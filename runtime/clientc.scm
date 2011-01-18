@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Wed Oct 20 09:30:43 2010 (serrano)                */
-;*    Copyright   :  2009-10 Manuel Serrano                            */
+;*    Last change :  Fri Jan 14 10:41:41 2011 (serrano)                */
+;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
 ;*=====================================================================*/
@@ -55,6 +55,8 @@
 				    precompiled-declared-variables
 				    precompiled-free-variables)
 
+	    (current-module-clientc-import)
+	    
 	    (clientc-url ::bstring)
 	    (clientc-response::%http-response ::http-request ::bstring)
 	    (get-clientc-compiled-file ::bstring)))
@@ -110,6 +112,15 @@
        (precompiled-free-variables (or precompiled-free-variables null)))))
    
 ;*---------------------------------------------------------------------*/
+;*    current-module-clientc-import ...                                */
+;*---------------------------------------------------------------------*/
+(define (current-module-clientc-import)
+   (let ((mod (eval-module)))
+      (if (evmodule? mod)
+	  (evmodule-extension mod)
+	  '())))
+
+;*---------------------------------------------------------------------*/
 ;*    clientc-url ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (clientc-url path)
@@ -137,13 +148,13 @@
 	     (unwind-protect
 		(let* ((jscript ((clientc-filec (hop-clientc)) path '()))
 		       (cache (cache-put! clientc-cache path jscript)))
-		   (instantiate::http-response-file
+		   (instantiate::http-response-string
 		      (request req)
 		      (charset (hop-locale))
 		      (content-type mime)
 		      (bodyp (eq? method 'GET))
 		      (header '((Accept-Ranges: . "bytes")))
-		      (file cache)))
+		      (body jscript)))
 		(eval-module-set! m))))))
 
 ;*---------------------------------------------------------------------*/
@@ -158,5 +169,11 @@
 (define (get-clientc-compiled-file path)
    (let* ((req (or (current-request) dummy-request))
 	  (rep (clientc-response req path)))
-      (with-input-from-file (http-response-file-file rep) read-string)))
+      (cond
+	 ((http-response-file? rep)
+	  (with-input-from-file (http-response-file-file rep) read-string))
+	 ((http-response-string? rep)
+	  (http-response-string-body rep))
+	 (else
+	  (error "get-clientc-compiled-file" "Illegal clientc response" rep)))))
 

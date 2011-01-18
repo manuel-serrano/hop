@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Mon Oct 25 10:15:35 2010 (serrano)                */
-/*    Copyright   :  2010 Manuel Serrano                               */
+/*    Last change :  Mon Jan 17 17:06:38 2011 (serrano)                */
+/*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
 /*=====================================================================*/
@@ -16,6 +16,7 @@ package fr.inria.hop;
 
 import android.app.*;
 import android.content.Intent;
+import android.util.Log;
 
 import java.io.*;
 import java.lang.*;
@@ -35,16 +36,23 @@ public abstract class HopPlugin {
    public String name;
 
    public HopPlugin( HopDroid h, Activity a, String n ) {
+      Log.v( "HopPlugin", "creating plugin: " + n );
       handroid = h;
       activity = a;
       name = n;
    }
 
+   // cleanup
+   public void kill() {
+      Log.v( "HopPlugin", "killing plugin: " + name );
+   }
+   
    // the server
    abstract void server( InputStream ip, OutputStream op ) throws IOException;
 
    // onActivityResult (called by HopLauncher)
    static public void onActivityResult( int key, int result, Intent intent ) {
+      Log.v( "HopPlugin", "onActivityResult key=" + key );
       synchronized( atable ) {
 	 HopPlugin p = (HopPlugin)atable.get( key );
 
@@ -63,12 +71,17 @@ public abstract class HopPlugin {
    }
    
    // startHopActivityForResult
-   public void startHopActivityForResult( Intent intent ) {
+   public int startHopActivityForResult( Intent intent ) {
       int key = getKey();
-      activity.startActivityForResult( intent, key );
+      
       synchronized( atable ) {
 	 atable.put( key, this );
+
+	 Log.v( "HopPlugin", "Starting activity key=" + key );
       }
+      activity.startActivityForResult( intent, key );
+
+      return key;
    }
 
    // onHopActivityResult (super method of plugins)

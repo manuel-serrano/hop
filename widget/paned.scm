@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Sep  8 09:03:52 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Mon Jan 17 13:45:33 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
 ;*=====================================================================*/
@@ -36,7 +36,7 @@
 ;*---------------------------------------------------------------------*/
 (define-markup <PANED> ((id #unspecified string)
 			(class #unspecified string)
-			(fraction 30)
+			(fraction #f)
 			(onresize "")
 			(orientation 'vertical)
 			(style #f)
@@ -86,6 +86,7 @@
       (display ">" p)
       (fprintf p "<div class='hop-paned-inner hop-paned-~a' id='~a-inner'>"
 	       orientation id)
+      (fprintf p "<span class='hop-paned-fraction' id='~a-fraction'></span>" id)
       (fprintf p "<div class='hop-paned-pan hop-paned-el1' id='~a-el1'>" id)
       (xml-write (car body) p backend)
       (fprint p "</div>")
@@ -101,9 +102,13 @@
 	       "hop_init_paned_~a( ~s, ~a, function(event) { ~a } )"
 	       orientation
 	       id
-	       (if (string? fraction)
-		   (string-append "\"" fraction "\"")
-		   fraction)
+	       (cond
+		  ((string? fraction)
+		   (string-append "\"" fraction "\""))
+		  ((not fraction)
+		   "false")
+		  (else
+		   fraction))
 	       (cond
 		  ((xml-tilde? onresize)
 		   (xml-tilde->return onresize))

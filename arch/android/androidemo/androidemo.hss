@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Mar  2 07:38:26 2010                          */
-/*    Last change :  Thu Dec  2 05:49:13 2010 (serrano)                */
-/*    Copyright   :  2010 Manuel Serrano                               */
+/*    Last change :  Tue Jan 11 14:17:14 2011 (serrano)                */
+/*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    POPART css                                                       */
 /*=====================================================================*/
@@ -223,12 +223,23 @@ table.contact th {
   border-bottom: 2px solid black;
 }
 
+div#callinfo-state {
+  width: 20em;
+  min-height: 4ex;
+  overflow: auto;
+}
+
+table.callinfo,
 table.calllog {
   border: 1px solid #ccc;
   border-radius: 2px;
   background-color: #eef;
   font-size: 90%;
   padding: 2px;
+}
+
+table.callinfo th {
+  text-align: center;
 }
 
 table.calllog th {

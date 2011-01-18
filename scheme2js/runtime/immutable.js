@@ -295,7 +295,7 @@ function sc_stringContains(s1,s2,start) {
 	   (type bool))
 */
 function sc_stringCIContains(s1,s2,start) {
-   return s1.toLowerCase.indexOf(s2.toLowerCase,start ? start : 0) >= 0;
+   return s1.toLowerCase().indexOf(s2.toLowerCase(),start ? start : 0) >= 0;
 }
 
 /*** META ((export #t)

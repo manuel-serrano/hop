@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Dec 21 18:10:15 2010 (serrano)                */
-/*    Copyright   :  2006-10 Manuel Serrano                            */
+/*    Last change :  Wed Jan  5 15:06:44 2011 (serrano)                */
+/*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
 /*    -------------------------------------------------------------    */
@@ -1091,6 +1091,8 @@ function cloneScriptNode( node ) {
    } else {
       var t = document.createTextNode( node.innerHTML );
       var s = document.createElement( "SCRIPT" );
+
+      s.id = node.id;
 
       if( "text" in s ) 
 	 s.text = node.innerHTML;

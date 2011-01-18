@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue Nov 23 08:23:43 2010 (serrano)                */
-/*    Copyright   :  2006-10 Manuel Serrano                            */
+/*    Last change :  Thu Jan  6 22:58:20 2011 (serrano)                */
+/*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
@@ -140,6 +140,7 @@ function hop_Config() {
   this.clone_innerHTML = false; // see hop_create_element (hop-dom.js)
   this.eval_innerHTML = true;
   this.websocket = false;
+  this.server_event = "long polling";
 
   /* navigator specific configuration */
   if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {
@@ -147,7 +148,7 @@ function hop_Config() {
      this.navigator_family = "msie";
      this.mouse_left_button = 1;
      this.flash_external_interface = true;
-     this.flash_audio = false;
+     this.flash_audio = true;
      this.flash_markup = "object";
      this.inline_image = false;
      this.clone_innerHTML = true;
@@ -168,7 +169,7 @@ function hop_Config() {
      this.navigator_family = "chrome";
      this.mouse_left_button = 0;
      this.flash_external_interface = true;
-     this.flash_audio = false;
+     this.flash_audio = true;
      this.flash_markup = "embed";
      this.inline_image = true;
      this.css = 3;
@@ -182,7 +183,7 @@ function hop_Config() {
      this.navigator_family = "safari";
      this.mouse_left_button = 0;
      this.flash_external_interface = true;
-     this.flash_audio = false;
+     this.flash_audio = true;
      this.flash_markup = "embed";
      this.inline_image = true;
      this.clone_innerHTML = true;
@@ -192,7 +193,7 @@ function hop_Config() {
      this.js_speed = 80;
      this.mouse_left_button = 0;
      this.flash_external_interface = true;
-     this.flash_audio = false;
+     this.flash_audio = true;
      this.flash_markup = "embed";
      this.inline_image = true;
      this.clone_innerHTML = true;
@@ -201,7 +202,7 @@ function hop_Config() {
      this.navigator_family = "khtml";
      this.mouse_left_button = 1;
      this.flash_external_interface = true;
-     this.flash_audio = false;
+     this.flash_audio = true;
      this.flash_markup = "embed";
      this.inline_image = true;
      this.clone_innerHTML = true;
@@ -241,7 +242,14 @@ function hop_Config() {
   this.screen_available_height = screen.availHeight;
   this.screen_color_depth = screen.colorDepth;
   
-     
+  /* Android 2.1 webkit adjustments */
+  if( this.flash_audio ) {
+    if( navigator.userAgent.indexOf( "Android 2.1" ) ||
+        navigator.userAgent.indexOf( "Android 2.0" ) ) {
+       this.flash_audio = false;
+    }
+  }
+
   this.version = hop_version();
   this.backend = hop_backend();
 }
@@ -451,6 +459,8 @@ if( "XMLHttpRequest" in window ) {
    }
    if( "multipart" in req ) {
       hop_config.xhr_multipart = true;
+      if( hop_config.server_event === "long polling" ) 
+         hop_config.server_event = "xhr_multipart";
    }
 } else {
    if( "ActiveXObject" in window ) {
@@ -519,6 +529,8 @@ if( "XMLHttpRequest" in window ) {
 /*    web socket                                                       */
 /*---------------------------------------------------------------------*/
 if( "WebSocket" in window ) {
+   if( hop_config.server_event === "long polling" ) 
+      hop_config.server_event = "websocket";
    hop_config.websocket = true;
 }
 
@@ -589,7 +601,7 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
 /*---------------------------------------------------------------------*/
 function node_style_set_native( el, prop, value ) {
    var obj = el;
-   
+
    if( (el instanceof String) || (typeof el === "string") )
       obj = document.getElementById( el );
 
@@ -600,28 +612,13 @@ function node_style_set_native( el, prop, value ) {
       if( sc_isKeyword( p ) )
 	 p = sc_keyword2jsstring( p );
    
-      if( !(v instanceof String) && (typeof v !== "string") ) {
-	 if( !v && (v != 0) ) {
-	    sc_error( "node-style-set!", "Illegal \"" + p + "\" value: " + v, el );
-	 } else {
-	    v = v.toString();
-	 }
-      }
+      if( !(v instanceof String) && (typeof v !== "string") )
+	 v = v.toString();
 
-      if( !obj || !obj.style ) {
-	 sc_error( "node-style-set!",
-		   "Illegal object while setting \"" + p + ": " + v + "\"",
-		   el );
-      }
-
-      try {
-	 if( p in obj.style ) {
-	    obj.style[ p ] =  v;
-	 } else {
-	    obj.style.setProperty( p, v, "" );
-	 }
-      } catch( e ) {
-	 sc_error( "node-style-set!", "Can't set property \"" + p + "\"", el );
+      if( p in obj.style ) {
+	 obj.style[ p ] =  v;
+      } else {
+	 obj.style.setProperty( p, v, "" );
       }
    }
 }
@@ -639,13 +636,8 @@ function node_style_set_array( el, prop, value ) {
       if( sc_isKeyword( p ) )
 	 p = sc_keyword2jsstring( p );
    
-      if( !(v instanceof String) && (typeof v !== "string") ) {
-	 if( !v && (v != 0) ) {
-	    sc_error( "node-style-set!", "Illegal \"" + p + "\" value: "+ v, el );
-	 } else {
-	    v = v.toString();
-	 }
-      }
+      if( !(v instanceof String) && (typeof v !== "string") )
+	 v = v.toString();
    
       obj.style[ p ] = v;
    }
@@ -654,9 +646,10 @@ function node_style_set_array( el, prop, value ) {
 /*** META ((export node-style-set!) (arity -3)) */
 var node_style_set = function( el, prop, value ) {
    var obj = el;
-   
-   if( (el instanceof String) || (typeof el === "string") )
+
+   if( (el instanceof String) || (typeof el === "string") ) {
       obj = document.getElementById( el );
+   }
 
    try {
       if( "setProperty" in obj.style ) {
@@ -666,8 +659,10 @@ var node_style_set = function( el, prop, value ) {
 	 node_style_set = node_style_set_array;
 	 return node_style_set_array.apply( null, arguments );
       }
-   } catch( e ) {
-      sc_error( "node-style-set!", "Can't set property \"" + prop + "\"", el );
+   } catch( exc ) {
+      var msg = "message" in exc ? exc.message : "Cannot set style";
+
+      sc_error( "node-style-set!", msg, el );
   }
 }
 
@@ -946,13 +941,13 @@ function hop_screen_dimensions( unit ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export iframe-scroll-height) (arity #t)) */
 function hop_iframe_scroll_height( e ) {
-   if( "contentDocument" in e ) {
+   if( "contentDocument" in e && e.contentDocument != undefined ) {
       return e.contentDocument.body.scrollHeight;
    } else {
-      if( "document" in e ) {
+      if( "document" in e && e.document != undefined ) {
 	 return e.document.body.scrollHeight;
       } else {
-	 return iframe.height;
+	 return e.scrollHeight;
       }
    }
 }
@@ -962,13 +957,13 @@ function hop_iframe_scroll_height( e ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export iframe-scroll-width) (arity #t)) */
 function hop_iframe_scroll_width( e ) {
-   if( "contentDocument" in e ) {
+   if( "contentDocument" in e && e.contentDocument != undefined ) {
       return e.contentDocument.body.scrollWidth;
    } else {
-      if( "document" in e ) {
+      if( "document" in e && e.document != undefined ) {
 	 return e.document.body.scrollWidth;
       } else {
-	 return iframe.width;
+	 return e.scrollWidth;
       }
    }
 }

@@ -49,7 +49,7 @@ using //Paneds// must include in their header, the following statement:
 ^  attributes   ^   type    ^   default       ^  short description                ^
 | :id           |  string   |  //random//     | element identifier.               |
 | :class        |  string   |  //random//     | the class of the element.         |
-| :fraction     |  integer  |   ++0++         | the split ratio.                  |
+| :fraction     |  integer  |      _          | the split ratio.                  |
 | :orientation  |  symbol   |   ++vertical++  | the paned orientation.            |
 | :onresize     |  script   |      _          | the action to execute on resize.  |
 | body          |  element  |  empty          | the body.                         |

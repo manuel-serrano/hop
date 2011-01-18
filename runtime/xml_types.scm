@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Sun Dec  5 08:32:25 2010 (serrano)                */
-;*    Copyright   :  2010 Manuel Serrano                               */
+;*    Last change :  Tue Jan 11 07:30:42 2011 (serrano)                */
+;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
 ;*=====================================================================*/
@@ -85,7 +85,9 @@
 	       (%js-expression (default #f))
 	       (%js-statement (default #f))
 	       (%js-return (default #f))
-	       (%js-attribute (default #f)))
+	       (%js-attribute (default #f))
+	       (env (default #f))
+	       (menv (default #f)))
 
 	    (class xml-meta::xml-markup)
 

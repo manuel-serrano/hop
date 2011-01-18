@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Tue Dec 21 11:08:43 2010 (serrano)                */
-/*    Copyright   :  2004-10 Manuel Serrano                            */
+/*    Last change :  Tue Jan 11 06:59:23 2011 (serrano)                */
+/*    Copyright   :  2004-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
 /*=====================================================================*/
@@ -82,8 +82,8 @@ div[hssclass=hop-error] {
   border-color: red;
   opacity: 1;
   color: black;
-  top: 0; bottom: 0;
-  left: 0; right: 0;
+  top: 30px; bottom: 30px;
+  left: 30px; right: 30px;
   position: fixed;
   z-index: 100002;
   margin: 100px;
@@ -129,6 +129,10 @@ div[hssclass=hop-error-msg] {
   font-weight: bold;
 }
 
+pre[hssclass=hop-error-notification] {
+  font-size: 90%;
+}
+
 div[hssclass=hop-error-msg] tt {
   font-weight: bold;
   font-family: monospace;
@@ -143,7 +147,7 @@ div[hssclass=hop-error-trace] {
   padding-top: 2ex;
   padding-bottom: 2ex;
   font-weight: bold;
-  font-size: 9pt;
+  font-size: 85%;
   color: black;
 }
 
@@ -183,6 +187,10 @@ div[hssclass=hop-error].remote span[hssclass=hop-error-img] {
 
 div[hssclass=hop-error].client span[hssclass=hop-error-img] {
   background-image: url( "icons/errors/client-error.png" );
+}
+
+div[hssclass=hop-error].security span[hssclass=hop-error-img] {
+  background-image: url( "icons/errors/privacy.png" );
 }
 
 /*---------------------------------------------------------------------*/

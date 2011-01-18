@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Dec 20 08:24:04 2010 (serrano)                */
-;*    Copyright   :  2004-10 Manuel Serrano                            */
+;*    Last change :  Fri Jan 14 10:29:04 2011 (serrano)                */
+;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -116,9 +116,15 @@
 	      (bigloo-debug-module-set! (string->integer level))
 	      (bigloo-debug-set! (string->integer level)))
 	     (else
-	      (bigloo-debug-module-set! 0)
-	      (bigloo-debug-set! 0)
-	      (hop-clientc-debug-unbound-set! 0))))
+	      (let ((l (string->integer level)))
+		 (bigloo-debug-module-set! l)
+		 (bigloo-debug-set! l)
+		 (hop-clientc-debug-unbound-set! l)))))
+	 (("--devel" (help "Enable devel mode"))
+	  (set! clear-cache #t)
+	  (hop-cache-enable-set! #f)
+	  (hop-allow-redefine-service-set! #t)
+	  (hop-force-reload-service-set! #t))
 	 (("--time" (help "Report execution time"))
 	  (hop-report-execution-time-set! #t))
 	 (("-w?level" (help "Increase/set warning level (-w0 no warning)"))
@@ -249,9 +255,11 @@
       (init-hopscheme! :reader (lambda (p v) (hop-read p))
 	 :share (hop-share-directory)
 	 :verbose (hop-verbose)
-	 :eval (lambda (e) (call-with-output-string
-			    (lambda (op)
-			       (obj->javascript (eval e) op #f))))
+	 :eval (lambda (e)
+		  (let* ((ev (eval e))
+			 (op (open-output-string)))
+		     (obj->javascript ev op #f)
+		     (close-output-port op)))
 	 :hop-compile (lambda (e p)
 			 (obj->javascript e p #f))
 	 :features `(hop

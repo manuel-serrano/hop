@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 29 16:36:58 2010                          */
-;*    Last change :  Thu Dec  2 06:43:35 2010 (serrano)                */
-;*    Copyright   :  2010 Manuel Serrano                               */
+;*    Last change :  Thu Jan  6 13:42:40 2011 (serrano)                */
+;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Text-to-speech                                                   */
 ;*=====================================================================*/
@@ -67,6 +67,8 @@
 ;*    register-tts-listener! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (register-tts-listener! p::androidphone)
+   (unless tts-plugin
+      (error "add-event-listener!" "No tts plugin registred" tts-plugin))
    (android-send-command p tts-plugin #\b))
 
 ;*---------------------------------------------------------------------*/

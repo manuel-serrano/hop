@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Dec  8 11:03:20 2010 (serrano)                */
+#*    Last change :  Wed Jan  5 14:11:59 2011 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -36,7 +36,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
 _OBJECTS = init notepad paned slider tree file foldlist tabslider \
-   editor audio video lframe foot sorttable sym
+   editor audio video lframe foot sorttable sym prefs
 _HOBJECTS= spinbutton colorchooser spage gauge
 
 OBJECTS = $(_OBJECTS:%=o/%.o) $(_HOBJECTS:%=o/%.o)

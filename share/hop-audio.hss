@@ -121,7 +121,8 @@ audio div.hop-audio-panel2 {
 /*    hop-audio-button                                                 */
 /*---------------------------------------------------------------------*/
 audio div.hop-audio-buttons {
-  padding-top: 6px;
+  padding-top: 2px;
+  padding-bottom: 2px;
   width: 100%;
   overflow: hidden;
 }

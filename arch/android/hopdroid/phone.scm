@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed Dec  1 17:25:40 2010 (serrano)                */
-;*    Copyright   :  2010 Manuel Serrano                               */
+;*    Last change :  Tue Jan 11 18:00:07 2011 (serrano)                */
+;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
 ;*=====================================================================*/
@@ -58,7 +58,7 @@
 (define sensor-plugin #f)
 (define sms-plugin #f)
 (define contact-plugin #f)
-(define call-log-plugin #f)
+(define call-plugin #f)
 (define battery-plugin #f)
 (define locale-plugin #f)
 
@@ -116,7 +116,9 @@
 		     (thread-start!
 		      (instantiate::pthread
 			 (body (lambda () (android-event-listener p)))))))
-	    (hashtable-update! %evtable event cons (list proc))
+	    (hashtable-update! %evtable event
+			       (lambda (v) (cons proc v))
+			       (list proc))
 	    (let ((op (socket-output %socket2)))
 	       (send-string event op)
 	       (send-byte 1 op)
@@ -125,7 +127,11 @@
 	       ((string=? event "battery")
 		(register-battery-listener! p))
 	       ((string=? event "tts")
-		(register-tts-listener! p)))))))
+		(register-tts-listener! p))
+	       ((string=? event "call")
+		(register-call-listener! p))
+	       ((string=? event "orientation")
+		(register-orientation-listener! p)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remove-event-listener! ...                                       */
@@ -141,8 +147,13 @@
 					((string=? event "battery")
 					 (remove-battery-listener! p))
 					((string=? event "tts")
-					 (remove-tts-listener! p)))
-				     (remq! proc l)) '()))
+					 (remove-tts-listener! p))
+					((string=? event "call")
+					 (remove-call-listener! p))
+					((string=? event "orientation")
+					 (remove-call-listener! p)))
+				     (remq! proc l))
+				  '()))
 	    (when (socket? %socket2)
 	       (let ((op (socket-output %socket2)))
 		  (send-string event op)
@@ -239,21 +250,39 @@
    (android-send-command/result p sensor-plugin #\i))
 
 ;*---------------------------------------------------------------------*/
+;*    sensor-type-number ...                                           */
+;*---------------------------------------------------------------------*/
+(define (sensor-type-number type)
+   (case type
+      ((orientation) 0)
+      ((light) 1)
+      ((magnetic-field) 2)
+      ((proximity) 3)
+      ((temperature) 4)
+      ((accelerometer) 5)
+      ((pressure) 6)
+      (else (error "sensor" "unknown sensor type" type))))
+
+;*---------------------------------------------------------------------*/
 ;*    phone-sensor ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-sensor p::androidphone type . delay)
-   (let ((t (case type
-	       ((orientation) 0)
-	       ((light) 1)
-	       ((magnetic-field) 2)
-	       ((proximity) 3)
-	       ((temperature) 4)
-	       ((accelerometer) 5)
-	       ((pressure) 6)
-	       (else (error "sensor" "unknown sensor type" type)))))
-      (android-send-command/result p sensor-plugin #\b t
-				   (phone-sensor-ttl p)
-				   (if (pair? delay) (car delay) 0))))
+   (android-send-command/result p sensor-plugin #\b
+				(sensor-type-number type)
+				(phone-sensor-ttl p)
+				(if (pair? delay) (car delay) 0)))
+
+;*---------------------------------------------------------------------*/
+;*    register-orientation-listener! ...                               */
+;*---------------------------------------------------------------------*/
+(define (register-orientation-listener! p::androidphone)
+   (android-send-command p sensor-plugin #\a (sensor-type-number 'orientation)))
+
+;*---------------------------------------------------------------------*/
+;*    remove-orientation-listener! ...                                 */
+;*---------------------------------------------------------------------*/
+(define (remove-orientation-listener! p::androidphone)
+   (android-send-command p sensor-plugin #\r (sensor-type-number 'orientation)))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-sms-send ::androidphone ...                                */
@@ -326,10 +355,50 @@
 ;*    phone-call-log ::androidphone ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-call-log p::androidphone . optional)
-   (unless call-log-plugin
-      (set! call-log-plugin (android-load-plugin p "calllog")))
+   (unless call-plugin
+      (set! call-plugin (android-load-plugin p "call")))
    (let ((n (if (pair? optional) (car optional) -1)))
-      (android-send-command/result p call-log-plugin #\l n)))
+      (android-send-command/result p call-plugin #\l n)))
+
+;*---------------------------------------------------------------------*/
+;*    phone-call-info ::androidphone ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (phone-call-info p::androidphone)
+   (unless call-plugin
+      (set! call-plugin (android-load-plugin p "call")))
+      (android-send-command/result p call-plugin #\i))
+
+;*---------------------------------------------------------------------*/
+;*    register-call-listener! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (register-call-listener! p::androidphone)
+   (unless call-plugin
+      (set! call-plugin (android-load-plugin p "call")))
+   (android-send-command p call-plugin #\b))
+
+;*---------------------------------------------------------------------*/
+;*    remove-call-listener! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (remove-call-listener! p::androidphone)
+   (unless call-plugin
+      (set! call-plugin (android-load-plugin p "call")))
+   (android-send-command p call-plugin #\e))
+
+;*---------------------------------------------------------------------*/
+;*    phone-call-start ::androidphone ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (phone-call-start p::androidphone n::bstring . optional)
+   (unless call-plugin
+      (set! call-plugin (android-load-plugin p "call")))
+   (let ((window (if (pair? optional) (car optional) #f)))
+      (android-send-command p call-plugin #\c n window)))
+
+;*---------------------------------------------------------------------*/
+;*    phone-call-stop ::androidphone ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (phone-call-stop p::androidphone)
+   (when call-plugin
+      (android-send-command p call-plugin #\k)))
 
 ;*---------------------------------------------------------------------*/
 ;*    send-string ...                                                  */
@@ -394,17 +463,28 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (send-obj o::obj op::output-port)
    (cond
-      ((string? o) (send-string o op))
-      ((llong? o) (send-int64 o op))
-      ((integer? o) (send-int32 o op))
-      ((real? o) (send-string (real->string o) op))
-      ((boolean? o) (send-boolean o op))
-      ((char? o) (send-char o op))
-      ((vector? o) (send-vector o op))
-      ((and (pair? o) (pair? (cdr o))) (send-obj (list->vector o) op))
-      ((pair? o) (send-obj (car o) op) (send-obj (cdr o) op))
-      ((symbol? o) (send-string (symbol->string! o) op))
-      (else (error "send-obj" "cannot serialize value" o))))
+      ((string? o)
+       (send-string o op))
+      ((llong? o)
+       (send-int64 o op))
+      ((fixnum? o)
+       (send-int32 o op))
+      ((flonum? o)
+       (send-string (real->string o) op))
+      ((boolean? o)
+       (send-boolean o op))
+      ((char? o)
+       (send-char o op))
+      ((vector? o)
+       (send-vector o op))
+      ((and (pair? o) (or (null? (cdr o)) (pair? (cdr o))))
+       (send-obj (list->vector o) op))
+      ((pair? o)
+       (send-obj (car o) op) (send-obj (cdr o) op))
+      ((symbol? o)
+       (send-string (symbol->string! o) op))
+      (else
+       (error "send-obj" "cannot serialize value" o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    send-obj ::vcard ...                                             */

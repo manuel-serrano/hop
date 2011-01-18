@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Dec 20 08:02:41 2010 (serrano)                */
-;*    Copyright   :  2004-10 Manuel Serrano                            */
+;*    Last change :  Sun Jan  9 06:39:42 2011 (serrano)                */
+;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
 ;*=====================================================================*/
@@ -110,9 +110,10 @@
 		 :title "Unknown Host!"
 		 :msg  (list (&error-msg e) ": "
 			     (<TT> :class "notfound" (&error-obj e)))
-		 (<PRE> (with-error-to-string
-			   (lambda ()
-			      (exception-notify e)))))))))
+		 (<PRE> :hssclass "hop-error-notification"
+		    (with-error-to-string
+		       (lambda ()
+			  (exception-notify e)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-error ::&io-file-not-found-error ...                        */
@@ -145,8 +146,7 @@
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (charset (hop-charset))
-	 (xml (<HTML-ERROR> :icon "privacy.png"
-		 :class "security"
+	 (xml (<HTML-ERROR> :class "security"
 		 :title "Security Error"
 		 :msg (&error-msg e)
 		 (<PRE> (html-string-encode s)))))))
@@ -169,11 +169,11 @@
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (charset (hop-charset))
-	 (xml (<HTML-ERROR> :icon "error.png"
-		 :class "service"
+	 (xml (<HTML-ERROR> :class "service"
 		 :title "Service Autoload Error"
 		 :msg (&error-msg e)
-		 (<PRE> (html-string-encode s)))))))
+		 (<PRE> :hssclass "hop-error-notification"
+		    (html-string-encode s)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HTML-ERROR> ...                                                 */
@@ -323,7 +323,7 @@ a timeout which has now expired. The service is then no longer available."))
 		 :msg msg
 		 (<DIV> :hssclass "hop-error-trace"
 		    (<DIV> "Hop server stack:")
-		    (<PRE>
+		    (<PRE> :hssclass "hop-error-notification"
 		       (html-string-encode s))))))))
    
 ;*---------------------------------------------------------------------*/
@@ -343,7 +343,8 @@ a timeout which has now expired. The service is then no longer available."))
 			       ":" (http-request-port req)
 			       (hop-service-base) service)
 			 ", " (<TT> (hop-request-service-name req)))
-	      (<PRE> (html-string-encode m))))))
+	      (<PRE> :hssclass "hop-error-notification"
+		 (html-string-encode m))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-invalidated-service-error ...                               */
@@ -407,7 +408,8 @@ Reloading the page is the only way to fix this problem.")))))
 	 (xml (<HTML-ERROR> :class "warning"
 		 :title "Warning"
 		 :msg (<TT> msg)
-		 (<PRE> dump))))))
+		 (<PRE> :hssclass "hop-error-notification"
+		    dump))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-service-unavailable ...                                     */
@@ -448,7 +450,8 @@ Reloading the page is the only way to fix this problem.")))))
 		 :title "Remote Error"
 		 :msg (list "An error occured while talking to a remote host: "
 			    (<TT> host))
-		 (<PRE> (html-string-encode s)))))))
+		 (<PRE> :hssclass "hop-error-notification"
+		    (html-string-encode s)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-io-error ...                                                */
@@ -467,7 +470,8 @@ Reloading the page is the only way to fix this problem.")))))
 		 :class (if (&io-timeout-error? e) "timeout" "error")
 		 :title "IO Error"
 		 :msg (list "Error type: " (<TT> (typeof e)))
-		 (<PRE> (html-string-encode s)))))))
+		 (<PRE>  :hssclass "hop-error-notification"
+		    (html-string-encode s)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-gateway-timeout ...                                         */

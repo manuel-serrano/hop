@@ -4,8 +4,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Thu Dec 16 11:32:50 2010 (serrano)                */
-#*    Copyright   :  2010 Manuel Serrano                               */
+#*    Last change :  Mon Jan 17 09:25:08 2011 (serrano)                */
+#*    Copyright   :  2010-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
 #*=====================================================================*/
@@ -13,7 +13,7 @@
 #*---------------------------------------------------------------------*/
 #*    Global user configuration                                        */
 #*---------------------------------------------------------------------*/
-HOPVERSION=2.2.0-rc5
+HOPVERSION=2.2.0-rc6
 HOPURL=http://hop.inria.fr
 BIGLOOVERSION=3.5b
 ANDROID=2.1
@@ -50,6 +50,9 @@ if [ "$MAKEJOBS " = " " ]; then
 fi
 
 makeopt=-j$MAKEJOBS
+
+# link should be set to "library" as soon as the GC support dynamic loading
+link=static
 
 #*---------------------------------------------------------------------*/
 #*    actions                                                          */
@@ -155,7 +158,8 @@ if [ $action_configure = "yes" ]; then
       --libdir=$PREFIX/hoplib \
       --cc=$CC \
       --bigloolibdir=$ANDROIDBIGLOOLIB \
-      --link=static\
+      --link=$link \
+      --disable-ssl \
       --android \
       --library=mail \
       --library=calendar \
@@ -167,6 +171,8 @@ fi
 #*---------------------------------------------------------------------*/
 #*    compile                                                          */
 #*---------------------------------------------------------------------*/
+mkdir -p $android
+
 if [ $action_make = "yes" ]; then
   make $makeopt -C $tmp/hop-$HOPVERSION || exit 1
 fi
@@ -184,13 +190,15 @@ if [ $action_install = "yes" ]; then
     || exit 1
   
   # cleanup useless file
-  /bin/rm $android/assets/bin/hop-$branch
-  /bin/rm $android/assets/bin/hopc
-  /bin/rm $android/assets/bin/hopsh
-  /bin/rm $android/assets/hoplib/hop/$branch/*.so
-  /bin/rm $android/assets/hoplib/hop/$branch/*.heap
-  /bin/rm $android/assets/hoplib/hop/$branch/*.a
-  /bin/rm $android/assets/hoplib/*.so
+  if [ "$link" = "static" ]; then
+    /bin/rm $android/assets/bin/hop-$branch
+    /bin/rm $android/assets/bin/hopc
+    /bin/rm $android/assets/bin/hopsh
+    /bin/rm $android/assets/hoplib/hop/$branch/*.so
+    /bin/rm $android/assets/hoplib/hop/$branch/*.heap
+    /bin/rm $android/assets/hoplib/hop/$branch/*.a
+    /bin/rm $android/assets/hoplib/*.so
+  fi
   
   /bin/rm -rf $android/assets/man
   /bin/rm -rf $android/assets/hoplib/hop/$branch/weblets/home
@@ -206,10 +214,12 @@ fi
 #*---------------------------------------------------------------------*/
 #*    apk build                                                        */
 #*---------------------------------------------------------------------*/
-cat $basedir/local.properties.in $basedir/build.properties.in \
-  | sed -e "s|@ANDROIDSDK@|$ANDROIDSDK|" \
-        -e "s|@BASEDIR@|$basedir|" \
-  > $android/local.properties || exit 1
+for p in local.properties build.properties; do
+  cat $basedir/$p.in \
+    | sed -e "s|@ANDROIDSDK@|$ANDROIDSDK|" \
+          -e "s|@BASEDIR@|$basedir|" \
+    > $android/$p || exit 1
+done
 
 for p in build.xml default.properties Android.mk; do \
   cp $basedir/$p $android

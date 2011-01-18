@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:29:16 2010                          */
-/*    Last change :  Tue Dec 21 09:12:52 2010 (serrano)                */
-/*    Copyright   :  2010 Manuel Serrano                               */
+/*    Last change :  Tue Jan 11 17:29:40 2011 (serrano)                */
+/*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Music Player                                             */
 /*    -------------------------------------------------------------    */
@@ -92,7 +92,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
    // music player
    protected void server( InputStream ip, OutputStream op )
       throws IOException {
-      switch( ip.read() ) {
+      switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'x':
 	    // exit
 	    if( mplayer != null ) {

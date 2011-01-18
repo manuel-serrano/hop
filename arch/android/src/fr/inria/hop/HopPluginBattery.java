@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Mon Nov  1 14:18:37 2010 (serrano)                */
-/*    Copyright   :  2010 Manuel Serrano                               */
+/*    Last change :  Tue Jan 11 17:27:45 2011 (serrano)                */
+/*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with SMS                                                 */
 /*=====================================================================*/
@@ -34,13 +34,20 @@ public class HopPluginBattery extends HopPlugin {
       super( h, a, n );
    }
 
+   // kill
+   public void kill() {
+      super.kill();
+
+      if( receiver != null ) activity.unregisterReceiver( receiver );
+   }
+   
    // sensor manager
    protected void server( final InputStream ip, final OutputStream op )
       throws IOException {
       
-      switch( ip.read() ) {
+      switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'b':
-	    // send a SMS
+	    // register battery listener
 	    if( count++ == 0 ) {
 	       receiver = new BroadcastReceiver() {
 		     @Override

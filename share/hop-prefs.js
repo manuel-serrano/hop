@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-prefs.js                */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-prefs.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Apr 21 11:52:04 2008                          */
-/*    Last change :  Fri Jun  5 10:06:37 2009 (serrano)                */
-/*    Copyright   :  2008-09 Manuel Serrano                            */
+/*    Last change :  Thu Jan  6 10:11:51 2011 (serrano)                */
+/*    Copyright   :  2008-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    PREFS client-side runtime.                                       */
 /*=====================================================================*/
@@ -34,10 +34,7 @@ function hop_prefs_editor_expr( event, inp, name, parse, type, key ) {
       inp.className = inp.className.replace( /hop-pr-changed/, "hop-pr-saved" );
       if( !parse || parse( inp.value ) ) {
 	 var svc = hop_apply_url( hop_prefs_edit_svc,
-				  [ name,
-				    type,
-				    inp.value,
-				    key ] );
+				  [ name, type, inp.value, key ] );
       
 	 with_hop( svc, hop_prefs_callback );
       }
@@ -47,15 +44,33 @@ function hop_prefs_editor_expr( event, inp, name, parse, type, key ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_prefs_editor_list_item ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_prefs_editor_list_item( event, value, name, parse, type, key ) {
+   if( !parse || parse( value ) ) {
+      var svc = hop_apply_url( hop_prefs_edit_svc, [ name, type, value, key ] );
+      
+      with_hop( svc, hop_prefs_callback );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_prefs_editor_number ...                                      */
+/*---------------------------------------------------------------------*/
+function hop_prefs_editor_number( event, value, name, parse, type, key ) {
+   if( !parse || parse( value ) ) {
+      var svc = hop_apply_url( hop_prefs_edit_svc, [ name, type, value, key ] );
+      
+      with_hop( svc, hop_prefs_callback );
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_prefs_editor_bool ...                                        */
 /*---------------------------------------------------------------------*/
 function hop_prefs_editor_bool( event, inp, name, parse, type, key ) {
    if( !parse || parse( inp.value ) ) {
-      var svc = hop_apply_url( hop_prefs_edit_svc,
-			       [ name,
-				 type,
-				 inp,
-				 key ] );
+      var svc = hop_apply_url( hop_prefs_edit_svc, [ name, type, inp.value, key ] );
       
       with_hop( svc, hop_prefs_callback );
    }

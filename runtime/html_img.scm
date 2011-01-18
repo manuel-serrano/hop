@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/hop_img.scm               */
+;*    serrano/prgm/project/hop/2.2.x/runtime/html_img.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Sun Nov  7 08:41:10 2010 (serrano)                */
-;*    Copyright   :  2007-10 Manuel Serrano                            */
+;*    Last change :  Tue Jan 11 07:52:22 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
 ;*=====================================================================*/
@@ -140,9 +140,12 @@
 		(set-car! (cdr onerror) nval)
 		attributes))
 	    ((xml-tilde? oval)
-	     (let ((nval (sexp->xml-tilde `(begin
-					      ,(xml-tilde->sexp oval)
-					      ,(secure-javascript-attr val)))))
+	     (let ((nval (sexp->xml-tilde
+			  `(begin
+			      ,(xml-tilde->sexp oval)
+			      ,(secure-javascript-attr val))
+			  (xml-tilde-env oval)
+			  (xml-tilde-menv oval))))
 		(set-car! (cdr onerror) nval)
 		attributes))
 	    (else
@@ -160,9 +163,10 @@
 
    (cond
       ((xml-tilde? src)
+       ;; see xml-write-initializations
        (instantiate::xml-empty-element
 	  (tag 'img)
-	  (id (xml-make-id id 'img))
+	  (id id)
 	  (attributes `(:src ,src :alt ,alt ,@attributes))
 	  (body '())))
       ((string? src)

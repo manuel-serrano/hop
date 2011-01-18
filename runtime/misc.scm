@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Sun Dec 19 06:28:39 2010 (serrano)                */
+;*    Last change :  Fri Dec 24 11:29:48 2010 (serrano)                */
 ;*    Copyright   :  2004-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -332,7 +332,9 @@
 		       (if ssl
 			   (cond-expand
 			      (enable-ssl
-			       (make-ssl-client-socket host port :timeout tmt))
+			       (make-ssl-client-socket host port
+						       :protocol 'tls
+						       :timeout tmt))
 			      (else
 			       (error "make-client-socket/timeout"
 				      "SSL not supported"

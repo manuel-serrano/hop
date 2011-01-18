@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/prefs-expd.sch            */
+;*    serrano/prgm/project/hop/2.2.x/runtime/prefs_expd.sch            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:04:20 2006                          */
-;*    Last change :  Sat Jun 19 06:49:38 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Tue Jan 11 09:26:45 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the DEFINE-PREFERENCES macro.                  */
 ;*=====================================================================*/
@@ -40,7 +40,7 @@
 		     (expr
 		      `(write (list ',(symbol-append param '-set!)
 				    (,param))))
-		     ((or quote (list . ?-))
+		     ((or quote (list . ?-) (alist . ?-))
 		      `(write (list ',(symbol-append param '-set!)
 				    (list 'quote (,param)))))
 		     (else

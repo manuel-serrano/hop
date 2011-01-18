@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Dec  6 17:10:05 2010                          */
-/*    Last change :  Mon Dec 13 18:00:31 2010 (serrano)                */
-/*    Copyright   :  2010 Manuel Serrano                               */
+/*    Last change :  Fri Jan  7 07:31:25 2011 (serrano)                */
+/*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for spage tag                                                */
 /*=====================================================================*/
@@ -38,6 +38,8 @@ $(define-hss-type sphead "div[hssclass=hop-sphead]"
        (format "div[hssclass=hop-sppopbutton] > span { visibility: ~l; }" v))
     (define-hss-property (button-content v)
        (format "div[hssclass=hop-sppopbutton]:before { content: ~l; }" v))
+    (define-hss-property (button-color v)
+       (format "div[hssclass=hop-sppopbutton]:before { color: ~l; }" v))
     (define-hss-property (button-width v)
        (format "div[hssclass=hop-sppopbutton] { width: ~l; }" v)))
 
@@ -47,6 +49,8 @@ $(define-hss-type spbody "div[hssclass=hop-spbody]")
 $(define-hss-type sptabhead "div[hssclass=hop-sptabhead]"
     (define-hss-property (button-visibility v)
        (format "div[hssclass=hop-sppushbutton] { visibility: ~l; }" v))
+    (define-hss-property (button-color v)
+       (format "div[hssclass=hop-sppushbutton] { color: ~l; }" v))
     (define-hss-property (button-align v)
        (cond 
            ((string=? (car v) "left")
@@ -67,7 +71,7 @@ $(define-hss-type sptabhead "div[hssclass=hop-sptabhead]"
 /*---------------------------------------------------------------------*/
 /* <public> */
 spage {
-  transition-style: slide;
+  transition-style: auto;
   padding: 0; 
   margin: 0;
   font-size: 10pt;
@@ -148,6 +152,15 @@ sptabhead > div[hssclass=hop-sppushbutton] {
   vertical-align: bottom;
 }
 
+div[hssclass=hop-spwindow] {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+}
+
 div[hssclass=hop-spviewport] {
   position: relative;
   transition: left 0.4s ease-in;
@@ -200,7 +213,6 @@ div[hssclass=hop-sppopbutton].visible {
   display: block;
 }
 
-div[hssclass=hop-sptab-static] > div[hssclass=hop-spbody]  {
+div[hssclass=hop-sptab-static] {
   display: none;
 }
-  

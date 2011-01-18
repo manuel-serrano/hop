@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Thu Dec 23 06:58:55 2010 (serrano)                */
-/*    Copyright   :  2007-10 Manuel Serrano                            */
+/*    Last change :  Mon Jan  3 10:18:32 2011 (serrano)                */
+/*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
 /*=====================================================================*/
@@ -15,7 +15,6 @@
 /*** META ((export Math) (JS Math)) */
 /*** META ((export navigator) (JS navigator)) */
 /*** META ((export eval) (JS eval)) */
-/*** META ((export hop_update) (JS hop_update)) */
 /*** META ((export confirm) (JS confirm)) */
 /*** META ((export setInterval) (JS setInterval)) */
 /*** META ((export clearInterval) (JS clearInterval)) */
@@ -302,26 +301,6 @@ var hop_window_onload_add = function( proc ) {
    return hop_add_event_listener( window, "load", proc );
 }
 
-/*    var oldonload = window.onload;                                   */
-/*    var wproc = hop_callback( proc );                                */
-/*                                                                     */
-/*    if( typeof oldonload != 'function' ) {                           */
-/*       window.onload = wproc;                                        */
-/*    } else {                                                         */
-/*       window.onload = function( e ) {                               */
-/* 	 oldonload( e );                                               */
-/* 	 wproc( e );                                                   */
-/*       }                                                             */
-/*    }                                                                */
-/* }                                                                   */
-/*                                                                     */
-/* hop_window_onload_add( function( e ) {                              */
-/*       {* once the window is loaded, onload handlers *}              */
-/*       {* must be invoked eargly                     *}              */
-/*       hop_window_onload_add = function( proc ) { proc( e ); }       */
-/*    } );                                                             */
-/*                                                                     */
-
 /*---------------------------------------------------------------------*/
 /*    hop_update ...                                                   */
 /*    -------------------------------------------------------------    */
@@ -333,12 +312,15 @@ var hop_window_onload_add = function( proc ) {
 /*---------------------------------------------------------------------*/
 function hop_update( node ) {
    /* update the children recursively */
-   if( node.hop_update != undefined ) {
-      node.hop_update();
-   }
-   /* traverse the all tree */
-   for( var i = 0; i < node.childNodes.length; i++ ) {
-      hop_update( node.childNodes[ i ] );
+   if( hop_is_html_element( node ) ) {
+      if( "hop_update" in node ) {
+	 node.hop_update();
+      }
+
+      /* traverse the children */
+      for( var c in node.childNodes ) {
+	 hop_update( c );
+      }
    }
 }
 

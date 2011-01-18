@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Dec 20 17:50:09 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Tue Jan 11 08:19:37 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -319,15 +319,6 @@
 	      (read-error "Illegal token" (string #\# c) (the-port)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    current-module-clientc-import ...                                */
-;*---------------------------------------------------------------------*/
-(define (current-module-clientc-import)
-   (let ((mod (eval-module)))
-      (if (evmodule? mod)
-	  (evmodule-extension mod)
-	  '())))
-
-;*---------------------------------------------------------------------*/
 ;*    *hop-grammar* ...                                                */
 ;*---------------------------------------------------------------------*/
 (define *hop-grammar*
@@ -578,12 +569,9 @@
 			 (input-port-position (the-port))))
 	      (expr (ignore))
 	      (src (tree-copy expr))
-	      (js ((clientc-expressionc (hop-clientc))
-		      expr
-		      (current-module-clientc-import)
-		      menv
-		      hop-read-javascript-string)))
-	  (econs '<TILDE> (list js :src `',src :loc `',loc) loc)))
+	      (env (current-module-clientc-import))
+	      (js ((clientc-expressionc (hop-clientc)) expr env menv hop-read-javascript-string)))
+	  (econs '<TILDE> (list js :src `',src :loc `',loc :env `',env) loc)))
       
       ;; structures
       ("#{"
@@ -808,6 +796,7 @@
 ;*---------------------------------------------------------------------*/
 (define *afile-dirs* '())
 (define *afile-mutex* (make-mutex "hop-afile"))
+(define *afile-table* (make-hashtable))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-afile ...                                               */
@@ -816,10 +805,12 @@
 ;*    access table.                                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-afile dir)
+   
    (define (add-dir f)
       (if (or (string=? f "") (char=? (string-ref f 0) #\/))
 	  f
 	  (make-file-name dir f)))
+   
    (mutex-lock! *afile-mutex*)
    (if (memq dir *afile-dirs*)
        (mutex-unlock! *afile-mutex*)
@@ -837,15 +828,15 @@
 (define (get-directory-module-access dir)
    
    (define (get-file-module-access f abase)
-      (call-with-input-file f
-	 (lambda (p)
-	    (let loop ((e (hop-read p)))
-	       (unless (eof-object? e)
-		  (match-case e
-		     ((module ?module-name . ?-)
-		      (module-add-access! module-name (list f) abase))
-		     (else
-		      (loop (hop-read p)))))))))
+      (mutex-lock! *afile-mutex*)
+      (unless (hashtable-get *afile-table* f)
+	 (hashtable-put! *afile-table* f #t)
+	 (call-with-input-file f
+	    (lambda (p)
+	       (match-case (hop-read p)
+		  ((module ?module-name . ?-)
+		   (module-add-access! module-name (list f) abase))))))
+      (mutex-unlock! *afile-mutex*))
    
    (for-each (lambda (f)
 		(when (member (suffix f) (hop-module-suffixes))

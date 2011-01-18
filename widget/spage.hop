@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Thu Dec 23 06:35:49 2010 (serrano)                */
-;*    Copyright   :  2009-10 Manuel Serrano                            */
+;*    Last change :  Tue Jan 11 08:18:28 2011 (serrano)                */
+;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
 ;*=====================================================================*/
@@ -42,17 +42,20 @@
 			 (<SPHEAD> :style "display: none" "?")
 			 (car head))
 		     (<SPAN> :hssclass "hop-spstyle" " ")
-		     (<DIV> :hssclass "hop-spviewport"
-			(<DIV> :hssclass "hop-spbody"
-			   :class class
-			   body))
-		     ~(add-event-listener! window "ready"
+		     (<DIV> :hssclass "hop-spwindow"
+			(<DIV> :hssclass "hop-spviewport"
+			   (<DIV> :hssclass "hop-spbody"
+			      :class class
+			      body)))
+		     ~(add-event-listener! $id "ready"
 			 (lambda (e)
 			    (spage-init $id
 					$(when (xml-tilde? onchange)
 					    (sexp->xml-tilde
 					     `(lambda (event)
-						 ,(xml-tilde->sexp onchange))))))))))))
+						 ,(xml-tilde->sexp onchange))
+					     (xml-tilde-env onchange)
+					     (xml-tilde-menv onchange)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    SPHEAD ...                                                       */
@@ -70,6 +73,19 @@
 		     (<SPAN> ""))))))
 
 ;*---------------------------------------------------------------------*/
+;*    svc-stamp ...                                                    */
+;*---------------------------------------------------------------------*/
+(define svc-stamp 0)
+
+;*---------------------------------------------------------------------*/
+;*    get-svc-stamp ...                                                */
+;*---------------------------------------------------------------------*/
+(define (get-svc-stamp)
+   (let ((s svc-stamp))
+      (set! svc-stamp (+fx 1 svc-stamp))
+      s))
+
+;*---------------------------------------------------------------------*/
 ;*    SPTAB ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <SPTAB> ((id (xml-make-id 'SPTAB) string)
@@ -79,24 +95,29 @@
 			      body)
    
    (define (init-sptab id onselect)
-      (sexp->xml-tilde
-       `(let loop ()
-	   (let ((el (dom-get-element-by-id ,id)))
-	      (if (not el)
-		  (after 10 loop)
-		  (begin
+      (if (xml-tilde? onselect)
+	  (sexp->xml-tilde
+	   `(add-event-listener! ,id "ready"
+	       (lambda (event)
+		  (let ((el this))
 		     (set! el.hop_add_event_listener sptab-add-event-listener!)
-		     ,(when (xml-tilde? onselect)
-			 `(set! el.onselect
-				(lambda (event)
-				   ,(xml-tilde->sexp onselect))))
-		     #unspecified))))))
+		     (set! el.onselect
+			   (lambda (event)
+			      ,(xml-tilde->sexp onselect)))
+		     #unspecified)))
+	   (xml-tilde-env onselect)
+	   (xml-tilde-menv onselect))
+	  (sexp->xml-tilde
+	   `(add-event-listener! ,id "ready"
+	       (lambda (event)
+		  (set! this.hop_add_event_listener sptab-add-event-listener!)
+		  #unspecified)))))
    
    (let* ((head (filter xml-sphead-element? body))
 	  (body (filter (lambda (x) (not (xml-sphead-element? x))) body)))
       (if (and (pair? body) (null? (cdr body)) (xml-delay? (car body)))
 	  ;; a dynamic tab
-	  (let ((svc (service :name (format "sptab/~a" id) ()
+	  (let ((svc (service :name (format "sptab/~a/~a" id (get-svc-stamp)) ()
 			(<DIV> :hssclass "hop-spbody"
 			   :class class
 			   attr
@@ -106,12 +127,12 @@
 		(if (null? head) "?" (car head))
 		(init-sptab id onselect)))
 	  ;; a static tab
-	  (<DIV> :hssclass "hop-sptab-static"
-	     (<DIV> :hssclass "hop-spbody":class class attr body)
-	     (<DIV> :hssclass "hop-sptab" :class class :id id
-		:onclick ~(spage-push-node this (dom-previous-sibling this))
-		(if (null? head) "?" (car head))
-		(init-sptab id onselect))))))
+	  (<DIV> :hssclass "hop-sptab" :class class :id id
+	     :onclick ~(spage-push-node this (dom-first-child (dom-last-child this)))
+	     (if (null? head) "?" (car head))
+	     (init-sptab id onselect)
+	     (<DIV> :hssclass "hop-sptab-static"
+		(<DIV> :hssclass "hop-spbody":class class attr body))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    SPTABHEAD ...                                                    */

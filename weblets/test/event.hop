@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Fri Nov  5 12:03:57 2010 (serrano)                */
-;*    Copyright   :  2007-10 Manuel Serrano                            */
+;*    Last change :  Sun Jan  9 07:03:46 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
 ;*=====================================================================*/
@@ -93,18 +93,6 @@ events succeeded, you should see an acknowledge.")
 	       ~(define (add-text e)
 		   (when e.value
 		      (innerHTML-set! $b5 (apply string-append e.value))))
-	       ~(add-event-listener! window "ready"
-		   (lambda (e)
-		      (let ((imp (cond
-				    ((hop-config 'websocket)
-				     "websocket")
-				    ((hop-config 'xhr_multipart)
-				     "xhr/multipart")
-				    ((hop-config 'flash_external_interface)
-				     "flash")
-				    (else
-				     "long polling"))))
-			 (innerHTML-set! $b6 imp))))
 	       ~(add-event-listener! $evt1 "server"
 		   (lambda (e)
 		      (when e.value
@@ -124,13 +112,21 @@ events succeeded, you should see an acknowledge.")
 			  (set! e.value "B")))))
 	       ~(add-event-listener! document "serverready"
 		   (lambda (e)
+		      (let ((imp (if (string? (hop-config :server_event))
+				     (hop-config :server_event)
+				     "long polling")))
+			 (innerHTML-set! $b6 imp))
 		      (with-hop ($(service :ttl 1 ()
+				     (tprint "EVT.1: " evt1)
 				     (hop-event-signal!
 				      evt1 evt1)
+				     (tprint "EVT.2: " evt2)
 				     (hop-event-signal!
 				      evt2 evt2)
+				     (tprint "EVT.3: " evt3)
 				     (hop-event-signal!
 				      evt3 evt3)
+				     (tprint "EVT.4: " evt4)
 				     (hop-event-signal!
 				      evt4 (list "foo" "\"" "bar")))))))
 	       (<H4> "Client events")
@@ -150,6 +146,9 @@ events succeeded, you should see an acknowledge.")
 			    (oy 1)
 			    (oz 1)
 			    (PI/2 (* 2 (atan 1))))
+			 (add-event-listener! window "orientationchange"
+			    (lambda (e)
+			       (tprint "orientationchange...")))
 			 (add-event-listener! window "MozOrientation"
 			    (lambda (e)
 			       (when (or (> (abs (- e.x ox)) 0.05)

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/share/hop-serialize.js            */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-serialize.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Fri Jul  2 11:52:39 2010 (serrano)                */
-/*    Copyright   :  2007-10 Manuel Serrano                            */
+/*    Last change :  Sat Jan 15 19:47:41 2011 (serrano)                */
+/*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
@@ -45,8 +45,7 @@ function hop_bigloo_serialize( item ) {
    if( item instanceof Date )
       return hop_serialize_date( item );
 
-   if( (item instanceof Object) &&
-       ((typeof item.hop_bigloo_serialize) == "function") )
+   if( (item instanceof Object) && ("hop_bigloo_serialize" in item) )
       return item.hop_bigloo_serialize();
    
    if( (HTMLCollection != undefined) && (item instanceof HTMLCollection) )

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sun Nov 21 08:20:57 2010 (serrano)                */
-/*    Copyright   :  2007-10 Manuel Serrano                            */
+/*    Last change :  Sun Jan  9 08:05:31 2011 (serrano)                */
+/*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
 /*=====================================================================*/
@@ -56,18 +56,29 @@ function hop_add_event_listener( obj, event, proc, capture ) {
    if( event === "timeout" )
       return hop_add_timeout_listener( obj, proc );
 
-   if( ("hop_add_event_listener" in obj) &&
-       (obj.hop_add_event_listener != hop_add_event_listener) )
-      return obj.hop_add_event_listener( event, proc, capture );
-
    if( event === "ready" ) {
-      if( hop_is_ready ) {
-	 return proc( new function() { this.name = 'ready' } );
+      if( obj === window ) {
+	 if( hop_is_ready ) {
+	    window.ready = proc;
+	    return window.ready( new HopEvent( "ready", window ) );
+	 } else {
+	    return hop_add_native_event_listener( window, "load", proc, capture );
+	 }
+      } else if( typeof obj === "string" ) {
+	 /* wait for a node to be created and added to the document */
+	 return after( 1, function() { hop_add_ready_listener( obj, proc, 20 ) } );
       } else {
-	 return hop_add_native_event_listener( window, "load", proc, capture );
+	 return sc_error( "add-event-listener!",
+			  "Illegal \"ready\" event for object",
+			  obj );
       }
    }
    
+   if( ("hop_add_event_listener" in obj) &&
+       (obj.hop_add_event_listener != hop_add_event_listener) ) {
+      return obj.hop_add_event_listener( event, proc, capture );
+   }
+
    return hop_add_native_event_listener( obj, event, proc, capture );
 }
 
@@ -97,6 +108,26 @@ function hop_remove_event_listener( obj, event, proc, capture ) {
 
    return hop_remove_native_event_listener( obj, event, proc, capture );
 } 
+
+/*---------------------------------------------------------------------*/
+/*    hop_add_ready_listener ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_add_ready_listener( obj, proc, ttl ) {
+   var el = document.getElementById( obj );
+
+   if( !el ) {
+      if( ttl > 0 ) {
+	 after( 10, function() { return hop_add_ready_listener( obj, proc, ttl - 1 ); } );
+      } else {
+	 return sc_error( "add-event-listener!",
+			  "Timeout when getting \"ready\" object",
+			  obj );
+      }
+   } else {
+      el.ready = proc;
+      el.ready( new HopEvent( "ready", el ) );
+   }
+}
 
 /*---------------------------------------------------------------------*/
 /*    hop_add_active_location_listener ...                             */
@@ -248,7 +279,6 @@ function start_servevt_websocket_proxy( key, host, port ) {
    if( !hop_servevt_proxy.websocket ) {
       var url = "ws://" + host + ":" + port +
 	 hop_service_base() + "/server-event/websocket?key=" + key;
-/*       var url = "ws://" + host + ":" + 8788 + "/echo";              */
       var ws = new WebSocket( url );
 
       var register = function( id ) {
@@ -381,6 +411,8 @@ function start_servevt_ajax_proxy( key ) {
       var xhr_error_ttl = 6 * 3;
       var server_ready = false;
       
+      if( !hop_config.server_event ) hop_config.server_event = "ajax";
+      
       var register = function( id ) {
 	 var svc = hop_service_base() +
 	    "/server-event/register?event=" + id +
@@ -420,7 +452,7 @@ function start_servevt_ajax_proxy( key ) {
 		(xhr_error_ttl > 0) &&
 		!xhr.getAllResponseHeaders() ) {
 	       // mark the connection timeout error in order to avoid
-	       // falling into an infinit loop when the server has crashed.
+	       // falling into an infinite loop when the server has crashed.
 	       xhr_error_ttl--;
 	       // we have reached a timeout, we just re-register
 	       register( id );
@@ -469,9 +501,123 @@ function start_servevt_ajax_proxy( key ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_servevt_signal ...                                           */
+/*---------------------------------------------------------------------*/
+function hop_servevt_signal( val ) {
+   // null is used as a marker for an abandonned connection
+   if( val != null ) {
+      // invoke all the user handlers (we have received a list of
+      // values corresponding to server buffer).
+      while( sc_isPair( val ) ) {
+	 var v = val.car;
+	 var id = v.car;
+	 var vals = v.cdr;
+
+	 while( vals != null ) {
+	    hop_trigger_servevt( id, vals.car, vals.car, false );
+	    vals = vals.cdr;
+	 }
+
+	 val = val.cdr;
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    servevt_script_url ...                                           */
+/*---------------------------------------------------------------------*/
+function servevt_script_url( id, key, nocache ) {
+   return hop_service_base()
+      + "/server-event/register?event=" + id 
+      + "&key=" + key  + "&mode=ajax&padding=hop_servevt_signal["
+      + nocache + "]";
+}
+
+/*---------------------------------------------------------------------*/
+/*    start_servevt_script_proxy ...                                   */
+/*---------------------------------------------------------------------*/
+function start_servevt_script_proxy( key ) {
+   if( !hop_servevt_proxy.script ) {
+      var nocache = 0;
+      var ttl = 2;
+      
+      if( !hop_config.server_event ) hop_config.server_event = "script";
+
+      var register = function( id ) {
+	 var script = document.createElement( "script" );
+	 var cache = nocache++
+
+	 script.className = "hop_servevt_script";
+	 script.error_ttl = ttl;
+	 script.src = servevt_script_url( id, key, cache );
+	 script.id = script + nocache;
+	 
+	 script.onerror = function( e ) {
+	    if( script.error_ttl < 0 ) {
+	       exc = new Error( "Cannot receive server event response" );
+	       exc.message = "Abandoning server event";
+	       exc.scObject = key;
+	       exc.hopStack = false;
+
+	       script.onerror = false;
+	       script.parentNode.removeChild( script );
+	       
+	       hop_report_exception( exc );
+	    } else {
+	       script.error_ttl--;
+	       script.src = servevt_script_url( id, key, nocache++ );
+	    }
+	 };
+
+	 hop_servevt_signal[ cache ] = function( val ) {
+	    hop_servevt_signal( val );
+
+	    register( "" );
+	 }
+
+	 script.onload = function( e ) {
+	    script.parentNode.removeChild( script );
+	 }
+	 
+	 // hook the new script after a small timeout to avoid busy icons
+	 after( 10, function () { document.body.appendChild( script ) } );
+      }
+
+      var unregister = function( id ) {
+	 var script = document.createElement( "script" );
+	 var svc = hop_service_base() +
+	 "/server-event/unregister?event=" + id +
+	 "&key=" + hop_servevt_proxy.key;
+
+	 script.onload = function( e ) {
+	    script.parentNode.removeChild( script );
+	 }
+	 script.src = svc;
+
+	 document.body.appendChild( script );
+      };
+
+      // complete the proxy definition
+      hop_servevt_proxy.register = register;
+      hop_servevt_proxy.unregister = unregister;
+
+      // register the unitialized events
+      for( var p in hop_servevt_table ) {
+	 if( hop_servevt_table[ p ].hop_servevt ) {
+	    register( p );
+	 }
+      }
+      
+      // raise server_ready 
+      after( 100, function() { hop_trigger_serverready_event( new HopServerReadyEvent() ); } );
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    start_servevt_flash_proxy ...                                    */
 /*---------------------------------------------------------------------*/
 function start_servevt_flash_proxy( key, host, port ) {
+   
    var object_proxy = function() {
       return "<object id='" + hop_servevt_id + "' class='hop-servevt-proxy'" +
       " style='visibility: visible; position: fixed; top: 0; right: 0'" +
@@ -517,6 +663,8 @@ function start_servevt_flash_proxy( key, host, port ) {
    node_style_set( proxy, "top", "0" );
    node_style_set( proxy, "right", "0" );
    node_style_set( proxy, "background", "transparent" );
+   
+   proxy.ready = false;
 
    if( hop_config.flash_markup === "embed" ) {
       proxy.appendChild( embed_proxy() );
@@ -527,7 +675,30 @@ function start_servevt_flash_proxy( key, host, port ) {
    document.body.appendChild( proxy );
    document.getElementById( hop_servevt_id ).key = key;
 
+   /* give 4 seconds to flash to succeed or switch to long polling */
+   after( 4000, function() {
+	 if( !proxy.ready ) {
+	    document.body.removeChild( proxy );
+	    start_long_polling_proxy( key, host, port );
+	 }
+      } );
+      
    return proxy;
+}
+
+/*---------------------------------------------------------------------*/
+/*    start_long_polling_proxy ...                                     */
+/*---------------------------------------------------------------------*/
+function start_long_polling_proxy( key, host, port ) {
+   hop_config.server_event = "long polling";
+
+   if( servevt_scriptp() ) {
+      // script polling
+      start_servevt_script_proxy( key );
+   } else {
+      // fallback xhr backend
+      start_servevt_ajax_proxy( key );
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -551,10 +722,12 @@ function hop_servevt_onerror( msg ) {
 function hop_servevt_proxy_flash_init() {
    /* if we are here, we are sure that Flash v8 or better is running */
    hop_flash_minversion_set( 8 );
+   hop_config.server_event = "flash";
 
    var pending_events = 0;
 
    hop_servevt_proxy = document.getElementById( hop_servevt_id );
+   hop_servevt_proxy.ready = true;
 
    var abort = function( id ) {
       var svc = hop_service_base() +
@@ -649,7 +822,14 @@ function servevt_websocketp() {
 function servevt_xhr_multipartp() {
    return hop_config.xhr_multipart;
 }
-      
+
+/*---------------------------------------------------------------------*/
+/*    servevt_scriptp ...                                              */
+/*---------------------------------------------------------------------*/
+function servevt_scriptp() {
+   return true;
+}
+
 /*---------------------------------------------------------------------*/
 /*    servevt_flashp ...                                               */
 /*---------------------------------------------------------------------*/
@@ -669,6 +849,7 @@ function servevt_flashp( port ) {
 function hop_start_servevt_proxy() {
    hop_servevt_proxy = new Object();
    hop_servevt_proxy.websocket = false;
+   hop_servevt_proxy.script = false;
    hop_servevt_proxy.register = function( x ) {};
 
    hop_send_request( hop_service_base() + "/server-event/info",
@@ -691,18 +872,19 @@ function hop_start_servevt_proxy() {
 			   try {
 			      start_servevt_flash_proxy( key, host, port );
 			   } catch( e ) {
-			      e.scObject = ("port=" + port);
 			      throw( e );
 			   }
 			} else {
-			   // fallback xhr backend
-			   start_servevt_ajax_proxy( key );
+			   start_long_polling_proxy( key, host, port );
 			}
 		     },
-
 		     // failure callback
-		     function( v ) {
-			throw new Error( "No event server acknowledge" );
+		     function( xhr ) {
+			if( xhr.exception ) {
+			   throw xhr.exception;
+			} else {
+			   throw new Error( "No event server acknowledge" );
+			}
 		     },
 		     // run the anim during the call
 		     true,
@@ -713,7 +895,7 @@ function hop_start_servevt_proxy() {
 /*---------------------------------------------------------------------*/
 /*    hop_trigger_servevt ...                                          */
 /*    -------------------------------------------------------------    */
-/*    This function is invoked by Flash and Ajax on event reception.   */
+/*    This function is invoked by Flash and Ajax upon event reception  */
 /*---------------------------------------------------------------------*/
 function hop_trigger_servevt( id, text, value, json ) {
    try {

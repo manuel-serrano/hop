@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 13 05:44:41 2010                          */
-;*    Last change :  Mon Nov 22 18:13:27 2010 (serrano)                */
+;*    Last change :  Sun Dec 26 17:19:02 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Gauge server-side implementation                                 */
@@ -41,7 +41,7 @@
 	 "0"
 	 (<DIV> :hssclass "hop-gauge-fill" :id fid)
 	 (<DIV> :hssclass "hop-gauge-text" :id tid "0")
-	 ~(add-event-listener! window "ready"
+	 ~(add-event-listener! $id "ready"
 	     (lambda (e)
 		(gauge-init! $id $fid $tid $value $min $max $fmt $listener)))
 	 body)))

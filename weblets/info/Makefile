@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/weblets/info/Makefile             */
+#*    serrano/prgm/project/hop/2.2.x/weblets/info/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed Oct 14 11:42:05 2009 (serrano)                */
-#*    Copyright   :  2006-09 Manuel Serrano                            */
+#*    Last change :  Sat Dec 25 19:02:07 2010 (serrano)                */
+#*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Weblet Makefile                                                  */
 #*=====================================================================*/
@@ -24,9 +24,10 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 SOURCES		= info.hop
 
-POPULATION	= Makefile info.hss \
+POPULATION	= Makefile info.hss info.scm \
                   etc/weblet.info.in etc/info.wiki.in \
                   etc/logo.png etc/favicon.png \
+                  etc/maze.scm \
                   $(SOURCES)
 
 #*---------------------------------------------------------------------*/
@@ -34,7 +35,7 @@ POPULATION	= Makefile info.hss \
 #*---------------------------------------------------------------------*/
 build: etc/weblet.info etc/$(TITLE).wiki .afile
 
-.afile: $(SOURCES)
+.afile: $(SOURCES) etc/maze.scm
 	$(AFILE) -suffix hop $(POPULATION) -o .afile
 
 clean:

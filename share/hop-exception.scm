@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Thu Dec 23 07:46:01 2010 (serrano)                */
+;*    Last change :  Thu Dec 30 15:25:22 2010 (serrano)                */
 ;*    Copyright   :  2009-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -35,7 +35,9 @@
 ;*    hop-name-aliases ...                                             */
 ;*---------------------------------------------------------------------*/
 (define hop-name-aliases
-   '(("hop_send_request" . "with-hop")))
+   '(("hop_send_request" . "with-hop")
+     ("hop_add_event_listener" . "add-event-listener!")
+     ("hop_innerHTML_set" . "innerHTML-set!")))
 
 ;*---------------------------------------------------------------------*/
 ;*    bigloo-mangled? ...                                              */
@@ -138,7 +140,7 @@
 		 (let ((frame (cons caller (vector->list caller.arguments))))
 		    (loop caller.caller (- n 1) (cons frame stack)))
 		 (reverse! stack))))
-	 (proc
+	 ((and proc (not (eq? proc #unspecified)))
 	  (loop proc.caller (- offset 1)))
 	 (else
 	  '()))))
@@ -169,15 +171,14 @@
    (cond
       ((procedure? o)
        (let ((name (cond
-		      ((not (string? o.name))
-		       (bigloo-demangle
-			(with-output-to-string (lambda () (write o)))))
-		      ((> (string-length o.name) 0)
+		      ((and (string? o.sc_name) (> (string-length o.sc_name) 0))
+		       (bigloo-demangle o.sc_name))
+		      ((and (string? o.name) (> (string-length o.name) 0))
 		       (bigloo-demangle o.name))
 		      (else
-		       (<I> "anonymous")))))
-	  (if (and longp (string? o.location))
-	      (let ((m (pregexp-match "[(]at ([^ ]+) ([^ ]+)[)]" o.location)))
+		       "anonymous"))))
+	  (if (and longp (string? o.sc_location))
+	      (let ((m (pregexp-match "[(]at ([^ ]+) ([^ ]+)[)]" o.sc_location)))
 		 (if m
 		     (list
 		      (<SPAN> :style "color: #777" 
@@ -289,7 +290,7 @@
 		      (string-split exc.description "\n "))))
 	 (else
 	  "unknwown error")))
-   
+
    (let* ((message (exception-message exc))
 	  (msg (if (and exc (js-in? "scObject" exc))
 		   (list message " -- " (<TT> (obj->name exc.scObject #f)))
@@ -330,7 +331,7 @@
 				 (obj->name exc.hopService #f))))))
 	       (when (pair? exc.hopStack)
 		  (<EXCEPTION-STACK> exc.hopStack))
-	       (when (string? exc.stack)
+	       (when (and (> (hop-debug) 1) (string? exc.stack))
 		  (<EXCEPTION-JSSTACK> exc.stack 2)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -355,6 +356,7 @@
 		       e))
 		   (else
 		    exc))))
+	  (set! e.hopStack (hop-get-stack 1))
 	  (dom-append-child! document.body (<EXCEPTION> e))))
       (else
        ;; the error might be raised even before document.body is bound

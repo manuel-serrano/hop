@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun Dec 19 14:10:48 2010 (serrano)                */
-;*    Copyright   :  2004-10 Manuel Serrano                            */
+;*    Last change :  Sun Jan  9 07:48:11 2011 (serrano)                */
+;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -158,7 +158,8 @@
 					header
 					content-type charset
 					server content-length value
-					bodyp timeout request serializer)
+					bodyp timeout request serializer
+					padding)
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request)))
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
@@ -168,14 +169,19 @@
 		(http-write-line p "Content-Length: " content-length)
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
+	    (http-write-line p "Cache-Control: no-cache")
 	    (http-write-content-type p (or content-type (hop-json-mime-type)) charset)
 	    (http-write-line-string p "Server: " server)
+	    
 	    (http-write-line-string p "Hop-Serialize: "
 				    (symbol->string! serializer))
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 "http-response-js"
 	       (when bodyp
+		  (when padding
+		     (display padding p)
+		     (display "(" p))
 		  (case serializer
 		     ((javascript)
 		      (obj->javascript value p #t))
@@ -186,7 +192,9 @@
 		     (else
 		      (error "http-response"
 			     "Unspported serialization method"
-			     (hop-serialize-method))))))
+			     (hop-serialize-method))))
+		  (when padding
+		     (display ")" p))))
 	    (flush-output-port p)
 	    connection))))
 

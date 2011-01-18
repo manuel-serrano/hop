@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -100,8 +100,8 @@ function sc_error() {
 function sc_arity_check(fun, nbArgs) {
    function err( args, msg, obj ) {
       var where= ("callee" in args && "caller" in args.callee ?
-		  ("name" in args.callee.caller ?
-		   args.callee.caller.name : args.callee.caller)
+		  ("sc_name" in args.callee.caller ?
+		   args.callee.caller.sc_name : args.callee.caller)
 		  : "arity-check");
       sc_error(where, msg, obj);
       return undefined;
@@ -311,7 +311,7 @@ function sc_greaterEqual(x, y) {
     return true;
 }
 
-/*** META ((export #t) (arity #t)
+/*** META ((export zero? zerofx? zerofl?) (arity #t)
            (type bool)
            (peephole (postfix "=== 0")))
 */
@@ -335,7 +335,7 @@ function sc_isNegative(x) {
     return (x < 0);
 }
 
-/*** META ((export #t) (arity #t)
+/*** META ((export odd? oddfx? evenfl?) (arity #t)
            (type bool)
            (peephole (postfix "%2===1")))
 */
@@ -343,7 +343,7 @@ function sc_isOdd(x) {
     return (x % 2 === 1);
 }
 
-/*** META ((export #t) (arity #t)
+/*** META ((export even? evenfx? evenfl?) (arity #t)
            (type bool)
            (peephole (postfix "%2===0")))
 */
@@ -380,7 +380,7 @@ function sc_multi() {
     return product;
 }
 
-/*** META ((export - -fx -fl)
+/*** META ((export - -fx -fl negfx negfl)
            (peephole (minus))
            (arity -2))
 */
@@ -422,14 +422,14 @@ function sc_quotient(x, y) {
     return parseInt(x / y);
 }
 
-/*** META ((export #t) (arity #t)
+/*** META ((export remainder remainderfl) (arity #t)
            (peephole (infix 2 2 "%")))
 */
 function sc_remainder(x, y) {
     return x % y;
 }
 
-/*** META ((export #t) (arity #t))
+/*** META ((export modulo modulofx) (arity #t))
 */
 function sc_modulo(x, y) {
     var remainder = x % y;
@@ -2145,6 +2145,16 @@ function sc_currentSeconds() {
 */
 function sc_currentMicroseconds() {
    return (new Date()).getTime();
+}
+
+/*** META ((export #t) (arity #t)) 
+*/
+function sc_time(proc) {
+   var start = sc_currentMicroseconds();
+   var res = proc();
+   var stop = sc_currentMicroseconds();
+
+   return sc_values( res, stop - start, 0, 0 );
 }
 
 function sc_Hashtable() {

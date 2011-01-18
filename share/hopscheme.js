@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Wed Sep  8 09:02:27 2010 (serrano)                */
-/*    Copyright   :  2007-10 Manuel Serrano                            */
+/*    Last change :  Sat Jan 15 20:03:28 2011 (serrano)                */
+/*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
 /*=====================================================================*/
@@ -31,6 +31,10 @@ function hop_bigloo_serialize_pair( l ) {
 
 sc_Pair.prototype.hop_bigloo_serialize = function() {
    return '(' + hop_bigloo_serialize_pair( this );
+};
+
+sc_Char.prototype.hop_bigloo_serialize = function() {
+   return 'a' + hop_serialize_word( this.val.charCodeAt( 0 ) );
 };
 
 /*---------------------------------------------------------------------*/

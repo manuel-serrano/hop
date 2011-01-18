@@ -705,7 +705,7 @@
 	       (?@ stmt? "~@;\n")
 	       (?@ needs-parenthesis? "(~@)")
 	       (?@ (Out-Env-debug? env)
-		   "~a=~@,~a.name=\"~a\",~a.location=\"~a\",~a.sc_arity=~a,~a"
+		   "~a=~@,~a.sc_name=\"~a\",~a.sc_location=\"~a\",~a.sc_arity=~a,~a"
 		   *tmp-var*
 		   *tmp-var* (cond
 				((Ref? lvalue) (Var-id (Ref-var lvalue)))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Nov 20 07:16:13 2010                          */
-/*    Last change :  Sun Nov 21 12:29:19 2010 (serrano)                */
+/*    Last change :  Sat Dec 25 18:39:20 2010 (serrano)                */
 /*    Copyright   :  2010 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Workbench HSS                                                    */
@@ -173,11 +173,13 @@ button.selector:hover {
   border-bottom: 1px solid #aaa;
   border-collapse: collapse;
   width: 100%;
+  font-family: monospace;
 }
 
 #console-head th {
   border-left: 1px solid #aaa;
   width: 22px;
+  min-height: 22px;
   background-repeat: no-repeat;
   background-position: center center;
 }
@@ -213,18 +215,26 @@ button.selector:hover {
 #consolep {
   font-family: monospace;
   background: #f7fff7;
-  display: inline-block;
   position: absolute;
   top: 3ex;
   left: 0;
   right: 0;
   bottom: 0;
+  margin-top: 3px;
+  padding: 0;
 }
 
 #console {
+  font-size: 95%;
+  font-family: monospace;
+  overflow: auto;
   background: #fafbfe;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  margin: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   border: 0;
 }
 

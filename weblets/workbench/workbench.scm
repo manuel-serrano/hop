@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Nov 21 06:00:36 2010                          */
-;*    Last change :  Sun Nov 21 12:23:56 2010 (serrano)                */
+;*    Last change :  Sat Dec 25 18:37:50 2010 (serrano)                */
 ;*    Copyright   :  2010 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Client side for the workbench                                    */
@@ -80,7 +80,7 @@
 (define (server-event-handler event)
    (when logp
       (let ((el (dom-get-element-by-id "console")))
-	 (set! el.value (string-append el.value event.value)))))
+	 (dom-append-child! el event.value))))
 
 ;*---------------------------------------------------------------------*/
 ;*    url-keydown-handler ...                                          */

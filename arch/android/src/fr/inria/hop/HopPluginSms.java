@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Mon Oct 25 10:17:23 2010 (serrano)                */
-/*    Copyright   :  2010 Manuel Serrano                               */
+/*    Last change :  Tue Jan 11 17:30:00 2011 (serrano)                */
+/*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with SMS                                                 */
 /*=====================================================================*/
@@ -38,7 +38,7 @@ public class HopPluginSms extends HopPlugin {
    protected void server( final InputStream ip, final OutputStream op )
       throws IOException {
       
-      switch( ip.read() ) {
+      switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'s':
 	    // send a SMS
 	    PendingIntent sentpi = PendingIntent.getBroadcast(
