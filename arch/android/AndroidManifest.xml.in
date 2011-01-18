@@ -4,14 +4,17 @@
       android:versionCode="2"
       android:versionName="@HOPVERSION@">
     <application android:label="@string/hop"
-                 android:screenOrientation="nosensor"
+                 android:screenOrientation="landscape"
+                 android:persistent="true"
                  android:icon="@drawable/logo">
         <activity android:name="fr.inria.hop.hop"
+                  android:screenOrientation="landscape"
                   android:launchMode="singleInstance"
                   android:label="@string/hop">
         </activity>
         <activity android:name="fr.inria.hop.HopLauncher"
-                  android:configChanges="keyboardHidden|orientation"
+                  android:screenOrientation="landscape"
+                  android:configChanges="keyboard|keyboardHidden|orientation|screenLayout"
                   android:label="@string/hop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
