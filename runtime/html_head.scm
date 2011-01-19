@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Dec 17 07:42:24 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Wed Jan 19 14:50:02 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -467,7 +467,8 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 				   (and (xml-markup-is? x 'meta)
 					(dom-get-attribute x "http-equiv")))
 				body0))
-		     (let ((meta (<META> :http-equiv "Content-Type")))
+		     (let ((meta (<META> :http-equiv "Content-Type"
+				    :content "~a; charset=~a")))
 			(cons meta body1))
 		     body1)))
       (instantiate::xml-markup

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Sun Nov  7 08:58:12 2010 (serrano)                */
-;*    Copyright   :  2007-10 Manuel Serrano                            */
+;*    Last change :  Wed Jan 19 14:30:43 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
 ;*    This module implements a WebDAV server as specified              */
@@ -57,7 +57,7 @@
       (header-format "<?xml version=\"1.0\" encoding=\"~a\"?>")
       (no-end-tags-elements '())
       ;; the meta-format contains the closing />
-      (meta-format "/>")
+      (meta-delimiter "/>")
       ;; support <foo/> abbreviations
       (abbrev-emptyp #t)))
 

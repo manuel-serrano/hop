@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/weblets/homepage.hop      */
+;*    serrano/prgm/project/hop/2.2.x/weblets/weblets/homepage.hop      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec  7 07:29:36 2007                          */
-;*    Last change :  Wed May  6 10:22:19 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Last change :  Tue Jan 18 18:01:28 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The service that dynamically creates weblets homagepage.         */
 ;*=====================================================================*/
@@ -13,14 +13,16 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module weblets_homepage
-
-   (import weblets
-	   weblets_config
-	   weblets_package
-	   weblets_markup
-	   weblets_fontifier)
    
-   (export weblets/homepage))
+   (library hop)
+   
+   (import  weblets
+	    weblets_config
+	    weblets_package
+	    weblets_markup
+	    weblets_fontifier)
+   
+   (export  weblets/homepage))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblets-cache ...                                                */
@@ -30,7 +32,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    weblets/homepage ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-service (weblets/homepage #!key weblet)
+(define-service (weblets/homepage #!key weblet file)
    ;; check if the weblet exists
    (if (not weblet)
        (http-bad-request "/hop/weblets/homepage -- parameter `weblet' should be provided")
@@ -39,7 +41,7 @@
 	      (http-file-not-found weblet)
 	      (let ((hz (car hzs)))
 		 (untar-hz hz)
-		 (weblets-homepage weblet hz))))))
+		 (weblets-homepage weblet hz file))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblet-cache-dir ...                                             */
@@ -52,38 +54,41 @@
 ;*---------------------------------------------------------------------*/
 ;*    weblets-homepage ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (weblets-homepage weblet hz)
+(define (weblets-homepage weblet hz file)
    (let* ((dir (make-file-name (weblet-cache-dir hz) "etc"))
 	  (homedir (make-file-name dir "homepage"))
 	  (info (with-input-from-file (make-file-name dir "weblet.info")
 		   read))
 	  (logo (make-file-name dir "logo.png"))
 	  (fi (make-file-name dir "favicon.png"))
-	  (title (find-info info 'name weblet)))
-      (<HTML>
-	 (<HEAD> :favicon fi
-	    :title title
-	    :jscript (make-file-path (hop-weblets-directory) "hz" "hz-install.js")
-	    :include (when (directory? homedir) "hop-notepad")
-	    :css (service-resource weblets "weblets.hss")
-	    :css (service-resource weblets "weblets-homepage.hss"))
-	 (<BODY> :id "weblet-homepage"
-	    (<DIV> :align 'center
-	       (<TABLE> :class "weblet-homepage"
-		  (<COLGROUP> (<COL> :width "0*"))
-		  (<TR>
-		     (<TD> :class "logo"
-			(<IMG> :class "logo" :inline #t :src logo))
-		     (<TD> :class "content"
-			(<DIV> :class "weblet-homepage"
-			   (<DIV> :id "title"
-			      (string-capitalize title)
-			      (let ((title (find-info info 'title "")))
-				 (when title (list " - " title))))
-			   (if (directory? homedir)
-			       (weblets-homepage-custom weblet hz info)
-			       (weblets-homepage-default weblet hz info))))))
-	       (<FOOT>))))))
+	  (title (find-info info 'name weblet))
+	  (resp (if (directory? homedir)
+		    (weblets-homepage-custom weblet hz info file)
+		    (weblets-homepage-default weblet hz info))))
+      (if (%http-response? resp)
+	  resp
+	  (<HTML>
+	     (<HEAD> :favicon fi
+		:title title
+		:jscript (make-file-path (hop-weblets-directory) "hz" "hz-install.js")
+		:include (when (directory? homedir) "hop-notepad") "hop-foot"
+		:css (service-resource weblets "weblets.hss")
+		:css (service-resource weblets "weblets-homepage.hss"))
+	     (<BODY> :id "weblet-homepage"
+		(<DIV> :align 'center
+		   (<TABLE> :class "weblet-homepage"
+		      (<COLGROUP> (<COL> :width "0*"))
+		      (<TR>
+			 (<TD> :class "logo"
+			    (<IMG> :class "logo" :inline #t :src logo))
+			 (<TD> :class "content"
+			    (<DIV> :class "weblet-homepage"
+			       (<DIV> :id "title"
+				  (string-capitalize title)
+				  (let ((title (find-info info 'title "")))
+				     (when title (list " - " title))))
+			       resp))))
+		   (<FOOT>)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblets-homepage-default ...                                     */
@@ -123,6 +128,7 @@
 (define (weblets-homepage-wiki-file file dir url info)
    (let ((m (eval-module)))
       (eval `(module ,(gensym 'weblets-home-page-wiki)
+	      (import weblets_homepage)
 	      (import weblets_markup)))
       (eval `(define (weblet-url) ,url))
       (eval `(define (weblet-etc-dir) ,dir))
@@ -141,7 +147,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    weblets-homepage-custom ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (weblets-homepage-custom weblets hz info)
+(define (weblets-homepage-custom weblets hz info file)
    (let* ((dir (make-file-name (weblet-cache-dir hz) "etc"))
 	  (url (format "http://~a:~a~a" (hostname) (hop-port) hz))
 	  (homedir (make-file-name dir "homepage"))
@@ -150,6 +156,10 @@
 			    (string-suffix? ".wiki" f))
 			 files)))
       (cond
+	 ((string? file)
+	  (instantiate::http-response-file
+	     (content-type (mime-type file "text/plain"))
+	     (file (make-file-name homedir file))))
 	 ((null? files)
 	  (weblets-homepage-default weblets hz info))
 	 ((null? (cdr wikis))

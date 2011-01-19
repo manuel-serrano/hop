@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Tue Jan 11 07:30:42 2011 (serrano)                */
+;*    Last change :  Wed Jan 19 14:25:25 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
@@ -25,7 +25,7 @@
 	      (cdata-stop (default #f))
 	      (css-start (default #f))
 	      (css-stop (default #f))
-	      (meta-format::bstring read-only)
+	      (meta-delimiter::bstring read-only)
 	      (abbrev-emptyp::bool (default #f))
 	      (security::obj read-only (default #f)))
 
@@ -89,7 +89,8 @@
 	       (env (default #f))
 	       (menv (default #f)))
 
-	    (class xml-meta::xml-markup)
+	    (class xml-meta::xml-markup
+	       (content::obj (default #f)))
 
 	    (generic %xml-constructor ::xml)))
 

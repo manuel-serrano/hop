@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Jan 11 08:03:57 2011 (serrano)                */
+;*    Last change :  Wed Jan 19 14:50:14 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -109,7 +109,7 @@
       (header-format "")
       (no-end-tags-elements '(link))
       ;; the meta-format contains the closing >
-      (meta-format " content=\"~a; charset=~a\">")))
+      (meta-delimiter ">")))
 
 ;*---------------------------------------------------------------------*/
 ;*    *html5-backend* ...                                              */
@@ -123,7 +123,7 @@
       (header-format "")
       (no-end-tags-elements '(link))
       ;; the meta-format contains the closing >
-      (meta-format " content=\"~a; charset=~a\">")))
+      (meta-delimiter ">")))
 
 ;*---------------------------------------------------------------------*/
 ;*    *xhtml-backend* ...                                              */
@@ -132,8 +132,7 @@
    (instantiate::xml-backend
       (id 'xhtml-1.0)
       (mime-type "application/xhtml+xml")
-;*       (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">") */
-      (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN\" \"http://www.w3.org/2002/04/xhtml-math-svg/xhtml-math-svg.dtd\" [<!ENTITY nbsp \"&#160;\">]>")
+      (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN\" \"http://www.w3.org/2002/04/xhtml-math-svg/xhtml-math-svg.dtd\" [<!ENTITY nbsp \"&#160;\"><!ENTITY OverBar \"&#xaf;\"><!ENTITY OverBrace \"&#xFE37;\">]>")
       (html-attributes (hop-xhtml-xmlns))
       (header-format "<?xml version=\"1.0\" encoding=\"~a\"?>\n")
       (no-end-tags-elements '())
@@ -141,7 +140,7 @@
       (cdata-start "\n<![CDATA[\n")
       (cdata-stop "]]>\n")
       ;; the meta-format contains the closing />
-      (meta-format " content=\"~a; charset=~a\"/>")))
+      (meta-delimiter "/>")))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-xml-backend ...                                              */
@@ -459,14 +458,16 @@
 ;*    xml-write ::xml-meta ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-meta p backend)
-   (with-access::xml-meta obj (tag attributes body)
+   (with-access::xml-meta obj (tag attributes content body)
       (display "<" p)
       (display tag p)
       (xml-write-attributes attributes p backend)
-      (if (pair? (plist-assq :content attributes))
-	  (display ">" p)
-	  (with-access::xml-backend backend (meta-format mime-type)
-	     (fprintf p meta-format mime-type (hop-charset))))
+      (with-access::xml-backend backend (mime-type meta-delimiter)
+	 (when content
+	    (display " content=\"" p)
+	    (fprintf p content mime-type (hop-charset))
+	    (display "\"" p))
+	 (display meta-delimiter p))
       (newline p)))
 
 ;*---------------------------------------------------------------------*/

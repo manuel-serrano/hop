@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Thu Dec  9 21:19:40 2010 (serrano)                */
-;*    Copyright   :  2010 Manuel Serrano                               */
+;*    Last change :  Wed Jan 19 14:28:10 2011 (serrano)                */
+;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
 ;*=====================================================================*/
@@ -168,7 +168,6 @@
 (define-xml-element <MAP>)
 (define-xml-element <MARQUEE>)
 (define-xml-element <MENU>)
-(define-xml xml-meta #f <META>)
 (define-xml-element <NOFRAMES>)
 (define-xml-element <NOSCRIPT>)
 (define-xml-element <OBJECT>)
@@ -203,6 +202,18 @@
 (define-xml-element <U>)
 (define-xml-element <UL>)
 (define-xml-element <VAR>)
+
+;*---------------------------------------------------------------------*/
+;*    <META> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-markup <META> ((content #f)
+		       (attrs)
+		       body)
+   (instantiate::xml-meta
+      (tag 'meta)
+      (attributes attrs)
+      (content content)
+      (body body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <FORM> ...                                                       */

@@ -13,7 +13,7 @@
 #*---------------------------------------------------------------------*/
 #*    Global user configuration                                        */
 #*---------------------------------------------------------------------*/
-HOPVERSION=2.2.0-rc6
+HOPVERSION=2.2.0
 HOPURL=http://hop.inria.fr
 BIGLOOVERSION=3.5b
 ANDROID=2.1

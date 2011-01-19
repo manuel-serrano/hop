@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 07:05:30 2008                          */
-/*    Last change :  Sat Nov 20 17:06:10 2010 (serrano)                */
-/*    Copyright   :  2008-10 Manuel Serrano                            */
+/*    Last change :  Wed Jan 19 15:54:15 2011 (serrano)                */
+/*    Copyright   :  2008-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side support for url browsers.                            */
 /*=====================================================================*/
@@ -95,18 +95,26 @@ function hop_filechooser_button_push( button, id, url ) {
 function hop_filechooser_select( row, event, id, url ) {
    var el = document.getElementById( id );
 
-   if( el.selected && (el.selected != undefined) ) {
-      el.selected.className = el.selected.oldClassName;
-   }
+   if( el.unselected == row ) {
+      return hop_filechooser_open( id, url );
+   } else {
+      if( el.selected && (el.selected != undefined) ) {
+	 el.selected.className = el.selected.oldClassName;
+      }
 
-   if( el.selected != row ) {
-      row.oldClassName = row.className;
-      row.className = "selected";
+      if( el.selected != row ) {
+	 row.oldClassName = row.className;
+	 row.className = "selected";
 
-      el.selected = row;
-      el.value = url;
+	 el.selected = row;
+	 el.unselected = undefined;
+	 el.value = url;
 
-      if( el.select ) el.select( event );
+	 if( el.select ) el.select( event );
+      } else {
+	 el.selected = undefined;
+	 el.unselected = row;
+      }
    }
 }
 

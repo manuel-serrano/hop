@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Mon Jan  3 10:18:32 2011 (serrano)                */
+/*    Last change :  Wed Jan 19 08:02:54 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -399,9 +399,19 @@ function url_decode( s ) {
 /*---------------------------------------------------------------------*/
 /*    url-encode ...                                                   */
 /*---------------------------------------------------------------------*/
-/*** META ((export url-encode) (arity #t)) */
+/*** META ((export url-encode) (arity #t))
+           (peephole (hole 1 "encodeURI(" s ")"))) */
 function url_encode( s ) {
    return encodeURI( s );
+}
+
+/*---------------------------------------------------------------------*/
+/*    url-path-encode ...                                              */
+/*---------------------------------------------------------------------*/
+/*** META ((export url-path-encode) (arity #t)
+           (peephole (hole 1 "encodeURIComponent(" s ")"))) */
+function url_path_encode( s ) {
+   return encodeURIComponent( s );
 }
 
 /*---------------------------------------------------------------------*/

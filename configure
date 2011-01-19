@@ -59,7 +59,7 @@ libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite"
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
 version="2.2.0"
-devel=rc
+devel=
 
 hopc=$PWD/bin/hopc
 
