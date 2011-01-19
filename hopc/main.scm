@@ -45,10 +45,10 @@
    ;; set the Hop cond-expand identification
    (register-srfi! 'hopc)
    (for-each register-eval-srfi! (hop-srfis))
-   ;; parse the command line
-   (parse-args args)
    ;; set the library load path
    (bigloo-library-path-set! (hop-library-path))
+   ;; parse the command line
+   (parse-args args)
    ;; preload the hop library
    (eval `(library-load 'hop))
    ;; setup the client-side compiler
