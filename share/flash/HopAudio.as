@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Aug 23 16:16:58 2007                          */
-/*    Last change :  Mon Jan 10 16:42:02 2011 (serrano)                */
+/*    Last change :  Thu Jan 20 14:45:58 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopAudio flash support.                                          */
@@ -64,7 +64,7 @@ class HopAudio {
       var playSound = function( offset ) {
 	 if( url ) {
 	    paused = false;
-	    endedpos = snd.position;
+	    endedpos = (snd.position == undefined) ? 0 : snd.position;
 	    snd.start( offset ? offset : 0 );
 	    waitPlay( endedpos );
 	    return true;
@@ -101,7 +101,7 @@ class HopAudio {
 
 	 snd.loadSound( u, stream );
 	 if( stream ) {
-	    endedpos = snd.position;
+	    endedpos = (snd.position == undefined) ? 0 : snd.position;
 	    waitPlay( endedpos );
 	 }
       }
