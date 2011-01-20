@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec  7 09:54:35 2007                          */
-;*    Last change :  Mon Jan 17 16:02:54 2011 (serrano)                */
+;*    Last change :  Thu Jan 20 11:09:54 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    weblets markups                                                  */
@@ -140,4 +140,4 @@
 	  (srcr (make-file-name dir "hz-run.png"))
 	  (id (symbol->string (gensym))))
       (<DIV> :class "install" :id id
-	 ~(hop_install_weblet $url $srci $srcr $id))))
+	 ~((@ hop_install_weblet _) $url $srci $srcr $id))))
