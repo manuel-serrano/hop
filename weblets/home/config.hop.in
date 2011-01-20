@@ -84,7 +84,7 @@
 ;*    home-bigloo-url ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter home-bigloo-url
-   "http://www.inria.fr/indes/fp/Bigloo")
+   "http://www-sop.inria.fr/indes/fp/Bigloo")
 
 ;*---------------------------------------------------------------------*/
 ;*    home-source-url ...                                              */
