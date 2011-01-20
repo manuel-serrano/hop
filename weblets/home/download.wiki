@@ -79,18 +79,21 @@ used without downloading and installing the source code manually:
 == Maemo ==
 
 ,(let ((fremantle (home/maemo/hop.install "fremantle" "hop" "free"))
-       (chinook (home/maemo/hop.install "chinook" "hop" "free")))
+       (chinook (home/maemo/hop.install "chinook" "hop" "free"))
+       (name (format "hop-~a.install" (home-hop-stable-version))))
     (<TABLE> :id "download-source"
        (<TR>
 	  (<TD> :class "download-source"
 	     (<DOWNLOAD> :class "download-stable"
 		:legend "Fremantle"
 		:src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")
-		:url fremanle))
+		:name name
+		:url fremantle))
 	  (<TD> :class "download-source"
 	     (<DOWNLOAD> :class "download-stable"
 		:legend "Chinook"
 		:src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")
+		:name name
 		:url chinook)))
        (<TR>
 	  (<TD> :colspan 2
@@ -107,6 +110,7 @@ used without downloading and installing the source code manually:
 	     (<DOWNLOAD> :class "download-stable"
 		:legend "MacOS 10.6 x86/64"
 		:src (make-file-path (home-dir) "etc" "icons" "macos.png")
+		:name dmg
 		:url url)))))
 
 
