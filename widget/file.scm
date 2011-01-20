@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Thu Jan 20 10:17:08 2011 (serrano)                */
+;*    Last change :  Thu Jan 20 10:31:07 2011 (serrano)                */
 ;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -443,8 +443,8 @@
 	       :onclick (secure-javascript-attr
 			 (if (is-directory? p)
 			     (format "hop_filechooser_select( this, event, ~s, ~s )" id p)
-			     (format "if( hop_filechooser_dblclickp() ) hop_filechooser_ok( event, ~s );"
-				     id)))
+			     (format "if( hop_filechooser_dblclickp() ) hop_filechooser_ok( event, ~s ); else hop_filechooser_select( this, event, ~s, ~s )"
+				     id id p)))
 	       :ondblclick (secure-javascript-attr
 			    (if (is-directory? p)
 				(format "hop_filechooser_open( ~s, ~s )"
