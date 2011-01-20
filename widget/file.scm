@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Fri Jan 14 15:51:51 2011 (serrano)                */
+;*    Last change :  Thu Jan 20 10:17:08 2011 (serrano)                */
 ;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -306,16 +306,28 @@
       (let ((path (getenv "HOME")))
 	 (<TR> :ondblclick (secure-javascript-attr
 			    (format "hop_filechooser_open( ~s, ~s )" id path))
+	    :onmousedown (secure-javascript-attr
+			  "hop_filechooser_arm_dblclick()")
+	    :onclick (secure-javascript-attr
+		      (format "if( hop_filechooser_dblclickp() ) hop_filechooser_open( ~s, ~s )" id path))
 	    :title path
 	    (<TD> :class "filechooser-icon filechooser-home" (getenv "USER"))))
       (let ((path (make-file-name (getenv "HOME") "Desktop")))
 	 (<TR> :ondblclick (secure-javascript-attr
 			    (format "hop_filechooser_open( ~s, ~s )" id path))
+	    :onmousedown (secure-javascript-attr
+			  "hop_filechooser_arm_dblclick()")
+	    :onclick (secure-javascript-attr
+		      (format "if( hop_filechooser_dblclickp() ) hop_filechooser_open( ~s, ~s )" id path))
 	    :title path
 	    (<TD> :class "filechooser-icon filechooser-desktop" "Desktop")))
       (let ((path (dirname (make-file-name "" "foo"))))
 	 (<TR> :ondblclick (secure-javascript-attr
 			    (format "hop_filechooser_open( ~s, ~s )" id path))
+	    :onmousedown (secure-javascript-attr
+			  "hop_filechooser_arm_dblclick()")
+	    :onclick (secure-javascript-attr
+		      (format "if( hop_filechooser_dblclickp() ) hop_filechooser_open( ~s, ~s )" id path))
 	    :title path
 	    (<TD> :class "filechooser-icon filechooser-hdd" "File system")))
       (<TR> (<TD> :colspan 2 :class "filechooser-br"))
@@ -324,6 +336,8 @@
 		     (when (string? ep)
 			(let ((p ((hop-locale->charset) ep)))
 			   (<TR>
+			      :onmousedown (secure-javascript-attr
+					    "hop_filechooser_arm_dblclick()")
 			      :onclick (secure-javascript-attr
 					(format "hop_filechooser_select( this, event, ~s, ~s )" id p))
 			      :ondblclick (secure-javascript-attr
@@ -424,8 +438,13 @@
       (define (<tr> ep eid class prevep previd nextep nextid)
 	 (let ((p ((hop-locale->charset) ep)))
 	    (<TR> :class class 
+	       :onmousedown (secure-javascript-attr
+			     "hop_filechooser_arm_dblclick()")
 	       :onclick (secure-javascript-attr
-			 (format "hop_filechooser_select( this, event, ~s, ~s )" id p))
+			 (if (is-directory? p)
+			     (format "hop_filechooser_select( this, event, ~s, ~s )" id p)
+			     (format "if( hop_filechooser_dblclickp() ) hop_filechooser_ok( event, ~s );"
+				     id)))
 	       :ondblclick (secure-javascript-attr
 			    (if (is-directory? p)
 				(format "hop_filechooser_open( ~s, ~s )"
