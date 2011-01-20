@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Mon Jan 17 09:25:08 2011 (serrano)                */
+#*    Last change :  Wed Jan 19 18:23:18 2011 (serrano)                */
 #*    Copyright   :  2010-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -15,7 +15,7 @@
 #*---------------------------------------------------------------------*/
 HOPVERSION=2.2.0
 HOPURL=http://hop.inria.fr
-BIGLOOVERSION=3.5b
+BIGLOOVERSION=3.6a
 ANDROID=2.1
 
 REPOSITORY=/users/serrano/prgm/distrib

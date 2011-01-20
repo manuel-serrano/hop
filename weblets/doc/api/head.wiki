@@ -31,12 +31,22 @@ times in an invocation. A typical ++<HEAD>++ looks like:
 === server ===
 
   (<HEAD> ...)
+  (<META> ...)
   (<FOOT> ...)
   (<FOOT-BUTTON> ...)
 
+=== Requirements ===
+
+Client codes using ++<FOOT>++ and ++<FOOT-BUTTON>++ need to load the ++hop-foot.hss++
+configuration file.
+
+
+  (<HEAD> :include "hop-foot")
+
+
 == Examples ==
 
-<example><HEAD>, service-base-url, service-resource, <FOOT>, <FOOT-BUTTON></example>
+<example><HEAD>, service-base-url, service-resource, <META>, <FOOT>, <FOOT-BUTTON></example>
 
 == Server Definitions ==
 <server>
@@ -132,6 +142,32 @@ attribute.
 
 </markup>
 
+=== <META> ===
+<markup> <META>
+
+<arguments>
+^  arguments   ^   type     ^   default    ^  short description                    ^
+|  :content   |   bool or string     |   #f    |  The content format               |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+When present the :content argument is treating as a //format// for the
+printing function ++format++. When compiling to HTML that format 
+will be used with two string arguments: a mime-type and a character set.
+If a ++<HEAD>++ element does not contain any ++<META>++ element with
+a :http-equiv attribute, Hop automatically adds one builds with:
+
+  (<META> :http-equiv "Content-Type" :content "~a; charset=~a")
+
+
+On modern Smartphones, one may find convenient to use ++<META>++
+declarations such as:
+
+  (<META> :content "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no")
+
+
+</markup>
+
 === <FOOT> ===
 <markup> <FOOT>
 <arguments>
@@ -190,6 +226,6 @@ The ++<IMG>++ element of the foot button.
 
 
 == See also ==
-<see-also><HEAD>, <FOOT>, <FOOT-BUTTON></see-also>
+<see-also><HEAD>, <META>, <LINK>, <FOOT>, <FOOT-BUTTON></see-also>
 
 </doc>
