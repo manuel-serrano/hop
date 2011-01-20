@@ -86,12 +86,12 @@ used without downloading and installing the source code manually:
 	     (<DOWNLOAD> :class "download-stable"
 		:legend "Fremantle"
 		:src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")
-		:url (format "hop-~a.deb" (home-hop-stable-version))))
+		:url fremanle))
 	  (<TD> :class "download-source"
 	     (<DOWNLOAD> :class "download-stable"
 		:legend "Chinook"
 		:src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")
-		:url (format "hop-~a.deb" (home-hop-stable-version)))))
+		:url chinook)))
        (<TR>
 	  (<TD> :colspan 2
 	     (<QRCODE> :typenumber 6 :id "download-maemo" fremantle)))))
@@ -107,7 +107,7 @@ used without downloading and installing the source code manually:
 	     (<DOWNLOAD> :class "download-stable"
 		:legend "MacOS 10.6 x86/64"
 		:src (make-file-path (home-dir) "etc" "icons" "macos.png")
-		:url dmg)))))
+		:url url)))))
 
 
 ;* == Virtual Machines ==                                              */
