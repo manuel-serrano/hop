@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Thu Dec 16 07:35:48 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Thu Jan 20 07:58:54 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets distribution weblet.                                 */
 ;*    -------------------------------------------------------------    */
@@ -121,8 +121,9 @@
    ;; check if we can resolve a weblet name (containing stars) and
    ;; if we can, return the URL of the actual weblet
    (let ((path (hz-resolve-name weblet (list (weblets-repository)))))
-      (when (and (string? path) (file-exists? path))
-	 (basename path))))
+      (if (and (string? path) (file-exists? path))
+	  (basename path)
+	  "")))
 
 ;*---------------------------------------------------------------------*/
 ;*    update-alist! ...                                                */

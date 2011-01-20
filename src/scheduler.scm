@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Wed Sep  8 09:03:14 2010 (serrano)                */
-;*    Copyright   :  2008-10 Manuel Serrano                            */
+;*    Last change :  Thu Jan 20 07:41:20 2011 (serrano)                */
+;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
 ;*=====================================================================*/
@@ -18,13 +18,7 @@
    
    (cond-expand
       (enable-threads
-       (library pthread))
-      (else
-       (export (class pthread::nothread))))
-
-   (cond-expand
-      ((not enable-threads)
-       (eval (class pthread))))
+       (library pthread)))
    
    (export (class hopthread::pthread
 	      (proc::procedure (default (lambda (t) #f)))

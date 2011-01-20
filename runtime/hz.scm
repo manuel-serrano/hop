@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Dec  3 11:10:35 2010 (serrano)                */
-;*    Copyright   :  2007-10 Manuel Serrano                            */
+;*    Last change :  Thu Jan 20 08:00:42 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
 ;*=====================================================================*/
@@ -160,7 +160,10 @@
    (let ((u (string-append (hop-hz-server) "/hop/weblets/resolve?weblet=" url)))
       (call-with-input-file u
 	 (lambda (p)
-	    (basename (read-string p))))))
+	    (let ((s (read-string p)))
+	       (if (=fx (string-length s) 0)
+		   (error "hz" "Cannot resolve name" url)
+		   (basename s)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-cache-path ...                                                */

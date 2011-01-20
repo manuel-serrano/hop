@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Thu Jan 20 05:51:35 2011 (serrano)                */
+;*    Last change :  Thu Jan 20 08:03:46 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME widgets.                                                */
@@ -28,7 +28,6 @@
 	 :title "Hop Home page"
 	 :include "hop-notepad" "hop-window" "hop-window-orange" "hop-foldlist"
 	 :include "hop-foot"
-	 :include "qrcode-api-1.1.*.hz"
 	 :jscript (make-file-path (hop-share-directory) "flash" "swfobject.js")
 	 :favicon (service-resource home "etc/gohome.png")
 	 (<LINK> :rel "alternate" :type "application/rss+xml"

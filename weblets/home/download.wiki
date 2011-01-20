@@ -1,3 +1,22 @@
+(define-xml-compound <QRCODE> ((typenumber 4)
+			       (correctlevel "L")
+			       (class #f)
+			       text)
+   (let* ((d (case typenumber
+		((1) 21)
+		((2) 25)
+		((3) 29)
+		((4) 33)
+		((10) 57)
+		((40) 177)
+		(else 200)))
+	  (sz (format "~ax~a" (+ 15 d) (+ 15 d))))
+      (<IMG> :class class
+	 :src (format (home-google-qrcode-format)
+		      sz
+		      correctlevel
+		      (url-path-encode (car text))))))
+
 ,(define (<DOWNLOAD> #!key class src legend url name)
     (<A> :class (string-append "download-button " class)
        :href url

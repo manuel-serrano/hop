@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/home/config.hop           */
+;*    serrano/prgm/project/hop/2.2.x/weblets/home/config.hop.in        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Tue Dec  4 11:08:56 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Thu Jan 20 08:06:33 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Home configuration                                               */
 ;*=====================================================================*/
@@ -26,7 +26,8 @@
 	   (home-ftp-hop-url)
 	   (home-ftp-bigloo-url)
 	   (home-bigloo-url)
-	   (home-source-url)))
+	   (home-source-url)
+           (home-google-chart-format)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Version                                                          */
@@ -90,3 +91,10 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter home-source-url
    "http://hop.inria.fr:4000")
+
+;*---------------------------------------------------------------------*/
+;*    home-google-qrcode-format ...                                    */
+;*---------------------------------------------------------------------*/
+(define-parameter home-google-qrcode-format 
+   "https://chart.googleapis.com/chart?chs=~a&chld=~a&cht=qr&chma=0,0,0,0&chof=png&chl=choe=UTF-8&chl=~a")
+

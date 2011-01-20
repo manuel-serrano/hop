@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Thu Nov 18 07:37:24 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Thu Jan 20 08:03:34 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
 ;*=====================================================================*/
@@ -13,8 +13,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hophome
-   (import (qrcode-api "qrcode-api-1.0.*.hz")
-	   hophome_config
+   (import hophome_config
 	   hophome_widgets
 	   hophome_demo
 	   hophome_wiki)
