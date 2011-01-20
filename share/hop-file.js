@@ -3,35 +3,11 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 07:05:30 2008                          */
-/*    Last change :  Thu Jan 20 10:13:16 2011 (serrano)                */
+/*    Last change :  Wed Jan 19 15:54:15 2011 (serrano)                */
 /*    Copyright   :  2008-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side support for url browsers.                            */
 /*=====================================================================*/
-
-/*---------------------------------------------------------------------*/
-/*    hop_filechooser_mousedown_time ...                               */
-/*---------------------------------------------------------------------*/
-var hop_filechooser_mousedown_time = 0;
-var hop_filechooser_dblclick_timeout = 400;
-
-/*---------------------------------------------------------------------*/
-/*    hop_filechooser_arm_dblclick ...                                 */
-/*---------------------------------------------------------------------*/
-function hop_filechooser_arm_dblclick() {
-   hop_filechooser_mousedown_time = new Date().getTime();
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_filechooser_dblclickp ...                                    */
-/*    -------------------------------------------------------------    */
-/*    Tablet and phones lack doubleclick, we similuate them by         */
-/*    a long click.                                                    */
-/*---------------------------------------------------------------------*/
-function hop_filechooser_dblclickp() {
-   return ((new Date()).getTime() - hop_filechooser_mousedown_time) >
-      hop_filechooser_dblclick_timeout;
-}
 
 /*---------------------------------------------------------------------*/
 /*    hop_inputurl_key ...                                             */
@@ -119,24 +95,26 @@ function hop_filechooser_button_push( button, id, url ) {
 function hop_filechooser_select( row, event, id, url ) {
    var el = document.getElementById( id );
 
-   if( hop_filechooser_dblclickp() ) {
+   if( el.unselected == row ) {
       return hop_filechooser_open( id, url );
-   }
-   
-   if( el.selected && (el.selected != undefined) ) {
-      el.selected.className = el.selected.oldClassName;
-   }
-
-   if( el.selected != row ) {
-      row.oldClassName = row.className;
-      row.className = "selected";
-      
-      el.selected = row;
-      el.value = url;
-
-      if( el.select ) el.select( event );
    } else {
-      el.selected = undefined;
+      if( el.selected && (el.selected != undefined) ) {
+	 el.selected.className = el.selected.oldClassName;
+      }
+
+      if( el.selected != row ) {
+	 row.oldClassName = row.className;
+	 row.className = "selected";
+
+	 el.selected = row;
+	 el.unselected = undefined;
+	 el.value = url;
+
+	 if( el.select ) el.select( event );
+      } else {
+	 el.selected = undefined;
+	 el.unselected = row;
+      }
    }
 }
 
