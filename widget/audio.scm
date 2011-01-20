@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Jan 11 07:06:23 2011 (serrano)                */
+;*    Last change :  Thu Jan 20 20:44:20 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -233,10 +233,10 @@
 	    (format "function ~a() {" init)
 	    (if guard (format "if( ~a ) {" guard "{"))
 	    (format "var backend = document.getElementById( ~s );" id)
-	    (format "hop_audio_flash_init( backend ); hop_audio_init[ '~a' ]( backend );}}" id id))
+	    (format "hop_audio_flash_init( backend ); hop_audio_init[ '~a' ]( backend );}" id id))
 	 (<OBJECT> :id (string-append id "-object") :class "hop-audio"
-	    :style "visibility: visible; position: fixed; top: 0; right: 0; background: transparent"
-	    :width "1px" :height "1px"
+	    :style "visibility: visible; background: transparent"
+	    :width "0px" :height "0px"
 	    :title "hop-audio" :classId "HopAudio.swf"
 	    :type "application/x-shockwave-flash"
 	    :codebase "http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,22,0"
