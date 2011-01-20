@@ -1,21 +1,14 @@
-(define-xml-compound <QRCODE> ((typenumber 4)
-			       (correctlevel "L")
-			       (class #f)
-			       text)
-   (let* ((d (case typenumber
-		((1) 21)
-		((2) 25)
-		((3) 29)
-		((4) 33)
-		((10) 57)
-		((40) 177)
-		(else 200)))
-	  (sz (format "~ax~a" (+ 15 d) (+ 15 d))))
-      (<IMG> :class class
-	 :src (format (home-google-qrcode-format)
-		      sz
-		      correctlevel
-		      (url-path-encode (car text))))))
+,(define-xml-compound <QRCODE> ((typenumber 4)
+				(id #f)
+				(correctlevel "L")
+				(class #f)
+				text)
+    (<IMG> :class class
+       :id (xml-make-id id)
+       :src (format (home-google-qrcode-format)
+		    "128x128"
+		    correctlevel
+		    (url-path-encode (car text)))))
 
 ,(define (<DOWNLOAD> #!key class src legend url name)
     (<A> :class (string-append "download-button " class)
@@ -48,7 +41,7 @@
 
 ~~ In order to install HOP from the source (for significantly improving
 performance), the ,(<A> :href (home-bigloo-url) "Bigloo") compiler has
-first to be installed. Bigloo version **3.5a** or higher is required to
+first to be installed. Bigloo version **3.6a** or higher is required to
 compile HOP.
 
 ~~ Bigloo versions may be downloaded
@@ -65,7 +58,8 @@ from: ,(<A> :href (home-ftp-bigloo-url) (home-ftp-bigloo-url)).
 	     (<DOWNLOAD> :class "download-stable"
 		:legend "Android 2.1"
 		:src (make-file-path (home-dir) "etc" "icons" "android-market.png")
-		:url url))
+		:url url)))
+       (<TR>
 	  (<TD> 
 	     (<QRCODE> :typenumber 4 :id "download-android" url)))))
 
@@ -97,8 +91,9 @@ used without downloading and installing the source code manually:
 	     (<DOWNLOAD> :class "download-stable"
 		:legend "Chinook"
 		:src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")
-		:url (format "hop-~a.deb" (home-hop-stable-version))))
-	  (<TD> 
+		:url (format "hop-~a.deb" (home-hop-stable-version)))))
+       (<TR>
+	  (<TD> :colspan 2
 	     (<QRCODE> :typenumber 6 :id "download-maemo" fremantle)))))
 
 
@@ -115,28 +110,28 @@ used without downloading and installing the source code manually:
 		:url dmg)))))
 
 
-== Virtual Machines ==
-
-,(let* ((qemu (format "hop-~a.dmg" (home-hop-stable-version)))
-	(vbox (format "hop-~a.img" (home-hop-stable-version)))
-	(vmware (format "hop-~a.img" (home-hop-stable-version))))
-    (<TABLE> :id "download-source"
-       (<TR>
-	  (<TD> :class "download-source"
-	     (<DOWNLOAD> :class "download-stable"
-		:legend "QEmu"
-		:src (make-file-path (home-dir) "etc" "icons" "linux.png")
-		:url (make-download-url "virtual" qemu)))
-	  (<TD> :class "download-source"
-	     (<DOWNLOAD> :class "download-stable"
-		:legend "Virtual-box"
-		:src (make-file-path (home-dir) "etc" "icons" "linux.png")
-		:url (make-download-url "virtual" vbox)))
-	  (<TD> :class "download-source"
-	     (<DOWNLOAD> :class "download-stable"
-		:legend "VMware"
-		:src (make-file-path (home-dir) "etc" "icons" "linux.png")
-		:url (make-download-url "virtual" vmware))))))
+;* == Virtual Machines ==                                              */
+;*                                                                     */
+;* ,(let* ((qemu (format "hop-~a.dmg" (home-hop-stable-version)))      */
+;* 	(vbox (format "hop-~a.img" (home-hop-stable-version)))         */
+;* 	(vmware (format "hop-~a.img" (home-hop-stable-version))))      */
+;*     (<TABLE> :id "download-source"                                  */
+;*        (<TR>                                                        */
+;* 	  (<TD> :class "download-source"                               */
+;* 	     (<DOWNLOAD> :class "download-stable"                      */
+;* 		:legend "QEmu"                                         */
+;* 		:src (make-file-path (home-dir) "etc" "icons" "linux.png") */
+;* 		:url (make-download-url "virtual" qemu)))              */
+;* 	  (<TD> :class "download-source"                               */
+;* 	     (<DOWNLOAD> :class "download-stable"                      */
+;* 		:legend "Virtual-box"                                  */
+;* 		:src (make-file-path (home-dir) "etc" "icons" "linux.png") */
+;* 		:url (make-download-url "virtual" vbox)))              */
+;* 	  (<TD> :class "download-source"                               */
+;* 	     (<DOWNLOAD> :class "download-stable"                      */
+;* 		:legend "VMware"                                       */
+;* 		:src (make-file-path (home-dir) "etc" "icons" "linux.png") */
+;* 		:url (make-download-url "virtual" vmware))))))         */
 
 == License ==
 

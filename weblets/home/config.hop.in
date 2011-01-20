@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Thu Jan 20 08:06:33 2011 (serrano)                */
+;*    Last change :  Thu Jan 20 09:36:00 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Home configuration                                               */
@@ -27,7 +27,7 @@
 	   (home-ftp-bigloo-url)
 	   (home-bigloo-url)
 	   (home-source-url)
-           (home-google-chart-format)))
+           (home-google-qrcode-format)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Version                                                          */
