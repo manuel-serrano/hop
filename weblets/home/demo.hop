@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Wed Nov 10 16:21:40 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Fri Jan 21 05:32:13 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
 ;*=====================================================================*/
@@ -175,32 +175,34 @@ be used to access the whole source code of this playground.]))))
 	 (w (if (pair? r) (car r) "200"))
 	 (h (if (and (pair? r) (pair? (cdr r))) (cadr r) "200"))
 	 (t (string-capitalize "Tips")))
-      ~(let ((frame (document.createElement "iframe"))
-	     (t (document.getElementById $id))
-	     (p (document.getElementById "demo-playground")))
-	  (set! frame.className "demos")
-	  (set! frame.src $(home/demos/tips))
-	  (node-style-set! frame "border-width" "0")
-	  (node-style-set! frame "width" "100%")
-	  (node-style-set! frame "height" "100%")
-	  (let* ((w (window-open :id $t
-		       :src frame
-		       :width $w :height $h
-		       :left (/ (- (main-window-width) $w) 2) :top 200
-		       :parent p))
-		 (i (<SPAN> :class "icon" $t)))
-	     (set! i.onmousedown
-		   (lambda (e)
-		      (set! i.style.visibility "hidden")
-		      (set! w.style.display "block")))
-	     (set! w.iconify
-		   (lambda ()
-		      (set! i.style.top w.style.top)
-		      (set! i.style.left w.style.left)
-		      (set! i.style.visibility "visible")
-		      (set! w.style.display "none")))
-	     (dom-append-child! p i)
-	     w))))
+      ~(add-event-listener! "demo-playground" "ready"
+	  (lambda (e)
+	     (let ((frame (document.createElement "iframe"))
+		   (t (document.getElementById $id))
+		   (p (document.getElementById "demo-playground")))
+		(set! frame.className "demos")
+		(set! frame.src $(home/demos/tips))
+		(node-style-set! frame "border-width" "0")
+		(node-style-set! frame "width" "100%")
+		(node-style-set! frame "height" "100%")
+		(let* ((w (window-open :id $t
+			     :src frame
+			     :width $w :height $h
+			     :left (/ (- (main-window-width) $w) 2) :top 200
+			     :parent p))
+		       (i (<SPAN> :class "icon" $t)))
+		   (set! i.onmousedown
+			 (lambda (e)
+			    (set! i.style.visibility "hidden")
+			    (set! w.style.display "block")))
+		   (set! w.iconify
+			 (lambda ()
+			    (set! i.style.top w.style.top)
+			    (set! i.style.left w.style.left)
+			    (set! i.style.visibility "visible")
+			    (set! w.style.display "none")))
+		   (dom-append-child! p i)
+		   w))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    img->data ...                                                    */

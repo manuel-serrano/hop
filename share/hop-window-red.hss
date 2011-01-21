@@ -103,6 +103,7 @@ div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-middle
 div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-left,
 div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-right,
 div[hssclass=hop-window]:hover table.hop-window-handle {
+  background-image: none;
   background-color: $active-color;
   background-image: -moz-linear-gradient( -90deg, $active-color, $active-color-to );
   background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($active-color), to($active-color-to) );
