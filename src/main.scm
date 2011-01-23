@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Jan  5 12:06:25 2011 (serrano)                */
+;*    Last change :  Sat Jan 22 09:26:52 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -127,12 +127,16 @@
    (with-handler
       (lambda (e)
 	 (exception-notify e)
-	 (with-output-to-port (current-error-port)
-	    (lambda ()
-	       (print "An error has occurred in the Hop main loop, exiting...")
-	       (newline)))
+	 (fprint (current-error-port)
+		 "An error has occurred in the Hop main loop, exiting...")
 	 (exit 1))
-      (let ((serv (hop-server-socket)))
+      (let ((serv (with-handler
+		     (lambda (e)
+			(exception-notify e)
+			(fprint (current-error-port)
+				"Cannot start Hop server, exiting...")
+			(exit 2))
+		     (hop-server-socket))))
 	 ;; tune the server socket
 	 (socket-option-set! serv :TCP_NODELAY #t)
 	 ;; start the job (background taks, a la cron) scheduler

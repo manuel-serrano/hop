@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Dec 16 07:37:07 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Sat Jan 22 09:31:36 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
 ;*=====================================================================*/
@@ -23,7 +23,8 @@
 ;*---------------------------------------------------------------------*/
 (define-service (shutdown #!key exitval restart)
    (let ((req (current-request)))
-      (if (or (authorized-service? req 'admin) (authorized-service? req 'shutdown))
+      (if (or (authorized-service? req 'admin)
+	      (authorized-service? req 'shutdown))
 	  (<SHUTDOWN> req exitval restart
 		      (<SPAN> "Shutdown the serving HOP broker..."))
 	  (user-access-denied req))))

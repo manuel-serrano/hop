@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Fri Jan 14 15:51:51 2011 (serrano)                */
+;*    Last change :  Sun Jan 23 07:21:07 2011 (serrano)                */
 ;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -305,17 +305,17 @@
       ;; home and hdd
       (let ((path (getenv "HOME")))
 	 (<TR> :ondblclick (secure-javascript-attr
-			    (format "hop_filechooser_open( ~s, ~s )" id path))
+			    (format "hop_filechooser_open( ~s, ~s ); hop_stop_propagation( event, false );" id path))
 	    :title path
 	    (<TD> :class "filechooser-icon filechooser-home" (getenv "USER"))))
       (let ((path (make-file-name (getenv "HOME") "Desktop")))
 	 (<TR> :ondblclick (secure-javascript-attr
-			    (format "hop_filechooser_open( ~s, ~s )" id path))
+			    (format "hop_filechooser_open( ~s, ~s ); hop_stop_propagation( event, false );" id path))
 	    :title path
 	    (<TD> :class "filechooser-icon filechooser-desktop" "Desktop")))
       (let ((path (dirname (make-file-name "" "foo"))))
 	 (<TR> :ondblclick (secure-javascript-attr
-			    (format "hop_filechooser_open( ~s, ~s )" id path))
+			    (format "hop_filechooser_open( ~s, ~s ); hop_stop_propagation( event, false );" id path))
 	    :title path
 	    (<TD> :class "filechooser-icon filechooser-hdd" "File system")))
       (<TR> (<TD> :colspan 2 :class "filechooser-br"))
@@ -327,7 +327,7 @@
 			      :onclick (secure-javascript-attr
 					(format "hop_filechooser_select( this, event, ~s, ~s )" id p))
 			      :ondblclick (secure-javascript-attr
-					   (format "hop_filechooser_open( ~s, ~s )"
+					   (format "hop_filechooser_open( ~s, ~s ); hop_stop_propagation( event, false );"
 						   id p))
 			      :title p
 			      (<TD> :class "filechooser-icon filechooser-folder"
@@ -428,9 +428,9 @@
 			 (format "hop_filechooser_select( this, event, ~s, ~s )" id p))
 	       :ondblclick (secure-javascript-attr
 			    (if (is-directory? p)
-				(format "hop_filechooser_open( ~s, ~s )"
+				(format "hop_filechooser_open( ~s, ~s ); hop_stop_propagation( event, false );"
 					id p)
-				(format "hop_filechooser_ok( event, ~s )"
+				(format "hop_filechooser_ok( event, ~s ); hop_stop_propagation( event, false );"
 					id)))
 	       :onmousedown (secure-javascript-attr
 			     (format "hop_filechooser_begin_drag( event, ~s, ~s )"

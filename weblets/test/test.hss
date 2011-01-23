@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/weblets/test/test.hss             */
+/*    serrano/prgm/project/hop/2.2.x/weblets/test/test.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Tue Jun 29 09:45:06 2010 (serrano)                */
-/*    Copyright   :  2005-10 Manuel Serrano                            */
+/*    Last change :  Sun Jan 23 07:15:26 2011 (serrano)                */
+/*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for the TEST weblet                                          */
 /*=====================================================================*/
@@ -45,10 +45,6 @@ table.test {
 table.test img#logo {
   padding: 20px;
 }
-
-/* table.test td {                                                     */
-/*   text-align: left;                                                 */
-/* }                                                                   */
 
 td#title {
   font-size: x-large;

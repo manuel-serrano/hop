@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Thu Jan 20 21:09:48 2011 (serrano)                */
+;*    Last change :  Sat Jan 22 08:38:00 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -248,6 +248,7 @@
 	    (<PARAM> :name "allowScriptAccess" :value "sameDomain")
 	    (<PARAM> :name "FlashVars" :value fvar)
 	    (<EMBED> :id (string-append id "-embed") :class "hop-audio"
+	       :style "position: fixed; top: 0; bottom: 0"
 	       :width "1px" :height "1px"
 	       :src swf
 	       :type "application/x-shockwave-flash"

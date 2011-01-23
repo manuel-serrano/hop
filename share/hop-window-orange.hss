@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Sep 25 13:45:53 2009                          */
-/*    Last change :  Wed Dec  8 11:16:40 2010 (serrano)                */
-/*    Copyright   :  2009-10 Manuel Serrano                            */
+/*    Last change :  Sat Jan 22 09:17:28 2011 (serrano)                */
+/*    Copyright   :  2009-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Window customizations                                            */
 /*=====================================================================*/
@@ -74,6 +74,8 @@ div[hssclass=hop-window] div.hop-window-handle {
   opacity: $passive-opacity;
   border: 0;
   height: 20px;
+  padding-left: 3px;
+  padding-right: 3px;
 }
 
 div[hssclass=hop-window]:hover div.hop-window-handle {
@@ -83,17 +85,16 @@ div[hssclass=hop-window]:hover div.hop-window-handle {
 div[hssclass=hop-window] table.hop-window-handle {
   border: 0;
   height: 20px;
-  padding-left: 3px;
-  padding-right: 3px;
+  background: inherit;
 }
 
 div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-middle,
 div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-left,
 div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-right,
-div[hssclass=hop-window] table.hop-window-handle {
-  background-image: none;
+div[hssclass=hop-window] div.hop-window-handle {
   vertical-align: middle;
   background-color: $passive-color;
+  background-image: none;
   background-image: -moz-linear-gradient( -90deg, $passive-color, $passive-color-to );
   background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($passive-color), to($passive-color-to) );
   border-radius: $radius $radius 0 0;
@@ -102,7 +103,7 @@ div[hssclass=hop-window] table.hop-window-handle {
 div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-middle,
 div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-left,
 div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-right,
-div[hssclass=hop-window]:hover table.hop-window-handle {
+div[hssclass=hop-window]:hover div.hop-window-handle {
   background-image: none;
   background-color: $active-color;
   background-image: -moz-linear-gradient( -90deg, $active-color, $active-color-to );

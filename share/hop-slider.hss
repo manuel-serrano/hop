@@ -134,25 +134,30 @@ slider {
 slider td {
   margin: 0;
   padding: 0;
+  user-select: none;
 }
 
 slider td.line {
   border: 0;
   vertical-align: middle;
   background-color: inherit;
+  user-select: none;
 }
 
 slider div.line {
   user-select: none;
   margin: 0;
+  user-select: none;
 }
 
 slider div.lineleft {
   border-right: 0;
+  user-select: none;
 }
   
 slider div.lineright {
   border-left: 0;
+  user-select: none;
 }
 
 /*---------------------------------------------------------------------*/
