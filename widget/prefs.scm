@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan  5 14:11:23 2011                          */
-;*    Last change :  Thu Jan  6 10:22:35 2011 (serrano)                */
+;*    Last change :  Mon Jan 24 13:53:55 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -31,6 +31,21 @@
    (if (string? name)
        (string-append default " " name)
        default))
+
+;*---------------------------------------------------------------------*/
+;*    default-value ...                                                */
+;*---------------------------------------------------------------------*/
+(define (default-value type)
+   (case type
+      ((string) "")
+      ((symbol) '||)
+      ((number integer) 0)
+      ((real) 0.0)
+      (else
+       (match-case type
+	  ((list . ?-) '())
+	  ((alist . ?-) '())
+	  (else #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    value->string ...                                                */
@@ -251,6 +266,7 @@
 ;*    pr-editor-input ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (pr-editor-input name type value title parse key)
+   (tprint "pr-editor-input type=" type)
    (<INPUT> :class "hop-pr-editor-expr hop-pr-saved"
       :type "text"
       :value (value->string type value)
@@ -371,11 +387,12 @@
 (define (pr-editor-list name type value title parse key)
    (match-case type
       ((?- ?type . ?def)
+       (tprint "pr-editor-list type=" type " " (map typeof value))
        (<DIV> :class "hop-pr-editor-list"
 	  (<TABLE> 
 	     (<TR> :class "hop-pr-editor-list-add"
 		(<TD>
-		   ((pr-editor type) (list 'add name) type (if (pair? def) (car def) "") title parse key))
+		   ((pr-editor type) (list 'add name) type (if (pair? def) (car def) (default-value type)) title parse key))
 		(<TD> :class "hop-pr-editor-list-button"))
 	     (map (lambda (v i)
 		     (let ((edit ((pr-editor type) (list 'set i name) type v title parse key)))
@@ -403,9 +420,9 @@
 	  (<TABLE>
 	     (<TR> :class "hop-pr-editor-list-add"
 		(<TH>
-		   ((pr-editor typek) (list 'aaddk name) typek (if (pair? def) (car def) "") title parse key))
+		   ((pr-editor typek) (list 'aaddk name) typek (if (pair? def) (car def) (default-value type)) title parse key))
 		(<TD>
-		   ((pr-editor typev) (list 'aaddv name) typev (if (and (pair? def) (pair? (cdr def))) (cadr def) "") title parse key))
+		   ((pr-editor typev) (list 'aaddv name) typev (if (and (pair? def) (pair? (cdr def))) (cadr def) (default-value type)) title parse key))
 		(<TD> :class "hop-pr-editor-list-button"))
 	     (map (lambda (v i)
 		     (let ((editk ((pr-editor typek) (list 'asetk i name) typek (car v) title parse key))
