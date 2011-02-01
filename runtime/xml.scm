@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sat Jan 22 10:01:17 2011 (serrano)                */
+;*    Last change :  Sat Jan 29 16:06:56 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -328,6 +328,8 @@
        #unspecified)
       ((eq? obj #t)
        #unspecified)
+      ((char? obj)
+       (display obj p))
       (else
        (error "xml-write" "Illegal xml object" obj))))
 

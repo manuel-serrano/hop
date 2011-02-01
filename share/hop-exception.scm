@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Thu Dec 30 15:25:22 2010 (serrano)                */
-;*    Copyright   :  2009-10 Manuel Serrano                            */
+;*    Last change :  Wed Jan 26 18:43:19 2011 (serrano)                */
+;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
 ;*    debug mode).                                                     */
@@ -361,7 +361,8 @@
       (else
        ;; the error might be raised even before document.body is bound
        (add-event-listener! window "load"
-	  (lambda (e) (hop-report-exception exc))))))
+	  (lambda (e)
+	     (hop-report-exception exc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-last-exception ...                                           */

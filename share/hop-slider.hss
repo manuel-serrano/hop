@@ -63,8 +63,8 @@ slider {
   line-right-color: #ccc;
   line-height: 3px;
   line-border-left: 1px solid #999;
-  line-border-right: 1px solid #999;
   line-border-top: 1px solid #999;
+  line-border-right: 1px solid #555;
   line-border-bottom: 1px solid #555;
 }
 

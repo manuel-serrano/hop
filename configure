@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Jan  9 14:13:26 2011 (serrano)                */
+#*    Last change :  Tue Jan 25 10:49:29 2011 (serrano)                */
 #*    Copyright   :  2004-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -58,7 +58,7 @@ libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite"
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="2.2.0"
+version="2.2.1"
 devel=
 
 hopc=$PWD/bin/hopc
@@ -84,7 +84,7 @@ buildbindir=$PWD/bin
 buildspecific=
 installspecific=
 
-bigloorequired=3.5a
+bigloorequired=3.6a
 bigloourl=http://www.inria.fr/indes/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop

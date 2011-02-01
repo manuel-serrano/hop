@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Jan  5 15:06:44 2011 (serrano)                */
+/*    Last change :  Tue Feb  1 10:10:36 2011 (serrano)                */
 /*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -936,7 +936,7 @@ function hop_load_jscript( url ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    dom_get_element_by_class ...                                     */
+/*    dom_get_elements_by_class ...                                    */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity -2)) */
 function dom_get_elements_by_class( doc, name ) {
@@ -969,6 +969,50 @@ document.getElementsByClass = function( className ) {
     
    for( var i = 0; i < all.length; i++ ) {
       if( re.exec( all[ i ].className ) ) {
+	 res[ n++ ] = all[ i ];
+      }
+   }
+   
+   return res;
+}
+
+/*---------------------------------------------------------------------*/
+/*    dom_get_elements_by_attribute ...                                */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity -2)) */
+function dom_get_elements_by_attribute( doc, name, value ) {
+   var res = new Array();
+   var n = 0;
+   var all;
+
+   if( (doc instanceof String) || (typeof doc == "string") ) {
+      all = document.getElementsByTagName( "*" );
+      value = name;
+      name = sc_isKeyword( doc ) ? sc_keyword2jsstring( doc ) : doc;
+   } else {
+      all = doc.getElementsByTagName( "*" );
+
+      if( sc_isKeyword( name ) ) name = sc_keyword2jsstring( name );
+   }
+
+   for( var i = 0; i < all.length; i++ ) {
+      if( all[ i ].getAttribute( name ) == value ) {
+	 res[ n++ ] = all[ i ];
+      }
+   }
+   
+   return sc_vector2list( res );
+}
+
+document.getElementsByAttribute = function( name, value ) {
+   var all = document.getElementsByTagName( "*" );
+   var res = new Array();
+   var n = 0;
+    
+   if( sc_isKeyword( name ) ) name = sc_keyword2jsstring( name );
+   
+   for( var i = 0; i < all.length; i++ ) {
+      if( all[ i ].getAttribute( name ) == value ) {
 	 res[ n++ ] = all[ i ];
       }
    }
@@ -1049,13 +1093,20 @@ function node_style_get( obj, prop ) {
            (arity #t))
 */
 function node_computed_style_get( obj, prop ) {
+   var el = obj;
+   
    if( (obj instanceof String) || (typeof obj === "string") )
-      obj = document.getElementById( obj );
+      el = document.getElementById( obj );
    
    if( sc_isKeyword( prop ) )
       prop = sc_keyword2jsstring( prop );
 
-   return window.getComputedStyle( obj, null )[ prop ];
+   var t = window.getComputedStyle( el, null );
+
+   if( t != null )
+      return t[ prop ];
+   else
+      return false;
 }
 
 /*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Fri Jan  7 08:05:32 2011 (serrano)                */
+;*    Last change :  Tue Jan 25 16:46:55 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -55,7 +55,8 @@
 	    (node-style-set! spage.spviewport
 	       :-webkit-transition-property "all"
 	       :-moz-transition-property "all"
-	       :-o-transition-property "all")))))
+	       :-o-transition-property "all"
+	       :transition-property "all")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-update ...                                                 */
@@ -239,17 +240,6 @@
       ;; mark the transition style (needed on resize)
       (set! spage.transitionstyle 'none)
       (node-style-set! otab :display "none"))
-;*       (node-style-set! (cadr tbody) :display "none")                */
-;*       (node-style-set! tbody                                        */
-;* 	 :-webkit-transition-property "none"                           */
-;* 	 :-moz-transition-property "none"                              */
-;* 	 :-o-transition-property "none")                               */
-;*       (node-style-set! spviewport                                   */
-;* 	 :-webkit-transition-property "none"                           */
-;* 	 :-moz-transition-property "none"                              */
-;* 	 :-o-transition-property "none"                                */
-;* 	 :z-index spage.num                                            */
-;* 	 :left (format "-~apx" spage.spoffset)))                       */
    
    (define (spage-push-slide spage spviewport tbody otab)
       ;; mark the transition style (needed on resize)
@@ -268,6 +258,7 @@
 	 :-webkit-transition-property "none"
 	 :-moz-transition-property "none"
 	 :-o-transition-property "none"
+	 :transition-property "none"
 	 :opacity 0
 	 :z-index spage.num
 	 :top 0
@@ -278,11 +269,13 @@
 			 :-webkit-transition-property "opacity"
 			 :-moz-transition-property "opacity"
 			 :-o-transition-property "opacity"
+			 :transition-property "opacity"
 			 :opacity 1)
 		      (node-style-set! (cadr spage.tabs)
 			 :-webkit-transition-property "opacity"
 			 :-moz-transition-property "opacity"
 			 :-o-transition-property "opacity"
+			 :transition-property "opacity"
 			 :opacity 0)))
 	  (fade tbody (cadr spage.tabs)
 		(or (css-transition-duration tbody) 400) 0 1 #f)))
@@ -374,7 +367,8 @@
 		   (node-style-set! tbody
 		      :-webkit-transition-property "none"
 		      :-moz-transition-property "none"
-		      :-o-transition-property "none")
+		      :-o-transition-property "none"
+		      :transition-property "none")
 		   (dom-remove-child! spviewport tbody)
 		   (restore-static-body tbody.tab)
 		   (shrink-viewport spviewport))))

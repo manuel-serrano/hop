@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/share/hop-color.scm               */
+;*    serrano/prgm/project/hop/2.2.x/share/hop-color.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 14 11:31:04 2009                          */
-;*    Last change :  Fri Jul  2 15:24:31 2010 (serrano)                */
-;*    Copyright   :  2009-10 Manuel Serrano                            */
+;*    Last change :  Thu Jan 27 12:32:18 2011 (serrano)                */
+;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client side support for color selectors.                         */
 ;*=====================================================================*/
@@ -14,8 +14,14 @@
 ;*---------------------------------------------------------------------*/
 (module __hop-color
    
-   (export (hsv->rgb h s v)
+   (export (parse-hex-color color)
+	   (parse-rgb-color color)
+	   (parse-hsl-color color)
+	   (parse-web-color color)
+	   (hsv->rgb h s v)
 	   (rgb->hsv r g b)
+	   (hsl->rgb h s l)
+	   (rgb->hsl r g b)
 	   (colorchooser-reset-mousemove! cc)
 	   (colorchooser-init-hmodel hmodel)
 	   (colorchooser-init-colorscale scale)
@@ -46,6 +52,96 @@
 ;*    head (for client-side dependencies)                              */
 ;*---------------------------------------------------------------------*/
 (<HEAD> :include "hop-slider" "hop-spinbutton")
+
+;*---------------------------------------------------------------------*/
+;*    raise-color-error ...                                            */
+;*---------------------------------------------------------------------*/
+(define (raise-color-error color)
+   (error "parse-web-color" "Illegal color" color))
+
+;*---------------------------------------------------------------------*/
+;*    parse-hex-color ...                                              */
+;*---------------------------------------------------------------------*/
+(define (parse-hex-color color)
+   
+   (define (char->int c)
+      (cond
+         ((and (char>=? c #\0) (char<=? c #\9))
+          (*fx 16 (-fx (char->integer c) (char->integer #\0))))
+         ((and (char>=? c #\a) (char<=? c #\f))
+          (*fx 16 (+fx 10 (-fx (char->integer c) (char->integer #\a)))))
+         ((and (char>=? c #\A) (char<=? c #\F))
+          (*fx 16 (+fx 10 (-fx (char->integer c) (char->integer #\A)))))
+         (else
+          (raise-color-error color))))
+
+   (cond
+      ((or (<fx (string-length color) 4)
+           (not (char=? (string-ref color 0) #\#)))
+       (raise-color-error color))
+      ((=fx (string-length color) 7)
+       (values (string->integer (substring color 1 3) 16)
+               (string->integer (substring color 3 5) 16)
+               (string->integer (substring color 5 7) 16)))
+      ((=fx (string-length color) 4)
+       (values (char->int (string-ref color 1))
+               (char->int (string-ref color 2))
+               (char->int (string-ref color 3))))
+      (else
+       (raise-color-error color))))
+
+;*---------------------------------------------------------------------*/
+;*    parse-rgb-color ...                                              */
+;*---------------------------------------------------------------------*/
+(define (parse-rgb-color c)
+   (cond
+      ((pregexp-match "rgb([ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*)" c)
+       =>
+       (lambda (m)
+          (values (string->number (cadr m))
+                  (string->number (caddr m))
+                  (string->number (cadddr m)))))
+      ((pregexp-match "rgb([ ]*([0-9]+)%[ ]*,[ ]*([0-9]+)%[ ]*,[ ]*([0-9]+)%[ ]*)" c)
+       =>
+       (lambda (m)
+          (values (* 255 (/ (string->number (cadr m)) 100))
+                  (* 255 (/ (string->number (caddr m)) 100))
+                  (* 255 (/ (string->number (cadddr m)) 100)))))
+      (else
+       (raise-color-error c))))
+                         
+;*---------------------------------------------------------------------*/
+;*    parse-hsl-color ...                                              */
+;*---------------------------------------------------------------------*/
+(define (parse-hsl-color c)
+   (cond
+      ((pregexp-match "hsl([ ]*([0-9]+)[ ]*,[ ]*([0-9]+)%[ ]*,[ ]*([0-9]+)%[ ]*)" c)
+       =>
+       (lambda (m)
+          (hsl->rgb (string->integer (cadr m))
+                    (string->integer (caddr m))
+                    (string->integer (cadddr m)))))
+      (else
+       (raise-color-error c))))
+                         
+;*---------------------------------------------------------------------*/
+;*    parse-web-color ...                                              */
+;*---------------------------------------------------------------------*/
+(define (parse-web-color color)
+   (cond
+      ((=fx (string-length color) 0)
+       (raise-color-error color))
+      ((char=? (string-ref color 0) #\#)
+       (parse-hex-color color))
+      ((substring-at? color "rgb(" 0)
+       (parse-rgb-color color))
+      ((substring-at? color "hsl(" 0)
+       (parse-hsl-color color))
+      (else
+       (let ((val (assoc color css2-colors)))
+          (if val
+              (apply values (cdr val))
+              (raise-color-error color))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    css2-colors ...                                                  */
@@ -142,6 +238,83 @@
       (values (h max min r g b)
 	      (s max min r g b)
 	      (inexact->exact (round (* 100 max))))))
+
+;*---------------------------------------------------------------------*/
+;*    h ...                                                            */
+;*---------------------------------------------------------------------*/
+(define (h max min r g b)
+   (cond
+      ((= max min)
+       0)
+      ((= max r)
+       (modulo
+        (inexact->exact
+         (round (+ (* 60. (/ (- g b) (- max min))) 360.))) 360))
+      ((= max g)
+       (inexact->exact
+        (round (+ (* 60. (/ (- b r) (- max min))) 120.))))
+      (else
+       (inexact->exact
+        (round (+ (* 60. (/ (- r g) (- max min))) 240.))))))
+
+;*---------------------------------------------------------------------*/
+;*    hsl->rgb ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (hsl->rgb h s l)
+   (define (tc t)
+      (cond
+         ((< t .0) (+ t 1.))
+         ((> t 1.) (- t 1.))
+         (else t)))
+   (define (colorc t p q)
+      (let ((v (cond
+                  ((< t (/ 1. 6.))
+                   (+ p (* (- q p) (* 6. t))))
+                  ((< t 0.5)
+                   q)
+                  ((< t (/ 2. 3.))
+                   (+ p (* (- q p) (* 6. (- (/ 2. 3.) t)))))
+                  (else
+                   p))))
+         (inexact->exact (round (* 255. v)))))
+   (if (= s 0)
+       (let ((v (inexact->exact (round (* (/ l 100.) 255.)))))
+          (values v v v))
+       (let* ((l/100 (/ (exact->inexact l) 100.))
+              (s/100 (/ (exact->inexact s) 100.))
+              (q (if (<fx l 50)
+                     (* l/100 (+ 1. s/100))
+                     (+ l/100 (- s/100 (* l/100 s/100)))))
+              (p (- (* 2. l/100) q))
+              (hk (/ (exact->inexact h) 360.))
+              (tcr (tc (+ hk (/ 1. 3.))))
+              (tcg (tc hk))
+              (tcb (tc (- hk (/ 1. 3.)))))
+          (values (colorc tcr p q) (colorc tcg p q) (colorc tcb p q)))))
+         
+;*---------------------------------------------------------------------*/
+;*    rgb->hsl ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (rgb->hsl r g b)
+   (define (s max min r g b l)
+      (cond
+         ((= max min)
+          0)
+         ((<= l 0.5)
+          (inexact->exact
+           (round (* 100. (/ (- max min) (+ max min))))))
+         (else
+          (inexact->exact
+           (round (* 100. (/ (- max min) (- 2. (+ max min)))))))))
+   (let* ((r (/ (exact->inexact r) 255.))
+          (g (/ (exact->inexact g) 255.))
+          (b (/ (exact->inexact b) 255.))
+          (max (max r g b))
+          (min (min r g b))
+          (l (/ (+ max min) 2.)))
+      (values (h max min r g b)
+              (s max min r g b l)
+              (inexact->exact (round (* 100. l))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopcolor-mousemove-listener ...                                  */

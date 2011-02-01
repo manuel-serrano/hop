@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sun Jan  9 08:05:31 2011 (serrano)                */
+/*    Last change :  Wed Jan 26 16:38:44 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -408,7 +408,7 @@ function start_servevt_xhr_multipart_proxy( key ) {
 /*---------------------------------------------------------------------*/
 function start_servevt_ajax_proxy( key ) {
    if( !hop_servevt_proxy.httpreq ) {
-      var xhr_error_ttl = 6 * 3;
+      var xhr_error_ttl = 18;
       var server_ready = false;
       
       if( !hop_config.server_event ) hop_config.server_event = "ajax";
@@ -427,7 +427,7 @@ function start_servevt_ajax_proxy( key ) {
 	    // null is used as a marker for an abandonned connection
 	    if( val != null ) {
 	       // erase previous errors
-	       xhr_error_ttl = 6 * 3;
+	       xhr_error_ttl = 18;
 	       // re-register the event as soon as possible
 	       register( "" );
 	       // invoke all the user handlers (we have received a list of
@@ -537,9 +537,12 @@ function servevt_script_url( id, key, nocache ) {
 /*    start_servevt_script_proxy ...                                   */
 /*---------------------------------------------------------------------*/
 function start_servevt_script_proxy( key ) {
+   var ttl_init = 18;
+   
    if( !hop_servevt_proxy.script ) {
       var nocache = 0;
-      var ttl = 2;
+      var err_stamp = 0;
+      var ttl = ttl_init;
       
       if( !hop_config.server_event ) hop_config.server_event = "script";
 
@@ -548,12 +551,13 @@ function start_servevt_script_proxy( key ) {
 	 var cache = nocache++
 
 	 script.className = "hop_servevt_script";
-	 script.error_ttl = ttl;
 	 script.src = servevt_script_url( id, key, cache );
 	 script.id = script + nocache;
 	 
 	 script.onerror = function( e ) {
-	    if( script.error_ttl < 0 ) {
+	    hop_stop_propagation( e, false );
+
+	    if( ttl < 0 ) {
 	       exc = new Error( "Cannot receive server event response" );
 	       exc.message = "Abandoning server event";
 	       exc.scObject = key;
@@ -564,8 +568,16 @@ function start_servevt_script_proxy( key ) {
 	       
 	       hop_report_exception( exc );
 	    } else {
-	       script.error_ttl--;
-	       script.src = servevt_script_url( id, key, nocache++ );
+	       if( (e.timeStamp - err_stamp) < 1000 ) {
+		  /* decrement the ttl counter if two errors are */
+		  /* raised within 1 second */
+		  ttl--;
+	       }
+	       
+	       err_stamp = e.timeStamp;
+	       
+	       script.parentNode.removeChild( script );
+	       after( 1, function() { register( "" ) } );
 	    }
 	 };
 
@@ -576,6 +588,7 @@ function start_servevt_script_proxy( key ) {
 	 }
 
 	 script.onload = function( e ) {
+	    ttl = ttl_init;
 	    script.parentNode.removeChild( script );
 	 }
 	 
@@ -609,7 +622,9 @@ function start_servevt_script_proxy( key ) {
       }
       
       // raise server_ready 
-      after( 100, function() { hop_trigger_serverready_event( new HopServerReadyEvent() ); } );
+      after( 100, function() {
+	 hop_trigger_serverready_event( new HopServerReadyEvent() );
+      } );
    }
 }
 

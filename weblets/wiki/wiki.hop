@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Dec 16 07:35:16 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Tue Feb  1 11:39:09 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
 ;*=====================================================================*/
@@ -266,7 +266,7 @@
 				    (or (string-suffix? ".hss" path)
 					(string-suffix? ".css" path)))
 				 (directory->path-list (dirname file)))))
-	      (head (make-wiki-head compiled :jscript jscript :css css)))
+	      (head (make-wiki-head compiled #t :jscript jscript :css css)))
 	  (<WIKI:HTML> :compiled compiled :prefs prefs :file file
 	     :req req
 	     head (cons* #f #f body)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Jan 14 10:16:58 2011 (serrano)                */
+;*    Last change :  Sun Jan 30 10:56:04 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -338,6 +338,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-cache-directory
    (or (hop-configure-cache-directory)
+       (let ((h (getenv "XDG_CACHE_HOME")))
+	  (when (string? h)
+	     (make-file-name h "hop")))
        (make-file-name (hop-rc-directory) "cache"))
    (lambda (v)
       (hop-path-set! (cons v (hop-path)))
@@ -829,7 +832,11 @@
      ("video/mpeg" "avi")
      ("video/ogg" "ogv")
      ("video/mpeg" "mpg")
-     ("video/x-flv" "flv"))
+     ("video/x-flv" "flv")
+     ;; fonts
+     ("application/x-font-ttf" "ttf")
+     ("application/octet-stream" "otf")
+     ("application/vnd.ms-fontobject" ".eot"))
    (lambda (v)
       (mime-type-add-list! v)
       v))

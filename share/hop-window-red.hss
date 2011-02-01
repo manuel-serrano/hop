@@ -67,8 +67,6 @@ $(define iconify-icon "icons/hop-window-red/iconify.png")
 $(define maximize-icon "icons/hop-window-red/maximize.png")
 $(define close-icon "icons/hop-window-red/close.png")
 
-$(define radius "0px")
-
 /*--- title and upper line --------------------------------------------*/
 div[hssclass=hop-window] div.hop-window-handle {
   opacity: $passive-opacity;
@@ -76,6 +74,7 @@ div[hssclass=hop-window] div.hop-window-handle {
   height: 20px;
   padding-left: 3px;
   padding-right: 3px;
+  border-radius: 0;
 }
 
 div[hssclass=hop-window]:hover div.hop-window-handle {
@@ -97,7 +96,7 @@ div[hssclass=hop-window] div.hop-window-handle {
   background-image: none;
   background-image: -moz-linear-gradient( -90deg, $passive-color, $passive-color-to );
   background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($passive-color), to($passive-color-to) );
-  border-radius: $radius $radius 0 0;
+  border-radius: 0;
 }
 
 div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-middle,
@@ -163,10 +162,10 @@ div[hssclass=hop-window] td.hop-window-bottom-right {
 }
 
 div[hssclass=hop-window] td.hop-window-bottom-left {
-  border-radius: 0 0 0 $radius;
+  border-radius: 0;
 }
 div[hssclass=hop-window] td.hop-window-bottom-right {
-  border-radius: 0 0 $radius 0;
+  border-radius: 0;
 }
 
 div[hssclass=hop-window]:hover td.hop-window-bottom-left,

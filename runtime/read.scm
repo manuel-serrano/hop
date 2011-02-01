@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Jan 11 08:19:37 2011 (serrano)                */
+;*    Last change :  Sat Jan 29 11:02:11 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -828,15 +828,18 @@
 (define (get-directory-module-access dir)
    
    (define (get-file-module-access f abase)
-      (mutex-lock! *afile-mutex*)
-      (unless (hashtable-get *afile-table* f)
-	 (hashtable-put! *afile-table* f #t)
-	 (call-with-input-file f
-	    (lambda (p)
-	       (match-case (hop-read p)
-		  ((module ?module-name . ?-)
-		   (module-add-access! module-name (list f) abase))))))
-      (mutex-unlock! *afile-mutex*))
+      (with-lock *afile-mutex*
+	 (lambda ()
+	    (unless (hashtable-get *afile-table* f)
+	       (hashtable-put! *afile-table* f #t)
+	       (with-handler
+		  (lambda (e)
+		     (tprint "GET-DIRECTORY-MODULE-ACCESS: e=" e))
+		  (call-with-input-file f
+		     (lambda (p)
+			(match-case (hop-read p)
+			   ((module ?module-name . ?-)
+			    (module-add-access! module-name (list f) abase))))))))))
    
    (for-each (lambda (f)
 		(when (member (suffix f) (hop-module-suffixes))
@@ -856,7 +859,7 @@
 		  (abase #t))
    (if (hz-package-filename? file-name)
        (hop-load-from-hz file-name env menv mode charset abase)
-       (hop-load-file file-name env menv mode charset abase)))
+       (hop-load-file file-name env menv mode charset abase 'eval)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-dir ...                                                       */
@@ -879,12 +882,15 @@
       ;; load the .hop source file
       (let ((base (basename dir)))
 	 (let ((fname (string-append (make-file-name dir base) ".hop")))
-	    (hop-load-file fname env menv mode charset abase)))))
+	    (hop-load-file fname env menv mode charset abase 'eval)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-file ...                                                */
+;*    -------------------------------------------------------------    */
+;*    The C code generation imposed the variable traceid not to        */
+;*    be inlined.                                                      */
 ;*---------------------------------------------------------------------*/
-(define (hop-load-file fname env menv mode charset abase)
+(define (hop-load-file fname env menv mode charset abase traceid::symbol)
    (let* ((path (find-file/path fname (hop-path)))
 	  (apath (cond
 		    ((string? abase) abase)
@@ -899,9 +905,11 @@
 	  (let ((port (open-input-file path)))
 	     (if (input-port? port)
 		 (let ((m (eval-module))
-		       (f (the-loading-file)))
+		       (f (the-loading-file))
+		       (denv (current-dynamic-env)))
 		    (unwind-protect
-		       (begin
+		       (let ()
+			  ($env-push-trace denv traceid #f)
 			  (hop-load-afile apath)
 			  (when abase (module-abase-set! apath))
 			  (loading-file-set! path)
@@ -912,28 +920,37 @@
 				 ;; always read the first expression
 				 ;; in debug mod to enforce location in side
 				 ;; the module clause
-				 (let ((sexp (hop-read port charset menv loc)))
-				    (if (eof-object? sexp)
-					last
-					(let ((val (eval! sexp env)))
-					   (when (xml-tilde? val)
-					      (warning/location
-					       fname
-					       (and (epair? sexp)
-						    (match-case (cer sexp)
-						       ((?- ?- ?loc . ?-)
-							loc)
-						       (else #f)))
-					       'hop-load
-					       "Useless ~ expression"))
-					   (loop val #f))))))
+				 (let ((e (hop-read port charset menv loc)))
+				    (when (epair? e)
+				       ($env-set-trace-location denv (cer e)))
+				    (if (eof-object? e)
+					(begin
+					   ($env-pop-trace denv)
+					   last)
+					(begin
+					   (let ((val (eval! e env)))
+					      (when (xml-tilde? val)
+						 (warning/location
+						  fname
+						  (and (epair? e)
+						       (match-case (cer e)
+							  ((?- ?- ?loc . ?-)
+							   loc)
+							  (else #f)))
+						  'hop-load
+						  "Useless ~ expression"))
+					      (loop val #f)))))))
 			     ((include)
 			      (let loop ((res '())
 					 (loc #t))
-				 (let ((sexp (hop-read port charset menv loc)))
-				    (if (eof-object? sexp)
-					(reverse! res)
-					(let ((val (eval! sexp env)))
+				 (let ((e (hop-read port charset menv loc)))
+				    (when (epair? e)
+				       ($env-set-trace-location denv (cer e)))
+				    (if (eof-object? e)
+					(begin
+					   ($env-pop-trace denv)
+					   (reverse! res))
+					(let ((val (eval! e env)))
 					   (loop (cons val res) #f))))))
 			     (else
 			      (error "hop-load" "Illegal mode" mode))))
