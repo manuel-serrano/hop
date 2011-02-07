@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Jan 22 09:26:52 2011 (serrano)                */
+;*    Last change :  Mon Feb  7 17:26:29 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -71,6 +71,7 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
+   ;; (eval-evaluate-set! 'new)
    ;; catch critical signals
    (signal-init!)
    ;; set the Hop cond-expand identification

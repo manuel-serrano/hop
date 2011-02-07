@@ -57,7 +57,7 @@ entries. First let's consider the declaration of the //history manager//.
 </code>
 
 
-Event thought the head of the document is, in this example, empty, the
+Although the head of the document is empty, in this example, the
 markup ++<HEAD>++ is **required** because it forces the HOP client
 runtime system to be included inside the client part of the
 document. If the markup is omitted the client runtime system is lacking

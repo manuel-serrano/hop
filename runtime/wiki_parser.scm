@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Thu Dec  9 21:19:10 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Sun Feb  6 19:37:10 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
 ;*=====================================================================*/
@@ -159,20 +159,6 @@
       (pregexp-replace* "^ +| +$" s2 "")))
 
 ;*---------------------------------------------------------------------*/
-;*    wiki-parse-ident ...                                             */
-;*---------------------------------------------------------------------*/
-(define (wiki-parse-ident str)
-   (let ((i (string-index str #\@)))
-      (cond
-	 ((not i)
-	  (values str #f))
-	 ((=fx i 0)
-	  (values #f (substring str 1 (string-length str))))
-	 (else
-	  (values (substring str 0 i)
-		  (substring str (+fx i 1) (string-length str)))))))
-
-;*---------------------------------------------------------------------*/
 ;*    normalize-string ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (normalize-string str)
@@ -189,6 +175,54 @@
 	  (substring str b))
 	 (else
 	  (substring str b (+fx 1 e))))))
+
+;*---------------------------------------------------------------------*/
+;*    remove-surrounding-spaces ...                                    */
+;*---------------------------------------------------------------------*/
+(define (remove-surrounding-spaces l)
+   (let loop ((l l)
+	      (mode 'all))
+      (cond
+	 ((string? l)
+	  (case mode
+	     ((all)
+	      (normalize-string l))
+	     ((head)
+	      (let ((b (string-skip l " \t")))
+		 (if b
+		     (substring l b)
+		     l)))
+	     ((tail)
+	      (let ((b (string-skip-right l " \t")))
+		 (if b
+		     (string-shrink! l (+fx b 1))
+		     "")))
+	     (else
+	      l)))
+	 ((pair? l)
+	  (if (null? (cdr l))
+	      (list (loop (car l) mode))
+	      (cons (loop (car l) 'head)
+		    (let liip ((l (cdr l)))
+		       (if (null? (cdr l))
+			   (list (loop (car l) 'tail))
+			   (cons (car l) (liip (cdr l))))))))
+	 (else
+	  l))))
+
+;*---------------------------------------------------------------------*/
+;*    wiki-parse-ident ...                                             */
+;*---------------------------------------------------------------------*/
+(define (wiki-parse-ident str)
+   (let ((i (string-index str #\@)))
+      (cond
+	 ((not i)
+	  (values str #f))
+	 ((=fx i 0)
+	  (values #f (substring str 1 (string-length str))))
+	 (else
+	  (values (substring str 0 i)
+		  (substring str (+fx i 1) (string-length str)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *wiki-grammar* ...                                               */
@@ -578,7 +612,8 @@
 				    (when (wiki-debug?)
 				       (fprint (current-error-port) ";;" name))
 				    (list (<A> :name name)
-					  (apply hx :name name expr))))
+					  (apply hx :name name
+						 (remove-surrounding-spaces expr)))))
 			      #f)
 		 (ignore)))))
       

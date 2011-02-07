@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -34,8 +34,9 @@
 ;; but not at start.
 (define (dotted-symbol? id)
    (and (symbol? id)
-	(let ((i (string-index (symbol->string id) #\.)))
-	   (and (fixnum? i) (>fx i 0)))))
+	(let* ((s (symbol->string! id))
+	       (i (string-index s #\.)))
+	   (and (fixnum? i) (>fx i 0) (<fx i (-fx (string-length s) 1))))))
 
 (define (starts-with-dot? id)
    (and (symbol? id)

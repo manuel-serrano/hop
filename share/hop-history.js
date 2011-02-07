@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-history.js              */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-history.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:59:42 2007                          */
-/*    Last change :  Sat Jan  2 08:19:30 2010 (serrano)                */
-/*    Copyright   :  2007-10 Manuel Serrano                            */
+/*    Last change :  Thu Feb  3 06:51:46 2011 (serrano)                */
+/*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP history manager.                                             */
 /*=====================================================================*/
@@ -119,9 +119,9 @@ function hop_state_history_flush() {
 
    /* store the new browser URL */
    if( i == -1 ) {
-      hop_active_location_set( document, old + loc );
+      hop_hashchange_set( document, old + loc );
    } else {
-      hop_active_location_set( document, old.substring( 0, i ) + loc );
+      hop_hashchange_set( document, old.substring( 0, i ) + loc );
    }
 }
    
@@ -300,6 +300,7 @@ function hop_retry_eval_history_state( count, old_state, new_state ) {
 /*    This function is invoked when the location has changed.          */
 /*---------------------------------------------------------------------*/
 function hop_eval_history_state( location ) {
+   return;
    var hash = location.hash;
 
    if( hop_eval_history_interval )
@@ -397,7 +398,7 @@ if( hop_enable_location_event ) {
       hop_add_event_listener(
 	 window, "ready",
 	 function( e ) {
-	    hop_add_event_listener( document, "location", hop_eval_history_state );
+	    hop_add_event_listener( window, "hashchange", hop_eval_history_state );
 	 } );
    }
 }

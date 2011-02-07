@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Thu Jan  6 22:58:20 2011 (serrano)                */
+/*    Last change :  Tue Feb  1 17:19:49 2011 (serrano)                */
 /*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -90,168 +90,169 @@ function hop_get_flash_version() {
 /*    deduced by introspection.                                        */
 /*---------------------------------------------------------------------*/
 function hop_Config() {
-  /* cpu speed */
-  this.cpu_speed = 100;
-  if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.cpu_speed = 40;
-  if( navigator.platform.indexOf( "armv5" ) >= 0 ) this.cpu_speed = 30;
-  if( navigator.platform.indexOf( "WinCE" ) >= 0 ) this.cpu_speed = 30;
+   /* cpu speed */
+   this.cpu_speed = 100;
+   if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.cpu_speed = 40;
+   if( navigator.platform.indexOf( "armv5" ) >= 0 ) this.cpu_speed = 30;
+   if( navigator.platform.indexOf( "WinCE" ) >= 0 ) this.cpu_speed = 30;
 
-  /* gpu speed */
-  this.gpu_speed = 100;
-  if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.gpu_speed = 30;
+   /* gpu speed */
+   this.gpu_speed = 100;
+   if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.gpu_speed = 30;
 
-  /* js speed */
-  this.js_speed = 50;
+   /* js speed */
+   this.js_speed = 50;
 
-  /* pointing device */
-  this.is_tablet = ( navigator.userAgent.indexOf( "Tablet" ) >= 0 );
+   /* pointing device */
+   this.is_tablet = ( navigator.userAgent.indexOf( "Tablet" ) >= 0 );
 
-  /* html5 */
-  this.html5_video = "play" in document.createElement( "video" );
-  var audio = document.createElement( "audio" );
+   /* html5 */
+   this.html5_video = "play" in document.createElement( "video" );
+   var audio = document.createElement( "audio" );
 
-  if( !"HTMLAudioElement" in window ) {
-     this.html5_audio = false;
-  } else {
-    this.html5_audio = 
-       ("play" in audio) 
-       && (audio.constructor === window[ "HTMLAudioElement" ])
-       && ((audio.canPlayType( "audio/ogg" ) != "")
-           || (audio.canPlayType( "audio/mpeg" ) != ""));
-  }
+   if( !"HTMLAudioElement" in window ) {
+      this.html5_audio = false;
+   } else {
+      this.html5_audio = 
+	 ("play" in audio) 
+	 && (audio.constructor === window[ "HTMLAudioElement" ])
+	 && ((audio.canPlayType( "audio/ogg" ) != "")
+             || (audio.canPlayType( "audio/mpeg" ) != ""));
+   }
 
-  /* flash version */
-  this.flash_version = hop_get_flash_version();
-  this.flash_external_interface = false;
-  this.flash_audio = false;
-  this.flash_markup = "embed";
+   /* flash version */
+   this.flash_version = hop_get_flash_version();
+   this.flash_external_interface = false;
+   this.flash_audio = false;
+   this.flash_markup = "embed";
 
-  /* Geolocation */
-  this.geolocation = (navigator.geolocation ? true : false);
+   /* Geolocation */
+   this.geolocation = (navigator.geolocation ? true : false);
 
-  /* default navigator setting */
-  this.mouse_left_button = 0;
+   /* default navigator setting */
+   this.mouse_left_button = 0;
 
-  this.inline_image = false;
-  this.filtered_errors = [];
-  this.css = 2.1;
-  this.css_transition = false;
-  this.xhr_multipart = false; // see hop_make_xml_http_request conf
-  this.clone_innerHTML = false; // see hop_create_element (hop-dom.js)
-  this.eval_innerHTML = true;
-  this.websocket = false;
-  this.server_event = "long polling";
+   this.inline_image = false;
+   this.filtered_errors = [];
+   this.css = 2.1;
+   this.css_transition = false;
+   this.xhr_multipart = false; // see hop_make_xml_http_request conf
+   this.clone_innerHTML = false; // see hop_create_element (hop-dom.js)
+   this.eval_innerHTML = true;
+   this.websocket = false;
+   this.server_event = "long polling";
+   this.hashchange_event = ("onhashchange" in window);
 
-  /* navigator specific configuration */
-  if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {
-     this.js_speed = 20;
-     this.navigator_family = "msie";
-     this.mouse_left_button = 1;
-     this.flash_external_interface = true;
-     this.flash_audio = true;
-     this.flash_markup = "object";
-     this.inline_image = false;
-     this.clone_innerHTML = true;
-     if( navigator.userAgent.indexOf( "MSIE 6.0" ) >= 0 ) {
-	hop_enable_location_event = false;
-     }
-  } else if( navigator.userAgent.indexOf( "Opera" ) >= 0 ) {
-     this.js_speed = 70;
-     this.navigator_family = "opera";
-     this.mouse_left_button = 0;
-     this.flash_external_interface = false;
-     this.flash_audio = false;
-     this.flash_markup = "embed";
-     this.inline_image = true;
-     this.clone_innerHTML = true;
-  } else if( navigator.userAgent.indexOf( "Chrome" ) >= 0 ) {
-     this.js_speed = 100;
-     this.navigator_family = "chrome";
-     this.mouse_left_button = 0;
-     this.flash_external_interface = true;
-     this.flash_audio = true;
-     this.flash_markup = "embed";
-     this.inline_image = true;
-     this.css = 3;
-     this.css_transition = true;
-     this.clone_innerHTML = true;
-     if( ! "Window" in window || window.Window === undefined ) {
-       window.Window = window.constructor;
-     }
-  } else if( navigator.userAgent.indexOf( "Safari" ) >= 0 ) {
-     this.js_speed = 80;
-     this.navigator_family = "safari";
-     this.mouse_left_button = 0;
-     this.flash_external_interface = true;
-     this.flash_audio = true;
-     this.flash_markup = "embed";
-     this.inline_image = true;
-     this.clone_innerHTML = true;
-     this.css_transition = true;
-  } else if( navigator.userAgent.indexOf( "WebKit" ) >= 0 ) {
-     this.navigator_family = "webkit";
-     this.js_speed = 80;
-     this.mouse_left_button = 0;
-     this.flash_external_interface = true;
-     this.flash_audio = true;
-     this.flash_markup = "embed";
-     this.inline_image = true;
-     this.clone_innerHTML = true;
-     this.css_transition = true;
-  } else if( navigator.userAgent.indexOf( "KHTML" ) >= 0 ) {
-     this.navigator_family = "khtml";
-     this.mouse_left_button = 1;
-     this.flash_external_interface = true;
-     this.flash_audio = true;
-     this.flash_markup = "embed";
-     this.inline_image = true;
-     this.clone_innerHTML = true;
-  } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
-     if( navigator.userAgent.match( /4.[0-9][^ ]*$/ ) ) {
-        /* Firefox 4.0 */
-        this.js_speed = 100;	    
-        this.css = 3;
-        this.css_transition = true;
-     } else if( navigator.userAgent.match( /3.[56][^ ]*$/ ) ) {
-        /* Firefox 3.5, 3.6 */
-        this.js_speed = 75;	    
-        this.css = 3;
-     } else if( navigator.userAgent.match( /3.0[^ ]*$/ ) ) {
-        /* Firefox 3.0, 3.1 */
-        this.js_speed = 60;	    
-     } else {
-        this.js_speed = 50;
-     }
-
-     this.navigator_family = "mozilla";
-     this.mouse_left_button = 0;
-     this.flash_external_interface = true;
-     this.flash_audio = true;
-     this.flash_markup = "embed";
-     this.inline_image = true;
-     this.filtered_errors = ["javascript:top.location+\"__flashplugin_unique__\"", "tipElement.ownerDocument is null"];
-  } else {
-     alert( "Unknown navigator (" + navigator.userAgent +
-	    "), using default settings..." );
-  }
-
-  /* Screen Dimensions */
-  this.screen_width = screen.width;
-  this.screen_height = screen.height;
-  this.screen_available_width = screen.availWidth;
-  this.screen_available_height = screen.availHeight;
-  this.screen_color_depth = screen.colorDepth;
-  
-  /* Android 2.1 webkit adjustments */
-  if( this.flash_audio ) {
-    if( navigator.userAgent.indexOf( "Android 2.1" ) ||
-        navigator.userAgent.indexOf( "Android 2.0" ) ) {
-       this.flash_audio = false;
-    }
-  }
-
-  this.version = hop_version();
-  this.backend = hop_backend();
+   /* navigator specific configuration */
+   if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {
+      this.js_speed = 20;
+      this.navigator_family = "msie";
+      this.mouse_left_button = 1;
+      this.flash_external_interface = true;
+      this.flash_audio = true;
+      this.flash_markup = "object";
+      this.inline_image = false;
+      this.clone_innerHTML = true;
+      if( navigator.userAgent.indexOf( "MSIE 6.0" ) >= 0 ) {
+	 hop_enable_location_event = false;
+      }
+   } else if( navigator.userAgent.indexOf( "Opera" ) >= 0 ) {
+      this.js_speed = 70;
+      this.navigator_family = "opera";
+      this.mouse_left_button = 0;
+      this.flash_external_interface = false;
+      this.flash_audio = false;
+      this.flash_markup = "embed";
+      this.inline_image = true;
+      this.clone_innerHTML = true;
+   } else if( navigator.userAgent.indexOf( "Chrome" ) >= 0 ) {
+      this.js_speed = 100;
+      this.navigator_family = "chrome";
+      this.mouse_left_button = 0;
+      this.flash_external_interface = true;
+      this.flash_audio = true;
+      this.flash_markup = "embed";
+      this.inline_image = true;
+      this.css = 3;
+      this.css_transition = true;
+      this.clone_innerHTML = true;
+      if( ! "Window" in window || window.Window === undefined ) {
+	 window.Window = window.constructor;
+      }
+   } else if( navigator.userAgent.indexOf( "Safari" ) >= 0 ) {
+      this.js_speed = 80;
+      this.navigator_family = "safari";
+      this.mouse_left_button = 0;
+      this.flash_external_interface = true;
+      this.flash_audio = true;
+      this.flash_markup = "embed";
+      this.inline_image = true;
+      this.clone_innerHTML = true;
+      this.css_transition = true;
+   } else if( navigator.userAgent.indexOf( "WebKit" ) >= 0 ) {
+      this.navigator_family = "webkit";
+      this.js_speed = 80;
+      this.mouse_left_button = 0;
+      this.flash_external_interface = true;
+      this.flash_audio = true;
+      this.flash_markup = "embed";
+      this.inline_image = true;
+      this.clone_innerHTML = true;
+      this.css_transition = true;
+   } else if( navigator.userAgent.indexOf( "KHTML" ) >= 0 ) {
+      this.navigator_family = "khtml";
+      this.mouse_left_button = 1;
+      this.flash_external_interface = true;
+      this.flash_audio = true;
+      this.flash_markup = "embed";
+      this.inline_image = true;
+      this.clone_innerHTML = true;
+   } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
+      if( navigator.userAgent.match( /4.[0-9][^ ]*$/ ) ) {
+         /* Firefox 4.0 */
+         this.js_speed = 100;	    
+         this.css = 3;
+         this.css_transition = true;
+      } else if( navigator.userAgent.match( /3.[56][^ ]*$/ ) ) {
+         /* Firefox 3.5, 3.6 */
+         this.js_speed = 75;	    
+         this.css = 3;
+      } else if( navigator.userAgent.match( /3.0[^ ]*$/ ) ) {
+         /* Firefox 3.0, 3.1 */
+         this.js_speed = 60;	    
+      } else {
+         this.js_speed = 50;
+      }
+      
+      this.navigator_family = "mozilla";
+      this.mouse_left_button = 0;
+      this.flash_external_interface = true;
+      this.flash_audio = true;
+      this.flash_markup = "embed";
+      this.inline_image = true;
+      this.filtered_errors = ["javascript:top.location+\"__flashplugin_unique__\"", "tipElement.ownerDocument is null"];
+   } else {
+      alert( "Unknown navigator (" + navigator.userAgent +
+	     "), using default settings..." );
+   }
+   
+   /* Screen Dimensions */
+   this.screen_width = screen.width;
+   this.screen_height = screen.height;
+   this.screen_available_width = screen.availWidth;
+   this.screen_available_height = screen.availHeight;
+   this.screen_color_depth = screen.colorDepth;
+   
+   /* Android 2.1 webkit adjustments */
+   if( this.flash_audio ) {
+      if( navigator.userAgent.indexOf( "Android 2.1" ) ||
+          navigator.userAgent.indexOf( "Android 2.0" ) ) {
+	 this.flash_audio = false;
+      }
+   }
+   
+   this.version = hop_version();
+   this.backend = hop_backend();
 }
 
 /*---------------------------------------------------------------------*/
@@ -667,12 +668,12 @@ var node_style_set = function( el, prop, value ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_active_location_timeout ...                                  */
+/*    hop_hashchange_timeout ...                                       */
 /*    -------------------------------------------------------------    */
 /*    The frequency, new locations are checked. On slow CPU (e.g.,     */
 /*    ARM processors), use a reduced frequency.                        */
 /*---------------------------------------------------------------------*/
-var hop_active_location_timeout =
+var hop_hashchange_timeout =
    ((hop_config.cpu_speed < 66) ? 100 : 250);
 
 /*---------------------------------------------------------------------*/

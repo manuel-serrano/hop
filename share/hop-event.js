@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Jan 26 16:38:44 2011 (serrano)                */
+/*    Last change :  Wed Feb  2 07:39:26 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -14,7 +14,9 @@
 /*---------------------------------------------------------------------*/
 var hop_is_ready = false;
 
-hop_add_native_event_listener( window, "load", function() { hop_is_ready = true; } );
+hop_add_native_event_listener( window, "load", function() {
+   hop_is_ready = true;
+} );
 
 /*---------------------------------------------------------------------*/
 /*    HopEvent ...                                                     */
@@ -41,9 +43,6 @@ function hop_event_stoppedp( e ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export add-event-listener!) (arity -4))) */
 function hop_add_event_listener( obj, event, proc, capture ) {
-   if( event === "location" )
-      return hop_add_active_location_listener( obj, proc );
-
    if( event === "server" )
       return hop_add_server_listener( obj, proc, capture );
 
@@ -79,6 +78,10 @@ function hop_add_event_listener( obj, event, proc, capture ) {
       return obj.hop_add_event_listener( event, proc, capture );
    }
 
+   if( event === "hashchange" && !hop_config.hashchange_event ) {
+      return hop_add_hashchange_listener( obj, proc );
+   }
+
    return hop_add_native_event_listener( obj, event, proc, capture );
 }
 
@@ -87,9 +90,6 @@ function hop_add_event_listener( obj, event, proc, capture ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export remove-event-listener!) (arity -4)) */
 function hop_remove_event_listener( obj, event, proc, capture ) {
-   if( event === "location" )
-      return hop_remove_active_location_listener( obj, proc );
-
    if( event === "server" )
       return hop_remove_server_listener( obj, proc );
 
@@ -105,6 +105,9 @@ function hop_remove_event_listener( obj, event, proc, capture ) {
    if( (obj.hop_remove_event_listener != undefined) &&
       (obj.hop_remove_event_listener != hop_remove_event_listener) )
       return obj.hop_remove_event_listener( event, proc, capture );
+
+   if( event === "hashchange" && !hop_config.hashchange_event )
+      return hop_remove_hashchange_listener( obj, proc );
 
    return hop_remove_native_event_listener( obj, event, proc, capture );
 } 
@@ -130,51 +133,57 @@ function hop_add_ready_listener( obj, proc, ttl ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_add_active_location_listener ...                             */
+/*    hop_add_hashchange_listener ...                                  */
 /*---------------------------------------------------------------------*/
-function hop_add_active_location_listener( obj, proc ) {
-   obj.hop_active_location_proc = proc;
-   var i = window.location.href.indexOf( "#" );
-   
-   if( i === -1 ) {
-      obj.hop_active_location_href = window.location.href;
-   } else {
-      obj.hop_active_location_href = window.location.href.substring( 0, i-1 );
-   }
+function hop_add_hashchange_listener( obj, proc ) {
+   obj.hop_hashchange_proc = proc;
+/*    var i = window.location.href.indexOf( "#" );                     */
+/*                                                                     */
+/*    if( i === -1 ) {                                                 */
+/*       obj.hop_hashchange_href = window.location.href;               */
+/*    } else {                                                         */
+/*       obj.hop_hashchange_href = window.location.href.substring( 0, i-1 ); */
+/*    }                                                                */
 
-   if( obj.hop_active_location_interval === undefined ) {
-      var check = function() {
-	 if( obj.hop_active_location_href !== window.location.href ) {
-	    if( obj.hop_active_location_href != window.location.href ) {
-	       obj.hop_active_location_href = window.location.href;
-	       obj.hop_active_location_proc( window.location );
-	    }
+   var check = function() {
+      if( obj.hop_hashchange_href !== window.location.href ) {
+	 if( obj.hop_hashchange_href != window.location.href ) {
+	    obj.hop_hashchange_href = window.location.href;
+	    obj.hop_hashchange_proc( window.location );
 	 }
-	 return true;
       }
-
-      obj.hop_active_location_interval =
-	 setInterval( check, hop_active_location_timeout );
+      return true;
    }
+
+   obj.hop_hashchange_listeners =
+      sc_cons( sc_cons( proc, setInterval( check, hop_hashchange_timeout ) ),
+	       ( "hop_hashchange_listeners" in obj ) ?
+	       hop_hashchange_listeners : null );
+   
    return false;
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_remove_active_location_listener ...                          */
+/*    hop_remove_active_hashchange_listener ...                        */
 /*---------------------------------------------------------------------*/
-function hop_remove_active_location_listener( obj, proc ) {
-   if( obj.hop_active_location_interval != undefined ) {
-      clearInterval( obj.hop_active_location_interval );
-      obj.hop_active_location_interval = undefined;
+function hop_remove_active_hashchange_listener( obj, proc ) {
+   if( sc_isPair( obj.hop_hashchange_listener ) ) {
+      var c = sc_assq( proc, obj.hop_hashchange_listener );
+
+      if( c ) {
+	 clearInterval( c.cdr );
+	 obj.hop_hashchange_listener =
+	    sc_deleteBang( c, obj.hop_hashchange_listener );
+      }
    }
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_active_location_set ...                                      */
+/*    hop_hashchange_set ...                                           */
 /*---------------------------------------------------------------------*/
-function hop_active_location_set( obj, href ) {
+function hop_hashchange_set( obj, href ) {
    window.location.href = href;
-   obj.hop_active_location_href = window.location.href;
+/*    obj.hop_hashchange_href = window.location.href;                  */
 }
 
 /*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Mon Jan 24 13:45:03 2011 (serrano)                */
+;*    Last change :  Sat Feb  5 09:46:33 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -245,6 +245,8 @@
        (string->number val))
       ((integer)
        (string->integer val))
+      ((elong)
+       (string->elong val))
       ((real)
        (string->real val))
       ((symbol)
@@ -264,6 +266,7 @@
 			 ((string? s) s)
 			 ((symbol? s) (symbol->string s))
 			 ((integer? s) (integer->string s))
+			 ((elong? s) (elong->string s))
 			 ((real? s) (real->string s))
 			 ((keyword? s) (keyword->string s))
 			 (else (error "string->value" "Illegal value" val))))

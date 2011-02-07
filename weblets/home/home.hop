@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Tue Jan 25 14:31:25 2011 (serrano)                */
+;*    Last change :  Wed Feb  2 06:51:53 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -104,8 +104,7 @@
 (define (home-main req)
    (<HOME>
       (service-base-url home req)
-      (<NOTEPAD>
-	 :id "home-notepad"
+      (<NOTEPAD> :id "home-notepad"
 	 (<NPTAB> :id "Presentation"
 	    (<NPTABHEAD>
 	       (<IMG> :inline #f

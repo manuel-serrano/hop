@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/weblets/doc/doc.scm               */
+;*    serrano/prgm/project/hop/2.2.x/weblets/doc/doc.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 22 08:00:34 2007                          */
-;*    Last change :  Fri Mar  5 19:00:23 2010 (serrano)                */
-;*    Copyright   :  2007-10 Manuel Serrano                            */
+;*    Last change :  Wed Feb  2 06:59:49 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Doc weblet library                                               */
 ;*=====================================================================*/
@@ -20,6 +20,7 @@
    
    (export (select-api-doc svc entry el node-id)
 	   (select-api-pad api k pad)
+	   (tutorialref id path)
 
 	   api-history
 	   weblet-history

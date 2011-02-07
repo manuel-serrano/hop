@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/weblets/doc/search.hop            */
+;*    serrano/prgm/project/hop/2.2.x/weblets/doc/search.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Fri Mar  5 18:08:19 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Mon Feb  7 17:26:18 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
 ;*=====================================================================*/
@@ -146,7 +146,7 @@
 			;; add to the markup table
 			(hashtable-put! table mk path)
 			(loop (+ s (string-length mk)))))))))
-      
+
       (if (null? (cdr markups))
 	  (let ((t (kmp-table (car markups))))
 	     (for-each (lambda (f)
