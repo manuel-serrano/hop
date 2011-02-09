@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Sun Jan  9 06:34:09 2011 (serrano)                */
+;*    Last change :  Wed Feb  9 11:30:12 2011 (serrano)                */
 ;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -237,7 +237,6 @@
    (with-stage-handler
       response-error-handler (scd req)
       (let ((resp (with-time (request->response req thread) id "RESPONSE")))
-	 (evmeaning-reset-error!)
 	 (debug-thread-info-set! thread
 				 (format "~a ~a://~a:~a~a... -> ~a"
 					 (http-request-method req)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Feb  2 07:39:26 2011 (serrano)                */
+/*    Last change :  Tue Feb  8 09:28:08 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -78,7 +78,7 @@ function hop_add_event_listener( obj, event, proc, capture ) {
       return obj.hop_add_event_listener( event, proc, capture );
    }
 
-   if( event === "hashchange" && !hop_config.hashchange_event ) {
+   if( event === "hashchange" && (true || !hop_config.hashchange_event) ) {
       return hop_add_hashchange_listener( obj, proc );
    }
 
@@ -129,6 +129,37 @@ function hop_add_ready_listener( obj, proc, ttl ) {
    } else {
       el.ready = proc;
       el.ready( new HopEvent( "ready", el ) );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_get_hashchange_interval ...                                  */
+/*---------------------------------------------------------------------*/
+function hop_get_hashchange_interval() {
+   if( hop_hashchange_interval ) {
+      return hop_hashchange_interval;
+   } else {
+      window.hop_hashchange_href = window.location.href;
+      var e = new HopEvent( "hashchange", window );
+      
+      var interval = function() {
+	 if( window.hop_hashchange_href !== window.location.href ) {
+	    if( window.hop_hashchange_href != window.location.href ) {
+	       var l = obj.hop_hashchange_listener;
+	       window.hop_hashchange_href = window.location.href;
+	       
+	       while( sc_isPair( l ) ) {
+		  l.car( window.location )( e );
+		  l = l.cdr;
+	       }
+	    }
+	 }
+	 return true;
+      }
+	 
+      hop_hashchange_interval =
+	 setInterval( interval, hop_hashchange_timeout );
+      return hop_hashchange_interval;
    }
 }
 
