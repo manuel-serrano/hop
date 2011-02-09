@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Feb  9 11:22:10 2011 (serrano)                */
+;*    Last change :  Wed Feb  9 11:54:19 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -834,7 +834,7 @@
 	       (hashtable-put! *afile-table* f #t)
 	       (with-handler
 		  (lambda (e)
-		     (tprint "GET-DIRECTORY-MODULE-ACCESS: e=" e))
+		     #unspecified)
 		  (call-with-input-file f
 		     (lambda (p)
 			(match-case (hop-read p)
