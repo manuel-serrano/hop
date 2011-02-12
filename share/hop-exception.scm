@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Wed Jan 26 18:43:19 2011 (serrano)                */
+;*    Last change :  Wed Feb  9 16:29:37 2011 (serrano)                */
 ;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -16,6 +16,7 @@
 (module __hop-exception
    (export (hop-get-stack offset . depth)
 	   (hop-report-exception exc)
+	   (hop-report-exception/location exc)
 	   (bigloo-mangled? str)
 	   (bigloo-demangle str)
 	   (<EXCEPTION-STACK> stack)
@@ -26,6 +27,7 @@
        (hop-config hop_config))
    (scheme2js-pragma (hop-get-stack (JS "hop_get_stack"))
 		     (hop-report-exception (JS "hop_report_exception"))
+		     (hop-report-exception/location (JS "hop_report_exception_location"))
 		     (bigloo-mangled? (JS "hop_mangledp"))
 		     (bigloo-demangle (JS "hop_demangle"))
 		     (<EXCEPTION-STACK> (JS "hop_make_exception_stack"))
@@ -301,9 +303,11 @@
 			(string-append "Client Error: " exc.hopLocation)
 			"Client Error"))
 	  (src (cond
-		  ((and exc.lineNumber (not (eq? exc.lineNumber #unspecified)))
+		  ((js-in? "charNumber" exc)
+		   (list (<A> :href url url) ", char " exc.charNumber))
+		  ((js-in? "lineNumber" exc)
 		   (list (<A> :href url url) ", line " exc.lineNumber))
-		  ((and exc.line (not (eq? exc.line #unspecified)))
+		  ((js-in? "line" exc)
 		   (list (<A> :href url url) ", line " exc.line))
 		  (else
 		   (<A> :href url)))))
@@ -332,7 +336,7 @@
 	       (when (pair? exc.hopStack)
 		  (<EXCEPTION-STACK> exc.hopStack))
 	       (when (and (> (hop-debug) 1) (string? exc.stack))
-		  (<EXCEPTION-JSSTACK> exc.stack 2)))))))
+		  (<EXCEPTION-JSSTACK> exc.stack 0)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-report-exception ...                                         */
@@ -363,6 +367,14 @@
        (add-event-listener! window "load"
 	  (lambda (e)
 	     (hop-report-exception exc))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-report-exception/location ...                                */
+;*---------------------------------------------------------------------*/
+(define (hop-report-exception/location exc file point)
+   (set! exc.fileName file)
+   (set! exc.charNumber point)
+   (hop-report-exception exc))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-last-exception ...                                           */

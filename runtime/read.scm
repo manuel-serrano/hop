@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Feb  9 11:54:19 2011 (serrano)                */
+;*    Last change :  Sat Feb 12 07:38:37 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -887,7 +887,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-file ...                                                */
 ;*    -------------------------------------------------------------    */
-;*    The C code generation imposed the variable traceid not to        */
+;*    The C code generation imposes the variable traceid not to        */
 ;*    be inlined.                                                      */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-file fname env menv mode charset abase traceid::symbol)
@@ -904,21 +904,23 @@
 		    (obj fname)))
 	  (let ((port (open-input-file path)))
 	     (if (input-port? port)
-		 (let ((m (eval-module))
-		       (f (the-loading-file))
-		       (denv (current-dynamic-env)))
+		 (let ((f (the-loading-file))
+		       (denv (current-dynamic-env))
+		       (m (eval-module)))
 		    (unwind-protect
 		       (let ()
 			  ($env-push-trace denv traceid #f)
 			  (hop-load-afile apath)
 			  (when abase (module-abase-set! apath))
 			  (loading-file-set! path)
+			  (when (evmodule? env)
+			     (eval-module-set! env))
 			  (case mode
 			     ((load)
 			      (let loop ((last #unspecified)
 					 (loc #t))
 				 ;; always read the first expression
-				 ;; in debug mod to enforce location in side
+				 ;; in debug mod to enforce location inside
 				 ;; the module clause
 				 (let ((e (hop-read port charset menv loc)))
 				    (when (epair? e)
@@ -927,19 +929,13 @@
 					(begin
 					   ($env-pop-trace denv)
 					   last)
-					(begin
-					   (let ((val (eval! e env)))
-					      (when (xml-tilde? val)
-						 (warning/location
-						  fname
-						  (and (epair? e)
-						       (match-case (cer e)
-							  ((?- ?- ?loc . ?-)
-							   loc)
-							  (else #f)))
-						  'hop-load
-						  "Useless ~ expression"))
-					      (loop val #f)))))))
+					(let ((val (eval! e (eval-module))))
+					   (when (xml-tilde? val)
+					      (evwarning
+					       (when (pair? e) (cer e))
+					       "hop-load"
+					       "Useless ~ expression"))
+					   (loop val #f))))))
 			     ((include)
 			      (let loop ((res '())
 					 (loc #t))
@@ -950,7 +946,7 @@
 					(begin
 					   ($env-pop-trace denv)
 					   (reverse! res))
-					(let ((val (eval! e env)))
+					(let ((val (eval! e (eval-module))))
 					   (loop (cons val res) #f))))))
 			     (else
 			      (error "hop-load" "Illegal mode" mode))))
