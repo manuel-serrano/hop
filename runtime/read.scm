@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sat Feb 12 07:38:37 2011 (serrano)                */
+;*    Last change :  Mon Feb 14 08:20:19 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -952,7 +952,10 @@
 			      (error "hop-load" "Illegal mode" mode))))
 		       (begin
 			  (close-input-port port)
-			  (eval-module-set! m)
+			  (let ((cm (eval-module)))
+			     (unless (eq? cm m)
+				(evmodule-check-unbound cm #f)
+				(eval-module-set! m)))
 			  (loading-file-set! f))))
 		 (raise (instantiate::&io-port-error
 			   (proc "hop-load")
