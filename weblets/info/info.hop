@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Jan 10 09:27:56 2011 (serrano)                */
+;*    Last change :  Tue Feb 15 08:33:59 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -494,14 +494,17 @@ mmmmmmmmmmlil"))))
 		       e.removeChild( ch[ i ] );
 	            }
 		  } "clear"))
-       (<DIV> :class "traffic"
-	  ~(add-event-listener! $info-event "server"
-				(lambda (e)
-				   (let ((t (event-response-text e)))
-				      (innerHTML-set! $traffic
-						      (string-append
-						       $traffic.innerHTML t)))))
-	  (<SORTTABLE> traffic)))))
+       (if (> (bigloo-debug) 0)
+	   (<DIV> :class "traffic"
+	      ~(add-event-listener! $info-event "server"
+		  (lambda (e)
+		     (let ((t (event-response-text e)))
+			(innerHTML-set! $traffic
+					(string-append
+					 $traffic.innerHTML t)))))
+	      (<SORTTABLE> traffic))
+	   (<DIV> :class "traffic"
+	      "Run Hop in debug mode (-g option) to activate traffic live inspection.")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    info/perfs/script/server ...                                     */

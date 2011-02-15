@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Feb 14 08:20:19 2011 (serrano)                */
+;*    Last change :  Tue Feb 15 11:04:46 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -913,8 +913,7 @@
 			  (hop-load-afile apath)
 			  (when abase (module-abase-set! apath))
 			  (loading-file-set! path)
-			  (when (evmodule? env)
-			     (eval-module-set! env))
+			  (when (evmodule? env) (eval-module-set! env))
 			  (case mode
 			     ((load)
 			      (let loop ((last #unspecified)
@@ -926,7 +925,10 @@
 				    (when (epair? e)
 				       ($env-set-trace-location denv (cer e)))
 				    (if (eof-object? e)
-					(begin
+					(let ((nm (eval-module)))
+					   (when (and (not (eq? m nm))
+						      (evmodule? nm))
+					      (evmodule-check-unbound nm #f))
 					   ($env-pop-trace denv)
 					   last)
 					(let ((val (eval! e (eval-module))))
@@ -943,7 +945,9 @@
 				    (when (epair? e)
 				       ($env-set-trace-location denv (cer e)))
 				    (if (eof-object? e)
-					(begin
+					(let ((nm (eval-module)))
+					   (unless (eq? m nm)
+					      (evmodule-check-unbound nm #f))
 					   ($env-pop-trace denv)
 					   (reverse! res))
 					(let ((val (eval! e (eval-module))))
@@ -952,10 +956,7 @@
 			      (error "hop-load" "Illegal mode" mode))))
 		       (begin
 			  (close-input-port port)
-			  (let ((cm (eval-module)))
-			     (unless (eq? cm m)
-				(evmodule-check-unbound cm #f)
-				(eval-module-set! m)))
+			  (eval-module-set! m)
 			  (loading-file-set! f))))
 		 (raise (instantiate::&io-port-error
 			   (proc "hop-load")
