@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 13 08:24:51 2010                          */
-;*    Last change :  Tue Dec 28 08:43:02 2010 (serrano)                */
-;*    Copyright   :  2010 Manuel Serrano                               */
+;*    Last change :  Thu Feb 17 10:29:37 2011 (serrano)                */
+;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Gauge client-side implementation                                 */
 ;*=====================================================================*/
@@ -40,17 +40,22 @@
 		 (if (pair? l) (cadr l) 0)))
 	 (max (let ((l (memq :max attrs)))
 		 (if (pair? l) (cadr l) 99)))
-	 (format (let ((l (memq :format attrs)))
-		    (if (pair? l) (cadr l) (format "~~a/~a" max))))
+	 
 	 (id (let ((l (memq :id attrs)))
 		(if (pair? l) (cadr l) (symbol->string (gensym)))))
 	 (fid (symbol->string (gensym)))
 	 (tid (symbol->string (gensym))))
-      (<DIV> :hssclass "hop-gauge" :id id
-	 "0"
-	 (<DIV> :hssclass "hop-gauge-fill" :id fid)
-	 (<DIV> :hssclass "hop-gauge-text" :id tid "0")
-	 (gauge-init! id fid tid value min max format listener))))
+      (let ((format (let ((l (memq :format attrs)))
+		       (if (pair? l) (cadr l) (format "~~a/~a" max)))))
+	 (<DIV> :hssclass "hop-gauge" :id id
+	    "0"
+	    (<DIV> :hssclass "hop-gauge-fill" :id fid)
+	    (<DIV> :hssclass "hop-gauge-text" :id tid "0")
+	    (add-event-listener! id "ready"
+	       (lambda (e)
+		  (gauge-init! id fid tid value min max format listener))
+	       #t)
+	    body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    gauge-init! ...                                                  */
@@ -59,7 +64,7 @@
    (let ((el (dom-get-element-by-id id))
 	 (fel (dom-get-element-by-id fid))
 	 (tel (dom-get-element-by-id tid)))
-      (set! el.hop_add_event_listener add-event-listener!)
+      (set! el.hop_add_event_listener add-gauge-event-listener!)
       (set! el.format fmt)
       (set! el.min min)
       (set! el.max max)
@@ -67,14 +72,14 @@
       (set! el.tel tel)
       (gauge-text-set! el (format fmt value max min))
       (if listener
-	  (add-event-listener! el "change" listener #t)
+	  (add-gauge-event-listener! el "change" listener #t)
 	  (set! el.onchange #f))
       (gauge-value-set! el value)))
 
 ;*---------------------------------------------------------------------*/
-;*    add-event-listener! ...                                          */
+;*    add-gauge-event-listener! ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (add-event-listener! el event proc capture)
+(define (add-gauge-event-listener! el event proc capture)
    (if (string=? event "change")
        (set! el.onchange proc))
    (hop_add_native_event_listener el event proc capture))

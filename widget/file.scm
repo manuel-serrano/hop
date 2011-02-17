@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Sun Jan 23 07:21:07 2011 (serrano)                */
+;*    Last change :  Wed Feb 16 17:41:01 2011 (serrano)                */
 ;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -214,7 +214,7 @@
 			 :cellpadding 0
 			 (<COLGROUP> (<COL>) (<COL> :width "0*"))
 			 (<TR>
-			    (<TD> files)
+			    (<TD> :class "filechooser-files" files)
 			    (<TD> :class "filechooser-body" body)))
 		      files))))
 	 (<DIV> (<FILECHOOSER:BUTTONS> id url filters regexp hidden))

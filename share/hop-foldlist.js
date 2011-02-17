@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-foldlist.js             */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-foldlist.js             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 11:56:02 2006                          */
-/*    Last change :  Sat Jun 13 09:27:28 2009 (serrano)                */
+/*    Last change :  Wed Feb 16 07:06:14 2011 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP fold-item implementation                                     */
 /*=====================================================================*/
@@ -11,20 +11,18 @@
 /*---------------------------------------------------------------------*/
 /*    hop_fold_item_close ...                                          */
 /*---------------------------------------------------------------------*/
-function hop_fold_item_close( el, imgo, imgc, history ) {
+function hop_fold_item_close( el, img, history ) {
    el.style.display = "none";
-   imgo.style.display = "none";
-   imgc.style.display = "block";
+   img.className = "hop-fl-img hop-fl-img-close"
    if( history != false ) hop_state_history_add( el.id, "fl", "0" );
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_fold_item_open ...                                           */
 /*---------------------------------------------------------------------*/
-function hop_fold_item_open(  el, imgo, imgc, history ) {
+function hop_fold_item_open( el, img, history ) {
    el.style.display = "block";
-   imgo.style.display = "block";
-   imgc.style.display = "none";
+   img.className = "hop-fl-img hop-fl-img-open"
    if( history != false ) hop_state_history_add( el.id, "fl", "1" );
 }
    
@@ -33,13 +31,12 @@ function hop_fold_item_open(  el, imgo, imgc, history ) {
 /*---------------------------------------------------------------------*/
 function hop_fold_item_toggle( id, history ) {
    var el = document.getElementById( id );
-   var imgo = document.getElementById( id + "-imgo" );
-   var imgc = document.getElementById( id + "-imgc" );
+   var img = document.getElementById( id + "-img" );
    
    if( el.style.display == "block" ) {
-      hop_fold_item_close( el, imgo, imgc, history );
+      hop_fold_item_close( el, img, history );
    } else {
-      hop_fold_item_open( el, imgo, imgc, history );
+      hop_fold_item_open( el, img, history );
    }
 }
 
@@ -48,14 +45,13 @@ function hop_fold_item_toggle( id, history ) {
 /*---------------------------------------------------------------------*/
 function hop_fold_item_toggle_service( id, history, svc ) {
    var el = document.getElementById( id );
-   var imgo = document.getElementById( id + "-imgo" );
-   var imgc = document.getElementById( id + "-imgc" );
+   var img = document.getElementById( id + "-img" );
 
    if( el.style.display == "block" ) {
-      hop_fold_item_close( el, imgo, imgc, history );
+      hop_fold_item_close( el, img, history );
    } else {
       with_hop( svc, function( h ) { hop_innerHTML_set( id, h ); } );
-      hop_fold_item_open( el, imgo, imgc, history );
+      hop_fold_item_open( el, img, history );
    }
 }
 
@@ -69,13 +65,12 @@ hop_state_history_register_handler(
      var el = document.getElementById( id );
 
      if( el != undefined ) {
-	var imgo = document.getElementById( id + "-imgo" );
-	var imgc = document.getElementById( id + "-imgc" );
+	var imgo= document.getElementById( id + "-img" );
 
 	if( arg == "0" ) {
-	   hop_fold_item_close( el, imgo, imgc, false );
+	   hop_fold_item_close( el, img, false );
 	} else {
-	   hop_fold_item_open( el, imgo, imgc, false );
+	   hop_fold_item_open( el, img, false );
 	}
 
 	return true;

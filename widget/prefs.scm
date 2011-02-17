@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan  5 14:11:23 2011                          */
-;*    Last change :  Mon Jan 24 13:53:55 2011 (serrano)                */
+;*    Last change :  Thu Feb 17 11:29:10 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -266,7 +266,6 @@
 ;*    pr-editor-input ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (pr-editor-input name type value title parse key)
-   (tprint "pr-editor-input type=" type)
    (<INPUT> :class "hop-pr-editor-expr hop-pr-saved"
       :type "text"
       :value (value->string type value)
@@ -387,7 +386,6 @@
 (define (pr-editor-list name type value title parse key)
    (match-case type
       ((?- ?type . ?def)
-       (tprint "pr-editor-list type=" type " " (map typeof value))
        (<DIV> :class "hop-pr-editor-list"
 	  (<TABLE> 
 	     (<TR> :class "hop-pr-editor-list-add"

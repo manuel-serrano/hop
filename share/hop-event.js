@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Tue Feb  8 09:28:08 2011 (serrano)                */
+/*    Last change :  Thu Feb 17 10:19:21 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -41,7 +41,7 @@ function hop_event_stoppedp( e ) {
 /*---------------------------------------------------------------------*/
 /*    hop_add_event_listener ...                                       */
 /*---------------------------------------------------------------------*/
-/*** META ((export add-event-listener!) (arity -4))) */
+/*** META ((export add-event-listener!) (arity -3))) */
 function hop_add_event_listener( obj, event, proc, capture ) {
    if( event === "server" )
       return hop_add_server_listener( obj, proc, capture );
@@ -72,7 +72,7 @@ function hop_add_event_listener( obj, event, proc, capture ) {
 			  obj );
       }
    }
-   
+
    if( ("hop_add_event_listener" in obj) &&
        (obj.hop_add_event_listener != hop_add_event_listener) ) {
       return obj.hop_add_event_listener( event, proc, capture );

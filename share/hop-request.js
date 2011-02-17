@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Jan  5 15:04:26 2011 (serrano)                */
+/*    Last change :  Wed Feb 16 07:16:09 2011 (serrano)                */
 /*    Copyright   :  2004-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -273,9 +273,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
    function onreadystatechange() {
       if( xhr.readyState == 4 ) {
 	 try {
-	    var status = xhr.status;
-
-	    switch( status ) {
+	    switch( xhr.status ) {
 	       case 200:
 		  try {
 		     var ctype = hop_header_ctype( xhr );
@@ -314,6 +312,8 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 			var el = hop_create_element( xhr.responseText );
 
 			return succ( el, xhr );
+		     } else if( ctype === "application/json" ) {
+			return succ( hop_json_parse( xhr.responseText ), xhr );
 		     } else {
 			return succ( xhr.responseText, xhr );
 		     }
@@ -360,8 +360,8 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 		  return false;
 
 	       default:
-		  if( (typeof status == "number") &&
-		      (status > 200) && (status < 300) ) {
+		  if( (typeof xhr.status == "number") &&
+		      (xhr.status > 200) && (xhr.status < 300) ) {
 		     return succ( xhr.responseText, xhr );
 		  } else {
 		     fail( xhr );

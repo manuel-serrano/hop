@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Feb  1 10:10:36 2011 (serrano)                */
+/*    Last change :  Thu Feb 17 10:31:17 2011 (serrano)                */
 /*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -20,26 +20,29 @@
 /*---------------------------------------------------------------------*/
 /*    dom_add_child ...                                                */
 /*---------------------------------------------------------------------*/
+/*** META ((export dom-append-child!) (arity #t)) */
 function dom_add_child( node, e ) {
    if( hop_is_html_element( e ) ) {
       /* we no longer need to clone a node, even if it is already  */
       /* in the document because the server side implementation    */
       /* of dom-add-child checks if the node is already in the     */
-      /* same tree and if it is, it removes it removes it first    */
+      /* same tree and if it is, it removes it first               */
       node.appendChild( e );
    } else {
       if( (e instanceof String) ||
-	  (typeof e == "string") ||
-	  (typeof e == "number") ) {
+	  (typeof e === "string") ||
+	  (typeof e === "number") ) {
 	 node.appendChild( document.createTextNode( e ) );
       } else {
 	 if( sc_isPair( e ) ) {
 	    dom_add_child( node, e.car );
 	    dom_add_child( node, e.cdr );
+	 } else if( typeof e === "boolean" || e == null || e == undefined ) {
+	    return;
 	 } else {
-	    if( e ) {
-	       sc_error( "dom_add_child", "illegal child node", e );
-	    }
+	    sc_error( "dom_add_child",
+		      "illegal child node (" + (typeof e) + ")",
+		      e );
 	 }
       }
    }
@@ -798,16 +801,6 @@ function dom_node_type( node ) {
 */
 function dom_parent_node( node ) {
    return node.parentNode;
-}
-/*** META ((export dom-append-child!) (arity #t)) */
-function dom_append_child( node, n ) {
-   if( (n instanceof String) ||
-       (typeof n == "string") ||
-       (typeof n == "number") ) {
-      return node.appendChild( document.createTextNode( n ) );
-   } else {
-      return node.appendChild( n );
-   }
 }
 /*** META ((export dom-remove-child!)
            (arity #t)

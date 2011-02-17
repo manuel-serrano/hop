@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/widget/foldlist.scm               */
+;*    serrano/prgm/project/hop/2.2.x/widget/foldlist.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Sat Jun 19 06:37:35 2010 (serrano)                */
+;*    Last change :  Wed Feb 16 07:02:51 2011 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL> markup.                           */
 ;*=====================================================================*/
@@ -134,11 +134,10 @@
 		      id history
 		      (if (html-foldlist-stop parent) ";hop_stop_propagation( event, true )" ""))))
 	 (fprintf p "<td>
-                       <img class='hop-fl-img' id=~s src=~s style='display:~a' alt='foldlist bullet'/>
-                       <img class='hop-fl-img' id=~s src=~s style='display:~a' alt='foldlist bullet'/>
+                       <span class='hop-fl-img ~a' id=~s></span>
                      </td><td class='~a'>"
-		  (string-append id "-imgo") icono (if open "block" "none")
-		  (string-append id "-imgc") iconc (if open "none" "block")
+		  (if open "hop-fl-img-open" "hop-fl-img-close") 
+		  (string-append id "-img")
 		  (html-flitem-cname obj))
 	 (when (and (pair? tmp)
 		    (xml-element? (car tmp))

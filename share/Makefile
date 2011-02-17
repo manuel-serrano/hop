@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Dec 20 15:08:30 2010 (serrano)                */
-#*    Copyright   :  2004-10 Manuel Serrano                            */
+#*    Last change :  Wed Feb 16 07:13:15 2011 (serrano)                */
+#*    Copyright   :  2004-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -100,8 +100,6 @@ ICONS_TREE	= device.png folder-close.png joinbottom.png plus.png \
 		  empty.png folder-open.png minus.png plusbottom.png \
 		  file.png join.png minusbottom.png vline.png
 
-ICONS_FOLDLIST	= triangle-down.png triangle-right.png
-
 ICONS_LOGIN	= login.png
 
 ICONS_FCHOOSER	= folder-close.png file.png home.png hdd.png desktop.png \
@@ -122,7 +120,6 @@ ICONS		= $(ICONS_HOP:%=hop/%) \
                   $(ICONS_WINDOW_RED:%=hop-window-red/%) \
                   $(ICONS_FX:%=hop-fx/%) \
                   $(ICONS_TREE:%=hop-tree/%) \
-                  $(ICONS_FOLDLIST:%=hop-foldlist/%) \
                   $(ICONS_LOGIN:%=hop-login/%) \
                   $(ICONS_FCHOOSER:%=hop-filechooser/%) \
                   $(ICONS_COLOR:%=hop-color/%) \

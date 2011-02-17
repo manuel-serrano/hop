@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Fri Jan 14 15:48:16 2011 (serrano)                */
+/*    Last change :  Thu Feb 17 09:38:49 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -812,7 +812,7 @@ function hop_window_open() {
       } else {
 	 if( !src && parent ) {
 	    if( body ) {
-	       dom_append_child( div, k );
+	       dom_add_child( div, k );
 	    } else {
 	       body = dom_create( "div", k );
 	    }
