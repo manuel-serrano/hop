@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sun Feb  6 19:37:10 2011 (serrano)                */
+;*    Last change :  Fri Feb 18 09:50:20 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -90,7 +90,8 @@
       (lambda ()
 	 (wiki-input-port->hop (current-input-port)
 			       :syntax syntax
-			       :charset charset))))
+			       :charset charset
+			       :env env))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-input-port->hop ...                                         */
@@ -98,37 +99,34 @@
 (define (wiki-input-port->hop iport #!key syntax (charset (hop-locale)) env)
    (let ((conv (if (procedure? charset)
 		   charset
-		   (charset-converter! charset (hop-charset)))))
-      (cond
-	 ((wiki-syntax? syntax)
-	  (with-loading-file (input-port-name iport)
-			     (lambda ()
-				((wiki-syntax-posthook syntax)
-				 (cons
-				  ((wiki-syntax-prehook syntax))
-				  (read/rp *wiki-grammar*
-					   iport
-					   syntax
-					   '()
-					   '()
-					   0
-					   0
-					   conv
-					   env))))))
-	 ((not syntax)
-	  (with-loading-file (input-port-name iport)
-			     (lambda ()
-				(read/rp *wiki-grammar*
-					 iport
-					 *default-syntax*
-					 '()
-					 '()
-					 0
-					 0
-					 conv
-					 env))))
-	 (else
-	  (error "wiki-input-port->hop" "Illegal syntax" syntax)))))
+		   (charset-converter! charset (hop-charset))))
+	 (m (eval-module))
+	 (f (the-loading-file)))
+      (unwind-protect
+	 (begin
+	    (loading-file-set! (input-port-name iport))
+	    (let* ((r (cond
+			 ((wiki-syntax? syntax)
+			  ((wiki-syntax-posthook syntax)
+			   (cons ((wiki-syntax-prehook syntax))
+				 (read/rp *wiki-grammar* iport
+					  syntax
+					  '() '() 0 0 conv env))))
+			 ((not syntax)
+			  (read/rp *wiki-grammar* iport
+				   *default-syntax*
+				   '() '() 0 0 conv env))
+			 (else
+			  (error "wiki-input-port->hop"
+				 "Illegal syntax"
+				 syntax))))
+		   (nm (eval-module)))
+	       (unless (eq? m nm)
+		  (evmodule-check-unbound nm #f))
+	       r))
+	 (begin
+	    (eval-module-set! m)
+	    (loading-file-set! f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-read-error ...                                              */
@@ -1006,20 +1004,16 @@
        (with-handler
 	  (lambda (e)
 	     (exception-notify e)
-	     (add-expr! (<SPAN> "*** PARSE-ERROR:" (string (the-failure)))))
+	     (add-expr! (<SPAN> :hssclass "hop-parse-error"
+			   (string (the-failure)))))
 	  (let ((expr (hop-read (the-port))))
 	     (with-handler
 		(lambda (e)
 		   (exception-notify e)
-		   (add-expr! (<SPAN> "*** EVAL-ERROR:"
-				      (let ((m (eval-module)))
-					 (if (evmodule? m)
-					     (evmodule-name m)
-					     "top-level"))
-				      ":"
-				      (with-output-to-string
-					 (lambda ()
-					    (write expr))))))
+		   (add-expr! (<SPAN> :hssclass "hop-eval-error"
+				 (with-output-to-string
+				    (lambda ()
+				       (write expr))))))
 		(add-expr! (eval-wiki expr)))))
        (ignore))
        

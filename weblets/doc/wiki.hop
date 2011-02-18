@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/weblets/doc/wiki.hop              */
+;*    serrano/prgm/project/hop/2.2.x/weblets/doc/wiki.hop              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Thu Jul  1 11:45:40 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Fri Feb 18 09:42:46 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
 ;*=====================================================================*/
@@ -307,7 +307,7 @@
       (else
        (let ((iport (open-input-file page)))
 	  (if (not (input-port? iport))
-	      (http-permission-denied path)
+	      (http-permission-denied page)
 	      (with-handler
 		 (lambda (e)
 		    (exception-notify e)

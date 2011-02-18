@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 07:05:30 2008                          */
-/*    Last change :  Wed Jan 19 15:54:15 2011 (serrano)                */
+/*    Last change :  Fri Feb 18 09:55:24 2011 (serrano)                */
 /*    Copyright   :  2008-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side support for url browsers.                            */
@@ -208,7 +208,8 @@ function hop_filechooser_location_keypress( input, event, id ) {
    if( hop_event_key_code( event ) == 13 ) {
       hop_filechooser_open( id, input.value );
    } else {
-      id.value = input.value;
+      var el = document.getElementById( id );
+      el.value = input.value;
    }
 }
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Feb 15 11:04:46 2011 (serrano)                */
+;*    Last change :  Fri Feb 18 07:45:19 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -482,8 +482,7 @@
       ("("
        ;; we increment the number of open parenthesis
        (set! par-open (+fx 1 par-open))
-       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
-			     par-poses))
+       (set! par-poses (cons (-fx (input-port-position (the-port)) 1) par-poses))
        ;; and then, we compute the result list...
        (make-list! (collect-upto ignore "list" (the-port) location) (the-port)))
       (")"

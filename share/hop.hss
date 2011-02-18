@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Sat Jan 29 11:06:54 2011 (serrano)                */
+/*    Last change :  Fri Feb 18 08:40:09 2011 (serrano)                */
 /*    Copyright   :  2004-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
@@ -192,6 +192,18 @@ div[hssclass=hop-error].client span[hssclass=hop-error-img] {
 
 div[hssclass=hop-error].security span[hssclass=hop-error-img] {
   background-image: url( "icons/errors/privacy.png" );
+}
+
+span[hssclass=hop-eval-error] {
+  border: 3px dashed red;
+  color: black;
+  font-weight: bold;
+}
+
+span[hssclass=hop-parse-error] {
+  border: 3px dashed darkorange;
+  color: black;
+  font-weight: bold;
 }
 
 /*---------------------------------------------------------------------*/
