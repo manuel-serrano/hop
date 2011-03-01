@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Feb 16 19:48:16 2011 (serrano)                */
+;*    Last change :  Tue Mar  1 16:34:17 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -235,8 +235,8 @@
 	    (format "var backend = document.getElementById( ~s );" id)
 	    (format "hop_audio_flash_init( backend ); hop_audio_init[ '~a' ]( backend );}}" id id))
 	 (<OBJECT> :id (string-append id "-object") :class "hop-audio"
-	    :style "visibility: visible; background: transparent"
-	    :width "0px" :height "0px"
+	    :style "background: transparent; border: 0"
+	    :width "1px" :height "1px"
 	    :title "hop-audio" :classId "HopAudio.swf"
 	    :type "application/x-shockwave-flash"
 	    :codebase "http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,22,0"
@@ -248,7 +248,7 @@
 	    (<PARAM> :name "allowScriptAccess" :value "sameDomain")
 	    (<PARAM> :name "FlashVars" :value fvar)
 	    (<EMBED> :id (string-append id "-embed") :class "hop-audio"
-	       :style "position: fixed; top: 0; bottom: 0"
+	       :style "border: 0; background: transparent"
 	       :width "1px" :height "1px"
 	       :src swf
 	       :type "application/x-shockwave-flash"
@@ -1073,9 +1073,7 @@
 (define (audio-event-poll)
    (mutex-lock! event-mutex)
    (let ((l (take old-events 5)))
-      (tprint "<<< audio-poll: " (map (lambda (e)
-					 (cons (caar e) (cdr e)))
-				      l))
+      (tprint "<<< audio-poll: " (map (lambda (e) (cons (caar e) (cdr e))) l))
       (mutex-unlock! event-mutex)
       l))
    

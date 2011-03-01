@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Thu Jan 20 20:44:53 2011 (serrano)                */
+/*    Last change :  Tue Mar  1 16:33:44 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -590,6 +590,7 @@ function hop_audio_server_init( backend ) {
    backend.current_metadata = false;
    backend.playlist = null;
    backend.playlistindex = -1;
+   backend.state = Sinit;
 
    // install the server listener...
    if( hop_config.websocket || hop_config.xhr_multipart ) {
@@ -617,23 +618,25 @@ function hop_audio_server_init( backend ) {
 
       var poll = function () {
 	 clearInterval( backend.interval );
-	 with_hop( hop_apply_url( backend.url, [ Spoll, false ] ),
-		   function( l ) {
-		      while( sc_isPair( l ) ) {
-			 var v = l.car.car;
-			 var s = l.car.cdr;
+	 if( backend.state !== Sclose ) {
+	    with_hop( hop_apply_url( backend.url, [ Spoll, false ] ),
+		      function( l ) {
+			 while( sc_isPair( l ) ) {
+			    var v = l.car.car;
+			    var s = l.car.cdr;
 
-			 if( s > stamp ) {
-			    // only consider events not yet processed
-			    stamp = s;
+			    if( s > stamp ) {
+			       // only consider events not yet processed
+			       stamp = s;
 
-			    hop_audio_server_event_listener( {value: v}, backend );
+			       hop_audio_server_event_listener( {value: v}, backend );
+			    }
+			    l = l.cdr;
 			 }
-			 l = l.cdr;
-		      }
-		      backend.interval = setInterval( poll, period );
-		   },
-		   false, false, false );
+			 backend.interval = setInterval( poll, period );
+		      },
+		      false, false, false );
+	 }
       };
 
       // we first connect to flush all the current events
@@ -983,7 +986,9 @@ function hop_audio_backend_set( audio, backend ) {
    if( backend === Sbrowser ) {
       if( audio.browserbackend && audio.browserbackend !== audio.backend ) {
 	 if( audio.backend ) hop_audio_stop( audio );
+	 audio.backend.state = Sclose;
 	 audio.backend = audio.browserbackend;
+	 audio.serverbackend = false;
       }
       hop_audio_invoke_listeners( audio, "backend", "Browser"  );
    } else {
@@ -1006,6 +1011,15 @@ function hop_audio_backend_set( audio, backend ) {
 
    /* force the init of the audio */
    if( audio.id in hop_audio_init ) hop_audio_init[ audio.id ];
+
+   /* raise the onbackend event */
+   if( audio.controls && audio.controls.onbackend ) {
+      var evt = new HopEvent( "backend" );
+      evt.value = (backend === Sbrowser) ? "browser" : "server";
+      evt.audio = audio;
+      
+      audio.controls.onbackend( evt );
+   }
 }
 
 /*---------------------------------------------------------------------*/

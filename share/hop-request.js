@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Feb 16 07:16:09 2011 (serrano)                */
+/*    Last change :  Tue Mar  1 15:41:38 2011 (serrano)                */
 /*    Copyright   :  2004-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -82,51 +82,34 @@ function hop_apply_url( service, args ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)) */
 function hop_default_failure( xhr ) {
-   if( !document ) return;
+   if( !document ) {
+      alert( "with-hop failed!" );
+      return;
+   }
 
-   var div = document.createElement( "div" );
-   
    if( "exception" in xhr ) {
       hop_report_exception( xhr.exception );
-   } else {
-      if( xhr.responseError ) {
-	 div.appendChild( xhr.responseError );
-      } else {
-	 var t = xhr.responseText;
-	 if( t ) {
-	    if( t.match( /<!DOCTYPE[^>]*>/) ) {
-	       /* we have received the complete document */
-	       t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
-	       t = t.replace( /<head[^>]*>/g, "<div style='display: none;'>" );
-	       t = t.replace( /<\/head>/g, "</div>" );
-	       t = t.replace( /<(meta|link)[^>]*>/g, "<span style='display: none'></span>" );
-	       t = t.replace( /<html[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
-	       t = t.replace( /<\/html>/g, "</div>" );
-	       t = t.replace( /<body[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
-	       t = t.replace( /<\/body>/g, "</div>" );
-	       t = t.replace( /&quot;/g, "\"" );
-	       div.innerHTML = t;
-	    } else {
-	       /* we have received a partial text */
-	       div.innerHTML = "foo: " + t;
-	    }
-	 } else {
-	    div.innerHTML = "<div hssclass='hop-error'><span hssclass='hop-error-img'></span><div hssclass='hop-error-msg'>Status: " + xhr.status + " -- " + xhr.statusText + "</div></div>";
-	 }
-      }
+      return;
+   }
 
-      document.body.appendChild( hop_make_exception_frame( div ) );
-
-      /* add the client side stack */
-      if( xhr.hopStack ) {
-	 var el = document.getElementById( "hop-error" );
-	 if( el ) {
-	    el.appendChild( hop_make_exception_stack( xhr.hopStack ) );
-	 } else {
-	    div.appendChild( hop_make_exception_stack( xhr.hopStack ) );
-	 }
+   var nexc = new Error( "with-hop" );
+   var t = xhr.responseText;
+   if( t ) {
+      if( t.match( /<!DOCTYPE[^>]*>/) ) {
+	 /* we have received the complete document */
+	 t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
+	 t = t.replace( /<head[^>]*>/g, "<div style='display: none;'>" );
+	 t = t.replace( /<\/head>/g, "</div>" );
+	 t = t.replace( /<(meta|link)[^>]*>/g, "<span style='display: none'></span>" );
+	 t = t.replace( /<html[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
+	 t = t.replace( /<\/html>/g, "</div>" );
+	 t = t.replace( /<body[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
+	 t = t.replace( /<\/body>/g, "</div>" );
+	 t = t.replace( /&quot;/g, "\"" );
       }
    }
+   nexc.message = t;
+   hop_report_exception( nexc );
 }
 
 /*---------------------------------------------------------------------*/
