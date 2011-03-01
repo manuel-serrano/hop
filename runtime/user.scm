@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Aug 27 08:00:22 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Tue Feb 22 08:45:25 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -96,7 +96,6 @@
 	 (c '())
 	 (u #f)
 	 (d (list (hop-share-directory)
-		  (make-cache-name (hop-cache-directory))
 		  (hop-var-directory))))
       (let loop ((a args))
 	 (cond

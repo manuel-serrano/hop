@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun Jan  9 07:48:11 2011 (serrano)                */
+;*    Last change :  Tue Feb 22 08:45:00 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -469,17 +469,15 @@
 (define-method (http-response r::http-response-file socket)
    (with-trace 3 "http-response::http-response-file"
       (with-access::http-response-file r (start-line header file request)
-	 (if (authorized-path? request file)
-	     (cond
-		((directory? file)
-		 (http-response (directory->response r file) socket))
-		((http-header-field (http-request-header request) range:)
-		 =>
-		 (lambda (range)
-		    (http-response-range range r socket)))
-		(else
-		 (http-response-regular-file r socket)))
-	     (http-response (user-access-denied request) socket)))))
+	 (cond
+	    ((directory? file)
+	     (http-response (directory->response r file) socket))
+	    ((http-header-field (http-request-header request) range:)
+	     =>
+	     (lambda (range)
+		(http-response-range range r socket)))
+	    (else
+	     (http-response-regular-file r socket))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-cgi-env ...                                                  */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jan 14 10:29:04 2011 (serrano)                */
+;*    Last change :  Tue Feb 22 07:45:31 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -286,7 +286,12 @@
       (init-hop-widgets!)
 
       ;; hoprc
-      (when loadp (parseargs-loadrc rc-file (hop-rc-file)))
+      (if loadp
+	  (parseargs-loadrc rc-file (hop-rc-file))
+	  (add-user! "anonymous" 
+		     :services '(home doc epassword wizard hz/list shutdown)
+		     :directories (hop-path)
+		     :preferences-filename #f))
 
       ;; kill
       (when killp
