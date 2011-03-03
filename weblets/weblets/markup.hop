@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec  7 09:54:35 2007                          */
-;*    Last change :  Thu Jan 20 11:09:54 2011 (serrano)                */
+;*    Last change :  Wed Mar  2 11:44:51 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    weblets markups                                                  */
@@ -25,14 +25,6 @@
 	   (<WEBLETS-CATEGORIES>)
 	   (<WEBLET> path auth)
 	   (<WEBLET-INSTALL> url)))
-
-;*---------------------------------------------------------------------*/
-;*    find-info ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (find-info info key default)
-   (cond
-      ((assq key info) => cadr)
-      (else default)))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblets/filter ...                                               */

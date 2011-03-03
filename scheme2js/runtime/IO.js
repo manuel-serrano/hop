@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -705,24 +705,35 @@ function sc_write(o, p) {
     p.appendJSString(sc_toWriteString(o));
 }
 
+function sc_toWriteStringProcedure(o) {
+   if ("sc_name" in o) {
+      return "#<procedure " + sc_name + " " + (o.sc_location != "#f" ? o.sc_location : "") + ":" + sc_hash(o) + ">";
+   } else {
+      var n = o.toString().match( /function[ \t\n]+([_a-zA-Z0-9$]+)/ );
+      
+      return "#<procedure " + (n ? n[ 1 ] : "anonymous") + ":" + sc_hash(o) + ">";
+   }
+}
+
 function sc_toWriteString(o) {
-    if (o === null)
-	return "()";
-    else if (o === true)
-	return "#t";
-    else if (o === false)
-	return "#f";
-    else if (o === undefined)
-	return "#unspecified";
+   if (o === null)
+      return "()";
+   if (o === true)
+      return "#t";
+   if (o === false)
+      return "#f";
+   if (o === undefined)
+      return "#unspecified";
     // window is only declared inside browsers. Otherwise this.window should be undefined
-    else if (o === this.window)
-        return "window";
-    else if (typeof o === 'function')
-        return "#<procedure " + (o.sc_name ? o.sc_name : "anonymous") + " " + (o.sc_location != "#f" ? o.sc_location : "") + ":" + sc_hash(o) + ">";
-    else if (o.sc_toWriteString)
-	return o.sc_toWriteString();
-    else
-	return o.toString();
+   if (o === this.window)
+
+      return "window";
+   if (typeof o === 'function') {
+      sc_toWriteStringProcedure(o);
+   }
+   if (o.sc_toWriteString)
+      return o.sc_toWriteString();
+   return o.toString();
 }
 
 function sc_escapeWriteString(s) {
@@ -782,7 +793,7 @@ function sc_toDisplayString(o) {
     else if (o === this.window)
         return "window";
     else if (typeof o === 'function')
-        return "#<procedure " + (o.sc_name ? o.sc_name : "anonymous") + " " + (o.sc_location != "#f" ? o.sc_location : "") + ":" + sc_hash(o) + ">";
+       return sc_toWriteStringProcedure(o);
     else if (o.sc_toDisplayString)
 	return o.sc_toDisplayString();
     else

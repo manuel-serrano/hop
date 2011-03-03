@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Tue Jan 11 18:09:19 2011 (serrano)                */
+;*    Last change :  Wed Mar  2 19:53:22 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -63,7 +63,9 @@
       (hop-event-broadcast! "sms-sent" #t)))
 (add-event-listener! android "sms-received"
    (lambda (e)
-      (hop-event-broadcast! "sms-received" (event-value e))))
+      (let ((val (event-value e)))
+	 (hop-event-broadcast! "sms-received" val)
+	 (tts-speak atts (cadr val)))))
 (add-event-listener! android "battery"
    (lambda (e)
       (hop-event-broadcast! "battery" (event-value e))))
@@ -86,7 +88,7 @@
 	 :favicon (service-resource androidemo "etc/favicon.png")
 	 :base (service-base-url androidemo (current-request))
 	 :path (androidemo-dir)
-	 :include "hop-gauge" "hop-audio" "hop-slider"
+	 :include "hop-gauge" "hop-audio" "hop-slider" "hop-foot"
 	 :include "androidemo")
       (<ANDROIDEMO:BODY> :header "Androidemo"
 	 (<DIV> :class "note"
@@ -218,8 +220,8 @@ Android phone. This demonstration does not use any HTML5 facility.")
     (<DIV> :class "short-note"
        "This demonstrates the ability to the running Hop to react to
 incoming SMS. In that demonstration, when a SMS is received, the server code
-intercepts that message and broadcasts it to clients (i.e., web browsers) that
-display information relative to that message.")
+intercepts that message, read it, and broadcasts it to clients
+(i.e., web browsers) that display information relative to that message.")
     (<DIV> "From: " (<SPAN> :id "sms-received-no"))
     (<PRE> :id "sms-received-text" "This box will display the content of incoming SMS")
     (<H3> "Call Log")
@@ -476,7 +478,6 @@ missed.")
 	     (filter-map (lambda (l)
 			    (when (memq (tts-locale-check atts l)
 					'(lang-country lang-country-var))
-			       (tprint "OPTION: " l " " (equal? l locale))
 			       (<OPTION> :label (list-ref l 3)
 				  :value (with-output-to-string
 					    (lambda ()

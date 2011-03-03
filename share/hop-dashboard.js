@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/share/hop-dashboard.js            */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-dashboard.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Wed Apr 14 14:49:39 2010 (serrano)                */
-/*    Copyright   :  2007-10 Manuel Serrano                            */
+/*    Last change :  Wed Mar  2 10:51:10 2011 (serrano)                */
+/*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
 /*=====================================================================*/
@@ -44,7 +44,11 @@ function hop_dashboard_start_applet( name, svc ) {
       window.open( sc_dirname( svc ), name );
    }
 
-   function failure( xhr ) {
+   function failure( exc, xhr ) {
+      if( exc instanceof Error ) {
+	 return hop_report_exception( exc );
+      }
+      
       if( xhr.status == 404 ) {
 	 window.open( sc_dirname( svc ), name );
       } else {
@@ -128,7 +132,7 @@ function hop_dashboard_populate( proc ) {
       proc();
    }
 
-   function permission_denied( h ) {
+   function permission_denied( e, h ) {
       alert( "Permission denied to run the dashboard on this host!" );
    }
    

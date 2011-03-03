@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/1.10.x/weblets/hzbuilder/config.hop.in      */
+;*    .../prgm/project/hop/2.2.x/weblets/hzbuilder/config.hop.in       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jun 10 07:34:38 2008                          */
-;*    Last change :  Mon Sep 29 11:16:11 2008 (serrano)                */
-;*    Copyright   :  2008 Manuel Serrano                               */
+;*    Last change :  Wed Mar  2 15:34:55 2011 (serrano)                */
+;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hzbuilder configuration                                          */
 ;*=====================================================================*/
@@ -105,8 +105,8 @@
 		(<AUTOSIZE-IMG> path))
 	       ((pregexp-match "^.*[.](?:svg)$" base)
 		(<IFRAME> :class "preview"
-		   :width (-fx (car (hzbuilder-run-size)) 2)
-		   :height (-fx (cdr (hzbuilder-run-size)) 2)
+		   :width (-fx (hzbuilder-preview-size) 2)
+		   :height (-fx (hzbuilder-preview-size) 2)
 		   :src path))))
 	 (lambda (base path)
 	    (when (pregexp-match "^.*[.](?:jpeg|jpg)$" base)

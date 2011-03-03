@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Tue Mar  1 16:33:44 2011 (serrano)                */
+/*    Last change :  Wed Mar  2 17:56:09 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -619,7 +619,7 @@ function hop_audio_server_init( backend ) {
       var poll = function () {
 	 clearInterval( backend.interval );
 	 if( backend.state !== Sclose ) {
-	    with_hop( hop_apply_url( backend.url, [ Spoll, false ] ),
+	    with_hop( hop_apply_url( backend.url, [ Spoll, stamp ] ),
 		      function( l ) {
 			 while( sc_isPair( l ) ) {
 			    var v = l.car.car;
@@ -640,7 +640,7 @@ function hop_audio_server_init( backend ) {
       };
 
       // we first connect to flush all the current events
-      with_hop( hop_apply_url( backend.url, [ Spoll, false ] ),
+      with_hop( hop_apply_url( backend.url, [ Spoll, stamp ] ),
 		function( l ) {
 		   // flush out the events
 		   while( sc_isPair( l ) ) {

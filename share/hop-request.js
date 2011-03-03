@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Mar  1 15:41:38 2011 (serrano)                */
+/*    Last change :  Wed Mar  2 14:46:11 2011 (serrano)                */
 /*    Copyright   :  2004-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -81,12 +81,18 @@ function hop_apply_url( service, args ) {
 /*    hop_default_failure ...                                          */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)) */
-function hop_default_failure( xhr ) {
+function hop_default_failure( exc, xhr ) {
    if( !document ) {
       alert( "with-hop failed!" );
       return;
    }
 
+   if( exc instanceof Error ) {
+      alert( "HOP_DEFAULT_FAILURE: " + exc );
+      hop_report_exception( exc );
+      return;
+   }
+   
    if( "exception" in xhr ) {
       hop_report_exception( xhr.exception );
       return;
@@ -233,25 +239,71 @@ function hop_default_success( h, xhr ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_request_unserialize ...                                      */
+/*    -------------------------------------------------------------    */
+/*    Unserialize the object contained in the XHR response. The        */
+/*    unserialization method depends on the mime type of the response. */
+/*---------------------------------------------------------------------*/
+function hop_request_unserialize( svc, xhr ) {
+   var ctype = hop_header_content_type( xhr );
+
+   if( ctype === "application/x-javascript" ) {
+      var serialize = hop_header_hop_serialize( xhr );
+      
+      /* ctype must match the value hop-json-mime-type */
+      /* which is defined in runtime/param.scm.        */
+      if( serialize === "javascript" ) {
+	 return eval( xhr.responseText );
+      } else if( serialize === "hop" ) {
+	 return hop_string_to_obj( decodeURIComponent( xhr.responseText ) );
+      } else if( serialize === "json" ) {
+	 return hop_unjson( hop_json_parse( xhr.responseText ) );
+      } else {
+	 sc_error( svc, "Unknown serialization format", serialize );
+      }
+   }
+
+   if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
+      return hop_create_element( xhr.responseText );
+   }
+
+   if( ctype === "application/json" ) {
+      return hop_json_parse( xhr.responseText );
+   }
+
+   return xhr.responseText;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_duplicate_error ...                                          */
+/*---------------------------------------------------------------------*/
+function hop_duplicate_error( exc ) {
+   var nexc = new exc.constructor( exc.message );
+
+   for( p in exc ) {
+      nexc[ p ] = exc[ p ];
+   }
+
+   return nexc;
+}
+   
+/*---------------------------------------------------------------------*/
 /*    hop_send_request ...                                             */
 /*    -------------------------------------------------------------    */
 /*    In this function SUCCESS and FAILURE are *always* bound to       */
 /*    functions.                                                       */
-/*    -------------------------------------------------------------    */
-/*    This function DOES NOT evaluates its result.                     */
 /*---------------------------------------------------------------------*/
 function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x ) {
    var xhr = x ? x : hop_make_xml_http_request();
 
-   /* MS, 20 Jun 08: I cannot understand why but sometime sc_error is  */
-   /* unbound (at least in Firefox) when used inside a catch! Binding  */
-   /* it to a local var eliminates this problem.                       */
-   var hop_header_ctype = hop_header_content_type;
-   var hop_header_serialize = hop_header_hop_serialize;
+   /* MS, 20 Jun 08: I cannot understand why but sometime global functions */
+   /* are unbound (at least in Firefox) when used inside a catch! Binding  */
+   /* it to a local var eliminates this problem.                           */
+   var duperror = hop_duplicate_error;
    var succ = (typeof success === "function") ? success : hop_default_success;
    var fail = (typeof failure === "function") ? failure : hop_default_failure;
    
-   xhr.hopStack = hop_debug() > 0 ? hop_get_stack( 0 ) : null;
+   xhr.hopStack = hop_debug() > 0 ? hop_get_stack( 1 ) : null;
 
    function onreadystatechange() {
       if( xhr.readyState == 4 ) {
@@ -259,66 +311,20 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 	    switch( xhr.status ) {
 	       case 200:
 		  try {
-		     var ctype = hop_header_ctype( xhr );
-		     var expr;
-
-		     if( ctype === "application/x-javascript" ) {
-			var serialize = hop_header_serialize( xhr );
-
-			/* ctype must match the value hop-json-mime-type */
-			/* which is defined in runtime/param.scm.        */
-			try {
-			   if( serialize === "javascript" ) {
-			      expr = eval( xhr.responseText );
-			   } else if( serialize === "hop" ) {
-			      expr = hop_string_to_obj( decodeURIComponent( xhr.responseText ) );
-			   } else if( serialize === "json" ) {
-			      expr = hop_unjson( hop_json_parse( xhr.responseText ) );
-			   } else {
-			      sc_error( svc,
-					"Unknown serialization format",
-					serialize );
-			   }
-			} catch( exc ) {
-			   exc.hopService = svc;
-			   exc.message = xhr.responseText;
-			   
-			   xhr.exception = exc;
-
-			   fail( xhr );
-			   expr = false;
-			}
-
-			return succ( expr, xhr );
-		     } else if( (ctype === "text/html") ||
-				(ctype === "application/xhtml+xml") ) {
-			var el = hop_create_element( xhr.responseText );
-
-			return succ( el, xhr );
-		     } else if( ctype === "application/json" ) {
-			return succ( hop_json_parse( xhr.responseText ), xhr );
-		     } else {
-			return succ( xhr.responseText, xhr );
-		     }
+		     return succ( hop_request_unserialize( svc, xhr ), xhr );
 		  } catch( exc ) {
 		     // Exception are read-only in Firefox, duplicate then
 		     var frame = sc_cons( succ, sc_cons( xhr, null ) );
-		     var nexc = new Error( exc.name );
-
-		     nexc.name = exc.name;
-		     nexc.message = exc.message;
-		     nexc.description = exc.description;
-		     nexc.fileName = exc.fileName;
-		     nexc.lineNumber = exc.lineNumber;
-		     nexc.line = exc.line;
+		     var nexc = duperror( exc );
+		     
 		     nexc.hopLocation = exc.hopLocation;
 		     nexc.scObject = exc.scObject;
 		     nexc.hopStack = sc_cons( frame, xhr.hopStack );
 		     nexc.hopService = svc;
-		     
+
 		     xhr.exception = nexc;
 
-		     fail( xhr );
+		     fail( nexc, xhr );
 		     return false;
 		  }
 
@@ -338,8 +344,12 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 		  hop_set_cookie( xhr );
 		  return false;
 
+   	       case 400:
+	          fail( hop_request_unserialize( svc, xhr ), xhr );
+	          return false;
+	       
 	       case 407:
-		  fail( xhr );
+	          fail( 407, xhr );
 		  return false;
 
 	       default:
@@ -347,15 +357,19 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 		      (xhr.status > 200) && (xhr.status < 300) ) {
 		     return succ( xhr.responseText, xhr );
 		  } else {
-		     fail( xhr );
+		     fail( xhr.status, xhr );
 		     return false;
 		  }
 	    }
 	 } catch( exc ) {
-	    xhr.exception = exc;
-	    xhr.exception.hopStack = xhr.hopStack;
-	    xhr.exception.hopService = svc;
-	    fail( xhr );
+	    var nexc = duperror( exc );
+
+	    nexc.hopStack = xhr.hopStack;
+	    nexc.hopService = svc;
+
+	    xhr.exception = nexc;
+	    
+	    fail( nexc, xhr );
 	    return false;
 	 } finally {
 	    if( typeof hop_stop_anim === "function" ) { 

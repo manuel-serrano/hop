@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-tree.js                 */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-tree.js                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Wed Aug 19 06:52:06 2009 (serrano)                */
-/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    Last change :  Wed Mar  2 10:39:35 2011 (serrano)                */
+/*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
 /*=====================================================================*/
@@ -141,13 +141,17 @@ function hop_tree_populate( tree ) {
       }
    }
    
-   var failure = function( xhr ) {
-      try {
-	 var proc = eval( xhr.responseText );
-	 if( proc ) proc( function() { return hop_tree_populate( tree ) } );
-      } catch( e ) {
-	 e.hopObject = xhr.responseText;
-	 throw( e );
+   var failure = function( exc, xhr ) {
+      if( exc instanceof Error ) {
+	 hop_report_exception( exc );
+      } else {
+	 try {
+	    var proc = eval( xhr.responseText );
+	    if( proc ) proc( function() { return hop_tree_populate( tree ) } );
+	 } catch( e ) {
+	    e.hopObject = xhr.responseText;
+	    throw( e );
+	 }
       }
    }
 

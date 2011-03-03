@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Tue Feb 15 11:47:32 2011 (serrano)                */
+;*    Last change :  Wed Mar  2 15:40:37 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -179,17 +179,19 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-load-hz path)
    (let ((p (open-input-gzip-file path)))
-      (unwind-protect
-	 (let* ((tmp (make-file-name (os-tmp) "hop"))
-		(file (car (untar p :directory tmp)))
-		(base (substring file
-				 (+fx (string-length tmp) 1)
-				 (string-length file)))
-		(dir (dirname base))
-		(name (if (string=? dir ".") base dir))
-		(src (make-file-path tmp name (string-append name ".hop"))))
-	    (hop-load-weblet src))
-	 (close-input-port p))))
+      (if (input-port? p)
+	  (unwind-protect
+	     (let* ((tmp (make-file-name (os-tmp) "hop"))
+		    (file (car (untar p :directory tmp)))
+		    (base (substring file
+				     (+fx (string-length tmp) 1)
+				     (string-length file)))
+		    (dir (dirname base))
+		    (name (if (string=? dir ".") base dir))
+		    (src (make-file-path tmp name (string-append name ".hop"))))
+		(hop-load-weblet src))
+	     (close-input-port p))
+	  (error "hop-load-hz" "Cannot find HZ file" path))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-weblet ...                                              */

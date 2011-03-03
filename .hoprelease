@@ -1,4 +1,4 @@
 #!/bin/sh
-major=2.2.0
+major=2.2.1
 state=
 minor=

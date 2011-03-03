@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Fri Jan 14 09:36:40 2011 (serrano)                */
+;*    Last change :  Wed Mar  2 12:17:12 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -22,7 +22,6 @@
 	   hz_package)
    
    (export hz
-	   hz/weblet
 	   hz/documentation
 	   hz/preferences
 	   hz/install

@@ -1,0 +1,193 @@
+~~ This README explains how to create and use **VirtualBox**,
+**VMware**, and **Qemu** images containing a Linux Debian equipped
+with a pre-installed Hop.
+
+~~ This README.wiki file can be visualized at:
+
+  firefox http://localhost:8080/hop/wiki?path=$PWD/README.wiki
+
+
+== 1. Building the image ==
+
+There are two ways for building the image.
+
+   - use the Makefile entries.
+   - use the scripts manually.
+
+
+**NOTE:** in both case you need ++sudo++ ability to create an image.
+
+=== 1.1 Build an image with the Makefile entries ===
+
+To create a image use one of the following:
+
+  $ make qemu
+  $ make virtualbox
+  $ make vmware
+
+
+~~ This will create an image for the current version of the Hop in the directory
+given by ++$(HOPTMPDIR)++. The minimal Bigloo version will be used. The image
+size is given by the Makefile variable ++$(IMGSIZE)++.
+
+
+~~ If you want to create an image using a particular Bigloo and Hop version
+use something such as:
+
+  $ make qemu RELEASE=3.6b-alpha03Mar11 HOPRELEASE=2.2.1
+
+
+=== 1.2 Build an image using the script manually ===
+
+==== 1.2.1 Create the image ====
+
+The first step consists in creating a plain Linux image. This is done
+with:
+
+   $ sudo scripts/create_image.sh /tmp/hop.hdd 4G
+
+
+==== 1.2.2 Install Hop and create the hdd image ====
+
+The second step of the manual installation is to install Bigloo and Hop
+in the Linux image:
+
+   # sudo is needed because the image is owned by root
+   $ sudo scripts/install_bigloo_hop.sh /tmp/hop.hdd 3.6b 2.2.1 
+
+
+Optionally
+
+   $ sudo chown <user-name> /tmp/hop.hdd
+
+
+==== 1.2.3 Create the vmdk image ====
+
+   # this produces hop.vmdk ready for shipping
+   $ scripts/convert_image.sh /tmp/hop.hdd /tmp/hop.vmdk
+
+
+==== 1.2.4 lenny image ====
+
+Of course the first script could be run only once per debian release,
+creating a base image, and then copying this base image to the image
+we'll work on, as in:
+
+   # once per debian release
+   sudo scripts/create_image.sh lenny 4G
+
+
+Then when we want to release another image, just:
+
+   $ cp lenny.hdd hop_2.2.1.hdd
+   $ scripts/install_bigloo_hop.sh hop_2.2.1 3.6b 2.2.1  
+   $ scripts/convert_image.sh hop_2.2.1
+
+
+That way you save creating an image, which takes some minutes, 
+every time you want to make a release.
+
+
+== 2. Running the image ==
+
+~~ The downloaded .vmdk file is ready to be used by VirtualBox and
+VMWare, but needs some configuration in the virtualized machine. It is
+possible to use qemu, but there's no easy way to setup a network
+device to communicate with it. If you really want to use it, we
+suggest either to read its documentation on how to do it or to install
+a desktop environment and a browser in the emulated machine.  Here are
+instructions about how to configure them the other two:
+
+
+=== 2.1 VirtualBox ===
+
+~~ Select the menu ++Machine-> New++. This opens the "++new virtual machine
+wizard++". Put a VM name, select Linux/Debian in Operating
+System/Version. Next comes memory size; 128MiB is enough.
+
+~~ As for the hard disk, select "++use existing hard disk++" and then
+click the small folderish icon in the right to open the "++virtual media
+manager++". Click on "++add++", and with the dialog select the downloaded
+image. Click on "++select++".
+
+~~ Finish the wizard.
+
+~~ The default setup has one network adapter configured as a "NAT
+adapter", which allows the virtual machine access internet, but we
+need a second one to access the virtual machine from the host.
+
+~~ Select the vm and then "++settings++". Select "++network++",
+activate the tab "++Adapter 2++".  Select "++enable network adapter++" and
+attach it to "++host-only-adapter++". Click on "++ok++", you are done.
+
+~~ Now select "++start++". The virtual machine will boot.
+
+=== 2.2 VMWare ===
+
+~~ This instructions assume VMWare Player. Other VMWare products
+should be similar.
+
+~~ From the menu, select "++File-> Create new virtual machine++". In the
+opened dialog select "++I will install the operating system
+later++". Select "++Linux++" and "++Debian 5++" as guest operating system. The
+name and location are up to your discretion. The disk size is
+irrelevant, so cerate the smallest possible.  Unluckly VMWare assumes
+you're creating the machine from scratch (see the first question), so
+this disk will be erased later. Select "++Finish++" and "++Close++".
+
+~~ Back in the main windows, select the virtual machine from the list
+at the left and then "++Virtual Machine-> Virtual Machine Settings++".
+
+~~ If you want, you can ramove the CD/DVD and floppy devices and the
+printer also.  They're completely optional. Remove the hard disk.
+
+~~ Add a //Hard disk//, selecting "++Use an existing virtual disk++"
+and then browsing to the path where you downloaded the disk image and
+then "++Finish++". You can convert to the new format or not, it's not
+important. The conversion can take some time.
+
+~~ Add a "++Network adapter++"', selecting it as "++Host-only++" and
+"++Finish++".
+
+~~ Click on "++Save++".
+
+~~ Back in the main window, click on "++Play virtual machine++". The
+virtual machine will boot.
+
+=== 2.3 Accessing Hop ===
+
+~~ Accessing Hop running in the virtual machine is just a matter of
+pointing your browser to the right address. Unluckly there's not an
+easy way to determine the address, because it heavily depends on the
+emulator and your setup.
+
+~~ Under VirtualBox and VMWare we declare two network adapters. One is
+used to let Hop reach the internet and the other to be able to connect
+from the host. You will have to login in the virtual machine (user
+root, no password) and look at the output of the command 
+
+  ifconfig eth1 | grep inet
+
+
+which should be something like:
+
+  inet addr:192.168.56.101  Bcast:192.168,56.255  Mask:255.255.255.0
+
+
+So just point your browser to ,(<TT> "http://192.168.56.101:8080/hop") and
+you're set.
+
+
+== 3. Adapting the image ==
+
+Hop is, by default configuration provided by us, running in a sort of
+"development mode". This mode is insecure, because it allows to
+redefine any function, including the ones provided by Hop or the
+Bigloo runtime library. This mode is not suitable for production; if
+you want to use it as such, you should:
+
+  * login as 'root' in the terminal.
+  * comment the 4th line of the /etc/default/hop file, which reads like:
+  EXTRA_OPTS="--allow-service-override"
+
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Mar  1 16:34:17 2011 (serrano)                */
+;*    Last change :  Wed Mar  2 14:15:40 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -559,7 +559,7 @@
 				  ((close)
 				   (audio-server-close-sans-lock as))
 				  ((poll)
-				   (audio-event-poll))
+				   (audio-event-poll a1))
 				  (else
 				   (tprint "unknown msg..." a0)
 				   #f))))))))))
@@ -1070,9 +1070,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    audio-event-poll ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (audio-event-poll)
+(define (audio-event-poll stamp)
    (mutex-lock! event-mutex)
-   (let ((l (take old-events 5)))
+   (let ((l (filter (lambda (o) (> (cdr o) stamp)) (take old-events 5))))
       (tprint "<<< audio-poll: " (map (lambda (e) (cons (caar e) (cdr e))) l))
       (mutex-unlock! event-mutex)
       l))

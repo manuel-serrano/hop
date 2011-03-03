@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Tue Dec 21 09:53:21 2010 (serrano)                */
-;*    Copyright   :  2007-10 Manuel Serrano                            */
+;*    Last change :  Wed Mar  2 16:00:01 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with weblets.                              */
 ;*=====================================================================*/
@@ -90,13 +90,13 @@
 	  (name (let ((v (find 'name name)))
 		   (if (or (not (string? name)) (string=? v name))
 		       (convert v)
-		       (error 'info->weblet
+		       (error "info->weblet"
 			      (format "weblet ~a name mismatch" name)
 			      (format "~a expected, ~a provided" name v)))))
 	  (version (let ((v (find 'version (or version "0.0.0"))))
 		      (if (or (not (string? version)) (string=? v version))
 			  (convert v)
-			  (error 'info->weblet
+			  (error "info->weblet"
 				 (format "weblet ~a, version mismatch" name)
 				 (format "~a expected, ~a provided" version v)))))
 	  (publisher (convert (find 'publisher #f)))
@@ -107,7 +107,7 @@
 					(dirname publisher)
 					name
 					version))
-		     (else (error 'info->weblet
+		     (else (error "info->weblet"
 				  "Url or Publisher should be given"
 				  name))))))
       (instantiate::weblet

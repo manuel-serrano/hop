@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Fri Feb 18 08:40:09 2011 (serrano)                */
+/*    Last change :  Wed Mar  2 10:46:11 2011 (serrano)                */
 /*    Copyright   :  2004-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
@@ -156,6 +156,7 @@ div[hssclass=hop-error-trace] pre {
   color: #00a;
   font-weight: normal;
   padding-left: 1em;
+  font-size: 9pt;
 }
 
 div[hssclass=hop-error].warning {

@@ -8,7 +8,7 @@
       (<HEAD> :title "@TITLE@"
 	 :favicon (service-resource @HZ@ "etc/favicon.png")
 	 :base (service-base-url @HZ@ (current-request))
-	 :include (when @DASHBOARD@ "hop-dashboard")
+	 :include (when @DASHBOARD@ "hop-dashboard") "hop-foot"
 	 :css "@HZ@.hss")
       (<@HZUPCASE@:BODY> :prefs #t
 	   :header "@TITLE@"
@@ -105,7 +105,7 @@
       (<HEAD> :title (string-capitalize "@HZ@")
 	 :favicon (service-resource @HZ@ "etc/favicon.png")
 	 :base (service-base-url @HZ@ (current-request))
-	 :include "hop-prefs"
+	 :include "hop-prefs" "hop-foot"
 	 :css "@HZ@.hss")
       (<@HZUPCASE@:BODY> :class "@HZ@-body-preferences"
          :header "Preferences"

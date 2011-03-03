@@ -1,33 +1,25 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.2.x/arch/Makefile                     */
+#*    serrano/prgm/project/hop/2.2.x/arch/macosx/Makefile              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
-#*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Wed Mar  2 07:15:25 2011 (serrano)                */
-#*    Copyright   :  2006-11 Manuel Serrano                            */
+#*    Creation    :  Wed Mar  2 07:14:10 2011                          */
+#*    Last change :  Wed Mar  2 07:15:10 2011 (serrano)                */
+#*    Copyright   :  2011 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
-#*    ETC Makefile                                                     */
+#*    MacOS X port                                                     */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
--include ../etc/Makefile.hopconfig
--include ../etc/Makefile.version
+-include ../../etc/Makefile.hopconfig
+-include ../../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION = Makefile
+POPULATION = Makefile \
+  Makefile.bundle Info.plist hop.icns
 
-POPDIRS = felix android macosx vm
-
-install:
-
-uninstall:
-
-clean:
-
-
-devclean: clean
+POPDIRS = 
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Wed Feb 16 10:43:13 2011 (serrano)                */
+;*    Last change :  Wed Mar  2 10:47:39 2011 (serrano)                */
 ;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -244,8 +244,8 @@
 	  "")
 	 ((= s 0)
 	  (<DIV> :hssclass "hop-error-trace"
-	     (<DIV> :style "font-weight: bold" "JavaScript stack:")
-	     (<PRE> :style "font-size: 9pt; padding-left: 1em"
+	     (<DIV> "JavaScript stack:")
+	     (<PRE> 
 		:onclick (stop-event-propagation event)
 		(pp-js-stack l))))
 	 (else
@@ -329,10 +329,8 @@
 			   src))))
 	       (when (and exc.hopService (not (eq? exc.hopService #unspecified)))
 		  (<DIV> :hssclass "hop-error-trace"
-		     (<DIV> :style "font-weight: bold" "Service:")
-		     (<TABLE> :style "padding-left: 1em"
-			(<TR> (<TD> :style "font-size: 110%; font-family: monospace; font-weight: normal"
-				 (obj->name exc.hopService #f))))))
+		     (<DIV> "Service:")
+		     (<PRE> (obj->name exc.hopService #f))))
 	       (when (pair? exc.hopStack)
 		  (<EXCEPTION-STACK> exc.hopStack))
 	       (when (and (> (hop-debug) 1) (string? exc.stack))
@@ -360,7 +358,8 @@
 		       e))
 		   (else
 		    exc))))
-	  (set! e.hopStack (hop-get-stack 1))
+	  (unless (js-in? "hopStack" e)
+	     (set! e.hopStack (hop-get-stack 1)))
 	  (dom-append-child! document.body (<EXCEPTION> e))))
       (else
        ;; the error might be raised even before document.body is bound

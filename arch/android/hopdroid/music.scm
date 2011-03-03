@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Mon Dec 20 18:48:48 2010 (serrano)                */
-;*    Copyright   :  2010 Manuel Serrano                               */
+;*    Last change :  Wed Mar  2 20:41:04 2011 (serrano)                */
+;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
 ;*=====================================================================*/
@@ -23,6 +23,7 @@
 
 	      (%open::bool (default #t))
 	      (%playlist::pair-nil (default '()))
+	      (%playlistlength::int (default 0))
 	      (%meta::pair-nil (default '()))
 	      (%tag::obj (default '())))))
 
@@ -44,7 +45,7 @@
 ;*    music-close ::androidmusic ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (music-close o::androidmusic)
-   (with-access::androidmusic o (phone %mutex %open %playlist %meta %tag)
+   (with-access::androidmusic o (phone %mutex %open %playlist %playlistlength %meta %tag)
       (with-lock %mutex
 	 (lambda ()
 	    (when %open
@@ -52,6 +53,7 @@
 	       (set! %meta '())
 	       (set! %tag #unspecified)
 	       (set! %playlist '())
+	       (set! %playlistlength 0)
 	       (android-send-command phone music-plugin #\x)
 	       (call-next-method))))))
 
@@ -80,36 +82,39 @@
 ;*---------------------------------------------------------------------*/
 (define-method (music-playlist-add! androidmusic::androidmusic n)
    (call-next-method)
-   (with-access::androidmusic androidmusic (%mutex %playlist %status)
+   (with-access::androidmusic androidmusic (%mutex %playlist %playlistlength %status)
       (with-lock %mutex
 	 (lambda ()
 	    (set! %playlist (append %playlist (list n)))
+	    (set! %playlistlength (+fx %playlistlength 1))
 	    (with-access::musicstatus %status (playlistid playlistlength)
 	       (set! playlistid (+fx 1 playlistid))
-	       (set! playlistlength (+fx 1 playlistlength)))))))
+	       (set! playlistlength %playlistlength))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-delete! ::androidmusic ...                        */
 ;*---------------------------------------------------------------------*/
 (define-method (music-playlist-delete! androidmusic::androidmusic n)
-   (with-access::androidmusic androidmusic (%mutex %playlist %status)
+   (with-access::androidmusic androidmusic (%mutex %playlist %playlistlength %status)
       (with-lock %mutex
 	 (lambda ()
 	    (set! %playlist (delete! n %playlist string=?))
+	    (set! %playlistlength (-fx %playlistlength 1))
 	    (with-access::musicstatus %status (playlistid playlistlength)
 	       (when (and (>=fx n 0) (<fx n playlistlength))
 		  (set! %playlist (remq! (list-ref %playlist n) %playlist))
 		  (set! playlistid (+fx 1 playlistid))
-		  (set! playlistlength (length %playlist))))))))
+		  (set! playlistlength %playlistlength)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-clear! ::androidmusic ...                         */
 ;*---------------------------------------------------------------------*/
 (define-method (music-playlist-clear! androidmusic::androidmusic)
-   (with-access::androidmusic androidmusic (%mutex %playlist %status)
+   (with-access::androidmusic androidmusic (%mutex %playlist %playlistlength %status)
       (with-lock %mutex
 	 (lambda ()
 	    (set! %playlist '())
+	    (set! %playlistlength 0)
 	    (with-access::musicstatus %status (playlistlength song songid)
 	       (set! song 0)
 	       (set! songid 0)
@@ -216,12 +221,13 @@
 ;*    music-update-status! ::androidmusic ...                          */
 ;*---------------------------------------------------------------------*/
 (define-method (music-update-status! o::androidmusic status::musicstatus)
-   (with-access::androidmusic o (%mutex phone %status)
+   (with-access::androidmusic o (%mutex phone %status %playlistlength)
       (let ((s (android-send-command/result phone music-plugin #\S)))
 	 (when (pair? s)
 	    (musicstatus-state-set! status (car s))
 	    (musicstatus-songlength-set! status (cadr s))
 	    (musicstatus-songpos-set! status (caddr s))))
+      (musicstatus-playlistlength-set! status %playlistlength)
       status))
 
 ;*---------------------------------------------------------------------*/

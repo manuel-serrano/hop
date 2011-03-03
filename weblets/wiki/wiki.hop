@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Feb  1 11:39:09 2011 (serrano)                */
+;*    Last change :  Wed Mar  2 07:39:17 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -131,7 +131,7 @@
 			  "Save")
 		       (<DIV> :align "center"
 			  editor))))
-	      (htt-file-not-found file))
+	      (http-file-not-found file))
 	  (user-access-denied))))
 
 ;*---------------------------------------------------------------------*/
