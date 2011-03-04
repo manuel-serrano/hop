@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/etc/hoprc.hop.in                 */
+;*    serrano/prgm/project/hop/2.2.x/etc/hoprc.hop.in                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 26 08:20:34 2006                          */
-;*    Last change :  Wed Dec 31 07:44:54 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Fri Mar  4 10:15:04 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP runtime command file.                                        */
 ;*    -------------------------------------------------------------    */
@@ -120,7 +120,9 @@
 (unless (file-exists? (make-file-name (hop-rc-directory) (hop-rc-file)))
    (hop-filter-add!
     (lambda (req)
-       (if (and (string=? (http-request-path req) "/")
+       (if (and (or (string=? (http-request-path req) "/")
+                    (string=? (http-request-path req) "/hop")
+                    (substring-at? (http-request-path req) "/hop/" 0))
 		(not (file-exists?
 		      (make-file-name (hop-rc-directory) (hop-rc-file)))))
 	   (http-warning [You have reached this page because you

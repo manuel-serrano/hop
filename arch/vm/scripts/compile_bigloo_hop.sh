@@ -63,8 +63,8 @@ if ! [ "$hop_version" = "" ]; then
    ./configure && $MAKE && make install
    )
    ldconfig
-   adduser --system --group users --shell /bin/sh hop
+   adduser --system --ingroup users --shell /bin/sh hop
 
    mkdir -pv /home/hop/src
-   chown -v hop.nogroup /home/hop/src
+   chown -v hop.users /home/hop/src
 fi

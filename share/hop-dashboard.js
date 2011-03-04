@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Wed Mar  2 10:51:10 2011 (serrano)                */
+/*    Last change :  Thu Mar  3 14:43:45 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
@@ -23,7 +23,8 @@ var hop_dashboard_container = false;
 var hop_dashboard_icon_size = 32;
 var hop_dashboard_interval = false;
 var hop_dashboard_opacity = "0.70";
-var hop_dashboard_panel_background = "#ddd";
+var hop_dashboard_panel_background = "#B7AE8A";
+var hop_dashboard_panel_icon_background = "#E9E0BA";
 var hop_dashboard_panel_opacity = "0.50";
 
 /*---------------------------------------------------------------------*/
@@ -44,11 +45,7 @@ function hop_dashboard_start_applet( name, svc ) {
       window.open( sc_dirname( svc ), name );
    }
 
-   function failure( exc, xhr ) {
-      if( exc instanceof Error ) {
-	 return hop_report_exception( exc );
-      }
-      
+   function failure( xhr ) {
       if( xhr.status == 404 ) {
 	 window.open( sc_dirname( svc ), name );
       } else {
@@ -96,15 +93,16 @@ function hop_dashboard_populate( proc ) {
 	 node_style_set( app, "float", "left");
 		   
 	 app.onmouseover = function( e ) {
-	    node_style_set( this, "background", "#fff" );
-	    node_style_set( this, "border-left", "1px solid #ccc" );
-	    node_style_set( this, "border-top", "1px solid #ccc" );
-	    node_style_set( this, "border-right", "1px solid #555" );
-	    node_style_set( this, "border-bottom", "1px solid #555" );
+	    node_style_set( this, "background", hop_dashboard_panel_icon_background );
+	    node_style_set( this, "-moz-border-radius", "4px" );
+	    node_style_set( this, "-webkit-border-radius", "4px" );
+	    node_style_set( this, "border", "1px solid #FFD93D" );
 	 }
 	 app.onmouseout = function( e ) {
 	    node_style_set( this, "background", "inherit" );
 	    node_style_set( this, "border", "1px solid transparent" );
+	    node_style_set( this, "-moz-border-radius", "4px" );
+	    node_style_set( this, "-webkit-border-radius", "4px" );
 	 }
 	 app.name = p.car
 	 app.svc = p.cdr.cdr.car;
@@ -123,7 +121,7 @@ function hop_dashboard_populate( proc ) {
       node_style_set( div, "left", ((hop_current_window_width()-width)/2) + "px" );
       node_style_set( div, "width", width + "px" );
       node_style_set( div2, "bottom", "-" + app_size + 8 + "px" );
-      node_style_set( div2, "left", ((hop_current_window_width()-width)/2) + "px" );
+      node_style_set( div2, "left", (1+((hop_current_window_width()-width)/2)) + "px" );
       node_style_set( div2, "width", width + "px" );
       node_style_set( div2, "height", app_size + 10 + "px" );
 
@@ -132,7 +130,7 @@ function hop_dashboard_populate( proc ) {
       proc();
    }
 
-   function permission_denied( e, h ) {
+   function permission_denied( h ) {
       alert( "Permission denied to run the dashboard on this host!" );
    }
    

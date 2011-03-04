@@ -19,7 +19,9 @@ fi
 # params
 script_dir=`dirname $0`
 img_file=$1
+img_dir=`dirname $img_file`
 mnt_dir=$img_dir/mnt
+
 bigloo_version=$2
 hop_version=$3
 shift 3
@@ -56,6 +58,7 @@ loop_devices="/dev/loop1 $loop_devices"
 mount /dev/loop1 $mnt_dir/
 echo -n "$img_file "
 mount_points="$mnt_dir $mount_points"
+
 for mntpt in /dev /dev/pts /proc; do
    echo -n "$mntpt "
    mkdir -p $mnt_dir/$mntpt

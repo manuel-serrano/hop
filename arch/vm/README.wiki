@@ -91,12 +91,15 @@ every time you want to make a release.
 == 2. Running the image ==
 
 ~~ The downloaded .vmdk file is ready to be used by VirtualBox and
-VMWare, but needs some configuration in the virtualized machine. It is
-possible to use qemu, but there's no easy way to setup a network
-device to communicate with it. If you really want to use it, we
-suggest either to read its documentation on how to do it or to install
-a desktop environment and a browser in the emulated machine.  Here are
-instructions about how to configure them the other two:
+VMWare, but needs some configuration in the virtualized machine. You can
+convert the image to be executed with QEmu. This short notice describes
+how to use the image with the tree systems.
+
+~~ Independently of the host engine (Virtualbox, VMWare, QEmu), once
+booted the virtual machine will start a Hop daemon in background. If
+you need to log in the machine, use the "++root++" account whose
+password is "++hop++". The machine is equipped with a Linux
+[[http://www.debian.org/|Debian]] distribution.
 
 
 === 2.1 VirtualBox ===
@@ -154,7 +157,8 @@ important. The conversion can take some time.
 ~~ Back in the main window, click on "++Play virtual machine++". The
 virtual machine will boot.
 
-=== 2.3 Accessing Hop ===
+
+=== 2.3 Accessing Hop with VirtualBox and VMWare ===
 
 ~~ Accessing Hop running in the virtual machine is just a matter of
 pointing your browser to the right address. Unluckly there's not an
@@ -176,6 +180,20 @@ which should be something like:
 
 So just point your browser to ,(<TT> "http://192.168.56.101:8080/hop") and
 you're set.
+
+
+=== 2.4 QEmu ===
+
+~~ To run the machine with QEmu use something such as:
+
+  qemu hop.vmdk -redir tcp:8000::8080 
+
+
+~~ This boots the machine and instructs QEmu to redirect the host port
+++8000++ to the guest port ++8080++. Hop can be accessed from the host 
+at the URL ++http://localhost:8000/hop++.
+Additional informations about QEmu networking can be found at
+[[http://en.wikibooks.org/wiki/QEMU/Networking]].
 
 
 == 3. Adapting the image ==
