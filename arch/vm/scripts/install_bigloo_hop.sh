@@ -5,7 +5,7 @@ set -e
 if [ $# -lt 3 ]; then
    echo "Usage: $0 img_file bigloo_version hop_version [other_pkg,...]"
    echo
-   echo "    Example: $0 /tmp/hop.hdd 3.6b 2.2.1 gource,hgview"
+   echo "    Example: $0 /tmp/hop.hdd 3.6b 2.2.1 hoptex,popart-api -- gource,hgview"
    echo
    echo "  hop_version can be in the form 'hg;url;revision'"
    echo "  which clones the repo at 'url' and checkouts revision/tag 'revision'."
@@ -26,7 +26,17 @@ bigloo_version=$2
 hop_version=$3
 shift 3
 
-other_pkgs="$@"
+while : ; do
+  case $1 in;
+    --)
+     other_pkgs="$@"
+     ;;
+    *)
+     extra_welbets="$extra_welbets $1";
+     ;;
+  esac
+  shift
+done
 
 mkdir -pv $mnt_dir
 
@@ -71,3 +81,8 @@ echo "Chrootin'..."
 cp -v /etc/resolv.conf $mnt_dir/etc/resolv.conf
 cp -v $script_dir/compile_bigloo_hop.sh $mnt_dir/root/compile_bigloo_hop.sh
 chroot $mnt_dir bash /root/compile_bigloo_hop.sh "$bigloo_version" "$hop_version" $other_pkgs
+
+echo "Extra weblets"
+for p in $extra_weblets; do
+  cp $extra_weblets $mnt_dir/home/hop/.config/hop/weblets
+done

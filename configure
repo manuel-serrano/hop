@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Jan 25 10:49:29 2011 (serrano)                */
+#*    Last change :  Fri Mar  4 11:20:47 2011 (serrano)                */
 #*    Copyright   :  2004-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -79,6 +79,7 @@ contribsdir=$prefix/share/hop/contribs
 buildlibdir=$PWD/lib
 buildsharedir=$PWD/share
 distribdir=$HOME/prgm/distrib
+distribdir=$HOME/prgm/project/hop/repository
 buildbindir=$PWD/bin
 
 buildspecific=
@@ -91,8 +92,10 @@ svn=ssh://hop@hop.inria.fr/hop
 
 if [ "$USER " = "serrano " ]; then
   distribdir=$HOME/prgm/distrib
+  repodir=$HOME/prgm/project/hop/repository
 else
   distribdir=.
+  repodir=.
 fi
 
 # User controlled optional features
@@ -639,6 +642,7 @@ cat $mkmf.in \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@DISTRIBDIR@|$distribdir|" \
+          -e "s|@REPODIR@|$repodir|" \
           -e "s|@HOPSVN@|$svn|" \
           -e "s|@HOPDISTRIBDIR@|$distribdir|" \
           -e "s|@BIGLOOSSLLIBS@|$bigloossllibs|" \

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Wed Jan 19 16:46:03 2011 (serrano)                */
+#*    Last change :  Fri Mar  4 11:18:42 2011 (serrano)                */
 #*    Copyright   :  2004-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -97,6 +97,7 @@ BUILDSPECIFIC   = @BUILDSPECIFIC@
 INSTALLSPECIFIC = @INSTALLSPECIFIC@
 
 DISTRIBDIR	= @DISTRIBDIR@
+REPODIR		= @REPODIR@
 
 #*---------------------------------------------------------------------*/
 #*    Destinations                                                     */

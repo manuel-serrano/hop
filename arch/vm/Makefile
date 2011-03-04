@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar  2 07:14:10 2011                          */
-#*    Last change :  Wed Mar  2 14:27:25 2011 (serrano)                */
+#*    Last change :  Fri Mar  4 11:21:18 2011 (serrano)                */
 #*    Copyright   :  2011 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    VirtualMachine image generation                                  */
@@ -43,3 +43,6 @@ hop-install: $(HOPTMPDIR)/hop.hdd
 
 qemu: hop-install
 
+qemu+:
+	WEBLETS="$(REPODIR)/hoptex-1.1.2.hz popart-api-1.0.0.hz" \
+          $(MAKE) hop-install
