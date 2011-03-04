@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Mar  2 14:15:40 2011 (serrano)                */
+;*    Last change :  Fri Mar  4 18:47:25 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -170,7 +170,6 @@
        (<AUDIO:HTML5> :id id :controls controls :src src body)
        (<DIV> :id id :class "hop-audio"
 	  (when controls (<controls>))
-	  (tprint "BROWSER: " browser)
 	  (case browser
 	     ((flash)
 	      (list (<audio:init> :backendid fid
@@ -228,14 +227,13 @@
    (let* ((swf (make-file-path (hop-share-directory) "flash" "HopAudio.swf"))
 	  (init (string-append "hop_audio_flash_init_" id))
 	  (fvar (string-append "arg=" init)))
-      (<DIV> :id id
+      (<DIV> :id id :hssclass "hop-audio-flash-container"
 	 (<SCRIPT>
 	    (format "function ~a() {" init)
 	    (if guard (format "if( ~a ) {" guard) "{")
 	    (format "var backend = document.getElementById( ~s );" id)
 	    (format "hop_audio_flash_init( backend ); hop_audio_init[ '~a' ]( backend );}}" id id))
 	 (<OBJECT> :id (string-append id "-object") :class "hop-audio"
-	    :style "background: transparent; border: 0"
 	    :width "1px" :height "1px"
 	    :title "hop-audio" :classId "HopAudio.swf"
 	    :type "application/x-shockwave-flash"
@@ -248,7 +246,6 @@
 	    (<PARAM> :name "allowScriptAccess" :value "sameDomain")
 	    (<PARAM> :name "FlashVars" :value fvar)
 	    (<EMBED> :id (string-append id "-embed") :class "hop-audio"
-	       :style "border: 0; background: transparent"
 	       :width "1px" :height "1px"
 	       :src swf
 	       :type "application/x-shockwave-flash"

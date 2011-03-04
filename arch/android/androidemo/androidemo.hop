@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Wed Mar  2 19:53:22 2011 (serrano)                */
+;*    Last change :  Fri Mar  4 19:22:21 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -465,10 +465,8 @@ missed.")
     ~(add-event-listener! "tts" "server"
 	(lambda (e)
 	   (alert "tts done: " (event-value e))))
-    (<TEXTAREA> :id "speech"
-       "")
-    (<DIV>
-       "language: "
+    (<TEXTAREA> :id "speech" "")
+    (<DIV> "language: "
        (let ((locale (phone-current-locale android)))
 	  (<SELECT> :id "language"
 	     :onchange ~(with-hop ($(service (s)
@@ -487,19 +485,15 @@ missed.")
 			 (phone-locales android)))))
     (<TABLE> :id "speech-conf"
        (<TR>
-	  (<TH>
-	     "pitch: ")
-	  (<TD>
-	     (<SLIDER> :min 0.2 :max 2.0 :step 0.1 :value (tts-pitch atts)
-		:onchange ~(with-hop ($(service (v) (tts-pitch-set! atts v))
-				       this.value)))))
+	  (<TH> "pitch: ")
+	  (<TD> (<SLIDER> :min 0.2 :max 2.0 :step 0.1 :value (tts-pitch atts)
+		   :onchange ~(with-hop ($(service (v) (tts-pitch-set! atts v))
+					  this.value)))))
        (<TR>
-	  (<TH>
-	     "rate: ")
-	  (<TD>
-	     (<SLIDER> :min 0.2 :max 2.0 :step 0.1 :value (tts-rate atts)
-		:onchange ~(with-hop ($(service (v) (tts-rate-set! atts v))
-				       this.value))))))
+	  (<TH> "rate: ")
+	  (<TD> (<SLIDER> :min 0.2 :max 2.0 :step 0.1 :value (tts-rate atts)
+		   :onchange ~(with-hop ($(service (v) (tts-rate-set! atts v))
+					  this.value))))))
     (<BUTTON>
        :onclick ~(let ((el (dom-get-element-by-id "speech")))
 		    (with-hop ($(service (text) (tts-speak atts text)) el.value)))

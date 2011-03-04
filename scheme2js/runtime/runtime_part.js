@@ -1968,14 +1968,14 @@ function sc_bitUrsh(x, y) {
     return x >>> y;
 }
 
-/*** META ((export js-field js-property) (arity #t)
+/*** META ((export js-field js-property js-ref) (arity #t)
            (peephole (hole 2 o "[" field "]")))
 */
 function sc_jsField(o, field) {
     return o[field];
 }
 
-/*** META ((export js-field-set! js-property-set!)
+/*** META ((export js-field-set! js-property-set! js-set!)
            (arity #t)
            (peephole (hole 3 o "[" field "] = " val)))
 */

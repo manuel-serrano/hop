@@ -64,6 +64,10 @@ if ! [ "$hop_version" = "" ]; then
    )
    ldconfig
    adduser --system --ingroup users --shell /bin/sh hop
+   passwd hop <<EOF
+hop
+hop
+EOF
 
    mkdir -pv /home/hop/src
    chown -v hop.users /home/hop/src

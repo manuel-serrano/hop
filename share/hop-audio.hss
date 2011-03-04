@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 28 06:23:39 2007                          */
-/*    Last change :  Thu Dec  2 05:45:28 2010 (serrano)                */
-/*    Copyright   :  2007-10 Manuel Serrano                            */
+/*    Last change :  Fri Mar  4 18:49:40 2011 (serrano)                */
+/*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Audio's cascade style sheet.                                 */
 /*=====================================================================*/
@@ -96,6 +96,7 @@ $(define hopaudio-monospace "DejaVu Sans Mono, Andale Mono, Bitstream Vera Sans 
 /*---------------------------------------------------------------------*/
 div.hop-audio {
   display: inline-block;
+  font-size: 1px;
 }
 
 /*---------------------------------------------------------------------*/
@@ -398,4 +399,43 @@ audio table.hop-audio-panel-pan {
 
 table.hop-audio-panel-pan div.lineleft {
   background: #ccc;
+}
+
+/*---------------------------------------------------------------------*/
+/*    flash container                                                  */
+/*---------------------------------------------------------------------*/
+div[hssclass=hop-audio-flash-container] {
+  width: 1px; 
+  height: 1px; 
+  border: 0; 
+  background: transparent;
+  margin: 0; 
+  padding: 0;
+  display: inline-block;
+  position: relative;
+  left: 0;
+  top: -3px;
+}
+
+div[hssclass=hop-audio-flash-container] object.hop-audio {
+  display: inline-block;
+  left: 0;
+  top: 0;
+  height: 1px; 
+  width: 1px; 
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+  
+div[hssclass=hop-audio-flash-container] embded.hop-audio {
+  display: inline-block;
+  left: 0;
+  top: 0;
+  height: 1px; 
+  width: 1px; 
+  border: 0;
+  background: transparent;
+  border: 1px solid green;
+  padding: 0;
 }

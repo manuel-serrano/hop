@@ -24,16 +24,24 @@ mnt_dir=$img_dir/mnt
 
 bigloo_version=$2
 hop_version=$3
+weblets=
+
 shift 3
 
 while : ; do
-  case $1 in;
+  echo $1;
+  case $1 in
+    "")
+     break;;
+
     --)
      other_pkgs="$@"
      ;;
+
     *)
-     extra_welbets="$extra_welbets $1";
+     weblets="$weblets $1";
      ;;
+
   esac
   shift
 done
@@ -83,6 +91,7 @@ cp -v $script_dir/compile_bigloo_hop.sh $mnt_dir/root/compile_bigloo_hop.sh
 chroot $mnt_dir bash /root/compile_bigloo_hop.sh "$bigloo_version" "$hop_version" $other_pkgs
 
 echo "Extra weblets"
-for p in $extra_weblets; do
-  cp $extra_weblets $mnt_dir/home/hop/.config/hop/weblets
+mkdir -pv $mnt_dir/home/hop/.config/hop/weblets
+for p in $weblets; do
+  cp $p $mnt_dir/home/hop/.config/hop/weblets
 done

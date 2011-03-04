@@ -35,7 +35,7 @@
 			    (compute-frame)
 			    (after 0 loop)))))))
 	 
-	 ~(define (alpha-row data width i j a)
+	 ~(define (alpha-row data width j a)
 	     (let loop ((i 0))
 		(when (< i (+ j width))
 		   (vector-set! data (+ 3 (* 4 (+ i (* width j)))) a)
@@ -54,7 +54,7 @@
 		(let loop ((j 0))
 		   (when (< j c1.height)
 		      (let ((alpha (max 0 (- 256 (* step j)))))
-			 (alpha-row data video.width i j alpha)
+			 (alpha-row data video.width j alpha)
 			 (loop (+ j 1)))))
 		;; draw the image
 		(canvas-put-image-data ctx2 frame 0 0)))
