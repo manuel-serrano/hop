@@ -143,9 +143,8 @@ weblet.
 You must fix that in order to be able to use Hop. New comers are
 encouraged to use the Hop
 ,(<A> :href (format "http://~a:~a/hop/wizard" (http-request-host req) (http-request-port req))
-    "wizard") for creating a simple Hop configuration file.]
+    "wizard") for creating a simple Hop configuration file.
 		      
-		      [
 Alternatively, for those that feel more confident, you can generate
 the configuration file by hand. The Hop
 ,(<A> :href (format "http://~a:~a/hop/doc" (http-request-host req) (http-request-port req))
