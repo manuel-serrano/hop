@@ -131,7 +131,7 @@ if [ $create_install -eq 1 ]; then
    # TODO: || true?!?
    debootstrap --arch i386 --include=locales,cdbs,debhelper,libsqlite3-dev,\
 libssl-dev,libgstreamer-plugins-base0.10-dev,libgmp3-dev,build-essential,\
-linux-image-2.6-686,mercurial,samba,$other_pkgs stable $mnt_dir $mirror || true
+linux-image-2.6-686,mercurial,samba,psmisc,$other_pkgs stable $mnt_dir $mirror || true
 fi
 
 echo
@@ -175,12 +175,21 @@ chroot="chroot $mnt_dir"
    $chroot apt-get -y install --reinstall dpkg
    # MS, 1 march 2010: don't know why it is needed to kill samba!?
    $chroot /etc/init.d/samba stop
+   # MS, 4 march 2010: don't know the default root passwd!!!
+   $chroot passwd <<EOF
+hop
+hop
+EOF
 # }
 
 echo
 echo "More config..."
 # copy more config
 (cd config && tar cf - .) | (cd $mnt_dir && tar xvf -)
+
+# {
+   $chroot update-rc.d hop defaults
+# }
 
 # overwrite the placeholder with root partition's UUID
 uuid=$(blkid /dev/loop1 | cut -d '"' -f 2)
