@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Jan 22 09:31:36 2011 (serrano)                */
+;*    Last change :  Fri Mar  4 10:30:59 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
@@ -107,12 +107,6 @@
 	 (<FOOT>))))
 
 ;*---------------------------------------------------------------------*/
-;*    shutdown-preferences ...                                         */
-;*---------------------------------------------------------------------*/
-(define-preferences shutdown-preferences
-   ("printer" expr shutdown-print))
- 
-;*---------------------------------------------------------------------*/
 ;*    shutdown/documentation ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-service (shutdown/documentation)
@@ -126,6 +120,4 @@
 ;*    shutdown/preferences ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-service (shutdown/preferences)
-   (shutdown-preferences-edit
-    :onclick ~(with-hop ($(service ()
-			     (shutdown-preferences-save shutdown-prefs))))))
+   "No preferences for this weblet")
