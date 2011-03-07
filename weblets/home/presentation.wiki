@@ -43,7 +43,7 @@ to spreading HOP to the Web, it also serves as a //meta-demonstration//.
 
 ~~ The native version (built from the source) of the runtime
 environment (//i.e.,// the Web broker) runs on most **Linux**
-platforms. It runs on **[[/hop/android|Android]]**
+platforms. It runs on **[[/hop/home/android|Android]]**
 and **Maemo** SmartPhones. It has been compiled for NASes (//e.g.,//
 Synology DS-101) and some robotics appliances (//e.g.,// Lincon i8000).
 The native version also runs on **MacOS X**. Other platforms should

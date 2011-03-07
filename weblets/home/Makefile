@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Mar  7 13:44:53 2011 (serrano)                */
+#*    Last change :  Mon Mar  7 14:16:13 2011 (serrano)                */
 #*    Copyright   :  2006-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -26,7 +26,7 @@ DATE = $(HOPDATE)
 SOURCES         = home.hop widgets.hop demo.hop wiki.hop
 HOP_POP		= presentation.wiki docs.wiki license.wiki faq.wiki \
                   download.wiki weblets.wiki install.wiki install-jvm.wiki \
-                  vm.wiki community.wiki videos.wiki
+                  vm.wiki android.wiki community.wiki videos.wiki
 VIDEOS		= # hopx10.ogv hopx10.flv
 
 TALKS		= hopdiffuse.xhtml.gz
