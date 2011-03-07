@@ -56,7 +56,7 @@ from: ,(<A> :href (home-ftp-bigloo-url) (home-ftp-bigloo-url)).
        (<TR>
 	  (<TD> :class "download-source"
 	     (<DOWNLOAD> :class "download-stable"
-		:legend "Android 2.1"
+		:legend "Android"
 		:src (make-file-path (home-dir) "etc" "icons" "android-market.png")
 		:url url)))
        (<TR>
@@ -64,7 +64,7 @@ from: ,(<A> :href (home-ftp-bigloo-url) (home-ftp-bigloo-url)).
 	     (<QRCODE> :typenumber 4 :id "download-android" url)))))
 
 ~~ Information specific to the Android port may be found 
-[[/hop/android|here]].
+[[/hop/home/android|here]].
 
 
 == Linux ==
@@ -74,6 +74,20 @@ used without downloading and installing the source code manually:
 
   * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "arch-16x16.png")) [[http://aur.archlinux.org|Arch Linux]]
   * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "gentoo-16x16.png")) [[http://www.gentoo.org|Gentoo]]
+
+
+== MacOS X ==
+
+,(let* ((dmg (format "hop-~a.dmg" (home-hop-stable-version)))
+	(url (make-download-url "macosx" dmg)))
+    (<TABLE> :id "download-source"
+       (<TR>
+	  (<TD> :class "download-source"
+	     (<DOWNLOAD> :class "download-stable"
+		:legend "MacOS 10.6 x86/64"
+		:src (make-file-path (home-dir) "etc" "icons" "macos.png")
+		:name dmg
+		:url url)))))
 
 
 == Maemo ==
@@ -100,42 +114,22 @@ used without downloading and installing the source code manually:
 	     (<QRCODE> :typenumber 6 :id "download-maemo" fremantle)))))
 
 
-== MacOS X ==
+== Virtual Machines ==
 
-,(let* ((dmg (format "hop-~a.dmg" (home-hop-stable-version)))
-	(url (make-download-url "macosx" dmg)))
+,(let* ((vmdk (format "hop-~a.vmdk" (home-hop-stable-version)))
+	(url (make-download-url "vm" vmdk)))
     (<TABLE> :id "download-source"
        (<TR>
 	  (<TD> :class "download-source"
 	     (<DOWNLOAD> :class "download-stable"
-		:legend "MacOS 10.6 x86/64"
-		:src (make-file-path (home-dir) "etc" "icons" "macos.png")
-		:name dmg
+		:legend "Virtual Image"
+		:src (make-file-path (home-dir) "etc" "icons" "vlinux.png")
+		:name vmdk
 		:url url)))))
 
+~~ Information specific to the Android port may be found 
+[[/hop/home/vm|here]].
 
-;* == Virtual Machines ==                                              */
-;*                                                                     */
-;* ,(let* ((qemu (format "hop-~a.dmg" (home-hop-stable-version)))      */
-;* 	(vbox (format "hop-~a.img" (home-hop-stable-version)))         */
-;* 	(vmware (format "hop-~a.img" (home-hop-stable-version))))      */
-;*     (<TABLE> :id "download-source"                                  */
-;*        (<TR>                                                        */
-;* 	  (<TD> :class "download-source"                               */
-;* 	     (<DOWNLOAD> :class "download-stable"                      */
-;* 		:legend "QEmu"                                         */
-;* 		:src (make-file-path (home-dir) "etc" "icons" "linux.png") */
-;* 		:url (make-download-url "virtual" qemu)))              */
-;* 	  (<TD> :class "download-source"                               */
-;* 	     (<DOWNLOAD> :class "download-stable"                      */
-;* 		:legend "Virtual-box"                                  */
-;* 		:src (make-file-path (home-dir) "etc" "icons" "linux.png") */
-;* 		:url (make-download-url "virtual" vbox)))              */
-;* 	  (<TD> :class "download-source"                               */
-;* 	     (<DOWNLOAD> :class "download-stable"                      */
-;* 		:legend "VMware"                                       */
-;* 		:src (make-file-path (home-dir) "etc" "icons" "linux.png") */
-;* 		:url (make-download-url "virtual" vmware))))))         */
 
 == License ==
 

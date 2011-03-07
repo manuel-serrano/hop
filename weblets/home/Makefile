@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Nov 18 17:45:47 2010 (serrano)                */
-#*    Copyright   :  2006-10 Manuel Serrano                            */
+#*    Last change :  Mon Mar  7 13:44:53 2011 (serrano)                */
+#*    Copyright   :  2006-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
 #*=====================================================================*/
@@ -26,7 +26,7 @@ DATE = $(HOPDATE)
 SOURCES         = home.hop widgets.hop demo.hop wiki.hop
 HOP_POP		= presentation.wiki docs.wiki license.wiki faq.wiki \
                   download.wiki weblets.wiki install.wiki install-jvm.wiki \
-                  community.wiki videos.wiki
+                  vm.wiki community.wiki videos.wiki
 VIDEOS		= # hopx10.ogv hopx10.flv
 
 TALKS		= hopdiffuse.xhtml.gz
@@ -37,6 +37,7 @@ POPULATION	= Makefile home.hss tips.hss \
                   demos etc/icons articles etc/weblet.info.in etc/home.wiki.in \
                   etc/logo.png etc/favicon.png etc/video.png \
                   etc/icons/maemo_install.png etc/icons/android-market.png \
+                  etc/icons/vlinux.png \
                   $(VIDEOS:%=videos/%) \
                   $(TALKS:%=talks/%) \
                   $(ARTICLES:%=articles/%) \

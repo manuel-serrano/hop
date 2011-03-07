@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Fri Feb 18 09:50:20 2011 (serrano)                */
+;*    Last change :  Mon Mar  7 11:49:05 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -121,8 +121,9 @@
 				 "Illegal syntax"
 				 syntax))))
 		   (nm (eval-module)))
-	       (unless (eq? m nm)
-		  (evmodule-check-unbound nm #f))
+	       (cond-expand
+		  (bigloo3.6a #unspecified)
+		  (else (unless (eq? m nm) (evmodule-check-unbound nm #f))))
 	       r))
 	 (begin
 	    (eval-module-set! m)

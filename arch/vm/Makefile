@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar  2 07:14:10 2011                          */
-#*    Last change :  Mon Mar  7 10:41:15 2011 (serrano)                */
+#*    Last change :  Mon Mar  7 13:45:28 2011 (serrano)                */
 #*    Copyright   :  2011 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    VirtualMachine image generation                                  */
@@ -27,7 +27,6 @@ WEBLETS = hoptex-1.1.2.hz popart-api-1.0.0.hz hopslide-2.5.1.hz
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION = Makefile \
-  README.wiki \
   scripts/compile_bigloo_hop.sh scripts/create_image.sh \
   scripts/convert_image.sh scripts/install_bigloo_hop.sh script/mount_hdd.sh
 

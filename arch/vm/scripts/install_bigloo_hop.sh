@@ -97,4 +97,4 @@ for p in $weblets; do
   cp $p $mnt_dir/home/hop/.config/hop/weblets
 done
 
-chown -vR hop.users /home/hop
+chroot $mnt_dir chown -R hop.users /home/hop

@@ -12,7 +12,9 @@
 == Installation Guides ==
 
   * [[/hop/home/install|HOP Installation page]]
-  * [[/hop/home/install-jvm|Running HOP with a Java Virtual Machine]]
+  * [[/hop/home/vm|Running HOP inside a Virtual Machine]]
+  * [[/hop/home/android|Running HOP on an Android host]]
+
 
 == Programming Manual ==
 

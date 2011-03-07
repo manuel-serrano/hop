@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Feb 18 07:45:19 2011 (serrano)                */
+;*    Last change :  Mon Mar  7 11:48:18 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -925,14 +925,20 @@
 				       ($env-set-trace-location denv (cer e)))
 				    (if (eof-object? e)
 					(let ((nm (eval-module)))
-					   (when (and (not (eq? m nm))
-						      (evmodule? nm))
-					      (evmodule-check-unbound nm #f))
+					   (cond-expand
+					      (bigloo3.6a
+					       #unspecified)
+					      (else
+					       (when (and (not (eq? m nm))
+							  (evmodule? nm))
+						  (evmodule-check-unbound nm #f))))
 					   ($env-pop-trace denv)
 					   last)
 					(let ((val (eval! e (eval-module))))
 					   (when (xml-tilde? val)
-					      (evwarning
+					      ((cond-expand
+						  (bigloo3.6a evmeaning-warning)
+						  (else evwarning))
 					       (when (pair? e) (cer e))
 					       "hop-load"
 					       "Useless ~ expression"))
@@ -945,8 +951,12 @@
 				       ($env-set-trace-location denv (cer e)))
 				    (if (eof-object? e)
 					(let ((nm (eval-module)))
-					   (unless (eq? m nm)
-					      (evmodule-check-unbound nm #f))
+					   (cond-expand
+					      (bigloo3.6a
+					       #unspecified)
+					      (else
+					       (unless (eq? m nm)
+						  (evmodule-check-unbound nm #f))))
 					   ($env-pop-trace denv)
 					   (reverse! res))
 					(let ((val (eval! e (eval-module))))
