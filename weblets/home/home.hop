@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon Mar  7 14:16:02 2011 (serrano)                */
+;*    Last change :  Mon Mar  7 14:19:55 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -85,7 +85,7 @@
 (define-service (home/android)
    (<HOME>
       (service-base-url home (current-request))
-      (wiki->hop "android.wiki"))
+      (wiki->hop "android.wiki")))
 
 ;*---------------------------------------------------------------------*/
 ;*    home/vm ...                                                      */

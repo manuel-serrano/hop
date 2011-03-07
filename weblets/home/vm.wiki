@@ -4,7 +4,7 @@ with a pre-installed Hop.
 
 ~~ This README.wiki file can be visualized at:
 
-  firefox http://localhost:8080/hop/wiki?path=$PWD/README.wiki
+  firefox http://localhost:8080/hop/wiki?path=$PWD/vm.wiki
 
 
 == 1. Building the image ==
