@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Mar  4 11:20:47 2011 (serrano)                */
+#*    Last change :  Mon Mar  7 07:44:48 2011 (serrano)                */
 #*    Copyright   :  2004-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -338,7 +338,7 @@ while : ; do
       echo "   --android............. Prepares the production of an Android apk" >&2;
       echo "   --macosx.............. Prepares the production of a MacOSX bundle" >&2;
       echo "   --apache-felix=path... Path to felix.jar" >&2;
-      exit -1;
+      exit 255;
   esac
   shift
 done

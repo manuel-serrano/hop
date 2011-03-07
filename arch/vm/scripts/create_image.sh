@@ -131,7 +131,7 @@ if [ $create_install -eq 1 ]; then
    # TODO: || true?!?
    debootstrap --arch i386 --include=locales,cdbs,debhelper,libsqlite3-dev,\
 libssl-dev,libgstreamer-plugins-base0.10-dev,libgmp3-dev,build-essential,\
-linux-image-2.6-686,mercurial,samba,psmisc,$other_pkgs stable $mnt_dir $mirror || true
+linux-image-2.6-686,linux-headers-2.6-686,mercurial,samba,psmisc,$other_pkgs stable $mnt_dir $mirror || true
 fi
 
 echo
@@ -188,7 +188,7 @@ echo "More config..."
 (cd config && tar cf - .) | (cd $mnt_dir && tar xvf -)
 
 # {
-   $chroot update-rc.d hop defaults
+   $chroot update-rc.d hop defaults 30
 # }
 
 # overwrite the placeholder with root partition's UUID

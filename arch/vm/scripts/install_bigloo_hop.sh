@@ -29,7 +29,6 @@ weblets=
 shift 3
 
 while : ; do
-  echo $1;
   case $1 in
     "")
      break;;
@@ -86,12 +85,16 @@ done
 echo "done."
 
 echo "Chrootin'..."
-cp -v /etc/resolv.conf $mnt_dir/etc/resolv.conf
-cp -v $script_dir/compile_bigloo_hop.sh $mnt_dir/root/compile_bigloo_hop.sh
+mv $mnt_dir/etc/resolv.conf $mnt_dir/etc/resolv.conf.orig
+cp /etc/resolv.conf $mnt_dir/etc/resolv.conf
+cp $script_dir/compile_bigloo_hop.sh $mnt_dir/root/compile_bigloo_hop.sh
 chroot $mnt_dir bash /root/compile_bigloo_hop.sh "$bigloo_version" "$hop_version" $other_pkgs
+mv $mnt_dir/etc/resolv.conf.orig $mnt_dir/etc/resolv.conf
 
 echo "Extra weblets"
 mkdir -pv $mnt_dir/home/hop/.config/hop/weblets
 for p in $weblets; do
   cp $p $mnt_dir/home/hop/.config/hop/weblets
 done
+
+chown -vR hop.users /home/hop

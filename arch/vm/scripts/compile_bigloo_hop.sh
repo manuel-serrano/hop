@@ -70,5 +70,5 @@ hop
 EOF
 
    mkdir -pv /home/hop/src
-   chown -v hop.users /home/hop/src
+   chown -vR hop.users /home/hop
 fi

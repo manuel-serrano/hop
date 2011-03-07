@@ -192,8 +192,15 @@ you're set.
 ~~ This boots the machine and instructs QEmu to redirect the host port
 ++8000++ to the guest port ++8080++. Hop can be accessed from the host 
 at the URL ++http://localhost:8000/hop++.
-Additional informations about QEmu networking can be found at
-[[http://en.wikibooks.org/wiki/QEMU/Networking]].
+
+~~ By default, Qemu supports TCP and UDP networking protocols. Normally,
+this configuration should be enough for Hop that only contact remote
+servers using HTTP that relies exclusively on TCP.
+
+~~ Additional informations about QEmu networking can be found at
+[[http://en.wikibooks.org/wiki/QEMU/Networking]]. Arch Linux user
+may found information at
+[[ https://wiki.archlinux.org/index.php/QEMU#Basic_Networking]].
 
 
 == 3. Adapting the image ==
