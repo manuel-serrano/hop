@@ -6,7 +6,7 @@
     (<IMG> :class class
        :id (xml-make-id id)
        :src (format (home-google-qrcode-format)
-		    "128x128"
+		    "96x96"
 		    correctlevel
 		    (url-path-encode (car text)))))
 
@@ -26,12 +26,12 @@
 ,(<TABLE> :id "download-source"
     (<TR>
        (<TD> :class "download-source"
-	  (<DOWNLOAD> :class "download-stable"
+	  (<DOWNLOAD> :class "download-src"
 	     :legend "Stable source"
 	     :src (make-file-path (home-dir) "etc" "icons" "package.png")
 	     :url *stable-tar-url*))
        (<TD> :class "download-source"
-	  (<DOWNLOAD> :class "download-devel"
+	  (<DOWNLOAD> :class "download-src"
 	     :legend "Devel source"
 	     :src (make-file-path (home-dir) "etc" "icons" "package.png")
 	     :url *devel-tar-url*))))
@@ -121,14 +121,14 @@ used without downloading and installing the source code manually:
     (<TABLE> :id "download-source"
        (<TR>
 	  (<TD> :class "download-source"
-	     (<DOWNLOAD> :class "download-stable"
+	     (<DOWNLOAD> :class "download-vm"
 		:legend "Virtual Image"
 		:src (make-file-path (home-dir) "etc" "icons" "vlinux.png")
 		:name vmdk
 		:url url)))))
 
-~~ Information specific to the Android port may be found 
-[[/hop/home/vm|here]].
+~~ Information specific to the running Hop inside a Virtual Machine 
+may be found [[/hop/home/vm|here]].
 
 
 == License ==

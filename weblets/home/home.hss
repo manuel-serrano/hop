@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Nov 17 16:13:51 2010 (serrano)                */
-/*    Copyright   :  2005-10 Manuel Serrano                            */
+/*    Last change :  Mon Mar  7 14:08:59 2011 (serrano)                */
+/*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -19,6 +19,7 @@ $(define bg-color2 (color-lighter bg-color))
 $(define border-color "#8f8a7f")
 $(define notepad-color "#EFF9BE")
 $(set! notepad-color "#F8FFCC")
+$(set! notepad-color "#E0DDCB")
 
 $(define header-color "#fffff0")
 $(define title-color "#ddd")
@@ -389,7 +390,8 @@ span.icon {
 /*    Download                                                         */
 /*---------------------------------------------------------------------*/
 $(define download-color "#e6ffbd")
-$(define download-devel-color "#feffb4")
+$(define download-src-color "#feffb4")
+$(define download-vm-color "#bdc5ff")
 
 /* logos and sections */
 img.download-logo {
@@ -456,19 +458,34 @@ a.download-stable td.download-button {
   color: $(color-darker download-color 8);
 }
 
+/* vm */
+a.download-vm div.download-button {
+  background: $download-vm-color;
+  background-image: -moz-linear-gradient( -90deg, $(color-lighter download-vm-color 2), $download-vm-color );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter download-vm-color 2)), to( $download-vm-color ));
+}
+
+a.download-vm:hover div.download-button {
+  box-shadow: 0px 0px 12px $(color-darker download-vm-color 4);
+}
+  
+a.download-vm td.download-button {
+  color: $(color-darker download-vm-color 8);
+}
+
 /* devel source */
-a.download-devel div.download-button {
+a.download-src div.download-button {
   background: $download-color;
-  background-image: -moz-linear-gradient( -90deg, $(color-lighter download-devel-color 2), $download-devel-color );
-  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter download-devel-color 2)), to( $download-devel-color ));
+  background-image: -moz-linear-gradient( -90deg, $(color-lighter download-src-color 2), $download-src-color );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter download-src-color 2)), to( $download-src-color ));
 }
 
 a.download-devel:hover div.download-button {
-  box-shadow: 0px 0px 12px $(color-darker download-devel-color 4);
+  box-shadow: 0px 0px 12px $(color-darker download-src-color 4);
 }
 
 a.download-devel td.download-button {
-  color: $(color-darker download-devel-color 7);
+  color: $(color-darker download-src-color 7);
 }
 
 /* download-source */
@@ -483,13 +500,9 @@ td.download-source {
 }
 
 /* download-android */
-qrcode#download-android {
-  cell-size: 2px;
-}
-
-/* download-maemo */
-qrcode#download-maemo {
-  cell-size: 2px;
+#download-android,
+#download-maemo {
+  border: 1px solid #ccc;
 }
 
 div.os-download {
