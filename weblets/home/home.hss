@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Mar  7 14:08:59 2011 (serrano)                */
+/*    Last change :  Mon Mar  7 14:13:59 2011 (serrano)                */
 /*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -17,9 +17,8 @@ $(define typewriter "Bitstream Vera Sans Mono, Andale Mono, monospace")
 $(define bg-color "#DCDAD5")
 $(define bg-color2 (color-lighter bg-color))
 $(define border-color "#8f8a7f")
-$(define notepad-color "#EFF9BE")
-$(set! notepad-color "#F8FFCC")
-$(set! notepad-color "#E0DDCB")
+$(define notepad-color "#FFF7D1")
+$(define notepad-color2 "#F1DF8C")
 
 $(define header-color "#fffff0")
 $(define title-color "#ddd")
@@ -176,8 +175,8 @@ nptab img {
 nptab-active {
   background-color: $notepad-color;
   border-bottom-color: $notepad-color;
-  background-image: -moz-linear-gradient( -90deg, $(color-lighter notepad-color 1), $notepad-color );
-  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter notepad-color 1)), to($notepad-color));
+  background-image: -moz-linear-gradient( -90deg, $notepad-color, $notepad-color2 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, $notepad-color, to($notepad-color2));
   color: black;
   text-shadow: #999 2px 2px 2px;
 }
@@ -196,8 +195,8 @@ notepad-body {
   border: 1px solid $border-color;
   padding: 10px;
   background-color: $notepad-color;
-  background-image: -moz-linear-gradient( -90deg, $notepad-color, $(color-lighter notepad-color 1) );
-  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($notepad-color), to($(color-lighter notepad-color 1)));
+  background-image: -moz-linear-gradient( -90deg, $notepad-color, $notepad-color2 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($notepad-color), to($notepad-color2));
 }
 
 div.hop-tab {
