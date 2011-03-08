@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Tue Feb  1 14:34:28 2011 (serrano)                */
+#*    Last change :  Mon Mar  7 14:37:40 2011 (serrano)                */
 #*    Copyright   :  2010-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -276,5 +276,5 @@ fi
 
 # copy the apk in the repo directory
 if [ $action_repository = "yes" ]; then
-  cp $android/bin/hop-release.apk $REPOSITORY/android/$ANDROID/hop-$HOPVERSION.apk
+  cp $android/bin/hop-release.apk $REPOSITORY/android/hop-$HOPVERSION.apk
 fi

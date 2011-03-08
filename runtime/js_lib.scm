@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Fri Nov 19 08:52:18 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Tue Mar  8 17:09:20 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
 ;*=====================================================================*/
@@ -43,13 +43,65 @@
 		  obj)))
       ((date? obj)
        (fprintf op "new Date( ~a000 )" (date->seconds obj)))
+      ((eq? obj #t)
+       (display (clientc-true) op))
+      ((eq? obj #f)
+       (display (clientc-false) op))
+      ((eq? obj #unspecified)
+       (display (clientc-unspecified) op))
       (else
-       (let ((comp (hop-clientc))
-	     (foreign-out (lambda (obj2 op)
-			     (unless (eq? obj obj2)
-				(obj->javascript obj2 op isrep)))))
-	  ((clientc-valuec comp) obj op foreign-out #f)))))
+       (clientc-compile obj op isrep))))
 
+;*---------------------------------------------------------------------*/
+;*    clientc-compile ...                                              */
+;*---------------------------------------------------------------------*/
+(define (clientc-compile obj op isrep)
+   (let ((comp (hop-clientc))
+	 (foreign-out (lambda (obj2 op)
+			 (unless (eq? obj obj2)
+			    (obj->javascript obj2 op isrep)))))
+      ((clientc-valuec comp) obj op foreign-out #f)))
+
+;*---------------------------------------------------------------------*/
+;*    *clientc-true* ...                                               */
+;*---------------------------------------------------------------------*/
+(define *clientc-true* #f)
+(define *clientc-false* #f)
+(define *clientc-unspecified* #f)
+
+;*---------------------------------------------------------------------*/
+;*    clientc-true ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (clientc-true)
+   (if *clientc-true*
+       *clientc-true*
+       (let ((op (open-output-string)))
+	  (clientc-compile #t op #f)
+	  (set! *clientc-true* (close-output-port op))
+	  *clientc-true*)))
+       
+;*---------------------------------------------------------------------*/
+;*    clientc-false ...                                                */
+;*---------------------------------------------------------------------*/
+(define (clientc-false)
+   (if *clientc-false*
+       *clientc-false*
+       (let ((op (open-output-string)))
+	  (clientc-compile #f op #f)
+	  (set! *clientc-false* (close-output-port op))
+	  *clientc-false*)))
+       
+;*---------------------------------------------------------------------*/
+;*    clientc-unspecified ...                                          */
+;*---------------------------------------------------------------------*/
+(define (clientc-unspecified)
+   (if *clientc-unspecified*
+       *clientc-unspecified*
+       (let ((op (open-output-string)))
+	  (clientc-compile #unspecified op #f)
+	  (set! *clientc-unspecified* (close-output-port op))
+	  *clientc-unspecified*)))
+       
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript ::object ...                                     */
 ;*---------------------------------------------------------------------*/
@@ -302,13 +354,13 @@
 	(car IDENTIFIER))
        ((new)
 	new)
-       ((IDENTIFIER PAR-OPEN vals PAR-CLO)
+       ((IDENTIFIER PAR-OPEN expressions* PAR-CLO)
 	(case (car IDENTIFIER)
-	   ((sc_consStart) (apply cons* vals))
-	   ((sc_Pair) (cons (car vals) (cadr vals)))
-	   ((sc_list) vals)
-	   ((sc_jsstring2symbol) (string->symbol (car vals)))
-	   ((sc_jsstring2keyword) (string->keyword (car vals)))
+	   ((sc_consStart) (apply cons* expressions*))
+	   ((sc_Pair) (cons (car expressions*) (cadr expressions*)))
+	   ((sc_list) expressions*)
+	   ((sc_jsstring2symbol) (string->symbol (car expressions*)))
+	   ((sc_jsstring2keyword) (string->keyword (car expressions*)))
 	   (else (error "json->hop" "Unknown function" (car IDENTIFIER)))))
        ((ANGLE-OPEN ANGLE-CLO)
 	'#())
@@ -330,32 +382,42 @@
 		  RETURN new SEMI-COMMA
 		  BRA-CLO PAR-CLO PAR-OPEN PAR-CLO)
 	new)
+       ((PAR-OPEN new PAR-CLO)
+	new)
        ((constructor)
 	#unspecified))
 
+      (expressions*
+       (()
+	'())
+       ((expression)
+	(list expression))
+       ((expression COMMA expressions*)
+	(cons expression expressions*)))
+
       ;; new
       (new
-       ((NEW IDENTIFIER PAR-OPEN vals PAR-CLO)
+       ((NEW IDENTIFIER PAR-OPEN expressions* PAR-CLO)
 	(case (car IDENTIFIER)
 	   ((sc_Pair)
-	    (match-case vals
+	    (match-case expressions*
 	       ((?a ?d)
 		(cons a d))
 	       (else
-		(error "json->hop" "Illegal `cons' construction" vals))))
+		(error "json->hop" "Illegal `cons' construction" expressions*))))
 	   ((Date)
-	    (match-case vals
+	    (match-case expressions*
 	       ((and ?sec (? integer?))
 		(seconds->date (/fx sec 1000)))
 	       (else
-		(error "json->hop" "Illegal `date' construction" vals))))
+		(error "json->hop" "Illegal `date' construction" expressions*))))
 	   (else
 	    (let ((c (find-class (car IDENTIFIER))))
 	       (if (not (class? c))
 		   (error "json->hop" "Can't find class" c)
 		   (let* ((constr (class-constructor c))
 			  (create (class-creator c))
-			  (ins (apply create vals)))
+			  (ins (apply create expressions*)))
 		      (when (procedure? constr) (constr ins))
 		      ins)))))))
       
@@ -384,16 +446,16 @@
 
       ;; object
       (object
-       ((FUNCTION IDENTIFIER PAR-OPEN argument+ PAR-CLO
+       ((FUNCTION IDENTIFIER PAR-OPEN expressions* PAR-CLO
 		  BRA-OPEN set+ BRA-CLO SEMI-COMMA
 		  BRA-OPEN proto BRA-CLO SEMI-COMMA
-		  NEW IDENTIFIER@klass PAR-OPEN vals PAR-CLO)
+		  NEW IDENTIFIER@klass PAR-OPEN expressions* PAR-CLO)
 	(let ((c (find-class klass)))
 	   (if (not (class? c))
 	       (error "json->hop" "Can't find class" c)
 	       (let* ((constr (class-constructor c))
 		      (create (class-creator c))
-		      (ins (apply constr vals)))
+		      (ins (apply constr expressions*)))
 		  (when (procedure? create) (create ins))
 		  ins)))))
 
@@ -431,14 +493,6 @@
       (proto
        ((IDENTIFIER@c DOT IDENTIFIER@p DOT IDENTIFIER@f = IDENTIFIER@fun)
 	(list c p f fun)))
-
-      (vals
-       (()
-	'())
-       ((expression)
-	(list expression))
-       ((expression COMMA vals)
-	(cons expression vals)))
 
       ;; get-element-by-id
       (get-element-by-id

@@ -191,7 +191,7 @@ you're set.
 
 ~~ This boots the machine and instructs QEmu to redirect the host port
 ++8000++ to the guest port ++8080++. Hop can be accessed from the host 
-at the URL ++http://localhost:8000/hop++.
+at the URL ++http:,(<SPAN> "//")localhost:8000/hop++.
 
 ~~ By default, Qemu supports TCP and UDP networking protocols. Normally,
 this configuration should be enough for Hop that only contact remote
