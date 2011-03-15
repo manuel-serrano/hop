@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Mon Jan 17 14:12:23 2011 (serrano)                */
+/*    Last change :  Tue Mar 15 09:34:16 2011 (serrano)                */
 /*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -230,26 +230,20 @@ function hop_paned_get_fraction( id, dim ) {
 /*---------------------------------------------------------------------*/
 function hop_init_paned_vertical( id, fraction, onresize ) {
    var paned = hop_init_paned( id, fraction, hop_vpaned_mousemove );
-
-   // resize event handling
    var resize = function( e ) {
-      hop_vpaned_fraction_set( paned, paned.fraction );
-   }
-   
-   hop_add_event_listener( window, "resize", resize, true );
+      if( !fraction ) {
+	 fraction = hop_paned_get_fraction( id, "clientWidth"  );
+      }
+      hop_vpaned_fraction_set( paned, fraction );
+   };
    
    // setup the initial fraction
    paned.fraction_set = hop_vpaned_fraction_set;
    hop_paned_onresize_set( paned, onresize );
 
    // postponed initialization
-   hop_add_event_listener( paned.id, "ready",
-			   function( e ) {
-			      if( !fraction ) {
-				 fraction = hop_paned_get_fraction( id, "clientWidth"  );
-			      }
-				 
-			      paned.fraction_set( paned, fraction ); } );
+   hop_add_event_listener( paned.id, "ready", resize, true );
+   hop_add_event_listener( window, "resize", resize, true );
    
    return paned;
 }
@@ -259,21 +253,22 @@ function hop_init_paned_vertical( id, fraction, onresize ) {
 /*---------------------------------------------------------------------*/
 function hop_init_paned_horizontal( id, fraction, onresize ) {
    var paned = hop_init_paned( id, fraction, hop_hpaned_mousemove );
+   var resize = function( e ) {
+      if( !fraction ) {
+	 fraction = hop_paned_get_fraction( id, "clientHeight" );
+      }
+      paned.fraction_set( paned, fraction );
+   };
 
+   
    // setup the initial fraction
    paned.fraction_set = hop_hpaned_fraction_set;
    hop_paned_onresize_set( paned, onresize );
 
    // postponed initialization
-   hop_add_event_listener( paned.id, "ready",
-			   function( e ) {
-			      if( !fraction ) {
-				 fraction = hop_paned_get_fraction( id, "clientHeight" );
-			      }
-				 
-			      paned.fraction_set( paned, fraction );
-			   } );
-   
+   hop_add_event_listener( paned.id, "ready", resize, true );
+   hop_add_event_listener( window, "resize", resize, true );
+      
    return paned;
 }
 

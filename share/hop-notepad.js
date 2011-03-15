@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Tue Jul  6 18:58:41 2010 (serrano)                */
-/*    Copyright   :  2005-10 Manuel Serrano                            */
+/*    Last change :  Fri Mar 11 19:52:14 2011 (serrano)                */
+/*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
 /*=====================================================================*/
@@ -111,21 +111,23 @@ function hop_notepad_selection( id ) {
 /*---------------------------------------------------------------------*/
 /*    Install the notepad history state handler                        */
 /*---------------------------------------------------------------------*/
-hop_add_native_event_listener(
-   window,
-   "onload",
-   function( _ ) {
-      hop_state_history_register_handler(
-	 "np", /* key argument */
-	 "0",  /* reset value  */
-	 function( id, arg ) {
-	    var np = document.getElementById( id );
-	    if( np != undefined ) {
-	       hop_notepad_inner_select( np, parseInt( arg ) );
-	       return true;
-	    } else {
-	       return false;
-	    }
-	 } );
-   },
-   true );
+if( hop_config.history ) {
+   hop_add_event_listener(
+      window,
+      "load",
+      function( _ ) {
+	 hop_state_history_register_handler(
+	    "np", /* key argument */
+	    "0",  /* reset value  */
+	    function( id, arg ) {
+	       var np = document.getElementById( id );
+	       if( np != undefined ) {
+		  hop_notepad_inner_select( np, parseInt( arg ) );
+		  return true;
+	       } else {
+		  return false;
+	       }
+	    } );
+      },
+      true );
+}

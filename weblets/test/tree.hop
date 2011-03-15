@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/weblets/test/tree.hop            */
+;*    serrano/prgm/project/hop/2.2.x/weblets/test/tree.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
-;*    Last change :  Mon Feb 16 09:31:23 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Last change :  Fri Mar 11 16:02:56 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Trees                                                            */
 ;*=====================================================================*/
@@ -20,7 +20,7 @@
 ;*    test/tree ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-service (test/tree)
-   (<TEST-HTML> :include "hop-tree"
+   (<TEST-HTML> :include '("hop-history" "hop-tree")
       :source (service-resource test/tree "tree.hop")
       (<DIV> :class "comment"
 	 "This test checks trees. If the test succeeds you should

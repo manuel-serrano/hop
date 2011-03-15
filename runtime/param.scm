@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Jan 30 10:56:04 2011 (serrano)                */
+;*    Last change :  Mon Mar 14 16:44:24 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -325,12 +325,21 @@
    (hop-configure-rc-directory))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-path ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-path
+   (list "."
+	 (hop-share-directory)
+	 (hop-weblets-directory)
+	 (hop-contribs-directory)))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-var-directory ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-var-directory
    (or (hop-configure-var-directory) (hop-rc-directory))
    (lambda (v)
-      (hop-path-set! (cons v (hop-path)))
+      (hop-path-set! (cons* v (make-file-name v "cache") (hop-path)))
       v))
 
 ;*---------------------------------------------------------------------*/
@@ -690,16 +699,6 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-password
    (list (base64-encode "Hop:hop")))
-
-;*---------------------------------------------------------------------*/
-;*    hop-path ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-path
-   (list "."
-	 (make-file-name (hop-var-directory) "cache")
-	 (hop-share-directory)
-	 (hop-weblets-directory)
-	 (hop-contribs-directory)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-server-hostname ...                                          */

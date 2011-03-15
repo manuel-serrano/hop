@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Mar  7 11:49:05 2011 (serrano)                */
+;*    Last change :  Wed Mar  9 12:18:38 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -29,6 +29,7 @@
 	       markup::symbol
 	       syntax::procedure
 	       (expr::pair-nil (default '()))
+	       (attr::pair-nil (default '()))
 	       value::obj)
 	    (class expr::state)
 	    (class block::state
@@ -284,7 +285,7 @@
 		      (value value))))
 	    (set! state (cons st state))))
       
-      (define (enter-expr! st fun value)
+      (define (enter-expr! st fun value . attr)
 	 (when (wiki-debug2?)
 	    (set! dbgcount (+fx 1 dbgcount))
 	    (fprint (current-error-port)
@@ -295,6 +296,7 @@
 		      (markup st)
 		      (syntax fun)
 		      (expr '())
+		      (attr attr)
 		      (value value))))
 	    (set! state (cons st state))))
       
@@ -365,13 +367,13 @@
 		(begin
 		   (set! state '())
 		   (when el (add-expr! el)))
-		(with-access::state (car st) (markup syntax expr)
+		(with-access::state (car st) (markup syntax expr attr)
 		   (let ((ar (reverse! (if el (cons el expr) expr))))
 		      (if (eq? s (car st))
-			  (let ((ne (apply syntax ar args)))
+			  (let ((ne (apply syntax ar attr args)))
 			     (set! state (cdr st))
 			     (add-expr! ne))
-			  (let ((ne (apply syntax ar)))
+			  (let ((ne (apply syntax ar attr)))
 			     (loop (cdr st) ne))))))))
 
       ;; table cell
@@ -722,34 +724,51 @@
 		   #t #f (-fx (the-length) 2)))
       
       ;; font style
-      ("**"
+      ((: "**" (? (: #\: (+ (out " \t\n")))))
        (let ((s (in-state '**)))
-	  (if s
-	      (begin
-		 (unwind-state! s)
-		 (ignore))
-	      (begin
-		 (enter-expr! '** (wiki-syntax-b syn) #f)
-		 (ignore)))))
-      ("//"
+	  (cond
+	     (s
+	      (unwind-state! s)
+	      (ignore))
+	     ((=fx (the-length) 2)
+	      (enter-expr! '** (wiki-syntax-b syn) #f)
+	      (ignore))
+	     (else
+	      (multiple-value-bind (ident class)
+		 (wiki-parse-ident (the-substring 3 (the-length)))
+		 (enter-expr! '** (wiki-syntax-b syn) #f
+			      :class class :id ident)
+		 (ignore))))))
+      ((: "//" (? (: #\: (+ (out " \t\n")))))
        (let ((s (in-state '//)))
-	  (if s
-	      (begin
-		 (unwind-state! s)
-		 (ignore))
-	      (begin
-		 (enter-expr! '// (wiki-syntax-em syn) #f)
-		 (ignore)))))
-      ("__"
+	  (cond
+	     (s
+	      (unwind-state! s)
+	      (ignore))
+	     ((=fx (the-length) 2)
+	      (enter-expr! '// (wiki-syntax-em syn) #f)
+	      (ignore))
+	     (else
+	      (multiple-value-bind (ident class)
+		 (wiki-parse-ident (the-substring 3 (the-length)))
+		 (enter-expr! '// (wiki-syntax-em syn) #f
+			      :class class :id ident)
+		 (ignore))))))
+      ((: "__" (? (: #\: (+ (out " \t\n")))))
        (let ((s (in-state '__)))
-	  (if s
-	      (begin
-		 (unwind-state! s)
-		 (ignore))
-	      (begin
-		 (enter-expr! '__ (wiki-syntax-u syn) #f)
-		 (ignore)))))
-
+	  (cond
+	     (s
+	      (unwind-state! s)
+	      (ignore))
+	     ((=fx (the-length) 2)
+	      (enter-expr! '__ (wiki-syntax-u syn) #f)
+	      (ignore))
+	     (else
+	      (multiple-value-bind (ident class)
+		 (wiki-parse-ident (the-substring 3 (the-length)))
+		 (enter-expr! '__ (wiki-syntax-u syn) #f
+			      :class class :id ident)
+		 (ignore))))))
       ("<<"
        (enter-expr! '<< (wiki-syntax-note syn) #f)
        (ignore))
@@ -868,36 +887,54 @@
        (ignore))
       
       ;; tt
-      ("++"
+      ((: "++" (? (: #\: (+ (out " \t\n")))))
        (let ((s (in-state 'tt)))
-	  (if s
-	      (begin
-		 (unwind-state! s)
-		 (ignore))
-	      (begin
-		 (enter-expr! 'tt (wiki-syntax-tt syn) #f)
-		 (ignore)))))
+	  (cond
+	     (s
+	      (unwind-state! s)
+	      (ignore))
+	     ((=fx (the-length) 2)
+	      (enter-expr! 'tt (wiki-syntax-tt syn) #f)
+	      (ignore))
+	     (else
+	      (multiple-value-bind (ident class)
+		 (wiki-parse-ident (the-substring 3 (the-length)))
+		 (enter-expr! 'tt (wiki-syntax-tt syn) #f
+			      :class class :id ident)
+		 (ignore))))))
       ;; code
-      ("%%"
+      ((: "%%" (? (: #\: (+ (out " \t\n")))))
        (let ((s (in-state 'code)))
-	  (if s
-	      (begin
-		 (unwind-state! s)
-		 (ignore))
-	      (begin
-		 (enter-expr! 'code (wiki-syntax-code syn) #f)
-		 (ignore)))))
+	  (cond
+	     (s
+	      (unwind-state! s)
+	      (ignore))
+	     ((=fx (the-length) 2)
+	      (enter-expr! 'code (wiki-syntax-code syn) #f)
+	      (ignore))
+	     (else
+	      (multiple-value-bind (ident class)
+		 (wiki-parse-ident (the-substring 3 (the-length)))
+		 (enter-expr! 'code (wiki-syntax-code syn) #f
+			      :class class :id ident)
+		 (ignore))))))
       
       ;; strike
-      ("--"
+      ((: "--" (? (: #\: (+ (out " \t\n")))))
        (let ((s (in-state 'strike)))
-	  (if s
-	      (begin
-		 (unwind-state! s)
-		 (ignore))
-	      (begin
-		 (enter-expr! 'strike (wiki-syntax-strike syn) #f)
-		 (ignore)))))
+	  (cond
+	     (s
+	      (unwind-state! s)
+	      (ignore))
+	     ((=fx (the-length) 2)
+	      (enter-expr! 'strike (wiki-syntax-strike syn) #f)
+	      (ignore))
+	     (else
+	      (multiple-value-bind (ident class)
+		 (wiki-parse-ident (the-substring 3 (the-length)))
+		 (enter-expr! 'strike (wiki-syntax-strike syn) #f
+			      :class class :id ident)
+		 (ignore))))))
 
       ;; quotes
       (#\"

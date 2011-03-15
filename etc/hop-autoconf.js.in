@@ -142,6 +142,7 @@ function hop_Config() {
    this.websocket = false;
    this.server_event = "long polling";
    this.hashchange_event = ("onhashchange" in window);
+   this.history = false;
 
    /* navigator specific configuration */
    if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {

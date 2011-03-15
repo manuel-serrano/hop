@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Wed Mar  2 10:39:35 2011 (serrano)                */
+/*    Last change :  Fri Mar 11 19:52:29 2011 (serrano)                */
 /*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -788,22 +788,29 @@ function hop_tree_id_selection( id ) {
 /*---------------------------------------------------------------------*/
 /*    Install the tree history state handler                           */
 /*---------------------------------------------------------------------*/
-hop_state_history_register_handler(
-   "tr", /* key argument */
-   "0",  /* reset value  */
-   function( id, arg ) {
-      var tr = document.getElementById( id );
-
-      if( tr != undefined ) {
-	 if( arg == "0" ) {
-	    hop_tree_close( tr );
-	 } else {
-	    hop_tree_open( tr );
-	 }
-
-	 return true;
-      } else {
-	 return false;
-      }
-   }
-);
+if( hop_config.history ) {
+   hop_add_event_listener(
+      window,
+      "load",
+      function( _ ) {
+	 hop_state_history_register_handler(
+	    "tr", /* key argument */
+	    "0",  /* reset value  */
+	    function( id, arg ) {
+	       var tr = document.getElementById( id );
+	       
+	       if( tr != undefined ) {
+		  if( arg == "0" ) {
+		     hop_tree_close( tr );
+		  } else {
+		     hop_tree_open( tr );
+		  }
+		  
+		  return true;
+	       } else {
+		  return false;
+	       }
+	    } );
+      },
+      true );
+}

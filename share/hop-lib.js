@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Wed Jan 19 08:02:54 2011 (serrano)                */
+/*    Last change :  Thu Mar 10 08:54:38 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -87,6 +87,20 @@ function hop_tprint( file, pos, rest ) {
    var svc = hop_apply_url( hop_service_base() + "/trace/tprint",
 			    [ file, pos, rest ] );
    hop_send_request( svc, true, function() {}, function() {}, false, [] );
+}
+
+/*---------------------------------------------------------------------*/
+/*    tprint ...                                                       */
+/*    -------------------------------------------------------------    */
+/*    The variant used in JavaScript code (for debugging Hop).         */
+/*---------------------------------------------------------------------*/
+function tprint( file, rest ) {
+   var lst = null;
+   
+   for( i = arguments.length - 1; i >= 1; i-- ) 
+      lst = new sc_Pair( arguments[ i ], lst );
+   
+   hop_tprint( file, 0, lst );
 }
 
 /*---------------------------------------------------------------------*/

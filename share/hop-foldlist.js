@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 11:56:02 2006                          */
-/*    Last change :  Wed Feb 16 07:06:14 2011 (serrano)                */
+/*    Last change :  Mon Mar 14 16:46:48 2011 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP fold-item implementation                                     */
 /*=====================================================================*/
@@ -58,23 +58,31 @@ function hop_fold_item_toggle_service( id, history, svc ) {
 /*---------------------------------------------------------------------*/
 /*    Install the foldlist history state handler                       */
 /*---------------------------------------------------------------------*/
-hop_state_history_register_handler(
-   "fl", /* key argument */
-   "0",  /* reset value  */
-   function( id, arg ) {
-     var el = document.getElementById( id );
-
-     if( el != undefined ) {
-	var imgo= document.getElementById( id + "-img" );
-
-	if( arg == "0" ) {
-	   hop_fold_item_close( el, img, false );
-	} else {
-	   hop_fold_item_open( el, img, false );
-	}
-
-	return true;
-     } else {
-	return false;
-     }
-} );
+if( hop_config.history ) {
+   hop_add_event_listener(
+      window,
+      "load",
+      function( _ ) {
+	 hop_state_history_register_handler(
+	    "fl", /* key argument */
+	    "0",  /* reset value  */
+	    function( id, arg ) {
+	       var el = document.getElementById( id );
+	       
+	       if( el != undefined ) {
+		  var imgo= document.getElementById( id + "-img" );
+		  
+		  if( arg == "0" ) {
+		     hop_fold_item_close( el, img, false );
+		  } else {
+		     hop_fold_item_open( el, img, false );
+		  }
+		  
+		  return true;
+	       } else {
+		  return false;
+	       }
+	    } );
+      },
+      true );
+}

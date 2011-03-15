@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec  7 09:54:35 2007                          */
-;*    Last change :  Wed Mar  2 11:44:51 2011 (serrano)                */
+;*    Last change :  Wed Mar  9 16:01:40 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    weblets markups                                                  */
@@ -92,11 +92,13 @@
 ;*---------------------------------------------------------------------*/
 (define (<WEBLET> path auth category)
    (with-access::http-request (current-request) (host port)
-      (let* ((info (with-input-from-string (package-info path) read))
+      (let* ((pinfo (package-info path))
+	     (info (if (string? pinfo)
+		       (with-input-from-string (package-info path) read)
+		       '()))
 	     (url (if (string? auth)
 		      (format "http://~a@~a:~a~a" auth host port path)
 		      (format "http://~a:~a~a" host port path))))
-	 
 	 (when (or (string=? category "all")
 		   (string=? (find-info info 'category "other") category))
 	    (<DIV> :class "weblet"
