@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Tue Feb 22 08:34:52 2011 (serrano)                */
+;*    Last change :  Thu Mar 17 15:24:32 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -74,6 +74,8 @@
 (define (http-get req)
    (with-access::http-request req (abspath query)
       (cond
+	 ((not (authorized-path? req abspath))
+	  (user-access-denied req))
 	 ((not (file-exists? abspath))
 	  ;; an error
 	  (http-get-file-not-found req))
@@ -93,6 +95,8 @@
 (define (http-head req)
    (with-access::http-request req (abspath query)
       (cond
+	 ((not (authorized-path? req abspath))
+	  (user-access-denied req))
 	 ((not (file-exists? abspath))
 	  ;; an error
 	  (http-get-file-not-found req))

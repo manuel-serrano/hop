@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Thu Feb 17 10:19:21 2011 (serrano)                */
+/*    Last change :  Tue Mar 15 16:39:14 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -78,7 +78,7 @@ function hop_add_event_listener( obj, event, proc, capture ) {
       return obj.hop_add_event_listener( event, proc, capture );
    }
 
-   if( event === "hashchange" && (true || !hop_config.hashchange_event) ) {
+   if( event === "hashchange" && !hop_config.hashchange_event ) {
       return hop_add_hashchange_listener( obj, proc );
    }
 
@@ -190,7 +190,7 @@ function hop_add_hashchange_listener( obj, proc ) {
       sc_cons( sc_cons( proc, setInterval( check, hop_hashchange_timeout ) ),
 	       ( "hop_hashchange_listeners" in obj ) ?
 	       hop_hashchange_listeners : null );
-   
+
    return false;
 }
 

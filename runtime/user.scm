@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Tue Feb 22 08:45:25 2011 (serrano)                */
+;*    Last change :  Thu Mar 17 15:23:57 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -473,7 +473,13 @@
 ;*---------------------------------------------------------------------*/
 (define (user-authorized-path? user path)
    (define (path-member path dirs)
-      (any? (lambda (d) (substring-at? path d 0)) dirs))
+      (any? (lambda (d)
+	       (and (substring-at? path d 0)
+		    (or (=fx (string-length d) (string-length path))
+			(and (>fx (string-length d) (string-length path))
+			     (char=? (string-ref d (string-length path))
+				     (string-ref (file-separator) 0))))))
+	    dirs))
    (and (with-access::user user (directories services)
 	   (or (eq? directories '*)
 	       (path-member path directories)

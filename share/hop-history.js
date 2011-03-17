@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:59:42 2007                          */
-/*    Last change :  Fri Mar 11 19:51:28 2011 (serrano)                */
+/*    Last change :  Tue Mar 15 17:12:26 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP history manager.                                             */
@@ -14,13 +14,13 @@
 /*---------------------------------------------------------------------*/
 var hop_current_state_history = undefined;
 var hop_state_history_handler = {};
-var hop_location_event_initp = false;
 
 /*---------------------------------------------------------------------*/
 /*    hop_state_history_register_handler ...                           */
 /*---------------------------------------------------------------------*/
 function hop_state_history_register_handler( key, reset, proc ) {
    hop_state_history_handler[ key ] = { reset: reset, proc: proc };
+   hop_eval_history_state( true );
 }
 
 /*---------------------------------------------------------------------*/
@@ -237,7 +237,7 @@ function hop_state_history_update( olds, news ) {
 		(state.val != olds[ p ].val) ) {
 	       var op = state.op;
 	       var handler = hop_state_history_handler[ op ];
-	       
+
 	       if( (handler != undefined) && !state.close ) {
 		  if( handler.proc( p, state.val ) ) {
 		     state.close = true;
@@ -273,7 +273,7 @@ function hop_hash_historyp( hash ) {
 /*** META ((export current-history) (arity #t)) */
 function hop_current_history() {
    var hash = location.hash;
-   
+
    if( hash.length == 0 ) {
       return false;
    }
@@ -336,7 +336,7 @@ function hop_history_add( history, id, val ) {
 /*    -------------------------------------------------------------    */
 /*    This function is invoked when the location has changed.          */
 /*---------------------------------------------------------------------*/
-function hop_eval_history_state( location ) {
+function hop_eval_history_state( _ ) {
    var hash = location.hash;
 
    if( hash.length == 0 ) {
@@ -350,9 +350,6 @@ function hop_eval_history_state( location ) {
 	 if( count == 0 ) {
 	    /* the update is complete, we state the new state and exit */
 	    hop_current_state_history = new_state;
-	 } else {
-	    /* periodically retry to update */
-/* 	    hop_retry_eval_history_state( count, old_state, new_state ); */
 	 }
       }
    }
@@ -361,15 +358,12 @@ function hop_eval_history_state( location ) {
 /*---------------------------------------------------------------------*/
 /*    Install the location event listener                              */
 /*---------------------------------------------------------------------*/
-if( hop_enable_location_event ) {
-   if( !hop_location_event_initp ) {
-      hop_config.history = true;
-      hop_location_event_initp = true;
-      hop_add_event_listener(
-	 window, "ready",
-	 function( e ) {
-	    hop_add_event_listener( window, "hashchange", hop_eval_history_state );
-	 } );
-   }
+if( !hop_config.history ) {
+   hop_config.history = true;
+   hop_add_event_listener(
+      window, "ready",
+      function( e ) {
+	 hop_add_event_listener( window, "hashchange", hop_eval_history_state );
+      } );
 }
 
