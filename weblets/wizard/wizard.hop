@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Jan  6 18:08:05 2011 (serrano)                */
+;*    Last change :  Thu Mar 17 17:45:37 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -438,7 +438,7 @@ WebDAV server.]))))))
 	    (write `(add-user! "admin"
 			       :groups '(admin exec)
 			       :password ,apasswd
-			       :directories '*
+			       :directories (cons "/tmp" (hop-path))
 			       :services '*))
 	    (newline)
 	    (newline)

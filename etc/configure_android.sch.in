@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  5 09:54:10 2009                          */
-;*    Last change :  Sun Nov  7 08:59:44 2010 (serrano)                */
-;*    Copyright   :  2009-10 Manuel Serrano                            */
+;*    Last change :  Mon Mar 21 16:20:38 2011 (serrano)                */
+;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common arch HOP configuration                                    */
 ;*=====================================================================*/
@@ -35,7 +35,9 @@
 (define (hop-android-home)
    (let ((es (make-file-name (hop-etc-directory) "externalstorage.hop")))
       (if (file-exists? es)
-	  (string-append (file->string es) "/home")
+	  (call-with-input-file es
+	     (lambda (p)
+		(string-append (read p) "/home")))
 	  "/sdcard/home")))
 
 ;*---------------------------------------------------------------------*/

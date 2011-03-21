@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Feb  8 11:24:07 2011 (serrano)                */
+;*    Last change :  Mon Mar 21 15:56:26 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -198,7 +198,7 @@
        (let ((pw (getpwnam user)))
 	  (if (pair? pw)
 	      (setuid (caddr pw))
-	      (error "set-hop-owner!" "Cannot find HOP system user" user))))
+	      (error "hop" "Hop is executed as root (which is forbidden) and fails to switch to the dedicated HOP system user" user))))
       (user
        (err))
       (else
