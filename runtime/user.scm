@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon Mar 21 16:23:37 2011 (serrano)                */
+;*    Last change :  Mon Mar 21 16:25:02 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -484,7 +484,7 @@
 	   (tprint "USER-AUTHORIZED-PATH directories=" directories
 		   " path-member=" (path-member path directories)
 		   " cano-path=" (file-name-unix-canonicalize path)
-		   " cano member=" (path-member cpath directories))
+		   " cano member=" (path-member (file-name-unix-canonicalize path) directories))
 	   (or (eq? directories '*)
 	       (path-member path directories)
 	       (let ((cpath (file-name-unix-canonicalize path)))
