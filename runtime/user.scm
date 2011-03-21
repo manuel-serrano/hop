@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon Mar 21 16:38:24 2011 (serrano)                */
+;*    Last change :  Mon Mar 21 16:42:47 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -481,7 +481,8 @@
 				     (file-separator))))))
 	    dirs))
    (and (with-access::user user (directories services)
-	   (tprint "USER-AUTHORIZED-PATH path=" path
+	   (tprint "USER-AUTHORIZED-PATH name=" name
+		   " path=" path
 		   " directories=" directories
 		   " path-member=" (path-member path directories))
 	   (or (eq? directories '*)
