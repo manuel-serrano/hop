@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Thu Mar 17 17:38:52 2011 (serrano)                */
+;*    Last change :  Mon Mar 21 16:23:37 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -481,6 +481,10 @@
 				     (file-separator))))))
 	    dirs))
    (and (with-access::user user (directories services)
+	   (tprint "USER-AUTHORIZED-PATH directories=" directories
+		   " path-member=" (path-member path directories)
+		   " cano-path=" (file-name-unix-canonicalize path)
+		   " cano member=" (path-member cpath directories))
 	   (or (eq? directories '*)
 	       (path-member path directories)
 	       (let ((cpath (file-name-unix-canonicalize path)))
@@ -489,6 +493,7 @@
 			 (and (symbol? service-path)
 			      (user-authorized-service? user service-path)))))))
 	(let ((hopaccess (find-hopaccess path)))
+	   (tprint "USER-AUTHORIZED-SERVICE? hopaccess=" hopaccess)
 	   (or (not hopaccess)
 	       (let ((access (with-input-from-file hopaccess read)))
 		  (cond
