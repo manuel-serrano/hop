@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Thu Mar 31 10:19:35 2011 (serrano)                */
+/*    Last change :  Thu Mar 31 15:17:14 2011 (serrano)                */
 /*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1162,8 +1162,8 @@ function hop_create_element( html ) {
 
    var el = document.createElement( tag );
    el.innerHTML = html;
-
-   if( hop_config.clone_innerHTML || true ) {
+   
+   if( hop_config.clone_innerHTML ) {
       // As of Feb 2010, webkit based browsers (Feb 2010) requires a deep
       // clone. Otherwise, embedded scripts are not evaluated when the
       // resulting is inserted in the DOM!

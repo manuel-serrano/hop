@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Tue Mar 15 16:39:14 2011 (serrano)                */
+/*    Last change :  Thu Mar 31 15:06:11 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -122,6 +122,7 @@ function hop_add_ready_listener( obj, proc, ttl ) {
       if( ttl > 0 ) {
 	 after( 10, function() { return hop_add_ready_listener( obj, proc, ttl - 1 ); } );
       } else {
+	 alert( "PAS GLOP: " + el );
 	 return sc_error( "add-event-listener!",
 			  "Timeout when getting \"ready\" object",
 			  obj );

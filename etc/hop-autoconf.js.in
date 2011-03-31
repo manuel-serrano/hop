@@ -214,7 +214,6 @@ function hop_Config() {
          this.js_speed = 100;	    
          this.css = 3;
          this.css_transition = true;
-	 this.clone_innerHTML = true;
       } else if( navigator.userAgent.match( /3.[56][^ ]*$/ ) ) {
          /* Firefox 3.5, 3.6 */
          this.js_speed = 75;	    
