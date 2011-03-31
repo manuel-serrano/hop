@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue Feb  1 17:19:49 2011 (serrano)                */
+/*    Last change :  Thu Mar 31 10:20:24 2011 (serrano)                */
 /*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -214,6 +214,7 @@ function hop_Config() {
          this.js_speed = 100;	    
          this.css = 3;
          this.css_transition = true;
+	 this.clone_innerHTML = true;
       } else if( navigator.userAgent.match( /3.[56][^ ]*$/ ) ) {
          /* Firefox 3.5, 3.6 */
          this.js_speed = 75;	    

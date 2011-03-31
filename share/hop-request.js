@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Mar  2 14:46:11 2011 (serrano)                */
+/*    Last change :  Thu Mar 31 10:20:59 2011 (serrano)                */
 /*    Copyright   :  2004-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -286,7 +286,7 @@ function hop_duplicate_error( exc ) {
 
    return nexc;
 }
-   
+
 /*---------------------------------------------------------------------*/
 /*    hop_send_request ...                                             */
 /*    -------------------------------------------------------------    */
