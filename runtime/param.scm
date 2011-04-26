@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Mar 14 16:44:24 2011 (serrano)                */
+;*    Last change :  Mon Apr 11 16:03:53 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -401,7 +401,7 @@
 ;*    hop-session ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-session
-   (absfx (elong->fixnum (date->seconds (current-date)))))
+   (bit-rsh (absfx (elong->fixnum (date->seconds (current-date)))) 2))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-realm ...                                                    */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Dec  6 17:10:05 2010                          */
-/*    Last change :  Fri Jan  7 07:31:25 2011 (serrano)                */
+/*    Last change :  Thu Apr 21 19:01:35 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for spage tag                                                */
@@ -34,6 +34,8 @@ $(define-hss-type spage "div[hssclass=hop-spage]"
 $(define-hss-type sphead "div[hssclass=hop-sphead]"
     (define-hss-property (button-visibility v)
        (format "div[hssclass=hop-sppopbutton] { visibility: ~l; }" v))
+    (define-hss-property (button-display v)
+       (format "div[hssclass=hop-sppopbutton] { display: ~l; }" v))
     (define-hss-property (button-text-visibility v)
        (format "div[hssclass=hop-sppopbutton] > span { visibility: ~l; }" v))
     (define-hss-property (button-content v)

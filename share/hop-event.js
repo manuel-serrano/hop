@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Thu Mar 31 15:06:11 2011 (serrano)                */
+/*    Last change :  Sun Apr 24 09:23:22 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -13,10 +13,9 @@
 /*    window event listener ...                                        */
 /*---------------------------------------------------------------------*/
 var hop_is_ready = false;
-
-hop_add_native_event_listener( window, "load", function() {
-   hop_is_ready = true;
-} );
+var hop_ready_timeout = 10;
+var hop_elements_ready_counter = 0;
+var hop_window_ready_list = null;
 
 /*---------------------------------------------------------------------*/
 /*    HopEvent ...                                                     */
@@ -61,9 +60,11 @@ function hop_add_event_listener( obj, event, proc, capture ) {
 	    window.ready = proc;
 	    return window.ready( new HopEvent( "ready", window ) );
 	 } else {
-	    return hop_add_native_event_listener( window, "load", proc, capture );
+	    hop_window_ready_list = sc_cons( proc, hop_window_ready_list );
+	    return proc;
 	 }
       } else if( typeof obj === "string" ) {
+	 hop_elements_ready_counter++;
 	 /* wait for a node to be created and added to the document */
 	 return after( 1, function() { hop_add_ready_listener( obj, proc, 20 ) } );
       } else {
@@ -120,14 +121,17 @@ function hop_add_ready_listener( obj, proc, ttl ) {
 
    if( !el ) {
       if( ttl > 0 ) {
-	 after( 10, function() { return hop_add_ready_listener( obj, proc, ttl - 1 ); } );
+	 after( hop_ready_timeout, function() {
+	    return hop_add_ready_listener( obj, proc, ttl - 1 );
+	 } );
       } else {
-	 alert( "PAS GLOP: " + el );
+	 hop_elements_ready_counter--;
 	 return sc_error( "add-event-listener!",
 			  "Timeout when getting \"ready\" object",
 			  obj );
       }
    } else {
+      hop_elements_ready_counter--;
       el.ready = proc;
       el.ready( new HopEvent( "ready", el ) );
    }
@@ -169,13 +173,6 @@ function hop_get_hashchange_interval() {
 /*---------------------------------------------------------------------*/
 function hop_add_hashchange_listener( obj, proc ) {
    obj.hop_hashchange_proc = proc;
-/*    var i = window.location.href.indexOf( "#" );                     */
-/*                                                                     */
-/*    if( i === -1 ) {                                                 */
-/*       obj.hop_hashchange_href = window.location.href;               */
-/*    } else {                                                         */
-/*       obj.hop_hashchange_href = window.location.href.substring( 0, i-1 ); */
-/*    }                                                                */
 
    var check = function() {
       if( obj.hop_hashchange_href !== window.location.href ) {
@@ -255,16 +252,16 @@ var hop_servevt_table = {};
 var hop_servevt_ctable = {};
 var hop_servevt_dlist = null;
 
-var hop_servevt_enveloppe_re =
+var hop_servevt_envelope_re =
    new RegExp( "^<([rsxifj]) name='([^']+)'>((?:.|[\n])*)</[rsxifj]>$" );
-var hop_servevt_enveloppe_cdata_re =
+var hop_servevt_envelope_cdata_re =
    new RegExp( "^<!\\[CDATA\\[((?:.|[\n])*)\\]\\]>$" );
 
 /*---------------------------------------------------------------------*/
-/*    hop_servevt_enveloppe_parse ...                                  */
+/*    hop_servevt_envelope_parse ...                                   */
 /*---------------------------------------------------------------------*/
-function hop_servevt_enveloppe_parse( val, xhr, server_ready ) {
-   var m = val.match( hop_servevt_enveloppe_re );
+function hop_servevt_envelope_parse( val, xhr, server_ready ) {
+   var m = val.match( hop_servevt_envelope_re );
 
    if( m != null ) {
       var k = m [ 1 ];
@@ -280,7 +277,7 @@ function hop_servevt_enveloppe_parse( val, xhr, server_ready ) {
       } else if( k == "x" ) {
 	 hop_trigger_servevt( id, text, hop_create_element( text ), false );
       } else if( k == "j" ) {
-	 var t = text.match( hop_servevt_enveloppe_cdata_re );
+	 var t = text.match( hop_servevt_envelope_cdata_re );
 	 if( t ) {
 	    hop_trigger_servevt( id, t[ 1 ], t[ 1 ], true );
 	 }
@@ -291,24 +288,24 @@ function hop_servevt_enveloppe_parse( val, xhr, server_ready ) {
 	 }
 	 return true;
       } else {
-	 hop_servevt_enveloppe_parse_error( xhr );
+	 hop_servevt_envelope_parse_error( xhr );
       }
    } else {
-      hop_servevt_enveloppe_parse_error( xhr );
+      hop_servevt_envelope_parse_error( xhr );
    }
    return server_ready;
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_servevt_enveloppe_parse_error ...                            */
+/*    hop_servevt_envelope_parse_error ...                             */
 /*---------------------------------------------------------------------*/
-function hop_servevt_enveloppe_parse_error( xhr ) {
-   exc = new Error( "bad server event enveloppe" );
+function hop_servevt_envelope_parse_error( xhr ) {
+   exc = new Error( "bad server event envelope" );
    
    exc.hopStack = false;
    exc.name = "HopServevtError";
    exc.scObject = false;
-   exc.message = xhr.responseText === "" ? "Empty enveloppe" : xhr.responseText;
+   exc.message = xhr.responseText === "" ? "Empty envelope" : xhr.responseText;
    
    hop_report_exception( exc );
 }
@@ -362,7 +359,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
       }
       ws.onmessage = function ( e ) {
 	 e.responseText = e.data;
-	 hop_servevt_enveloppe_parse( e.data, e, true );
+	 hop_servevt_envelope_parse( e.data, e, true );
       }
       
       // complete the proxy definition
@@ -376,14 +373,14 @@ function start_servevt_websocket_proxy( key, host, port ) {
 function start_servevt_xhr_multipart_proxy( key ) {
    if( !hop_servevt_proxy.httpreq ) {
       var server_ready = false;
-      
+
       var register = function( id ) {
 	 var svc = hop_service_base() +
 	    "/server-event/register?event=" + id +
 	    "&key=" + key  + "&mode=xhr-multipart";
 
 	 var success = function( val, xhr ) {
-	    server_ready = hop_servevt_enveloppe_parse( val, xhr, server_ready );
+	    server_ready = hop_servevt_envelope_parse( val, xhr, server_ready );
 	 }
 
 	 var failure = function( xhr ) {
@@ -584,7 +581,7 @@ function start_servevt_script_proxy( key ) {
       var nocache = 0;
       var err_stamp = 0;
       var ttl = ttl_init;
-      
+
       if( !hop_config.server_event ) hop_config.server_event = "script";
 
       var register = function( id ) {
@@ -599,15 +596,15 @@ function start_servevt_script_proxy( key ) {
 	    hop_stop_propagation( e, false );
 
 	    if( ttl < 0 ) {
-	       exc = new Error( "Cannot receive server event response" );
-	       exc.message = "Abandoning server event";
-	       exc.scObject = key;
-	       exc.hopStack = false;
-
 	       script.onerror = false;
 	       script.parentNode.removeChild( script );
 	       
-	       hop_report_exception( exc );
+	       hop_servevt_onclose();
+/* 	       exc = new Error( "Cannot receive server event response" ); */
+/* 	       exc.message = "Abandoning server event";                */
+/* 	       exc.scObject = key;                                     */
+/* 	       exc.hopStack = false;                                   */
+/* 	       hop_report_exception( exc );                            */
 	    } else {
 	       if( (e.timeStamp - err_stamp) < 1000 ) {
 		  /* decrement the ttl counter if two errors are */
@@ -1031,7 +1028,8 @@ function hop_remove_serverclose_listener( obj, proc ) {
 /*---------------------------------------------------------------------*/
 /*    hop_servevt_onclose ...                                          */
 /*    -------------------------------------------------------------    */
-/*    This function is invoked by Flash and Ajax on connection close.  */
+/*    This function is invoked by Flash, WebSocket, and Ajax on        */
+/*    connection close.                                                */
 /*---------------------------------------------------------------------*/
 function hop_servevt_onclose() {
    // allocate a new event in order to hide handler side effects
@@ -1208,3 +1206,25 @@ function hop_remove_timeout_listener( proc ) {
       }
    }
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop window ready listener ...                                    */
+/*---------------------------------------------------------------------*/
+hop_add_native_event_listener(
+   window, "load", function( evt ) {
+      var i = setInterval( function() {
+	 if( hop_elements_ready_counter == 0 ) {
+	    clearInterval( i );
+	    hop_is_ready = true;
+	    
+	    new HopEvent( "ready", window )
+	    
+	    while( sc_isPair( hop_window_ready_list ) ) {
+	       hop_window_ready_list.car( evt );
+	       if( evt.isStopped ) break;
+	       hop_window_ready_list = hop_window_ready_list.cdr;
+	    }
+	 }
+      }, hop_ready_timeout + 1 );
+   } );
+      

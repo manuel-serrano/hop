@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Tue Feb 22 08:31:26 2011 (serrano)                */
+;*    Last change :  Thu Apr 21 10:54:59 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -66,6 +66,28 @@
 (define *hss-function-env* (make-hashtable))
 
 ;*---------------------------------------------------------------------*/
+;*    hss->ast ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (hss->ast s)
+   (let ((p (open-input-string s)))
+      (with-handler
+	 (lambda (e)
+	    (if (&io-parse-error? e)
+		(match-case (&error-obj e)
+		   ((?token ?val ?port ?pos)
+		    (raise
+		       (duplicate::&io-parse-error e
+			  (obj (string-append (substring s 0 pos)
+				  "==>" (string (string-ref s pos)) "<=="
+				  (substring s 0 pos))))))
+		   (else
+		    (raise e)))
+		(raise e)))
+	 (let ((ast (css->ast p :extension hss-extension)))
+	    (close-input-port p)
+	    ast))))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-hss-type! ...                                                */
 ;*    -------------------------------------------------------------    */
 ;*    This function is only here for ensuring backward compatility     */
@@ -81,8 +103,7 @@
 (define (hss-bind-type-compiler! type element body properties)
    (with-lock *hss-compiler-mutex*
       (lambda ()
-	 (let* ((p (open-input-string (format "~a {}" element)))
-		(ast (css->ast p :extension hss-extension))
+	 (let* ((ast (hss->ast (format "~a {}" element)))
 		(compiler (with-access::css-stylesheet ast (rule*)
 			     (with-access::css-ruleset (caar rule*) (selector+)
 				(instantiate::hss-compiler
@@ -131,33 +152,27 @@
 ;*    hss-parse-ruleset ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hss-parse-ruleset s)
-   (let ((p (open-input-string s)))
-      (unwind-protect
-	 (let ((ast (css->ast p :extension hss-extension)))
-	    (if (not (css-stylesheet? ast))
-		(error "hss-string->rulset" "Illegal declaration list" s)
-		(with-access::css-stylesheet ast (rule*)
-		   (if (not (and (pair? rule*) (null? (cdr rule*))))
-		       (error "hss-string->rulset" "Illegal declaration list" s)
-		       (caar rule*)))))
-	 (close-input-port p))))
+   (let ((ast (hss->ast s)))
+      (if (not (css-stylesheet? ast))
+	  (error "hss-string->rulset" "Illegal declaration list" s)
+	  (with-access::css-stylesheet ast (rule*)
+	     (if (not (and (pair? rule*) (null? (cdr rule*))))
+		 (error "hss-string->rulset" "Illegal declaration list" s)
+		 (caar rule*))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hss-parse-rulesets ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hss-parse-rulesets s)
-   (let ((p (open-input-string s)))
-      (unwind-protect
-	 (let ((ast (css->ast p :extension hss-extension)))
-	    (if (not (css-stylesheet? ast))
-		(error "hss-string->rulset" "Illegal declaration list" s)
-		(with-access::css-stylesheet ast (rule*)
-		   (if (not (pair? rule*))
-		       (error "hss-string->rulset" "Illegal declaration list" s)
-		       (append-map (lambda (rule)
-				      (filter css-ruleset? rule))
-				   rule*)))))
-	 (close-input-port p))))
+   (let ((ast (hss->ast s)))
+      (if (not (css-stylesheet? ast))
+	  (error "hss-string->rulset" "Illegal declaration list" s)
+	  (with-access::css-stylesheet ast (rule*)
+	     (if (not (pair? rule*))
+		 (error "hss-string->rulset" "Illegal declaration list" s)
+		 (append-map (lambda (rule)
+				(filter css-ruleset? rule))
+		    rule*))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hss-property->declaration-list ...                               */
@@ -627,26 +642,23 @@
 (define (hss-parse-function fun s)
    (define (err msg)
       (error fun msg s))
-   (let ((p (open-input-string (format "* {x:~a;}" s))))
-      (unwind-protect
-	 (let ((ast (css->ast p :extension hss-extension)))
-	    (if (not (css-stylesheet? ast))
-		(err "result of HSS function not a stylesheet")
-		(with-access::css-stylesheet ast (rule*)
-		   (if (not (and (pair? rule*) (null? (cdr rule*))))
-		       (if (pair? rule*)
-			   (err "result contains more than one rule")
-			   (err "result contains not rule"))
-		       (with-access::css-ruleset (caar rule*) (declaration*)
-			  (if (not (and (pair? declaration*)
-					(null? (cdr declaration*))))
-			      (if (pair? declaration*)
-				  (err "result contains more than one declaration")
-				  (err "result contains no declaration"))
-			      (with-access::css-declaration (car declaration*)
-				    (expr)
-				 expr)))))))
-	 (close-input-port p))))
+   (let ((ast (hss->ast (format "* {x:~a;}" s))))
+      (if (not (css-stylesheet? ast))
+	  (err "result of HSS function not a stylesheet")
+	  (with-access::css-stylesheet ast (rule*)
+	     (if (not (and (pair? rule*) (null? (cdr rule*))))
+		 (if (pair? rule*)
+		     (err "result contains more than one rule")
+		     (err "result contains not rule"))
+		 (with-access::css-ruleset (caar rule*) (declaration*)
+		    (if (not (and (pair? declaration*)
+				  (null? (cdr declaration*))))
+			(if (pair? declaration*)
+			    (err "result contains more than one declaration")
+			    (err "result contains no declaration"))
+			(with-access::css-declaration (car declaration*)
+			      (expr)
+			   expr))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    compile ::css-function ...                                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon Mar 21 16:45:25 2011 (serrano)                */
+;*    Last change :  Mon Apr 11 16:04:53 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -39,7 +39,7 @@
 	    (user-access-denied ::http-request #!optional message)
 	    (user-service-denied ::http-request ::user ::symbol)
 	    (proxy-denied ::http-request ::user ::bstring)))
-	    
+
 ;*---------------------------------------------------------------------*/
 ;*    *user-mutex* ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -212,7 +212,7 @@
 (define (find-authorized-user auth l::pair path::bstring method::symbol ip::bstring)
 
    (define (cannot-authenticate m n)
-      (hop-verb 2 m " Can't authentify user: " n "\n")
+      (hop-verb 2 m " Cannot authentify user: " n "\n")
       #f)
       
    (define (find-none-authentication n p)
@@ -241,8 +241,8 @@
 		(let ((p (h1password password path (hop-session))))
 		   (if (string=? p md5p)
 		       (add-cached-user! auth u)
-		       (cannot-authenticate  "H01:" n))))
-	     (cannot-authenticate  "H01:" n))))
+		       (cannot-authenticate  "HO1:" n))))
+	     (cannot-authenticate  "HO1:" n))))
 
    (define (find-ho2-authentication n md5p path)
       (let ((u (hashtable-get *users* n)))

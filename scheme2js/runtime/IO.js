@@ -707,7 +707,7 @@ function sc_write(o, p) {
 
 function sc_toWriteStringProcedure(o) {
    if ("sc_name" in o) {
-      return "#<procedure " + sc_name + " " + (o.sc_location != "#f" ? o.sc_location : "") + ":" + sc_hash(o) + ">";
+      return "#<procedure " + o.sc_name + " " + (o.sc_location != "#f" ? o.sc_location : "") + ":" + sc_hash(o) + ">";
    } else {
       var n = o.toString().match( /function[ \t\n]+([_a-zA-Z0-9$]+)/ );
       
@@ -968,11 +968,69 @@ function sc_format(s) {
    var p = new sc_StringOutputPort();
    var i = 0, j = 1;
 
+   function format_num(n,base) {
+      switch(base.charCodeAt(0)) {
+	  case 68:
+	  case 100:
+	      // d
+	      return n.toString(10);
+
+	  case 88:
+	  case 120:
+	      // x
+	      return n.toString(16);
+
+	  case 79:
+	  case 111:
+	      // o
+	      return n.toString(8);
+
+	  case 66:
+	  case 98:
+	      // b
+	      return n.toString(2);
+      }
+   }
+
+   function format_number(s, n, p) {
+      var m = s.match("([0-9]+),(.)([xXoObBdD])");
+
+      if (m) {
+	 var fs = format_num(n,m[3]);
+	 var k = parseInt(m[1]);
+
+	 if (fs.length < k) {
+	    for (var l=k-fs.length; l> 0; l--)
+	       p.appendJSString(m[2]);
+	 }
+
+	 p.appendJSString(fs);
+	 return m[0].length;
+      } else {
+	 m = s.match("([0-9]+)([xXoObBdD])");
+	 if (m) {
+	    var fs = format_num(n,m[2]);
+	    var k = parseInt(m[1]);
+	    
+	    if (fs.length < k) {
+	       for (var l=k-fs.length; l> 0; l--)
+		  p.appendJSString(" ");
+	    }
+
+	    p.appendJSString(fs);
+	    return m[0].length;
+	 } else {
+	    sc_error("format: illegal ~ tag \"" + s + "\"");
+	    return 0;
+	 }
+      }
+   }
+	 
    while( i < len ) {
       var i2 = s.indexOf("~", i);
 
       if (i2 == -1) {
-	  p.appendJSString( s.substring( i, len ) );
+	  p.appendJSString( s.substring(i, len) );
 	  return p.close();
       } else if (i2 == (len - 1)) {
 	  p.appendJSString(s.substring(i, len));
@@ -1030,6 +1088,13 @@ function sc_format(s) {
 	      j++;
 	      break;
 
+	  case 68:
+	  case 100:
+	      // d
+	      p.appendJSString(arguments[j].toString(10));
+	      j++;
+	      break;
+
 	  case 88:
 	  case 120:
 	      // x
@@ -1067,6 +1132,20 @@ function sc_format(s) {
 	      p.appendJSString("~");
 	      break;
 
+	  case 48:
+	  case 49:
+	  case 50:
+	  case 51:
+	  case 52:
+	  case 53:
+	  case 54:
+	  case 55:
+	  case 56:
+	  case 57:
+	     // char-numeric
+	     i += format_number(s.substr(i2 + 1), arguments[j++], p) - 1;
+	     break;
+	     
 	  default:
 	      sc_error( "format: illegal ~"
 			+ String.fromCharCode(s.charCodeAt(i2 + 1))
@@ -1079,6 +1158,7 @@ function sc_format(s) {
    return p.close();
 }
 
+   
 /* ------------------ global ports ---------------------------------------------------*/
 
 var SC_DEFAULT_IN = new sc_ErrorInputPort();

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/expanders.sch             */
+;*    serrano/prgm/project/hop/2.2.x/runtime/expanders.sch             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Sun Jun 14 12:12:46 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Sun Apr 24 07:37:44 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop expanders installer                                          */
 ;*=====================================================================*/
@@ -26,5 +26,6 @@
    (eval `(define-expander define-xml-compound ,hop-define-xml-cpd-expander))
    (eval `(define-expander define-markup ,hop-server-define-markup))
    (eval `(define-expander define-hss-type ,hop-define-hss-type-expander))
-   (eval `(define-expander define-hss-property ,hop-define-hss-property-expander)))
+   (eval `(define-expander define-hss-property ,hop-define-hss-property-expander))
+   (eval `(define-expander define-hss-function ,hop-define-hss-function-expander)))
    

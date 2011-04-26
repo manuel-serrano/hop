@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Jan 19 14:50:02 2011 (serrano)                */
+;*    Last change :  Fri Apr 15 13:44:06 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -348,7 +348,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 	 ((pair? (car a))
 	  (loop (append (car a) (cdr a))
 		mode rts dir path base inl packed els))
-	 ((null? (car a))
+	 ((or (null? (car a)) (not (car a)))
 	  (loop (cdr a) mode rts dir path base inl packed els))
 	 ((keyword? (car a))
 	  (if (null? (cdr a))

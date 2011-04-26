@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Dec 16 19:54:08 2010 (serrano)                */
-;*    Copyright   :  2004-10 Manuel Serrano                            */
+;*    Last change :  Tue Apr  5 06:31:25 2011 (serrano)                */
+;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPSH entry point                                            */
 ;*=====================================================================*/

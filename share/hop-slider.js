@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Thu Feb 17 09:13:50 2011 (serrano)                */
+/*    Last change :  Thu Apr 21 10:52:15 2011 (serrano)                */
 /*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
@@ -76,7 +76,7 @@ function hop_slider_value_get( slider ) {
 /*---------------------------------------------------------------------*/
 function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    var slider, tbody, tr, tr2 = false;
-   var line1, line2, cursor, cursorbg;
+   var line1, line2, cursor, cursorbg, cursorimg;
    var td1, td3;
    var div;
    var caption;
@@ -132,6 +132,9 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    cursorbg = document.createElement( "div" );
    cursorbg.setAttribute( "hssclass", "hop-slider-cursor-background" );
    cursor.appendChild( cursorbg );
+   cursorimg = document.createElement( "div" );
+   cursorimg.setAttribute( "hssclass", "hop-slider-cursor-image" );
+   cursorbg.appendChild( cursorimg );
 
    slider.line1 = line1;
    slider.line2 = line2;

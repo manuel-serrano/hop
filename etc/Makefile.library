@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Mon Oct 11 08:22:23 2010 (serrano)                */
-#*    Copyright   :  2006-10 Manuel Serrano                            */
+#*    Last change :  Tue Apr  5 06:45:31 2011 (serrano)                */
+#*    Copyright   :  2006-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
 #*=====================================================================*/
@@ -95,7 +95,7 @@ lib-c: $(TAGS) o lib-c-static lib-c-shared
 o:
 	mkdir -p $@
 
-lib-c-static: .afile o
+lib-c-static: .afile $(OBJECTS)
 	$(MAKE) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a \
 	        $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a \
 	        $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a \

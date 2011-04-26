@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/hopsh/parseargs.scm               */
+;*    serrano/prgm/project/hop/2.2.x/hopsh/parseargs.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed May 26 15:54:49 2010 (serrano)                */
-;*    Copyright   :  2004-10 Manuel Serrano                            */
+;*    Last change :  Sun Apr  3 20:29:58 2011 (serrano)                */
+;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -21,7 +21,9 @@
 	    hopsh_login)
    
    (export  (parse-args ::pair-nil)
-	    (hopsh-load-rc ::bstring)))
+	    (hopsh-load-rc ::bstring))
+
+   (eval    (export hopsh-load-rc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    parse-args ...                                                   */

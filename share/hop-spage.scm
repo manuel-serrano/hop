@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Thu Mar 31 15:18:01 2011 (serrano)                */
+;*    Last change :  Sun Apr 24 06:45:02 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -18,6 +18,7 @@
            HopEvent)
    
    (export (spage-init spage onchange)
+	   (spage-reset-size spage)
 	   (spage-resize spage)
 	   (sptab-add-event-listener! obj event proc capture)
 	   (spage-push spage tab tbody)
@@ -48,7 +49,7 @@
       (set! spage.hop_add_event_listener spage-add-event-listener!)
       (set! spage.hop_update (lambda () (spage-update this)))
       ;; adjust the body size
-      (spage-size-init spage)
+      (spage-reset-size spage)
       ;; set the transition effet
       (after 1
 	 (lambda ()
@@ -80,25 +81,28 @@
 				  spage.sphead.offsetHeight))))
 
 ;*---------------------------------------------------------------------*/
-;*    spage-size-init ...                                              */
+;*    spage-reset-size ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (spage-size-init spage)
-   (spage-resize spage)
-   ;; webkit got the animation wrong if the viewport is just not
-   ;; larger enough before adding a new tab
-   (set! spage.spscrollwidth (*fx (+fx spage.num 2) spage.spwidth))
-   (set! spage.spoffset (*fx spage.num spage.spwidth))
-   ;; we have to enforce the page size otherwise the browsers
-   ;; use the viewport width for the containing block width
-   (node-style-set! spage.spwindow
-      :width (format "~apx" spage.spwidth))
-   (node-style-set! spage.spviewport
-      :width (format "~apx" spage.spscrollwidth))
-   (node-style-set! (dom-first-child spage.spviewport)
-      :width (format "~apx" spage.spbodywidth))
-   (when (eq? spage.transitionstyle 'slide)
-      (node-style-set! (dom-first-child spage.spviewport)
-	 :left (format "~apx"spage.spoffset))))
+(define (spage-reset-size spage)
+   (let ((spage (if (string? spage) (dom-get-element-by-id spage) spage)))
+      (unless (eq? spage.spviewport #unspecified)
+	 ;; proceed only when initialized
+	 (spage-resize spage)
+	 ;; webkit got the animation wrong if the viewport is just not
+	 ;; larger enough before adding a new tab
+	 (set! spage.spscrollwidth (*fx (+fx spage.num 2) spage.spwidth))
+	 (set! spage.spoffset (*fx spage.num spage.spwidth))
+	 ;; we have to enforce the page size otherwise the browsers
+	 ;; use the viewport width for the containing block width
+	 (node-style-set! spage.spwindow
+	    :width (format "~apx" spage.spwidth))
+	 (node-style-set! spage.spviewport
+	    :width (format "~apx" spage.spscrollwidth))
+	 (node-style-set! (dom-first-child spage.spviewport)
+	    :width (format "~apx" spage.spbodywidth))
+	 (when (eq? spage.transitionstyle 'slide)
+	    (node-style-set! (dom-first-child spage.spviewport)
+	       :left (format "~apx"spage.spoffset))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    spage-add-event-listener! ...                                    */

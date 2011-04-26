@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Fri Dec 17 08:41:56 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Tue Apr  5 06:50:14 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
 ;*=====================================================================*/
