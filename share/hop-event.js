@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sun Apr 24 09:23:22 2011 (serrano)                */
+/*    Last change :  Wed Apr 27 16:47:23 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -540,6 +540,9 @@ function start_servevt_ajax_proxy( key ) {
 
 /*---------------------------------------------------------------------*/
 /*    hop_servevt_signal ...                                           */
+/*    -------------------------------------------------------------    */
+/*    This has to be a global function because it is called from       */
+/*    the toplevel.                                                    */
 /*---------------------------------------------------------------------*/
 function hop_servevt_signal( val ) {
    // null is used as a marker for an abandonned connection
@@ -590,7 +593,6 @@ function start_servevt_script_proxy( key ) {
 
 	 script.className = "hop_servevt_script";
 	 script.src = servevt_script_url( id, key, cache );
-	 script.id = script + nocache;
 	 
 	 script.onerror = function( e ) {
 	    hop_stop_propagation( e, false );
@@ -600,11 +602,6 @@ function start_servevt_script_proxy( key ) {
 	       script.parentNode.removeChild( script );
 	       
 	       hop_servevt_onclose();
-/* 	       exc = new Error( "Cannot receive server event response" ); */
-/* 	       exc.message = "Abandoning server event";                */
-/* 	       exc.scObject = key;                                     */
-/* 	       exc.hopStack = false;                                   */
-/* 	       hop_report_exception( exc );                            */
 	    } else {
 	       if( (e.timeStamp - err_stamp) < 1000 ) {
 		  /* decrement the ttl counter if two errors are */
@@ -621,7 +618,7 @@ function start_servevt_script_proxy( key ) {
 
 	 hop_servevt_signal[ cache ] = function( val ) {
 	    hop_servevt_signal( val );
-
+	    delete( hop_servevt_signal[ cache ] );
 	    register( "" );
 	 }
 

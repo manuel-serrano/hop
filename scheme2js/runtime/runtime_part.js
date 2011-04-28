@@ -2138,7 +2138,7 @@ function sc_currentDate() {
 /*** META ((export current-seconds) (arity #t)) 
 */
 function sc_currentSeconds() {
-   return (new Date()).getTime() / 1000;
+   return Math.round((new Date()).getTime() / 1000);
 }
 
 /*** META ((export current-microseconds) (arity #t)) 

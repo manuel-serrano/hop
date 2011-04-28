@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Jan 12 08:05:35 2011 (serrano)                */
+;*    Last change :  Wed Apr 27 18:22:13 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -72,6 +72,15 @@
 	    (hop-event-broadcast! ::bstring ::obj)
 	    (hop-event-client-ready? ::bstring)
 	    (hop-event-policy-file ::http-request)))
+
+;*---------------------------------------------------------------------*/
+;*    debug ...                                                        */
+;*---------------------------------------------------------------------*/
+(define debug-ajax #t)
+(define debug-ajax-buffer #t)
+(define debug-websocket #f)
+(define debug-multipart #f)
+(define debug-flash #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::obj ...                                    */
@@ -146,11 +155,27 @@
 	 r)))
 
 ;*---------------------------------------------------------------------*/
+;*    buffer-length ...                                                */
+;*    -------------------------------------------------------------    */
+;*    Assumes mutex acquired.                                          */
+;*---------------------------------------------------------------------*/
+(define (buffer-length buf)
+   (with-access::buffer buf (head tail cells mutex)
+      (let loop ((i 0)
+		 (h head))
+	 (if (and (pair? h) (caar h))
+	     (loop (+fx i 1) (cdr h))
+	     i))))
+   
+;*---------------------------------------------------------------------*/
 ;*    buffer-push! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (buffer-push! buf val)
-   (with-access::buffer buf (size head tail cells mutex)
+   (with-access::buffer buf (head tail cells mutex)
       (mutex-lock! mutex)
+      (when debug-ajax-buffer
+	 (tprint ">>> buffer-push: len=" (buffer-length buf)
+	    " len(cell)=" (length cells)))
       (if (pair? tail)
 	  ;; we have free cells
 	  (let ((cell (car tail)))
@@ -158,20 +183,22 @@
 	     (set-car! cell #t)
 	     (set-cdr! cell val))
 	  ;; we dont have free cells, we remove the first one
-	  (let* ((l head)
-		 (cell (car l)))
+	  (let ((l head)
+		(cell (car head)))
 	     (set! head (cdr head))
 	     (set-cdr! l '())
 	     (set-cdr! cell val)
-	     (set-cdr! (last-pair head) l)
-	     (set! tail '())))
+	     (set-cdr! (last-pair head) l)))
+      (when debug-ajax-buffer
+	 (tprint "<<< buffer-push: len=" (buffer-length buf)
+	    " len(head)=" (length head)))
       (mutex-unlock! mutex)))
 
 ;*---------------------------------------------------------------------*/
 ;*    buffer-pop! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (buffer-pop! buf)
-   (with-access::buffer buf (size head tail cells mutex)
+   (with-access::buffer buf (head tail cells mutex)
       (mutex-lock! mutex)
       (let ((cell (car head)))
 	 (if (car cell)
@@ -185,9 +212,13 @@
 		       (begin
 			  (set-cdr! (last-pair head) l)
 			  (set! tail l))))
+		(when debug-ajax-buffer
+		   (tprint ">>> buffer-pop: len=" (buffer-length buf)))
 		(mutex-unlock! mutex)
 		val)
 	     (begin
+		(when debug-ajax-buffer
+		   (tprint ">>> buffer-pop: len=" 0))
 		(mutex-unlock! mutex)
 		#f)))))
    
@@ -198,36 +229,35 @@
 ;*    mutex is already acquired.                                       */
 ;*---------------------------------------------------------------------*/
 (define (buffer-pop-all! buf)
-   (with-access::buffer buf (size head tail cells)
+   (with-access::buffer buf (head tail cells)
+      (when debug-ajax-buffer
+	 (tprint ">>> buffer-pop-all!..." (buffer-length buf)
+	    " len(head)=" (length head)))
       (let loop ((res '())
-		 (last (last-pair head)))
-	 (let ((cell (car head)))
-	    (if (car cell)
-		(let ((val (cdr cell)))
-		   (set-car! cell #f)
-		   (let ((l head))
-		      (set! head (cdr head))
-		      (set-cdr! l '())
-		      (set-cdr! last l)
-		      (loop (cons val res) l)))
+		 (l head))
+	 (if (and (pair? l) (caar l))
+	     (let ((c (car l)))
+		(set-car! c #f)
+		(loop (cons (cdr c) res) (cdr l)))
+	     (begin
+		(set! tail head)
+		(when debug-ajax-buffer
+		   (tprint "<<< buffer-pop-all len(head)=" (length head)))
 		(reverse! res))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    buffer-get-all ...                                               */
+;*    -------------------------------------------------------------    */
+;*    Debug function                                                   */
 ;*---------------------------------------------------------------------*/
 (define (buffer-get-all buf)
-   (with-access::buffer buf (size head tail cells mutex)
-      (mutex-lock! mutex)
-      (let loop ((res '()))
-	 (let ((cell (car head)))
-	    (if (car cell)
-		(let ((val (cdr cell)))
-		   (let ((l head))
-		      (set! head (cdr head))
-		      (loop (cons val res))))
-		(begin
-		   (mutex-unlock! mutex)
-		   (reverse! res)))))))
+   (with-access::buffer buf (head tail cells)
+      (let loop ((res '())
+		 (l head))
+	 (if (and (pair? l) (caar l))
+	     (let ((c (car l)))
+		(loop (cons (cdr c) res) (cdr l)))
+	     (reverse! res)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *ajax-connection-key-table* ...                                  */
@@ -275,6 +305,9 @@
    [assert (conn) (not (symbol? (mutex-state (ajax-connection-mutex conn))))]
    (with-access::ajax-connection conn (buffers mutex buffers)
       (let ((cell (assoc name buffers)))
+	 (when debug-ajax
+	    (tprint ">>>    hop-event-broadcast, ajax.4 push name=" name
+	       " cell=" (typeof cell)))
 	 (when (pair? cell)
 	    (buffer-push! (cdr cell) value)))))
 
@@ -283,6 +316,8 @@
 ;*---------------------------------------------------------------------*/
 (define (ajax-connection-abandon-for! conn nreq)
    (with-access::ajax-connection conn (req mutex padding)
+      (when debug-ajax
+	 (tprint "!!! AJAX-CONNECTION-ABANDON: req=" req))
       (when (http-request? req)
 	 (ajax-signal-value req (scheme->response '() req)))
       (set! req nreq)))
@@ -294,6 +329,7 @@
    (with-access::ajax-connection conn (mutex buffers)
       (let ((cell (assoc name buffers)))
 	 (unless (pair? cell)
+	    (tprint "ajax-connection-add-event, create buffer for name=" name)
 	    (hashtable-update! *ajax-connection-name-table*
 			       name
 			       (lambda (l) (cons conn l))
@@ -304,6 +340,7 @@
 ;*    ajax-connection-remove-event! ...                                */
 ;*---------------------------------------------------------------------*/
 (define (ajax-connection-remove-event! conn name)
+   (tprint "!!! ajax-connection-remove-event name=" name)
    (with-access::ajax-connection conn (mutex buffers)
       (mutex-lock! mutex)
       (let ((cell (assoc name buffers)))
@@ -404,7 +441,8 @@
 	       (cons (cons (string->symbol key) req)
 		     *websocket-request-list*))))
 
-   (tprint "websocket-register-new-connection: " key)
+   (when debug-websocket
+      (tprint "websocket-register-new-connection: " key))
    
    (with-access::http-request req (header connection socket)
       (let ((host (get-header header host: #f)))
@@ -552,7 +590,8 @@
       (hashtable-for-each *ajax-connection-key-table*
 			  (lambda (key conn)
 			     (when (ajax-connection-expired? conn)
-				(tprint "*** ajax collecting: " conn)
+				(when debug-ajax
+				   (tprint "*** ajax collecting: " conn))
 				(set! *clients-number* (-fx *clients-number* 1))
 				(with-access::ajax-connection conn (buffers)
 				   (for-each (lambda (buffer)
@@ -565,7 +604,8 @@
       (hashtable-for-each *ajax-connection-key-table*
 			  (lambda (k conn)
 			     (when (ajax-connection-ping? conn)
-				(tprint "*** ping: " conn)
+				(when debug-ajax
+				   (tprint "*** ping: " conn))
 				(ajax-connection-ping! conn)))))
 
    (define (flash-connection-ping? e)
@@ -599,14 +639,18 @@
 			 ;; this is not an automatic re-registry
 			 (ajax-connection-add-event! conn name))
 		      (let ((vals (ajax-connection-event-pop-all! conn)))
+			 (when debug-ajax
+			    (tprint "   ajax vals=" vals))
 			 (if (pair? vals)
 			     (let ((val (scheme->response vals req)))
-				(with-access::ajax-connection conn (padding)
-				   (when padding
-				      (http-response-js-padding-set! val padding))
-				   val))
+				(when padding
+				   (when debug-ajax
+				      (tprint "   ajax padding=" padding))
+				   (http-response-js-padding-set! val padding))
+				val)
 			     (begin
 				(ajax-connection-abandon-for! conn req)
+				(ajax-connection-padding-set! conn padding)
 				(instantiate::http-response-persistent
 				   (request req)))))))
 		(let ((conn (ajax-register-new-connection! req key padding)))
@@ -687,7 +731,9 @@
    (with-trace 2 "server-register-event!"
       (with-lock *event-mutex*
 	 (lambda ()
-	    (tprint "SERVER-EVENT-REGISTER: " event " " key " " mode " " padding)
+	    (when (or debug-ajax debug-websocket debug-multipart debug-flash)
+	       (tprint "SERVER-EVENT-REGISTER: event=[" event "] key="
+		  key " mode=" mode " padding=" padding))
 	    (if (<fx *clients-number* (hop-event-max-clients))
 		(let ((req (current-request))
 		      (key (string->symbol key)))
@@ -915,7 +961,8 @@
    (let ((s (http-request-socket req)))
       (with-handler
 	 (lambda (e)
-	    (tprint "AJAX EVENT ERROR: " e)
+	    (when debug-ajax
+	       (tprint "AJAX EVENT ERROR: " e))
 	    (unless (&io-error? e) (raise e))
 	    #f)
 	 (http-response resp s)
@@ -930,7 +977,8 @@
 	  (p (socket-output s)))
       (with-handler
 	 (lambda (e)
-	    (tprint "FLASH EVENT ERROR: " e " thread=" (current-thread))
+	    (when debug-flash
+	       (tprint "FLASH EVENT ERROR: " e " thread=" (current-thread)))
 	    (if (&io-error? e)
 		(begin
 		   (set! *clients-number* (-fx *clients-number* 1))
@@ -955,7 +1003,8 @@
 	  (p (socket-output s)))
       (with-handler
 	 (lambda (e)
-	    (tprint "MULTIPART EVENT ERROR: " e " thread=" (current-thread))
+	    (when debug-multipart
+	       (tprint "MULTIPART EVENT ERROR: " e " thread=" (current-thread)))
 	    (if (&io-error? e)
 		(begin
 		   (set! *clients-number* (-fx *clients-number* 1))
@@ -975,8 +1024,9 @@
 	  (p (socket-output s)))
       (with-handler
 	 (lambda (e)
-	    (tprint "WEBSOCKET EVENT ERROR: " e " thread=" (current-thread)
-		    " req=" req " value=" value)
+	    (when debug-websocket
+	       (tprint "WEBSOCKET EVENT ERROR: " e " thread=" (current-thread)
+		  " req=" req " value=" value))
 	    (if (&io-error? e)
 		(begin
 		   (set! *clients-number* (-fx *clients-number* 1))
@@ -1080,13 +1130,15 @@
 			  (mutex-unlock! mutex)
 			  (loop (cdr l)))))
 		(when (pair? conns)
-		   (tprint "PUSHING: " name " value=" value)
+		   (when debug-ajax
+		      (tprint "PUSHING: " name " value=" value))
 		   (let* ((conn (car conns))
 			  (mutex (ajax-connection-mutex conn)))
 		      (mutex-lock! mutex)
 		      (ajax-connection-event-push! conn name value)
 		      (mutex-unlock! mutex)
-		      (tprint "PUSHING: done"))
+		      (when debug-ajax
+			 (tprint "PUSHING: done")))
 		   #t)))))
    
    (define (flash-event-signal! name value)
@@ -1106,7 +1158,8 @@
        (lambda (l)
 	  (when (pair? l)
 	     (let ((val (multipart-value name value)))
-		(tprint "MULTIPART SIGNAL: " name)
+		(when debug-multipart
+		   (tprint "MULTIPART SIGNAL: " name))
 		(multipart-signal-value (car l) val)
 		#t)))))
 
@@ -1117,7 +1170,8 @@
        (lambda (l)
 	  (when (pair? l)
 	     (let ((val (websocket-value name value)))
-		(tprint "WEBSOCKET SIGNAL: " name)
+		(when debug-websocket
+		   (tprint "WEBSOCKET SIGNAL: " name))
 		(websocket-signal-value (car l) val)
 		#t)))))
 
@@ -1159,15 +1213,19 @@
 (define (hop-event-broadcast! name value)
    
    (define (ajax-event-broadcast! name value)
+      (when debug-ajax
+	 (tprint ">>> hop-event-broadcast, ajax broadcast: " name))
       (for-each (lambda (conn)
+		   (when debug-ajax
+		      (tprint ">>>    hop-event-broadcast, ajax.2 conn=" conn))
 		   (with-access::ajax-connection conn (req mutex padding)
 		      (with-lock mutex
 			 (lambda ()
+			    (when debug-ajax
+			       (tprint ">>>    hop-event-broadcast, ajax.3 req=" req))
 			    (if (http-request? req)
 				(let ((val (scheme->response
 					    (list (list name value)) req)))
-				   (tprint ">>> hop-event-broadcast, ajax broadcast: " name " "
-					   (http-request-socket req))
 				   (http-response-js-padding-set! val padding)
 				   (ajax-signal-value req val)
 				   (set! req #f))

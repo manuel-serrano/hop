@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sun Apr 24 07:18:08 2011 (serrano)                */
+/*    Last change :  Tue Apr 26 18:54:26 2011 (serrano)                */
 /*    Copyright   :  2004-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -179,7 +179,12 @@ var hop_default_anim = hop_anim_32_32;
 /*** META ((export with-hop-default-anim-set!) (arity #t)) */
 function hop_default_anim_set( anim ) {
    var old = hop_default_anim;
-   hop_default_anim = anim;
+   if( typeof( anim ) == "string" ) {
+      var img = hop_anim_32_32( "custom" ).firstChild;
+
+      img.src = anim;
+   }
+	 
    return old;
 }
 

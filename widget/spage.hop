@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Thu Mar 31 15:36:22 2011 (serrano)                */
+;*    Last change :  Tue Apr 26 17:43:22 2011 (serrano)                */
 ;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -140,6 +140,7 @@
 ;*    SPTABHEAD ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <SPTABHEAD> ((id (xml-make-id 'SPTABHEAD) string)
+				  (onclick #f)
 				  (attr)
 				  body)
    (instantiate::xml-sphead-element

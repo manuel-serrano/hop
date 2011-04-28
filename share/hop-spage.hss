@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Dec  6 17:10:05 2010                          */
-/*    Last change :  Thu Apr 21 19:01:35 2011 (serrano)                */
+/*    Last change :  Tue Apr 26 17:38:38 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for spage tag                                                */
@@ -48,25 +48,8 @@ $(define-hss-type sphead "div[hssclass=hop-sphead]"
 $(define-hss-type sptab "div[hssclass=hop-sptab]")
 $(define-hss-type spbody "div[hssclass=hop-spbody]")
 
-$(define-hss-type sptabhead "div[hssclass=hop-sptabhead]"
-    (define-hss-property (button-visibility v)
-       (format "div[hssclass=hop-sppushbutton] { visibility: ~l; }" v))
-    (define-hss-property (button-color v)
-       (format "div[hssclass=hop-sppushbutton] { color: ~l; }" v))
-    (define-hss-property (button-align v)
-       (cond 
-           ((string=? (car v) "left")
-            (list 
-             "padding-left: 1.5em;"
-             "div[hssclass=hop-sppushbutton] { left: 0; right: auto;}"))
-           ((string=? (car v) "right")
-            "div[hssclass=hop-sppushbutton] { left: auto; right: 0;}")
-           (else
-            (list 
-             (format "padding-left: ~a;" (car v))
-             "div[hssclass=hop-sppushbutton] { left: 0; right: auto;}"))))
-    (define-hss-property (button-content v)
-       (format "div[hssclass=hop-sppushbutton]:before { content: ~l; }" v)))
+$(define-hss-type sptabhead "div[hssclass=hop-sptabhead]")
+$(define-hss-type sppushbutton "div[hssclass=hop-sppushbutton]")
 
 /*---------------------------------------------------------------------*/
 /*    public declarations                                              */
@@ -98,9 +81,6 @@ sphead {
 }
 
 sptabhead {
-  button-visibility: visible;
-  button-content: "\00bb";
-  button-align: right;
   font-family: Arial, sans-serif;
   font-size: 10pt;
   font-weight: bold;
@@ -108,6 +88,15 @@ sptabhead {
   color: black;
   border-top: 0;
   cursor: pointer;
+}
+
+sppushbutton {
+  left: auto;
+  right: 0;
+}
+  
+sppushbutton:before {
+  content: "\00bb";
 }
 
 sptabhead:hover {
@@ -141,7 +130,7 @@ sptabhead {
   position: relative;
 }
 
-sptabhead > div[hssclass=hop-sppushbutton] {
+sptabhead > sppushbutton {
   position: absolute;
   right: 0;
   top: 0;
