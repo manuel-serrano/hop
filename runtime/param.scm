@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Apr 11 16:03:53 2011 (serrano)                */
+;*    Last change :  Sun May  1 19:47:11 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -64,6 +64,9 @@
 	    
 	    (hop-port::int)
 	    (hop-port-set! ::int)
+
+	    (hop-discovery-port::int)
+	    (hop-discovery-port-set! ::int)
 	    
 	    (hop-use-proxy::obj)
 	    (hop-use-proxy-set! ::obj)
@@ -438,6 +441,18 @@
 	     (hop-login-cookie-id-set! (format "hop@~a:~a" (hostname) v))
 	     v)
 	  (error "hop-port" "Illegal hop port" v))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-discovery-port ...                                           */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-discovery-port
+   (-fx (hop-port) 1)
+   (lambda (v)
+      (if (<fx v 1024)
+	  (error "hop-discovery-port-set!"
+	     "Server event ports must be greater than 1023"
+	     v)
+	  v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-proxy ...                                                    */

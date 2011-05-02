@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Wed Jan  5 14:12:47 2011 (serrano)                */
+;*    Last change :  Sun May  1 19:36:57 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -61,7 +61,8 @@
 	   __hop_wiki-parser
            __hop_wiki-toc
 	   __hop_hz
-	   __hop_security)
+	   __hop_security
+	   __hop_discovery)
 	   
    (eval   (export-all)
 
@@ -115,5 +116,8 @@
 
   	   (class wiki-syntax)
 
-	   (class event)))
+	   (class event)
+
+	   (class discover-event)
+	   (class discoverer)))
 

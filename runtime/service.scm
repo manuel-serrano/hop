@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Jan 14 10:22:03 2011 (serrano)                */
+;*    Last change :  Mon May  2 08:29:37 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -408,19 +408,14 @@
 			 ((autoload-filter req)
 			  =>
 			  (lambda (o)
-			     (cond
-				((not o)
-				 (http-service-not-found abspath))
-				((eq? o #t)
-				 
+			     (if (eq? o #t)
 				 (let ((s (hashtable-get *service-table* abspath)))
 				    (if (not s)
 					(http-service-not-found abspath)
 					(begin
 					   (mutex-lock! *service-mutex*)
-					   (loop s)))))
-				(else
-				 (http-error o)))))
+					   (loop s))))
+				 (http-error o))))
 			 (else
 			  (http-service-not-found abspath)))))))))))
 

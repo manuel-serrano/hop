@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Mar 21 15:56:26 2011 (serrano)                */
+;*    Last change :  Sun May  1 17:02:01 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -147,6 +147,11 @@
 	    (if (>fx (hop-max-threads) 1)
 		(hop-repl (hop-scheduler))
 		(error "hop" "No thread available for the REPL" "aborting.")))
+	 ;; when needed, start the HOP discovery thread
+	 (when (hop-enable-discovery)
+	    (if (>fx (hop-max-threads) 1)
+		(hop-discovery (hop-discovery-port))
+		(error "hop" "No thread available for discovery" "aborting.")))
 	 ;; when needed, start a loop for server events
 	 (hop-event-server (hop-scheduler))
 	 ;; execute the script file

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Feb 22 07:45:31 2011 (serrano)                */
+;*    Last change :  Sun May  1 20:18:57 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -34,6 +34,7 @@
 	 (autoloadp #t)
 	 (p (hop-port))
 	 (ep #unspecified)
+	 (dp #unspecified)
 	 (rc-file #unspecified)
 	 (mime-file #unspecified)
 	 (libraries '())
@@ -83,9 +84,9 @@
 	  (hop-clientc-clear-cache-set! #f))
 	 (("--script-file" ?file (help "A file loaded before the main loop"))
 	  (hop-script-file-set! file))
-	 (("--enable-autoload" (help "Enable autoload (default)"))
+	 (("--autoload" (help "Enable autoload (default)"))
 	  (set! autoloadp #t))
-	 (("--disable-autoload" (help "Disable autoload"))
+	 (("--no-autoload" (help "Disable autoload"))
 	  (set! autoloadp #f))
 	 (("--add-autoload-dir" ?dir (help "Add autoload directory"))
 	  (hop-autoload-directory-add! dir))
@@ -148,15 +149,15 @@
 	 (section "Run")
 	 ((("-p" "--http-port") ?port (help (format "Port number [~s]" p)))
 	  (set! p (string->integer port)))
-	 (("--fast-server-event-port" ?port (help (format "Fast Server event Port number [~s]" p)))
+	 (("--fast-server-event-port" ?port (help (format "Fast Server event port number [~s]" p)))
 	  (set! ep (string->integer port)))
-	 (("--enable-https" (help (format "Enable HTTPS")))
+	 (("--https" (help (format "Enable HTTPS")))
 	  (hop-enable-https-set! #t))
-	 (("--disable-https" (help (format "Disable HTTPS")))
+	 (("--no-https" (help (format "Disable HTTPS")))
 	  (hop-enable-https-set! #f))
-	 (("--enable-fast-server-event" (help (format "Enable fast Server events")))
+	 (("--fast-server-event" (help (format "Enable fast Server events")))
 	  (hop-enable-fast-server-event-set! #t))
-	 (("--disable-fast-server-event" (help (format "Disable fast server events")))
+	 (("--no-fast-server-event" (help (format "Disable fast server events")))
 	  (hop-enable-fast-server-event-set! #f))
 	 ((("-i" "--session-id") ?session (help "Set session identifier"))
 	  (hop-session-set! (string->integer session)))
@@ -166,6 +167,12 @@
 	  (set! exprs (cons string exprs)))
 	 (("--repl" (help "Start a repl"))
 	  (hop-enable-repl-set! #t))
+	 (("--discovery" (help "Start the discovery loop (default)"))
+	  (hop-enable-discovery-set! #t))
+	 (("--no-discovery" (help "Do not start the discovery loop"))
+	  (hop-enable-discovery-set! #f))
+	 (("--discovery-port" ?port (help (format "Disocvery event port number [~s]" dp)))
+	  (set! dp (string->integer port)))
 	 ((("-x" "--xml-backend") ?ident
 				  (help (format "Set XML backend [~s]"
 						(xml-backend-id (hop-xml-backend)))))
@@ -221,6 +228,9 @@
       ;; http port
       (hop-port-set! p)
       (when (eq? ep #unspecified) (set! ep p))
+      (if (eq? dp #unspecified)
+	  (hop-discovery-port-set! (-fx p 1))
+	  (hop-discovery-port-set! dp))
 
       ;; log
       (when log-file
@@ -312,7 +322,7 @@
       (when (hop-enable-fast-server-event)
 	 (if (<fx ep 1024)
 	     (error "fast-server-event-port"
-		    "Server event port must be greater than 1023. (See `--fast-server-event-port' or `--disable-fast-server-event' options.)"
+		    "Server event port must be greater than 1023. (See `--fast-server-event-port' or `--no-fast-server-event' options.)"
 		    ep)
 	     (hop-fast-server-event-port-set! ep)))
 
