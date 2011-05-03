@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Nov 19 08:59:46 2010 (serrano)                */
+#*    Last change :  Tue May  3 08:07:27 2011 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -184,7 +184,9 @@ uninstall:
 	$(MAKE) -C widget uninstall
 	$(MAKE) -C scheme2js uninstall
 	$(MAKE) -C hopscheme uninstall
-	/bin/rm -rf $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)
+	if[ "$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)" != "/" ]; then
+	  /bin/rm -rf $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \
+        fi
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
@@ -232,6 +234,7 @@ distclean: clean devclean
 	/bin/rm -f runtime/configure_android.sch
 	/bin/rm -f runtime/configure_macosx.sch
 	/bin/rm -f runtime/configure_noarch.sch
+	/bin/rm -f config.status
 
 cleanall: distclean
 

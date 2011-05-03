@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Mar  7 07:44:48 2011 (serrano)                */
+#*    Last change :  Mon May  2 20:55:17 2011 (serrano)                */
 #*    Copyright   :  2004-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -26,7 +26,7 @@ fflags="-main -version 9 -cp /usr/share/mtasc/std -cp /usr/share/mtasc/std8 -swf
 backend=native
 link=dynamic
 unzip=unzip
-gzip="gzip -9"
+gzip="GZIP=-9 gzip"
 install="install -m a+r,u+r"
 jar="jar cfm"
 javac=javac
