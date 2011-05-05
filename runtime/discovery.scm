@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Mon May  2 08:51:54 2011 (serrano)                */
+;*    Last change :  Tue May  3 18:10:57 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -103,7 +103,7 @@
 			    (substring-at? start-line "401" 9 3))))))
 	    (current-request-set! #f creq))))
    
-   (let loop ()
+   (let loop ((id -1))
       (multiple-value-bind (msg host)
 	 (datagram-socket-receive serv 1024)
 	 (let ((l (string-split msg)))
@@ -114,8 +114,10 @@
 				 (not (=fx port (hop-port))))
 			     (or (string=? svc "*")
 				 (service-exists? svc)))
+		     (hop-verb 2 (hop-color id id " DISCOVERY ")
+			host ":" port "\n")
 		     (hop-discovery-reply host port svc))))))
-      (loop)))
+      (loop (-fx id 1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-discovery-reply ...                                          */

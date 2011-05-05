@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Tue Mar  8 17:09:20 2011 (serrano)                */
+;*    Last change :  Tue May  3 18:32:42 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -262,7 +262,14 @@
       ;; string constant
       ((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
        (let ((str (ucs2->utf8 (the-substring 1 (-fx (the-length) 1)) 0)))
-	  (list 'CONSTANT (string-as-read str))))
+	  (cond
+	     ;; see scheme2js/runtime/immutable.js
+	     ((string-prefix? "\356\256\254" str)
+	      (list 'CONSTANT (string->symbol (substring str 3))))
+	     ((string-prefix? "\356\256\255" str)
+	      (list 'CONSTANT (string->keyword (substring str 3))))
+	     (else
+	      (list 'CONSTANT (string-as-read str))))))
       
       ;; identifier
       ((: (or #\_ alpha) (* (or #\_ alpha digit)))

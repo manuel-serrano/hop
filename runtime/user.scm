@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon Apr 11 16:04:53 2011 (serrano)                */
+;*    Last change :  Tue May  3 17:52:37 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -126,7 +126,11 @@
 				(groups g)
 				(password pass)
 				(authentication auth)
-				(services (if (eq? s '*) s (cons (hop-service-weblet-wid) s)))
+				(services (if (eq? s '*)
+					      s
+					      (cons* (hop-service-weblet-wid)
+						 'discovery
+						 s)))
 				(preferences (append c prefs))
 				(preferences-filename cname)
 				(directories d)

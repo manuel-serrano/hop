@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun May  1 20:18:57 2011 (serrano)                */
+;*    Last change :  Thu May  5 10:55:46 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -20,7 +20,7 @@
 
    (eval    (export hop-load-rc))
 
-   (export  (parse-args ::pair-nil)
+   (export  (parse-args ::pair)
 	    (hop-load-rc ::bstring)))
 
 ;*---------------------------------------------------------------------*/
@@ -28,7 +28,7 @@
 ;*---------------------------------------------------------------------*/
 (define (parse-args args)
 
-   ; 'defaults'
+   ;; 'defaults'
    (let ((loadp #t)
 	 (mimep #t)
 	 (autoloadp #t)
@@ -149,7 +149,7 @@
 	 (section "Run")
 	 ((("-p" "--http-port") ?port (help (format "Port number [~s]" p)))
 	  (set! p (string->integer port)))
-	 (("--fast-server-event-port" ?port (help (format "Fast Server event port number [~s]" p)))
+	 (("--fast-server-event-port" ?port (help (format "Fast Server event port number [~s]" ep)))
 	  (set! ep (string->integer port)))
 	 (("--https" (help (format "Enable HTTPS")))
 	  (hop-enable-https-set! #t))
@@ -383,6 +383,9 @@
 	     (hop-port)
 	     (if (hop-enable-fast-server-event)
 		 (format ", comet-port:~a" (hop-fast-server-event-port))
+		 "")
+	     (if (hop-enable-discovery)
+		 (format ", discovery-port:~a" (hop-discovery-port))
 		 "")
 	     ", security:" (security-manager-name (hop-security-manager))
 	     " [" (hop-security) "]")
