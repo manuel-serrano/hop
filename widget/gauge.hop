@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 13 05:44:41 2010                          */
-;*    Last change :  Sun Dec 26 17:19:02 2010 (serrano)                */
-;*    Copyright   :  2010 Manuel Serrano                               */
+;*    Last change :  Fri May  6 05:54:06 2011 (serrano)                */
+;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Gauge server-side implementation                                 */
 ;*=====================================================================*/
@@ -30,8 +30,9 @@
 			      (attrs)
 			      body)
    (let ((listener (when (xml-tilde? onchange)
-		      (sexp->xml-tilde `(lambda (event)
-					  ,(xml-tilde->sexp onchange)))))
+		      (sexp->xml-tilde
+			 `(lambda (event)
+			     ,(xml-tilde->sexp onchange)))))
 	 (fid (xml-make-id 'GAUGE-FILL))
 	 (tid (xml-make-id 'GAUGE-TEXT))
 	 (fmt (if (string? format)

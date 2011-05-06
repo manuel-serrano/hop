@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Apr 26 18:54:26 2011 (serrano)                */
+/*    Last change :  Fri May  6 15:25:42 2011 (serrano)                */
 /*    Copyright   :  2004-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -250,10 +250,12 @@ function hop_default_success( h, xhr ) {
 /*    unserialization method depends on the mime type of the response. */
 /*---------------------------------------------------------------------*/
 function hop_request_unserialize( svc, xhr ) {
-   var ctype = hop_header_content_type( xhr );
+   var ctype =
+      ("content_type" in xhr) ? xhr.content_type : hop_header_content_type( xhr );
 
    if( ctype === "application/x-javascript" ) {
-      var serialize = hop_header_hop_serialize( xhr );
+      var serialize = ("hop_serialize" in xhr) ?
+	 xhr.hop_serialize : hop_header_hop_serialize( xhr );
       
       /* ctype must match the value hop-json-mime-type */
       /* which is defined in runtime/param.scm.        */
@@ -293,6 +295,81 @@ function hop_duplicate_error( exc ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_request_ready ...                                            */
+/*---------------------------------------------------------------------*/
+function hop_request_ready( xhr, svc, succ, fail, err ) {
+   try {
+      switch( xhr.status ) {
+      case 200:
+	 try {
+	    return succ( hop_request_unserialize( svc, xhr ), xhr );
+	  } catch( exc ) {
+	     // Exception are read-only in Firefox, duplicate then
+	     var frame = sc_cons( succ, sc_cons( xhr, null ) );
+	     var nexc = duperror( exc );
+	     
+	     nexc.hopLocation = exc.hopLocation;
+	     nexc.scObject = exc.scObject;
+	     nexc.hopStack = sc_cons( frame, xhr.hopStack );
+	     nexc.hopService = svc;
+	     
+	     xhr.exception = nexc;
+	     
+	     fail( nexc, xhr );
+	     return false;
+	  }
+	 
+      case 204:
+	 return false;
+	 
+      case 257:
+	 return hop_js_eval( xhr );
+	 
+      case 258:
+	 if( xhr.responseText != null )
+	    return eval( xhr.responseText );
+	 else
+	    return false;
+	 
+      case 259:
+	 hop_set_cookie( xhr );
+	 return false;
+	 
+      case 400:
+	 fail( hop_request_unserialize( svc, xhr ), xhr );
+	 return false;
+	 
+      case 407:
+	 fail( 407, xhr );
+	 return false;
+	 
+      default:
+	 if( (typeof xhr.status == "number") &&
+	     (xhr.status > 200) && (xhr.status < 300) ) {
+	    return succ( xhr.responseText, xhr );
+	 } else {
+	    fail( xhr.status, xhr );
+	    return false;
+	 }
+      }
+   } catch( exc ) {
+      var nexc = duperror( exc );
+      
+      nexc.hopStack = xhr.hopStack;
+      nexc.hopService = svc;
+      
+      xhr.exception = nexc;
+      
+      fail( nexc, xhr );
+      return false;
+   } finally {
+      if( typeof hop_stop_anim === "function" ) { 
+	 hop_stop_anim( xhr );
+      }
+   }
+}
+   
+/*---------------------------------------------------------------------*/
 /*    hop_send_request ...                                             */
 /*    -------------------------------------------------------------    */
 /*    In this function SUCCESS and FAILURE are *always* bound to       */
@@ -312,75 +389,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 
    function onreadystatechange() {
       if( xhr.readyState == 4 ) {
-	 try {
-	    switch( xhr.status ) {
-	       case 200:
-		  try {
-		     return succ( hop_request_unserialize( svc, xhr ), xhr );
-		  } catch( exc ) {
-		     // Exception are read-only in Firefox, duplicate then
-		     var frame = sc_cons( succ, sc_cons( xhr, null ) );
-		     var nexc = duperror( exc );
-		     
-		     nexc.hopLocation = exc.hopLocation;
-		     nexc.scObject = exc.scObject;
-		     nexc.hopStack = sc_cons( frame, xhr.hopStack );
-		     nexc.hopService = svc;
-
-		     xhr.exception = nexc;
-
-		     fail( nexc, xhr );
-		     return false;
-		  }
-
-	       case 204:
-		  return false;
-
-	       case 257:
-		  return hop_js_eval( xhr );
-
-	       case 258:
-		  if( xhr.responseText != null )
-		     return eval( xhr.responseText );
-		  else
-		     return false;
-
-	       case 259:
-		  hop_set_cookie( xhr );
-		  return false;
-
-   	       case 400:
-	          fail( hop_request_unserialize( svc, xhr ), xhr );
-	          return false;
-	       
-	       case 407:
-	          fail( 407, xhr );
-		  return false;
-
-	       default:
-		  if( (typeof xhr.status == "number") &&
-		      (xhr.status > 200) && (xhr.status < 300) ) {
-		     return succ( xhr.responseText, xhr );
-		  } else {
-		     fail( xhr.status, xhr );
-		     return false;
-		  }
-	    }
-	 } catch( exc ) {
-	    var nexc = duperror( exc );
-
-	    nexc.hopStack = xhr.hopStack;
-	    nexc.hopService = svc;
-
-	    xhr.exception = nexc;
-	    
-	    fail( nexc, xhr );
-	    return false;
-	 } finally {
-	    if( typeof hop_stop_anim === "function" ) { 
-	       hop_stop_anim( xhr );
-	    }
-	 }
+	 hop_request_ready( xhr, svc, succ, fail, duperror );
       }
 
       return false;
@@ -401,21 +410,18 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
       }
    }
 
+   xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
    if( hop_config.navigator_family != "safari" &&
        hop_config.navigator_family != "chrome" &&
-       hop_config.navigator_family != "webkit" )
+       hop_config.navigator_family != "webkit" ) {
       xhr.setRequestHeader( 'Connection', 'close' );
-   
-   xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
-   
-   if( henv.length > 0 ) {
-      xhr.setRequestHeader( 'Hop-Env', hop_serialize_request_env() );
    }
-
+   if( henv.length > 0 ) {
+      xhr.setRequestHeader( 'Hop-Env', henv );
+   }
    if( auth ) {
       xhr.setRequestHeader( 'Authorization', auth );
    }
-
    if( xhr.multipart === true ) {
       /* This header is needed to let the server */
       /* disable timeout for this connection     */
@@ -466,6 +472,106 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_send_request_xdomain ...                                     */
+/*    -------------------------------------------------------------    */
+/*    In this function SUCCESS and FAILURE are *always* bound to       */
+/*    functions.                                                       */
+/*---------------------------------------------------------------------*/
+function hop_send_request_xdomain( e, origin ) {
+   var xhr = hop_make_xml_http_request();
+   var m = e.data.match( "([^ ]*) ([^ ]*) ([^ ]*)" );
+   var svc = m[ 1 ];
+   var henv = m[ 2 ];
+   var auth = m[ 3 ];
+
+   function onreadystatechange() {
+      if( xhr.readyState == 4 ) {
+	 var ctype = hop_header_content_type( xhr );
+	 var serialize = hop_header_hop_serialize( xhr );
+	 
+	 e.source.postMessage(
+	    xhr.status + " " + ctype + " " + serialize + " " + xhr.responseText,
+	    e.origin );
+      }
+   }
+
+   xhr.onreadystatechange = onreadystatechange;
+   xhr.open( "PUT", svc, true );
+   
+   xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
+   if( hop_config.navigator_family != "safari" &&
+       hop_config.navigator_family != "chrome" &&
+       hop_config.navigator_family != "webkit" ) {
+      xhr.setRequestHeader( 'Connection', 'close' );
+   }
+   if( henv.length > 0 ) {
+      xhr.setRequestHeader( 'Hop-Env', henv );
+   }
+   if( auth.length > 0 ) {
+      xhr.setRequestHeader( 'Authorization', auth );
+   }
+
+   xhr.send( null );
+
+   return xhr;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_xdomain_onmessage ...                                        */
+/*---------------------------------------------------------------------*/
+function hop_xdomain_onmessage( event, svc, succ, fail ) {
+   var xhr = new Object();
+   var m = event.data.match( "([0-9]*) ([^ ]*) ([^ ]*) (.*)$");
+   xhr.status = parseInt( m[ 1 ], 10 );
+   xhr.content_type = m[ 2 ];
+   xhr.hop_serialize = m[ 3 ];
+   xhr.responseText = m[ 4 ];
+   
+   hop_request_ready( xhr, svc, succ, fail, hop_duplicate_error );
+}
+
+/*---------------------------------------------------------------------*/
+/*    with_hop_xdomain ...                                             */
+/*---------------------------------------------------------------------*/
+function with_hop_xdomain( host, port, svc, sync, success, failure, anim, henv, auth, t, x ) {
+   if( !port ) port = 80;
+   
+   if( sync ) {
+      sc_error( svc,
+		"cross domain with-hop must be asynchronous",
+		host + ":" + port );
+   } else {
+      var id = "__xdomain:" + host + ":" + port;
+      var el = document.getElementById( id );
+      var origin = "http://" + host + ":" + port + "/hop/admin/xdomain"
+      var msg = svc + " " + hop_serialize_request_env() +
+	 " " + (auth ? auth : "");
+      
+      if( !el ) {
+	 el = document.createElement( "iframe" );
+
+	 el.src = origin;
+	 el.id = id;
+
+	 hop_add_event_listener( el, "load", function() {
+	    el.contentWindow.postMessage( msg, origin );
+	 }, true );
+	 
+	 node_style_set( el, "display", "none" );
+	 document.body.appendChild( el );
+	 
+	 hop_add_event_listener(
+	    window, "message",
+	    function( event ) {
+	       hop_xdomain_onmessage( event, svc, success, failure );
+	    }, false );
+      } else {
+	 el.contentWindow.postMessage( msg, origin )
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    with_hop ...                                                     */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity -2)) */
@@ -487,28 +593,43 @@ function with_hop( svc, success, failure, sync, anim, timeout ) {
 	 (user #f)
 	 (password #f)
 	 (authorization #f)
+	 (host #f)
+	 (port #f)
 	 (timeout #f))
       (let loop ((rest rest))
 	 (cond
 	    ((null? rest)
-	     `((@ hop_send_request _)
-	       ,svc
-	       ,sync
-	       ,(or success '(lambda (h) h))
-	       ,(or fail '(@ hop_default_failure _))
-	       ,anim
-	       ((@ hop_serialize_request_env _))
-	       ,(cond
-		   (authorization
-		    authorization)
-		   ((and (string? user)
-			 (string? password))
-		    (string-append
-		     "Basic "
-		     (base64-encode
-		      (string-append
-		       user ":" password)))))
-	       ,timeout))
+	     (if host
+		 `((@ with_hop_xdomain _)
+		   ,host
+		   ,port
+		   ,svc
+		   ,sync
+		   ,(or success '(lambda (h) h))
+		   ,(or fail '(@ hop_default_failure _))
+		   ,anim
+		   ((@ hop_serialize_request_env _))
+		   ,(cond
+		       (authorization
+			  authorization)
+		       ((and (string? user) (string? password))
+			(string-append "Basic "
+			   (base64-encode (string-append user ":" password)))))
+		   ,timeout)
+		   `((@ hop_send_request _)
+		   ,svc
+		   ,sync
+		   ,(or success '(lambda (h) h))
+		   ,(or fail '(@ hop_default_failure _))
+		   ,anim
+		   ((@ hop_serialize_request_env _))
+		   ,(cond
+		       (authorization
+			  authorization)
+		       ((and (string? user) (string? password))
+			(string-append "Basic "
+			   (base64-encode (string-append user ":" password)))))
+		   ,timeout)))
 	    ((eq? (car rest) :anim)
 	     (if (null? (cdr rest))
 		 (error 'with-hop "Illegal :anim argument" rest)
@@ -538,6 +659,16 @@ function with_hop( svc, success, failure, sync, anim, timeout ) {
 	     (if (null? (cdr rest))
 		 (error 'with-hop "Illegal :timeout argument" rest)
 		 (set! timeout (cadr rest)))
+	     (loop (cddr rest)))
+	    ((eq? (car rest) :host)
+	     (if (null? (cdr rest))
+		 (error 'with-hop "Illegal :host argument" rest)
+		 (set! host (cadr rest)))
+	     (loop (cddr rest)))
+	    ((eq? (car rest) :port)
+	     (if (null? (cdr rest))
+		 (error 'with-hop "Illegal :port argument" rest)
+		 (set! port (cadr rest)))
 	     (loop (cddr rest)))
 	    ((not success)
 	     (set! success (car rest))
