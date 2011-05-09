@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Tue Apr  5 06:49:26 2011 (serrano)                */
+;*    Last change :  Mon May  9 09:26:59 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -354,6 +354,7 @@
 			 (id hop-to-hop-id)
 			 (host host)
 			 (port port)
+			 (connection 'close)
 			 (authorization authorization)
 			 (path (or abspath path))))
 		 (suc (or success (lambda (x) x)))

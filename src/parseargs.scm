@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu May  5 10:55:46 2011 (serrano)                */
+;*    Last change :  Sun May  8 19:07:52 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -20,7 +20,7 @@
 
    (eval    (export hop-load-rc))
 
-   (export  (parse-args ::pair)
+   (export  (parse-args::pair-nil ::pair)
 	    (hop-load-rc ::bstring)))
 
 ;*---------------------------------------------------------------------*/
@@ -44,7 +44,7 @@
 	 (files '())
 	 (killp #f)
 	 (clear-cache #f))
-
+      
       (bigloo-debug-set! 0)
 
       (args-parse (cdr args)
@@ -59,7 +59,7 @@
          (("--version" (help "Print the version and exit"))
           (print (hop-name) "-" (hop-version))
           (exit 0))
-
+	 
 	 ;; RC
 	 (section "RC & Autoload")
 	 (("-q" (help "Do not load an init file"))
@@ -96,7 +96,7 @@
 	  (set! mime-file file))
 	 (("--preload-service" ?svc (help "Preload service"))
 	  (hop-preload-services-set! (cons svc (hop-preload-services))))
-
+	 
 	 ;; Verbosity and logs
 	 (section "Verbosity & Logging")
          (("-v?level" (help "Increase/set verbosity level (-v0 crystal silence)"))
@@ -144,7 +144,7 @@
 	  (hop-capture-port-set! (open-output-file file)))
 	 (("--allow-service-override" (help "Allow service overriding (see -s)"))
 	  (hop-security-set! 0))
-
+	 
 	 ;; Run
 	 (section "Run")
 	 ((("-p" "--http-port") ?port (help (format "Port number [~s]" p)))
@@ -175,7 +175,7 @@
 	  (set! dp (string->integer port)))
 	 ((("-x" "--xml-backend") ?ident
 				  (help (format "Set XML backend [~s]"
-						(xml-backend-id (hop-xml-backend)))))
+					   (xml-backend-id (hop-xml-backend)))))
 	  (set! be ident))
 	 (("--accept-kill" (help "Enable remote kill commands (see -k)"))
 	  (hop-accept-kill-set! #t))
@@ -185,7 +185,7 @@
 	  (set! killp #t))
 	 (("--no-user" (help "Don't attempt to set the Hop process owner"))
 	  (hop-user-set! #f))
-
+	 
 	 ;; Paths
 	 (section "Paths")
 	 ((("-I" "--path") ?path (help "Add <PATH> to hop load path"))
@@ -194,7 +194,7 @@
 	  (bigloo-library-path-set! (cons path (bigloo-library-path))))
 	 ((("-l" "--library") ?library (help "Preload additional <LIBRARY>"))
 	  (set! libraries (cons library libraries )))
-
+	 
 	 ;; Internals
 	 (section "Internals")
 	 (("--configure" ?config (help "Report HOP configuration"))
@@ -231,14 +231,14 @@
       (if (eq? dp #unspecified)
 	  (hop-discovery-port-set! (-fx p 1))
 	  (hop-discovery-port-set! dp))
-
+      
       ;; log
       (when log-file
 	 (let ((p (append-output-file log-file)))
 	    (unless p
 	       (error "hop" "Cannot open log file" log-file))
 	    (hop-log-file-set! p)))
-
+      
       ;; mime types
       (when mimep
 	 (load-mime-types (hop-mime-types-file))
@@ -249,17 +249,17 @@
 	     =>
 	     (lambda (p)
 		(load-mime-types (make-file-name p ".mime.types"))))))
-
+      
       ;; clear al caches
       (when clear-cache
 	 (let ((cache (make-cache-name)))
 	    (when (directory? cache)
 	       (delete-path cache))))
-
+      
       ;; weblets path
       (hop-autoload-directory-add!
-       (make-file-name (hop-rc-directory) "weblets"))
-
+	 (make-file-name (hop-rc-directory) "weblets"))
+      
       ;; init hss, scm compilers, and services
       (init-hss-compiler! (hop-port))
       (init-hopscheme! :reader (lambda (p v) (hop-read p))
@@ -273,12 +273,12 @@
 	 :hop-compile (lambda (e p)
 			 (obj->javascript e p #f))
 	 :features `(hop
-		     hop-client
-		     ,(string->symbol (format "hop-~a" (hop-branch)))
-		     ,(string->symbol (format "hop-~a" (hop-version))))
+		       hop-client
+		       ,(string->symbol (format "hop-~a" (hop-branch)))
+		       ,(string->symbol (format "hop-~a" (hop-version))))
 	 :expanders `(labels match-case
-		      (define-markup . ,hop-client-define-markup)
-		      (define-xml-compound . ,hop-client-define-xml-compound)))
+			   (define-markup . ,hop-client-define-markup)
+			(define-xml-compound . ,hop-client-define-xml-compound)))
       (init-clientc-compiler! :modulec hopscheme-compile-module
 	 :expressionc hopscheme-compile-expression
 	 :valuec hopscheme-compile-value
@@ -291,18 +291,18 @@
 	 :precompiled->JS-return hopscheme->JS-return
 	 :precompiled-declared-variables hopscheme-declared
 	 :precompiled-free-variables hopscheme-free)
-
+      
       (init-hop-services!)
       (init-hop-widgets!)
-
+      
       ;; hoprc
       (if loadp
 	  (parseargs-loadrc rc-file (hop-rc-file))
 	  (add-user! "anonymous" 
-		     :services '(home doc epassword wizard hz/list shutdown)
-		     :directories (hop-path)
-		     :preferences-filename #f))
-
+	     :services '(home doc epassword wizard hz/list shutdown)
+	     :directories (hop-path)
+	     :preferences-filename #f))
+      
       ;; kill
       (when killp
 	 (hop-verb 2 "Kill HOP process " (key-filepath p) "...\n")
@@ -311,21 +311,21 @@
 		(http :port p :path (format "/hop/shutdown/kill?key=~a" key))
 		(error "hop-kill" "Cannot find process key" (key-filepath p)))
 	    (exit 0)))
-
+      
       ;; hello world
       (hello-world)
       
       ;; default backend
       (when (string? be) (hop-xml-backend-set! (string->symbol be)))
-
+      
       ;; server event port
       (when (hop-enable-fast-server-event)
 	 (if (<fx ep 1024)
 	     (error "fast-server-event-port"
-		    "Server event port must be greater than 1023. (See `--fast-server-event-port' or `--no-fast-server-event' options.)"
-		    ep)
+		"Server event port must be greater than 1023. (See `--fast-server-event-port' or `--no-fast-server-event' options.)"
+		ep)
 	     (hop-fast-server-event-port-set! ep)))
-
+      
       (for-each (lambda (expr)
 		   (with-input-from-string expr
 		      (lambda ()
@@ -338,31 +338,18 @@
 					 #unspecified)
 				      (raise e)))
 			       (eval sexp))))))
-		exprs)
-
+	 exprs)
+      
       (when autoloadp (install-autoload-weblets! (hop-autoload-directories)))
-
+      
       (for-each (lambda (l) (eval `(library-load ',l))) libraries)
-
-      (when (pair? files)
-	 (let ((req (instantiate::http-server-request
-		       (host "localhost")
-		       (port (hop-port))
-		       (user (anonymous-user)))))
-	    ;; set a dummy request
-	    (thread-request-set! #unspecified req)
-	    ;; preload the user files
-	    (for-each load-weblet (reverse! files))
-	    ;; unset the dummy request
-	    (thread-request-set! #unspecified #unspecified)))
-
+      
       ;; write the process key
       (hop-process-key-write (hop-process-key) (hop-port))
       (register-exit-function! (lambda (ret)
 				  (hop-process-key-delete (hop-port))
 				  ret))
-
-      #unspecified))
+      (reverse files)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hello-world ...                                                  */
@@ -391,30 +378,6 @@
 	     " [" (hop-security) "]")
    (hop-verb 3 ", session:" (hop-session))
    (hop-verb 1 "\n"))
-
-;*---------------------------------------------------------------------*/
-;*    load-weblet ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (load-weblet f)
-   (let ((path (cond
-		  ((string-index f ":")
-		   f)
-		  ((and (>fx (string-length f) 0)
-			(char=? (string-ref f 0) (file-separator)))
-		   f)
-		  (else
-		   (file-name-canonicalize! (make-file-name (pwd) f))))))
-      (cond
-	 ((string-suffix? ".hz" path)
-	  ;; this is a weblet
-	  (hop-load-hz path))
-	 ((directory? path)
-	  ;; load a directory
-	  (let ((src (string-append (basename path) ".hop")))
-	     (hop-load-weblet (make-file-name path src))))
-	 (else
-	  ;; this is a plain file
-	  (hop-load-weblet path)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ...                                                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Feb 22 08:45:00 2011 (serrano)                */
+;*    Last change :  Mon May  9 09:47:30 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -98,7 +98,7 @@
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	    (http-write-line-string p start-line)
 	    (http-write-header p header)
-	    (if (>= clen 0)
+	    (if (> clen 0)
 		(http-write-line p "Content-Length: " clen)
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
@@ -734,7 +734,7 @@
 ;*---------------------------------------------------------------------*/
 (define (http-send-request req::http-request proc::procedure)
    (with-trace 3 "http-send-request"
-      (with-access::http-request req (scheme method path (httpv http) host port header socket userinfo timeout connection-timeout)
+      (with-access::http-request req (scheme method path (httpv http) host port header socket userinfo timeout connection-timeout connection)
 	 (let ((ssl (eq? scheme 'https)))
 	    (let loop ((host host)
 		       (port port)
@@ -764,6 +764,7 @@
 					 (make-file-name (dirname path) rpath)
 					 rpath)))
 			    (raise e)))
+		     (set! header (cons (cons connection: connection) header))
 		     (http :in in :out out
 			:protocol scheme :method method :http-version httpv
 			:host host :port port :path path :header header
@@ -776,6 +777,8 @@
 			:login user
 			:body socket
 			:proxy (hop-use-proxy))
+		     (when (eq? connection 'close)
+			(close-output-port out))
 		     (unwind-protect
 			(http-parse-response in out proc)
 			(socket-close sock)))))))))

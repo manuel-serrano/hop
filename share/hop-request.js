@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri May  6 15:25:42 2011 (serrano)                */
+/*    Last change :  Fri May  6 16:19:29 2011 (serrano)                */
 /*    Copyright   :  2004-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -306,7 +306,7 @@ function hop_request_ready( xhr, svc, succ, fail, err ) {
 	  } catch( exc ) {
 	     // Exception are read-only in Firefox, duplicate then
 	     var frame = sc_cons( succ, sc_cons( xhr, null ) );
-	     var nexc = duperror( exc );
+	     var nexc = err( exc );
 	     
 	     nexc.hopLocation = exc.hopLocation;
 	     nexc.scObject = exc.scObject;
@@ -353,7 +353,7 @@ function hop_request_ready( xhr, svc, succ, fail, err ) {
 	 }
       }
    } catch( exc ) {
-      var nexc = duperror( exc );
+      var nexc = err( exc );
       
       nexc.hopStack = xhr.hopStack;
       nexc.hopService = svc;

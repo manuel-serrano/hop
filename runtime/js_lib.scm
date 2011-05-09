@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Tue May  3 18:32:42 2011 (serrano)                */
+;*    Last change :  Mon May  9 08:54:54 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -197,6 +197,15 @@
    #t)
 
 ;*---------------------------------------------------------------------*/
+;*    return ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-macro (return key . val)
+   `(list ,key
+	  ,(if (pair? val) (car val) '(the-string))
+	  (input-port-name (the-port))
+	  (input-port-position (the-port))))
+
+;*---------------------------------------------------------------------*/
 ;*    *json-lexer* ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define *json-lexer*
@@ -214,37 +223,37 @@
       
       ;; commas
       (#\.
-       (list 'DOT))
+       (return 'DOT))
       (#\,
-       (list 'COMMA))
+       (return 'COMMA))
       (#\;
-       (list 'SEMI-COMMA))
+       (return 'SEMI-COMMA))
       (#\:
-       (list 'COLON))
+       (return 'COLON))
       (#\=
-       (list '=))
+       (return '=))
       
       ;; angles
       (#\[
-       (list 'ANGLE-OPEN))
+       (return 'ANGLE-OPEN))
       (#\]
-       (list 'ANGLE-CLO))
+       (return 'ANGLE-CLO))
       
       ;; parenthesis
       (#\(
-       (list 'PAR-OPEN))
+       (return 'PAR-OPEN))
       (#\)
-       (list 'PAR-CLO))
+       (return 'PAR-CLO))
       
       ;; brackets
       (#\{
-       (list 'BRA-OPEN))
+       (return 'BRA-OPEN))
       (#\}
-       (list 'BRA-CLO))
+       (return 'BRA-CLO))
       
       ;; integer constant
-      ((: (+ digit))
-       (list 'CONSTANT (the-integer)))
+      ((: (? (in "+-")) (+ digit))
+       (return 'CONSTANT (the-integer)))
       
       ;; floating-point constant
       ((or (: (? #\-) (+ digit)
@@ -253,11 +262,11 @@
 	   (: (? #\-) (or (: (+ digit) #\. (* digit)) (: #\. (+ digit)))
 	      (? (: (in #\e #\E) (? (in #\- #\+)) (+ digit)))
 	      (? (in #\f #\F #\l #\L))))
-       (list 'CONSTANT (the-flonum)))
+       (return 'CONSTANT (the-flonum)))
       
       ;; symbols constant
       ((: #\' (* (or (out #\\ #\') (: #\\ all))) #\')
-       (list 'CONSTANT (the-symbol)))
+       (return 'CONSTANT (the-symbol)))
       
       ;; string constant
       ((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
@@ -265,30 +274,30 @@
 	  (cond
 	     ;; see scheme2js/runtime/immutable.js
 	     ((string-prefix? "\356\256\254" str)
-	      (list 'CONSTANT (string->symbol (substring str 3))))
+	      (return 'CONSTANT (string->symbol (substring str 3))))
 	     ((string-prefix? "\356\256\255" str)
-	      (list 'CONSTANT (string->keyword (substring str 3))))
+	      (return 'CONSTANT (string->keyword (substring str 3))))
 	     (else
-	      (list 'CONSTANT (string-as-read str))))))
+	      (return 'CONSTANT (string-as-read str))))))
       
       ;; identifier
       ((: (or #\_ alpha) (* (or #\_ alpha digit)))
        (case (the-symbol)
-	  ((null) (list 'CONSTANT '()))
-	  ((undefined) (list 'CONSTANT #unspecified))
-	  ((true) (list 'CONSTANT #t))
-	  ((false) (list 'CONSTANT #f))
-	  ((new) (list 'NEW))
-	  ((function) (list 'FUNCTION))
-	  ((return) (list 'RETURN))
-	  ((var) (list 'VAR))
-	  (else (list 'IDENTIFIER (the-symbol)))))
+	  ((null) (return 'CONSTANT '()))
+	  ((undefined) (return 'CONSTANT #unspecified))
+	  ((true) (return 'CONSTANT #t))
+	  ((false) (return 'CONSTANT #f))
+	  ((new) (return 'NEW))
+	  ((function) (return 'FUNCTION))
+	  ((return) (return 'RETURN))
+	  ((var) (return 'VAR))
+	  (else (return 'IDENTIFIER (the-symbol)))))
       
       (else
        (let ((c (the-failure)))
 	  (if (eof-object? c)
 	      c
-	      (list 'ERROR c))))))
+	      (return 'ERROR c))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ucs2->utf8 ...                                                   */
@@ -389,8 +398,10 @@
 		  RETURN new SEMI-COMMA
 		  BRA-CLO PAR-CLO PAR-OPEN PAR-CLO)
 	new)
-       ((PAR-OPEN new PAR-CLO)
-	new)
+       ((PAR-OPEN expressions* PAR-CLO)
+	(if (null? (cdr expressions*))
+	    (car expressions*)
+	    expressions*))
        ((constructor)
 	#unspecified))
 
@@ -419,11 +430,15 @@
 	       (else
 		(error "json->hop" "Illegal `date' construction" expressions*))))
 	   (else
-	    (let ((c (find-class (car IDENTIFIER))))
-	       (if (not (class? c))
-		   (error "json->hop" "Can't find class" c)
-		   (let* ((constr (class-constructor c))
-			  (create (class-creator c))
+	    (let* ((mangle (symbol->string (car IDENTIFIER)))
+		   (name (if (bigloo-mangled? mangle)
+			     (bigloo-demangle mangle)
+			     mangle))
+		   (clazz (find-class (string->symbol name))))
+	       (if (not (class? clazz))
+		   (error "json->hop" "Can't find class" clazz)
+		   (let* ((constr (class-constructor clazz))
+			  (create (class-creator clazz))
 			  (ins (apply create expressions*)))
 		      (when (procedure? constr) (constr ins))
 		      ins)))))))
@@ -525,7 +540,19 @@
 ;*    json->hop ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (json->hop ip)
-   (read/lalrp *json-parser* *json-lexer* ip))
+   (with-handler
+      (lambda (e)
+	 (if (not (&io-parse-error? e))
+	     (raise e)
+	     (match-case (&io-parse-error-obj e)
+		((?token ?val ?file ?pos)
+		 (raise (duplicate::&io-parse-error e
+			   (obj (format "~a (~a)" token val))
+			   (fname file)
+			   (location pos))))
+		(else
+		 (raise e)))))
+      (read/lalrp *json-parser* *json-lexer* ip)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->js-callback ...                                             */

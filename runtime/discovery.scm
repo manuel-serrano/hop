@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Tue May  3 18:10:57 2011 (serrano)                */
+;*    Last change :  Fri May  6 16:06:39 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -38,8 +38,9 @@
 	   (class discover-event::event
 	      (key::bstring read-only)
 	      (port::int read-only))
-	   
-	   (hop-discovery ::int)
+
+	   (hop-discovery-init!)
+	   (hop-discovery-server ::int)
 	   (hop-discover #!key
 	      (address::bstring "255.255.255.255")
 	      (port::int (hop-discovery-port))
@@ -71,16 +72,15 @@
 (define discovery-mutex (make-mutex))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-discovery ...                                                */
+;*    hop-discovery-server ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (hop-discovery port)
+(define (hop-discovery-server port)
    (cond-expand
       (enable-threads
-       (hop-discovery-init!)
-       (let ((serv (make-datagram-server-socket port)))
-	  (thread-start-joinable!
-	     (instantiate::pthread
-		(body (lambda () (discovery-loop serv)))))))
+	 (let ((serv (make-datagram-server-socket port)))
+	    (thread-start-joinable!
+	       (instantiate::pthread
+		  (body (lambda () (discovery-loop serv)))))))
       (else
        (error "hop-discovery" "discovery requires thread support" #f))))
 
