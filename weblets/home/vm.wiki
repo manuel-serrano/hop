@@ -21,9 +21,9 @@ There are two ways for building the image.
 
 To create a image use one of the following:
 
-  $ make qemu
-  $ make virtualbox
-  $ make vmware
+  $ make -C arch/vm/Makefile qemu
+  $ make -C arch/vm/Makefile virtualbox
+  $ make -C arch/vm/Makefile vmware
 
 
 ~~ This will create an image for the current version of the Hop in the directory

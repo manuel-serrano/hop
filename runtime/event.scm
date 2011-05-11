@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon May  9 12:19:29 2011 (serrano)                */
+;*    Last change :  Tue May 10 07:48:02 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -54,7 +54,7 @@
 	       (padding::obj (default #f)))
 
 	    ;; buffers for ajax server push
-	    (class buffer
+	    (class ajax-buffer
 	       (buffer-init)
 	       (size::int read-only (default (hop-event-buffer-size)))
 	       (mutex::mutex read-only (default (make-mutex)))
@@ -92,8 +92,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    debug ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define debug-ajax #f)
-(define debug-ajax-buffer #f)
+(define debug-ajax #t)
+(define debug-ajax-buffer #t)
 (define debug-websocket #f)
 (define debug-multipart #f)
 (define debug-flash #f)
@@ -163,7 +163,7 @@
 ;*    buffer-init ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (buffer-init buf)
-   (with-access::buffer buf (size head tail cells)
+   (with-access::ajax-buffer buf (size head tail cells)
       (set! cells (map! (lambda (i) (cons #f #unspecified)) (iota size)))
       (set! head cells)
       (set! tail cells)))
@@ -172,7 +172,7 @@
 ;*    buffer-empty? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (buffer-empty? buf)
-   (with-access::buffer buf (head mutex)
+   (with-access::ajax-buffer buf (head mutex)
       (mutex-lock! mutex)
       (let ((r (not (car (car head)))))
 	 (mutex-unlock! mutex)
@@ -184,7 +184,7 @@
 ;*    Assumes mutex acquired.                                          */
 ;*---------------------------------------------------------------------*/
 (define (buffer-length buf)
-   (with-access::buffer buf (head tail cells mutex)
+   (with-access::ajax-buffer buf (head tail cells mutex)
       (let loop ((i 0)
 		 (h head))
 	 (if (and (pair? h) (caar h))
@@ -195,7 +195,7 @@
 ;*    buffer-push! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (buffer-push! buf val)
-   (with-access::buffer buf (head tail cells mutex)
+   (with-access::ajax-buffer buf (head tail cells mutex)
       (mutex-lock! mutex)
       (when debug-ajax-buffer
 	 (tprint ">>> buffer-push: len=" (buffer-length buf)
@@ -222,7 +222,7 @@
 ;*    buffer-pop! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (buffer-pop! buf)
-   (with-access::buffer buf (head tail cells mutex)
+   (with-access::ajax-buffer buf (head tail cells mutex)
       (mutex-lock! mutex)
       (let ((cell (car head)))
 	 (if (car cell)
@@ -253,7 +253,7 @@
 ;*    mutex is already acquired.                                       */
 ;*---------------------------------------------------------------------*/
 (define (buffer-pop-all! buf)
-   (with-access::buffer buf (head tail cells)
+   (with-access::ajax-buffer buf (head tail cells)
       (when debug-ajax-buffer
 	 (tprint ">>> buffer-pop-all!..." (buffer-length buf)
 	    " len(head)=" (length head)))
@@ -275,7 +275,7 @@
 ;*    Debug function                                                   */
 ;*---------------------------------------------------------------------*/
 (define (buffer-get-all buf)
-   (with-access::buffer buf (head tail cells)
+   (with-access::ajax-buffer buf (head tail cells)
       (let loop ((res '())
 		 (l head))
 	 (if (and (pair? l) (caar l))
@@ -358,7 +358,8 @@
 			       name
 			       (lambda (l) (cons conn l))
 			       (list conn))
-	    (set! buffers (cons (cons name (instantiate::buffer)) buffers))))))
+	    (set! buffers
+	       (cons (cons name (instantiate::ajax-buffer)) buffers))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ajax-connection-remove-event! ...                                */
@@ -1458,7 +1459,6 @@
 		   (loop (+fx i 1))))))))
 
    (define (hopsocket-raise-event hs name value)
-      (tprint "HOPSOCKET-RAISE-EVENT name=" name " value=" value)
       (with-access::hopsocket hs (mutex listeners)
 	 (mutex-lock! mutex)
 	 (let ((l (filter (lambda (c) (string=? (car c) name)) listeners)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Sun Apr 24 06:45:02 2011 (serrano)                */
+;*    Last change :  Mon May  9 18:15:25 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -29,7 +29,8 @@
 	   (spage-push-service tab svc)
 	   (spage-push-node tab node)
 	   (spage-head spage)
-	   (spage-tab spage)))
+	   (spage-tab spage)
+	   (spage-depth spage)))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-init ...                                                   */
@@ -537,3 +538,9 @@
 ;*---------------------------------------------------------------------*/
 (define (spage-tab spage)
    (dom-first-child spage.spcontent))
+
+;*---------------------------------------------------------------------*/
+;*    spage-depth ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (spage-depth spage)
+   spage.num)

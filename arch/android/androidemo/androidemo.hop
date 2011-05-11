@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Fri Mar  4 19:22:21 2011 (serrano)                */
+;*    Last change :  Wed May 11 09:56:02 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -13,7 +13,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module androidemo
-   (library mail phone hopdroid)
+   (library mail phone hopdroid multimedia)
    (import androidemo_config))
 
 ;*---------------------------------------------------------------------*/
@@ -504,15 +504,23 @@ missed.")
 ;*---------------------------------------------------------------------*/
 (define (<ANDROIDEMO:MULTIMEDIA>)
    (list
-    (<AUDIO>
-       :controls #t
-       :src "http://www.m-base.org/motherland_pulse_mp3_files/motherland_pulse.mp3"
-       :browser 'none
-       :server (instantiate::audio-server
-		  (music amusic)))
-    (<DIV> :style "font-size: 10px; font-style: italic"
-       "Thanks to " (<A> :href "http://www.m-base.com" "Steve Coleman")
-       " for making his music freely available on-line.")))
+      (<H3> "Music database")
+      (let ((mpd (instantiate::androidmpd-database
+		    (phone android))))
+	 (<DIV> :id "database-genre"
+	    (call-with-output-string
+	       (lambda (op)
+		  (mpd-database-listgenre mpd op)))))
+      (<H3> "Music player")
+      (<AUDIO>
+	 :controls #t
+	 :src "http://www.m-base.org/motherland_pulse_mp3_files/motherland_pulse.mp3"
+	 :browser 'none
+	 :server (instantiate::audio-server
+		    (music amusic)))
+      (<DIV> :style "font-size: 10px; font-style: italic"
+	 "Thanks to " (<A> :href "http://www.m-base.com" "Steve Coleman")
+	 " for making his music freely available on-line.")))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    androidemo/documentation ...                                     */
