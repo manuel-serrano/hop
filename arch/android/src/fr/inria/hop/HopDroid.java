@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Mar  2 18:05:54 2011 (serrano)                */
+/*    Last change :  Wed May 11 10:27:34 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -80,6 +80,7 @@ public class HopDroid extends Thread {
 	 registerPlugin( new HopPluginCall( this, activity, "call" ) );
 	 registerPlugin( new HopPluginBattery( this, activity, "battery" ) );
 	 registerPlugin( new HopPluginTts( this, activity, "tts" ) );
+	 registerPlugin( new HopPluginMediaAudio( this, activity, "mediaaudio" ) );
       } catch( Exception e ) {
 	 Log.v( "HopDroid", "init error: " + e.toString() + " exception=" +
 	    e.getClass().getName() );
