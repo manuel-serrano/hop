@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Wed May 11 10:31:40 2011 (serrano)                */
+/*    Last change :  Wed May 11 11:50:30 2011 (serrano)                */
 /*    Copyright   :  2011 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -22,7 +22,8 @@ import android.os.*;
 import android.util.Log;
 import android.media.*;
 import android.net.*;
-import MediaStore.Audio.Genres;
+import android.provider.MediaStore.Audio.*;
+import android.database.Cursor;
 
 import java.net.*;
 import java.io.*;
@@ -33,10 +34,10 @@ import java.io.*;
 public class HopPluginMediaAudio extends HopPlugin {
    // private fields
    private static final String[] GENRE_LOOKUP_PROJECTION = new String[] {
-      Audio.Genres.NAME, // 0
+      Genres.NAME, // 0
    };
    private static final String[] ARTIST_LOOKUP_PROJECTION = new String[] {
-      Audio.Artists.NAME, // 0
+      Artists.ARTIST, // 0
    };
    
    // constructor
@@ -50,12 +51,12 @@ public class HopPluginMediaAudio extends HopPlugin {
       switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'G':
 	    // query genres
-	    queryGenres( OutputStream op );
+	    queryGenres( op );
 	    break;
 
 	 case (byte)'A':
 	    // query artists
-	    queryArtists( OutputStream op );
+	    queryArtists( op );
 	    break;
       }
       op.flush();
@@ -63,60 +64,60 @@ public class HopPluginMediaAudio extends HopPlugin {
       return;
    }
 
-   private void queryGenres( OutputStream op ) {
-      Cursor cur = managedQuery( MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI,
-				 GENRE_LOOKUP_PROJECTION,
-				 MediaStore.Audio.Genres.NAME + "=?",
-				 null,
-				 null );
+   private void queryGenres( OutputStream op ) throws IOException {
+      Cursor cur = activity.managedQuery( Genres.EXTERNAL_CONTENT_URI,
+					  GENRE_LOOKUP_PROJECTION,
+					  Genres.NAME + "=?",
+					  null,
+					  null );
 
       synchronized( op ) {
-	 if( cursor == null ) {
+	 if( cur == null ) {
 	    op.write( "()".getBytes() );
 	 } else {
 	    op.write( "(".getBytes() );
 	    
-	    if( cursor.moveToFirst() ) {
+	    if( cur.moveToFirst() ) {
 	       do {
-		  String genre = cursor.getString( 0 );
+		  String genre = cur.getString( 0 );
 		     
 		  op.write( "\"".getBytes() );
 		  op.write( genre.getBytes() );
 		  op.write( "\" ".getBytes() );
-	       } while( cursor.moveToNext() );
+	       } while( cur.moveToNext() );
 	       
 	       op.write( ")".getBytes() );
 	    }
-	    cursor.close();
+	    cur.close();
 	 }
       }
    }
 
-   private void queryArtists( OutputStream op ) {
-      Cursor cur = managedQuery( MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI,
-				 ARTIST_LOOKUP_PROJECTION,
-				 MediaStore.Audio.Artists.NAME + "=?",
-				 null,
-				 null );
+   private void queryArtists( OutputStream op ) throws IOException {
+      Cursor cur = activity.managedQuery( Artists.EXTERNAL_CONTENT_URI,
+					  ARTIST_LOOKUP_PROJECTION,
+					  Artists.ARTIST + "=?",
+					  null,
+					  null );
 
       synchronized( op ) {
-	 if( cursor == null ) {
+	 if( cur == null ) {
 	    op.write( "()".getBytes() );
 	 } else {
 	    op.write( "(".getBytes() );
 	    
-	    if( cursor.moveToFirst() ) {
+	    if( cur.moveToFirst() ) {
 	       do {
-		  String artist = cursor.getString( 0 );
+		  String artist = cur.getString( 0 );
 		     
 		  op.write( "\"".getBytes() );
 		  op.write( artist.getBytes() );
 		  op.write( "\" ".getBytes() );
-	       } while( cursor.moveToNext() );
+	       } while( cur.moveToNext() );
 	       
 	       op.write( ")".getBytes() );
 	    }
-	    cursor.close();
+	    cur.close();
 	 }
       }
    }
