@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Wed May 11 11:50:30 2011 (serrano)                */
+/*    Last change :  Wed May 11 16:41:23 2011 (serrano)                */
 /*    Copyright   :  2011 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -67,28 +67,32 @@ public class HopPluginMediaAudio extends HopPlugin {
    private void queryGenres( OutputStream op ) throws IOException {
       Cursor cur = activity.managedQuery( Genres.EXTERNAL_CONTENT_URI,
 					  GENRE_LOOKUP_PROJECTION,
-					  Genres.NAME + "=?",
+					  null,
 					  null,
 					  null );
 
+      Log.d( "HopDroidMediaAudio", "queryGenres"
+	     + " " + (cur == null ? " (null)" : " (non-null)") );
       synchronized( op ) {
 	 if( cur == null ) {
 	    op.write( "()".getBytes() );
 	 } else {
 	    op.write( "(".getBytes() );
-	    
 	    if( cur.moveToFirst() ) {
+	       int i = cur.getColumnIndex( Genres.NAME ); 
+	       Log.d( "HopDroidMediaAudio", "moveToFirst..." );
 	       do {
-		  String genre = cur.getString( 0 );
+		  Log.d( "HopDroidMediaAudio", "first to be displayed..." );
+		  String genre = cur.getString( i );
+		  Log.d( "HopDroidMediaAudio", "genre=" + genre );
 		     
 		  op.write( "\"".getBytes() );
 		  op.write( genre.getBytes() );
 		  op.write( "\" ".getBytes() );
 	       } while( cur.moveToNext() );
-	       
-	       op.write( ")".getBytes() );
 	    }
 	    cur.close();
+	    op.write( ")".getBytes() );
 	 }
       }
    }
@@ -100,24 +104,25 @@ public class HopPluginMediaAudio extends HopPlugin {
 					  null,
 					  null );
 
+      Log.d( "HopDroidMediaAudio", "queryArtists" );
       synchronized( op ) {
 	 if( cur == null ) {
 	    op.write( "()".getBytes() );
 	 } else {
 	    op.write( "(".getBytes() );
-	    
 	    if( cur.moveToFirst() ) {
 	       do {
 		  String artist = cur.getString( 0 );
 		     
+		  Log.d( "HopDroidMediaAudio", "artist=" + artist );
 		  op.write( "\"".getBytes() );
 		  op.write( artist.getBytes() );
 		  op.write( "\" ".getBytes() );
 	       } while( cur.moveToNext() );
 	       
-	       op.write( ")".getBytes() );
 	    }
 	    cur.close();
+	    op.write( ")".getBytes() );
 	 }
       }
    }
