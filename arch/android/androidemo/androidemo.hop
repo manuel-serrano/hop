@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Fri May 13 15:13:41 2011 (serrano)                */
+;*    Last change :  Fri May 13 16:14:10 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -513,7 +513,7 @@ missed.")
 			  (<H4> (html-string-encode g))
 			  (<DIV>
 			     (format "~l" (mpd-database-getgenreartist mpd g)))))
-		  (mpd-database-getgenre mpd op))))
+		  (mpd-database-getgenre mpd))))
       (<H3> "Music player")
 ;*       (<AUDIO>                                                      */
 ;* 	 :controls #t                                                  */
