@@ -52,8 +52,8 @@
 	       (null? opnds))
 	  ;; just map vaarg to '(), and return the
 	  ;; whole assig-list
-	  (cons (cons (car formals) (instantiate::Const (value '())))
-		rev-res))
+	  (reverse (cons (cons (car formals) (instantiate::Const (value '())))
+		      rev-res)))
 	 
 	 ;; the last element is a vaarg, and there are still operands
 	 ((and (null? (cdr formals))
@@ -67,8 +67,8 @@
 					 #f))
 			   (operator (runtime-reference 'list))
 			   (operands opnds))))
-	     (cons (cons (car formals) rvalue)
-		   rev-res)))
+	     (reverse (cons (cons (car formals) rvalue)
+			 rev-res))))
 
 	 ;; no opnds, but formals
 	 ((and (null? opnds)
