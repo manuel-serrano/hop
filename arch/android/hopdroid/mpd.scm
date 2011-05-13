@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 11 08:16:32 2011                          */
-;*    Last change :  Fri May 13 11:29:05 2011 (serrano)                */
+;*    Last change :  Fri May 13 11:39:12 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android MPD implementation                                       */
@@ -51,6 +51,5 @@
       (set! %artists
 	 (map list (android-send-command/result phone mpd-plugin #\A)))
       (call-next-method)))
-
       
    
