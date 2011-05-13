@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 11 08:16:32 2011                          */
-;*    Last change :  Fri May 13 11:01:23 2011 (serrano)                */
+;*    Last change :  Fri May 13 11:21:33 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android MPD implementation                                       */
@@ -40,7 +40,7 @@
 (define-method (mpd-database-listgenre o::androidmpd-database op)
    (with-access::androidmpd-database o (phone %genres)
       (set! %genres (android-send-command/result phone mpd-plugin #\G))
-      (tprint "GENRES=" %genres)
+      (tprint "GENRES=" %genres " typeof=" (typeof %genres))
       (call-next-method)))
 
 ;*---------------------------------------------------------------------*/

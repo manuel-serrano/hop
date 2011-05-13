@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Fri May 13 11:11:28 2011 (serrano)                */
+;*    Last change :  Fri May 13 11:21:39 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -534,6 +534,4 @@
 	 (lambda ()
 	    (android-send p plugin args)
 	    (let ((ip (socket-input %socket1)))
-	       (let ((r (read ip)))
-		  (tprint "android-send-command/result: " r)
-		  r))))))
+	       (read ip))))))
