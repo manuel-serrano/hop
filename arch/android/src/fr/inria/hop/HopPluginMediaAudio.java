@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Fri May 13 12:27:26 2011 (serrano)                */
+/*    Last change :  Fri May 13 16:20:10 2011 (serrano)                */
 /*    Copyright   :  2011 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -143,7 +143,7 @@ public class HopPluginMediaAudio extends HopPlugin {
       ContentResolver cr = activity.getContentResolver();
       Cursor cur = cr.query( Genres.EXTERNAL_CONTENT_URI,
 			     GENRE_LOOKUP_PROJECTION,
-			     Genres.NAME + "=" + genre, 
+			     Genres.NAME + "='" + genre + "'", 
 			     null,
 			     null );
       synchronized( op ) {

@@ -1,10 +1,10 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/linux/maemo/makedeb.sh                  */
+#*    serrano/prgm/project/hop/2.2.x/arch/debian/makedeb.sh            */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Wed May 11 17:10:22 2011 (serrano)                */
+#*    Last change :  Fri May 13 16:34:54 2011 (serrano)                */
 #*    Copyright   :  2007-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -48,9 +48,11 @@ maemo=`pkg-config maemo-version --modversion` 2> /dev/null
 
 if [ $? = 0 ]; then
   debian=maemo
+  debianversion=maemo`echo $maemo | sed -e "s/[.].*$//"`
   extradepend="hildon-desktop, "
 else
   debian=debian
+  debianversion=debian
   extradepend=
 fi
 
@@ -194,12 +196,4 @@ cat $BASEDIR/debian/changelog.in | sed "s/@HOPVERSION@/$VERSION/g" > \
 #*---------------------------------------------------------------------*/
 #*    Copy the deb file                                                */
 #*---------------------------------------------------------------------*/
-maemo=`pkg-config maemo-version --modversion`
-
-if [ $? = 0 ]; then
-  debian=maemo`echo $maemo | sed -e "s/[.].*$//"`
-else
-  debian=debian
-fi
-
-cp $TMP/hop_"$VERSION"_armel.deb $REPOSITORY/$debian
+cp $TMP/hop_"$VERSION"_armel.deb $REPOSITORY/$debianversion
