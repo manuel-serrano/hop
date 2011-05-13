@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Fri May 13 16:48:38 2011 (serrano)                */
+/*    Last change :  Fri May 13 16:53:07 2011 (serrano)                */
 /*    Copyright   :  2011 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -178,6 +178,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 		     op.write( artist.getBytes() );
 		     op.write( "\" ".getBytes() );
 		  } while( c.moveToNext() );
+		  op.write( ")".getBytes() );
 	       }
 	       
 	       c.close();
