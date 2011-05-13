@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 11 08:16:32 2011                          */
-;*    Last change :  Fri May 13 11:39:12 2011 (serrano)                */
+;*    Last change :  Fri May 13 12:43:00 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android MPD implementation                                       */
@@ -35,21 +35,26 @@
 	 (set! mpd-plugin (android-load-plugin phone "mediaaudio")))))
 
 ;*---------------------------------------------------------------------*/
-;*    mpd-database-listgenre ::androidmpd-database ...                 */
+;*    mpd-database-getgenre ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (mpd-database-listgenre o::androidmpd-database op)
+(define-method (mpd-database-getgenre::pair-nil o::androimpd-database)
    (with-access::androidmpd-database o (phone %genres)
       (set! %genres
 	 (map list (android-send-command/result phone mpd-plugin #\G)))
-      (call-next-method)))
-
+      %genres))
+   
 ;*---------------------------------------------------------------------*/
-;*    mpd-database-listartist ::androidmpd-database ...                */
+;*    mpd-database-getartist ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (mpd-database-listartist o::androidmpd-database op)
+(define-method (mpd-database-getgenreartist::pair-nil o::androimpd-database)
    (with-access::androidmpd-database o (phone %artists)
       (set! %artists
 	 (map list (android-send-command/result phone mpd-plugin #\A)))
-      (call-next-method)))
-      
+      %artists))
    
+;*---------------------------------------------------------------------*/
+;*    mpd-database-getgenreartist ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (mpd-database-getgenreartist o::androidmpd-database op genre)
+   (android-send-command/result phone mpd-plugin #\a genre))
+

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Fri May 13 11:29:23 2011 (serrano)                */
+/*    Last change :  Fri May 13 12:27:26 2011 (serrano)                */
 /*    Copyright   :  2011 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -34,10 +34,12 @@ import java.io.*;
 public class HopPluginMediaAudio extends HopPlugin {
    // private fields
    private static final String[] GENRE_LOOKUP_PROJECTION = new String[] {
-      Genres.NAME, // 0
+      Genres._ID, // 0
+      Genres.NAME, // 1
    };
    private static final String[] ARTIST_LOOKUP_PROJECTION = new String[] {
-      Artists.ARTIST, // 0
+      Genres._ID, // 0
+      Artists.ARTIST, // 1
    };
    
    // constructor
@@ -57,6 +59,11 @@ public class HopPluginMediaAudio extends HopPlugin {
 	 case (byte)'A':
 	    // query artists
 	    queryArtists( op );
+	    break;
+	    
+	 case (byte)'a':
+	    // query artists by genre
+	    queryGenreArtists( op, HopDroid.read_string( ip ) );
 	    break;
       }
       op.flush();
@@ -93,11 +100,11 @@ public class HopPluginMediaAudio extends HopPlugin {
 
    private void queryArtists( OutputStream op ) throws IOException {
       ContentResolver cr = activity.getContentResolver();
-      Cursor cur = activity.managedQuery( Artists.EXTERNAL_CONTENT_URI,
-					  ARTIST_LOOKUP_PROJECTION,
-					  null, 
-					  null,
-					  null );
+      Cursor cur = cr.query( Artists.EXTERNAL_CONTENT_URI,
+			     ARTIST_LOOKUP_PROJECTION,
+			     null, 
+			     null,
+			     null );
       synchronized( op ) {
 	 if( cur == null ) {
 	    op.write( "()".getBytes() );
@@ -106,7 +113,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 	    if( cur.moveToFirst() ) {
 	       int i = cur.getColumnIndex( Artists.ARTIST );
 	       do {
-		  String artist = cur.getString( 0 );
+		  String artist = cur.getString( 1 );
 		  
 		  op.write( "\"".getBytes() );
 		  op.write( artist.getBytes() );
@@ -116,6 +123,60 @@ public class HopPluginMediaAudio extends HopPlugin {
 	    }
 	    cur.close();
 	    op.write( ")".getBytes() );
+	 }
+      }
+   }
+
+   private Uri makeGenreUri( String id ) {
+      return Uri.parse(
+	 new StringBuilder()
+	 .append( Genres.EXTERNAL_CONTENT_URI.toString() )
+	 .append( "/" )
+	 .append( id )
+	 .append( "/" )
+	 .append( Genres.Members.CONTENT_DIRECTORY )
+	 .toString());
+   }
+   
+   private void queryGenreArtists( OutputStream op, String genre )
+      throws IOException {
+      ContentResolver cr = activity.getContentResolver();
+      Cursor cur = cr.query( Genres.EXTERNAL_CONTENT_URI,
+			     GENRE_LOOKUP_PROJECTION,
+			     Genres.NAME + "=" + genre, 
+			     null,
+			     null );
+      synchronized( op ) {
+	 if( cur == null ) {
+	    op.write( "()".getBytes() );
+	 } else {
+	    if( cur.moveToFirst() ) {
+	       int i = cur.getColumnIndex( Genres._ID );
+	       Log.d( "HopPluginMediaAudio", "id for \"" + genre + "\"=" + i );
+	       Log.d( "HopPluginMediaAudio", "uri=" + makeGenreUri( cur.getString( i ) ) );
+	       cur.close();
+	       Cursor c = cr.query( makeGenreUri( cur.getString( 1 ) ),
+				    new String[] { Media.ARTIST },
+				    null,
+				    null,
+				    null );
+
+	       if( c.getCount() == 0 ) {
+		  op.write( "()".getBytes() );
+	       } else {
+		  op.write( "(".getBytes() );
+		  c.moveToFirst();
+		  int j = c.getColumnIndex( Artists.ARTIST );
+		  do {
+		     String artist = cur.getString( j );
+		  
+		     op.write( "\"".getBytes() );
+		     op.write( artist.getBytes() );
+		     op.write( "\" ".getBytes() );
+		  } while( c.moveToNext() );
+		  c.close();
+	       }
+	    }
 	 }
       }
    }

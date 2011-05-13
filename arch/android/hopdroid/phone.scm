@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Fri May 13 11:21:39 2011 (serrano)                */
+;*    Last change :  Fri May 13 11:58:23 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -298,40 +298,41 @@
 (define-method (phone-contact p::androidphone)
    (unless contact-plugin
       (set! contact-plugin (android-load-plugin p "contact")))
-   (when contact-plugin
-      (map! (lambda (e)
-	       (match-case e
-		  ((?first ?family ?akas ?comp ?phones ?addrs ?emails ?notes ?-)
-		   (let* ((face (let ((c (assq 'face notes)))
+   (if contact-plugin
+       (map! (lambda (e)
+		(match-case e
+		   ((?first ?family ?akas ?comp ?phones ?addrs ?emails ?notes ?-)
+		    (let* ((face (let ((c (assq 'face notes)))
+				    (when (pair? c)
+				       (set! notes (remq! c notes))
+				       (cdr c))))
+			   (url (let ((c (assq 'url notes)))
 				   (when (pair? c)
 				      (set! notes (remq! c notes))
 				      (cdr c))))
-			  (url (let ((c (assq 'url notes)))
-				  (when (pair? c)
-				     (set! notes (remq! c notes))
-				     (cdr c))))
-			  (notes (if (pair? akas)
-				     (cons (cons 'akas akas) notes)
-				     notes))
-			  (fn (if (string? first)
-				  (if (string? family)
-				      (string-append first " " family)
-				      first)
-				  (if (string? family)
-				      family
-				      ""))))
-		      (instantiate::vcard
-			 (fn fn)
-			 (familyname family)
-			 (firstname first)
-			 (org comp)
-			 (face face)
-			 (url url)
-			 (phones phones)
-			 (addresses addrs)
-			 (emails emails)
-			 (notes notes))))))
-	    (android-send-command/result p contact-plugin #\l))))
+			   (notes (if (pair? akas)
+				      (cons (cons 'akas akas) notes)
+				      notes))
+			   (fn (if (string? first)
+				   (if (string? family)
+				       (string-append first " " family)
+				       first)
+				   (if (string? family)
+				       family
+				       ""))))
+		       (instantiate::vcard
+			  (fn fn)
+			  (familyname family)
+			  (firstname first)
+			  (org comp)
+			  (face face)
+			  (url url)
+			  (phones phones)
+			  (addresses addrs)
+			  (emails emails)
+			  (notes notes))))))
+	  (android-send-command/result p contact-plugin #\l))
+       '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-contact-add! ::androidphone ...                            */

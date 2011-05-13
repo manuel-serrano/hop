@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Mar  2 07:38:26 2010                          */
-/*    Last change :  Wed May 11 09:56:27 2011 (serrano)                */
+/*    Last change :  Fri May 13 12:00:54 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    POPART css                                                       */
@@ -288,7 +288,7 @@ table#speech-conf th {
 /*---------------------------------------------------------------------*/
 /*    Multimedia                                                       */
 /*---------------------------------------------------------------------*/
-#database-genre {
+#database-audio {
   font-size: 10px;
   font-family: monospace;
 }
