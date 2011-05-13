@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Fri May 13 16:20:10 2011 (serrano)                */
+/*    Last change :  Fri May 13 16:48:38 2011 (serrano)                */
 /*    Copyright   :  2011 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -154,28 +154,33 @@ public class HopPluginMediaAudio extends HopPlugin {
 	       int i = cur.getColumnIndex( Genres._ID );
 	       Log.d( "HopPluginMediaAudio", "id for \"" + genre + "\"=" + i );
 	       Log.d( "HopPluginMediaAudio", "uri=" + makeGenreUri( cur.getString( i ) ) );
-	       cur.close();
-	       Cursor c = cr.query( makeGenreUri( cur.getString( 1 ) ),
+	       Cursor c = cr.query( makeGenreUri( cur.getString( i ) ),
 				    new String[] { Media.ARTIST },
 				    null,
 				    null,
 				    null );
+	       cur.close();
 
+	       Log.d( "HopPluginMediaAudio.java", "C.getCount=" + c.getCount() );
+	       
 	       if( c.getCount() == 0 ) {
 		  op.write( "()".getBytes() );
 	       } else {
 		  op.write( "(".getBytes() );
 		  c.moveToFirst();
-		  int j = c.getColumnIndex( Artists.ARTIST );
+		  int j = c.getColumnIndex( Media.ARTIST );
 		  do {
-		     String artist = cur.getString( j );
+		     String artist = c.getString( j );
 		  
+		     Log.d( "HopPluginMediaAudio.java", "artist=" + artist );
+		     
 		     op.write( "\"".getBytes() );
 		     op.write( artist.getBytes() );
 		     op.write( "\" ".getBytes() );
 		  } while( c.moveToNext() );
-		  c.close();
 	       }
+	       
+	       c.close();
 	    }
 	 }
       }
