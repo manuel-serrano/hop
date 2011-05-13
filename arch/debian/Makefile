@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri May 13 10:19:41 2011                          */
-#*    Last change :  Fri May 13 10:31:19 2011 (serrano)                */
+#*    Last change :  Fri May 13 13:50:23 2011 (serrano)                */
 #*    Copyright   :  2011 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Debian (maemo) port                                              */

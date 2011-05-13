@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed May 11 08:46:34 2011 (serrano)                */
+#*    Last change :  Fri May 13 13:49:32 2011 (serrano)                */
 #*    Copyright   :  2010-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -43,7 +43,7 @@ ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java HopUiUtils.java \
 #*---------------------------------------------------------------------*/
 POPULATION = Makefile makeapk.sh \
   $(ANDROID_BUILD) $(ANDROID_JNI) $(ANDROID_RES) \
-  $(ANDROID_JAVA:%=src/fr/inria/hop/%) \
+  $(ANDROID_JAVA:%=src/fr/inria/hop/%)
 
 POPDIRS = hopdroid androidemo
 
