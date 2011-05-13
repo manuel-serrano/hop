@@ -1,0 +1,114 @@
+#*=====================================================================*/
+#*    .../prgm/project/hop/linux/maemo/hop-launcher/Makefile.in        */
+#*    -------------------------------------------------------------    */
+#*    Author      :  Manuel Serrano                                    */
+#*    Creation    :  Fri Dec 14 07:39:27 2007                          */
+#*    Last change :  Wed Sep  1 14:33:35 2010 (serrano)                */
+#*    Copyright   :  2007-10 Manuel Serrano                            */
+#*    -------------------------------------------------------------    */
+#*    The Makefile to build the hop-launcher application               */
+#*=====================================================================*/
+do: build
+
+#*---------------------------------------------------------------------*/
+#*    Configuration                                                    */
+#*---------------------------------------------------------------------*/
+HOPBRANCH = @HOPBRANCH@
+HOPHOMEPAGE = @HOPHOMEPAGE@
+HOPPORT = @HOPPORT@
+MAEMO = @MAEMO@
+BUILDDIR = @BUILDDIR@
+
+-include $(BUILDDIR)/etc/Makefile.hopconfig
+-include $(BUILDDIR)/etc/Makefile.version
+
+#*---------------------------------------------------------------------*/
+#*    Target and Project                                               */
+#*---------------------------------------------------------------------*/
+EXEC = hop-launcher
+CFLAGS = -O2 -Wall `@CHILDONFLAGS@` -I/usr/include/dbus-1.0 -I/usr/lib/dbus-1.0/include
+LDFLAGS = $(CFLAGS) `@LDHILDONFLAGS@` -ldbus-1 -losso
+
+HOPLEXEC = $(HOPBINDIR)/hop
+HOPLPORT = 8080
+
+#*---------------------------------------------------------------------*/
+#*    Sources    					               */
+#*---------------------------------------------------------------------*/
+FILES = main hop gui param read list
+
+INCLUDES = config.h hop.h gui.h param.h
+
+OBJECTS = $(FILES:%=o/%.o)
+
+SOURCES = $(FILES:%=%.c)
+
+COLOR = 32
+
+#*---------------------------------------------------------------------*/
+#*    Population                                                       */
+#*---------------------------------------------------------------------*/
+POPULATION = config.h.in $(SOURCES) Makefile
+
+#*---------------------------------------------------------------------*/
+#*    The hop executable                                               */
+#*---------------------------------------------------------------------*/
+.PHONY: build dobuild
+
+build:  o $(BUILDBINDIR)/$(EXEC)
+
+o: 
+	mkdir -p $@
+
+$(BUILDBINDIR)/$(EXEC): $(OBJECTS)
+	@ $(call compile,CC,LDFLAGS,-o $@ $(OBJECTS))
+	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
+
+#*---------------------------------------------------------------------*/
+#*    Install                                                          */
+#*---------------------------------------------------------------------*/
+install: $(DESTDIR)$(HOPSHAREDIR)/icons
+	install -m $(MODEXE) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)
+	install -m $(MODFILE) hop-128x128.png $(DESTDIR)$(HOPSHAREDIR)/icons
+
+$(DESTDIR)$(HOPSHAREDIR)/icons:
+	mkdir -p $@
+
+#*---------------------------------------------------------------------*/
+#*    SUFFIXES                                                         */
+#*---------------------------------------------------------------------*/
+.SUFFIXES:
+.SUFFIXES: .c .o
+
+#*---------------------------------------------------------------------*/
+#*    The implicit `.c.o' rule                                         */
+#*---------------------------------------------------------------------*/
+o/%.o: %.c
+	@ $(call compile,CC,CFLAGS,$< -o $@ -c)
+
+#*---------------------------------------------------------------------*/
+#*    config.h                                                         */
+#*---------------------------------------------------------------------*/
+config.h: config.h.in
+	$(RM) -f $@
+	echo "/* Generated file, don't edit */" > $@
+	cat $< | sed -e "s|@HOP_RELEASE@|$(HOPRELEASE)|" \
+                     -e "s|@HOP_EXEC@|$(HOPLEXEC)|" \
+                     -e "s|@HOP_PORT@|$(HOPLPORT)|" \
+                     -e "s|@HOP_URL@|$(HOPHOMEPAGE)|" \
+                     -e "s|@HOP_ARG@|$(HOPLARG)|" \
+                     -e "s|@HOP_SHARE_DIR@|$(HOPSHAREDIR)|" \
+                     -e "s|@MAEMO_RELEASE@|$(MAEMO)|" >> $@ && chmod a-w $@
+
+#*---------------------------------------------------------------------*/
+#*    Dependencies                                                     */
+#*---------------------------------------------------------------------*/
+o/hop.o o/main.o gui.o: config.h hop.h gui.h
+
+#*---------------------------------------------------------------------*/
+#*    clean                                                            */
+#*---------------------------------------------------------------------*/
+clean:
+	$(RM) -rf o
+	$(RM) -f config.h
+	$(RM) $(BUILDBINDIR)/$(EXEC)

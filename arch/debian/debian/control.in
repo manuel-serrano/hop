@@ -1,0 +1,58 @@
+Source: hop
+Section: user/programming
+Priority: optional
+Maintainer: Manuel Serrano <Manuel.Serrano@inria.fr>
+Build-Depends: debhelper (>= 4.0.0), bigloo (>= 3.3a)
+Standards-Version: 3.6.1
+
+Package: hop
+Architecture: any
+Depends: ${shlibs:Depends}, @EXTRADEPEND@ libbigloo-full
+Description: A SDK for the Web 2.0.
+ Hop is a SDK for the Web 2.0. It consists in a new higher-order 
+ programming language and runtime environment containing a 
+ Web broker, i.e., a Web server that may act indifferently as a 
+ regular Web server or Web proxy, and an extensive set of runtime 
+ libraries. The Hop language is designed for programming 
+ interactive web applications such as web agendas, web galleries, 
+ music players, etc. Hop can be viewed as a replacement for 
+ traditional graphical toolkits. 
+XB-Maemo-Icon-26:
+ iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAAAXNSR0IArs4c6QAA
+ AAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9cM
+ DQ8PNS4CLDoAAAZUSURBVEjHrVZbbFzVFV3n3Hvn4Tuelz0Pz9gz9oxn/Irj4ASw
+ U9xIVZFwA1EjGqRSVAnUn7aBAI0FRHGU0AeQ1pAiVfmgEjSoH6hNBVEk2h8oQmmo
+ k/iZOI7H9vgxL8+MZ8bzft17+jGhFUI0Du2Wzt/ee521zzp7b4K7sIVLh13+tfhR
+ hVLntNo1z3bdP+bbbizZjtPm3AkuvJF0h4O+0WJq6SAo5RVa73mLvfOUrUm7ZO4c
+ le6Ug98O0Fokbo+Fwy8j7ztwn3dTDSpjdlk6GA2qeVmyjwBYu1MOeieH9YnDtlQs
+ NCanZw70uTbUjfo8GrUF7HSH1XJm4pFEPHB6aWLE8rVLl5h/jgbDaf1WMvl2MnR1
+ /2DvJmeoK4IQGSAAYxSpnAqXZ0xF3th3VmMwnfS0W7MW7y/ku2IUieU64rHY75PB
+ 8eGhnXGuQcyDgoKAA2EcKKMw1hUw1BdTscRnT6Vi0dfCG1uebTNK3HyRRmLpjsCK
+ /xgr+h7td4fURl0FBDIYo5BkChACjkggRAZjHBJZAZMLTbmq2vsXe5vnFau5/pal
+ 44vMviSGYGhLH49Hf8mKiw/1tsXVRm0RBASSzGNmkcdnswAvEOzt49HlqIKDBIOm
+ gj5XRJz20+9FQ6KmUjH/CEDiKxmtTzxnW/UHz6bCl4YHulOCob4AChm5kgIXP63D
+ 6+cqmF8noGDodFRx5AkVHh6qgFAgXaQA4zA1p66obfved7qcz7r6T4e+ABSdP8EF
+ I9HmVCw0lt2Y+u4DvUlOK5ZAmIyiRPDxP1U49ibDjdUSJAkgYKAc0OFQ4NRPBbRY
+ OPzxAsO++yT0uChuBQyS2rz7vF7veL7V0RQ2d4/IHAA8cajPEw0FXy1vTT480LOp
+ MIilmk4IwfgNESd+J+HarQJkdls7jIHJDLFkFdcXCTYSCnwyWYFvnUGj5rF3d5Zu
+ BJPOXFFsrBJ+9q13L6fI3JWj7tX56WNCwf/95saE2mIpQMsz5Es8ri0oMPZ2GctB
+ GaWyjPVYFSWJgcgACAEhDDwlEEUew/dzeHy/AJe9AmczQy5H2LTPkpbE3gsOT9fP
+ ucce6TmXj07uv8cTFxfXGD6+wqOxUYnzHxGcOVeEvl7AyFMKDO5SYHFdwkYC4BhQ
+ Lwow6jmUywy7uwS88owSu3tKMBsl8LQKlVomWrGiCoQqnRJt6eCVCi0DFESSgHt3
+ VLEaBo6/UYTFzOHE0yL27cpDyWUAcHjgXjXevcDjjXeyePKgCl1tPJaCEp48JMNt
+ zICgpmgGAlkiqFQJKhU5Vy6Vp8jSzGtt/htXX5LS1x/f0RoWdboSMhkGtZJBVDFw
+ tApGACJTyIRiK6/ED14CHhzk0GTk0NNRRVdrHjyrgRAGSIxHNKVk0z5znNT3vOPa
+ secMde98wd/s6f610LDng0m/OZ8pKGDVS9CqZVAqg4GAACBEBmUSDHU5DPULyBeA
+ vf0SvPYcBCaBgNVETIB4WsTUgiPPNwz82d7e+Vtv/2iIAoDFrluytjhf1NkGL47f
+ MEuJbB0Y40BYDYawWkFqKmDoamWYWWD4+wTB3LIC6wkFMnkRVUnAZlrE+E2TZHB+
+ 80OHu/tXTpc3/KUPG1ocs635ls/GF/46vKc7Jph0OVDwAJFq53O/ZB0+/FTASpDD
+ ZqaCTKGKnU4eD35DgcCGvmjp+s7fnB7vTyyuw6Gv7HU3r5w0xsLBt/KRfwzvaA2o
+ m/RZEMpul6YWIoEDgQzCeMgyRTKjxHpcgXDSlBEtA38y21p+1j1wMvVfe53Vbknx
+ vHB8NZ/NzK6wR4W2gKZRVwKh1Vr5GECJ/G9IgKAqM0TSpozS2Ptei7v9tNlqSW97
+ Hi1ce9kTXPOPZlc/eWywL65s0GT/cy8iofb2DJtpDS5PmYqic+gPDnf7b9p3HV+8
+ q1FuajItlivVZ5TCt7lL1z86NNDDhIb6wm02FDKjiKc0GJ83SebOb53XGEwvmK3W
+ 9NdeTkK+15uW5+bOpIOXDtzTHlCZ9GUADNGUCtM+R1HnHLro7u4+YnE9Hfqfdgab
+ 5/mwyeoYqTPvvTC70pyPbKkQSaox62/O1dkHPjDZnEfvBLLtLchibwwSyo+ulLc2
+ r96iP+QJx2utfe83tbaeslhNgf/bXve5Lc2+2hYLZt5UKHiltdl6xOb98c3txv4L
+ 0327iDG2bFcAAAAASUVORK5CYII=
+

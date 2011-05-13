@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Wed Mar  2 07:15:25 2011 (serrano)                */
+#*    Last change :  Fri May 13 10:31:38 2011 (serrano)                */
 #*    Copyright   :  2006-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -20,7 +20,7 @@
 #*---------------------------------------------------------------------*/
 POPULATION = Makefile
 
-POPDIRS = felix android macosx vm
+POPDIRS = felix android macosx debian vm
 
 install:
 

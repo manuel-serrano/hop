@@ -1,0 +1,16 @@
+;*=====================================================================*/
+;*    .../project/hop/linux/maemo/hop-launcher/hop-launcher.hop        */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Wed May 14 09:16:41 2008                          */
+;*    Last change :  Sat Feb 13 10:19:56 2010 (serrano)                */
+;*    Copyright   :  2008-10 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    The HOP RC file loaded when executed from Maemo's hop-launch.    */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    Start additional services                                        */
+;*---------------------------------------------------------------------*/
+(print "Preloading hopmusic/mpd")
+(autoload-force-load! (make-url-name (hop-service-base) "hopmusic/mpd"))

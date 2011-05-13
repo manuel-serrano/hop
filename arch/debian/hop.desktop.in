@@ -1,0 +1,12 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=@HOPVERSION@
+Type=Application
+Name=Hop
+Exec=@HOPPREFIX@/bin/hop-launcher
+Icon=hop
+X-Window-Icon=tn-bookmarks-link
+X-HildonDesk-ShowInToolbar=true
+X-Osso-Service=fr.inria.hop
+X-Osso-Type=application/x-executable
+Terminal=false

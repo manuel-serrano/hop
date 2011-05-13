@@ -1,0 +1,58 @@
+#!/bin/sh
+#*=====================================================================*/
+#*    serrano/prgm/project/hop/linux/maemo/debian/postinst.in          */
+#*    -------------------------------------------------------------    */
+#*    Author      :  Manuel Serrano                                    */
+#*    Creation    :  Tue Dec 18 10:55:54 2007                          */
+#*    Last change :  Wed May 11 13:14:33 2011 (serrano)                */
+#*    Copyright   :  2007-11 Manuel Serrano                            */
+#*    -------------------------------------------------------------    */
+#*    Add the HOP desktop entries from the configuration files         */
+#*=====================================================================*/
+
+if [ "@DEBIAN@ " = "maemo " ]; then
+  # Where to store the desktop file, usually, this is
+  # /usr/share/applications/hildon
+  #hildondir=`pkg-config osso-af-settings --variable=desktopentrydir`
+  prefixhildondir=@PREFIX@/share/applications/hildon
+  hildondir=/usr/share/applications/hildon
+  
+  #* path="/etc/hildon-desktop"                                          */
+  #* home_conf="$path/home.conf"                                         */
+  #* home_entry="[/usr/share/applications/hildon/hop.desktop]"           */
+  
+  # The clock might be wrong and we know that we need to update the icon
+  # cache so we just force it.
+  
+  gtk-update-icon-cache -f /usr/share/icons/hicolor
+  
+  # Now that the icon cache is uptodate, we move the .desktop file into
+  # place.  Doing this only now prevents the Task navigator from
+  # reconstructing the menu before the icon is available.  This trick is
+  # not really necessary when using maemo-select-menu-location (as we do
+  # below), since maemo-select-menu-location will trigger the
+  # reconstructing of the Taks navigator menu as well.
+  
+  cp $prefixhildondir/hop.inactive $hildondir/hop.desktop
+  
+  # Now we are ready to let the user move the entry around, but only if
+  # this is a new install
+  
+  if [ "@MAEMOHASLOCATION@ " = "yes " ]; then
+    oldversion="$2"
+    if [ -z "$oldversion" ]; then
+      maemo-select-menu-location hop.desktop
+    fi
+  fi
+fi
+
+#* echo $home_entry | cat - $home_conf > $path/home_conf.tmp           */
+#* mv $path/home_conf.tmp $home_conf                                   */
+
+search=`grep @HOPPREFIX@ /etc/ld.so.conf`
+
+if [ "$search" != "@HOPPREFIX@/lib" ]; then
+  echo "@HOPPREFIX@/lib" >> /etc/ld.so.conf
+fi
+
+ldconfig
