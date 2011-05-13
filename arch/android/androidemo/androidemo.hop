@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Wed May 11 19:23:10 2011 (serrano)                */
+;*    Last change :  Fri May 13 11:35:06 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -507,20 +507,17 @@ missed.")
       (<H3> "Music database")
       (let ((mpd (instantiate::androidmpd-database
 		    (phone android))))
-	 (<DIV> :id "database-genre"
-	    (<PRE>
-	       (html-string-encode
-		  (let ((s (call-with-output-string
-			      (lambda (op) (mpd-database-listgenre mpd op)))))
-		     (tprint "genre=" s)
-		     s))))
-	 (<DIV> :id "database-artist"
-	    (<PRE>
-	       (html-string-encode
-		  (let ((s (call-with-output-string
-			      (lambda (op) (mpd-database-listartist mpd op)))))
-		     (tprint "artist=" s)
-		     s)))))
+	 (list
+	    (<DIV> :id "database-genre"
+	       (<PRE>
+		  (html-string-encode
+		     (call-with-output-string
+			(lambda (op) (mpd-database-listgenre mpd op))))))
+	    (<DIV> :id "database-artist"
+	       (<PRE>
+		  (html-string-encode
+		     (call-with-output-string
+			(lambda (op) (mpd-database-listartist mpd op))))))))
       (<H3> "Music player")
 ;*       (<AUDIO>                                                      */
 ;* 	 :controls #t                                                  */
