@@ -1,0 +1,22 @@
+#! /bin/sh
+
+errcode=5
+pid=
+
+killhop() {
+  if [ "$pid " != " " ]; then
+    if [ -d /proc/$pid ]; then
+      kill -9 $pid
+      pid=
+    fi
+  fi
+}
+
+trap killhop EXIT
+trap killhop TERM
+
+while [ $errcode -eq 5 ]; do
+   /usr/local/bin/hop "$@" & pid=$!
+   wait $pid
+   errcode=$?
+done

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar  2 07:14:10 2011                          */
-#*    Last change :  Mon Mar  7 14:20:43 2011 (serrano)                */
+#*    Last change :  Fri May 13 13:53:07 2011 (serrano)                */
 #*    Copyright   :  2011 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    VirtualMachine image generation                                  */
@@ -28,7 +28,11 @@ WEBLETS = hoptex-1.1.2.hz popart-api-1.0.0.hz hopslide-2.5.1.hz
 #*---------------------------------------------------------------------*/
 POPULATION = Makefile \
   scripts/compile_bigloo_hop.sh scripts/create_image.sh \
-  scripts/convert_image.sh scripts/install_bigloo_hop.sh scripts/mount_hdd.sh
+  scripts/convert_image.sh scripts/install_bigloo_hop.sh scripts/mount_hdd.sh \
+  config/boot/syslinux/extlinux.conf config/etc/apt/sources.list \
+  config/etc/default/hop config/etc/hostname config/etc/init.d/hop \
+  config/etc/network/interfaces config/etc/samba/smb.conf \
+  config/usr/local/sbin/hop
 
 POPDIRS = 
 
