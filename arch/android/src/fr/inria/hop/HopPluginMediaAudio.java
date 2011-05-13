@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Wed May 11 17:16:20 2011 (serrano)                */
+/*    Last change :  Fri May 13 11:08:43 2011 (serrano)                */
 /*    Copyright   :  2011 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -65,11 +65,12 @@ public class HopPluginMediaAudio extends HopPlugin {
    }
 
    private void queryGenres( OutputStream op ) throws IOException {
-      Cursor cur = activity.managedQuery( Genres.EXTERNAL_CONTENT_URI,
-					  GENRE_LOOKUP_PROJECTION,
-					  null,
-					  null,
-					  null );
+      ContentResolver cr = activity.getContentResolver();
+      Cursor cur = cr.query( Genres.EXTERNAL_CONTENT_URI,
+			     GENRE_LOOKUP_PROJECTION,
+			     null,
+			     null,
+			     null );
       synchronized( op ) {
 	 if( cur == null ) {
 	    op.write( "()".getBytes() );
@@ -79,7 +80,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 	       int i = cur.getColumnIndex( Genres.NAME ); 
 	       do {
 		  String genre = cur.getString( i );
-		     
+		  Log.d( "HopPluginMediaAudio", "genre=" + genre );   
 		  op.write( "\"".getBytes() );
 		  op.write( genre.getBytes() );
 		  op.write( "\" ".getBytes() );
@@ -92,6 +93,7 @@ public class HopPluginMediaAudio extends HopPlugin {
    }
 
    private void queryArtists( OutputStream op ) throws IOException {
+      ContentResolver cr = activity.getContentResolver();
       Cursor cur = activity.managedQuery( Artists.EXTERNAL_CONTENT_URI,
 					  ARTIST_LOOKUP_PROJECTION,
 					  null, 
@@ -106,7 +108,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 	       int i = cur.getColumnIndex( Artists.ARTIST );
 	       do {
 		  String artist = cur.getString( 0 );
-		     
+		  
 		  op.write( "\"".getBytes() );
 		  op.write( artist.getBytes() );
 		  op.write( "\" ".getBytes() );
