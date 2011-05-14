@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Fri May 13 16:53:11 2011 (serrano)                */
+;*    Last change :  Sat May 14 15:41:23 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -96,28 +96,28 @@
 demonstrations it is adviced to run them from a PC, although they can be
 executed by the Web browsers running on the Android device.")
 
-;* 	 (<H2> "Telephony")                                            */
-;* 	 (<ANDROIDEMO:TELEPHONY>)                                      */
+	 (<H2> "Telephony")
+	 (<ANDROIDEMO:TELEPHONY>)
+
+	 (<H2> "Hardware")
+	 (<DIV> :class "short-note"
+	    "This small demonstrations illustrate the ability of the server
+side to use the hardware sensors and activators of the phone. Each time a
+button of this web interface is clicked, the corresponding order is send
+to the server to directly controls the phone.")
+	 (<ANDROIDEMO:HARDWARE>)
+;* 	                                                               */
+;* 	 (<H2> "Contact")                                              */
+;* 	 (<DIV> :class "short-note"                                    */
+;* 	    "This illustrates the ability of the Hop to use the on-device */
+;* contacts.")                                                         */
+;* {* 	 (<ANDROIDEMO:CONTACT>)                                        *} */
 ;*                                                                     */
-;* 	 (<H2> "Hardware")                                             */
-;* 	 (<DIV> :class "short-note"                                    */
-;* 	    "This small demonstrations illustrate the ability of the server */
-;* side to use the hardware sensors and activators of the phone. Each time a */
-;* button of this web interface is clicked, the corresponding order is send */
-;* to the server to directly controls the phone.")                     */
-;* 	 (<ANDROIDEMO:HARDWARE>)                                       */
-;* {* 	                                                               *} */
-;* {* 	 (<H2> "Contact")                                              *} */
-;* {* 	 (<DIV> :class "short-note"                                    *} */
-;* {* 	    "This illustrates the ability of the Hop to use the on-device *} */
-;* {* contacts.")                                                         *} */
-;* {* {* 	 (<ANDROIDEMO:CONTACT>)                                        *} *} */
-;* {*                                                                     *} */
-;* 	 (<H2> "Speech")                                               */
-;* 	 (<DIV> :class "short-note"                                    */
-;* 	    "This shows the Android ability to synthesizes speech from */
-;* text for immediate playback or to create a sound file.")            */
-;* 	 (<ANDROIDEMO:SPEECH>)                                         */
+	 (<H2> "Speech")
+	 (<DIV> :class "short-note"
+	    "This shows the Android ability to synthesizes speech from
+text for immediate playback or to create a sound file.")
+	 (<ANDROIDEMO:SPEECH>)
 	 
 	 (<H2> "Multimedia")
 	 (<DIV> :class "short-note"
@@ -508,19 +508,36 @@ missed.")
       (let ((mpd (instantiate::androidmpd-database
 		    (phone android))))
 	 (<DIV> :id "database-audio"
+	    (<UL>
 	       (map (lambda (g)
 		       (list
-			  (<H4> (html-string-encode (car g)))
-			  (<DIV>
-			     (format "~l" (mpd-database-getgenreartist mpd (car g))))))
-		  (mpd-database-getgenre mpd))))
+			  (<LI> (html-string-encode (car g)))
+			  (<UL>
+			     (map (lambda (a)
+				     (tprint "Artist=" a)
+				     (list
+					(<LI> a)
+					(<UL>
+					   (map (lambda (a)
+						   (tprint "Album=" a)
+						   (list
+						      (<LI> a)
+						      (map (lambda (a)
+							      (<PRE>
+								 (with-output-to-string
+								    (lambda ()
+								       (display a)))))
+							 (mpd-database-get-album mpd a))))
+					      (mpd-database-getartistalbum mpd a)))))
+				(mpd-database-getgenreartist mpd (car g))))))
+		  (mpd-database-getgenre mpd)))))
       (<H3> "Music player")
-;*       (<AUDIO>                                                      */
-;* 	 :controls #t                                                  */
-;* 	 :src "http://www.m-base.org/motherland_pulse_mp3_files/motherland_pulse.mp3" */
-;* 	 :browser 'none                                                */
-;* 	 :server (instantiate::audio-server                            */
-;* 		    (music amusic)))                                   */
+      (<AUDIO>
+	 :controls #t
+	 :src "http://www.m-base.org/motherland_pulse_mp3_files/motherland_pulse.mp3"
+	 :browser 'none
+	 :server (instantiate::audio-server
+		    (music amusic)))
       (<DIV> :style "font-size: 10px; font-style: italic"
 	 "Thanks to " (<A> :href "http://www.m-base.com" "Steve Coleman")
 	 " for making his music freely available on-line.")))

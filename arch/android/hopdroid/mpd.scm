@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 11 08:16:32 2011                          */
-;*    Last change :  Fri May 13 16:18:24 2011 (serrano)                */
+;*    Last change :  Sat May 14 14:43:30 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android MPD implementation                                       */
@@ -57,5 +57,19 @@
 ;*---------------------------------------------------------------------*/
 (define-method (mpd-database-getgenreartist o::androidmpd-database genre)
    (with-access::androidmpd-database o (phone)
-      (android-send-command/result phone mpd-plugin #\a genre)))
+      (android-send-command/result phone mpd-plugin #\g genre)))
 
+;*---------------------------------------------------------------------*/
+;*    mpd-database-getartistalbum ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (mpd-database-getartistalbum o::androidmpd-database artist)
+   (with-access::androidmpd-database o (phone)
+      (android-send-command/result phone mpd-plugin #\d artist)))
+
+;*---------------------------------------------------------------------*/
+;*    mpd-database-get-album ::androidmpd-database ...                 */
+;*---------------------------------------------------------------------*/
+(define-method (mpd-database-get-album o::androidmpd-database album)
+   (with-access::androidmpd-database o (phone %albums)
+      (android-send-command/result phone mpd-plugin #\a album)))
+   
