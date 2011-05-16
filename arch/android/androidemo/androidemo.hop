@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Sat May 14 15:41:23 2011 (serrano)                */
+;*    Last change :  Sat May 14 18:47:04 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -514,9 +514,8 @@ missed.")
 			  (<LI> (html-string-encode (car g)))
 			  (<UL>
 			     (map (lambda (a)
-				     (tprint "Artist=" a)
 				     (list
-					(<LI> a)
+					(<LI> (car a))
 					(<UL>
 					   (map (lambda (a)
 						   (tprint "Album=" a)
@@ -528,7 +527,7 @@ missed.")
 								    (lambda ()
 								       (display a)))))
 							 (mpd-database-get-album mpd a))))
-					      (mpd-database-getartistalbum mpd a)))))
+					      (mpd-database-getartistalbum mpd (car a))))))
 				(mpd-database-getgenreartist mpd (car g))))))
 		  (mpd-database-getgenre mpd)))))
       (<H3> "Music player")

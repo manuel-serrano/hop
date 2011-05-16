@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Wed Mar  2 20:41:04 2011 (serrano)                */
+;*    Last change :  Sun May 15 15:15:48 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -157,26 +157,30 @@
 ;*    music-play ::androidmusic ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (music-play o::androidmusic . song)
-   (with-access::androidmusic o (%mutex %open %status phone)
+   (with-access::androidmusic o (%mutex %open %status phone %playlist)
       (with-lock %mutex
 	 (lambda ()
 	    (unless %open
 	       (error "music-play ::androidmusic"
 		      "Player closed (or badly initialized)"
 		      o))
-	    (let ((url (if (pair? song)
-			   (if (not (integer? (car song)))
-			       (bigloo-type-error
-				"music-play ::androidmusic"
-				'int
-				(car song))
-			       (set-song! o (car song)))
-			   (set-song! o (musicstatus-song %status)))))
-	       (when (string? url)
-		  (let ((uri (charset-convert url)))
-		     (android-send-command phone music-plugin #\u uri)
-		     (with-access::musicstatus %status (state)
-			(set! state 'play)))))))))
+	    (tprint "music-play song=" song " plist=" (length %playlist))
+	    (when (pair? %playlist)
+	       (let ((url (if (pair? song)
+			      (if (not (integer? (car song)))
+				  (bigloo-type-error
+				     "music-play ::androidmusic"
+				     'int
+				     (car song))
+				  (set-song! o (car song)))
+			      (set-song! o (musicstatus-song %status)))))
+		  (tprint "MUSIC-PLAY URL=[" url "]")
+		  (when (string? url)
+		     (let ((uri (charset-convert url)))
+			(tprint "MUSIC-PLAY URI=[" uri "]")
+			(android-send-command phone music-plugin #\u uri)
+			(with-access::musicstatus %status (state)
+			   (set! state 'play))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-seek ::androidmusic ...                                    */

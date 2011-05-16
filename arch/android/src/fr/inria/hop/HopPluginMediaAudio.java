@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Sat May 14 14:44:20 2011 (serrano)                */
+/*    Last change :  Sun May 15 16:54:20 2011 (serrano)                */
 /*    Copyright   :  2011 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -174,6 +174,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 	       int in = cur.getColumnIndex( Media.TRACK );
 	       int ia = cur.getColumnIndex( Media.ARTIST );
 	       int iv = cur.getColumnIndex( Media.ALBUM );
+	       int im = cur.getColumnIndex( Media.MIME_TYPE );
 	       do {
 		  op.write( "(file: \"".getBytes() );
 		  op.write( cur.getString( ip ).getBytes() );
@@ -183,6 +184,9 @@ public class HopPluginMediaAudio extends HopPlugin {
 		  op.write( " ".getBytes() );
 		  op.write( "id: ".getBytes() );
 		  op.write( cur.getString( in ).getBytes() );
+		  op.write( " ".getBytes() );
+		  op.write( "mime-type: ".getBytes() );
+		  op.write( cur.getString( im ).getBytes() );
 		  op.write( " ".getBytes() );
 		  op.write( "artist: \"".getBytes() );
 		  op.write( cur.getString( ia ).getBytes() );

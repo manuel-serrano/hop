@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 11 08:16:32 2011                          */
-;*    Last change :  Sat May 14 14:43:30 2011 (serrano)                */
+;*    Last change :  Sun May 15 16:24:33 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android MPD implementation                                       */
@@ -57,14 +57,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (mpd-database-getgenreartist o::androidmpd-database genre)
    (with-access::androidmpd-database o (phone)
-      (android-send-command/result phone mpd-plugin #\g genre)))
+      (map list (android-send-command/result phone mpd-plugin #\g genre))))
 
 ;*---------------------------------------------------------------------*/
 ;*    mpd-database-getartistalbum ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (mpd-database-getartistalbum o::androidmpd-database artist)
    (with-access::androidmpd-database o (phone)
-      (android-send-command/result phone mpd-plugin #\d artist)))
+      (map list (android-send-command/result phone mpd-plugin #\d artist))))
 
 ;*---------------------------------------------------------------------*/
 ;*    mpd-database-get-album ::androidmpd-database ...                 */
@@ -72,4 +72,21 @@
 (define-method (mpd-database-get-album o::androidmpd-database album)
    (with-access::androidmpd-database o (phone %albums)
       (android-send-command/result phone mpd-plugin #\a album)))
+
+;*---------------------------------------------------------------------*/
+;*    mpd-database-find-album ::androidmpd-database ...                */
+;*---------------------------------------------------------------------*/
+(define-method (mpd-database-find-album o::androidmpd-database op album)
+   (with-access::mpd-database o (%albums)
+      (for-each (lambda (f)
+		   (for-each (lambda (k)
+				(let ((v (memq k f)))
+				   (when (pair? v)
+				      (display (keyword->string k) op)
+				      (display ": " op)
+				      (display (cadr v) op)
+				      (newline op))))
+		      '(file: pos: id: artist: title: album:)))
+	 (mpd-database-get-album o album))))
+
    

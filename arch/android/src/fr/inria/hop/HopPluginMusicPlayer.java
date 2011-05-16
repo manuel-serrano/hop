@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:29:16 2010                          */
-/*    Last change :  Tue Jan 11 17:29:40 2011 (serrano)                */
+/*    Last change :  Sun May 15 16:45:22 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Music Player                                             */
@@ -99,17 +99,17 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	       mplayer.release();
 	       mplayer = null;
 	       mplayerstate = MPLAYER_STATE_CLOSE;	       
-	       return;
 	    }
-
+	    return;
+	    
 	 case (byte)'b':
 	    // start
 	    Log.v( "HopDroidMusicPlayer", "mediaplayer start" );
 	    if( mplayer != null ) {
 	       mplayerstate = MPLAYER_STATE_PLAY;	       
 	       mplayer.start();
-	       return;
 	    }
+	    return;
 
 	 case (byte)'k':
 	    // seek
@@ -117,28 +117,29 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	       int sec = HopDroid.read_int32( ip );
 	       Log.v( "HopDroidMusicPlayer", "mediaplayer seek: " + sec );
 	       mplayer.seekTo( sec * 1000 );
-	       return;
 	    }
+	    return;
 
 	 case (byte)'e':
 	    // stop
-	    Log.v( "HopDroidMusicPlayer", "mediaplayer stop" );
+	    Log.v( "HopDroidMusicPlayer", "mediaplayer set stop" );
 	    if( mplayer != null ) {
 	       mplayerstate = MPLAYER_STATE_STOP;	       
 	       mplayer.stop();
-	       return;
 	    }
-
+	    return;
+	       
 	 case (byte)'p':
 	    // pause
-	    Log.v( "HopDroidMusicPlayer", "mediaplayer pause" );
+	    Log.v( "HopDroidMusicPlayer", "mediaplayer set pause" );
 	    if( mplayer != null ) {
 	       mplayer.pause();
 	       mplayerstate = MPLAYER_STATE_PAUSE;	       
-	       return;
 	    }
+	    return;
 
 	 case (byte)'u':
+	    Log.v( "HopDroidMusicPlayer", "loading..." );
 	    // url
 	    if( mplayer == null ) {
 	       mplayer = make_mediaplayer();
