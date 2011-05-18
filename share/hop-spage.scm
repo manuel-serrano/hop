@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Mon May  9 18:15:25 2011 (serrano)                */
+;*    Last change :  Wed May 18 09:56:24 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -30,7 +30,9 @@
 	   (spage-push-node tab node)
 	   (spage-head spage)
 	   (spage-tab spage)
-	   (spage-depth spage)))
+	   (spage-depth spage)
+	   (spage-current-tab spage)
+	   (find-spage id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-init ...                                                   */
@@ -438,14 +440,25 @@
 ;*    find-spage ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (find-spage el)
-   (let loop ((parent (dom-parent-node el)))
-      (cond
-	 ((string=? (parent.getAttribute "hssclass") "hop-spage")
-	  parent)
-	 ((or (not parent) (eq? parent #unspecified))
-	  (error "find-spage" "cannot find parent spage" el))
-	 (else
-	  (loop (dom-parent-node parent))))))
+   (let ((el (if (string? el)
+		 (dom-get-element-by-id el)
+		 el)))
+      (let loop ((parent (dom-parent-node el)))
+	 (cond
+	    ((string=? (parent.getAttribute "hssclass") "hop-spage")
+	     parent)
+	    ((or (not parent) (eq? parent #unspecified))
+	     (error "find-spage" "cannot find parent spage" el))
+	    (else
+	     (loop (dom-parent-node parent)))))))
+
+;*---------------------------------------------------------------------*/
+;*    spage-current-tab ...                                            */
+;*---------------------------------------------------------------------*/
+(define (spage-current-tab spage)
+   (let* ((tabs spage.tabs)
+	  (tbody (car tabs)))
+      tbody.tab))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-pop-update ...                                             */
@@ -514,11 +527,18 @@
    (let ((tab (if (string? tab) (dom-get-element-by-id tab) tab)))
       (when tab.svc
 	 (with-hop (tab.svc)
-	    (lambda (body)
-	       (let* ((spage (find-spage tab))
-		      (spviewport spage.spviewport))
-		  (dom-remove-child! spviewport (dom-last-child spviewport))
-		  (dom-append-child! spviewport body)))))))
+            (lambda (body)
+               (let* ((spage (find-spage tab))
+                      (spviewport spage.spviewport))
+		  (spage-resize spage)
+                  (dom-remove-child! spviewport (dom-last-child spviewport))
+		  (node-style-set! body
+		     :width (format "~apx" spage.spbodywidth))
+                  (dom-append-child! spviewport body)
+		  (set! spage.tabs (cons body (cdr spage.tabs)))
+		  (set! body.tab tab)
+		  (spage-invoke-onchange-listener! spage body)
+		  (sptab-invoke-onselect-listener! body.tab body "push")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-tab-pop ...                                                */
