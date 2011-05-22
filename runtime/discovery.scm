@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Fri May  6 16:06:39 2011 (serrano)                */
+;*    Last change :  Sun May 22 11:42:49 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -37,7 +37,9 @@
 
 	   (class discover-event::event
 	      (key::bstring read-only)
-	      (port::int read-only))
+	      (port::int read-only)
+	      (hostname::bstring read-only)
+	      (session::int read-only))
 
 	   (hop-discovery-init!)
 	   (hop-discovery-server ::int)
@@ -104,30 +106,31 @@
 	    (current-request-set! #f creq))))
    
    (let loop ((id -1))
-      (multiple-value-bind (msg host)
+      (multiple-value-bind (msg clienthost)
 	 (datagram-socket-receive serv 1024)
 	 (let ((l (string-split msg)))
 	    (when (=fx (length l) 2)
 	       (let ((svc (cadr l))
-		     (port (string->number (car l))))
-		  (when (and (or (not (string=? host discovery-host))
-				 (not (=fx port (hop-port))))
-			     (or (string=? svc "*")
-				 (service-exists? svc)))
+		     (clientport (string->number (car l))))
+		  (when (and (or (string=? svc "*")
+				 (service-exists? svc))
+			     (or (not (=fx clientport (hop-port)))
+				 (not (string=? (host clienthost) discovery-host))))
 		     (hop-verb 2 (hop-color id id " DISCOVERY ")
-			host ":" port "\n")
-		     (hop-discovery-reply host port svc))))))
+			clienthost ":" clientport "\n")
+		     (hop-discovery-reply clienthost clientport svc))))))
       (loop (-fx id 1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-discovery-reply ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (hop-discovery-reply host port service)
+(define (hop-discovery-reply clienthost clientport service)
    (when (=fx discovery-key 0)
       (set! discovery-key
 	 (bit-rsh (absfx (elong->fixnum (date->seconds (current-date)))) 2)))
-   (let ((url (format "http://~a:~a/hop/discovery?host=~a&port=~a&key=~a&service=~a" host port
-		 (hostname) (hop-port) discovery-key service)))
+   (let* ((name (hostname))
+	  (url (format "http://~a:~a/hop/discovery?host=~a&port=~a&hostname=~a&key=~a&service=~a&session=~a" clienthost clientport
+		  (host name) (hop-port) name discovery-key service (hop-session))))
       (with-url url (lambda (e) #unspecified))))
       
 ;*---------------------------------------------------------------------*/
@@ -136,7 +139,7 @@
 (define (hop-discovery-init!)
    (set! discovery-host (host (hostname)))
    (set! discovery-service
-      (service :name "discovery" (#!key host port key service)
+      (service :name "discovery" :id discovery (#!key host port hostname key service session)
 	 (mutex-lock! discovery-mutex)
 	 ;; find all the discovers that matches that event
 	 (let ((d (filter (lambda (d)
@@ -154,7 +157,9 @@
 					      (name "discover")
 					      (target service)
 					      (value host)
+					      (hostname hostname)
 					      (port (string->number port))
+					      (session (string->integer session))
 					      (key key))))
 				     (let loop ((l %listeners))
 					(when (pair? l)
@@ -166,8 +171,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-discover ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (hop-discover
-	   #!key
+(define (hop-discover #!key
 	   (address::bstring "255.255.255.255")
 	   (port::int (hop-discovery-port))
 	   service)

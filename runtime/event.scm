@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue May 10 07:48:02 2011 (serrano)                */
+;*    Last change :  Sun May 22 11:01:17 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -496,13 +496,14 @@
 	    (set! *client-key* (elong->fixnum (current-seconds)))
 	    
 	    (set! *websocket-service*
-		  (service :name "server-event/websocket" (#!key key)
+		  (service :name "server-event/websocket" :id server-event
+		     (#!key key)
 		     (when debug-websocket
 			(tprint "register websocket key=" key))
 		     (websocket-register-new-connection! (current-request) key)))
 	    
 	    (set! *port-service*
-		  (service :name "server-event/info" ()
+		  (service :name "server-event/info" :id server-event ()
 		     (let* ((req (current-request))
 			    (hd (http-request-header req))
 			    (host (assq host: hd))
@@ -514,7 +515,8 @@
 			    (vector (http-request-host req) port key)))))
 	    
 	    (set! *init-service*
-		  (service :name "server-event/init" (#!key key)
+		  (service :name "server-event/init" :id server-event
+		     (#!key key)
 		     (with-lock *event-mutex*
 			(lambda ()
 			   (let ((req (current-request)))
@@ -533,7 +535,8 @@
 				 (name key)))))))
 
 	    (set! *policy-file-service
-		  (service :name "server-event/policy-file" (#!key port key)
+		  (service :name "server-event/policy-file" :id server-event
+		     (#!key port key)
 		     (instantiate::http-response-string
 			(request (current-request))
 			(content-type "application/xml")
@@ -541,6 +544,7 @@
 
 	    (set! *close-service*
 		  (service :name "server-event/close" (#!key key)
+		     :id server-event
 		     (with-lock *event-mutex*
 			(lambda ()
 			   (let ((key (string->symbol key)))
@@ -551,11 +555,13 @@
 					     *flash-request-list*)))))))
 
 	    (set! *unregister-service*
-		  (service :name "server-event/unregister" (#!key event key)
+		  (service :name "server-event/unregister" :id server-event
+		     (#!key event key)
 		     (server-event-unregister event key)))
 	    
 	    (set! *register-service*
-		  (service :name "server-event/register" (#!key event key mode padding)
+		  (service :name "server-event/register" :id server-event
+		     (#!key event key mode padding)
 		     (server-event-register event key mode padding)))))))
 
 ;*---------------------------------------------------------------------*/

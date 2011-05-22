@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Apr 27 16:47:23 2011 (serrano)                */
+/*    Last change :  Sun May 22 11:01:07 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -352,6 +352,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
 	       register( p );
 	    }
 	 }
+
 	 hop_trigger_serverready_event( new HopServerReadyEvent() );
       }
       ws.onclose = function() {

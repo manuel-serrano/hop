@@ -268,7 +268,10 @@ intercepted. Here are the meaning of its optional arguments:
     * ++'*++ (the symbol ++*++), all ,(<APIREF> "services" "service.wiki")
  can be executed.
     * a list of service names (a list of symbols), each
- ,(<APIREF> "service" "service.wiki") in the list can be executed.
+ ,(<APIREF> "service" "service.wiki") in the list can be executed. The
+ special name "?" stands for the anonymous services. That is only users whose
+ authorized services list contains the symbol ? is allowed to execute
+ anonymous services. 
   * :groups - The list of groups the user belongs to.
 
 

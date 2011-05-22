@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Fri Jan 14 09:25:30 2011 (serrano)                */
+;*    Last change :  Sun May 22 09:36:05 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -166,12 +166,13 @@
        (let loop ((a args)
 		  (tmt '(hop-service-default-timeout))
 		  (ttl -1)
-		  (url '(make-hop-url-name (gen-service-url))))
+		  (url '(make-hop-url-name (gen-service-url)))
+		  (id '(hop-service-weblet-wid)))
 	  (cond
 	     ((or (symbol? (car a)) (null? (car a)) (pair? (car a)))
 	      (let ((svc (expand-service
 			  #f
-			  '(hop-service-weblet-wid)
+			  id
 			  url tmt ttl (car a) (cdr a))))
 		 (e (evepairify svc x) e)))
 	     ((eq? (car a) :timeout)
@@ -182,7 +183,8 @@
 		  (loop (cddr a)
 			(cadr a)
 			ttl
-			url)))
+			url
+			id)))
 	     ((eq? (car a) :url)
 	      (if (null? (cdr a))
 		  (error "service"
@@ -191,7 +193,8 @@
 		  (loop (cddr a)
 			tmt
 			ttl
-			(cadr a))))
+			(cadr a)
+			id)))
 	     ((eq? (car a) :name)
 	      (if (null? (cdr a))
 		  (error "service"
@@ -200,7 +203,24 @@
 		  (loop (cddr a)
 			tmt
 			ttl
-			`(make-hop-url-name ,(cadr a)))))
+			`(make-hop-url-name ,(cadr a))
+			id)))
+	     ((eq? (car a) :id)
+	      (cond
+		 ((null? (cdr a))
+		  (error "service"
+			 "Illegal service declaration (missing id)"
+			 x))
+		 ((not (symbol? (cadr a)))
+		  (error "service"
+			 "Illegal id"
+			 (cadr a)))
+		 (else
+		  (loop (cddr a)
+			tmt
+			ttl
+			url
+			`',(cadr a)))))
 	     ((eq? (car a) :ttl)
 	      (if (null? (cdr a))
 		  (error "service"
@@ -209,7 +229,8 @@
 		  (loop (cddr a)
 			tmt
 			(cadr a)
-			url)))
+			url
+			id)))
 	     (else
 	      (error "service" "Illegal service declaration" x)))))
       (else

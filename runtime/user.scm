@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Wed May 18 09:16:24 2011 (serrano)                */
+;*    Last change :  Sun May 22 11:14:57 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -121,16 +121,22 @@
 				    (substring p 1))
 				   (else
 				    p)))
+			  (svcs (if (eq? s '*)
+				    s
+				    (cons*
+				       'discovery
+				       'server-event
+				       (map! (lambda (s)
+						(if (eq? s '?)
+						    (hop-service-weblet-wid)
+						    s))
+					  s))))
 			  (u (instantiate::user
 				(name name)
 				(groups g)
 				(password pass)
 				(authentication auth)
-				(services (if (eq? s '*)
-					      s
-					      (cons* (hop-service-weblet-wid)
-						 'discovery
-						 s)))
+				(services svcs)
 				(preferences (append c prefs))
 				(preferences-filename cname)
 				(directories d)
