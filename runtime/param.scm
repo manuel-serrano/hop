@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue May  3 17:53:16 2011 (serrano)                */
+;*    Last change :  Mon May 23 08:55:55 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -446,13 +446,7 @@
 ;*    hop-discovery-port ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-discovery-port
-   (-fx (hop-port) 1)
-   (lambda (v)
-      (if (<fx v 1024)
-	  (error "hop-discovery-port-set!"
-	     "Server event ports must be greater than 1023"
-	     v)
-	  v)))
+   (-fx (hop-port) 1))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-proxy ...                                                    */

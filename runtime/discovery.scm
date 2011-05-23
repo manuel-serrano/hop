@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Sun May 22 11:42:49 2011 (serrano)                */
+;*    Last change :  Mon May 23 08:56:12 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -79,6 +79,10 @@
 (define (hop-discovery-server port)
    (cond-expand
       (enable-threads
+	 (when (<fx port 1024)
+	    (error "hop-discovery-server"
+	       "Discovery ports must be greater than 1023"
+	       port))
 	 (let ((serv (make-datagram-server-socket port)))
 	    (thread-start-joinable!
 	       (instantiate::pthread
