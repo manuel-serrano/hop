@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 19 14:53:16 2010                          */
-;*    Last change :  Fri Dec 17 07:38:34 2010 (serrano)                */
-;*    Copyright   :  2010 Manuel Serrano                               */
+;*    Last change :  Mon May 23 12:34:57 2011 (serrano)                */
+;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Parsing and dealing with CSS.                                    */
 ;*=====================================================================*/
@@ -434,8 +434,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (css-selector-match? selector::css-selector-name  el)
    (with-access::css-selector-name selector (name)
-      (when (string? name)
-	 (string-ci=? name (symbol->string! (xml-element-tag el))))))
+      (cond
+	 ((eq? name '*)
+	  #t)
+	 ((string? name)
+	  (string-ci=? name (symbol->string! (xml-element-tag el)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-selector-match? ::css-selector-hash ...                      */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed Mar  9 12:18:38 2011 (serrano)                */
+;*    Last change :  Mon May 23 11:53:08 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -23,7 +23,8 @@
 	    __hop_param
 	    __hop_read
 	    __hop_charset
-	    __hop_wiki-syntax)
+	    __hop_wiki-syntax
+	    __hop_svg)
    
    (static  (class state
 	       markup::symbol
@@ -1025,15 +1026,20 @@
        (let* ((s (the-substring 2 -2))
 	      (i (string-index s "|")))
 	  (add-expr!
-	   (if (not i)
-	       (let ((path (link-val s)))
-		  (<IMG> :src path :alt s))
-	       (let* ((p (substring s 0 i))
-		      (path (link-val p))
-		      (title (html-string-encode
-			      (charset
-			       (substring s (+fx i 1) (string-length s))))))
-		  (<IMG> :src path :alt p :title title)))))
+	     (if (not i)
+		 (let ((path (link-val s)))
+		    (if (or (string-suffix? ".svg" path)
+			    (string-suffix? ".svgz" path))
+			(<SVG:IMG> :src path :width "3cm")
+			(<IMG> :src path :alt s)))
+		 (let* ((p (substring s 0 i))
+			(t (substring s (+fx i 1) (string-length s)))
+			(path (link-val p)))
+		    (if (or (string-suffix? ".svg" path)
+			    (string-suffix? ".svgz" path))
+			(<SVG:IMG> :id t :src path)
+			(let ((title (html-string-encode (charset t))))
+			   (<IMG> :src path :alt p :title title)))))))
        (ignore))
 
       ;; embedded hop

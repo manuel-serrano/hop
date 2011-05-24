@@ -92,7 +92,6 @@ hop-login-panel div.hop-login-main {
   top: 10%;
   left: 10%;
   right: 10%;
-  width: 100%;
   z-index: 1000;
 }
 

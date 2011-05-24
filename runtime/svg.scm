@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Sun Nov  7 09:03:45 2010 (serrano)                */
-;*    Copyright   :  2007-10 Manuel Serrano                            */
+;*    Last change :  Mon May 23 12:18:03 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
 ;*=====================================================================*/
@@ -30,8 +30,7 @@
 	    __hop_cache
 	    __hop_priv)
    
-   (static (class xml-svg::xml-element)
-	   (class svg-img-markup
+   (static (class svg-img-markup
 	      name
 	      attributes)
 	   (class svg-img-markup+::svg-img-markup
@@ -511,7 +510,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    SVG:IMG ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-markup <SVG:IMG> ((id #unspecified)
+(define-markup <SVG:IMG> ((id #f)
 			  (class #f)
 			  (width #f)
 			  (height #f)
@@ -546,9 +545,9 @@
 			  (format "height: ~a; ~a" (width->height width) style1))
 			 (else
 			  style1))))
-	  (<DIV> :style style2 :class class
+	  (<DIV> :style style2 :class class :id id
 	     (instantiate::xml-svg
 		(tag 'svg:img)
-		(id (gensym 'svg:img))
-		(attributes '())
+		(id (xml-make-id 'svg:img))
+		(attributes `(:src ,src))
 		(body (list img))))))))

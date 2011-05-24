@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Wed Feb  9 11:30:12 2011 (serrano)                */
+;*    Last change :  Mon May 23 09:01:31 2011 (serrano)                */
 ;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -360,14 +360,12 @@
 		       (stage-exec-verb scd thread req resp connection
 					  " KEEP-ALIVE"))
 		    (keep-alive++)
-		    ;(stage scd thread stage-request id sock 'keep-alive 1)
 		    1)
 		   (else
 		    (when (>=fx (hop-verbose) 3)
 		       (stage-exec-verb scd thread req resp connection
 					  " KEEP-ALIVE"))
 		    (keep-alive++)
-		    ;(stage scd thread stage-request id sock 'keep-alive (hop-keep-alive-timeout))
 		    (hop-keep-alive-timeout)))))
 	    (else
 	     (when (>=fx (hop-verbose) 3)

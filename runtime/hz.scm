@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Thu Jan 20 08:00:42 2011 (serrano)                */
+;*    Last change :  Mon May 23 14:12:48 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -170,12 +170,12 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-cache-path url)
    (let ((cache (hz-resolve-name url (list (make-cache-name "api")))))
-      (if (directory? cache)
-	  (multiple-value-bind (base version)
-	     (hz-package-name-parse (basename url))
-	     (let ((cachedir (make-file-name cache base)))
-		(when (directory? cachedir)
-		   cachedir))))))
+      (when (directory? cache)
+	 (multiple-value-bind (base version)
+	    (hz-package-name-parse (basename url))
+	    (let ((cachedir (make-file-name cache base)))
+	       (when (directory? cachedir)
+		  cachedir))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-download-to-cache ...                                         */
@@ -190,9 +190,9 @@
 		(let* ((dest (make-cache-name "api"))
 		       (dir (if host
 				(make-file-name dest
-						(format "~a_~a~a"
-							host port
-							(prefix (basename apath))))
+				   (format "~a_~a~a"
+				      host port
+				      (prefix (basename apath))))
 				(make-file-name dest (prefix (basename apath))))))
 		   (cond
 		      ((directory? dir)
@@ -206,8 +206,8 @@
 		       (let* ((name (hz-server-resolve-name url))
 			      (dir (make-file-name dest (prefix name)))
 			      (url (string-append
-				    (hop-hz-server)
-				    "/hop/weblets/download?weblet=" name)))
+				      (hop-hz-server)
+				      "/hop/weblets/download?weblet=" name)))
 			  (download-url url dir)
 			  (make-file-name dir base))))))))))
 

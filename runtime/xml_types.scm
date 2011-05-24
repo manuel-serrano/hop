@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Wed Jan 19 14:25:25 2011 (serrano)                */
+;*    Last change :  Mon May 23 12:13:13 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
@@ -91,6 +91,8 @@
 
 	    (class xml-meta::xml-markup
 	       (content::obj (default #f)))
+
+	    (class xml-svg::xml-element)
 
 	    (generic %xml-constructor ::xml)))
 
