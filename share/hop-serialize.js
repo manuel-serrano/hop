@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sat Jan 15 19:47:41 2011 (serrano)                */
+/*    Last change :  Wed May 25 16:48:57 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -203,6 +203,23 @@ function utf_length( s ) {
 
 /*---------------------------------------------------------------------*/
 /*    hop_serialize_string ...                                         */
+/*    -------------------------------------------------------------    */
+/*    MS 25may2011: I'm not sure this is the correct way of encoding   */
+/*    strings. In the current implementation, the UCS2 is transformed  */
+/*    into a uri-encoded string. This works fine for sending the       */
+/*    value to the server. The problem is when that encoding is used   */
+/*    by hop_obj_to_string. That function will apply codeURI to the    */
+/*    result of the encoding which will change the length of the       */
+/*    encoded character. Imaging a string which contains the two       */
+/*    latin character e' such as te'. In UCS2, this string has a       */
+/*    length of 2, encoded in UTF8 it has a length of 3, thus          */
+/*    the function hop_serialize_string will strink the encoded        */
+/*    string. So the serialization has marked a string of length 3     */
+/*    but the actual string produced by obj_to_string only contains    */
+/*    a string of length 2! For the decodeing to work, the decoder has */
+/*    to be aware that the substring it extract might larger than      */
+/*    the expected value. This is implemented by a loop inside         */
+/*    the decoding of the string (see read_string).                    */
 /*---------------------------------------------------------------------*/
 function hop_serialize_string( mark, item ) {
    return mark +
@@ -336,6 +353,7 @@ function hop_string_to_obj( s ) {
    function read_float( s ) {
       var szf = read_size( s );
       var res = s.substring( pointer, pointer + szf );
+      
       pointer += szf;
 
       return +res;
@@ -366,9 +384,17 @@ function hop_string_to_obj( s ) {
    }
    
    function read_string( s ) {
-      var sz = read_size( s );
+      var ulen = read_size( s );
+      var sz = ((ulen + pointer) > s.length) ? s.length - pointer : ulen;
       var res = s.substring( pointer, pointer + sz );
 
+      // see the comment of function hop_serialize_string to understand
+      // that loop
+      while( utf_length( res ) > ulen ) {
+	 sz--;
+	 res = s.substring( pointer, pointer + sz );
+      }
+      
       if( defining >= 0 ) {
 	 definitions[ defining ] = res;
 	 defining = -1;

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Sun Apr 24 07:37:44 2011 (serrano)                */
+;*    Last change :  Mon May 30 14:45:15 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop expanders installer                                          */
@@ -24,7 +24,7 @@
    (eval `(define-expander define-xml-element ,hop-define-xml-el-expander))
    (eval `(define-expander define-xml-alias ,hop-define-xml-alias-expander))
    (eval `(define-expander define-xml-compound ,hop-define-xml-cpd-expander))
-   (eval `(define-expander define-markup ,hop-server-define-markup))
+   (eval `(define-expander define-tag ,hop-server-define-tag))
    (eval `(define-expander define-hss-type ,hop-define-hss-type-expander))
    (eval `(define-expander define-hss-property ,hop-define-hss-property-expander))
    (eval `(define-expander define-hss-function ,hop-define-hss-function-expander)))

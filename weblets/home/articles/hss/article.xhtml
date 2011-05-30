@@ -13717,12 +13717,12 @@ fa&shy;cil&shy;i&shy;ties with an im&shy;por&shy;tant dif&shy;fer&shy;ence :
 <p id='_604'>For in&shy;stance, in Hop, one might cre&shy;ate <em id='_603'>labelled frames</em> with two
 fol&shy;low&shy;ing dec&shy;la&shy;ra&shy;tions:
 </p>
-<pre id='_605'>(define-markup &lt;LFRAME&gt; (body)
+<pre id='_605'>(define-tag &lt;LFRAME&gt; (body)
    (&lt;DIV&gt; :hssclass &quot;hop-lframe&quot;
       (&lt;DIV&gt; :hssclass &quot;hop-lfborder&quot;
          (&lt;DIV&gt; :hssclass &quot;hop-lfbody&quot; body))))
   
-(define-markup &lt;LFLABEL&gt; (body)
+(define-tag &lt;LFLABEL&gt; (body)
    (&lt;DIV&gt; :hssclass &quot;hop-lflabel&quot;
       (&lt;SPAN&gt; body)))
 </pre>

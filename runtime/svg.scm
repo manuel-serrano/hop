@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Mon May 23 12:18:03 2011 (serrano)                */
+;*    Last change :  Mon May 30 14:46:23 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -105,10 +105,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    Standards SVG elements                                           */
 ;*---------------------------------------------------------------------*/
-(define-markup <SVG> ((id #unspecified string)
-		      (xmlns "http://www.w3.org/2000/svg" string)
-		      (attributes)
-		      body)
+(define-tag <SVG> ((id #unspecified string)
+		   (xmlns "http://www.w3.org/2000/svg" string)
+		   (attributes)
+		   body)
    (instantiate::xml-element
       (tag 'svg)
       (id (xml-make-id id 'svg))
@@ -202,7 +202,7 @@
 	  (else
 	  (for-each (lambda (o) (show-svg-img o prefix)) o))))
       (else
-       (error "show-svg-img" "Illegal object" o))))
+       (error "<SVG:IMG>" "Illegal object" o))))
        
 ;*---------------------------------------------------------------------*/
 ;*    show-svg-img-attributes                                          */
@@ -510,20 +510,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    SVG:IMG ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-markup <SVG:IMG> ((id #f)
-			  (class #f)
-			  (width #f)
-			  (height #f)
-			  (style "text-align: center" string)
-			  (src #unspecified string)
-			  (prefix #t boolean)
-			  (display "-moz-inline-box; -moz-box-orient:vertical; display:inline-block")
-			  (attrs))
+(define-tag <SVG:IMG> ((id #f)
+		       (class #f)
+		       (width #f)
+		       (height #f)
+		       (style "text-align: center" string)
+		       (src #unspecified string)
+		       (prefix #t boolean)
+		       (display "-moz-inline-box; -moz-box-orient:vertical; display:inline-block")
+		       (attrs))
    (cond
       ((not (string? src))
-       (error "<SVG-IMG>" "Illegal image src" src))
+       (error "<SVG:IMG>" "Illegal image src" src))
       ((not (file-exists? src))
-       (error "<SVG-IMG>" "Cannot find image" src))
+       (error "<SVG:IMG>" "Cannot find image" src))
       (else
        (let* ((img (call-with-input-file
 			 (if (string=? (suffix src) "svgz")

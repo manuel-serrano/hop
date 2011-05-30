@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/widget/colorchooser.hop           */
+;*    serrano/prgm/project/hop/2.2.x/widget/colorchooser.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 14 12:01:13 2009                          */
-;*    Last change :  Sat Jan  2 08:48:31 2010 (serrano)                */
-;*    Copyright   :  2009-10 Manuel Serrano                            */
+;*    Last change :  Mon May 30 14:47:35 2011 (serrano)                */
+;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Color Chooser implementation                                     */
 ;*=====================================================================*/
@@ -24,10 +24,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    <COLORCHOOSER> ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-markup <COLORCHOOSER> ((id #unspecified string)
-			       (onselect #f)
-			       (attributes)
-			       body)
+(define-tag <COLORCHOOSER> ((id #unspecified string)
+			    (onselect #f)
+			    (attributes)
+			    body)
    (let ((cc (xml-make-id id 'colorchooser))
 	 (satval (xml-make-id 'satval))
 	 (hmodel (xml-make-id 'hmodel))

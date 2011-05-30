@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Nov  7 08:26:54 2010                          */
-;*    Last change :  Sun Nov  7 08:27:53 2010 (serrano)                */
-;*    Copyright   :  2010 Manuel Serrano                               */
+;*    Last change :  Mon May 30 14:48:05 2011 (serrano)                */
+;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Foot widgets                                                     */
 ;*=====================================================================*/
@@ -22,10 +22,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    <FOOT> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-markup <FOOT> ((id #unspecified string)
-		       (class "foot" string)
-		       (inline #f)
-		       body)
+(define-tag <FOOT> ((id #unspecified string)
+		    (class "foot" string)
+		    (inline #f)
+		    body)
    (<DIV> :id (xml-make-id id 'FOOT)
       :class class
       (<DIV> :align "center"
@@ -40,13 +40,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    <FOOT-BUTTON> ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-markup <FOOT-BUTTON> ((id #unspecified string)
-			      (class "foot-button")
-			      (href #f string)
-			      (title #f string)
-			      (path #f)
-			      (inline #f)
-			      (src #f))
+(define-tag <FOOT-BUTTON> ((id #unspecified string)
+			   (class "foot-button")
+			   (href #f string)
+			   (title #f string)
+			   (path #f)
+			   (inline #f)
+			   (src #f))
    (<A> :class class
       :href href
       :title title

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/widget/tree.scm                   */
+;*    serrano/prgm/project/hop/2.2.x/widget/tree.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Jun 19 06:38:34 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Mon May 30 14:49:11 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
 ;*=====================================================================*/
@@ -49,21 +49,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    <TREE> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-markup <TREE> ((id #unspecified string)
-		       (class #f)
-		       (visible #t)
-		       (open #f)
-		       (multiselect #f)
-		       (onselect #f)
-		       (onunselect #f)
-		       (onopen #f)
-		       (onclose #f)
-		       (value #unspecified)
-		       (history #unspecified)
-		       (inline #t boolean)
-		       (iconopen #t)
-		       (iconclose #t)
-		       body)
+(define-tag <TREE> ((id #unspecified string)
+		    (class #f)
+		    (visible #t)
+		    (open #f)
+		    (multiselect #f)
+		    (onselect #f)
+		    (onunselect #f)
+		    (onopen #f)
+		    (onclose #f)
+		    (value #unspecified)
+		    (history #unspecified)
+		    (inline #t boolean)
+		    (iconopen #t)
+		    (iconclose #t)
+		    body)
    (let ((head ""))
       (when (and (pair? body) (xml-markup-is? (car body) 'trhead))
 	 (set! head (car body))
@@ -100,12 +100,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    <TRLEAF> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-markup <TRLEAF> ((id #unspecified string)
-			 (class #f)
-			 (value #unspecified)
-			 (inline #t boolean)
-			 (icon #t)
-			 body)
+(define-tag <TRLEAF> ((id #unspecified string)
+		      (class #f)
+		      (value #unspecified)
+		      (inline #t boolean)
+		      (icon #t)
+		      body)
    (instantiate::html-tree-leaf
       (tag 'tree-leaf)
       (klass (if (string? class) class ""))

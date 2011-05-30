@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Apr 15 13:44:06 2011 (serrano)                */
+;*    Last change :  Mon May 30 14:45:54 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -479,11 +479,11 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 ;*---------------------------------------------------------------------*/
 ;*    LINK ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define-markup <LINK> ((id #unspecified string)
-		       (inline #f boolean)
-		       (href #f string)
-		       (attributes)
-		       body)
+(define-tag <LINK> ((id #unspecified string)
+		    (inline #f boolean)
+		    (href #f string)
+		    (attributes)
+		    body)
    
    (define (default href)
       (when (and (string? href) inline)
@@ -535,12 +535,12 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 ;*---------------------------------------------------------------------*/
 ;*    SCRIPT ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-markup <SCRIPT> ((inline #f boolean)
-			 (src #unspecified string)
-			 (type (hop-javascript-mime-type) string)
-			 (attributes)
-			 body)
-
+(define-tag <SCRIPT> ((inline #f boolean)
+		      (src #unspecified string)
+		      (type (hop-javascript-mime-type) string)
+		      (attributes)
+		      body)
+   
    (define (purify node)
       (if (>=fx (hop-security) 2)
 	  (let ((sm (hop-security-manager)))
@@ -572,20 +572,20 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 		(attributes `(:type ,type ,@attributes))
 		(body (list "\n" body)))
 	     (default src))))
-
+   
    (purify
-    (if (and inline (string? src))
-	(if (file-exists? src)
-	    (inl src)
-	    (default src))
-	(default src))))
+      (if (and inline (string? src))
+	  (if (file-exists? src)
+	      (inl src)
+	      (default src))
+	  (default src))))
  
 ;*---------------------------------------------------------------------*/
 ;*    <STYLE> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-markup <STYLE> ((type (hop-configure-css-mime-type) string)
-			(attributes)
-			body)
+(define-tag <STYLE> ((type (hop-configure-css-mime-type) string)
+		     (attributes)
+		     body)
    (instantiate::xml-style
       (tag 'style)
       (attributes `(:type ,type ,@attributes))

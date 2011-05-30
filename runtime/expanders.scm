@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:46:47 2006                          */
-;*    Last change :  Sun Nov  7 08:58:36 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Mon May 30 14:45:23 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop expanders                                                    */
 ;*=====================================================================*/
@@ -21,7 +21,7 @@
 	    "xml_expd.sch"
 	    "expanders.sch")
 
-   (export  (hop-client-define-markup x e)
+   (export  (hop-client-define-tag x e)
 	    (hop-client-define-xml-compound x e)
 	    
 	    (hop-install-expanders!)))

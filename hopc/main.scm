@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Jan 14 10:11:39 2011 (serrano)                */
+;*    Last change :  Mon May 30 14:44:46 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -80,7 +80,7 @@
 		  ,(string->symbol (format "hop-~a" (hop-branch)))
 		  ,(string->symbol (format "hop-~a" (hop-version))))
       :expanders `(labels match-case
-			(define-markup . ,(eval 'hop-client-define-markup))))
+			(define-tag . ,(eval 'hop-client-define-tag))))
    (init-clientc-compiler! :modulec hopscheme-compile-module
       :expressionc hopscheme-compile-expression
       :valuec hopscheme-compile-value 

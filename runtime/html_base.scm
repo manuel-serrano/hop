@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Wed Jan 19 14:28:10 2011 (serrano)                */
+;*    Last change :  Mon May 30 14:45:39 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -206,9 +206,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    <META> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-markup <META> ((content #f)
-		       (attrs)
-		       body)
+(define-tag <META> ((content #f)
+		    (attrs)
+		    body)
    (instantiate::xml-meta
       (tag 'meta)
       (attributes attrs)
@@ -218,33 +218,33 @@
 ;*---------------------------------------------------------------------*/
 ;*    <FORM> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-markup <FORM> ((id #unspecified string)
-		       (onsubmit #f)
-		       (onreset #f)
-		       (action #f)
-		       (attrs)
-		       body)
+(define-tag <FORM> ((id #unspecified string)
+		    (onsubmit #f)
+		    (onreset #f)
+		    (action #f)
+		    (attrs)
+		    body)
    (let* ((attrs (cond
 		    ((xml-tilde? onsubmit)
 		     `(:onsubmit ,(xml-tilde->return onsubmit) ,@attrs))
 		    (onsubmit
-		     `(:onsubmit ,onsubmit ,@attrs))
+		       `(:onsubmit ,onsubmit ,@attrs))
 		    (else
 		     attrs)))
 	  (attrs (cond
 		    ((xml-tilde? onreset)
 		     `(:onreset ,(xml-tilde->return onreset) ,@attrs))
 		    (onreset
-		     `(:onreset ,onreset ,@attrs))
+		       `(:onreset ,onreset ,@attrs))
 		    (else
 		     attrs)))
 	  (attrs (cond
 		    ((xml-tilde? action)
 		     `(:action ,(format "javascript: ~a"
-					(xml-tilde->statement action))
-			       ,@attrs))
+				   (xml-tilde->statement action))
+			 ,@attrs))
 		    (action
-		     `(:action ,action ,@attrs))
+		       `(:action ,action ,@attrs))
 		    (else
 		     attrs))))
       (instantiate::xml-element
@@ -256,31 +256,31 @@
 ;*---------------------------------------------------------------------*/
 ;*    <INPUT> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-markup <INPUT> ((id #unspecified string)
-			(type 'text)
-			(onkeydown #f)
-			(attributes))
+(define-tag <INPUT> ((id #unspecified string)
+		     (type 'text)
+		     (onkeydown #f)
+		     (attributes))
    (if (or (eq? type 'url) (equal? type "url"))
        (let* ((id (xml-make-id id 'input))
 	      (comp "hop_inputurl_keydown( this, event )")
 	      (onkeydown (if onkeydown
 			     (format "~a; ~a" comp
-				     (if (xml-tilde? onkeydown)
-					 (xml-tilde->statement onkeydown)
-					 onkeydown))
+				(if (xml-tilde? onkeydown)
+				    (xml-tilde->statement onkeydown)
+				    onkeydown))
 			     comp)))
 	  (instantiate::xml-empty-element
 	     (tag 'input)
 	     (id id)
 	     (attributes `(:type ,type
-				 :onkeydown ,(secure-javascript-attr onkeydown)
-				 ,@attributes))
+			     :onkeydown ,(secure-javascript-attr onkeydown)
+			     ,@attributes))
 	     (body '())))
        (instantiate::xml-empty-element
 	  (tag 'input)
 	  (id (xml-make-id id 'input))
 	  (attributes `(type: ,type
-			      ,@(if onkeydown `(onkeydown: ,(secure-javascript-attr onkeydown)) '())
-			      ,@attributes))
+			  ,@(if onkeydown `(onkeydown: ,(secure-javascript-attr onkeydown)) '())
+			  ,@attributes))
 	  (body '()))))
 

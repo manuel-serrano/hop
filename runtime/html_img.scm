@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Tue Jan 11 07:52:22 2011 (serrano)                */
+;*    Last change :  Mon May 30 14:46:03 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -109,12 +109,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    IMG ...                                                          */
 ;*---------------------------------------------------------------------*/
-(define-markup <IMG> ((id #unspecified string)
-		      (inline #f boolean)
-		      (alt #f)
-		      (src #unspecified)
-		      (attributes)
-		      body)
+(define-tag <IMG> ((id #unspecified string)
+		   (inline #f boolean)
+		   (alt #f)
+		   (src #unspecified)
+		   (attributes)
+		   body)
    
    (define (plain-img src cssrc)
       (instantiate::xml-empty-element

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Nov 18 16:17:41 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Mon May 30 14:48:26 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
 ;*=====================================================================*/
@@ -34,12 +34,12 @@
 ;*    -------------------------------------------------------------    */
 ;*    See __hop_css for HSS types.                                     */
 ;*---------------------------------------------------------------------*/
-(define-markup <NOTEPAD> ((id #unspecified string)
-			  (class #unspecified string)
-			  (history #unspecified)
-			  (onchange #f)
-			  (attrs)
-			  body)
+(define-tag <NOTEPAD> ((id #unspecified string)
+		       (class #unspecified string)
+		       (history #unspecified)
+		       (onchange #f)
+		       (attrs)
+		       body)
    (let ((id (xml-make-id id 'NOTEPAD))
 	 (history (if (boolean? history) history (not (eq? id #unspecified))))
 	 head)
@@ -142,9 +142,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    <NPHEAD> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-markup <NPHEAD> ((id #unspecified string)
-			 (attr)
-			 body)
+(define-tag <NPHEAD> ((id #unspecified string)
+		      (attr)
+		      body)
    (instantiate::xml-nphead-element
       (tag 'div)
       (id (xml-make-id id 'NPHEAD))
@@ -154,12 +154,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    <NPTAB> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-markup <NPTAB> ((id #unspecified string)
-			(class #unspecified string)
-			(selected #f)
-			(onselect #f)
-			(attr)
-			body)
+(define-tag <NPTAB> ((id #unspecified string)
+		     (class #unspecified string)
+		     (selected #f)
+		     (onselect #f)
+		     (attr)
+		     body)
    
    (cond
       ((null? body)
@@ -181,9 +181,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    <NPTABHEAD> ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-markup <NPTABHEAD> ((id #unspecified string)
-			    (attr)
-			    body)
+(define-tag <NPTABHEAD> ((id #unspecified string)
+			 (attr)
+			 body)
    (instantiate::xml-nptabhead-element
       (tag 'span)
       (id (xml-make-id id 'NPTABHEAD))

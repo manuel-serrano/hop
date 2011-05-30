@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Wed Feb 16 07:02:51 2011 (serrano)                */
+;*    Last change :  Mon May 30 14:47:53 2011 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL> markup.                           */
 ;*=====================================================================*/
@@ -35,13 +35,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    <FL> ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define-markup <FL> ((id #unspecified string)
-		     (class #unspecified string)
-		     (spacing 0)
-		     (icono #f)
-		     (iconc #f)
-		     (history #unspecified)
-		     body)
+(define-tag <FL> ((id #unspecified string)
+		  (class #unspecified string)
+		  (spacing 0)
+		  (icono #f)
+		  (iconc #f)
+		  (history #unspecified)
+		  body)
    (let ((res (instantiate::html-foldlist
 	         (tag 'fl)
 		 (cname (if (string? class)
@@ -77,10 +77,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    <FLITEM> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-markup <FLITEM> ((id #unspecified string)
-			 (class #unspecified string)
-			 (open #f)
-			 body)
+(define-tag <FLITEM> ((id #unspecified string)
+		      (class #unspecified string)
+		      (open #f)
+		      body)
    (instantiate::html-flitem
       (tag 'flitem)
       (cname (if (string? class)
@@ -152,9 +152,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    <FLHEAD> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-markup <FLHEAD> ((id #unspecified string)
-			 (class #unspecified string)
-			 body)
+(define-tag <FLHEAD> ((id #unspecified string)
+		      (class #unspecified string)
+		      body)
    (instantiate::html-flhead
       (tag 'flhead)
       (cname (if (string? class)

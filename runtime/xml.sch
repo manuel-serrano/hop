@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 15:24:40 2005                          */
-;*    Last change :  Sun Nov  7 09:02:06 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Mon May 30 14:46:31 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML macros                                                       */
 ;*=====================================================================*/
@@ -40,6 +40,6 @@
 (define-expander define-xml-compound hop-define-xml-cpd-expander)
 
 ;*---------------------------------------------------------------------*/
-;*    define-markup ...                                                */
+;*    define-tag ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-expander define-markup hop-server-define-markup)
+(define-expander define-tag hop-server-define-tag)

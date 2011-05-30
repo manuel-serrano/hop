@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Nov 24 13:51:08 2010 (serrano)                */
+;*    Last change :  Mon May 30 14:49:00 2011 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -32,14 +32,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    <TABSLIDER> ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-markup <TABSLIDER> ((id #unspecified string)
-			    (class #unspecified string)
-			    (width #f)
-			    (height #f)
-			    (index 0)
-			    (onchange #f)
-			    (history #unspecified)
-			    body)
+(define-tag <TABSLIDER> ((id #unspecified string)
+			 (class #unspecified string)
+			 (width #f)
+			 (height #f)
+			 (index 0)
+			 (onchange #f)
+			 (history #unspecified)
+			 body)
    
    ;; Verify that the body is a list of <TSPAN>
    (for-each (lambda (x)
@@ -84,9 +84,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    <TSPAN> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-markup <TSPAN> ((id #unspecified string)
-			(onselect #f)
-			body)
+(define-tag <TSPAN> ((id #unspecified string)
+		     (onselect #f)
+		     body)
    
    (define (tspan-onselect id onselect)
       (when onselect

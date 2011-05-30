@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Feb  9 16:17:39 2011 (serrano)                */
+;*    Last change :  Mon May 30 14:46:40 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -883,8 +883,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    <DELAY> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-markup <DELAY> ((id #unspecified string)
-			body)
+(define-tag <DELAY> ((id #unspecified string)
+		     body)
    (if (and (pair? body)
 	    (procedure? (car body))
 	    (correct-arity? (car body) 0))

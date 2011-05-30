@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon May 23 11:53:08 2011 (serrano)                */
+;*    Last change :  Tue May 24 10:34:29 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -154,6 +154,8 @@
 			  (for-each loop e))
 			 ((xml-markup? e)
 			  (loop (xml-markup-body e)))
+			 ((null? e)
+			  #unspecified)
 			 (else
 			  (display e)))))))
 	  (s2 (pregexp-replace* "  |\n" s " ")))
@@ -619,7 +621,7 @@
 			      #f)
 		 (ignore)))))
       
-      ((>= 2 #\=)
+      ((: (* (in " \t")) (>= 2 #\=))
        (let ((st (in-state '==)))
 	  (if st
 	      (unwind-state! st)

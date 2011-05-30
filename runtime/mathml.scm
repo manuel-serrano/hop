@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:24:08 2007                          */
-;*    Last change :  Sun Nov  7 08:53:47 2010 (serrano)                */
-;*    Copyright   :  2007-10 Manuel Serrano                            */
+;*    Last change :  Mon May 30 14:46:12 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop MATHML support.                                              */
 ;*=====================================================================*/
@@ -55,10 +55,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    Standards MATH elements                                          */
 ;*---------------------------------------------------------------------*/
-(define-markup <MATH> ((id #unspecified string)
-		       (xmlns "http://www.w3.org/1998/Math/MathML" string)
-		       (attributes)
-		       body)
+(define-tag <MATH> ((id #unspecified string)
+		    (xmlns "http://www.w3.org/1998/Math/MathML" string)
+		    (attributes)
+		    body)
    (instantiate::xml-element
       (tag 'math)
       (id (xml-make-id id 'math))

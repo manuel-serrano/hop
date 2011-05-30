@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Jan  5 16:20:53 2011 (serrano)                */
+;*    Last change :  Mon May 30 14:48:44 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
@@ -30,15 +30,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    <SLIDER> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-markup <SLIDER> ((id #unspecified string)
-			 (class #unspecified string)
-			 (value 0)
-			 (min 0)
-			 (max 100)
-			 (step 1)
-			 (onchange #f)
-			 (caption "top")
-			 (attrs))
+(define-tag <SLIDER> ((id #unspecified string)
+		      (class #unspecified string)
+		      (value 0)
+		      (min 0)
+		      (max 100)
+		      (step 1)
+		      (onchange #f)
+		      (caption "top")
+		      (attrs))
    (instantiate::html-slider
       (tag 'slider)
       (klass (if (string? class) class "hop-slider"))

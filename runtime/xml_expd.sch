@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Thu Dec  9 21:20:57 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Mon May 30 14:46:59 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
 ;*=====================================================================*/
@@ -341,39 +341,39 @@
        (error "define-xml-compound" "Illegal form" x))))
 
 ;*---------------------------------------------------------------------*/
-;*    expand-define-markup ...                                         */
+;*    expand-define-tag ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (expand-define-markup id bindings body)
+(define (expand-define-tag id bindings body)
    (let ((s (symbol->string id)))
       (if (and (>fx (string-length s) 2)
 	       (char=? (string-ref s 0) #\<)
 	       (char=? (string-ref s (-fx (string-length s) 1)) #\>))
 	  (let ((el (string->symbol (substring s 1 (-fx (string-length s) 1)))))
 	     (define-compound id el bindings body))
-	  (error "define-markup" "Illegal identifier" id))))
+	  (error "define-tag" "Illegal identifier" id))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-server-define-markup ...                                     */
+;*    hop-server-define-tag ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (hop-server-define-markup x e)
+(define (hop-server-define-tag x e)
    (match-case x
       ((?- ?id ?bindings . ?body)
-       (e (evepairify (expand-define-markup id bindings body) x) e))
+       (e (evepairify (expand-define-tag id bindings body) x) e))
       (else
-       (error "define-markup" "Illegal form" x))))
+       (error "define-tag" "Illegal form" x))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-client-define-markup ...                                     */
+;*    hop-client-define-tag ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (hop-client-define-markup x e)
+(define (hop-client-define-tag x e)
    (match-case x
       ((?- ?id ?bindings . ?body)
        (let* ((id2 (symbol-append '< id '>))
-	      (nf (expand-define-markup id2 bindings body))
+	      (nf (expand-define-tag id2 bindings body))
 	      (nm `(define-macro (,id . args)
 		      (list 'quasiquote
 			    (,id2 ,(list 'unquote-splicing 'args)))))
 	      (nx nm))
 	  (e (evepairify nx x) e)))
       (else
-       (error "define-markup" "Illegal form" x))))
+       (error "define-tag" "Illegal form" x))))

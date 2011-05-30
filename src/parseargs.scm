@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun May  8 19:07:52 2011 (serrano)                */
+;*    Last change :  Mon May 30 14:47:07 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -277,7 +277,7 @@
 		       ,(string->symbol (format "hop-~a" (hop-branch)))
 		       ,(string->symbol (format "hop-~a" (hop-version))))
 	 :expanders `(labels match-case
-			   (define-markup . ,hop-client-define-markup)
+			   (define-tag . ,hop-client-define-tag)
 			(define-xml-compound . ,hop-client-define-xml-compound)))
       (init-clientc-compiler! :modulec hopscheme-compile-module
 	 :expressionc hopscheme-compile-expression

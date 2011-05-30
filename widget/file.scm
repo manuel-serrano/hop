@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Fri Feb 18 09:51:52 2011 (serrano)                */
+;*    Last change :  Mon May 30 14:47:42 2011 (serrano)                */
 ;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -159,16 +159,16 @@
 ;*    -------------------------------------------------------------    */
 ;*    See __hop_css for HSS types.                                     */
 ;*---------------------------------------------------------------------*/
-(define-markup <FILECHOOSER> ((id #unspecified string)
-			      (class #unspecified string)
-			      (filters '(("All Files" "^[^.].*")))
-			      (hidden #t)
-			      (url (preference-get 'filechooser/url :default (pwd)) string)
-			      (onselect #f)
-			      (onopen #f)
-			      (oncancel #f)
-			      (onrun #f)
-			      body)
+(define-tag <FILECHOOSER> ((id #unspecified string)
+			   (class #unspecified string)
+			   (filters '(("All Files" "^[^.].*")))
+			   (hidden #t)
+			   (url (preference-get 'filechooser/url :default (pwd)) string)
+			   (onselect #f)
+			   (onopen #f)
+			   (oncancel #f)
+			   (onrun #f)
+			   body)
    (let ((id (xml-make-id id 'filechooser))
 	 (regexp (if (null? filters) ".*" (cadar filters))))
      (<DIV> :id id

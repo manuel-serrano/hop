@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Nov  7 08:28:34 2010                          */
-;*    Last change :  Sun Nov  7 08:30:36 2010 (serrano)                */
-;*    Copyright   :  2010 Manuel Serrano                               */
+;*    Last change :  Mon May 30 14:48:51 2011 (serrano)                */
+;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Sorttable                                                        */
 ;*=====================================================================*/
@@ -21,9 +21,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    <SORTTABLE> ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-markup <SORTTABLE> ((id #unspecified string)
-			    (attributes)
-			    body)
+(define-tag <SORTTABLE> ((id #unspecified string)
+			 (attributes)
+			 body)
    (let ((i (xml-make-id)))
       (<SPAN> :id i :hssclass "hop-sorttable"
 	 (<TABLE> :id (if (string? id) id (xml-make-id 'SORTTABLE))
