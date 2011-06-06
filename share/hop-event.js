@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Mon Jun  6 15:18:31 2011 (serrano)                */
+/*    Last change :  Mon Jun  6 15:34:57 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -885,7 +885,7 @@ function servevt_scriptp() {
 /*    servevt_flashp ...                                               */
 /*---------------------------------------------------------------------*/
 function servevt_flashp( port ) {
-   return port &&
+   return false && port &&
       (hop_config.flash_version >= 8) &&
       (hop_config.flash_external_interface) &&
       (hop_config.navigator_family != "msie");
@@ -914,11 +914,9 @@ function hop_start_servevt_proxy() {
 
 			if( servevt_websocketp() ) {
 			   // websocket backend
-			   alert( "hop-event.js: servevt_websocketp..." );
 			   start_servevt_websocket_proxy( key, host, port );
 			} else if( servevt_xhr_multipartp() ) {
 			   // xhr_multipart backend
-			   alert( "hop-event.js: start_servevt_xhr_multipart_proxy...");
 			   start_servevt_xhr_multipart_proxy( key );
 			} else if( servevt_flashp( port ) ) {
 			   alert( "hop-event.js: servevt_flashp..." );
@@ -926,7 +924,6 @@ function hop_start_servevt_proxy() {
 			   try {
 			      start_servevt_flash_proxy( key, host, port );
 			   } catch( e ) {
-			      alert( "hop-event.js: flash error: " + e );
 			      throw( e );
 			   }
 			} else {
