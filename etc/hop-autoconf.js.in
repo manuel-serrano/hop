@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Mon Jun  6 15:47:11 2011 (serrano)                */
+/*    Last change :  Mon Jun  6 15:49:26 2011 (serrano)                */
 /*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -261,8 +261,8 @@ function hop_Config() {
    }
 
    if( this.flash_serverevent ) {
-      if( navigator.userAgent.indexOf( "Android.2.3" ) ) {
-	 this.flash_serverevent = true;
+      if( navigator.userAgent.indexOf( "Android 2.3" ) ) {
+	 this.flash_serverevent = false;
       }
    }
    
