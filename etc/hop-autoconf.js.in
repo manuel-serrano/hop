@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Sun May 29 10:15:23 2011 (serrano)                */
+/*    Last change :  Mon Jun  6 15:47:11 2011 (serrano)                */
 /*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -124,6 +124,7 @@ function hop_Config() {
    this.flash_version = hop_get_flash_version();
    this.flash_external_interface = false;
    this.flash_audio = false;
+   this.flash_serverevent = false;
    this.flash_markup = "embed";
 
    /* Geolocation */
@@ -151,6 +152,7 @@ function hop_Config() {
       this.mouse_left_button = 1;
       this.flash_external_interface = true;
       this.flash_audio = true;
+      this.flash_serverevent = true;
       this.flash_markup = "object";
       this.inline_image = false;
       this.clone_innerHTML = true;
@@ -163,6 +165,7 @@ function hop_Config() {
       this.mouse_left_button = 0;
       this.flash_external_interface = false;
       this.flash_audio = false;
+      this.flash_serverevent = false;
       this.flash_markup = "embed";
       this.inline_image = true;
       this.clone_innerHTML = true;
@@ -172,6 +175,7 @@ function hop_Config() {
       this.mouse_left_button = 0;
       this.flash_external_interface = true;
       this.flash_audio = true;
+      this.flash_serverevent = true;
       this.flash_markup = "embed";
       this.inline_image = true;
       this.css = 3;
@@ -186,6 +190,7 @@ function hop_Config() {
       this.mouse_left_button = 0;
       this.flash_external_interface = true;
       this.flash_audio = true;
+      this.flash_serverevent = true;
       this.flash_markup = "embed";
       this.inline_image = true;
       this.clone_innerHTML = true;
@@ -196,6 +201,7 @@ function hop_Config() {
       this.mouse_left_button = 0;
       this.flash_external_interface = true;
       this.flash_audio = true;
+      this.flash_serverevent = true;
       this.flash_markup = "embed";
       this.inline_image = true;
       this.clone_innerHTML = true;
@@ -205,6 +211,7 @@ function hop_Config() {
       this.mouse_left_button = 1;
       this.flash_external_interface = true;
       this.flash_audio = true;
+      this.flash_serverevent = true;
       this.flash_markup = "embed";
       this.inline_image = true;
       this.clone_innerHTML = true;
@@ -229,6 +236,7 @@ function hop_Config() {
       this.mouse_left_button = 0;
       this.flash_external_interface = true;
       this.flash_audio = true;
+      this.flash_serverevent = true;
       this.flash_markup = "embed";
       this.inline_image = true;
       this.filtered_errors = ["javascript:top.location+\"__flashplugin_unique__\"", "tipElement.ownerDocument is null"];
@@ -244,11 +252,17 @@ function hop_Config() {
    this.screen_available_height = screen.availHeight;
    this.screen_color_depth = screen.colorDepth;
    
-   /* Android 2.1 webkit adjustments */
+   /* Android webkit adjustments */
    if( this.flash_audio ) {
       if( navigator.userAgent.indexOf( "Android 2.1" ) ||
           navigator.userAgent.indexOf( "Android 2.0" ) ) {
 	 this.flash_audio = false;
+      }
+   }
+
+   if( this.flash_serverevent ) {
+      if( navigator.userAgent.indexOf( "Android.2.3" ) ) {
+	 this.flash_serverevent = true;
       }
    }
    
