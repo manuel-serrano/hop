@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Tue Feb  1 17:24:52 2011 (serrano)                */
+;*    Last change :  Tue May 31 05:51:20 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -216,7 +216,7 @@
 	 :css (format "~a/hop.hss" (hop-dir))
 	 :favicon (format "~a/etc/favicon.png" (hop-dir))
 	 (<META> :name "viewport"
-	    :content "width=device-width, initial-scale=1."))
+	    :content "width=device-width, initial-scale=0.8"))
       (<BODY>
 	 (<DIV> :class "body"
 	    (<TABLE> :class "hop"
