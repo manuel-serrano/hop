@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sun May 22 11:01:07 2011 (serrano)                */
+/*    Last change :  Mon Jun  6 11:33:54 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -743,6 +743,7 @@ function start_servevt_flash_proxy( key, host, port ) {
 function start_long_polling_proxy( key, host, port ) {
    hop_config.server_event = "long polling";
 
+   alert( "START LONG POLLING: servevt_scriptp=" + servevt_scriptp() );
    if( servevt_scriptp() ) {
       // script polling
       start_servevt_script_proxy( key );
@@ -912,6 +913,10 @@ function hop_start_servevt_proxy() {
 			var port = v[ 1 ];
 			var key = v[ 2 ];
 
+			alert( "SERVER-EVENT/INFO: " +
+			       " websocket=" + servevt_websocketp() +
+			       " xhr_multipart=" + servevt_xhr_multipartp() +
+			       " flash=" + ( servevt_flashp( port ) ) );
 			if( servevt_websocketp() ) {
 			   // websocket backend
 			   start_servevt_websocket_proxy( key, host, port );

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Dec  3 10:09:15 2010 (serrano)                */
-/*    Copyright   :  2005-10 Manuel Serrano                            */
+/*    Last change :  Mon Jun  6 11:30:07 2011 (serrano)                */
+/*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -159,7 +159,6 @@ table.weblet-incompatible td.legend {
 /*--- <HOP> -----------------------------------------------------------*/
 table.hop {
   width: 100%;
-  padding: 10px;
   border: 1px solid $border-color;
   background-color: #f7f3e9;
   border-radius: 0.4em;
@@ -196,6 +195,12 @@ table.directory th.title {
   body {
     padding: 5px;
     margin: 0;
+  }
+
+  div.body {
+    padding-top: 1ex;
+    padding-left: 1em;
+    padding-right: 1em;
   }
 
   table.hop {

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Tue Dec 28 14:50:03 2010 (serrano)                */
-/*    Copyright   :  2005-10 Manuel Serrano                            */
+/*    Last change :  Mon Jun  6 11:45:20 2011 (serrano)                */
+/*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    INFO HOP CSS                                                     */
 /*=====================================================================*/
@@ -16,6 +16,8 @@ $(define title-color "#ddd")
 body {
   background: #e0e0e0;
   font-family: arial;
+  margin: 0;
+  padding: 0;
 }
 
 /* to be removed when chromium bug fixed */
@@ -28,14 +30,8 @@ gaugefill {
 }
 
 div.body {
-  margin-top: 2ex;
-  margin-left: auto;
-  margin-right: auto;
-  width: 90%;
-  box-shadow: 6px 6px 5px #555;
-  border: 1px solid $border-color;
-  border-radius: 0.5em;
-  background: white;
+  padding: 20px;
+  text-align: center;
 }
 
 button {
@@ -51,9 +47,15 @@ table td {
 }
 
 table.info {
-  width: 100%;
-  height: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  min-width: 90%;
+  min-height: 90%;
   padding: 10px;
+  box-shadow: 6px 6px 5px #555;
+  border: 1px solid $border-color;
+  border-radius: 0.5em;
+  background: white;
 }
 
 table.info td#logo {
@@ -508,8 +510,6 @@ div.perfs-buttons button.perfs-all {
 /*---------------------------------------------------------------------*/
 @media all and (max-width: 1024px) {
   div.body {
-    width: 100%;
-    margin: 0;
     border-radius: 0;
     box-shadow: none;
   }
