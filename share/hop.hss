@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Wed Mar  2 10:46:11 2011 (serrano)                */
+/*    Last change :  Mon Jun  6 14:31:23 2011 (serrano)                */
 /*    Copyright   :  2004-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
@@ -129,6 +129,13 @@ div[hssclass=hop-error-msg] {
   font-weight: bold;
 }
 
+div[hssclass=hop-error-body] {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  font-family: sans-serif;
+  font-weight: 90%;
+}
+
 pre[hssclass=hop-error-notification] {
   font-size: 80%;
   color: #00a;
@@ -167,7 +174,7 @@ div[hssclass=hop-error].warning div[hssclass=hop-error-title] {
   border-color: darkorange;
 }
 
-div[hssclass=hop-error].warning span[hssclass=hop-error-img] {
+div[hssclass=hop-error].warning > span[hssclass=hop-error-img] {
   background-image: url( "icons/errors/warning.png" );
 }
 
@@ -179,19 +186,19 @@ div[hssclass=hop-error].notfound div[hssclass=hop-error-title] {
   color: #f1d630;
 }
 
-div[hssclass=hop-error].notfound span[hssclass=hop-error-img] {
+div[hssclass=hop-error].notfound > span[hssclass=hop-error-img] {
   background-image: url( "icons/errors/notfound.png" );
 }
 
-div[hssclass=hop-error].remote span[hssclass=hop-error-img] {
+div[hssclass=hop-error].remote > span[hssclass=hop-error-img] {
   background-image: url( "icons/errors/error2.png" );
 }
 
-div[hssclass=hop-error].client span[hssclass=hop-error-img] {
+div[hssclass=hop-error].client > span[hssclass=hop-error-img] {
   background-image: url( "icons/errors/client-error.png" );
 }
 
-div[hssclass=hop-error].security span[hssclass=hop-error-img] {
+div[hssclass=hop-error].security > span[hssclass=hop-error-img] {
   background-image: url( "icons/errors/privacy.png" );
 }
 
@@ -205,6 +212,10 @@ span[hssclass=hop-parse-error] {
   border: 3px dashed darkorange;
   color: black;
   font-weight: bold;
+}
+
+div[hssclass=hop-error] tt {
+  color: #00a;
 }
 
 /*---------------------------------------------------------------------*/

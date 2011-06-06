@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Jan  9 06:39:42 2011 (serrano)                */
+;*    Last change :  Mon Jun  6 14:26:49 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -198,7 +198,7 @@
 	       (<DIV> :id "hop-error"
 		  (<DIV> :hssclass "hop-error-title" title)
 		  (<DIV> :hssclass "hop-error-msg" msg)
-		  body))))))
+		  (<DIV> :hssclass "hop-error-body" body)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-file-not-found ...                                          */
@@ -238,7 +238,7 @@
 <br><br>
 This is generally due to a restart of the server.
 On restart the server invalidates all anonymous services that hence
-can no longer be executed.<br><br>
+can no longer be executed.
 Reloading the page is the only way to fix this problem." msg))
    
    (let ((svc (make-file-name (hop-service-base) (hop-service-weblet-name))))
@@ -364,7 +364,7 @@ a timeout which has now expired. The service is then no longer available."))
 <br><br>
 This is generally due to a restart of the server.
 On restart the server invalidates all anonymous services that hence
-can no longer be executed.<br><br>
+can no longer be executed.
 Reloading the page is the only way to fix this problem.")))))
 
 ;*---------------------------------------------------------------------*/

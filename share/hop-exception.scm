@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Wed Mar  2 10:47:39 2011 (serrano)                */
+;*    Last change :  Mon Jun  6 14:31:50 2011 (serrano)                */
 ;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -256,12 +256,6 @@
 ;*---------------------------------------------------------------------*/
 (define (<EXCEPTION> exc)
    
-   (define (unhtml string)
-      (set! string (pregexp-replace* "<" "&lt;" string))
-      (set! string (pregexp-replace* ">" "&gt;" string))
-      (set! string (pregexp-replace* "&quot;" "\"" string))
-      string)
-   
    (define (exception-name exc)
       (cond
 	 ((string? exc.name) exc.name)
@@ -273,18 +267,17 @@
 	 ((not (js-in? "message" exc))
 	  "unknwown error")     
 	 ((string? exc.message)
-	  (apply string-append
-		 (map (lambda (s)
-			 (string-append (bigloo-demangle s) " "))
-		      (string-split exc.message "\n "))))
+	  (<TT> (map (lambda (s)
+			(string-append (bigloo-demangle s) " "))
+		   (string-split exc.message "\n "))))
 	 ((symbol? exc.message)
-	  (symbol->string exc.message))
+	  (<TT> (symbol->string exc.message)))
 	 ((keyword? exc.message)
-	  (keyword->string exc.message))
+	  (<TT> (keyword->string exc.message)))
 	 ((number? exc.message)
-	  exc.message)
+	  (<TT> exc.message))
 	 ((not (eq? exc.message #unspecified))
-	  (obj->name exc.message #f))
+	  (<TT> (obj->name exc.message #f)))
 	 ((string? exc.description)
 	  (apply string-append
 		 (map (lambda (s)
@@ -313,28 +306,36 @@
 		   (<A> :href url)))))
       
       (<EXCEPTION-FRAME>
-	 (<DIV> :hssclass "hop-error" :class "client"
-	    (<SPAN> :hssclass "hop-error-img")
-	    (<DIV>
-	       (<DIV> :hssclass "hop-error-title" errtitle)
-	       (<DIV> :hssclass "hop-error-msg"
-		  (<TABLE> :style "font-weight: normal"
-		     (<TR>
-			(<TD>
-			   (<SPAN> :style "color: #777; font-weight: bold" name)
-			   ": "
-			   (<TT> msg)))
-		     (<TR>
-			(<TD>
-			   src))))
-	       (when (and exc.hopService (not (eq? exc.hopService #unspecified)))
-		  (<DIV> :hssclass "hop-error-trace"
-		     (<DIV> "Service:")
-		     (<PRE> (obj->name exc.hopService #f))))
-	       (when (pair? exc.hopStack)
-		  (<EXCEPTION-STACK> exc.hopStack))
-	       (when (and (> (hop-debug) 1) (string? exc.stack))
-		  (<EXCEPTION-JSSTACK> exc.stack 0)))))))
+	 (if (js-in? "element" exc)
+	     (let* ((el exc.element)
+		    (bd (dom-last-child (dom-last-child el))))
+		(when (pair? exc.hopStack)
+		   (dom-append-child! bd (<EXCEPTION-STACK> exc.hopStack)))
+		(when (and (> (hop-debug) 1) (string? exc.stack))
+		   (dom-append-child! bd (<EXCEPTION-JSSTACK> exc.stack 0)))
+		el)
+	     (<DIV> :hssclass "hop-error" :class "client"
+		(<SPAN> :hssclass "hop-error-img")
+		(<DIV>
+		   (<DIV> :hssclass "hop-error-title" errtitle)
+		   (<DIV> :hssclass "hop-error-msg"
+		      (<TABLE> :style "font-weight: normal"
+			 (<TR>
+			    (<TD>
+			       (<SPAN> :style "color: #777; font-weight: bold" name)
+			       ": "
+			       msg))
+			 (<TR>
+			    (<TD>
+			       src))))
+		   (when (and exc.hopService (not (eq? exc.hopService #unspecified)))
+		      (<DIV> :hssclass "hop-error-trace"
+			 (<DIV> "Service:")
+			 (<PRE> (obj->name exc.hopService #f))))
+		   (when (pair? exc.hopStack)
+		      (<EXCEPTION-STACK> exc.hopStack))
+		   (when (and (> (hop-debug) 1) (string? exc.stack))
+		      (<EXCEPTION-JSSTACK> exc.stack 0))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-report-exception ...                                         */

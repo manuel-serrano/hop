@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Mon Jun  6 11:33:54 2011 (serrano)                */
+/*    Last change :  Mon Jun  6 15:18:31 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -260,7 +260,7 @@ var hop_servevt_envelope_cdata_re =
 /*---------------------------------------------------------------------*/
 /*    hop_servevt_envelope_parse ...                                   */
 /*---------------------------------------------------------------------*/
-function hop_servevt_envelope_parse( val, xhr, server_ready ) {
+function hop_servevt_envelope_parse( val, xhr ) {
    var m = val.match( hop_servevt_envelope_re );
 
    if( m != null ) {
@@ -283,17 +283,15 @@ function hop_servevt_envelope_parse( val, xhr, server_ready ) {
 	 }
       } else if( k == "r" ) {
 	 // register, first event listener added to the server
-	 if( !server_ready ) {
+	 if( !hop_serverready_triggered ) {
 	    hop_trigger_serverready_event( new HopServerReadyEvent() );
 	 }
-	 return true;
       } else {
 	 hop_servevt_envelope_parse_error( xhr );
       }
    } else {
       hop_servevt_envelope_parse_error( xhr );
    }
-   return server_ready;
 }
 
 /*---------------------------------------------------------------------*/
@@ -360,7 +358,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
       }
       ws.onmessage = function ( e ) {
 	 e.responseText = e.data;
-	 hop_servevt_envelope_parse( e.data, e, true );
+	 hop_servevt_envelope_parse( e.data, e );
       }
       
       // complete the proxy definition
@@ -381,7 +379,7 @@ function start_servevt_xhr_multipart_proxy( key ) {
 	    "&key=" + key  + "&mode=xhr-multipart";
 
 	 var success = function( val, xhr ) {
-	    server_ready = hop_servevt_envelope_parse( val, xhr, server_ready );
+	    hop_servevt_envelope_parse( val, xhr );
 	 }
 
 	 var failure = function( xhr ) {
@@ -715,8 +713,6 @@ function start_servevt_flash_proxy( key, host, port ) {
    node_style_set( proxy, "right", "0" );
    node_style_set( proxy, "background", "transparent" );
    
-   proxy.ready = false;
-
    if( hop_config.flash_markup === "embed" ) {
       proxy.appendChild( embed_proxy() );
    } else {
@@ -724,11 +720,14 @@ function start_servevt_flash_proxy( key, host, port ) {
    }
 
    document.body.appendChild( proxy );
-   document.getElementById( hop_servevt_id ).key = key;
+
+   var fproxy = document.getElementById( hop_servevt_id );
+   fproxy.key = key;
+   fproxy.ready = false;
 
    /* give 4 seconds to flash to succeed or switch to long polling */
    after( 4000, function() {
-	 if( !proxy.ready ) {
+	 if( !fproxy.ready ) {
 	    document.body.removeChild( proxy );
 	    start_long_polling_proxy( key, host, port );
 	 }
@@ -913,24 +912,25 @@ function hop_start_servevt_proxy() {
 			var port = v[ 1 ];
 			var key = v[ 2 ];
 
-			alert( "SERVER-EVENT/INFO: " +
-			       " websocket=" + servevt_websocketp() +
-			       " xhr_multipart=" + servevt_xhr_multipartp() +
-			       " flash=" + ( servevt_flashp( port ) ) );
 			if( servevt_websocketp() ) {
 			   // websocket backend
+			   alert( "hop-event.js: servevt_websocketp..." );
 			   start_servevt_websocket_proxy( key, host, port );
 			} else if( servevt_xhr_multipartp() ) {
 			   // xhr_multipart backend
+			   alert( "hop-event.js: start_servevt_xhr_multipart_proxy...");
 			   start_servevt_xhr_multipart_proxy( key );
 			} else if( servevt_flashp( port ) ) {
+			   alert( "hop-event.js: servevt_flashp..." );
 			   // flash backend
 			   try {
 			      start_servevt_flash_proxy( key, host, port );
 			   } catch( e ) {
+			      alert( "hop-event.js: flash error: " + e );
 			      throw( e );
 			   }
 			} else {
+			   alert( "hop-event.js: start_long_polling_proxy..." );
 			   start_long_polling_proxy( key, host, port );
 			}
 		     },
@@ -1132,13 +1132,15 @@ function HopServerReadyEvent() {
 /*    hop_trigger_serverready_event ...                                */
 /*---------------------------------------------------------------------*/
 function hop_trigger_serverready_event( evt ) {
-   while( sc_isPair( hop_serverready_list ) ) {
-      hop_serverready_list.car( evt );
-      if( evt.isStopped ) break;
-      hop_serverready_list = hop_serverready_list.cdr;
+   if( !hop_serverready_triggered ) {
+      hop_serverready_triggered = true;
+   
+      while( sc_isPair( hop_serverready_list ) ) {
+	 hop_serverready_list.car( evt );
+	 if( evt.isStopped ) break;
+	 hop_serverready_list = hop_serverready_list.cdr;
+      }
    }
-
-   hop_serverready_triggered = true;
 }
 
 /*---------------------------------------------------------------------*/

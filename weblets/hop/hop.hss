@@ -193,7 +193,7 @@ table.directory th.title {
 
 @media all and (max-width: 900px) {
   body {
-    padding: 5px;
+    padding: 0;
     margin: 0;
   }
 

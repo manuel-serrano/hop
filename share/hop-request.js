@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri May  6 16:19:29 2011 (serrano)                */
+/*    Last change :  Mon Jun  6 14:14:19 2011 (serrano)                */
 /*    Copyright   :  2004-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -88,7 +88,6 @@ function hop_default_failure( exc, xhr ) {
    }
 
    if( exc instanceof Error ) {
-      alert( "HOP_DEFAULT_FAILURE: " + exc );
       hop_report_exception( exc );
       return;
    }
@@ -100,21 +99,33 @@ function hop_default_failure( exc, xhr ) {
 
    var nexc = new Error( "with-hop" );
    var t = xhr.responseText;
+   nexc.hopStack = xhr.hopStack;
+
    if( t ) {
       if( t.match( /<!DOCTYPE[^>]*>/) ) {
-	 /* we have received the complete document */
-	 t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
-	 t = t.replace( /<head[^>]*>/g, "<div style='display: none;'>" );
-	 t = t.replace( /<\/head>/g, "</div>" );
-	 t = t.replace( /<(meta|link)[^>]*>/g, "<span style='display: none'></span>" );
-	 t = t.replace( /<html[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
-	 t = t.replace( /<\/html>/g, "</div>" );
-	 t = t.replace( /<body[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
-	 t = t.replace( /<\/body>/g, "</div>" );
-	 t = t.replace( /&quot;/g, "\"" );
+	 var m = t.match( /<body id='[^']+' hssclass='hop-error'>((?:.|[\n])*)/ );
+	 if( m ) {
+	    nexc.element = document.createElement( "div" );
+	    nexc.element.innerHTML = m[ 1 ].replace( /<\/body>(?:.|[\n])*/g, "" );
+	 } else {
+	    /* we have received the complete document */
+	    t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
+	    t = t.replace( /<head[^>]*>/g, "<div style='display: none;'>" );
+	    t = t.replace( /<\/head>/g, "</div>" );
+	    t = t.replace( /<(meta|link)[^>]*>/g, "<span style='display: none'></span>" );
+	    t = t.replace( /<html[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
+	    t = t.replace( /<\/html>/g, "</div>" );
+	    t = t.replace( /<body[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
+	    t = t.replace( /<\/body>/g, "</div>" );
+	    t = t.replace( /&quot;/g, "\"" );
+	    
+	    nexc.message = t;
+	 }
+      } else {
+	 nexc.message = t;
       }
    }
-   nexc.message = t;
+
    hop_report_exception( nexc );
 }
 
@@ -295,9 +306,9 @@ function hop_duplicate_error( exc ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_request_ready ...                                            */
+/*    hop_request_onready ...                                          */
 /*---------------------------------------------------------------------*/
-function hop_request_ready( xhr, svc, succ, fail, err ) {
+function hop_request_onready( xhr, svc, succ, fail, err ) {
    try {
       switch( xhr.status ) {
       case 200:
@@ -348,6 +359,9 @@ function hop_request_ready( xhr, svc, succ, fail, err ) {
 	     (xhr.status > 200) && (xhr.status < 300) ) {
 	    return succ( xhr.responseText, xhr );
 	 } else {
+	    var frame = sc_cons( fail, sc_cons( xhr, null ) );
+	    
+	    xhr.hopStack = sc_cons( frame, xhr.hopStack );
 	    fail( xhr.status, xhr );
 	    return false;
 	 }
@@ -389,7 +403,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 
    function onreadystatechange() {
       if( xhr.readyState == 4 ) {
-	 hop_request_ready( xhr, svc, succ, fail, duperror );
+	 hop_request_onready( xhr, svc, succ, fail, duperror );
       }
 
       return false;
@@ -527,7 +541,7 @@ function hop_xdomain_onmessage( event, svc, succ, fail ) {
    xhr.hop_serialize = m[ 3 ];
    xhr.responseText = m[ 4 ];
    
-   hop_request_ready( xhr, svc, succ, fail, hop_duplicate_error );
+   hop_request_onready( xhr, svc, succ, fail, hop_duplicate_error );
 }
 
 /*---------------------------------------------------------------------*/

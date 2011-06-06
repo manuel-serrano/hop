@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri May  6 11:58:51 2011 (serrano)                */
+;*    Last change :  Mon Jun  6 15:04:38 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -378,17 +378,18 @@
 		   (set! service svc)
 		   (with-access::hop-service svc (ttl path id wid)
 		      (cond
-			 ((=fx ttl 1)
-			  (unregister-service! svc))
-			 ((>fx ttl 1)
-			  (set! ttl (-fx ttl 1))))
-		      (cond
 			 ((service-expired? svc)
 			  (mark-service-path-expired! path)
 			  (http-invalidated-service-error req))
 			 ((or (authorized-service? req wid)
 			      (authorized-service? req id))
-			  (scheme->response (service-handler svc req) req))
+			  (if (>fx ttl 0)
+			      (unwind-protect
+				 (scheme->response (service-handler svc req) req)
+				 (if (=fx ttl 1)
+				     (unregister-service! svc)
+				     (set! ttl (-fx ttl 1))))
+			      (scheme->response (service-handler svc req) req)))
 			 (else
 			  (user-service-denied req user id)))))
 		  (else
