@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sun May 22 11:01:17 2011 (serrano)                */
+;*    Last change :  Tue Jun  7 13:11:03 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -93,7 +93,7 @@
 ;*    debug ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define debug-ajax #t)
-(define debug-ajax-buffer #t)
+(define debug-ajax-buffer #f)
 (define debug-websocket #f)
 (define debug-multipart #f)
 (define debug-flash #f)
@@ -672,7 +672,7 @@
 			 (ajax-connection-add-event! conn name))
 		      (let ((vals (ajax-connection-event-pop-all! conn)))
 			 (when debug-ajax
-			    (tprint "   ajax vals=" vals))
+			    (tprint "   ajax-register-event! ajax vals=" vals))
 			 (if (pair? vals)
 			     (let ((val (scheme->response vals req)))
 				(when padding

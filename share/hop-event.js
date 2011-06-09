@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Mon Jun  6 15:48:25 2011 (serrano)                */
+/*    Last change :  Tue Jun  7 11:58:17 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -55,18 +55,22 @@ function hop_add_event_listener( obj, event, proc, capture ) {
       return hop_add_timeout_listener( obj, proc );
 
    if( event === "ready" ) {
+      var p = hop_callback( proc );
+      proc.handler = p;
+      proc.handler.enable = true;
+
       if( obj === window ) {
 	 if( hop_is_ready ) {
-	    window.ready = proc;
+	    window.ready = p;
 	    return window.ready( new HopEvent( "ready", window ) );
 	 } else {
-	    hop_window_ready_list = sc_cons( proc, hop_window_ready_list );
+	    hop_window_ready_list = sc_cons( p, hop_window_ready_list );
 	    return proc;
 	 }
       } else if( typeof obj === "string" ) {
 	 hop_elements_ready_counter++;
 	 /* wait for a node to be created and added to the document */
-	 return after( 1, function() { hop_add_ready_listener( obj, proc, 20 ) } );
+	 return after( 1, function() { hop_add_ready_listener( obj, p, 20 ) } );
       } else {
 	 return sc_error( "add-event-listener!",
 			  "Illegal \"ready\" event for object",
@@ -103,6 +107,11 @@ function hop_remove_event_listener( obj, event, proc, capture ) {
    if( event === "timeout" )
       return hop_remove_timeout_listener( proc );
 
+   if( event === "ready" ) {
+      if( proc.handler ) {
+	 proc.handler.enable = false;
+      }
+   }
    if( (obj.hop_remove_event_listener != undefined) &&
       (obj.hop_remove_event_listener != hop_remove_event_listener) )
       return obj.hop_remove_event_listener( event, proc, capture );
@@ -132,8 +141,11 @@ function hop_add_ready_listener( obj, proc, ttl ) {
       }
    } else {
       hop_elements_ready_counter--;
-      el.ready = proc;
-      el.ready( new HopEvent( "ready", el ) );
+
+      if( proc.enable ) {
+	 el.ready = proc;
+	 el.ready( new HopEvent( "ready", el ) );
+      }
    }
 }
 
@@ -627,7 +639,7 @@ function start_servevt_script_proxy( key ) {
 	 }
 	 
 	 // hook the new script after a small timeout to avoid busy icons
-	 after( 10, function () { document.body.appendChild( script ) } );
+	 after( 10, function () { document.body.appendChild( script ); } );
       }
 
       var unregister = function( id ) {
@@ -727,11 +739,11 @@ function start_servevt_flash_proxy( key, host, port ) {
 
    /* give 4 seconds to flash to succeed or switch to long polling */
    after( 4000, function() {
-	 if( !fproxy.ready ) {
-	    document.body.removeChild( proxy );
-	    start_long_polling_proxy( key, host, port );
-	 }
-      } );
+      if( !fproxy.ready ) {
+	 document.body.removeChild( proxy );
+	 start_long_polling_proxy( key, host, port );
+      }
+   } );
       
    return proxy;
 }
@@ -884,7 +896,7 @@ function servevt_scriptp() {
 /*    servevt_flashp ...                                               */
 /*---------------------------------------------------------------------*/
 function servevt_flashp( port ) {
-   return port &&
+  return port &&
       hop_config.flash_serverevent &&
       (hop_config.flash_version >= 8) &&
       (hop_config.flash_external_interface) &&
@@ -1179,8 +1191,9 @@ var hop_timeout_listeners = null;
 /*    hop_add_timeout_listener ...                                     */
 /*---------------------------------------------------------------------*/
 function hop_add_timeout_listener( obj, proc ) {
-   hop_timeout_listeners = sc_cons( sc_cons( proc, setInterval( proc, obj ) ),
-				    hop_timeout_listeners );
+   hop_timeout_listeners =
+      sc_cons( sc_cons( proc, setInterval( proc, obj ) ),
+	       hop_timeout_listeners );
 }
 
 /*---------------------------------------------------------------------*/
@@ -1220,8 +1233,12 @@ hop_add_native_event_listener(
 	    new HopEvent( "ready", window )
 	    
 	    while( sc_isPair( hop_window_ready_list ) ) {
-	       hop_window_ready_list.car( evt );
-	       if( evt.isStopped ) break;
+	       if( hop_window_ready_list.car.enable ) {
+		  window.ready = hop_window_ready_list.car;
+		  window.ready( evt );
+	       
+		  if( evt.isStopped ) break;
+	       }
 	       hop_window_ready_list = hop_window_ready_list.cdr;
 	    }
 	 }
