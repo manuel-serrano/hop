@@ -1,5 +1,5 @@
 ;; a REST Simple Storage Service (Amazon like). Must be included in hoprc.hop
-;; the module (just to be sure that we do not interfer with other programs)
+;; the module (just to be sure that we do not interfere with other programs)
 (module hop-S3
    (library sqlite))
 

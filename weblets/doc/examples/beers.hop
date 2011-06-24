@@ -1,4 +1,4 @@
-;; Five bootle of beers song
+;; Five bootles of beer song
 (module beers)
 
 (define beers-number 5)

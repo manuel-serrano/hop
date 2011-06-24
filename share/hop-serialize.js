@@ -3,16 +3,45 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Wed May 25 16:48:57 2011 (serrano)                */
+/*    Last change :  Thu Jun 23 17:31:23 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
+/*    hop_serialize_context ...                                        */
+/*---------------------------------------------------------------------*/
+var hop_serialize_context = new Object();
+hop_serialize_context.def = 0;
+hop_serialize_context.ref = 0;
+hop_serialize_context.active = false;
+hop_serialize_context.key = 1;
+
+/*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize( item ) {
+   if( hop_serialize_context.active ) {
+      return hop_bigloo_serialize_context( item );
+   } else {
+      hop_serialize_context.active = true;
+      hop_serialize_context.ref = 0;
+      hop_serialize_context.def = 0;
+      hop_serialize_context.key++;
+
+      var str = hop_bigloo_serialize_context( item );
+
+      hop_serialize_context.active = false;
+      
+      return "c" + hop_serialize_number( hop_serialize_context.def ) + str;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_context ...                                 */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_context( item ) {
    var tname = typeof item;
 
    if( (item instanceof String) || (tname == "string") ) {
@@ -32,21 +61,27 @@ function hop_bigloo_serialize( item ) {
       
    if( (item instanceof Boolean) || (tname == "boolean") )
       return hop_serialize_boolean( item );
-      
-   if( item instanceof Array )
-      return hop_serialize_array( item );
-   
+
    if( item === undefined )
       return ";";
    
    if( item === null )
       return ".";
 
+   if( item.hop_serialize_context_key === hop_serialize_context.key ) {
+      hop_serialize_context.ref++;
+      return "%23" + hop_serialize_word( item.hop_serialize_context_def );
+   }
+
+   if( item instanceof Array )
+      return hop_serialize_array( item );
+   
    if( item instanceof Date )
       return hop_serialize_date( item );
 
-   if( (item instanceof Object) && ("hop_bigloo_serialize" in item) )
-      return item.hop_bigloo_serialize();
+   if( (item instanceof Object) && ("hop_bigloo_serialize" in item) ) {
+      return hop_bigloo_serialize_custom( item );
+   }
    
    if( (HTMLCollection != undefined) && (item instanceof HTMLCollection) )
       return hop_serialize_array( item );
@@ -70,25 +105,41 @@ function hop_bigloo_serialize( item ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_custom ...                                  */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_custom( item ) {
+   item.hop_serialize_context_key = hop_serialize_context.key;
+   item.hop_serialize_context_def = hop_serialize_context.def++;
+
+   return "=" + hop_serialize_word( item.hop_serialize_context_def ) +
+      item.hop_bigloo_serialize();
+}
+   
+/*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize_object ...                                  */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_object() {
-   var o = this;
-   var classname = hop_demangle( o.hop_classname );
-   var classfields = o.hop_classfields;
+   var item = this;
+   var classname = hop_demangle( item.hop_classname );
+   var classfields = item.hop_classfields;
    var str = "|" + "%27" + hop_serialize_string( '%22', classname );
    var args = "";
    var len = 1;
 
+   item.hop_serialize_context_key = hop_serialize_context.key;
+   item.hop_serialize_context_def = hop_serialize_context.def++;
+
    for( var i = 0; i < classfields.length; i++ ) {
       len++;
-      args += hop_bigloo_serialize( o[ classfields[ i ] ] );
+      args += hop_bigloo_serialize( item[ classfields[ i ] ] );
    }
 
    str += hop_serialize_word( len );
    str += hop_serialize_boolean( false );
    str += args;
-   str += hop_bigloo_serialize( o.hop_classhash );
+   str += hop_bigloo_serialize( item.hop_classhash );
+
+   str = "=" +  hop_serialize_word( item.hop_serialize_context_def ) + str;
 
    return str;
 }
@@ -127,7 +178,17 @@ function hop_serialize_word( word ) {
          var c = ((word >> (s << 3)) & 0xff);
 
          if( (c < 127) && (c >= 46) ) {
-	    rw += String.fromCharCode( c );
+	    if( c == 92 )
+	       // Chrome patch:
+	       // Chrome (at least Chrome <= 12) escapes \ characters when
+	       // sending the request via an XHR. The consequence is the
+	       // client-side DIGEST authentication is computed on a different
+	       // string from the one actually sent to the client. As a
+	       // workaround we explicitly escape \ character using the URL
+	       // escaping mechanism.
+	       rw += "%5c";
+	    else
+	       rw += String.fromCharCode( c );
          } else {
             var i1 = (c >> 4);
             var i2 = (c & 0xf);
@@ -271,11 +332,14 @@ function hop_serialize_array( item ) {
    var ra = '[' + hop_serialize_word( l );
    var i = 0;
 
+   item.hop_serialize_context_key = hop_serialize_context.key;
+   item.hop_serialize_context_def = hop_serialize_context.def++;
+
    for( i = 0; i < l; i++ ) {
       ra += hop_bigloo_serialize( item[ i ] );
    }
 
-   return ra;
+   return "=" + hop_serialize_word( item.hop_serialize_context_def ) + ra;
 }
 
 /*---------------------------------------------------------------------*/

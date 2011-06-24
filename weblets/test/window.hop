@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jul  7 08:33:34 2007                          */
-;*    Last change :  Mon Jan 31 05:30:20 2011 (serrano)                */
+;*    Last change :  Thu Jun 23 07:19:46 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing window                                                   */
@@ -20,7 +20,7 @@
 ;*    test/window ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-service (test/window)
-   (<TEST-HTML> :include `("hop-window" ) ;;,(service-resource test/window "window.hss"))
+   (<TEST-HTML> :include `("hop-window" ,(service-resource test/window "window.hss"))
       :source (service-resource test/window "window.hop")
       (test-window-inner)))
 

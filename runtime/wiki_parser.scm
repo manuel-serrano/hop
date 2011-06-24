@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue May 24 10:34:29 2011 (serrano)                */
+;*    Last change :  Fri Jun 17 05:26:46 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -1032,14 +1032,16 @@
 		 (let ((path (link-val s)))
 		    (if (or (string-suffix? ".svg" path)
 			    (string-suffix? ".svgz" path))
-			(<SVG:IMG> :src path :width "3cm")
+			(<SVG:IMG> :src path :width "100%")
 			(<IMG> :src path :alt s)))
 		 (let* ((p (substring s 0 i))
 			(t (substring s (+fx i 1) (string-length s)))
 			(path (link-val p)))
 		    (if (or (string-suffix? ".svg" path)
 			    (string-suffix? ".svgz" path))
-			(<SVG:IMG> :id t :src path)
+			(multiple-value-bind (id class)
+			   (wiki-parse-ident t)
+			   (<SVG:IMG> :id id :class class :src path))
 			(let ((title (html-string-encode (charset t))))
 			   (<IMG> :src path :alt p :title title)))))))
        (ignore))

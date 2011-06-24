@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sun May 22 11:14:57 2011 (serrano)                */
+;*    Last change :  Thu Jun 23 11:38:38 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -277,7 +277,7 @@
       (define (KD secret data)
 	 (H (string-append secret ":" data)))
       
-      (define (request-digest A1 n)
+      (define (request-digest A1 n l)
 	 (let ((nc (get 'nc l))
 	       (nonce (get 'nonce l))
 	       (qop (get 'qop l))
@@ -286,41 +286,41 @@
 		;; Hop does not support auth-int so A2 is
 		;; only defined as follows
 		(let ((A2 (string-append
-			   (symbol->string method) ":" uri)))
+			     (symbol->string method) ":" uri)))
 		   (if (equal? qop "auth")
 		       (let ((cnonce (get 'cnonce l)))
 			  (if (string? cnonce)
 			      (KD A1
-				  (string-append
-				   nonce
-				   ":" nc
-				   ":" cnonce
-				   ":" qop
-				   ":" (H A2)))
-			      (cannot-authenticate "digest:" n)))
+				 (string-append
+				    nonce
+				    ":" nc
+				    ":" cnonce
+				    ":" qop
+				    ":" (H A2)))
+			      (cannot-authenticate "digest (4):" n)))
 		       (KD (H A1) (string-append nonce ":" (H A2)))))
-		(cannot-authenticate "digest:" n))))
+		(cannot-authenticate "digest (5):" n))))
       
       (let* ((n (get 'username l))
 	     (u (hashtable-get *users* n)))
-	 (if (user? u)
-	     (with-access::user u (password authentication)
-		(if (eq? authentication 'digest)
-		    (let ((opaque (get 'opaque l))
-			  (realm (get 'realm l))
-			  (response (get 'response l)))
-		       (if (and (string? opaque)
-				(string=? opaque digest-opaque)
-				(string? realm)
-				(string=? realm (hop-realm))
-				(string? response))
-			   (let ((request (request-digest password n)))
-			      (if (and (string? request)
-				       (string=? request response))
-				  (add-cached-user! auth u)
-				  (cannot-authenticate "digest:" n)))
-			   (cannot-authenticate "digest:" n)))
-		    (cannot-authenticate "digest:" n))))))
+	 (when (user? u)
+	    (with-access::user u (password authentication)
+	       (if (eq? authentication 'digest)
+		   (let ((opaque (get 'opaque l))
+			 (realm (get 'realm l))
+			 (response (get 'response l)))
+		      (if (and (string? opaque)
+			       (string=? opaque digest-opaque)
+			       (string? realm)
+			       (string=? realm (hop-realm))
+			       (string? response))
+			  (let ((request (request-digest password n l)))
+			     (if (and (string? request)
+				      (string=? request response))
+				 (add-cached-user! auth u)
+				 (cannot-authenticate "digest (3):" n)))
+			  (cannot-authenticate "digest (2):" n)))
+		   (cannot-authenticate "digest (1):" n))))))
 
    (case (car l)
       ((basic url)

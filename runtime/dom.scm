@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Fri Feb 18 07:05:44 2011 (serrano)                */
+;*    Last change :  Sat Jun 11 06:13:26 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -518,7 +518,7 @@
 	     (set! body (reverse! new)))
 	    ((not (string? (car body)))
 	     (loop (cdr body) (cons (dom-normalize! (car body)) new)))
-	    ((string=? body "")
+	    ((string=? (car body) "")
 	     (loop (cdr body) new))
 	    ((null? (cdr body))
 	     (loop '() (cons (car body) new)))

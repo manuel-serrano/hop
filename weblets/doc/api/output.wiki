@@ -4,7 +4,7 @@
 
 This page describes the HOP output functions. In particular, it
 describes the ++format++ function that enables formatted I/Os such as
-the CommonLisp's ++format++ or C's ++sprintf++.
+CommonLisp's ++format++ or C's ++sprintf++.
 
 ~~ Note: Many thanks to Scott G. Miller who is the author of
 [[http://srfi.schemers.org/srfi-28|SRFI-28]]. Most of the

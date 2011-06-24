@@ -10,7 +10,7 @@ markups.
 
 ~~ In addition to regular SVG markups, HOP supports the additional
 ++<MATHML:TEX>++ markup that allows math TeX math formulas to be 
-embed inside HOP programs.
+embedded inside HOP programs.
 
 ~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
 Embedding MatHML markups inside Web pages with Firefox is currently 

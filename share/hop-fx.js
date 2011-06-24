@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-fx.js                   */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-fx.js                   */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May  4 16:34:59 2006                          */
-/*    Last change :  Sat Jan  9 09:48:01 2010 (serrano)                */
-/*    Copyright   :  2006-10 Manuel Serrano                            */
+/*    Last change :  Thu Jun 23 07:17:47 2011 (serrano)                */
+/*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP graphical effects library                                    */
 /*=====================================================================*/

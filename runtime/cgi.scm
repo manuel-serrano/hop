@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Fri Dec 17 07:35:45 2010 (serrano)                */
-;*    Copyright   :  2003-10 Manuel Serrano                            */
+;*    Last change :  Thu Jun 23 16:45:19 2011 (serrano)                */
+;*    Copyright   :  2003-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
 ;*=====================================================================*/
