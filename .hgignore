@@ -49,3 +49,9 @@ etc/hopsh.man
 etc/hopshrc.hop
 hopscheme/hop-runtime.sch
 config.status
+^arch/android/androidemo/config.hop$
+^arch/android/androidemo/etc/androidemo.wiki$
+^arch/android/androidemo/etc/weblet.info$
+^runtime/configure_android.sch$
+^runtime/configure_macosx.sch$
+^runtime/configure_noarch.sch$
