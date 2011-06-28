@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue Jun  7 08:20:46 2011 (serrano)                */
+/*    Last change :  Tue Jun 28 19:44:59 2011 (serrano)                */
 /*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -218,6 +218,7 @@ function hop_Config() {
    } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
       if( navigator.userAgent.match( /[4-9].[0-9][^ ]*$/ ) ) {
          /* Firefox 4.0 */
+	 this.clone_innerHTML = true;
          this.js_speed = 100;	    
          this.css = 3;
          this.css_transition = true;
@@ -630,18 +631,17 @@ function node_style_set_native( el, prop, value ) {
       var p = arguments[ i ];
       var v = arguments[ i + 1 ];
 
-      if( v ) {
-	 if( sc_isKeyword( p ) )
-	    p = sc_keyword2jsstring( p );
+      if( sc_isKeyword( p ) )
+	 p = sc_keyword2jsstring( p );
    
-	 if( !(v instanceof String) && (typeof v !== "string") )
-	    v = v.toString();
+      if( !(v instanceof String) && (typeof v !== "string") ) {
+	 v = v.toString();
+      }
 
-	 if( p in obj.style ) {
-	    obj.style[ p ] =  v;
-	 } else {
-	    obj.style.setProperty( p, v, "" );
-	 }
+      if( p in obj.style ) {
+	 obj.style[ p ] =  v;
+      } else {
+	 obj.style.setProperty( p, v, "" );
       }
    }
 }
@@ -661,15 +661,14 @@ function node_style_set_array( el, prop, value ) {
       var p = arguments[ i ];
       var v = arguments[ i + 1 ];
 
-      if( v ) {
-	 if( sc_isKeyword( p ) )
-	    p = sc_keyword2jsstring( p );
+      if( sc_isKeyword( p ) )
+	 p = sc_keyword2jsstring( p );
    
-	 if( !(v instanceof String) && (typeof v !== "string") )
-	    v = v.toString();
-   
-	 obj.style[ p ] = v;
+      if( !(v instanceof String) && (typeof v !== "string") ) {
+	 v = v.toString();
       }
+   
+      obj.style[ p ] = v;
    }
 }
 
