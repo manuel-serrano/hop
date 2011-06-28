@@ -634,7 +634,7 @@ function node_style_set_native( el, prop, value ) {
       if( sc_isKeyword( p ) )
 	 p = sc_keyword2jsstring( p );
    
-      if( !(v instanceof String) && (typeof v !== "string") ) {
+      if( !v || (!(v instanceof String) && (typeof v !== "string")) ) {
 	 v = v.toString();
       }
 
@@ -664,7 +664,7 @@ function node_style_set_array( el, prop, value ) {
       if( sc_isKeyword( p ) )
 	 p = sc_keyword2jsstring( p );
    
-      if( !(v instanceof String) && (typeof v !== "string") ) {
+      if( !v || (!(v instanceof String) && (typeof v !== "string")) ) {
 	 v = v.toString();
       }
    
