@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon May 30 14:46:40 2011 (serrano)                */
+;*    Last change :  Wed Jun 29 10:34:58 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -668,6 +668,12 @@
    (display "='" p)
    (display (hop-service-path attr) p)
    (display "'" p))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write-attribute ::xml-lazy-attribute ...                     */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write-attribute attr::xml-lazy-attribute id p backend)
+   (xml-write-attribute ((xml-lazy-attribute-proc attr)) id p backend))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-initializations ...                                    */

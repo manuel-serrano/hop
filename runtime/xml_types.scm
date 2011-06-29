@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Mon May 23 12:13:13 2011 (serrano)                */
+;*    Last change :  Wed Jun 29 10:34:50 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
@@ -93,6 +93,9 @@
 	       (content::obj (default #f)))
 
 	    (class xml-svg::xml-element)
+
+	    (class xml-lazy-attribute
+	       (proc::procedure read-only))
 
 	    (generic %xml-constructor ::xml)))
 

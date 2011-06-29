@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sun May  1 19:36:57 2011 (serrano)                */
+;*    Last change :  Wed Jun 29 10:39:24 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -105,6 +105,8 @@
 	   (class xml-tilde)
 	   (class xml-html)
 	   (class xml-document)
+
+	   (class xml-lazy-attribute)
 
 	   (class css-style)
 	   
