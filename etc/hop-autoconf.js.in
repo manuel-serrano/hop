@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue Jun 28 20:49:08 2011 (serrano)                */
+/*    Last change :  Wed Jun 29 05:27:12 2011 (serrano)                */
 /*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -631,12 +631,20 @@ function node_style_set_native( el, prop, value ) {
       var p = arguments[ i ];
       var v = arguments[ i + 1 ];
 
-      if( v != undefined ) {
-	 if( sc_isKeyword( p ) )
-	    p = sc_keyword2jsstring( p );
-   
-	 if( !v || (!(v instanceof String) && (typeof v !== "string")) ) {
-	    v = v.toString();
+      if( sc_isKeyword( p ) )
+	 p = sc_keyword2jsstring( p );
+
+      if( v == undefined ) {
+	 sc_error( "node-style-set!",
+		   "undefined value for property \"" + p + "\"",
+		   el );
+      } else {
+	 if( !v ) {
+	    v = "0";
+	 } else {
+	    if( !(v instanceof String) && (typeof v !== "string") ) {
+	       v = v.toString();
+	    }
 	 }
 	 
 	 if( p in obj.style ) {
@@ -663,12 +671,20 @@ function node_style_set_array( el, prop, value ) {
       var p = arguments[ i ];
       var v = arguments[ i + 1 ];
 
-      if( v != undefined ) {
-	 if( sc_isKeyword( p ) )
-	    p = sc_keyword2jsstring( p );
-   
-	 if( !v || (!(v instanceof String) && (typeof v !== "string")) ) {
-	    v = v.toString();
+      if( sc_isKeyword( p ) )
+	 p = sc_keyword2jsstring( p );
+      
+      if( v == undefined ) {
+	 sc_error( "node-style-set!",
+		   "undefined value for property \"" + p + "\"",
+		   el );
+      } else {
+	 if( !v ) {
+	    v = "0";
+	 } else {
+	    if( !(v instanceof String) && (typeof v !== "string") ) {
+	       v = v.toString();
+	    }
 	 }
 	 
 	 obj.style[ p ] = v;

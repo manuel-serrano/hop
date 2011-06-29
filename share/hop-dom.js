@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Jun 28 19:34:00 2011 (serrano)                */
+/*    Last change :  Wed Jun 29 05:31:21 2011 (serrano)                */
 /*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1075,8 +1075,11 @@ function node_style_get( obj, prop ) {
 
    if( sc_isKeyword( prop ) )
       prop = sc_keyword2jsstring( prop );
-   
-   return obj.style[ prop ];
+
+   if( prop in obj.style ) 
+      return obj.style[ prop ];
+   else
+      return false;
 }
 
 /*---------------------------------------------------------------------*/
@@ -1096,7 +1099,7 @@ function node_computed_style_get( obj, prop ) {
 
    var t = window.getComputedStyle( el, null );
 
-   if( t != null )
+   if( t != null && (prop in t) )
       return t[ prop ];
    else
       return false;
