@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Wed Jun 29 05:27:12 2011 (serrano)                */
+/*    Last change :  Thu Jun 30 07:30:46 2011 (serrano)                */
 /*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -90,6 +90,17 @@ function hop_get_flash_version() {
 /*    deduced by introspection.                                        */
 /*---------------------------------------------------------------------*/
 function hop_Config() {
+   /* body */
+   if( ("body" in document) && (document.body != null) ) {
+      this.body = document.body;
+   } else {
+      if( ("documentElement" in document) && (document.documentElement != null) ) {
+	 this.body = document.documentElement;
+      } else {
+	 this.body = document.getElementsByTagName( "body" )[ 0 ];
+      }
+   }
+      
    /* cpu speed */
    this.cpu_speed = 100;
    if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.cpu_speed = 40;
@@ -138,7 +149,7 @@ function hop_Config() {
    this.css = 2.1;
    this.css_transition = false;
    this.xhr_multipart = false; // see hop_make_xml_http_request conf
-   this.clone_innerHTML = false; // see hop_create_element (hop-dom.js)
+   this.clone_innerHTML = true; // see hop_create_element (hop-dom.js)
    this.eval_innerHTML = true;
    this.websocket = false;
    this.server_event = "long polling";
@@ -155,7 +166,6 @@ function hop_Config() {
       this.flash_serverevent = true;
       this.flash_markup = "object";
       this.inline_image = false;
-      this.clone_innerHTML = true;
       if( navigator.userAgent.indexOf( "MSIE 6.0" ) >= 0 ) {
 	 hop_enable_location_event = false;
       }
@@ -168,7 +178,6 @@ function hop_Config() {
       this.flash_serverevent = false;
       this.flash_markup = "embed";
       this.inline_image = true;
-      this.clone_innerHTML = true;
    } else if( navigator.userAgent.indexOf( "Chrome" ) >= 0 ) {
       this.js_speed = 100;
       this.navigator_family = "chrome";
@@ -180,7 +189,6 @@ function hop_Config() {
       this.inline_image = true;
       this.css = 3;
       this.css_transition = true;
-      this.clone_innerHTML = true;
       if( ! "Window" in window || window.Window === undefined ) {
 	 window.Window = window.constructor;
       }
@@ -193,7 +201,6 @@ function hop_Config() {
       this.flash_serverevent = true;
       this.flash_markup = "embed";
       this.inline_image = true;
-      this.clone_innerHTML = true;
       this.css_transition = true;
    } else if( navigator.userAgent.indexOf( "WebKit" ) >= 0 ) {
       this.navigator_family = "webkit";
@@ -204,7 +211,6 @@ function hop_Config() {
       this.flash_serverevent = true;
       this.flash_markup = "embed";
       this.inline_image = true;
-      this.clone_innerHTML = true;
       this.css_transition = true;
    } else if( navigator.userAgent.indexOf( "KHTML" ) >= 0 ) {
       this.navigator_family = "khtml";
@@ -214,11 +220,9 @@ function hop_Config() {
       this.flash_serverevent = true;
       this.flash_markup = "embed";
       this.inline_image = true;
-      this.clone_innerHTML = true;
    } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
       if( navigator.userAgent.match( /[4-9].[0-9][^ ]*$/ ) ) {
          /* Firefox 4.0 */
-	 this.clone_innerHTML = true;
          this.js_speed = 100;	    
          this.css = 3;
          this.css_transition = true;
@@ -314,34 +318,89 @@ function hop_flash_audio_set( v ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_innerHTML_need_evalp ...                                     */
-/*    -------------------------------------------------------------    */
-/*    This test sets the variable hop_config.eval_innerHTML to         */
-/*    false if innerHTML evaluates the scripts contained in the        */
-/*    DOM nodes it receives as argument.                               */
+/*    cloneScriptNode ...                                              */
 /*---------------------------------------------------------------------*/
-var tmp = document.createElement( "div" );
-
-try {
-   tmp.innerHTML = "<script type='text/javascript'>hop_config.eval_innerHTML = false;<\u002fscript>";
-   tmp = tmp.cloneNode( true );
-   if( ("body" in document) && (document.body != null) ) {
-      document.body.appendChild( tmp );
-      document.body.removeChild( tmp );
-   } else {
-      if( ("documentElement" in document) &&  
-          (document.documentElement != null) ) {
-	 document.documentElement.appendChild( tmp );
-	 document.documentElement.removeChild( tmp );
-      } else {
-	 var body = document.getElementsByTagName( "body" )[ 0 ];
-	 body.appendChild( tmp );
-	 body.removeChild( tmp );
-      }
+function cloneScriptNode( node ) {
+   if( node.nodeType != 1 ) {
+      return node;
    }
-} catch( e ) {
-     ;
+
+   if( (node.tagName !== "SCRIPT") && (node.tagName !== "script") ) {
+      var childs = node.childNodes;
+
+      for( var i = childs.length - 1; i >= 0; i-- ) {
+	 var n = cloneScriptNode( childs[ i ] );
+	 if( n != childs[ i ] ) {
+	    node.replaceChild( n, childs[ i ] );
+	 }
+      }
+
+      return node;
+   } else {
+      var t = document.createTextNode( node.innerHTML );
+      var s = document.createElement( "SCRIPT" );
+
+      s.id = node.id;
+
+      if( "text" in s ) 
+	 s.text = node.innerHTML;
+      else
+	 s.appendChild( t );
+
+      return s;
+   }
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_config.clone_innerHTML                                       */
+/*    -------------------------------------------------------------    */
+/*    Check whether the browser requires elements created by assigning */
+/*    the innerHTML field of their parent to be cloned.                */
+/*---------------------------------------------------------------------*/
+((function () {
+   var tmp = document.createElement( "div" );
+
+   tmp.innerHTML = "<script type='text/javascript'>hop_config.clone_innerHTML_tmp = 1;<\u002fscript>";
+
+   hop_config.clone_innerHTML_tmp = 0;
+   hop_config.body.appendChild( tmp );
+   hop_config.body.removeChild( tmp );
+
+   if( hop_config.clone_innerHTML_tmp == 1 ) {
+      /* cloning not needed because the script got evaluated */
+      hop_config.clone_innerHTML = false;
+   } else {
+      // check if cloning is effective
+      var s = tmp.childNodes[ 0 ];
+      tmp.removeChild( s );
+      tmp.appendChild( cloneScriptNode( s ) );
+      
+      hop_config.body.appendChild( tmp );
+      hop_config.body.removeChild( tmp );
+
+      if( hop_config.clone_innerHTML_tmp == 1 ) {
+	 hop_config.clone_innerHTML = true;
+      } else {
+	 throw new Error( "innerHTML-set!: cannot get innerHTML to evaluate script nodes!" );
+      }
+   
+      delete hop_config.clone_innerHTML_tmp;
+   }
+}))
+
+/*---------------------------------------------------------------------*/
+/*    hop_config.eval_innerHTML                                        */
+/*    -------------------------------------------------------------    */
+/*    Check whether setting innerHTML property evaluates the           */
+/*    textual scripts.                                                 */
+/*---------------------------------------------------------------------*/
+((function () {
+   var tmp = document.createElement( "div" );
+
+   hop_config.body.appendChild( tmp );
+   tmp.innerHTML = "<script type='text/javascript'>hop_config.eval_innerHTML = false;<\u002fscript>";
+   hop_config.body.removeChild( tmp );
+}))
 
 /*---------------------------------------------------------------------*/
 /*    hop_json_parse ...                                               */

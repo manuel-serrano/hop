@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Jun 29 05:31:21 2011 (serrano)                */
+/*    Last change :  Thu Jun 30 07:28:16 2011 (serrano)                */
 /*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1117,39 +1117,6 @@ var hop_tags_parent = {
 };
 
 /*---------------------------------------------------------------------*/
-/*    cloneScriptNode ...                                              */
-/*---------------------------------------------------------------------*/
-function cloneScriptNode( node ) {
-   if( node.nodeType != 1 ) {
-      return node;
-   }
-
-   if( (node.tagName !== "SCRIPT") && (node.tagName !== "script") ) {
-      var childs = node.childNodes;
-
-      for( var i = childs.length - 1; i >= 0; i-- ) {
-	 var n = cloneScriptNode( childs[ i ] );
-	 if( n != childs[ i ] ) {
-	    node.replaceChild( n, childs[ i ] );
-	 }
-      }
-
-      return node;
-   } else {
-      var t = document.createTextNode( node.innerHTML );
-      var s = document.createElement( "SCRIPT" );
-
-      s.id = node.id;
-
-      if( "text" in s ) 
-	 s.text = node.innerHTML;
-      else
-	 s.appendChild( t );
-
-      return s;
-   }
-}
-/*---------------------------------------------------------------------*/
 /*    hop_create_element ...                                           */
 /*---------------------------------------------------------------------*/
 function hop_create_element( html ) {
@@ -1168,8 +1135,8 @@ function hop_create_element( html ) {
    
    if( hop_config.clone_innerHTML ) {
       // As of Feb 2010, webkit based browsers (Feb 2010) requires a deep
-      // clone. Otherwise, embedded scripts are not evaluated when the
-      // resulting is inserted in the DOM!
+      // clone to accept evaluating embedded scripts when the resulting
+      // node is inserted in the DOM!
       if( html.search( /<script[ >]/i ) >= 0 )
 	 return cloneScriptNode( el.childNodes[ 0 ] );
       else
@@ -1212,10 +1179,9 @@ function hop_innerHTML_set( nid, html ) {
 
    if( (html instanceof String) || (typeof html == "string") ) {
       el.innerHTML = html;
-      hop_node_eval( el, html );
+      if( hop_config.eval_innerHTML ) hop_node_eval( el, html );
    } else if( hop_is_html_element( html ) || sc_isPair( html ) ) {
       dom_set_child_node( el, html );
-      if( hop_config.eval_innerHTML ) hop_node_eval( el, html );
    } else {
       el.innerHTML = html;
    }
