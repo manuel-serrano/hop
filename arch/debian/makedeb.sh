@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Fri May 13 16:34:54 2011 (serrano)                */
+#*    Last change :  Mon Jul  4 18:22:56 2011 (serrano)                */
 #*    Copyright   :  2007-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -160,22 +160,26 @@ done
 
 # The desktop file
 cp $TMP/hop-$VERSION/LICENSE $TMP/hop-$VERSION/copyright
-cat $BASEDIR/hop.desktop.in \
-  | sed -e "s/@HOPVERSION@/$VERSION/g" \
-        -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
-        -e "s|@PREFIX@|$PREFIX|g" > \
-  $TMP/hop-$VERSION/maemo/hop.desktop && \
-  chmod a-w $TMP/hop-$VERSION/maemo/hop.desktop
-cat > $TMP/hop-$VERSION/debian/hop.links <<EOF
-$PREFIX/share/applications/hildon/hop.desktop etc/others-menu/extra_applications/hop.desktop
+if [ "$debian " = "maemo " ]; then
+  cat $BASEDIR/hop.desktop.in \
+    | sed -e "s/@HOPVERSION@/$VERSION/g" \
+          -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
+          -e "s|@PREFIX@|$PREFIX|g" > \
+    $TMP/hop-$VERSION/maemo/hop.desktop && \
+    chmod a-w $TMP/hop-$VERSION/maemo/hop.desktop
+  cat > $TMP/hop-$VERSION/debian/hop.links <<EOF
+  $PREFIX/share/applications/hildon/hop.desktop etc/others-menu/extra_applications/hop.desktop
 EOF
+fi
 
 # The service
-cat $BASEDIR/hop.service.in  \
-  | sed -e "s/@HOPVERSION@/$VERSION/g" \
-        -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
-        -e "s|@PREFIX@|$PREFIX|g" > \
-  $TMP/hop-$VERSION/maemo/hop.service
+if [ "$debian " = "maemo " ]; then
+  cat $BASEDIR/hop.service.in  \
+    | sed -e "s/@HOPVERSION@/$VERSION/g" \
+          -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
+          -e "s|@PREFIX@|$PREFIX|g" > \
+    $TMP/hop-$VERSION/maemo/hop.service
+fi
 
 # The changelog file
 /bin/rm -f $TMP/hop-$VERSION/debian/changelog
