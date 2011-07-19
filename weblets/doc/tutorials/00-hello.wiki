@@ -190,7 +190,7 @@ text is centered.
 We now add a parameter to the service.
 
 <example>
-  (define-service (hello who)
+  (define-service (hello #!key who)
      (<HTML>
         (<BODY>
            (<DIV> :align "center" 
@@ -233,14 +233,14 @@ to provide a value to a ++<HEAD>>++ attribute :dir. Then, it is used to
 refer to a image.
 
 <code>
-  (define-service (hello who)
+  (define-service (hello #!key who)
      (<HTML>
        (<HEAD>
          :title "A simple weblet"
          :dir (service-resource hello)
          :css "hello.hss")
        (<BODY>
-         (<IMG> :src (service-resource hello "hello.jpg"))))) 
+         (<IMG> :src (service-resource hello :who "hello.jpg"))))) 
 </code>
 
 </doc>

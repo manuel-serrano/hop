@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon Mar  7 14:19:55 2011 (serrano)                */
+;*    Last change :  Tue Jul 12 17:04:24 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -260,8 +260,10 @@ components = ~a" catalogues catalogues (home-ftp-hop-url) distrib component))))
 ;*---------------------------------------------------------------------*/
 ;*    home/submit-hz ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-service (home/submit-hz file)
+(define-service (home/submit-hz #!key file header)
+   (tprint "submit-hz file=" file " header=" header)
    (let ((path (cgi-post-arg-field :file file)))
+      (tprint "path=" path)
       (home-main (current-request))))
 
 ;*---------------------------------------------------------------------*/
