@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon May  9 09:26:59 2011 (serrano)                */
+;*    Last change :  Fri Jul 29 08:49:13 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -401,8 +401,9 @@
 ;*    are called locally but they are still remote.                    */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-remote success fail auth)
-   (let ((url (http-response-remote-path obj)))
-      (with-hop-remote url success fail :authorization auth)))
+   (with-access::http-response-remote obj (path host port)
+      (with-hop-remote path success fail
+	 :host host :port port :authorization auth)))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-autoload ...                      */

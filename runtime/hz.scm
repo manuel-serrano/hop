@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Mon May 23 14:12:48 2011 (serrano)                */
+;*    Last change :  Mon Jul 25 05:47:14 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -23,8 +23,8 @@
 	   (hz-package-name-parse ::bstring)
 	   (hz-package-url-parse ::bstring)
 	   (hz-package-info ::bstring)
-	   (hz-cache-path ::bstring)
-	   (hz-download-to-cache ::bstring)
+	   (hz-cache-path ::bstring  #!key (dir (make-cache-name "api")))
+	   (hz-download-to-cache ::bstring #!key (dir (make-cache-name "api")))
 	   (hz-resolve-name ::bstring ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
@@ -168,8 +168,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-cache-path ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (hz-cache-path url)
-   (let ((cache (hz-resolve-name url (list (make-cache-name "api")))))
+(define (hz-cache-path url #!key (dir (make-cache-name "api")))
+   (let ((cache (hz-resolve-name url (list dir))))
       (when (directory? cache)
 	 (multiple-value-bind (base version)
 	    (hz-package-name-parse (basename url))
@@ -180,14 +180,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-download-to-cache ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (hz-download-to-cache url)
-   (or (hz-cache-path url)
+(define (hz-download-to-cache url #!key (dir (make-cache-name "api")))
+   (or (hz-cache-path url :dir dir)
        (multiple-value-bind (scheme _ host port abspath)
 	  (url-parse url)
 	  (let ((apath (abspath->filename abspath)))
 	     (multiple-value-bind (base version)
 		(hz-package-name-parse apath)
-		(let* ((dest (make-cache-name "api"))
+		(let* ((dest dir)
 		       (dir (if host
 				(make-file-name dest
 				   (format "~a_~a~a"

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Mon May  9 08:54:54 2011 (serrano)                */
+;*    Last change :  Fri Jul 29 07:12:16 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -27,7 +27,7 @@
 	    __hop_read-js)
 
    (export  (generic obj->javascript ::obj ::output-port ::obj)
-	    (json->hop ::input-port)
+	    (json->hop ::obj)
 	    (hop->js-callback ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -539,20 +539,27 @@
 ;*---------------------------------------------------------------------*/
 ;*    json->hop ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (json->hop ip)
-   (with-handler
-      (lambda (e)
-	 (if (not (&io-parse-error? e))
-	     (raise e)
-	     (match-case (&io-parse-error-obj e)
-		((?token ?val ?file ?pos)
-		 (raise (duplicate::&io-parse-error e
-			   (obj (format "~a (~a)" token val))
-			   (fname file)
-			   (location pos))))
-		(else
-		 (raise e)))))
-      (read/lalrp *json-parser* *json-lexer* ip)))
+(define (json->hop o)
+   
+   (define (parse-json ip)
+      (with-handler
+	 (lambda (e)
+	    (if (not (&io-parse-error? e))
+		(raise e)
+		(match-case (&io-parse-error-obj e)
+		   ((?token ?val ?file ?pos)
+		    (raise (duplicate::&io-parse-error e
+			      (obj (format "~a (~a)" token val))
+			      (fname file)
+			      (location pos))))
+		   (else
+		    (raise e)))))
+	 (read/lalrp *json-parser* *json-lexer* ip)))
+
+   (cond
+      ((input-port? o) (parse-json o))
+      ((string? o) (call-with-input-string o parse-json))
+      (else (error "json->hop" "Illegal argument" o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->js-callback ...                                             */

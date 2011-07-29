@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Tue Jun  7 11:58:17 2011 (serrano)                */
+/*    Last change :  Wed Jul 27 19:52:07 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -68,9 +68,7 @@ function hop_add_event_listener( obj, event, proc, capture ) {
 	    return proc;
 	 }
       } else if( typeof obj === "string" ) {
-	 hop_elements_ready_counter++;
-	 /* wait for a node to be created and added to the document */
-	 return after( 1, function() { hop_add_ready_listener( obj, p, 20 ) } );
+	 return hop_add_ready_listener( obj, p, 20 );
       } else {
 	 return sc_error( "add-event-listener!",
 			  "Illegal \"ready\" event for object",
@@ -128,6 +126,8 @@ function hop_remove_event_listener( obj, event, proc, capture ) {
 function hop_add_ready_listener( obj, proc, ttl ) {
    var el = document.getElementById( obj );
 
+   hop_elements_ready_counter++;
+   
    if( !el ) {
       if( ttl > 0 ) {
 	 after( hop_ready_timeout, function() {
