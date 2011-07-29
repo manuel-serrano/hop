@@ -27,7 +27,7 @@
 	 (<BODY>
 	    ~(add-event-listener! $wikiedit-event "server"
 		(lambda (e)
-		   (innerHTML-set! $d (event-response-text e))))
+		   (innerHTML-set! $d (event-value e))))
 	    d))))
 
 (define (wikiedit-compile src)
