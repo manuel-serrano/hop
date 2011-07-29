@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Jul 29 08:49:13 2011 (serrano)                */
+;*    Last change :  Fri Jul 29 08:57:56 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -45,8 +45,7 @@
 			     (user #f)
 			     (password #f)
 			     (authorization #f)
-			     (anim #f)
-			     (sync #f))
+			     (anim #f))
 	    (generic with-hop-local obj success fail authorization)
 	    (hop-get-file::obj ::bstring ::obj)))
 
@@ -334,8 +333,7 @@
 			 (user #f)
 			 (password #f)
 			 (authorization #f)
-			 (anim #f)
-			 (sync #f))
+			 (anim #f))
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
 	     ": " path "\n")
@@ -375,10 +373,8 @@
 				   (status 501)
 				   (header '())
 				   (input-port ip)))))
-		    (let ((v (http-send-request req hdl)))
-		       (if sync v #unspecified)))
-		 (let ((v (http-send-request req hdl)))
-		    (if sync v #unspecified))))))))
+		    (http-send-request req hdl))
+		 (http-send-request req hdl)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fail-or-raise ...                                                */

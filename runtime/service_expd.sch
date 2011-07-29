@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sun May 22 09:36:05 2011 (serrano)                */
+;*    Last change :  Fri Jul 29 08:56:37 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -263,16 +263,12 @@
 		  (auth #f))
 	  (cond
 	     ((null? opts)
-	      (let ((nx (if (and (not host) (not port))
-			    ;; a local call
-			    (let ((wh (with-hop-local svc a success fail auth)))
-			       (if sync
-				   (let ((v (gensym)))
-				      `(let ((,v ,wh))
-					  (if ,sync ,v #unspecified)))
-				   `(begin ,wh #unspecified)))
-			    ;; a remote call
-			    (with-hop-remote svc a success fail args))))
+	      (let ((nx (let ((wh (if (and (not host) (not port))
+				      (with-hop-local svc a success fail auth)
+				      (with-hop-remote svc a success fail args))))
+			   (if sync
+			       wh
+			       `(begin ,wh #unspecified)))))
 		 (e (evepairify nx x) e)))
 	     ((not (keyword? (car opts)))
 	      (cond
