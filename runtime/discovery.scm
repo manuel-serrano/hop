@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Mon May 23 08:56:12 2011 (serrano)                */
+;*    Last change :  Wed Aug  3 06:48:37 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -168,7 +168,7 @@
 				     (let loop ((l %listeners))
 					(when (pair? l)
 					   ((caar l) e)
-					   (unless (event-stopped? e)
+					   (unless (event-stopped e)
 					      (loop (cdr l))))))))))
 	       d)))))
 				  

@@ -1672,6 +1672,24 @@ function sc_filter(proc, l1) {
 }
 
 /*** META ((export #t) (arity #t)) */
+function sc_findTail(proc, l1) {
+   while (l1 !== null) {
+      if (proc(l1.car)) {
+	 return l1;
+      } else {
+	 l1 = l1.cdr;
+      }
+   }
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_find(proc, l1) {
+   var l = sc_findTail(proc, l1);
+
+   return l ? l.car : false;
+}
+	 
+/*** META ((export #t) (arity #t)) */
 function sc_filterBang(proc, l1) {
     var head = sc_cons("dummy", l1);
     var it = head;

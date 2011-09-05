@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Jun  6 14:26:49 2011 (serrano)                */
+;*    Last change :  Sun Aug 14 07:17:37 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -48,23 +48,6 @@
 	    (http-service-unavailable obj)
 	    (http-remote-error ::obj ::&exception)
 	    (http-gateway-timeout e)))
-
-;*---------------------------------------------------------------------*/
-;*    *anonymous-request* ...                                          */
-;*---------------------------------------------------------------------*/
-(define *anonymous-request* #f)
-
-;*---------------------------------------------------------------------*/
-;*    anonymous-request ...                                            */
-;*---------------------------------------------------------------------*/
-(define (anonymous-request)
-   (unless (http-request? *anonymous-request*)
-      (set! *anonymous-request*
-	    (instantiate::http-server-request
-	       (http 'HTTP/1.0)
-	       (connection 'close)
-	       (user (anonymous-user)))))
-   *anonymous-request*)
 
 ;*---------------------------------------------------------------------*/
 ;*    http-start-line ...                                              */

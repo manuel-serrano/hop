@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Jul 29 08:57:56 2011 (serrano)                */
+;*    Last change :  Sun Aug 14 07:19:51 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -34,6 +34,7 @@
 	    (generic thread-request-set! ::obj ::obj)
 	    (inline current-request::obj)
 	    (inline current-request-set! ::thread ::obj)
+	    (anonymous-request::http-request)
 	    (request-get::obj ::symbol)
 	    (request->response::%http-response ::http-request ::obj)
 	    (with-url ::bstring ::obj #!key fail (header '()) (timeout 0))
@@ -48,6 +49,23 @@
 			     (anim #f))
 	    (generic with-hop-local obj success fail authorization)
 	    (hop-get-file::obj ::bstring ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    *anonymous-request* ...                                          */
+;*---------------------------------------------------------------------*/
+(define *anonymous-request* #f)
+
+;*---------------------------------------------------------------------*/
+;*    anonymous-request ...                                            */
+;*---------------------------------------------------------------------*/
+(define (anonymous-request)
+   (unless (http-request? *anonymous-request*)
+      (set! *anonymous-request*
+	    (instantiate::http-server-request
+	       (http 'HTTP/1.0)
+	       (connection 'close)
+	       (user (anonymous-user)))))
+   *anonymous-request*)
 
 ;*---------------------------------------------------------------------*/
 ;*    *current-request* ...                                            */

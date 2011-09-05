@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -263,6 +263,7 @@
 
 
 (define (compile-value val p foreign-out loc)
+   
    (define (display-ucs2-char p c) ;; without the quotes
       (let ((i (ucs2->integer c)))
 	 (cond
@@ -278,7 +279,7 @@
 	     (template-display p "\\u0~x" i))
 	    (else
 	     (template-display p "\\u~x" i)))))
-	     
+
    (cond
       ((null? val)
        (template-display p "null"))
@@ -315,14 +316,19 @@
 		(display-ucs2-char p (ucs2-string-ref val i))
 		(loop (+fx i 1))))))
       ((vector? val)
-       (template-display p
-	  "[~e]"
-	  (let loop ((i 0))
-	     (unless (>= i (vector-length val))
-		(if (not (= i 0))
-		    (template-display p ", "))
-		(compile-value (vector-ref val i) p foreign-out loc)
-		(loop (+ i 1))))))
+       (if (class? val)
+	   (scheme2js-error "scheme2js:val-out"
+	      "Cannot compile Bigloo class"
+	      (class-name val)
+	      loc)
+	   (template-display p
+	      "[~e]"
+	      (let loop ((i 0))
+		 (unless (>= i (vector-length val))
+		    (if (not (= i 0))
+			(template-display p ", "))
+		    (compile-value (vector-ref val i) p foreign-out loc)
+		    (loop (+ i 1)))))))
       ((pair? val)
        (if (small-list/pair? val)
 	   (template-display p
@@ -347,7 +353,7 @@
       (foreign-out
        (foreign-out val p))
       (else
-       (scheme2js-error "val-out"
+       (scheme2js-error "scheme2js:val-out"
 			"Internal Error: forgot Val-type"
 			val
 			loc))))

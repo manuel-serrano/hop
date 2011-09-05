@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Jun 20 14:00:10 2011 (serrano)                */
+;*    Last change :  Wed Aug  3 06:47:25 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -70,10 +70,10 @@
 	       (thread::thread read-only)
 	       (listeners::pair-nil (default '()))))
 	    
-   (export  (abstract-class event
+   (export  (class event
 	       (name::bstring read-only)
 	       (target::obj read-only)
-	       (stopped?::bool (default #f))
+	       (stopped::bool (default #f))
 	       (value::obj (default #unspecified)))
 
 	    (class server-event::event)
@@ -116,7 +116,7 @@
        (error "remove-event-listener!" "Illegal listener" obj)))
 
 (define-generic (stop-event-propagation event::event default::bool)
-   (event-stopped?-set! event #t))
+   (event-stopped-set! event #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    *event-mutex* ...                                                */
@@ -1392,7 +1392,6 @@
 	       :authorization auth
 	       :header `((origin ,(format "~a:~a" (hostname) (hop-port)))
 			 (WebSocket-Protocol "ws")))
-	    (flush-output-port (socket-output sock))
 	    (let* ((in (socket-input sock))
 		   (line (read-line in))
 		   (upgrade (read-line in))
@@ -1477,7 +1476,7 @@
 		  (let loop ((l l))
 		     (when (pair? l)
 			((cdar l) e)
-			(unless (event-stopped? e)
+			(unless (event-stopped e)
 			   (loop (cdr l))))))))))
 
    (define (hopsocket-loop hs)

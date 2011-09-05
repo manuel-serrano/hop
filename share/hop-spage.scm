@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Tue Jun 28 19:35:36 2011 (serrano)                */
+;*    Last change :  Sun Aug 28 13:00:23 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -103,7 +103,10 @@
 	    :width (format "~apx" spage.spscrollwidth))
 	 (node-style-set! (dom-first-child spage.spviewport)
 	    :width (format "~apx" spage.spbodywidth))
-	 (when (eq? spage.transitionstyle 'slide)
+	 ;; MS 28aug2011 why should the following be needed?
+	 ;; If needed, this must be fixed, because it makes the first tab
+	 ;; appears below (if taller) the current tab
+	 '(when (eq? spage.transitionstyle 'slide)
 	    (node-style-set! (dom-first-child spage.spviewport)
 	       :left (format "~apx"spage.spoffset))))))
    
