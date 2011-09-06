@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Fri May 13 11:58:23 2011 (serrano)                */
+;*    Last change :  Tue Sep  6 08:36:20 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -195,7 +195,7 @@
 			   (let liip ((procs procs))
 			      (when (pair? procs)
 				 ((car procs) event)
-				 (unless (event-stopped? event)
+				 (unless (event-stopped event)
 				    (liip (cdr procs)))))))))
 	       (loop)))
 	 (with-lock %mutex
