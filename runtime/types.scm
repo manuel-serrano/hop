@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Jan 14 09:21:58 2011 (serrano)                */
+;*    Last change :  Sun Sep 25 08:39:13 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -134,10 +134,11 @@
 
 	   (class http-response-websocket::%http-response-local
 	      (connection::symbol read-only (default 'Upgrade))
-	      (origin::bstring read-only)
-	      (location::bstring read-only)
+	      (origin::obj read-only (default #f))
+	      (location::obj read-only (default #f))
 	      (protocol::obj read-only)
-	      (sec read-only (default #f)))
+	      (sec read-only (default #f))
+	      (accept read-only (default #f)))
 
 	   (class http-response-error::http-response-string)
 

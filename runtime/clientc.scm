@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Fri Jan 14 10:41:41 2011 (serrano)                */
+;*    Last change :  Tue Sep  6 16:58:15 2011 (serrano)                */
 ;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -131,7 +131,7 @@
 ;*---------------------------------------------------------------------*/
 (define (clientc-response req path)
    (let ((cache (cache-get clientc-cache path))
-	 (mime (mime-type path (hop-javascript-mime-type)))
+	 (mime (hop-javascript-mime-type))
 	 (method (http-request-method req)))
       (if (string? cache)
 	  ;; since we are serving a cached answer, we also have

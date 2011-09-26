@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/charset.scm               */
+;*    serrano/prgm/project/hop/2.2.x/runtime/charset.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 10 06:46:43 2007                          */
-;*    Last change :  Tue Sep 29 15:53:59 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Last change :  Sat Sep 17 06:02:45 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with charset.                              */
 ;*=====================================================================*/
@@ -23,15 +23,17 @@
 ;*---------------------------------------------------------------------*/
 (define (charset-alias charset)
    (case charset
-      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1 ISO-8869-1 ISO8859-1
-        iso-8859-1 iso-8859-2 iso-8859-15 iso-latin-1 iso-8869-1 iso8859-1)
+      ((UTF-8 utf-8)
+       'UTF-8)
+      ((ISO-8859-1 ISO-8859-2 ISO-LATIN-1 ISO-8869-1 ISO8859-1
+        iso-8859-1 iso-8859-2 iso-latin-1 iso-8869-1 iso8859-1)
        'ISO-8859-1)
+      ((ISO-8859-15 iso-8859-15)
+       'ISO-8859-15)
       ((WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258
         windows-1250 windows-1252 windows-1256 windows-1258)
        'CP1252)
-      ((utf-8)
-       'UTF-8)
-      ((ucs-2)
+      ((UCS-2 ucs-2)
        'UCS-2)
       (else
        charset)))
@@ -41,6 +43,7 @@
 ;*---------------------------------------------------------------------*/
 (define (make-charset-converter charset1::symbol charset2::symbol
 				8859->utf8::procedure utf8->8859::procedure
+				utf8->8859-15::procedure
 				8859->us-ascii::procedure
 				1252->utf8::procedure utf8->1252::procedure)
    (let ((cset1 (charset-alias charset1))
@@ -48,7 +51,7 @@
       (if (eq? cset1 cset2)
 	  (lambda (x) x)
 	  (case cset1
-	     ((ISO-8859-1)
+	     ((ISO-8859-1 ISO-8859-15)
 	      (case cset2
 		 ((UTF-8)
 		  8859->utf8)
@@ -74,6 +77,8 @@
 	      (case cset2
 		 ((ISO-8859-1)
 		  utf8->8859)
+		 ((ISO-8859-15)
+		  utf8->8859-15)
 		 ((CP1252)
 		  utf8->1252)
 		 ((UCS-2)
@@ -88,6 +93,9 @@
 		 ((ISO-8859-1)
 		  (lambda (str)
 		     (utf8->iso-latin! (ucs2-string->utf8-string str))))
+		 ((ISO-8859-15)
+		  (lambda (str)
+		     (utf8->iso-latin-15! (ucs2-string->utf8-string str))))
 		 ((CP1252)
 		  (lambda (str)
 		     (utf8->cp1252! (ucs2-string->utf8-string str))))
@@ -101,7 +109,7 @@
 		  (lambda (x) x))))
 	     ((US-ASCII)
 	      (case cset2
-		 ((ISO-8859-1 CP1252)
+		 ((ISO-8859-1 ISO-8859-15 CP1252)
 		  (lambda (x) x))
 		 ((UTF-8)
 		  8859->utf8)
@@ -120,7 +128,7 @@
 ;*---------------------------------------------------------------------*/
 (define (charset-converter charset1 charset2)
    (make-charset-converter charset1 charset2
-			   iso-latin->utf8 utf8->iso-latin
+			   iso-latin->utf8 utf8->iso-latin utf8->iso-latin-15
 			   iso-8859-1->us-ascii
 			   cp1252->utf8 utf8->cp1252))
 
@@ -129,7 +137,7 @@
 ;*---------------------------------------------------------------------*/
 (define (charset-converter! charset1 charset2)
    (make-charset-converter charset1 charset2
-			   iso-latin->utf8! utf8->iso-latin!
+			   iso-latin->utf8! utf8->iso-latin! utf8->iso-latin-15! 
 			   iso-8859-1->us-ascii!
 			   cp1252->utf8! utf8->cp1252!))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Jan  9 06:45:07 2011 (serrano)                */
+;*    Last change :  Tue Sep  6 08:40:52 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -66,7 +66,7 @@
 (define request-eof-exception
    (instantiate::&io-parse-error
       (obj beof)
-      (proc 'request-list-grammar)
+      (proc 'request-line-grammar)
       (msg "Illegal premature end-of-file")))
 
 ;*---------------------------------------------------------------------*/

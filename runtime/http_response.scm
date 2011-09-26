@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon May 23 18:15:41 2011 (serrano)                */
+;*    Last change :  Sun Sep 25 07:16:16 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -126,26 +126,32 @@
 					       location
 					       timeout
 					       protocol
-					       sec)
+					       sec
+					       accept)
 	 (let ((p (socket-output socket)))
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	    (http-write-line-string p start-line)
 	    (http-write-line-string p "Upgrade: WebSocket")
 	    (http-write-line p "Connection: " connection)
-	    (if sec
-		(begin
-		   (http-write-line p "Sec-WebSocket-Origin: " origin)
-		   (http-write-line p "Sec-WebSocket-Location: " location)
-		   (when protocol
-		      (http-write-line p "Sec-WebSocket-Protocol: " protocol))
-		   (http-write-line p)
-		   (display sec p))
-		(begin
-		   (http-write-line p "WebSocket-Origin: " origin)
-		   (http-write-line p "WebSocket-Location: " location)
-		   (when protocol
-		      (http-write-line p "WebSocket-Protocol: " protocol))
-		   (http-write-line p)))
+	    (cond
+	       (accept
+		  (http-write-line p "Sec-WebSocket-Accept: " accept)
+		  (when protocol
+		     (http-write-line p "WebSocket-Protocol: " protocol))
+		  (http-write-line p))
+	       (sec
+		  (http-write-line p "Sec-WebSocket-Origin: " origin)
+		  (http-write-line p "Sec-WebSocket-Location: " location)
+		  (when protocol
+		     (http-write-line p "Sec-WebSocket-Protocol: " protocol))
+		  (http-write-line p)
+		  (display sec p))
+	       (else
+		(http-write-line p "WebSocket-Origin: " origin)
+		(http-write-line p "WebSocket-Location: " location)
+		(when protocol
+		   (http-write-line p "WebSocket-Protocol: " protocol))
+		(http-write-line p)))
 	    (flush-output-port p)
 	    'persistent))))
 

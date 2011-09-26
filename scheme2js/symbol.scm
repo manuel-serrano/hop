@@ -146,7 +146,7 @@
 	    (v v)
 	    ((not JS?) #f)
 	    ((and (qualified? id)
-		  (eq? (id-qualifier id) '_)) ;; JS
+		  (memq (id-qualifier id) '(js JS _))) ;; JS
 	     (let* ((scheme-sym (id-symbol id))
 		    (js-str (symbol->string scheme-sym)) ;; do not mangle.
 		    (var (create-js-var scheme-sym #t

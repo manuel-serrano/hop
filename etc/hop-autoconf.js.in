@@ -150,7 +150,7 @@ function hop_Config() {
    this.css_transition = false;
    this.xhr_multipart = false; // see hop_make_xml_http_request conf
    this.clone_innerHTML = true; // see hop_create_element (hop-dom.js)
-   this.eval_innerHTML = true;
+   this.eval_innerHTML = false;
    this.websocket = false;
    this.server_event = "long polling";
    this.hashchange_event = ("onhashchange" in window);
@@ -352,43 +352,6 @@ function cloneScriptNode( node ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_config.clone_innerHTML                                       */
-/*    -------------------------------------------------------------    */
-/*    Check whether the browser requires elements created by assigning */
-/*    the innerHTML field of their parent to be cloned.                */
-/*---------------------------------------------------------------------*/
-((function () {
-   var tmp = document.createElement( "div" );
-
-   tmp.innerHTML = "<script type='text/javascript'>hop_config.clone_innerHTML_tmp = 1;<\u002fscript>";
-
-   hop_config.clone_innerHTML_tmp = 0;
-   hop_config.body.appendChild( tmp );
-   hop_config.body.removeChild( tmp );
-
-   if( hop_config.clone_innerHTML_tmp == 1 ) {
-      /* cloning not needed because the script got evaluated */
-      hop_config.clone_innerHTML = false;
-   } else {
-      // check if cloning is effective
-      var s = tmp.childNodes[ 0 ];
-      tmp.removeChild( s );
-      tmp.appendChild( cloneScriptNode( s ) );
-      
-      hop_config.body.appendChild( tmp );
-      hop_config.body.removeChild( tmp );
-
-      if( hop_config.clone_innerHTML_tmp == 1 ) {
-	 hop_config.clone_innerHTML = true;
-      } else {
-	 throw new Error( "innerHTML-set!: cannot get innerHTML to evaluate script nodes!" );
-      }
-   
-      delete hop_config.clone_innerHTML_tmp;
-   }
-}))
-
-/*---------------------------------------------------------------------*/
 /*    hop_config.eval_innerHTML                                        */
 /*    -------------------------------------------------------------    */
 /*    Check whether setting innerHTML property evaluates the           */
@@ -398,8 +361,47 @@ function cloneScriptNode( node ) {
    var tmp = document.createElement( "div" );
 
    hop_config.body.appendChild( tmp );
-   tmp.innerHTML = "<script type='text/javascript'>hop_config.eval_innerHTML = false;<\u002fscript>";
+   tmp.innerHTML = "<script type='text/javascript'>hop_config.eval_innerHTML = true;<\u002fscript>";
    hop_config.body.removeChild( tmp );
+}))
+
+/*---------------------------------------------------------------------*/
+/*    hop_config.clone_innerHTML                                       */
+/*    -------------------------------------------------------------    */
+/*    Check whether the browser requires elements created by assigning */
+/*    the innerHTML field of their parent to be cloned.                */
+/*---------------------------------------------------------------------*/
+((function () {
+   var tmp = document.createElement( "div" );
+   tmp.innerHTML = "<script type='text/javascript'>hop_config.clone_innerHTML_tmp = 1;<\u002fscript>";
+
+   hop_config.clone_innerHTML_tmp = 0;
+
+   hop_config.body.appendChild( tmp );
+   hop_config.body.removeChild( tmp );
+
+   if( hop_config.clone_innerHTML_tmp == 1 ) {
+      // cloning not needed because the script got evaluated
+      hop_config.clone_innerHTML = false;
+      } else {
+      // check if cloning is effective
+      var s = tmp.childNodes[ 0 ];
+      tmp.removeChild( s );
+      tmp.appendChild( cloneScriptNode( s ) );
+
+      hop_config.body.appendChild( tmp );
+      hop_config.body.removeChild( tmp );
+
+      if( hop_config.clone_innerHTML_tmp == 1 ) {
+	 hop_config.clone_innerHTML = true;
+      } else {
+         alert( "hop auto-configuration: cannot get innerHTML to evaluate script nodes!" );
+alert( "hop_config.eval_innerHTML: " + hop_config.eval_innerHTML );
+	 throw new Error( "innerHTML-set!: cannot get innerHTML to evaluate script nodes!" );
+      }
+   }
+   
+   delete hop_config.clone_innerHTML_tmp;
 }))
 
 /*---------------------------------------------------------------------*/
@@ -535,8 +537,9 @@ if( "XMLHttpRequest" in window ) {
    }
    if( "multipart" in req ) {
       hop_config.xhr_multipart = true;
-      if( hop_config.server_event === "long polling" ) 
+      if( hop_config.server_event === "long polling" ) {
          hop_config.server_event = "xhr_multipart";
+      }
    }
 } else {
    if( "ActiveXObject" in window ) {
@@ -604,9 +607,12 @@ if( "XMLHttpRequest" in window ) {
 /*---------------------------------------------------------------------*/
 /*    web socket                                                       */
 /*---------------------------------------------------------------------*/
+if( "MozWebSocket" in window ) {
+  window.WebSocket = window.MozWebSocket;
+}
+
 if( "WebSocket" in window ) {
-   if( hop_config.server_event === "long polling" ) 
-      hop_config.server_event = "websocket";
+   hop_config.server_event = "websocket";
    hop_config.websocket = true;
 }
 

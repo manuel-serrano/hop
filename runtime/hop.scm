@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sun Aug 14 07:19:51 2011 (serrano)                */
+;*    Last change :  Thu Sep 15 10:27:14 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -123,7 +123,7 @@
    (with-access::http-request req (header)
       (let ((env (http-header-field header hop-env:)))
 	 (if (string? env)
-	     (string->obj (xml-string-decode env))
+	     (string->obj (url-decode env))
 	     '()))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Jul 27 19:52:07 2011 (serrano)                */
+/*    Last change :  Sun Sep 25 09:56:27 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -299,9 +299,13 @@ function hop_servevt_envelope_parse( val, xhr ) {
 	    hop_trigger_serverready_event( new HopServerReadyEvent() );
 	 }
       } else {
+	 alert( "hop-event.js(debug), hop_servevt_envelope_parse val=" + val
+		+ " xhr=" + xhr );
 	 hop_servevt_envelope_parse_error( xhr );
       }
    } else {
+      alert( "hop-event.js(debug), hop_servevt_envelope_parse val=" + val
+	     + " xhr=" + xhr );
       hop_servevt_envelope_parse_error( xhr );
    }
 }
@@ -314,9 +318,9 @@ function hop_servevt_envelope_parse_error( xhr ) {
    
    exc.hopStack = false;
    exc.name = "HopServevtError";
-   exc.scObject = false;
+   exc.scObject = xhr;
    exc.message = xhr.responseText === "" ? "Empty envelope" : xhr.responseText;
-   
+
    hop_report_exception( exc );
 }
 
@@ -365,7 +369,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
 
 	 hop_trigger_serverready_event( new HopServerReadyEvent() );
       }
-      ws.onclose = function() {
+      ws.onclose = function( e ) {
 	 hop_servevt_onclose();
       }
       ws.onmessage = function ( e ) {

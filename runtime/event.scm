@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Aug  3 06:47:25 2011 (serrano)                */
+;*    Last change :  Sun Sep 25 16:20:00 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -133,7 +133,7 @@
 ;*    event services ...                                               */
 ;*---------------------------------------------------------------------*/
 (define *port-service* #f)
-(define *websocket-service* #f)
+(define *websocket-service* #t)
 (define *register-service* #f)
 (define *unregister-service* #f)
 (define *init-service* #f)
@@ -401,10 +401,10 @@
    
    (define (websocket-server-location host)
       (format "ws://~a/~a/server-event/websocket?key=~a"
-	      (or host (format "~a:~a" (http-request-host req) (http-request-port req)))
-	      (hop-initial-weblet)
-	      key))
-
+	 (or host (format "~a:~a" (http-request-host req) (http-request-port req)))
+	 (hop-initial-weblet)
+	 key))
+   
    (define (protocol76-key-value s)
       (let ((l (string-length s)))
 	 (let loop ((i 0)
@@ -416,13 +416,13 @@
 		   (cond
 		      ((char-numeric? c)
 		       (let ((k (fixnum->llong
-				 (-fx (char->integer c) (char->integer #\0)))))
+				   (-fx (char->integer c) (char->integer #\0)))))
 			  (loop (+fx i 1) (+llong (*llong n #l10) k) b)))
 		      ((char=? c #\space)
 		       (loop (+fx i 1) n (+llong b #l1)))
 		      (else
 		       (loop (+fx i 1) n b))))))))
-
+   
    (define (blit-string-int32-big-endian! n::llong buf::bstring o::int)
       (let ((b3 (llong->fixnum (bit-andllong n #l255)))
 	    (b2 (llong->fixnum (bit-andllong (bit-rshllong n 8) #l255)))
@@ -432,8 +432,10 @@
 	 (string-set! buf (+fx o 2) (integer->char b2))
 	 (string-set! buf (+fx o 1) (integer->char b1))
 	 (string-set! buf o (integer->char b0))))
-		
-   (define (webwocket-protocol76 key1 key2 req)
+   
+   (define (webwocket-hixie-protocol-76 key1 key2 req)
+      (when debug-websocket
+	 (tprint "websocket-protocol76 " key1 " " key2))
       ;; Handshake known as draft-hixie-thewebsocketprotocol-76
       ;; see http://www.whatwg.org/specs/web-socket-protocol/
       ;; http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-03
@@ -448,7 +450,7 @@
 	 (blit-string-int32-big-endian! k2 buf 4)
 	 (blit-string! key3 0 buf 8 8)
 	 (string-hex-intern! (md5sum buf))))
-	    
+   
    (define (websocket-sec-challenge req header)
       ;; newer websocket protocols includes a 3 keys challenge
       ;; we check which version we are asked.
@@ -456,30 +458,54 @@
 	 (when key1
 	    (let ((key2 (get-header header sec-websocket-key2: #f)))
 	       (when key2
-		  (webwocket-protocol76 key1 key2 req))))))
-      
+		  (webwocket-hixie-protocol-76 key1 key2 req))))))
    
-   ;; register the websocket
-   (with-lock *event-mutex*
-      (lambda ()
-	 (set! *websocket-request-list*
-	       (cons (cons (string->symbol key) req)
-		     *websocket-request-list*))))
-
-   (when debug-websocket
-      (tprint "websocket-register-new-connection: " key))
+   (define (websocket-hixie-protocol header read)
+      (instantiate::http-response-websocket
+	 (request req)
+	 (start-line "HTTP/1.1 101 Web Socket Protocol Handshake")
+	 (location (websocket-server-location host))
+	 (origin (get-header header origin: "localhost"))
+	 (protocol (get-header header WebSocket-Protocol: #f))
+	 (connection 'Upgrade)
+	 (sec (websocket-sec-challenge req header))))      
+   
+   (define (websocket-hybi-protocol header req)
+      ;; http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-08
+      (when debug-websocket
+	 (tprint "websocket-hybi-protocol-08, header: " header))
+      (let* ((key (get-header header sec-websocket-key: #f))
+	     (i (string-index key #\space))
+	     (pkey (if i (car (string-split key #\space)) key))
+	     (guid "258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
+	     (akey (string-append pkey guid))
+	     (skey (sha1sum-string akey)))
+	 (instantiate::http-response-websocket
+	    (request req)
+	    (start-line "HTTP/1.1 101 Switching Protocols")
+	    (connection 'Upgrade)
+	    (protocol (get-header header WebSocket-Protocol: #f))
+	    (accept (base64-encode (string-hex-intern! skey))))))
    
    (with-access::http-request req (header connection socket)
-      (let ((host (get-header header host: #f)))
+      (let ((host (get-header header host: #f))
+	    (version (get-header header sec-websocket-version: #f)))
 	 ;; see http_response.scm for the source code that actually sends
 	 ;; the bytes of the response to the client.
-	 (instantiate::http-response-websocket
-	    (start-line "HTTP/1.1 101 Web Socket Protocol Handshake")
-	    (location (websocket-server-location host))
-	    (origin (get-header header origin: "localhost"))
-	    (protocol (get-header header WebSocket-Protocol: #f))
-	    (connection 'Upgrade)
-	    (sec (websocket-sec-challenge req header))))))
+	 (when debug-websocket
+	    (tprint "websocket-register, protocol-version: " version))
+	 (let ((resp (case (string->integer version)
+			((7 8 9 10)
+			 (websocket-hybi-protocol header req))
+			(else
+			 (websocket-hixie-protocol header req)))))
+	    ;; register the websocket
+	    (with-lock *event-mutex*
+	       (lambda ()
+		  (set! *websocket-response-list*
+		     (cons (cons (string->symbol key) resp)
+			*websocket-response-list*))))
+	    resp))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-init! ...                                              */
@@ -590,7 +616,7 @@
 	   (*flash-socket-table* ,*flash-socket-table*)
 	   (*multipart-request-list* ,*multipart-request-list*)
 	   (*multipart-socket-table* ,*multipart-socket-table*)
-	   (*websocket-request-list* ,*websocket-request-list*)
+	   (*websocket-response-list* ,*websocket-response-list*)
 	   (*websocket-socket-table* ,*websocket-socket-table*)
 	   (*ajax-connection-key-table* ,(dump-ajax-table *ajax-connection-key-table*))))))
 
@@ -749,17 +775,17 @@
    
    (define (websocket-register-event! req key name)
       (with-trace 3 "websocket-register-event!"
-	 (let ((c (assq key *websocket-request-list*)))
+	 (let ((c (assq key *websocket-response-list*)))
 	    (when debug-websocket
 	       (tprint "websocket-register-event key=" key " name=" name " c=" c))
 	    (if (pair? c)
-		(let ((req (cdr c)))
+		(let ((resp (cdr c)))
 		   (hashtable-update! *websocket-socket-table*
 				      name
-				      (lambda (l) (cons req l))
-				      (list req))
+				      (lambda (l) (cons resp l))
+				      (list resp))
 		   (instantiate::http-response-string
-		      (request req)))
+		      (request (http-response-websocket-request resp))))
 		(error "server-event-register" "Illegal websocket entry" key)))))
 
    (with-trace 2 "server-register-event!"
@@ -828,17 +854,17 @@
 	       (multipart-signal-value req (multipart-value *ping* #unspecified))))))
 
    (define (unregister-websocket-event! event key)
-      (let ((c (assq (string->symbol key) *websocket-request-list*)))
+      (let ((c (assq (string->symbol key) *websocket-response-list*)))
 	 (when (pair? c)
-	    (let ((req (cadr c)))
+	    (let ((resp (cadr c)))
 	       (hashtable-update! *websocket-socket-table*
 				  event
-				  (lambda (l) (delete! req l))
+				  (lambda (l) (delete! resp l))
 				  '())
 	       ;; Ping the client to check it still exists. If the client
 	       ;; no longer exists, an error will be raised and the client
 	       ;; will be removed from the tables.
-	       (websocket-signal-value req (websocket-value *ping* #unspecified))))))
+	       (websocket-signal-value resp (websocket-value *ping* #unspecified))))))
    
    (with-lock *event-mutex*
       (lambda ()
@@ -894,21 +920,23 @@
 ;*    -------------------------------------------------------------    */
 ;*    This assumes that the event-mutex has been acquired.             */
 ;*---------------------------------------------------------------------*/
-(define (websocket-close-request! req)
-   ;; close the socket
-   (socket-close (http-request-socket req))
-   ;; remove the request from the *websocket-request-list*
-   (set! *websocket-request-list*
-	 (filter! (lambda (e) (not (eq? (cdr e) req)))
-		  *websocket-request-list*))
-   ;; remove the request from the *websocket-socket-table*
-   (hashtable-for-each *websocket-socket-table*
-		       (lambda (k l)
-			  (hashtable-update! *websocket-socket-table*
-					     k
-					     (lambda (l) (delete! req l))
-					     '())))
-   (hashtable-filter! *websocket-socket-table* (lambda (k l) (pair? l))))
+(define (websocket-close-request! resp::http-response-websocket)
+   (let ((req (http-response-websocket-request resp)))
+      ;; close the socket
+      (socket-close (http-request-socket req))
+      ;; remove the request from the *websocket-response-list*
+      (set! *websocket-response-list*
+	 (filter! (lambda (e)
+		     (not (eq? (cdr e) resp)))
+	    *websocket-response-list*))
+      ;; remove the response from the *websocket-socket-table*
+      (hashtable-for-each *websocket-socket-table*
+	 (lambda (k l)
+	    (hashtable-update! *websocket-socket-table*
+	       k
+	       (lambda (l) (delete! resp l))
+	       '())))
+      (hashtable-filter! *websocket-socket-table* (lambda (k l) (pair? l)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-client-ready? ...                                      */
@@ -963,7 +991,7 @@
 ;*    *websocket-request-table*                                        */
 ;*---------------------------------------------------------------------*/
 (define *websocket-socket-table* (make-hashtable))
-(define *websocket-request-list* '())
+(define *websocket-response-list* '())
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-event ...                          */
@@ -1053,8 +1081,43 @@
 ;*---------------------------------------------------------------------*/
 ;*    websocket-signal-value ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (websocket-signal-value req value)
-   (let* ((s (http-request-socket req))
+(define (websocket-signal-value resp::http-response-websocket value)
+   
+   (define (hixie-signal-value value p)
+      (display #a000 p)
+      (display value p)
+      (display #a255 p)
+      (flush-output-port p))
+
+   (define (hybi-signal-value value p)
+      (let ((ps (open-output-string)))
+	 (display value ps)
+	 (let* ((s (close-output-port ps))
+		(l (string-length s)))
+	    ;; FIN=1, OPCODE=x1 (text)
+	    (display (integer->char #x81) p)
+	    (cond
+	       ((<=fx l 125)
+		;; 1 byte length
+		(display (integer->char l) p))
+	       ((<=fx l 65535)
+		;; 2 bytes length
+		(display #a126 p)
+		(display (integer->char (bit-rsh l 8)) p)
+		(display (integer->char (bit-and l #xff)) p))
+	       (else
+		;; 4 bytes length
+		(display #a127 p)
+		(display (integer->char (bit-rsh l 24)) p)
+		(display (integer->char (bit-and (bit-rsh l 16) #xff)) p)
+		(display (integer->char (bit-and (bit-rsh l 8) #xff)) p)
+		(display (integer->char (bit-and l #xff)) p)))
+	    ;; payload data
+	    (display s p)
+	    (flush-output-port p))))
+   
+   (let* ((req (http-response-websocket-request resp))
+	  (s (http-request-socket req))
 	  (p (socket-output s)))
       (with-handler
 	 (lambda (e)
@@ -1064,13 +1127,12 @@
 	    (if (&io-error? e)
 		(begin
 		   (set! *clients-number* (-fx *clients-number* 1))
-		   (websocket-close-request! req))
+		   (websocket-close-request! resp))
 		(raise e)))
-	 (begin
-	    (display #a000 p)
-	    (display value p)
-	    (display #a255 p)
-	    (flush-output-port p)))))
+	 (with-access::http-response-websocket resp (accept)
+	    (if accept
+		(hybi-signal-value value p)
+		(hixie-signal-value value p))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    enveloppe-value ...                                              */
@@ -1205,7 +1267,7 @@
 	  (when (pair? l)
 	     (let ((val (websocket-value name value)))
 		(when debug-websocket
-		   (tprint "WEBSOCKET SIGNAL: " name))
+		   (tprint "websocket signal: " name))
 		(websocket-signal-value (car l) val)
 		#t)))))
 
@@ -1286,8 +1348,8 @@
 	       (when debug-websocket
 		  (tprint "websocket-event-broadcast name=" name " l=" l))
 	       (when (pair? l)
-		  (for-each (lambda (req)
-			       (websocket-signal-value req val))
+		  (for-each (lambda (resp)
+			       (websocket-signal-value resp val))
 		     l))))))
        
    (define (multipart-event-broadcast! name value)

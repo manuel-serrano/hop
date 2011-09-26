@@ -15,6 +15,8 @@ Character sets encoding and decoding
   (iso-latin->utf8! string)
   (utf8->iso-latin string)
   (utf8->iso-latin! string)
+  (utf8->iso-latin-15 string)
+  (utf8->iso-latin-15! string)
   (utf8-string->ucs2-string string)
 
 
@@ -109,8 +111,12 @@ Converts a string encoding with the ++ISO-LATIN-1++ charset into the
 
 === ++(utf8->iso-latin string)++ ===
 === ++(utf8->iso-latin! string)++ ===
+=== ++(utf8->iso-latin-15 string)++ ===
+=== ++(utf8->iso-latin-15! string)++ ===
 <function> utf8->iso-latin
 <function> utf8->iso-latin!
+<function> utf8->iso-latin-15
+<function> utf8->iso-latin-15!
 
 <arguments>
 ^  arguments  ^   type   ^   description                                   ^
@@ -118,7 +124,7 @@ Converts a string encoding with the ++ISO-LATIN-1++ charset into the
 <arguments>
 
 Converts a string encoding with the ++UTF-8++ charset into the
- ++ISO-LATIN-1++ charset.
+ ++ISO-LATIN-1++ (respec. ++ISO-LATIN-15++) charset.
 </function>
 </function>
 

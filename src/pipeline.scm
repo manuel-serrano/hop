@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Mon May 23 09:01:31 2011 (serrano)                */
+;*    Last change :  Thu Sep 15 13:48:24 2011 (serrano)                */
 ;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -179,7 +179,7 @@
 	   (or (&io-timeout-error? e)
 	       (and (&io-parse-error? e)
 		    (eof-object? (&io-parse-error-obj e))))))
-
+   
    (if (keep-alive-ellapsed-error? e)
        ;; this is not a true error, just log
        (hop-verb 3 (hop-color id id " SHUTDOWN")
@@ -194,6 +194,7 @@
 		 "\n")
        ;; this one is a true error
        (begin
+	  (tprint "STAGE-REQUEST-ERROR-HANDLER: " e " id=" id " sock=" sock " mode=" mode "\n\n\n")	  
 	  (when (&exception? e)
 	     (hop-verb 1 (hop-color id id " ABORT: ")
 		       " " (trace-color 1 (typeof e))

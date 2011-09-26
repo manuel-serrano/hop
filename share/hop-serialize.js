@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Thu Jun 23 17:31:23 2011 (serrano)                */
+/*    Last change :  Thu Sep 15 13:23:34 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -177,7 +177,7 @@ function hop_serialize_word( word ) {
       while( s >= 0 ) {
          var c = ((word >> (s << 3)) & 0xff);
 
-         if( (c < 127) && (c >= 46) ) {
+         if( (c >= 46) && (c < 127) ) {
 	    if( c == 92 )
 	       // Chrome patch:
 	       // Chrome (at least Chrome <= 12) escapes \ characters when
@@ -269,7 +269,7 @@ function utf_length( s ) {
 /*    strings. In the current implementation, the UCS2 is transformed  */
 /*    into a uri-encoded string. This works fine for sending the       */
 /*    value to the server. The problem is when that encoding is used   */
-/*    by hop_obj_to_string. That function will apply codeURI to the    */
+/*    by hop_obj_to_string. That function will apply decodeURI to the  */
 /*    result of the encoding which will change the length of the       */
 /*    encoded character. Imaging a string which contains the two       */
 /*    latin character e' such as te'. In UCS2, this string has a       */
@@ -277,8 +277,8 @@ function utf_length( s ) {
 /*    the function hop_serialize_string will strink the encoded        */
 /*    string. So the serialization has marked a string of length 3     */
 /*    but the actual string produced by obj_to_string only contains    */
-/*    a string of length 2! For the decodeing to work, the decoder has */
-/*    to be aware that the substring it extract might larger than      */
+/*    a string of length 2! For the decoding to work, the decoder has  */
+/*    to be aware that the substring it extracts might be larger than  */
 /*    the expected value. This is implemented by a loop inside         */
 /*    the decoding of the string (see read_string).                    */
 /*---------------------------------------------------------------------*/
@@ -398,7 +398,36 @@ function hop_bigloo_serialize_alist( item ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export obj->string) (arity #t)) */
 function hop_obj_to_string( item ) {
-   return decodeURIComponent( hop_bigloo_serialize( item ) );
+   var s = hop_bigloo_serialize( item );
+
+   try {
+      return decodeURIComponent( s );
+   } catch( e ) {
+      /* decoding has hitted an illegal UTF-8 surrogate, deocde by hand */
+      var i = 0;
+      var l = s.length;
+      var r = "";
+
+      while( i < l ) {
+	 var j = s.indexOf( '%', i );
+
+	 if( j == -1 ) {
+	    return r + s.substring( i );
+	 } else {
+	    if( j > l - 3 )
+	       return r + s.substring( i );
+	    
+	    if( j > i )
+	       r += s.substring( i, j );
+	    
+	    r += string_hex_intern( s.substring( j + 1, j + 3 ) );
+
+	    i = j + 3;
+	 }
+      }
+
+      return r;
+   }
 }
 
 /*---------------------------------------------------------------------*/
