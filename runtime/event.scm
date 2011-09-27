@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sun Sep 25 16:20:00 2011 (serrano)                */
+;*    Last change :  Tue Sep 27 10:07:39 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -1108,6 +1108,7 @@
 	       (else
 		;; 4 bytes length
 		(display #a127 p)
+		(display "\000\000\000\000" p)
 		(display (integer->char (bit-rsh l 24)) p)
 		(display (integer->char (bit-and (bit-rsh l 16) #xff)) p)
 		(display (integer->char (bit-and (bit-rsh l 8) #xff)) p)
