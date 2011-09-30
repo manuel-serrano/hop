@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Jun 29 10:34:58 2011 (serrano)                */
+;*    Last change :  Fri Sep 30 16:28:07 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -971,11 +971,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-tilde-unbound obj::xml-tilde env)
    (with-access::xml-tilde obj (body src)
-      (for-each (lambda (v)
-		   (let ((v (car v)))
-		      (hashtable-update! env v (lambda (x) #f) #f)))
-		((clientc-precompiled-declared-variables (hop-clientc)) body))
-      (for-each (lambda (v)
-		   (let ((v (car v)))
-		      (hashtable-update! env v (lambda (x) #f) src)))
-		((clientc-precompiled-free-variables (hop-clientc)) body))))
+      (when (vector? body)
+	 (for-each (lambda (v)
+		      (let ((v (car v)))
+			 (hashtable-update! env v (lambda (x) #f) #f)))
+	    ((clientc-precompiled-declared-variables (hop-clientc)) body))
+	 (for-each (lambda (v)
+		      (let ((v (car v)))
+			 (hashtable-update! env v (lambda (x) #f) src)))
+	    ((clientc-precompiled-free-variables (hop-clientc)) body)))))

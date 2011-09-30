@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Dec 16 07:36:27 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Fri Sep 30 10:31:01 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZBUILDER weblet                                                 */
 ;*=====================================================================*/
@@ -211,13 +211,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    <ENTRY> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <ENTRY> ((class "optional")
-			      (id #f)
-			      (title #f)
-			      (default #f)
-			      (onkeypress #f)
-			      (onkeyup #f)
-			      key)
+(define-tag <ENTRY> ((class "optional")
+		     (id #f)
+		     (title #f)
+		     (default #f)
+		     (onkeypress #f)
+		     (onkeyup #f)
+		     key)
    (<TABLE> :class "form-entry"
       (<TR> :title title
 	 (<TD> :class "key" (<SPAN> :class "key" key))
@@ -229,12 +229,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    <CENTRY> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <CENTRY> ((class "optional")
-			       (id #f)
-			       (title #f)
-			       (default #f)
-			       (onclick #f)
-			       key)
+(define-tag <CENTRY> ((class "optional")
+		      (id #f)
+		      (title #f)
+		      (default #f)
+		      (onclick #f)
+		      key)
    (<TABLE> :class "form-entry"
       (<TR> :title title
 	 (<TD> :class "key bottom" (<SPAN> :class "key" key))
@@ -247,12 +247,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    <SENTRY> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <SENTRY> ((class "optional")
-			       (id #f)
-			       (title #f)
-			       (default #f)
-			       (options '())
-			       key)
+(define-tag <SENTRY> ((class "optional")
+		      (id #f)
+		      (title #f)
+		      (default #f)
+		      (options '())
+		      key)
    (<TABLE> :class "form-entry"
       (<TR> :title title
 	 (<TD> :class "key bottom" (<SPAN> :class "key" key))
@@ -262,18 +262,18 @@
 			  (<OPTION> :label k :value k
 			     :selected (equal? k default)
 			     k))
-		       options))))))
+		     options))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <IENTRY> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <IENTRY> ((class "optional")
-			       (id #f)
-			       (title #f)
-			       (default #f)
-			       (src #f)
-			       (legend #f)
-			       key)
+(define-tag <IENTRY> ((class "optional")
+		      (id #f)
+		      (title #f)
+		      (default #f)
+		      (src #f)
+		      (legend #f)
+		      key)
    (let ((img (<IMG> :src src :title src :id (xml-make-id id 'img))))
       (<TABLE> :class "form-entry"
 	 (<TR> :title title

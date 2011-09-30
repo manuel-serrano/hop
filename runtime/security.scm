@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Fri Dec 17 07:44:43 2010 (serrano)                */
-;*    Copyright   :  2009-10 Manuel Serrano                            */
+;*    Last change :  Fri Sep 30 16:47:47 2011 (serrano)                */
+;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
 ;*=====================================================================*/
@@ -79,7 +79,7 @@
 ;*---------------------------------------------------------------------*/
 (define security-manager-tree-compare
    (instantiate::security-manager
-      (name "_")
+      (name "Secure tree")
       (xml-sanitize xml-tree-compare)
       (string-sanitize (lambda (s) "_"))
       (inline-sanitize (lambda (n) n))
@@ -133,6 +133,7 @@
 ;*    xml-tree-compare ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (xml-tree-compare::obj xml backend)
+   (tprint "XML-TREE-COMPARE...")
    (let ((p (open-output-string)))
       (xml-write xml p (duplicate::xml-backend backend
 			  (security security-manager-tree-compare)))
@@ -148,6 +149,7 @@
 		      (raise e))))
 	    (begin
 	       (xml-compare (normalize-ast xml) (normalize-ast ast))
+	       (tprint "XML=" (typeof xml))
 	       xml)))))
 
 ;*---------------------------------------------------------------------*/
@@ -261,20 +263,24 @@
 ;*---------------------------------------------------------------------*/
 ;*    normalize-ast ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (normalize-ast ast)
+(define (normalize-ast::obj ast::obj)
    (if (pair? ast)
        (match-case ast
 	  ((?x)
 	   (normalize-ast x))
 	  (else
-	   (let loop ((l (map normalize-ast ast)))
-	      (cond
-		 ((null? l)
-		  l)
-		 ((xml? (car l))
-		  (cons (car l) (loop (cdr l))))
-		 (else
-		  (loop (cdr l)))))))
+	   (cond
+	      ((null? ast)
+	       ast)
+	      ((not (pair? ast))
+	       (normalize-ast ast))
+	      (else
+	       (let ((a (normalize-ast (car ast))))
+		  (cond
+		     ((xml? a)
+		      (cons a (normalize-ast (cdr ast))))
+		     (else
+		      (normalize-ast (cdr ast)))))))))
        ast))
 
 ;*---------------------------------------------------------------------*/

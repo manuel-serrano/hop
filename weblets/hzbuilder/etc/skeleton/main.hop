@@ -35,7 +35,7 @@
 	 (<TR> (map (lambda (i) (<TD> :style style (random size))) lst)))))
 
 ;; <@HZUPCASE@:BODY> widget
-(define-xml-compound <@HZUPCASE@:BODY>
+(define-tag <@HZUPCASE@:BODY>
       ((class "@HZ@")
        (header "" string)
        (prefs #f)
