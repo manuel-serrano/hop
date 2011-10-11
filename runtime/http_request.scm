@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Sep  6 08:40:52 2011 (serrano)                */
+;*    Last change :  Sun Oct  2 21:09:16 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -178,7 +178,7 @@
 			 (scheme scheme)
 			 (userinfo userinfo)
 			 (path path)
-			 (abspath abspath)
+			 (abspath (charset-convert abspath (hop-charset) (hop-locale)))
 			 (query query)
 			 (header header)
 			 (port (or actual-port port (hop-port)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Mon May 30 14:46:59 2011 (serrano)                */
+;*    Last change :  Fri Sep 30 20:32:02 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -25,7 +25,7 @@
 			(tag ',el)
 			(attributes attr)
 			(body (reverse! body)))
-		      `(begin ,@exp))))
+		      `(let ((body (reverse! body))) ,@exp))))
 	     ((keyword? (car args))
 	      (if (null? (cdr args))
 		  (loop '() (cons* #t (car args) attr) body)

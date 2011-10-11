@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Thu Sep 15 13:48:24 2011 (serrano)                */
+;*    Last change :  Fri Sep 30 22:01:47 2011 (serrano)                */
 ;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -194,7 +194,6 @@
 		 "\n")
        ;; this one is a true error
        (begin
-	  (tprint "STAGE-REQUEST-ERROR-HANDLER: " e " id=" id " sock=" sock " mode=" mode "\n\n\n")	  
 	  (when (&exception? e)
 	     (hop-verb 1 (hop-color id id " ABORT: ")
 		       " " (trace-color 1 (typeof e))

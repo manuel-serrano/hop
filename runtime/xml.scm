@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Sep 30 16:28:07 2011 (serrano)                */
+;*    Last change :  Fri Sep 30 20:33:48 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -466,9 +466,9 @@
       (xml-write-attributes attributes p backend)
       (with-access::xml-backend backend (mime-type meta-delimiter)
 	 (when content
-	    (display " content=\"" p)
+	    (display " content='" p)
 	    (fprintf p content mime-type (hop-charset))
-	    (display "\"" p))
+	    (display "'" p))
 	 (display meta-delimiter p))
       (newline p)))
 

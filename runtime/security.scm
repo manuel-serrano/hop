@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Fri Sep 30 16:47:47 2011 (serrano)                */
+;*    Last change :  Fri Sep 30 21:45:14 2011 (serrano)                */
 ;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -81,12 +81,9 @@
    (instantiate::security-manager
       (name "Secure tree")
       (xml-sanitize xml-tree-compare)
-      (string-sanitize (lambda (s) "_"))
+      (string-sanitize (lambda (s) s))
       (inline-sanitize (lambda (n) n))
       (script-sanitize (lambda (n) n))
-      (attribute-sanitize (lambda (a id)
-			     (let ((a (xml-attribute-sanitize a id)))
-				"")))
       (runtime '())))
  
 ;*---------------------------------------------------------------------*/
@@ -100,6 +97,10 @@
 	  (error "hop-security-manager-set!"
 		 "Security managers can be specified once hoprc.hop loaded"
 		 #f))
+	 ((eq? v 'tree)
+	  security-manager-tree-compare)
+	 ((eq? v 'unsecure)
+	  security-manager-default)
 	 ((not (security-manager? v))
 	  (bigloo-type-error "hop-security-manager-set!" "security-manager" v))
 	 (else
@@ -133,7 +134,6 @@
 ;*    xml-tree-compare ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (xml-tree-compare::obj xml backend)
-   (tprint "XML-TREE-COMPARE...")
    (let ((p (open-output-string)))
       (xml-write xml p (duplicate::xml-backend backend
 			  (security security-manager-tree-compare)))
@@ -149,7 +149,6 @@
 		      (raise e))))
 	    (begin
 	       (xml-compare (normalize-ast xml) (normalize-ast ast))
-	       (tprint "XML=" (typeof xml))
 	       xml)))))
 
 ;*---------------------------------------------------------------------*/
@@ -157,7 +156,7 @@
 ;*---------------------------------------------------------------------*/
 (define (skip-declaration ast)
    (match-case ast
-      (((declaration . ?-) ?rest) rest)
+      (((declaration . ?-) . ?rest) rest)
       (else ast)))
 
 ;*---------------------------------------------------------------------*/
@@ -179,6 +178,7 @@
       (or (string? a)
 	  (number? a)
 	  (symbol? a)
+	  (boolean? a)
 	  (null? a)
 	  (and (list? a) (every ast-constant? a))))
    
@@ -187,16 +187,18 @@
        (unless (ast-constant? a2)
 	  (xml-compare-error a1 a2)))
       ((list? a1)
-       (if (and (list? a2) (=fx (length a1) (length a2)))
-	   (let liip ((a1 a1)
-		      (a2 a2))
-	      (when (pair? a1)
-		 (xml-compare (normalize-ast (car a1)) (normalize-ast (car a2)))
-		 (liip (cdr a1) (cdr a2))))
-	   (xml-compare-error a1 a2)))
+       (let ((na1 (normalize-ast a1))
+	     (na2 (normalize-ast a2)))
+	  (if (and (list? na2) (=fx (length na1) (length na2)))
+	      (let liip ((a1 na1)
+			 (a2 na2))
+		 (when (pair? a1)
+		    (xml-compare (normalize-ast (car a1)) (normalize-ast (car a2)))
+		    (liip (cdr a1) (cdr a2))))
+	      (xml-compare-error na1 na2))))
       (else
        (raise (instantiate::&io-parse-error
-		 (proc "comparse-ast")
+		 (proc "compare-ast")
 		 (msg "Illegal XML tree")
 		 (obj a1))))))
 
@@ -233,7 +235,7 @@
 	    (xml-cdata? (cadr a2)))
        (xml-compare a1 (car a2)))
       (else
-       (xml-compare-error a1 (car a2)))))
+       (xml-compare-error a1 a2))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-compare ::xml-tilde ...                                      */
@@ -263,25 +265,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    normalize-ast ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (normalize-ast::obj ast::obj)
-   (if (pair? ast)
-       (match-case ast
-	  ((?x)
-	   (normalize-ast x))
-	  (else
-	   (cond
-	      ((null? ast)
-	       ast)
-	      ((not (pair? ast))
-	       (normalize-ast ast))
-	      (else
-	       (let ((a (normalize-ast (car ast))))
-		  (cond
-		     ((xml? a)
-		      (cons a (normalize-ast (cdr ast))))
-		     (else
-		      (normalize-ast (cdr ast)))))))))
-       ast))
+(define (normalize-ast ast)
+   (cond
+      ((and (pair? ast) (null? (cdr ast)))
+       (normalize-ast (car ast)))
+      ((xml? ast)
+       ast)
+      ((pair? ast)
+       (let ((l (filter xml? ast)))
+	  (if (and (pair? l) (null? (cdr l)))
+	      (car l)
+	      l)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ast->string-list ...                                             */

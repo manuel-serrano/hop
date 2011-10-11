@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Mon May 30 14:46:23 2011 (serrano)                */
+;*    Last change :  Tue Oct 11 08:24:25 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -517,7 +517,7 @@
 		       (style "text-align: center" string)
 		       (src #unspecified string)
 		       (prefix #t boolean)
-		       (display "-moz-inline-box; -moz-box-orient:vertical; display:inline-block")
+		       (display "-moz-inline-box; -moz-box-orient:vertical; display: inline-block")
 		       (attrs))
    (cond
       ((not (string? src))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sun May 22 10:19:42 2011 (serrano)                */
+;*    Last change :  Sun Oct  2 21:05:31 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -80,8 +80,8 @@
 	  ;; an error
 	  (http-get-file-not-found req))
 	 (query
-	  ;; a file with query arguments
-	  (http-get-file-query req))
+	    ;; a file with query arguments
+	    (http-get-file-query req))
 	 ((is-suffix? abspath ".hop")
 	  ;; hop source code
 	  (http-get-hop req #t))
@@ -101,8 +101,8 @@
 	  ;; an error
 	  (http-get-file-not-found req))
 	 (query
-	  ;; a file with query arguments
-	  (http-get-file-query req))
+	    ;; a file with query arguments
+	    (http-get-file-query req))
 	 ((is-suffix? abspath ".hop")
 	  ;; hop source code
 	  (http-get-hop req #f))

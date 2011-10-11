@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Sep 30 16:22:44 2011 (serrano)                */
+;*    Last change :  Fri Sep 30 21:29:16 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -134,7 +134,9 @@
 	 (("-s?level" (help "Increase/set security level (-s0 no security enforcement)"))
           (if (string=? level "")
 	      (hop-security-set! (+fx 1 (hop-security)))
-	      (hop-security-set! (string->integer level))))
+	      (hop-security-set! (string->integer level)))
+	  (when (> (hop-security) 1)
+	     (hop-security-manager-set! 'tree)))
 	 (("--no-color" (help "Disable colored traces"))
 	  (bigloo-trace-color-set! #f))
 	 (("--log-file" ?file (help "Use <FILE> as log file"))

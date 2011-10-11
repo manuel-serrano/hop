@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon May 30 14:45:54 2011 (serrano)                */
+;*    Last change :  Fri Sep 30 20:43:13 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -68,14 +68,17 @@
 ;*---------------------------------------------------------------------*/
 (define-xml xml-html #f <HTML>
    ;; the macro define-xml binds attr, init, and body
-   (let* ((body (reverse! body))
-	  (nbody (cond
-		    ((null? body)
-		     body)
-		    ((not (xml-markup-is? (car body) 'head))
-		     (cons (<HEAD>) body))
-		    (else
-		     body))))
+   (let ((nbody (let loop ((body body))
+		   (cond
+		      ((not (pair? body))
+		       body)
+		      ((and (string? (car body))
+			    (not (string-skip (car body) "\n\t ")))
+		       (loop (cdr body)))
+		      ((not (xml-markup-is? (car body) 'head))
+		       (cons (<HEAD>) body))
+		      (else
+		       body)))))
       (instantiate::xml-html
 	 (tag 'html)
 	 (attributes attr)
