@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Tue Oct 25 08:18:18 2011 (serrano)                */
+#*    Last change :  Tue Oct 25 10:26:16 2011 (serrano)                */
 #*    Copyright   :  2007-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -159,6 +159,7 @@ for p in control rules postinst postrm; do
 done
 
 # etc/init.d
+mkdir -p $TMP/hop-$VERSION/etc/init.d
 for p in hop; do
   if [ -f $BASEDIR/etc/init.d/$p.in ]; then
     cat $BASEDIR/etc/init.d/$p.in \
