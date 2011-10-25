@@ -60,7 +60,7 @@ install: build
 	$(MAKE) install-debian DESTDIR=$(CURDIR)/debian/hop
 
 	# See postinst for why we do this.
-	if [ -f "@DEBIAN@ " = "maemo " ]; then \
+	if [ "@DEBIAN@ " = "maemo " ]; then \
           if [ -f $(CURDIR)/debian/hop/$(PREFIX)/share/applications/hildon/hop.destkop ]; then \
             mv $(CURDIR)/debian/hop/$(PREFIX)/share/applications/hildon/hop.desktop \
               $(CURDIR)/debian/hop/$(PREFIX)/share/applications/hildon/hop.inactive; \
