@@ -58,8 +58,9 @@ install: build
 	# Add here commands to install the package into debian/hop.
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/hop
 
-	echo "INSTALL PWD[" $$PWD "] CURDIR=" $(CURDIR)
-	cp arch/debian/etc/init.d/hop $(CURDIR)/debian/hop/etc/init.d/hop
+	echo "INSTALL pwd=" $$PWD " cp " $(CURDIR)/debian/etc/init.d/hop " " $(CURDIR)/debian/hop/etc/init.d/hop
+	mkdir -p $(CURDIR)/debian/hop/etc
+	cp $(CURDIR)/debian/etc/init.d/hop $(CURDIR)/debian/hop/etc/init.d/hop
 
 	# See postinst for why we do this.
 	if [ -f "@DEBIAN@ " = "maemo " ]; then \
