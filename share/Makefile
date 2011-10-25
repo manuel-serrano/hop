@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed May 18 08:03:59 2011 (serrano)                */
+#*    Last change :  Tue Oct 25 17:16:20 2011 (serrano)                */
 #*    Copyright   :  2004-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -126,7 +126,7 @@ ICONS		= $(ICONS_HOP:%=hop/%) \
                   $(ICONS_ACTIONS:%=actions/%)
 
 BUTTONS		= cc.png firefox.png hop2.png inria.png opera.png \
-		  css.png freebsd.png html401.png inria2.png paypal.png \
+		  css.png freebsd.png html401.png inria-2010.png paypal.png \
 		  debian.png gpl.png ie1.png konqueror.png safari.png \
 		  donate.png hop.png ie2.png mozilla.png xhtml.png rss.png
  
