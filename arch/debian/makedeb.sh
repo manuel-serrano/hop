@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Tue Oct 25 10:26:16 2011 (serrano)                */
+#*    Last change :  Tue Oct 25 11:31:54 2011 (serrano)                */
 #*    Copyright   :  2007-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -159,7 +159,8 @@ for p in control rules postinst postrm; do
 done
 
 # etc/init.d
-mkdir -p $TMP/hop-$VERSION/etc/init.d
+echo "INIT [" $TMP/hop-$VERSION/debian/etc/init.d "]"
+mkdir -p $TMP/hop-$VERSION/debian/etc/init.d
 for p in hop; do
   if [ -f $BASEDIR/etc/init.d/$p.in ]; then
     cat $BASEDIR/etc/init.d/$p.in \
@@ -171,9 +172,10 @@ for p in hop; do
             -e "s|@PREFIX@|$PREFIX|g" \
             -e "s/@MAEMOHASLOCATION@/$maemohaslocation/g" \
             -e "s/@BIGLOOVERSION@/$BIGLOOVERSION/g" > \
-      $TMP/hop-$VERSION/etc/init.d/$p;
+      $TMP/hop-$VERSION/debian/etc/init.d/$p;
+      echo "INIT [" $TMP/hop-$VERSION/debian/etc/init.d/$p "]"
   else
-    cp $BASEDIR/etc/init.d/$p $TMP/hop-$VERSION/etc/init.d;
+    cp $BASEDIR/etc/init.d/$p $TMP/hop-$VERSION/debian/etc/init.d;
   fi
 done
 
