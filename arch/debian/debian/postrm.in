@@ -1,15 +1,18 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/linux/maemo/debian/postrm.in            */
+#*    serrano/prgm/project/hop/2.2.x/arch/debian/debian/postrm.in      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Dec 18 10:55:54 2007                          */
-#*    Last change :  Wed May 11 18:40:26 2011 (serrano)                */
+#*    Last change :  Tue Oct 25 08:05:32 2011 (serrano)                */
 #*    Copyright   :  2007-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Remove the HOP desktop entries from the configuration files      */
 #*=====================================================================*/
 
+#*---------------------------------------------------------------------*/
+#*    maemo                                                            */
+#*---------------------------------------------------------------------*/
 if [ "@DEBIAN@ " = "maemo " ]; then
   path="/etc/hildon-desktop"
   conf=home.conf
@@ -17,4 +20,11 @@ if [ "@DEBIAN@ " = "maemo " ]; then
 
   sed "/$home_data/d" $path/$conf > home_conf.tmp
   mv home_conf.tmp $path/$conf
+fi
+
+#*---------------------------------------------------------------------*/
+#*    init script                                                      */
+#*---------------------------------------------------------------------*/
+if [ "$1" = purge ]; then
+  update-rc.d hop remove
 fi

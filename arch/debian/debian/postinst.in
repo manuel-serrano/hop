@@ -1,15 +1,18 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/linux/maemo/debian/postinst.in          */
+#*    .../prgm/project/hop/2.2.x/arch/debian/debian/postinst.in        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Dec 18 10:55:54 2007                          */
-#*    Last change :  Wed May 11 13:14:33 2011 (serrano)                */
+#*    Last change :  Tue Oct 25 08:04:35 2011 (serrano)                */
 #*    Copyright   :  2007-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Add the HOP desktop entries from the configuration files         */
 #*=====================================================================*/
 
+#*---------------------------------------------------------------------*/
+#*    maemo specifics                                                  */
+#*---------------------------------------------------------------------*/
 if [ "@DEBIAN@ " = "maemo " ]; then
   # Where to store the desktop file, usually, this is
   # /usr/share/applications/hildon
@@ -49,6 +52,9 @@ fi
 #* echo $home_entry | cat - $home_conf > $path/home_conf.tmp           */
 #* mv $path/home_conf.tmp $home_conf                                   */
 
+#*---------------------------------------------------------------------*/
+#*    ldconfig                                                         */
+#*---------------------------------------------------------------------*/
 search=`grep @HOPPREFIX@ /etc/ld.so.conf`
 
 if [ "$search" != "@HOPPREFIX@/lib" ]; then
@@ -56,3 +62,8 @@ if [ "$search" != "@HOPPREFIX@/lib" ]; then
 fi
 
 ldconfig
+
+#*---------------------------------------------------------------------*/
+#*    init script                                                      */
+#*---------------------------------------------------------------------*/
+update-rc.d hop defaults
