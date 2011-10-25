@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Tue Oct 25 13:15:10 2011 (serrano)                */
+#*    Last change :  Tue Oct 25 15:51:24 2011 (serrano)                */
 #*    Copyright   :  2007-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -175,7 +175,13 @@ for p in hop; do
   else
     cp $BASEDIR/etc/init.d/$p $TMP/hop-$VERSION/debian/hop/etc/init.d;
   fi
+
+  if [ ! -f $TMP/hop-$VERSION/debian/hop/etc/init.d/$p ]; then
+    echo "*** ERROR: cannot install \"$TMP/hop-$VERSION/debian/hop/etc/init.d/$p\""
+    exit 1
+  fi
 done
+
 
 # The desktop file
 cp $TMP/hop-$VERSION/LICENSE $TMP/hop-$VERSION/copyright
