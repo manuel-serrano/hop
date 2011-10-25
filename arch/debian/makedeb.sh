@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Tue Oct 25 15:51:24 2011 (serrano)                */
+#*    Last change :  Tue Oct 25 17:03:49 2011 (serrano)                */
 #*    Copyright   :  2007-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -159,10 +159,9 @@ for p in control rules postinst postrm; do
 done
 
 # etc/init.d
-mkdir -p $TMP/hop-$VERSION/debian/hop/etc/init.d
 for p in hop; do
-  if [ -f $BASEDIR/etc/init.d/$p.in ]; then
-    cat $BASEDIR/etc/init.d/$p.in \
+  if [ -f $BASEDIR/init.d/$p.in ]; then
+    cat $BASEDIR/init.d/$p.in \
       | sed -e "s/@HOPVERSION@/$VERSION/g" \
             -e "s/@MAEMO@/$maemo/g" \
             -e "s/@DEBIAN@/$debian/g" \
@@ -171,17 +170,11 @@ for p in hop; do
             -e "s|@PREFIX@|$PREFIX|g" \
             -e "s/@MAEMOHASLOCATION@/$maemohaslocation/g" \
             -e "s/@BIGLOOVERSION@/$BIGLOOVERSION/g" > \
-      $TMP/hop-$VERSION/debian/hop/etc/init.d/$p;
+      $TMP/hop-$VERSION/arch/debian/init.d/$p;
   else
-    cp $BASEDIR/etc/init.d/$p $TMP/hop-$VERSION/debian/hop/etc/init.d;
-  fi
-
-  if [ ! -f $TMP/hop-$VERSION/debian/hop/etc/init.d/$p ]; then
-    echo "*** ERROR: cannot install \"$TMP/hop-$VERSION/debian/hop/etc/init.d/$p\""
-    exit 1
+    cp $BASEDIR/init.d/$p $TMP/hop-$VERSION/arch/debian/init.d/$p;
   fi
 done
-
 
 # The desktop file
 cp $TMP/hop-$VERSION/LICENSE $TMP/hop-$VERSION/copyright

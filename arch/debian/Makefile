@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri May 13 10:19:41 2011                          */
-#*    Last change :  Fri May 13 13:50:23 2011 (serrano)                */
+#*    Last change :  Tue Oct 25 17:06:55 2011 (serrano)                */
 #*    Copyright   :  2011 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Debian (maemo) port                                              */
@@ -28,8 +28,9 @@ DEBIAN = changelog.in control.in postinst.in postrm.in rules.in
 
 POPULATION = Makefile Makefile.maemo README README.maemo \
   hop-16x16.png hop-26x26.png hop-40x40.png hop-48x48.png hop-64x64.png \
-  hop.desktop.in hop.install hop.service.in makedeb.sh \
-  etc/hop \
+  hop.desktop.in hop.install hop.service.in \
+  etc/init.d/hop.in \
+  makedeb.sh \
   $(LAUNCHER:%=hop-launcher/%) \
   $(DEBIAN:%=debian/%)
 
