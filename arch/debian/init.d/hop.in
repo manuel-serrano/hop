@@ -18,13 +18,14 @@
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DESC="Hop Web Broker"
 NAME=hop
+PORT=8080
 SCRIPTNAME=/etc/init.d/$NAME
 LOGDIR=/var/log/hop
 LOGFILE=$LOGDIR/$NAME.log
 DAEMON=@HOPPREFIX@/bin/hop
 DAEMON=/opt/bigloo/bin/hop
 DAEMON_ARGS="--log-file $LOGFILE"
-DAEMONUSER=hop 
+DAEMONUSER=@HOPUSER@
 PIDFILE=/var/run/$NAME.pid
 
 # Exit if the package is not installed
@@ -72,7 +73,7 @@ do_start()
   start-stop-daemon --start --pidfile $PIDFILE --make-pidfile \
           --background --chuid $DAEMONUSER \
           --exec $DAEMON -- \
-          $DAEMON_ARGS $EXTRA_ARGS \
+          -p $PORT $DAEMON_ARGS $EXTRA_ARGS \
           || return 2
   # Add code here, if necessary, that waits for the process to be ready
   # to handle requests from services started subsequently which depend

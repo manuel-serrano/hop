@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Dec 18 10:55:54 2007                          */
-#*    Last change :  Tue Oct 25 08:04:35 2011 (serrano)                */
+#*    Last change :  Wed Oct 26 08:56:48 2011 (serrano)                */
 #*    Copyright   :  2007-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Add the HOP desktop entries from the configuration files         */
@@ -64,6 +64,24 @@ fi
 ldconfig
 
 #*---------------------------------------------------------------------*/
+#*    Add Hop user                                                     */
+#*---------------------------------------------------------------------*/
+if ! getent passwd | grep -q "^@HOPUSER@:"; then
+  adduser --system --ingroup users --shell /bin/sh hop
+fi
+
+#*---------------------------------------------------------------------*/
 #*    init script                                                      */
 #*---------------------------------------------------------------------*/
-update-rc.d hop defaults
+if whiptail --title "Hop configuration" --yesno "Start Hop automatically on boot?" 8 50; then
+  update-rc.d hop defaults
+else
+  echo "Note: Hop will not be started automatically on boot."
+  echo ""
+  echo "To spawn it in background on behalf of use @HOPUSER@, use:"
+  echo "   \"/etc/init.d/hop start\""
+  echo "Edit \"/etc/default/hop\" to change default configuration."
+  echo ""
+  echo "Alternatively, run it with:"
+  echo"    \"hop -v\""
+fi

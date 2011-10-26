@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Tue Oct 25 17:03:49 2011 (serrano)                */
+#*    Last change :  Wed Oct 26 08:54:00 2011 (serrano)                */
 #*    Copyright   :  2007-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -25,6 +25,7 @@ TMP=`pwd`/build.hop
 BASEDIR=`dirname $0`
 HOPPREFIX=/opt/bigloo
 PREFIX=/usr
+HOPUSER=hop
 
 if [ "$REPODIR " != " " ]; then
   REPOSITORY=$REPODIR;
@@ -145,6 +146,7 @@ for p in control rules postinst postrm; do
   if [ -f $BASEDIR/debian/$p.in ]; then
     cat $BASEDIR/debian/$p.in \
       | sed -e "s/@HOPVERSION@/$VERSION/g" \
+            -e "s/@HOPUSER@/$HOPUSER/g" \
             -e "s/@MAEMO@/$maemo/g" \
             -e "s/@DEBIAN@/$debian/g" \
             -e "s/@EXTRADEPEND@/$extradepend/g" \
@@ -163,6 +165,7 @@ for p in hop; do
   if [ -f $BASEDIR/init.d/$p.in ]; then
     cat $BASEDIR/init.d/$p.in \
       | sed -e "s/@HOPVERSION@/$VERSION/g" \
+            -e "s/@HOPUSER@/$HOPUSER/g" \
             -e "s/@MAEMO@/$maemo/g" \
             -e "s/@DEBIAN@/$debian/g" \
             -e "s/@EXTRADEPEND@/$extradepend/g" \

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Oct 25 18:38:00 2011 (serrano)                */
+#*    Last change :  Wed Oct 26 09:01:14 2011 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -174,9 +174,9 @@ install-android: hop-dirs
 	$(MAKE) -C arch/android install
 
 install-debian: hop-dirs
-	mkdir -p $(DESTDIR)etc/init.d
-	$(INSTALL) $(BUILDDIR)/arch/debian/init.d/hop $(DESTDIR)etc/init.d \
-	  && chmod u+rx $(DESTDIR)etc/init.d/hop
+	mkdir -p $(DESTDIR)/etc/init.d
+	$(INSTALL) $(BUILDDIR)/arch/debian/init.d/hop $(DESTDIR)/etc/init.d \
+	  && chmod u+rx $(DESTDIR)/etc/init.d/hop
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
