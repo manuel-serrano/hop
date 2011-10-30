@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
-;*    Last change :  Wed Mar  2 12:04:55 2011 (serrano)                */
+;*    Last change :  Fri Oct 28 08:52:48 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
@@ -75,28 +75,35 @@
 (define (hz-db-init!)
    (with-lock *db-mutex*
       (lambda ()
-	 (when (eq? *db* #unspecified)
-	    (if (file-exists? (hz-db))
-		(hz-db-reconfigure! (instantiate::sqltiny
-				       (path (hz-db))
-				       (sync 'automatic)))
-		(begin
-		   (make-directory (dirname (hz-db)))
-		   (let ((db (instantiate::sqltiny
-				(path (hz-db))
-				(sync 'automatic))))
-		      (sqlite-exec db
-			 "CREATE TABLE info (name STRING, date STRING, stamp INTEGER, version STRING)")
-		      (sqlite-exec db
-			 "INSERT INTO info VALUES ('info', ~q, ~q, ~q)"
-			 (elong->string (date->seconds (make-date)))
-			 1
-			 (hz-version))
-		      (sqlite-exec db
-			 "CREATE TABLE weblets (~L)"
-			 (map (lambda (s) (format "~a ~a" (car s) (cdr s)))
-			      (hz-db-columns)))
-		      (set! *db* db)))))))
+	 (let loop ()
+	    (when (eq? *db* #unspecified)
+	       (if (file-exists? (hz-db))
+		   (with-handler
+		      (lambda (e)
+			 (exception-notify e)
+			 (delete-file (hz-db))
+			 (loop))
+		      (hz-db-reconfigure!
+			 (instantiate::sqltiny
+			    (path (hz-db))
+			    (sync 'automatic))))
+		   (begin
+		      (make-directory (dirname (hz-db)))
+		      (let ((db (instantiate::sqltiny
+				   (path (hz-db))
+				   (sync 'automatic))))
+			 (sqlite-exec db
+			    "CREATE TABLE info (name STRING, date STRING, stamp INTEGER, version STRING)")
+			 (sqlite-exec db
+			    "INSERT INTO info VALUES ('info', ~q, ~q, ~q)"
+			    (elong->string (date->seconds (make-date)))
+			    1
+			    (hz-version))
+			 (sqlite-exec db
+			    "CREATE TABLE weblets (~L)"
+			    (map (lambda (s) (format "~a ~a" (car s) (cdr s)))
+			       (hz-db-columns)))
+			 (set! *db* db))))))))
    (hz-sync-standard-weblets!))
 
 ;*---------------------------------------------------------------------*/

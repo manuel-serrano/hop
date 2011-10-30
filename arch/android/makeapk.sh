@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Fri Sep 30 15:21:41 2011 (serrano)                */
+#*    Last change :  Thu Oct 27 20:20:06 2011 (serrano)                */
 #*    Copyright   :  2010-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -63,6 +63,8 @@ action_make=yes;
 action_install=yes;
 action_weblets_devel=yes
 action_repository=no
+action_mode=release
+action_mode=debug
 
 while : ; do
   case $1 in
@@ -103,7 +105,10 @@ while : ; do
       action_repository="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --repository=*)
-      repository="`echo $1 | sed 's/^[^=]*=//'`";;
+      REPOSITORY="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --mode=*)
+      action_mode="`echo $1 | sed 's/^[^=]*=//'`";;
 
     -*)
       echo "*** makeapk, unknown option $1" >&2;
@@ -121,6 +126,7 @@ while : ; do
       echo "   --install-repo=yes|no... install in the Hop repo" >&2;
       echo "   --weblets-devel=yes|no.. full weblets installations" >&2;
       echo "   --repository=dir........ output target directory" >&2;
+      echo "   --mode=debug|release.... output target directory" >&2;
       echo "" >&2;
       echo "Example:" >&2;
       echo "   $0 --untar=no --make=no --install=no --weblets-devel=no" >&2;
@@ -264,7 +270,7 @@ $ANDROIDNDK/ndk-build -C $android V=1 || exit 1
 
 # build the .apk
 (cd $android &&
- $ant -Dbuild.compiler.fulldepend=true -Dbuild.compiler.compilerarg="-Xlint:unchecked" release <<EOF
+ $ant -Dbuild.compiler.fulldepend=true -Dbuild.compiler.compilerarg="-Xlint:unchecked" $action_mode <<EOF
 hophop
 hophop
 
@@ -276,5 +282,5 @@ fi
 
 # copy the apk in the repo directory
 if [ $action_repository = "yes" ]; then
-  cp $android/bin/hop-release.apk $REPOSITORY/android/hop-$HOPVERSION.apk
+  cp $android/bin/hop-$action_mode.apk $REPOSITORY/android/hop-$HOPVERSION.apk
 fi

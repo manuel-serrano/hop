@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Dec 18 10:55:54 2007                          */
-#*    Last change :  Wed Oct 26 08:56:48 2011 (serrano)                */
+#*    Last change :  Wed Oct 26 13:40:38 2011 (serrano)                */
 #*    Copyright   :  2007-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Add the HOP desktop entries from the configuration files         */
@@ -73,8 +73,11 @@ fi
 #*---------------------------------------------------------------------*/
 #*    init script                                                      */
 #*---------------------------------------------------------------------*/
-if whiptail --title "Hop configuration" --yesno "Start Hop automatically on boot?" 8 50; then
+if whiptail --title "Hop configuration" --yesno "Start Hop automatically?" 8 50; then
   update-rc.d hop defaults
+  echo "Hop will now be automatically spawned when the machine boots"
+  echo "To run it now, use:"
+  echo "   \"/etc/init.d/hop start\""
 else
   echo "Note: Hop will not be started automatically on boot."
   echo ""

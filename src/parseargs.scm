@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Sep 30 21:29:16 2011 (serrano)                */
+;*    Last change :  Fri Oct 28 08:31:11 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -393,11 +393,11 @@
 ;*    %hop-load-rc ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (%hop-load-rc path)
-   (if (string? path)
-       (when (file-exists? path)
-	  (hop-verb 2 "Loading `" path "'...\n")
-	  (hop-load path)
-	  (hop-rc-loaded!))))
+   (when (and (string? path) (file-exists? path))
+      (hop-verb 2 "Loading `" path "'...\n")
+      (hop-load path)
+      (hop-rc-loaded!)
+      path))
 
 ;*---------------------------------------------------------------------*/
 ;*    parseargs-loadrc ...                                             */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Mon May 30 18:28:33 2011 (serrano)                */
+/*    Last change :  Sun Oct 30 15:17:02 2011 (serrano)                */
 /*    Copyright   :  2011 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -259,9 +259,11 @@ public class HopPluginMediaAudio extends HopPlugin {
 			     Genres.NAME + "='" + genre + "'", 
 			     null,
 			     null );
+      Log.d( "hopPluginMediaAudio", "queryGenreArtist genre=\"" + genre + "\"" );
       synchronized( op ) {
 	 if( cur == null ) {
 	    cur.close();
+	    Log.d( "hopPluginMediaAudio", "cur null.1" );
 	    op.write( "()".getBytes() );
 	 } else {
 	    if( cur.moveToFirst() ) {
@@ -272,6 +274,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 				    null,
 				    Media.ARTIST + " ASC" );
 	       if( c.getCount() == 0 ) {
+		  Log.d( "hopPluginMediaAudio", "count null.1" );
 		  op.write( "()".getBytes() );
 	       } else {
 		  String cartist = "";
@@ -281,7 +284,9 @@ public class HopPluginMediaAudio extends HopPlugin {
 		  int j = c.getColumnIndex( Media.ARTIST );
 		  do {
 		     String artist = c.getString( j );
-		  
+		     
+		     Log.d( "hopPluginMediaAudio", "artist=" + artist );
+
 		     if( !artist.equals( cartist ) ) {
 			op.write( "\"".getBytes() );
 			op.write( artist.getBytes() );
