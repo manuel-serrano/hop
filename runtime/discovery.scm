@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Wed Aug  3 06:48:37 2011 (serrano)                */
+;*    Last change :  Mon Oct 31 20:13:12 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -112,6 +112,7 @@
    (let loop ((id -1))
       (multiple-value-bind (msg clienthost)
 	 (datagram-socket-receive serv 1024)
+	 (tprint "DISCOVERY-LOOP msg=" msg " clienthost=" clienthost)
 	 (let ((l (string-split msg)))
 	    (when (=fx (length l) 2)
 	       (let ((svc (cadr l))
@@ -131,7 +132,7 @@
 (define (hop-discovery-reply clienthost clientport service)
    (when (=fx discovery-key 0)
       (set! discovery-key
-	 (bit-rsh (absfx (elong->fixnum (date->seconds (current-date)))) 2)))
+	 (bit-rsh (absfx (elong->fixnum (current-seconds))) 2)))
    (let* ((name (hostname))
 	  (url (format "http://~a:~a/hop/discovery?host=~a&port=~a&hostname=~a&key=~a&service=~a&session=~a" clienthost clientport
 		  (host name) (hop-port) name discovery-key service (hop-session))))
