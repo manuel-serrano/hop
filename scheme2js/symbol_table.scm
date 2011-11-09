@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -109,7 +109,7 @@
       (let ((entry (get-entry)))
 	 (cond
 	    (entry entry)
-	    ((Lazy-Scope? scope)
+	    ((is-a? scope Lazy-Scope)
 	     (with-access::Lazy-Scope scope (lazy)
 		(lazy scope id)))
 	    (else #f)))))

@@ -160,12 +160,12 @@
     
 (define-nmethod (Module.resolve! symbol-table)
    (let* ((runtime-scope (make-lazy-scope
-			  (lazy-imported-lookup `((* . ,(Env-runtime env)))
+			  (lazy-imported-lookup `((* . ,(with-access::Env env (runtime) runtime)))
 						#f)))
 	  (imported-scope (make-lazy-scope
-			   (lazy-imported-lookup (Env-imports env) #t)))
+			   (lazy-imported-lookup (with-access::Env env (imports) imports) #t)))
 	  ;; module-scope might grow, but 'length' is just an indication. 
-	  (module-scope (make-scope (length (Env-exports env))))
+	  (module-scope (make-scope (length (with-access::Env env (exports) exports))))
 	  (extended-symbol-table (cons* module-scope
 					imported-scope
 					runtime-scope
@@ -182,45 +182,47 @@
       
       ;; insert exported variables
       (for-each (lambda (meta) (js-symbol-add! module-scope meta #f))
-		(Env-exports env))
+	 (with-access::Env env (exports) exports))
       
       ;; we need to reference runtime-variables from other passes. Export
       ;; a function allowing access to them.
       (runtime-reference-init! (lambda (id::symbol)
 				  (symbol-var runtime-scope id)))
-      
-      (Env-runtime-scope-set! env runtime-scope)
-      (Env-allow-unresolved?-set!
-       env
-       (case (config 'allow-unresolved)
-	  ((#t module) (lambda (id loc) #t))
-	  ((#f) (lambda (id loc) #f))
-	  ((ask) (let ((oracle (config 'allow-unresolved-oracle)))
-		    (lambda (id loc)
-		       (oracle id (scheme2js-error-location loc)))))
-	  (else (error "symbol-resolution"
-		       "invalid 'allow-unresolved' configuration"
-		       (config 'allow-unresolved)))))
-      (Env-unbound-add!-set!
-       env
-       (let ((unresolved-declare! (config 'unresolved-declare)))
-	  (lambda (id)
-	     (when (pair? id) ;; qualified
-		(scheme2js-error "symbol-resolution"
-				 "could not resolve qualified variable"
-				 (cons '@ id)
-				 id))
-	     (let ((js-str (mangle-JS-sym id)))
-		(if unresolved-declare!
-		    (unresolved-declare! id js-str)
-		    (verbose "Unresolved symbol '"
-			     id "' assumed to be a JS-var"))
-		(js-symbol-add! imported-scope
-				    (instantiate::Export-Desc
-				       (id id)
-				       (js-id js-str)
-				       (exported-as-const? #f))
-				    #t)))))
+
+      (with-access::Env env ((rs runtime-scope)
+			     allow-unresolved?
+			     unbound-add!)
+	 (set! rs runtime-scope)
+	 
+	 (set! allow-unresolved?
+	    (case (config 'allow-unresolved)
+	       ((#t module) (lambda (id loc) #t))
+	       ((#f) (lambda (id loc) #f))
+	       ((ask) (let ((oracle (config 'allow-unresolved-oracle)))
+			 (lambda (id loc)
+			    (oracle id (scheme2js-error-location loc)))))
+	       (else (error "symbol-resolution"
+			"invalid 'allow-unresolved' configuration"
+			(config 'allow-unresolved)))))
+	 (set! unbound-add!
+	    (let ((unresolved-declare! (config 'unresolved-declare)))
+	       (lambda (id)
+		  (when (pair? id) ;; qualified
+		     (scheme2js-error "symbol-resolution"
+			"could not resolve qualified variable"
+			(cons '@ id)
+			id))
+		  (let ((js-str (mangle-JS-sym id)))
+		     (if unresolved-declare!
+			 (unresolved-declare! id js-str)
+			 (verbose "Unresolved symbol '"
+			    id "' assumed to be a JS-var"))
+		     (js-symbol-add! imported-scope
+			(instantiate::Export-Desc
+			   (id id)
+			   (js-id js-str)
+			   (exported-as-const? #f))
+			#t))))))
 
       (with-access::Module this (this-var runtime-vars imported-vars
 					  scope-vars body)
@@ -338,20 +340,21 @@
       (let ((v (any (lambda (scope)
 		       (symbol-var scope id))
 		    symbol-table)))
-	 (cond
-	    (v (set! var v))
-	    (((Env-allow-unresolved? env) id this)
-	     ((Env-unbound-add! env) id)
-	     (ncall resolve! this symbol-table)) ;; try again.
-	    (else
-	     (scheme2js-error #f "Unresolved symbol" id this)))))
+	 (with-access::Env env (allow-unresolved? unbound-add!)
+	    (cond
+	       (v (set! var v))
+	       ((allow-unresolved? id this)
+		(unbound-add! id)
+		(ncall resolve! this symbol-table)) ;; try again.
+	       (else
+		(scheme2js-error #f "Unresolved symbol" id this))))))
    this)
 
 ;; runtime-var-ref directly queries the js-var-scope (short-cutting the
 ;; intermediate scopes).
 (define-nmethod (Runtime-Ref.resolve! symbol-table)
    (with-access::Runtime-Ref this (id var)
-      (let ((v (symbol-var (Env-runtime-scope env) id)))
+      (let ((v (symbol-var (with-access::Env env (runtime-scope) runtime-scope) id)))
 	 ;; error should never happen (programming error)
 	 (when (not v) (error "Runtime-Var-Ref.resolve!"
 			      "Internal Error: Runtime-variable not found"
@@ -393,7 +396,7 @@
 		(cond
 		   (var
 		    'do-nothing)
-		   ((Env-export-globals env)
+		   ((with-access::Env env (export-globals) export-globals)
 		    (let* ((js-id (mangle-JS-sym id))
 			   (desc (instantiate::Export-Desc
 				    (id id)

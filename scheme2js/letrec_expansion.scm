@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -72,7 +72,7 @@
 
 (define (letrec-expansion! tree)
    (verbose "letrec-expansion")
-   (letrec-expand tree (make-Env (config 'call/cc))))
+   (letrec-expand tree (instantiate::Env (call/cc? (config 'call/cc)))))
 
 (define-nmethod (Node.letrec-expand)
    (default-walk this))
@@ -93,7 +93,7 @@
       (set! body (defines->letrec! body))
       (default-walk this)
       (when (and (eq? kind 'letrec)
-		 (Env-call/cc? env)
+		 (with-access::Env env (call/cc?) call/cc?)
 		 (any? (lambda (binding)
 			  (with-access::Set! binding (val)
 			     (not (letrec-constant? val))))

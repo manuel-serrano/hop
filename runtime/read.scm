@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Jul 25 05:48:51 2011 (serrano)                */
+;*    Last change :  Sat Nov  5 20:57:16 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -189,7 +189,7 @@
 ;*---------------------------------------------------------------------*/
 (define (collect-upto ignore kind port location)
    
-   (define (collect-upto.debug ignore kind port)
+   (define (collect-upto-debug ignore kind port)
       ;; move one character backward for the open-parenthesis
       (let* ((name (input-port-name port))
 	     (po (-fx (input-port-position port) 1))
@@ -203,7 +203,7 @@
 		       (loop (let ((po (input-port-last-token-position port)))
 				(econs item acc (list 'at name po))))))))))
    
-   (define (collect-upto.optim ignore kind port)
+   (define (collect-upto-optim ignore kind port)
       (let ((item (ignore)))
 	 (if (eq? item *end-of-list*)
 	     '()
@@ -214,8 +214,8 @@
 		       (loop (cons item acc))))))))
    
    (if (or (>fx (bigloo-debug) 0) location)
-       (collect-upto.debug ignore kind port)
-       (collect-upto.optim ignore kind port)))
+       (collect-upto-debug ignore kind port)
+       (collect-upto-optim ignore kind port)))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-quote ...                                                   */

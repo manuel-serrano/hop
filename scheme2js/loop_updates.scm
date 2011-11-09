@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -64,13 +64,13 @@
 ;; this procedure stops at function boundaries.
 (define (dep-tree vars)
    (let* ((escaping-vars (filter Var-escapes? vars))
-	  (shallow-refs-env (make-Shallow-Env escaping-vars)))
+	  (shallow-refs-env (instantiate::Shallow-Env (escaping-vars escaping-vars))))
 
       (for-each (lambda (var)
 		   (with-access::Update-Var var (new-val referenced-vars)
-		      (let ((box (make-List-Box '())))
+		      (let ((box (instantiate::List-Box (l '()))))
 			 (shallow-refs new-val shallow-refs-env var box)
-			 (set! referenced-vars (List-Box-l box)))))
+			 (set! referenced-vars (with-access::List-Box box (l) l)))))
 		vars)
       ;; fill rev-pointers.
       (for-each (lambda (var)
@@ -93,7 +93,7 @@
       (for-each (lambda (v)
 		   ;; don't count self.
 		   (when (and (not (eq? v self-var))
-			      (Update-Var? v)
+			      (is-a? v Update-Var)
 			      (not (memq v l)))
 		      (cons-set! l v)))
 	     use-vars)))
@@ -107,20 +107,21 @@
    (default-walk this self-var b)
    (with-access::Call this (operator)
       (let ((target (call-target operator)))
-	 (cond
-	    ((not target)
-	     (potential-uses (Shallow-Env-escaping-vars env) self-var b))
-	    ((higher-order-runtime-ref? target)
-	     (potential-uses (Shallow-Env-escaping-vars env) self-var b))
-	    ((runtime-ref? target)
-	     ;; arguments are already taken care of.
-	     'do-nothing)
-	    ((Lambda? target)
-	     (with-access::Lambda target (free-vars)
-		(unless  (null? free-vars)
-		   (potential-uses free-vars self-var b))))
-	    (else
-	     (potential-uses (Shallow-Env-escaping-vars env) self-var b))))))
+	 (with-access::Shallow-Env env (escaping-vars)
+	    (cond
+	       ((not target)
+		(potential-uses escaping-vars self-var b))
+	       ((higher-order-runtime-ref? target)
+		(potential-uses escaping-vars self-var b))
+	       ((runtime-ref? target)
+		;; arguments are already taken care of.
+		'do-nothing)
+	       ((Lambda? target)
+		(with-access::Lambda target (free-vars)
+		   (unless  (null? free-vars)
+		      (potential-uses free-vars self-var b))))
+	       (else
+		(potential-uses escaping-vars self-var b)))))))
 (define-nmethod (Lambda.shallow-refs self-var ht)
    'do-not-go-into-lambdas)
 
@@ -190,7 +191,9 @@
    ;;  now we can start with assigning tmp-x (the cyclic tmp-vars)
    ;;  then with the "reverse independent" variable 't'. nobody depends
    ;;  on 't'.
-   (let* ((cyclic-vars (filter Update-Var-cyclic-var? vars))
+   (let* ((cyclic-vars (filter (lambda (v)
+				  (with-access::Update-Var v (cyclic-var?) cyclic-var?))
+			  vars))
 	  ;; break-var-decls are tmp-vars, that are inside a Let.
 	  (break-var-decls (map break-var-decl cyclic-vars))
 	  (let-vars (map Ref-var break-var-decls))
@@ -236,7 +239,7 @@
 		   ;; remove rev-deps.
 		   (for-each
 		    (lambda (v)
-		       (when (Update-Var? v)
+		       (when (is-a? v Update-Var)
 			  ;; hasn't been cleaned yet
 			  (with-access::Update-Var v (rev-referenced-vars)
 			     (set! rev-referenced-vars

@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -33,7 +33,7 @@
 (define-nmethod (Set!.rm!)
    (with-access::Set! this (lvalue val)
       (with-access::Ref lvalue (var)
-	 (if (Rm-Var? var)
+	 (if (is-a? var Rm-Var)
 	     (walk! val)
 	     (default-walk! this)))))
 

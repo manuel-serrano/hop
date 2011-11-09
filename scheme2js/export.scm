@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -36,7 +36,7 @@
    (cond
       ((pair? l/ht)
        (any (lambda (desc)
-	       (and (eq? (Export-Desc-id desc) sym)
+	       (and (eq? (with-access::Export-Desc desc (id) id) sym)
 		    desc))
 	    l/ht))
       (hashtable? l/ht

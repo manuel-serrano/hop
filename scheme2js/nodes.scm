@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -183,17 +183,17 @@
 
 (define (var-reference v::Var #!key (location #f))
    (instantiate::Ref
-      (location (if (Node? location)
-		    (Node-location location)
+      (location (if (is-a? location Node)
+		    (with-access::Node location (location) location)
 		    location))
-      (id (Var-id v))
+      (id (with-access::Var v (id) id))
       (var v)))
 
 (define (var-assig v::Var val::Node #!key (location #f))
    (let ((var-ref (var-reference v :location location)))
       (instantiate::Set!
-	 (location (if (Node? location)
-		       (Node-location location)
+	 (location (if (is-a? location Node)
+		       (with-access::Node location (location) location)
 		       location))
 	 (lvalue var-ref)
 	 (val val))))
@@ -203,8 +203,8 @@
 		  (id id)
 		  (kind 'local))))
       (instantiate::Ref
-	 (location (if (Node? location)
-		       (Node-location location)
+	 (location (if (is-a? location Node)
+		       (with-access::Node location (location) location)
 		       location))
 	 (id id)
 	 (var var))))

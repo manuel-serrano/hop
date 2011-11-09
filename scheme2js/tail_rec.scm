@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -70,17 +70,17 @@
 							    formals
 							    vaarg?))
 		    (updates (map! cdr assig-mapping)))
-		(unless (Tail-Lambda? current-fun)
+		(unless (is-a? current-fun Tail-Lambda)
 		   (widen!::Tail-Lambda current-fun
 		      (label (make-Label (gensym 'continue)))))
 		(instantiate::Tail-rec-Call
 		   (updates updates)
-		   (label (Tail-Lambda-label current-fun)))))
+		   (label (with-access::Tail-Lambda current-fun (label) label)))))
 	  this)))
 
 (define-nmethod (Lambda.rec! current-fun)
    (default-walk! this this)
-   (when (Tail-Lambda? this)
+   (when (is-a? this Tail-Lambda)
       (with-access::Tail-Lambda this (label body formals scope-vars)
 	 ;; replace formals with replacement variables, and replace body
 	 ;; with while.
@@ -109,7 +109,7 @@
 				 
 	    (set! scope-vars
 		  (map! (lambda (var)
-			   (if (Repl-Var? var)
+			   (if (is-a? var Repl-Var)
 			       (with-access::Repl-Var var (replacement)
 				  (with-access::Ref replacement (var)
 				     var))

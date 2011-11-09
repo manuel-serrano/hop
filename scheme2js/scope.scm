@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -815,9 +815,9 @@
    (with-access::Let this (scope-vars body)
       (let ((frame-vars (cp-filter
 			 (lambda (var)
-			    (with-access::Scope-Var var (needs-frame?
-							 needs-boxing?
-							 needs-uniquization?)
+			    (with-access::Var var (needs-frame?
+						     needs-boxing?
+						     needs-uniquization?)
 			       (or needs-frame?
 				   needs-boxing?
 				   needs-uniquization?)))

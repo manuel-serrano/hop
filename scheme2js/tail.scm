@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -74,7 +74,7 @@
    (cond
       (tail?
        (widen!::Tail-Call this))
-      ((Tail-Call? this)
+      ((is-a? this Tail-Call)
        (shrink! this)))
    (default-walk this #f))
 
@@ -89,20 +89,20 @@
       (cond
 	 (tail?
 	  (widen!::Tail-Label label))
-	 ((Tail-Label? label)
+	 ((is-a? label Tail-Label)
 	  (shrink! label))))
    (default-walk this tail?))
 
 (define-nmethod (Break.tail tail?)
    (with-access::Break this (label val)
-      (if (Tail-Label? label)
+      (if (is-a? label Tail-Label)
 	  (walk val #t)
 	  (walk val #f))))
 
 (define-nmethod (Tail-rec.tail tail?)
    (with-access::Tail-rec this (inits body label)
       (for-each (lambda (init) (walk init #f)) inits)
-      (when (Tail-Label? label) (shrink! label))
+      (when (is-a? label Tail-Label) (shrink! label))
       (walk body tail?)))
    
 (define-nmethod (Tail-rec-Call.tail tail?)

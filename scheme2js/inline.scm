@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -88,9 +88,10 @@
 
 (define (single-use! tree)
    (verbose " single-use")
-   (let ((env (make-Single-Use-Env 0)))
-      (single! tree env '())
-      (> (Single-Use-Env-count env) 0)))
+   (let ((env (instantiate::Single-Use-Env (count 0))))
+      (with-access::Single-Use-Env env (count)
+	 (single! tree env '())
+	 (> count 0))))
 
 (define-nmethod (Node.single! surrounding-funs)
    (default-walk! this surrounding-funs))
@@ -125,8 +126,9 @@
 		 (counter 0)
 		 (max-rec-inline (config 'rec-inline-nb))
 		 (max-inline-size (config 'max-inline-size)))))
-      (clone tree env 0)
-      (> (Clone-Env-counter env) 0)))
+      (with-access::Clone-Env env (counter)
+	 (clone tree env 0)
+	 (> counter 0))))
 
 
 (define-nmethod (Node.clone nested-counter)
@@ -135,13 +137,14 @@
 (define-nmethod (Call.clone nested-counter)
    (define (good-for-inlining? var::Var nested-counter)
       (with-access::Var var (uses value)
+	 (with-access::Clone-Env env (max-rec-inline max-inline-size)
 	 (and (can-be-inlined? var)
-	      (< nested-counter (Clone-Env-max-rec-inline env))
+	      (< nested-counter max-rec-inline)
 	      (or (=fx uses 1)
 		  (with-access::Lambda value (size nested-closures?)
 		     (and (not nested-closures?)
-			  (<=fx size (/fx (Clone-Env-max-inline-size env)
-					  (+fx nested-counter 1)))))))))
+			  (<=fx size (/fx max-inline-size
+					  (+fx nested-counter 1))))))))))
 
    (default-walk this nested-counter)
    (with-access::Call this (operator)
@@ -165,8 +168,9 @@
    (verbose " inline-funs!")
    (let ((env (instantiate::Inline-Env
 		 (counter 0))))
-      (absorb! tree env #f #f)
-      (> (Inline-Env-counter env) 0)))
+      (with-access::Inline-Env env (counter)
+	 (absorb! tree env #f #f)
+	 (> counter 0))))
 
 (define-nmethod (Node.absorb! label fun)
    (default-walk! this label fun))
@@ -174,7 +178,7 @@
 (define-nmethod (Set!.absorb! label fun)
    (with-access::Set! this (lvalue val)
       (with-access::Ref lvalue (var)
-	 (when (Inlined-Local? var)
+	 (when (is-a? var Inlined-Local)
 	    (set! val (instantiate::Const (value #unspecified)))
 	    (shrink! var)))
       (default-walk! this label fun)))

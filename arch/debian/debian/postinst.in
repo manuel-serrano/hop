@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Dec 18 10:55:54 2007                          */
-#*    Last change :  Wed Oct 26 13:40:38 2011 (serrano)                */
+#*    Last change :  Tue Nov  1 08:48:46 2011 (serrano)                */
 #*    Copyright   :  2007-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Add the HOP desktop entries from the configuration files         */
@@ -86,5 +86,5 @@ else
   echo "Edit \"/etc/default/hop\" to change default configuration."
   echo ""
   echo "Alternatively, run it with:"
-  echo"    \"hop -v\""
+  echo "    \"hop -v\""
 fi

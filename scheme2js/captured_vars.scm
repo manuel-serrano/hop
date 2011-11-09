@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -35,7 +35,7 @@
    (verbose " collect captured")
    (free-vars tree)
    (side-effect tree)
-   (captured tree (make-Env (gensym 'token))))
+   (captured tree (instantiate::Env (token (gensym 'token)))))
 
 (define (clean-var v::Var)
    (with-access::Var v (captured? id)
@@ -44,8 +44,8 @@
 ;; cleans lambda, if it's the first time we encounter the lambda.
 (define (clean-lambda l::Lambda env)
    (with-access::Env env (token)
-      (unless (and (Capture-Lambda? l)
-		   (eq? (Capture-Lambda-token l) token))
+      (unless (and (is-a? l Capture-Lambda)
+		   (eq? (with-access::Capture-Lambda l (token) token) token))
 	 (widen!::Capture-Lambda l (token token))
 	 (with-access::Lambda l (closure? scope-vars)
 	    (set! closure? #f)
@@ -53,7 +53,7 @@
 	    (for-each clean-var scope-vars)))))
 
 (define (mark-closure! proc)
-   (with-access::Capture-Lambda proc (closure? free-vars)
+   (with-access::Lambda proc (closure? free-vars)
       (unless closure? ;; already done
 	 (set! closure? #t)
 	 (for-each (lambda (var)

@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -61,10 +61,10 @@
 (define (duplicate-Local var::Var)
    (with-access::Var var (value)
       (let ((new-value (cond
-			  ((Cloned-Var? value)
-			   (Cloned-Var-replacement value))
-			  ((Cloned-Lambda? value)
-			   (Cloned-Lambda-replacement value))
+			  ((is-a? value Cloned-Var)
+			   (with-access::Cloned-Var var (replacement) replacement))
+			  ((is-a? value Cloned-Lambda)
+			   (with-access::Cloned-Lambda value (replacement) replacement))
 			  (else value))))
 	 (duplicate::Var var
 	    (value new-value)))))

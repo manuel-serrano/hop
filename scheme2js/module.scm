@@ -289,7 +289,7 @@
 
 	 (prepare-module! m override-headers file-path reader)
 
-	 (let ((module-name (WIP-Unit-name m)))
+	 (with-access::WIP-Unit m ((module-name name))
 	    (unless (or (config 'infotron)
 			(not header-sexp?))
 	       (check-module-name module-name file header)))
@@ -602,7 +602,7 @@
       (let ((import-list (module-entries header 'import)))
 	 (unless (every (lambda (im)
 			   (or (symbol? im)
-			       (Compilation-Unit? im)))
+			       (is-a? im Compilation-Unit)))
 			import-list)
 	    (scheme2js-error "scheme2js-module"
 			     ;; we allow compilation units too, but this should
@@ -620,7 +620,7 @@
 	    ((null? imported-modules)
 	     (set! macros new-macros)
 	     (set! imports new-imports))
-	    ((Compilation-Unit? (car imported-modules))
+	    ((is-a? (car imported-modules) Compilation-Unit)
 	     (let ((im (car imported-modules)))
 		(with-access::Compilation-Unit im  (exports exported-macros name)
 		   (loop (cdr imported-modules)
