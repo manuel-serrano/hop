@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -133,7 +133,7 @@
 	    (else
 	     (error "While-patterns!" "Internal Error: should never happen" #f))))
 
-      (if (and (or (not (Env-call/cc? env)) ;; call/cc (and not just suspend)
+      (if (and (or (not (with-access::Env env (call/cc?) call/cc?)) ;; call/cc (and not just suspend)
 		   (not call/cc?)) ;; this could be set by suspend/resume too.
 	       (Const? test)
 	       (eq? (Const-value test) #t)

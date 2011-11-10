@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Wed Nov  9 19:46:13 2011 (serrano)                */
+;*    Last change :  Thu Nov 10 06:43:13 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -318,28 +318,31 @@
       ;; request
       (fprintf port "\"~a ~a ~a\" " method abspath http)
       ;; Return code
-      (let* ((str (%http-response-local-start-line resp))
-	     (len (string-length str)))
-	 (let loop ((i  0)
-		    (sp 0))
-	    (cond
-	       ((or (>=fx i len) (>=fx sp 2))
-		#f)
-	       ((char=? (string-ref str i) #\space)
-		(loop (+fx i 1) (+fx sp 1)))
-	       ((=fx sp 1)
-		(display (string-ref str i) port)
-		(loop (+fx i 1) sp))
-	       (else
-		(loop (+fx i 1) sp)))))
+      (if (is-a? resp %http-response-local)
+	  (with-access::%http-response-local resp ((str start-line))
+	     (let ((len (string-length str)))
+		(let loop ((i 0)
+			   (sp 0))
+		   (cond
+		      ((or (>=fx i len) (>=fx sp 2))
+		       #f)
+		      ((char=? (string-ref str i) #\space)
+		       (loop (+fx i 1) (+fx sp 1)))
+		      ((=fx sp 1)
+		       (display (string-ref str i) port)
+		       (loop (+fx i 1) sp))
+		      (else
+		       (loop (+fx i 1) sp))))))
+	  (display 305 port))
       (display " " port)
       ;; content-length
-      (let ((hdrs (%http-response-header resp)))
+      (with-access::%http-response resp ((hdrs header) content-length)
 	 (cond
-	    ((http-response-file? resp)
-	     (display (file-size (http-response-file-file resp)) port))
-	    ((>elong (%http-response-content-length resp) #e0)
-	     (display (%http-response-content-length resp) port))
+	    ((is-a? resp http-response-file)
+	     (with-access::http-response-file resp (file)
+		(display (file-size file) port)))
+	    ((>elong content-length #e0)
+	     (display content-length port))
 	    (else
 	     (display "-" port))))
       ;; long version (add User-Agent and Referer)
@@ -477,14 +480,7 @@
    (when (output-port? (hop-log-file))
       (hop-http-response-local-hook-add!
        (lambda (req resp)
-	  ;; A local response might a remote response object,
-	  ;; for instance, in the case of a service that forward
-	  ;; its reponses. 
-	  (cond
-	     ((%http-response-local? resp)
-	      (log-local-response (hop-log-file) req resp))
-	     ((http-response-remote? resp)
-	      (log-remote-response (hop-log-file) req resp)))))
+	  (log-local-response (hop-log-file) req resp)))
       (hop-http-response-remote-hook-add!
        (lambda (req resp)
 	  (log-remote-response (hop-log-file) req resp)))))

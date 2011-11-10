@@ -219,7 +219,7 @@
 
 (define-nmethod (Ref.widen!_)
    (with-access::Ref this (var)
-      (when (not (Scope-Var? var))
+      (unless (is-a? var Scope-Var)
 	 (error "scope"
 		"Internal Error: not scope-var: "
 		var))))
@@ -305,7 +305,7 @@
 		      (hashtable-put! ht var this))
 		   scope-vars)
 	 (default-walk this (list this) ht)
-	 (when (Call/cc-Lambda? this)
+	 (when (is-a? this Call/cc-Lambda)
 	    (for-each (lambda (var)
 			 (with-access::Scope-Var var (call/cc-when-alive?)
 			    (set! call/cc-when-alive? #t)))
@@ -341,7 +341,7 @@
 			     (hashtable-put! var->scope-ht var this))
 			  scope-vars)))
 	 (walk body this+surrounding-scopes var->scope-ht)
-	 (when (Call/cc-Let? this)
+	 (when (is-a? this Call/cc-Let)
 	    (for-each (lambda (var)
 			 (with-access::Scope-Var var (call/cc-when-alive?)
 			    (set! call/cc-when-alive? #t)))
@@ -389,9 +389,9 @@
    (when (Call-call/cc? this)
       (for-each (lambda (scope)
 		   (cond
-		      ((Lambda? scope) (widen!::Call/cc-Lambda scope))
-		      ((Let? scope) (widen!::Call/cc-Let scope))
-		      ((Call/cc-Tail-rec? scope)
+		      ((is-a? scope Lambda) (widen!::Call/cc-Lambda scope))
+		      ((is-a? scope Let) (widen!::Call/cc-Let scope))
+		      ((is-a? scope Call/cc-Tail-rec)
 		       (with-access::Call/cc-Tail-rec scope (contains-call/cc?)
 			  (set! contains-call/cc? #t)))))
 		surrounding-scopes)))
@@ -409,11 +409,11 @@
 		      ;; are in the bindings-part of a 'let').
 		      ;; -> the variable can not be '.modified-after-call/cc?'.
 		      'do-nothing)
-		     ((or (Call/cc-Lambda? scope)
-			  (Call/cc-Let? scope))
+		     ((or (is-a? scope Call/cc-Lambda)
+			  (is-a? scope Call/cc-Let))
 		      ;; there was already a call/cc in the scope of the var
 		      (set! modified-after-call/cc? #t))
-		     ((Call/cc-Tail-rec? scope)
+		     ((is-a? scope Call/cc-Tail-rec)
 		      (with-access::Call/cc-Tail-rec scope (contains-call/cc?
 							    modified-vars)
 			 (if contains-call/cc?
@@ -433,7 +433,7 @@
 				 (with-access::Call/cc-Tail-rec last-loop
 				       (modified-vars)
 				    (cons-set! modified-vars var))))
-			    ((Call/cc-Tail-rec? (car scopes))
+			    ((is-a? (car scopes) Call/cc-Tail-rec)
 			     (loop (cdr scopes) (car scopes)))
 			    (else
 			     (loop (cdr scopes) last-loop))))))))))))
@@ -441,7 +441,8 @@
 
 ;; assigns the predicates for each variable
 (define (main-predicates tree)
-   (main tree (make-Main-Env (config 'suspend/resume))))
+   (main tree (instantiate::Main-Env
+		 (suspend/resume? (config 'suspend/resume)))))
 
 (define-nmethod (Node.main)
    (default-walk this))
@@ -490,7 +491,7 @@
 			       modified-after-call/cc?))))
 
 (define-nmethod (Module.main)
-   (let ((sr? (Main-Env-suspend/resume? env)))
+   (with-access::Main-Env env ((sr? suspend/resume?))
       (with-access::Module this (scope-vars runtime-vars imported-vars this-var)
 	 (for-each (lambda (v) (compute-predicates v sr?)) scope-vars)
 	 (for-each (lambda (v) (compute-predicates v sr?)) runtime-vars)
@@ -499,14 +500,14 @@
    (default-walk this))
 
 (define-nmethod (Lambda.main)
-   (let ((sr? (Main-Env-suspend/resume? env)))
+   (with-access::Main-Env env ((sr? suspend/resume?))
       (with-access::Lambda this (scope-vars this-var)
 	 (for-each (lambda (v) (compute-predicates v sr?)) scope-vars)
 	 (compute-predicates this-var sr?)))
    (default-walk this))
    
 (define-nmethod (Scope.main)
-   (let ((sr? (Main-Env-suspend/resume? env)))
+   (with-access::Main-Env env ((sr? suspend/resume?))
       (with-access::Scope this (scope-vars)
 	 (for-each (lambda (v) (compute-predicates v sr?)) scope-vars)))
    (default-walk this))
@@ -551,9 +552,9 @@
 	     (bindings inits)
 	     (body body)
 	     (kind 'let)))
-	 ((Scope-Var-repl-var (car vars))
+	 ((with-access::Scope-Var (car vars) (repl-var) repl-var)
 	  (let* ((var (car vars))
-		 (repl-var (Scope-Var-repl-var var)))
+		 (repl-var (with-access::Scope-Var var (repl-var) repl-var)))
 	     (loop (cdr vars)
 		   (cons var let-vars)
 		   (cons (var-assig var (var-reference repl-var)) inits))))

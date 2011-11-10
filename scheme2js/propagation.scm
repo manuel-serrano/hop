@@ -101,12 +101,12 @@
       (widen-vars! runtime-vars)
       (widen-vars! imported-vars)
       (widen!::Prop-Var this-var))
-   (default-walk this this '() (make-List-Box '())))
+   (default-walk this this '() (instantiate::List-Box (v '()))))
 
 (define-nmethod (Lambda.changed surrounding-fun surrounding-whiles call/ccs)
    (widen-scope-vars! this)
    (widen!::Prop-Var (Lambda-this-var this))
-   (default-walk this this '() (make-List-Box '())))
+   (default-walk this this '() (instantiate::List-Box (v '()))))
 
 ;; result will be merged into orig
 ;; relies on the fact that all boxes will only append elements in front (using
@@ -116,7 +116,7 @@
    (with-access::List-Box orig (v)
       (let ((orig-list v))
 	 (for-each (lambda (b)
-		      (let loop ((other-v (List-Box-v b))
+		      (let loop ((other-v (with-access::List-Box b (v) v))
 				 (last #f))
 			 (cond
 			    ((and (eq? orig-list other-v)
@@ -126,13 +126,13 @@
 			    ((eq? orig-list other-v)
 			     ;; replace tail with the current v
 			     (set-cdr! last v)
-			     (set! v (List-Box-v b)))
+			     (set! v (with-access::List-Box b (v) v)))
 			    (else
 			     (loop (cdr other-v) other-v)))))
 		   boxes))))
 
 (define-nmethod (If.changed surrounding-fun surrounding-whiles call/ccs)
-   (if (Prop-Env-call/cc? env)
+   (if (with-access::Prop-Env env (call/cc?) call/cc?)
        ;; the default-method works fine, but is not optimized: if there's a
        ;; call/cc in the 'then'-branch, then any var-update in the else-branch
        ;; would be seen as an update inside the call/cc-loop.
@@ -146,7 +146,7 @@
        (default-walk this surrounding-fun surrounding-whiles call/ccs)))
 
 (define-nmethod (Case.changed surrounding-fun surrounding-whiles call/ccs)
-   (if (Prop-Env-call/cc? env)
+   (if (with-access::Prop-Env env (call/cc?) call/cc?)
        ;; default-walk would work here too (as for the If), but optimized...
        (with-access::Case this (key clauses)
 	  (walk key surrounding-fun surrounding-whiles call/ccs)
@@ -165,7 +165,7 @@
 			      call/ccs)
    (default-walk this surrounding-fun surrounding-whiles call/ccs)
    (when (and (Call-call/cc? this)
-	      (Prop-Env-call/cc? env))
+	      (with-access::Prop-Env env (call/cc?) call/cc?))
       (with-access::List-Box call/ccs (v)
       (cons-set! v this)
       
@@ -234,7 +234,7 @@
 	 (for-each update-while surrounding-whiles)
 
 	 ;; update the call/ccs (which in turn will update their whiles
-	 (for-each update-call/cc-call (List-Box-v call/ccs)))))
+	 (for-each update-call/cc-call (with-access::List-Box call/ccs (v) v)))))
 
 (define (pass2! tree)
    (verbose " propagation2")
@@ -242,7 +242,7 @@
 		       (call/cc? (config 'call/cc))
 		       (suspend/resume? (config 'suspend/resume))
 		       (bigloo-runtime-eval? (config 'bigloo-runtime-eval)))
-	       (make-List-Box '())))
+	       (instantiate::List-Box (v '()))))
 
 ;; b1 will be the result-box
 (define (merge-vals! b1::List-Box boxes::pair-nil)
@@ -298,7 +298,7 @@
 		   *all-vars*))))
 
 (define (assq-val x b::List-Box)
-   (let ((tmp (assq x (List-Box-v b))))
+   (let ((tmp (assq x (with-access::List-Box b (v) v))))
       (and tmp (cdr tmp))))
 
 (define (update-val b::List-Box x val)
@@ -340,9 +340,9 @@
 	       ;;   (let ((x y)) (if x (set! y (not y))))
 	       ;; ->
 	       ;;   (if y (set! y (not y)))
-	       ((and (not (Prop-Env-suspend/resume? env))
+	       ((and (not (with-access::Prop-Env env (suspend/resume?) suspend/resume?))
 		     (Ref? val)
-		     (not (Prop-Var-escaping-mutated? (Ref-var val))))
+		     (not (with-access::Prop-Var (Ref-var val) (escaping-mutated?) escaping-mutated?)))
 		(var-reference (Ref-var val) :location val))
 	       ((and (Const? val)
 		     (with-access::Const val (value)
@@ -361,7 +361,7 @@
 		this))))))
 
 (define-nmethod (Module.propagate! var/vals)
-   (default-walk! this (make-List-Box '())))
+   (default-walk! this (instantiate::List-Box (v '()))))
 
 (define-nmethod (Lambda.propagate! var/vals)
    (with-access::Lambda this (formals)
@@ -370,9 +370,10 @@
 		      (with-access::Prop-Var var (current)
 			 (set! current 'unknown))))
 		formals)
-      (let ((lb (make-List-Box (map (lambda (formal)
-				       (cons (Ref-var formal) 'unknown))
-				    formals))))
+      (let ((lb (instantiate::List-Box
+		   (v (map (lambda (formal)
+			      (cons (Ref-var formal) 'unknown))
+			 formals)))))
 	 (default-walk! this lb))))
 
 (define-nmethod (If.propagate! var/vals)
@@ -437,7 +438,7 @@
    
    (default-walk! this var/vals)
    (with-access::Call this (operator operands)
-      (if (and (Prop-Env-bigloo-runtime-eval? env)
+      (if (and (with-access::Prop-Env env (bigloo-runtime-eval?) bigloo-runtime-eval?)
 	       (Ref? operator)
 	       (runtime-ref? operator)
 	       (every? constant-value? operands))
@@ -493,7 +494,8 @@
       ;; surrounding Labeled will therefore ignore the result of var/vals.
       (when (and (Const? test) (Const-value test))
 	 (let ((tmp (duplicate::List-Box var/vals)))
-	    (List-Box-v-set! var/vals '())
+	    (with-access::List-Box var/vals (v)
+	       (set! v '()))
 	    (set! var/vals tmp))) ;; <== we replace the var/vals given as param
       ;; ------ var/vals is not the var/vals given as parameter anymore !!!
       (for-each (lambda (var)
