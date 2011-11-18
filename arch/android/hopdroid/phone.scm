@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Tue Sep  6 08:36:20 2011 (serrano)                */
+;*    Last change :  Fri Nov 18 21:04:09 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -111,7 +111,7 @@
 	       (set! %evtable (make-hashtable 8)))
 	    (unless (socket? %socket2)
 	       (set! %socket2 (make-client-socket host port2)))
-	    (unless (thread? %evthread)
+	    (unless (isa? %evthread thread)
 	       (set! %evthread
 		     (thread-start!
 		      (instantiate::pthread
@@ -195,8 +195,9 @@
 			   (let liip ((procs procs))
 			      (when (pair? procs)
 				 ((car procs) event)
-				 (unless (event-stopped event)
-				    (liip (cdr procs)))))))))
+				 (with-access::androidevent event (stopped)
+				    (unless stooped
+				       (liip (cdr procs))))))))))
 	       (loop)))
 	 (with-lock %mutex
 	    (lambda ()
