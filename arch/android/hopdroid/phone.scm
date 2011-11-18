@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Fri Nov 18 21:04:09 2011 (serrano)                */
+;*    Last change :  Fri Nov 18 21:17:36 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -196,7 +196,7 @@
 			      (when (pair? procs)
 				 ((car procs) event)
 				 (with-access::androidevent event (stopped)
-				    (unless stooped
+				    (unless stopped
 				       (liip (cdr procs))))))))))
 	       (loop)))
 	 (with-lock %mutex
@@ -270,7 +270,8 @@
 (define-method (phone-sensor p::androidphone type . delay)
    (android-send-command/result p sensor-plugin #\b
 				(sensor-type-number type)
-				(phone-sensor-ttl p)
+				(with-access::androidphone p (sensor-ttl)
+				   sensor-ttl)
 				(if (pair? delay) (car delay) 0)))
 
 ;*---------------------------------------------------------------------*/

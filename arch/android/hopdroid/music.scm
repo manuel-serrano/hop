@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Sun May 15 15:15:48 2011 (serrano)                */
+;*    Last change :  Fri Nov 18 21:22:06 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -36,9 +36,9 @@
 ;*    music-init ::androidmusic ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (music-init o::androidmusic)
-   (unless music-plugin
-      (set! music-plugin
-	    (android-load-plugin (androidmusic-phone o) "musicplayer")))
+   (with-access::androidmusic o (phone)
+      (unless music-plugin
+	 (set! music-plugin (android-load-plugin phone "musicplayer"))))
    (call-next-method))
 
 ;*---------------------------------------------------------------------*/
@@ -136,7 +136,8 @@
 	  #f)
 	 (else
 	  (let ((m (list-ref %playlist i)))
-	     (musicstatus-song-set! %status i)
+	     (with-access::musicstatus %status (song)
+		(set! song i))
 	     m)))))
 
 ;*---------------------------------------------------------------------*/
@@ -173,7 +174,8 @@
 				     'int
 				     (car song))
 				  (set-song! o (car song)))
-			      (set-song! o (musicstatus-song %status)))))
+			      (with-access::musicstatus %status (song)
+				 (set-song! o song)))))
 		  (tprint "MUSIC-PLAY URL=[" url "]")
 		  (when (string? url)
 		     (let ((uri (charset-convert url)))
@@ -228,19 +230,21 @@
    (with-access::androidmusic o (%mutex phone %status %playlistlength)
       (let ((s (android-send-command/result phone music-plugin #\S)))
 	 (when (pair? s)
-	    (musicstatus-state-set! status (car s))
-	    (musicstatus-songlength-set! status (cadr s))
-	    (musicstatus-songpos-set! status (caddr s))))
-      (musicstatus-playlistlength-set! status %playlistlength)
+	    (with-access::musicstatus status (state songlength songpos)
+	       (set! state (car s))
+	       (set! songlength (cadr s))
+	       (set! songpos (caddr s)))))
+      (with-access::musicstatus status (playlistlength)
+	 (set! playlistlength %playlistlength))
       status))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-status ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (music-status o::androidmusic)
-   (let ((status (music-%status o)))
-      (music-update-status! o status)
-      status))
+   (with-access::music o (%status)
+      (music-update-status! o %status)
+      %status))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-song ::androidmusic ...                                    */
@@ -249,7 +253,8 @@
    (with-access::androidmusic o (%mutex %status)
       (with-lock %mutex
 	 (lambda ()
-	    (musicstatus-song %status)))))
+	    (with-access::musicstatus %status (song)
+	       song)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-songpos ::androidmusic ...                                 */
@@ -259,7 +264,8 @@
    ;; gstmm music player has not been closed yet)
    (with-access::androidmusic o (%status)
       (music-update-status! o %status)
-      (musicstatus-songpos %status)))
+      (with-access::musicstatus %status (songpos)
+	 songpos)))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-meta ...                                                   */
@@ -273,12 +279,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (music-volume-get o::androidmusic)
    (with-access::androidmusic o (%status)
-      (musicstatus-volume %status)))
+      (with-access::musicstatus %status (volume)
+	 volume)))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-volume-set! ::androidmusic ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (music-volume-set! o::androidmusic vol)
    (with-access::androidmusic o (%status phone)
-      (musicstatus-volume-set! %status vol)
+      (with-access::musicstatus %status (volume)
+	 (set! volume vol))
       (android-send-command phone music-plugin #\v vol vol)))
