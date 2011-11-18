@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri May  6 11:54:52 2011 (serrano)                */
+#*    Last change :  Fri Nov 18 18:39:56 2011 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -68,7 +68,8 @@ INCLUDES = http_lib.sch \
            hss.sch hss_expd.sch \
            prefs.sch prefs_expd.sch  \
            service.sch service_expd.sch \
-           enable_thread.sch disable_thread.sch
+           enable_thread.sch disable_thread.sch \
+           wiki_syntax.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
