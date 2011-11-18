@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/widget/spinbutton.hop             */
+;*    serrano/prgm/project/hop/2.2.x/widget/spinbutton.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun 11 18:49:09 2009                          */
-;*    Last change :  Tue Feb 16 18:04:55 2010 (serrano)                */
-;*    Copyright   :  2009-10 Manuel Serrano                            */
+;*    Last change :  Sat Nov 12 07:37:09 2011 (serrano)                */
+;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spin Buttons server side implementation                          */
 ;*=====================================================================*/
@@ -67,7 +67,7 @@
 	  (<TABLE> :id id :hssclass "hop-spinbutton"
 	     :cellspacing 0
 	     :cellpadding 0
-	     :value (if (xml-tilde? value) value ~$value)
-	     :min (if (xml-tilde? min) min ~$min)
-	     :max (if (xml-tilde? max) max ~$max)
+	     :value (if (isa? value xml-tilde) value ~$value)
+	     :min (if (isa? min xml-tilde) min ~$min)
+	     :max (if (isa? max xml-tilde) max ~$max)
 	     body))))

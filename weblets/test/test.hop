@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Dec 16 07:34:08 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Wed Nov 16 15:58:53 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client side testing                                          */
 ;*=====================================================================*/
@@ -105,11 +105,12 @@
 				  (source #f)
 				  (backend #f)
 				  body)
-   (if backend
-       (instantiate::http-response-hop
-	  (backend backend)
-	  (content-type (xml-backend-mime-type backend))
-	  (xml (test-html include onload source body)))
+   (if (isa? backend xml-backend)
+       (with-access::xml-backend backend (mime-type)
+	  (instantiate::http-response-hop
+	     (backend backend)
+	     (content-type mime-type)
+	     (xml (test-html include onload source body))))
        (test-html include onload source body)))
 
 ;*---------------------------------------------------------------------*/

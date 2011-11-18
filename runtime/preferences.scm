@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Sat Feb  5 09:46:33 2011 (serrano)                */
+;*    Last change :  Sat Nov 12 06:15:06 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -354,30 +354,33 @@
 ;*    preference-get ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (preference-get key #!key default (request (current-request)))
-   (if (http-request? request)
+   (if (isa? request http-request)
        (with-access::http-request request (user)
-	  (if (string? (user-preferences-filename user))
-	      (user-preference-get user key :default default)
-	      default))
+	  (with-access::user user (preferences-filename)
+	     (if (string? preferences-filename)
+		 (user-preference-get user key :default default)
+		 default)))
        default))
 
 ;*---------------------------------------------------------------------*/
 ;*    preference-set! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (preference-set! key val #!key (request (current-request)))
-   (when (http-request? request)
+   (when (isa? request http-request)
       (with-access::http-request request (user)
-	 (when (string? (user-preferences-filename user))
-	    (user-preference-set! user key val)))))
+	 (with-access::user user (preferences-filename)
+	    (when (string? preferences-filename)
+	       (user-preference-set! user key val))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    preference-store! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (preference-store! key val #!key (request (current-request)))
-   (when (http-request? request)
+   (when (isa? request http-request)
       (with-access::http-request request (user)
-	 (when (string? (user-preferences-filename user))
-	    (user-preference-store! user key val)))))
+	 (with-access::user user (preferences-filename)
+	    (when (string? preferences-filename)
+	       (user-preference-store! user key val))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    preference-update! ...                                           */
@@ -387,18 +390,20 @@
 			    (request (current-request))
 			    (kons cons)
 			    (init '()))
-   (when (http-request? request)
+   (when (isa? request http-request)
       (with-access::http-request request (user)
-	 (when (string? (user-preferences-filename user))
-	    (user-preference-update! user key nv :kons kons :init init)))))
+	 (with-access::user user (preferences-filename)
+	    (when (string? preferences-filename)
+	       (user-preference-update! user key nv :kons kons :init init))))))
 				  
 ;*---------------------------------------------------------------------*/
 ;*    write-preferences ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (write-preferences request)
-   (when (http-request? request)
+   (when (isa? request http-request)
       (with-access::http-request request (user)
-	 (when (string? (user-preferences-filename user))
-	    (user-write-preferences user)))))
+	 (with-access::user user (preferences-filename)
+	    (when (string? preferences-filename)
+	       (user-write-preferences user))))))
 
 

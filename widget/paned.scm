@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon May 30 14:48:37 2011 (serrano)                */
+;*    Last change :  Sat Nov 12 07:14:02 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -112,7 +112,7 @@
 		  (else
 		   fraction))
 	       (cond
-		  ((xml-tilde? onresize)
+		  ((isa? onresize xml-tilde)
 		   (xml-tilde->return onresize))
 		  ((string? onresize)
 		   onresize)
@@ -143,26 +143,29 @@
 (define-method (xml-compare a1::html-paned a2)
    
    (define (xml-compare-pan c1 c2)
-      (if (and (xml-markup? c2) (eq? (xml-markup-tag c2) 'div))
+      (if (and (isa? c2 xml-markup)
+	       (with-access::xml-markup c2 (tag)
+		  (eq? tag 'div)))
 	  (xml-compare c1 (dom-first-child c2))
 	  (call-next-method)))
    
-   (if (and (xml-markup? a2)
-	    (eq? (xml-markup-tag a2) 'div)
+   (if (and (isa? a2 xml-markup)
+	    (with-access::xml-markup a2 (tag)
+	       (eq? tag 'div))
 	    (equal? (dom-get-attribute a2 "hssclass") "hop-paned"))
        (let ((b (dom-first-child a2)))
-	  (xml-compare-pan (car (html-paned-body a1))
-			   (dom-first-child b))
-	  (xml-compare-pan (cadr (html-paned-body a1))
-			   (caddr (dom-child-nodes b))))
+	  (with-access::html-paned a1 (body)
+	     (xml-compare-pan (car body) (dom-first-child b))
+	     (xml-compare-pan (cadr body) (caddr (dom-child-nodes b)))))
        (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-compare ::html-pan ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-compare a1::html-pan a2)
-   (if (and (xml-markup? a2)
-	    (eq? (xml-markup-tag a2) 'div)
+   (if (and (isa? a2 xml-markup)
+	    (with-access::xml-markup a2 (tag)
+	       (eq? tag 'div))
 	    (equal? (dom-get-attribute a2 "class") "hop-pan"))
        (xml-compare (dom-child-nodes a1) (dom-child-nodes a2))
        (call-next-method)))
@@ -176,7 +179,7 @@
        "_")
       ((list? ast)
        (map ast->string-list ast))
-      ((xml-element? ast)
+      ((isa? ast xml-element)
        (with-access::xml-element ast (tag body id)
 	  (let ((c (dom-get-attribute ast "class")))
 	     (if c
@@ -187,11 +190,11 @@
 		 `(,(symbol-append '< tag '>)
 		   :id ,id
 		   ,@(map ast->string-list body))))))
-      ((xml-markup? ast)
+      ((isa? ast xml-markup)
        (with-access::xml-markup ast (tag body)
 	  `(,(symbol-append '< tag '>)
 	    ,@(map ast->string-list body))))
-      ((xml-tilde? ast)
+      ((isa? ast xml-tilde)
        (with-access::xml-tilde ast (body)
 	  `(~ -)))
       ((symbol? ast)

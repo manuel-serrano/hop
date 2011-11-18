@@ -61,9 +61,9 @@
 (define (duplicate-Local var::Var)
    (with-access::Var var (value)
       (let ((new-value (cond
-			  ((is-a? value Cloned-Var)
+			  ((isa? value Cloned-Var)
 			   (with-access::Cloned-Var var (replacement) replacement))
-			  ((is-a? value Cloned-Lambda)
+			  ((isa? value Cloned-Lambda)
 			   (with-access::Cloned-Lambda value (replacement) replacement))
 			  (else value))))
 	 (duplicate::Var var
@@ -84,8 +84,9 @@
 	 (widen!::Cloned-Var this-var (replacement new-this-var))
 	 (widen!::Cloned-Lambda this (replacement new-lambda))
 
-	 (Lambda-formals-set! new-lambda (map clone formals))
-	 (Lambda-body-set! new-lambda (clone body))
+	 (with-access::Lambda new-lambda (formals body)
+	    (set! formals (map clone formals))
+	    (set! body (clone body)))
 	 new-lambda)))
 
 (define-method (clone this::Let)
@@ -98,8 +99,9 @@
 
 (define-method (clone this::Labeled)
    (with-access::Labeled this (label)
-      (widen!::Cloned-Label label
-	 (replacement (make-Label (gensym (Label-id label)))))
+      (with-access::Label label (id) 
+	 (widen!::Cloned-Label label
+	    (replacement (instantiate::Label (id (gensym id))))))
       (do-clone this)))
 
 (define-method (clone this::Tail-rec)
@@ -108,8 +110,9 @@
 		   (widen!::Cloned-Var var
 		      (replacement (duplicate-Local var))))
 		scope-vars)
-      (widen!::Cloned-Label label
-	 (replacement (make-Label (gensym (Label-id label)))))
+      (with-access::Label label (id)
+	 (widen!::Cloned-Label label
+	    (replacement (instantiate::Label (id (gensym id))))))
       (do-clone this)))
 
 (define-method (clone this::Call/cc-Resume)
@@ -134,9 +137,11 @@
 		     ((pair? f)
 		      (let ((name (car f)))
 			 `(,name (map clone
-				      (,(symbol-append class '- name) this)))))
+				    (,(symbol-append 'with-access:: class)
+				     this (,name) ,name)))))
 		     (else
-		      `(,f (clone (,(symbol-append class '- f) this))))))
+		      `(,f (clone (,(symbol-append 'with-access:: class)
+				       this (,f) ,f))))))
 	       fields))))
 
 (define-generic (do-clone this::Node)

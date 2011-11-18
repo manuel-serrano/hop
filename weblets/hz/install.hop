@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Tue Dec 21 09:47:32 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Wed Nov 16 16:12:38 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
 ;*=====================================================================*/
@@ -28,9 +28,8 @@
 ;*    hz-install-weblet ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hz-install-weblet e)
-   (hz-install-url (weblet-url e)
-		   :auth (weblet-authorization e)
-		   :weblet e))
+   (with-access::weblet e (url authorization)
+      (hz-install-url url :auth authorization :weblet e)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-install-url ...                                               */
@@ -63,13 +62,13 @@
 		  (reset-autoload!)
 		  w))
 	    :fail (lambda (xhr)
-		     ;; raise an error to stop everything
-		     (let* ((iport (xml-http-request-input-port xhr))
-			    (msg (read-string iport)))
-			;; WARNING, MS 19dec2010: this code is incorrect,
-			;; READ-STRING is not correct. A true parsing
-			;; (with content-length) should be needed here.
-			(list (xml-http-request-status xhr) url msg)))
+		     (with-access::xml-http-request xhr (input-port status)
+			;; raise an error to stop everything
+			(let ((msg (read-string input-port)))
+			   ;; WARNING, MS 19dec2010: this code is incorrect,
+			   ;; READ-STRING is not correct. A true parsing
+			   ;; (with content-length) should be needed here.
+			   (list status url msg))))
 	    :timeout (hz-connection-timeout)
 	    :header header))))
 
@@ -96,13 +95,13 @@
    ;; add the weblet to the database
    (let ((e (or e (hz->weblet name version url))))
       ;; add the publisher for other possible weblets
-      (weblet-stamp-set! e (hz-db-sync-stamp))
-      ;; mark the weblet as installed
-      (let ((pub (weblet-publisher e)))
-	 (unless (or (not (string? pub)) (string=? pub ""))
-	    (hz-publisher-add! pub)))
-      ;; update the database
-      (weblet-install-set! e (weblet-version e))
+      (with-access::weblet e (stamp publisher install version)
+	 (set! stamp (hz-db-sync-stamp))
+	 ;; mark the weblet as installed
+	 (unless (or (not (string? publisher)) (string=? publisher ""))
+	    (hz-publisher-add! publisher))
+	 ;; update the database
+	 (set! install version))
       (hz-db-add-or-update! e)
       ;; try to configure the weblet
       e))
@@ -141,7 +140,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-uninstall-weblet w)
    (hz-db-init!)
-   (when (weblet? w)
+   (when (isa? w weblet)
       (with-access::weblet w (name install)
 	 (when (delete-path (make-file-path (hz-weblets-directory) name))
 	    (set! install "")

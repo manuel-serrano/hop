@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -172,7 +172,7 @@
 	     "(~e~e)"
 	     (compile (car operands) p #f)
 	     (for-each (lambda (operand)
-			  (if (Const? operand)
+			  (if (isa? operand Const)
 			      (with-access::Const operand (value)
 				 (if (symbol? value)
 				     (template-display p
@@ -190,7 +190,7 @@
 
 (define (stringAppend_mutable-op p compile operands)
    (define (string-val operand)
-      (if (Const? operand)
+      (if (isa? operand Const)
 	  (with-access::Const operand (value)
 	     (if (string? value)
 		 (template-display p "\"$(string-for-read value)\"")
@@ -241,20 +241,20 @@
       (and (= nb-operands 1)
 	   (let ((operand (car operands)))
 	      (cond
-		 ((Const? operand)
+		 ((isa? operand Const)
 		  (with-access::Const operand (value)
 		     (set! value (not value)))
 		  (compile operand p #f))
-		 ((and (Call? operand)
-		       (Ref? (Call-operator operand))
+		 ((and (isa? operand Call)
+		       (isa? (with-access::Call operand (operator) operator) Ref)
 		       (with-access::Call operand (operator)
 			  (with-access::Ref operator (var)
-			     (with-access::Var var (constant?)
+			     (with-access::Var var (constant? kind)
 				(and constant?
-				     (or (eq? (Var-kind var) 'exported)
-					 (eq? (Var-kind var) 'imported))
-				     (let ((desc (Var-export-desc var)))
-					(eq? (Export-Desc-return-type desc)
+				     (or (eq? kind 'exported)
+					 (eq? kind 'imported))
+				     (let ((desc (with-access::Var var (export-desc) export-desc)))
+					(eq? (with-access::Export-Desc desc (return-type) return-type)
 					     'bool)))))))
 		  (template-display p
 		     "!~e" (compile operand p #f)))
@@ -270,7 +270,7 @@
 	 ((= nb-operands 0) (template-display p "''"))
 	 ((= nb-operands 1)
 	  (let ((operand (car operands)))
-	     (if (Const? operand)
+	     (if (isa? operand Const)
 		 (with-access::Const operand (value)
 		    (if (string? value)
 			(template-display p
@@ -291,7 +291,7 @@
 	 ((= nb-operands 0) (template-display p "''"))
 	 ((= nb-operands 1)
 	  (let ((operand (car operands)))
-	     (if (Const? operand)
+	     (if (isa? operand Const)
 		 (with-access::Const operand (value)
 		    (if (symbol? value)
 			(template-display p "\"$value\"")
@@ -305,12 +305,14 @@
       (< nb-operands 2))) ;; 0 et 1 have been handled.
 
 (define (compile-optimized-call p compile operator operands)
-   (when (and (Ref? operator)
-	      (Var-constant? (Ref-var operator))
-	      (eq? (Var-kind (Ref-var operator)) 'imported))
-      (let* ((var (Ref-var operator))
-	     (desc (Var-export-desc var))
-	     (peephole (Export-Desc-peephole desc)))
+   (when (and (isa? operator Ref)
+	      (with-access::Ref operator (var)
+		 (with-access::Var var (constant?) constant?))
+	      (with-access::Ref operator (var)
+		 (eq? (with-access::Var var (kind) kind) 'imported)))
+      (let* ((var (with-access::Ref operator (var)  var))
+	     (desc (with-access::Var var (export-desc) export-desc))
+	     (peephole (with-access::Export-Desc desc (peephole) peephole)))
 	 (when peephole
 	    (let* ((optimize-fun
 		    (case (car peephole)

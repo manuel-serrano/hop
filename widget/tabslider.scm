@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon May 30 14:49:00 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 16:05:22 2011 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -43,8 +43,9 @@
    
    ;; Verify that the body is a list of <TSPAN>
    (for-each (lambda (x)
-		(unless (and (xml-element? x)
-			     (eq? (xml-element-tag x) 'tspan))
+		(unless (and (isa? x xml-element)
+			     (with-access::xml-element x (tag)
+				(eq? tag 'tspan)))
 		   (error "<TABSLIDER>" "Component is not a <TSPAN>" x)))
 	     body)
    
@@ -99,27 +100,28 @@
       (cond
 	 ((or (null? body) (null? (cdr body)))
 	  (error "<TSPAN>" "Illegal body, at least two elements needed" body))
-	 ((and (xml-delay? (cadr body)) (null? (cddr body)))
+	 ((and (isa? (cadr body) xml-delay) (null? (cddr body)))
 	  ;; a delayed tspan
-	  (instantiate::html-tspan
-	     (tag 'tspan)
-	     (body (list (car body)
+	  (with-access::xml-delay (cadr body) (thunk)
+	     (instantiate::html-tspan
+		(tag 'tspan)
+		(body (list (car body)
 			 (<DIV>
 			    :id id
 			    :hssclass "hop-tabslider-pan"
 			    :class "inactive"
 			    :lang "delay"
 			    :onkeyup (secure-javascript-attr
-				      (format "return ~a;"
-					      (call-with-output-string
-					       (lambda (op)
-						  (obj->javascript
-						   (procedure->service
-						    (xml-delay-thunk (cadr body)))
-						   op
-						   #f)))))
+					(format "return ~a;"
+					   (call-with-output-string
+					      (lambda (op)
+						 (obj->javascript
+						    (procedure->service
+						       thunk)
+						    op
+						    #f)))))
 			    (tspan-onselect id onselect)
-			    "delayed tab")))))
+			    "delayed tab"))))))
 	 (else
 	  ;; an eager static tspan
 	  (instantiate::html-tspan
@@ -136,7 +138,8 @@
 ;*    xml-write ::html-tspan ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-tspan p backend)
-   (xml-write (html-tspan-body obj) p backend))
+   (with-access::html-tspan obj (body)
+      (xml-write body p backend)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TSHEAD> ...                                                     */

@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -23,7 +23,7 @@
 
 (define (compile-optimized-if-boolify p compile n)
    (with-access::If n (test then else)
-      (if (and (Const? else)
+      (if (and (isa? else Const)
 	       (with-access::Const else (value)
 		  (not value)))
 	  (template-display p
@@ -34,22 +34,22 @@
 
 (define (compile-optimized-boolify p compile n)
    (cond
-      ((Call? n)
+      ((isa? n Call)
        (with-access::Call n (operator operands)
-	  (if (Ref? operator)
+	  (if (isa? operator Ref)
 	      (with-access::Ref operator (var)
 		 (with-access::Var var (kind constant? export-desc)
 		    (if (and (or (eq? kind 'exported)
 				 (eq? kind 'imported))
 			     constant?
-			     (eq? (Export-Desc-return-type export-desc)
+			     (eq? (with-access::Export-Desc export-desc (return-type) return-type)
 				  'bool))
 			(compile n p #f)
 			(compile-unoptimized-boolify p compile n))))
 	      (compile-unoptimized-boolify p compile n))))
-      ((If? n)
+      ((isa? n If)
        (compile-optimized-if-boolify p compile n))
-      ((Const? n)
+      ((isa? n Const)
        (with-access::Const n (value)
 	  (template-display p
 	     "~a" (if value "true" "false"))))

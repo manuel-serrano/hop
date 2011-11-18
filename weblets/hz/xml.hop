@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Wed Mar  2 12:02:36 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 16:17:53 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ xml extensions                                                */
@@ -287,7 +287,7 @@ add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")"
 (define (<HZ:SYNC>)
    (let ((install (service (url auth)
 		     (let ((o (hz-install-url url :auth auth)))
-			(if (weblet? o)
+			(if (isa? o weblet)
 			    (<DIV> (<TT> url) " successfully installed")
 			    o)))))
       (<DIV>
@@ -392,19 +392,20 @@ add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")"
 		       (<TABLE> :class "search-result"
 			  (<TR> (<TH> (format fmt (length entries))))
 			  (map (lambda (e)
-				  (let ((s (service () (<HZ:WEBLET> e))))
-				     (<TR>
-					(<TD> :onclick
-					   ~(with-hop ($s)
-					       (lambda (h)
-						  (innerHTML-set! "hz-weblet" h)))
-					   (<SPAN> :class "name"
-					      (weblet-name e)
-					      "-" (weblet-version e))
-					   " (" (weblet-category e)
-					   ") -- "
-					   (<SPAN> :class "descr"
-					      (weblet-title e))))))
+				  (with-access::weblet e (version category name title)
+					(let ((s (service () (<HZ:WEBLET> e))))
+					   (<TR>
+					      (<TD> :onclick
+						 ~(with-hop ($s)
+						     (lambda (h)
+							(innerHTML-set! "hz-weblet" h)))
+						 (<SPAN> :class "name"
+						    name
+						    "-" version)
+						 " (" category
+						 ") -- "
+						 (<SPAN> :class "descr"
+						    title))))))
 			       entries))))
 	  (search (service (value)
 		     (let ((fmt (format "`~a' matches ~~a weblets" value)))
@@ -488,7 +489,7 @@ add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")"
 		 (let ((s (service ()
 			     (let ((ne (hz-db-get-entry-by-name-category
 					name category)))
-				(when (weblet? ne)
+				(when (isa? ne weblet)
 				   (<HZ:WEBLET> ne))))))
 		    (<TRLEAF> :icon ifile
 		       (<SPAN> :class "weblet"
@@ -557,7 +558,7 @@ add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")"
       (<TABLE>
 	 (let ((w (hz-db-find name cat)))
 	    (cond
-	       ((not (weblet? w))
+	       ((not (isa? w weblet))
 		(error 'hz "Cannot find weblet" (format "~a/~a" name cat)))
 	       ((string=? action "install")
 		(hz-install-weblet w)
@@ -600,44 +601,47 @@ add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")"
    (<TR>
       (<TD> :class "icon" (<IMG> :src "etc/icons/package.png"))
       (<TD> :class "action"
-	 (<SPAN> :onclick ~(with-hop ($action "install" $id
-					      $(weblet-name w)
-					      $(weblet-category w))
-			      (lambda (h)
-				 (innerHTML-set! $id h)))
-	    :title (format "Install the weblet from ~a" (weblet-url w))
-	    "Install"))))
+	 (with-access::weblet w (name category url)
+	    (<SPAN> :onclick ~(with-hop ($action "install" $id
+					   $name
+					   $category)
+				 (lambda (h)
+				    (innerHTML-set! $id h)))
+	       :title (format "Install the weblet from ~a" url)
+	       "Install")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:WEBLET-RUN> ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (<HZ:WEBLET-RUN> id w)
    (list
-    (<TD> :class "icon" (<IMG> :src "etc/icons/run.png"))
-    (<TD> :class "action"
-       (<SPAN> :onclick ~(window-open :title $(weblet-name w)
-			    :src $(format "~a/~a"
+      (<TD> :class "icon" (<IMG> :src "etc/icons/run.png"))
+      (<TD> :class "action"
+	 (with-access::weblet w (name)
+	    (<SPAN> :onclick ~(window-open :title $name
+				 :src $(format "~a/~a"
 					  (hop-service-base)
-					  (weblet-name w)))
-	  
-	  :title "Run the weblet in a new window"
-	  "Run"))))
+					  name))
+	       
+	       :title "Run the weblet in a new window"
+	       "Run")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:WEBLET-PREF> ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (<HZ:WEBLET-PREF> id w)
    (list
-    (<TD> :class "icon" (<IMG> :src "etc/icons/config.png"))
-    (<TD>
-       :class "action"
-       (<SPAN>
-	  :onclick ~(window-open :title $(weblet-name w)
-		       :src $(format "~a/~a/preferences"
+      (<TD> :class "icon" (<IMG> :src "etc/icons/config.png"))
+      (<TD>
+	 :class "action"
+	 (with-access::weblet w (name)
+	    (<SPAN>
+	       :onclick ~(window-open :title $name
+			    :src $(format "~a/~a/preferences"
 				     (hop-service-base)
-				     (weblet-name w)))
-	  :title "Run the weblet in a new window"
-	  "Configure"))))
+				     name))
+	       :title "Run the weblet in a new window"
+	       "Configure")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:WEBLET-DOC> ...                                              */
@@ -646,45 +650,48 @@ add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")"
    (list
     (<TD> :class "icon" (<IMG> :src "etc/icons/doc.png"))
     (<TD> :class "action"
-       (<SPAN>
-	  :onclick ~(window-open :title $(weblet-name w)
-		       :src $(format "~a/~a/documentation"
-				     (hop-service-base)
-				     (weblet-name w)))
-	  :title "Run the weblet in a new window"
-	  "Documentation"))))
+       (with-access::weblet w (name)
+	  (<SPAN>
+	     :onclick ~(window-open :title $name
+			  :src $(format "~a/~a/documentation"
+				   (hop-service-base)
+				   name))
+	     :title "Run the weblet in a new window"
+	     "Documentation")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:WEBLET-REMOVE> ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (<HZ:WEBLET-REMOVE> id w)
    (list
-    (<TD> :class "icon" (<IMG> :src "etc/icons/remove.png"))
-    (<TD> :class "action"
-       (<SPAN>
-	  :onclick ~(with-hop ($action "remove" $id
-				       $(weblet-name w)
-				       $(weblet-category w))
-		       (lambda (h)
-			  (innerHTML-set! $id h)))
-	  :title "Uninstall and remove the weblet from the database"
-	  "Remove"))))
+      (<TD> :class "icon" (<IMG> :src "etc/icons/remove.png"))
+      (<TD> :class "action"
+	 (with-access::weblet w (name category)
+	    (<SPAN>
+	       :onclick ~(with-hop ($action "remove" $id
+				      $name
+				      $category)
+			    (lambda (h)
+			       (innerHTML-set! $id h)))
+	       :title "Uninstall and remove the weblet from the database"
+	       "Remove")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:WEBLET-UNINSTALL> ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (<HZ:WEBLET-UNINSTALL> id w)
    (list
-    (<TD> :class "icon" (<IMG> :src "etc/icons/delete.png"))
-    (<TD> :class "action"
-       (<SPAN>
-	  :onclick ~(with-hop ($action "uninstall" $id
-				       $(weblet-name w)
-				       $(weblet-category w))
-		       (lambda (h)
-			  (innerHTML-set! $id h)))
-	  :title "Uninstall the weblet"
-	  "Uninstall"))))
+      (<TD> :class "icon" (<IMG> :src "etc/icons/delete.png"))
+      (<TD> :class "action"
+	 (with-access::weblet w (name category)
+	    (<SPAN>
+	       :onclick ~(with-hop ($action "uninstall" $id
+				      $name 
+				      $category)
+			    (lambda (h)
+			       (innerHTML-set! $id h)))
+	       :title "Uninstall the weblet"
+	       "Uninstall")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:WEBLET-UPDATE> ...                                           */
@@ -693,14 +700,15 @@ add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")"
    (list 
     (<TD> :class "icon" (<IMG> :src "etc/icons/update.png"))
     (<TD> :class "action"
-       (<SPAN>
-	  :onclick ~(with-hop ($action "update" $id
-				       $(weblet-name w)
-				       $(weblet-category w))
-		       (lambda (h)
-			  (innerHTML-set! $id h)))
-	  :title "Update the weblet"
-	  "Update"))))
+       (with-access::weblet w (name category)
+	  (<SPAN>
+	     :onclick ~(with-hop ($action "update" $id
+				    $name
+				    $category)
+			  (lambda (h)
+			     (innerHTML-set! $id h)))
+	     :title "Update the weblet"
+	     "Update")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:WEBLET-ACTION-UNMANAGED> ...                                 */
@@ -765,9 +773,10 @@ add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")"
 	 :class "icon"
 	 (<IMG> :src "etc/icons/warning.png"))
       (<TD>
-	 (<SPAN>
-	    "HOP " (hop-version) " incompatible, required " msg " by weblet "
-	    (weblet-name w)))))
+	 (with-access::weblet w (name)
+	    (<SPAN>
+	       "HOP " (hop-version) " incompatible, required " msg " by weblet "
+	       name)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    VBOX ...                                                         */

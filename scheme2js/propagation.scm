@@ -105,7 +105,7 @@
 
 (define-nmethod (Lambda.changed surrounding-fun surrounding-whiles call/ccs)
    (widen-scope-vars! this)
-   (widen!::Prop-Var (Lambda-this-var this))
+   (widen!::Prop-Var (with-access::Lambda this (this-var) this-var))
    (default-walk this this '() (instantiate::List-Box (v '()))))
 
 ;; result will be merged into orig
@@ -164,7 +164,7 @@
 (define-nmethod (Call.changed surrounding-fun surrounding-whiles
 			      call/ccs)
    (default-walk this surrounding-fun surrounding-whiles call/ccs)
-   (when (and (Call-call/cc? this)
+   (when (and (with-access::Call this (call/cc?) call/cc?)
 	      (with-access::Prop-Env env (call/cc?) call/cc?))
       (with-access::List-Box call/ccs (v)
       (cons-set! v this)
@@ -270,14 +270,14 @@
 				'do-nothing)
 			       ((not current)
 				(set! current val))
-			       ((and (Const? val)
-				     (Const? current))
-				(unless (eqv? (Const-value val)
-					      (Const-value current))
+			       ((and (isa? val Const)
+				     (isa? current Const))
+				(unless (eqv? (with-access::Const val (value) value)
+					      (with-access::Const current (value) value))
 				   (set! current 'unknown)))
-			       ((and (Ref? val) (Ref? current))
-				(unless (eq? (Ref-var val)
-					     (Ref-var current))
+			       ((and (isa? val Ref) (isa? current Ref))
+				(unless (eq? (with-access::Ref val (var) var)
+					     (with-access::Ref current (var) var))
 				   (set! current 'unknown)))
 			       (else
 				(set! current 'unknown))))))
@@ -310,8 +310,8 @@
       (set! v (map (lambda (p)
 		      (let ((other-var (car p))
 			    (other-val (cdr p)))
-			 (if (and (Ref? other-val)
-				  (eq? var (Ref-var other-val))
+			 (if (and (isa? other-val Ref)
+				  (eq? var (with-access::Ref other-val (var) var))
 				  (not (eq? other-var var)))
 			     (cons other-var 'unknown)
 			     p)))
@@ -341,10 +341,11 @@
 	       ;; ->
 	       ;;   (if y (set! y (not y)))
 	       ((and (not (with-access::Prop-Env env (suspend/resume?) suspend/resume?))
-		     (Ref? val)
-		     (not (with-access::Prop-Var (Ref-var val) (escaping-mutated?) escaping-mutated?)))
-		(var-reference (Ref-var val) :location val))
-	       ((and (Const? val)
+		     (isa? val Ref)
+		     (not (with-access::Ref val (var)
+			     (with-access::Prop-Var var (escaping-mutated?) escaping-mutated?))))
+		(var-reference (with-access::Ref val (var) var) :location val))
+	       ((and (isa? val Const)
 		     (with-access::Const val (value)
 			(or (number? value)
 			    (symbol? value)
@@ -355,8 +356,8 @@
 				 (not (>fx (string-length value) 15)))
 			    (eqv? #unspecified value))))
 		(instantiate::Const
-		   (location (Node-location val))
-		   (value (Const-value val))))
+		   (location (with-access::Node val (location) location))
+		   (value (with-access::Const val (value) value))))
 	       (else
 		this))))))
 
@@ -372,7 +373,8 @@
 		formals)
       (let ((lb (instantiate::List-Box
 		   (v (map (lambda (formal)
-			      (cons (Ref-var formal) 'unknown))
+			      (with-access::Ref formal (var)
+				 (cons var 'unknown)))
 			 formals)))))
 	 (default-walk! this lb))))
 
@@ -404,8 +406,8 @@
 
 (define-nmethod (Set!.propagate! var/vals)
    (define (transitive-value val)
-      (if (Begin? val)
-	  (transitive-value (car (last-pair (Begin-exprs val))))
+      (if (isa? val Begin)
+	  (transitive-value (car (last-pair (with-access::Begin val (exprs) exprs))))
 	  val))
 
    (with-access::Set! this (lvalue val)
@@ -426,29 +428,32 @@
 
 (define-nmethod (Call.propagate! var/vals)
    (define (constant-value? n)
-      (or (Const? n)
-	  (and (Ref? n)
-	       (with-access::Var (Ref-var n) (constant? value id)
-		  (and constant?
-		       value
-		       (Const? value)
-		       (or (pair? (Const-value value))
-			   (vector? (Const-value value)))
-		       #t)))))
+      (or (isa? n Const)
+	  (and (isa? n Ref)
+	       (with-access::Ref n (var)
+		  (with-access::Var var (constant? value id)
+		     (and constant?
+			  value
+			  (isa? value Const)
+			  (with-access::Const value (value)
+			     (or (pair? value) (vector? value)))
+			  #t))))))
    
    (default-walk! this var/vals)
    (with-access::Call this (operator operands)
       (if (and (with-access::Prop-Env env (bigloo-runtime-eval?) bigloo-runtime-eval?)
-	       (Ref? operator)
+	       (isa? operator Ref)
 	       (runtime-ref? operator)
 	       (every? constant-value? operands))
 	  ;; for most runtime-functions we should be able to compute the result
 	  ;; right now. (obviously a "print" won't work now...)
 	  ;;
 	  ;; optimize-runtime-op is at bottom of file.
-	  (or (optimize-runtime-op (Var-id (Ref-var operator)) operands
-				   (Node-location operator))
-	      this)
+	  (with-access::Ref operator (var)
+	     (with-access::Var var (id)
+		(or (optimize-runtime-op id operands
+		       (with-access::Node operator (location) location))
+		    this)))
 	  this)))
 
 (define-nmethod (Frame-alloc.propagate! var/vals)
@@ -492,7 +497,7 @@
       ;; if the test is true (which is currently the case), then we can't exit
       ;; the loop only by a break. -> clear the current var/vals. Any
       ;; surrounding Labeled will therefore ignore the result of var/vals.
-      (when (and (Const? test) (Const-value test))
+      (when (and (isa? test Const) (with-access::Const test (value) value))
 	 (let ((tmp (duplicate::List-Box var/vals)))
 	    (with-access::List-Box var/vals (v)
 	       (set! v '()))
@@ -521,9 +526,12 @@
 
 (define (optimize-runtime-op op operands location)
    (define (operand->val op)
-      (let ((tmp (if (Const? op)
-		     (Const-value op)
-		     (Const-value (Var-value (Ref-var op))))))
+      (let ((tmp (if (isa? op Const)
+		     (with-access::Const op (value) value)
+		     (with-access::Ref op (var)
+			(with-access::Var var (value)
+			   (with-access::Const value (value)
+			      value))))))
 	 (cond
 	    ((or (number? tmp)
 		 (char? tmp)

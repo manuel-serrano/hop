@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -254,21 +254,21 @@
 	    (ignore-RPAREN (consume! 'RPAREN))
 	    (body (statement)))
 	 (cond
-	    ((Var-Decl-List? lhs)
-	     (let ((lhs-vars (Var-Decl-List-vars lhs)))
+	    ((isa? lhs Var-Decl-List)
+	     (let ((lhs-vars (with-access::Var-Decl-List lhs (vars) vars)))
 		(unless (null? (cdr lhs-vars))
 		   (my-error input-port "Only one variable allowed in 'for ... in' loop"
-			     (Ref-id (cadr lhs-vars))
+			     (with-access::Ref (cadr lhs-vars) (id) id)
 			     error-token))
 		(instantiate::For-In
 		   (lhs lhs)
 		   (obj obj)
 		   (body body))))
-	    ((or (Sequence? lhs)
-		 (Assig? lhs)
-		 (Binary? lhs)
-		 (Unary? lhs)
-		 (Postfix? lhs))
+	    ((or (isa? lhs Sequence)
+		 (isa? lhs Assig)
+		 (isa? lhs Binary)
+		 (isa? lhs Unary)
+		 (isa? lhs Postfix))
 	     (my-error input-port "Bad left-hand side in 'for ... in' loop construct"
 		       (class-name (object-class lhs))
 		       error-token))
@@ -532,7 +532,7 @@
 		    (rhs (assig-expr in-for-init?)))
 		;; TODO: weed out bad lhs exprs
 		(cond
-		   ((and (eq? op '=) (Access? expr))
+		   ((and (eq? op '=) (isa? expr Access))
 		    (instantiate::Accsig
 		       (lhs expr)
 		       (rhs rhs)))
@@ -540,7 +540,7 @@
 		    (instantiate::Vassig
 		       (lhs expr)
 		       (rhs rhs)))
-		   ((Access? expr)
+		   ((isa? expr Access)
 		    (instantiate::Accsig-op
 		       (lhs expr)
 		       (op (with-out-= op))

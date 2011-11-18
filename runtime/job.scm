@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 14 14:53:17 2005                          */
-;*    Last change :  Sun Dec  5 15:11:53 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Wed Nov 16 11:47:56 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop JOB management                                               */
 ;*=====================================================================*/
@@ -131,22 +131,23 @@
 	 ((null? *jobs-queue*)
 	  (condition-variable-wait! *job-condvar* *job-mutex*)
 	  (loop))
-	 ((<=llong (job-date (car *jobs-queue*)) (current-milliseconds))
+	 ((<=llong (with-access::job (car *jobs-queue*) (date) date)
+	     (current-milliseconds))
 	  (let ((job (car *jobs-queue*)))
 	     (set! *jobs-queue* (cdr *jobs-queue*))
 	     (start-job! job))
 	  (loop))
 	 (else
-	  (let ((tmt (-llong (job-date (car *jobs-queue*))
-			     (current-milliseconds))))
-	     (condition-variable-wait! *job-condvar* *job-mutex* tmt)
-	     (loop))))))
+	  (with-access::job (car *jobs-queue*) (date)
+	     (let ((tmt (-llong date (current-milliseconds))))
+		(condition-variable-wait! *job-condvar* *job-mutex* tmt)
+		(loop)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    job-add! ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (job-add! j::job)
-   (let ((d (job-date j)))
+   (let ((d (with-access::job j (date) date)))
       (cond
 	 ((<=llong d (current-milliseconds))
 	  (start-job! j))
@@ -155,7 +156,7 @@
 	  (mutex-lock! *job-mutex*)
 	  (condition-variable-signal! *job-condvar*)
 	  (mutex-unlock! *job-mutex*))
-	 ((<llong d (job-date (car *jobs-queue*)))
+	 ((<llong d (with-access::job (car *jobs-queue*) (date) date))
 	  (set! *jobs-queue* (cons d *jobs-queue*))
 	  (mutex-lock! *job-mutex*)
 	  (condition-variable-signal! *job-condvar*)
@@ -166,7 +167,7 @@
 	     (cond
 		((null? jobs)
 		 (set-cdr! prev (cons j '())))
-		((<llong d (job-date (car jobs)))
+		((<llong d (with-access::job (car jobs) (date) date))
 		 (set-cdr! prev (cons j jobs)))
 		(else
 		 (loop (cdr jobs) jobs)))))))
@@ -208,9 +209,10 @@
 (define (job-abort! j::job)
    (with-lock *job-mutex*
       (lambda ()
-	 (when (thread? (job-%thread j))
-	    (thread-terminate! (job-%thread j))
-	    (set! *jobs-run* (remq! j *jobs-run*))))))
+	 (with-access::job j (%thread)
+	    (when (isa? %thread thread)
+	       (thread-terminate! %thread)
+	       (set! *jobs-run* (remq! j *jobs-run*)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    job-cancel! ...                                                  */
@@ -230,7 +232,7 @@
 	 (cond
 	    ((null? jobs)
 	     #f)
-	    ((string=? (job-name (car jobs)) name)
+	    ((string=? (with-access::job (car jobs) (name) name) name)
 	     (car jobs))
 	    (else
 	     (loop (cdr jobs))))))
@@ -245,14 +247,15 @@
 (define (jobs-dump)
    
    (define (job-dump j)
-      (when (job-expression j)
-	 (print `"(job-restore!")
-	 (display " '") (write (job-expression j)) (newline)
-	 (display " ") (write (job-date j))
-	 (print " ;; " (seconds->date (llong->elong (/llong (job-date j) #l1000))))
-	 (display " ") (write (job-repeat j))
-	 (display " ") (write (job-interval j)) (newline)
-	 (print " )")))
+      (with-access::job j (expression date repeat interval)
+	 (when expression
+	    (print `"(job-restore!")
+	    (display " '") (write expression) (newline)
+	    (display " ") (write date)
+	    (print " ;; " (seconds->date (llong->elong (/llong date #l1000))))
+	    (display " ") (write repeat)
+	    (display " ") (write interval) (newline)
+	    (print " )"))))
    
    (with-output-to-file (make-file-name (hop-var-directory) (hop-job-file))
       (lambda ()

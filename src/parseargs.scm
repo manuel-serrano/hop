@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Oct 28 08:31:11 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 12:03:05 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -176,7 +176,8 @@
 	  (set! dp (string->integer port)))
 	 ((("-x" "--xml-backend") ?ident
 				  (help (format "Set XML backend [~s]"
-					   (xml-backend-id (hop-xml-backend)))))
+					   (with-access::xml-backend (hop-xml-backend)
+						 (id) id))))
 	  (set! be ident))
 	 (("--accept-kill" (help "Enable remote kill commands (see -k)"))
 	  (hop-accept-kill-set! #t))
@@ -333,7 +334,7 @@
 			 (let ((sexp (hop-read (current-input-port))))
 			    (with-handler
 			       (lambda (e)
-				  (if (&eval-warning? e)
+				  (if (isa? e &eval-warning)
 				      (begin
 					 (warning-notify e)
 					 #unspecified)
@@ -375,7 +376,9 @@
 	     (if (hop-enable-discovery)
 		 (format ", discovery-port:~a" (hop-discovery-port))
 		 "")
-	     ", security:" (security-manager-name (hop-security-manager))
+	     ", security:"
+	     (with-access::security-manager (hop-security-manager) (name)
+		name)
 	     " [" (hop-security) "]")
    (hop-verb 3 ", session:" (hop-session))
    (hop-verb 1 "\n"))

@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -24,7 +24,7 @@
 
 (define (constant-var n)
    (and n
-	(Ref? n)
+	(isa? n Ref)
 	(with-access::Ref n (var)
 	   (with-access::Var var (constant?)
 	      (and constant?
@@ -34,8 +34,10 @@
 (define (runtime-ref-var n)
    (let ((v (constant-var n)))
       (and v
-	   (eq? (Var-kind v) 'imported)
-	   (Export-Desc-runtime? (Var-export-desc v))
+	   (with-access::Var v (kind export-desc)
+	      (eq? kind 'imported)
+	      (with-access::Export-Desc export-desc (runtime?)
+		 runtime?))
 	   v)))
 
 (define (runtime-ref? n)
@@ -45,21 +47,22 @@
 (define (higher-order-runtime-ref? n)
    (let ((v (runtime-ref-var n)))
       (and v
-	   (Export-Desc-higher? (Var-export-desc v))
+	   (with-access::Var v (export-desc)
+	      (with-access::Export-Desc export-desc (higher?)
+		 higher?))
 	   #t)))
 
 (define (runtime-ref-var-id n)
    (let ((v (runtime-ref-var n)))
-      (and v
-	   (Var-id v))))
+      (and v (with-access::Var v (id) id))))
 
 (define (call-target operator)
    (cond
-      ((Lambda? operator)
+      ((isa? operator Lambda)
        operator)
       ((runtime-ref? operator)
        operator)
-      ((and (Ref? operator)
+      ((and (isa? operator Ref)
 	    (with-access::Ref operator (var)
 	       (with-access::Var var (constant? value)
 		  (and constant? value))))

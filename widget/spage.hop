@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Mon May  9 18:12:39 2011 (serrano)                */
+;*    Last change :  Sat Nov 12 07:40:12 2011 (serrano)                */
 ;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -32,8 +32,8 @@
 			      (class #f)
 			      (attr)
 			      body)
-   (let ((head (filter xml-sphead-element? body))
-	 (body (filter (lambda (x) (not (xml-sphead-element? x))) body)))
+   (let ((head (filter (lambda (b) (isa? b xml-sphead-element)) body))
+	 (body (filter (lambda (x) (not (isa? x xml-sphead-element))) body)))
       (instantiate::xml-element
 	 (tag 'div)
 	 (id id)
@@ -50,12 +50,12 @@
 		     ~(add-event-listener! $id "ready"
 			 (lambda (e)
 			    (spage-init $id
-					$(when (xml-tilde? onchange)
-					    (sexp->xml-tilde
-					     `(lambda (event)
-						 ,(xml-tilde->sexp onchange))
-					     (xml-tilde-env onchange)
-					     (xml-tilde-menv onchange))))))
+			       $(when (isa? onchange xml-tilde)
+				   (with-access::xml-tilde onchange (env menv)
+				      (sexp->xml-tilde
+					 `(lambda (event)
+					     ,(xml-tilde->sexp onchange))
+					 env menv))))))
 		     ;; firefox workaround
 		     ~(if #f 1 2))))))
 
@@ -97,27 +97,27 @@
 			      body)
    
    (define (init-sptab id onselect)
-      (if (xml-tilde? onselect)
-	  (sexp->xml-tilde
-	   `(add-event-listener! ,id "ready"
-	       (lambda (event)
-		  (let ((el this))
-		     (set! el.hop_add_event_listener sptab-add-event-listener!)
-		     (set! el.onselect
-			   (lambda (event)
-			      ,(xml-tilde->sexp onselect)))
-		     #unspecified)))
-	   (xml-tilde-env onselect)
-	   (xml-tilde-menv onselect))
+      (if (isa? onselect xml-tilde)
+	  (with-access::xml-tilde onselect (env menv)
+	     (sexp->xml-tilde
+		`(add-event-listener! ,id "ready"
+		    (lambda (event)
+		       (let ((el this))
+			  (set! el.hop_add_event_listener sptab-add-event-listener!)
+			  (set! el.onselect
+			     (lambda (event)
+				,(xml-tilde->sexp onselect)))
+			  #unspecified)))
+		env menv))
 	  (sexp->xml-tilde
 	   `(add-event-listener! ,id "ready"
 	       (lambda (event)
 		  (set! this.hop_add_event_listener sptab-add-event-listener!)
 		  #unspecified)))))
    
-   (let* ((head (filter xml-sphead-element? body))
-	  (body (filter (lambda (x) (not (xml-sphead-element? x))) body)))
-      (if (and (pair? body) (null? (cdr body)) (xml-delay? (car body)))
+   (let* ((head (filter (lambda (b) (isa? b xml-sphead-element)) body))
+	  (body (filter (lambda (x) (not (isa? x xml-sphead-element))) body)))
+      (if (and (pair? body) (null? (cdr body)) (isa? (car body) xml-delay))
 	  ;; a dynamic tab
 	  (let ((svc (service :name (format "sptab/~a/~a" id (get-svc-stamp)) ()
 			(<DIV> :hssclass "hop-spbody"

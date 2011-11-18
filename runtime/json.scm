@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Tue Mar  8 10:04:28 2011 (serrano)                */
+;*    Last change :  Fri Nov 11 07:18:10 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -38,14 +38,13 @@
        (if (service? obj)
 	   (hop->json (procedure-attr obj) op)
 	   (error "hop->json"
-		  "Illegal procedure in JSON conversion"
-		  obj)))
+	      "Illegal procedure in JSON conversion"
+	      obj)))
       ((date? obj)
        (format "new Date( ~a000 )" (date->seconds obj)))
       (else
-       (let ((comp (hop-clientc)))
-	  (tprint "hop->json: " (typeof obj))
-	  ((clientc-valuec comp) obj op hop->json #f)))))
+       (with-access::clientc (hop-clientc) (valuec)
+	  (valuec obj op hop->json #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    vector->json ...                                                 */

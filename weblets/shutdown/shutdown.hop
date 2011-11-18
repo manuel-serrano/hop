@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Mar  4 10:30:59 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 17:05:44 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
@@ -101,7 +101,7 @@
 						     (when $restart
 							(innerHTML-set! $msg "Restarting...wait")
 							(after 10000 (lambda ()
-								       (set! location.href "/hop")))
+								       (set! document.location.href "/hop")))
 							#f)))))))
 				 "Shutdown"))))))))
 	 (<FOOT>))))

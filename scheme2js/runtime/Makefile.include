@@ -70,12 +70,12 @@ RUNTIME_EXPORTER_MODULES = exporter meta multi_file_port string
 RUNTIME_EXPORTER_SCMS = $(RUNTIME_EXPORTER_MODULES:%=$(SCHEME2JS_RUNTIME)/%.scm)
 
 $(SCHEME2JS_RUNTIME)/exporter: $(RUNTIME_EXPORTER_SCMS)
-	$(BIGLOO) -g -o $@ $^
+	$(BIGLOO) $(EFLAGS) -g -o $@ $^
 
 RUNTIME_INTERFACE_MODULES = interface meta multi_file_port string
 RUNTIME_INTERFACE_SCMS = $(RUNTIME_INTERFACE_MODULES:%=$(SCHEME2JS_RUNTIME)/%.scm)
 $(SCHEME2JS_RUNTIME)/interface: $(RUNTIME_INTERFACE_SCMS)
-	$(BIGLOO) -g -o $@ $^
+	$(BIGLOO) $(EFLAGS) -g -o $@ $^
 
 runtime-clean:
 	rm -f $(SCHEME2JS_RUNTIME)/exporter;

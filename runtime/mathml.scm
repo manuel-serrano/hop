@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:24:08 2007                          */
-;*    Last change :  Mon May 30 14:46:12 2011 (serrano)                */
+;*    Last change :  Fri Nov 11 07:14:38 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop MATHML support.                                              */
@@ -144,7 +144,8 @@
 		 (set-car! (cdr c) "true")
 		 (set! attributes `(:stretchy "true" ,@attributes))))))
       ((xml-markup-is? e 'mrow)
-       (for-each xml-stretch! (xml-markup-body e)))))
+       (with-access::xml-markup e (body)
+	  (for-each xml-stretch! body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-bold! ...                                                    */
@@ -158,7 +159,8 @@
 		 (set-car! (cdr c) "bold")
 		 (set! attributes `(:fontweight "bold" ,@attributes))))))
       ((xml-markup-is? e 'mrow)
-       (for-each xml-bold! (xml-markup-body e)))))
+       (with-access::xml-markup e (body)
+	  (for-each xml-bold! body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-cal! ...                                                     */
@@ -172,7 +174,8 @@
 		 (set-car! (cdr c) " cal")
 		 (set! attributes `(:class "cal" ,@attributes))))))
       ((xml-markup-is? e 'mrow)
-       (for-each xml-cal! (xml-markup-body e)))))
+       (with-access::xml-markup e (body)
+	  (for-each xml-cal! body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-expression ...                                              */
@@ -231,10 +234,12 @@
 	      (multiple-value-bind (exp stack)
 		 (read-expression port stack 'end-of-expression)
 		 (let ((e (if (and (xml-markup-is? exp 'mo)
-				   (pair? (xml-markup-body exp))
-				   (string? (car (xml-markup-body exp)))
-				   (null? (cdr (xml-markup-body exp))))
-			      (let ((op (car (xml-markup-body exp))))
+				   (with-access::xml-markup exp (body)
+				      (pair? body)
+				      (string? (car body))
+				      (null? (cdr body))))
+			      (let ((op (car (with-access::xml-markup exp (body)
+						body))))
 				 (cond
 				    ((string=? op "&equiv;")
 				     (<MATH:MO> "&#x2262;"))
@@ -284,11 +289,11 @@
 					 (<MATH:MSUP>
 					    head exp))
 					((xml-markup-is? head 'munder)
-					 (<MATH:MUNDEROVER>
-					    (xml-markup-body head) exp))
+					 (with-access::xml-markup head (body)
+					    (<MATH:MUNDEROVER> body exp)))
 					((xml-markup-is? head 'msub)
-					 (<MATH:MSUBSUP>
-					    (xml-markup-body head) exp))
+					 (with-access::xml-markup head (body)
+					    (<MATH:MSUBSUP> body exp)))
 					(else
 					 (<MATH:MSUP>
 					    head exp))))
@@ -298,10 +303,11 @@
 					 (<MATH:MUNDER>
 					    head exp))
 					((xml-markup-is? head 'mover)
-					 (<MATH:MUNDEROVER>
-					    (xml-markup-body head) exp))
+					 (with-access::xml-markup head (body)
+					    (<MATH:MUNDEROVER> body exp)))
 					((xml-markup-is? head 'msup)
-					 (let ((hbody (xml-markup-body head)))
+					 (with-access::xml-markup head
+					       ((hbody body))
 					    (if (not (and (pair? hbody)
 							  (pair? (cdr hbody))))
 						(parse-tex-error
@@ -347,8 +353,8 @@
 	      (multiple-value-bind (exp stack)
 		 (read-expression port stack 'end-of-expression)
 		 (let ((e (if (xml-markup-is? exp 'mo)
-			      (apply <MATH:MO>
-				     (xml-markup-body exp) (cdr token))
+			      (with-access::xml-markup exp (body)
+				 (apply <MATH:MO> body (cdr token)))
 			      exp)))
 		    (values e stack))))
 	     ((PREFIX2)

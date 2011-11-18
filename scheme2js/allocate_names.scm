@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -66,13 +66,15 @@
    (with-access::Frame-push this (frame-allocs)
       ;; the storage-vars allocate new vars that are supposed to be visible
       ;; inside the frame-pushes.
-      (let* ((declared-vars (map Frame-alloc-vars frame-allocs)))
+      (let* ((declared-vars (map (lambda (f)
+				    (with-access::Frame-alloc f (vars) vars))
+			       frame-allocs)))
 	 (default-walk this surrounding-fun
 	    (append declared-vars declared-vars-list)))))
 (define-nmethod (Ref.find-free surrounding-fun declared-vars-list)
    (with-access::Execution-Unit surrounding-fun (free-vars)
       (with-access::Ref this (var)
-	 (unless (or (eq? (Var-kind var) 'this)
+	 (unless (or (eq? (with-access::Var var (kind) kind) 'this)
 		     (any? (lambda (l) (memq var l)) declared-vars-list)
 		     (memq var free-vars))
 	    (cons-set! free-vars var)))))
@@ -127,12 +129,12 @@
    (and (hashtable-get used-ht str)))
 
 (define (allocate-name v::Var env used-ht)
-   (unless (Named-Var? v)
+   (unless (isa? v Named-Var)
       (with-access::Var v (kind)
-	 (let ((kind (if (Global-Var? v)
+	 (let ((kind (if (isa? v Global-Var)
 			 'global
 			 kind))
-	       (compress? (Name-Env-compress? env)))
+	       (compress? (with-access::Name-Env env (compress?) compress?)))
 	    (case kind
 	       ((local)  (if compress?
 			     (allocate-compressed-local-name v env used-ht)
@@ -143,7 +145,7 @@
 	       ((this)    (allocate-this-name v used-ht))
 	       ((imported exported)
 		(allocate-exported-name v env used-ht)))))
-      (hashtable-put! used-ht (Named-Var-js-id v) #t)))
+      (hashtable-put! used-ht (with-access::Named-Var v (js-id) js-id) #t)))
 
 ;; call to reset the last-generated-id.
 ;; Too often and the id-generation will slow down.
@@ -246,7 +248,7 @@
 
 (define (allocate-exported-name v::Var env used-ht)
    (with-access::Var v (export-desc)
-      (let ((js-id (Export-Desc-js-id export-desc)))
+      (let ((js-id (with-access::Export-Desc export-desc (js-id) js-id)))
 	 (widen!::Named-Var v (js-id js-id)))))
 
 (define (allocate-compressed-global-name v::Var env used-ht)
@@ -287,14 +289,14 @@
 	 ;;   if 'export-var' is handled before the exported one, it receives
 	 ;;   'export_var' as JS-id. -> bad...
 	 (for-each (lambda (var)
-		      (unless (eq? (Var-kind var) 'local)
+		      (unless (eq? (with-access::Var var (kind) kind) 'local)
 			 (allocate-name var env used-ht)))
 		   declared-vars)
 	 (reset-compressed-id! env)
 	 ;; now that the Exported vars have been handled we can assign the
 	 ;; names to the global vars.
 	 (for-each (lambda (var)
-		      (when (eq? (Var-kind var) 'local)
+		      (when (eq? (with-access::Var var (kind) kind) 'local)
 			 (widen!::Global-Var var)
 			 (allocate-name var env used-ht)))
 		   declared-vars)
@@ -307,7 +309,7 @@
       (let ((lambda-used-ht (make-hashtable)))
 	 (for-each (lambda (var)
 		      (hashtable-put! lambda-used-ht
-				      (Named-Var-js-id var)
+				      (with-access::Named-Var var (js-id) js-id)
 				      #t))
 		   free-vars)
 	 
@@ -327,5 +329,5 @@
 		vars)
       (default-walk this used-ht)
       (for-each (lambda (var)
-		   (hashtable-remove! used-ht (Named-Var-js-id var)))
+		   (hashtable-remove! used-ht (with-access::Named-Var var (js-id) js-id)))
 		vars)))

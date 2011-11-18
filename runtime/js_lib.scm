@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sat Oct  1 08:16:26 2011 (serrano)                */
+;*    Last change :  Sat Nov 12 06:54:27 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -60,7 +60,8 @@
 	 (foreign-out (lambda (obj2 op)
 			 (unless (eq? obj obj2)
 			    (obj->javascript obj2 op isrep)))))
-      ((clientc-valuec comp) obj op foreign-out #f)))
+      (with-access::clientc comp (valuec)
+	 (valuec obj op foreign-out #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *clientc-true* ...                                               */
@@ -179,7 +180,8 @@
 (define-method (obj->javascript obj::xml-element op isrep)
    (if isrep
        (call-next-method)
-       (fprintf op "document.getElementById( '~a' )" (xml-element-id obj)))
+       (with-access::xml-element obj (id)
+	  (fprintf op "document.getElementById( '~a' )" id)))
    #t)
 
 ;*---------------------------------------------------------------------*/
@@ -193,7 +195,8 @@
 ;*    obj->javascript ::hop-service ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (obj->javascript obj::hop-service op isrep)
-   (display (hop-service-javascript obj) op)
+   (with-access::hop-service obj (javascript)
+      (display javascript op))
    #t)
 
 ;*---------------------------------------------------------------------*/
@@ -544,16 +547,17 @@
    (define (parse-json ip)
       (with-handler
 	 (lambda (e)
-	    (if (not (&io-parse-error? e))
+	    (if (not (isa? e &io-parse-error))
 		(raise e)
-		(match-case (&io-parse-error-obj e)
-		   ((?token ?val ?file ?pos)
-		    (raise (duplicate::&io-parse-error e
-			      (obj (format "~a (~a)" token val))
-			      (fname file)
-			      (location pos))))
-		   (else
-		    (raise e)))))
+		(with-access::&io-parse-error e (obj)
+		   (match-case obj
+		      ((?token ?val ?file ?pos)
+		       (raise (duplicate::&io-parse-error e
+				 (obj (format "~a (~a)" token val))
+				 (fname file)
+				 (location pos))))
+		      (else
+		       (raise e))))))
 	 (read/lalrp *json-parser* *json-lexer* ip)))
 
    (cond
@@ -566,7 +570,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop->js-callback obj)
    (cond
-      ((xml-tilde? obj)
+      ((isa? obj xml-tilde)
        (format "function( event ) { ~a }" (xml-tilde->return obj)))
       ((string? obj)
        (format "function( event ) { ~a }" obj))

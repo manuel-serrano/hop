@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -71,7 +71,7 @@
 
 (define (block-body body indent p compress?
 		    needs-separation? newline-after?) 
-   (let ((body-block? (Block? body)))
+   (let ((body-block? (isa? body Block)))
       (if body-block?
 	  (begin
 	     (space-out p compress?)
@@ -88,7 +88,7 @@
 	     #f))))
 
 (define (Block-out-without-braces stmt indent p compress?)
-   (if (Block? stmt)
+   (if (isa? stmt Block)
        (with-access::Block stmt (stmts)
 	  (for-each (lambda (n)
 		       (stmt-out n indent p compress?))
@@ -97,21 +97,21 @@
 
 (define (stmt->block stmt)
    (cond
-      ((Block? stmt)
+      ((isa? stmt Block)
        stmt)
-      ((NOP? stmt)
+      ((isa? stmt NOP)
        (instantiate::Block (stmts '())))
       (else
        (instantiate::Block (stmts (list stmt))))))
 
 
 (define (primary-expr? n)
-   (or (This? n)
-       (Ref? n)
-       (Literal? n)
-       (RegExp? n) ;; strictly speaking a RegExp is a literal, too.
-       (Array? n)
-       (Obj-Init? n)))
+   (or (isa? n This)
+       (isa? n Ref)
+       (isa? n Literal)
+       (isa? n RegExp) ;; strictly speaking a RegExp is a literal, too.
+       (isa? n Array)
+       (isa? n Obj-Init)))
 
 ;; we merge NewExpressions and MemberExpressions
 ;; in other words we will not print 'new's without parenthesis.
@@ -119,99 +119,105 @@
 
 (define (call-expr? n)
    (or (primary-expr? n)
-       (Fun? n)
-       (Named-Fun? n)
-       (Access? n)
-       (New? n)
-       (Call? n)))
+       (isa? n Fun)
+       (isa? n Named-Fun)
+       (isa? n Access)
+       (isa? n New)
+       (isa? n Call)))
 
 (define (lhs-expr? n) (call-expr? n))
 
 (define (unary-expr? n)
    (or (lhs-expr? n)
-       (Postfix? n)
-       (Unary? n)))
+       (isa? n Postfix)
+       (isa? n Unary)))
 
 (define (*-or-unary-expr? n)
    (or (unary-expr? n)
-       (and (Binary? n)
-	    (eq? (Binary-op n) '*))))
+       (and (isa? n Binary)
+	    (with-access::Binary n (op)
+	       (eq? op '*)))))
 
 (define (mult-expr? n)
    (or (unary-expr? n)
-       (and (Binary? n)
-	    (let ((op (Binary-op n)))
+       (and (isa? n Binary)
+	    (with-access::Binary n (op)
 	       (case op
 		  ((* / %) #t)
 		  (else #f))))))
 
 (define (add-expr? n)
    (or (mult-expr? n)
-       (and (Binary? n)
-	    (let ((op (Binary-op n)))
+       (and (isa? n Binary)
+	    (with-access::Binary n (op) 
 	       (case op
 		  ((+ -) #t)
 		  (else #f))))))
 
 (define (shift-expr? n)
    (or (add-expr? n)
-       (and (Binary? n)
-	    (let ((op (Binary-op n)))
+       (and (isa? n Binary)
+	    (with-access::Binary n (op) 
 	       (case op
 		  ((<< >> >>>) #t)
 		  (else #f))))))
 
 (define (rel-expr? n)
    (or (shift-expr? n)
-       (and (Binary? n)
-	    (let ((op (Binary-op n)))
+       (and (isa? n Binary)
+	    (with-access::Binary n (op) 
 	       (case op
 		  ((< > <= >= instanceof in) #t)
 		  (else #f))))))
 
 (define (eq-expr? n)
    (or (rel-expr? n)
-       (and (Binary? n)
-	    (let ((op (Binary-op n)))
+       (and (isa? n Binary)
+	    (with-access::Binary n (op) 
 	       (case op
 		  ((== != === !==) #t)
 		  (else #f))))))
 
 (define (bit-and-expr? n)
    (or (eq-expr? n)
-       (and (Binary? n)
-	    (eq? (Binary-op n) '&))))
+       (and (isa? n Binary)
+	    (with-access::Binary n (op) 
+	       (eq? op '&)))))
 
 (define (bit-xor-expr? n)
    (or (bit-and-expr? n)
-       (and (Binary? n)
-	    (eq? (Binary-op n) '^))))
+       (and (isa? n Binary)
+	    (with-access::Binary n (op) 
+	       (eq? op '^)))))
 
 (define (bit-or-expr? n)
    (or (bit-xor-expr? n)
-       (and (Binary? n)
-	    (eq? (Binary-op n) 'BIT_OR))))
+       (and (isa? n Binary)
+	    (with-access::Binary n (op) 
+	       (eq? op 'BIT_OR)))))
 
 (define (and-expr? n)
    (or (bit-or-expr? n)
-       (and (Binary? n)
-	    (eq? (Binary-op n) '&&))))
+       (and (isa? n Binary)
+	    (with-access::Binary n (op) 
+	       (eq? op '&&)))))
    
 (define (or-expr? n)
    (or (and-expr? n)
-       (and (Binary? n)
-	    (eq? (Binary-op n) 'OR))))
+       (and (isa? n Binary)
+	    (with-access::Binary n (op) 
+	       (eq? op 'OR)))))
 
 (define (assig-expr? n)
    (or (or-expr? n)
-       (Cond? n)
-       (Assig? n)))
+       (isa? n Cond)
+       (isa? n Assig)))
 
 (define (expr? n)
    (cond-expand
       (bigloo-debug (unless (or (assig-expr? n)
-				(Sequence? n)
-				(Pragma? n))
+				(isa? n Sequence)
+				(isa? n Pragma))
 		       (error "expr?"
 			      "Internal error: forgot an expression"
 			      (class-name (object-class n))))
@@ -238,13 +244,13 @@
 			 indent p compress?)
    (let* ((needs-parentheses? (or (not (of-required-type? this))
 				  (and in-for-init?
-				       (Binary? this)
-				       (eq? (Binary-op this) 'in))
+				       (isa? this Binary)
+				       (eq? (with-access::Binary this (op) op) 'in))
 				  (and stmt-begin?
-				       (or (Obj-Init? this)
-					   (Named-Fun? this)
-					   (Fun? this)
-					   (Pragma? this)))))
+				       (or (isa? this Obj-Init)
+					   (isa? this Named-Fun)
+					   (isa? this Fun)
+					   (isa? this Pragma)))))
 	  ;; if we are inside parenthesis we don't care for the 'for' anymore.
 	  (new-in-for-init? (and in-for-init? (not needs-parentheses?)))
 	  ;; nor are we at the beginning of a stmt anymore.
@@ -331,9 +337,9 @@
 
 (define (if-out this::If indent p compress? indent?)
    (with-access::If this (test then else)
-      (when (and (If? then)            ;; nested if
-		 (NOP? (If-else then)) ;; has no else-branch
-		 (not (NOP? else)))    ;; but we have one
+      (when (and (isa? then If)            ;; nested if
+		 (isa? (with-access::If then (else) else) NOP) ;; has no else-branch
+		 (not (isa? else NOP)))    ;; but we have one
 	 (set! then (instantiate::Block (stmts (list then))))) ;; protect our else
       (when indent? (indent! indent p compress?))
       (display "if" p)
@@ -341,7 +347,7 @@
       (display #\( p)
       (nested-expr-out test expr? #f #f (+fx indent 4) p compress?)
       (display #\) p)
-      (let* ((else-branch? (not (NOP? else)))
+      (let* ((else-branch? (not (isa? else NOP)))
 	     (then-block? (block-body then indent p compress?
 				      #f (not else-branch?))))
 	 (when else-branch?
@@ -349,7 +355,7 @@
 		(space-out p compress?)
 		(indent! indent p compress?))
 	    (display "else" p)
-	    (if (If? else)
+	    (if (isa? else If)
 		(begin
 		   (display #\space p)
 		   (if-out else indent p compress? #f))
@@ -723,11 +729,11 @@
 (define-method (expr-out this::Access in-for-init? stmt-begin?
 			 indent p compress?)
    (with-access::Access this (obj field)
-      (if (and (String? field)
-	       (valid-js-id? (String-val field) :strip-delimiters? #t)
-	       (not (Number? obj))
-	       (not (Pragma? obj)))
-	  (let ((str (String-val field)))
+      (if (and (isa? field String)
+	       (valid-js-id? (with-access::String field (val) val) :strip-delimiters? #t)
+	       (not (isa? obj Number))
+	       (not (isa? obj Pragma)))
+	  (let ((str (with-access::String field (val) val)))
 	     (nested-expr-out obj call-expr? in-for-init? stmt-begin?
 			      indent p compress?)
 	     (display #\. p)
@@ -788,11 +794,11 @@
 	    (unless (=fx i 0)
 	       (display #\, p))
 	    (if (or (null? els)
-		    (not (=fx (Array-Element-index (car els)) i)))
+		    (not (=fx (with-access::Array-Element (car els) (index) index) i)))
 		(loop (+ i 1) els)
 		(begin
 		   (unless (=fx i 0) (space-out p compress?))
-		   (nested-expr-out (Array-Element-expr (car els))
+		   (nested-expr-out (with-access::Array-Element (car els) (expr) expr)
 				    assig-expr? #f #f
 				    (indent++ indent) p compress?)
 		   (loop (+ i 1) (cdr els))))))
@@ -803,12 +809,12 @@
    (define (init-display init)
       (with-access::Property-Init init (name val)
 	 (cond
-	    ((and (String? name)
-		  (valid-js-id? (String-val name) :strip-delimiters? #t))
-	     (let ((str (String-val name)))
+	    ((and (isa? name String)
+		  (valid-js-id? (with-access::String name (val) val) :strip-delimiters? #t))
+	     (let ((str (with-access::String name (val) val)))
 		(display (substring str 1 (-fx (string-length str) 1)) p)))
 	    (else
-	     (display (Literal-val name) p)))
+	     (display (with-access::Literal name (val) val) p)))
 	 (display ":" p)
 	 (space-out p compress?)
 	 (nested-expr-out val assig-expr? #f #f (indent++ indent) p compress?)))

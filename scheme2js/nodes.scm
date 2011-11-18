@@ -24,7 +24,7 @@
 
        (kind::symbol read-only) ;; one out of local, exported, imported or this
        ;; export-desc is used for exported and imported vars.
-       (export-desc::Export-Desc (default (Export-Desc-nil)) read-only)
+       (export-desc::Export-Desc (default (class-nil Export-Desc)) read-only)
 
        (constant?::bool (default #f))
        (value (default #f))
@@ -50,7 +50,7 @@
        value)
     (final-class Ref::Node
        id ;; either symbol or qualified id of form (symbol module)
-       (var::Var (default (Var-nil))))
+       (var::Var (default (class-nil Var))))
     (class Scope::Node
        (scope-vars::pair-nil (default '())) ;; list of Vars
 
@@ -183,7 +183,7 @@
 
 (define (var-reference v::Var #!key (location #f))
    (instantiate::Ref
-      (location (if (is-a? location Node)
+      (location (if (isa? location Node)
 		    (with-access::Node location (location) location)
 		    location))
       (id (with-access::Var v (id) id))
@@ -192,7 +192,7 @@
 (define (var-assig v::Var val::Node #!key (location #f))
    (let ((var-ref (var-reference v :location location)))
       (instantiate::Set!
-	 (location (if (is-a? location Node)
+	 (location (if (isa? location Node)
 		       (with-access::Node location (location) location)
 		       location))
 	 (lvalue var-ref)
@@ -203,7 +203,7 @@
 		  (id id)
 		  (kind 'local))))
       (instantiate::Ref
-	 (location (if (is-a? location Node)
+	 (location (if (isa? location Node)
 		       (with-access::Node location (location) location)
 		       location))
 	 (id id)

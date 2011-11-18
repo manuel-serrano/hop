@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -35,34 +35,33 @@
 (define (compile-optimized-set! p compile n)
    (with-access::Set! n (lvalue val)
       (with-access::Ref lvalue (var)
-	 (if (Call? val)
+	 (if (isa? val Call)
 	     (with-access::Call val (operator operands)
 		(if (and (not (null? operands))
 			 (not (null? (cdr operands)))
 			 ;; next test not strictly necessary, but
 			 ;; simplifies cases like "(set! x (- x 1 2 3))"
 			 (null? (cddr operands))
-			 (Ref? (car operands))
-			 (eq? (Ref-var (car operands)) var)
-			 (Ref? operator)
-			 (let ((op-var (Ref-var operator)))
+			 (isa? (car operands) Ref)
+			 (eq? (with-access::Ref (car operands) (var) var) var)
+			 (isa? operator Ref)
+			 (let ((op-var (with-access::Ref operator (var) var)))
 			    (with-access::Var op-var (constant? kind)
-			       (and (eq? kind 'imported)
-				    constant?))))
-		    (let* ((op-var (Ref-var operator))
-			   (desc (Var-export-desc op-var))
-			   (js-id (Export-Desc-js-id desc))
+			       (and (eq? kind 'imported) constant?))))
+		    (let* ((op-var (with-access::Ref operator (var) var))
+			   (desc (with-access::Var op-var (export-desc) export-desc))
+			   (js-id (with-access::Export-Desc desc (js-id) js-id))
 			   (entry (assoc js-id *set!-operators*)))
 		       (if entry
 			   ;; get ++ and --
 			   (if (and (or (string=? (cadr entry) "+")
 					(string=? (cadr entry) "-"))
-				    (Const? (cadr operands))
-				    (eq? 1 (Const-value (cadr operands))))
+				    (isa? (cadr operands) Const)
+				    (eq? 1 (with-access::Const (cadr operands) (value) value)))
 			       (template-display p
 				  "(~a~a~a)"
 				  (cadr entry) (cadr entry) ;; ++ or --
-				  (Named-Var-js-id var))
+				  (with-access::Named-Var var (js-id) js-id))
 			       (with-access::Named-Var var (js-id)
 				  (template-display p
 				     "($js-id ~a= ~e)"

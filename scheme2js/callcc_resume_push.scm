@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -49,14 +49,14 @@
 ;; physically modifies the begin, so it does not contain the resume-node
 ;; anymore.
 (define (resume-begin-split n)
-   (when (Begin? n)
+   (when (isa? n Begin)
       (with-access::Begin n (exprs)
 	 (let loop ((exprs exprs))
 	    (cond
 	       ((null? exprs) #f) ;; should never happen
 	       ((null? (cdr exprs)) #f)
 	       ((and (null? (cddr exprs))
-		     (Call/cc-Resume? (cadr exprs)))
+		     (isa? (cadr exprs) Call/cc-Resume))
 		(let ((resume (cadr exprs)))
 		   (set-cdr! exprs '())
 		   resume))
@@ -67,7 +67,7 @@
    (with-access::Begin bnode (exprs)
       (cond
 	 ((null? exprs) (instantiate::Const
-			   (location (Node-location bnode))
+			   (location (with-access::Node bnode (location) location))
 			   (value #unspecified)))
 	 ((null? (cdr exprs)) (car exprs))
 	 (else
@@ -86,7 +86,7 @@
 		 (if (null? resumes)
 		     (set! indices inds)
 		     (loop (cdr resumes)
-			   (append (Call/cc-Resume-indices (car resumes))
+			   (append (with-access::Call/cc-Resume (car resumes) (indices) indices)
 				   inds)))))
 	   first-resume)))
    
@@ -105,7 +105,7 @@
 	  (begin
 	     (default-walk! this surrounding-fun)
 	     (let ((resume-node (instantiate::Call/cc-Resume
-				   (location (Node-location this))
+				   (location (with-access::Node this (location) location))
 				   (indices (list call/cc-index)))))
 		(instantiate::Begin
 		   (exprs (list this resume-node))))))))
@@ -142,9 +142,9 @@
 	 (unless (null? exprs)
 	    (let ((expr (car exprs)))
 	       (cond
-		  ((Begin? expr)
+		  ((isa? expr Begin)
 		   ;; insert into our list.
-		   (let ((other-exprs (Begin-exprs expr))
+		   (let ((other-exprs (with-access::Begin expr (exprs) exprs))
 			 (exprs-tail (cdr exprs)))
 		      ;; we know there must be at least 2 elements.
 		      ;; otherwise we wouldn't have gotten a 'Begin'.
@@ -152,24 +152,24 @@
 		      (set-cdr! exprs (cdr other-exprs))
 		      (set-cdr! (last-pair other-exprs) exprs-tail))
 		   (loop exprs))
-		  ((Call/cc-Resume? expr)
+		  ((isa? expr Call/cc-Resume)
 		   (let ((next (and (not (null? (cdr exprs)))
 				    (cadr exprs))))
 		      (cond
 			 ((not next)
 			  (loop (cdr exprs)))
 			 ;; merge two consecutive Resumes into one.
-			 ((Call/cc-Resume? next)
+			 ((isa? next Call/cc-Resume)
 			  (set-car! exprs (resumes-merge! (list (car exprs) next)))
 			  (set-cdr! exprs (cddr exprs))
 			  (loop exprs))
-			 ((or (Continue? next)
-			      (and (Break? next)
-				   (not (Break-val next))))
-			  (let ((label (if Continue?
-					   (Continue-label next)
-					   (Break-label next))))
-			     (unless (Call/cc-Label? label)
+			 ((or (isa? next Continue)
+			      (and (isa? next Break)
+				   (not (with-access::Break next (val) val))))
+			  (let ((label (if (isa? next Continue)
+					   (with-access::Continue next (label) label)
+					   (with-access::Break next (label) label))))
+			     (unless (isa? label Call/cc-Label)
 				(widen!::Call/cc-Label label))
 			     (with-access::Call/cc-Label label (resumes)
 				(cons-set! resumes expr)))
@@ -207,7 +207,7 @@
 		   ;;                 (call/cc..)))
 		   (for-each (lambda (index)
 				(update-hoisted! surrounding-fun index
-						 `(set! ,(Ref-var lvalue))))
+						 `(set! ,(with-access::Ref lvalue (var) var))))
 			     indices)
 		   (instantiate::Begin (exprs (list this resume)))))
 	     this))))
@@ -218,7 +218,7 @@
       (let ((resume (resume-begin-split val)))
 	 (when resume
 	    (set! val (simplified-begin val))
-	    (unless (Call/cc-Label? label)
+	    (unless (isa? label Call/cc-Label)
 	       (widen!::Call/cc-Label label))
 	    (with-access::Call/cc-Label label (resumes)
 	       (cons-set! resumes resume)))))
@@ -228,8 +228,9 @@
    (default-walk! this surrounding-fun)
    (with-access::While this (body label)
       (let ((body-resume (resume-begin-split body))
-	    (continue-resumes (and (Call/cc-Label? label)
-				   (Call/cc-Label-resumes label))))
+	    (continue-resumes (and (isa? label Call/cc-Label)
+				   (with-access::Call/cc-Label label (resumes)
+				      resumes))))
 	 (when body-resume (set! body (simplified-begin body)))
 	  ;; a body-resume continues at the end of the while -> like a continue
 	  ;; We put it just before the loop.
@@ -244,7 +245,7 @@
 			  (continue-resumes
 			   (resumes-merge! continue-resumes))
 			  (else #f))))
-	    (when (Call/cc-Label? label) (shrink! label))
+	    (when (isa? label Call/cc-Label) (shrink! label))
 	    (if resume
 		;; note the 'resume' before the 'this'
 		(instantiate::Begin (exprs (list resume this)))
@@ -254,8 +255,9 @@
    (default-walk! this surrounding-fun)
    (with-access::Labeled this (body label)
       (let ((body-resume (resume-begin-split body))
-	    (label-resumes (and (Call/cc-Label? label)
-				(Call/cc-Label-resumes label))))
+	    (label-resumes (and (isa? label Call/cc-Label)
+				(with-access::Call/cc-Label label (resumes)
+				   resumes))))
 	 (when body-resume (set! body (simplified-begin body)))
 	 (let ((resume (cond
 			  ((and body-resume label-resumes)
@@ -265,7 +267,7 @@
 			  (label-resumes
 			   (resumes-merge! label-resumes))
 			  (else #f))))
-	    (when (Call/cc-Label? label) (shrink! label))
+	    (when (isa? label Call/cc-Label) (shrink! label))
 	    (if resume
 		;; all resumes are after Labelled.
 		(instantiate::Begin (exprs (list this resume)))

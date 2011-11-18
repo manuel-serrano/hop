@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -40,15 +40,14 @@
        'ok)
       (else
        (let ((ln (cond
-		    ((not (Node? loc-node)) #f)
-		    ((Node-location loc-node)
+		    ((not (isa? loc-node Node)) #f)
+		    ((with-access::Node loc-node (location) location)
 		     loc-node)
-		    ((Call? loc-node)
-		     (any (lambda (n)
-			     (and (Node-location n)
-				  n))
-			  (cons (Call-operator loc-node)
-				(Call-operands loc-node))))
+		    ((isa? loc-node Call)
+		     (with-access::Call loc-node (operator operands)
+			(any (lambda (n)
+				(with-access::Node n (location) location))
+			   (cons operator operands))))
 		    (else #f))))
        (scheme2js-error
 	'call-check
@@ -59,17 +58,17 @@
 
 (define-nmethod (Call.check)
    (with-access::Call this (operator operands)
-      (when (Ref? operator)
+      (when (isa? operator Ref)
 	 (with-access::Ref operator (var)
 	    (with-access::Var var (value id constant? kind export-desc)
 	       (when (and constant? value)
-		  (when (Const? value)
+		  (when (isa? value Const)
 		     ;; all others could potentially become functions.
 		     (scheme2js-error 'call-check
 				      "Call target not a function"
-				      (Const-value value)
+				      (with-access::Const value (value) value)
 				      this))
-		  (when (Lambda? value)
+		  (when (isa? value Lambda)
 		     (with-access::Lambda value (formals vaarg?)
 			(let ((call-len (length operands))
 			      (target-len (if vaarg?

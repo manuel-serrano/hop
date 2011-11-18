@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Tue Jul  6 08:41:16 2010 (serrano)                */
-;*    Copyright   :  2007-10 Manuel Serrano                            */
+;*    Last change :  Wed Nov 16 16:46:29 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with packages.                             */
 ;*=====================================================================*/
@@ -84,18 +84,19 @@
 	 (unwind-protect
 	    (let loop ()
 	       (let ((h (tar-read-header ip)))
-		  (when (tar-header? h)
-		     (case (tar-header-type h)
-			((dir)
-			 (loop))
-			((normal)
-			 (let ((b (tar-read-block h ip))
-			       (n (tar-header-name h)))
-			    (if (substring-at? n info (-fx (string-length n) len))
-				(charset-convert b (hop-locale) (hop-charset))
-				(loop))))
-			(else
-			 #f)))))
+		  (when (isa? h tar-header)
+		     (with-access::tar-header h (name type)
+			(case type
+			   ((dir)
+			    (loop))
+			   ((normal)
+			    (let ((b (tar-read-block h ip))
+				  (n name))
+			       (if (substring-at? n info (-fx (string-length n) len))
+				   (charset-convert b (hop-locale) (hop-charset))
+				   (loop))))
+			   (else
+			    #f))))))
 	    (close-input-port ip)))))
 
 

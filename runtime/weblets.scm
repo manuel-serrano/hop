@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Wed Mar  2 15:40:37 2011 (serrano)                */
+;*    Last change :  Sat Nov 12 06:12:48 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -350,7 +350,8 @@
 ;*---------------------------------------------------------------------*/
 (define (get-autoload-weblet-directories)
    (map (lambda (o)
-	   (dirname (%autoload-path o)))
+	   (with-access::%autoload o (path)
+	      path))
 	*autoloads*))
 
 ;*---------------------------------------------------------------------*/
@@ -446,7 +447,8 @@
 		    (autoload-load! (car al) req)
 		    ;; add all the file associated with the autoload in
 		    ;; the service path table (see __hop_service).
-		    (service-etc-path-table-fill! (%autoload-path (car al)))
+		    (with-access::%autoload (car al) (path)
+		       (service-etc-path-table-fill! path))
 		    ;; remove the autoaload (once loaded)
 		    (mutex-lock! *autoload-mutex*)
 		    (set! *autoloads* (remq! (car al) *autoloads*))
@@ -465,7 +467,7 @@
 	 ((null? al)
 	  (mutex-unlock! *autoload-mutex*)
 	  #f)
-	 (((%autoload-pred (car al)) req)
+	 (((with-access::%autoload (car al) (pred) pred) req)
 	  (mutex-unlock! *autoload-mutex*)
 	  #t)
 	 (else

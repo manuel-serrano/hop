@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon May 30 14:48:26 2011 (serrano)                */
+;*    Last change :  Sat Nov 12 06:36:06 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -43,13 +43,15 @@
    (let ((id (xml-make-id id 'NOTEPAD))
 	 (history (if (boolean? history) history (not (eq? id #unspecified))))
 	 head)
-      (if (and (pair? body) (xml-nphead-element? (car body)))
+      (if (and (pair? body) (isa? (car body) xml-nphead-element))
 	  (begin
 	     (set! head (car body))
-	     (set! body (filter xml-nptab-element? (cdr body))))
+	     (set! body (filter (lambda (e) (isa? e xml-nptab-element))
+			   (cdr body))))
 	  (begin
 	     (set! head #f)
-	     (set! body (filter xml-nptab-element? body))))
+	     (set! body (filter (lambda (e) (isa? e xml-nptab-element))
+			   body))))
       (if (null? body)
 	  (error "<NOTEPAD>" "Missing <NPTAB> elements" id)
 	  (notepad id class history attrs head body onchange))))
@@ -59,8 +61,9 @@
 ;*---------------------------------------------------------------------*/
 (define (nptab-get-body tab)
    (with-access::xml-nptab-element tab (body)
-      (if (and (xml-delay? (car body)) (null? (cdr body)))
-	  ((xml-delay-thunk (car body)))
+      (if (and (isa? (car body) xml-delay) (null? (cdr body)))
+	  (with-access::xml-delay (car body) (thunk)
+	     (thunk))
 	  body)))
 
 ;*---------------------------------------------------------------------*/
@@ -97,17 +100,18 @@
 					       " hop-nptab-active"
 					       " hop-nptab-inactive"))
 		    ,@attributes)))
-	 (when (and (pair? (xml-element-body tab))
-		    (xml-delay? (car (xml-element-body tab)))
-		    (null? (cdr (xml-element-body tab))))
-	    (set! attributes `(:lang "delay" ,@attributes)))
+	 (with-access::xml-element tab (body)
+	    (when (and (pair? body)
+		       (isa? (car body) xml-delay)
+		       (null? (cdr body)))
+	       (set! attributes `(:lang "delay" ,@attributes))))
 	 (<DIV> :hssclass "hop-notepad-tab-body"
 	    :style (if (=fx i 0) "display: block" "display: none")
 	    :id idt
 	    (cond
 	       ((=fx i 0)
 		(nptab-get-body tab))
-	       ((and (xml-delay? (car body)) (null? (cdr body)))
+	       ((and (isa? (car body) xml-delay) (null? (cdr body)))
 		;; we must not eagerly evaluate the tab...
 		"")
 	       (else
@@ -164,7 +168,7 @@
    (cond
       ((null? body)
        (error "<NPTAB>" "Missing <NPTABHEAD> " id))
-      ((not (xml-nptabhead-element? (car body)))
+      ((not (isa? (car body) xml-nptabhead-element))
        (error "<NPTAB>" "Illegal <NPTABHEAD> " (car body)))
       (else
        (let ((cla (make-class-name "hop-nptab " class)))
@@ -214,28 +218,35 @@
 ;*    xml-compare ::xml-nphead-element ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-compare a1::xml-nphead-element a2)
-   (if (and (xml-markup? a2)
-	    (eq? (xml-markup-tag a2) 'div)
+   (if (and (isa? a2 xml-markup)
+	    (with-access::xml-markup a2 (tag)
+	       (eq? tag 'div))
 	    (equal? (dom-get-attribute a2 "class") "hop-nphead"))
-       (xml-compare (xml-markup-body a1) (xml-markup-body a2))
+       (with-access::xml-markup a1 ((body1 body))
+	  (with-access::xml-markup a2 ((body2 body))
+	     (xml-compare body1 body2)))
        (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-compare ::xml-nptabhead-element ...                          */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-compare a1::xml-nptabhead-element a2)
-   (if (and (xml-markup? a2)
-	    (eq? (xml-markup-tag a2) 'span)
+   (if (and (isa? a2 xml-markup)
+	    (with-access::xml-markup a2 (tag)
+	       (eq? tag 'span))
 	    (equal? (dom-get-attribute a2 "hssclass") "hop-nptab-head"))
-       (xml-compare (xml-markup-body a1) (xml-markup-body a2))
+       (with-access::xml-markup a1 ((body1 body))
+	  (with-access::xml-markup a2 ((body2 body))
+	     (xml-compare body1 body2)))
        (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-compare ::xml-nptab-element ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-compare a1::xml-nptab-element a2)
-   (if (and (xml-markup? a2)
-	    (eq? (xml-markup-tag a2) 'span)
+   (if (and (isa? a2 xml-markup)
+	    (with-access::xml-markup a2 (tag)
+	       (eq? tag 'span))
 	    (equal? (dom-get-attribute a2 "hssclass") "hop-nptab")
 	    (let ((head (dom-first-child a2))
 		  (body (cadr (dom-child-nodes a2))))

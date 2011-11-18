@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -85,47 +85,43 @@
    (config-set! 'encapsulate-modules #t)
    (config-set! 'export-globals #f)
    
-   (let* ((header (WIP-Unit-header module))
-	  (module-name (WIP-Unit-name module))
-	  (a-list (filter pair? header))
-	  (uuid (make-uuid a-list module-name))
-	  (config-name (get-and-verify-config-name a-list))
-	  (iterms (extract-entries a-list 'iterms))
-	  (oterms (extract-entries a-list 'oterms))
-	  (properties (extract-entries a-list 'properties))
-	  (BLUEPRINT (gensym 'BLUEPRINT))
-	  (Object (gensym 'Object))
-
-	  (imports (WIP-Unit-imports module))
-	  (exports (WIP-Unit-exports module))
-	  (macros (WIP-Unit-macros module)))
-      (verbose "Infotron " module-name " has uuid " uuid) 
-      (unless (null? exports)
-	 (scheme2js-error "infotron"
-			  "infotrons must not export variables"
-			  exports
-			  exports))
-      (unless (null? macros)
-	 (scheme2js-error "infotron"
-			  "infotrons must not export macros"
-			  macros
-			  macros))
-      (let ((tl (infotron-preexpand (WIP-Unit-top-level module)
-				    BLUEPRINT
-				    Object
-				    module-name
-				    uuid
-				    config-name
-				    iterms
-				    oterms
-				    properties))
-	    (imps (append imports
-			  `((,BLUEPRINT (JS "BLUEPRINT")
-					(constant? #t))
-			    (,Object (JS "Object")
-				     (constant? #t))))))
-      (WIP-Unit-top-level-set! module tl)
-      (WIP-Unit-imports-set! module imps))))
+   (with-access::WIP-Unit module (top-level imports exports header name macros)
+      (let* ((module-name name)
+	     (a-list (filter pair? header))
+	     (uuid (make-uuid a-list module-name))
+	     (config-name (get-and-verify-config-name a-list))
+	     (iterms (extract-entries a-list 'iterms))
+	     (oterms (extract-entries a-list 'oterms))
+	     (properties (extract-entries a-list 'properties))
+	     (BLUEPRINT (gensym 'BLUEPRINT))
+	     (Object (gensym 'Object)))
+	 (verbose "Infotron " module-name " has uuid " uuid) 
+	 (unless (null? exports)
+	    (scheme2js-error "infotron"
+	       "infotrons must not export variables"
+	       exports
+	       exports))
+	 (unless (null? macros)
+	    (scheme2js-error "infotron"
+	       "infotrons must not export macros"
+	       macros
+	       macros))
+	 (let ((tl (infotron-preexpand top-level
+		      BLUEPRINT
+		      Object
+		      module-name
+		      uuid
+		      config-name
+		      iterms
+		      oterms
+		      properties))
+	       (imps (append imports
+			`((,BLUEPRINT (JS "BLUEPRINT")
+			     (constant? #t))
+			  (,Object (JS "Object")
+			     (constant? #t))))))
+	    (set! top-level tl)
+	    (set! imports imps)))))
 
 (define (symbol->jsstring s)
    (if (use-mutable-strings?)

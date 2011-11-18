@@ -63,7 +63,9 @@
 ;;
 ;; this procedure stops at function boundaries.
 (define (dep-tree vars)
-   (let* ((escaping-vars (filter Var-escapes? vars))
+   (let* ((escaping-vars (filter (lambda (v)
+				    (with-access::Var v (escapes?) escapes?))
+			    vars))
 	  (shallow-refs-env (instantiate::Shallow-Env (escaping-vars escaping-vars))))
 
       (for-each (lambda (var)
@@ -93,7 +95,7 @@
       (for-each (lambda (v)
 		   ;; don't count self.
 		   (when (and (not (eq? v self-var))
-			      (is-a? v Update-Var)
+			      (isa? v Update-Var)
 			      (not (memq v l)))
 		      (cons-set! l v)))
 	     use-vars)))
@@ -116,7 +118,7 @@
 	       ((runtime-ref? target)
 		;; arguments are already taken care of.
 		'do-nothing)
-	       ((Lambda? target)
+	       ((isa? target Lambda)
 		(with-access::Lambda target (free-vars)
 		   (unless  (null? free-vars)
 		      (potential-uses free-vars self-var b))))
@@ -196,7 +198,9 @@
 			  vars))
 	  ;; break-var-decls are tmp-vars, that are inside a Let.
 	  (break-var-decls (map break-var-decl cyclic-vars))
-	  (let-vars (map Ref-var break-var-decls))
+	  (let-vars (map (lambda (r)
+			    (with-access::Ref r (var) var))
+		       break-var-decls))
 	  (let-bindings (map! (lambda (break-var-decl)
 				 (with-access::Ref break-var-decl (var)
 				    (with-access::Update-Var var (new-val)
@@ -239,7 +243,7 @@
 		   ;; remove rev-deps.
 		   (for-each
 		    (lambda (v)
-		       (when (is-a? v Update-Var)
+		       (when (isa? v Update-Var)
 			  ;; hasn't been cleaned yet
 			  (with-access::Update-Var v (rev-referenced-vars)
 			     (set! rev-referenced-vars

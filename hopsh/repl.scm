@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Tue Apr  5 06:50:14 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 12:05:16 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
@@ -30,10 +30,10 @@
 (define (hopsh-eval exp)
    (with-handler
       (lambda (e)
-	 (if (&error? e)
+	 (if (isa? e &error)
 	     (begin
 		(exception-notify e)
-		(when (eof-object? (&error-obj e))
+		(when (with-access::&error e (obj) (eof-object? obj))
 		   (reset-eof (current-input-port)))
 		(sigsetmask 0)
 		#unspecified)
@@ -100,7 +100,7 @@
       (let liip ((ttl 5))
 	 (with-handler
 	    (lambda (e)
-	       (if (and (&io-timeout-error? e) (> ttl 0))
+	       (if (and (isa? e &io-timeout-error) (> ttl 0))
 		   (begin
 		      (sleep 100000)
 		      (liip (- ttl 1)))
@@ -109,22 +109,22 @@
 	       (lambda (s) s)
 	       :timeout (hopsh-timeout)
 	       :fail (lambda (xhr)
-			(case (xml-http-request-status xhr)
-			   ((404)
-			    (error "hopsh" "document not found" url))
-			   ((401)
-			    (if (=fx count 0)
-				(error "hop-sh" "permission denied'" url)
-				(begin
-				   (login!)
-				   (when (hopsh-login)
-				      (loop (login->header (hopsh-login))
+			(with-access::xml-http-request xhr (status input-port)
+			   (case status
+			      ((404)
+			       (error "hopsh" "document not found" url))
+			      ((401)
+			       (if (=fx count 0)
+				   (error "hop-sh" "permission denied'" url)
+				   (begin
+				      (login!)
+				      (when (hopsh-login)
+					 (loop (login->header (hopsh-login))
 					    (-fx count 1))))))
-			   (else
-			    (error "hopsh"
-				   (format "Illegal status code `~a'"
-					   (xml-http-request-status xhr))
-				   (read-string (xml-http-request-input-port xhr))))))
+			      (else
+			       (error "hopsh"
+				  (format "Illegal status code `~a'" status)
+				  (read-string input-port))))))
 	       :header header)))))
 
 ;*---------------------------------------------------------------------*/

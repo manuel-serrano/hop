@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Mon May 30 14:47:53 2011 (serrano)                */
+;*    Last change :  Sat Nov 12 07:24:35 2011 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL> markup.                           */
 ;*=====================================================================*/
@@ -57,9 +57,11 @@
 		 (body body))))
       ;; Verify that the body is a list of <FLITEM>s and fill their parent
       (for-each (lambda (x)
-		   (if (and (xml-element? x)
-			    (eq? (xml-element-tag x) 'flitem))
-		       (html-flitem-parent-set! x res)
+		   (if (and (isa? x xml-element)
+			    (with-access::xml-element x (tag)
+			       (eq? tag 'flitem)))
+		       (with-access::html-flitem x (parent)
+			  (set! parent res))
 		       (error "<FL>" "Component is not a <FLITEM>" x)))
 		body)
       res))
@@ -68,11 +70,11 @@
 ;*    xml-write ::html-foldlist ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-foldlist p backend)
-   (fprintf p "<table class='~a' id='~a' cellpadding='0' cellspacing='~a'>"
-	    (html-foldlist-cname obj)
-	    (html-foldlist-id obj) (html-foldlist-spacing obj))
-   (xml-write (html-foldlist-body obj) p backend)
-   (display "</table>" p))
+   (with-access::html-foldlist obj (cname id spacing body)
+      (fprintf p "<table class='~a' id='~a' cellpadding='0' cellspacing='~a'>"
+	 cname id spacing)
+      (xml-write body p backend)
+      (display "</table>" p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <FLITEM> ...                                                     */
@@ -96,56 +98,65 @@
 (define-method (xml-write obj::html-flitem p backend)
    (with-access::html-flitem obj (body id parent open)
       (let ((tmp   body)
-	    (icono (or (html-foldlist-icono parent)
+	    (icono (or (with-access::html-foldlist parent (icono) icono)
 		       (make-file-path (hop-icons-directory)
 				       "hop-foldlist"
 				       "triangle-down.png")))
-	    (iconc (or (html-foldlist-iconc parent)
+	    (iconc (or (with-access::html-foldlist parent (iconc) iconc)
 		       (make-file-path (hop-icons-directory)
 				       "hop-foldlist"
 				       "triangle-right.png")))
-	    (history (if (html-foldlist-history parent) "true" "false")))
+	    (history (if (with-access::html-foldlist parent (history) history)
+			 "true" "false")))
 	 (cond
 	    ((not (pair? body))
 	     (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~a) ~a'>"
 		      id history
-		      (if (html-foldlist-stop parent) ";hop_stop_propagation( event, true )" "")))
+		      (with-access::html-foldlist parent (stop)
+			 (if stop ";hop_stop_propagation( event, true )" ""))))
 	    ((and (pair? body)
-		  (xml-delay? (car body))
+		  (isa? (car body) xml-delay)
 		  (null? (cdr body)))
 	     (fprintf p
 		      "<tr onclick='hop_fold_item_toggle_service(~s,~a,~s) ~a'>"
 		      id history
-		      ((procedure->service (xml-delay-thunk (car body))))
-		      (if (html-foldlist-stop parent) ";hop_stop_propagation( event, true )" ""))
+		      (with-access::xml-delay (car body) (thunk)
+			 ((procedure->service thunk)))
+		      (with-access::html-foldlist parent (stop)
+			 (if stop ";hop_stop_propagation( event, true )" "")))
 	     (set-car! body ""))
 	    ((and (pair? body)
 		  (pair? (cdr body))
-		  (xml-delay? (cadr body))
+		  (isa? (cadr body) xml-delay)
 		  (null? (cddr body)))
 	     (fprintf p
 		      "<tr onclick='hop_fold_item_toggle_service(~s,~a,~s) ~a'>"
 		      id history
-		      ((procedure->service (xml-delay-thunk (cadr body))))
-		      (if (html-foldlist-stop parent) ";hop_stop_propagation( event, true )" ""))
+		      (with-access::xml-delay (cadr body) (thunk)
+			 ((procedure->service thunk)))
+		      (with-access::html-foldlist parent (stop)
+			 (if parent ";hop_stop_propagation( event, true )" "")))
 	     (set-car! (cdr body) ""))
 	    (else
 	     (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~a) ~a'>"
 		      id history
-		      (if (html-foldlist-stop parent) ";hop_stop_propagation( event, true )" ""))))
+		      (with-access::html-foldlist parent (stop)
+			 (if stop ";hop_stop_propagation( event, true )" "")))))
 	 (fprintf p "<td>
                        <span class='hop-fl-img ~a' id=~s></span>
                      </td><td class='~a'>"
 		  (if open "hop-fl-img-open" "hop-fl-img-close") 
 		  (string-append id "-img")
-		  (html-flitem-cname obj))
+		  (with-access::html-flitem obj (cname) cname))
 	 (when (and (pair? tmp)
-		    (xml-element? (car tmp))
-		    (eq? (xml-element-tag (car tmp)) 'flhead))
+		    (isa? (car tmp) xml-element)
+		    (with-access::xml-element (car tmp) (tag)
+		       (eq? tag 'flhead)))
 	    (xml-write (car tmp) p backend)
 	    (set! tmp (cdr tmp)))
 	 (fprintf p "</td></tr><tr><td></td><td class='hop-fl-item-body'><div class='~a' id='~a' style='display:~a'>"
-		  (html-flitem-cname obj) id (if open "block" "none"))
+		  (with-access::html-flitem obj (cname) cname)
+		  id (if open "block" "none"))
 	 (xml-write tmp p backend)
 	 (display "</div></td></tr>" p))))
   
@@ -167,7 +178,8 @@
 ;*    xml-write ::html-flhead ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-flhead p backend)
-   (display (format "<span class='~a'>" (html-flhead-cname obj)) p)
-   (xml-write (html-flhead-body obj) p backend)
-   (display "</span>" p))
+   (with-access::html-flhead obj (cname body)
+      (display (format "<span class='~a'>" cname) p)
+      (xml-write body p backend)
+      (display "</span>" p)))
 

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Wed Dec  8 11:03:14 2010 (serrano)                */
-;*    Copyright   :  2009-10 Manuel Serrano                            */
+;*    Last change :  Thu Nov 10 18:26:31 2011 (serrano)                */
+;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
 ;*=====================================================================*/
@@ -36,7 +36,8 @@
 				  (else #f)))
 			    clauses)))
 	  (if (pair? i)
-	      ((clientc-modulec (hop-clientc)) i)
+	      (with-access::clientc (hop-clientc) (modulec)
+		 (modulec i))
 	      i)))
       (else
        '())))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Fri Sep 30 21:45:14 2011 (serrano)                */
+;*    Last change :  Sat Nov 12 06:21:52 2011 (serrano)                */
 ;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -101,7 +101,7 @@
 	  security-manager-tree-compare)
 	 ((eq? v 'unsecure)
 	  security-manager-default)
-	 ((not (security-manager? v))
+	 ((not (isa? v security-manager))
 	  (bigloo-type-error "hop-security-manager-set!" "security-manager" v))
 	 (else
 	  v))))
@@ -125,7 +125,7 @@
 	       (msg "Illegal handler attribute")
 	       (obj attr)))
 	   attr))
-      ((xml-tilde? attr)
+      ((isa? attr xml-tilde)
        (xml-tilde->attribute attr))
       (else
        attr)))
@@ -142,10 +142,10 @@
 	 (with-handler
 	    (lambda (e)
 	       (let ((rep (http-error e)))
-		  (if (http-response-hop? rep)
+		  (if (isa? rep http-response-hop)
 		      (begin
 			 (exception-notify e)
-			 (http-response-hop-xml rep))
+			 (with-access::http-response-hop rep (xml) xml))
 		      (raise e))))
 	    (begin
 	       (xml-compare (normalize-ast xml) (normalize-ast ast))
@@ -213,26 +213,38 @@
 ;*    xml-compare ::xml-markup ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-compare a1::xml-markup a2::obj)
-   (if (and (xml-markup? a2) (eq? (xml-markup-tag a1) (xml-markup-tag a2)))
+   (if (and (isa? a2 xml-markup)
+	    (with-access::xml-markup a1 ((tag1 tag))
+	       (with-access::xml-markup a2 ((tag2 tag))
+		  (eq? tag1 tag2))))
        (if (safe-attributes? a2)
-	   (xml-compare (normalize-ast (xml-markup-body a1))
-			(normalize-ast (xml-markup-body a2)))
+	   (xml-compare
+	      (with-access::xml-markup a1 (body)
+		 (normalize-ast body))
+	      (with-access::xml-markup a2 (body)
+		 (normalize-ast body)))
 	   (xml-compare-error a1 a2))
        (xml-compare-error a1 a2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-compare ::xml-element ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-compare a1::xml-markup a2::obj)
+(define-method (xml-compare a1::xml-element a2::obj)
    (cond
-      ((and (xml-markup? a2) (eq? (xml-markup-tag a1) (xml-markup-tag a2)))
+      ((and (isa? a2 xml-markup)
+	    (with-access::xml-element a1 ((tag1 tag))
+	       (with-access::xml-element a2 ((tag2 tag))
+		  (eq? tag1 tag2))))
        (if (safe-attributes? a2)
-	   (xml-compare (normalize-ast (xml-markup-body a1))
-			(normalize-ast (xml-markup-body a2)))
+	   (xml-compare
+	      (with-access::xml-element a1 (body)
+		 (normalize-ast body))
+	      (with-access::xml-element a2 (body)
+		 (normalize-ast body)))
 	   (xml-compare-error a1 a2)))
-      ((and (any? xml-tilde? (dom-get-attributes a1))
+      ((and (any? (lambda (a) (isa? a xml-tilde)) (dom-get-attributes a1))
 	    (pair? a2) (pair? (cdr a2)) (null? (cddr a2))
-	    (xml-cdata? (cadr a2)))
+	    (isa? (cadr a2) xml-cdata))
        (xml-compare a1 (car a2)))
       (else
        (xml-compare-error a1 a2))))
@@ -241,12 +253,13 @@
 ;*    xml-compare ::xml-tilde ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-compare a1::xml-tilde a2)
-   (unless (and (xml-tilde? a1)
-		(xml-markup? a2)
-		(eq? (xml-markup-tag a2) 'script)
-		(pair? (xml-markup-body a2))
-		(string? (car (xml-markup-body a2)))
-		(null? (cdr (xml-markup-body a2))))
+   (unless (and (isa? a1 xml-tilde)
+		(isa? a2 xml-markup)
+		(with-access::xml-markup a2 (tag body)
+		   (and (eq? tag 'script)
+			(pair? body)
+			(string? (car body))
+			(null? (cdr body)))))
       (xml-compare-error a1 a2)))
 
 ;*---------------------------------------------------------------------*/
@@ -269,10 +282,10 @@
    (cond
       ((and (pair? ast) (null? (cdr ast)))
        (normalize-ast (car ast)))
-      ((xml? ast)
+      ((isa? ast xml)
        ast)
       ((pair? ast)
-       (let ((l (filter xml? ast)))
+       (let ((l (filter (lambda (a) (isa? a xml)) ast)))
 	  (if (and (pair? l) (null? (cdr l)))
 	      (car l)
 	      l)))))
@@ -286,7 +299,7 @@
        "_")
       ((list? ast)
        (map ast->string-list ast))
-      ((xml-element? ast)
+      ((isa? ast xml-element)
        (with-access::xml-element ast (tag body id)
 	  (let ((c (dom-get-attribute ast "class")))
 	     (if c
@@ -297,11 +310,11 @@
 		 `(,(symbol-append '< tag '>)
 		   :id ,(format "\"~a\"" id)
 		   ,@(map ast->string-list body))))))
-      ((xml-markup? ast)
+      ((isa? ast xml-markup)
        (with-access::xml-markup ast (tag body)
 	  `(,(symbol-append '< tag '>)
 	    ,@(map ast->string-list body))))
-      ((xml-tilde? ast)
+      ((isa? ast xml-tilde)
        (with-access::xml-tilde ast (body)
 	  `(~ -)))
       ((symbol? ast)

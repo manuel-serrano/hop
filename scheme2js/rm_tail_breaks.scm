@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -118,7 +118,7 @@
    (with-access::Continue this (label)
       (if (eq? while-label label)
 	  (instantiate::Const
-	     (location (Node-location this))
+	     (location (with-access::Node this (location) location))
 	     (value #unspecified))
 	  this)))
 

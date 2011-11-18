@@ -44,7 +44,7 @@
 ;; cleans lambda, if it's the first time we encounter the lambda.
 (define (clean-lambda l::Lambda env)
    (with-access::Env env (token)
-      (unless (and (is-a? l Capture-Lambda)
+      (unless (and (isa? l Capture-Lambda)
 		   (eq? (with-access::Capture-Lambda l (token) token) token))
 	 (widen!::Capture-Lambda l (token token))
 	 (with-access::Lambda l (closure? scope-vars)
@@ -82,8 +82,8 @@
 	 ;; If val is a lambda do not yet mark it as closure (if it has free
 	 ;; vars), but wait for its first use. (In the best case we are able to
 	 ;; determine that all free vars are still alive.
-	 (if (and (Var-constant? var)
-		  (Lambda? val))
+	 (if (and (with-access::Var var (constant?) constant?)
+		  (isa? val Lambda))
 	     (Lambda-non-closure-walk val env)
 	     (walk val)))))
 
@@ -91,9 +91,9 @@
 (define-nmethod (Call.captured)
    (with-access::Call this (operator operands)
       (cond
-	 ((Lambda? operator)
+	 ((isa? operator Lambda)
 	  (Lambda-non-closure-walk operator env)) ;; NOT (walk operator).
-	 ((Ref? operator)
+	 ((isa? operator Ref)
 	  ;; no need to go into Ref. if it references a lambda, we don't
 	  ;; want to know (as we allow lambda-refs in calls).
 	  'done)
@@ -126,5 +126,5 @@
    (with-access::Ref this (var)
       (with-access::Var var (constant? value)
 	 (if (and constant?
-		  (Lambda? value))
+		  (isa? value Lambda))
 	     (mark-closure! value)))))

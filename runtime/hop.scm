@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sat Oct  1 11:10:43 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 11:47:36 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -59,7 +59,7 @@
 ;*    anonymous-request ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (anonymous-request)
-   (unless (http-request? *anonymous-request*)
+   (unless (isa? *anonymous-request* http-request)
       (set! *anonymous-request*
 	    (instantiate::http-server-request
 	       (http 'HTTP/1.0)
@@ -103,13 +103,13 @@
    (let ((req (current-request)))
       (let loop ()
 	 (cond
-	    ((http-server-request+? req)
+	    ((isa? req http-server-request+)
 	     (with-access::http-server-request+ req (%env)
 		(let ((c (assq key %env)))
 		   (if (not (pair? c))
 		       #unspecified
 		       (cdr c)))))
-	    ((http-server-request? req)
+	    ((isa? req http-server-request)
 	     (widen!::http-server-request+ req
 		(%env (request-env-parse req)))
 	     (loop))
@@ -139,19 +139,20 @@
    (let loop ((m req)
 	      (filters (hop-filters)))
       (if (null? filters)
-	  (with-access::http-request m (content-length method path host user)
-	     (if (or (not (http-proxy-request? req))
+	  (with-access::http-request m (content-length method path host port
+					  user header userinfo scheme http)
+	     (if (or (not (isa? req http-proxy-request))
 		     (not (hop-enable-proxing)))
 		 (hop-request-hook m (http-file-not-found path))
 		 (let* ((n (instantiate::http-response-remote
-			      (scheme (http-request-scheme m))
-			      (method (http-request-method m))
-			      (host (http-request-host m))
-			      (port (http-request-port m))
-			      (path (http-request-path m))
-			      (userinfo (http-request-userinfo m))
-			      (http (http-request-http m))
-			      (header (http-request-header m))
+			      (scheme scheme)
+			      (method method)
+			      (host host)
+			      (port port)
+			      (path path)
+			      (userinfo userinfo)
+			      (http http)
+			      (header header)
 			      (bodyp (not (eq? method 'HEAD)))
 			      (content-length content-length)
 			      (request m)
@@ -161,12 +162,12 @@
 		    (hop-request-hook m r))))
 	  (let ((n ((cdar filters) m)))
 	     (cond
-		((%http-response? n)
+		((isa? n %http-response)
 		 (let ((r (hop-run-hook (hop-http-response-local-hooks) m n)))
 		    (hop-request-hook m r)))
 		((eq? n m)
 		 (loop m (cdr filters)))
-		((http-request? n)
+		((isa? n http-request)
 		 (current-request-set! thread n)
 		 (loop n (cdr filters)))
 		((eq? n 'hop-resume)
@@ -191,15 +192,17 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-request-hook::%http-response req rep)
    (cond
-      ((not (http-request? req))
+      ((not (isa? req http-request))
        (error "hop-request-hook" "Illegal request" req))
-      ((not (%http-response? rep))
+      ((not (isa? rep %http-response))
        (error "hop-request-hook" "Illegal response" rep))
       (else
-       (let* ((rep2 ((http-request-hook req) rep))
-	      (res (if (%http-response? rep2) rep2 rep)))
-	  (%http-response-request-set! res req)
-	  res))))
+       (with-access::http-request req (hook)
+	  (let* ((rep2 (hook rep))
+		 (res (if (isa? rep2 %http-response) rep2 rep)))
+	     (with-access::%http-response res (request)
+		(set! request req))
+	     res)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    header-content-type ...                                          */
@@ -379,7 +382,7 @@
 	     (if (procedure? fail)
 		 (with-handler
 		    (lambda (e)
-		       (let* ((strerr (if (&error? e)
+		       (let* ((strerr (if (isa? e &error)
 					  (let ((op (open-output-string)))
 					     (with-error-to-port op
 						(lambda ()
@@ -428,7 +431,7 @@
    (with-access::http-response-autoload obj (request)
       (with-access::http-request request (path)
 	 (let ((rep (service-filter request)))
-	    (if (%http-response? rep)
+	    (if (isa? rep %http-response)
 		(with-hop-local rep success fail auth)
 		(error "with-hop" "Bad auto-loaded local service" path))))))
 
@@ -452,48 +455,55 @@
 ;*    with-hop-local ::http-response-string ...                        */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-string success fail auth)
-   (when (procedure? success) (success (http-response-string-body obj))))
+   (when (procedure? success)
+      (with-access::http-response-string obj (body)
+	 (success body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-js ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-js success fail auth)
-   (when (procedure? success) (success (http-response-js-value obj))))
+   (when (procedure? success)
+      (with-access::http-response-js obj (value)
+	 (success value))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-hop ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-hop success fail auth)
-   (when (procedure? success) (success (http-response-hop-xml obj))))
+   (when (procedure? success)
+      (with-access::http-response-hop obj (xml)
+	 (success xml))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-procedure ...                     */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-procedure success fail auth)
    (when (procedure? success)
-      (success (with-output-to-string (http-response-procedure-proc obj)))))
+      (with-access::http-response-procedure obj (proc)
+	 (success (with-output-to-string proc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-file ...                          */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-file success fail auth)
-   (let* ((f (http-response-file-file obj))
-	  (pf (open-input-file f)))
-      (if (not (input-port? pf))
-	  (fail-or-raise
-	   fail
-	   (if (not (file-exists? f))
-	       (instantiate::&io-file-not-found-error
-		  (proc "with-hop")
-		  (msg "File not found")
-		  (obj f))
-	       (instantiate::&io-port-error
-		  (proc "with-hop")
-		  (msg "Cannot open file")
-		  (obj f))))
-	  (unwind-protect
-	     (when (procedure? success) (success (read-string pf)))
-	     (close-input-port pf)))))
+   (with-access::http-response-file obj (file)
+      (let ((pf (open-input-file file)))
+	 (if (not (input-port? pf))
+	     (fail-or-raise
+		fail
+		(if (not (file-exists? file))
+		    (instantiate::&io-file-not-found-error
+		       (proc "with-hop")
+		       (msg "File not found")
+		       (obj file))
+		    (instantiate::&io-port-error
+		       (proc "with-hop")
+		       (msg "Cannot open file")
+		       (obj file))))
+	     (unwind-protect
+		(when (procedure? success) (success (read-string pf)))
+		(close-input-port pf))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-cgi ...                           */
@@ -551,13 +561,13 @@
    (let* ((reqi (current-request))
 	  (req (instantiate::http-server-request
 		  (localclientp #t)
-		  (user (if (http-request? reqi)
-			    (http-request-user reqi)
+		  (user (if (isa? reqi http-request)
+			    (with-access::http-request reqi (user) user)
 			    (anonymous-user)))
 		  (path path)))
 	  (rep (request->response req thread)))
       (cond
-	 ((http-response-file? rep)
+	 ((isa? rep http-response-file)
 	  (with-access::http-response-file rep (file)
 	     (let ((p (open-input-file file)))
 		(if (input-port? p)
@@ -565,14 +575,15 @@
 		       (read-string p)
 		       (close-input-port p))
 		    #f))))
-	 ((http-response-procedure? rep)
+	 ((isa? rep http-response-procedure)
 	  (let ((p (open-output-string)))
 	     (with-access::http-response-procedure rep (proc)
 		(unwind-protect
 		   (proc p)
 		   (close-output-port p)))))
-	 ((http-response-string? rep)
-	  (http-response-string-body rep))
+	 ((isa? rep http-response-string)
+	  (with-access::http-response-string rep (body)
+	     body))
 	 (else
 	  #f))))
    

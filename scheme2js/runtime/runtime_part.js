@@ -99,10 +99,10 @@ function sc_error() {
 
 function sc_arity_check(fun, nbArgs) {
    function err( args, msg, obj ) {
-      var where= ("callee" in args && "caller" in args.callee ?
-		  ("sc_name" in args.callee.caller ?
-		   args.callee.caller.sc_name : args.callee.caller)
-		  : "arity-check");
+      var where = ("callee" in args && "caller" in args.callee ?
+		   ("sc_name" in args.callee.caller ?
+		    args.callee.caller.sc_name : args.callee.caller)
+		   : "arity-check");
       sc_error(where, msg, obj);
       return undefined;
    }
@@ -118,7 +118,7 @@ function sc_arity_check(fun, nbArgs) {
    if (fun_arity < 0 && nbArgs >= -1-fun_arity) return fun;
    var errorMsg = "Wrong number of arguments: " + fun_arity + " expected, " +
       nbArgs + " provided";
-   return err( arguments, errorMsg, fun);
+   return err(arguments, errorMsg, fun);
 }
 
 /*** META ((export #t) (arity #t)) */

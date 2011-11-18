@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Mar  4 18:47:25 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 12:02:23 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -24,7 +24,9 @@
 
    (export  (class audio-server
 	       (audio-server-init)
-	       (music (get (lambda (o) (audio-server-%music o)))
+	       (music (get (lambda (o)
+			      (with-access::audio-server o (%music)
+				 %music)))
 		      (set %audio-server-music-set!)
 		      (default #f))
 	       (%music (default #f))
@@ -54,22 +56,24 @@
 ;*    %audio-server-music-set! ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (%audio-server-music-set! o::audio-server v)
-   (with-lock (audio-server-%hmutex o)
-      (lambda ()
-	 (when (music? (audio-server-%music o))
-	    (music-close (audio-server-%music o)))
-	 (when (thread? (audio-server-%thread o))
-	    (thread-terminate! (audio-server-%thread o)))
-	 (audio-server-%music-set! o v)
-	 (when (music? v)
-	    (if (webmusic? v)
-		;; register the mapping audioserver/webserver
-		(begin
-		   (audio-server-%state-set! o 'ready)
-		   (webmusic-audioserver-set! v o))
-		;; start a thread for the player
-		(let ((th (make-audio-server-thread o v)))
-		   (audio-server-%thread-set! o th)))))))
+   (with-access::audio-server o (%hmutex %music %thread %state)
+      (with-lock %hmutex
+	 (lambda ()
+	    (when (isa? %music music)
+	       (music-close %music))
+	    (when (isa? %thread thread)
+	       (thread-terminate! %thread))
+	    (set! %music v)
+	    (when (isa? v music)
+	       (if (isa? v webmusic)
+		   ;; register the mapping audioserver/webserver
+		   (begin
+		      (set! %state 'ready)
+		      (with-access::webmusic v (audioserver)
+			 (set! audioserver o))
+		      ;; start a thread for the player
+		      (let ((th (make-audio-server-thread o v)))
+			 (set! %thread th)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *audio-mutex* ...                                                */
@@ -539,19 +543,20 @@
 				   (audio-update-metadata as)
 				   #t)
 				  ((ackplaylistset)
-				   (when (webmusic? %music)
-				      (webmusic-playlist-set! %music a1)))
+				   (when (isa? %music webmusic)
+				      (with-access::webmusic %music (playlist)
+					 (set! playlist a1))))
 				  ((ackpause)
-				   (when (webmusic? %music)
+				   (when (isa? %music webmusic)
 				      (webmusic-ackstate! %music 'pause)))
 				  ((ackstop)
-				   (when (webmusic? %music)
+				   (when (isa? %music webmusic)
 				      (webmusic-ackstate! %music 'stop)))
 				  ((ackplay)
-				   (when (webmusic? %music)
+				   (when (isa? %music webmusic)
 				      (webmusic-ackplay! %music a1)))
 				  ((ackvolume)
-				   (when (webmusic? %music)
+				   (when (isa? %music webmusic)
 				      (webmusic-ackvolume! %music a1)))
 				  ((close)
 				   (audio-server-close-sans-lock as))
@@ -577,8 +582,8 @@
 (define (audio-server-close-sans-lock as)
    (with-access::audio-server as (%hmutex %state %thread %music)
       (set! %state 'close)
-      (when (music? %music) (music-close %music))
-      (when (thread? %thread) (thread-terminate! %thread))
+      (when (isa? %music music) (music-close %music))
+      (when (isa? %thread thread) (thread-terminate! %thread))
       #f))
    
 ;*---------------------------------------------------------------------*/
@@ -655,12 +660,13 @@
    
    (cond-expand
       (enable-threads
-       (audio-server-%state-set! as 'init)
-       (let ((th (instantiate::pthread
-		    (body thread-body)
-		    (cleanup thread-cleanup))))
-	  (thread-start! th)
-	  th))
+	 (with-access::audio-server as (%state)
+	    (set! %state 'init))
+	 (let ((th (instantiate::pthread
+		      (body thread-body)
+		      (cleanup thread-cleanup))))
+	    (thread-start! th)
+	    th))
       (else
        (error "make-audio-server-thread"
 	  "Backend cannot be started in single-thread setting"
@@ -690,11 +696,12 @@
 	      (let ((durl (charset-convert url (hop-charset) (hop-locale))))
 		 (if (file-exists? durl)
 		     (let ((tag (file-musictag durl)))
-			(if (musictag? tag)
-			    (charset-convert (musictag-title tag) 'UTF-8 (hop-charset))
+			(if (isa? tag musictag)
+			    (with-access::musictag tag (title)
+			       (charset-convert title 'UTF-8 (hop-charset)))
 			    url))
 		     url)))
-	   plist))
+	 plist))
 
    (if (null? plist)
        plist
@@ -718,7 +725,8 @@
 	 (trace-item "music=" (typeof music))
 	 (trace-item "as=" (typeof as))
 	 (let ((e (audio-status-event-value status (music-playlist-get music))))
-	    (audio-server-%errcount-set! as 0)
+	    (with-access::audio-server as (%errcount)
+	       (set! %errcount 0))
 	    (audio-event-broadcast! event e)))))
 
 ;*---------------------------------------------------------------------*/
@@ -765,21 +773,23 @@
 
    (define (signal-meta s)
       (let ((tag (cond
-		    ((id3? s)
-		     (duplicate::id3 s
-			(title (conv (id3-title s)))
-			(artist (conv (id3-artist s)))
-			(album (conv (id3-album s)))
-			(orchestra #f)
-			(conductor #f)
-			(interpret #f)
-			(comment (conv (id3-comment s)))))
-		    ((vorbis? s)
-		     (duplicate::vorbis s
-			(title (conv (vorbis-title s)))
-			(artist (conv (vorbis-artist s)))
-			(album (conv (vorbis-album s)))
-			(comment (conv (vorbis-comment s)))))
+		    ((isa? s id3)
+		     (with-access::id3 s (title artist album comment)
+			(duplicate::id3 s
+			   (title (conv title))
+			   (artist (conv artist))
+			   (album (conv album))
+			   (orchestra #f)
+			   (conductor #f)
+			   (interpret #f)
+			   (comment (conv comment)))))
+		    ((isa? s vorbis)
+		     (with-access::vorbis s (title artist album comment)
+			(duplicate::vorbis s
+			   (title (conv title))
+			   (artist (conv artist))
+			   (album (conv album))
+			   (comment (conv comment)))))
 		    ((string? s)
 		     (convert-file s))
 		    ((list? s)
@@ -802,7 +812,8 @@
       (with-trace 3 "audio-onmeta"
 	 (trace-item "music=" (typeof music))
 	 (trace-item "as=" (typeof as))
-	 (audio-server-%errcount-set! as 0)
+	 (with-access::audio-server as (%errcount)
+	    (set! %errcount 0))
 	 (cond
 	    ((string? meta)
 	     ;; this is a file name (a url)
@@ -815,7 +826,7 @@
 			   (signal-meta tag))))))
 	    ((list? meta)
 	     (signal-meta meta))
-	    ((musictag? meta)
+	    ((isa? meta musictag)
 	     (signal-meta meta))))))
 
 ;*---------------------------------------------------------------------*/
@@ -840,7 +851,8 @@
 ;*    obj->javascript ::%audio-server ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (obj->javascript as::audio-server op isrep)
-   (fprintf op "\"~a/~a\"" (hop-service-base) (audio-server-%path as))
+   (with-access::audio-server as (%path)
+      (fprintf op "\"~a/~a\"" (hop-service-base) %path))
    #t)
 
 ;*---------------------------------------------------------------------*/
@@ -848,7 +860,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (music-init o::webmusic)
    (with-access::webmusic o (%status)
-      (musicstatus-volume-set! %status 100)))
+      (with-access::musicstatus %status (volume)
+	 (set! volume 100))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-close ...                                                  */
@@ -974,7 +987,8 @@
    (with-access::webmusic o (%mutex %status)
       (with-lock %mutex
 	 (lambda ()
-	    (musicstatus-song %status)))))
+	    (with-access::musicstatus %status (song)
+	       song)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-songpos ::webmusic ...                                     */
@@ -992,7 +1006,8 @@
    (with-access::webmusic o (%mutex %status)
       (with-lock %mutex
 	 (lambda ()
-	    (musicstatus-volume %status)))))
+	    (with-access::musicstatus %status (volume)
+	       volume)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    music-volume-set! ::webmusic ...                                 */
@@ -1005,11 +1020,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    webmusic-ackstate! ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (webmusic-ackstate! o::webmusic state)
+(define (webmusic-ackstate! o::webmusic s)
    (with-access::webmusic o (%mutex %status)
       (with-lock %mutex
 	 (lambda ()
-	    (musicstatus-state-set! %status state)))))
+	    (with-access::musicstatus %status (state)
+	       (set! state s))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webmusic-ackplay! ...                                            */
@@ -1026,11 +1042,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    webmusic-ackvolume! ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (webmusic-ackvolume! o::webmusic volume)
+(define (webmusic-ackvolume! o::webmusic vol)
    (with-access::webmusic o (%mutex %status)
       (with-lock %mutex
 	 (lambda ()
-	    (musicstatus-volume-set! %status volume)))))
+	    (with-access::musicstatus %status (volume)
+	       (set! volume vol))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    event caching ...                                                */

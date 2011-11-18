@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Wed Mar  2 12:17:12 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 16:18:47 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -80,7 +80,7 @@
 	     (when (file-exists? (hz-prefs)) (hz-preferences-load (hz-prefs)))
 	     (let ((w (hz-install-url url)))
 		(cond
-		   ((weblet? w)
+		   ((isa? w weblet)
 		    (<HZ> req :weblet w))
 		   ((list? w)
 		    (match-case w
@@ -114,12 +114,13 @@
 	 (begin
 	    (if install
 		(let ((w (or (let ((w (hz-db-find-by-url url)))
-				(when (and (weblet? w)
-					   (directory? (weblet-directory w)))
+				(when (and (isa? w weblet)
+					   (with-access::weblet w (directory)
+					      (directory? directory)))
 				   w))
 			     (hz-install-url url))))
 		   (cond
-		      ((weblet? w)
+		      ((isa? w weblet)
 		       (run name version))
 		      ((not (pair? w))
 		       (http-error w))

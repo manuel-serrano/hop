@@ -576,8 +576,9 @@
 			    (let ((ht (make-eq-hashtable)))
 			       (for-each (lambda (desc)
 					    (hashtable-put! ht
-							    (Export-Desc-id desc)
-							    desc))
+					       (with-access::Export-Desc desc (id)
+						  id)
+					       desc))
 					 exports)
 			       (set! exports ht)))
 			 (when store-exported-macros-in-ht?
@@ -594,7 +595,7 @@
 (define (export-list? l)
    (or (null? l)
        (and (pair? l)
-	    (Export-Desc? (car l))
+	    (isa? (car l) Export-Desc)
 	    (export-list? (cdr l)))))
 
 (define (read-imports! m::WIP-Unit module-resolver reader bigloo-modules?)
@@ -602,7 +603,7 @@
       (let ((import-list (module-entries header 'import)))
 	 (unless (every (lambda (im)
 			   (or (symbol? im)
-			       (is-a? im Compilation-Unit)))
+			       (isa? im Compilation-Unit)))
 			import-list)
 	    (scheme2js-error "scheme2js-module"
 			     ;; we allow compilation units too, but this should
@@ -620,7 +621,7 @@
 	    ((null? imported-modules)
 	     (set! macros new-macros)
 	     (set! imports new-imports))
-	    ((is-a? (car imported-modules) Compilation-Unit)
+	    ((isa? (car imported-modules) Compilation-Unit)
 	     (let ((im (car imported-modules)))
 		(with-access::Compilation-Unit im  (exports exported-macros name)
 		   (loop (cdr imported-modules)

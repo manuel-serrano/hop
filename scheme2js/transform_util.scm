@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -62,8 +62,9 @@
 	  ;; then return the whole list of pairs.
 	  (let ((rvalue (instantiate::Call
 			   (location (if (and (pair? operands)
-					      (Node? (car operands)))
-					 (Node-location (car operands))
+					      (isa? (car operands) Node))
+					 (with-access::Node (car operands) (location)
+					    location)
 					 #f))
 			   (operator (runtime-reference 'list))
 			   (operands opnds))))
@@ -75,8 +76,10 @@
 	       (not (null? formals)))
 	  (scheme2js-error where
 			   "not enough arguments"
-			   (if (Ref? (car formals))
-			       (Var-id (Ref-var (car formals)))
+			   (if (isa? (car formals) Ref)
+			       (with-access::Ref (car formals) (var)
+				  (with-access::Var var (id)
+				     id))
 			       '())
 			   call))
 

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/src/stage.sch                    */
+;*    serrano/prgm/project/hop/2.2.x/src/stage.sch                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 20 20:23:18 2008                          */
-;*    Last change :  Wed Nov 19 11:29:10 2008 (serrano)                */
-;*    Copyright   :  2008 Manuel Serrano                               */
+;*    Last change :  Sat Nov 12 08:41:26 2011 (serrano)                */
+;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Stage macros (optmization)                                       */
 ;*=====================================================================*/
@@ -34,7 +34,7 @@
 			(eargs (map (lambda (x) (e x e)) args))
 			(stg (string->symbol (format "stage~a" (length args)))))
 		     `(let ((,s ,escd))
-			 (if (row-scheduler? ,s)
+			 (if (isa? ,s row-scheduler)
 			     (,eproc ,s ,ethread ,@eargs)
 			     (,stg ,s ,ethread ,eproc ,@eargs)))))
 		 (else

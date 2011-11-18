@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Feb  2 15:42:45 2006                          */
-;*    Last change :  Fri Dec 17 07:36:48 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Wed Nov 16 11:53:17 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple color tools                                               */
 ;*=====================================================================*/
@@ -36,7 +36,7 @@
 (define (color-lighter color #!optional (coef 1))
    (with-handler
       (lambda (e)
-	 (if (&io-parse-error? e)
+	 (if (isa? e &io-parse-error)
 	     color
 	     (raise e)))
       (multiple-value-bind (r g b)
@@ -49,7 +49,7 @@
 (define (color-darker color #!optional (coef 1))
    (with-handler
       (lambda (e)
-	 (if (&io-parse-error? e)
+	 (if (isa? e &io-parse-error)
 	     color
 	     (raise e)))
       (multiple-value-bind (r g b)

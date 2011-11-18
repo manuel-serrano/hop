@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Jul 22 09:37:11 2011 (serrano)                */
+;*    Last change :  Sat Nov 12 07:42:22 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -99,7 +99,7 @@
       (hop-filters-close!)
       (users-close!)
       ;; create the scheduler
-      (unless (scheduler? (hop-scheduler))
+      (unless (isa? (hop-scheduler) scheduler)
 	 (cond-expand
 	    (enable-threads
 	       (case (hop-scheduling)
@@ -250,11 +250,12 @@
 ;*    hop-repl ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-repl scd)
-   (if (<=fx (scheduler-size scd) 1)
-       (error "hop-repl"
-	      "HOP REPL cannot be spawned without multi-threading"
-	      scd)
-       (spawn0 scd stage-repl)))
+   (with-access::scheduler scd (size)
+      (if (<=fx size 1)
+	  (error "hop-repl"
+	     "HOP REPL cannot be spawned without multi-threading"
+	     scd)
+	  (spawn0 scd stage-repl))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-repl ...                                                   */
@@ -275,7 +276,7 @@
       ((=fx (hop-fast-server-event-port) (hop-port))
        ;; will use the regular HOP port
        (hop-event-init! (hop-port)))
-      ((<=fx (scheduler-size scd) 1)
+      ((<=fx (with-access::scheduler scd (size) size) 1)
        ;; disable fast event because no thread is available
        ;; and extra port is needed
        (hop-event-init! #f))

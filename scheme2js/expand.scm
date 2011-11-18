@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -318,18 +318,11 @@
    (with-handler
       (lambda (e)
 	 (cond
-	    ((&error? e)
-	     (scheme2js-error (&error-proc e)
-			      (&error-msg e)
-			      (&error-obj e)
-			      (if (epair? (&error-obj e))
-				  (&error-obj e)
-				  x)))
+	    ((isa? e &error)
+	     (with-access::&error e (proc msg obj)
+		(scheme2js-error proc msg obj (if (epair? obj) obj x))))
 	    (else
-	     (scheme2js-error "expand"
-			      "Illegal form"
-			      x
-			      x))))
+	     (scheme2js-error "expand" "Illegal form" x x))))
       (expand-once x)))
 
 (define (expand-once-expander x e)

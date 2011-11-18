@@ -436,7 +436,7 @@ function sc_stringIndexRight(s, cset, start) {
    if (!start) start = s.length - 1;
    
    if (cset instanceof sc_Char) {
-      res = s.lastIndexof(sc_char2string(cset), start);
+      res = s.lastIndexOf(sc_char2string(cset), start);
       return res >= 0 ? res : false;
    }
    if (cset.length == 1) {

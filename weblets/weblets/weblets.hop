@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Thu Jan 20 07:58:54 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 16:51:36 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets distribution weblet.                                 */
@@ -185,48 +185,49 @@
 ;*    weblets/rss ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-service (weblets/rss)
-   (let ((link (format "http://~a:~a"
-		       (hop-server-hostname)
-		       (hop-port)
-		       (hop-service-path weblets))))
-      (<RSS>
-	 (<RSS:CHANNEL>
-	    (<RSS:TITLE> "HOP")
-	    (<RSS:LINK> link)
-	    (<RSS:DESCRIPTION> "The latest weblets in the HOP repository")
-	    (<RSS:LAST-BUILD-DATE> (current-date))
-	    (<RSS:GENERATOR> "Hop")
-	    (<RSS:IMAGE>
-	       (<RSS:URL> (format "http://~a:~a~a"
-				  (hop-server-hostname)
-				  (hop-port)
-				  (service-resource weblets "etc/logo.png")))
+   (with-access::hop-service weblets (path)
+      (let ((link (format "http://~a:~a"
+		     (hop-server-hostname)
+		     (hop-port)
+		     path)))
+	 (<RSS>
+	    (<RSS:CHANNEL>
 	       (<RSS:TITLE> "HOP")
-	       (<RSS:DESCRIPTION> "The latest weblets in the HOP repository"))
-	    (map (lambda (path)
-		    (let* ((info (with-input-from-string (package-info path)
-				    read))
-			   (title (find-info info 'name ""))
-			   (version (find-info info 'version ""))
-			   (link (find-info info 'publisher link))
-			   (description (find-info info 'title ""))
-			   (author (find-info info 'author ""))
-			   (date (seconds->date (file-modification-time path))))
-		       (<RSS:ITEM>
-			  (<RSS:TITLE> (xml-string-encode title) " v" version)
-			  (<RSS:LINK> link)
-			  (<RSS:DESCRIPTION> description)
-			  (<RSS:AUTHOR> author)
-			  (<RSS:PUB-DATE> (date->rfc2822-date date)))))
-		 (let ((l (sort (lambda (p1 p2)
-				   (>=elong (file-modification-time p1)
-					    (file-modification-time p2)))
-				(get-weblets (weblets-repository)))))
-		    (if (> (length l) (weblets-rss-number-of-entries))
-			(let ((le (list-ref l (weblets-rss-number-of-entries))))
-			   (set-cdr! le '())
-			   l)
-			l)))))))
+	       (<RSS:LINK> link)
+	       (<RSS:DESCRIPTION> "The latest weblets in the HOP repository")
+	       (<RSS:LAST-BUILD-DATE> (current-date))
+	       (<RSS:GENERATOR> "Hop")
+	       (<RSS:IMAGE>
+		  (<RSS:URL> (format "http://~a:~a~a"
+				(hop-server-hostname)
+				(hop-port)
+				(service-resource weblets "etc/logo.png")))
+		  (<RSS:TITLE> "HOP")
+		  (<RSS:DESCRIPTION> "The latest weblets in the HOP repository"))
+	       (map (lambda (path)
+		       (let* ((info (with-input-from-string (package-info path)
+				       read))
+			      (title (find-info info 'name ""))
+			      (version (find-info info 'version ""))
+			      (link (find-info info 'publisher link))
+			      (description (find-info info 'title ""))
+			      (author (find-info info 'author ""))
+			      (date (seconds->date (file-modification-time path))))
+			  (<RSS:ITEM>
+			     (<RSS:TITLE> (xml-string-encode title) " v" version)
+			     (<RSS:LINK> link)
+			     (<RSS:DESCRIPTION> description)
+			     (<RSS:AUTHOR> author)
+			     (<RSS:PUB-DATE> (date->rfc2822-date date)))))
+		  (let ((l (sort (lambda (p1 p2)
+				    (>=elong (file-modification-time p1)
+				       (file-modification-time p2)))
+			      (get-weblets (weblets-repository)))))
+		     (if (> (length l) (weblets-rss-number-of-entries))
+			 (let ((le (list-ref l (weblets-rss-number-of-entries))))
+			    (set-cdr! le '())
+			    l)
+			 l))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-weblets ...                                                  */

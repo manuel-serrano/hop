@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -31,5 +31,6 @@
    (with-access::Lambda this (closure?)
       (if (and surrounding-fun
 	       closure?)
-	  (Lambda-nested-closures?-set! surrounding-fun #t)))
+	  (with-access::Lambda surrounding-fun (nested-closures?)
+	     (set! nested-closures? #t))))
    (default-walk this this))

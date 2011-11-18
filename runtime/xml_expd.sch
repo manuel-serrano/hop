@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Fri Sep 30 20:32:02 2011 (serrano)                */
+;*    Last change :  Fri Nov 18 17:45:16 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -224,6 +224,28 @@
 ;*    define-compound ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (define-compound m el bindings body)
+   
+   (define (predicate type id)
+      (if (memq type '(int long string bstring bool char symbol keword double
+		       boolean pair vector procedure integer real
+		       elong llong date))
+	  `(,(symbol-append type '?) ,id)
+	  `(isa? ,id ,type)))
+
+   (define (untyped-ident id)
+      (let* ((string (symbol->string id))
+	     (len (string-length string)))
+	 (let loop ((walker  0))
+	    (cond
+	       ((=fx walker len)
+		id)
+	       ((and (char=? (string-ref string walker) #\:)
+		     (<fx walker (-fx len 1))
+		     (char=? (string-ref string (+fx walker 1)) #\:))
+		(string->symbol (substring string 0 walker)))
+	       (else
+		(loop (+fx walker 1)))))))
+      
    (let ((args (gensym 'args))
 	 (loop (gensym 'loop))
 	 (name (symbol->string m)))
@@ -245,16 +267,19 @@
 		      ,@(map (lambda (b)
 				(match-case b
 				   ((?id ?- (and (? symbol?) ?type))
-				    `(unless (or (eq? ,id #unspecified)
-						 (,(symbol-append type '?) ,id))
-					(bigloo-type-error
-					 ,(symbol->string m)
-					 (symbol->string ',type)
-					 ,id)))
-				   (((? symbol?))
-				    `(set! ,(car b) (reverse! ,(car b))))
-				   ((? symbol?)
-				    `(set! ,b (reverse! ,b)))
+				    (let ((id (untyped-ident id)))
+				       `(unless (or (eq? ,id #unspecified)
+						    ,(predicate type id))
+					   (bigloo-type-error
+					      ,(symbol->string m)
+					      (symbol->string ',type)
+					      ,id))))
+				   (((and ?id (? symbol?)))
+				    (let ((id (untyped-ident id)))
+				       `(set! ,id (reverse! ,id))))
+				   ((and ?id (? symbol?))
+				    (let ((id (untyped-ident id)))
+				       `(set! ,id (reverse! ,id))))
 				   (else
 				    #unspecified)))
 			     bindings)
@@ -262,30 +287,33 @@
 		     ,@(map (lambda (b)
 			       (match-case b
 				  (((and (? symbol?) ?id) ?- . ?-)
-				   `((eq? (car ,args) ,(symbol->keyword id))
-				     (if (null? (cdr ,args))
-					 (begin
-					    (set! ,id #t)
-					    (,loop '()))
-					 (begin
-					    (set! ,id (cadr ,args))
-					    (,loop (cddr ,args))))))
+				   (let ((id (untyped-ident id)))
+				      `((eq? (car ,args) ,(symbol->keyword id))
+					(if (null? (cdr ,args))
+					    (begin
+					       (set! ,id #t)
+					       (,loop '()))
+					    (begin
+					       (set! ,id (cadr ,args))
+					       (,loop (cddr ,args)))))))
 				  (((and (? symbol?) ?id))
-				   `((keyword? (car ,args))
-				     (if (null? (cdr ,args))
-					 (begin
-					    (set! ,id #t)
-					    (,loop '()))
-					 (begin
-					    (set! ,id (cons* (cadr ,args) (car ,args) ,id))
-					    (,loop (cddr ,args))))))
-				  ((? symbol?)
-				   `((not (keyword? (car ,args)))
-				     (if (pair? (car ,args))
-					 (,loop (append (car ,args) (cdr ,args)))
-					 (begin
-					    (set! ,b (cons (car ,args) ,b))
-					    (,loop (cdr ,args))))))
+				   (let ((id (untyped-ident id)))
+				      `((keyword? (car ,args))
+					(if (null? (cdr ,args))
+					    (begin
+					       (set! ,id #t)
+					       (,loop '()))
+					    (begin
+					       (set! ,id (cons* (cadr ,args) (car ,args) ,id))
+					       (,loop (cddr ,args)))))))
+				  ((and ?id (? symbol?))
+				   (let ((id (untyped-ident id)))
+				      `((not (keyword? (car ,args)))
+					(if (pair? (car ,args))
+					    (,loop (append (car ,args) (cdr ,args)))
+					    (begin
+					       (set! ,id (cons (car ,args) ,id))
+					       (,loop (cdr ,args)))))))
 				  (else
 				   `((pair? (car ,args))
 				     (,loop (append (car ,args) (cdr ,args)))))))

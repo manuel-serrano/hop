@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -65,7 +65,9 @@
 			 rev-res))))))
 
 (define (attach-location o loc)
-   (when loc (Node-location-set! o loc))
+   (when loc
+      (with-access::Node o (location)
+	 (set! location loc)))
    o)
    
 (define (pobject-conv prog)
@@ -185,7 +187,8 @@
 	  (let ((rev-all-clauses (cons (clause->pobject (car clauses) #t)
 				       rev-result)))
 	     ;; if there was no default clause, we add one.
-	     (if (Clause-default-clause? (car rev-all-clauses))
+	     (if (with-access::Clause (car rev-all-clauses) (default-clause?)
+		    default-clause?)
 		 (reverse! rev-all-clauses)
 		 (reverse! (cons (clause->pobject '(else #unspecified) #t)
 				 rev-all-clauses)))))

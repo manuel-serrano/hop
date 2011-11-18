@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sun Nov  7 09:10:34 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Wed Nov 16 11:49:23 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
 ;*=====================================================================*/
@@ -20,7 +20,8 @@
 	    __hop_param
 	    __hop_read
 	    __hop_charset
-	    __hop_mathml)
+	    __hop_mathml
+	    __hop_html-base)
    
    (export  (class wiki-syntax
 	       (section1::procedure (default list))

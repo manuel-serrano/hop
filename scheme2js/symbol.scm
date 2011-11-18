@@ -89,9 +89,10 @@
       (export-desc desc)))
 
 (define (js-symbol-add! scope desc imported?)
-   (let ((scheme-sym (Export-Desc-id desc)))
-      (symbol-var-set! scope scheme-sym
-		       (create-js-var scheme-sym imported? desc))))
+   (with-access::Export-Desc desc (id) 
+      (let ((scheme-sym id))
+	 (symbol-var-set! scope scheme-sym
+	    (create-js-var scheme-sym imported? desc)))))
 
 ;; lazy lookup will not create Vars until they are actually used.
 ;; if JS? is true then direct accesses are to be found/added here.
@@ -160,17 +161,17 @@
     
 (define-nmethod (Module.resolve! symbol-table)
    (let* ((runtime-scope (make-lazy-scope
-			  (lazy-imported-lookup `((* . ,(with-access::Env env (runtime) runtime)))
-						#f)))
+			    (lazy-imported-lookup `((* . ,(with-access::Env env (runtime) runtime)))
+			       #f)))
 	  (imported-scope (make-lazy-scope
-			   (lazy-imported-lookup (with-access::Env env (imports) imports) #t)))
+			     (lazy-imported-lookup (with-access::Env env (imports) imports) #t)))
 	  ;; module-scope might grow, but 'length' is just an indication. 
 	  (module-scope (make-scope (length (with-access::Env env (exports) exports))))
 	  (extended-symbol-table (cons* module-scope
-					imported-scope
-					runtime-scope
-					symbol-table)))
-
+				    imported-scope
+				    runtime-scope
+				    symbol-table)))
+      
       ;; no need to add runtime or imported variables. They are in a lazy
       ;; scope. HOWEVER: we need to add the internally used vars.
       ;; Otherwise 'list', ... might not be in the runtime-vars. They would be
@@ -178,7 +179,7 @@
       (for-each (lambda (id)
 		   ;; simply searching for the variable will mark it as used.
 		   (symbol-var runtime-scope id))
-		*scheme2js-compilation-runtime-vars*)
+	 *scheme2js-compilation-runtime-vars*)
       
       ;; insert exported variables
       (for-each (lambda (meta) (js-symbol-add! module-scope meta #f))
@@ -188,7 +189,7 @@
       ;; a function allowing access to them.
       (runtime-reference-init! (lambda (id::symbol)
 				  (symbol-var runtime-scope id)))
-
+      
       (with-access::Env env ((rs runtime-scope)
 			     allow-unresolved?
 			     unbound-add!)
@@ -223,9 +224,9 @@
 			   (js-id js-str)
 			   (exported-as-const? #f))
 			#t))))))
-
+      
       (with-access::Module this (this-var runtime-vars imported-vars
-					  scope-vars body)
+				   scope-vars body)
 	 
 	 (when (config 'procedures-provide-js-this)
 	    (symbol-var-set! module-scope 'this this-var))
@@ -240,11 +241,11 @@
 	 (let ((global-assig (config 'module-result-var)))
 	    (when global-assig
 	       (js-symbol-add! module-scope
-			       (instantiate::Export-Desc
-				  (id global-assig)
-				  (js-id (symbol->string global-assig))
-				  (exported-as-const? #f))
-			       #f)
+		  (instantiate::Export-Desc
+		     (id global-assig)
+		     (js-id (symbol->string global-assig))
+		     (exported-as-const? #f))
+		  #f)
 	       (set! body (instantiate::Set!
 			     (lvalue (instantiate::Ref (id global-assig)))
 			     (val body)))))
@@ -253,15 +254,18 @@
 	 (set! runtime-vars (scope->list runtime-scope))
 	 (set! imported-vars (scope->list imported-scope))
 	 (let* ((module-vars (filter! (lambda (var)
-					 (not (eq? (Var-kind var) 'this)))
-				      (scope->list module-scope)))
+					 (with-access::Var var (kind)
+					    (not (eq? kind 'this))))
+				(scope->list module-scope)))
 		(local-vars (cp-filter (lambda (var)
-					  (eq? (Var-kind var) 'local))
-				       module-vars)))
+					  (with-access::Var var (kind)
+					     (eq? kind 'local)))
+			       module-vars)))
 	    (set! scope-vars (filter (lambda (var)
-					(eq? (Var-kind var) 'exported))
-				     module-vars))
-
+					(with-access::Var var (kind)
+					   (eq? kind 'exported)))
+				module-vars))
+	 
 	    ;; the following is only useful when used as library.
 	    (let ((exported-declare! (config 'exported-declare)))
 	       (when exported-declare!
@@ -270,8 +274,8 @@
 				  (with-access::Export-Desc export-desc
 					(id js-id)
 				     (exported-declare! id js-id))))
-			 scope-vars)))
-
+		     scope-vars)))
+	 
 	    (set! body (instantiate::Let
 			  (scope-vars local-vars)
 			  (bindings '())
@@ -302,7 +306,9 @@
 	 (for-each (lambda (formal)
 		      (collect formal formals-scope))
 		   formals)
-	 (set! scope-vars (map Ref-var formals))
+	 (set! scope-vars (map (lambda (f)
+				  (with-access::Ref f (var) var))
+			     formals))
 	 
 	 (when (config 'procedures-provide-js-this)
 	    (symbol-var-set! formals-scope 'this this-var))
@@ -375,11 +381,11 @@
 
 (define (find-globals env n module-scope)
    (cond
-      ((Begin? n)
+      ((isa? n Begin)
        (with-access::Begin n (exprs)
 	  (for-each (lambda (e) (find-globals env e module-scope))
 		    exprs)))
-      ((Define? n)
+      ((isa? n Define)
        (shrink! n)
        (with-access::Set! n (lvalue)
 	  (with-access::Ref lvalue (id)

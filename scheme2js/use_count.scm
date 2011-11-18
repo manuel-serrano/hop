@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -38,7 +38,7 @@
 (define-nmethod (Module.count)
    (with-access::Module this (this-var scope-vars runtime-vars imported-vars declared-vars)
       ;; we don't count this-initialization as 'use'.
-      (Var-uses-set! this-var 0)
+      (with-access::Var this-var (uses) (set! uses 0))
       ;; imported and runtime-vars could be incremented or not. we decided for
       ;; not (more efficient).
       ;; scope-vars are exported. -> they are used out there...
@@ -48,9 +48,10 @@
    (default-walk this))
 
 (define-nmethod (Scope.count)
-   (when (Lambda? this)
+   (when (isa? this Lambda)
       (with-access::Lambda this (this-var declared-vars)
-	 (Var-uses-set! this-var 0)
+	 (with-access::Var this-var (uses)
+	    (set! uses 0))
 	 (for-each clean-var declared-vars)))
    (with-access::Scope this (scope-vars)
       (for-each clean-var scope-vars))

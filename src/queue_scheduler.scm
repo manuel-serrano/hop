@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/src/queue-scheduler.scm          */
+;*    serrano/prgm/project/hop/2.2.x/src/queue_scheduler.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:29:19 2008                          */
-;*    Last change :  Wed Nov 26 16:18:03 2008 (serrano)                */
-;*    Copyright   :  2008 Manuel Serrano                               */
+;*    Last change :  Wed Nov 16 12:04:48 2011 (serrano)                */
+;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    QUEUE scheduler                                                  */
 ;*=====================================================================*/
@@ -67,7 +67,7 @@
    (with-access::queue-scheduler scd (mutex)
       (mutex-lock! mutex)
       (let ((t (get-thread! scd)))
-	 (if (thread? t)
+	 (if (isa? t thread)
 	     (if (queue-empty? scd)
 		 (begin
 		    (mutex-unlock! mutex)
@@ -89,7 +89,7 @@
    (with-access::queue-scheduler scd (mutex)
       (mutex-lock! mutex)
       (let ((t (get-thread! scd)))
-	 (if (thread? t)
+	 (if (isa? t thread)
 	     ;; there is an available thread, we use it...
 	     (begin
 		(mutex-unlock! mutex)
@@ -106,7 +106,7 @@
    (with-access::queue-scheduler scd (mutex)
       (mutex-lock! mutex)
       (let ((t (get-thread! scd)))
-	 (if (thread? t)
+	 (if (isa? t thread)
 	     ;; there is an available thread, we use it...
 	     (begin
 		(mutex-unlock! mutex)
@@ -123,7 +123,7 @@
    (with-access::queue-scheduler scd (mutex)
       (mutex-lock! mutex)
       (let ((t (get-thread! scd)))
-	 (if (thread? t)
+	 (if (isa? t thread)
 	     ;; there is an available thread, we use it...
 	     (begin
 		(mutex-unlock! mutex)
@@ -291,8 +291,7 @@
 	 (with-handler
 	    (lambda (e)
 	       (scheduler-error-handler e t))
-	    (let ((tmutex (hopthread-mutex t))
-		  (tcondv (hopthread-condv t)))
+	    (with-access::hopthread t ((tmutex mutex) (tcondv condv) proc)
 	       (let loop ()
 		  ;; purge all the pending task
 		  (purge-scheduler-task!)
@@ -303,11 +302,12 @@
 		  ;; wait to be awaken
 		  (condition-variable-wait! tcondv tmutex)
 		  ;; execute the user task
-		  ((hopthread-proc t) scd t)
+		  (proc scd t)
 		  (loop)))))
       
       (let loop ()
-	 (with-lock (hopthread-mutex t) run)
+	 (with-access::hopthread t (mutex)
+	    (with-lock mutex run))
 	 (loop))))
    
 ;*---------------------------------------------------------------------*/

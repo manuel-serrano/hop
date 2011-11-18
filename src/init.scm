@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Thu Nov 10 06:43:13 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 12:03:39 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -114,12 +114,12 @@
 ;*    http-get-file-not-found ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (http-get-file-not-found req)
-   (with-access::http-request req (abspath timeout)
+   (with-access::http-request req (abspath timeout connection)
       (cond
 	 ((hop-service-path? abspath)
 	  (http-service-not-found abspath))
 	 ((string=? abspath "/crossdomain.xml")
-	  (http-request-connection-set! req 'close)
+	  (set! connection 'close)
 	  (let ((s (format "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE cross-domain-policy SYSTEM \"http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd\">
 <cross-domain-policy>
@@ -160,10 +160,11 @@
    (with-access::http-request req (abspath timeout)
       (let ((rep (hop-load abspath)))
 	 (cond
-	    ((%http-response? rep)
+	    ((isa? rep %http-response)
 	     rep)
-	    ((xml? rep)
+	    ((isa? rep xml)
 	     (instantiate::http-response-hop
+		(backend (hop-xml-backend))
 		(request req)
 		(timeout timeout)
 		(content-type (mime-type abspath (hop-default-mime-type)))
@@ -188,7 +189,7 @@
 (define (init-get-cache!)
    (set! get-memory-cache
 	 (instantiate::cache-memory
-	    (validity (lambda (ce _) (cache-entry? ce)))
+	    (validity (lambda (ce _) (isa? ce cache-entry)))
 	    (max-entries (hop-get-cache-size)))))
 
 ;*---------------------------------------------------------------------*/
@@ -197,7 +198,7 @@
 (define (http-get-file/cache req)
    (with-access::http-request req (abspath)
       (let ((cache (cache-get get-memory-cache abspath)))
-	 (if (%http-response? cache)
+	 (if (isa? cache %http-response)
 	     cache
 	     (let ((resp (http-get-file req #t)))
 		(cache-put! get-memory-cache abspath resp)
@@ -298,7 +299,7 @@
       ;; distant host address and user
       (fprintf port "~a - ~a "
 	       (socket-host-address socket)
-	       (if (user? user) (user-name user)) "-")
+	       (if (isa? user user) (with-access::user user (name) name)) "-")
       ;; date
       (display "[" port)
       (let* ((d   (current-date))
@@ -369,7 +370,7 @@
       ;; distant host address and user
       (fprintf port "~a - ~a "
 	       (socket-host-address socket)
-	       (if (user? user) (user-name user)) "-")
+	       (if (isa? user user) (with-access::user user (name) name)) "-")
       ;; date
       (display "[" port)
       (let* ((d   (current-date))
@@ -448,33 +449,34 @@
    ;; local filter (Fallback local file filter)
    (hop-filter-add-always-last!
     (lambda (req)
-       (when (http-server-request? req)
-	  (let ((handler (http-find-method-handler (http-request-method req))))
-	     (if (procedure? handler)
-		 (handler req)
-		 (http-method-error req))))))
+       (when (isa? req http-server-request)
+	  (with-access::http-request req (method)
+	     (let ((handler (http-find-method-handler method)))
+		(if (procedure? handler)
+		    (handler req)
+		    (http-method-error req)))))))
    
    ;; remote hooks
    (hop-http-response-remote-hook-add!
     (lambda (req resp)
-       (cond
-	  ((and (not (http-request-localclientp req))
-		(or (not (hop-proxy-allow-remote-client))
-		    (not (hop-proxy-ip-allowed? req))))
-	   (instantiate::http-response-abort
-	      (request req)))
-	  ((and (http-request-localclientp req)
-		(not (hop-proxy-authentication)))
-	   resp)
-	  ((and (not (http-request-localclientp req))
-		(not (hop-proxy-remote-authentication))
-		(not (hop-proxy-authentication)))
-	   resp)
-	  (else
-	   (with-access::http-request req (user host port path header)
-	      (if (user-authorized-service? user 'proxy)
-		  resp
-		  (proxy-denied req user host)))))))
+       (with-access::http-request req (localclientp)
+	  (cond
+	     ((and (not localclientp)
+		   (or (not (hop-proxy-allow-remote-client))
+		       (not (hop-proxy-ip-allowed? req))))
+	      (instantiate::http-response-abort
+		 (request req)))
+	     ((and localclientp (not (hop-proxy-authentication)))
+	      resp)
+	     ((and (not localclientp)
+		   (not (hop-proxy-remote-authentication))
+		   (not (hop-proxy-authentication)))
+	      resp)
+	     (else
+	      (with-access::http-request req (user host port path header)
+		 (if (user-authorized-service? user 'proxy)
+		     resp
+		     (proxy-denied req user host))))))))
    
    ;; logging
    (when (output-port? (hop-log-file))

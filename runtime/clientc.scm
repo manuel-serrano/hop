@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Tue Sep  6 16:58:15 2011 (serrano)                */
+;*    Last change :  Fri Nov 11 07:15:57 2011 (serrano)                */
 ;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -130,32 +130,33 @@
 ;*    clientc-response ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (clientc-response req path)
-   (let ((cache (cache-get clientc-cache path))
-	 (mime (hop-javascript-mime-type))
-	 (method (http-request-method req)))
-      (if (string? cache)
-	  ;; since we are serving a cached answer, we also have
-	  ;; to check that the client is allowed to the requested
-	  ;; file, i.e., the non-compiled file.
-	  (instantiate::http-response-file
-	     (request req)
-	     (charset (hop-locale))
-	     (content-type mime)
-	     (bodyp (eq? method 'GET))
-	     (header '((Accept-Ranges: . "bytes")))
-	     (file cache))
-	  (let ((m (eval-module)))
-	     (unwind-protect
-		(let* ((jscript ((clientc-filec (hop-clientc)) path '()))
-		       (cache (cache-put! clientc-cache path jscript)))
-		   (instantiate::http-response-string
-		      (request req)
-		      (charset (hop-locale))
-		      (content-type mime)
-		      (bodyp (eq? method 'GET))
-		      (header '((Accept-Ranges: . "bytes")))
-		      (body jscript)))
-		(eval-module-set! m))))))
+   (with-access::http-request req (method)
+      (let ((cache (cache-get clientc-cache path))
+	    (mime (hop-javascript-mime-type)))
+	 (if (string? cache)
+	     ;; since we are serving a cached answer, we also have
+	     ;; to check that the client is allowed to the requested
+	     ;; file, i.e., the non-compiled file.
+	     (instantiate::http-response-file
+		(request req)
+		(charset (hop-locale))
+		(content-type mime)
+		(bodyp (eq? method 'GET))
+		(header '((Accept-Ranges: . "bytes")))
+		(file cache))
+	     (let ((m (eval-module)))
+		(unwind-protect
+		   (with-access::clientc (hop-clientc) (filec)
+		      (let* ((jscript (filec path '()))
+			     (cache (cache-put! clientc-cache path jscript)))
+			 (instantiate::http-response-string
+			    (request req)
+			    (charset (hop-locale))
+			    (content-type mime)
+			    (bodyp (eq? method 'GET))
+			    (header '((Accept-Ranges: . "bytes")))
+			    (body jscript))))
+		   (eval-module-set! m)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dummy-request ...                                                */
@@ -170,10 +171,12 @@
    (let* ((req (or (current-request) dummy-request))
 	  (rep (clientc-response req path)))
       (cond
-	 ((http-response-file? rep)
-	  (with-input-from-file (http-response-file-file rep) read-string))
-	 ((http-response-string? rep)
-	  (http-response-string-body rep))
+	 ((isa? rep http-response-file)
+	  (with-access::http-response-file rep (file)
+	     (with-input-from-file file read-string)))
+	 ((isa? rep http-response-string)
+	  (with-access::http-response-string rep (body)
+	     body))
 	 (else
 	  (error "get-clientc-compiled-file" "Illegal clientc response" rep)))))
 

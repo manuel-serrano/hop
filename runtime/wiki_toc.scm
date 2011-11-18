@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 12 15:53:32 2006                          */
-;*    Last change :  Sun Nov  7 09:11:34 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Thu Nov 10 18:12:37 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki toc                                                         */
 ;*=====================================================================*/
@@ -50,9 +50,11 @@
 	  (values (reverse! res) '()))
 	 ((pair? (car obj))
 	  (loop (append (car obj) (cdr obj)) res depth))
-	 ((and (xml-element? (car obj))
-	       (eq? (xml-element-tag (car obj)) 'div))
-	  (loop (append (xml-element-body (car obj)) (cdr obj)) res depth))
+	 ((and (isa? (car obj) xml-element)
+	       (with-access::xml-element (car obj) (tag)
+		  (eq? tag 'div)))
+	  (with-access::xml-element (car obj) (body)
+	     (loop (append body (cdr obj)) res depth)))
 	 ((null? (cdr obj))
 	  (values (reverse! res) '()))
 	 (else
@@ -75,8 +77,10 @@
 			      (if (pair? res2)
 				  (loop rest (cons (li a (ul res2)) res) depth)
 				  (loop rest (cons (li a) res) depth))))))))
-		((and (xml-element? fst) (eq? (xml-element-tag fst) 'div))
-		 (loop (append (xml-element-body fst) (cdr obj)) res depth))
+		((and (isa? fst xml-element)
+		      (eq? (with-access::xml-element fst (tag) tag) 'div))
+		 (with-access::xml-element fst (body)
+		    (loop (append body (cdr obj)) res depth)))
 		(else
 		 (loop (cdr obj) res depth))))))))
    
@@ -84,16 +88,16 @@
 ;*    is-section? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (is-section? fst snd)
-   (and (xml-element? fst)
-	(xml-element? snd)
-	(eq? (xml-element-tag fst) 'a)
-	(memq (xml-element-tag snd) '(h1 h2 h3 h4))))
+   (and (isa? fst xml-element)
+	(isa? snd xml-element)
+	(eq? (with-access::xml-element fst (tag) tag) 'a)
+	(memq (with-access::xml-element snd (tag) tag) '(h1 h2 h3 h4))))
 
 ;*---------------------------------------------------------------------*/
 ;*    section-depth ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (section-depth fst snd)
-   (case (xml-element-tag snd)
+   (case (with-access::xml-element snd (tag) tag)
       ((h1) 1)
       ((h2) 2)
       ((h3) 3)
@@ -110,6 +114,7 @@
 ;*    section-title ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (section-title fst snd)
-   (xml-element-body snd))
+   (with-access::xml-element snd (body)
+      body))
    
       

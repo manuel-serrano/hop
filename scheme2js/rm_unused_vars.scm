@@ -33,7 +33,7 @@
 (define-nmethod (Set!.rm!)
    (with-access::Set! this (lvalue val)
       (with-access::Ref lvalue (var)
-	 (if (is-a? var Rm-Var)
+	 (if (isa? var Rm-Var)
 	     (walk! val)
 	     (default-walk! this)))))
 

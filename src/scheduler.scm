@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Fri Sep 30 22:00:00 2011 (serrano)                */
+;*    Last change :  Sat Nov 12 08:56:07 2011 (serrano)                */
 ;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -24,7 +24,7 @@
 	      (proc::procedure (default (lambda (t) #f)))
 	      (condv::condvar read-only (default (make-condition-variable)))
 	      (mutex::mutex read-only (default (make-mutex)))
-	      (scheduler::scheduler (default (scheduler-nil)))
+	      (scheduler::scheduler (default (class-nil scheduler)))
 	      (info::obj (default #unspecified))
 	      (request::obj (default #f))
 	      (onerror::obj (default #f))
@@ -92,11 +92,11 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (with-stage-handler handler args . body)
    (let ((len (length args)))
-      `(begin
-	  (hopthread-onerror-set! thread ,handler)
-	  (hopthread-error-args-length-set! thread ,len)
+      `(with-access::hopthread thread (onerror error-args-length error-args)
+	  (set! onerror ,handler)
+	  (set! error-args-length ,len)
 	  ,@(map (lambda (v i)
-		    `(vector-set! (hopthread-error-args thread) ,i ,v))
+		    `(vector-set! error-args ,i ,v))
 		 args
 		 (iota len))
 	  ,@body)))
@@ -220,21 +220,24 @@
 ;*    thread-info ::hopthread ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (thread-info th::hopthread)
-   (hopthread-info th))
+   (with-access::hopthread th (info)
+      info))
 
 ;*---------------------------------------------------------------------*/
 ;*    thread-info ::hopthread ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (thread-info-set! th::hopthread info)
-   (hopthread-info-set! th info))
+(define-method (thread-info-set! th::hopthread i)
+   (with-access::hopthread th (info)
+      (set! info i)))
 
 ;*---------------------------------------------------------------------*/
 ;*    thread-request ::hopthread ...                                   */
 ;*---------------------------------------------------------------------*/
 (cond-expand
    (enable-threads
-    (define-method (thread-request th::hopthread)
-       (hopthread-request th))))
+      (define-method (thread-request th::hopthread)
+	 (with-access::hopthread th (request)
+	    request))))
 
 ;*---------------------------------------------------------------------*/
 ;*    thread-request-set! ::hopthread ...                              */
@@ -242,22 +245,23 @@
 (cond-expand
    (enable-threads
     (define-method (thread-request-set! th::hopthread req)
-       (hopthread-request-set! th req))))
+	 (with-access::hopthread th (request)
+	    (set! request req)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-default-handler ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (scheduler-default-handler e)
    (cond
-      ((&ignore-exception? e)
+      ((isa? e &ignore-exception)
        #unspecified)
-      ((&exception? e)
+      ((isa? e &exception)
        (exception-notify e))
       (else
        (fprint (current-error-port) "*** INTERNAL ERROR, uncaught exception: "
 	       (typeof e))
        (let ((th (current-thread)))
-	  (when (thread? th)
+	  (when (isa? th thread)
 	     (tprint "Thread: " th
 		     " thread-info: " (thread-info th)
 		     " exception=" e))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Mon May 30 14:45:39 2011 (serrano)                */
+;*    Last change :  Fri Nov 11 07:09:02 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -225,21 +225,21 @@
 		    (attrs)
 		    body)
    (let* ((attrs (cond
-		    ((xml-tilde? onsubmit)
+		    ((isa? onsubmit xml-tilde)
 		     `(:onsubmit ,(xml-tilde->return onsubmit) ,@attrs))
 		    (onsubmit
 		       `(:onsubmit ,onsubmit ,@attrs))
 		    (else
 		     attrs)))
 	  (attrs (cond
-		    ((xml-tilde? onreset)
+		    ((isa? onreset xml-tilde)
 		     `(:onreset ,(xml-tilde->return onreset) ,@attrs))
 		    (onreset
 		       `(:onreset ,onreset ,@attrs))
 		    (else
 		     attrs)))
 	  (attrs (cond
-		    ((xml-tilde? action)
+		    ((isa? action xml-tilde)
 		     `(:action ,(format "javascript: ~a"
 				   (xml-tilde->statement action))
 			 ,@attrs))
@@ -265,7 +265,7 @@
 	      (comp "hop_inputurl_keydown( this, event )")
 	      (onkeydown (if onkeydown
 			     (format "~a; ~a" comp
-				(if (xml-tilde? onkeydown)
+				(if (isa? onkeydown xml-tilde)
 				    (xml-tilde->statement onkeydown)
 				    onkeydown))
 			     comp)))

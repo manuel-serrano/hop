@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Feb 15 11:30:05 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 15:58:27 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -59,7 +59,7 @@
 (define traffic-hook
    (lambda (req rep)
       (when traffic-hookingp
-	 (with-access::http-request req (http host port path user seconds)
+	 (with-access::http-request req (http host port path (u user) seconds)
 	    (hop-event-broadcast! info-event
 				  (<TR> :class "remote"
 				     (<TD> :nowrap #t
@@ -67,7 +67,10 @@
 				     (<TD> :nowrap #t
 					path)
 				     (<TD> :nowrap #t
-					(if (user? user) (user-name user) ""))
+					(if (isa? u user)
+					    (with-access::user u (name)
+					       name)
+					    ""))
 				     (<TD> :nowrap #t
 					(seconds->date seconds))))))
       rep))
@@ -257,74 +260,74 @@
 ;*    <CONFIG> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (<CONFIG>)
-   (list
-    (<H1> "Uptime")
-    (set! traffic-hookingp #f)
-    (<TABLE>
-       :class "hop-info"
-       (<TR>
-	  (<TH> :align 'right "Version")
-	  (<TD> :align 'left (hop-version)))
-       (<TR>
-	  (<TH> :align 'right "Hop")
-	  (<TD> :align 'left (hop-name)))
-       (<TR>
-	  (<TH> :align 'right "Uptime")
-	  (<TD> :align 'left (hop-uptime)))
-       (<TR>
-	  (<TH> :align 'right "System")
-	  (<TD> :align 'left (os-name)))
-       (<TR>
-	  (<TH> :align 'right "Arch")
-	  (<TD> :align 'left (os-arch)))
-       (<TR>
-	  (<TH> :align 'right "Server IP")
-	  (<TD> :align 'left (<TT> (host (hostname)))))
-       (<TR>
-	  (<TH> :align 'right "Client IP")
-	  (<TD> :align 'left (<TT> (socket-host-address
-				    (http-request-socket (current-request)))))))
-    (<H1> "Server configuration")
-    (<TABLE> :class "hop-info"
-       (<TR>
-	  (<TH> :align 'right "Var directory")
-	  (<TD> :align 'left (hop-var-directory)))
-       (<TR>
-	  (<TH> :align 'right "Cache directory")
-	  (<TD> :align 'left (hop-cache-directory)))
-       (<TR>
-	  (<TH> :align 'right "RC directory")
-	  (<TD> :align 'left (hop-rc-directory)))
-       (<TR>
-	  (<TH> :align 'right "RC file")
-	  (<TD> :align 'left (hop-rc-file)))
-       (<TR>
-	  (<TH> :align 'right "Default charset")
-	  (<TD> :align 'left (hop-charset)))
-       (<TR>
-	  (<TH> :align 'right "Default locale")
-	  (<TD> :align 'left (hop-locale)))
-       (<TR>
-	  (<TH> :align 'right "Connection ttl")
-	  (<TD> :align 'left (hop-connection-ttl)))
-       (<TR>
-	  (<TH> :align 'right "Connection timeout")
-	  (<TD> :align 'left (hop-connection-timeout)))
-       (<TR>
-	  (<TH> :align 'right "Keep alive timeout")
-	  (<TD> :align 'left (hop-keep-alive-timeout)))
-       (<TR>
-	  (<TH> :align 'right "Remote keep alive timeout")
-	  (<TD> :align 'left (hop-remote-keep-alive-timeout))))
-    (<H1> "Weblets")
-    (<DIV> :class "autoload"
-       (<BUTTON> :onclick ~(with-hop ($(service () (reset-autoload!))))
-	  "Reset autoload table")
-       (<TABLE> :class "info-autoload"
-	  (<TR> (<TH> "Autoload directories currently used"))
-	  (map (lambda (dir)
-		  (<TR> (<TD> dir)))
-	       (get-autoload-directories))))))
+   (with-access::http-request (current-request) (socket)
+      (list
+	 (<H1> "Uptime")
+	 (set! traffic-hookingp #f)
+	 (<TABLE>
+	    :class "hop-info"
+	    (<TR>
+	       (<TH> :align 'right "Version")
+	       (<TD> :align 'left (hop-version)))
+	    (<TR>
+	       (<TH> :align 'right "Hop")
+	       (<TD> :align 'left (hop-name)))
+	    (<TR>
+	       (<TH> :align 'right "Uptime")
+	       (<TD> :align 'left (hop-uptime)))
+	    (<TR>
+	       (<TH> :align 'right "System")
+	       (<TD> :align 'left (os-name)))
+	    (<TR>
+	       (<TH> :align 'right "Arch")
+	       (<TD> :align 'left (os-arch)))
+	    (<TR>
+	       (<TH> :align 'right "Server IP")
+	       (<TD> :align 'left (<TT> (host (hostname)))))
+	    (<TR>
+	       (<TH> :align 'right "Client IP")
+	       (<TD> :align 'left (<TT> (socket-host-address socket)))))
+	 (<H1> "Server configuration")
+	 (<TABLE> :class "hop-info"
+	    (<TR>
+	       (<TH> :align 'right "Var directory")
+	       (<TD> :align 'left (hop-var-directory)))
+	    (<TR>
+	       (<TH> :align 'right "Cache directory")
+	       (<TD> :align 'left (hop-cache-directory)))
+	    (<TR>
+	       (<TH> :align 'right "RC directory")
+	       (<TD> :align 'left (hop-rc-directory)))
+	    (<TR>
+	       (<TH> :align 'right "RC file")
+	       (<TD> :align 'left (hop-rc-file)))
+	    (<TR>
+	       (<TH> :align 'right "Default charset")
+	       (<TD> :align 'left (hop-charset)))
+	    (<TR>
+	       (<TH> :align 'right "Default locale")
+	       (<TD> :align 'left (hop-locale)))
+	    (<TR>
+	       (<TH> :align 'right "Connection ttl")
+	       (<TD> :align 'left (hop-connection-ttl)))
+	    (<TR>
+	       (<TH> :align 'right "Connection timeout")
+	       (<TD> :align 'left (hop-connection-timeout)))
+	    (<TR>
+	       (<TH> :align 'right "Keep alive timeout")
+	       (<TD> :align 'left (hop-keep-alive-timeout)))
+	    (<TR>
+	       (<TH> :align 'right "Remote keep alive timeout")
+	       (<TD> :align 'left (hop-remote-keep-alive-timeout))))
+	 (<H1> "Weblets")
+	 (<DIV> :class "autoload"
+	    (<BUTTON> :onclick ~(with-hop ($(service () (reset-autoload!))))
+	       "Reset autoload table")
+	    (<TABLE> :class "info-autoload"
+	       (<TR> (<TH> "Autoload directories currently used"))
+	       (map (lambda (dir)
+		       (<TR> (<TD> dir)))
+		  (get-autoload-directories)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <CONFIG:SERVER> ...                                              */
@@ -417,28 +420,31 @@ mmmmmmmmmmlil"))))
 	     (d (<DIV> :class "cache-files"
 		   (<TABLE> :class "cache-files"
 		      (map (lambda (ce)
-			      (<TR>
-				 (<TD>
-				    (<A> :href (format "http://~a:~a~a"
-						       (http-request-host req)
-						       (http-request-port req)
-						       (cache-entry-upath ce))
-				       (cache-entry-upath ce))
-				    " " (round
-					 (/ (file-size (cache-entry-upath ce))
-					    1024))
-				    "KB")))
+			      (with-access::cache-entry ce (upath)
+				 (with-access::http-request req (host port)
+				    (<TR>
+				       (<TD>
+					  (<A> :href (format "http://~a:~a~a"
+							host
+							port
+							upath)
+					     upath)
+					  " " (round
+						 (/ (file-size upath) 1024))
+					  "KB")))))
 			   l)))))
 	 (<TABLE> :class "info-cache"
 	    (<TR>
-	       (<TH> (cache-disk-path c)))
+	       (<TH> (with-access::cache-disk c (path) path)))
 	    (<TR>
 	       (<TD> (format "~a files, ~a KB on cache."
 			     (length l)
 			     (round
 			      (/ (apply + (map (lambda (ce)
 						  (file-size
-						   (cache-entry-upath ce)))
+						     (with-access::cache-entry ce
+							   (upath)
+							upath)))
 					       l))
 				 1024)))))
 	    (<TR> (<TD> "&#160;"))
@@ -459,15 +465,18 @@ mmmmmmmmmmlil"))))
 	    (<TD> :width "20%" :valign 'top
 	       (<DIV> :class "caches"
 		  (map (lambda (c)
-			  (<DIV> :class "cache-link"
-			     :width "100%"
-			     :onclick ~(with-hop ($(service () (info-cache c)))
-					  (lambda (h)
-					     (innerHTML-set! $d h)))
-			     (make-file-name
-			      (basename (dirname (cache-disk-path c)))
-			      (basename (cache-disk-path c)))))
-		       (filter cache-disk? (registered-caches)))))
+			  (with-access::cache-disk c (path)
+			     (<DIV> :class "cache-link"
+				:width "100%"
+				:onclick ~(with-hop ($(service () (info-cache c)))
+					     (lambda (h)
+						(innerHTML-set! $d h)))
+				(make-file-name
+				   (basename (dirname path))
+				   (basename path)))))
+		       (filter (lambda (c)
+				  (isa? c cache-disk))
+			  (registered-caches)))))
 	    (<TD> :width "80%" :valign 'top
 	       d)))))
 
@@ -555,7 +564,8 @@ mmmmmmmmmmlil"))))
 ;*---------------------------------------------------------------------*/
 (define-service (info/perfs/network/close #!key key)
    (let ((req (current-request)))
-      (http-request-connection-set! req 'close)
+      (with-access::http-request req (connection)
+	 (set! connection 'close))
       (instantiate::http-response-string
 	 (request req)
 	 (content-type (mime-type "hop-16x16.png" "image/png"))
@@ -774,26 +784,27 @@ mmmmmmmmmmlil"))))
 		       (<TH>
 			  (symbol->string (car e)))
 		       (<TD>
-			  (let ((sock (http-request-socket (cadr e))))
-			     (<SPAN> (socket-hostname sock)
+			  (with-access::http-request (cadr e) (socket)
+			     (<SPAN> (socket-hostname socket)
 				     ":"
-				     (socket-port-number sock))))))
-		 (cadr (assq key2 tables))))
+				     (socket-port-number socket))))))
+	       (cadr (assq key2 tables))))
 	 (<H1> "Socket table")
 	 (<TABLE> :class "dump-events"
 	    (hashtable-map
-	     (cadr (assq key1 tables))
-	     (lambda (k v)
-		(list
-		 (<TR> (<TH> k))
-		 (<TR> (<TD> (map (lambda (r)
-				     (let ((sock (http-request-socket r)))
-					(list (<SPAN>
-						 (socket-hostname sock)
-						 ":"
-						 (socket-port-number sock))
-					      " ")))
-				  v))))))))))
+	       (cadr (assq key1 tables))
+	       (lambda (k v)
+		  (list
+		     (<TR> (<TH> k))
+		     (<TR> (<TD> (map (lambda (r)
+					 (with-access::http-request r (socket)
+					    (list
+					       (<SPAN>
+						  (socket-hostname socket)
+						  ":"
+						  (socket-port-number socket))
+					       " ")))
+				    v))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <EVENT-AJAX> ...                                                 */

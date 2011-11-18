@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Mon Oct 31 20:13:12 2011 (serrano)                */
+;*    Last change :  Sat Nov 12 06:22:23 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -103,7 +103,7 @@
 			  (method 'get))))
 	       (current-request-set! #f req)
 	       (let ((rep (service-filter req)))
-		  (when (%http-response-local? rep)
+		  (when (isa? rep %http-response-local)
 		     (with-access::%http-response-local rep (start-line)
 			(or (substring-at? start-line "200" 9 3)
 			    (substring-at? start-line "401" 9 3))))))
@@ -169,8 +169,9 @@
 				     (let loop ((l %listeners))
 					(when (pair? l)
 					   ((caar l) e)
-					   (unless (event-stopped e)
-					      (loop (cdr l))))))))))
+					   (with-access::event e (stopped)
+					      (unless stopped
+						 (loop (cdr l)))))))))))
 	       d)))))
 				  
 ;*---------------------------------------------------------------------*/

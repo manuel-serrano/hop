@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -54,12 +54,11 @@
       (set! else (walk! else val-is-needed?))
       ;; some unlikely cases, but does not cost much to test for them...
       (cond
-	 ((Const? test) ;; (if #t x y)
-	  (if (Const-value test)
-	      then
-	      else))
-	 ((and (Const? then) ;; (begin (if (do-something) 1 2) ... )
-	       (Const? else)
+	 ((isa? test Const) ;; (if #t x y)
+	  (with-access::Const test (value) 
+	     (if value then else)))
+	 ((and (isa? then Const) ;; (begin (if (do-something) 1 2) ... )
+	       (isa? else Const)
 	       (not val-is-needed?))
 	  test)
 	 (else
@@ -79,9 +78,9 @@
 (define-nmethod (Set!.elim! val-is-needed?)
    (default-walk! this #t) ;; both are needed.
    (with-access::Set! this (lvalue val)
-      (if (and (Ref? val)
-	       (eq? (Ref-var lvalue)
-		    (Ref-var val)))
+      (if (and (isa? val Ref)
+	       (eq? (with-access::Ref lvalue (var) var)
+		    (with-access::Ref val (var) var)))
 	  (instantiate::Const
 	     (value #unspecified))
 	  this)))
@@ -117,9 +116,9 @@
 						    (null? (cdr exprs)))))
 		      (exprs-tail (cdr exprs)))
 		   (set-car! exprs expr)
-		   (if (Begin? expr)
+		   (if (isa? expr Begin)
 		       ;; insert into our list.
-		       (let ((other-exprs (Begin-exprs expr)))
+		       (let ((other-exprs (with-access::Begin expr (exprs) exprs)))
 			  ;; we know there must be at least 2 elements.
 			  ;; otherwise we wouldn't have gotten a 'Begin'.
 			  (set-car! exprs (car other-exprs))
@@ -142,18 +141,18 @@
 		    ((null? (cdr head)) ;; only one element got through
 		     (car head))
 		    (else
-		     (Begin-exprs-set! this head)
+		     (with-access::Begin this (exprs) (set! exprs head))
 		     this)))
 		((and (null? (cdr exprs))
 		      val-is-needed?)
 		 (if last
-		     (begin
-			(Begin-exprs-set! this head)
+		     (with-access::Begin this (exprs)
+			(set! exprs head)
 			this)
 		     (car exprs)))
-		((or (Lambda? (car exprs))
-		     (Const? (car exprs))
-		     (Ref? (car exprs)))
+		((or (isa? (car exprs) Lambda)
+		     (isa? (car exprs) Const)
+		     (isa? (car exprs) Ref))
 		 (if last
 		     (begin
 			(set-cdr! last (cdr exprs)) ;; remove the current el.
@@ -163,14 +162,14 @@
 		     (loop (cdr exprs)
 			   (cdr exprs) ;; head is the next element (for now)
 			   #f)))
-		((or (Break? (car exprs))
-		     (Return? (car exprs))
-		     (Continue? (car exprs)))
+		((or (isa? (car exprs) Break)
+		     (isa? (car exprs) Return)
+		     (isa? (car exprs) Continue))
 		 ;; remove remaining els
 		 (set-cdr! exprs '())
 		 (if last
-		     (begin
-			(Begin-exprs-set! this head)
+		     (with-access::Begin this (exprs)
+			(set! exprs head)
 			this)
 		     (car exprs)))
 		(else

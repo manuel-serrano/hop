@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Oct 19 17:05:31 2011 (serrano)                */
+;*    Last change :  Sat Nov 12 18:35:10 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -60,7 +60,7 @@
 ;*    service? ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-inline (service? obj)
-   (and (procedure? obj) (hop-service? (procedure-attr obj))))
+   (and (procedure? obj) (isa? (procedure-attr obj) hop-service)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mutexes ...                                                      */
@@ -136,16 +136,16 @@
 ;*    hop-request-service-name ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-request-service-name req)
-   (let* ((path (http-request-path req))
-	  (len (string-length path)))
-      (let loop ((i 1))
-	 (cond
-	    ((=fx i len)
-	     path)
-	    ((char=? (string-ref path i) #\?)
-	     (substring path 0 i))
-	    (else
-	     (loop (+fx i 1)))))))
+   (with-access::http-request req (path)
+      (let ((len (string-length path)))
+	 (let loop ((i 1))
+	    (cond
+	       ((=fx i len)
+		path)
+	       ((char=? (string-ref path i) #\?)
+		(substring path 0 i))
+	       (else
+		(loop (+fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-apply-nice-url ...                                           */
@@ -198,7 +198,7 @@
 ;*    service-funcall-url ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (service-funcall-url svc . vals)
-   (if (not (hop-service? svc))
+   (if (not (isa? svc hop-service))
        (bigloo-type-error 'service-funcall-url 'service svc)
        (with-access::hop-service svc (path)
 	  (hop-apply-url path vals))))
@@ -209,35 +209,39 @@
 (define (service-handler svc req)
    
    (define (invoke proc vals)
-      (hop-verb 2 (hop-color req req " INVOKE.svc")
-		" "
-		(with-output-to-string
-		   (lambda () (write (cons (hop-service-id svc) vals))))
-		"\n")
-      (cond
-	 ((not vals)
-	  (error (hop-service-id svc)
-		 "Illegal service arguments encoding"
-		 `(,(hop-service-id svc) ,vals)))
-	 ((correct-arity? proc (length vals))
-	  (apply proc vals))
-	 (else
-	  (error (hop-service-id svc)
-		 "Wrong number of arguments"
-		 `(,(hop-service-id svc) ,@vals)))))
+      (with-access::hop-service svc (id)
+	 (hop-verb 2 (hop-color req req " INVOKE.svc")
+	    " "
+	    (with-output-to-string
+	       (lambda ()
+		  (write (cons id vals))))
+	    "\n")
+	 (cond
+	    ((not vals)
+	     (error id
+		"Illegal service arguments encoding"
+		`(,id ,vals)))
+	    ((correct-arity? proc (length vals))
+	     (apply proc vals))
+	    (else
+	     (error id
+		"Wrong number of arguments"
+		`(,id ,@vals))))))
    
-   (let* ((ca (http-request-cgi-args req)))
-      (cond
-	 ((null? (cdr ca))
-	  (invoke (hop-service-proc svc) '()))
-	 ((equal? (cgi-arg "hop-encoding" ca) "hop")
-	  (http-request-charset-set! req 'UTF-8)
-	  (invoke (hop-service-proc svc) (serialized-cgi-arg "vals" ca)))
-	 (else
-	  (invoke (hop-service-proc svc)
-		  (append-map (lambda (p)
-				 (list (string->keyword (car p)) (cdr p)))
-			      (cdr ca)))))))
+   (let ((ca (http-request-cgi-args req)))
+      (with-access::hop-service svc (proc)
+	 (cond
+	    ((null? (cdr ca))
+	     (invoke proc '()))
+	    ((equal? (cgi-arg "hop-encoding" ca) "hop")
+	     (with-access::http-request req (charset)
+		(set! charset 'UTF-8))
+	     (invoke proc (serialized-cgi-arg "vals" ca)))
+	    (else
+	     (invoke proc
+		(append-map (lambda (p)
+			       (list (string->keyword (car p)) (cdr p)))
+		   (cdr ca))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure->service ...                                           */
@@ -275,7 +279,7 @@
    (cond
       ((string? exp)
        (string-replace exp #\Newline #\space))
-      ((xml-tilde? exp)
+      ((isa? exp xml-tilde)
        (let ((body (xml-tilde->expression exp)))
 	  (let ((l (string-length body)))
 	     (if (substring-at? body ";\n" (-fx l 2))
@@ -311,7 +315,8 @@
 		(obj->javascript (procedure->service (lambda (res) (cont res))) op #f)))))
       (instantiate::http-response-hop
 	 (backend (hop-xml-backend))
-	 (content-type (xml-backend-mime-type (hop-xml-backend)))
+	 (content-type (with-access::xml-backend (hop-xml-backend) (mime-type)
+			  mime-type))
 	 (request req)
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (xml (<HTML>
@@ -365,14 +370,14 @@
 ;*    initial weblet.                                                  */
 ;*---------------------------------------------------------------------*/
 (define (service-filter req)
-   (when (http-server-request? req)
+   (when (isa? req http-server-request)
       (with-access::http-server-request req (abspath user service method)
 	 (when (hop-service-path? abspath)
 	    (mutex-lock! *service-mutex*)
 	    (let loop ((svc (hashtable-get *service-table* abspath)))
 	       (mutex-unlock! *service-mutex*)
 	       (cond
-		  ((hop-service? svc)
+		  ((isa? svc hop-service)
 		   (when (hop-force-reload-service)
 		      (set! svc (force-reload-service svc)))
 		   (set! service svc)

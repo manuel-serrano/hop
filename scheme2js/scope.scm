@@ -122,7 +122,7 @@
 					     (not (eq? var binding-var)))
 					  scope-vars))
 			   (walk! (instantiate::Let
-				     (location (Node-location this))
+				     (location (with-access::Node this (location) location))
 				     (scope-vars (list binding-var))
 				     (bindings (list binding))
 				     (body this)
@@ -219,7 +219,7 @@
 
 (define-nmethod (Ref.widen!_)
    (with-access::Ref this (var)
-      (unless (is-a? var Scope-Var)
+      (unless (isa? var Scope-Var)
 	 (error "scope"
 		"Internal Error: not scope-var: "
 		var))))
@@ -305,7 +305,7 @@
 		      (hashtable-put! ht var this))
 		   scope-vars)
 	 (default-walk this (list this) ht)
-	 (when (is-a? this Call/cc-Lambda)
+	 (when (isa? this Call/cc-Lambda)
 	    (for-each (lambda (var)
 			 (with-access::Scope-Var var (call/cc-when-alive?)
 			    (set! call/cc-when-alive? #t)))
@@ -341,7 +341,7 @@
 			     (hashtable-put! var->scope-ht var this))
 			  scope-vars)))
 	 (walk body this+surrounding-scopes var->scope-ht)
-	 (when (is-a? this Call/cc-Let)
+	 (when (isa? this Call/cc-Let)
 	    (for-each (lambda (var)
 			 (with-access::Scope-Var var (call/cc-when-alive?)
 			    (set! call/cc-when-alive? #t)))
@@ -386,12 +386,12 @@
 
 (define-nmethod (Call.call/ccs surrounding-scopes var->scope-ht)
    (default-walk this surrounding-scopes var->scope-ht)
-   (when (Call-call/cc? this)
+   (when (with-access::Call this (call/cc?) call/cc?)
       (for-each (lambda (scope)
 		   (cond
-		      ((is-a? scope Lambda) (widen!::Call/cc-Lambda scope))
-		      ((is-a? scope Let) (widen!::Call/cc-Let scope))
-		      ((is-a? scope Call/cc-Tail-rec)
+		      ((isa? scope Lambda) (widen!::Call/cc-Lambda scope))
+		      ((isa? scope Let) (widen!::Call/cc-Let scope))
+		      ((isa? scope Call/cc-Tail-rec)
 		       (with-access::Call/cc-Tail-rec scope (contains-call/cc?)
 			  (set! contains-call/cc? #t)))))
 		surrounding-scopes)))
@@ -409,11 +409,11 @@
 		      ;; are in the bindings-part of a 'let').
 		      ;; -> the variable can not be '.modified-after-call/cc?'.
 		      'do-nothing)
-		     ((or (is-a? scope Call/cc-Lambda)
-			  (is-a? scope Call/cc-Let))
+		     ((or (isa? scope Call/cc-Lambda)
+			  (isa? scope Call/cc-Let))
 		      ;; there was already a call/cc in the scope of the var
 		      (set! modified-after-call/cc? #t))
-		     ((is-a? scope Call/cc-Tail-rec)
+		     ((isa? scope Call/cc-Tail-rec)
 		      (with-access::Call/cc-Tail-rec scope (contains-call/cc?
 							    modified-vars)
 			 (if contains-call/cc?
@@ -433,7 +433,7 @@
 				 (with-access::Call/cc-Tail-rec last-loop
 				       (modified-vars)
 				    (cons-set! modified-vars var))))
-			    ((is-a? (car scopes) Call/cc-Tail-rec)
+			    ((isa? (car scopes) Call/cc-Tail-rec)
 			     (loop (cdr scopes) (car scopes)))
 			    (else
 			     (loop (cdr scopes) last-loop))))))))))))
@@ -486,7 +486,7 @@
       (set! needs-uniquization? (and inside-loop?
 				     captured?
 				     constant?
-				     (not (Const? value))))
+				     (not (isa? value Const))))
       (set! needs-update? (and (not (boxed? var))
 			       modified-after-call/cc?))))
 
@@ -606,7 +606,7 @@
       (with-access::Scope-Var var (repl-var)
 	 (when repl-var
 	    (set! var repl-var)
-	    (set! id (Var-id repl-var))))))
+	    (set! id (with-access::Var repl-var (id) id))))))
 
 
 (define (scope-shrink-vars! tree)
@@ -687,7 +687,7 @@
    ;; body must be a Return.
    (with-access::Lambda this (body)
       (with-access::Return body (val)
-	 (unless (Let? val)
+	 (unless (isa? val Let)
 	    (set! val (instantiate::Let
 			 (scope-vars '())
 			 (bindings '())
@@ -827,9 +827,9 @@
 	     (default-walk! this)
 	     ;; create storage-var
 	     (let* ((storage-decl (Ref-of-new-Var 'storage))
-		    (storage-var (Ref-var storage-decl))
+		    (storage-var (with-access::Ref storage-decl (var) var))
 		    (frame-alloc (instantiate::Frame-alloc
-				    (storage-var (Ref-var storage-decl))
+				    (storage-var (with-access::Ref storage-decl (var) var))
 				    (vars frame-vars))))
 		(for-each (lambda (var)
 			     (with-access::Var var (indirect?)
@@ -880,7 +880,7 @@
 				 (with-access::Var var (indirect?)
 				    (not indirect?)))
 			      scope-vars)))
-	 (if (Module? surrounding-fun)
+	 (if (isa? surrounding-fun Module)
 	     (with-access::Module surrounding-fun (declared-vars)
 		(set! declared-vars (append fun-vars declared-vars)))
 	     (with-access::Lambda surrounding-fun (declared-vars)
@@ -896,7 +896,7 @@
 				 (with-access::Var var (indirect?)
 				    (not indirect?))) ;; should be all of them.
 			      scope-vars)))
-	 (if (Module? surrounding-fun)
+	 (if (isa? surrounding-fun Module)
 	     (with-access::Module surrounding-fun (declared-vars)
 		(set! declared-vars (append fun-vars declared-vars)))
 	     (with-access::Lambda surrounding-fun (declared-vars)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 14 12:01:13 2009                          */
-;*    Last change :  Mon May 30 14:47:35 2011 (serrano)                */
+;*    Last change :  Sat Nov 12 07:37:39 2011 (serrano)                */
 ;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Color Chooser implementation                                     */
@@ -54,8 +54,10 @@
 	  :id cc
 	  :onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))
 	  :oncolorselect (cond
-			    ((xml-tilde? onselect) (xml-tilde->statement onselect))
-			    ((string? onselect) onselect)
+			    ((isa? onselect xml-tilde)
+			     (xml-tilde->statement onselect))
+			    ((string? onselect)
+			     onselect)
 			    (else #f))
 	  attributes
 	  (<TR> :class "hop-colorchooser-mainrow"
@@ -218,7 +220,7 @@
 ;*---------------------------------------------------------------------*/
 (define (obj->proc obj)
    (cond
-      ((xml-tilde? obj)
+      ((isa? obj xml-tilde)
        (format "function( event ) { ~a }" (xml-tilde->return obj)))
       ((string? obj)
        (format "function( event ) { ~a }" obj))))

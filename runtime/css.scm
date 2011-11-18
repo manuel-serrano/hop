@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sat Oct 15 06:54:54 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 11:47:01 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -72,16 +72,17 @@
    (let ((p (open-input-string s)))
       (with-handler
 	 (lambda (e)
-	    (if (&io-parse-error? e)
-		(match-case (&error-obj e)
-		   ((?token ?val ?port ?pos)
-		    (raise
-		       (duplicate::&io-parse-error e
-			  (obj (string-append (substring s 0 pos)
-				  "==>" (string (string-ref s pos)) "<=="
-				  (substring s 0 pos))))))
-		   (else
-		    (raise e)))
+	    (if (isa? e &io-parse-error)
+		(with-access::&error e (obj)
+		   (match-case obj
+		      ((?token ?val ?port ?pos)
+		       (raise
+			  (duplicate::&io-parse-error e
+			     (obj (string-append (substring s 0 pos)
+				     "==>" (string (string-ref s pos)) "<=="
+				     (substring s 0 pos))))))
+		      (else
+		       (raise e))))
 		(raise e)))
 	 (let ((ast (css->ast p :extension hss-extension)))
 	    (close-input-port p)
@@ -153,7 +154,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hss-parse-ruleset s)
    (let ((ast (hss->ast s)))
-      (if (not (css-stylesheet? ast))
+      (if (not (isa? ast css-stylesheet))
 	  (error "hss-string->rulset" "Illegal declaration list" s)
 	  (with-access::css-stylesheet ast (rule*)
 	     (if (not (and (pair? rule*) (null? (cdr rule*))))
@@ -165,13 +166,15 @@
 ;*---------------------------------------------------------------------*/
 (define (hss-parse-rulesets s)
    (let ((ast (hss->ast s)))
-      (if (not (css-stylesheet? ast))
+      (if (not (isa? ast css-stylesheet))
 	  (error "hss-string->rulset" "Illegal declaration list" s)
 	  (with-access::css-stylesheet ast (rule*)
 	     (if (not (pair? rule*))
 		 (error "hss-string->rulset" "Illegal declaration list" s)
 		 (append-map (lambda (rule)
-				(filter css-ruleset? rule))
+				(filter (lambda (r)
+					   (isa? r css-ruleset))
+				   rule))
 		    rule*))))))
    
 ;*---------------------------------------------------------------------*/
@@ -180,7 +183,8 @@
 (define (hss-property->declaration-list val)
    (if (string? val)
        (let ((str (string-append "f{" val "}")))
-	  (css-ruleset-declaration* (hss-parse-ruleset str)))
+	  (with-access::css-ruleset (hss-parse-ruleset str) (declaration*)
+	     declaration*))
        (bigloo-type-error 'hss-property->declaration-list "string" val)))
 
 ;*---------------------------------------------------------------------*/
@@ -203,9 +207,10 @@
 	 ((or (substring-at? val "+ " 0) (substring-at? val "> " 0))
 	  (let* ((str (string-append "f " val))
 		 (rs (hss-parse-ruleset str)))
-	     (list
-	      (duplicate::css-ruleset rs
-		 (selector+ (list (cdr (car (css-ruleset-selector+ rs)))))))))
+	     (with-access::css-ruleset rs (selector+)
+		(list
+		   (duplicate::css-ruleset rs
+		      (selector+ (list (cdr (car selector+)))))))))
 	 (else
 	  (hss-parse-rulesets val))))
 
@@ -230,15 +235,17 @@
 	  (append selector (cons 'childof (car sel+)))))
    
    (define (compile-alias decl alias)
-      (let ((nsel (compose-selectors selector (css-ruleset-selector+ alias))))
-	 (compile (duplicate::css-ruleset alias
-		     (selector+ (list nsel)))
-		  penv)))
+      (with-access::css-ruleset alias (selector+)
+	 (let ((nsel (compose-selectors selector selector+)))
+	    (compile (duplicate::css-ruleset alias
+			(selector+ (list nsel)))
+	       penv))))
 
    (define (empty-selector? selector+)
       (and (null? (cdr selector+))
-	   (css-selector-name? (car selector+))
-	   (string=? (css-selector-name-name (car selector+)) "")))
+	   (isa? (car selector+) css-selector-name)
+	   (with-access::css-selector-name (car selector+) (name)
+	      (string=? name ""))))
 
    (define (args->string-args args)
       (map (lambda (a)
@@ -284,7 +291,9 @@
 				     (cond
 					((null? l)
 					 (liip (cdr rules) ndecl old nrules))
-					((equal? property (css-declaration-property (car l)))
+					((equal? property
+					    (with-access::css-declaration (car l) (property)
+					       property))
 					 (laap (cdr l) ndecl (cons (car l) old)))
 					(else
 					 (laap (cdr l) (cons (car l) ndecl) old))))
@@ -303,7 +312,9 @@
 		       (cond
 			  ((null? rules)
 			   (loop decl old nrules))
-			  ((equal? property (css-declaration-property (car rules)))
+			  ((equal? property
+			      (with-access::css-declaration (car rules) (property)
+				 property))
 			   (liip (cdr rules) decl (cons (car rules) old)))
 			  (else
 			   (liip (cdr rules) (cons (car rules) decl) old))))))
@@ -356,27 +367,27 @@
 ;*---------------------------------------------------------------------*/
 (define (hss-response req path)
    (if (authorized-path? req path)
-       (let ((hss (hop-get-hss path))
-	     (mime (mime-type path "text/css"))
-	     (method (http-request-method req)))
-	  (cond
-	     ((string? hss)
-	      (instantiate::http-response-file
-		 (request req)
-		 (charset (hop-locale))
-		 (content-type mime)
-		 (bodyp (eq? method 'GET))
-		 (file hss)))
-	     (hss
-	      (instantiate::http-response-procedure
-		 (request req)
-		 (charset (hop-locale))
-		 (content-type mime)
-		 (bodyp (eq? method 'GET))
-		 (proc (lambda (p)
-			  (css-write hss p)))))
-	     (else
-	      (http-file-not-found path))))
+       (with-access::http-request req (method)
+	  (let ((hss (hop-get-hss path))
+		(mime (mime-type path "text/css")))
+	     (cond
+		((string? hss)
+		 (instantiate::http-response-file
+		    (request req)
+		    (charset (hop-locale))
+		    (content-type mime)
+		    (bodyp (eq? method 'GET))
+		    (file hss)))
+		(hss
+		   (instantiate::http-response-procedure
+		      (request req)
+		      (charset (hop-locale))
+		      (content-type mime)
+		      (bodyp (eq? method 'GET))
+		      (proc (lambda (p)
+			       (css-write hss p)))))
+		(else
+		 (http-file-not-found path)))))
        (user-access-denied req)))
 
 ;*---------------------------------------------------------------------*/
@@ -410,7 +421,7 @@
 		    (eval `(module ,(gensym)))
 		    (with-handler
 		       (lambda (e)
-			  (when (&exception? e)
+			  (when (isa? e &exception)
 			     (exception-notify e))
 			  (with-error-to-string
 			     (lambda ()
@@ -438,16 +449,17 @@
 (define (hop-read-hss iport)
    (with-handler
       (lambda (e)
-	 (if (not (&io-parse-error? e))
+	 (if (not (isa? e &io-parse-error))
 	     (raise e)
-	     (match-case (&io-parse-error-obj e)
-		((?token ?val ?file ?pos)
-		 (raise (duplicate::&io-parse-error e
-			   (obj (format "~a (~a)" token val))
-			   (fname file)
-			   (location pos))))
-		(else
-		 (raise e)))))
+	     (with-access::&io-parse-error e (obj)
+		(match-case obj
+		   ((?token ?val ?file ?pos)
+		    (raise (duplicate::&io-parse-error e
+			      (obj (format "~a (~a)" token val))
+			      (fname file)
+			      (location pos))))
+		   (else
+		    (raise e))))))
       (css->ast iport :extension hss-extension)))
 
 ;*---------------------------------------------------------------------*/
@@ -465,17 +477,20 @@
 ;*    ruleset.                                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (css-write o::css-ruleset-unfold p::output-port)
-   (for-each (lambda (o) (css-write o p)) (css-ruleset-unfold-ruleset+ o)))
+   (with-access::css-ruleset-unfold o (ruleset+)
+      (for-each (lambda (o) (css-write o p))
+	 ruleset+)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (hss-compile o)
-   (duplicate::css-stylesheet o
-      (import* (map hss-compile-import (css-stylesheet-import* o)))
-      (rule* (map (lambda (r)
-		     (compile r *hss-property-env*))
-		  (css-stylesheet-rule* o)))))
+   (with-access::css-stylesheet o (import* rule*)
+      (duplicate::css-stylesheet o
+	 (import* (map hss-compile-import import*))
+	 (rule* (map (lambda (r)
+			(compile r *hss-property-env*))
+		   rule*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-compile-import ...                                           */
@@ -507,22 +522,25 @@
 ;*    compile ::css-media ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (compile o::css-media penv)
-   (duplicate::css-media o
-      (ruleset* (compile (css-media-ruleset* o) penv))))
+   (with-access::css-media o (ruleset*)
+      (duplicate::css-media o
+	 (ruleset* (compile ruleset* penv)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile ::css-page ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (compile o::css-page penv)
-   (duplicate::css-page o
-      (declaration* (compile (css-page-declaration* o) penv))))
+   (with-access::css-page o (declaration*)
+      (duplicate::css-page o
+	 (declaration* (compile declaration* penv)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile ::css-fontface ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (compile o::css-fontface penv)
-   (duplicate::css-fontface o
-      (declaration* (compile (css-fontface-declaration* o) penv))))
+   (with-access::css-fontface o (declaration*)
+      (duplicate::css-fontface o
+	 (declaration* (compile declaration* penv)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile ::css-pseudopage ...                                     */
@@ -537,16 +555,17 @@
 
    (define (find-compiler selector)
       (let ((hc (find-selector-compiler selector)))
-	 (when (and hc (pair? (hss-compiler-properties hc)))
+	 (when (and hc (pair? (with-access::hss-compiler hc (properties)
+				 properties)))
 	    hc)))
       
    (define (compile-rule o)
       (with-access::css-ruleset o (selector+ declaration*)
 	 (let ((hc (find-compiler (car (last-pair (car selector+))))))
 	    (if hc
-		(let* ((lenv (hss-compiler-properties hc))
-		       (nselector (hss-compile-selector* (car selector+))))
-		   (hss-compile-declaration* nselector declaration* lenv penv))
+		(with-access::hss-compiler hc ((lenv properties))
+		   (let ((nselector (hss-compile-selector* (car selector+))))
+		      (hss-compile-declaration* nselector declaration* lenv penv)))
 		(let ((ndecl* (apply append (compile declaration* penv))))
 		   (duplicate::css-ruleset o
 		      (selector+ (map hss-compile-selector* selector+))
@@ -560,13 +579,15 @@
 	  ;; the ruleset is unfolded iff:
 	  ;;    it uses several selectors
 	  ;;    one of the selector refers to a compiler in the last position
-	  (instantiate::css-ruleset-unfold
-	     (ruleset+ (map (lambda (s)
-			       (compile-rule
-				(instantiate::css-ruleset
-				   (selector+ (list (compile s penv)))
-				   (declaration* declaration*))))
-			    selector+)))
+	  (begin
+	     (print 6666)
+	     (instantiate::css-ruleset-unfold
+		(ruleset+ (map (lambda (s)
+				  (compile-rule
+				     (instantiate::css-ruleset
+					(selector+ (list (compile s penv)))
+					(declaration* declaration*))))
+			     selector+))))
 	  (compile-rule o))))
 
 ;*---------------------------------------------------------------------*/
@@ -581,12 +602,13 @@
 	     ;; stopped is the generated property is the same as the initial
 	     ;; one.
 	     (append-map (lambda (o2)
-			    (if (equal? property (css-declaration-property o))
-				(with-access::css-declaration o2 ((expr2 expr))
-				   (list
-				    (duplicate::css-declaration o2
-				       (expr (compile expr2 penv)))))
-				(compile o penv)))
+			    (with-access::css-declaration o ((p property))
+			       (if (equal? property p)
+				   (with-access::css-declaration o2 ((expr2 expr))
+				      (list
+					 (duplicate::css-declaration o2
+					    (expr (compile expr2 penv)))))
+				   (compile o penv))))
 			 (comp expr prio))
 	     (list
 	      (duplicate::css-declaration o
@@ -598,43 +620,50 @@
 (define (hss-compile-selector::pair o hc bodyp)
    
    (define (pseudo-attr? a)
-      (and (css-selector-pseudo? a)
-	   (not (css-selector-pseudo-fun a))
-	   (member (css-selector-pseudo-expr a)
-		   '("active" "focus" "before" "after"))))
-
+      (and (isa? a css-selector-pseudo)
+	   (with-access::css-selector-pseudo a (expr fun)
+	      (and (not fun)
+		   (member expr '("active" "focus" "before" "after"))))))
+   
    (define (copy-compiler-selectors hc attr*)
       ;; copy the virtual selector attribute only for the
       ;; first element of the selector
       (let ((npattr* (filter (lambda (a)
-				(and (css-selector-pseudo? a)
+				(and (isa? a css-selector-pseudo)
 				     (not (pseudo-attr? a))))
-			     attr*)))
-	 (let loop ((ls (hss-compiler-selector hc)))
-	    (let ((s (car ls)))
-	       (if (null? (cdr ls))
-		   (list (if (css-selector? s)
-			     (duplicate::css-selector s
-				(attr* (append (css-selector-attr* s) attr*)))
+			attr*)))
+	 (with-access::hss-compiler hc (selector)
+	    (let loop ((ls selector))
+	       (let ((s (car ls)))
+		  (if (null? (cdr ls))
+		      (list
+			 (if (isa? s css-selector)
+			     (with-access::css-selector s ((sattr* attr*))
+				(duplicate::css-selector s
+				   (attr* (append sattr* attr*))))
 			     s))
-		   (cons (if (css-selector? s)
-			     (duplicate::css-selector s
-				(attr* (append (css-selector-attr* s) npattr*)))
+		      (cons
+			 (if (isa? s css-selector)
+			     (with-access::css-selector s (attr*)
+				(duplicate::css-selector s
+				   (attr* (append attr* npattr*))))
 			     s)
-			 (loop (cdr ls))))))))
+			 (loop (cdr ls)))))))))
    
    (with-access::css-selector o (element attr*)
-      (let ((el (css-selector-name-name element)))
-	 (if (and (hss-compiler-body hc) bodyp)
-	     (append
-	      (let ((attr* (filter (lambda (a) (not (pseudo-attr? a))) attr*)))
-		 (copy-compiler-selectors hc attr*))
-	      (list
-	       '| |
-	       (instantiate::css-selector
-		  (element (hss-compiler-body hc))
-		  (attr* (filter pseudo-attr? attr*)))))
-	     (copy-compiler-selectors hc attr*)))))
+      (with-access::hss-compiler hc (body)
+	 (with-access::css-selector-name element ((el name))
+	    (if (and body bodyp)
+		(append
+		   (let ((attr* (filter (lambda (a) (not (pseudo-attr? a)))
+				   attr*)))
+		      (copy-compiler-selectors hc attr*))
+		   (list
+		      '| |
+		      (instantiate::css-selector
+			 (element body)
+			 (attr* (filter pseudo-attr? attr*)))))
+		(copy-compiler-selectors hc attr*))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-parse-function ...                                           */
@@ -643,7 +672,7 @@
    (define (err msg)
       (error fun msg s))
    (let ((ast (hss->ast (format "* {x:~a;}" s))))
-      (if (not (css-stylesheet? ast))
+      (if (not (isa? ast css-stylesheet))
 	  (err "result of HSS function not a stylesheet")
 	  (with-access::css-stylesheet ast (rule*)
 	     (if (not (and (pair? rule*) (null? (cdr rule*))))
@@ -689,13 +718,13 @@
 	      (hc (find-selector-compiler o)))
 	  (with-access::css-selector o (element attr*)
 	     (cond
-		((hss-compiler? hc)
+		((isa? hc hss-compiler)
 		 (let ((use-body (and (pair? (cdr lst))
 				      (symbol? (cadr lst))
 				      (not (eq? (cadr lst) '+)))))
 		    (append (hss-compile-selector o hc use-body)
 			    (hss-compile-selector* (cdr lst)))))
-		((css-selector-name? element)
+		((isa? element css-selector-name)
 		 (append (hss-unalias-selector-name o element)
 			 (hss-compile-selector* (cdr lst))))
 		(else
@@ -708,8 +737,9 @@
    (with-access::css-selector-name o (name)
       (if (string? name)
 	  (let ((new (hashtable-get *hss-type-env* (string-downcase name))))
-	     (if (hss-compiler? new)
-		 (hss-compiler-selector new)
+	     (if (isa? new hss-compiler)
+		 (with-access::hss-compiler new (selector)
+		    selector)
 		 (list (duplicate::css-selector s
 			  (element o)))))
 	  (list (duplicate::css-selector s
@@ -730,12 +760,14 @@
 	     (with-handler
 		(lambda (e)
 		   (cond
-		      ((&eval-warning? e)
+		      ((isa? e &eval-warning)
 		       (warning-notify e)
 		       #unspecified)
-		      ((and (&exception? e) (not (&exception-location e)))
-		       (&exception-location-set! e pos)
-		       (&exception-fname-set! e (input-port-name ip))
+		      ((and (isa? e &exception)
+			    (not (with-access::&exception e (location) location)))
+		       (with-access::&exception e (location fname)
+			  (set! location pos)
+			  (set! fname (input-port-name ip)))
 		       (raise e))
 		      (else
 		       (raise e))))
@@ -747,7 +779,8 @@
 (define-method (object-display o::css-hash-color . port)
    (let ((p (if (pair? port) (car port) (current-output-port))))
       (display "#" p)
-      (display (css-hash-color-value o) p)))
+      (with-access::css-hash-color o (value)
+	 (display value p))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-display ::css-function ...                                */

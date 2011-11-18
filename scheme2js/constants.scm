@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -121,7 +121,8 @@
 		 (let ((new-const (Ref-of-new-Var 'const)))
 		    (hashtable-put! constant-ht value
 				    (cons new-const
-					  (Node-location this)))
+				       (with-access::Node this (location)
+					  location)))
 		    (with-access::Ref new-const (var)
 		       (var-reference var :location this)))))
 	  this)))

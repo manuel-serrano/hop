@@ -61,25 +61,29 @@
    (with-access::Lambda l (closure? this-var)
       (and (not closure?)
 	   ;; do not inline functions that access 'this'
-	   (zero? (Var-uses this-var)))))
+	   (with-access::Var this-var (uses)
+	      (zero? uses)))))
       
 (define (can-be-inlined? var::Var)
    (define (imported-var? v)
-      (eq? (Var-kind v) 'imported))
+      (with-access::Var v (kind)
+	 (eq? kind 'imported)))
    (define (exported-as-mutable? v)
-      (and (eq? (Var-kind v) 'exported)
-	   (not (Export-Desc-exported-as-const? (Var-export-desc v)))))
+      (with-access::Var v (kind export-desc)
+	 (and (eq? kind 'exported)
+	      (with-access::Export-Desc export-desc (exported-as-const?)
+	      (not exported-as-const?)))))
    (with-access::Var var (constant? value)
       (and constant?
 	   value
 	   (not (imported-var? var))
 	   (not (exported-as-mutable? var))
-	   (Lambda? value)
+	   (isa? value Lambda)
 	   (lambda-can-be-inlined? value))))
 
 ;; can we move a function from its definition to its use?
 (define (can-be-moved? var::Var)
-   (and (eq? (Var-kind var) 'local)
+   (and (with-access::Var var (kind) (eq? kind 'local))
 	(can-be-inlined? var)))
 
 ;; functions that are only used once are directly moved to this position
@@ -101,7 +105,7 @@
 
 (define-nmethod (Call.single! surrounding-funs)
    (with-access::Call this (operator)
-      (when (Ref? operator)
+      (when (isa? operator Ref)
 	 (with-access::Ref operator (var)
 	    (with-access::Var var (uses value)
 	       (if (and (= uses 1)
@@ -148,7 +152,7 @@
 
    (default-walk this nested-counter)
    (with-access::Call this (operator)
-      (when (Ref? operator)
+      (when (isa? operator Ref)
 	 (with-access::Ref operator (var)
 	    (when (good-for-inlining? var nested-counter)
 	       (with-access::Var var (value)
@@ -178,7 +182,7 @@
 (define-nmethod (Set!.absorb! label fun)
    (with-access::Set! this (lvalue val)
       (with-access::Ref lvalue (var)
-	 (when (is-a? var Inlined-Local)
+	 (when (isa? var Inlined-Local)
 	    (set! val (instantiate::Const (value #unspecified)))
 	    (shrink! var)))
       (default-walk! this label fun)))
@@ -192,14 +196,17 @@
 
 (define-nmethod (Call.absorb! label fun)
    (with-access::Call this (operator operands)
-      (if (and (Lambda? operator)
+      (if (and (isa? operator Lambda)
 	       (lambda-can-be-inlined? operator))
 	  (with-access::Lambda operator (formals vaarg? body)
 	     ;; body must be a Return.
 	     ;; no need to include it...
-	     (let* ((return-body (Return-val body))
+	     (let* ((return-body (with-access::Return body (val) val))
 		    (assigs-mapping (parameter-assig-mapping
-				     (if (Ref? fun) (Var-id (Ref-var fun)))
+				     (if (isa? fun Ref)
+					 (with-access::Ref fun (var)
+					    (with-access::Var var (id)
+					    id)))
 				     this
 				     operands
 				     formals
@@ -212,7 +219,8 @@
 		    (traversed-assigs (map (lambda (node)
 					      (walk! node label fun))
 					   assigs))
-		    (return-label (make-Label (gensym 'inlined)))
+		    (return-label (instantiate::Label
+				     (id (gensym 'inlined))))
 		    (return-labeled (instantiate::Labeled
 					(body return-body)
 					(label return-label)))
@@ -220,7 +228,8 @@
 		(with-access::Inline-Env env (counter)
 		   (set! counter (+ counter 1)))
 		(instantiate::Let
-		   (scope-vars (map Ref-var formals))
+		   (scope-vars (map (lambda (f) (with-access::Ref f (var) var))
+				  formals))
 		   (bindings traversed-assigs)
 		   (body traversed-labeled)
 		   (kind 'let))))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Dec 16 07:33:11 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Wed Nov 16 15:49:44 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
 ;*=====================================================================*/
@@ -460,10 +460,11 @@ Google, each containing a forward pointer to the actual URL.])))
 ;*---------------------------------------------------------------------*/
 (define-service (webfilter/preferences)
    (let ((req (current-request)))
-      (if (not (user-authorized-service? (http-request-user req) 'admin))
-	  (user-access-denied req)
-	  (<WEBFILTER:HTML>
-	     (<PREFERENCES>)))))
+      (with-access::http-request req (user)
+	 (if (not (user-authorized-service? user 'admin))
+	     (user-access-denied req)
+	     (<WEBFILTER:HTML>
+		(<PREFERENCES>))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <PREFERENCES> ...                                                */

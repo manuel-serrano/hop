@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Mon May 30 14:47:42 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 12:01:41 2011 (serrano)                */
 ;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -149,7 +149,7 @@
 ;*---------------------------------------------------------------------*/
 (define (obj->proc obj)
    (cond
-      ((xml-tilde? obj)
+      ((isa? obj xml-tilde)
        (format "function( event ) { ~a }" (xml-tilde->return obj)))
       ((string? obj)
        (format "function( event ) { ~a }" obj))))
@@ -411,7 +411,7 @@
 		       (if (webdav? url)
 			   (with-handler
 			      (lambda (e)
-				 (if (&io-error? e)
+				 (if (isa? e &io-error)
 				     (begin
 					(exception-notify e)
 					'())

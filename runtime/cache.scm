@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Mon May 23 14:08:28 2011 (serrano)                */
+;*    Last change :  Thu Nov 10 17:38:11 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
@@ -106,8 +106,9 @@
 ;*    cache-entry-valid? ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (cache-entry-valid? ce path)
-   (and (cache-entry? ce)
-	(signature-equal? (cache-entry-signature ce) (cache-signature path))))
+   (and (isa? ce cache-entry)
+	(with-access::cache-entry ce (signature)
+	   (signature-equal? signature (cache-signature path)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    signature-equal? ...                                             */
@@ -127,9 +128,10 @@
 (define (for-each-cache proc::procedure c::cache)
    (with-access::cache c (%head)
       (let loop ((h %head))
-	 (when (cache-entry? h)
+	 (when (isa? h cache-entry)
 	    (proc h)
-	    (loop (cache-entry-%next h))))))
+	    (with-access::cache-entry h (%next)
+	       (loop %next))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-clear ::cache ...                                          */
@@ -164,7 +166,8 @@
 		 (res '()))
 	 (if (not tail)
 	     res
-	     (loop (cache-entry-%prev tail) (cons tail res))))))
+	     (with-access::cache-entry tail (%prev)
+		(loop %prev (cons tail res)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-get ::cache ...                                            */
@@ -180,25 +183,31 @@
 		   (when %prev
 		      (if %next
 			  (begin
-			     (cache-entry-%prev-set! %next %prev)
-			     (cache-entry-%next-set! %prev %next))
+			     (with-access::cache-entry %next ((prev %prev))
+				(set! prev %prev))
+			     (with-access::cache-entry %prev ((next %next))
+				(set! next %next)))
 			  (begin
-			     (cache-entry-%next-set! %prev #f)
+			     (with-access::cache-entry %prev (%next)
+				(set! %next #f))
 			     (set! %tail %prev)))
 		      (set! %prev #f)
 		      (set! %next %head)
-		      (cache-entry-%prev-set! %head ce)
+		      (with-access::cache-entry %head (%prev)
+			 (set! %prev ce))
 		      (set! %head ce)))
 		(mutex-unlock! %mutex)
 		value))
-	    ((cache-entry? ce)
+	    ((isa? ce cache-entry)
 	     (hashtable-remove! %table path)
 	     (with-access::cache-entry ce (value %prev %next)
 		(if %prev
-		    (cache-entry-%next-set! %prev %next)
+		    (with-access::cache-entry %prev ((next %next))
+		       (set! next %next))
 		    (set! %head %next))
 		(if %next
-		    (cache-entry-%prev-set! %next %prev)
+		    (with-access::cache-entry %next ((prev %prev))
+		       (set! prev %prev))
 		    (set! %tail %prev))
 		(mutex-unlock! %mutex)
 		#f))
@@ -214,31 +223,38 @@
       (mutex-lock! %mutex)
       (let ((ce (hashtable-get %table path)))
 	 (cond
-	    ((and (validity ce path) (file-exists? (cache-entry-value ce)))
+	    ((and (validity ce path)
+		  (with-access::cache-entry ce (value) (file-exists? value)))
 	     (with-access::cache-entry ce (value %prev %next)
 		(when %prev
 		   (if %next
 		       (begin
-			  (cache-entry-%prev-set! %next %prev)
-			  (cache-entry-%next-set! %prev %next))
+			  (with-access::cache-entry %next ((prev %prev))
+			     (set! prev %prev))
+			  (with-access::cache-entry %prev ((next %next))
+				(set! next %next)))
 		       (begin
-			  (cache-entry-%next-set! %prev #f)
+			  (with-access::cache-entry %prev (%next)
+				(set! %next #f))
 			  (set! %tail %prev)))
 		   (set! %prev #f)
 		   (set! %next %head)
-		   (cache-entry-%prev-set! %head ce)
+		   (with-access::cache-entry %head (%prev)
+		      (set! %prev ce))
 		   (set! %head ce))
 		(mutex-unlock! %mutex)
 		value))
-	    ((cache-entry? ce)
+	    ((isa? ce cache-entry)
 	     (hashtable-remove! %table path)
 	     (with-access::cache-entry ce (value %prev %next)
 		(if (file-exists? value) (delete-file value))
 		(if %prev
-		    (cache-entry-%next-set! %prev %next)
+		    (with-access::cache-entry %prev ((next %next))
+		       (set! next %next))
 		    (set! %head %next))
 		(if %next
-		    (cache-entry-%prev-set! %next %prev)
+		    (with-access::cache-entry %next ((prev %prev))
+		       (set! prev %prev))
 		    (set! %tail %prev))
 		(mutex-unlock! %mutex)
 		#f))
@@ -357,13 +373,18 @@
 	 (if (<fx current-entries max-entries)
 	     (set! current-entries (+fx 1 current-entries))
 	     (begin
-		(hashtable-remove! %table (cache-entry-upath %tail))
-		(set! %tail (cache-entry-%prev %tail))
-		(cache-entry-%next-set! %tail #f)))
+		(with-access::cache-entry %tail (upath)
+		   (hashtable-remove! %table upath))
+		(with-access::cache-entry %tail (%prev)
+		   (set! %tail %prev))
+		(with-access::cache-entry %tail (%next)
+		   (set! %next #f))))
 	 (if %head
 	     (begin
-		(cache-entry-%next-set! ce %head)
-		(cache-entry-%prev-set! %head ce)
+		(with-access::cache-entry ce (%next)
+		   (set! %next %head))
+		(with-access::cache-entry %head (%prev)
+		   (set! %prev ce))
 		(set! %head ce))
 	     (begin
 		(set! %head ce)
@@ -387,21 +408,27 @@
 (define-method (cache-add-entry! c::cache-memory ce::cache-entry)
    (with-access::cache-memory c (%table %head %tail max-entries current-entries
 					max-file-size)
-      (hashtable-put! %table (cache-entry-upath ce) ce)
-      (if (<fx current-entries max-entries)
-	  (set! current-entries (+fx 1 current-entries))
-	  (begin
-	     (hashtable-remove! %table (cache-entry-upath %tail))
-	     (set! %tail (cache-entry-%prev %tail))
-	     (cache-entry-%next-set! %tail #f)))
-      (if %head
-	  (begin
-	     (cache-entry-%next-set! ce %head)
-	     (cache-entry-%prev-set! %head ce)
-	     (set! %head ce))
-	  (begin
-	     (set! %head ce)
-	     (set! %tail ce)))))
+      (with-access::cache-entry ce (upath)
+	 (hashtable-put! %table upath ce)
+	 (if (<fx current-entries max-entries)
+	     (set! current-entries (+fx 1 current-entries))
+	     (begin
+		(with-access::cache-entry %tail (upath)
+		   (hashtable-remove! %table upath))
+		(with-access::cache-entry %tail (%prev)
+		   (set! %tail %prev))
+		(with-access::cache-entry %tail (%next)
+		   (set! %next #f))))
+	 (if %head
+	     (begin
+		(with-access::cache-entry ce (%next)
+		   (set! %next %head))
+		(with-access::cache-entry %head (%prev)
+		   (set! %prev ce))
+		(set! %head ce))
+	     (begin
+		(set! %head ce)
+		(set! %tail ce))))))
    
 
    

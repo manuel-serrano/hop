@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
-;*    Last change :  Fri Oct 28 08:52:48 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 16:09:10 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
@@ -241,7 +241,7 @@
       (with-lock *db-mutex*
 	 (lambda ()
 	    (let ((old (hz-db-find name category)))
-	       (if (weblet? old)
+	       (if (isa? old weblet)
 		   (begin
 		      (sqlite-exec *db*
 			 "UPDATE weblets SET ~l
@@ -267,7 +267,7 @@
       (with-lock *db-mutex*
 	 (lambda ()
 	    (let ((old (hz-db-find name category)))
-	       (when (weblet? old)
+	       (when (isa? old weblet)
 		  (sqlite-exec *db*
 		     "DELETE from weblets WHERE (name=~q) AND (category=~q)"
 		     name

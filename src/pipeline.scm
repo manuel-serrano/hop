@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Fri Sep 30 22:01:47 2011 (serrano)                */
+;*    Last change :  Fri Nov 18 16:04:20 2011 (serrano)                */
 ;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -109,7 +109,7 @@
    (define (http-connect-verb scd id sock req mode num)
       (with-access::http-request req (method scheme host port path user header)
          (when (>=fx (hop-verbose) 1)
-	    (hop-verb 1 (if (http-proxy-request? req)
+	    (hop-verb 1 (if (isa? req http-proxy-request)
 			    (hop-color req req
 				       (if (eq? mode 'keep-alive)
 					   (format " REQUEST.prox (+~a)" num)
@@ -123,13 +123,14 @@
 			  ": ")
 		      method " " scheme "://"
 		      (if (>=fx (hop-verbose) 2)
-			  (string-append (user-name user) "@")
+			  (with-access::user user (name)
+			     (string-append name "@"))
 			  "")
 		      host ":"
 		      port (string-for-read path)
 		      " "
 		      (if (>=fx (hop-verbose) 2)
-			  (http-request-http req)
+			  (with-access::http-request req (http) http)
 			  "")
 		      "\n")
 	    (hop-verb 4 (hop-color id id " CONNECT.header") ": "
@@ -153,13 +154,14 @@
        (debug-thread-info-set! thread "connection established with ~a")
        (let ((req (with-time (http-parse-request sock id timeout) id "CONNECT")))
 	  ;; debug info
-	  (debug-thread-info-set! thread
-				  (format "request parsed for ~a, ~a ~a"
-					  (if (>=fx (hop-verbose) 2)
-					      (socket-hostname sock)
-					      (socket-host-address sock))
-					  (http-request-method req)
-					  (http-request-path req)))
+	  (with-access::http-request req (method path)
+	     (debug-thread-info-set! thread
+		(format "request parsed for ~a, ~a ~a"
+		   (if (>=fx (hop-verbose) 2)
+		       (socket-hostname sock)
+		       (socket-host-address sock))
+		   method
+		   path)))
 	  (http-connect-verb scd id sock req mode num)
 	  ;; decrement the keep-alive number (we have a valid connection)
 	  (when (eq? mode 'keep-alive) (keep-alive--))
@@ -176,38 +178,41 @@
    ;; is the error raised of a timeout in a keep-alive connection?
    (define (keep-alive-ellapsed-error? e)
       (and (eq? mode 'keep-alive)
-	   (or (&io-timeout-error? e)
-	       (and (&io-parse-error? e)
-		    (eof-object? (&io-parse-error-obj e))))))
-   
+	   (or (isa? e &io-timeout-error)
+	       (isa? e &io-connection-error)
+	       (and (isa? e &io-parse-error)
+		    (with-access::&io-parse-error e (obj)
+		       (eof-object? obj))))))
+
    (if (keep-alive-ellapsed-error? e)
        ;; this is not a true error, just log
        (hop-verb 3 (hop-color id id " SHUTDOWN")
 		 (cond
-		    ((&io-timeout-error? e)
+		    ((isa? e &io-timeout-error)
 		     " (keep-alive, timeout ellapsed)")
-		    ((and (&io-parse-error? e)
-			  (eof-object? (&io-parse-error-obj e)))
+		    ((and (isa? e &io-parse-error)
+			  (with-access::&io-parse-error e (obj)
+			     (eof-object? obj)))
 		     " (keep-alive, connection reset by peer)")
 		    (else
 		     " (keep-alive, parse error)"))
 		 "\n")
        ;; this one is a true error
        (begin
-	  (when (&exception? e)
+	  (when (isa? e &exception)
 	     (hop-verb 1 (hop-color id id " ABORT: ")
 		       " " (trace-color 1 (typeof e))
 		       "\n")
 	     (exception-notify e))
-	  (when (and (&io-unknown-host-error? e) (not (socket-down? sock)))
+	  (when (and (isa? e &io-unknown-host-error) (not (socket-down? sock)))
 	     (with-handler
 		(lambda (e)
 		   ;; this error handler is invoked when the attempt to
 		   ;; notify the previous error to the client fails
-		   (when (&error? e) (exception-notify e))
+		   (when (isa? e &error) (exception-notify e))
 		   #unspecified)
 		;; we will try to answer the error to the client
-		(unless (&io-sigpipe-error? e)
+		(unless (isa? e &io-sigpipe-error)
 		   (let ((resp ((or (hop-http-request-error) http-error) e)))
 		      (http-response resp sock)))))))
 
@@ -220,10 +225,10 @@
 ;*    http-response-static? ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (http-response-static? resp)
-   (or (http-response-file? resp)
-       (http-response-string? resp)
-       (http-response-abort? resp)
-       (http-response-error? resp)))
+   (or (isa? resp http-response-file)
+       (isa? resp http-response-string)
+       (isa? resp http-response-abort)
+       (isa? resp http-response-error)))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-response ...                                               */
@@ -237,14 +242,11 @@
    (with-stage-handler
       response-error-handler (scd req)
       (let ((resp (with-time (request->response req thread) id "RESPONSE")))
-	 (debug-thread-info-set! thread
-				 (format "~a ~a://~a:~a~a... -> ~a"
-					 (http-request-method req)
-					 (http-request-scheme req)
-					 (http-request-host req)
-					 (http-request-port req)
-					 (http-request-path req)
-					 (typeof resp)))
+	 (with-access::http-request req (method scheme host port path)
+	    (debug-thread-info-set! thread
+	       (format "~a ~a://~a:~a~a... -> ~a"
+		  method scheme host
+		  port path (typeof resp))))
 	 (let ((proc (if (http-response-static? resp)
 			 stage-static-answer
 			 stage-dynamic-answer)))
@@ -265,21 +267,22 @@
       (lambda (e)
 	 (exception-notify e)
 	 ;; there is nothing we can do but aborting the request
-	 (socket-close (http-request-socket req))
+	 (socket-close (with-access::http-request req (socket) socket))
 	 (raise (instantiate::&ignore-exception)))
       ;; try to send the error message
-      (if (%http-response? e)
-	  (http-response e (http-request-socket req))
+      (if (isa? e %http-response)
+	  (with-access::http-request req (socket)
+	     (http-response e socket))
 	  (begin
 	     (exception-notify e)
 	     ;; generate a legal response for the next stage (although
 	     ;; this response denotes the error).
-	     (let ((resp ((or (hop-http-response-error) http-error) e))
-		   (sock (http-request-socket req)))
-		(http-response resp sock)
-		;; abort this request
-		(socket-close sock)
-		'close)))))
+	     (let ((resp ((or (hop-http-response-error) http-error) e)))
+		(with-access::http-request req (socket)
+		   (http-response resp socket)
+		   ;; abort this request
+		   (socket-close socket)
+		   'close))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-static-answer ...                                          */
@@ -316,73 +319,70 @@
 (define (stage-exec scd thread id req resp)
    (current-request-set! thread req)
    ;; log
-   (if (http-response-abort? resp)
-       (hop-verb 1 (hop-color req req " ABORT")
-		 " user: " (user-name (http-request-user req)) "\n")
-       (hop-verb 3 (hop-color req req " EXEC")
-		 " load: " (scheduler-load scd)
-		 (scheduler-stat scd)
-		 (format " ~a" thread)
-		 ": " (typeof resp)
-		 " " (user-name (http-request-user req)) "\n"))
+   (with-access::http-request req (user)
+      (if (isa? resp http-response-abort)
+	  (hop-verb 1 (hop-color req req " ABORT")
+	     " user: " (with-access::user user (name) name) "\n")
+	  (hop-verb 3 (hop-color req req " EXEC")
+	     " load: " (scheduler-load scd)
+	     (scheduler-stat scd)
+	     (format " ~a" thread)
+	     ": " (typeof resp)
+	     " " (with-access::user user (name) name) "\n")))
    (with-stage-handler
       exec-error-handler (scd req)
-      (let* ((sock (http-request-socket req))
-	     (connection (with-time (http-response resp sock) id "EXEC")))
-	 ;; debug
-	 (debug-thread-info-set! thread
-				 (format "~a ~a://~a:~a~a... -> ~a ~a"
-					 (http-request-method req)
-					 (http-request-scheme req)
-					 (http-request-host req)
-					 (http-request-port req)
-					 (http-request-path req)
-					 (typeof resp)
-					 connection))
-	 (case connection
-	    ((persistent)
-	     (when (>=fx (hop-verbose) 3)
-		(stage-exec-verb scd thread req resp connection
-				   " PERSISTENT"))
-	     #f)
-	    ((keep-alive)
-	     (let ((load (scheduler-load scd)))
-		(cond
-		   ((or (>=fx (keep-alive) (hop-keep-alive-threshold))
-			(=fx load 100))
-		    (when (>=fx (hop-verbose) 3)
-		       (stage-exec-verb scd thread req resp connection
-					" END"))
-		    (socket-close sock)
-		    #f)
-		   ((>=fx load 80)
-		    (when (>=fx (hop-verbose) 3)
-		       (stage-exec-verb scd thread req resp connection
-					  " KEEP-ALIVE"))
-		    (keep-alive++)
-		    1)
-		   (else
-		    (when (>=fx (hop-verbose) 3)
-		       (stage-exec-verb scd thread req resp connection
-					  " KEEP-ALIVE"))
-		    (keep-alive++)
-		    (hop-keep-alive-timeout)))))
-	    (else
-	     (when (>=fx (hop-verbose) 3)
-		(stage-exec-verb scd thread req resp connection " END"))
-	     (socket-close sock)
-	     #f)))))
+      (with-access::http-request req (socket method scheme port host path )
+	 (let ((connection (with-time (http-response resp socket) id "EXEC")))
+	    ;; debug
+	    (debug-thread-info-set! thread
+	       (format "~a ~a://~a:~a~a... -> ~a ~a"
+		  method scheme host port path
+		  (typeof resp) connection))
+	    (case connection
+	       ((persistent)
+		(when (>=fx (hop-verbose) 3)
+		   (stage-exec-verb scd thread req resp connection
+		      " PERSISTENT"))
+		#f)
+	       ((keep-alive)
+		(let ((load (scheduler-load scd)))
+		   (cond
+		      ((or (>=fx (keep-alive) (hop-keep-alive-threshold))
+			   (=fx load 100))
+		       (when (>=fx (hop-verbose) 3)
+			  (stage-exec-verb scd thread req resp connection
+			     " END"))
+		       (socket-close socket)
+		       #f)
+		      ((>=fx load 80)
+		       (when (>=fx (hop-verbose) 3)
+			  (stage-exec-verb scd thread req resp connection
+			     " KEEP-ALIVE"))
+		       (keep-alive++)
+		       1)
+		      (else
+		       (when (>=fx (hop-verbose) 3)
+			  (stage-exec-verb scd thread req resp connection
+			     " KEEP-ALIVE"))
+		       (keep-alive++)
+		       (hop-keep-alive-timeout)))))
+	       (else
+		(when (>=fx (hop-verbose) 3)
+		   (stage-exec-verb scd thread req resp connection " END"))
+		(socket-close socket)
+		#f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    exec-error-handler ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (exec-error-handler e scd req)
-   ;; first, close the socket, anycase
-   (socket-close (http-request-socket req))
-   (unless (&io-sigpipe-error? e)
-      ;; signal the error, when this is an error
-      (hop-verb 2 (hop-color req req " INTERRUPTED"))
-      (hop-verb 2 ": " (&error-obj e) "\n")
-      ;; abort the request
-      (raise e)))
+   (with-access::http-request req (socket)
+      ;; first, close the socket, anycase
+      (socket-close socket)
+      (unless (isa? e &io-sigpipe-error)
+	 ;; signal the error, when this is an error
+	 (hop-verb 2 (hop-color req req " INTERRUPTED"))
+	 (hop-verb 2 ": " (with-access::&error e (obj) obj) "\n")
+	 ;; abort the request
+	 (raise e))))
 

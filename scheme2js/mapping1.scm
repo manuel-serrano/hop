@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -21,13 +21,15 @@
    (let ((ht (make-eq-hashtable)))
       (map (lambda (e)
 	      (let ((desc (create-Export-Desc e #f #t)))
-		 (hashtable-put! ht (Export-Desc-id desc) desc)))
-	   (get-exports "runtime/runtime.sch"))
+		 (with-access::Export-Desc desc (id)
+		    (hashtable-put! ht id desc))))
+	 (get-exports "runtime/runtime.sch"))
       ht))
 (define *call/cc-constant-runtime-var-mapping*
    (let ((ht (make-eq-hashtable)))
       (map (lambda (e)
 	      (let ((desc (create-Export-Desc e #f #t)))
-		 (hashtable-put! ht (Export-Desc-id desc) desc)))
-	   (get-exports "runtime/runtime-callcc.sch"))
+		 (with-access::Export-Desc desc (id)
+		    (hashtable-put! ht id desc))))
+	 (get-exports "runtime/runtime-callcc.sch"))
       ht))

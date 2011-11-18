@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Thu Sep 15 13:10:03 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 11:45:52 2011 (serrano)                */
 ;*    Copyright   :  2003-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -48,7 +48,7 @@
 		       (cons path
 			     (with-handler
 				(lambda (e)
-				   (if (&io-parse-error? e)
+				   (if (isa? e &io-parse-error)
 				       '()
 				       (raise e)))
 				(cgi-multipart->list (hop-upload-directory)
@@ -81,11 +81,12 @@
 		    (loop (cdr l) (cons (car l) res)))))))
 
    (with-trace 2 'http-request-cgi-args
-      (trace-item "path=" (http-request-path req))
-      (trace-item "abspath=" (string-for-read (http-request-abspath req)))
-      (trace-item "query=" (if (string? (http-request-query req))
-			       (string-for-read (http-request-query req))
-			       "#f"))
+      (with-access::http-request req (path abspath query)
+	 (trace-item "path=" path)
+	 (trace-item "abspath=" (string-for-read abspath))
+	 (trace-item "query=" (if (string? query)
+				  (string-for-read query)
+				  "#f")))
       (let ((args (cgi-args req)))
 	 (trace-item "args="
 		     (map (lambda (a)

@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -74,6 +74,7 @@
 	     (var-reference var :location this)))
 	 (else
 	  (let ((new-pragma (Ref-of-new-Var 'pragma)))
-	     (hashtable-put! ht this (Ref-var new-pragma))
-	     (Node-location-set! new-pragma this)
+	     (hashtable-put! ht this (with-access::Ref new-pragma (var) var))
+	     (with-access::Node new-pragma (location)
+		(set! location this))
 	     new-pragma)))))

@@ -106,19 +106,20 @@
    (with-access::Set! this (lvalue val)
       (walk val)
       (with-access::Ref lvalue (var)
-	 (when (and (eq? (Var-kind var) 'imported)
-		    (Var-constant? var)) ;; equal to exported-as-const?
-	    (scheme2js-error
-	     "Set!"
-	     "Imported variable is constant, and must not be modified."
-	     (Var-id var)
-	     lvalue))
-	 (with-access::Var var (already-defined? constant? value)
-	    (if already-defined?
-		(begin
-		   (set! constant? #f)
-		   (set! value #f))
-		(begin
-		   (set! already-defined? #t)
-		   (set! constant? #t)
-		   (set! value val)))))))
+	 (with-access::Var var (kind constant?)
+	    (when (and (eq? kind 'imported) constant?)
+	       ;; equal to exported-as-const?
+	       (scheme2js-error
+		  "Set!"
+		  "Imported variable is constant, and must not be modified."
+		  (with-access::Var var (id) id)
+		  lvalue))
+	    (with-access::Var var (already-defined? constant? value)
+	       (if already-defined?
+		   (begin
+		      (set! constant? #f)
+		      (set! value #f))
+		   (begin
+		      (set! already-defined? #t)
+		      (set! constant? #t)
+		      (set! value val))))))))

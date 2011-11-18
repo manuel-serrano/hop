@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -37,4 +37,5 @@
    (default-walk this this)
    (when surrounding-fun
       (with-access::Lambda surrounding-fun (size)
-	 (set! size (+fx size (Lambda-size this))))))
+	 (with-access::Lambda this ((tsize size))
+	    (set! size (+fx size tsize))))))

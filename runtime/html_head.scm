@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sat Oct 22 07:06:10 2011 (serrano)                */
+;*    Last change :  Fri Nov 11 07:09:46 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -117,7 +117,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 		(substring p (string-length pref) (string-length p)) #f)))))
 
    (cond
-      ((and (http-request? (current-request))
+      ((and (isa? (current-request) http-request)
 	    (or (substring-at? p "http://" 0) (substring-at? p "https://" 0)))
        (preload-http p))
       ((and (file-exists? p) (char=? (string-ref p 0) (file-separator)))
@@ -441,7 +441,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 	     (else
 	      (loop (cdr a) #f rts dir path base inl packed
 		    (cons (car a) els)))))
-	 ((xml-tilde? (car a))
+	 ((isa? (car a) xml-tilde)
 	  (loop (cdr a) :jscript rts dir path base inl packed
 		(cons (car a) els)))
 	 ((not (car a))
@@ -547,7 +547,8 @@ function hop_realm() { return \"" (hop-realm) "\"; }
    (define (purify node)
       (if (>=fx (hop-security) 2)
 	  (let ((sm (hop-security-manager)))
-	     ((security-manager-script-sanitize sm) node))
+	     (with-access::security-manager sm (script-sanitize)
+		(script-sanitize node)))
 	  node))
    
    (define (default src)

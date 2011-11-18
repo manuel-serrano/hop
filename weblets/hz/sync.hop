@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Wed Mar  9 16:07:01 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 16:08:16 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -68,9 +68,10 @@
 	  (with-handler
 	     (lambda (e)
 		(cond
-		   ((&error? e)
-		    (list (cons url (&error-msg e))))
-		   ((http-response-authentication? e)
+		   ((isa? e &error)
+		    (with-access::&error e (msg)
+		       (list (cons url msg))))
+		   ((isa? e http-response-authentication)
 		    (escape url))
 		   (else
 		    (list (cons url e)))))
@@ -105,7 +106,7 @@
       (when (file-exists? ifile)
 	 (with-handler
 	    (lambda (e)
-	       (when (&error? e) (error-notify e))
+	       (when (isa? e &error) (error-notify e))
 	       #f)
 	    (with-input-from-file ifile
 	       (lambda ()
@@ -117,8 +118,9 @@
 				 i2
 				 (cons `(home "/hop") i2)))
 			 (w (info->weblet i3 :name (basename dir) :url dir)))
-		     (weblet-driver-set! w "standard")
-		     (weblet-install-set! w (weblet-version w))
+		     (with-access::weblet w (version driver install)
+			(set! driver "standard")
+			(set! install version))
 		     (hz-db-add-or-update! w)))))))
    
    (define (sync-dir! dir)

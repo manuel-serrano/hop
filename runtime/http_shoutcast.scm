@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sat Dec 18 06:24:00 2010 (serrano)                */
-;*    Copyright   :  2004-10 Manuel Serrano                            */
+;*    Last change :  Wed Nov 16 11:51:45 2011 (serrano)                */
+;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -122,7 +122,7 @@
 	 (if (string=? dir "/")
 	     file
 	     dir)))
-   (if (id3? id3)
+   (if (isa? id3 id3)
        (with-access::id3 id3 (artist album)
 	  (if (not (string=? artist "unknown"))
 	      (id3-icy-name id3)
@@ -133,7 +133,7 @@
 ;*    icy-title ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (icy-title id3 file)
-   (if (id3? id3)
+   (if (isa? id3 id3)
        (with-access::id3 id3 (title track)
 	  (if (not (string=? title "unknown"))
 	      (format "~a [~a]" title track)

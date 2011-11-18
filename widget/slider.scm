@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon May 30 14:48:44 2011 (serrano)                */
+;*    Last change :  Sat Nov 12 07:14:24 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
@@ -59,7 +59,7 @@
    (cond
       ((integer? obj)
        obj)
-      ((xml-tilde? obj)
+      ((isa? obj xml-tilde)
        (xml-tilde->expression obj))
       (else
        (error "<SLIDER>" (format "Illegal ~a" attr) obj))))
@@ -71,7 +71,7 @@
    (with-access::html-slider obj (id klass value min max step onchange caption)
       (let ((gid (gensym))
 	    (oc (cond
-		   ((xml-tilde? onchange)
+		   ((isa? onchange xml-tilde)
 		    (xml-tilde->return onchange))
 		   ((string? onchange)
 		    onchange)

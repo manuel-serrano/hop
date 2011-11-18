@@ -48,8 +48,8 @@
 	 (vars scope-vars))
       (default-walk! this)
       (shrink! label)
-      (let* ((break-label (make-Label (gensym 'while-break)))
-	     (location (Node-location this))
+      (let* ((break-label (instantiate::Label (id (gensym 'while-break))))
+	     (location (with-access::Node this (location) location))
 	     (while (instantiate::While
 		       (location location)
 		       (scope-vars scope-vars)
@@ -81,7 +81,7 @@
 	 (instantiate::Begin
 	    (exprs (list (loop-updates-free-order vars updates)
 			 (instantiate::Continue
-			    (location (Node-location this))
+			    (location (with-access::Node this (location) location))
 			    (label label))))))))
    
 ;; try to find loops, that can be transformed into optimized whiles.
@@ -135,9 +135,9 @@
 
       (if (and (or (not (with-access::Env env (call/cc?) call/cc?)) ;; call/cc (and not just suspend)
 		   (not call/cc?)) ;; this could be set by suspend/resume too.
-	       (Const? test)
-	       (eq? (Const-value test) #t)
-	       (If? body))
+	       (isa? test Const)
+	       (eq? (with-access::Const test (value) value) #t)
+	       (isa? body If))
 	  (with-access::If body (test then else)
 	     (let ((new-this (cond
 				((not (continue-in-branch? label else))

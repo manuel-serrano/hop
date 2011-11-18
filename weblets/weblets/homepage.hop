@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec  7 07:29:36 2007                          */
-;*    Last change :  Tue Jan 18 18:01:28 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 16:50:59 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The service that dynamically creates weblets homagepage.         */
@@ -65,7 +65,7 @@
 	  (resp (if (directory? homedir)
 		    (weblets-homepage-custom weblet hz info file)
 		    (weblets-homepage-default weblet hz info))))
-      (if (%http-response? resp)
+      (if (isa? resp %http-response)
 	  resp
 	  (<HTML>
 	     (<HEAD> :favicon fi
@@ -213,37 +213,35 @@
    (let loop ()
       (let ((h (tar-read-header ip)))
 	 (when h
-	    (case (tar-header-type h)
-	       ((dir)
-		(if (substring-at? (tar-header-name h) prefix 0)
-		    (let ((path (make-file-name base (tar-header-name h))))
-		       (if (make-directories path)
-			   (loop)
-			   (raise
-			    (instantiate::&io-error
-			       (proc 'untar)
-			       (msg "Cannot create directory")
-			       (obj path)))))
-		    (loop)))
-	       ((normal)
-		(let ((b (tar-read-block h ip)))
-		   (when (substring-at? (tar-header-name h) prefix 0)
-		      (let* ((path (make-file-name base (tar-header-name h)))
-			     (dir (dirname path)))
-			 (when (and (file-exists? dir) (not (directory? dir)))
-			    (delete-file dir))
-			 (unless (file-exists? dir)
-			    (make-directories dir))
-			 (with-output-to-file path
-			    (lambda ()
-			       (display b)))))
-		   (loop)))
-	       (else
-		(raise
-		 (instantiate::&io-parse-error
-		    (proc 'untar)
-		    (msg (format "Illegal file type `~a'" (tar-header-type h)))
-		    (obj (tar-header-name h))))))))))
-
-
-   
+	    (with-access::tar-header h (type name)
+	       (case type
+		  ((dir)
+		   (if (substring-at? name prefix 0)
+		       (let ((path (make-file-name base name)))
+			  (if (make-directories path)
+			      (loop)
+			      (raise
+				 (instantiate::&io-error
+				    (proc 'untar)
+				    (msg "Cannot create directory")
+				    (obj path)))))
+		       (loop)))
+		  ((normal)
+		   (let ((b (tar-read-block h ip)))
+		      (when (substring-at? name prefix 0)
+			 (let* ((path (make-file-name base name))
+				(dir (dirname path)))
+			    (when (and (file-exists? dir) (not (directory? dir)))
+			       (delete-file dir))
+			    (unless (file-exists? dir)
+			       (make-directories dir))
+			    (with-output-to-file path
+			       (lambda ()
+				  (display b)))))
+		      (loop)))
+		  (else
+		   (raise
+		      (instantiate::&io-parse-error
+			 (proc 'untar)
+			 (msg (format "Illegal file type `~a'" type))
+			 (obj name))))))))))

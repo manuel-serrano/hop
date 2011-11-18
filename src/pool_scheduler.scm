@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Fri May  6 05:55:48 2011 (serrano)                */
+;*    Last change :  Sat Nov 12 09:00:43 2011 (serrano)                */
 ;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
@@ -122,29 +122,25 @@
 ;*    pool-thread-body ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (pool-thread-body t)
-   (let* ((scd (hopthread-scheduler t))
-	  (mutex (hopthread-mutex t))
-	  (condv (hopthread-condv t)))
+   (with-access::hopthread t (proc userdata mutex condv scheduler)
       (mutex-lock! mutex)
       (let loop ()
 	 (condition-variable-wait! condv mutex)
-	 (let ((proc (hopthread-proc t)))
-	    ;; complete the demanded task
-	    (with-handler
-	       (make-scheduler-error-handler t)
-	       (proc scd t))
-	    ;; go back to the free pool
-	    (with-access::pool-scheduler scd ((smutex mutex)
-					      (scondv condv)
-					      free nfree)
-	       (mutex-lock! smutex)
-	       (let ((cell (hopthread-userdata t)))
-		  (set-cdr! cell free)
-		  (set! free cell)
-		  (set! nfree (+fx nfree 1))
-		  (condition-variable-signal! scondv)
-		  (mutex-unlock! smutex)
-		  (loop)))))))
+	 ;; complete the demanded task
+	 (with-handler
+	    (make-scheduler-error-handler t)
+	    (proc scheduler t))
+	 ;; go back to the free pool
+	 (with-access::pool-scheduler scheduler ((smutex mutex)
+						 (scondv condv)
+						 free nfree)
+	    (mutex-lock! smutex)
+	    (set-cdr! userdata free)
+	    (set! free userdata)
+	    (set! nfree (+fx nfree 1))
+	    (condition-variable-signal! scondv)
+	    (mutex-unlock! smutex)
+	    (loop)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    make-pool-thread ...                                             */

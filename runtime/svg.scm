@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Tue Oct 11 08:24:25 2011 (serrano)                */
+;*    Last change :  Fri Nov 11 07:11:04 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -78,7 +78,7 @@
 ;*---------------------------------------------------------------------*/
 (define (svg-img-cache-put! name tree)
    (when svg-img-tree-cache
-      (let ((size (cache-memory-max-file-size svg-img-tree-cache)))
+      (with-access::cache-memory svg-img-tree-cache ((size max-file-size))
 	 (when (and (file-exists? name) (<elong (file-size name) size))
 	    (cache-put! svg-img-tree-cache name tree))
 	 tree)))
@@ -346,9 +346,9 @@
 	    ;; patch the svg element
 	    (let loop ((tree tree))
 	       (cond
-		  ((and (svg-img-markup? tree)
-			(or (eq? (svg-img-markup-name tree) 'svg)
-			    (eq? (svg-img-markup-name tree) 'svg:svg)))
+		  ((and (isa? tree svg-img-markup)
+			(with-access::svg-img-markup tree (name)
+			   (or (eq? name 'svg) (eq? name 'svg:svg))))
 		   (tune-svg! tree)
 		   #t)
 		  ((and (pair? tree) (not (symbol? (car tree))))

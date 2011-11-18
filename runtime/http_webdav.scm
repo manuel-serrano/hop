@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Sat Jul 30 06:47:02 2011 (serrano)                */
+;*    Last change :  Fri Nov 18 09:35:02 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
@@ -96,7 +96,7 @@
       (newline p)
       (for-each (lambda (b)
 		   (xml-write b p backend))
-		(xml-webdav-body obj))))
+	 (with-access::xml-webdav obj (body) body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cp-r ...                                                         */
@@ -190,7 +190,7 @@
 			(return (car children)))
 		       ((prop)
 			(filter (lambda (p)
-				   (or (procedure? p) (xml-element? p)))
+				   (or (procedure? p) (isa? p xml-element)))
 				children))
 		       ((getcontentlength)
 			<GETCONTENTLENGTH>)
@@ -220,22 +220,23 @@
 	    (props (if (<=elong content-length 0)
 		       (webdav-propfind-all-properties)
 		       (parse-propfind-body
-			content-length (socket-input socket)))))
+			  content-length (socket-input socket)))))
 	 (cond
 	    ((not (authorized-service? req 'webdav))
 	     (user-service-denied req user 'webdav))
 	    ((not (authorized-path? req abspath))
 	     (user-access-denied req))
 	    (else
-	     (instantiate::http-response-hop
-		(request req)
-		(start-line "HTTP/1.1 207 Multi-Status")
-		(backend *webdav-backend*)
-		(content-type (xml-backend-mime-type *webdav-backend*))
-		(charset (hop-charset))
-		(xml (<DAV>
-			(<DAV:MULTISTATUS>
-			   (directory->dav abspath depth props))))))))))
+	     (with-access::xml-backend *webdav-backend* (mime-type)
+		(instantiate::http-response-hop
+		   (request req)
+		   (start-line "HTTP/1.1 207 Multi-Status")
+		   (backend *webdav-backend*)
+		   (content-type mime-type)
+		   (charset (hop-charset))
+		   (xml (<DAV>
+			   (<DAV:MULTISTATUS>
+			      (directory->dav abspath depth props)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webdav-proppatch ...                                             */
@@ -321,7 +322,7 @@
 		(cond
 		   ((procedure? (car props))
 		    (loop (cons ((car props) p) okp) errp (cdr props)))
-		   ((xml-element? (car props))
+		   ((isa? (car props) xml-element)
 		    (loop okp (cons (car props) errp) (cdr props)))
 		   (else
 		    (loop okp errp (cdr props))))))))
@@ -347,7 +348,7 @@
 ;*    webdav-mkcol ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (webdav-mkcol req::http-request)
-   (with-access::http-request req (abspath content-length)
+   (with-access::http-request req (abspath content-length user)
       (let* ((dir (dirname abspath))
 	     (parent (dirname dir)))
 	 (cond
@@ -452,19 +453,20 @@
    (define (cp-dir-response cp-res)
       (if (null? cp-res)
 	  (resp "HTTP/1.1 201 Created")
-	  (instantiate::http-response-hop
-	     (request req)
-	     (start-line "HTTP/1.1 207 Multi-Status")
-	     (backend *webdav-backend*)
-	     (content-type (xml-backend-mime-type *webdav-backend*))
-	     (charset (hop-locale))
-	     (xml (<DAV>
-		     (<DAV:MULTISTATUS>
-			(map (lambda (p)
-				(<DAV:RESPONSE>
-				   (<DAV:HREF> (url-path-encode p))
-				   (<DAV:STATUS> "HTTP/1.1 507 Insufficient Storage")))
-			     cp-res)))))))
+	  (with-access::xml-backend *webdav-backend* (mime-type)
+	     (instantiate::http-response-hop
+		(request req)
+		(start-line "HTTP/1.1 207 Multi-Status")
+		(backend *webdav-backend*)
+		(content-type mime-type)
+		(charset (hop-locale))
+		(xml (<DAV>
+			(<DAV:MULTISTATUS>
+			   (map (lambda (p)
+				   (<DAV:RESPONSE>
+				      (<DAV:HREF> (url-path-encode p))
+				      (<DAV:STATUS> "HTTP/1.1 507 Insufficient Storage")))
+			      cp-res))))))))
 
    (define (cp-r2 mod src dst)
       (if (make-directory dst)

@@ -187,7 +187,7 @@
 (define (dollar-eval e)
    (with-handler
       (lambda (e)
-	 (if (&error? e)
+	 (if (isa? e &error)
 	     (begin
 		(exception-notify e)
 		#unspecified)

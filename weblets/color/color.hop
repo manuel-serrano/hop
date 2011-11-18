@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Dec 16 07:36:51 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Wed Nov 16 17:04:51 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP color                                                        */
 ;*=====================================================================*/
@@ -15,8 +15,7 @@
 (module color
    (import color_config)
    (export color
-	   color/documentation
-	   color/populate))
+	   color/documentation))
 
 ;*---------------------------------------------------------------------*/
 ;*    color/documentation ...                                          */
@@ -32,44 +31,41 @@
 ;*    color ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (color)
-   (let* ((req (current-request))
-	  (user (http-request-user req))
-	  (uname (user-name user)))
-      (<HTML>
-	 (<HEAD> :title "Color"
-	    :favicon (service-resource color "etc/favicon.png")
-	    :base (service-base-url color (current-request))
-	    :include "hop-color" "hop-foot"
-	    :css "color.hss")
-	 (<BODY>
-	    (<DIV> :align 'center
-	       (<TABLE> :class "main"
-		  (<COLGROUP> (<COL> :width "0*"))
-		  (<TR>
-		     (<TD> :class "main"
-			(<IMG> :class "logo" :src "etc/logo.png")
-			   (<DIV> :class "version"
-			      (<DIV> "Color v " (color-version))
-			      (<DIV> (color-date)))
-			   (<DIV> :class "buttons"
-			      (<DIV> :class "button doc"
-				 (<A> :title "Documentation"
-				    :class "doc"
-				    :href "documentation"
-				    :onclick ~(set! this.href ($color/documentation))
-				    :target "_blank"
-				    :title "Color documentation"
-				    (<IMG> :class "doc"
-				       :inline #t
-				       :src (service-resource color "etc/doc.png"))
-				    "Help"))))
-		     (<TD> :class "main"
-			(<TABLE> :class "body"
-			   (<TR> (<TD> :class "main" :id "title"
-				    "Color  - a Hop Color Chooser"))
-			   (<TR> (<TD> :class "main"
-				    (<COLORCHOOSER>))))))))
-	    (<FOOT>)))))
+   (<HTML>
+      (<HEAD> :title "Color"
+	 :favicon (service-resource color "etc/favicon.png")
+	 :base (service-base-url color (current-request))
+	 :include "hop-color" "hop-foot"
+	 :css "color.hss")
+      (<BODY>
+	 (<DIV> :align 'center
+	    (<TABLE> :class "main"
+	       (<COLGROUP> (<COL> :width "0*"))
+	       (<TR>
+		  (<TD> :class "main"
+		     (<IMG> :class "logo" :src "etc/logo.png")
+		     (<DIV> :class "version"
+			(<DIV> "Color v " (color-version))
+			(<DIV> (color-date)))
+		     (<DIV> :class "buttons"
+			(<DIV> :class "button doc"
+			   (<A> :title "Documentation"
+			      :class "doc"
+			      :href "documentation"
+			      :onclick ~(set! this.href ($color/documentation))
+			      :target "_blank"
+			      :title "Color documentation"
+			      (<IMG> :class "doc"
+				 :inline #t
+				 :src (service-resource color "etc/doc.png"))
+			      "Help"))))
+		  (<TD> :class "main"
+		     (<TABLE> :class "body"
+			(<TR> (<TD> :class "main" :id "title"
+				 "Color  - a Hop Color Chooser"))
+			(<TR> (<TD> :class "main"
+				 (<COLORCHOOSER>))))))))
+	 (<FOOT>))))
 
 ;*---------------------------------------------------------------------*/
 ;*    color/dashboard ...                                              */

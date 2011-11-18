@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Aug  1 10:40:46 2011 (serrano)                */
+;*    Last change :  Thu Nov 10 18:05:51 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -25,7 +25,7 @@
 	    __hop_charset
 	    __hop_wiki-syntax
 	    __hop_svg)
-   
+
    (static  (class state
 	       markup::symbol
 	       syntax::procedure
@@ -37,6 +37,9 @@
 	       (is-subblock read-only (default #f)))
 	    (class plugin::state))
 
+   (include "wiki_syntax.sch"
+	    "wiki_parser.sch")
+   
    (export  (wiki-string->hop ::bstring #!key
 			      syntax
 			      (charset (hop-locale))
@@ -108,7 +111,7 @@
 	 (begin
 	    (loading-file-set! (input-port-name iport))
 	    (let* ((r (cond
-			 ((wiki-syntax? syntax)
+			 ((isa? syntax wiki-syntax)
 			  ((wiki-syntax-posthook syntax)
 			   (cons ((wiki-syntax-prehook syntax))
 				 (read/rp *wiki-grammar* iport
@@ -123,9 +126,7 @@
 				 "Illegal syntax"
 				 syntax))))
 		   (nm (eval-module)))
-	       (cond-expand
-		  (bigloo3.6a #unspecified)
-		  (else (unless (eq? m nm) (evmodule-check-unbound nm #f))))
+	       (unless (eq? m nm) (evmodule-check-unbound nm #f))
 	       r))
 	 (begin
 	    (eval-module-set! m)
@@ -152,8 +153,9 @@
 		      (cond
 			 ((pair? e)
 			  (for-each loop e))
-			 ((xml-markup? e)
-			  (loop (xml-markup-body e)))
+			 ((isa? e xml-markup)
+			  (with-access::xml-markup e (body)
+			     (loop body)))
 			 ((null? e)
 			  #unspecified)
 			 (else
@@ -324,7 +326,7 @@
 			 condition)
 			((symbol? condition)
 			 (lambda (s _) (eq? (state-markup s) condition)))
-			((state? condition)
+			((isa? condition state)
 			 (lambda (s _) (eq? s condition)))
 			(else
 			 (lambda (s _) #t)))))
@@ -336,7 +338,7 @@
 			 condition)
 			((symbol? condition)
 			 (lambda (s _) (eq? (state-markup s) condition)))
-			((state? condition)
+			((isa? condition state)
 			 (lambda (s _) (eq? s condition)))
 			(else
 			 (lambda (s _) #t)))))
@@ -359,7 +361,7 @@
       
       ;; unwind the state until the stack is empty or the state is found
       (define (unwind-state! s . args)
-	 (when (and (wiki-debug?) (or (block? s) (wiki-debug2?)))
+	 (when (and (wiki-debug?) (or (isa? s block) (wiki-debug2?)))
 	    (fprint (current-error-port)
 		    (make-string (max 0 (- (length state) 1)) #\space) "<<< "
 		    (when s (state-markup s)) " "
@@ -505,7 +507,7 @@
       
       ;; a blank line: end of expr
       ((bol (: (? #\Return) #\Newline))
-       (let ((st (in-bottom-up-state (lambda (n _) (expr? n)))))
+       (let ((st (in-bottom-up-state (lambda (n _) (isa? n expr)))))
 	  (cond
 	     (st
 	      (unwind-state! st))
@@ -514,7 +516,7 @@
        (add-expr! (the-html-string))
        (ignore))
       ((bol (: (>= 2 (in " \t")) (? #\Return) #\Newline))
-       (let ((st (or (in-bottom-up-state (lambda (n _) (expr? n)))
+       (let ((st (or (in-bottom-up-state (lambda (n _) (isa? n expr)))
 		     (is-state? 'p))))
 	  (when st (unwind-state! st)))
        (add-expr! (the-html-substring 2 (the-length)))
@@ -523,7 +525,7 @@
       ;; two consecutive blank lines: end of block
       ((bol (= 2 (: (? #\Return) #\Newline)))
        (let ((st (in-state (lambda (n _)
-			      (and (block? n) (not (block-is-subblock n)))))))
+			      (and (isa? n block) (not (block-is-subblock n)))))))
 	  (when st (unwind-state! st)))
        (add-expr! (the-html-string))
        (ignore))
@@ -602,7 +604,7 @@
 				 (let loop ((s s)
 					    (n n))
 				    (when (pair? n)
-				       (if (plugin? s)
+				       (if (isa? s plugin)
 					   (loop (car n) (cdr n))
 					   (with-access::state (car n)
 						 (markup value)
@@ -871,7 +873,7 @@
 		     (proc ((wiki-syntax-plugins syn) id)))
 		 (if (procedure? proc)
 		     (let ((st (in-state id)))
-			(if (state? st)
+			(if (isa? st state)
 			    (unwind-state! st)
 			    (add-expr! (the-html-string))))
 		     (add-expr! (the-html-string)))

@@ -58,34 +58,41 @@
    (default-walk! this current-fun)
    (with-access::Call this (operator operands)
       (if (and current-fun
-	       (Ref? operator)
+	       (isa? operator Ref)
 	       (with-access::Ref operator (var)
 		  (with-access::Var var (constant? value)
 		     (and constant?
 			  (eq? value current-fun)))))
 	  (with-access::Lambda current-fun (formals vaarg?)
-	     (let* ((assig-mapping (parameter-assig-mapping (Var-id (Ref-var operator))
+	     (with-access::Ref operator (var)
+		(with-access::Var var (id)
+		   (let* ((assig-mapping (parameter-assig-mapping id
 							    this
 							    operands
 							    formals
 							    vaarg?))
-		    (updates (map! cdr assig-mapping)))
-		(unless (is-a? current-fun Tail-Lambda)
-		   (widen!::Tail-Lambda current-fun
-		      (label (make-Label (gensym 'continue)))))
-		(instantiate::Tail-rec-Call
-		   (updates updates)
-		   (label (with-access::Tail-Lambda current-fun (label) label)))))
+			  (updates (map! cdr assig-mapping)))
+		      (unless (isa? current-fun Tail-Lambda)
+			 (widen!::Tail-Lambda current-fun
+			    (label (instantiate::Label
+				      (id (gensym 'continue))))))
+		      (instantiate::Tail-rec-Call
+			 (updates updates)
+			 (label (with-access::Tail-Lambda current-fun (label)
+				   label)))))))
 	  this)))
 
 (define-nmethod (Lambda.rec! current-fun)
    (default-walk! this this)
-   (when (is-a? this Tail-Lambda)
+   (when (isa? this Tail-Lambda)
       (with-access::Tail-Lambda this (label body formals scope-vars)
 	 ;; replace formals with replacement variables, and replace body
 	 ;; with while.
-	 (let* ((return-val (Return-val body)) ;; body must be a Return
-		(formals-vars (map Ref-var formals))
+	 (let* ((return-val (with-access::Return body (val) val))
+		;; body must be a Return
+		(formals-vars (map (lambda (f)
+				      (with-access::Ref f (var) var))
+				 formals))
 		(replacement-decls (map (lambda (formal)
 					   (with-access::Ref formal (var id)
 					      (let ((decl (Ref-of-new-Var id)))
@@ -93,7 +100,9 @@
 						       (replacement decl))
 						 decl)))
 					formals))
-		(replacement-vars (map Ref-var replacement-decls))
+		(replacement-vars (map (lambda (r)
+					  (with-access::Ref r (var) var))
+				     replacement-decls))
 		(inits (map (lambda (formal repl-var)
 			       (instantiate::Set!
 				  (lvalue formal)
@@ -109,7 +118,7 @@
 				 
 	    (set! scope-vars
 		  (map! (lambda (var)
-			   (if (is-a? var Repl-Var)
+			   (if (isa? var Repl-Var)
 			       (with-access::Repl-Var var (replacement)
 				  (with-access::Ref replacement (var)
 				     var))
@@ -122,6 +131,7 @@
 					   (shrink! var)
 					   tmp))))
 			       formals))
-	    (Return-val-set! body tail-rec)
+	    (with-access::Return body (val)
+	       (set! val tail-rec))
 	    (shrink! this))))
    this)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Aug 14 07:17:37 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 11:52:29 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -55,9 +55,10 @@
 (define-macro (http-start-line req msg)
    (let ((tmp (gensym 'req)))
       `(let ((,tmp ,req))
-	  (if (eq? (http-request-http ,tmp) 'HTTP/1.0)
-	      ,(string-append "HTTP/1.0 " msg)
-	      ,(string-append "HTTP/1.1 " msg)))))
+	  (with-access::http-request ,tmp (http)
+	     (if (eq? ,tmp 'HTTP/1.0)
+		 ,(string-append "HTTP/1.0 " msg)
+		 ,(string-append "HTTP/1.1 " msg))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-error ...                                                   */
@@ -65,16 +66,18 @@
 (define-generic (http-error e::obj)
    (let* ((req (current-request))
 	  (ths "text-align: right; color: #777; vertical-align: top;")
-	  (msg (<TABLE> :style "font-size: 12pt"
-		  (<COLGROUP> (<COL> :width "0*"))
-		  (<TR>
-		     (<TD> :style ths "host:")
-		     (<TD> (<TT> :style "font-size: 10pt; font-weight: bold"
-			      (http-request-host req) ":" (http-request-port req))))
-		  (<TR>
-		     (<TD> :style ths "path:")
-		     (<TD> (<TT> :style "font-size: 9pt"
-			      (html-string-encode (http-request-path req))))))))
+	  (msg (with-access::http-request req (host port path)
+		  (<TABLE> :style "font-size: 12pt"
+		     (<COLGROUP> (<COL> :width "0*"))
+		     (<TR>
+			(<TD> :style ths "host:")
+			(<TD> 
+			   (<TT> :style "font-size: 10pt; font-weight: bold"
+			      host ":" port)))
+		     (<TR>
+			(<TD> :style ths "path:")
+			(<TD> (<TT> :style "font-size: 9pt"
+				 (html-string-encode path))))))))
       (http-internal-error e msg)))
 
 ;*---------------------------------------------------------------------*/
@@ -82,27 +85,30 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-error e::&io-unknown-host-error)
    (let ((req (or (current-request) (anonymous-request))))
-      (instantiate::http-response-hop
-	 (start-line (http-start-line req "404 Not Found"))
-	 (request req)
-	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-	 (backend (hop-xml-backend))
-	 (content-type (xml-backend-mime-type (hop-xml-backend)))
-	 (charset (hop-charset))
-	 (xml (<HTML-ERROR> :class "remote"
-		 :title "Unknown Host!"
-		 :msg  (list (&error-msg e) ": "
-			     (<TT> :class "notfound" (&error-obj e)))
-		 (<PRE> :hssclass "hop-error-notification"
-		    (with-error-to-string
-		       (lambda ()
-			  (exception-notify e)))))))))
+      (with-access::xml-backend (hop-xml-backend) (mime-type)
+	 (instantiate::http-response-hop
+	    (start-line (http-start-line req "404 Not Found"))
+	    (request req)
+	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	    (backend (hop-xml-backend))
+	    (content-type mime-type)
+	    (charset (hop-charset))
+	    (xml (with-access::&error e (msg obj)
+		    (<HTML-ERROR> :class "remote"
+		       :title "Unknown Host!"
+		       :msg  (list msg ": "
+				(<TT> :class "notfound" obj))
+		       (<PRE> :hssclass "hop-error-notification"
+			  (with-error-to-string
+			     (lambda ()
+				(exception-notify e)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-error ::&io-file-not-found-error ...                        */
 ;*---------------------------------------------------------------------*/
 (define-method (http-error e::&io-file-not-found-error)
-   (http-file-not-found (&error-obj e)))
+   (with-access::&error e (obj)
+      (http-file-not-found obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-error ::&io-error ...                                       */
@@ -114,7 +120,8 @@
 ;*    http-error ::&hop-method-error ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (http-error e::&hop-method-error)
-   (http-method-error (&error-obj e)))
+   (with-access::&error e (obj)
+      (http-method-error obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-error ::&hop-security-error ...                             */
@@ -122,17 +129,19 @@
 (define-method (http-error e::&hop-security-error)
    (let ((s (with-error-to-string (lambda () (exception-notify e))))
 	 (req (current-request)))
-      (instantiate::http-response-hop
-	 (request req)
-	 (start-line (http-start-line req "200 ok"))
-	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-	 (backend (hop-xml-backend))
-	 (content-type (xml-backend-mime-type (hop-xml-backend)))
-	 (charset (hop-charset))
-	 (xml (<HTML-ERROR> :class "security"
-		 :title "Security Error"
-		 :msg (&error-msg e)
-		 (<PRE> (html-string-encode s)))))))
+      (with-access::xml-backend (hop-xml-backend) (mime-type)
+	 (instantiate::http-response-hop
+	    (request req)
+	    (start-line (http-start-line req "200 ok"))
+	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	    (backend (hop-xml-backend))
+	    (content-type mime-type)
+	    (charset (hop-charset))
+	    (xml (with-access::&error e (msg)
+		    (<HTML-ERROR> :class "security"
+		       :title "Security Error"
+		       :msg msg
+		       (<PRE> (html-string-encode s)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-error ::&hop-autoload-error ...                             */
@@ -141,22 +150,24 @@
    (let ((s (with-error-to-string
 	       (lambda ()
 		  (with-access::&hop-autoload-error e (obj)
-		     (if (&exception? obj)
+		     (if (isa? obj &exception)
 			 (exception-notify obj)
 			 (exception-notify e))))))
 	 (req (current-request)))
-      (instantiate::http-response-hop
-	 (request req)
-	 (start-line (http-start-line req "200 ok"))
-	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-	 (backend (hop-xml-backend))
-	 (content-type (xml-backend-mime-type (hop-xml-backend)))
-	 (charset (hop-charset))
-	 (xml (<HTML-ERROR> :class "service"
-		 :title "Service Autoload Error"
-		 :msg (&error-msg e)
-		 (<PRE> :hssclass "hop-error-notification"
-		    (html-string-encode s)))))))
+      (with-access::xml-backend (hop-xml-backend) (mime-type)
+	 (instantiate::http-response-hop
+	    (request req)
+	    (start-line (http-start-line req "200 ok"))
+	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	    (backend (hop-xml-backend))
+	    (content-type mime-type)
+	    (charset (hop-charset))
+	    (xml (with-access::&error e (msg)
+		    (<HTML-ERROR> :class "service"
+		       :title "Service Autoload Error"
+		       :msg msg
+		       (<PRE> :hssclass "hop-error-notification"
+			  (html-string-encode s)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HTML-ERROR> ...                                                 */
@@ -167,12 +178,12 @@
 				   body)
    (let ((req (current-request)))
       (<HTML>
-	 (if (http-proxy-request? req)
+	 (if (isa? req http-proxy-request)
 	     ;; this is a proxy request
-	     (let ((s (http-request-socket req)))
+	     (with-access::http-request req (socket)
 		(<HEAD> :base (format "http://~a:~a"
-				      (socket-hostname s)
-				      (hop-port))))
+				 (socket-hostname socket)
+				 (hop-port))))
 	     ;; this is a local request
 	     (<HEAD>))
 	 (<BODY> :hssclass "hop-error"
@@ -205,16 +216,17 @@
    
    (define (illegal-service key msg)
       (let ((req (or (current-request) (anonymous-request))))
-	 (instantiate::http-response-hop
-	    (request req)
-	    (start-line (http-start-line req "404 Not Found"))
-	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-	    (backend (hop-xml-backend))
-	    (content-type (xml-backend-mime-type (hop-xml-backend)))
-	    (xml (<HTML-ERROR> :class "notfound"
-		    :title (format "~a Service!" (string-capitalize key))
-		    :msg (<TT> :class "notfound" file)
-		    msg)))))
+	 (with-access::xml-backend (hop-xml-backend) (mime-type)
+	    (instantiate::http-response-hop
+	       (request req)
+	       (start-line (http-start-line req "404 Not Found"))
+	       (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	       (backend (hop-xml-backend))
+	       (content-type mime-type)
+	       (xml (<HTML-ERROR> :class "notfound"
+		       :title (format "~a Service!" (string-capitalize key))
+		       :msg (<TT> :class "notfound" file)
+		       msg))))))
 
    (define (illegal-service-message msg)
       (format "You are trying to execute an ~a service!
@@ -288,82 +300,88 @@ a timeout which has now expired. The service is then no longer available."))
    (let ((s (cond
 	       ((string? e)
 		e)
-	       ((&exception? e)
+	       ((isa? e &exception)
 		(with-error-to-string (lambda () (exception-notify e))))
 	       (else
 		(with-output-to-string (lambda () (display e))))))
 	 (req (or (current-request) (anonymous-request))))
-      (instantiate::http-response-hop
-	 (request req)
-	 (start-line (http-start-line req "500 Internal Server Error"))
-	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-	 (backend (hop-xml-backend))
-	 (content-type (xml-backend-mime-type (hop-xml-backend)))
-	 (charset (hop-charset))
-	 (xml (<HTML-ERROR>
-		 :class (if (&io-timeout-error? e) "timeour" "error")
-		 :title "Server Error"
-		 :msg msg
-		 (<DIV> :hssclass "hop-error-trace"
-		    (<DIV> "Hop server stack:")
-		    (<PRE> :hssclass "hop-error-notification"
-		       (html-string-encode s))))))))
+      (with-access::xml-backend (hop-xml-backend) (mime-type)
+	 (instantiate::http-response-hop
+	    (request req)
+	    (start-line (http-start-line req "500 Internal Server Error"))
+	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	    (backend (hop-xml-backend))
+	    (content-type mime-type)
+	    (charset (hop-charset))
+	    (xml (<HTML-ERROR>
+		    :class (if (isa? e &io-timeout-error) "timeour" "error")
+		    :title "Server Error"
+		    :msg msg
+		    (<DIV> :hssclass "hop-error-trace"
+		       (<DIV> "Hop server stack:")
+		       (<PRE> :hssclass "hop-error-notification"
+			  (html-string-encode s)))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    http-service-error ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (http-service-error req service m)
-   (instantiate::http-response-hop
-      (request req)
-      (start-line (http-start-line req "400 Bad Request"))
-      (backend (hop-xml-backend))
-      (content-type (xml-backend-mime-type (hop-xml-backend)))
-      (charset (hop-charset))
-      (xml (<HTML-ERROR>
-	      :title "Hop Service Error"
-	      :msg (list "An error occured while responding to"
-			 (<TT> "http://" (http-request-host req)
-			       ":" (http-request-port req)
-			       (hop-service-base) service)
-			 ", " (<TT> (hop-request-service-name req)))
-	      (<PRE> :hssclass "hop-error-notification"
-		 (html-string-encode m))))))
+   (with-access::xml-backend (hop-xml-backend) (mime-type)
+      (instantiate::http-response-hop
+	 (request req)
+	 (start-line (http-start-line req "400 Bad Request"))
+	 (backend (hop-xml-backend))
+	 (content-type mime-type)
+	 (charset (hop-charset))
+	 (xml (<HTML-ERROR>
+		 :title "Hop Service Error"
+		 :msg (with-access::http-request req (host port)
+			 (list "An error occured while responding to"
+			    (<TT> "http://" host
+				  ":" port
+				  (hop-service-base) service)
+			    ", " (<TT> (hop-request-service-name req))))
+		 (<PRE> :hssclass "hop-error-notification"
+		    (html-string-encode m)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-invalidated-service-error ...                               */
 ;*---------------------------------------------------------------------*/
 (define (http-invalidated-service-error req)
-   (instantiate::http-response-hop
-      (request req)
-      (start-line "HTTP/1.0 404 Not Found")
-      (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-      (backend (hop-xml-backend))
-      (content-type (xml-backend-mime-type (hop-xml-backend)))
-      (charset (hop-charset))
-      (xml (<HTML-ERROR> :class "stop"
-	      :title "Invalidated service!"
-	      :msg (<TT> (http-request-path req))
-	      (<DIV> "You are trying to executed an unexisting or invalidated service!
+   (with-access::xml-backend (hop-xml-backend) (mime-type)
+      (instantiate::http-response-hop
+	 (request req)
+	 (start-line "HTTP/1.0 404 Not Found")
+	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	 (backend (hop-xml-backend))
+	 (content-type mime-type)
+	 (charset (hop-charset))
+	 (xml (<HTML-ERROR> :class "stop"
+		 :title "Invalidated service!"
+		 :msg (<TT> (with-access::http-request req (path) path))
+		 (<DIV> "You are trying to executed an unexisting or invalidated service!
 <br><br>
 This is generally due to a restart of the server.
 On restart the server invalidates all anonymous services that hence
 can no longer be executed.
-Reloading the page is the only way to fix this problem.")))))
+Reloading the page is the only way to fix this problem."))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-corrupted-service-error ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (http-corrupted-service-error req)
-   (instantiate::http-response-hop
-      (request req)
-      (start-line "HTTP/1.0 404 Not Found")
-      (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-      (backend (hop-xml-backend))
-      (content-type (xml-backend-mime-type (hop-xml-backend)))
-      (charset (hop-charset))
-      (xml (<HTML-ERROR>
-	    :title (list "Corrupted service!" (<TT> (http-request-path req)))
-	    (<DIV> "You are trying to executed an corrupted service!")))))
+   (with-access::xml-backend (hop-xml-backend) (mime-type)
+      (instantiate::http-response-hop
+	 (request req)
+	 (start-line "HTTP/1.0 404 Not Found")
+	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	 (backend (hop-xml-backend))
+	 (content-type mime-type)
+	 (charset (hop-charset))
+	 (xml (<HTML-ERROR>
+		 :title (list "Corrupted service!"
+			   (<TT> (with-access::http-request req (path) path)))
+		 (<DIV> "You are trying to executed an corrupted service!"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-internal-warning ...                                        */
@@ -381,39 +399,41 @@ Reloading the page is the only way to fix this problem.")))))
 ;*---------------------------------------------------------------------*/
 (define (http-warning msg #!optional dump)
    (let ((req (or (current-request) (anonymous-request))))
-      (instantiate::http-response-hop
-	 (request req)
-	 (start-line (http-start-line req "200 ok"))
-	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-	 (backend (hop-xml-backend))
-	 (content-type (xml-backend-mime-type (hop-xml-backend)))
-	 (charset (hop-charset))
-	 (xml (<HTML-ERROR> :class "warning"
-		 :title "Warning"
-		 :msg (<TT> msg)
-		 (<PRE> :hssclass "hop-error-notification"
-		    dump))))))
+      (with-access::xml-backend (hop-xml-backend) (mime-type)
+	 (instantiate::http-response-hop
+	    (request req)
+	    (start-line (http-start-line req "200 ok"))
+	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	    (backend (hop-xml-backend))
+	    (content-type mime-type)
+	    (charset (hop-charset))
+	    (xml (<HTML-ERROR> :class "warning"
+		    :title "Warning"
+		    :msg (<TT> msg)
+		    (<PRE> :hssclass "hop-error-notification"
+		       dump)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-service-unavailable ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (http-service-unavailable e)
-   (let ((req (if (http-request? e)
+   (let ((req (if (isa? e http-request)
 		   e
 		   (or (current-request) (anonymous-request)))))
-      (instantiate::http-response-hop
-	 (request req)
-	 (start-line (http-start-line req "503 Service Unavailable"))
-	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-	 (backend (hop-xml-backend))
-	 (content-type (xml-backend-mime-type (hop-xml-backend)))
-	 (charset (hop-charset))
-	 (xml (<HTML-ERROR>
-		 :title "Service Unavailable"
-		 :msg (if (http-request? e)
-			    (http-request-path e)
-			    e)
-		 "")))))
+      (with-access::xml-backend (hop-xml-backend) (mime-type)
+	 (instantiate::http-response-hop
+	    (request req)
+	    (start-line (http-start-line req "503 Service Unavailable"))
+	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	    (backend (hop-xml-backend))
+	    (content-type mime-type)
+	    (charset (hop-charset))
+	    (xml (<HTML-ERROR>
+		    :title "Service Unavailable"
+		    :msg (if (isa? e http-request)
+			     (with-access::http-request e (path) path)
+			     e)
+		    ""))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-remote-error ...                                            */
@@ -421,20 +441,21 @@ Reloading the page is the only way to fix this problem.")))))
 (define (http-remote-error host e)
    (let ((s (with-error-to-string (lambda () (exception-notify e))))
 	 (req (current-request)))
-      (instantiate::http-response-hop
-	 (request req)
-	 (start-line (http-start-line req "503 Service Unavailable"))
-	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-	 (backend (hop-xml-backend))
-	 (content-type (xml-backend-mime-type (hop-xml-backend)))
-	 (charset (hop-charset))
-	 (xml (<HTML-ERROR>
-		 :class (if (&io-timeout-error? e) "timeout" "remote")
-		 :title "Remote Error"
-		 :msg (list "An error occured while talking to a remote host: "
+      (with-access::xml-backend (hop-xml-backend) (mime-type)
+	 (instantiate::http-response-hop
+	    (request req)
+	    (start-line (http-start-line req "503 Service Unavailable"))
+	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	    (backend (hop-xml-backend))
+	    (content-type mime-type)
+	    (charset (hop-charset))
+	    (xml (<HTML-ERROR>
+		    :class (if (isa? e &io-timeout-error) "timeout" "remote")
+		    :title "Remote Error"
+		    :msg (list "An error occured while talking to a remote host: "
 			    (<TT> host))
-		 (<PRE> :hssclass "hop-error-notification"
-		    (html-string-encode s)))))))
+		    (<PRE> :hssclass "hop-error-notification"
+		       (html-string-encode s))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-io-error ...                                                */
@@ -442,19 +463,20 @@ Reloading the page is the only way to fix this problem.")))))
 (define (http-io-error e)
    (let ((s (with-error-to-string (lambda () (exception-notify e))))
 	 (req (current-request)))
-      (instantiate::http-response-hop
-	 (request req)
-	 (start-line (http-start-line req "404 Not Found"))
-	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-	 (backend (hop-xml-backend))
-	 (content-type (xml-backend-mime-type (hop-xml-backend)))
-	 (charset (hop-charset))
-	 (xml (<HTML-ERROR>
-		 :class (if (&io-timeout-error? e) "timeout" "error")
-		 :title "IO Error"
-		 :msg (list "Error type: " (<TT> (typeof e)))
-		 (<PRE>  :hssclass "hop-error-notification"
-		    (html-string-encode s)))))))
+      (with-access::xml-backend (hop-xml-backend) (mime-type)
+	 (instantiate::http-response-hop
+	    (request req)
+	    (start-line (http-start-line req "404 Not Found"))
+	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	    (backend (hop-xml-backend))
+	    (content-type mime-type)
+	    (charset (hop-charset))
+	    (xml (<HTML-ERROR>
+		    :class (if (isa? e &io-timeout-error) "timeout" "error")
+		    :title "IO Error"
+		    :msg (list "Error type: " (<TT> (typeof e)))
+		    (<PRE>  :hssclass "hop-error-notification"
+		       (html-string-encode s))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-gateway-timeout ...                                         */

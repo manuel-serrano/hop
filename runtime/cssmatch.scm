@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 19 14:53:16 2010                          */
-;*    Last change :  Mon May 23 12:34:57 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 11:47:18 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Parsing and dealing with CSS.                                    */
@@ -52,19 +52,21 @@
 ;*---------------------------------------------------------------------*/
 (define (css-style-has-attribute? cs::css-style a::symbol)
    (mutex-lock! css-mutex)
-   (let ((v (pair? (assq a (css-style-attributes cs)))))
-      (mutex-unlock! css-mutex)
-      v))
+   (with-access::css-style cs (attributes)
+      (let ((v (pair? (assq a attributes))))
+	 (mutex-unlock! css-mutex)
+	 v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-style-get-attribute ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (css-style-get-attribute cs::css-style a::symbol)
    (mutex-lock! css-mutex)
-   (let ((p (assq a (css-style-attributes cs))))
-      (mutex-unlock! css-mutex)
-      (when (pair? p)
-	 (cdr p))))
+   (with-access::css-style cs (attributes)
+      (let ((p (assq a attributes)))
+	 (mutex-unlock! css-mutex)
+	 (when (pair? p)
+	    (cdr p)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-style-set-attribute! ...                                     */
@@ -72,10 +74,10 @@
 (define (css-style-set-attribute! cs::css-style a::symbol val)
    (with-lock css-mutex
       (lambda ()
-	 (let ((p (assq a (css-style-attributes cs))))
-	    (if (pair? p)
-		(set-cdr! p val)
-		(with-access::css-style cs (attributes)
+	 (with-access::css-style cs (attributes)
+	    (let ((p (assq a attributes)))
+	       (if (pair? p)
+		   (set-cdr! p val)
 		   (set! attributes (cons (cons a val) attributes))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -96,9 +98,10 @@
 		       (else (error "node-computed-style" "Illegal attribute" a))))
 		 (style (css-get-computed-style css el)))
 	     (when style
-		(let ((v (assq a (css-style-attributes style))))
-		   (when (pair? v)
-		      (cdr v))))))))
+		(with-access::css-style style (attributes)
+		   (let ((v (assq a attributes)))
+		      (when (pair? v)
+			 (cdr v)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-get-computed-style ::obj ...                                 */
@@ -181,11 +184,13 @@
       ((css-ruleset-before? rule)
        (let ((sstyle (instantiate::css-style)))
 	  (plain-css-set-style! sstyle rule)
-	  (css-style-before-set! style sstyle)))
+	  (with-access::css-style style (before)
+	     (set! before sstyle))))
       ((css-ruleset-after? rule)
        (let ((sstyle (instantiate::css-style)))
 	  (plain-css-set-style! sstyle rule)
-	  (css-style-after-set! style sstyle)))
+	  (with-access::css-style style (after)
+	     (set! after sstyle))))
       (else
        (plain-css-set-style! style rule))))
 
@@ -209,9 +214,10 @@
       (let ((s (car (last-pair (car selector+)))))
 	 (with-access::css-selector s (attr*)
 	    (any? (lambda (a)
-		     (and (css-selector-pseudo? a)
-			  (equal? (css-selector-pseudo-expr a) pseudo)))
-		  attr*)))))
+		     (and (isa? a css-selector-pseudo)
+			  (with-access::css-selector-pseudo a (expr)
+			     (equal? expr pseudo))))
+	       attr*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-find-matching-rules ...                                      */
@@ -236,7 +242,7 @@
 		 (p (open-input-string s)))
 	     (with-handler
 		(lambda (e)
-		   (if (&io-parse-error? e)
+		   (if (isa? e &io-parse-error)
 		       '()
 		       (raise e)))
 		(let ((css (css->ast p :extension hss-extension)))
@@ -313,7 +319,7 @@
 		(let ((selector (cadr selectors))
 		      (parent (dom-parent-node el)))
 		   (cond
-		      ((not (xml-element? parent))
+		      ((not (isa? parent xml-element))
 		       #f)
 		      ((css-selector-match? selector parent)
 		       (loop (cddr selectors) parent))
@@ -324,7 +330,7 @@
 		(let ((selector (cadr selectors)))
 		   (let liip ((parent (dom-parent-node el)))
 		      (cond
-			 ((not (xml-element? parent))
+			 ((not (isa? parent xml-element))
 			  #f)
 			 ((css-selector-match? selector parent)
 			  (loop (cddr selectors) parent))
@@ -338,12 +344,12 @@
 ;*---------------------------------------------------------------------*/
 (define (node-get-sibling el)
    (let ((parent (dom-parent-node el)))
-      (when (xml-element? parent)
+      (when (isa? parent xml-element)
 	 (let loop ((childs (dom-child-nodes parent)))
 	    (cond
 	       ((null? childs) #f)
 	       ((null? (cdr childs)) #f)
-	       ((not (xml-element? (car childs))) (loop (cdr childs)))
+	       ((not (isa? (car childs) xml-element)) (loop (cdr childs)))
 	       ((eq? (cadr childs) el) (car childs))
 	       (else (loop (cdr childs))))))))
 
@@ -438,13 +444,16 @@
 	 ((eq? name '*)
 	  #t)
 	 ((string? name)
-	  (string-ci=? name (symbol->string! (xml-element-tag el)))))))
+	  (with-access::xml-element el (tag)
+	     (string-ci=? name (symbol->string! tag)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-selector-match? ::css-selector-hash ...                      */
 ;*---------------------------------------------------------------------*/
 (define-method (css-selector-match? selector::css-selector-hash el)
-   (equal? (css-selector-hash-name selector) (xml-element-id el)))
+   (with-access::xml-element el (id)
+      (with-access::css-selector-hash selector (name)
+	 (equal? name id))))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-selector-match? ::css-selector-class ...                     */

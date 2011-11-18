@@ -78,9 +78,9 @@
    (default-walk this))
 
 (define (letrec-constant? n)
-   (or (Const? n)
-       (Ref? n)
-       (Lambda? n)))
+   (or (isa? n Const)
+       (isa? n Ref)
+       (isa? n Lambda)))
 
 (define-nmethod (Lambda.letrec-expand)
    (with-access::Lambda this (body)
@@ -100,7 +100,7 @@
 		       bindings))
 	 (let* ((tmp-vars (map (lambda (ign) (gensym 'ltr-tmp))
 			       bindings))
-		(location (Node-location this))
+		(location (with-access::Node this (location) location))
 		(new-bindings (map (lambda (tmp-var binding)
 				      (with-access::Set! binding (val)
 					 (instantiate::Set!
@@ -141,16 +141,16 @@
 
 (define (defines->letrec! n)
    (cond
-      ((Define? n)
+      ((isa? n Define)
        ;; wrap into begin.
        (defines->letrec! (instantiate::Begin
 			    (exprs (list n)))))
-      ((Begin? n)
+      ((isa? n Begin)
        (let ((bindings (map (lambda (n) (shrink! n)) (head-defines! n))))
 	  (if (null? bindings)
 	      n
 	      (instantiate::Let
-		 (location (Node-location n))
+		 (location (with-access::Node n (location) location))
 		 (bindings bindings)
 		 (body n)
 		 (kind 'letrec)))))
@@ -158,22 +158,24 @@
 
 (define (head-defines! bnode::Begin)
    (define (inner bnode::Begin rev-found-defines finish-fun)
-      (let loop ((exprs (Begin-exprs bnode))
+      (let loop ((exprs (with-access::Begin bnode (exprs) exprs))
 		 (rev-defines rev-found-defines))
 	 (cond
 	    ((null? exprs)
 	     rev-defines)
 	    ((not (pair? exprs))
-	     (scheme2js-error  'begin "Illegal form" bnode (Node-location bnode)))
-	    ((Begin? (car exprs))
+	     (scheme2js-error  'begin "Illegal form" bnode
+		(with-access::Node bnode (location) location)))
+	    ((isa? (car exprs) Begin)
 	     (loop (cdr exprs)
 		   (inner (car exprs)
 			  rev-defines
 			  finish-fun)))
-	    ((Define? (car exprs))
+	    ((isa? (car exprs) Define)
 	     (let ((binding (car exprs)))
 		(set-car! exprs (instantiate::Const
-				   (location (Node-location (car exprs)))
+				   (location (with-access::Node (car exprs) (location)
+						location))
 				   (value #unspecified)))
 		(loop (cdr exprs)
 		      (cons binding rev-defines))))

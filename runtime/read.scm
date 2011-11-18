@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sat Nov  5 20:57:16 2011 (serrano)                */
+;*    Last change :  Fri Nov 18 16:36:20 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -323,20 +323,25 @@
 ;*    *hop-grammar* ...                                                */
 ;*---------------------------------------------------------------------*/
 (define *hop-grammar*
-   (regular-grammar ((float    (or (: (* digit) "." (+ digit))
-				   (: (+ digit) "." (* digit))))
-		     (letter   (in ("azAZ") (#a128 #a255)))
-		     (kspecial (in "!@$%^&*></-_+\\=?."))
-		     (special  (or kspecial #\:))
-		     (quote    (in "\",'`"))
-		     (paren    (in "()[]{}"))
-		     (id       (: (* digit)
-				  (or letter special)
-				  (* (or letter special digit (in "'`")))))
-		     (letterid (: (or letter special)
-				  (* (or letter special digit (in "'`")))))
-		     (kid      (or digit letter kspecial))
-		     (blank    (in #\Space #\Tab #a012 #a013))
+   (regular-grammar ((float       (or (: (* digit) "." (+ digit))
+				      (: (+ digit) "." (* digit))))
+		     (letter      (in ("azAZ") (#a128 #a255)))
+		     (kspecial    (in "!@$%^&*></-_+\\=?"))
+		     (specialsans (or kspecial #\:))
+		     (special     (or specialsans #\.))
+		     (quote       (in "\",'`"))
+		     (paren       (in "()[]{}"))
+		     (id          (: (* digit)
+				     (or letter special)
+				     (* (or letter special digit (in "'`")))))
+		     (idsans      (: (* digit)
+				     (or letter specialsans)
+				     (* (or letter specialsans digit (in ",'`")))))
+		     (field       (: idsans (+ (: "." idsans))))
+		     (letterid    (: (or letter special)
+				     (* (or letter special digit (in "'`")))))
+		     (kid         (or digit letter kspecial "."))
+		     (blank       (in #\Space #\Tab #a012 #a013))
 		     
 		     cycles par-open bra-open par-poses bra-poses cset menv location)
       
@@ -364,11 +369,11 @@
 	    (ignore)))
       
       ;; srfi-22 support
-      ((bol (: "#!" #\space (in digit letter special "|,'`") (* all)))
+      ((bol (: "#!" #\space (or digit letter special (in "|,'`")) (* all)))
        (ignore))
       
       ;; the interpreter header or the dsssl named constants
-      ((: "#!" (+ (in digit letter special "|,'`")))
+      ((: "#!" (+ (or digit letter special (in "|,'`"))))
        (let* ((str (the-string)))
 	  (cond
 	     ((string=? str "#!optional")
@@ -460,7 +465,16 @@
        ;; rule, keyword rule has to be placed before the id rule.
        (the-keyword))
       
-      ;; identifiers
+      ;; identifiers and fields
+      (field
+       ;;;
+       (let* ((port (the-port))
+	      (name (input-port-name port))
+	      (pos (input-port-position port))
+	      (loc (list 'at name pos)))
+	  (econs '->
+	     (map! string->symbol (string-split (the-string) "."))
+	     loc)))
       (id
        ;; this rule has to be placed after the rule matching the `.' char
        (the-symbol))
@@ -564,14 +578,16 @@
 	  v))
       
       ("~"
-       (let* ((loc (list 'at
+       ;;; client side expression
+       (with-access::clientc (hop-clientc) (expressionc)
+	  (let* ((loc (list 'at
 			 (input-port-name (the-port))
 			 (input-port-position (the-port))))
-	      (expr (ignore))
-	      (src (tree-copy expr))
-	      (env (current-module-clientc-import))
-	      (js ((clientc-expressionc (hop-clientc)) expr env menv hop-read-javascript-string)))
-	  (econs '<TILDE> (list js :src `',src :loc `',loc :env `',env) loc)))
+		 (expr (ignore))
+		 (src (tree-copy expr))
+		 (env (current-module-clientc-import))
+		 (js (expressionc expr env menv hop-read-javascript-string)))
+	     (econs '<TILDE> (list js :src `',src :loc `',loc :env `',env) loc))))
       
       ;; structures
       ("#{"
@@ -727,19 +743,20 @@
 ;*    hop-read ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-read #!optional
-		  (iport::input-port (current-input-port))
-		  (charset (hop-locale))
-		  (menv #f)
-		  location)
+	   (iport::input-port (current-input-port))
+	   (charset (hop-locale))
+	   (menv #f)
+	   location)
    (if (closed-input-port? iport)
        (error "hop-read" "Illegal closed input port" iport)
        (begin
 	  ((hop-read-pre-hook) iport)
-	  (let* ((cset (charset-converter! charset (hop-charset)))
-		 (menv (or menv ((clientc-macroe (hop-clientc)))))
-		 (e (read/rp *hop-grammar* iport '() 0 0 '() '() cset menv location)))
-	     ((hop-read-post-hook) iport)
-	     e))))
+	  (with-access::clientc (hop-clientc) (macroe)
+	     (let* ((cset (charset-converter! charset (hop-charset)))
+		    (menv (or menv (macroe)))
+		    (e (read/rp *hop-grammar* iport '() 0 0 '() '() cset menv location)))
+		((hop-read-post-hook) iport)
+		e)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *the-loading-file* ...                                           */
@@ -751,8 +768,9 @@
 ;*---------------------------------------------------------------------*/
 (define (the-loading-file)
    (let ((t (current-thread)))
-      (if (thread? t)
-	  (thread-specific t)
+      (if (isa? t thread)
+	  (with-access::thread t (specific)
+	     specific)
 	  *the-loading-file*)))
 
 ;*---------------------------------------------------------------------*/
@@ -760,8 +778,9 @@
 ;*---------------------------------------------------------------------*/
 (define (loading-file-set! file-name)
    (let ((t (current-thread)))
-      (if (thread? t)
-	  (thread-specific-set! t file-name)
+      (if (isa? t thread)
+	  (with-access::thread t (specific)
+	     (set! specific file-name))
 	  (set! *the-loading-file* file-name))))
 
 ;*---------------------------------------------------------------------*/
@@ -896,7 +915,8 @@
 		    ((string? abase) abase)
 		    (abase (dirname fname))
 		    (else ".")))
-	  (menv (or menv ((clientc-macroe (hop-clientc))))))
+	  (menv (or menv (with-access::clientc (hop-clientc) (macroe)
+			    (macroe)))))
       (if (not (string? path))
 	  (raise (instantiate::&io-file-not-found-error
 		    (proc "hop-load")
@@ -926,23 +946,17 @@
 				       ($env-set-trace-location denv (cer e)))
 				    (if (eof-object? e)
 					(let ((nm (eval-module)))
-					   (cond-expand
-					      (bigloo3.6a
-					       #unspecified)
-					      (else
-					       (when (and (not (eq? m nm))
-							  (evmodule? nm))
-						  (evmodule-check-unbound nm #f))))
+					   (when (and (not (eq? m nm))
+						      (evmodule? nm))
+					      (evmodule-check-unbound nm #f))
 					   ($env-pop-trace denv)
 					   last)
 					(let ((val (eval! e (eval-module))))
-					   (when (xml-tilde? val)
-					      ((cond-expand
-						  (bigloo3.6a evmeaning-warning)
-						  (else evwarning))
-					       (when (pair? e) (cer e))
-					       "hop-load"
-					       "Useless ~ expression"))
+					   (when (isa? val xml-tilde)
+					      (evwarning
+						 (when (pair? e) (cer e))
+						 "hop-load"
+						 "Useless ~ expression"))
 					   (loop val #f))))))
 			     ((include)
 			      (let loop ((res '())
@@ -952,12 +966,8 @@
 				       ($env-set-trace-location denv (cer e)))
 				    (if (eof-object? e)
 					(let ((nm (eval-module)))
-					   (cond-expand
-					      (bigloo3.6a
-					       #unspecified)
-					      (else
-					       (unless (eq? m nm)
-						  (evmodule-check-unbound nm #f))))
+					   (unless (eq? m nm)
+					      (evmodule-check-unbound nm #f))
 					   ($env-pop-trace denv)
 					   (reverse! res))
 					(let ((val (eval! e (eval-module))))

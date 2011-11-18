@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Fri Jul 29 08:56:37 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 17:33:56 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -140,7 +140,6 @@
 		       (source (and (string? ,file) (basename ,file))))))
 	  ,(when (pair? body)
 	     `(register-service! ,svc))
-	  
 	  (procedure-attr-set! ,fun ,svc)
 	  ,fun)))
    
@@ -242,10 +241,8 @@
 (define (hop-with-hop-expander x e)
    
    (define (with-hop-local svc args success failure auth)
-      `(with-hop-local ((hop-service-proc (procedure-attr ,svc)) ,@args)
-		       ,success
-		       ,failure
-		       ,auth))
+      `(with-access::hop-service (procedure-attr ,svc) (proc)
+	  (with-hop-local (proc ,@args) ,success ,failure ,auth)))
 
    (define (with-hop-remote svc args success fail opts)
       `(with-hop-remote (,svc ,@args) ,success ,fail ,@(reverse! opts)))

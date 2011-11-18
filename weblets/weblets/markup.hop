@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec  7 09:54:35 2007                          */
-;*    Last change :  Wed Mar  9 16:01:40 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 16:49:22 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    weblets markups                                                  */
@@ -43,11 +43,11 @@
 ;*    <WEBLETS-LIST> ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (<WEBLETS-LIST> req category)
-   (let* ((autho (http-server-request-authorization req))
-	  (authe (if autho (http-decode-authentication autho) #f)))
-      (<DIV>
-	 (filter-map (lambda (w) (<WEBLET> w authe category))
-		     (sort string<? (get-weblets (weblets-repository)))))))
+   (with-access::http-server-request req (authorization)
+      (let ((authe (if authorization (http-decode-authentication authorization) #f)))
+	 (<DIV>
+	    (filter-map (lambda (w) (<WEBLET> w authe category))
+	       (sort string<? (get-weblets (weblets-repository))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLETS-PUBLISHER> ...                                          */

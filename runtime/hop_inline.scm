@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Sun Nov  7 09:12:40 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Fri Nov 11 19:48:49 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
 ;*=====================================================================*/
@@ -59,13 +59,15 @@
 		    (attributes `(:src ,src :resource ,resource))
 		    (body '())))
 	     (sm (hop-security-manager)))
-	  ((security-manager-inline-sanitize sm) el)))
+	  (with-access::security-manager sm (inline-sanitize)
+	     (inline-sanitize el))))
       (else
        (multiple-value-bind (_ userinfo host port path)
 	  (url-parse src)
 	  (let* ((req (current-request))
-		 (auth (and (http-server-request? req)
-			    (http-server-request-authorization req))))
+		 (auth (and (isa? req http-server-request)
+			    (with-access::http-server-request req (authorization)
+			       authorization))))
 	     (if early
 		 (xml-inline (or host (hostname))
 			     (or port (hop-port))
@@ -101,7 +103,7 @@
        (host host)
        (port port)
        (path path)
-       (user (user-nil))
+       (user (class-nil user))
        (userinfo userinfo)
        (authorization authorization))
     (lambda (p status header clength tenc)
@@ -136,8 +138,9 @@
 									       (filter! filter-attr attr))))
 						       (body body))))
 					    (for-each (lambda (b)
-							 (when (xml-element? b)
-							    (xml-element-parent-set! b el)))
+							 (when (isa? b xml-element)
+							    (with-access::xml-element b (parent)
+							       (set! parent el))))
 						      body)
 					    (if (and (string? eid)
 						     (string=? i eid))

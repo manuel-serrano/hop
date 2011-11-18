@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -28,17 +28,17 @@
 (define (assign! node to)
    (cond
       ((not to) node)
-      ((Return? to)
+      ((isa? to Return)
        (instantiate::Return
-	  (location (Node-location to))
+	  (location (with-access::Node to (location) location))
 	  (val node)))
-      ((Break? to)
+      ((isa? to Break)
        (with-access::Break to (label)
 	  (with-access::Push-Label label (var/return)
 	     (cond
-		((Return? var/return)
+		((isa? var/return Return)
 		 (assign! node var/return))
-		((Break? var/return)
+		((isa? var/return Break)
 		 (assign! node var/return))
 		(else
 		 (let ((tmp (assign! node var/return)))
@@ -89,7 +89,7 @@
 (define-nmethod (Set!.push! var/return)
    (with-access::Set! this (lvalue val)
       (with-access::Ref lvalue (var)
-	 (if (Var? var/return)
+	 (if (isa? var/return Var)
 	     ;; ignore var/return. the value of set! is unspecified.
 	     (walk! val var)
 	     (assign! (walk! val var)

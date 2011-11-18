@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sat Dec 18 06:24:52 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Wed Nov 16 11:52:05 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
 ;*=====================================================================*/
@@ -76,31 +76,32 @@
 		   (remote #f))
 	       (with-handler
 		  (lambda (e)
-		     (unless (&io-error? e)
+		     (unless (isa? e &io-error)
 			(exception-notify e))
 		     (when remote
 			(with-trace 4 "connection-close@handler"
 			   (connection-close! remote)))
 		     (cond
-			((&io-unknown-host-error? e)
+			((isa? e &io-unknown-host-error)
 			 (http-response (http-error e) socket))
 			((not remote)
-			 (if (&io-error? e)
+			 (if (isa? e &io-error)
 			     (http-response (http-remote-error host e) socket)
 			     (raise e)))
-			((connection-wstart? remote)
+			((with-access::connection remote (wstart?) wstart?)
 			 ;; If we have already sent characters to the client
 			 ;; it is no longer possible to repl with "resource
 			 ;; unavailable" so we raise the error.
 			 (raise e))
-			((connection-keep-alive remote)
+			((with-access::connection remote (keep-alive) keep-alive)
 			 ;; This is a keep-alive connection that is likely
 			 ;; to have been closed by the remote server, we
 			 ;; retry with a fresh connection
 			 (hop-verb 3
 				   (hop-color request request " RESET.ka")
 				   " (alive since "
-				   (connection-request-id remote)
+				   (with-access::connection remote (request-id)
+				      request-id)
 				   ") " host ":" port "\n")
 			 (http-response r socket))
 			(else
@@ -109,58 +110,58 @@
 		  (begin
 		     (set! remote (remote-get-socket host port connection-timeout request ssl))
 		     ;; verb
-		     (if (connection-keep-alive remote)
-			 (hop-verb 3
-				   (hop-color request request " REMOTE.ka")
-				   " (alive since "
-				   (connection-request-id remote)
-				   ") " host ":" port "\n")
-			 (hop-verb 3
-				   (hop-color request request " REMOTE")
-				   " " host ":" port "\n"))
-		     (let ((rp (connection-output remote))
-			   (sp (socket-input socket)))
-			(when (>fx remote-timeout 0)
-			   (output-timeout-set! rp remote-timeout)
-			   (input-timeout-set! (connection-input remote) remote-timeout))
-			;; the header and the request
-			(with-trace 4 "http-response-header"
-			   (trace-item "start-line: "
-				       (response-remote-start-line r))
-			   (remote-header header rp r)
-			   ;; if a char is ready and is eof, it means that the
-			   ;; connection is closed
-			   (if (connection-down? remote)
-			       (begin
-				  (with-trace 4 "connection-close@down"
-				     (trace-item "remote=" remote)
-				     (connection-close! remote))
-				  (loop))
-			       (begin
-				  ;; the content of the request
-				  (when (>elong content-length #e0)
-				     (trace-item "send-chars.1 cl=" content-length)
-				     (send-chars sp rp content-length))
-				  (flush-output-port rp)
-				  ;; capture dumping
-				  (when (output-port? (hop-capture-port))
-				     (log-capture request r))
-				  (if (assq :xhr-multipart header)
-				      (remote-multipart-body r socket remote)
-				      (remote-body r socket remote)))))))))))))
+		     (with-access::connection remote (keep-alive request-id)
+			(if keep-alive
+			    (hop-verb 3
+			       (hop-color request request " REMOTE.ka")
+			       " (alive since "
+			       request-id
+			       ") " host ":" port "\n")
+			    (hop-verb 3
+			       (hop-color request request " REMOTE")
+			       " " host ":" port "\n"))
+			(let ((rp (connection-output remote))
+			      (sp (socket-input socket)))
+			   (when (>fx remote-timeout 0)
+			      (output-timeout-set! rp remote-timeout)
+			      (input-timeout-set! (connection-input remote) remote-timeout))
+			   ;; the header and the request
+			   (with-trace 4 "http-response-header"
+			      (trace-item "start-line: "
+				 (response-remote-start-line r))
+			      (remote-header header rp r)
+			      ;; if a char is ready and is eof, it means that the
+			      ;; connection is closed
+			      (if (connection-down? remote)
+				  (begin
+				     (with-trace 4 "connection-close@down"
+					(trace-item "remote=" remote)
+					(connection-close! remote))
+				     (loop))
+				  (begin
+				     ;; the content of the request
+				     (when (>elong content-length #e0)
+					(trace-item "send-chars.1 cl=" content-length)
+					(send-chars sp rp content-length))
+				     (flush-output-port rp)
+				     ;; capture dumping
+				     (when (output-port? (hop-capture-port))
+					(log-capture request r))
+				     (if (assq :xhr-multipart header)
+					 (remote-multipart-body r socket remote)
+					 (remote-body r socket remote))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    log-capture ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (log-capture request r)
-   (let ((cp (hop-capture-port)))
-      (display "---------------------------------------------------------\n" cp)
-      (fprintf cp "http://~a:~a~a\n\n"
-	       (http-request-host request)
-	       (http-request-port request)
-	       (http-request-path request))
-      (remote-header (http-response-remote-header r) cp r)
-      (flush-output-port cp)))
+   (with-access::http-request request (host port path)
+      (let ((cp (hop-capture-port)))
+	 (display "---------------------------------------------------------\n" cp)
+	 (fprintf cp "http://~a:~a~a\n\n" host port path)
+	 (with-access::http-response-remote r (header)
+	    (remote-header header cp r))
+	 (flush-output-port cp))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remote-header ...                                                */
@@ -275,13 +276,12 @@
 			 (connection-close! remote))
 		      (connection-keep-alive! remote))
 		  ;; return to the main hop loop
-		  (let ((s (http-header-field
-			    (http-request-header request)
-			    proxy-connection:)))
-		     (if (and (or (>elong cl #e0) (eq? te 'chunked))
-			      (string? s))
-			 (string->symbol s)
-			 'close))))))))
+		  (with-access::http-request request (header)
+		     (let ((s (http-header-field header proxy-connection:)))
+			(if (and (or (>elong cl #e0) (eq? te 'chunked))
+				 (string? s))
+			    (string->symbol s)
+			    'close)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *remote-lock* ...                                                */
@@ -321,7 +321,7 @@
 	       (cond
 		  ((null? lst)
 		   #f)
-		  ((connection-locked (car lst))
+		  ((with-access::connection (car lst) (locked) locked)
 		   (loop (cdr lst)))
 		  ((connection-timeout? (car lst) cs)
 		   (connection-close-sans-lock! (car lst))
@@ -441,7 +441,7 @@
 	       (host host)
 	       (port port)
 	       (key key)
-	       (request-id (http-request-id request))
+	       (request-id (with-access::http-request request (id) id))
 	       (date (current-seconds))
 	       (locked #t)
 	       (intable #f)))))
@@ -486,18 +486,19 @@
       (let ((now (current-seconds)))
 	 (filter-connection-table!
 	  (lambda (c)
-	     (or (connection-locked c) (not (connection-timeout? c now)))))))
+	     (with-access::connection c (locked)
+		(or locked (not (connection-timeout? c now))))))))
    (if (too-many-keep-alive-connection?)
        ;; we have failed, we still have too many keep-alive connections open
        (begin
-	  (filter-connection-table! (lambda (c) (connection-locked c)))
+	  (filter-connection-table! (lambda (c) (with-access::connection c (locked) locked)))
 	  (connection-close-sans-lock! conn))
        ;; store the connection only if room is available on the table
-       (with-access::connection conn (locked keep-alive)
+       (with-access::connection conn (locked keep-alive intable)
 ;* 	  (tprint "keep-alive connection : " (connection-id conn))     */
 	  (set! locked #f)
 	  (set! keep-alive #t)
-	  (unless (connection-intable conn)
+	  (unless intable
 	     ;; this is the first time we see this connection, we add it to
 	     ;; the connection table
 	     (connection-table-add! conn))))
@@ -507,11 +508,11 @@
 ;*    connection-close-sans-lock! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (connection-close-sans-lock! conn::connection)
-   (with-access::connection conn (socket %%debug-closed)
+   (with-access::connection conn (socket %%debug-closed intable)
       (when %%debug-closed
 	 (error 'connection-close-sans-lock! "Connection already closed" conn))
       (close-connection! conn)
-      (when (connection-intable conn)
+      (when intable
 	 (connection-table-remove! conn))))
    
 ;*---------------------------------------------------------------------*/
@@ -546,10 +547,12 @@
 ;*    connection-output ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (connection-output connection::connection)
-   (socket-output (connection-socket connection)))
+   (with-access::connection connection (socket)
+      (socket-output socket)))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-input ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (connection-input connection::connection)
-   (socket-input (connection-socket connection)))
+   (with-access::connection connection (socket)
+      (socket-input socket)))

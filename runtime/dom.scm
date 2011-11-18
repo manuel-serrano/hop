@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Sat Jun 11 06:13:26 2011 (serrano)                */
+;*    Last change :  Fri Nov 11 07:08:30 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -63,13 +63,15 @@
    (with-access::xml-document doc (%idtable)
       
       (define (update-xml-markup! obj)
-	 (when (xml-element? obj)
-	    (hashtable-put! %idtable (xml-element-id obj) obj))
-	 (update-body! (xml-markup-body obj)))
+	 (when (isa? obj xml-element)
+	    (with-access::xml-element obj (id)
+	       (hashtable-put! %idtable id obj)))
+	 (with-access::xml-markup obj (body)
+	    (update-body! body)))
 
       (define (update-body! body)
 	 (cond
-	    ((xml-markup? body)
+	    ((isa? body xml-markup)
 	     (update-xml-markup! body))
 	    ((pair? body)
 	     (for-each update-body! body))))
@@ -110,22 +112,25 @@
 ;*    dom-get-element-by-id ::xml-delay ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (dom-get-element-by-id obj::xml-delay id)
-   (when (string=? id (xml-delay-id obj))
-      obj))
+   (with-access::xml-delay obj (id)
+      (when (string=? id id)
+	 obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-element-by-id ::xml-markup ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (dom-get-element-by-id obj::xml-markup id)
-   (dom-get-element-by-id* (xml-markup-body obj) id))
+   (with-access::xml-markup obj (body)
+      (dom-get-element-by-id* body id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-element-by-id ::xml-element ...                          */
 ;*---------------------------------------------------------------------*/
 (define-method (dom-get-element-by-id obj::xml-element id)
-   (if (and (string? (xml-element-id obj)) (string=? id (xml-element-id obj)))
-       obj
-       (dom-get-element-by-id* (xml-element-body obj) id)))
+   (with-access::xml-element obj ((oid id) body)
+      (if (and (string? oid) (string=? id oid))
+	  obj
+	  (dom-get-element-by-id* body id))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-element-by-id* ...                                       */
@@ -140,13 +145,14 @@
 ;*    dom-owner-document ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (dom-owner-document obj)
-   (when (xml-element? obj)
-      (let loop ((parent (xml-element-parent obj)))
+   (when (isa? obj xml-element)
+      (let loop ((parent (with-access::xml-element obj (parent) parent)))
 	 (cond
-	    ((xml-document? parent)
+	    ((isa? parent xml-document)
 	     parent)
-	    ((xml-element? parent)
-	     (loop (xml-element-parent parent)))
+	    ((isa? parent xml-element)
+	     (with-access::xml-element parent (parent)
+		(loop parent)))
 	    (else
 	     #f)))))
 
@@ -154,7 +160,7 @@
 ;*    dom-get-attributes ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (dom-get-attributes node)
-   (if (xml-markup? node)
+   (if (isa? node xml-markup)
        (with-access::xml-markup node (attributes)
 	  attributes)
        '()))
@@ -163,7 +169,7 @@
 ;*    dom-child-nodes ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (dom-child-nodes node)
-   (if (xml-markup? node)
+   (if (isa? node xml-markup)
        (with-access::xml-markup node (body)
 	  body)
        '()))
@@ -172,7 +178,7 @@
 ;*    dom-first-child ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (dom-first-child node)
-   (and (xml-markup? node)
+   (and (isa? node xml-markup)
 	(with-access::xml-markup node (body)
 	   (and (pair? body) (car body)))))
 
@@ -180,7 +186,7 @@
 ;*    dom-last-child ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (dom-last-child node)
-   (and (xml-markup? node)
+   (and (isa? node xml-markup)
 	(with-access::xml-markup node (body)
 	   (and (pair? body) (car (last-pair body))))))
 
@@ -191,9 +197,10 @@
    (cond
       ((string? node)
        "#text")
-      ((xml-markup? node)
-       (symbol->string (xml-markup-tag node)))
-      ((xml-document? node)
+      ((isa? node xml-markup)
+       (with-access::xml-markup node (tag)
+	  (symbol->string tag)))
+      ((isa? node xml-document)
        "#document")
       (else
        "")))
@@ -205,11 +212,11 @@
    (cond
       ((string? node)
        'text)
-      ((xml-markup? node)
-       (xml-markup-tag node))
-      ((xml-markup? node)
+      ((isa? node xml-markup)
+       (with-access::xml-markup node (tag) tag))
+      ((isa? node xml-element)
        'element)
-      ((xml-document? node)
+      ((isa? node xml-document)
        'document)
       (else
        'unknown)))
@@ -221,7 +228,7 @@
    (cond
       ((string? node)
        node)
-      ((xml-markup? node)
+      ((isa? node xml-markup)
        #f)
       (else
        #f)))
@@ -230,15 +237,21 @@
 ;*    dom-parent-node ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (dom-parent-node node)
-   (and (xml-element? node) (xml-element-parent node)))
+   (when (isa? node xml-element)
+      (with-access::xml-element node (parent)
+	 parent)))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-set-parent-node! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (dom-set-parent-node! node parent)
    (cond
-      ((xml-element? node) (xml-element-parent-set! node parent))
-      ((xml-tilde? node) (xml-tilde-parent-set! node parent))))
+      ((isa? node xml-element)
+       (with-access::xml-element node ((xparent parent))
+	  (set! xparent parent)))
+      ((isa? node xml-tilde)
+       (with-access::xml-tilde node ((xparent parent))
+	  (set! xparent parent)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-ancestor-node ...                                            */
@@ -246,26 +259,28 @@
 ;*    Transitive closure on parent node until no parent found.         */
 ;*---------------------------------------------------------------------*/
 (define (dom-ancestor-node obj)
-   (when (xml-element? obj)
-      (let ((parent (xml-element-parent obj)))
-	 (when (xml-element? parent)
-	    (let loop ((nparent (xml-element-parent parent))
-		       (parent parent))
-	       (cond
-		  ((not nparent)
-		   parent)
-		  ((xml-document? nparent)
-		   nparent)
-		  (else
-		   (loop (xml-element-parent nparent) nparent))))))))
+   (when (isa? obj xml-element)
+      (with-access::xml-element obj (parent)
+	 (when (isa? parent xml-element)
+	    (with-access::xml-element parent ((nparent parent))
+	       (let loop ((nparent nparent)
+			  (parent parent))
+		  (cond
+		     ((not nparent)
+		      parent)
+		     ((isa? nparent xml-document)
+		      nparent)
+		     (else
+		      (with-access::xml-element nparent (parent)
+			 (loop parent nparent))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-previous-sibling ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (dom-previous-sibling node)
-   (and (xml-element? node)
+   (and (isa? node xml-element)
 	(with-access::xml-element node (parent)
-	   (and (xml-markup? parent)
+	   (and (isa? parent xml-markup)
 		(with-access::xml-markup parent (body)
 		   (let loop ((body body)
 			      (prev #f))
@@ -281,9 +296,9 @@
 ;*    dom-next-sibling ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (dom-next-sibling node)
-   (and (xml-element? node)
+   (and (isa? node xml-element)
 	(with-access::xml-element node (parent)
-	   (and (xml-markup? parent)
+	   (and (isa? parent xml-markup)
 		(with-access::xml-markup parent (body)
 		   (let ((child (memq node body)))
 		      (and (pair? child)
@@ -294,11 +309,12 @@
 ;*    dom-remove-child! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (dom-remove-child! node old)
-   (when (xml-markup? node)
+   (when (isa? node xml-markup)
       (let ((doc (dom-owner-document node)))
-	 (when (xml-document? doc)
+	 (when (isa? doc xml-document)
 	    (with-access::xml-document doc (%idtable)
-	       (hashtable-remove! %idtable (xml-element-id old)))))
+	       (with-access::xml-element old (id)
+		  (hashtable-remove! %idtable id)))))
       (with-access::xml-markup node (body)
 	 (set! body (remq! old body))
 	 (when (eq? (dom-parent-node old) node)
@@ -314,11 +330,11 @@
       ;; re-parent new
       (if (and ancp (eq? ancp ancn))
 	  (let ((parent (dom-parent-node new)))
-	     (when (xml-markup? parent)
+	     (when (isa? parent xml-markup)
 		(with-access::xml-markup parent (body)
 		   (set! body (remq! new body)))))
 	  (let ((doc (dom-owner-document node)))
-	     (when (xml-document? doc)
+	     (when (isa? doc xml-document)
 		(with-access::xml-document doc (%idtable)
 		   (doc-update-idtable! doc new))))))
    ;; and new to node
@@ -338,7 +354,7 @@
 ;*    dom-replace-child! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (dom-replace-child! node new old)
-   (when (xml-element? node)
+   (when (isa? node xml-element)
       (let ((ancp (dom-ancestor-node node))
 	    (ancn (dom-ancestor-node new))
 	    (anco (dom-ancestor-node old))
@@ -346,10 +362,10 @@
 	 ;; re-parent the new node
 	 (if (and ancp (eq? ancp ancn))
 	     (let ((parent (dom-parent-node new)))
-		(when (xml-markup? parent)
+		(when (isa? parent xml-markup)
 		   (with-access::xml-markup parent (body)
 		      (set! body (remq! new body)))))
-	     (when (xml-document? docp)
+	     (when (isa? docp xml-document)
 		(with-access::xml-document docp (%idtable)
 		   (doc-update-idtable! docp new))))
 	 ;; unparent the old node
@@ -357,7 +373,8 @@
 	 (let ((doco (dom-owner-document old)))
 	    (when (and docp (eq? docp doco))
 	       (with-access::xml-document doco (%idtable)
-		  (hashtable-remove! %idtable (xml-element-id old))))))
+		  (with-access::xml-element old (id)
+		     (hashtable-remove! %idtable id))))))
       ;; replace the elements
       (dom-set-parent-node! new node)
       (with-access::xml-markup node (body)
@@ -374,7 +391,7 @@
 ;*    dom-insert-before! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (dom-insert-before! node new ref)
-   (when (xml-markup? node)
+   (when (isa? node xml-markup)
       (with-access::xml-markup node (body)
 	 (cond
 	    ((not ref)
@@ -387,11 +404,11 @@
 		;; re-parent new
 		(if (and ancp (eq? ancp ancn))
 		    (let ((parent (dom-parent-node new)))
-		       (when (xml-markup? parent)
+		       (when (isa? parent xml-markup)
 			  (with-access::xml-markup parent (body)
 			     (set! body (remq! new body)))))
 		    (let ((doc (dom-owner-document node)))
-		       (when (xml-document? doc)
+		       (when (isa? doc xml-document)
 			  (with-access::xml-document doc (%idtable)
 			     (doc-update-idtable! doc new))))))
 	     ;; add new
@@ -432,10 +449,11 @@
 (define-method (dom-clone-node node::xml-if deep::bool)
    (if (not deep)
        (duplicate::xml-if node)
-       (duplicate::xml-if node
-	  (test (dom-clone-node (xml-if-test xml-if) deep))
-	  (then (dom-clone-node (xml-if-then xml-if) deep))
-	  (otherwise (dom-clone-node (xml-if-otherwise xml-if) deep)))))
+       (with-access::xml-if node (test then otherwise)
+	  (duplicate::xml-if node 
+	     (test (dom-clone-node test deep))
+	     (then (dom-clone-node then deep))
+	     (otherwise (dom-clone-node otherwise deep))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-clone-node ::xml-delay ...                                   */
@@ -449,9 +467,10 @@
 (define-method (dom-clone-node node::xml-markup deep::bool)
    (if (not deep)
        (duplicate::xml-markup node)
-       (duplicate::xml-markup node
-	  (attributes (dom-clone-node (xml-markup-attributes node) deep))
-	  (body (dom-clone-node (xml-markup-body node) deep)))))
+       (with-access::xml-markup node (attributes body)
+	  (duplicate::xml-markup node
+	     (attributes (dom-clone-node attributes deep))
+	     (body (dom-clone-node body deep))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-clone-node ::xml-element ...                                 */
@@ -459,9 +478,10 @@
 (define-method (dom-clone-node node::xml-element deep::bool)
    (if (not deep)
        (duplicate::xml-element node)
-       (duplicate::xml-element node
-	  (attributes (dom-clone-node (xml-element-attributes node) deep))
-	  (body (dom-clone-node (xml-element-body node) deep)))))
+       (with-access::xml-element node (attributes body)
+	  (duplicate::xml-element node
+	     (attributes (dom-clone-node attributes deep))
+	     (body (dom-clone-node body deep))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-clone-node ::xml-html ...                                    */
@@ -469,15 +489,16 @@
 (define-method (dom-clone-node node::xml-html deep::bool)
    (if (not deep)
        (duplicate::xml-html node)
-       (duplicate::xml-html node
-	  (attributes (dom-clone-node (xml-html-attributes node) deep))
-	  (body (dom-clone-node (xml-html-body node) deep)))))
+       (with-access::xml-html node (attributes body)
+	  (duplicate::xml-html node
+	     (attributes (dom-clone-node attributes deep))
+	     (body (dom-clone-node body deep))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-add-class! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (dom-add-class! node name)
-   (when (xml-markup? node)
+   (when (isa? node xml-markup)
       (let ((cname (dom-get-attribute node "class")))
 	 (if (not (string? cname))
 	     (dom-set-attribute! node "class" name)
@@ -489,7 +510,7 @@
 ;*    dom-remove-class! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (dom-remove-class! node name)
-   (when (xml-markup? node)
+   (when (isa? node xml-markup)
       (let ((cname (dom-get-attribute node "class"))
 	    (regexp (string-append "[ \\t]*" name "\\b")))
 	 (dom-set-attribute! node "class" (pregexp-replace regexp cname "")))))
@@ -498,20 +519,24 @@
 ;*    dom-has-attributes? ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (dom-has-attributes? node)
-   (and (xml-markup? node) (pair? (xml-markup-attributes node))))
+   (when (isa? node xml-markup)
+      (with-access::xml-markup node (attributes)
+	 (pair? attributes))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-has-child-nodes? ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (dom-has-child-nodes? node)
-   (and (xml-markup? node) (pair? (xml-markup-body node))))
+   (when (isa? node xml-markup)
+      (with-access::xml-markup node (body)
+	 (pair? body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-normalize! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (dom-normalize! node)
-   (when (xml-markup? node)
-      (let loop ((body (xml-markup-body node))
+   (when (isa? node xml-markup)
+      (let loop ((body (with-access::xml-markup node (body) body))
 		 (new '()))
 	 (cond
 	    ((null? body)
@@ -544,10 +569,11 @@
 	 (cond
 	    ((pair? obj)
 	     (append-map loop obj))
-	    ((xml-markup? obj)
-	     (if (eq? sym (xml-markup-tag obj))
-		 (cons obj (loop (xml-markup-body obj)))
-		 (loop (xml-markup-body obj))))
+	    ((isa? obj xml-markup)
+	     (with-access::xml-markup obj (body tag)
+		(if (eq? sym tag)
+		    (cons obj (loop body))
+		    (loop body))))
 	    (else
 	     '())))))
 
@@ -559,15 +585,16 @@
       (cond
 	 ((pair? obj)
 	  (append-map loop obj))
-	 ((xml-markup? obj)
-	  (let ((c (dom-get-attribute obj "class")))
-	     ;; CARE: may be we should check that name is part
-	     ;; of the class attribute. If we decide to change this,
-	     ;; the change should be reported in the JS implementation
-	     ;; inside the file hop-dom.js
-	     (if (and (string? c) (string=? c name))
-		 (cons obj (loop (xml-markup-body obj)))
-		 (loop (xml-markup-body obj)))))
+	 ((isa? obj xml-markup)
+	  (with-access::xml-markup obj (body)
+	     (let ((c (dom-get-attribute obj "class")))
+		;; CARE: may be we should check that name is part
+		;; of the class attribute. If we decide to change this,
+		;; the change should be reported in the JS implementation
+		;; inside the file hop-dom.js
+		(if (and (string? c) (string=? c name))
+		    (cons obj (loop body))
+		    (loop body)))))
 	 (else
 	  '()))))
 
@@ -579,11 +606,12 @@
       (cond
 	 ((pair? obj)
 	  (append-map loop obj))
-	 ((xml-markup? obj)
-	  (let ((c (dom-get-attribute obj "hssclass")))
-	     (if (and (string? c) (string=? c name))
-		 (cons obj (loop (xml-markup-body obj)))
-		 (loop (xml-markup-body obj)))))
+	 ((isa? obj xml-markup)
+	  (with-access::xml-markup obj (body)
+	     (let ((c (dom-get-attribute obj "hssclass")))
+		(if (and (string? c) (string=? c name))
+		    (cons obj (loop body))
+		    (loop body)))))
 	 (else
 	  '()))))
 
@@ -591,7 +619,7 @@
 ;*    dom-get-attribute ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (dom-get-attribute node name)
-   (when (xml-markup? node)
+   (when (isa? node xml-markup)
       (with-access::xml-markup node (attributes)
 	 (let ((a (plist-assq (string->keyword name) attributes)))
 	    (when a (cadr a))))))
@@ -600,7 +628,7 @@
 ;*    dom-has-attribute? ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (dom-has-attribute? node name)
-   (when (xml-markup? node)
+   (when (isa? node xml-markup)
       (with-access::xml-markup node (attributes)
 	 (pair? (plist-assq (string->keyword name) attributes)))))
 
@@ -608,7 +636,7 @@
 ;*    dom-remove-attribute! ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (dom-remove-attribute! node name)
-   (when (xml-markup? node)
+   (when (isa? node xml-markup)
       (with-access::xml-markup node (attributes)
 	 (set! attributes (plist-remq! (string->keyword name) attributes))
 	 attributes)))
@@ -617,7 +645,7 @@
 ;*    dom-set-attribute!...                                            */
 ;*---------------------------------------------------------------------*/
 (define (dom-set-attribute! node name value)
-   (when (xml-markup? node)
+   (when (isa? node xml-markup)
       (with-access::xml-markup node (attributes)
 	 (let* ((key (string->keyword name))
 		(a (plist-assq key attributes)))
@@ -629,7 +657,7 @@
 ;*    dom-node-element? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (dom-node-element? node)
-   (xml-element? node))
+   (isa? node xml-element))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-node-text? ...                                               */
@@ -661,10 +689,11 @@
 (define (dom-inner-html-set! node::xml-markup body)
    (let ((body (if (pair? body) body (list body))))
       ;; set the new body
-      (xml-markup-body-set! node body)
+      (with-access::xml-markup node ((xbody body))
+	 (set! xbody body))
       ;; update the id hashtable
       (let ((doc (dom-owner-document node)))
-	 (when (xml-document? doc)
+	 (when (isa? doc xml-document)
 	    (doc-update-idtable! doc body)))
       node))
 

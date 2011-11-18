@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -40,8 +40,8 @@
 	     (cond
 		((and constant?
 		      value
-		      (Const? value)
-		      (let ((const (Const-value value)))
+		      (isa? value Const)
+		      (with-access::Const value ((const value))
 			 ;; do not propagate vectors, lists and
 			 ;; strings. Otherwise 'eq?' might not work anymore.
 			 ;; Also strings can be quite long.
@@ -53,22 +53,19 @@
 		 value)
 		((and constant?
 		      value
-		      (Ref? value)
+		      (isa? value Ref)
 		      (with-access::Ref value (var)
-			 (with-access::Var var (constant?)
-			    (and constant?
-				 (not (eq? (Var-kind var) 'this))))))
+			 (with-access::Var var (constant? kind)
+			    (and constant? (not (eq? kind 'this))))))
 		 (transitive-value value))
 		(else var-ref))))))
 
 (define-nmethod (Ref.propagate!)
    (let* ((target (transitive-value this)))
       (cond
-	 ((Const? target)
-	  (instantiate::Const
-	     (location (Node-location target))
-	     (value (Const-value target))))
-	 ((and (Ref? target)
+	 ((isa? target Const)
+	  (duplicate::Const target))
+	 ((and (isa? target Ref)
 	       (not (eq? this target)))
 	  (with-access::Ref target (var)
 	     (var-reference var :location target)))

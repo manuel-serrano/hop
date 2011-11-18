@@ -109,7 +109,7 @@
       (let ((entry (get-entry)))
 	 (cond
 	    (entry entry)
-	    ((is-a? scope Lazy-Scope)
+	    ((isa? scope Lazy-Scope)
 	     (with-access::Lazy-Scope scope (lazy)
 		(lazy scope id)))
 	    (else #f)))))

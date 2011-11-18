@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri May  6 11:54:10 2011                          */
-;*    Last change :  Fri May  6 14:56:24 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 12:00:53 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop xdomain requests                                             */
@@ -47,6 +47,7 @@
    (set! *xdomain-svc*
       (service :name "admin/xdomain" (#!key origin)
 	 (instantiate::http-response-hop
+	    (backend (hop-xml-backend))
 	    (request (current-request))
 	    (charset (hop-locale))
 	    (xml (<HTML>

@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -48,7 +48,7 @@
 		       #!optional (use-var? #t))
    (if use-var?
        (let* ((tmp (Ref-of-new-Var 'stmp))
-	      (tmp-var (Ref-var tmp)))
+	      (tmp-var (with-access::Ref tmp (var) var)))
 	  (with-access::Begin stmt-begin (exprs)
 	     (cons-set! exprs
 			(walk! (var-assig tmp-var n)
@@ -61,7 +61,7 @@
 	  (cons-set! exprs
 		     (walk! n surrounding-fun #f)) ;; n is at stmt-level now.
 	  (instantiate::Const
-	     (location (Node-location n))
+	     (location (with-access::Node n (location) location))
 	     (value #unspecified)))))
 
 
@@ -251,8 +251,8 @@
 		       (walk! n surrounding-fun #f))))
 		
 		(define (unaffected? n)
-		   (or (Const? n)
-		       (and (Ref? n)
+		   (or (isa? n Const)
+		       (and (isa? n Ref)
 			    (with-access::Ref n (var)
 			       (with-access::Var var (constant?)
 				  constant?)))))

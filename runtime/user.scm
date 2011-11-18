@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Thu Jun 23 11:38:38 2011 (serrano)                */
+;*    Last change :  Thu Nov 10 17:22:41 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -61,7 +61,8 @@
 ;*    user-key ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (user-key u)
-   (make-user-key (user-name u) (user-password u)))
+   (with-access::user u (name password)
+      (make-user-key name password)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *users-open* ...                                                 */
@@ -192,7 +193,7 @@
 (define (user-exists? name)
    (with-lock *user-mutex*
       (lambda ()
-	 (user? (hashtable-get *users* name)))))
+	 (isa? (hashtable-get *users* name) user))))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-authentication-encrypt ...                                  */
@@ -206,8 +207,9 @@
 		 (n (substring auth 0 i))
 		 (p (substring auth (+fx i 1) (string-length auth)))
 		 (s (let ((u (hashtable-get *users* n)))
-		       (if (user? u)
-			   (user-authentication u)
+		       (if (isa? u user)
+			   (with-access::user u (authentication)
+			      authentication)
 			   'basic))))
 	     (authentication-encrypt s algo (hop-session) n p path)))
 	 (else
@@ -227,7 +229,7 @@
       
    (define (find-none-authentication n p)
       (let ((u (hashtable-get *users* n)))
-	 (if (user? u)
+	 (if (isa? u user)
 	     (with-access::user u (password authentication)
 		(if (string=? password (password-encrypt n p authentication))
 		    (add-cached-user! auth u)
@@ -236,7 +238,7 @@
    
    (define (find-ho0-authentication n md5p)
       (let ((u (hashtable-get *users* n)))
-	 (if (user? u)
+	 (if (isa? u user)
 	     (with-access::user u (password)
 		(let ((p (h0password password path)))
 		   (if (string=? p md5p)
@@ -246,7 +248,7 @@
    
    (define (find-ho1-authentication n md5p path)
       (let ((u (hashtable-get *users* n)))
-	 (if (user? u)
+	 (if (isa? u user)
 	     (with-access::user u (password)
 		(let ((p (h1password password path (hop-session))))
 		   (if (string=? p md5p)
@@ -256,7 +258,7 @@
 
    (define (find-ho2-authentication n md5p path)
       (let ((u (hashtable-get *users* n)))
-	 (if (user? u)
+	 (if (isa? u user)
 	     (with-access::user u (password)
 		(let ((p (h2password password path (hop-session) ip)))
 		   (if (string=? p md5p)
@@ -303,7 +305,7 @@
       
       (let* ((n (get 'username l))
 	     (u (hashtable-get *users* n)))
-	 (when (user? u)
+	 (when (isa? u user)
 	    (with-access::user u (password authentication)
 	       (if (eq? authentication 'digest)
 		   (let ((opaque (get 'opaque l))
@@ -359,10 +361,10 @@
 ;*    anonymous-user ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (anonymous-user)
-   (if (user? *anonymous-user*)
+   (if (isa? *anonymous-user* user)
        *anonymous-user*
        (let ((a (hashtable-get *users* "anonymous")))
-	  (if (user? a)
+	  (if (isa? a user)
 	      (set! *anonymous-user* a)
 	      (error "anonymous-user" "No anonymous user declared" a))
 	  *anonymous-user*)))
@@ -377,7 +379,7 @@
 		  (string=? *last-authentication* auth))
 	     *last-user*
 	     (let ((u (hashtable-get *authenticated-users* auth)))
-		(when (user? u)
+		(when (isa? u user)
 		   (set! *last-authentication* auth)
 		   (set! *last-user* u))
 		u)))))
@@ -399,8 +401,9 @@
 ;*---------------------------------------------------------------------*/
 (define (find-user user-name encoded-passwd)
    (let ((u (hashtable-get *users* user-name)))
-      (and (user? u)
-	   (string=? encoded-passwd (user-password u))
+      (and (isa? u user)
+	   (with-access::user u (password)
+	      (string=? encoded-passwd password))
 	   u)))
 
 ;*---------------------------------------------------------------------*/
@@ -408,8 +411,9 @@
 ;*---------------------------------------------------------------------*/
 (define (find-user/encrypt user-name encoded-passwd encrypt)
    (let ((u (hashtable-get *users* user-name)))
-      (and (user? u)
-	   (string=? encoded-passwd (encrypt (user-password u)))
+      (and (isa? u user)
+	   (with-access::user u (password)
+	      (string=? encoded-passwd (encrypt password)))
 	   u)))
 
 ;*---------------------------------------------------------------------*/
@@ -488,8 +492,8 @@
 		    (or (=fx (string-length d) (string-length path))
 			(and (>fx (string-length path) (string-length d))
 			     (char=? (string-ref path (string-length d))
-				     (file-separator))))))
-	    dirs))
+				(file-separator))))))
+	 dirs))
    (and (with-access::user user (directories services)
 	   (or (eq? directories '*)
 	       (path-member path directories)
@@ -499,22 +503,24 @@
 			 (and (symbol? service-path)
 			      (user-authorized-service? user service-path)))))))
 	(let ((hopaccess (find-hopaccess path)))
-	   (or (not hopaccess)
-	       (let ((access (with-input-from-file hopaccess read)))
-		  (cond
-		     ((eq? access '*)
-		      #t)
-		     ((list? access)
-		      (member (user-name user) access))
-		     (else
-		      #f)))))))
+	   (with-access::user user (name)
+	      (or (not hopaccess)
+		  (let ((access (with-input-from-file hopaccess read)))
+		     (cond
+			((eq? access '*)
+			 #t)
+			((list? access)
+			 (member name access))
+			(else
+			 #f))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    authorized-path? ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (authorized-path? req path)
    (or ((hop-path-access-control) req path)
-       (user-authorized-path? (http-request-user req) path)))
+       (with-access::http-request req (user)
+	  (user-authorized-path? user path))))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-authorized-service? ...                                     */
@@ -533,7 +539,8 @@
 ;*---------------------------------------------------------------------*/
 (define (authorized-service? req service)
    (or ((hop-service-access-control) req service)
-       (user-authorized-service? (http-request-user req) service)))
+       (with-access::http-request req (user)
+	  (user-authorized-service? user service))))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-authorized-request? ...                                     */
@@ -585,11 +592,13 @@
       (if (or (eq? (hop-http-authentication) 'basic)
 	      (eq? http 'HTTP/1.0)
 	      (let ((user (find-unauthenticated-user req)))
-		 (and (user? user) (eq? (user-authentication user) 'basic))))
+		 (and (isa? user user)
+		      (with-access::user user (authentication)
+			 (eq? authentication 'basic)))))
 	  `((WWW-Authenticate: . ,(basic-authenticate req))
 	    (hop-session: . ,(hop-session)))
 	  `((WWW-Authenticate: . ,(digest-authenticate req))
-	    (hop-session: . ,(hop-session)))))) ;
+	    (hop-session: . ,(hop-session))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-access-denied ...                                           */
@@ -602,11 +611,10 @@
       (body (cond
 	       (message
 		message)
-	       ((http-request? req)
-		(format "Protected Area! Authentication required: ~a:~a:~a"
-			(http-request-host req)
-			(http-request-port req)
-			(http-request-path req)))
+	       ((isa? req http-request)
+		(with-access::http-request req (host port path)
+		   (format "Protected Area! Authentication required: ~a:~a:~a"
+		      host port path)))
 	       (else
 		"Protected Area! Authentication required.")))))
 
@@ -619,7 +627,7 @@
       (start-line "HTTP/1.0 401 Unauthorized")
       (request req)
       (body (format "User `~a' is not allowed to execute service `~a'."
-		    (user-name user) svc))))
+	       (with-access::user user (name) name) svc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    proxy-denied ...                                                 */
@@ -633,4 +641,4 @@
 		 ,(format "Basic realm=\"Hop proxy (~a) authentication\""
 			  host))))
       (body (format "Protected Area! Authentication required for user `~a'."
-		    (user-name user)))))
+		    (with-access::user user (name) name)))))

@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -17,7 +17,7 @@
 
 (define (scheme2js-error-location loc)
    (cond
-      ((Node? loc)
+      ((isa? loc Node)
        (with-access::Node loc (location)
 	  (scheme2js-error-location location)))
       ((epair? loc)

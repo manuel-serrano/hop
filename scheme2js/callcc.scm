@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -112,8 +112,8 @@
 
 
 (define (finally-var? var)
-   (and (not (Var-indirect? var))
-	(Var-needs-update? var)))
+   (with-access::Var var (indirect? needs-update?)
+      (and (not indirect?) needs-update?)))
 
 (define (call/cc-scoping tree)
    (scope tree #f #f #f '()))
@@ -136,7 +136,7 @@
 			       (surrounding-while #f)
 			       (finally-vars (filter finally-var?
 						     scope-vars)))))
-	     (when (not (null? (Call/cc-Scope-Info-finally-vars scope-info)))
+	     (when (not (null? (with-access::Call/cc-Scope-Info scope-info (finally-vars) finally-vars)))
 		(set! call/cc-finally-scopes (list scope-info)))
 	     
 	     (set! call/cc-contained-scopes (list scope-info))
@@ -162,7 +162,7 @@
 	     (set! call/cc-counter-nb call/cc-nb-while-counters)
 	     (set! call/cc-nb-while-counters (+fx 1 call/cc-counter-nb))
 
-	     (let* ((to-save-vars (filter (lambda (var) (not (Var-indirect? var)))
+	     (let* ((to-save-vars (filter (lambda (var) (not (with-access::Var var (indirect?) indirect?)))
 					  scope-vars))
 		    (finally-vars (filter finally-var? to-save-vars)))
 
@@ -189,7 +189,7 @@
    (with-access::Let this (call/cc? scope-vars bindings body)
       (if (not call/cc?)
 	  (default-walk this surrounding-fun surrounding-while scopes)
-	  (let* ((to-save-vars (filter (lambda (var) (not (Var-indirect? var)))
+	  (let* ((to-save-vars (filter (lambda (var) (not (with-access::Var var (indirect?) indirect?)))
 				       scope-vars))
 		 (finally-vars (filter finally-var? to-save-vars)))
 	     (if (null? to-save-vars)
@@ -247,12 +247,12 @@
       (cond
 	 ((not call/cc?)
 	  this)
-	 ((Const? init)
+	 ((isa? init Const)
 	  this)
 	 (else
 	  (let ((old-init init))
 	     (set! init (instantiate::Const
-			   (location (Node-location this))
+			   (location (with-access::Node this (location) location))
 			   (value #unspecified)))
 	     (instantiate::Begin
 		(exprs (list old-init this))))))))

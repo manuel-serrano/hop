@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon May 30 14:49:11 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 12:01:27 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -149,7 +149,7 @@
 ;*---------------------------------------------------------------------*/
 (define (obj->js-tree-thunk obj)
    (cond
-      ((xml-tilde? obj)
+      ((isa? obj xml-tilde)
        (format "function( event ) { ~a }" (xml-tilde->return obj)))
       ((string? obj)
        (format "function( event ) { ~a }" obj))
@@ -172,8 +172,9 @@
 				   value history
 				   inline iconopen iconclose icondir)
       ;; set the parent relationship with the body
-      (when (and (pair? body) (html-trbody? (car body)))
-	 (html-trbody-parent-set! (car body) obj))
+      (when (and (pair? body) (isa? (car body) html-trbody))
+	 (with-access::html-trbody (car body) (parent)
+	    (set! parent obj)))
       ;; the constructor call
       (display "hop_make_tree(" p)
       ;; parent 
@@ -213,12 +214,13 @@
       (display ", " p)
       ;; the title
       (let ((title (let ((ps (open-output-string)))
-		      (xml-write-body (xml-element-body head) ps be)
+		      (with-access::xml-element head (body)
+			 (xml-write-body body ps be))
 		      (close-output-port ps))))
 	 (obj->javascript title p #t))
       (display ", " p)
       ;; is the tree open
-      (if (xml-tilde? open)
+      (if (isa? open xml-tilde)
 	  (begin
 	     (display (xml-tilde->expression open) p)
 	     (display ", " p))
@@ -298,9 +300,9 @@
 ;*    delayed-tree-body? ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (delayed-tree-body? body)
-   (when (and (pair? body) (html-trbody? (car body)))
+   (when (and (pair? body) (isa? (car body) html-trbody))
       (with-access::xml-element (car body) (body)
-	 (and (pair? body) (xml-delay? (car body))))))
+	 (and (pair? body) (isa? (car body) xml-delay)))))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-body ...                                               */
@@ -319,21 +321,23 @@
 			 (cond
 			    ((pair? b)
 			     (for-each loop b))
-			    ((xml-delay? b)
-			     (loop ((xml-delay-thunk b))))
-			    ((html-tree? b)
+			    ((isa? b xml-delay)
+			     (with-access::xml-delay b (thunk)
+				(loop (thunk))))
+			    ((isa? b html-tree)
 			     (html-write-tree level b parent p be)
 			     (display ";\n" p))
-			    ((html-tree-leaf? b)
+			    ((isa? b html-tree-leaf)
 			     (html-write-tree-leaf b parent p be)
 			     (display ";\n" p))
 			    ((null? b)
 			     #f)
-			    ((%http-response? b)
+			    ((isa? b %http-response)
 			     (return b))
-			    ((xml-tilde? b)
+			    ((isa? b xml-tilde)
 			     (return
 			      (instantiate::http-response-js
+				 (backend (hop-xml-backend))
 				 (start-line "HTTP/1.0 501 Internal Server Error")
 				 (content-type (hop-json-mime-type))
 				 (value b))))
@@ -358,7 +362,8 @@
       (display "\", " p)
       ;; the body
       (let ((sbody (let ((ps (open-output-string)))
-		      (xml-write-body (xml-element-body obj) ps be)
+		      (with-access::xml-element obj (body)
+			 (xml-write-body body ps be))
 		      (close-output-port ps))))
 	 (obj->javascript sbody p #t))
       (display ", " p)

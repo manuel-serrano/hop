@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Fri Feb 18 09:42:46 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 16:21:32 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -97,12 +97,14 @@
 			 (lambda (port t expr)
 			    (let ((title (if mktitle (mktitle t) t)))
 			       (if (authorized-service? req 'admin)
-				   (if (http-request-localclientp req)
-				       (<DOC/emacs> port title expr)
-				       (<DOC/edit> port title expr))
-				   (<WIKI-DOC> port title expr)))))
+				   (with-access::http-request req (localclientp)
+				      (if localclientp
+					  (<DOC/emacs> port title expr)
+					  (<DOC/edit> port title expr))
+				      (<WIKI-DOC> port title expr))))))
 			(else
-			 ((wiki-syntax-plugins initial-syntax) id))))))))
+			 (with-access::wiki-syntax initial-syntax (plugins)
+			    (plugins id)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WIKI-DOC> ...                                                   */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Oct 12 11:52:21 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 11:45:02 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -148,7 +148,7 @@
 (define-parameter hop-xml-backend
    *html-4.01-backend*
    (lambda (v)
-      (if (xml-backend? v)
+      (if (isa? v xml-backend)
 	  v
 	  (hop-get-xml-backend v))))
 
@@ -190,15 +190,18 @@
 	    ((pair? es)
 	     (let ((e (car es)))
 		(cond
-		   ((xml-element? e)
-		    (xml-element-parent-set! e o))
-		   ((xml-tilde? e)
-		    (xml-tilde-parent-set! e o))
+		   ((isa? e xml-element)
+		    (with-access::xml-element e (parent)
+		       (set! parent o)))
+		   ((isa? e xml-tilde)
+		    (with-access::xml-tilde e (parent)
+		       (set! parent o)))
 		   ((pair? e)
 		    (loop e))))
 	     (loop (cdr es)))
-	    ((xml-element? es)
-	     (xml-element-parent-set! es o))))
+	    ((isa? es xml-element)
+	     (with-access::xml-element es (parent)
+		(set! parent o)))))
       o))
 
 ;*---------------------------------------------------------------------*/
@@ -258,8 +261,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-markup-is? ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (xml-markup-is? o tag)
-   (and (xml-markup? o) (eq? (xml-markup-tag o) tag)))
+(define (xml-markup-is? o t)
+   (when (isa? o xml-markup)
+      (with-access::xml-markup o (tag)
+	 (eq? tag t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    id-count ...                                                     */
@@ -305,7 +310,7 @@
    (cond
       ((string? obj)
        (with-access::xml-backend backend (security)
-	  (if (security-manager? security)
+	  (if (isa? security security-manager)
 	      (with-access::security-manager security (string-sanitize)
 		 (let ((s (string-sanitize obj)))
 		    (when (string? s)
@@ -376,7 +381,7 @@
       (call-with-input-string el
 	 (lambda (ip)
 	    (let ((hss (hop-read-hss ip)))
-	       (if (css-stylesheet? hss)
+	       (if (isa? hss css-stylesheet)
 		   (css-write (hss-compile hss) p)
 		   (error "xml-write" "Illegal style sheet" el))))))
 
@@ -404,7 +409,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-tilde p backend)
    (with-access::xml-tilde obj (body parent)
-      (if (and (xml-markup? parent) (eq? (xml-markup-tag parent) 'script))
+      (if (xml-markup-is? parent 'script)
 	  (xml-write (xml-tilde->statement obj) p backend)
 	  (with-access::xml-backend backend (cdata-start cdata-stop)
 	     (display "<script type='" p)
@@ -430,31 +435,31 @@
       (display "<" p)
       (display tag p)
       (xml-write-attributes attributes p backend)
-      (cond
-	 ((and (eq? tag 'head) (>=fx (hop-security) 3))
-	  (display ">" p)
-	  (for-each (lambda (b) (xml-write b p backend)) body)
-	  (with-access::xml-backend backend (security)
-	     (when (security-manager? security)
+      (with-access::xml-backend backend (security no-end-tags-elements)
+	 (cond
+	    ((and (eq? tag 'head) (>=fx (hop-security) 3))
+	     (display ">" p)
+	     (for-each (lambda (b) (xml-write b p backend)) body)
+	     (when (isa? security security-manager)
 		(for-each (lambda (r)
 			     (display "<script type='" p)
 			     (display (hop-javascript-mime-type) p)
 			     (fprintf p "' src='~a'>" r)
 			     (display "</script>\n" p))
-			  (security-manager-runtime security))))
-	  (display "</" p)
-	  (display tag p)
-	  (display ">\n" p))
-	 ((or (pair? body) (eq? tag 'script))
-	  (display ">" p)
-	  (for-each (lambda (b) (xml-write b p backend)) body)
-	  (display "</" p)
-	  (display tag p)
-	  (display ">\n" p))
-	 ((memq tag (xml-backend-no-end-tags-elements backend))
-	  (display ">\n" p))
-	 (else
-	  (display "/>" p)))))
+		   (with-access::security-manager security (runtime) runtime)))
+	     (display "</" p)
+	     (display tag p)
+	     (display ">\n" p))
+	    ((or (pair? body) (eq? tag 'script))
+	     (display ">" p)
+	     (for-each (lambda (b) (xml-write b p backend)) body)
+	     (display "</" p)
+	     (display tag p)
+	     (display ">\n" p))
+	    ((memq tag no-end-tags-elements)
+	     (display ">\n" p))
+	    (else
+	     (display "/>" p))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-meta ...                                         */
@@ -477,49 +482,50 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-element p backend)
    (with-access::xml-element obj (tag id attributes body)
-      (cond
-	 ((and (null? body) (null? attributes))
-	  (display "<" p)
-	  (display tag p)
-	  (display " id='" p)
-	  (display id p)
-	  (display "'" p)
-	  (if (xml-backend-abbrev-emptyp backend)
-	      (display "/>" p)
-	      (begin
-		 (display "></" p)
+      (with-access::xml-backend backend (abbrev-emptyp no-end-tags-elements)
+	 (cond
+	    ((and (null? body) (null? attributes))
+	     (display "<" p)
+	     (display tag p)
+	     (display " id='" p)
+	     (display id p)
+	     (display "'" p)
+	     (if abbrev-emptyp
+		 (display "/>" p)
+		 (begin
+		    (display "></" p)
+		    (display tag p)
+		    (display ">" p))))
+	    ((null? body)
+	     (display "<" p)
+	     (display tag p)
+	     (display " id='" p)
+	     (display id p)
+	     (display "'" p)
+	     (xml-write-attributes attributes p backend)
+	     (cond
+		(abbrev-emptyp
+		   (display "/>" p))
+		((memq tag no-end-tags-elements)
+		 (display ">" p))
+		(else
+		 (display ">" p)
+		 (display "</" p)
 		 (display tag p)
 		 (display ">" p))))
-	 ((null? body)
-	  (display "<" p)
-	  (display tag p)
-	  (display " id='" p)
-	  (display id p)
-	  (display "'" p)
-	  (xml-write-attributes attributes p backend)
-	  (cond
-	     ((xml-backend-abbrev-emptyp backend)
-	      (display "/>" p))
-	     ((memq tag (xml-backend-no-end-tags-elements backend))
-	      (display ">" p))
-	     (else
-	      (display ">" p)
-	      (display "</" p)
-	      (display tag p)
-	      (display ">" p))))
-	 (else
-	  (display "<" p)
-	  (display tag p)
-	  (display " id='" p)
-	  (display id p)
-	  (display "'" p)
-	  (xml-write-attributes attributes p backend)
-	  (display ">" p)
-	  (for-each (lambda (b) (xml-write b p backend)) body)
-	  (display "</" p)
-	  (display tag p)
-	  (display ">" p)))
-      (xml-write-initializations obj p backend)))
+	    (else
+	     (display "<" p)
+	     (display tag p)
+	     (display " id='" p)
+	     (display id p)
+	     (display "'" p)
+	     (xml-write-attributes attributes p backend)
+	     (display ">" p)
+	     (for-each (lambda (b) (xml-write b p backend)) body)
+	     (display "</" p)
+	     (display tag p)
+	     (display ">" p)))
+	 (xml-write-initializations obj p backend))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-empty-element ...                                */
@@ -568,7 +574,8 @@
 					"Unbound variables"))
 				    "Unbound variables"))
 			     (r (http-internal-error e m)))
-			 (xml-write-html (http-response-hop-xml r) p backend)))
+			 (with-access::http-response-hop r (xml)
+			    (xml-write-html xml p backend))))
 		   (error/source '<HTML>
 				 (format "Unbound client-side variable: ~a"
 					 (car lf))
@@ -631,17 +638,19 @@
 	 ((eq? attr #t)
 	  (display (keyword->string! id) p))
 	 ((procedure? attr)
-	  (if (hop-service? (procedure-attr attr))
-	      (display (hop-service-path (procedure-attr attr)) p)
+	  (if (isa? (procedure-attr attr) hop-service)
+	      (with-access::hop-service (procedure-attr attr) (path)
+		 (display path p))
 	      (error "xml"
 		     "Illegal procedure argument in XML attribute"
 		     id)))
-	 ((xml-backend-security backend)
+	 ((with-access::xml-backend backend (security) security)
 	  =>
 	  (lambda (sm)
-	     (if (security-manager? sm)
-		 (let ((a (xml-attribute-encode attr)))
-		    (display ((security-manager-attribute-sanitize sm) a id) p))
+	     (if (isa? sm security-manager)
+		 (with-access::security-manager sm (attribute-sanitize)
+		    (let ((a (xml-attribute-encode attr)))
+		       (display (attribute-sanitize a id) p)))
 		 (error "xml-write-attribute" "Illegal security-manager" sm))))
 	 (else
 	  (display (xml-attribute-encode attr) p)))
@@ -654,9 +663,10 @@
    (when (xml-event-handler-attribute? id)
       (display (keyword->string! id) p)
       (display "='" p)
-      (let ((sm (xml-backend-security backend)))
-	 (if (security-manager? sm)
-	     (display ((security-manager-attribute-sanitize sm) attr id) p)
+      (with-access::xml-backend backend ((sm security))
+	 (if (isa? sm security-manager)
+	     (with-access::security-manager sm (attribute-sanitize)
+		(display (attribute-sanitize attr id) p))
 	     (display (xml-tilde->attribute attr) p)))
       (display "'" p)))
    
@@ -666,14 +676,16 @@
 (define-method (xml-write-attribute attr::hop-service id p backend)
    (display (keyword->string! id) p)
    (display "='" p)
-   (display (hop-service-path attr) p)
+   (with-access::hop-service p (path)
+      (display path p))
    (display "'" p))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::xml-lazy-attribute ...                     */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-attribute attr::xml-lazy-attribute id p backend)
-   (xml-write-attribute ((xml-lazy-attribute-proc attr)) id p backend))
+   (with-access::xml-lazy-attribute attr (proc)
+      (xml-write-attribute (proc) id p backend)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-initializations ...                                    */
@@ -688,7 +700,7 @@
 		(when var
 		   (when cdata-stop (display cdata-stop p))
 		   (display "}, false );</script>\n" p)))
-	       ((and (xml-tilde? (cadr attrs))
+	       ((and (isa? (cadr attrs) xml-tilde)
 		     (not (xml-event-handler-attribute? (car attrs))))
 		(if var
 		    (begin
@@ -806,8 +818,8 @@
 (define (xml-tilde->expression::bstring obj)
    (with-access::xml-tilde obj (%js-expression body)
       (when (not (string? %js-expression))
-	 (set! %js-expression
-	       ((clientc-precompiled->JS-expression (hop-clientc)) body)))
+	 (with-access::clientc (hop-clientc) (precompiled->JS-expression)
+	    (set! %js-expression (precompiled->JS-expression body))))
       %js-expression))
 
 ;*---------------------------------------------------------------------*/
@@ -822,14 +834,15 @@
    
    (with-access::xml-tilde obj (%js-statement body loc)
       (when (not (string? %js-statement))
-	 (let ((stmt ((clientc-precompiled->JS-statement (hop-clientc)) body)))
-	    (if (>fx (bigloo-debug) 0)
-		(match-case loc
-		   ((at ?file ?point)
-		    (set! %js-statement (js-catch-error stmt file point)))
-		   (else
-		    (set! %js-statement (js-catch-error stmt #f #f))))
-		(set! %js-statement stmt))))
+	 (with-access::clientc (hop-clientc) (precompiled->JS-statement)
+	    (let ((stmt (precompiled->JS-statement body)))
+	       (if (>fx (bigloo-debug) 0)
+		   (match-case loc
+		      ((at ?file ?point)
+		       (set! %js-statement (js-catch-error stmt file point)))
+		      (else
+		       (set! %js-statement (js-catch-error stmt #f #f))))
+		   (set! %js-statement stmt)))))
       %js-statement))
 
 ;*---------------------------------------------------------------------*/
@@ -838,8 +851,8 @@
 (define (xml-tilde->return::bstring obj)
    (with-access::xml-tilde obj (%js-return body)
       (when (not (string? %js-return))
-	 (set! %js-return
-	       ((clientc-precompiled->JS-return (hop-clientc)) body)))
+	 (with-access::clientc (hop-clientc) (precompiled->JS-return)
+	    (set! %js-return (precompiled->JS-return body))))
       %js-return))
 
 ;*---------------------------------------------------------------------*/
@@ -860,20 +873,22 @@
    
    (define (wrapper o)
       `(pragma ,(call-with-output-string
-		 (lambda (op)
-		    (obj->javascript o op #f)))))
+		   (lambda (op)
+		      (obj->javascript o op #f)))))
    
    (with-access::xml-tilde obj (body)
-      ((clientc-precompiled->sexp (hop-clientc)) body wrapper)))
+      (with-access::clientc (hop-clientc) (precompiled->sexp)
+	 (precompiled->sexp body wrapper))))
 
 ;*---------------------------------------------------------------------*/
 ;*    sexp->xml-tilde ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (sexp->xml-tilde obj #!optional env menv)
-   (let* ((env (or env (current-module-clientc-import)))
-	  (menv (or menv ((clientc-macroe (hop-clientc)))))
-	  (c ((clientc-sexp->precompiled (hop-clientc)) obj env menv)))
-      (<TILDE> c :src obj :env env :menv menv)))
+   (with-access::clientc (hop-clientc) (macroe sexp->precompiled)
+      (let* ((env (or env (current-module-clientc-import)))
+	     (menv (or menv (macroe)))
+	     (c (sexp->precompiled obj env menv)))
+	 (<TILDE> c :src obj :env env :menv menv))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TILDE> ...                                                      */
@@ -961,7 +976,7 @@
       (let ((old (hashtable-get env 'event)))
 	 (unless old (hashtable-put! env 'event #f))
 	 (for-each (lambda (a)
-		      (when (xml-tilde? a)
+		      (when (isa? a xml-tilde)
 			 (xml-tilde-unbound a env)))
 		   attributes)
 	 (unless old (hashtable-remove! env 'event)))))
@@ -971,12 +986,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-tilde-unbound obj::xml-tilde env)
    (with-access::xml-tilde obj (body src)
-      (when (vector? body)
-	 (for-each (lambda (v)
-		      (let ((v (car v)))
-			 (hashtable-update! env v (lambda (x) #f) #f)))
-	    ((clientc-precompiled-declared-variables (hop-clientc)) body))
-	 (for-each (lambda (v)
-		      (let ((v (car v)))
-			 (hashtable-update! env v (lambda (x) #f) src)))
-	    ((clientc-precompiled-free-variables (hop-clientc)) body)))))
+      (with-access::clientc (hop-clientc) (precompiled-declared-variables
+					     precompiled-free-variables)
+	 (when (vector? body)
+	    (for-each (lambda (v)
+			 (let ((v (car v)))
+			    (hashtable-update! env v (lambda (x) #f) #f)))
+	       (precompiled-declared-variables body))
+	    (for-each (lambda (v)
+			 (let ((v (car v)))
+			    (hashtable-update! env v (lambda (x) #f) src)))
+	       (precompiled-free-variables body))))))

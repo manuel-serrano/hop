@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Sat Dec 18 06:22:35 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Fri Nov 11 19:47:04 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
 ;*=====================================================================*/
@@ -66,41 +66,42 @@
 		     (send-chars sp rp content-length))
 		  (flush-output-port rp))
 	       ;; the body
-	       (with-trace 4 "http-response-body"
-		  (let* ((ip (socket-input rsock))
-			 (op (socket-output socket))
-			 (statusf (http-response-filter-statusf f))
-			 (headerf (http-response-filter-headerf f))
-			 (bodyf (http-response-filter-bodyf f))
-			 (sl (http-parse-status-line ip)))
-		     (multiple-value-bind (http-version status-code phrase)
-			sl
-			(let ((fs (statusf
-				   (format "~a ~a ~a"
+	       (with-access::http-response-filter f (statusf headerf bodyf)
+		  (with-trace 4 "http-response-body"
+		     (let* ((ip (socket-input rsock))
+			    (op (socket-output socket))
+			    (statusf statusf)
+			    (headerf headerf)
+			    (bodyf bodyf)
+			    (sl (http-parse-status-line ip)))
+			(multiple-value-bind (http-version status-code phrase)
+			   sl
+			   (let ((fs (statusf
+					(format "~a ~a ~a"
 					   http-version
 					   status-code
 					   phrase))))
-			   (display fs op)
-			   (multiple-value-bind (header _1 _2 cl te _3 _4 _5)
-			      (http-parse-header ip op)
-			      (when (eq? te 'chunked)
-				 (let ((c (assq transfer-encoding: header)))
-				    (set! header (remq! c header))))
-			      (let ((fh (headerf header)))
-				 (http-write-header op fh)
-				 (http-write-line op)
-				 (cond
-				    ((or (=fx status-code 204)
-					 (=fx status-code 304))
-				     ;; no message body
-				     #unspecified)
-				    (else
-				     (if (eq? te 'chunked)
-					 (let ((ip2 (http-chunks->port ip)))
-					    (unwind-protect
-					       (bodyf ip2 op sl header cl)
-					       (close-input-port ip2)))
-					 (bodyf ip op sl header cl)))))))))))
+			      (display fs op)
+			      (multiple-value-bind (header _1 _2 cl te _3 _4 _5)
+				 (http-parse-header ip op)
+				 (when (eq? te 'chunked)
+				    (let ((c (assq transfer-encoding: header)))
+				       (set! header (remq! c header))))
+				 (let ((fh (headerf header)))
+				    (http-write-header op fh)
+				    (http-write-line op)
+				    (cond
+				       ((or (=fx status-code 204)
+					    (=fx status-code 304))
+					;; no message body
+					#unspecified)
+				       (else
+					(if (eq? te 'chunked)
+					    (let ((ip2 (http-chunks->port ip)))
+					       (unwind-protect
+						  (bodyf ip2 op sl header cl)
+						  (close-input-port ip2)))
+					    (bodyf ip op sl header cl))))))))))))
 	    (socket-close rsock))))
    'close)
 

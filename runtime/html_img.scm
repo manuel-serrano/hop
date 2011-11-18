@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Mon May 30 14:46:03 2011 (serrano)                */
+;*    Last change :  Fri Nov 11 07:10:30 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -139,15 +139,16 @@
 	     (let ((nval (string-append oval "; " val)))
 		(set-car! (cdr onerror) nval)
 		attributes))
-	    ((xml-tilde? oval)
-	     (let ((nval (sexp->xml-tilde
-			  `(begin
-			      ,(xml-tilde->sexp oval)
-			      ,(secure-javascript-attr val))
-			  (xml-tilde-env oval)
-			  (xml-tilde-menv oval))))
-		(set-car! (cdr onerror) nval)
-		attributes))
+	    ((isa? oval xml-tilde)
+	     (with-access::xml-tilde oval (env menv)
+		(let ((nval (sexp->xml-tilde
+			       `(begin
+				   ,(xml-tilde->sexp oval)
+				   ,(secure-javascript-attr val))
+			       env
+			       menv)))
+		   (set-car! (cdr onerror) nval)
+		   attributes)))
 	    (else
 	     `(:onerror ,(secure-javascript-attr val) ,@attributes)))))
    
@@ -162,7 +163,7 @@
 	  (plain-img src cssrc)))
 
    (cond
-      ((xml-tilde? src)
+      ((isa? src xml-tilde)
        ;; see xml-write-initializations
        (instantiate::xml-empty-element
 	  (tag 'img)

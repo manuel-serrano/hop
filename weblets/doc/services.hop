@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:52:24 2006                          */
-;*    Last change :  Fri Jul 29 13:56:02 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 16:40:43 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP doc services                                                 */
@@ -54,6 +54,7 @@
 	  (lambda (e)
 	     (http-internal-error e "Error in source code"))
 	  (instantiate::http-response-hop
+	     (backend (hop-xml-backend))
 	     (request (current-request))
 	     (content-type "text/html")
 	     (bodyp #t)
@@ -78,6 +79,7 @@
 	  (lambda (e)
 	     (http-internal-error e "Error in source code"))
 	  (instantiate::http-response-hop
+	     (backend (hop-xml-backend))
 	     (request (current-request))
 	     (content-type "text/html")
 	     (bodyp #t)

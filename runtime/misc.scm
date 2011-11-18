@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Fri Dec 24 11:29:48 2010 (serrano)                */
-;*    Copyright   :  2004-10 Manuel Serrano                            */
+;*    Last change :  Wed Nov 16 11:30:58 2011 (serrano)                */
+;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
 ;*=====================================================================*/
@@ -72,13 +72,15 @@
    (let ((c (cond
 	       ((integer? col)
 		(+fx (modulo col 16) 1))
-	       ((http-request? col)
-		(+fx (modulo (http-request-id col) 16) 1))
+	       ((isa? col http-request)
+		(with-access::http-request col (id)
+		   (+fx (modulo id 16) 1)))
 	       (else
 		1))))
       (trace-color c
-		   (if (http-request? req)
-		       (http-request-id req)
+		   (if (isa? req http-request)
+		       (with-access::http-request req (id)
+			  id)
 		       req)
 		   msg)))
 
@@ -316,29 +318,29 @@
       (let loop ((ttl (hop-connection-ttl)))
 	 (let ((res (with-handler
 		       (lambda (e)
-			  (if (and (>fx ttl 0) (&io-timeout-error? e))
+			  (if (and (>fx ttl 0) (isa? e &io-timeout-error))
 			      (begin
 				 (hop-verb 1
-					   (hop-color msg msg " REMOTE")
-					   ": " host ":" port
-					   (if (http-request? msg)
-					       (format " (~a)"
-						       (http-request-path msg))
-					       "")
-					   (trace-color 1 " CONNECTION FAILED")
-					   " ttl=" ttl "\n")
+				    (hop-color msg msg " REMOTE")
+				    ": " host ":" port
+				    (if (isa? msg http-request)
+					(with-access::http-request msg (path)
+					   (format " (~a)" path))
+					"")
+				    (trace-color 1 " CONNECTION FAILED")
+				    " ttl=" ttl "\n")
 				 (-fx ttl 1))
 			      (raise e)))
 		       (if ssl
 			   (cond-expand
 			      (enable-ssl
-			       (make-ssl-client-socket host port
-						       :protocol 'tls
-						       :timeout tmt))
+				 (make-ssl-client-socket host port
+				    :protocol 'tls
+				    :timeout tmt))
 			      (else
 			       (error "make-client-socket/timeout"
-				      "SSL not supported"
-				      "make-ssl-client-socket")))
+				  "SSL not supported"
+				  "make-ssl-client-socket")))
 			   (make-client-socket host port :timeout tmt)))))
 	    (if (number? res)
 		(loop res)

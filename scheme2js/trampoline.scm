@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -58,11 +58,11 @@
    (let ((target (call-target operator)))
       (cond
 	 ((not target) #t)
-	 ((Trampoline-Lambda? target)
+	 ((isa? target Trampoline-Lambda)
 	  (with-access::Trampoline-Lambda target (finished?
 						  contains-trampoline-call?)
 	     (or (not finished?) contains-trampoline-call?)))
-	 ((Lambda? target)
+	 ((isa? target Lambda)
 	  (walk! target #f))
 	 ((runtime-ref? target)
 	  #f)
@@ -76,22 +76,22 @@
 		 (not (higher-order-runtime-ref? target))
 		 ;; finally weed things like: (+ (f ..) (let ...))
 		 (every? (lambda (op)
-			    (or (Const? op)
-				(Ref? op)))
+			    (or (isa? op Const)
+				(isa? op Ref)))
 			 operands)))))
 
    (let ((hoisted '()))
       (define (hoist n)
 	 (cond
-	    ((or (Const? n)
-		 (Ref? n))
+	    ((or (isa? n Const)
+		 (isa? n Ref))
 	     n)
-	    ((and (Call? n)
+	    ((and (isa? n Call)
 		  (allowed-call? n))
 	     n)
 	    (else
 	     (let* ((tmp-decl (Ref-of-new-Var 'tail))
-		    (tmp-var (Ref-var tmp-decl))
+		    (tmp-var (with-access::Ref tmp-decl (var) var))
 		    (assig (var-assig tmp-var n)))
 		(cons-set! hoisted assig)
 		tmp-decl))))
@@ -104,7 +104,7 @@
 	     (instantiate::Let
 		(scope-vars (map (lambda (assig)
 				    (with-access::Set! assig (lvalue)
-				       (Ref-var lvalue)))
+				       (with-access::Ref lvalue (var) var)))
 				 hoisted))
 		(bindings hoisted)
 		(body call)

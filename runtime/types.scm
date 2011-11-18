@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Sep 25 08:39:13 2011 (serrano)                */
+;*    Last change :  Wed Nov 16 16:31:16 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -44,7 +44,7 @@
 	   
 	   (class http-request::%http-message
 	      (id::int read-only (default -1))
-	      (user::user read-only (default (user-nil)))
+	      (user::user read-only (default (class-nil user)))
 	      (localclientp::bool (default #f))
 	      (hook::procedure (default (lambda (rep) rep)))
 	      (transfer-encoding (default #f))
@@ -76,7 +76,7 @@
 	   
 	   (abstract-class %http-response::%http-message
 	      (content-type (default #f))
-	      (request::http-request (default (http-request-nil)))
+	      (request::http-request (default (class-nil http-request)))
 	      (bodyp::bool read-only (default #t)))
 
 	   (class http-response-abort::%http-response)
@@ -108,11 +108,11 @@
 	   (class http-response-autoload::%http-response-local)
 
 	   (class http-response-hop::%http-response-local
-	      (backend read-only (default (hop-xml-backend)))
+	      (backend read-only)
 	      (xml read-only))
 	   
 	   (class http-response-js::%http-response-local
-	      (backend read-only (default (hop-xml-backend)))
+	      (backend read-only)
 	      (serializer::symbol read-only (default (hop-serialize-method)))
 	      (padding::obj (default #f))
 	      (value::obj read-only))
@@ -237,7 +237,7 @@
       (let ((old-hook hook))
 	 (set! hook (lambda (rep)
 		       (let* ((rep2 (h rep))
-			      (res (if (%http-response? rep2)
+			      (res (if (isa? rep2 %http-response)
 				       rep2
 				       rep)))
 			  (old-hook res)))))))
