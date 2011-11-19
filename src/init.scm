@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Wed Nov 16 12:03:39 2011 (serrano)                */
+;*    Last change :  Sat Nov 19 07:59:54 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -140,6 +140,7 @@
    (with-access::http-request req (abspath query method timeout header)
       (cond
 	 ((string=? query (hop-scm-compile-suffix))
+	  (tprint "SCM-COMPILE-SUFFIX: abspath=" abspath " query=" query)
 	  (clientc-response req abspath))
 	 ((string=? query (hop-hss-compile-suffix))
 	  (hss-response req abspath))
@@ -295,11 +296,11 @@
 	 (display #\0 port))
       (display n port))
    
-   (with-access::http-request req (socket host user method abspath http header)
+   (with-access::http-request req (socket host (u user) method abspath http header)
       ;; distant host address and user
       (fprintf port "~a - ~a "
 	       (socket-host-address socket)
-	       (if (isa? user user) (with-access::user user (name) name)) "-")
+	       (if (isa? u user) (with-access::user u (name) name)) "-")
       ;; date
       (display "[" port)
       (let* ((d   (current-date))
@@ -319,7 +320,7 @@
       ;; request
       (fprintf port "\"~a ~a ~a\" " method abspath http)
       ;; Return code
-      (if (is-a? resp %http-response-local)
+      (if (isa? resp %http-response-local)
 	  (with-access::%http-response-local resp ((str start-line))
 	     (let ((len (string-length str)))
 		(let loop ((i 0)
@@ -339,7 +340,7 @@
       ;; content-length
       (with-access::%http-response resp ((hdrs header) content-length)
 	 (cond
-	    ((is-a? resp http-response-file)
+	    ((isa? resp http-response-file)
 	     (with-access::http-response-file resp (file)
 		(display (file-size file) port)))
 	    ((>elong content-length #e0)
@@ -366,11 +367,11 @@
 	 (display #\0 port))
       (display n port))
    
-   (with-access::http-request req (socket host (p port) user method abspath http header)
+   (with-access::http-request req (socket host (p port) (u user) method abspath http header)
       ;; distant host address and user
       (fprintf port "~a - ~a "
 	       (socket-host-address socket)
-	       (if (isa? user user) (with-access::user user (name) name)) "-")
+	       (if (isa? u user) (with-access::user u (name) name)) "-")
       ;; date
       (display "[" port)
       (let* ((d   (current-date))

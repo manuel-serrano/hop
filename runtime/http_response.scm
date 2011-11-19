@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Nov 16 11:51:12 2011 (serrano)                */
+;*    Last change :  Sat Nov 19 08:16:05 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -428,26 +428,26 @@
 (define (http-response-regular-file r::http-response-file socket::socket)
    (with-access::http-response-file r (start-line header content-type charset server file bodyp request timeout)
       (let ((size (file-size file)))
-	 (when (>=elong size #e0)
-	    (with-access::http-request request (connection)
-	       (let ((p (socket-output socket)))
-		  (output-timeout-set! p timeout)
-		  (http-write-line-string p start-line)
-		  (http-write-header p header)
-		  (http-write-line p "Connection: " connection)
-		  (http-write-content-type p content-type charset)
-		  (http-write-line-string p "Server: " server)
-		  (unless (eq? connection 'close)
-		     (display "Content-Length: " p)
-		     (display-elong size p)
-		     (http-write-line p))
-		  (http-write-line p)
-		  ;; the body
-		  (with-trace 4 "http-response-file"
-		     (when bodyp (send-file file p size #e-1)))
-		  (flush-output-port p)
-		  connection)
-	       (http-response (http-file-not-found file) socket))))))
+	 (if (>=elong size #e0)
+	     (with-access::http-request request (connection)
+		(let ((p (socket-output socket)))
+		   (output-timeout-set! p timeout)
+		   (http-write-line-string p start-line)
+		   (http-write-header p header)
+		   (http-write-line p "Connection: " connection)
+		   (http-write-content-type p content-type charset)
+		   (http-write-line-string p "Server: " server)
+		   (unless (eq? connection 'close)
+		      (display "Content-Length: " p)
+		      (display-elong size p)
+		      (http-write-line p))
+		   (http-write-line p)
+		   ;; the body
+		   (with-trace 4 "http-response-file"
+		      (when bodyp (send-file file p size #e-1)))
+		   (flush-output-port p)
+		   connection))
+	     (http-response (http-file-not-found file) socket)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    directory->response ...                                          */
