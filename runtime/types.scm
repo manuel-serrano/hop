@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Nov 16 16:31:16 2011 (serrano)                */
+;*    Last change :  Sat Nov 19 19:03:29 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -44,7 +44,7 @@
 	   
 	   (class http-request::%http-message
 	      (id::int read-only (default -1))
-	      (user::user read-only (default (class-nil user)))
+	      (user::user read-only (default (class-nil (@ user __hop_types))))
 	      (localclientp::bool (default #f))
 	      (hook::procedure (default (lambda (rep) rep)))
 	      (transfer-encoding (default #f))

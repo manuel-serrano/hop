@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Sat Nov 19 08:12:08 2011 (serrano)                */
+;*    Last change :  Sat Nov 19 18:49:07 2011 (serrano)                */
 ;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -133,8 +133,6 @@
    (with-access::http-request req (method)
       (let ((cache (cache-get clientc-cache path))
 	    (mime (hop-javascript-mime-type)))
-	 (tprint "clientc-response: path=" path " cache=" (string? cache)
-	    " mime=" mime)
 	 (if (string? cache)
 	     ;; since we are serving a cached answer, we also have
 	     ;; to check that the client is allowed to the requested

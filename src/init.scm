@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sat Nov 19 07:59:54 2011 (serrano)                */
+;*    Last change :  Sat Nov 19 08:02:00 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -140,7 +140,6 @@
    (with-access::http-request req (abspath query method timeout header)
       (cond
 	 ((string=? query (hop-scm-compile-suffix))
-	  (tprint "SCM-COMPILE-SUFFIX: abspath=" abspath " query=" query)
 	  (clientc-response req abspath))
 	 ((string=? query (hop-hss-compile-suffix))
 	  (hss-response req abspath))
