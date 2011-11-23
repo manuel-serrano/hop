@@ -31,6 +31,8 @@
 	      ;; the following two entries will be filled in this module
 	      ;;  list of hts/lists of macros that are imported
 	      (macros::pair-nil (default '()))
+	      ;; the list of classes
+	      (classes::pair-nil (default '()))
 	      ;;  a list of 'Export'-lists/hashtables.
 	      (imports::pair-nil (default '()))
 	      ;; #t if the file/unit contained a module header.
@@ -838,7 +840,7 @@
 		   (else
 		    (loop new-macros rev-res)))))))
 			  
-   (with-access::WIP-Unit m (header name exports exported-macros top-level)
+   (with-access::WIP-Unit m (header name exports exported-macros top-level classes)
       (let ((new-exports (module-entries header 'export))
 	    (pragmas (module-entries header 'scheme2js-pragma)))
 	 (let loop ((entries new-exports)
@@ -860,6 +862,37 @@
 			   (loop (cdr entries)
 				 (append (cdr e) new-macros))
 			   (loop (cdr entries) new-macros)))
+;* 		      ((memq (car e) '(class abstract-class final-class wide-class)) */
+;* 		       (multiple-value-bind (clazz e x)                */
+;* 			  (scheme2js-class e m)                        */
+;* 			  (set! classes (cons clazz classes))          */
+;* 			  (set! top-level (append e top-level))        */
+;* 			  (set! exports (append x exports))            */
+;* 			  (loop (cdr entries) new-macros)))            */
+;* 			                                               */
+;* 		       (let ((c (make-class :name ',(cadr e)           */
+;* 				   :super #f                           */
+;* 				   :alloc #f                           */
+;* 				   :hash 0                             */
+;* 				   :fields '()                         */
+;* 				   :constructor #f                     */
+;* 				   :virtuals '#()                      */
+;* 				   :new #f                             */
+;* 				   :nil (lambda () #f)                 */
+;* 				   :shrink #f                          */
+;* 				   :abstract #f)))                     */
+;* {* 			  (let ((wid (symbol-append 'instantiate:: (class-name class)))) *} */
+;* {* 			     ((@ install-expander! expand) wid (eval-instantiate-expander c))) *} */
+;* 			  (set! top-level                              */
+;* 			     (cons* `(define (,(cadr e)) (pragma "this")) */
+;* 				`(register-class! ,(cadr e) ',(cadr e)) */
+;* 				top-level))                            */
+;* 			  (set! exports                                */
+;* 			     (cons (create-Export-Desc                 */
+;* 				      (normalize-var (cadr e) pragmas entries) name #f) */
+;* 				exports))                              */
+;* 			  (set! classes (cons (cons e 'export) classes)) */
+;* 			  (loop (cdr entries) new-macros)))            */
 		      (else
 		       (let ((undsssl (dsssl-formals->scheme-formals
 				       e (lambda (o p m) (scheme2js-error o p m e)))))
@@ -869,6 +902,46 @@
 				      exports)))
 		       (loop (cdr entries) new-macros)))))))))
 
+;*---------------------------------------------------------------------*/
+;*    scheme2js-class ...                                              */
+;*---------------------------------------------------------------------*/
+(define (scheme2js-class e::pair-nil m::WIP-Unit)
+   '(match-case e
+      ((?class ?id . ?fields)
+       (let ((loc (get-source-location src))
+	     (super (find-class (or sid 'object))))
+	  (if (not (class? super))
+	      (evcompile-error loc "eval" "Cannot find super class" sid)
+	      (multiple-value-bind (constructor slots)
+		 (eval-parse-class loc clauses)
+		 ;; evaluate the slots default value and virtual accessors
+		 (for-each (lambda (slot)
+			      (slot-default-value-set! slot
+				 (eval! `(lambda ()
+					    ,(slot-default-value slot))
+				    mod))
+			      (when (slot-virtual? slot)
+				 (slot-getter-set! slot
+				    (eval! (slot-getter slot) mod))
+				 (slot-setter-set! slot
+				    (eval! (slot-setter slot) mod))))
+		    slots)
+		 ;; make the class and bind it to its global variable
+		 (let* ((clazz (eval-register-class
+				  cid super abstract
+				  slots 
+				  (get-eval-class-hash id src)
+				  (eval! constructor mod))))
+		    (eval! `(define ,cid ,clazz))
+		    ;; with-access
+		    (eval-expand-with-access clazz)
+		    (unless abstract
+		       ;; instantiate
+		       (eval-expand-instantiate clazz)
+		       (eval-expand-duplicate clazz))
+		    (list cid))))))))
+       
+   
 (define (check-scheme2js-export-clause ex)
    (cond
       ((symbol? ex) 'ok)

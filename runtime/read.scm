@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Nov 18 16:36:20 2011 (serrano)                */
+;*    Last change :  Wed Nov 23 07:10:48 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -344,6 +344,24 @@
 		     (blank       (in #\Space #\Tab #a012 #a013))
 		     
 		     cycles par-open bra-open par-poses bra-poses cset menv location)
+      ;; bom
+;*       ((bof (: #aef #abb #abf))                                     */
+;*        ;; utf-8 bom                                                 */
+;*        ...)                                                         */
+;*       ((bof (: #afe #aff))                                          */
+;*        ;; utf-16 utf-16 big endian                                  */
+;*        ...)                                                         */
+;*       ((bof (: #aff #afe))                                          */
+;*        ;; utf-16 utf-16 little endian                               */
+;*        ...)                                                         */
+;*       ((bof (: #aff #afe))                                          */
+;*        ;; utf-16 utf-16 little endian                               */
+;*        ...)                                                         */
+;*       ((bof (: #a00 #a00 #fe #ff))                                  */
+;*        ;; utf-32 big endian                                         */
+;*       ((bof (: #fe #ff #a00 #a00))                                  */
+;*        ;; utf-32 little endian                                      */
+;*        ...)                                                         */
       
       ;; newlines
       ((+ #\Newline)

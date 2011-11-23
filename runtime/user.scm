@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Thu Nov 10 17:22:41 2011 (serrano)                */
+;*    Last change :  Mon Nov 21 07:34:42 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -591,9 +591,9 @@
    (with-access::http-request req (http)
       (if (or (eq? (hop-http-authentication) 'basic)
 	      (eq? http 'HTTP/1.0)
-	      (let ((user (find-unauthenticated-user req)))
-		 (and (isa? user user)
-		      (with-access::user user (authentication)
+	      (let ((u (find-unauthenticated-user req)))
+		 (and (isa? u user)
+		      (with-access::user u (authentication)
 			 (eq? authentication 'basic)))))
 	  `((WWW-Authenticate: . ,(basic-authenticate req))
 	    (hop-session: . ,(hop-session)))

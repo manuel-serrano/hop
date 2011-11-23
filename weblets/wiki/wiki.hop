@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Mar  2 07:39:17 2011 (serrano)                */
+;*    Last change :  Wed Nov 23 07:11:19 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -40,10 +40,11 @@
       (if (string? path)
 	  (if (authorized-path? req path)
 	      (let ((be (hop-get-xml-backend (string->symbol xml))))
-		 (instantiate::http-response-hop
-		    (backend be)
-		    (content-type (xml-backend-mime-type be))
-		    (xml (wiki-view req path #t #f))))
+		 (with-access::xml-backend be (mime-type) 
+		    (instantiate::http-response-hop
+		       (backend be)
+		       (content-type mime-type)
+		       (xml (wiki-view req path #t #f)))))
 	      (user-access-denied))
 	  (wiki-query req xml))))
 
@@ -55,10 +56,11 @@
       (if (string? path)
 	  (if (authorized-path? req path)
 	      (let ((be (hop-get-xml-backend (string->symbol xml))))
-		 (instantiate::http-response-hop
-		    (backend be)
-		    (content-type (xml-backend-mime-type be))
-		    (xml (wiki-view req path #f #t))))
+		 (with-access::xml-backend be (mime-type) 
+		    (instantiate::http-response-hop
+		       (backend be)
+		       (content-type mime-type)
+		       (xml (wiki-view req path #f #t)))))
 	      (user-access-denied))
 	  (wiki-query req xml))))
 
@@ -234,7 +236,7 @@
 ;*---------------------------------------------------------------------*/
 (define (wiki-load file syn)
    (when (and (file-exists? file) (not (directory? file)))
-      (wiki-file->hop file :syntax (when (wiki-syntax? syn) syn))))
+      (wiki-file->hop file :syntax (when (isa? syn wiki-syntax) syn))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-view ...                                                    */
@@ -288,11 +290,11 @@
        (http-file-not-found path))
       (else
        (let ((doc (hop-load path :env wiki-env)))
-	  (if (wiki-document? doc)
+	  (if (isa? doc wiki-document)
 	      (with-access::wiki-document doc (head toc body)
 		 (let ((head (if head
-				 (apply make-wiki-head compiled #f
-					(xml-element-body head))
+				 (with-access::xml-element head (body)
+				    (apply make-wiki-head compiled #f body))
 				 (make-wiki-head compiled #t)))
 		       (toc (or toc (hop-wiki->toc body :max-depth 3 :ul <OL>))))
 		    (<WIKI:HTML> :compiled compiled :prefs prefs :file file
@@ -343,7 +345,7 @@
 		  (<TABLE> :class 'edit :width "100%"
 		     (<TR> (<TD> file)
 			   (<TD> :class 'edit
-			      (if (http-server-request? req)
+			      (if (isa? req http-server-request)
 				  (<EDIT:EMACS> file)
 				  (<EDIT:EDIT> file))))))))
 	 (<DIV> :class "wiki-head" :id "wiki-head")
@@ -363,14 +365,16 @@
 ;*---------------------------------------------------------------------*/
 (define (<DOCUMENT> . l)
    (let ((heads (filter (lambda (x) (xml-markup-is? x 'head)) l))
-	 (tocs (filter wiki-toc? l))
+	 (tocs (filter (lambda (x) (isa? x wiki-toc)) l))
 	 (body (filter (lambda (x)
-			  (and (not (wiki-toc? x))
+			  (and (not (isa? x wiki-toc))
 			       (not (xml-markup-is? x 'head))))
-		       l)))
+		  l)))
       (instantiate::wiki-document
 	 (head (when (pair? heads) (car heads)))
-	 (toc (when (pair? tocs) (wiki-toc-body (car tocs))))
+	 (toc (when (pair? tocs)
+		 (with-access::wiki-toc (car tocs) (body)
+		    body)))
 	 (body body))))
 
 ;*---------------------------------------------------------------------*/

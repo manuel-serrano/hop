@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Fri Nov 18 17:45:16 2011 (serrano)                */
+;*    Last change :  Sun Nov 20 19:42:27 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -228,7 +228,7 @@
    (define (predicate type id)
       (if (memq type '(int long string bstring bool char symbol keword double
 		       boolean pair vector procedure integer real
-		       elong llong date))
+		       elong llong date list))
 	  `(,(symbol-append type '?) ,id)
 	  `(isa? ,id ,type)))
 
