@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/read.scm                  */
+;*    serrano/prgm/project/hop/2.3.x/runtime/read.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Nov 23 07:10:48 2011 (serrano)                */
+;*    Last change :  Wed Nov 23 08:31:48 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -344,25 +344,23 @@
 		     (blank       (in #\Space #\Tab #a012 #a013))
 		     
 		     cycles par-open bra-open par-poses bra-poses cset menv location)
-      ;; bom
-;*       ((bof (: #aef #abb #abf))                                     */
-;*        ;; utf-8 bom                                                 */
-;*        ...)                                                         */
-;*       ((bof (: #afe #aff))                                          */
-;*        ;; utf-16 utf-16 big endian                                  */
-;*        ...)                                                         */
-;*       ((bof (: #aff #afe))                                          */
-;*        ;; utf-16 utf-16 little endian                               */
-;*        ...)                                                         */
-;*       ((bof (: #aff #afe))                                          */
-;*        ;; utf-16 utf-16 little endian                               */
-;*        ...)                                                         */
-;*       ((bof (: #a00 #a00 #fe #ff))                                  */
-;*        ;; utf-32 big endian                                         */
-;*       ((bof (: #fe #ff #a00 #a00))                                  */
-;*        ;; utf-32 little endian                                      */
-;*        ...)                                                         */
-      
+      ;; utf-8 bom
+      ((bof (: #a239 #a187 #a191))
+       (set! cset (charset-converter! 'UTF-8 (hop-charset)))
+       (ignore))
+
+      ;; utf-16 big endian
+      ((bof (: #a254 #a255))
+       ;; MS 23nov2011: CARE I don't know if ucs-2 is big or little endian
+       (set! cset (charset-converter! 'UCS-2 (hop-charset)))
+       (ignore))
+
+      ;; utf-16 little endian
+      ((bof (: #a255 #a254))
+       ;; MS 23nov2011: CARE I don't know if ucs-2 is big or little endian
+       (set! cset (charset-converter! 'UCS-2 (hop-charset)))
+       (ignore))
+
       ;; newlines
       ((+ #\Newline)
        (ignore))

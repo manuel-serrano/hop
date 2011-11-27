@@ -728,7 +728,7 @@ function sc_toWriteString(o) {
    if (o === this.window)
 
       return "window";
-   if (typeof o === 'function') {
+   if (typeof o === 'function' && !("toString" in o) ) {
       sc_toWriteStringProcedure(o);
    }
    if (o.sc_toWriteString)
@@ -781,23 +781,23 @@ function sc_display(o, p) {
 }
 
 function sc_toDisplayString(o) {
-    if (o === null)
-	return "()";
-    else if (o === true)
-	return "#t";
-    else if (o === false)
-	return "#f";
-    else if (o === undefined)
-	return "#unspecified";
+   if (o === null)
+      return "()";
+   else if (o === true)
+      return "#t";
+   else if (o === false)
+      return "#f";
+   else if (o === undefined)
+      return "#unspecified";
     // window is only declared inside browsers. Otherwise this.window should be undefined
-    else if (o === this.window)
-        return "window";
-    else if (typeof o === 'function')
-       return sc_toWriteStringProcedure(o);
-    else if (o.sc_toDisplayString)
-	return o.sc_toDisplayString();
-    else
-	return o.toString();
+   else if (o === this.window)
+      return "window";
+   else if (typeof o === 'function' && !("toString" in o) )
+      return sc_toWriteStringProcedure(o);
+   else if (o.sc_toDisplayString)
+      return o.sc_toDisplayString();
+   else
+      return o.toString();
 }
 
 /* ------------------ newline ---------------------------------------------------*/

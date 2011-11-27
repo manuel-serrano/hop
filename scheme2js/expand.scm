@@ -84,14 +84,11 @@
 (define (add-macro-to-ht macro ht)
    (match-case macro
       ((define-macro (?name . ?args) ?e0 . ?body)
-       (hashtable-put! ht
-		       name
-		       (lazy-macro macro ht)))
+       (hashtable-put! ht name (lazy-macro macro ht)))
+      ((define-expander ?name ?proc)
+       (hashtable-put! ht name proc))
       (else
-       (scheme2js-error "add-macro-to-ht"
-			"bad macro"
-			macro
-			macro))))
+       (scheme2js-error "add-macro-to-ht" "bad macro" macro macro))))
    
 ;; ============================================================================
 ;; module-macro-ht

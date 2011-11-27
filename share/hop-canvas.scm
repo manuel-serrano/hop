@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/share/hop-canvas.scm              */
+;*    serrano/prgm/project/hop/2.3.x/share/hop-canvas.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov  3 08:24:25 2007                          */
-;*    Last change :  Sat Jun 19 06:34:38 2010 (serrano)                */
-;*    Copyright   :  2007-10 Manuel Serrano                            */
+;*    Last change :  Thu Nov 24 10:01:32 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Canvas interface                                             */
 ;*=====================================================================*/
@@ -572,9 +572,13 @@
 ;*---------------------------------------------------------------------*/
 (define (canvas-measure-text ctx text)
    (cond
-      ((procedure? ctx.measureText) (ctx.measureText text).width)
-      ((procedure? ctx.mozMeasureText) (ctx.mozMeasureText text))
-      (else 0)))
+      ((procedure? ctx.measureText)
+       (let ((m (ctx.measureText text)))
+	  m.width))
+      ((procedure? ctx.mozMeasureText)
+       (ctx.mozMeasureText text))
+      (else
+       0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    canvas-path-text ...                                             */

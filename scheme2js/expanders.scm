@@ -1,19 +1,27 @@
 ;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.3.x/scheme2js/expanders.scm           */
+;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+;*    Creation    :  Thu Nov 24 10:52:12 2011                          */
+;*    Last change :  Sat Nov 26 19:02:09 2011 (serrano)                */
+;*    Copyright   :  2007011-2011 Florian Loitsch, Manuel Serrano      */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Scheme2Js is distributed in the hope that it will be useful,     */
+;*    but WITHOUT ANY WARRANTY; without even the implied warranty of   */
+;*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the    */
+;*    LICENSE file for more details.                                   */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module expanders
    (import expand
 	   config
 	   error
+	   tools
 	   (runtime-ref pobject-conv)))
 
 ;; reuse the expanders of Bigloo.
@@ -24,20 +32,23 @@
 ;; don't go into quotes.
 (install-expander! 'quote identity-expander)
 
-(install-expander! 'lambda        lambda-expander)
-(install-expander! 'define-macro  define-macro-expander)
-(install-expander! 'define        define-expander)
-(install-expander! 'or            or-expander)
-(install-expander! 'and           and-expander)
-(install-expander! 'let*          let*-expander)
-(install-expander! 'let           let-expander)
+(install-expander! 'lambda lambda-expander)
+(install-expander! 'define-macro define-macro-expander)
+(install-expander! 'define define-expander)
+(install-expander! 'or or-expander)
+(install-expander! 'and and-expander)
+(install-expander! 'let* let*-expander)
+(install-expander! 'let let-expander)
 (install-expander! 'define-struct define-struct-expander)
-(install-expander! 'delay         delay-expander)
-(install-expander! 'bind-exit     bind-exit-expander)
-(install-expander! 'with-handler  with-handler-expander)
-(install-expander! 'receive       receive-expander)
-(install-expander! '@             identity-expander)
+(install-expander! 'delay delay-expander)
+(install-expander! 'bind-exit bind-exit-expander)
+(install-expander! 'with-handler with-handler-expander)
+(install-expander! 'receive receive-expander)
+(install-expander! '@ identity-expander)
 (install-expander! 'multiple-value-bind multiple-value-bind-expander)
+(install-expander! 'define-generic define-generic-expander)
+(install-expander! 'define-method define-method-expander)
+
 
 (define (lambda-expander x e)
    (match-case x
@@ -306,3 +317,74 @@
        (scheme2js-error "multiple-value-bind"
 			"Invalid 'multiple-value-bind' form"
 			x x))))
+
+;*---------------------------------------------------------------------*/
+;*    map* ...                                                         */
+;*---------------------------------------------------------------------*/
+(define (map* f lst)
+   (cond
+      ((null? lst)
+       '())
+      ((not (pair? lst))
+       (list (f lst)))
+      (else
+       (cons (f (car lst)) (map* f (cdr lst))))))
+	  
+;*---------------------------------------------------------------------*/
+;*    define-generic-expander ...                                      */
+;*---------------------------------------------------------------------*/
+(define (define-generic-expander x e)
+   (match-case x
+      ((?- (?id ?a0 . ?args) . ?body)
+       (multiple-value-bind (gname gtype)
+	  (parse-ident id)
+	  (multiple-value-bind (aname atype)
+	     (parse-ident a0)
+	     `(begin
+		 ,(e (loc-attach
+			`(define (,id ,a0 ,@args)
+			    ,(if (list? body)
+				 `((-> ,aname ,gname)
+				   ,aname ,@(map id-of-id args))
+				 `(apply (-> ,aname ,gname)
+				     ,aname ,@(map* id-of-id args))))
+			x (cadr x) (cadr x))
+		     e)
+		 ,(e (loc-attach
+			`((@ sc_add_method js)
+			  ,atype
+			  ',gname
+			  (lambda (,a0 ,@args) ,@body))
+			x x x x)
+		     e)))))
+      (else
+       (scheme2js-error "define-generic" "Illegal form" x x))))
+	  
+;*---------------------------------------------------------------------*/
+;*    define-method-expander ...                                       */
+;*---------------------------------------------------------------------*/
+(define (define-method-expander x e)
+   (match-case x
+      ((?- (?id ?a0 . ?args) . ?body)
+       (multiple-value-bind (gname gtype)
+	  (parse-ident id)
+	  (multiple-value-bind (aname atype)
+	     (parse-ident a0)
+	     (e (loc-attach
+		   `((@ sc_add_method js)
+		     ,atype
+		     ',gname
+		     (lambda (,a0 ,@args)
+			(define (call-next-method)
+			   (let* ((proto ((@ sc_getprototype js) ,aname))
+				  (super ((@ sc_getprototype js) proto)))
+			      ,(if (list? args)
+				   `((-> super ,gname)
+				     ,aname ,@(map id-of-id args))
+				   `(apply (-> super ,gname)
+				       ,aname ,@(map* id-of-id args)))))
+			,@body))
+		   x x x x)
+		e))))
+      (else
+       (scheme2js-error "define-method" "Illegal form" x x))))

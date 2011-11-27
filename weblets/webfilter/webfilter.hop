@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.2.x/weblets/webfilter/webfilter.hop       */
+;*    .../prgm/project/hop/2.3.x/weblets/webfilter/webfilter.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Nov 16 15:49:44 2011 (serrano)                */
+;*    Last change :  Sun Nov 27 05:42:58 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -377,7 +377,9 @@ Google, each containing a forward pointer to the actual URL.])))
 (define (blacklist req)
    (when (webfilter-blacklist)
       (with-access::http-request req (host port path header)
+	 (tprint "checking: " host)
 	 (when (hashtable-get *domain-blacklist*  host)
+	 (tprint "!!! BLACKLIST: " host)
 	    (hop-verb 2 (hop-color req req " BLACKLISTED") ": " host ":" port path "\n")
 	    (hop-verb 3 " header: " header "\n")
 	    (instantiate::http-response-string

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/share/hop-exception.scm           */
+;*    serrano/prgm/project/hop/2.3.x/share/hop-exception.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Fri Nov 18 10:54:05 2011 (serrano)                */
+;*    Last change :  Thu Nov 24 07:12:34 2011 (serrano)                */
 ;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -21,7 +21,8 @@
 	   (bigloo-demangle str)
 	   (<EXCEPTION-STACK> stack)
 	   (<EXCEPTION-FRAME> . args))
-   (JS (properties->string hop_properties_to_string)
+   (js (properties->string hop_properties_to_string)
+      (js-arguments arguments)
        "Error"
        "window"
        (hop-config hop_config))
@@ -130,7 +131,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-get-stack offset . depth)
    ;; skip offset frames of the stack
-   (let loop ((proc (@ arguments _).callee)
+   (let loop ((proc js-arguments.callee)
 	      (offset offset))
       (cond
 	 ((= offset -1)

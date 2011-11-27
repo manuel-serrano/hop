@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-serialize.js            */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-serialize.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Thu Sep 15 13:23:34 2011 (serrano)                */
+/*    Last change :  Sat Nov 26 20:02:09 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -17,6 +17,11 @@ hop_serialize_context.def = 0;
 hop_serialize_context.ref = 0;
 hop_serialize_context.active = false;
 hop_serialize_context.key = 1;
+
+/*---------------------------------------------------------------------*/
+/*    object serialization                                             */
+/*---------------------------------------------------------------------*/
+sc_Object.prototype.hop_bigloo_serialize = hop_bigloo_serialize_sc_object;
 
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize ...                                         */
@@ -82,7 +87,7 @@ function hop_bigloo_serialize_context( item ) {
    if( (item instanceof Object) && ("hop_bigloo_serialize" in item) ) {
       return hop_bigloo_serialize_custom( item );
    }
-   
+
    if( (HTMLCollection != undefined) && (item instanceof HTMLCollection) )
       return hop_serialize_array( item );
       
@@ -129,15 +134,50 @@ function hop_bigloo_serialize_object() {
    item.hop_serialize_context_key = hop_serialize_context.key;
    item.hop_serialize_context_def = hop_serialize_context.def++;
 
-   for( var i = 0; i < classfields.length; i++ ) {
-      len++;
-      args += hop_bigloo_serialize( item[ classfields[ i ] ] );
+   for( p in item ) {
+      if( p !== "hop_bigloo_serialize" &&
+	  p !== "hop_classname" &&
+	  p !== "hop_serialize_context_key" &&
+	  p !== "hop_serialize_context_def" &&
+	  p !== "hop_classhash" ) {
+	 len++;
+	 args += hop_bigloo_serialize( item[ p ] );
+      }
    }
 
    str += hop_serialize_word( len );
    str += hop_serialize_boolean( false );
    str += args;
    str += hop_bigloo_serialize( item.hop_classhash );
+
+   str = "=" +  hop_serialize_word( item.hop_serialize_context_def ) + str;
+
+   return str;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_sc_object ...                               */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_sc_object() {
+   var item = this;
+   var clazz = sc_object_class( item );
+   var classname = sc_symbol2jsstring( sc_class_name( clazz ) );
+   var str = "|" + "%27" + hop_serialize_string( '%22', classname );
+   var args = "";
+   var fields = sc_class_all_fields( clazz );
+   var len = 1 + fields.length;
+
+   item.hop_serialize_context_key = hop_serialize_context.key;
+   item.hop_serialize_context_def = hop_serialize_context.def++;
+
+   for( var i = 0; i < fields.length; i++ ) {
+      args += hop_bigloo_serialize( fields[ i ].sc_getter( item ) );
+   }
+
+   str += hop_serialize_word( len );
+   str += hop_serialize_boolean( false );
+   str += args;
+   str += hop_bigloo_serialize( sc_class_hash( clazz ) );
 
    str = "=" +  hop_serialize_word( item.hop_serialize_context_def ) + str;
 
@@ -645,4 +685,26 @@ function hop_unjson( o ) {
       return o;
 }
 
+/*---------------------------------------------------------------------*/
+/*    hop_js_to_object ...                                             */
+/*---------------------------------------------------------------------*/
+function hop_js_to_object( cname, hash, o ) {
+   var klass = sc_class_exists( sc_string2symbol( sc_jsstring2string( cname ) ) );
 
+   if( !klass ) {
+      o.hop_bigloo_serialize = hop_bigloo_serialize_object;
+      o.hop_classname = cname;
+      o.hop_classhash = hash;
+
+      return o;
+   } else {
+      if( sc_class_hash( klass ) !== hash ) {
+	 sc_error( "hop_js_to_object", "incomptabile class versions", cname );
+      } else {
+	 o.__proto__ = klass.prototype;
+	 o.__proto__.constructor = klass;
+
+	 return o;
+      }
+   }
+}

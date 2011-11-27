@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/wiki_parser.scm           */
+;*    serrano/prgm/project/hop/2.3.x/runtime/wiki_parser.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Thu Nov 10 18:05:51 2011 (serrano)                */
+;*    Last change :  Wed Nov 23 08:31:25 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -500,6 +500,23 @@
 	     (string-append (the-loading-dir) "/" s))
 	    (else
 	     s)))
+
+      ;; utf-8 bom
+      ((bof (: #a239 #a187 #a191))
+       (set! charset (charset-converter! 'UTF-8 (hop-charset)))
+       (ignore))
+
+      ;; utf-16 big endian
+      ((bof (: #a254 #a255))
+       ;; MS 23nov2011: CARE I don't know if ucs-2 is big or little endian
+       (set! charset (charset-converter! 'UCS-2 (hop-charset)))
+       (ignore))
+
+      ;; utf-16 little endian
+      ((bof (: #a255 #a254))
+       ;; MS 23nov2011: CARE I don't know if ucs-2 is big or little endian
+       (set! charset (charset-converter! 'UCS-2 (hop-charset)))
+       (ignore))
 
       ;; continuation lines
       ((: #\\ (? #\Return) #\Newline)

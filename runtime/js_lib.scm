@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/js_lib.scm                */
+;*    serrano/prgm/project/hop/2.3.x/runtime/js_lib.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sat Nov 12 06:54:27 2011 (serrano)                */
+;*    Last change :  Sat Nov 26 19:21:16 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -107,54 +107,96 @@
 ;*    obj->javascript ::object ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (obj->javascript obj::object op isrep)
-
-   (define (display-seq lst op proc)
-      (when (pair? lst)
-	 (proc (car lst) op)
-	 (let loop ((lst (cdr lst)))
-	    (when (pair? lst)
-	       (display "," op)
-	       (proc (car lst) op)
-	       (loop (cdr lst))))))
-
-   (define (display-list lst op proc)
-      (display "(" op)
-      (display-seq lst op proc)
-      (display ")" op))
    
-   (define (display-field-init fields op)
-      (display "{" op)
-      (for-each (lambda (f)
-		   (let ((n (class-field-name f)))
-		      (fprintf op "this.~a = ~a;" n n)))
-		fields)
-      (display "}" op))
+   (define (display-seq vec op proc)
+      (let ((len (vector-length vec)))
+	 (when (>fx len 0)
+	    (proc (vector-ref vec 0) op)
+	    (let loop ((i 1))
+	       (when (<fx i len)
+		  (display "," op)
+		  (proc (vector-ref vec i) op)
+		  (loop (+fx i 1)))))))
 
-   (let* ((klass (object-class obj))
-	  (kname (symbol->string! (class-name klass)))
-	  (name (if (bigloo-need-mangling? kname)
-		    (bigloo-mangle kname)
-		    kname))
-	  (hash (class-hash klass))
-	  (fields (class-all-fields klass)))
-      (fprintf op "(function() {var ~a=function" name)
-      (display-list fields op (lambda (o op) (display (class-field-name o) op)))
-      (display-field-init fields op)
-      (fprintf op ";~a.prototype.hop_bigloo_serialize = hop_bigloo_serialize_object; " name)
-      (fprintf op "~a.prototype.hop_classname = '~a'; " name name)
-      (fprintf op "~a.prototype.hop_classhash = ~a;" name hash)
-      (fprintf op "~a.prototype.hop_classfields = [" name)
+   (define (display-fields fields op)
+      (display "{ " op)
       (display-seq fields op (lambda (f op)
 				(display "'" op)
 				(display (class-field-name f) op)
-				(display "'" op)))
-      (display "]; " op)
-      (fprintf op "return new ~a" name)
-      (display-list fields op (lambda (f op)
-				 (obj->javascript
-				  ((class-field-accessor f) obj) op isrep)))
-      (display ";})()" op))
-   #t)
+				(display "': " op)
+				(obj->javascript
+				   ((class-field-accessor f) obj) op isrep)))
+      (display "}" op))
+      
+
+   (let* ((klass (object-class obj))
+	  (fields (class-all-fields klass)))
+      (display "hop_js_to_object( \""  op)
+      (display (class-name klass) op)
+      (display "\", " op)
+      (display (class-hash klass) op)
+      (display ", " op)
+      (display-fields fields op)
+      (display ")" op)))
+
+;* (define-method (obj->javascript-old-25nov2011 obj::object op isrep) */
+;*                                                                     */
+;*    (define (display-seq vec op proc)                                */
+;*       (let ((len (vector-length vec)))                              */
+;* 	 (when (>fx len 0)                                             */
+;* 	    (proc (vector-ref vec 0) op)                               */
+;* 	    (let loop ((i 1))                                          */
+;* 	       (when (<fx i len)                                       */
+;* 		  (display "," op)                                     */
+;* 		  (proc (vector-ref vec i) op)                         */
+;* 		  (loop (+fx i 1)))))))                                */
+;*                                                                     */
+;*    (define (display-vect vec op proc)                               */
+;*       (display "(" op)                                              */
+;*       (display-seq vec op proc)                                     */
+;*       (display ")" op))                                             */
+;*                                                                     */
+;*    (define (vector-for-each proc v)                                 */
+;*       (let ((len (vector-length v)))                                */
+;* 	 (let loop ((i 0))                                             */
+;* 	    (when (<fx i len)                                          */
+;* 	       (proc (vector-ref v i))                                 */
+;* 	       (loop (+fx i 1))))))                                    */
+;* 		                                                       */
+;*    (define (display-field-init fields op)                           */
+;*       (display "{" op)                                              */
+;*       (vector-for-each                                              */
+;* 	 (lambda (f)                                                   */
+;* 	    (let ((n (class-field-name f)))                            */
+;* 	       (fprintf op "this.~a = ~a;" n n)))                      */
+;* 	 fields)                                                       */
+;*       (display "}" op))                                             */
+;*                                                                     */
+;*    (let* ((klass (object-class obj))                                */
+;* 	  (kname (symbol->string! (class-name klass)))                 */
+;* 	  (name (if (bigloo-need-mangling? kname)                      */
+;* 		    (bigloo-mangle kname)                              */
+;* 		    kname))                                            */
+;* 	  (hash (class-hash klass))                                    */
+;* 	  (fields (class-all-fields klass)))                           */
+;*       (fprintf op "(function() {var ~a=function" name)              */
+;*       (display-vect fields op (lambda (o op) (display (class-field-name o) op))) */
+;*       (display-field-init fields op)                                */
+;*       (fprintf op ";~a.prototype.hop_bigloo_serialize = hop_bigloo_serialize_object; " name) */
+;*       (fprintf op "~a.prototype.hop_classname = '~a'; " name name)  */
+;*       (fprintf op "~a.prototype.hop_classhash = ~a;" name hash)     */
+;*       (fprintf op "~a.prototype.hop_classfields = [" name)          */
+;*       (display-seq fields op (lambda (f op)                         */
+;* 				(display "'" op)                       */
+;* 				(display (class-field-name f) op)      */
+;* 				(display "'" op)))                     */
+;*       (display "]; " op)                                            */
+;*       (fprintf op "return new ~a" name)                             */
+;*       (display-vect fields op (lambda (f op)                        */
+;* 				 (obj->javascript                      */
+;* 				  ((class-field-accessor f) obj) op isrep))) */
+;*       (display ";})()" op))                                         */
+;*    #t)                                                              */
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript ::xml ...                                        */

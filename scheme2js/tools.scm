@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -17,7 +17,10 @@
 	   (macro begin0)
 	   (macro cons-set!)
 	   (macro cp-filter)
-	   (macro for)))
+	   (macro for)
+	   (make-typed-ident::symbol ::symbol ::symbol)
+	   (id-of-id::symbol ::symbol)
+	   (parse-ident ::symbol)))
 
 (define-inline (make-eq-hashtable #!optional (size #unspecified))
    (make-hashtable size #unspecified eq?))
@@ -55,3 +58,37 @@
 	       (when (< ,i ,to-tmp)
 		  ,@Lbody
 		  (,loop (+fx ,i 1)))))))
+
+;*---------------------------------------------------------------------*/
+;*    id-of-id ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (id-of-id v::symbol)
+   (let* ((str (symbol->string! v))
+	  (pos (string-contains str "::")))
+      (if pos
+	  (string->symbol (substring str 0 pos))
+	  v)))
+
+;*---------------------------------------------------------------------*/
+;*    parse-ident ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (parse-ident v::symbol)
+   (let* ((str (symbol->string! v))
+	  (pos (string-contains str "::")))
+      (if pos
+	  (values (string->symbol (substring str 0 pos))
+	     (string->symbol (substring str (+fx pos 2)
+				(string-length str))))
+	  (values v #f))))
+
+;*---------------------------------------------------------------------*/
+;*    4dots ...                                                        */
+;*---------------------------------------------------------------------*/
+(define 4dots (string->symbol "::"))
+
+;*---------------------------------------------------------------------*/
+;*    make-typed-ident ...                                             */
+;*---------------------------------------------------------------------*/
+(define (make-typed-ident sym1 sym2)
+   (symbol-append sym1 4dots sym2))
+

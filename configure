@@ -1,10 +1,10 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.2.x/configure                         */
+#*    serrano/prgm/project/hop/2.3.x/configure                         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon May  2 20:55:17 2011 (serrano)                */
+#*    Last change :  Wed Nov 23 14:49:25 2011 (serrano)                */
 #*    Copyright   :  2004-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -58,7 +58,7 @@ libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite"
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="2.2.1"
+version="2.3.0"
 devel=
 
 hopc=$PWD/bin/hopc

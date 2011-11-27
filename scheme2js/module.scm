@@ -1,15 +1,22 @@
 ;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.3.x/scheme2js/module.scm              */
+;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
+;*    Last change :  Thu Nov 24 11:42:22 2011 (serrano)                */
+;*    Copyright   :  2007-11 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Scheme2Js is distributed in the hope that it will be useful,     */
+;*    but WITHOUT ANY WARRANTY; without even the implied warranty of   */
+;*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the    */
+;*    LICENSE file for more details.                                   */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module module-system
    (import verbose
 	   gen-js
@@ -19,6 +26,7 @@
 	   expand
 	   export-desc
 	   module-resolver
+	   module-class
 	   infotron
 	   config)
    (export (final-class Compilation-Unit
@@ -38,7 +46,8 @@
 	      ;; #t if the file/unit contained a module header.
 	      (declared-module?::bool (default #f)))
 	   (wide-class WIP-Unit::Compilation-Unit ;; work in progress
-	      header)
+	      header
+	      (class-expr::pair-nil (default '())))
 	   (create-module-from-file file::bstring override-headers::pair-nil
 				    reader::procedure)
 	   (create-module-from-expr expr override-headers::pair-nil)
@@ -107,25 +116,18 @@
    (define (add-new-els! acc new-elements loc)
       (let loop ((new-els new-elements))
 	 (cond
-	    ((null? new-els) 'done)
+	    ((null? new-els)
+	     'done)
 	    ((epair? new-els)
 	     ;; don't forget the location
-	     (set-cdr! acc
-		       (econs (car new-els)
-			      (cdr acc)
-			      (cer new-els)))
+	     (set-cdr! acc (econs (car new-els) (cdr acc) (cer new-els)))
 	     (loop (cdr new-els)))
 	    ((pair? new-els)
-	     (set-cdr! acc
-		       (cons (car new-els)
-			     (cdr acc)))
+	     (set-cdr! acc (cons (car new-els) (cdr acc)))
 	     (loop (cdr new-els)))
 	    (else
-	     (scheme2js-error
-	      "module"
-	      "invalid module-clause"
-	      new-els
-	      loc)))))
+	     (scheme2js-error "module"
+		"invalid module-clause" new-els loc)))))
 	     
    (with-access::WIP-Unit m (header)
       (let loop ((h (cddr header))
@@ -296,6 +298,9 @@
 			(not header-sexp?))
 	       (check-module-name module-name file header)))
 
+	 (with-access::WIP-Unit m (top-level class-expr)
+	    (set! top-level (append class-expr top-level)))
+	 
 	 (shrink! m)
 	 m)))
 
@@ -342,7 +347,9 @@
 	    (read-includes! m include-paths reader)
 	    (read-imports! m module-resolver reader bigloo-modules?) ;; macros too
 	    (normalize-JS-imports! m)
-	    (normalize-exports! m bigloo-modules?)))
+	    (normalize-statics! m bigloo-modules? #t)
+	    (normalize-exports! m bigloo-modules?))
+	 (with-access::WIP-Unit m (top-level) top-level))
       (when (config 'infotron)
 	 (module->infotron! m))
       (when module-postprocessor
@@ -570,6 +577,7 @@
 		      (normalize-module-header! im)
 		      ;; normalize-exports might need the 'ip' in
 		      ;; case it needs to search for macros.
+		      (normalize-statics! im bigloo-modules? #f)
 		      (normalize-exports! im bigloo-modules?
 					  #t  ;; get macros
 					  reader ip)
@@ -676,7 +684,8 @@
 			  js
 			  (if (epair? js) js header)))
 
-      (let* ((direct-JS-imports (module-entries header 'JS))
+      (let* ((direct-JS-imports (append (module-entries header 'JS)
+				   (module-entries header 'js)))
 	     (descs (map (lambda (js)
 			    (match-case js
 			       ((?scheme-id ?js-id)
@@ -706,7 +715,7 @@
 			imports))))))
 
 (define (normalize-exports! m bigloo-modules?
-			    #!optional get-macros? reader input-p)
+	   #!optional get-macros? reader input-p)
    (if bigloo-modules?
        (normalize-bigloo-exports! m get-macros? reader input-p)
        (normalize-scheme2js-exports! m)))
@@ -728,18 +737,10 @@
 ;; the input-port is only used when macros are exported and the module has not
 ;; yet read its top-level.
 (define (normalize-bigloo-exports! m get-macros? reader input-p)
-   (define (untype v::symbol)
-      (let* ((str (symbol->string v))
-	     (pos (string-contains str "::")))
-	 (if pos
-	     (values (string->symbol (substring str 0 pos))
-		     (string->symbol (substring str (+fx pos 2)
-						(string-length str))))
-	     (values v #f))))
-	  
+   
    (define (normalize-var v pragmas loc)
       (receive (v type)
-	 (untype v)
+	 (parse-ident v)
 	 (when (string=? "" (symbol->string v))
 	    (scheme2js-error "scheme2js-module"
 			     "bad export-variable"
@@ -758,7 +759,7 @@
 
    (define (analyze-fun f)
       (receive (name type)
-	 (untype (car f))
+	 (parse-ident (car f))
 	 (values name type (analyze-arity (cdr f)))))
 
    (define (normalize-fun f pragmas)
@@ -837,16 +838,28 @@
 				     (not (eq? macro (car (cadr e)))))
 				  new-macros)
 			  (cons e rev-res)))
+		   ((and (pair? e)
+			 (eq? (car e) 'define-expander)
+			 (pair? (cdr e))
+			 (symbol? (cadr e))
+			 (memq (cadr e) new-macros))
+		    (loop (filter (lambda (macro)
+				     (not (eq? macro (cadr e))))
+				  new-macros)
+			  (cons e rev-res)))
 		   (else
 		    (loop new-macros rev-res)))))))
 			  
    (with-access::WIP-Unit m (header name exports exported-macros top-level classes)
       (let ((new-exports (module-entries header 'export))
 	    (pragmas (module-entries header 'scheme2js-pragma)))
+	 (unless top-level (set! top-level '()))
 	 (let loop ((entries new-exports)
-		    (new-macros '()))
+		    (new-macros '())
+		    (class-macros '()))
 	    (if (null? entries)
-		(set! exported-macros (find-macros new-macros header))
+		(set! exported-macros
+		   (append (find-macros new-macros header) class-macros))
 		(let ((e (car entries)))
 		   (cond
 		      ((symbol? e)
@@ -854,45 +867,20 @@
 			     (cons (create-Export-Desc
 				    (normalize-var e pragmas entries) name #f)
 				   exports))
-		       (loop (cdr entries) new-macros))
+		       (loop (cdr entries) new-macros class-macros))
 		      ((not (pair? e))
-		       (loop (cdr entries) new-macros))
+		       (loop (cdr entries) new-macros class-macros))
 		      ((eq? (car e) 'macro)
 		       (if get-macros?
 			   (loop (cdr entries)
-				 (append (cdr e) new-macros))
-			   (loop (cdr entries) new-macros)))
-;* 		      ((memq (car e) '(class abstract-class final-class wide-class)) */
-;* 		       (multiple-value-bind (clazz e x)                */
-;* 			  (scheme2js-class e m)                        */
-;* 			  (set! classes (cons clazz classes))          */
-;* 			  (set! top-level (append e top-level))        */
-;* 			  (set! exports (append x exports))            */
-;* 			  (loop (cdr entries) new-macros)))            */
-;* 			                                               */
-;* 		       (let ((c (make-class :name ',(cadr e)           */
-;* 				   :super #f                           */
-;* 				   :alloc #f                           */
-;* 				   :hash 0                             */
-;* 				   :fields '()                         */
-;* 				   :constructor #f                     */
-;* 				   :virtuals '#()                      */
-;* 				   :new #f                             */
-;* 				   :nil (lambda () #f)                 */
-;* 				   :shrink #f                          */
-;* 				   :abstract #f)))                     */
-;* {* 			  (let ((wid (symbol-append 'instantiate:: (class-name class)))) *} */
-;* {* 			     ((@ install-expander! expand) wid (eval-instantiate-expander c))) *} */
-;* 			  (set! top-level                              */
-;* 			     (cons* `(define (,(cadr e)) (pragma "this")) */
-;* 				`(register-class! ,(cadr e) ',(cadr e)) */
-;* 				top-level))                            */
-;* 			  (set! exports                                */
-;* 			     (cons (create-Export-Desc                 */
-;* 				      (normalize-var (cadr e) pragmas entries) name #f) */
-;* 				exports))                              */
-;* 			  (set! classes (cons (cons e 'export) classes)) */
-;* 			  (loop (cdr entries) new-macros)))            */
+				 (append (cdr e) new-macros)
+				 class-macros)
+			   (loop (cdr entries) new-macros class-macros)))
+		      ((class-decl? e)
+		       (loop (cdr entries)
+			  new-macros
+			  (append (parse-module-class! m e #t #t)
+			     class-macros)))
 		      (else
 		       (let ((undsssl (dsssl-formals->scheme-formals
 				       e (lambda (o p m) (scheme2js-error o p m e)))))
@@ -900,47 +888,7 @@
 				(cons (create-Export-Desc
 				       (normalize-fun undsssl pragmas) name #f)
 				      exports)))
-		       (loop (cdr entries) new-macros)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    scheme2js-class ...                                              */
-;*---------------------------------------------------------------------*/
-(define (scheme2js-class e::pair-nil m::WIP-Unit)
-   '(match-case e
-      ((?class ?id . ?fields)
-       (let ((loc (get-source-location src))
-	     (super (find-class (or sid 'object))))
-	  (if (not (class? super))
-	      (evcompile-error loc "eval" "Cannot find super class" sid)
-	      (multiple-value-bind (constructor slots)
-		 (eval-parse-class loc clauses)
-		 ;; evaluate the slots default value and virtual accessors
-		 (for-each (lambda (slot)
-			      (slot-default-value-set! slot
-				 (eval! `(lambda ()
-					    ,(slot-default-value slot))
-				    mod))
-			      (when (slot-virtual? slot)
-				 (slot-getter-set! slot
-				    (eval! (slot-getter slot) mod))
-				 (slot-setter-set! slot
-				    (eval! (slot-setter slot) mod))))
-		    slots)
-		 ;; make the class and bind it to its global variable
-		 (let* ((clazz (eval-register-class
-				  cid super abstract
-				  slots 
-				  (get-eval-class-hash id src)
-				  (eval! constructor mod))))
-		    (eval! `(define ,cid ,clazz))
-		    ;; with-access
-		    (eval-expand-with-access clazz)
-		    (unless abstract
-		       ;; instantiate
-		       (eval-expand-instantiate clazz)
-		       (eval-expand-duplicate clazz))
-		    (list cid))))))))
-       
+		       (loop (cdr entries) new-macros class-macros)))))))))
    
 (define (check-scheme2js-export-clause ex)
    (cond
@@ -984,3 +932,35 @@
 	 ;; module too.
 	 ;; Add them to the macros.
 	 (set! macros (append exported-ms macros)))))
+
+;*---------------------------------------------------------------------*/
+;*    normalize-bigloo-statics! ...                                    */
+;*    -------------------------------------------------------------    */
+;*    Normalizing a static clause, only means extracting its class     */
+;*    definitions.                                                     */
+;*---------------------------------------------------------------------*/
+(define (normalize-statics! m bigloo-modules? definep)
+   (when bigloo-modules?
+      (normalize-bigloo-statics! m definep)))
+
+;*---------------------------------------------------------------------*/
+;*    class-decl? ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    Is a module clause a class declaration                           */
+;*---------------------------------------------------------------------*/
+(define (class-decl? e)
+   (when (pair? e)
+      (memq (car e) '(class abstract-class final-class wide-class))))
+
+;*---------------------------------------------------------------------*/
+;*    normalize-bigloo-statics! ...                                    */
+;*---------------------------------------------------------------------*/
+(define (normalize-bigloo-statics! m definep)
+   (with-access::WIP-Unit m (name header macros)
+      (for-each (lambda (e)
+		   (when (class-decl? e)
+		      (set! macros
+			 (cons (parse-module-class! m e definep #f)
+			    macros))))
+	 (module-entries header 'static))))
+      

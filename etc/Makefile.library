@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.2.x/etc/Makefile.library              */
+#*    serrano/prgm/project/hop/2.3.x/etc/Makefile.library              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Tue Apr  5 06:45:31 2011 (serrano)                */
+#*    Last change :  Thu Nov 24 06:39:18 2011 (serrano)                */
 #*    Copyright   :  2006-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -19,8 +19,6 @@ HEAPJVM_FILE	= $(BUILDLIBDIR)/$(TARGETNAME).jheap
 PBASE		= bigloo.$(TARGETNAME)
 CLASS_DIR	= o/class_s/bigloo/$(TARGETNAME)
 CLASS_EDIR	= o/class_es/bigloo/$(TARGETNAME)
-DOTNET_OBJ_DIR	= o/dotnet_s
-DOTNET_OBJ_EDIR	= o/dotnet_es
 
 #*---------------------------------------------------------------------*/
 #*    Suffixes                                                         */
@@ -52,18 +50,6 @@ $(CLASS_DIR)/%.class: %.hop
 $(CLASS_EDIR)/%.class: %.hop
 	@ $(call compile3b,HOPC,HFLAGS,BJVMFLAGS,BLJVMFLAGS,$< -o $@ -c)
 
-$(DOTNET_OBJ_DIR)/%.obj: %.scm
-	@ $(call compile2,BIGLOO,BDOTNETFLAGS,BLFLAGS,$< -o $@ -c)
-
-$(DOTNET_OBJ_EDIR)/%.obj: %.scm
-	@ $(call compile2,BIGLOO,BDOTNETFLAGS,BLDOTNETFLAGS,$< -o $@ -c)
-
-$(DOTNET_OBJ_DIR)/%.obj: %.hop
-	@ $(call compile3b,HOPC,HFLAGS,BDOTNETFLAGS,BLFLAGS,$< -o $@ -c)
-
-$(DOTNET_OBJ_EDIR)/%.obj: %.hop
-	@ $(call compile3b,HOPC,HFLAGS,BDOTNETFLAGS,BLDOTNETFLAGS,$< -o $@ -c)
-
 #*---------------------------------------------------------------------*/
 #*    The heap construction                                            */
 #*---------------------------------------------------------------------*/
@@ -85,9 +71,9 @@ $(HEAPJVM_FILE): .jfile .afile make_lib.scm
 #*---------------------------------------------------------------------*/
 #*    lib                                                              */
 #*---------------------------------------------------------------------*/
-.PHONY: lib-c lib-jvm lib-dotnet
+.PHONY: lib-c lib-jvm
 
-lib: lib-jvm lib-dotnet
+lib: lib-jvm
 
 #*--- lib-c -----------------------------------------------------------*/
 lib-c: $(TAGS) o lib-c-static lib-c-shared
@@ -221,48 +207,6 @@ $(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).zip: .afile .jfile $(BGL_ECLASSES)
 	@ echo "$@ done..."
 	@ echo "-------------------------------"
 
-#*--- lib-dotnet ---------------------------------------------------------*/
-lib-dotnet: $(TAGS) $(DOTNET_OBJ_DIR) $(DOTNET_OBJ_EDIR) lib.dll
-
-$(DOTNET_OBJ_DIR):
-	mkdir -p $(DOTNET_OBJ_DIR)
-
-$(DOTNET_OBJ_EDIR):
-	mkdir -p $(DOTNET_OBJ_EDIR)
-
-lib.dll: $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll \
-         $(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).dll
-
-$(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll: .afile $(BGL_DOTNET_OBJ) $(DOTNET_OBJ_SRC)
-	@ $(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll
-	@ $(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
-	@ (cd $(DOTNET_OBJ_DIR) && \
-	  $(DOTNETCSCC) \
-		$(DOTNETFTDLLPATH) $(DOTNETLINKBIGLOODLL) \
-                -shared -o $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll \
-                $(DOTNET_OBJ_SRC:$(DOTNET_OBJ_DIR)/%=%) \
-		$(BGL_DOTNET_OBJ:$(DOTNET_OBJ_DIR)/%=%))
-	@ echo "$@ done..."
-	 (cd o/dotnet_s && \
-	  $(DOTNETCSCC) \
-		$(DOTNETFTDLLPATH) $(DOTNETLINKBIGLOODLL) \
-                -shared -o $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll \
-                $(DOTNET_OBJ_SRC:$(DOTNET_OBJ_DIR)/%=%) \
-		$(BGL_DOTNET_OBJ:$(DOTNET_OBJ_DIR)/%=%))
-	@ echo "$@ done..."
-	@ echo "-------------------------------"
-
-$(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).dll: .afile $(BGL_DOTNET_EOBJ)
-	@ $(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).dll
-	@ (cd $(DOTNET_OBJ_EDIR) && \
-	  $(DOTNETCSCC) \
-		$(DOTNETFTDLLPATH) $(DOTNETLINKBIGLOODLL) \
-                 -shared -o $(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).dll \
-                            $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll \
-		$(BGL_DOTNET_EOBJ:$(DOTNET_OBJ_EDIR)/%=%))
-	@ echo "$@ done..."
-	@ echo "-------------------------------"
-
 #*---------------------------------------------------------------------*/
 #*    stdclean                                                         */
 #*---------------------------------------------------------------------*/
@@ -288,7 +232,6 @@ stdclean:
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).jheap
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).heap
 	$(RM) -rf $(CLASS_DIR)
-	$(RM) -rf $(DOTNET_OBJ_DIR)
 	$(RM) -f *~
 	$(RM) -f *.mco
 	$(RM) -f *.ast
@@ -348,18 +291,6 @@ install-native:
                 LIB=lib$(TARGETNAME)_eu-$(HOPRELEASE)
 
 install-jvm:
-
-install-dotnet:
-	$(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME).jheap $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).jheap && \
-        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).jheap && \
-        $(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll && \
-        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll && \
-        $(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).dll $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_es-$(HOPRELEASE).dll && \
-        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_es-$(HOPRELEASE).dll && \
-        $(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME)_eu-$(HOPRELEASE).dll $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_eu-$(HOPRELEASE).dll && \
-        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_eu-$(HOPRELEASE).dll && \
-        $(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll && \
-        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
 
 uninstall:
 	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap

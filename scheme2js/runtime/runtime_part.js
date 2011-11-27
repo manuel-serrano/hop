@@ -1580,6 +1580,35 @@ function sc_vectorCopyBang(target, tstart, source, sstart, send) {
     return target;
 }
 
+/*** META ((export #t) (arity #t)) */
+function sc_vectorAppend() {
+   if( arguments.length === 0 ) {
+      return new sc_Vector( 0 );
+   }
+
+   if( arguments.length === 1 ) {
+      return arguments[ 0 ];
+   } else {
+      var len = 0;
+      var i = 0;
+      var j = 0;
+      
+      for( i = 0; i < arguments.length; i++ ) {
+	 len += arguments[ i ].length;
+      }
+
+      var res = new sc_vector( len );
+
+      for( i = 0; i < arguments.length; i++ ) {
+	 var v = arguments[ i ];
+	 sc_vectorCopyBang( res, j, v, 0, v.length );
+	 j += v.length;
+      }
+
+      return res;
+   }
+}
+
 /*** META ((export #t) (arity #t)
            (type bool)
            (peephole (hole 1 "typeof " o " === 'function'")))
@@ -2301,3 +2330,175 @@ var SC_SCM2JS_GLOBALS = new Object();
 
 var SC_TAIL_OBJECT = new sc_Trampoline();  // (used in runtime_callcc.)
 SC_SCM2JS_GLOBALS.TAIL_OBJECT = SC_TAIL_OBJECT;
+
+/*---------------------------------------------------------------------*/
+/*    OO layer                                                         */
+/*---------------------------------------------------------------------*/
+var sc_allClasses = {};
+
+function sc_Class() {
+   ;
+}
+
+/*** META ((export #t)) */
+function sc_Object() {
+}
+
+sc_Class.prototype.toString = function() {
+   return "#<class:" + sc_class_name( this ) + ">";
+}
+sc_Class.prototype.sc_toWriteOrDisplayString = sc_Class.prototype.toString;
+
+function sc_register_class( clazz, name, zuper, hash, allocator, constructor, fields ) {
+   var ftable = {};
+
+   clazz.toString = sc_Class.prototype.toString;
+   clazz.toWriteOrDisplayString = sc_Class.prototype.toString;
+   clazz.sc_name = name;
+   clazz.sc_super = zuper;
+   clazz.sc_hash = hash;
+   clazz.sc_constructor = constructor;
+   clazz.sc_fields = fields;
+   clazz.sc_fields_table = ftable;
+   clazz.sc_allocator = allocator;
+
+   for( var i = 0; i < fields.length; i++ ) {
+      var f = fields[ i ];
+      
+      ftable[ f.sc_name ] = f;
+   }
+
+   if( zuper != clazz ) {
+      var constr = clazz.prototype.constructor;
+      
+      clazz.prototype = new zuper();
+      clazz.prototype.constructor = constr;
+
+      for( f in zuper.sc_fields_table ) {
+	 ftable[ f.sc_name ] = f;
+      }
+      
+      clazz.sc_all_fields = sc_vectorAppend( zuper.sc_all_fields, fields );
+   } else {
+      clazz.sc_all_fields = fields;
+   }
+
+   sc_allClasses[ name ] = clazz;
+}
+
+/*** META ((export #t) (arity #t) (type bool)) */
+function sc_isClass( o ) {
+   return (o.toString === sc_Class.prototype.toString);
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_class_exists( cname ) {
+   if( cname in sc_allClasses ) {
+      return sc_allClasses[ cname ];
+   } else {
+      return false;
+   }
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_find_class( cname ) {
+   var c = sc_class_exists( cname );
+
+   if( c ) {
+      return c;
+   } else {
+      sc_error( "find-class", "Can't find class", cname );
+   }
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_class_nil( clazz ) {
+   if( !clazz.sc_nil ) clazz.sc_nil = clazz.sc_allocator();
+   
+   return clazz.sc_nil;
+}
+   
+/*** META ((export #t) (arity #t)) */
+function sc_class_name( clazz ) {
+   return clazz.sc_name;
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_class_super( clazz ) {
+   return clazz.sc_super;
+}
+   
+/*** META ((export #t) (arity #t)) */
+function sc_class_hash( clazz ) {
+   return clazz.sc_hash;
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_class_allocator( clazz ) {
+   return clazz.sc_allocator;
+}
+
+function sc_Field( name, getter, setter, ronly, virtual, info, def, type ) {
+   this.sc_name = name;
+   this.sc_getter = getter;
+   this.sc_setter = setter;
+   this.sc_ronly = ronly;
+   this.sc_virtual = virtual;
+   this.sc_info = info;
+   this.sc_def = def;
+   this.sc_type = type;
+}
+
+function sc_getprototype( o ) {
+   if( o instanceof sc_Object ) {
+      if( "__proto__" in o ) {
+	 return o.__proto__;
+      } else {
+	 return Object.GetPrototypeOf( o );
+      }
+   } else {
+      return false;
+   }
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_object_class( o ) {
+   var proto = sc_getprototype( o );
+
+   if( proto ) {
+      return proto.constructor;
+   } else {
+      return sc_Object;;
+   }
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_class_fields( clazz ) {
+   return clazz.sc_fields;
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_class_all_fields( clazz ) {
+   return clazz.sc_all_fields;
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_find_class_field( clazz, id ) {
+   return clazz.sc_fields_table[ id ];
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_class_field_default_value( field ) {
+   return field.sc_def();
+}
+
+function sc_add_method( clazz, generic, proc ) {
+   var name = sc_symbol2jsstring( generic );
+   if( !clazz ) {
+      Object.prototype[ name ] = proc;
+   } else {
+      clazz.prototype[ name ] = proc;
+   }
+}
+
+/* OO bootstrap in mutable.js and immutable.js */

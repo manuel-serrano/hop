@@ -1,17 +1,25 @@
 ;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.3.x/scheme2js/pobject_conv.scm        */
+;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Creation    :  Thu Nov 24 07:23:39 2011                          */
+;*    Last change :  Thu Nov 24 10:57:12 2011 (serrano)                */
+;*    Copyright   :  2007-11 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Scheme2Js is distributed in the hope that it will be useful,     */
+;*    but WITHOUT ANY WARRANTY; without even the implied warranty of   */
+;*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the    */
+;*    LICENSE file for more details.                                   */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module pobject-conv
-   (import nodes
+   (import tools
+	   nodes
 	   error
 	   export-desc
 	   config
@@ -97,24 +105,25 @@
 		(else
 		 (set-cdr! p (list vaarg)) ;; physically attach the vaarg
 		 (values arguments #t)))))))
-	 
-      
+   
+   
    (receive (formals vaarg?)
       (vaarg-list! arguments)
-
+      
       (unless (and (list? formals)
 		   (every? symbol? formals))
 	 (scheme2js-error "Object-conv"
-			  "Invalid arguments-clause"
-			  arguments
-			  arguments))
-
+	    "Invalid arguments-clause"
+	    arguments
+	    arguments))
+      
       (let ((formal-decls
-	     (location-map (lambda (formal loc)
-			      (attach-location (instantiate::Ref
-						  (id formal))
-					       loc))
-			   formals)))
+	       (location-map (lambda (formal loc)
+				(attach-location
+				   (instantiate::Ref
+				      (id (id-of-id formal)))
+				   loc))
+		  formals)))
 	 (instantiate::Lambda
 	    (formals formal-decls)
 	    (vaarg? vaarg?)
@@ -131,7 +140,7 @@
 			  "Bad Let-form binding"
 			  binding
 			  binding))
-      (let ((var (car binding))
+      (let ((var (id-of-id (car binding)))
 	    (val (cadr binding)))
 	 (instantiate::Set!
 	    (lvalue (attach-location (instantiate::Ref (id var))
@@ -201,6 +210,33 @@
       (key (scheme->pobject-no-loc key))
       (clauses (clauses->pobjects clauses '()))))
 
+(define (js-field-ref l)
+   (let loop ((l (cdr l))
+	      (n (car l)))
+      (let ((n `(js-field ,n ,(symbol->string (car l)))))
+	 (if (null? (cdr l))
+	     n
+	     (loop (cdr l) n)))))
+
+(define (js-field-set l exp)
+   (let loop ((l (cdr l))
+	      (n (car l)))
+      (if (null? (cdr l))
+	  `(js-field-set! ,n ,(symbol->string (car l)) ,exp)
+	  (loop (cdr l) `(js-field ,n ,(symbol->string (car l)))))))
+
+(define (js-method-call l args)
+   (let loop ((l (cdr l))
+	      (n (car l)))
+      (if (null? (cdr l))
+	  `(js-method-call ,n ,(symbol->string (car l)) ,@args)
+	  (loop (cdr l) `(js-field ,n ,(symbol->string (car l)))))))
+
+(define (epairfy dest src)
+   (if (epair? src)
+       (econs (car dest) (cdr dest) (cer src))
+       dest))
+
 (define (scheme->pobject-no-loc exp)
    (cond
       ((pair? exp)
@@ -225,6 +261,11 @@
 					  (id var))
 				       (location (cdr exp))))
 	      (val (scheme->pobject expr (location (cddr exp))))))
+	  ((set! (-> . ?l) ?val)
+	   (if (and (pair? l) (pair? (cdr l)) (every symbol? (cdr l)))
+	       ;; field set
+	       (scheme->pobject-no-loc (epairfy (js-field-set l val) exp))
+	       (error "scheme2js" "bad set!-form" exp)))
 	  ((set! (@ ?sym ?qualifier) ?expr)
 	   (let ((id (cadr exp)))
 	      (instantiate::Set!
@@ -239,8 +280,8 @@
 	  ((define ?var ?expr)
 	   (instantiate::Define
 	      (lvalue (attach-location (instantiate::Ref
-					(id var))
-				     (location (cdr exp))))
+					  (id (id-of-id var)))
+			 (location (cdr exp))))
 	      (val (scheme->pobject expr (location (cddr exp))))))
 	  ((pragma ?str)
 	   (if (string? str)
@@ -249,8 +290,16 @@
 	  ((runtime-ref ?id (? procedure?))
 	   (instantiate::Runtime-Ref
 	      (id id)))
+	  ((-> . ?l)
+	   (if (and (pair? l) (pair? (cdr l)) (every symbol? (cddr l)))
+	       (scheme->pobject-no-loc (epairfy (js-field-ref l) exp))
+	       (error "scheme2js" "bad field access" exp)))
 	  ((@ ?sym ?qualifier)
 	   (instantiate::Ref (id (cdr exp))))
+	  (((-> . ?l) . ?args)
+	   (if (and (pair? l) (pair? (cdr l)) (every symbol? (cdr l)))
+	       (scheme->pobject-no-loc (epairfy (js-method-call l args) exp))
+	       (error "scheme2js" "illegal method invocation" exp)))
 	  ((?operator . ?operands)
 	   (if (and (config 'return)
 		    (eq? operator 'return!))

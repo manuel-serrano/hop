@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-lib.js                  */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-lib.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Thu Mar 10 08:54:38 2011 (serrano)                */
+/*    Last change :  Wed Nov 23 14:10:04 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -143,7 +143,7 @@ function hop_in( field, obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_instanceof ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export js-instanceof?) (arity #t)
+/*** META ((export js-instanceof? isa?) (arity #t)
            (peephole (infix 2 2 " instanceof "))
            (type bool))
 */

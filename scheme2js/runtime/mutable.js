@@ -520,3 +520,13 @@ function sc_suffix(s) {
    var i = s.val.lastIndexOf(".");
    return i ? s.val.substring(i+1,i.length) : s;
 }
+
+/* OO bootstrap */
+sc_register_class( sc_Object,
+		   sc_string2symbol( sc_jsstring2string( "object" ) ),
+		   sc_Object,
+		   0,
+		   function() { return new sc_Object(); },
+		   false,
+		   sc_makeVector( 0 ) );
+

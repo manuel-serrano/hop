@@ -116,24 +116,24 @@
 	  ((split-multi-dot x) => (lambda (splitted)
 				     (get-dot-expand splitted)))
 	  (else x)))
-      ((-> . ?l)
-       (if (and (pair? l) (pair? (cdr l)) (every symbol? (cdr l))
-		(or (symbol? (car l))
-		    (match-case (car l) 
-		       ((pragma ?-) #t)
-		       (else #f))))
-	   (epairfy (js-field-ref l) x)
-	   (error "scheme2js" "bad field access" exp)))
-      ((set! (-> . ?l) ?val)
-       (if (and (pair? l) (pair? (cdr l))
-		(every symbol? (cdr l))
-		(or (symbol? (car l))
-		    (match-case (car l) 
-		       ((pragma ?-) #t)
-		       (else #f))))
-	   ;; field set
-	   (epairfy (js-field-set l val) x)
-	   (error "scheme2js" "bad set!-form" exp)))
+;*       ((-> . ?l)                                                    */
+;*        (if (and (pair? l) (pair? (cdr l)) (every symbol? (cdr l))   */
+;* 		(or (symbol? (car l))                                  */
+;* 		    (match-case (car l)                                */
+;* 		       ((pragma ?-) #t)                                */
+;* 		       (else #f))))                                    */
+;* 	   (epairfy (js-field-ref l) x)                                */
+;* 	   (error "scheme2js" "bad field access" exp)))                */
+;*       ((set! (-> . ?l) ?val)                                        */
+;*        (if (and (pair? l) (pair? (cdr l))                           */
+;* 		(every symbol? (cdr l))                                */
+;* 		(or (symbol? (car l))                                  */
+;* 		    (match-case (car l)                                */
+;* 		       ((pragma ?-) #t)                                */
+;* 		       (else #f))))                                    */
+;* 	   ;; field set                                                */
+;* 	   (epairfy (js-field-set l val) x)                            */
+;* 	   (error "scheme2js" "bad set!-form" exp)))                   */
       ;(set! x.y ...)
       ((set! (and (? dotted-symbol?) ?x-dot-y) . ?val-L)
        (let ((splitted (split-dot x-dot-y)))
@@ -145,13 +145,13 @@
 	  (set!-dot-expand splitted val-L
 			   x p (cddr x))))
       ;(x.f ...)
-      (((-> . ?l) . ?args)
-       (if (and (pair? l) (pair? (cdr l)) (every symbol? (cdr l))
-		(or (symbol? (car l))
-		    (match-case (car l) 
-		       ((pragma ?-) #t)
-		       (else #f))))
-	   (epairfy (js-method-call l args) x)))
+;*       (((-> . ?l) . ?args)                                          */
+;*        (if (and (pair? l) (pair? (cdr l)) (every symbol? (cdr l))   */
+;* 		(or (symbol? (car l))                                  */
+;* 		    (match-case (car l)                                */
+;* 		       ((pragma ?-) #t)                                */
+;* 		       (else #f))))                                    */
+;* 	   (epairfy (js-method-call l args) x)))                       */
       (((and (? dotted-symbol?) ?x-dot-f) . ?args)
        (multiple-value-bind (o f)
 	  (split-last (split-dot x-dot-f))
@@ -192,8 +192,8 @@
        (expand-indirect-accesses! x)
        x)))
 
-(add-pre-expand! 1
-		 (lambda (x)
-		    (if (config 'direct-js-object-access)
-			(undot x)
-			x)))
+;* (add-pre-expand! 1                                                  */
+;* 		 (lambda (x)                                           */
+;* 		    (if (config 'direct-js-object-access)              */
+;* 			(undot x)                                      */
+;* 			x)))                                           */

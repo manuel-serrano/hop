@@ -1,10 +1,10 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.2.x/arch/android/makeapk.sh           */
+#*    serrano/prgm/project/hop/2.3.x/arch/android/makeapk.sh           */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Fri Nov 18 20:59:15 2011 (serrano)                */
+#*    Last change :  Wed Nov 23 08:06:08 2011 (serrano)                */
 #*    Copyright   :  2010-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -13,7 +13,7 @@
 #*---------------------------------------------------------------------*/
 #*    Global user configuration                                        */
 #*---------------------------------------------------------------------*/
-HOPVERSION=2.2.1
+HOPVERSION=2.3.0
 HOPURL=http://hop.inria.fr
 BIGLOOVERSION=3.8a
 ANDROID=2.1
