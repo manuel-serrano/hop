@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/src/parseargs.scm                 */
+;*    serrano/prgm/project/hop/2.3.x/src/parseargs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Nov 16 12:03:05 2011 (serrano)                */
+;*    Last change :  Sun Nov 27 06:46:06 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -82,7 +82,7 @@
 	  (set! clear-cache #t))
 	 (("--no-clear-cache" (help "Don't clear any cache"))
 	  (hop-clientc-clear-cache-set! #f))
-	 (("--script-file" ?file (help "A file loaded before the main loop"))
+	 (("--script-file" ?file (help "Load file before main loop"))
 	  (hop-script-file-set! file))
 	 (("--autoload" (help "Enable autoload (default)"))
 	  (set! autoloadp #t))
@@ -208,7 +208,7 @@
 	  (hop-scheduling-set! 'nothread))
 	 (("--scheduler" ?ident (help (format "Set scheduling policy [~s] (see --help-scheduler)" (hop-scheduling))))
 	  (hop-scheduling-set! (string->symbol ident)))
-	 (("--help-scheduler" (help "Prints the available schedulers list"))
+	 (("--help-scheduler" (help "Print available schedulers list"))
 	  (with-output-to-port (current-error-port)
 	     (lambda ()
 		(print  "Schedulers:")
