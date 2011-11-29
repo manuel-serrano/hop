@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/hop_wiki.scm              */
+;*    serrano/prgm/project/hop/2.3.x/runtime/hop_wiki.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  6 07:37:32 2006                          */
-;*    Last change :  Thu Nov 10 17:43:23 2011 (serrano)                */
+;*    Last change :  Tue Nov 29 10:02:36 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The wiki markup                                                  */
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_wiki
+
+   (library web)
 
    (include "xml.sch")
 
@@ -38,13 +40,14 @@
       ((not (pair? obj))
        (values (format ",(vector-ref ~a ~a)" id i) (cons obj env) (+fx i 1)))
       ((and (pair? obj) (every? string? obj))
-       (values (apply string-append obj) env i))
+       (values (html-string-decode (apply string-append obj)) env i))
       (else
        (multiple-value-bind (str env i)
 	  (flatten (car obj) env i id)
 	  (multiple-value-bind (str2 env2 i2)
 	     (flatten (cdr obj) env i id)
-	     (values (string-append str str2) env2 i2))))))
+	     (values (string-append (html-string-decode str)
+			(html-string-decode str2)) env2 i2))))))
        
 ;*---------------------------------------------------------------------*/
 ;*    wiki-cache->hop ...                                              */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed Nov 23 08:31:25 2011 (serrano)                */
+;*    Last change :  Mon Nov 28 11:24:34 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -890,7 +890,7 @@
 		     (proc ((wiki-syntax-plugins syn) id)))
 		 (if (procedure? proc)
 		     (let ((st (in-state id)))
-			(if (isa? st state)
+			(if (isa? st (@ state __hop_wiki-parser))
 			    (unwind-state! st)
 			    (add-expr! (the-html-string))))
 		     (add-expr! (the-html-string)))
