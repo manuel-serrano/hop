@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/hopc/hopc-param.scm               */
+;*    serrano/prgm/project/hop/2.3.x/hopc/hopc_param.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Oct  7 05:44:19 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Wed Nov 30 11:48:50 2011 (serrano)                */
+;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
 ;*=====================================================================*/
@@ -33,7 +33,10 @@
 	    (hopc-destination-set! ::obj)
 
 	    (hopc-share-directory::bstring)
-	    (hopc-share-directory-set! ::bstring))
+	    (hopc-share-directory-set! ::bstring)
+   
+	    (hopc-access-file::obj)
+	    (hopc-access-file-set! ::obj))
    
    (eval    (export-exports)))
 
@@ -78,3 +81,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-share-directory
    (hop-share-directory))
+
+;*---------------------------------------------------------------------*/
+;*    hopc-access-file ...                                             */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-access-file
+   #f)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Thu Nov 24 11:42:22 2011 (serrano)                */
+;*    Last change :  Wed Nov 30 13:15:02 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -27,7 +27,6 @@
 	   export-desc
 	   module-resolver
 	   module-class
-	   infotron
 	   config)
    (export (final-class Compilation-Unit
 	      name::symbol      ;; module-name
@@ -77,7 +76,6 @@
 ;; module name, returns a list of potential files that could contain the
 ;; module.
 
-;; reads an evaluates the module/infotron clauses in the beginning of files.
 ;; In addition to the (optionel) module-header found in files one can provide
 ;; additional headers that should either replace or merge with the existing
 ;; one. It is also possible to provide headers that are only "applied" if the
@@ -128,7 +126,7 @@
 	    (else
 	     (scheme2js-error "module"
 		"invalid module-clause" new-els loc)))))
-	     
+   
    (with-access::WIP-Unit m (header)
       (let loop ((h (cddr header))
 		 (rev-res '())) ;; only the assq themselves are reversed
@@ -137,38 +135,36 @@
 	     (for-each (lambda (clause)
 			  (when (pair? clause)
 			     (set-cdr! clause (reverse! (cdr clause)))))
-		       rev-res)
+		rev-res)
 	     (set! header (cons* (car header) (cadr header) rev-res)))
 	    ((not (pair? h))
 	     (scheme2js-error "module"
-			      "invalid module-header"
-			      h
-			      header))
+		"invalid module-header"
+		h
+		header))
 	    ((or (not (pair? (car h)))
 		 (not (symbol? (car (car h)))))
 	     (scheme2js-error "module"
-			      "invalid module-clause"
-			      h
-			      header))
+		"invalid module-clause" h header))
 	    (else
 	     (let* ((clause (car h))
 		    (acc (assq (car clause) rev-res)))
 		(cond
 		   (acc ;; already have an entry for this kind.
-		    (add-new-els! acc (cdr clause) header)
-		    (loop (cdr h) rev-res))
+		      (add-new-els! acc (cdr clause) header)
+		      (loop (cdr h) rev-res))
 		   ((epair? clause)
 		    (let ((acc (econs (car clause)
-				      '()
-				      (cer clause))))
+				  '()
+				  (cer clause))))
 		       (add-new-els! acc (cdr clause) header)
 		       (loop (cdr h)
-			     (cons acc rev-res))))
+			  (cons acc rev-res))))
 		   (else
 		    (let ((acc (list (car clause))))
 		       (add-new-els! acc (cdr clause) header)
 		       (loop (cdr h)
-			     (cons acc rev-res)))))))))))
+			  (cons acc rev-res)))))))))))
 
 ;; verifies that (user-supplied) module-clause is well formed.
 (define (verify-module-clause clause)
@@ -216,43 +212,46 @@
 		     (match-case h
 			((cond-expand . ?L) #t)
 			(else #f)))
-		  header)
+	       header)
 	 ;; make a copy so we can physically modify the list.
 	 (let ((copy (make-ecopy header)))
 	    (let loop ((clauses copy)
 		       ;; a module always starts with (module xyz ...)
 		       ;; therefore we can't have a cond-expand as first el.
 		       (last-list-el #f))
-	    (cond
-	       ((null? clauses)
-		(set! header copy))
-	       ((not (pair? clauses))
-		(scheme2js-error "module"
-				 "invalid module-clause"
-				 header
-				 header))
-	       (else
-		(match-case (car clauses)
-		   ((cond-expand ?clause . ?Lclauses)
-		    (let ((new-clauses (srfi0-expand (car clauses))))
-		       (cond
-			  ((null? new-clauses)
-			   (set-cdr! last-list-el (cdr clauses))
-			   (loop (cdr clauses) last-list-el))
-			  ((list? new-clauses)
-			   (let ((new-last-list-el (last-pair new-clauses)))
-			      (set-cdr! last-list-el new-clauses)
-			      (set-cdr! new-last-list-el (cdr clauses))
-			      (loop (cdr clauses) new-last-list-el)))
-			  (else
-			   (scheme2js-error "module"
-					    "invalid cond-expand module-clause"
-					    (car clauses)
-					    (if (pair? new-clauses)
-						new-clauses
-						(car clauses)))))))
-		   (else
-		    (loop (cdr clauses)
+	       (cond
+		  ((null? clauses)
+		   (set! header copy))
+		  ((not (pair? clauses))
+		   (scheme2js-error "module"
+		      "invalid cond-expand module clause"
+		      header
+		      header))
+		  (else
+		   (match-case (car clauses)
+		      ((cond-expand ?clause . ?Lclauses)
+		       (let liip ((new-clauses (srfi0-expand (car clauses))))
+			  (cond
+			     ((null? new-clauses)
+			      (set-cdr! last-list-el (cdr clauses))
+			      (loop (cdr clauses) last-list-el))
+			     ((and (pair? new-clauses)
+				   (eq? (car new-clauses) 'begin))
+			      (liip (cdr new-clauses)))
+			     ((list? new-clauses)
+			      (let ((new-last-list-el (last-pair new-clauses)))
+				 (set-cdr! last-list-el new-clauses)
+				 (set-cdr! new-last-list-el (cdr clauses))
+				 (loop (cdr clauses) new-last-list-el)))
+			     (else
+			      (scheme2js-error "module"
+				 "invalid cond-expand module-clause"
+				 (car clauses)
+				 (if (pair? new-clauses)
+				     new-clauses
+				     (car clauses)))))))
+		      (else
+		       (loop (cdr clauses)
 			  clauses))))))))))
 
 (define (create-module-from-file file override-headers reader)
@@ -294,8 +293,7 @@
 	 (prepare-module! m override-headers file-path reader)
 
 	 (with-access::WIP-Unit m ((module-name name))
-	    (unless (or (config 'infotron)
-			(not header-sexp?))
+	    (unless (not header-sexp?)
 	       (check-module-name module-name file header)))
 
 	 (with-access::WIP-Unit m (top-level class-expr)
@@ -350,8 +348,6 @@
 	    (normalize-statics! m bigloo-modules? #t)
 	    (normalize-exports! m bigloo-modules?))
 	 (with-access::WIP-Unit m (top-level) top-level))
-      (when (config 'infotron)
-	 (module->infotron! m))
       (when module-postprocessor
 	 (module-postprocessor m #f))))
 

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/hopc/main.scm                     */
+;*    serrano/prgm/project/hop/2.3.x/hopc/main.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon May 30 14:44:46 2011 (serrano)                */
+;*    Last change :  Wed Nov 30 12:59:30 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -49,6 +49,12 @@
    (bigloo-library-path-set! (hop-library-path))
    ;; parse the command line
    (parse-args args)
+   ;; access file
+   (cond
+      ((string? (hopc-access-file))
+       (module-load-access-file (hopc-access-file)))
+      ((file-exists? ".afile")
+       (module-load-access-file ".afile")))
    ;; preload the hop library
    (eval `(library-load 'hop))
    ;; setup the client-side compiler

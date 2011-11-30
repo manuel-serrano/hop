@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -158,8 +158,7 @@
 (define (Obench-config) *Obench*)
 
 (define *default-config*
-   (append '((infotron . #f)
-	     (direct-js-object-access . #t)
+   (append '((direct-js-object-access . #t)
 	     (procedures-provide-js-this . #f)
 	     (allow-unresolved . module)
 	     (export-globals . module)

@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.2.x/widget/Makefile                   */
+#*    serrano/prgm/project/hop/2.3.x/widget/Makefile                   */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Jan  5 14:11:59 2011 (serrano)                */
+#*    Last change :  Wed Nov 30 12:58:57 2011 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -66,7 +66,7 @@ include ../etc/Makefile.library
 #*---------------------------------------------------------------------*/
 .PHONY: build native jvm dotnet distrib distrib-clean
 
-build: 
+build: .afile
 	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
          export LD_LIBRARY_PATH; \
          DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/hopc/parseargs.scm                */
+;*    serrano/prgm/project/hop/2.3.x/hopc/parseargs.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Nov 28 07:01:10 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Wed Nov 30 11:48:00 2011 (serrano)                */
+;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -81,6 +81,8 @@
 	     (hopc-bigloo-set! bigloo))
 	    ((("-j" "--client-js") (help "Generate a client-side JavaScript file"))
 	     (hopc-pass-set! 'client-js))
+	    ((("-a" "--afile") ?file (help "Set accessfile"))
+	     (hopc-access-file-set! file))
 	    (else
 	     (if (string=? else "--")
 		 (begin
