@@ -279,7 +279,6 @@
 	     (template-display p "\\u0~x" i))
 	    (else
 	     (template-display p "\\u~x" i)))))
-
    (cond
       ((null? val)
        (template-display p "null"))

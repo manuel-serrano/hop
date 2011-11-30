@@ -74,7 +74,7 @@
 	  (scm-out tree p))))
 
 (define (scheme2js module p)
-   (with-access::Compilation-Unit module (imports exports top-level macros)
+   (with-access::Compilation-Unit module (imports exports top-level macros name)
       (let* ((debug-stage (config 'debug-stage))
 	     (top-level-e (my-expand `(begin ,@top-level) macros))
 	     (dummy1 (when (eq? debug-stage 'expand)
@@ -86,7 +86,7 @@
 	     (dummy3 (when (eq? debug-stage 'dsssl-expand)
 			(pp dsssl-e p)))
 	     (tree (pobject-conv dsssl-e)))
-	 
+
 	 ;;we could do the letrec-expansion in list-form too.
 	 (pass 'letrec         (letrec-expansion! tree))
 	 (pass 'symbol         (symbol-resolution tree imports exports))
@@ -164,7 +164,6 @@
 	       (let ((module (create-module-from-file in-file
 						      module-headers
 						      reader)))
-		  
 		  ;; set the global-seed to the input-file's name (which is the
 		  ;; same as the module's name, if any was given).
 		  (unless (or (config 'statics-suffix)

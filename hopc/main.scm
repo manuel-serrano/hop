@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Nov 30 12:59:30 2011 (serrano)                */
+;*    Last change :  Wed Nov 30 16:45:56 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -81,7 +81,8 @@
       :eval (lambda (e) (let ((op (open-output-string)))
 			   (obj->javascript (eval e) op #f)
 			   (close-output-port op)))
-      :hop-compile (lambda (e p) (obj->javascript e p #f))
+      :hop-compile (lambda (e p)
+		      (obj->javascript e p #f))
       :features `(hop
 		  ,(string->symbol (format "hop-~a" (hop-branch)))
 		  ,(string->symbol (format "hop-~a" (hop-version))))
@@ -105,7 +106,10 @@
 
    (define (compile-javascript p)
       (let ((s (hopscheme-compile-file p '())))
-	 (call-with-output-file (hopc-destination) (lambda (p) (display s p)))))
+	 (if (string? (hopc-destination))
+	     (call-with-output-file (hopc-destination)
+		(lambda (p) (display s p)))
+	     (display s))))
 
    (define (compile-module exp)
       (match-case exp

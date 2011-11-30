@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 10:52:12 2011                          */
-;*    Last change :  Sat Nov 26 19:02:09 2011 (serrano)                */
+;*    Last change :  Wed Nov 30 16:44:44 2011 (serrano)                */
 ;*    Copyright   :  2007011-2011 Florian Loitsch, Manuel Serrano      */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -35,6 +35,7 @@
 (install-expander! 'lambda lambda-expander)
 (install-expander! 'define-macro define-macro-expander)
 (install-expander! 'define define-expander)
+(install-expander! 'define-inline define-expander)
 (install-expander! 'or or-expander)
 (install-expander! 'and and-expander)
 (install-expander! 'let* let*-expander)
@@ -48,6 +49,14 @@
 (install-expander! 'multiple-value-bind multiple-value-bind-expander)
 (install-expander! 'define-generic define-generic-expander)
 (install-expander! 'define-method define-method-expander)
+(install-expander! '-> ->expander)
+(install-expander! 'with-trace with-trace-expander)
+(install-expander! 'trace-item trace-item-expander)
+
+(define (->expander x e)
+   (if (every? symbol? x)
+       x
+       (scheme2js-error "->" "bad form" x x)))
 
 
 (define (lambda-expander x e)
@@ -171,13 +180,14 @@
 		   (set-car! (cdr binding)
 			     (e (cadr binding) e)))
 		bindings)
-		   
-      `(let ,(emap1 (lambda (binding)
-		       (loc-attach
-			`(,(e (car binding) e) ,(e (cadr binding) e))
-			binding (cdr binding)))
-		    bindings)
-	  ,@(emap1 (lambda (y) (e y e)) body))))
+
+      `(let ,bindings ,@(emap1 (lambda (y) (e y e)) body))))
+;*       `(let ,(emap1 (lambda (binding)                               */
+;* 		       (loc-attach                                     */
+;* 			`(,(e (car binding) e) ,(e (cadr binding) e))  */
+;* 			binding (cdr binding)))                        */
+;* 		    bindings)                                          */
+;* 	  ,@(emap1 (lambda (y) (e y e)) body))))                       */
 
 (define (let-expander x e)
    (match-case x
@@ -340,9 +350,11 @@
 	  (parse-ident id)
 	  (multiple-value-bind (aname atype)
 	     (parse-ident a0)
+	     (unless (pair? body)
+		(set! body `(error ,(symbol->string id) "No default body" ,aname)))
 	     `(begin
 		 ,(e (loc-attach
-			`(define (,id ,a0 ,@args)
+			`(define ,(cons* id a0 args)
 			    ,(if (list? body)
 				 `((-> ,aname ,gname)
 				   ,aname ,@(map id-of-id args))
@@ -354,7 +366,7 @@
 			`((@ sc_add_method js)
 			  ,atype
 			  ',gname
-			  (lambda (,a0 ,@args) ,@body))
+			  (lambda ,(cons a0 args) ,@body))
 			x x x x)
 		     e)))))
       (else
@@ -365,7 +377,7 @@
 ;*---------------------------------------------------------------------*/
 (define (define-method-expander x e)
    (match-case x
-      ((?- (?id ?a0 . ?args) . ?body)
+      ((?- ((and (? symbol?) ?id) (and (? symbol?) ?a0) . ?args) . ?body)
        (multiple-value-bind (gname gtype)
 	  (parse-ident id)
 	  (multiple-value-bind (aname atype)
@@ -374,7 +386,7 @@
 		   `((@ sc_add_method js)
 		     ,atype
 		     ',gname
-		     (lambda (,a0 ,@args)
+		     (lambda ,(cons a0 args)
 			(define (call-next-method)
 			   (let* ((proto ((@ sc_getprototype js) ,aname))
 				  (super ((@ sc_getprototype js) proto)))
@@ -388,3 +400,23 @@
 		e))))
       (else
        (scheme2js-error "define-method" "Illegal form" x x))))
+
+;*---------------------------------------------------------------------*/
+;*    with-trace ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (with-trace-expander x e)
+   (match-case x
+      ((?- ?- ?- . ?body)
+       (e `(begin ,@body) e))
+      (else
+       (scheme2js-error "with-trace" "Illegal form" x x))))
+
+;*---------------------------------------------------------------------*/
+;*    trace-item-expander ...                                          */
+;*---------------------------------------------------------------------*/
+(define (trace-item-expander x e)
+   (match-case x
+      ((?- . ?-)
+       #f)
+      (else
+       (scheme2js-error "trace-item" "Illegal form" x x))))

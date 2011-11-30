@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 23 11:24:26 2011                          */
-;*    Last change :  Fri Nov 25 18:53:39 2011 (serrano)                */
+;*    Last change :  Wed Nov 30 16:53:45 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2JS class compiler                                         */
@@ -267,6 +267,18 @@
 	  (error "instantiate" "Illegal form" x)))))
 
 ;*---------------------------------------------------------------------*/
+;*    sjs-duplicate-expander ...                                       */
+;*---------------------------------------------------------------------*/
+(define (sjs-duplicate-expander class)
+   (lambda (x e)
+      (match-case x
+	 ((?- ?dup . ?-)
+	  (localize (get-source-location x)
+	     (duplicate->make x class dup e)))
+	 (else
+	  (error "instantiate" "Illegal form" x)))))
+
+;*---------------------------------------------------------------------*/
 ;*    allocate-expr ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (allocate-expr class::sjsclass)
@@ -364,7 +376,6 @@
 	     ;; constructors
 	     ,@(map (lambda (c) (e `(,c ,new) e))
 		  (find-class-constructors class))	
-	     
 	     ;; virtual fields
 	     ,@(filter-map (lambda (slot val)
 			      (with-access::sjsslot slot (read-only? id)
@@ -377,6 +388,85 @@
 	     ;; return the new instance
 	     ,new))))
 
+;*---------------------------------------------------------------------*/
+;*    duplicate->make ...                                              */
+;*---------------------------------------------------------------------*/
+(define (duplicate->make x class::sjsclass duplicated e)
+   
+   (define (collect-slot-values slots dupvar)
+      (let ((vargs (make-vector (length slots))))
+	 ;; collect the provided values
+	 (let loop ((provided (cddr x)))
+	    (when (pair? provided)
+	       (let ((p (car provided)))
+		  (match-case p
+		     (((and (? symbol?) ?s-name) ?value)
+		      ;; plain slot
+		      (vector-set! vargs
+			 (find-slot-offset slots s-name (car x) p)
+			 (cons #t (localize (get-source-location p) value))))
+		     (else
+		      (error (car x) "Illegal argument \"~a\"" x)))
+		  (loop (cdr provided)))))
+	 ;; collect the duplicated values
+	 (let loop ((i 0)
+		    (slots slots))
+	    (when (pair? slots)
+	       (let ((value (vector-ref vargs i)))
+		  (unless (pair? value)
+		     (let ((slot (car slots)))
+			(with-access::sjsslot slot (id) 
+			   ;; no value is provided for this object we pick
+			   ;; one from this duplicated object.
+			   (vector-set! vargs
+			      i
+			      (cons #t `(-> ,dupvar ,id))))))
+		  (loop (+fx i 1) (cdr slots)))))
+	 ;; build the result
+	 (vector->list vargs)))
+   
+   (with-access::sjsclass class (id slots)
+      (let* ((new (gensym 'new))
+	     (dup (gensym 'duplicated))
+	     (tnew (make-typed-ident new id))
+	     (tdup (make-typed-ident dup id))
+	     (args (collect-slot-values slots dup))
+	     (init (allocate-expr class)))
+	 ;; check that there is enough values
+	 (for-each (lambda (a s)
+		      (unless (or (car a) (slot-virtual? s))
+			 ;; value missing
+			 (error (car x)
+			    (format "Missing value for field \"~a\""
+			       (with-access::sjsslot s (id) id))
+			    x)))
+	    args slots)
+	 ;; allocate the object and set the fields,
+	 ;; first the actual fields, second the virtual fields
+	 `(let ((,tnew ,init)
+		(,tdup ,(e duplicated e)))
+	     ;; actual fields
+	     ,@(filter-map (lambda (slot val)
+			      (unless (slot-virtual? slot)
+				 (let ((v (e (cdr val) e)))
+				    (with-access::sjsslot slot (id)
+				       `(set! (-> ,new ,id) ,v)))))
+		  slots args)
+	     ;; constructors
+	     ,@(map (lambda (c) (e `(,c ,new) e))
+		  (find-class-constructors class))	
+	     ;; virtual fields
+	     ,@(filter-map (lambda (slot val)
+			      (with-access::sjsslot slot (read-only? id)
+				 (when (and (slot-virtual? slot)
+					    (not read-only?)
+					    (car val))
+				    (let ((v (e (cdr val) e)))
+				       `(set! (-> ,new ,id) ,v)))))
+		  slots args)
+	     ;; return the new instance
+	     ,new))))
+ 
 ;*---------------------------------------------------------------------*/
 ;*    find-class-constructors ...                                      */
 ;*    -------------------------------------------------------------    */
@@ -405,7 +495,6 @@
 		     (nslots '()))
 	     (cond
 		((null? s)
-		 
 		 (let* ((aux (gensym 'i))
 			(instance (e instance e))
 			(class-id (with-access::sjsclass class (id) id))
@@ -442,15 +531,14 @@
 	 (match-case x
 	    ((and ?var (? symbol?))
 	     (if (memq var ids)
-		 (olde `(-> ,i ,(id var)) olde)
+		 `(-> ,i ,(id var))
 		 (olde var olde)))
 	    ((set! (and (? symbol?) ?var) ?val)
 	     (let ((val (e val e)))
 		(if (memq var ids)
 		    (localize (get-source-location x)
-		       (let* ((id `(-> ,i ,(id var)))
-			      (nx `(set! ,id ,val)))
-			  (olde nx olde)))
+		       (let ((id `(-> ,i ,(id var))))
+			  `(set! ,id ,val)))
 		    (begin
 		       (set-car! (cddr x) val)
 		       (olde x olde)))))
@@ -468,13 +556,23 @@
 ;*    slot->field ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (slot->field slot::sjsslot)
+
+   (define (slot-default-expr s)
+      (if (slot-default? s)
+	  `(lambda ()
+	      ,(with-access::sjsslot s (default-value) default-value))
+	  #f))
+   
    (with-access::sjsslot slot (id getter setter read-only?
-				 virtual user-info default-value type)
+				 virtual user-info type)
       `(js-new (@ sc_Field js) ',id
 	  ,(or getter `(lambda (o) (-> o ,id)))
 	  ,(or setter `(lambda (o v) (set! (-> o ,id) v)))
 	  ,read-only?
-	  #f ,user-info (lambda () ,default-value) ,type)))
+	  #f ,user-info ,(slot-default-expr slot)
+	  ,(if (isa? type sjsclass)
+	       (with-access::sjsclass type (id) `,id)
+	       type))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-class-fields ...                                            */
@@ -544,6 +642,9 @@
 				`(define-expander
 				    ,(symbol-append 'instantiate:: cid)
 				    ,(sjs-instantiate-expander nclass))
+				`(define-expander
+				    ,(symbol-append 'duplicate:: cid)
+				    ,(sjs-duplicate-expander nclass))
 				`(define-expander
 				    ,(symbol-append 'with-access:: cid)
 				    ,(sjs-with-access-expander nclass)))))))))))

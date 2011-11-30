@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Wed Nov 30 13:15:02 2011 (serrano)                */
+;*    Last change :  Wed Nov 30 16:30:00 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -59,7 +59,7 @@
 	   (module-exported-macro-add! m::Compilation-Unit macro::pair)))
 
 (define (module-exported-macro-add! m::Compilation-Unit macro::pair)
-   (with-access::Compilation-Unit m (exported-macros)
+   (with-access::Compilation-Unit m (exported-macros name)
       (cond
 	 ((or (null? exported-macros)
 	      (pair? exported-macros))
@@ -764,8 +764,7 @@
 	 (let ((pragma-info (assq fun-name pragmas)))
 	    (when pragma-info (check-pragma pragma-info))
 	    (cond
-	       ((and (not pragma-info)
-		     type)
+	       ((and (not pragma-info) type)
 		`(,fun-name (type ,type) (arity ,arity) (constant? #t)))
 	       ((not pragma-info)
 		`(,fun-name (arity ,arity) (constant? #t)))
@@ -845,8 +844,8 @@
 			  (cons e rev-res)))
 		   (else
 		    (loop new-macros rev-res)))))))
-			  
-   (with-access::WIP-Unit m (header name exports exported-macros top-level classes)
+	 
+   (with-access::WIP-Unit m (header name exports exported-macros top-level classes macros)
       (let ((new-exports (module-entries header 'export))
 	    (pragmas (module-entries header 'scheme2js-pragma)))
 	 (unless top-level (set! top-level '()))
@@ -854,8 +853,10 @@
 		    (new-macros '())
 		    (class-macros '()))
 	    (if (null? entries)
-		(set! exported-macros
-		   (append (find-macros new-macros header) class-macros))
+		(begin
+		   (set! exported-macros
+		      (append (find-macros new-macros header) class-macros))
+		   (set! macros (cons class-macros macros)))
 		(let ((e (car entries)))
 		   (cond
 		      ((symbol? e)
@@ -877,6 +878,15 @@
 			  new-macros
 			  (append (parse-module-class! m e #t #t)
 			     class-macros)))
+		      ((or (generic-decl? e) (inline-decl? e))
+		       (let ((undsssl (dsssl-formals->scheme-formals
+				       (cdr e)
+				       (lambda (o p m) (scheme2js-error o p m e)))))
+			  (set! exports
+				(cons (create-Export-Desc
+				       (normalize-fun undsssl pragmas) name #f)
+				      exports)))
+		       (loop (cdr entries) new-macros class-macros))
 		      (else
 		       (let ((undsssl (dsssl-formals->scheme-formals
 				       e (lambda (o p m) (scheme2js-error o p m e)))))
@@ -948,6 +958,20 @@
    (when (pair? e)
       (memq (car e) '(class abstract-class final-class wide-class))))
 
+;*---------------------------------------------------------------------*/
+;*    generic-decl? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (generic-decl? e)
+   (when (pair? e)
+      (eq? (car e) 'generic)))
+   
+;*---------------------------------------------------------------------*/
+;*    inline-decl? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (inline-decl? e)
+   (when (pair? e)
+      (eq? (car e) 'inline)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    normalize-bigloo-statics! ...                                    */
 ;*---------------------------------------------------------------------*/

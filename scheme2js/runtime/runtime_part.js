@@ -39,7 +39,6 @@ function initRuntime() {
 }
 */
 
-
 function sc_print_debug() {
     sc_print.apply(null, arguments);
 }
@@ -661,6 +660,12 @@ function sc_isPair(p) {
     return (p instanceof sc_Pair);
 }
 
+/*** META ((export #t) (arity #t)
+           (type bool)) */
+function sc_isEpair(p) {
+    return (p instanceof sc_Pair) && "cer" in p;
+}
+
 function sc_isPairEqual(p1, p2, comp) {
     return (comp(p1.car, p2.car) && comp(p1.cdr, p2.cdr));
 }
@@ -670,6 +675,13 @@ function sc_isPairEqual(p1, p2, comp) {
 */
 function sc_cons(car, cdr) {
     return new sc_Pair(car, cdr);
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_econs(car, cdr, cer) {
+   var p = new sc_Pair(car, cdr);
+   p.cer = cer;
+   return p;
 }
 
 /*** META ((export cons*)
@@ -694,6 +706,13 @@ function sc_car(p) {
 */
 function sc_cdr(p) {
     return p.cdr;
+}
+
+/*** META ((export #t) (arity #t)
+           (peephole (postfix ".cer")))
+*/
+function sc_cer(p) {
+    return p.cer;
 }
 
 /*** META ((export #t) (arity #t)
@@ -2436,6 +2455,20 @@ function sc_class_hash( clazz ) {
 /*** META ((export #t) (arity #t)) */
 function sc_class_allocator( clazz ) {
    return clazz.sc_allocator;
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_class_creator( clazz ) {
+   return function() {
+      var o =  clazz.sc_allocator();
+      var f = sc_class_all_fields( clazz );
+
+      for( i = 0; i < f.length; i++ ) {
+	 o[ f.sc_name ] = arguments[ i ];
+      }
+
+      return o;
+   }
 }
 
 function sc_Field( name, getter, setter, ronly, virtual, info, def, type ) {

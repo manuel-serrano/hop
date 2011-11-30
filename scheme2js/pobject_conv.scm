@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:23:39 2011                          */
-;*    Last change :  Thu Nov 24 10:57:12 2011 (serrano)                */
+;*    Last change :  Wed Nov 30 15:19:35 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -146,7 +146,7 @@
 	    (lvalue (attach-location (instantiate::Ref (id var))
 				     (location binding)))
 	    (val (scheme->pobject val (location (cdr binding)))))))
-   
+
    (let ((pobject-bindings (map! binding->pobject bindings)))
       (instantiate::Let
 	 (bindings pobject-bindings)
