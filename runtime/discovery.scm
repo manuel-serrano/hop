@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Thu Dec  1 09:43:19 2011 (serrano)                */
+;*    Last change :  Thu Dec  1 18:36:57 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -17,10 +17,10 @@
    
    (cond-expand
       (enable-threads
-       (library pthread)))
-
+	 (library pthread)))
+   
    (include "service.sch")
-
+   
    (import __hop_configure
 	   __hop_service
 	   __hop_types
@@ -29,26 +29,25 @@
 	   __hop_misc
 	   __hop_read
 	   __hop_event)
-      
+   
    (export (class discoverer
 	      (filter::procedure read-only (default (lambda (h p k s) #t)))
 	      (%mutex read-only (default (make-mutex)))
 	      (%listeners::pair-nil (default '())))
-
+	   
 	   (class discover-event::event
 	      (key::bstring read-only)
 	      (port::int read-only)
 	      (hostname::bstring read-only)
 	      (session::int read-only))
-
+	   
 	   (hop-discovery-init!)
 	   (hop-discovery-server ::int)
 	   (hop-discover #!key
 	      (address::bstring "255.255.255.255")
 	      (port::int (hop-discovery-port))
-	      service)
-	   (hop-discover-ping ::bstring ::int #!key
-	      service (timeout 1000))))
+	      service
+	      (broadcast::bool #t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    discovery-key ...                                                */
@@ -59,7 +58,6 @@
 ;*    discovery-service ...                                            */
 ;*---------------------------------------------------------------------*/
 (define discovery-service #f)
-(define discovery-ping-service #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    discovery-host ...                                               */
@@ -146,13 +144,6 @@
    
    (set! discovery-host (host (hostname)))
    
-   (set! discovery-ping-service
-      (service :name "discovery/ping" :id discovery/ping (#!key service)
-	 (with-access::http-request (current-request) (socket)
-	    (hop-discovery-reply
-	       (socket-host-address socket) (socket-port-number socket)
-	       service 0))))
-   
    (set! discovery-service
       (service :name "discovery" :id discovery (#!key host port hostname key service session)
 	 (mutex-lock! discovery-mutex)
@@ -190,22 +181,14 @@
 (define (hop-discover #!key
 	   (address::bstring "255.255.255.255")
 	   (port::int (hop-discovery-port))
-	   service)
-   (let* ((sock (make-datagram-client-socket address port #t))
+	   service
+	   (broadcast::bool #t))
+   (let* ((sock (make-datagram-client-socket address port broadcast))
 	  (msg (format "~a ~a" (hop-port)
 		  (if (string? service) service "*"))))
       (display msg (datagram-socket-output-port sock))
       (datagram-socket-close sock)
       #t))
-
-;*---------------------------------------------------------------------*/
-;*    hop-discover-ping ...                                            */
-;*---------------------------------------------------------------------*/
-(define (hop-discover-ping host::bstring port::int #!key service (timeout 1000))
-   (let ((url (format "http://~a:~a/hop/discovery/ping?service=~a"
-		 host port service)))
-      (with-url url (lambda (e) #unspecified)
-	  :timeout (micro-seconds timeout))))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::discoverer ...                             */
