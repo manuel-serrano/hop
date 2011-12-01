@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 23 11:24:26 2011                          */
-;*    Last change :  Wed Nov 30 16:53:45 2011 (serrano)                */
+;*    Last change :  Thu Dec  1 12:30:03 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2JS class compiler                                         */
@@ -314,7 +314,7 @@
       (with-access::sjsclass class (holder)
 	 (with-access::sjsslot s (id default-value)
 	    (if (literal? default-value)
-		`',default-value
+		default-value
 		`(class-field-default-value
 		    (find-class-field ,holder ',id))))))
    

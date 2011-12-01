@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sat Nov 26 20:02:09 2011 (serrano)                */
+/*    Last change :  Thu Dec  1 10:12:06 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -84,7 +84,7 @@ function hop_bigloo_serialize_context( item ) {
    if( item instanceof Date )
       return hop_serialize_date( item );
 
-   if( (item instanceof Object) && ("hop_bigloo_serialize" in item) ) {
+   if( item && ("hop_bigloo_serialize" in item) ) {
       return hop_bigloo_serialize_custom( item );
    }
 
@@ -106,6 +106,9 @@ function hop_bigloo_serialize_context( item ) {
    if( hop_is_html_element( item ) )
       return hop_serialize_html( item );
 
+   if( sc_isClass( item ) )
+      return hop_bigloo_serialize_sc_class( item );
+      
    return hop_bigloo_serialize_alist( item );
 }
 
@@ -182,6 +185,14 @@ function hop_bigloo_serialize_sc_object() {
    str = "=" +  hop_serialize_word( item.hop_serialize_context_def ) + str;
 
    return str;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_sc_class ...                                */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_sc_class( clazz ) {
+   var classname = sc_symbol2jsstring( sc_class_name( clazz ) );
+   return "k" + hop_serialize_string( '%22', classname );
 }
 
 /*---------------------------------------------------------------------*/

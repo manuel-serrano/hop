@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/discovery.scm             */
+;*    serrano/prgm/project/hop/2.3.x/runtime/discovery.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Sat Nov 12 06:22:23 2011 (serrano)                */
+;*    Last change :  Thu Dec  1 09:43:19 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -46,7 +46,9 @@
 	   (hop-discover #!key
 	      (address::bstring "255.255.255.255")
 	      (port::int (hop-discovery-port))
-	      service)))
+	      service)
+	   (hop-discover-ping ::bstring ::int #!key
+	      service (timeout 1000))))
 
 ;*---------------------------------------------------------------------*/
 ;*    discovery-key ...                                                */
@@ -57,6 +59,7 @@
 ;*    discovery-service ...                                            */
 ;*---------------------------------------------------------------------*/
 (define discovery-service #f)
+(define discovery-ping-service #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    discovery-host ...                                               */
@@ -112,7 +115,6 @@
    (let loop ((id -1))
       (multiple-value-bind (msg clienthost)
 	 (datagram-socket-receive serv 1024)
-	 (tprint "DISCOVERY-LOOP msg=" msg " clienthost=" clienthost)
 	 (let ((l (string-split msg)))
 	    (when (=fx (length l) 2)
 	       (let ((svc (cadr l))
@@ -121,15 +123,14 @@
 				 (service-exists? svc))
 			     (or (not (=fx clientport (hop-port)))
 				 (not (string=? (host clienthost) discovery-host))))
-		     (hop-verb 2 (hop-color id id " DISCOVERY ")
-			clienthost ":" clientport "\n")
-		     (hop-discovery-reply clienthost clientport svc))))))
+		     (hop-discovery-reply clienthost clientport svc id))))))
       (loop (-fx id 1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-discovery-reply ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (hop-discovery-reply clienthost clientport service)
+(define (hop-discovery-reply clienthost clientport service id)
+   (hop-verb 2 (hop-color id id " DISCOVERY ") clienthost ":" clientport "\n")
    (when (=fx discovery-key 0)
       (set! discovery-key
 	 (bit-rsh (absfx (elong->fixnum (current-seconds))) 2)))
@@ -142,7 +143,16 @@
 ;*    hop-discovery-init! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hop-discovery-init!)
+   
    (set! discovery-host (host (hostname)))
+   
+   (set! discovery-ping-service
+      (service :name "discovery/ping" :id discovery/ping (#!key service)
+	 (with-access::http-request (current-request) (socket)
+	    (hop-discovery-reply
+	       (socket-host-address socket) (socket-port-number socket)
+	       service 0))))
+   
    (set! discovery-service
       (service :name "discovery" :id discovery (#!key host port hostname key service session)
 	 (mutex-lock! discovery-mutex)
@@ -187,6 +197,15 @@
       (display msg (datagram-socket-output-port sock))
       (datagram-socket-close sock)
       #t))
+
+;*---------------------------------------------------------------------*/
+;*    hop-discover-ping ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hop-discover-ping host::bstring port::int #!key service (timeout 1000))
+   (let ((url (format "http://~a:~a/hop/discovery/ping?service=~a"
+		 host port service)))
+      (with-url url (lambda (e) #unspecified)
+	  :timeout (micro-seconds timeout))))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::discoverer ...                             */

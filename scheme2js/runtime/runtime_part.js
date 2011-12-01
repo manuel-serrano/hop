@@ -2364,7 +2364,7 @@ function sc_Object() {
 }
 
 sc_Class.prototype.toString = function() {
-   return "#<class:" + sc_class_name( this ) + ">";
+   return "#<class:" + sc_symbol2jsstring( sc_class_name( this ) ) + ">";
 }
 sc_Class.prototype.sc_toWriteOrDisplayString = sc_Class.prototype.toString;
 
@@ -2464,7 +2464,7 @@ function sc_class_creator( clazz ) {
       var f = sc_class_all_fields( clazz );
 
       for( i = 0; i < f.length; i++ ) {
-	 o[ f.sc_name ] = arguments[ i ];
+	 o[ sc_symbol2jsstring( f[ i ].sc_name ) ] = arguments[ i ];
       }
 
       return o;
@@ -2527,6 +2527,7 @@ function sc_class_field_default_value( field ) {
 
 function sc_add_method( clazz, generic, proc ) {
    var name = sc_symbol2jsstring( generic );
+
    if( !clazz ) {
       Object.prototype[ name ] = proc;
    } else {

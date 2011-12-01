@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Wed Nov 30 16:30:00 2011 (serrano)                */
+;*    Last change :  Wed Nov 30 17:58:23 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -298,7 +298,7 @@
 
 	 (with-access::WIP-Unit m (top-level class-expr)
 	    (set! top-level (append class-expr top-level)))
-	 
+
 	 (shrink! m)
 	 m)))
 

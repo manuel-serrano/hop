@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 10:52:12 2011                          */
-;*    Last change :  Wed Nov 30 16:44:44 2011 (serrano)                */
+;*    Last change :  Thu Dec  1 13:37:08 2011 (serrano)                */
 ;*    Copyright   :  2007011-2011 Florian Loitsch, Manuel Serrano      */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -388,12 +388,12 @@
 		     ',gname
 		     (lambda ,(cons a0 args)
 			(define (call-next-method)
-			   (let* ((proto ((@ sc_getprototype js) ,aname))
-				  (super ((@ sc_getprototype js) proto)))
+			   (let* ((super (class-super ,atype))
+				  (proto (-> super prototype)))
 			      ,(if (list? args)
-				   `((-> super ,gname)
+				   `((-> proto ,gname)
 				     ,aname ,@(map id-of-id args))
-				   `(apply (-> super ,gname)
+				   `(apply (-> proto ,gname)
 				       ,aname ,@(map* id-of-id args)))))
 			,@body))
 		   x x x x)
