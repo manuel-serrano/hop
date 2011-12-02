@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Nov 30 11:48:50 2011 (serrano)                */
+;*    Last change :  Fri Dec  2 15:55:03 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -36,7 +36,11 @@
 	    (hopc-share-directory-set! ::bstring)
    
 	    (hopc-access-file::obj)
-	    (hopc-access-file-set! ::obj))
+	    (hopc-access-file-set! ::obj)
+
+	    (hopc-jsheap::obj)
+	    (hopc-jsheap-set! ::obj))
+   
    
    (eval    (export-exports)))
 
@@ -86,4 +90,10 @@
 ;*    hopc-access-file ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-access-file
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-jsheap ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-jsheap
    #f)

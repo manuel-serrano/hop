@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/param.scm                 */
+;*    serrano/prgm/project/hop/2.3.x/runtime/param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Sep  6 16:52:16 2011 (serrano)                */
+;*    Last change :  Fri Dec  2 13:38:54 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -1028,7 +1028,7 @@
 
 (define-parameter hop-read-timeout
    ;; the number of milli-seconds to wait for parsing http headers
-   (*fx 60 1000))
+   (*fx 10 1000))
 
 (define-parameter hop-enable-keep-alive
    ;; does hop support keep-alive connection

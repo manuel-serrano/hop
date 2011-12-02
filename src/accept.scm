@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/src/accept.scm                    */
+;*    serrano/prgm/project/hop/2.3.x/src/accept.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Sat Nov 12 08:47:01 2011 (serrano)                */
+;*    Last change :  Fri Dec  2 13:51:55 2011 (serrano)                */
 ;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -194,6 +194,9 @@
 			       (if (>=fx (hop-verbose) 3)
 				   (format " ~a" thread) "")
 			       ": " (socket-hostname sock)
+			       (if (>=fx (hop-verbose) 4)
+				   (format ":~a" (socket-port-number sock))
+				   "")
 			       " [" (current-date) "]\n")
 			    ;; tune the socket
 			    (tune-socket! sock)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sat Nov 26 19:21:16 2011 (serrano)                */
+;*    Last change :  Fri Dec  2 19:05:02 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -422,6 +422,7 @@
 	   ((sc_list) expressions*)
 	   ((sc_jsstring2symbol) (string->symbol (car expressions*)))
 	   ((sc_jsstring2keyword) (string->keyword (car expressions*)))
+	   ((hop_js_to_object) (json->object expressions*))
 	   (else (error "json->hop" "Unknown function" (car IDENTIFIER)))))
        ((ANGLE-OPEN ANGLE-CLO)
 	'#())
@@ -431,8 +432,8 @@
 	'())
        ((BRA-OPEN hash-elements BRA-CLO)
 	hash-elements)
-       ((object)
-	object)
+;*        ((object)                                                    */
+;* 	object)                                                        */
        ((get-element-by-id)
 	get-element-by-id)
        ((service)
@@ -475,18 +476,19 @@
 	       (else
 		(error "json->hop" "Illegal `date' construction" expressions*))))
 	   (else
-	    (let* ((mangle (symbol->string (car IDENTIFIER)))
-		   (name (if (bigloo-mangled? mangle)
-			     (bigloo-demangle mangle)
-			     mangle))
-		   (clazz (find-class (string->symbol name))))
-	       (if (not (class? clazz))
-		   (error "json->hop" "Can't find class" clazz)
-		   (let* ((constr (class-constructor clazz))
-			  (create (class-creator clazz))
-			  (ins (apply create expressions*)))
-		      (when (procedure? constr) (constr ins))
-		      ins)))))))
+	    (error "json->hop" "Illegal `new' form" expressions*)))))
+;* 	    (let* ((mangle (symbol->string (car IDENTIFIER)))          */
+;* 		   (name (if (bigloo-mangled? mangle)                  */
+;* 			     (bigloo-demangle mangle)                  */
+;* 			     mangle))                                  */
+;* 		   (clazz (find-class (string->symbol name))))         */
+;* 	       (if (not (class? clazz))                                */
+;* 		   (error "json->hop" "Can't find class" clazz)        */
+;* 		   (let* ((constr (class-constructor clazz))           */
+;* 			  (create (class-creator clazz))               */
+;* 			  (ins (apply create expressions*)))           */
+;* 		      (when (procedure? constr) (constr ins))          */
+;* 		      ins)))))))                                       */
       
       ;; array
       (array-elements
@@ -512,19 +514,19 @@
 	       (list v expression)))))
 
       ;; object
-      (object
-       ((FUNCTION IDENTIFIER PAR-OPEN expressions* PAR-CLO
-		  BRA-OPEN set+ BRA-CLO SEMI-COMMA
-		  BRA-OPEN proto BRA-CLO SEMI-COMMA
-		  NEW IDENTIFIER@klass PAR-OPEN expressions* PAR-CLO)
-	(let ((c (find-class klass)))
-	   (if (not (class? c))
-	       (error "json->hop" "Can't find class" c)
-	       (let* ((constr (class-constructor c))
-		      (create (class-creator c))
-		      (ins (apply constr expressions*)))
-		  (when (procedure? create) (create ins))
-		  ins)))))
+;*       (object                                                       */
+;*        ((FUNCTION IDENTIFIER PAR-OPEN expressions* PAR-CLO          */
+;* 		  BRA-OPEN set+ BRA-CLO SEMI-COMMA                     */
+;* 		  BRA-OPEN proto BRA-CLO SEMI-COMMA                    */
+;* 		  NEW IDENTIFIER@klass PAR-OPEN expressions* PAR-CLO)  */
+;* 	(let ((c (find-class klass)))                                  */
+;* 	   (if (not (class? c))                                        */
+;* 	       (error "json->hop" "Can't find class" c)                */
+;* 	       (let* ((constr (class-constructor c))                   */
+;* 		      (create (class-creator c))                       */
+;* 		      (ins (apply constr expressions*)))               */
+;* 		  (when (procedure? create) (create ins))              */
+;* 		  ins)))))                                             */
 
       (argument*
        (()
@@ -576,10 +578,25 @@
 
       ;; constructor
       (constructor
-       ((FUNCTION PAR-OPEN argument+ PAR-CLO
-		  BRA-OPEN set+ BRA-CLO)
+       ((FUNCTION PAR-OPEN argument+ PAR-CLO BRA-OPEN set+ BRA-CLO)
 	#unspecified))))
 
+;*---------------------------------------------------------------------*/
+;*    json->object ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (json->object expressions*)
+   (let* ((mangle (car expressions*))
+	  (hash (cadr expressions*))
+	  (fields (caddr expressions*))
+	  (name (if (bigloo-mangled? mangle) (bigloo-demangle mangle) mangle))
+	  (clazz (find-class (string->symbol name))))
+      (if (=fx hash (class-hash clazz))
+	  (let* ((create (class-creator clazz))
+		 (constr (class-constructor clazz))
+		 (o (apply create (map cadr fields))))
+	     (when (procedure? constr) (constr o))
+	     o)
+	  (error "json->hop" "corrupted class" name))))
 
 ;*---------------------------------------------------------------------*/
 ;*    json->hop ...                                                    */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/src/pipeline.scm                  */
+;*    serrano/prgm/project/hop/2.3.x/src/pipeline.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Fri Nov 18 16:04:20 2011 (serrano)                */
+;*    Last change :  Fri Dec  2 14:09:17 2011 (serrano)                */
 ;*    Copyright   :  2008-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -141,15 +141,6 @@
 	      (num 1))
       (with-stage-handler
        stage-request-error-handler (id sock mode)
-       ;; log
-       (unless (eq? mode 'keep-alive)
-	  (hop-verb 2 (hop-color id id " CONNECT")
-		    (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
-		    (if (>=fx (hop-verbose) 2) (scheduler-stat scd) "")
-		    ": " (if (>=fx (hop-verbose) 2)
-			     (socket-hostname sock)
-			     (socket-host-address sock))
-		    " [" (current-date) "]\n"))
        ;; debug trace
        (debug-thread-info-set! thread "connection established with ~a")
        (let ((req (with-time (http-parse-request sock id timeout) id "CONNECT")))
@@ -202,8 +193,15 @@
 	  (when (isa? e &exception)
 	     (hop-verb 1 (hop-color id id " ABORT: ")
 		       " " (trace-color 1 (typeof e))
+		       (if (>=fx (hop-verbose) 4)
+			   (format "~a:~a"
+			      (socket-hostname sock)
+			      (socket-port-number sock))
+			   "")
 		       "\n")
-	     (exception-notify e))
+	     (when (>=fx (hop-verbose) 2)
+		(hop-verb 2 (with-error-to-string
+			       (lambda () (exception-notify e))))))
 	  (when (and (isa? e &io-unknown-host-error) (not (socket-down? sock)))
 	     (with-handler
 		(lambda (e)

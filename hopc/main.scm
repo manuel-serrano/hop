@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Nov 30 16:45:56 2011 (serrano)                */
+;*    Last change :  Fri Dec  2 17:02:03 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -65,7 +65,11 @@
    ;; turn on debug to get line information
    (bigloo-debug-set! 1)
    ;; start the compilation stage
-   (compile-sources))
+   (if (hopc-jsheap)
+       ;; generate a js heap file from the source
+       (jsheap)
+       ;; compile the source file
+       (compile-sources)))
 
 ;*---------------------------------------------------------------------*/
 ;*    setup-client-compiler! ...                                       */
@@ -187,3 +191,54 @@
       (else
        (compile (current-input-port)))))
 				 
+;*---------------------------------------------------------------------*/
+;*    jsheap ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (jsheap)
+
+   (define (load-module mod path)
+      (print "   ;; " mod)
+      (display "   ")
+      (write (with-input-from-file path read))
+      (newline)
+      (newline))
+   
+   (define (include-module module)
+      (match-case module
+	 (((and (? symbol?) ?sym) (and (? string?) ?path))
+	  (load-module sym path))
+	 ((? symbol?)
+	  (load-module module (car ((bigloo-module-resolver) module (module-abase)))))
+	 (else
+	  (error "hopc" "Illegal module clause" module))))
+	     
+   (define (generate)
+      (let ((exp (with-input-from-file (car (hopc-sources)) read)))
+	 (match-case exp
+	    ((module (and (? symbol?) ?name) . ?clauses)
+	     (print "(heap " name)
+	     (print "\n  (")
+	     (for-each (lambda (c)
+			  (match-case c
+			     ((import . ?modules)
+			      (for-each include-module modules))))
+		clauses)
+	     (print "  )\n")
+	     (print "  ;; heap import")
+	     (display "  (import  ")
+	     (for-each (match-lambda
+			  ((import . ?i)
+			   (for-each (lambda (i)
+					(display " ")
+					(display i))
+			      i)))
+		clauses)
+	     (print ")")
+	     (print ")"))
+	    (else
+	     (error "hopc" "Illegal heap source file" exp)))))
+
+   (if (string? (hopc-destination))
+       (with-output-to-file (hopc-destination) generate)
+       (generate)))
+   

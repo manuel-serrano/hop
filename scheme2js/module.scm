@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Fri Dec  2 08:03:03 2011 (serrano)                */
+;*    Last change :  Fri Dec  2 11:07:08 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -27,6 +27,7 @@
 	   export-desc
 	   module-resolver
 	   module-class
+	   module-library
 	   config)
    (export (final-class Compilation-Unit
 	      name::symbol      ;; module-name
@@ -344,6 +345,8 @@
 	    (normalize-module-header! m)
 	    (read-includes! m include-paths reader)
 	    (read-imports! m module-resolver reader bigloo-modules?) ;; macros too
+	    (module-read-libraries! m module-resolver reader
+	       (module-entries header 'library))
 	    (normalize-JS-imports! m)
 	    (normalize-statics! m bigloo-modules? #t)
 	    (normalize-exports! m bigloo-modules?))

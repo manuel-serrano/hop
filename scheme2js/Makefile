@@ -1,7 +1,7 @@
 #*=====================================================================*/
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Wed Nov 30 13:02:45 2011 (serrano)                */
+#*    Last change :  Fri Dec  2 11:09:22 2011 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -31,7 +31,7 @@ BLIBFLAGS = $(BSCM2JSFLAGS)
 _BGL_OBJECTS = main scheme2js srfi0 \
         tools \
         config mutable_strings verbose error \
-        module module_resolver module_class \
+        module module_resolver module_class module_library \
         expand expanders runtime_expander dsssl_expander dot_expand \
         nodes export walk \
         pobject_conv \
