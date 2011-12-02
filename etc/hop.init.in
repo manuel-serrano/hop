@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/etc/hop.init.in                   */
+;*    serrano/prgm/project/hop/2.3.x/etc/hop.init.in                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 09:57:45 2006                          */
-;*    Last change :  Mon Apr 21 08:53:49 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Fri Dec  2 07:15:02 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP lib init file.                                           */
 ;*=====================================================================*/
@@ -13,12 +13,12 @@
 ;*    The library                                                      */
 ;*---------------------------------------------------------------------*/
 (declare-library! 'hop
-		  :version "@VERSION@"
-		  :srfi '(hop)
-		  :module-init '__hop_types
-		  :module-eval '__hop_makelib
-		  :class-init "bigloo.hop.types"
-		  :class-eval "bigloo.hop.make_lib")
+   :version "@VERSION@"
+   :srfi '(hop)
+   :module-init '__hop_types
+   :module-eval '__hop_makelib
+   :class-init "bigloo.hop.types"
+   :class-eval "bigloo.hop.make_lib")
 
 ;*---------------------------------------------------------------------*/
 ;*    Link option                                                      */

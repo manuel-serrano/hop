@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Wed Nov 30 17:58:23 2011 (serrano)                */
+;*    Last change :  Fri Dec  2 08:03:03 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -971,7 +971,7 @@
 (define (inline-decl? e)
    (when (pair? e)
       (eq? (car e) 'inline)))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    normalize-bigloo-statics! ...                                    */
 ;*---------------------------------------------------------------------*/

@@ -67,7 +67,7 @@
 ;; It is required to define the "anonymous" user. An error will be raised
 ;; if this user is not declared when the first request is intercepted.
 (add-user! "anonymous" 
-           :services '(home doc epassword wizard hz/list shutdown)
+           :services '(home doc epassword wizard hz/list shutdown discovery)
 	   :directories (hop-path)
            :preferences-filename #f)
 

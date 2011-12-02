@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/share/hop-spage.scm               */
+;*    serrano/prgm/project/hop/2.3.x/share/hop-spage.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Fri Nov 18 16:56:54 2011 (serrano)                */
+;*    Last change :  Fri Dec  2 06:48:49 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -23,6 +23,7 @@
 	   (sptab-add-event-listener! obj event proc capture)
 	   (spage-push spage tab tbody)
 	   (spage-pop spage)
+	   (spage-pop-all spage)
 	   (spage-tab-update tab)
 	   (spage-tab-pop tab)
 	   (spage-pop-update el)
@@ -438,6 +439,15 @@
 		(spage-pop-auto spage spviewport tbody otab))
 	       (else
 		(spage-pop-none spage spviewport tbody otab)))))))
+
+;*---------------------------------------------------------------------*/
+;*    spage-pop-all ...                                                */
+;*---------------------------------------------------------------------*/
+(define (spage-pop-all spage)
+   (let loop ()
+      (when (>fx spage.num 0)
+	 (spage-pop spage)
+	 (loop))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-spage ...                                                   */
