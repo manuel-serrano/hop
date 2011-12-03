@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Sat Dec  3 19:06:58 2011 (serrano)                */
+;*    Last change :  Sat Dec  3 19:20:11 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -123,7 +123,8 @@
 				 (service-exists? svc))
 			     (or (not (=fx clientport (hop-port)))
 				 (not (string=? (host clienthost) discovery-host))))
-		     (hop-discovery-reply (datagram-socket-hostip)
+		     (hop-discovery-reply
+			(datagram-socket-host-address serv)
 			clienthost clientport svc id))))))
       (tprint "<<< DISCOVERY-LOOP id=" id)
       (loop (-fx id 1))))
