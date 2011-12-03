@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/event.scm                 */
+;*    serrano/prgm/project/hop/2.3.x/runtime/event.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Nov 16 11:52:57 2011 (serrano)                */
+;*    Last change :  Sat Dec  3 06:35:54 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -357,7 +357,8 @@
    (with-access::ajax-connection conn (mutex buffers)
       (let ((cell (assoc name buffers)))
 	 (unless (pair? cell)
-	    (tprint "ajax-connection-add-event, create buffer for name=" name)
+	    (when debug-ajax
+	       (tprint "ajax-connection-add-event, create buffer for name=" name))
 	    (hashtable-update! *ajax-connection-name-table*
 			       name
 			       (lambda (l) (cons conn l))

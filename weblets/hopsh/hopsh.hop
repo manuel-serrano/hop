@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/hopsh/hopsh.hop           */
+;*    serrano/prgm/project/hop/2.3.x/weblets/hopsh/hopsh.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Dec 16 07:33:33 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Sat Dec  3 18:37:43 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hopsh weblet                                                 */
 ;*=====================================================================*/
@@ -66,8 +66,12 @@
 ;*    <HOPSH> ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (<HOPSH> req)
-   (let ((i (<INPUT> :type 'text :name "expression" :size 90))
-	 (r (<PRE> :id "result" "&#160;")))
+   (let* ((r (<PRE> :id "result" "&#160;"))
+	  (i (<INPUT> :type 'text :name "expression" :size 90
+		:onkeyup ~(when (memq event.which '(10 13))
+			     (with-hop ($hopsh/string :exp this.value)
+				(lambda (h)
+				   (innerHTML-set! $r h)))))))
       (<HTML>
 	 (<HEAD> :title "Hop Sh"
 	    :base (service-base-url hopsh req)
@@ -95,9 +99,10 @@
 				 :colspan 2
 				 :align 'left
 				 (<BUTTON> :onclick
-				    ~(with-hop ($hopsh/string :exp $i.value)
-					(lambda (h)
-					   (innerHTML-set! $r h)))
+				    ~(let ((i $i))
+					(with-hop ($hopsh/string :exp i.value)
+					   (lambda (h)
+					      (innerHTML-set! $r h))))
 				    "Evaluate")))
 			   (<TR>
 			      (<TD> :colspan 2

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/service_expd.sch          */
+;*    serrano/prgm/project/hop/2.3.x/runtime/service_expd.sch          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Wed Nov 16 17:33:56 2011 (serrano)                */
+;*    Last change :  Sat Dec  3 09:25:58 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -298,7 +298,7 @@
 		    sync auth))
 	     ((eq? (car opts) :sync)
 	      (loop (cddr opts)
-		    (cons* (cadr opts) (car opts) args)
+		    args
 		    success fail
 		    host port
 		    (cadr opts)
