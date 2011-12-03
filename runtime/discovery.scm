@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Sat Dec  3 19:20:11 2011 (serrano)                */
+;*    Last change :  Sat Dec  3 19:25:13 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -123,8 +123,11 @@
 				 (service-exists? svc))
 			     (or (not (=fx clientport (hop-port)))
 				 (not (string=? (host clienthost) discovery-host))))
+		     (tprint "DISCOVERY hname="
+			(datagram-socket-hostname serv)
+			" ip=" (datagram-socket-host-address serv))
 		     (hop-discovery-reply
-			(datagram-socket-host-address serv)
+			(datagram-socket-hostname serv)
 			clienthost clientport svc id))))))
       (tprint "<<< DISCOVERY-LOOP id=" id)
       (loop (-fx id 1))))
@@ -132,14 +135,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-discovery-reply ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (hop-discovery-reply hostip clienthost clientport service id)
+(define (hop-discovery-reply hostname clienthost clientport service id)
    (hop-verb 2 (hop-color id id " DISCOVERY ") clienthost ":" clientport "\n")
    (when (=fx discovery-key 0)
       (set! discovery-key
 	 (bit-rsh (absfx (elong->fixnum (current-seconds))) 2)))
-   (let* ((name (hostname))
-	  (url (format "http://~a:~a/hop/discovery?host=~a&port=~a&hostname=~a&key=~a&service=~a&session=~a" clienthost clientport
-		  hostip (hop-port) hostip discovery-key service (hop-session))))
+   (let ((url (format "http://~a:~a/hop/discovery?host=~a&port=~a&hostname=~a&key=~a&service=~a&session=~a" clienthost clientport
+		 (host hostname) (hop-port) hostname discovery-key service (hop-session))))
       (tprint "DISCOVER-REPLY id=" id " url=" url)
       (with-handler
 	 (lambda (e) #f)
