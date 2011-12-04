@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Sun Dec  4 08:49:16 2011 (serrano)                */
+;*    Last change :  Sun Dec  4 17:32:21 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -136,7 +136,7 @@
    (when (=fx discovery-key 0)
       (set! discovery-key
 	 (bit-rsh (absfx (elong->fixnum (current-seconds))) 2)))
-   (let ((url (format "http://~a:~a/hop/discovery?port=~a&key=~a&service=~a&session=~a" clienthost clientport
+   (let ((url (format "http://~a:~a/hop/public/discovery?port=~a&key=~a&service=~a&session=~a" clienthost clientport
 		 (hop-port) discovery-key service (hop-session))))
       (tprint "DISCOVER-REPLY id=" id " url=" url)
       (with-handler
@@ -148,7 +148,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-discovery-init!)
    (set! discovery-service
-      (service :name "discovery" :id discovery (#!key port key service session)
+      (service :name "public/discovery" :id discovery (#!key port key service session)
 	 (with-access::http-request (current-request) (socket localclientp)
 	    (unless localclientp
 	       (mutex-lock! discovery-mutex)
