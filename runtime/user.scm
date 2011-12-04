@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sun Dec  4 17:22:47 2011 (serrano)                */
+;*    Last change :  Sun Dec  4 18:11:07 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -225,7 +225,7 @@
 
    (define (cannot-authenticate m n)
       (hop-verb 2 m " Cannot authentify user: " n "\n")
-      #f)
+      (anonymous-user))
       
    (define (find-none-authentication n p)
       (let ((u (hashtable-get *users* n)))
