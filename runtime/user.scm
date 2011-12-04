@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/user.scm                  */
+;*    serrano/prgm/project/hop/2.3.x/runtime/user.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon Nov 21 07:34:42 2011 (serrano)                */
+;*    Last change :  Sun Dec  4 17:22:47 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -526,13 +526,28 @@
 ;*    user-authorized-service? ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (user-authorized-service? user service)
-   (or (with-access::user user (services)
+   (or (with-access::user user (services name)
 	  (or (eq? services '*) (and (pair? services) (memq service services))))
        ((hop-authorize-service-hook) user service)
        ;; flash sends anonymous requests so we have to access server-event/init
        ;; requests for all users
        (eq? service 'server-event/init)
-       (eq? service 'server-event/policy-file)))
+       (eq? service 'server-event/policy-file)
+       (public-service? service)))
+
+;*---------------------------------------------------------------------*/
+;*    public-service-prefix ...                                        */
+;*---------------------------------------------------------------------*/
+(define public-service-prefix #f)
+   
+;*---------------------------------------------------------------------*/
+;*    public-service? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (public-service? service)
+   (unless (string? public-service-prefix)
+      (set! public-service-prefix
+	 (string-append (hop-service-base) "/public")))
+   (string-prefix? public-service-prefix (symbol->string! service)))
 
 ;*---------------------------------------------------------------------*/
 ;*    authorized-service? ...                                          */

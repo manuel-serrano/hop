@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sat Dec  3 09:25:58 2011 (serrano)                */
+;*    Last change :  Sun Dec  4 17:26:40 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -165,7 +165,7 @@
        (let loop ((a args)
 		  (tmt '(hop-service-default-timeout))
 		  (ttl -1)
-		  (url '(make-hop-url-name (gen-service-url)))
+		  (url '(make-hop-url-name (gen-service-url :public #t)))
 		  (id '(hop-service-weblet-wid)))
 	  (cond
 	     ((or (symbol? (car a)) (null? (car a)) (pair? (car a)))

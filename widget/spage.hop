@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/widget/spage.hop                  */
+;*    serrano/prgm/project/hop/2.3.x/widget/spage.hop                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Sat Nov 12 07:40:12 2011 (serrano)                */
+;*    Last change :  Sun Dec  4 17:18:25 2011 (serrano)                */
 ;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -119,7 +119,7 @@
 	  (body (filter (lambda (x) (not (isa? x xml-sphead-element))) body)))
       (if (and (pair? body) (null? (cdr body)) (isa? (car body) xml-delay))
 	  ;; a dynamic tab
-	  (let ((svc (service :name (format "sptab/~a/~a" id (get-svc-stamp)) ()
+	  (let ((svc (service :name (format "public/sptab/~a/~a" id (get-svc-stamp)) ()
 			(<DIV> :hssclass "hop-spbody"
 			   :class class
 			   attr
