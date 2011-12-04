@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Sat Dec  3 19:25:13 2011 (serrano)                */
+;*    Last change :  Sun Dec  4 08:12:24 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -60,9 +60,9 @@
 (define discovery-service #f)
 
 ;*---------------------------------------------------------------------*/
-;*    discovery-host ...                                               */
+;*    discovery-host-ip ...                                            */
 ;*---------------------------------------------------------------------*/
-(define discovery-host #f)
+(define discovery-host-ip #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    discovers ...                                                    */
@@ -111,10 +111,10 @@
 	    (current-request-set! #f creq))))
    
    (let loop ((id -1))
-      (tprint ">>> DISCOVERY-LOOP id=" id)
+      (tprint ">>> DISCOVERY-LOOP.1 id=" id)
       (multiple-value-bind (msg clienthost)
 	 (datagram-socket-receive serv 1024)
-	 (tprint "--- DISCOVERY-LOOP id=" id " msg=" msg " clienthost=" clienthost)
+	 (tprint "--- DISCOVERY-LOOP.2 id=" id " msg=" msg " clienthost=" clienthost)
 	 (let ((l (string-split msg)))
 	    (when (=fx (length l) 2)
 	       (let ((svc (cadr l))
@@ -122,26 +122,22 @@
 		  (when (and (or (string=? svc "*")
 				 (service-exists? svc))
 			     (or (not (=fx clientport (hop-port)))
-				 (not (string=? (host clienthost) discovery-host))))
-		     (tprint "DISCOVERY hname="
-			(datagram-socket-hostname serv)
-			" ip=" (datagram-socket-host-address serv))
-		     (hop-discovery-reply
-			(datagram-socket-hostname serv)
-			clienthost clientport svc id))))))
-      (tprint "<<< DISCOVERY-LOOP id=" id)
+				 (not discovery-host-ip)
+				 (not (string=? clienthost discovery-host-ip))))
+		     (hop-discovery-reply clienthost clientport svc id))))))
+      (tprint "<<< DISCOVERY-LOOP.3 id=" id)
       (loop (-fx id 1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-discovery-reply ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (hop-discovery-reply hostname clienthost clientport service id)
+(define (hop-discovery-reply clienthost clientport service id)
    (hop-verb 2 (hop-color id id " DISCOVERY ") clienthost ":" clientport "\n")
    (when (=fx discovery-key 0)
       (set! discovery-key
 	 (bit-rsh (absfx (elong->fixnum (current-seconds))) 2)))
-   (let ((url (format "http://~a:~a/hop/discovery?host=~a&port=~a&hostname=~a&key=~a&service=~a&session=~a" clienthost clientport
-		 (host hostname) (hop-port) hostname discovery-key service (hop-session))))
+   (let ((url (format "http://~a:~a/hop/discovery?port=~a&key=~a&service=~a&session=~a" clienthost clientport
+		 (hop-port) discovery-key service (hop-session))))
       (tprint "DISCOVER-REPLY id=" id " url=" url)
       (with-handler
 	 (lambda (e) #f)
@@ -151,39 +147,42 @@
 ;*    hop-discovery-init! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hop-discovery-init!)
-   
-   (set! discovery-host (host (hostname)))
-   
    (set! discovery-service
-      (service :name "discovery" :id discovery (#!key host port hostname key service session)
-	 (mutex-lock! discovery-mutex)
-	 ;; find all the discovers that matches that event
-	 (let ((d (filter (lambda (d)
-			     (with-access::discoverer d (filter %listeners)
-				(when (pair? %listeners)
-				   (filter host port key service))))
-		     discovers)))
-	    (mutex-unlock! discovery-mutex)
-	    ;; invoke all the discovers
-	    (for-each (lambda (d)
-			 (with-access::discoverer d (%listeners %mutex)
-			    (with-lock %mutex
-			       (lambda ()
-				  (let ((e (instantiate::discover-event
-					      (name "discover")
-					      (target service)
-					      (value host)
-					      (hostname hostname)
-					      (port (string->number port))
-					      (session (string->integer session))
-					      (key key))))
-				     (let loop ((l %listeners))
-					(when (pair? l)
-					   ((caar l) e)
-					   (with-access::event e (stopped)
-					      (unless stopped
-						 (loop (cdr l)))))))))))
-	       d)))))
+      (service :name "discovery" :id discovery (#!key port key service session)
+	 (with-access::http-request (current-request) (socket localclientp)
+	    (unless localclientp
+	       (mutex-lock! discovery-mutex)
+	       ;; now we have our own name
+	       (unless discovery-host-ip
+		  (set! discovery-host-ip (socket-local-address socket)))
+	       ;; find all the discovers that match that event
+	       (let* ((h (host (socket-local-address socket)))
+		      (d (filter (lambda (d)
+				    (with-access::discoverer d (filter %listeners)
+				       (when (pair? %listeners)
+					  (filter h port key service))))
+			    discovers)))
+		  (mutex-unlock! discovery-mutex)
+		  ;; invoke all the discovers
+		  (for-each (lambda (d)
+			       (with-access::discoverer d (%listeners %mutex)
+				  (with-lock %mutex
+				     (lambda ()
+					(let ((e (instantiate::discover-event
+						    (name "discover")
+						    (target service)
+						    (value h)
+						    (hostname h)
+						    (port (string->number port))
+						    (session (string->integer session))
+						    (key key))))
+					   (let loop ((l %listeners))
+					      (when (pair? l)
+						 ((caar l) e)
+						 (with-access::event e (stopped)
+						    (unless stopped
+						       (loop (cdr l)))))))))))
+		     d)))))))
 				  
 ;*---------------------------------------------------------------------*/
 ;*    hop-discover ...                                                 */
