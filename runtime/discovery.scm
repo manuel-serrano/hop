@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Sun Dec  4 08:12:24 2011 (serrano)                */
+;*    Last change :  Sun Dec  4 08:47:05 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -156,7 +156,7 @@
 	       (unless discovery-host-ip
 		  (set! discovery-host-ip (socket-local-address socket)))
 	       ;; find all the discovers that match that event
-	       (let* ((h (host (socket-local-address socket)))
+	       (let* ((h (host (socket-host-address socket)))
 		      (d (filter (lambda (d)
 				    (with-access::discoverer d (filter %listeners)
 				       (when (pair? %listeners)
