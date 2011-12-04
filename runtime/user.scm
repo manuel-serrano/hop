@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sun Dec  4 18:11:07 2011 (serrano)                */
+;*    Last change :  Sun Dec  4 18:14:53 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -532,22 +532,7 @@
        ;; flash sends anonymous requests so we have to access server-event/init
        ;; requests for all users
        (eq? service 'server-event/init)
-       (eq? service 'server-event/policy-file)
-       (public-service? service)))
-
-;*---------------------------------------------------------------------*/
-;*    public-service-prefix ...                                        */
-;*---------------------------------------------------------------------*/
-(define public-service-prefix #f)
-   
-;*---------------------------------------------------------------------*/
-;*    public-service? ...                                              */
-;*---------------------------------------------------------------------*/
-(define (public-service? service)
-   (unless (string? public-service-prefix)
-      (set! public-service-prefix
-	 (string-append (hop-service-base) "/public")))
-   (string-prefix? public-service-prefix (symbol->string! service)))
+       (eq? service 'server-event/policy-file)))
 
 ;*---------------------------------------------------------------------*/
 ;*    authorized-service? ...                                          */
