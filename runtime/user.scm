@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sun Dec  4 18:14:53 2011 (serrano)                */
+;*    Last change :  Sun Dec  4 19:22:08 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -96,8 +96,7 @@
 		 (hop-rc-directory) "users" (string-append name ".prefs")))
 	 (c '())
 	 (u #f)
-	 (d (list (hop-share-directory)
-		  (hop-var-directory))))
+	 (d (list (hop-share-directory) (hop-var-directory))))
       (let loop ((a args))
 	 (cond
 	    ((null? a)
@@ -124,9 +123,7 @@
 				    p)))
 			  (svcs (if (eq? s '*)
 				    s
-				    (cons*
-				       'discovery
-				       'server-event
+				    (cons 'server-event
 				       (map! (lambda (s)
 						(if (eq? s '?)
 						    (hop-service-weblet-wid)
@@ -165,16 +162,18 @@
 			      (and (list? (cadr a)) (every? symbol? (cadr a)))))
 		     (error "add-user!" "Illegal services" (cadr a))
 		     (unless (eq? s '*)
-			(if (eq? (cadr a) '*)
-			    (set! s '*)
-			    (set! s (cadr a))))))
+			(set! s (cadr a)))))
 		((:directories)
 		 (unless (eq? d '*)
 		    (cond
 		       ((eq? (cadr a) '*)
 			(set! d '*))
+		       ((procedure? (cadr a))
+			(set! d (cadr a)))
 		       ((and (list? (cadr a)) (every? string? (cadr a)))
-			(set! d (append (map file-name-unix-canonicalize (cadr a)) d)))
+			(set! d
+			   (append (map file-name-unix-canonicalize (cadr a))
+			      d)))
 		       (else
 			(error "add-user!" "Illegal directories" (cadr a))))))
 		((:preferences)
@@ -494,14 +493,20 @@
 			     (char=? (string-ref path (string-length d))
 				(file-separator))))))
 	 dirs))
-   (and (with-access::user user (directories services)
-	   (or (eq? directories '*)
-	       (path-member path directories)
-	       (let ((cpath (file-name-unix-canonicalize path)))
-		  (or (path-member cpath directories)
-		      (let ((service-path (etc-path->service cpath)))
-			 (and (symbol? service-path)
-			      (user-authorized-service? user service-path)))))))
+   (and (with-access::user user (directories name)
+	   (cond
+	      ((eq? directories '*)
+	       #t)
+	      ((pair? directories)
+	       (or (path-member path directories)
+		   (let ((cpath (file-name-unix-canonicalize path)))
+		      (or (path-member cpath directories)
+			  (let ((service-path (etc-path->service cpath)))
+			     (and (symbol? service-path)
+				  (user-authorized-service? user service-path)))))))
+	      ((procedure? directories) (directories user path))
+	      (else
+	       #f)))
 	(let ((hopaccess (find-hopaccess path)))
 	   (with-access::user user (name)
 	      (or (not hopaccess)
@@ -527,12 +532,12 @@
 ;*---------------------------------------------------------------------*/
 (define (user-authorized-service? user service)
    (or (with-access::user user (services name)
-	  (or (eq? services '*) (and (pair? services) (memq service services))))
-       ((hop-authorize-service-hook) user service)
-       ;; flash sends anonymous requests so we have to access server-event/init
-       ;; requests for all users
-       (eq? service 'server-event/init)
-       (eq? service 'server-event/policy-file)))
+	  (cond
+	     ((eq? services '*) #t)
+	     ((pair? services) (memq service services))
+	     ((procedure? services) (services user service))
+	     (else #f)))
+       ((hop-authorize-service-hook) user service)))
 
 ;*---------------------------------------------------------------------*/
 ;*    authorized-service? ...                                          */
