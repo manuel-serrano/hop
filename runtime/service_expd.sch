@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Mon Dec  5 09:02:10 2011 (serrano)                */
+;*    Last change :  Mon Dec  5 18:34:21 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -121,6 +121,7 @@
 					  ;; a remote wrapper service
 					  (instantiate::http-response-remote
 					     (request (instantiate::http-request
+							 (user (class-nil user))
 							 (port (hop-port))
 							 (path ,path)
 							 (abspath ,path)))

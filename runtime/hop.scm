@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon Dec  5 08:48:16 2011 (serrano)                */
+;*    Last change :  Mon Dec  5 18:10:12 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -370,6 +370,7 @@
 	  (let* ((req (instantiate::http-server-request
 			 (userinfo (when (and (string? user) (string? password))
 				      (string-append user ":" password)))
+			 (user (anonymous-user))
 			 (id hop-to-hop-id)
 			 (host host)
 			 (port port)

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/weblets.scm               */
+;*    serrano/prgm/project/hop/2.3.x/runtime/weblets.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Sat Nov 12 06:12:48 2011 (serrano)                */
+;*    Last change :  Mon Dec  5 18:11:08 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -23,7 +23,8 @@
 	   __hop_xml
 	   __hop_service
 	   __hop_misc
-	   __hop_read)
+	   __hop_read
+	   __hop_user)
    
    (static  (abstract-class %autoload
 	       (path::bstring read-only)
@@ -478,6 +479,7 @@
 ;*---------------------------------------------------------------------*/
 (define (autoload-force-load! path)
    (let ((req (instantiate::http-server-request
+		 (user (anonymous-user))
 		 (localclientp #t)
 		 (port (hop-port))
 		 (path path)

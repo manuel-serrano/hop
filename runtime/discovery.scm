@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Mon Dec  5 07:56:17 2011 (serrano)                */
+;*    Last change :  Mon Dec  5 18:11:34 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -28,7 +28,8 @@
 	   __hop_param
 	   __hop_misc
 	   __hop_read
-	   __hop_event)
+	   __hop_event
+	   __hop_user)
    
    (export (class discoverer
 	      (filter::procedure read-only (default (lambda (h p k s) #t)))
@@ -100,6 +101,7 @@
       (let ((creq (current-request)))
 	 (unwind-protect
 	    (let ((req (instantiate::http-server-request
+			  (user (anonymous-user))
 			  (abspath (string-append (hop-service-base) "/" svc))
 			  (method 'get))))
 	       (current-request-set! #f req)

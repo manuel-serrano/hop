@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/clientc.scm               */
+;*    serrano/prgm/project/hop/2.3.x/runtime/clientc.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Sat Nov 19 18:49:07 2011 (serrano)                */
+;*    Last change :  Mon Dec  5 18:14:01 2011 (serrano)                */
 ;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -162,7 +162,8 @@
 ;*    dummy-request ...                                                */
 ;*---------------------------------------------------------------------*/
 (define dummy-request
-   (instantiate::http-request))
+   (instantiate::http-request
+      (user (class-nil user))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-clientc-compiled-file ...                                    */
