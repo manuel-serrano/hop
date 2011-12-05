@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon Dec  5 08:01:28 2011 (serrano)                */
+;*    Last change :  Mon Dec  5 09:02:34 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -517,7 +517,6 @@
 ;*---------------------------------------------------------------------*/
 (define (user-authorized-service? user service)
    (or (with-access::user user (services name)
-	  (tprint "AUTH SERVICE services=" services " service=" service)
 	  (or (eq? services '*) (memq service services)))
        ((hop-authorize-service-hook) user service)))
 
