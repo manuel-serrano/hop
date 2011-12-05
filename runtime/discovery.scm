@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Mon Dec  5 19:09:05 2011 (serrano)                */
+;*    Last change :  Mon Dec  5 19:14:54 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -102,6 +102,8 @@
 	 (unwind-protect
 	    (let ((req (instantiate::http-server-request
 			  (user (anonymous-user))
+			  (localclientp #t)
+			  (lanclientp #t)
 			  (abspath (string-append (hop-service-base) "/" svc))
 			  (method 'GET))))
 	       (current-request-set! #f req)
