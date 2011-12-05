@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Sun Dec  4 18:08:34 2011 (serrano)                */
+;*    Last change :  Mon Dec  5 07:56:17 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -144,7 +144,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-discovery-init!)
    (set! discovery-service
-      (service :name "public/discovery" :id discovery (#!key port key service session)
+      (service :name "public/discovery" :id public/discovery (#!key port key service session)
 	 (with-access::http-request (current-request) (socket localclientp)
 	    (unless localclientp
 	       (mutex-lock! discovery-mutex)

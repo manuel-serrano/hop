@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-event.js                */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-event.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Thu Oct  6 15:14:23 2011 (serrano)                */
+/*    Last change :  Mon Dec  5 07:43:09 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -330,12 +330,12 @@ function hop_servevt_envelope_parse_error( xhr ) {
 function start_servevt_websocket_proxy( key, host, port ) {
    if( !hop_servevt_proxy.websocket ) {
       var url = "ws://" + host + ":" + port +
-	 hop_service_base() + "/server-event/websocket?key=" + key;
+	 hop_service_base() + "/public/server-event/websocket?key=" + key;
       var ws = new WebSocket( url );
 
       var register = function( id ) {
 	 var svc = hop_service_base() +
-	 "/server-event/register?event=" + id +
+	 "/public/server-event/register?event=" + id +
 	 "&key=" + key  + "&mode=websocket";
 
 	 hop_send_request( svc, false,
@@ -347,7 +347,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
 	 hop_servevt_proxy.httpreq.abort();
 
 	 var svc = hop_service_base() +
-	 "/server-event/unregister?event=" + id +
+	 "/public/server-event/unregister?event=" + id +
 	 "&key=" + key;
 	 
 	 hop_send_request( svc, false,
@@ -391,7 +391,7 @@ function start_servevt_xhr_multipart_proxy( key ) {
 
       var register = function( id ) {
 	 var svc = hop_service_base() +
-	    "/server-event/register?event=" + id +
+	    "/public/server-event/register?event=" + id +
 	    "&key=" + key  + "&mode=xhr-multipart";
 
 	 var success = function( val, xhr ) {
@@ -435,7 +435,7 @@ function start_servevt_xhr_multipart_proxy( key ) {
 	 hop_servevt_proxy.httpreq.abort();
 
 	 var svc = hop_service_base() +
-	    "/server-event/unregister?event=" + id +
+	    "/public/server-event/unregister?event=" + id +
    	    "&key=" + hop_servevt_proxy.key;
 	 
 	 hop_servevt_proxy.httpreq = hop_send_request( svc, false,
@@ -468,7 +468,7 @@ function start_servevt_ajax_proxy( key ) {
       
       var register = function( id ) {
 	 var svc = hop_service_base() +
-	    "/server-event/register?event=" + id +
+	    "/public/server-event/register?event=" + id +
 	    "&key=" + key  + "&mode=ajax";
 
 	 var success = function( val, xhr ) {
@@ -532,7 +532,7 @@ function start_servevt_ajax_proxy( key ) {
 	 hop_servevt_proxy.httpreq.abort();
 
 	 var svc = hop_service_base() +
-	    "/server-event/unregister?event=" + id +
+	    "/public/server-event/unregister?event=" + id +
    	    "&key=" + hop_servevt_proxy.key;
 	 
 	 hop_servevt_proxy.httpreq = hop_send_request( svc, false,
@@ -584,7 +584,7 @@ function hop_servevt_signal( val ) {
 /*---------------------------------------------------------------------*/
 function servevt_script_url( id, key, nocache ) {
    return hop_service_base()
-      + "/server-event/register?event=" + id 
+      + "/public/server-event/register?event=" + id 
       + "&key=" + key  + "&mode=ajax&padding=hop_servevt_signal["
       + nocache + "]";
 }
@@ -649,7 +649,7 @@ function start_servevt_script_proxy( key ) {
       var unregister = function( id ) {
 	 var script = document.createElement( "script" );
 	 var svc = hop_service_base() +
-	 "/server-event/unregister?event=" + id +
+	 "/public/server-event/unregister?event=" + id +
 	 "&key=" + hop_servevt_proxy.key;
 
 	 script.onload = function( e ) {
@@ -797,7 +797,7 @@ function hop_servevt_proxy_flash_init() {
 
    var abort = function( id ) {
       var svc = hop_service_base() +
-         "/server-event/unregister?event=" + id
+         "/public/server-event/unregister?event=" + id
          + "&key=" + hop_servevt_proxy.key;
       hop_servevt_proxy.httpreq = hop_send_request( svc, false,
 						    function() {;}, false,
@@ -814,14 +814,14 @@ function hop_servevt_proxy_flash_init() {
       }
 
       hop_send_request( hop_service_base() +
-			"/server-event/close?key=" + hop_servevt_proxy.key,
+			"/public/server-event/close?key=" + hop_servevt_proxy.key,
 			false,
 			function() {;}, false,
 			false, [] );
    }
 
    var register = function( id ) {
-      var svc = hop_service_base() + "/server-event/register?event=" + id
+      var svc = hop_service_base() + "/public/server-event/register?event=" + id
          + "&key=" + hop_servevt_proxy.key + "&mode=flash";
       
       var success = function( e ) {
@@ -919,7 +919,7 @@ function hop_start_servevt_proxy() {
    hop_servevt_proxy.script = false;
    hop_servevt_proxy.register = function( x ) {};
 
-   hop_send_request( hop_service_base() + "/server-event/info",
+   hop_send_request( hop_service_base() + "/public/server-event/info",
 		     // asynchronous call
 		     false,
 		     // success callback

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/flash/HopServevt.as         */
+/*    serrano/prgm/project/hop/2.3.x/share/flash/HopServevt.as         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Sep  7 15:31:58 2007                          */
-/*    Last change :  Sun Jan  9 07:58:33 2011 (serrano)                */
+/*    Last change :  Mon Dec  5 07:46:05 2011 (serrano)                */
 /*    Copyright   :  2007-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    ActionScript server events runtime system.                       */
@@ -43,7 +43,7 @@ class HopServevt {
 
       socket.onConnect = function( success ) {
 	 if( success ) {
-	    socket.send( "GET /hop/server-event/init?key="
+	    socket.send( "GET /hop/public/server-event/init?key="
 			 + key + " HTTP/1.1\n\n" );
 	 } else {
 	    err( "Flash proxy: Cannot establish connection to server" );

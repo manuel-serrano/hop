@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun Dec  4 18:16:28 2011 (serrano)                */
+;*    Last change :  Mon Dec  5 09:01:02 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -50,41 +50,46 @@
 	     (let* ((status (dom-get-element-by-id document "status"))
 		    (message (dom-get-element-by-id document "message"))
 		    (msg (dom-get-element-by-id document "message"))
-		    (apasswd (dom-get-element-by-id document "apasswd").value)
-		    (uname (dom-get-element-by-id document "uname").value)
-		    (upasswd (dom-get-element-by-id document "upasswd").value)
-		    (udir (dom-get-element-by-id document "udir").value)
-		    (gname (dom-get-element-by-id document "gname").value)
-		    (gpasswd (dom-get-element-by-id document "gpasswd").value)
-		    (cadmin (crypt "admin" apasswd))
-		    (cuser (if (and (> (string-length uname) 0)
-				    (> (string-length upasswd) 0))
-			       (crypt uname upasswd)
+		    (apasswd (dom-get-element-by-id document "apasswd"))
+		    (uname (dom-get-element-by-id document "uname"))
+		    (upasswd (dom-get-element-by-id document "upasswd"))
+		    (udir (dom-get-element-by-id document "udir"))
+		    (gname (dom-get-element-by-id document "gname"))
+		    (gpasswd (dom-get-element-by-id document "gpasswd"))
+		    (cadmin (crypt "admin" apasswd.value))
+		    (cuser (if (and (> (string-length uname.value) 0)
+				    (> (string-length upasswd.value) 0))
+			       (crypt uname.value upasswd.value)
 			       #f))
-		    (cguest (if (and (> (string-length gname) 0)
-				     (> (string-length gpasswd) 0))
-				(crypt gname gpasswd)
+		    (cguest (if (and (> (string-length gname.value) 0)
+				     (> (string-length gpasswd.value) 0))
+				(crypt gname.value gpasswd.value)
 				#f))
-		    (proxy (dom-get-element-by-id document "proxy").value)
-		    (proxyu (dom-get-element-by-id document "uproxy").checked)
-		    (proxya (dom-get-element-by-id document "aproxy").checked)
-		    (proxyr (dom-get-element-by-id document "rproxy").checked)
+		    (proxy (dom-get-element-by-id document "proxy"))
+		    (proxyu (dom-get-element-by-id document "uproxy"))
+		    (proxya (dom-get-element-by-id document "aproxy"))
+		    (proxyr (dom-get-element-by-id document "rproxy"))
 		    (proxym (map (lambda (i)
-				    (dom-get-element-by-id document i).value)
+				    (let ((el (dom-get-element-by-id document i)))
+				       el.value))
 				 '("mip1" "mip2" "mip3" "mip4")))
-		    (webdav (dom-get-element-by-id document "webdav").checked))
+		    (localp (dom-get-element-by-id document "localp"))
+		    (lanp (dom-get-element-by-id document "lanp"))
+		    (webdav (dom-get-element-by-id document "webdav")))
 		(cond
-		   ((string=? apasswd "")
+		   ((string=? apasswd.value "")
 		    (alert "Missing password for `admin' user!"))
-		   ((and (not (string=? uname "")) (string=? upasswd ""))
+		   ((and (not (string=? uname.value "")) (string=? upasswd.value ""))
 		    (alert "Missing password for `regular' user!"))
-		   ((and (not (string=? gname "")) (string=? gpasswd ""))
+		   ((and (not (string=? gname.value "")) (string=? gpasswd.value ""))
 		    (alert "Missing password for `guest' user!"))
 		   (else
-		    (with-hop ($wizard/save #f cadmin uname cuser udir
-					    gname cguest
-					    proxy proxyu proxya proxyr proxym
-					    webdav)
+		    (with-hop ($wizard/save #f cadmin uname.value cuser udir.value
+					    gname.value cguest
+					    proxy.value proxyu.value
+					    proxya.value proxyr.value proxym
+					    localp.checked lanp.checked
+					    webdav.checked)
 		       (lambda (h)
 			  (case (string->symbol (car h))
 			     ((query)
@@ -93,12 +98,13 @@
 					  "' alread exists. Overide it ?")))
 				 (if (confirm msg)
 				     (with-hop ($wizard/save #t cadmin
-							     uname cuser udir
-							     gname cguest
-							     proxy
-							     proxyu proxya
-							     proxyr proxym
-							     webdav)
+							     uname.value cuser udir.value
+							     gname.value cguest
+							     proxy.value
+							     proxyu.value proxya.value
+							     proxyr.value proxym
+							     localp.checked lanp.checked
+							     webdav.checked)
 					(lambda (h)
 					   (innerHTML-set! status (cadr h))
 					   (innerHTML-set! message
@@ -140,6 +146,9 @@
 			(<TR>
 			   (<TD> :colspan 2
 			      (<GUEST-USER>)))
+			(<TR>
+			   (<TD> :colspan 2
+			      (<ANONYMOUS-USER>)))
 			(<TR>
 			   (<TD> :colspan 2
 			      (<SPAN> :class "head" "Internet connection:")))
@@ -262,6 +271,29 @@ likely to be the owner of the Hop process.])))))))
 can only access the directory ,(<TT> "guest") of the Hop RC directory.])))))))
 
 ;*---------------------------------------------------------------------*/
+;*    <ANONYMOUS-USER> ...                                             */
+;*---------------------------------------------------------------------*/
+(define (<ANONYMOUS-USER>)
+   (<TABLE> :class "wizard-user wizard-anonymous"
+      (<TR> (<TD> :class "logo" (<IMG> :src (make-file-name "etc" "anonymous.png")))
+	    (<TD> (<TABLE>
+		     (<COLGROUP> (<COL> :width "0*"))
+		     (<TR> (<TH> :colspan 2 "Anonymous"))
+		     (<TR> (<TD> 
+			      (<INPUT> :type 'checkbox :id "localp" :checked #t))
+			   (<TD> (<SPAN> "Allow anonymous requests from the local host")))
+		     (<TR> (<TD>
+			      (<TD> :class "comment"
+				 "Lets Hop accepts all anonymous requests (services and resources) coming from local host")))
+		     (<TR> (<TD> 
+			      (<INPUT> :type 'checkbox :id "lanp" :checked #f))
+			   (<TD> (<SPAN> "Allow anonymous requests from LAN")))
+		     (<TR> (<TD>
+			      (<TD> :class "comment"
+				 "Lets Hop accepts all anonymous requests coming from computers on the same domain (same local area network)"))))))))
+		     
+
+;*---------------------------------------------------------------------*/
 ;*    <INTERNET>                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<INTERNET>)
@@ -357,13 +389,15 @@ WebDAV server.]))))))
 			     proxy
 			     user-proxy anonymous-proxy
 			     remote-proxy proxy-mask
+			     localp lanp
 			     webdav)
    (let* ((rc (make-file-name (hoprc-dir) (hop-rc-file)))
 	  (wd (make-file-name (hoprc-dir) "wizard.hop")))
       (cond
 	 (force
 	  (save (hoprc-dir) rc wd apasswd uname upasswd udir gname gpasswd
-		proxy user-proxy anonymous-proxy remote-proxy proxy-mask))
+		proxy user-proxy anonymous-proxy remote-proxy proxy-mask
+		localp lanp webdav))
 	 ((file-exists? rc)
 	  (list 'query (format "File exists ~a" rc)))
 	 ((file-exists? wd)
@@ -371,7 +405,7 @@ WebDAV server.]))))))
 	 (else
 	  (save (hoprc-dir) rc wd apasswd uname upasswd udir gname gpasswd
 		proxy user-proxy anonymous-proxy remote-proxy proxy-mask
-		webdav)))))
+		localp lanp webdav)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    save ...                                                         */
@@ -379,7 +413,7 @@ WebDAV server.]))))))
 (define (save rcdir rcfile passwdfile
 	      apasswd uname upasswd udir gname gpasswd
 	      proxy uproxy anonymous-proxy remote-proxy proxy-mask
-	      webdav)
+	      localp lanp webdav)
    (unless (and (file-exists? rcdir) (directory? rcdir))
       (make-directories rcdir))
    (with-output-to-file rcfile
@@ -420,12 +454,35 @@ WebDAV server.]))))))
 	    (when proxy-mask
 	       (print ";; proxy IP mask")
 	       (write `(hop-proxy-ip-mask-set!
-			,(apply format "~a.~a.~a.~a" proxy-mask)))
+			  ,(apply format "~a.~a.~a.~a" proxy-mask)))
 	       (newline)
 	       (newline)))
 	 (print ";; WebDAV")
 	 (write `(hop-enable-webdav-set! ,webdav))
-	 (newline)))
+	 (newline)
+	 (newline)
+	 (cond
+	    (lanp
+	       (print ";; anonymous lan requests")
+	       (print '(hop-authorize-service-hook-set!
+			(lambda (user svc)
+			   (with-access::http-request (current-request) (lanclientp)
+			      lanclienp))))
+	       (print '(hop-authorize-request-hook-set!
+			(lambda (user svc)
+			   (with-access::http-request (current-request) (lanclientp)
+			      lanclienp)))))
+	    (localp
+	       (print ";; anonymous local requests")
+	       (print '(hop-authorize-service-hook-set!
+			(lambda (user svc)
+			   (with-access::http-request (current-request) (localclientp)
+			      localclienp))))
+	       (print '(hop-authorize-request-hook-set!
+			(lambda (user svc)
+			   (with-access::http-request (current-request) (localclientp)
+			      localclienp))))
+	       (newline)))))
    (let ((accounts "admin"))
       (with-output-to-file passwdfile
 	 (lambda ()

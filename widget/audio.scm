@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/widget/audio.scm                  */
+;*    serrano/prgm/project/hop/2.3.x/widget/audio.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Nov 16 12:02:23 2011 (serrano)                */
+;*    Last change :  Sun Dec  4 19:47:44 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -503,7 +503,7 @@
 ;*    audio-server-init ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-generic (audio-server-init as::audio-server)
-   (let* ((p (gen-service-url "audio"))
+   (let* ((p (gen-service-url :prefix "audio"))
 	  (s (service :name p (a0 a1)
 		(with-handler
 		   (lambda (e)

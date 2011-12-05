@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/hop.scm                   */
+;*    serrano/prgm/project/hop/2.3.x/runtime/hop.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sat Nov 19 19:00:37 2011 (serrano)                */
+;*    Last change :  Mon Dec  5 08:48:16 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -561,6 +561,7 @@
    (let* ((reqi (current-request))
 	  (req (instantiate::http-server-request
 		  (localclientp #t)
+		  (lanclientp #t)
 		  (user (if (isa? reqi http-request)
 			    (with-access::http-request reqi (user) user)
 			    (anonymous-user)))

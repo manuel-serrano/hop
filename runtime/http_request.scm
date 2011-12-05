@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/http_request.scm          */
+;*    serrano/prgm/project/hop/2.3.x/runtime/http_request.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Nov 18 15:16:41 2011 (serrano)                */
+;*    Last change :  Mon Dec  5 08:47:46 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -53,11 +53,16 @@
 	 (out (socket-output sock)))
       (socket-timeout-set! sock timeout timeout)
       (let* ((req (read/rp request-line-grammar port id out))
-	     (localc (string=? (socket-local-address sock)
-			       (socket-host-address sock))))
-	 (with-access::http-request req (socket localclientp)
+	     (localaddr (socket-local-address sock))
+	     (hostaddr (socket-host-address sock))
+	     (localc (string=? localaddr hostaddr))
+	     (lanc (or localc
+			  (let ((i (string-index-right localaddr #\.)))
+			     (substring=? localaddr hostaddr i)))))
+	 (with-access::http-request req (socket localclientp lanclientp)
 	    (set! socket sock)
 	    (set! localclientp localc)
+	    (set! lanclientp lanc)
 	    req))))
 
 ;*---------------------------------------------------------------------*/
@@ -196,7 +201,7 @@
    (if (substring-at? string "<policy-file-request" 0)
        ;; This request is emitted by Flash plugins >= 9.0.115.
        ;; This plugins are buggous because they should seek for
-       ;; the policy file using the /hop/server-event/policy-file.
+       ;; the policy file using the /hop/public/server-event/policy-file.
        ;; In the meantime, Hop also handles the <policy-file-request/>.
        (instantiate::http-server-request
 	  (id id)

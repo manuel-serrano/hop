@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/weblets/wizard/wizard.hss         */
+/*    serrano/prgm/project/hop/2.3.x/weblets/wizard/wizard.hss         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Oct  8 05:25:23 2010 (serrano)                */
-/*    Copyright   :  2005-10 Manuel Serrano                            */
+/*    Last change :  Mon Dec  5 08:42:38 2011 (serrano)                */
+/*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    history simple CSS                                               */
 /*=====================================================================*/
@@ -91,6 +91,10 @@ table.wizard-regular th {
 
 table.wizard-guest th {
   color: #0e0;
+}
+
+table.wizard-anonymous th {
+  color: #555;
 }
 
 table.wizard-user th {

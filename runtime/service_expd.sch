@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sun Dec  4 17:26:40 2011 (serrano)                */
+;*    Last change :  Mon Dec  5 08:00:23 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -126,6 +126,8 @@
 							 (abspath ,path)))
 					     (port (hop-port))
 					     (path ,url))))))))
+	      (_ (tprint "CREATING SVC wid=" ,(if (symbol? wid) `',wid wid)
+		    " id=" ,id))
 	      (,svc (instantiate::hop-service
 		       (wid ,(if (symbol? wid) `',wid wid))
 		       (id ,id)
@@ -166,12 +168,12 @@
 		  (tmt '(hop-service-default-timeout))
 		  (ttl -1)
 		  (url '(make-hop-url-name (gen-service-url :public #t)))
-		  (id '(hop-service-weblet-wid)))
+		  (id #f))
 	  (cond
 	     ((or (symbol? (car a)) (null? (car a)) (pair? (car a)))
 	      (let ((svc (expand-service
-			  #f
-			  id
+			  (or id '(hop-service-weblet-id))
+			  'public
 			  url tmt ttl (car a) (cdr a))))
 		 (e (evepairify svc x) e)))
 	     ((eq? (car a) :timeout)
@@ -181,17 +183,14 @@
 			 x)
 		  (loop (cddr a)
 			(cadr a)
-			ttl
-			url
-			id)))
+			ttl url id)))
 	     ((eq? (car a) :url)
 	      (if (null? (cdr a))
 		  (error "service"
 			 "Illegal service declaration (missing url)"
 			 x)
 		  (loop (cddr a)
-			tmt
-			ttl
+			tmt ttl
 			(cadr a)
 			id)))
 	     ((eq? (car a) :name)
@@ -200,8 +199,7 @@
 			 "Illegal service declaration (missing name)"
 			 x)
 		  (loop (cddr a)
-			tmt
-			ttl
+			tmt ttl
 			`(make-hop-url-name ,(cadr a))
 			id)))
 	     ((eq? (car a) :id)
@@ -216,9 +214,7 @@
 			 (cadr a)))
 		 (else
 		  (loop (cddr a)
-			tmt
-			ttl
-			url
+			tmt ttl url
 			`',(cadr a)))))
 	     ((eq? (car a) :ttl)
 	      (if (null? (cdr a))
@@ -228,8 +224,7 @@
 		  (loop (cddr a)
 			tmt
 			(cadr a)
-			url
-			id)))
+			url id)))
 	     (else
 	      (error "service" "Illegal service declaration" x)))))
       (else

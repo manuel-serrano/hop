@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sun Dec  4 19:22:08 2011 (serrano)                */
+;*    Last change :  Mon Dec  5 08:01:28 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -121,14 +121,7 @@
 				    (substring p 1))
 				   (else
 				    p)))
-			  (svcs (if (eq? s '*)
-				    s
-				    (cons 'server-event
-				       (map! (lambda (s)
-						(if (eq? s '?)
-						    (hop-service-weblet-wid)
-						    s))
-					  s))))
+			  (svcs s)
 			  (u (instantiate::user
 				(name name)
 				(groups g)
@@ -168,12 +161,8 @@
 		    (cond
 		       ((eq? (cadr a) '*)
 			(set! d '*))
-		       ((procedure? (cadr a))
-			(set! d (cadr a)))
 		       ((and (list? (cadr a)) (every? string? (cadr a)))
-			(set! d
-			   (append (map file-name-unix-canonicalize (cadr a))
-			      d)))
+			(set! d (append (map file-name-unix-canonicalize (cadr a)) d)))
 		       (else
 			(error "add-user!" "Illegal directories" (cadr a))))))
 		((:preferences)
@@ -485,6 +474,7 @@
 ;*    user-authorized-path? ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (user-authorized-path? user path)
+   
    (define (path-member path dirs)
       (any? (lambda (d)
 	       (and (substring-at? path d 0)
@@ -493,20 +483,15 @@
 			     (char=? (string-ref path (string-length d))
 				(file-separator))))))
 	 dirs))
+   
    (and (with-access::user user (directories name)
-	   (cond
-	      ((eq? directories '*)
-	       #t)
-	      ((pair? directories)
+	   (or (eq? directories '*)
 	       (or (path-member path directories)
 		   (let ((cpath (file-name-unix-canonicalize path)))
 		      (or (path-member cpath directories)
 			  (let ((service-path (etc-path->service cpath)))
 			     (and (symbol? service-path)
-				  (user-authorized-service? user service-path)))))))
-	      ((procedure? directories) (directories user path))
-	      (else
-	       #f)))
+				  (user-authorized-service? user service-path))))))))
 	(let ((hopaccess (find-hopaccess path)))
 	   (with-access::user user (name)
 	      (or (not hopaccess)
@@ -532,11 +517,8 @@
 ;*---------------------------------------------------------------------*/
 (define (user-authorized-service? user service)
    (or (with-access::user user (services name)
-	  (cond
-	     ((eq? services '*) #t)
-	     ((pair? services) (memq service services))
-	     ((procedure? services) (services user service))
-	     (else #f)))
+	  (tprint "AUTH SERVICE services=" services " service=" service)
+	  (or (eq? services '*) (memq service services)))
        ((hop-authorize-service-hook) user service)))
 
 ;*---------------------------------------------------------------------*/
@@ -631,7 +613,7 @@
       (header (authenticate-header req))
       (start-line "HTTP/1.0 401 Unauthorized")
       (request req)
-      (body (format "User `~a' is not allowed to execute service `~a'."
+      (body (format "User \"~a\" is not allowed to execute service \"~a\"."
 	       (with-access::user user (name) name) svc))))
 
 ;*---------------------------------------------------------------------*/
@@ -645,5 +627,5 @@
 		 .
 		 ,(format "Basic realm=\"Hop proxy (~a) authentication\""
 			  host))))
-      (body (format "Protected Area! Authentication required for user `~a'."
+      (body (format "Protected Area! Authentication required for user \"~a\"."
 		    (with-access::user user (name) name)))))
