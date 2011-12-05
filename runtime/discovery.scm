@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Mon Dec  5 19:14:54 2011 (serrano)                */
+;*    Last change :  Mon Dec  5 19:34:49 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -156,12 +156,12 @@
 	       (unless discovery-host-ip
 		  (set! discovery-host-ip (socket-local-address socket)))
 	       ;; find all the discovers that match that event
-	       (let* ((ip (socket-host-address socket))
-		      (h (host ip))
+	       (let* ((ip (host (socket-host-address socket)))
+		      (hname (socket-hostname socket))
 		      (d (filter (lambda (d)
 				    (with-access::discoverer d (filter %listeners)
 				       (when (pair? %listeners)
-					  (filter h port key service))))
+					  (filter hname port key service))))
 			    discovers)))
 		  (mutex-unlock! discovery-mutex)
 		  ;; invoke all the discovers
@@ -173,7 +173,7 @@
 						    (name "discover")
 						    (target service)
 						    (value ip)
-						    (hostname h)
+						    (hostname hname)
 						    (port (string->number port))
 						    (session (string->integer session))
 						    (key key))))
