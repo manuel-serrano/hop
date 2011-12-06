@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Fri Dec  2 11:07:08 2011 (serrano)                */
+;*    Last change :  Tue Dec  6 08:13:05 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -33,9 +33,9 @@
 	      name::symbol      ;; module-name
 	      top-level         ;; id or pair-nil
 	      exported-macros   ;; ht or list of macros.
-	                        ;;  with list: of form (define-macro...)
+	      ;;  with list: of form (define-macro...)
 	      exports           ;; list or hashtable (see export.scm)
-
+	      
 	      ;; the following two entries will be filled in this module
 	      ;;  list of hts/lists of macros that are imported
 	      (macros::pair-nil (default '()))
@@ -49,14 +49,19 @@
 	      header
 	      (class-expr::pair-nil (default '())))
 	   (create-module-from-file file::bstring override-headers::pair-nil
-				    reader::procedure)
+	      reader::procedure)
 	   (create-module-from-expr expr override-headers::pair-nil)
 	   (read-imported-module-file module-name::symbol file
-				      reader
-				      #!key
-				      (bigloo-modules? #t)
-				      (store-exports-in-ht? #f)
-				      (store-exported-macros-in-ht? #f))
+	      reader
+	      #!key
+	      (bigloo-modules? #t)
+	      (store-exports-in-ht? #f)
+	      (store-exported-macros-in-ht? #f))
+	   (parse-imported-module module-name module-clause reader ip
+	      #!key
+	      (bigloo-modules? #t)
+	      (store-exports-in-ht? #f)
+	      (store-exported-macros-in-ht? #f))
 	   (module-exported-macro-add! m::Compilation-Unit macro::pair)))
 
 (define (module-exported-macro-add! m::Compilation-Unit macro::pair)
@@ -542,64 +547,76 @@
 
 ;; returns #f if the file is not the correct one.
 (define (read-imported-module-file module-name file reader
-				   #!key
-				   (bigloo-modules? #t)
-				   (store-exports-in-ht? #f)
-				   (store-exported-macros-in-ht? #f))
+	   #!key
+	   (bigloo-modules? #t)
+	   (store-exports-in-ht? #f)
+	   (store-exported-macros-in-ht? #f))
    (when (file-exists? file)
       (let ((ip (open-input-file file)))
 	 (unwind-protect
 	    (let ((module-clause (reader ip #t)))
-	       (cond
-		  ((or (not (pair? module-clause))
-		       (not (eq? (car module-clause) 'module)))
-		   #f)
-		  ((not (verify-module-clause module-clause))
-		   (warning "scheme2js module"
-			    "invalid module-clause skipped"
-			    file)
-		   #f)
-		  ((not (eq? (cadr module-clause) module-name))
-		   #f)
-		  (else
-		   (let ((im (instantiate::Compilation-Unit ;; import-module
-				(name module-name)
-				(top-level #f)
-				(exports '())
-				(exported-macros '())))
-			 (module-preprocessor (config 'module-preprocessor))
-			 (module-postprocessor (config 'module-postprocessor)))
-		      (widen!::WIP-Unit im (header module-clause))
-		      (when module-preprocessor
-			 (module-preprocessor im #t))
-		      (cond-expand-headers! im)
-		      (normalize-module-header! im)
-		      ;; normalize-exports might need the 'ip' in
-		      ;; case it needs to search for macros.
-		      (normalize-statics! im bigloo-modules? #f)
-		      (normalize-exports! im bigloo-modules?
-					  #t  ;; get macros
-					  reader ip)
-		      (with-access::Compilation-Unit im (exports exported-macros)
-			 (when store-exports-in-ht?
-			    (let ((ht (make-eq-hashtable)))
-			       (for-each (lambda (desc)
-					    (hashtable-put! ht
-					       (with-access::Export-Desc desc (id)
-						  id)
-					       desc))
-					 exports)
-			       (set! exports ht)))
-			 (when store-exported-macros-in-ht?
-			    (let ((ht (make-eq-hashtable)))
-			       (for-each (lambda (def-macro)
-					    (add-macro-to-ht def-macro ht))
-					 exported-macros)
-			       (set! exported-macros ht))))
-		      (when module-postprocessor
-			 (module-postprocessor im #t))
-		      im))))
+	       (parse-imported-module module-name module-clause
+		  reader ip
+		  :bigloo-modules? bigloo-modules?
+		  :store-exports-in-ht? store-exports-in-ht?
+		  :store-exported-macros-in-ht? store-exported-macros-in-ht?))
 	    (close-input-port ip)))))
+
+(define (parse-imported-module module-name module-clause reader ip
+	   #!key
+	   (bigloo-modules? #t)
+	   (store-exports-in-ht? #f)
+	   (store-exported-macros-in-ht? #f))
+   
+   (cond
+      ((or (not (pair? module-clause))
+	   (not (eq? (car module-clause) 'module)))
+       #f)
+      ((not (verify-module-clause module-clause))
+       (warning "scheme2js module"
+	  "invalid module-clause skipped"
+	  module-clause)
+       #f)
+      ((not (eq? (cadr module-clause) module-name))
+       #f)
+      (else
+       (let ((im (instantiate::Compilation-Unit ;; import-module
+		    (name module-name)
+		    (top-level #f)
+		    (exports '())
+		    (exported-macros '())))
+	     (module-preprocessor (config 'module-preprocessor))
+	     (module-postprocessor (config 'module-postprocessor)))
+	  (widen!::WIP-Unit im (header module-clause))
+	  (when module-preprocessor
+	     (module-preprocessor im #t))
+	  (cond-expand-headers! im)
+	  (normalize-module-header! im)
+	  ;; normalize-exports might need the 'ip' in
+	  ;; case it needs to search for macros.
+	  (normalize-statics! im bigloo-modules? #f)
+	  (normalize-exports! im bigloo-modules?
+	     #t  ;; get macros
+	     reader ip)
+	  (with-access::Compilation-Unit im (exports exported-macros)
+	     (when store-exports-in-ht?
+		(let ((ht (make-eq-hashtable)))
+		   (for-each (lambda (desc)
+				(hashtable-put! ht
+				   (with-access::Export-Desc desc (id)
+				      id)
+				   desc))
+		      exports)
+		   (set! exports ht)))
+	     (when store-exported-macros-in-ht?
+		(let ((ht (make-eq-hashtable)))
+		   (for-each (lambda (def-macro)
+				(add-macro-to-ht def-macro ht))
+		      exported-macros)
+		   (set! exported-macros ht))))
+	  (when module-postprocessor
+	     (module-postprocessor im #t))
+	  im))))
 
 (define (export-list? l)
    (or (null? l)

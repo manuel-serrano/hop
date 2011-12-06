@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Mon Dec  5 18:11:08 2011 (serrano)                */
+;*    Last change :  Tue Dec  6 05:50:23 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -411,6 +411,7 @@
 	       (hop-load-modified path))
 	    ;; execute the hooks
 	    (for-each (lambda (h) (h req)) hooks)
+	    (hop-verb 2 (hop-color req req " AUTOLOAD COMPLETE") ": " path "\n")
 	    (set! loaded #t))
 	 (mutex-unlock! mutex))))
 
@@ -442,9 +443,9 @@
 	     (if (pred req)
 		 (begin
 		    (mutex-unlock! *autoload-mutex*)
-		    ;; the autoload cannot be removed until read, otherwise
-		    ;; parallel requests to the autoloaded service will raise
-		    ;; a service not found error
+		    ;; the autoload cannot be removed until the weblet
+		    ;; is fully loaded, otherwise parallel requests to the
+		    ;; autoloaded service will raise a service not found error
 		    (autoload-load! (car al) req)
 		    ;; add all the file associated with the autoload in
 		    ;; the service path table (see __hop_service).
@@ -468,7 +469,7 @@
 	 ((null? al)
 	  (mutex-unlock! *autoload-mutex*)
 	  #f)
-	 (((with-access::%autoload (car al) (pred) pred) req)
+	 ((with-access::%autoload (car al) (pred) (pred req))
 	  (mutex-unlock! *autoload-mutex*)
 	  #t)
 	 (else

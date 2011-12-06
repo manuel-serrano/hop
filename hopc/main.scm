@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Dec  2 17:02:03 2011 (serrano)                */
+;*    Last change :  Tue Dec  6 08:03:06 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -217,7 +217,8 @@
 	 (match-case exp
 	    ((module (and (? symbol?) ?name) . ?clauses)
 	     (print "(heap " name)
-	     (print "\n  (")
+	     (print "  ;; library modules")
+	     (print "  (")
 	     (for-each (lambda (c)
 			  (match-case c
 			     ((import . ?modules)

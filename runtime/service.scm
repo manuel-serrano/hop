@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Mon Dec  5 07:30:55 2011 (serrano)                */
+;*    Last change :  Tue Dec  6 05:27:49 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -363,11 +363,6 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    service-filter ...                                               */
-;*    -------------------------------------------------------------    */
-;*    This filter is executes after the AUTOLOAD-FILTER. Hence         */
-;*    when the default service is selected, the entire HOP loop        */
-;*    has to be re-executed in order to properly autoload the          */
-;*    initial weblet.                                                  */
 ;*---------------------------------------------------------------------*/
 (define (service-filter req)
    (when (isa? req http-server-request)

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/html_head.scm             */
+;*    serrano/prgm/project/hop/2.3.x/runtime/html_head.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Nov 11 07:09:46 2011 (serrano)                */
+;*    Last change :  Tue Dec  6 08:47:11 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -175,6 +175,15 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 			   (append (hop-runtime-system)
 				   (hop-runtime-extra)
 				   (list "hop-exception.scm"))))))))
+
+;*---------------------------------------------------------------------*/
+;*    library-path ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (library-path)
+   (let ((venv (getenv "BIGLOOLIB")))
+      (if (not venv)
+	  (bigloo-library-path)
+	  (cons "." (unix-path->list venv)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    head-parse ...                                                   */
@@ -357,7 +366,7 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 	  (if (null? (cdr a))
 	      (error "<HEAD>" (format "Missing ~a value" (car a)) a)
 	      (case (car a)
-		 ((:css :jscript :include :hz)
+		 ((:css :jscript :include :hz :library)
 		  (loop (cdr a) (car a) rts dir path base inl packed els))
 		 ((:favicon)
 		  (if (string? (cadr a))
@@ -415,6 +424,12 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 	      (let ((file (or (find-file/path (car a) path) (car a))))
 		 (loop (cdr a) mode rts dir path base inl packed 
 		       (cons (script (absolute-path file dir) inl) els))))
+	     ((:library)
+	      (let ((file (find-file/path (car a) (library-path))))
+		 (if (not (string? file))
+		     (error "<HEAD>" "Cannot find library file" (car a))
+		     (loop (cdr a) mode rts dir path base inl packed 
+			(cons (script file inl) els)))))
 	     ((:include)
 	      (cond
 		 ((member (car a) incs)

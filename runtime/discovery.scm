@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Mon Dec  5 19:34:49 2011 (serrano)                */
+;*    Last change :  Tue Dec  6 07:35:59 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -121,11 +121,11 @@
 	    (when (=fx (length l) 2)
 	       (let ((svc (cadr l))
 		     (clientport (string->number (car l))))
-		  (when (and (or (string=? svc "*")
-				 (service-exists? svc))
-			     (or (not (=fx clientport (hop-port)))
+		  (when (and (or (not (=fx clientport (hop-port)))
 				 (not discovery-host-ip)
-				 (not (string=? clienthost discovery-host-ip))))
+				 (not (string=? clienthost discovery-host-ip)))
+			     (or (string=? svc "*")
+				 (service-exists? svc)))
 		     (hop-discovery-reply clienthost clientport svc id))))))
       (loop (-fx id 1))))
 

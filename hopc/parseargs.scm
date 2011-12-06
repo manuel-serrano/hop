@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Dec  2 16:24:05 2011 (serrano)                */
+;*    Last change :  Tue Dec  6 08:02:29 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -83,7 +83,7 @@
 	     (hopc-pass-set! 'client-js))
 	    ((("-a" "--afile") ?file (help "Set access file"))
 	     (hopc-access-file-set! file))
-	    ((("-h" "--mkheap") (help "Build a js heap file"))
+	    (("--mkheap" (help "Build a js heap file"))
 	     (hopc-jsheap-set! #t))
 	    (else
 	     (if (string=? else "--")
