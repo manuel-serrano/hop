@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Dec  5 09:01:02 2011 (serrano)                */
+;*    Last change :  Wed Dec  7 14:43:17 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -464,23 +464,23 @@ WebDAV server.]))))))
 	 (cond
 	    (lanp
 	       (print ";; anonymous lan requests")
-	       (print '(hop-authorize-service-hook-set!
-			(lambda (user svc)
-			   (with-access::http-request (current-request) (lanclientp)
+	       (print '(hop-service-access-control-set!
+			(lambda (req svc)
+			   (with-access::http-request req (lanclientp)
 			      lanclienp))))
-	       (print '(hop-authorize-request-hook-set!
-			(lambda (user svc)
-			   (with-access::http-request (current-request) (lanclientp)
+	       (print '(hop-path-access-control-set!
+			(lambda (req path)
+			   (with-access::http-request req (lanclientp)
 			      lanclienp)))))
 	    (localp
 	       (print ";; anonymous local requests")
-	       (print '(hop-authorize-service-hook-set!
-			(lambda (user svc)
-			   (with-access::http-request (current-request) (localclientp)
+	       (print '(hop-service-access-control-set!
+			(lambda (req svc)
+			   (with-access::http-request req (localclientp)
 			      localclienp))))
-	       (print '(hop-authorize-request-hook-set!
-			(lambda (user svc)
-			   (with-access::http-request (current-request) (localclientp)
+	       (print '(hop-path-access-control-set!
+			(lambda (req path)
+			   (with-access::http-request req (localclientp)
 			      localclienp))))
 	       (newline)))))
    (let ((accounts "admin"))

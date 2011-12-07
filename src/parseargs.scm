@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Nov 27 06:46:06 2011 (serrano)                */
+;*    Last change :  Wed Dec  7 14:41:20 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -299,7 +299,9 @@
       
       ;; hoprc
       (if loadp
-	  (parseargs-loadrc rc-file (hop-rc-file))
+	  (begin
+	     (parseargs-loadrc rc-file (hop-rc-file))
+	     (hop-rc-loaded!))
 	  (add-user! "anonymous" 
 	     :services '(home doc epassword wizard hz/list shutdown)
 	     :directories (hop-path)
@@ -397,9 +399,8 @@
 ;*---------------------------------------------------------------------*/
 (define (%hop-load-rc path)
    (when (and (string? path) (file-exists? path))
-      (hop-verb 2 "Loading `" path "'...\n")
+      (hop-verb 2 "Loading \"" path "\"...\n")
       (hop-load path)
-      (hop-rc-loaded!)
       path))
 
 ;*---------------------------------------------------------------------*/
