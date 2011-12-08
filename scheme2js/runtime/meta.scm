@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -11,7 +11,7 @@
 ;*=====================================================================*/
 
 (define (without-META line)
-   (define META-pattern (pregexp "(?:/\*\*\* META)(.*)"))
+   (define META-pattern (pregexp "(?:/[*][*][*] META)(.*)"))
    (cadr (pregexp-match META-pattern line)))
 
 
