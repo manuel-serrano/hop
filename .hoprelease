@@ -1,4 +1,4 @@
 #!/bin/sh
 major=2.3.0
-state=
-minor=
+state=pre
+minor=1
