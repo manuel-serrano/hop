@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sun Dec  4 20:38:40 2011 (serrano)                */
+;*    Last change :  Sun Dec 11 07:16:18 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -80,8 +80,8 @@
 	  ;; an error
 	  (http-get-file-not-found req))
 	 (query
-	    ;; a file with query arguments
-	    (http-get-file-query req))
+	  ;;; a file with query arguments
+	  (http-get-file-query req))
 	 ((is-suffix? abspath ".hop")
 	  ;; hop source code
 	  (http-get-hop req #t))
@@ -108,7 +108,9 @@
 	  (http-get-hop req #f))
 	 (else
 	  ;; a regular file
-	  (http-get-file req #f)))))
+	  (let ((lm (date->rfc2822-date
+		       (seconds->date (file-modification-time abspath)))))
+	     (http-get-file req lm #f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-get-file-not-found ...                                      */
@@ -196,35 +198,46 @@
 ;*    http-get-file/cache ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (http-get-file/cache req)
-   (with-access::http-request req (abspath)
-      (let ((cache (cache-get get-memory-cache abspath)))
-	 (if (isa? cache %http-response)
-	     cache
-	     (let ((resp (http-get-file req #t)))
+   (with-access::http-request req (abspath header)
+      (let ((ce (cache-get get-memory-cache abspath))
+	    (im (http-header-field header if-modified-since:))
+	    (lm (date->rfc2822-date
+		   (seconds->date (file-modification-time abspath)))))
+	 (cond
+	    ((and (string? im) (string=? im lm))
+	     ;; not modified
+	     (instantiate::http-response-string
+		(request req)
+		(start-line "HTTP/1.1 304 Not Modified")
+		(header `((Last-Modified: . ,lm)))
+		(charset (hop-locale))))
+	    ((isa? ce cache-entry)
+	     ;; in memory cache
+	     (with-access::cache-entry ce (value)
+		value))
+	    (else
+	     ;; a new entry
+	     (let ((resp (http-get-file req lm #t)))
 		(cache-put! get-memory-cache abspath resp)
-		resp)))))
+		resp))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-get-file ...                                                */
+;*    -------------------------------------------------------------    */
+;*    The file exists and the request has already been authorized.     */
 ;*---------------------------------------------------------------------*/
-(define (http-get-file req bodyp)
+(define (http-get-file req last-modified::bstring bodyp::bool)
    (with-access::http-request req (abspath query header method timeout)
       (cond
-	 ((pair? (assq 'icy-metadata: header))
-	  (instantiate::http-response-shoutcast
-	     (request req)
-	     (timeout -1)
-	     (start-line "ICY 200 OK")
-	     (header '((Accept-Ranges: . "bytes")))
-	     (bodyp bodyp)
-	     (file abspath)))
 	 ((and (string-suffix? ".gz" abspath) (accept-gzip? header))
 	  ;; send a gzipped file with a mime type corresponding
 	  ;; to the ungzipped file
 	  (instantiate::http-response-file
 	     (request req)
 	     (timeout timeout)
-	     (header '((Content-Encoding: . "gzip") (Accept-Ranges: . "bytes")))
+	     (header `((Last-Modified: . ,last-modified)
+		       (Content-Encoding: . "gzip")
+		       (Accept-Ranges: . "bytes")))
 	     (content-type (mime-type (prefix abspath) "text/plain"))
 	     (charset (hop-locale))
 	     (bodyp bodyp)
@@ -236,17 +249,31 @@
 	  (instantiate::http-response-file
 	     (request req)
 	     (timeout timeout)
-	     (header '((Content-Encoding: . "gzip") (Accept-Ranges: . "bytes")))
+	     (header `((Last-Modified: . ,last-modified)
+		       (Content-Encoding: . "gzip")
+		       (Accept-Ranges: . "bytes")))
 	     (content-type (mime-type abspath "text/plain"))
 	     (charset (hop-locale))
 	     (bodyp bodyp)
 	     (file (string-append abspath ".gz"))))
+	 ((http-header-field header icy-metadata:)
+	  =>
+	  (lambda (icy)
+	     (instantiate::http-response-shoutcast
+		(request req)
+		(timeout -1)
+		(start-line "ICY 200 OK")
+		(header `((Last-Modified: . ,last-modified)
+			  (Accept-Ranges: . "bytes")))
+		(bodyp bodyp)
+		(file abspath))))
 	 (else
 	  ;; send a regular file
 	  (instantiate::http-response-file
 	     (request req)
 	     (timeout timeout)
-	     (header '((Accept-Ranges: . "bytes")))
+	     (header `((Last-Modified: . ,last-modified)
+		       (Accept-Ranges: . "bytes")))
 	     (content-type (mime-type abspath "text/plain"))
 	     (charset (hop-locale))
 	     (bodyp bodyp)

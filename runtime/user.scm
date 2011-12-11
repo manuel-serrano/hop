@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Wed Dec  7 14:36:35 2011 (serrano)                */
+;*    Last change :  Sat Dec 10 09:27:04 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -453,10 +453,11 @@
 ;*---------------------------------------------------------------------*/
 (define (find-hopaccess path)
    (let loop ((p path))
-      (let ((cache (cache-get hopaccess-cache p)))
+      (let ((ce (cache-get hopaccess-cache p)))
 	 (cond
-	    (cache
-	     (when (string? cache) cache))
+	    ((isa? ce cache-entry)
+	     (with-access::cache-entry ce (value)
+		(when (string? value) value)))
 	    ((string=? p "/")
 	     (cache-put! hopaccess-cache path #t)
 	     #f)

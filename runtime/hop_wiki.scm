@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  6 07:37:32 2006                          */
-;*    Last change :  Tue Nov 29 10:02:36 2011 (serrano)                */
+;*    Last change :  Sat Dec 10 09:24:27 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The wiki markup                                                  */
@@ -53,11 +53,10 @@
 ;*    wiki-cache->hop ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (wiki-cache->hop wiki-cache src syntax charset)
-   (let ((cache (cache-get wiki-cache src)))
-      (if (string? cache)
-	  (with-input-from-file cache
-	     (lambda ()
-		(read-string)))
+   (let ((ce (cache-get wiki-cache src)))
+      (if (isa? cache cache-entry)
+	  (with-access::cache-entry ce (value)
+	     (with-input-from-file value read-string))
 	  (let* ((wiki (wiki-file->hop src :syntax syntax :charset charset))
 		 (cache (cache-put! wiki-cache src wiki)))
 	     (if (string? cache)

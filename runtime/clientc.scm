@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Mon Dec  5 18:14:01 2011 (serrano)                */
+;*    Last change :  Sat Dec 10 20:03:08 2011 (serrano)                */
 ;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -28,7 +28,8 @@
 	    __hop_misc
 	    __hop_mime
 	    __hop_types
-	    __hop_hop)
+	    __hop_hop
+	    __hop_http-lib)
    
    (export  (class clientc
 	       (filec::procedure read-only)
@@ -130,31 +131,47 @@
 ;*    clientc-response ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (clientc-response req path)
-   (with-access::http-request req (method)
-      (let ((cache (cache-get clientc-cache path))
+   (with-access::http-request req (method header)
+      (let ((ce (cache-get clientc-cache path))
 	    (mime (hop-javascript-mime-type)))
-	 (if (string? cache)
+	 (if (isa? ce cache-entry)
 	     ;; since we are serving a cached answer, we also have
 	     ;; to check that the client is allowed to the requested
 	     ;; file, i.e., the non-compiled file.
-	     (instantiate::http-response-file
-		(request req)
-		(charset (hop-locale))
-		(content-type mime)
-		(bodyp (eq? method 'GET))
-		(header '((Accept-Ranges: . "bytes")))
-		(file cache))
+	     (with-access::cache-entry ce (value signature)
+		(let ((etag (http-header-field header if-none-match:))
+		      (hd `((ETag: . ,signature))))
+		   (if (and (string? etag)
+			    (=elong (string->elong etag) signature))
+		       (instantiate::http-response-string
+			  (request req)
+			  (start-line "HTTP/1.1 304 Not Modified")
+			  (content-type mime)
+			  (header hd)
+			  (charset (hop-locale)))
+		       (instantiate::http-response-file
+			  (request req)
+			  (charset (hop-locale))
+			  (content-type mime)
+			  (bodyp (eq? method 'GET))
+			  (header (cons '(Accept-Ranges: . "bytes") hd))
+			  (file value)))))
 	     (let ((m (eval-module)))
 		(unwind-protect
 		   (with-access::clientc (hop-clientc) (filec)
 		      (let* ((jscript (filec path '()))
-			     (cache (cache-put! clientc-cache path jscript)))
+			     (ce (cache-put! clientc-cache path jscript))
+			     (hd (if (isa? ce cache-entry)
+				     (with-access::cache-entry ce (signature)
+					(cons `(ETag: . ,signature)
+					   '((Accept-Ranges: . "bytes"))))
+				     '((Accept-Ranges: . "bytes")))))
 			 (instantiate::http-response-string
 			    (request req)
 			    (charset (hop-locale))
 			    (content-type mime)
 			    (bodyp (eq? method 'GET))
-			    (header '((Accept-Ranges: . "bytes")))
+			    (header hd)
 			    (body jscript))))
 		   (eval-module-set! m)))))))
 

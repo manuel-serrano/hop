@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/http_response.scm         */
+;*    serrano/prgm/project/hop/2.3.x/runtime/http_response.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sat Nov 19 18:50:54 2011 (serrano)                */
+;*    Last change :  Sun Dec 11 07:18:26 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -353,7 +353,7 @@
 	  (header header))
        socket))
 
-   (define (response-header conn beg end size p r)
+   (define (response-header conn beg end size p r file)
       (with-access::http-response-file r (start-line header content-type charset server request)
 	 (with-access::http-request request (http)
 	    ;; partial content header
@@ -363,9 +363,11 @@
 	    (http-write-line p "Connection: " conn)
 	    (http-write-content-type p content-type charset)
 	    (http-write-line-string p "Server: " server)
-	    (let ((dt (date->rfc2822-date (current-date))))
-	       (http-write-line p "Date: " dt)
-	       (http-write-line p "Last-Modified: " dt))
+	    (let ((dtc (date->rfc2822-date (current-date))))
+	       ;; don't need to explicitly display the last-modified
+	       ;; header entry because it is contained in the
+	       ;; pre-computed header response
+	       (http-write-line p "Date: " dtc))
 	    ;; content-length
 	    (display "Content-Length: " p)
 	    (display-elong (+elong #e1 (-elong end beg)) p)
@@ -406,13 +408,13 @@
 			       '((content-range: . "*"))))
 			 (output-timeout-set! p timeout)
 			 ;; the header
-			 (response-header connection beg end size p r)
+			 (response-header connection beg end size p r file)
 			 ;; capture dumping
 			 (let ((cp (hop-capture-port)))
 			    (when (output-port? cp)
 			       (display "----------------------------------------------------------\n" cp)
 			       (fprintf cp "http://~a:~a~a\n\n" host port path)
-			       (response-header connection beg end size cp r)
+			       (response-header connection beg end size cp r file)
 			       (flush-output-port cp)))
 			 ;; the body
 			 (with-trace 4 "http-response-file"
@@ -482,16 +484,15 @@
 (define-method (http-response r::http-response-file socket)
    (with-trace 3 "http-response::http-response-file"
       (with-access::http-response-file r (start-line header file request)
-	 (cond
-	    ((directory? file)
-	     (http-response (directory->response r file) socket))
-	    ((http-header-field
-		(with-access::http-request request (header) header) range:)
-	     =>
-	     (lambda (range)
-		(http-response-range range r socket)))
-	    (else
-	     (http-response-regular-file r socket))))))
+	 (with-access::http-request request (header)
+	    (cond
+	       ((directory? file)
+		(http-response (directory->response r file) socket))
+	       ((http-header-field header range:)
+		=>
+		(lambda (range) (http-response-range range r socket)))
+	       (else
+		(http-response-regular-file r socket)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-cgi-env ...                                                  */

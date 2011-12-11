@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/cache.scm                 */
+;*    serrano/prgm/project/hop/2.3.x/runtime/cache.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Thu Nov 10 17:38:11 2011 (serrano)                */
+;*    Last change :  Sat Dec 10 19:13:39 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
@@ -57,7 +57,7 @@
 	   (generic cache-clear ::cache)
 	   (generic cache->list ::cache)
 	   (generic cache-get::obj ::cache ::bstring)
-	   (generic cache-put! ::cache ::bstring ::obj)))
+	   (generic cache-put!::obj ::cache ::bstring ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *all-caches* ...                                                 */
@@ -178,7 +178,7 @@
       (let ((ce (hashtable-get %table path)))
 	 (cond
 	    ((validity ce path)
-	     (with-access::cache-entry ce (value %prev %next)
+	     (with-access::cache-entry ce (%prev %next)
 		(unless (eq? %head ce)
 		   (when %prev
 		      (if %next
@@ -197,10 +197,10 @@
 			 (set! %prev ce))
 		      (set! %head ce)))
 		(mutex-unlock! %mutex)
-		value))
+		ce))
 	    ((isa? ce cache-entry)
 	     (hashtable-remove! %table path)
-	     (with-access::cache-entry ce (value %prev %next)
+	     (with-access::cache-entry ce (%prev %next)
 		(if %prev
 		    (with-access::cache-entry %prev ((next %next))
 		       (set! next %next))
@@ -225,7 +225,7 @@
 	 (cond
 	    ((and (validity ce path)
 		  (with-access::cache-entry ce (value) (file-exists? value)))
-	     (with-access::cache-entry ce (value %prev %next)
+	     (with-access::cache-entry ce (%prev %next)
 		(when %prev
 		   (if %next
 		       (begin
@@ -243,7 +243,7 @@
 		      (set! %prev ce))
 		   (set! %head ce))
 		(mutex-unlock! %mutex)
-		value))
+		ce))
 	    ((isa? ce cache-entry)
 	     (hashtable-remove! %table path)
 	     (with-access::cache-entry ce (value %prev %next)
@@ -299,12 +299,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    cache-put! ::cache ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-generic (cache-put! c::cache upath::bstring value::obj))
+(define-generic (cache-put!::cache-entry c::cache upath::bstring value::obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-put! ::cache-disk ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (cache-put! c::cache-disk upath::bstring value)
+(define-method (cache-put!::cache-entry c::cache-disk upath::bstring value)
    (with-access::cache-disk c (%table %head %tail %mutex
 				      max-entries current-entries uid
 				      path max-file-size out)
@@ -335,7 +335,7 @@
 	    (set! uid (+fx 1 uid))
 	    (cache-add-entry! c ce)
 	    (mutex-unlock! %mutex)
-	    cpath))))
+	    ce))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-put! ::cache-memory ...                                    */
@@ -354,7 +354,7 @@
 	    (mutex-lock! %mutex)
 	    (cache-add-entry! c ce)
 	    (mutex-unlock! %mutex)
-	    value))))
+	    ce))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-add-entry! ::cache ...                                     */

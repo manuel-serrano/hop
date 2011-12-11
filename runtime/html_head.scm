@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Dec  6 08:47:11 2011 (serrano)                */
+;*    Last change :  Sat Dec 10 19:29:06 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -119,9 +119,11 @@ function hop_realm() { return \"" (hop-realm) "\"; }
    (cond
       ((and (isa? (current-request) http-request)
 	    (or (substring-at? p "http://" 0) (substring-at? p "https://" 0)))
-       (preload-http p))
+       (preload-http p)
+       #unspecified)
       ((and (file-exists? p) (char=? (string-ref p 0) (file-separator)))
-       (hop-get-hss p))
+       (hop-get-hss p)
+       #unspecified)
       ((and base (>fx (string-length p) 0) (not (char=? (string-ref p 0) #\/)))
        (preload-css (string-append base p) #f))))
 

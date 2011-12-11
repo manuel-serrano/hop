@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/html_img.scm              */
+;*    serrano/prgm/project/hop/2.3.x/runtime/html_img.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Fri Nov 11 07:10:30 2011 (serrano)                */
+;*    Last change :  Sat Dec 10 09:25:10 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -81,9 +81,10 @@
 (define (cache-memory-inline-image path)
    (and (file-exists? path)
 	(<elong (file-size path) #e4096)
-	(let ((cache (cache-get img-memory-cache path)))
-	   (if (string? cache)
-	       cache
+	(let ((ce (cache-get img-memory-cache path)))
+	   (if (isa? ce cache-entry)
+	       (with-access::cache-entry ce (value)
+		  value)
 	       (let ((img (img-base64-encode path)))
 		  (cache-put! img-memory-cache path img)
 		  img)))))
@@ -92,9 +93,10 @@
 ;*    cache-disk-inline-image ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (cache-disk-inline-image path)
-   (let ((cache (cache-get img-disk-cache path)))
-      (if (string? cache)
-	  (with-input-from-file cache read-string)
+   (let ((ce (cache-get img-disk-cache path)))
+      (if (isa? ce cache-entry)
+	  (with-access::cache-entry ce (value)
+	     (with-input-from-file value read-string))
 	  (let ((img (img-base64-encode path)))
 	     (cache-put! img-disk-cache path img)
 	     img))))

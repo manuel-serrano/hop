@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/svg.scm                   */
+;*    serrano/prgm/project/hop/2.3.x/runtime/svg.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Fri Nov 11 07:11:04 2011 (serrano)                */
+;*    Last change :  Sat Dec 10 09:25:47 2011 (serrano)                */
 ;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -88,7 +88,10 @@
 ;*---------------------------------------------------------------------*/
 (define (svg-img-cache-get name)
    (when svg-img-tree-cache
-      (cache-get svg-img-tree-cache name)))
+      (let ((ce (cache-get svg-img-tree-cache name)))
+	 (when (isa? ce cache-entry)
+	    (with-access::cache-entry ce (value)
+	       value)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-svg ...                                          */

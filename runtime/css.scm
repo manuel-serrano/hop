@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/css.scm                   */
+;*    serrano/prgm/project/hop/2.3.x/runtime/css.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Nov 16 11:47:01 2011 (serrano)                */
+;*    Last change :  Sat Dec 10 19:55:56 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -31,7 +31,8 @@
 	    __hop_param
 	    __hop_mime
 	    __hop_misc
-	    __hop_user)
+	    __hop_user
+	    __hop_http-lib)
 
    (static  (class css-ruleset-unfold
 	       (ruleset+::pair read-only)))
@@ -338,9 +339,10 @@
 (define (hss->css path)
    (with-lock hss-mutex
       (lambda ()
-	 (let ((cache (cache-get hss-cache path)))
-	    (if (string? cache)
-		(with-input-from-file cache read-string)
+	 (let ((ce (cache-get hss-cache path)))
+	    (if (isa? ce cache-entry)
+		(with-access::cache-entry ce (value)
+		   (with-input-from-file value read-string))
 		(let ((hss (hop-load-hss path)))
 		   (cache-put! hss-cache path hss)
 		   (let ((p (open-output-string)))
@@ -367,10 +369,29 @@
 ;*---------------------------------------------------------------------*/
 (define (hss-response req path)
    (if (authorized-path? req path)
-       (with-access::http-request req (method)
+       (with-access::http-request req (method header)
 	  (let ((hss (hop-get-hss path))
 		(mime (mime-type path "text/css")))
 	     (cond
+		((isa? hss cache-entry)
+		 (with-access::cache-entry hss (value signature)
+		    (let ((etag (http-header-field header if-none-match:))
+			  (hd `((ETag: . ,signature))))
+		       (if (and (string? etag)
+				(=elong (string->elong etag) signature))
+			   (instantiate::http-response-string
+			      (request req)
+			      (start-line "HTTP/1.1 304 Not Modified")
+			      (content-type mime)
+			      (header hd)
+			      (charset (hop-locale)))
+			   (instantiate::http-response-file
+			      (request req)
+			      (charset (hop-locale))
+			      (content-type mime)
+			      (bodyp (eq? method 'GET))
+			      (header hd)
+			      (file value))))))
 		((string? hss)
 		 (instantiate::http-response-file
 		    (request req)
@@ -379,13 +400,13 @@
 		    (bodyp (eq? method 'GET))
 		    (file hss)))
 		(hss
-		   (instantiate::http-response-procedure
-		      (request req)
-		      (charset (hop-locale))
-		      (content-type mime)
-		      (bodyp (eq? method 'GET))
-		      (proc (lambda (p)
-			       (css-write hss p)))))
+                   (instantiate::http-response-procedure
+                      (request req)
+                      (charset (hop-locale))
+                      (content-type mime)
+                      (bodyp (eq? method 'GET))
+                      (proc (lambda (p)
+                               (css-write hss p)))))
 		(else
 		 (http-file-not-found path)))))
        (user-access-denied req)))
@@ -396,13 +417,13 @@
 (define (hop-get-hss path)
    (with-lock hss-mutex
       (lambda ()
-	 (let ((cache (cache-get hss-cache path)))
-	    (if (string? cache)
-		cache
+	 (let ((ce (cache-get hss-cache path)))
+	    (if (isa? ce cache-entry)
+		ce
 		(let* ((hss (hop-load-hss path))
-		       (cache (cache-put! hss-cache path hss)))
-		   (if (string? cache)
-		       cache
+		       (ce (cache-put! hss-cache path hss)))
+		   (if (isa? ce cache-entry)
+		       ce
 		       hss)))))))
 
 ;*---------------------------------------------------------------------*/
