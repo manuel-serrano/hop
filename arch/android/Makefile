@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.2.x/arch/android/Makefile             */
+#*    serrano/prgm/project/hop/2.3.x/arch/android/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Fri May 13 13:51:48 2011 (serrano)                */
+#*    Last change :  Tue Dec 13 08:44:53 2011 (serrano)                */
 #*    Copyright   :  2010-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -20,8 +20,8 @@ do: build
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
-ANDROID_BUILD = Android.mk build.xml default.properties hop.keystore \
-  AndroidManifest.xml.in local.properties.in build.properties.in
+ANDROID_BUILD = Android.mk build.xml project.properties hop.keystore \
+  AndroidManifest.xml.in local.properties.in and.properties.in proguard.cfg
 
 ANDROID_JNI = jni/Android.mk jni/termExec.cpp
 
