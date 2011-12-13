@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Fri Dec  2 19:05:02 2011 (serrano)                */
+;*    Last change :  Tue Dec 13 16:19:37 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -35,6 +35,12 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (obj->javascript obj op::output-port isrep)
    (cond
+      ((eq? obj #t)
+       (display (clientc-true) op))
+      ((eq? obj #f)
+       (display (clientc-false) op))
+      ((eq? obj #unspecified)
+       (display (clientc-unspecified) op))
       ((procedure? obj)
        (if (service? obj)
 	   (obj->javascript (procedure-attr obj) op isrep)
@@ -43,12 +49,6 @@
 		  obj)))
       ((date? obj)
        (fprintf op "new Date( ~a000 )" (date->seconds obj)))
-      ((eq? obj #t)
-       (display (clientc-true) op))
-      ((eq? obj #f)
-       (display (clientc-false) op))
-      ((eq? obj #unspecified)
-       (display (clientc-unspecified) op))
       (else
        (clientc-compile obj op isrep))))
 
@@ -117,7 +117,7 @@
 		  (display "," op)
 		  (proc (vector-ref vec i) op)
 		  (loop (+fx i 1)))))))
-
+   
    (define (display-fields fields op)
       (display "{ " op)
       (display-seq fields op (lambda (f op)
@@ -127,17 +127,21 @@
 				(obj->javascript
 				   ((class-field-accessor f) obj) op isrep)))
       (display "}" op))
-      
-
-   (let* ((klass (object-class obj))
-	  (fields (class-all-fields klass)))
-      (display "hop_js_to_object( \""  op)
-      (display (class-name klass) op)
-      (display "\", " op)
-      (display (class-hash klass) op)
-      (display ", " op)
-      (display-fields fields op)
-      (display ")" op)))
+   
+   (let ((klass (object-class obj)))
+      (if (nil? obj)
+	  (begin
+	     (display "sc_class_nil(sc_class_exists(sc_string2symbol(sc_jsstring2string(\"" op)
+	     (display (class-name klass) op)
+	     (display "\"))))" op))
+	  (let ((fields (class-all-fields klass)))
+	     (display "hop_js_to_object(\""  op)
+	     (display (class-name klass) op)
+	     (display "\", " op)
+	     (display (class-hash klass) op)
+	     (display ", " op)
+	     (display-fields fields op)
+	     (display ")" op)))))
 
 ;* (define-method (obj->javascript-old-25nov2011 obj::object op isrep) */
 ;*                                                                     */

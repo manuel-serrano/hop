@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 10:52:12 2011                          */
-;*    Last change :  Thu Dec  1 13:37:08 2011 (serrano)                */
+;*    Last change :  Tue Dec 13 14:38:01 2011 (serrano)                */
 ;*    Copyright   :  2007011-2011 Florian Loitsch, Manuel Serrano      */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -355,7 +355,7 @@
 	     `(begin
 		 ,(e (loc-attach
 			`(define ,(cons* id a0 args)
-			    ,(if (list? body)
+			    ,(if (list? args)
 				 `((-> ,aname ,gname)
 				   ,aname ,@(map id-of-id args))
 				 `(apply (-> ,aname ,gname)

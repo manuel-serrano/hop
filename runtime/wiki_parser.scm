@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Nov 28 11:24:34 2011 (serrano)                */
+;*    Last change :  Tue Dec 13 14:00:58 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -559,8 +559,8 @@
        (ignore))
 
       ;; hyphen
-      ((: #\\ #\\)
-       (add-expr! ((wiki-syntax-hyphen syn) "\\\\"))
+      ((: #\\ #\-)
+       (add-expr! ((wiki-syntax-hyphen syn) "\\-"))
        (ignore))
 
       ;; paragraphs

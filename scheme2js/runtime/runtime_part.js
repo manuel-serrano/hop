@@ -2273,6 +2273,21 @@ function sc_hashtableForEach(ht, f) {
     }
 }
 
+/*** META ((export #t) (arity #t)) */
+function sc_hashtableMap(ht, f) {
+   var hd = cons( null, null );
+   var res = hd;
+   
+   for (var v in ht) {
+      if (ht[v] instanceof sc_HashtableElement) {
+	 res.cdr = cons( f(ht[v].key, ht[v].val), null );
+	 res = res.cdr;
+      }
+   }
+
+   return hd.cdr;
+}
+
 /*** META ((export hashtable-contains?)
            (arity #t)
            (peephole (hole 2 "sc_hash(" 1 ") in " 0)))
@@ -2469,6 +2484,12 @@ function sc_class_creator( clazz ) {
 
       return o;
    }
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_isNil( o ) {
+   var clazz = sc_object_class( o );
+   return sc_class_nil( clazz ) === o;
 }
 
 function sc_Field( name, getter, setter, ronly, virtual, info, def, type ) {
