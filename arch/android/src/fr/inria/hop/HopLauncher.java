@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../hop/2.2.x/arch/android/src/fr/inria/hop/HopLauncher.java     */
+/*    .../hop/2.3.x/arch/android/src/fr/inria/hop/HopLauncher.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Mon Jan 17 17:24:24 2011 (serrano)                */
+/*    Last change :  Tue Dec 13 07:52:58 2011 (serrano)                */
 /*    Copyright   :  2010-11 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -327,13 +327,9 @@ public class HopLauncher extends Activity {
    }
 
    public void onDestroy() {
-      Log.i( "HopLauncher", "destroying.1..." );
       hop.kill();
-      Log.i( "HopLauncher", "destroying.2..." );
       hopdroid.kill();
-      Log.i( "HopLauncher", "destroying.3..." );
       super.onDestroy();
-      Log.i( "HopLauncher", "destroying.4..." );
    }
 
    protected void onActivityResult( int reqcode, int rescode, Intent intent ) {

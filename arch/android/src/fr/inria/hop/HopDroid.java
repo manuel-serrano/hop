@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../hop/2.2.x/arch/android/src/fr/inria/hop/HopDroid.java        */
+/*    .../hop/2.3.x/arch/android/src/fr/inria/hop/HopDroid.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed May 11 10:27:34 2011 (serrano)                */
+/*    Last change :  Tue Dec 13 08:08:48 2011 (serrano)                */
 /*    Copyright   :  2010-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -55,7 +55,7 @@ public class HopDroid extends Thread {
       hopdroid = this;
 
       try {
-	 Log.i( "HopDroid", "starting servers port=" + p + ", " + (p+1) );
+	 Log.i( "HopDroid", "starting servers port=" + p + ", " + (p + 1) );
 	 try {
 	    serv1 = new ServerSocket( p );
 	 } catch( Exception e ) {
@@ -202,7 +202,6 @@ public class HopDroid extends Thread {
       }
    }
    
-   
    // handle a session with one client connected to the HopDroid server
    private void server( Socket sock ) {
       Log.i( "HopDroid", "server " + sock );
@@ -243,6 +242,7 @@ public class HopDroid extends Thread {
 	 } catch( IOException _ ) {
 	    ;
 	 }
+	 kill();
       }
    }
 	    
@@ -300,6 +300,7 @@ public class HopDroid extends Thread {
 	 } catch( IOException _ ) {
 	    ;
 	 }
+	 kill();
       }
    }
 
