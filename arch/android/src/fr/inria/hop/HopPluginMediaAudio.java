@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Tue Dec 13 08:19:33 2011 (serrano)                */
+/*    Last change :  Tue Dec 13 11:19:54 2011 (serrano)                */
 /*    Copyright   :  2011 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -220,13 +220,13 @@ public class HopPluginMediaAudio extends HopPlugin {
 
    private void queryArtistAlbum( OutputStream op, String artist )
       throws IOException {
+      Log.d( "HopPluginMediaAudio", "querying ArtistAlbum: [" + artist + "]");
       ContentResolver cr = activity.getContentResolver();
       Cursor cur = cr.query( Albums.EXTERNAL_CONTENT_URI,
 			     ALBUM_LOOKUP_PROJECTION,
-			     Albums.ARTIST + "='" + artist + "'", 
-			     null,
+			     Albums.ARTIST + "=?", 
+			     new String[] { artist },
 			     null );
-      Log.d( "HopPluginMediaAudio", "querying ArtistAlbum: [" + artist + "]");
       Log.d( "HopPluginMediaAudio", "cur=" + (cur == null ? "null" : "pas-null") );
       synchronized( op ) {
 	 if( cur == null ) {
