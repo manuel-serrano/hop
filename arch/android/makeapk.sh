@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Wed Nov 23 08:06:08 2011 (serrano)                */
+#*    Last change :  Tue Dec 13 08:51:59 2011 (serrano)                */
 #*    Copyright   :  2010-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -220,14 +220,14 @@ fi
 #*---------------------------------------------------------------------*/
 #*    apk build                                                        */
 #*---------------------------------------------------------------------*/
-for p in local.properties build.properties; do
+for p in local.properties ant.properties; do
   cat $basedir/$p.in \
     | sed -e "s|@ANDROIDSDK@|$ANDROIDSDK|" \
           -e "s|@BASEDIR@|$basedir|" \
     > $android/$p || exit 1
 done
 
-for p in build.xml default.properties Android.mk; do \
+for p in build.xml project.properties Android.mk; do \
   cp $basedir/$p $android
 done
 
