@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Tue Dec 13 11:19:54 2011 (serrano)                */
+/*    Last change :  Tue Dec 13 11:43:50 2011 (serrano)                */
 /*    Copyright   :  2011 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -101,6 +101,14 @@ public class HopPluginMediaAudio extends HopPlugin {
       return;
    }
 
+   private static byte[] escapeBytes( String s ) {
+      if( s.indexOf( '\\' ) > 0 ) {
+	 return s.replace( "'", "\\'" ).getBytes();
+      } else {
+	 return s.getBytes();
+      }
+   }
+   
    private void queryGenres( OutputStream op ) throws IOException {
       ContentResolver cr = activity.getContentResolver();
       Cursor cur = cr.query( Genres.EXTERNAL_CONTENT_URI,
@@ -120,7 +128,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 		  
 		  Log.d( "HopPluginMediaAudio", "querying genre: [" + genre + "]");
 		  op.write( "\"".getBytes() );
-		  op.write( genre.getBytes() );
+		  op.write( escapeBytes( genre ) );
 		  op.write( "\" ".getBytes() );
 	       } while( cur.moveToNext() );
 	    }
@@ -147,7 +155,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 	       do {
 		  Log.d( "HopPluginMediaAudio", "querying artist: [" + cur.getString( i ) + "]");
 		  op.write( "\"".getBytes() );
-		  op.write( cur.getString( i ).getBytes() );
+		  op.write( escapeBytes( cur.getString( i ) ) );
 		  op.write( "\" ".getBytes() );
 	       } while( cur.moveToNext() );
 	       
@@ -162,8 +170,8 @@ public class HopPluginMediaAudio extends HopPlugin {
       ContentResolver cr = activity.getContentResolver();
       Cursor cur = cr.query( Media.EXTERNAL_CONTENT_URI,
 			     MEDIA_LOOKUP_PROJECTION,
-			     Media.ALBUM + "='" + album + "'",
-			     null,
+			     Media.ALBUM + "=?",
+			     new String[] { album },
 			     null );
       Log.d( "HopPluginMediaAudio", "querying album: " + album + "..." );
       synchronized( op ) {
@@ -180,34 +188,26 @@ public class HopPluginMediaAudio extends HopPlugin {
 	       int iv = cur.getColumnIndex( Media.ALBUM );
 	       int im = cur.getColumnIndex( Media.MIME_TYPE );
 	       do {
-		  Log.d( "HopPluginMediaAudio", "querying album: file=" + cur.getString( ip )
-			 + ", pos=" + cur.getString( in )
-			 + ", id=" + cur.getString( in )
-			 + ", mime-type=" + cur.getString( im )
-			 + ", artist=" + cur.getString( ia )
-			 + ", title=" + cur.getString( it )
-			 + ", album=" + cur.getString( iv )
-			 + "]");
 		  op.write( "(file: \"".getBytes() );
-		  op.write( cur.getString( ip ).getBytes() );
+		  op.write( escapeBytes( cur.getString( ip ) ) );
 		  op.write( "\" ".getBytes() );
 		  op.write( "pos: ".getBytes() );
 		  op.write( cur.getString( in ).getBytes() );
 		  op.write( " ".getBytes() );
 		  op.write( "id: ".getBytes() );
-		  op.write( cur.getString( in ).getBytes() );
+		  op.write( escapeBytes( cur.getString( in ) ) );
 		  op.write( " ".getBytes() );
 		  op.write( "mime-type: ".getBytes() );
-		  op.write( cur.getString( im ).getBytes() );
+		  op.write( escapeBytes( cur.getString( im ) ) );
 		  op.write( " ".getBytes() );
 		  op.write( "artist: \"".getBytes() );
-		  op.write( cur.getString( ia ).getBytes() );
+		  op.write( escapeBytes( cur.getString( ia ) ) );
 		  op.write( "\" ".getBytes() );
 		  op.write( "title: \"".getBytes() );
-		  op.write( cur.getString( it ).getBytes() );
+		  op.write( escapeBytes( cur.getString( it ) ) );
 		  op.write( "\" ".getBytes() );
 		  op.write( "album: \"".getBytes() );
-		  op.write( cur.getString( iv ).getBytes() );
+		  op.write( escapeBytes( cur.getString( iv ) ) );
 		  op.write( "\") ".getBytes() );
 	       } while( cur.moveToNext() );
 	       
@@ -240,7 +240,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 	       do {
 		  Log.d( "HopPluginMediaAudio", "ALBUM=" + cur.getString( j )    );
 		  op.write( "\"".getBytes() );
-		  op.write( cur.getString( j ).getBytes() );
+		  op.write( escapeBytes( cur.getString( j )) );
 		  op.write( "\" ".getBytes() );
 	       } while( cur.moveToNext() );
 	       
@@ -268,8 +268,8 @@ public class HopPluginMediaAudio extends HopPlugin {
       ContentResolver cr = activity.getContentResolver();
       Cursor cur = cr.query( Genres.EXTERNAL_CONTENT_URI,
 			     GENRE_LOOKUP_PROJECTION,
-			     Genres.NAME + "='" + genre + "'", 
-			     null,
+			     Genres.NAME + "=?",
+			     new String[] { genre },
 			     null );
       Log.d( "hopPluginMediaAudio", "queryGenreArtist genre=\"" + genre + "\"" );
       synchronized( op ) {
@@ -301,7 +301,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 
 		     if( !artist.equals( cartist ) ) {
 			op.write( "\"".getBytes() );
-			op.write( artist.getBytes() );
+			op.write( escapeBytes( artist ) );
 			op.write( "\" ".getBytes() );
 			cartist = artist;
 		     }
