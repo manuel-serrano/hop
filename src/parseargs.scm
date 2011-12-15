@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Dec  7 14:41:20 2011 (serrano)                */
+;*    Last change :  Thu Dec 15 18:09:25 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -174,6 +174,10 @@
 	  (hop-enable-discovery-set! #f))
 	 (("--discovery-port" ?port (help (format "Disocvery event port number [~s]" dp)))
 	  (set! dp (string->integer port)))
+	 (("--zeroconf" (help "Enable zeroconf support"))
+	  (hop-enable-zeroconf-set! #t))
+	 (("--no-zeroconf" (help "Disable zeroconf support (default)"))
+	  (hop-enable-zeroconf-set! #f))
 	 ((("-x" "--xml-backend") ?ident
 				  (help (format "Set XML backend [~s]"
 					   (with-access::xml-backend (hop-xml-backend)

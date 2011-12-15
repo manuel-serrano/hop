@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/make_lib.scm              */
+;*    serrano/prgm/project/hop/2.3.x/runtime/make_lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Wed Jun 29 10:39:24 2011 (serrano)                */
+;*    Last change :  Thu Dec 15 09:57:50 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -62,7 +62,8 @@
            __hop_wiki-toc
 	   __hop_hz
 	   __hop_security
-	   __hop_discovery)
+	   __hop_discovery
+	   __hop_zeroconf)
 	   
    (eval   (export-all)
 

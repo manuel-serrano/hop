@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/src/hop_param.scm                 */
+;*    serrano/prgm/project/hop/2.3.x/src/hop_param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Jun 26 16:16:38 2011 (serrano)                */
+;*    Last change :  Thu Dec 15 18:09:15 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -99,7 +99,10 @@
 	    (hop-user-set! ::obj)
 
 	    (hop-preload-services::pair-nil)
-	    (hop-preload-services-set! ::pair-nil))
+	    (hop-preload-services-set! ::pair-nil)
+
+	    (hop-enable-zeroconf::bool)
+	    (hop-enable-zeroconf-set! ::bool))
 
    (eval    (export-exports)))
 
@@ -331,3 +334,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-preload-services
    '())
+
+;*---------------------------------------------------------------------*/
+;*    hop-enable-zeroconf ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-enable-zeroconf
+   #f)

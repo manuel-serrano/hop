@@ -2275,12 +2275,12 @@ function sc_hashtableForEach(ht, f) {
 
 /*** META ((export #t) (arity #t)) */
 function sc_hashtableMap(ht, f) {
-   var hd = cons( null, null );
+   var hd = sc_cons( null, null );
    var res = hd;
    
    for (var v in ht) {
       if (ht[v] instanceof sc_HashtableElement) {
-	 res.cdr = cons( f(ht[v].key, ht[v].val), null );
+	 res.cdr = sc_cons( f(ht[v].key, ht[v].val), null );
 	 res = res.cdr;
       }
    }

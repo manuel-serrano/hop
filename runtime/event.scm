@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Dec  5 07:44:28 2011 (serrano)                */
+;*    Last change :  Thu Dec 15 18:08:21 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -94,7 +94,7 @@
 ;*---------------------------------------------------------------------*/
 (define debug-ajax #f)
 (define debug-ajax-buffer #f)
-(define debug-websocket #f)
+(define debug-websocket #t)
 (define debug-multipart #f)
 (define debug-flash #f)
 
@@ -502,7 +502,7 @@
 	 (when debug-websocket
 	    (tprint "websocket-register, protocol-version: " version))
 	 (let ((resp (case (string->integer version)
-			((7 8 9 10)
+			((7 8 9 10 13)
 			 (websocket-hybi-protocol header req))
 			(else
 			 (websocket-hixie-protocol header req)))))

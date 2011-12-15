@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.2.x/runtime/Makefile                  */
+#*    serrano/prgm/project/hop/2.3.x/runtime/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Nov 18 18:42:24 2011 (serrano)                */
+#*    Last change :  Thu Dec 15 09:13:23 2011 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -47,7 +47,7 @@ _OBJECTS = param misc priv types read module \
            http_error http_filter \
            hop_inline \
            event color weblets preferences expanders \
-           security discovery xdomain
+           security discovery xdomain zeroconf
 
 OBJECTS = $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS = o/make_lib.o
@@ -69,7 +69,8 @@ INCLUDES = http_lib.sch \
            prefs.sch prefs_expd.sch  \
            service.sch service_expd.sch \
            enable_thread.sch disable_thread.sch \
-           wiki_syntax.sch wiki_parser.sch
+           wiki_syntax.sch wiki_parser.sch \
+           zeroconf_avahi.sch zeroconf_dummy.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -119,52 +120,60 @@ o/thread.o thread.class: enable-thread.sch disable-thread.sch
 #*---------------------------------------------------------------------*/
 #*    Dependencies ...                                                 */
 #*---------------------------------------------------------------------*/
-o/http_filter.o ./http_filter.class: http_lib.sch 
-o/param.o param.class: param.sch 
-o/clientc.o ./clientc.class: xml.sch service.sch 
-o/clientc.o clientc.class: xml.sch service.sch 
-o/param.o ./param.class: param.sch 
-o/html_head.o ./html_head.class: xml.sch 
-o/weblets.o ./weblets.class: xml.sch 
-o/weblets.o weblets.class: xml.sch 
-o/http_response.o ./http_response.class: http_lib.sch 
-o/hop_inline.o ./hop_inline.class: xml.sch 
-o/misc.o ./misc.class: param.sch 
-o/http_remote.o ./http_remote.class: http_lib.sch 
-o/configure.o ./configure.class: configure_noarch.sch 
-o/http_lib.o ./http_lib.class: http_lib.sch 
-o/event.o event.class: xml.sch service.sch param.sch 
-o/prefs.o prefs.class: xml.sch service.sch 
-o/html_head.o html_head.class: xml.sch 
-o/http_filter.o http_filter.class: http_lib.sch 
-o/html_base.o ./html_base.class: param.sch xml.sch 
-o/misc.o misc.class: param.sch 
 o/http_error.o ./http_error.class: xml.sch 
-o/html_img.o ./html_img.class: param.sch xml.sch 
-o/prefs.o ./prefs.class: xml.sch service.sch 
-o/http_webdav.o http_webdav.class: http_lib.sch xml.sch 
-o/html_base.o html_base.class: param.sch xml.sch 
-o/hop_rss.o hop_rss.class: xml.sch 
+o/http_filter.o http_filter.class: http_lib.sch 
+o/wiki_parser.o wiki_parser.class: wiki_syntax.sch wiki_parser.sch 
+o/mathml.o ./mathml.class: xml.sch 
+o/clientc.o ./clientc.class: xml.sch service.sch 
+o/http_lib.o http_lib.class: http_lib.sch 
 o/security.o ./security.class: param.sch 
-o/http_remote.o http_remote.class: http_lib.sch 
+o/preferences.o preferences.class: xml.sch service.sch 
+o/service.o service.class: service.sch 
+o/xdomain.o xdomain.class: service.sch 
+o/xml.o ./xml.class: param.sch xml.sch 
+o/http_response.o http_response.class: http_lib.sch 
+o/http_response.o ./http_response.class: http_lib.sch 
 o/expanders.o expanders.class: service_expd.sch prefs_expd.sch           \
       param_expd.sch hss_expd.sch xml_expd.sch expanders.sch 
-o/css.o css.class: xml.sch service.sch hss.sch 
-o/mathml.o ./mathml.class: xml.sch 
-o/svg.o svg.class: xml.sch 
-o/service.o ./service.class: service.sch 
-o/http_response.o http_response.class: http_lib.sch 
-o/http_lib.o http_lib.class: http_lib.sch 
-o/service.o service.class: service.sch 
-o/hop_inline.o hop_inline.class: xml.sch 
-o/hop_wiki.o hop_wiki.class: xml.sch 
-o/html_img.o html_img.class: param.sch xml.sch 
-o/xml.o xml.class: param.sch xml.sch 
+o/misc.o ./misc.class: param.sch 
+o/http_error.o http_error.class: xml.sch 
 o/css.o ./css.class: xml.sch service.sch hss.sch 
 o/mathml.o mathml.class: xml.sch 
-o/http_error.o http_error.class: xml.sch 
-o/security.o security.class: param.sch 
-o/xml.o ./xml.class: param.sch xml.sch 
+o/event.o event.class: xml.sch service.sch param.sch 
+o/event.o ./event.class: xml.sch service.sch param.sch 
+o/http_webdav.o http_webdav.class: http_lib.sch xml.sch 
+o/weblets.o weblets.class: xml.sch 
+o/http_lib.o ./http_lib.class: http_lib.sch 
+o/html_img.o html_img.class: param.sch xml.sch 
+o/html_base.o html_base.class: param.sch xml.sch 
+o/svg.o ./svg.class: xml.sch 
+o/html_base.o ./html_base.class: param.sch xml.sch 
+o/http_remote.o ./http_remote.class: http_lib.sch 
+o/html_head.o html_head.class: xml.sch service.sch 
+o/html_head.o ./html_head.class: xml.sch service.sch 
+o/hop_inline.o ./hop_inline.class: xml.sch 
+o/http_filter.o ./http_filter.class: http_lib.sch 
+o/clientc.o clientc.class: xml.sch service.sch 
+o/configure.o ./configure.class: configure_noarch.sch 
+o/wiki_parser.o ./wiki_parser.class: wiki_syntax.sch wiki_parser.sch 
+o/hop_wiki.o hop_wiki.class: xml.sch 
+o/xml.o xml.class: param.sch xml.sch 
+o/preferences.o ./preferences.class: xml.sch service.sch 
+o/service.o ./service.class: service.sch 
+o/html_img.o ./html_img.class: param.sch xml.sch 
+o/xdomain.o ./xdomain.class: service.sch 
+o/css.o css.class: xml.sch service.sch hss.sch 
+o/zeroconf.o zeroconf.class: zeroconf_avahi.sch zeroconf_dummy.sch 
+o/hop_inline.o hop_inline.class: xml.sch 
+o/hop_rss.o hop_rss.class: xml.sch 
 o/http_shoutcast.o http_shoutcast.class: http_lib.sch 
+o/discovery.o discovery.class: service.sch 
+o/security.o security.class: param.sch 
+o/weblets.o ./weblets.class: xml.sch 
+o/param.o param.class: param.sch 
+o/svg.o svg.class: xml.sch 
+o/param.o ./param.class: param.sch 
+o/misc.o misc.class: param.sch 
+o/http_remote.o http_remote.class: http_lib.sch 
 
 #bdepend stop

@@ -27,8 +27,7 @@
    (bigloo-compile
     ;; required libraries for HOP
     (set! *additional-bigloo-libraries*
-	  (cons* 'bigloomultimedia
-		 'biglooweb
+	  (cons* @BIGLOOCLOSELIBS@
                  @BIGLOOSSL@
 		 *additional-bigloo-libraries*)))
    (bigloo-eval

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Dec  8 15:07:51 2011 (serrano)                */
+#*    Last change :  Thu Dec 15 09:55:53 2011 (serrano)                */
 #*    Copyright   :  2004-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -54,6 +54,7 @@ jsmimetype="text/javascript"
 cssmimetype="text/css"
 
 libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite"
+bglcloselibs="web multimedia"
 
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
@@ -102,6 +103,7 @@ fi
 ssl=""
 locevent="true"
 threads=""
+avahi=""
 
 hopsrfis=""
 
@@ -443,6 +445,33 @@ if [ "$threads" = "yes" ]; then
 fi
 
 #*---------------------------------------------------------------------*/
+#*    Avahi                                                            */
+#*---------------------------------------------------------------------*/
+if [ "$avahi " = " " ]; then
+  if [ -f $bgllibdir/bigloo/$bglversion/avahi.heap ]; then
+    avahi=yes
+  else
+    avahi=no
+  fi
+fi
+
+if [ "$avahi" = "yes" ]; then
+  if [ ! -f $bgllibdir/bigloo/$bglversion/pthread.heap ]; then
+    echo "*** ERROR:configure:bigloo avahi. Aborting"
+    echo ""
+    echo "You have request a avahi support but it appears that"
+    echo "the installed Bigloo compiler does not support avahi."
+    echo "You must either, configure Hop without avahi support"
+    echo "or re-configure and re-install your Bigloo compiler."
+    exit 1;
+  fi
+
+  hopsrfis="$hopsrfis enable-avahi"
+  libraries="avahi $libraries"
+  bglcloselibs="$bglcloselibs avahi"
+fi
+
+#*---------------------------------------------------------------------*/
 #*    Then check if bglafile exists this is a good indicator of a      */
 #*    correct Bigloo installation.                                     */
 #*---------------------------------------------------------------------*/
@@ -589,6 +618,16 @@ fi
 
 mkmf=etc/Makefile.hopconfig
 
+bglcloselibs_u=
+bglcloselibs_s=
+bglcloselibs_init=
+
+for p in $bglcloselibs; do
+  bglcloselibs_u="$bglcloselibs_u -lbigloo$p""_u-$""(RELEASE)";
+  bglcloselibs_s="$bglcloselibs_s -lbigloo$p""_s-$""(RELEASE)";
+  bglcloselibs_init="'bigloo$p $bglcloselibs_init";
+done
+
 rm -f $mkmf 2> /dev/null
 echo "#* Automatically generated file (don't edit) */" > $mkmf
 
@@ -651,6 +690,8 @@ cat $mkmf.in \
           -e "s|@BIGLOOPTHLIBU@|$bigloopthlibu|" \
           -e "s|@RTSCONFIG@|$rts|" \
           -e "s|@HOPGCCLOSELIB@|$bigloogc|" \
+          -e "s|@BGLCLOSELIBS_U@|$bglcloselibs_u|" \
+          -e "s|@BGLCLOSELIBS_S@|$bglcloselibs_s|" \
     >> $mkmf
 
 # runtime/configure.scm
@@ -726,6 +767,7 @@ cat etc/hop.init.in \
           -e "s|@BRANCH@|$branch|" \
           -e "s|@BIGLOOSSL@|$bigloossl|" \
           -e "s|@BIGLOOPTH@|$bigloopth|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs_init|" \
     >> $init
 echo "" >> $init
 

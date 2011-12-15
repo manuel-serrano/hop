@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.2.x/etc/Makefile.hopconfig.in         */
+#*    serrano/prgm/project/hop/2.3.x/etc/Makefile.hopconfig.in         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Fri Mar  4 11:18:42 2011 (serrano)                */
+#*    Last change :  Thu Dec 15 09:47:36 2011 (serrano)                */
 #*    Copyright   :  2004-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -76,13 +76,11 @@ BSCM2JSFLAGS	= @BSCM2JSFLAGS@
 #*---------------------------------------------------------------------*/
 BGLCLOSELIBS_S	= $(BIGLOOPTHLIBS) \
                   $(BIGLOOSSLLIBS) \
-                  -lbiglooweb_s-$(RELEASE) \
-                  -lbigloomultimedia_s-$(RELEASE)
+                  @BGLCLOSELIBS_S@
 
 BGLCLOSELIBS_U	= $(BIGLOOPTHLIBU) \
                   $(BIGLOOSSLLIBU) \
-                  -lbiglooweb_u-$(RELEASE) \
-                  -lbigloomultimedia_u-$(RELEASE)
+                  @BGLCLOSELIBS_U@
 
 #*---------------------------------------------------------------------*/
 #*    Build                                                            */

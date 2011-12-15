@@ -166,14 +166,14 @@ $(CLASS_DIR)/mapping2.class o/mapping2.o: $(SCHEME2JS_RUNTIME)/mod-runtime.sch $
 #*---------------------------------------------------------------------*/
 #*    Dependencies ...                                                 */
 #*---------------------------------------------------------------------*/
-o/mapping1.o ./mapping1.class: mapping.sch 
-o/srfi0.o srfi0.class: version.sch 
+o/scheme2js.o scheme2js.class: version.sch 
+o/scheme2js.o ./scheme2js.class: version.sch 
 o/mapping2.o mapping2.class: mapping.sch 
-o/srfi0.o ./srfi0.class: version.sch 
 o/mapping1.o mapping1.class: mapping.sch 
 o/main.o main.class: version.sch 
-o/scheme2js.o ./scheme2js.class: version.sch 
+o/srfi0.o srfi0.class: version.sch 
+o/srfi0.o ./srfi0.class: version.sch 
 o/mapping2.o ./mapping2.class: mapping.sch 
-o/scheme2js.o scheme2js.class: version.sch 
+o/mapping1.o ./mapping1.class: mapping.sch 
 
 #bdepend stop

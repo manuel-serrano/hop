@@ -253,12 +253,12 @@ $(OBJECTS): .afile
 #*---------------------------------------------------------------------*/
 #*    Dependencies ...                                                 */
 #*---------------------------------------------------------------------*/
-o/pipeline.o ./pipeline.class: stage.sch 
-o/accept.o ./accept.class: stage.sch 
-o/accept.o accept.class: stage.sch 
 o/pipeline.o pipeline.class: stage.sch 
-o/nothread_scheduler.o nothread_scheduler.class: stage.sch 
-o/nothread_scheduler.o ./nothread_scheduler.class: stage.sch 
+o/pipeline.o ./pipeline.class: stage.sch 
 o/main.o main.class: libraries.sch 
+o/nothread_scheduler.o ./nothread_scheduler.class: stage.sch 
+o/accept.o ./accept.class: stage.sch 
+o/nothread_scheduler.o nothread_scheduler.class: stage.sch 
+o/accept.o accept.class: stage.sch 
 
 #bdepend stop
