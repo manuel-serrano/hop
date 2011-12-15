@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Tue Dec  6 05:50:23 2011 (serrano)                */
+;*    Last change :  Thu Dec 15 19:57:55 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -50,7 +50,8 @@
 	    (autoload-prefix::procedure ::bstring)
 	    (autoload ::bstring ::procedure . hooks)
 	    (autoload-filter ::http-request)
-	    (autoload-force-load! ::bstring)))
+	    (autoload-force-load! ::bstring)
+	    (get-weblets-zeroconf::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-weblets-in-directory ...                                    */
@@ -286,11 +287,14 @@
 		    (path (cadr (assq 'weblet x)))
 		    (autopred (assq 'autoload x))
 		    (rc (assq 'rc x))
+		    (zc (assq 'zeroconf x))
 		    (opath (hashtable-get *weblet-table* svc)))
 		;; dashboard setup
 		(install-weblet-dashboard! name prefix x url)
 		;; rc setup
 		(when (pair? rc) (eval (cadr rc)))
+		;; zeroconf
+		(when (pair? zc) (weblet-zeroconf-add! name (cdr zc)))
 		;; autoload per say
 		(cond
 		   ((string? opath)
@@ -487,3 +491,35 @@
 		 (abspath path))))
       (or (autoload-filter req) (autoload-loaded? req))))
 
+;*---------------------------------------------------------------------*/
+;*    *weblets-zeroconf* ...                                           */
+;*---------------------------------------------------------------------*/
+(define *weblets-zeroconf* '())
+
+;*---------------------------------------------------------------------*/
+;*    weblet-zeroconf-add! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (weblet-zeroconf-add! name zc)
+   (with-handler
+      (lambda (e)
+	 (exception-notify e))
+      (for-each (lambda (z)
+		   (match-case z
+		      (((and (? string?) ?type))
+		       (set! *weblets-zeroconf*
+			  (cons `(:name ,name :type ,type :port ,(hop-port))
+			     *weblets-zeroconf*)))
+		      (((and (? string?) ?type) ?port . ?rest)
+		       (set! *weblets-zeroconf*
+			  (cons `(:name ,name :type ,type
+				    :port ,(or port (hop-port))
+				    ,@rest)
+			     *weblets-zeroconf*)))))
+	 zc)))
+
+;*---------------------------------------------------------------------*/
+;*    get-weblets-zeroconf ...                                         */
+;*---------------------------------------------------------------------*/
+(define (get-weblets-zeroconf)
+   *weblets-zeroconf*)
+   

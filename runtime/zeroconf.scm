@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Thu Dec 15 18:27:29 2011 (serrano)                */
+;*    Last change :  Thu Dec 15 20:25:07 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -18,11 +18,11 @@
        (include "zeroconf_avahi.sch"))
       (else
        (include "zeroconf_dummy.sch")))
-   (export (hop-zeroconf)))
+   (export (hop-zeroconf ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-zeroconf ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (hop-zeroconf)
-   (hop-zeroconf-publish))
+(define (hop-zeroconf svc)
+   (hop-zeroconf-publish svc))
    

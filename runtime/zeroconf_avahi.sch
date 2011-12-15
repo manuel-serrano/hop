@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Thu Dec 15 18:55:02 2011 (serrano)                */
+;*    Last change :  Thu Dec 15 20:26:43 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -15,17 +15,19 @@
 (directives
    (import __hop_configure
 	   __hop_param
-	   __hop_misc)
+	   __hop_misc
+	   __hop_weblets
+	   __hop_types)
    (library avahi pthread))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-zeroconf-publish ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (hop-zeroconf-publish)
+(define (hop-zeroconf-publish svc)
    (hop-verb 1 "Zeroconf (avahi) setup...\n")
    (let* ((poll (instantiate::avahi-simple-poll))
 	  (client (instantiate::avahi-client
-		     (proc client-callback)
+		     (proc (lambda (c s) (client-callback c s svc)))
 		     (poll poll))))
       (thread-start!
 	 (instantiate::pthread
@@ -39,10 +41,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    client-callback ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (client-callback client::avahi-client state::symbol)
+(define (client-callback client::avahi-client state::symbol svc::pair-nil)
    (case state
       ((avahi-client-running)
-       (create-services client))
+       (create-services client svc))
       ((avahi-client-failure)
        (warning "hop-zeroconf" (avahi-client-error-message client) state)
        (avahi-simple-poll-quit (-> client poll)))
@@ -52,14 +54,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    create-services ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (create-services client::avahi-client)
+(define (create-services client::avahi-client extra-services)
    (let ((group (instantiate::avahi-entry-group
 		   (proc entry-group-callback)
 		   (client client))))
       (let loop ((name "Hop"))
 	 (with-handler
 	    (lambda (e)
-	       (tprint "ERROR: " e)
 	       (if (isa? e &avahi-collision-error)
 		   (begin
 		      (avahi-entry-group-reset! group)
@@ -73,13 +74,14 @@
 		  :port (hop-port)
 		  (format "version=~a" (hop-version))
 		  (format "path=~a" (hop-service-base)))
-	       ;; 
-	       (avahi-entry-group-add-service! group
-		  :name "foobar"
-		  :type "_http._tcp"
-		  :port (hop-port)
-		  (format "version=~a" (hop-version))
-		  (format "path=~a/foobar" (hop-service-base)))
+	       ;; additional init services
+	       (map (lambda (wi)
+		       (apply avahi-entry-group-add-service! group wi))
+		  extra-services)
+	       ;; weblets zeroconf info
+	       (map (lambda (wi)
+		       (apply avahi-entry-group-add-service! group wi))
+		  (get-weblets-zeroconf))
 	       ;; tell the server to register the service
 	       (avahi-entry-group-commit group))))))
 
