@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Dec 15 20:27:06 2011 (serrano)                */
+;*    Last change :  Fri Dec 16 09:29:15 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -99,7 +99,7 @@
       (when (hop-enable-zeroconf)
 	 (hop-zeroconf
 	    (if (hop-enable-webdav)
-		`((:name "Hop" :type "_webdav._tcp" :port (hop-port)))
+		`((:name "Hop" :type "_webdav._tcp" :port ,(hop-port)))
 		'())))
       ;; close filters and users registration before starting
       (hop-filters-close!)

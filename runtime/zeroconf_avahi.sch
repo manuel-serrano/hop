@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Thu Dec 15 20:26:43 2011 (serrano)                */
+;*    Last change :  Fri Dec 16 09:29:51 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -76,11 +76,13 @@
 		  (format "path=~a" (hop-service-base)))
 	       ;; additional init services
 	       (map (lambda (wi)
-		       (apply avahi-entry-group-add-service! group wi))
+		       (apply avahi-entry-group-add-service! group
+			  :name (format "~a (~a)" (cadr wi) name) (cddr wi)))
 		  extra-services)
 	       ;; weblets zeroconf info
 	       (map (lambda (wi)
-		       (apply avahi-entry-group-add-service! group wi))
+		       (apply avahi-entry-group-add-service! group
+			  :name (format "~a (~a)" (cadr wi) name) (cddr wi)))
 		  (get-weblets-zeroconf))
 	       ;; tell the server to register the service
 	       (avahi-entry-group-commit group))))))
