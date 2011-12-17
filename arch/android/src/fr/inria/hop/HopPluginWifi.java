@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 17 06:55:59 2011                          */
-/*    Last change :  Sat Dec 17 13:15:22 2011 (serrano)                */
+/*    Last change :  Sat Dec 17 19:40:20 2011 (serrano)                */
 /*    Copyright   :  2011 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Dealing with Wifi configuration                                  */
@@ -18,6 +18,7 @@ import android.app.*;
 import android.content.*;
 import android.os.Bundle;
 import android.util.Log;
+import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.MulticastLock;
 
 import java.io.*;
@@ -28,12 +29,12 @@ import java.io.*;
 /*    WARNING: NOT TESTED!                                             */
 /*---------------------------------------------------------------------*/
 public class HopPluginWifi extends HopPlugin {
-   MulticastLock mclock = null;
+   static MulticastLock mclock = null;
    static WifiManager wifi;
 
-
    // init
-   initMultiCastLock() {
+   static void initMulticastLock( Activity activity ) {
+      wifi = (WifiManager)activity.getSystemService( Context.WIFI_SERVICE );
       if( mclock == null ) {
 	 wifi.createMulticastLock( "hop-multicast-lock" );
       }
@@ -42,7 +43,6 @@ public class HopPluginWifi extends HopPlugin {
    // constructor
    public HopPluginWifi( HopDroid h, Activity a, String n ) {
       super( h, a, n );
-       wifi = (WifiManager)getSystemService( Context.WIFI_SERVICE );
    }
    
    // sensor manager
@@ -51,7 +51,7 @@ public class HopPluginWifi extends HopPlugin {
       
       switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'m':
-	    initMulticastLock();
+	    initMulticastLock( activity );
 	    mclock.acquire();
 	    return;
 
@@ -62,9 +62,9 @@ public class HopPluginWifi extends HopPlugin {
 	    
 	 case (byte)'s':
 	    if( mclock != null && mclock.isHeld() ) {
-	       op.write( "#t" );
+	       op.write( "#t".getBytes() );
 	    } else {
-	       op.write( "#f" );
+	       op.write( "#f".getBytes() );
 	    }
 	    return;
       }
