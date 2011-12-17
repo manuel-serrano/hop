@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Dec 15 09:55:53 2011 (serrano)                */
+#*    Last change :  Sat Dec 17 13:30:42 2011 (serrano)                */
 #*    Copyright   :  2004-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -252,6 +252,9 @@ while : ; do
 
     --disable-ssl)
       ssl=no;;
+
+    --disable-avahi)
+      avahi=no;;
 
     --gzip=*)
       gzip="`echo $1 | sed 's/^[^=]*=//'`";;

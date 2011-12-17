@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Sat Dec 17 10:01:12 2011 (serrano)                */
+#*    Last change :  Sat Dec 17 13:30:02 2011 (serrano)                */
 #*    Copyright   :  2010-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -166,6 +166,7 @@ if [ $action_configure = "yes" ]; then
       --bigloolibdir=$ANDROIDBIGLOOLIB \
       --link=$link \
       --disable-ssl \
+      --disable-avahi \
       --android \
       --library=mail \
       --library=calendar \
