@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Dec 16 19:52:16 2011 (serrano)                */
+;*    Last change :  Sat Dec 17 06:41:42 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -94,7 +94,7 @@
 ;*---------------------------------------------------------------------*/
 (define debug-ajax #f)
 (define debug-ajax-buffer #f)
-(define debug-websocket #t)
+(define debug-websocket #f)
 (define debug-multipart #f)
 (define debug-flash #f)
 
