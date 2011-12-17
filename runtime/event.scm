@@ -94,7 +94,7 @@
 ;*---------------------------------------------------------------------*/
 (define debug-ajax #f)
 (define debug-ajax-buffer #f)
-(define debug-websocket #f)
+(define debug-websocket #t)
 (define debug-multipart #f)
 (define debug-flash #f)
 
