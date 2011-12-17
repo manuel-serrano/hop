@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat Dec 17 06:41:42 2011 (serrano)                */
+;*    Last change :  Sat Dec 17 07:42:42 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -502,7 +502,7 @@
 	 (when debug-websocket
 	    (tprint "websocket-register, protocol-version: " version))
 	 (let ((resp (case (string->integer version)
-			((7 8 9 10 11 12 13)
+			((7 8 9 10 11 12 13 14 15 16 17)
 			 (websocket-hybi-protocol header req))
 			(else
 			 (websocket-hixie-protocol header req)))))
