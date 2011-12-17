@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sat Dec 17 07:08:10 2011 (serrano)                */
+#*    Last change :  Sat Dec 17 09:03:10 2011 (serrano)                */
 #*    Copyright   :  2010-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -21,7 +21,7 @@ do: build
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
 ANDROID_BUILD = Android.mk build.xml project.properties hop.keystore \
-  AndroidManifest.xml.in local.properties.in and.properties.in proguard.cfg
+  AndroidManifest.xml.in local.properties.in ant.properties.in proguard.cfg
 
 ANDROID_JNI = jni/Android.mk jni/termExec.cpp
 
