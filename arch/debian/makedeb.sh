@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Sat Dec 17 09:02:02 2011 (serrano)                */
+#*    Last change :  Sat Dec 17 09:24:02 2011 (serrano)                */
 #*    Copyright   :  2007-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -157,6 +157,8 @@ for p in control rules postinst postrm; do
             -e "s/@BIGLOOVERSION@/$BIGLOOVERSION/g" > \
       $TMP/hop-$VERSION/debian/$p;
   else
+echo "CP $BASEDIR/debian/$p $TMP/hop-$VERSION/debian;"
+echo "PWD=$PWD";
     cp $BASEDIR/debian/$p $TMP/hop-$VERSION/debian;
   fi
 done
