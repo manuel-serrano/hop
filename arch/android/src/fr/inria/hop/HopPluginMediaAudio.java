@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Tue Dec 13 11:43:50 2011 (serrano)                */
+/*    Last change :  Sat Dec 17 19:54:19 2011 (serrano)                */
 /*    Copyright   :  2011 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -227,14 +227,16 @@ public class HopPluginMediaAudio extends HopPlugin {
 			     Albums.ARTIST + "=?", 
 			     new String[] { artist },
 			     null );
-      Log.d( "HopPluginMediaAudio", "cur=" + (cur == null ? "null" : "pas-null") );
+      Log.d( "HopPluginMediaAudio", "queryArtistAlbum, cur=" + (cur == null ? "null" : "pas-null") );
       synchronized( op ) {
+	 Log.d( "HopPluginMediaAudio", "queryArtistAlbum, dans le block synchronized" );
 	 if( cur == null ) {
 	    op.write( "()".getBytes() );
 	 } else {
 	    if( cur.moveToFirst() ) {
 	       int j = cur.getColumnIndex( Albums.ALBUM );
 		  
+	       Log.d( "HopPluginMediaAudio", "queryArtistAlbum, moved to first" );
 	       op.write( "(".getBytes() );
 		  
 	       do {
