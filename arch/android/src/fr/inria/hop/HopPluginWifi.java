@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 17 06:55:59 2011                          */
-/*    Last change :  Sat Dec 17 07:58:15 2011 (serrano)                */
+/*    Last change :  Sat Dec 17 13:15:22 2011 (serrano)                */
 /*    Copyright   :  2011 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Dealing with Wifi configuration                                  */
@@ -42,7 +42,7 @@ public class HopPluginWifi extends HopPlugin {
    // constructor
    public HopPluginWifi( HopDroid h, Activity a, String n ) {
       super( h, a, n );
-       wifi = getSystemService( Context.WIFI_SERVICE );
+       wifi = (WifiManager)getSystemService( Context.WIFI_SERVICE );
    }
    
    // sensor manager
