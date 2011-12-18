@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Dec 17 13:30:42 2011 (serrano)                */
+#*    Last change :  Sun Dec 18 06:12:24 2011 (serrano)                */
 #*    Copyright   :  2004-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -103,6 +103,7 @@ fi
 ssl=""
 locevent="true"
 threads=""
+zeroconfig=""
 avahi=""
 
 hopsrfis=""
@@ -374,123 +375,6 @@ if [ $? != "0" ]; then
 fi
 
 #*---------------------------------------------------------------------*/
-#*    Check the Bigloo libraries                                       */
-#*---------------------------------------------------------------------*/
-bgllibdir=`$bigloo -q -eval "(begin (print *ld-library-dir*) (exit 0))"`
-
-if [ ! -f $bgllibdir/bigloo/$bglversion/web.heap ]; then
-  echo "*** ERROR:configure:bigloo web. Aborting"
-  echo ""
-  echo "This error is due to a bad Bigloo installation. It might be that"
-  echo "you have installed Bigloo without the WEB support. Please"
-  echo "check your Bigloo installation."
-  exit 1;
-fi
-
-if [ ! -f $bgllibdir/bigloo/$bglversion/multimedia.heap ]; then
-  echo "*** ERROR:configure:bigloo multimedia. Aborting"
-  echo ""
-  echo "This error is due to a bad Bigloo installation. It might be that"
-  echo "you have installed Bigloo without the MULTIMEDIA support. Please"
-  echo "check your Bigloo installation."
-  exit 1;
-fi
-
-#*---------------------------------------------------------------------*/
-#*    SSL                                                              */
-#*---------------------------------------------------------------------*/
-if [ "$ssl " = " " ]; then
-  if [ ! -f $bgllibdir/bigloo/$bglversion/ssl.heap ]; then
-    ssl=no
-  else
-    ssl=yes
-  fi
-fi
-
-if [ "$ssl" = "yes" ]; then
-  if [ ! -f $bgllibdir/bigloo/$bglversion/ssl.heap ]; then
-    echo "*** ERROR:configure:bigloo ssl. Aborting"
-    echo ""
-    echo "This error is due to a bad Bigloo installation. It might be that"
-    echo "you have installed Bigloo without the SSL support. Please"
-    echo "check your Bigloo installation, or configure Hop without ssl."
-    exit 1;
-  fi
-
-  hopsrfis="$hopsrfis enable-ssl"
-  libraries="ssl $libraries"
-fi
-
-#*---------------------------------------------------------------------*/
-#*    Threads                                                          */
-#*---------------------------------------------------------------------*/
-if [ "$threads " = " " ]; then
-  if [ -f $bgllibdir/bigloo/$bglversion/pthread.heap ]; then
-    threads=yes
-  else
-    threads=no
-  fi
-fi
-
-if [ "$threads" = "yes" ]; then
-  if [ ! -f $bgllibdir/bigloo/$bglversion/pthread.heap ]; then
-    echo "*** ERROR:configure:bigloo pthread. Aborting"
-    echo ""
-    echo "You have request a multi-threading support but it appears that"
-    echo "the installed Bigloo compiler does not support multi-threading."
-    echo "You must either, configure Hop without multi-threading support"
-    echo "or re-configure and re-install your Bigloo compiler."
-    exit 1;
-  fi
-
-  hopsrfis="$hopsrfis enable-threads"
-  libraries="pthread $libraries"
-fi
-
-#*---------------------------------------------------------------------*/
-#*    Avahi                                                            */
-#*---------------------------------------------------------------------*/
-if [ "$avahi " = " " ]; then
-  if [ -f $bgllibdir/bigloo/$bglversion/avahi.heap ]; then
-    avahi=yes
-  else
-    avahi=no
-  fi
-fi
-
-if [ "$avahi" = "yes" ]; then
-  if [ ! -f $bgllibdir/bigloo/$bglversion/pthread.heap ]; then
-    echo "*** ERROR:configure:bigloo avahi. Aborting"
-    echo ""
-    echo "You have request a avahi support but it appears that"
-    echo "the installed Bigloo compiler does not support avahi."
-    echo "You must either, configure Hop without avahi support"
-    echo "or re-configure and re-install your Bigloo compiler."
-    exit 1;
-  fi
-
-  hopsrfis="$hopsrfis enable-avahi"
-  libraries="avahi $libraries"
-  bglcloselibs="$bglcloselibs avahi"
-fi
-
-#*---------------------------------------------------------------------*/
-#*    Then check if bglafile exists this is a good indicator of a      */
-#*    correct Bigloo installation.                                     */
-#*---------------------------------------------------------------------*/
-$afile runtime/*.scm > /dev/null 2> /dev/null
-
-if [ $? != "0" ]; then
-  echo "*** ERROR:configure:$afile. Aborting"
-  echo ""
-  echo "This error is due to a bad Bigloo installation. It might be that"
-  echo "you have installed Bigloo but not ran \"ldconfig\" afterward."
-  echo "In such a case, binaries produced by Bigloo cannot be executed"
-  echo "because the loader cannot find the Bigloo dynamic library."
-  exit 1;
-fi
-
-#*---------------------------------------------------------------------*/
 #*    Check the backend                                                */
 #*---------------------------------------------------------------------*/
 case $backend in
@@ -511,13 +395,6 @@ case $backend in
       echo "see configure --help" >&2;
       exit -1;
 esac
-
-#*---------------------------------------------------------------------*/
-#*    Weblets dir                                                      */
-#*---------------------------------------------------------------------*/
-if [ "$webletsdir " = " " ]; then
-  webletsdir=$libdir/hop/$version/weblets;
-fi
 
 #*---------------------------------------------------------------------*/
 #*    We are now able to set the correct value for cc since we know    */
@@ -542,10 +419,133 @@ if [ "$ccflags " = " " ]; then
 fi
 
 #*---------------------------------------------------------------------*/
+#*    Check the Bigloo required libraries                              */
+#*---------------------------------------------------------------------*/
+if [ ! -f $bigloolibdir/web.heap ]; then
+  echo "*** ERROR:configure:bigloo web. Aborting"
+  echo ""
+  echo "This error is due to a bad Bigloo installation. It might be that"
+  echo "you have installed Bigloo without the WEB support. Please"
+  echo "check your Bigloo installation."
+  exit 1;
+fi
+
+if [ ! -f $bigloolibdir/multimedia.heap ]; then
+  echo "*** ERROR:configure:bigloo multimedia. Aborting"
+  echo ""
+  echo "This error is due to a bad Bigloo installation. It might be that"
+  echo "you have installed Bigloo without the MULTIMEDIA support. Please"
+  echo "check your Bigloo installation."
+  exit 1;
+fi
+
+#*---------------------------------------------------------------------*/
+#*    SSL                                                              */
+#*---------------------------------------------------------------------*/
+if [ "$ssl " = " " ]; then
+  if [ ! -f $bigloolibdir/ssl.heap ]; then
+    ssl=no
+  else
+    ssl=yes
+  fi
+fi
+
+if [ "$ssl" = "yes" ]; then
+  if [ ! -f $bigloolibdir/ssl.heap ]; then
+    echo "*** ERROR:configure:bigloo ssl. Aborting"
+    echo ""
+    echo "This error is due to a bad Bigloo installation. It might be that"
+    echo "you have installed Bigloo without the SSL support. Please"
+    echo "check your Bigloo installation, or configure Hop without ssl."
+    exit 1;
+  fi
+
+  hopsrfis="$hopsrfis enable-ssl"
+  libraries="ssl $libraries"
+fi
+
+#*---------------------------------------------------------------------*/
+#*    Threads                                                          */
+#*---------------------------------------------------------------------*/
+if [ "$threads " = " " ]; then
+  if [ -f $bigloolibdir/pthread.heap ]; then
+    threads=yes
+  else
+    threads=no
+  fi
+fi
+
+if [ "$threads" = "yes" ]; then
+  if [ ! -f $bigloolibdir/pthread.heap ]; then
+    echo "*** ERROR:configure:bigloo pthread. Aborting"
+    echo ""
+    echo "You have request a multi-threading support but it appears that"
+    echo "the installed Bigloo compiler does not support multi-threading."
+    echo "You must either, configure Hop without multi-threading support"
+    echo "or re-configure and re-install your Bigloo compiler."
+    exit 1;
+  fi
+
+  hopsrfis="$hopsrfis enable-threads"
+  libraries="pthread $libraries"
+fi
+
+#*---------------------------------------------------------------------*/
+#*    Avahi                                                            */
+#*---------------------------------------------------------------------*/
+if [ "$avahi " = " " ]; then
+  if [ -f $bigloolibdir/avahi.heap ]; then
+    avahi=yes
+  else
+    avahi=no
+  fi
+fi
+
+if [ "$avahi" = "yes" ]; then
+  if [ ! -f $bigloolibdir/avahi.heap ]; then
+    echo "*** ERROR:configure:bigloo avahi. Aborting"
+    echo ""
+    echo "You have request a avahi support but it appears that"
+    echo "the installed Bigloo compiler does not support avahi."
+    echo "You must either, configure Hop without avahi support"
+    echo "or re-configure and re-install your Bigloo compiler."
+    exit 1;
+  fi
+
+  hopsrfis="$hopsrfis enable-avahi"
+  libraries="avahi $libraries"
+  bglcloselibs="$bglcloselibs avahi"
+  zeroconf="avahi $zeroconf"
+fi
+
+#*---------------------------------------------------------------------*/
+#*    Then check if bglafile exists this is a good indicator of a      */
+#*    correct Bigloo installation.                                     */
+#*---------------------------------------------------------------------*/
+$afile runtime/*.scm > /dev/null 2> /dev/null
+
+if [ $? != "0" ]; then
+  echo "*** ERROR:configure:$afile. Aborting"
+  echo ""
+  echo "This error is due to a bad Bigloo installation. It might be that"
+  echo "you have installed Bigloo but not ran \"ldconfig\" afterward."
+  echo "In such a case, binaries produced by Bigloo cannot be executed"
+  echo "because the loader cannot find the Bigloo dynamic library."
+  exit 1;
+fi
+
+#*---------------------------------------------------------------------*/
 #*    Jvm zip libs                                                     */
 #*---------------------------------------------------------------------*/
 jvmziplibs=
 jvminits=
+
+#*---------------------------------------------------------------------*/
+#*    Weblets dir                                                      */
+#*---------------------------------------------------------------------*/
+if [ "$webletsdir " = " " ]; then
+  webletsdir=$libdir/hop/$version/weblets;
+fi
 
 # Hop librairies
 for p in scheme2js hopscheme hop hopwidget; do
@@ -941,8 +941,11 @@ echo "  hop release number.................... $version $state$minor"
 echo "  bigloo................................ $bigloo ($bglversion)"
 echo "  backend............................... $backend"
 echo "  link.................................. $link"
-echo "  bigloo compilation flags.............. $bcflags"
-echo "  runtime compilation flags............. $bcflagsrts"
+echo 
+echo "Optional features:"
+echo "  multi-threading....................... $threads"
+echo "  https support......................... $ssl"
+echo "  zerconf............................... $zeroconf"
 echo
 echo "Directories where Hop will be installed:"
 echo "  etc directory......................... $etcdir"
@@ -954,9 +957,9 @@ echo "  weblets directory..................... $webletsdir"
 echo "  contribs directory.................... $contribsdir"
 echo 
 echo "Internals:"
+echo "  bigloo compilation flags.............. $bcflags"
+echo "  runtime compilation flags............. $bcflagsrts"
 echo "  mime types............................ $mimetypes"
 echo "  default JavaScript mime type.......... $jsmimetype"
 echo "  default CSS mime type................. $cssmimetype"
-echo "  multi-threading....................... $threads"
-echo "  https support......................... $ssl"
 
