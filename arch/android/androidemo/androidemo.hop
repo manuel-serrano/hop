@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Mon Dec 19 13:32:06 2011 (serrano)                */
+;*    Last change :  Mon Dec 19 15:39:52 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -513,7 +513,7 @@ missed.")
 	 (<DIV> :id "database-audio"
 	    (<UL>
 	       (map (lambda (g)
-		       (tprint "genre=[" g "]")
+		       (tprint "genre=[" (car g) "]")
 		       (list
 			  (<LI> (html-string-encode (car g)))
 			  (<UL>
@@ -536,12 +536,12 @@ missed.")
 				(mpd-database-getgenreartist mpd (car g))))))
 		  (mpd-database-getgenre mpd)))))
       (<H3> "Music player")
-;*       (<AUDIO>                                                      */
-;* 	 :controls #t                                                  */
-;* 	 :src "http://www.m-base.org/motherland_pulse_mp3_files/motherland_pulse.mp3" */
-;* 	 :browser 'none                                                */
-;* 	 :server (instantiate::audio-server                            */
-;* 		    (music amusic)))                                   */
+      (<AUDIO>
+	 :controls #t
+	 :src "http://www.m-base.org/motherland_pulse_mp3_files/motherland_pulse.mp3"
+	 :browser 'none
+	 :server (instantiate::audio-server
+		    (music amusic)))
       (<DIV> :style "font-size: 10px; font-style: italic"
 	 "Thanks to " (<A> :href "http://www.m-base.com" "Steve Coleman")
 	 " for making his music freely available on-line.")))
