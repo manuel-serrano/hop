@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../project/hop/2.2.x/arch/android/androidemo/androidemo.hop     */
+;*    .../project/hop/2.3.x/arch/android/androidemo/androidemo.hop     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Sat May 14 18:47:04 2011 (serrano)                */
+;*    Last change :  Mon Dec 19 12:06:20 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -62,22 +62,22 @@
    (lambda (e)
       (hop-event-broadcast! "sms-sent" #t)))
 (add-event-listener! android "sms-received"
-   (lambda (e)
-      (let ((val (event-value e)))
+   (lambda (e::event)
+      (let ((val (event.value e)))
 	 (hop-event-broadcast! "sms-received" val)
 	 (tts-speak atts (cadr val)))))
 (add-event-listener! android "battery"
-   (lambda (e)
-      (hop-event-broadcast! "battery" (event-value e))))
+   (lambda (e::event)
+      (hop-event-broadcast! "battery" (event.value e))))
 (add-event-listener! android "tts"
-   (lambda (e)
-      (hop-event-broadcast! "tts" (event-value e))))
+   (lambda (e::event)
+      (hop-event-broadcast! "tts" (event.value e))))
 (add-event-listener! android "call"
-   (lambda (e)
-      (hop-event-broadcast! "call" (event-value e))))
+   (lambda (e::event)
+      (hop-event-broadcast! "call" (event.value e))))
 (add-event-listener! android "orientation"
-   (lambda (e)
-      (hop-event-broadcast! "orientation" (event-value e))))
+   (lambda (e::event)
+      (hop-event-broadcast! "orientation" (event.value e))))
 
 ;*---------------------------------------------------------------------*/
 ;*    androidemo ...                                                   */
@@ -303,8 +303,8 @@ missed.")
 (define (<ANDROIDEMO:BATTERY>)
    (list
     ~(add-event-listener! "battery" "server"
-	(lambda (e)
-	   (let ((val (event-value e)))
+	(lambda (e::event)
+	   (let ((val (event.value e)))
 	      (gauge-value-set! "bat-level" (car val))
 	      (innerHTML-set! "bat-status" (symbol->string (caddr val)))
 	      (innerHTML-set! "bat-plug" (symbol->string (cadddr val)))
@@ -428,8 +428,8 @@ missed.")
 				 (elt(dom-get-element-by-id "call-speech")))
 			      (with-hop ($(service (number text)
 					     (when (and (string? text) (>fx (string-length text) 0))
-						(letrec ((h (lambda (e)
-							       (match-case (event-value e)
+						(letrec ((h (lambda (e::event)
+							       (match-case (event.value e)
 								  ((call-state offhook)
 								   (remove-event-listener! android "call" h)
 								   (tts-speak atts "text"))))))
@@ -463,8 +463,8 @@ missed.")
 (define (<ANDROIDEMO:SPEECH>)
    (list
     ~(add-event-listener! "tts" "server"
-	(lambda (e)
-	   (alert "tts done: " (event-value e))))
+	(lambda (e::event)
+	   (alert "tts done: " (event.value e))))
     (<TEXTAREA> :id "speech" "")
     (<DIV> "language: "
        (let ((locale (phone-current-locale android)))
