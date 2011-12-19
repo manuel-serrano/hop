@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Mon Dec 19 13:23:05 2011 (serrano)                */
+;*    Last change :  Mon Dec 19 13:27:51 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -513,7 +513,7 @@ missed.")
 	 (<DIV> :id "database-audio"
 	    (<UL>
 	       (map (lambda (g)
-		       (tprint "genre=[" genre "]")
+		       (tprint "genre=[" g "]")
 		       (list
 			  (<LI> (html-string-encode (car g)))
 			  (<UL>
