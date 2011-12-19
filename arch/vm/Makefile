@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.2.x/arch/vm/Makefile                  */
+#*    serrano/prgm/project/hop/2.3.x/arch/vm/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar  2 07:14:10 2011                          */
-#*    Last change :  Fri May 13 13:53:07 2011 (serrano)                */
+#*    Last change :  Mon Dec 19 12:07:48 2011 (serrano)                */
 #*    Copyright   :  2011 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    VirtualMachine image generation                                  */
@@ -21,7 +21,7 @@ do: qemu
 #*    Default settings                                                 */
 #*---------------------------------------------------------------------*/
 IMGSIZE = 4G
-WEBLETS = hoptex-1.1.2.hz popart-api-1.0.0.hz hopslide-2.5.1.hz
+WEBLETS = hoptex-1.1.3.hz popart-api-1.0.0.hz hopslide-2.5.4.hz hophifi-1.0.1.hz
 
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
