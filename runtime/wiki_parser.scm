@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue Dec 13 14:00:58 2011 (serrano)                */
+;*    Last change :  Mon Dec 19 10:06:02 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -746,7 +746,7 @@
 		   #t #f (-fx (the-length) 2)))
       
       ;; font style
-      ((: "**" (? (: #\: (+ (out " \t\n")))))
+      ((: "**" (? (: #\: (+ (or (out " \t\n*") (: "*" (out "*")))) " \t\n")))
        (let ((s (in-state '**)))
 	  (cond
 	     (s
@@ -761,7 +761,7 @@
 		 (enter-expr! '** (wiki-syntax-b syn) #f
 			      :class class :id ident)
 		 (ignore))))))
-      ((: "//" (? (: #\: (+ (out " \t\n")))))
+      ((: "//" (? (: #\: (+ (or (out " \t\n/") (: "/" (out "/")))) " \t\n")))
        (let ((s (in-state '//)))
 	  (cond
 	     (s
@@ -776,7 +776,7 @@
 		 (enter-expr! '// (wiki-syntax-em syn) #f
 			      :class class :id ident)
 		 (ignore))))))
-      ((: "__" (? (: #\: (+ (out " \t\n")))))
+      ((: "__" (? (: #\: (+ (or (out " \t\n_") (: "_" (out "_")))) " \t\n")))
        (let ((s (in-state '__)))
 	  (cond
 	     (s
@@ -904,12 +904,12 @@
 	  (ignore)))
 
       ;; math
-      ((: "$$" (+ (or (out #\$) (: #\$ (out #\$)))) "$$")
+      ((: "$$" (? (: #\: (+ (or (out " \t\n$") (: "$" (out "$")))) " \t\n")))
        (add-expr! ((wiki-syntax-math syn) (the-substring 2 -2)))
        (ignore))
       
       ;; tt
-      ((: "++" (? (: #\: (+ (out " \t\n")))))
+      ((: "++" (? (: #\: (+ (or (out " \t\n+") (: "+" (out "+")))) " \t\n")))
        (let ((s (in-state 'tt)))
 	  (cond
 	     (s
@@ -925,7 +925,7 @@
 			      :class class :id ident)
 		 (ignore))))))
       ;; code
-      ((: "%%" (? (: #\: (+ (out " \t\n")))))
+      ((: "%%" (? (: #\: (+ (or (out " \t\n%") (: "%" (out "%")))) " \t\n")))
        (let ((s (in-state 'code)))
 	  (cond
 	     (s
@@ -942,7 +942,7 @@
 		 (ignore))))))
       
       ;; strike
-      ((: "--" (? (: #\: (+ (out " \t\n")))))
+      ((: "--" (? (: #\: (+ (or (out " \t\n-") (: "-" (out "-")))) " \t\n")))
        (let ((s (in-state 'strike)))
 	  (cond
 	     (s

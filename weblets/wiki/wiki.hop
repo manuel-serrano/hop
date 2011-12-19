@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/wiki/wiki.hop             */
+;*    serrano/prgm/project/hop/2.3.x/weblets/wiki/wiki.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Nov 23 07:11:19 2011 (serrano)                */
+;*    Last change :  Mon Dec 19 09:44:17 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -40,11 +40,14 @@
       (if (string? path)
 	  (if (authorized-path? req path)
 	      (let ((be (hop-get-xml-backend (string->symbol xml))))
-		 (with-access::xml-backend be (mime-type) 
-		    (instantiate::http-response-hop
-		       (backend be)
-		       (content-type mime-type)
-		       (xml (wiki-view req path #t #f)))))
+		 (with-access::xml-backend be (mime-type)
+		    (let ((res (wiki-view req path #t #f)))
+		       (if (isa? res %http-response)
+			   res
+			   (instantiate::http-response-hop
+			      (backend be)
+			      (content-type mime-type)
+			      (xml res))))))
 	      (user-access-denied))
 	  (wiki-query req xml))))
 
@@ -301,8 +304,8 @@
 		       :req req
 		       head toc body)))
 	      (http-service-error req
-				  'wiki
-				  (format "Loading path \"~a\"should have produced a DOCUMENT" path)))))))
+		 'wiki
+		 (format "Loading path \"~a\" should have produced a DOCUMENT" path)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-wiki-head ...                                               */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/http_error.scm            */
+;*    serrano/prgm/project/hop/2.3.x/runtime/http_error.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Nov 19 08:16:30 2011 (serrano)                */
+;*    Last change :  Mon Dec 19 09:44:04 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -336,7 +336,7 @@ a timeout which has now expired. The service is then no longer available."))
 	 (xml (<HTML-ERROR>
 		 :title "Hop Service Error"
 		 :msg (with-access::http-request req (host port)
-			 (list "An error occured while responding to"
+			 (list "An error occured while responding to "
 			    (<TT> "http://" host
 				  ":" port
 				  (hop-service-base) service)
