@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/info/info.hop             */
+;*    serrano/prgm/project/hop/2.3.x/weblets/info/info.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Nov 16 15:58:27 2011 (serrano)                */
+;*    Last change :  Mon Dec 19 10:45:42 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -15,6 +15,7 @@
 (module weblet_info
    
    ~(import weblet_info-client)
+   ~(js navigator)
    
    (import maze)
    
@@ -346,6 +347,8 @@
 ;*---------------------------------------------------------------------*/
 (define (<CONFIG:CLIENT>)
    ~(<TABLE> :class "hop-info"
+       (<TR> (<TH> :align 'right "user-argent")
+	     (<TD> :align 'left navigator.userAgent))
        (map (lambda (e)
 	       (<TR> (<TH> :align 'right (symbol->string (car e)))
 		     (<TD> :align 'left (with-output-to-string

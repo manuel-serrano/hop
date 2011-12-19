@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat Dec 17 07:48:52 2011 (serrano)                */
+;*    Last change :  Mon Dec 19 11:50:51 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -406,7 +406,7 @@
    
    (define (websocket-server-location host)
       (with-access::http-request req ((h host) (p port))
-	 (format "ws://~a/~a/pulic/server-event/websocket?key=~a"
+	 (format "ws://~a/~a/public/server-event/websocket?key=~a"
 	    (or host (format "~a:~a" h p))
 	    (hop-initial-weblet)
 	    key)))
@@ -441,7 +441,7 @@
    
    (define (webwocket-hixie-protocol-76 key1 key2 req)
       (when debug-websocket
-	 (tprint "websocket-protocol76 " key1 " " key2))
+	 (tprint "websocket-protocol76 key1=[" key1 "] key2=[" key2 "]"))
       ;; Handshake known as draft-hixie-thewebsocketprotocol-76
       ;; see http://www.whatwg.org/specs/web-socket-protocol/
       ;; http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-03
@@ -471,7 +471,7 @@
       (instantiate::http-response-websocket
 	 (request req)
 	 (start-line "HTTP/1.1 101 Web Socket Protocol Handshake")
-	 (location (websocket-server-location host))
+	 (location (websocket-server-location (get-header header host: #f)))
 	 (origin (get-header header origin: "localhost"))
 	 (protocol (get-header header WebSocket-Protocol: #f))
 	 (connection 'Upgrade)
@@ -496,7 +496,7 @@
    
    (with-access::http-request req (header connection socket)
       (let ((host (get-header header host: #f))
-	    (version (get-header header sec-websocket-version: #f)))
+	    (version (get-header header sec-websocket-version: "-1")))
 	 ;; see http_response.scm for the source code that actually sends
 	 ;; the bytes of the response to the client.
 	 (when debug-websocket

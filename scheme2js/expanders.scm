@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 10:52:12 2011                          */
-;*    Last change :  Tue Dec 13 14:38:01 2011 (serrano)                */
+;*    Last change :  Mon Dec 19 11:25:26 2011 (serrano)                */
 ;*    Copyright   :  2007011-2011 Florian Loitsch, Manuel Serrano      */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -55,7 +55,9 @@
 
 (define (->expander x e)
    (if (every? symbol? x)
-       x
+       (loc-attach
+	  `(,(car x) ,(e (cadr x) e) ,@(cddr x))
+	  x (cdr x))
        (scheme2js-error "->" "bad form" x x)))
 
 
