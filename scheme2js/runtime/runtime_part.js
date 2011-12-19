@@ -2431,7 +2431,7 @@ function sc_register_class( clazz, name, zuper, hash, allocator, constructor, fi
       clazz.prototype.constructor = constr;
 
       for( f in zuper.sc_fields_table ) {
-	 ftable[ f.sc_name ] = f;
+	 ftable[ zuper.sc_fields_table[ f ].sc_name ] = zuper.sc_fields_table[ f ];
       }
       
       clazz.sc_all_fields = sc_vectorAppend( zuper.sc_all_fields, fields );
@@ -2561,6 +2561,11 @@ function sc_class_all_fields( clazz ) {
 /*** META ((export #t) (arity #t)) */
 function sc_find_class_field( clazz, id ) {
    return clazz.sc_fields_table[ id ];
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_class_field_name( field ) {
+   return field.sc_name;
 }
 
 /*** META ((export #t) (arity #t)) */
