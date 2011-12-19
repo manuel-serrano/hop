@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Sat Dec 17 20:27:23 2011 (serrano)                */
+/*    Last change :  Sun Dec 18 12:02:23 2011 (serrano)                */
 /*    Copyright   :  2011 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -42,7 +42,6 @@ public class HopPluginMediaAudio extends HopPlugin {
       Artists.ARTIST,
    };
    private static final String[] ALBUM_LOOKUP_PROJECTION = new String[] {
-      Albums._ID,
       Albums.ARTIST,
       Albums.ALBUM,
    };
@@ -133,9 +132,9 @@ public class HopPluginMediaAudio extends HopPlugin {
 	       } while( cur.moveToNext() );
 	    }
 	    op.write( ")".getBytes() );
+	    cur.close();
 	 }
       }
-      cur.close();
    }
 
    private void queryArtists( OutputStream op ) throws IOException {
@@ -161,9 +160,9 @@ public class HopPluginMediaAudio extends HopPlugin {
 	       
 	    }
 	    op.write( ")".getBytes() );
+	    cur.close();
 	 }
       }
-      cur.close();
    }
 
    private void queryAlbum( OutputStream op, String album ) throws IOException {
@@ -172,7 +171,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 			     MEDIA_LOOKUP_PROJECTION,
 			     Media.ALBUM + "=?",
 			     new String[] { album },
-			     null );
+			     Media.TRACK + " ASC" );
       Log.d( "HopPluginMediaAudio", "querying album: " + album + "..." );
       synchronized( op ) {
 	 if( cur == null ) {
@@ -213,47 +212,63 @@ public class HopPluginMediaAudio extends HopPlugin {
 	       
 	    }
 	    op.write( ")".getBytes() );
+	    cur.close();
 	 }
       }
-      cur.close();
    }
 
    private void queryArtistAlbum( OutputStream op, String artist )
       throws IOException {
       Log.d( "HopPluginMediaAudio", "querying ArtistAlbum: [" + artist + "]");
       ContentResolver cr = activity.getContentResolver();
-      Cursor cur = cr.query( Albums.EXTERNAL_CONTENT_URI,
-			     ALBUM_LOOKUP_PROJECTION,
-			     Albums.ARTIST + "=?", 
-			     new String[] { artist },
-			     null );
-      Log.d( "HopPluginMediaAudio", "queryArtistAlbum, cur=" + (cur == null ? "null" : "pas-null") );
+
+      // get the artist first
+      Cursor acur = cr.query( Artists.EXTERNAL_CONTENT_URI,
+			      ARTIST_LOOKUP_PROJECTION,
+			      Artists.ARTIST + "=?",
+			      new String[] { artist },
+			      null );
       synchronized( op ) {
-	 Log.d( "HopPluginMediaAudio", "queryArtistAlbum, dans le block synchronized" );
-	 if( cur == null ) {
+	 if( acur == null ) {
 	    op.write( "()".getBytes() );
 	 } else {
-	    if( cur.moveToFirst() ) {
-	       int j = cur.getColumnIndex( Albums.ALBUM );
-		  
-	       Log.d( "HopPluginMediaAudio", "queryArtistAlbum, moved to first" );
-	       op.write( "(".getBytes() );
-		  
-	       do {
-		  Log.d( "HopPluginMediaAudio", "ALBUM=" + cur.getString( j ) );
-		  op.write( "\"".getBytes() );
-		  op.write( escapeBytes( cur.getString( j )) );
-		  op.write( "\" ".getBytes() );
-	       } while( cur.moveToNext() );
+	    if( acur.moveToFirst() ) {
+	       long artistid = acur.getLong( acur.getColumnIndex( Artists._ID ) );
+	       Uri uri = Artists.Albums.getContentUri( "external", artistid );
+	       Cursor cur = cr.query( uri,
+				      ALBUM_LOOKUP_PROJECTION,
+				      null,
+				      null,
+				      null );
+
+	       Log.d( "HopPluginMediaAudio", "queryArtistAlbum, cur="
+		      + (cur == null ? "null" : cur.getCount())
+		  + " artistid=" + artistid );
 	       
-	       op.write( ")".getBytes() );
-	    } else {
-	       op.write( "()".getBytes() );
+	       if( cur == null ) {
+		  op.write( "()".getBytes() );
+	       } else {
+		  int j = cur.getColumnIndex( Albums.ALBUM );
+		  
+		  op.write( "(".getBytes() );
+
+		  if( cur.moveToFirst() ) {
+		     do {
+			Log.d( "HopPluginMediaAudio", "ALBUM=" + cur.getString( j ) );
+			op.write( "\"".getBytes() );
+			op.write( escapeBytes( cur.getString( j )) );
+			op.write( "\" ".getBytes() );
+		     } while( cur.moveToNext() );
+		  }
+		     
+		  op.write( ")".getBytes() );
+		  cur.close();
+	       }
 	    }
+
+	    acur.close();
 	 }
       }
-      
-      cur.close();
    }
    
    private Uri makeGenreUri( String id ) {
@@ -277,10 +292,11 @@ public class HopPluginMediaAudio extends HopPlugin {
 			     null );
       Log.d( "hopPluginMediaAudio", "queryGenreArtist genre=\"" + genre + "\"" );
       synchronized( op ) {
-	 if( cur == null ) {
+	 if( cur == null || cur.getCount() == 0 ) {
 	    cur.close();
 	    Log.d( "hopPluginMediaAudio", "cur null.1" );
 	    op.write( "()".getBytes() );
+	    if( cur != null ) cur.close();
 	 } else {
 	    if( cur.moveToFirst() ) {
 	       int i = cur.getColumnIndex( Genres._ID );
@@ -289,27 +305,25 @@ public class HopPluginMediaAudio extends HopPlugin {
 				    null,
 				    null,
 				    Media.ARTIST + " ASC" );
-	       if( c.getCount() == 0 ) {
-		  Log.d( "hopPluginMediaAudio", "count null.1" );
-		  op.write( "()".getBytes() );
-	       } else {
+	       if( c != null ) {
 		  String cartist = "";
 		  
 		  op.write( "(".getBytes() );
-		  c.moveToFirst();
-		  int j = c.getColumnIndex( Media.ARTIST );
-		  do {
-		     String artist = c.getString( j );
+		  if( c.moveToFirst() ) {
+		     int j = c.getColumnIndex( Media.ARTIST );
+		     do {
+			String artist = c.getString( j );
 		     
-		     Log.d( "hopPluginMediaAudio", "artist=" + artist );
+			Log.d( "hopPluginMediaAudio", "artist=" + artist );
 
-		     if( !artist.equals( cartist ) ) {
-			op.write( "\"".getBytes() );
-			op.write( escapeBytes( artist ) );
-			op.write( "\" ".getBytes() );
-			cartist = artist;
-		     }
-		  } while( c.moveToNext() );
+			if( !artist.equals( cartist ) ) {
+			   op.write( "\"".getBytes() );
+			   op.write( escapeBytes( artist ) );
+			   op.write( "\" ".getBytes() );
+			   cartist = artist;
+			}
+		     } while( c.moveToNext() );
+		  }
 		  op.write( ")".getBytes() );
 	       }
 	       
