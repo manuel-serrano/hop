@@ -1941,7 +1941,7 @@ function sc_dynamicWind(before, thunk, after) {
 
 
 function sc_Struct(name) {
-    this.name = name;
+    this['sc_struct name'] = name;
 }
 sc_Struct.prototype.sc_toDisplayString = function() {
     return "#<struct" + sc_hash(this) + ">";
@@ -1965,10 +1965,10 @@ function sc_isStruct(o) {
 
 /*** META ((export #t) (arity #t)
            (type bool)
-           (peephole (hole 2 "(" 1 " instanceof sc_Struct) && ( " 1 ".name === " 0 ")")))
+           (peephole (hole 2 "(" 1 " instanceof sc_Struct) && ( " 1 "['sc_struct name'] === " 0 ")")))
 */
 function sc_isStructNamed(name, s) {
-    return ((s instanceof sc_Struct) && (s.name === name));
+    return ((s instanceof sc_Struct) && (s['sc_struct name'] === name));
 }
 
 /*** META ((export struct-field) (arity #t)
@@ -2251,6 +2251,16 @@ function sc_isHashtable(o) {
 }
 
 /*** META ((export #t) (arity #t)) */
+function sc_hashtableSize(ht) {
+    var count = 0
+    for (hash in ht) {
+	if (ht[hash] instanceof sc_HashtableElement)
+	    count++;
+    }
+    return count;
+}
+
+/*** META ((export #t) (arity #t)) */
 function sc_hashtablePutBang(ht, key, val) {
     var hash = sc_hash(key);
     ht[hash] = new sc_HashtableElement(key, val);
@@ -2266,12 +2276,24 @@ function sc_hashtableGet(ht, key) {
 }
 
 /*** META ((export #t) (arity #t)) */
+function sc_hashtableRemoveBang(ht, key) {
+    var hash = sc_hash(key);
+    if (hash in ht) {
+	delete ht[hash];
+	return true;
+    }
+    else
+	return false;
+}
+
+/*** META ((export #t) (arity #t)) */
 function sc_hashtableForEach(ht, f) {
     for (var v in ht) {
 	if (ht[v] instanceof sc_HashtableElement)
 	    f(ht[v].key, ht[v].val);
     }
 }
+
 
 /*** META ((export #t) (arity #t)) */
 function sc_hashtableMap(ht, f) {

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Sat Dec 17 14:12:09 2011 (serrano)                */
+;*    Last change :  Mon Dec 19 08:46:27 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_zeroconf
    (cond-expand
-      ((and enabe-avahi (library pthread) (library avahi))
+      ((and enable-avahi (library pthread) (library avahi))
        (include "zeroconf_avahi.sch"))
       (else
        (include "zeroconf_dummy.sch")))

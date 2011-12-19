@@ -171,7 +171,8 @@ function sc_char2symbol(c) { return sc_SYMBOL_PREFIX + c.val; }
 */
 function sc_isString(s) {
     return (typeof s === "string") &&
-	(s.charAt(0) !== sc_SYMBOL_PREFIX);
+	(s.charAt(0) !== sc_SYMBOL_PREFIX) &&
+	(s.charAt(0) !== sc_KEYWORD_PREFIX);
 }
 
 /*** META ((export #t) (arity -2)) */
