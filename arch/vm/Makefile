@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar  2 07:14:10 2011                          */
-#*    Last change :  Mon Dec 19 12:07:48 2011 (serrano)                */
+#*    Last change :  Mon Dec 19 12:12:13 2011 (serrano)                */
 #*    Copyright   :  2011 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    VirtualMachine image generation                                  */
@@ -55,7 +55,7 @@ hop-install+: $(HOPTMPDIR)/hop.hdd
 $(HOPTMPDIR)/hop.vmdk: $(HOPTMPDIR)/hop.hdd
 	scripts/convert_image.sh $(HOPTMPDIR)/hop
 
-$(HOPTMPDIR)/hop+.vmdk: $(HOPTMPDIR)/hop+.hdd
+$(HOPTMPDIR)/hop+.vmdk: $(HOPTMPDIR)/hop.hdd
 	scripts/convert_image.sh $(HOPTMPDIR)/hop+
 
 qemu: hop-install

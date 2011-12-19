@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Mon Dec 19 12:11:22 2011 (serrano)                */
+;*    Last change :  Mon Dec 19 12:16:02 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -113,21 +113,23 @@ to the server to directly controls the phone.")
 ;* contacts.")                                                         */
 ;* {* 	 (<ANDROIDEMO:CONTACT>)                                        *} */
 ;*                                                                     */
-	 (<H2> "Speech")
-	 (<DIV> :class "short-note"
-	    "This shows the Android ability to synthesizes speech from
-text for immediate playback or to create a sound file.")
-	 (<ANDROIDEMO:SPEECH>)
 	 
-	 (<H2> "Multimedia")
-	 (<DIV> :class "short-note"
-	    "This shows that the server side can control the multimedia
-resources of the phone. When the control buttons of the followin music player
-are clicked (for instance the play button below), the corresponding order
-is sent to the server that directly controls the multimedia player of the
-Android phone. This demonstration does not use any HTML5 facility.")
-	 (<ANDROIDEMO:MULTIMEDIA>))))
+;* 	 (<H2> "Speech")                                               */
+;* 	 (<DIV> :class "short-note"                                    */
+;* 	    "This shows the Android ability to synthesizes speech from */
+;* text for immediate playback or to create a sound file.")            */
+;* 	 (<ANDROIDEMO:SPEECH>)                                         */
+;* 	                                                               */
+;* 	 (<H2> "Multimedia")                                           */
+;* 	 (<DIV> :class "short-note"                                    */
+;* 	    "This shows that the server side can control the multimedia */
+;* resources of the phone. When the control buttons of the followin music player */
+;* are clicked (for instance the play button below), the corresponding order */
+;* is sent to the server that directly controls the multimedia player of the */
+;* Android phone. This demonstration does not use any HTML5 facility.") */
+;* 	 (<ANDROIDEMO:MULTIMEDIA>))))                                  */
 
+	 )))
 ;*---------------------------------------------------------------------*/
 ;*    androidemo/sensors ...                                           */
 ;*---------------------------------------------------------------------*/
