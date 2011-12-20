@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 10:52:12 2011                          */
-;*    Last change :  Mon Dec 19 11:25:26 2011 (serrano)                */
+;*    Last change :  Tue Dec 20 18:00:11 2011 (serrano)                */
 ;*    Copyright   :  2007011-2011 Florian Loitsch, Manuel Serrano      */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -51,7 +51,6 @@
 (install-expander! 'define-method define-method-expander)
 (install-expander! '-> ->expander)
 (install-expander! 'with-trace with-trace-expander)
-(install-expander! 'trace-item trace-item-expander)
 
 (define (->expander x e)
    (if (every? symbol? x)
@@ -408,17 +407,10 @@
 ;*---------------------------------------------------------------------*/
 (define (with-trace-expander x e)
    (match-case x
-      ((?- ?- ?- . ?body)
-       (e `(begin ,@body) e))
+      ((?- ?level ?name . ?body)
+       (e (loc-attach
+	     `((@ sc_withTrace js) ,level ,name (lambda () ,@body))
+	     x (cdr x) (cddr x) (cdddr x))
+	  e))
       (else
        (scheme2js-error "with-trace" "Illegal form" x x))))
-
-;*---------------------------------------------------------------------*/
-;*    trace-item-expander ...                                          */
-;*---------------------------------------------------------------------*/
-(define (trace-item-expander x e)
-   (match-case x
-      ((?- . ?-)
-       #f)
-      (else
-       (scheme2js-error "trace-item" "Illegal form" x x))))

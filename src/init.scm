@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sun Dec 11 07:16:18 2011 (serrano)                */
+;*    Last change :  Tue Dec 20 12:29:37 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -20,7 +20,8 @@
    
    (export  (init-http!)
 	    (init-webdav!)
-	    (init-flash!)))
+	    (init-flash!)
+	    (init-zeroconf!)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *http-method-handlers* ...                                       */
@@ -513,3 +514,26 @@
       (hop-http-response-remote-hook-add!
        (lambda (req resp)
 	  (log-remote-response (hop-log-file) req resp)))))
+
+;*---------------------------------------------------------------------*/
+;*    init-zeroconf! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (init-zeroconf!)
+   (let ((name (format "Hop (~a)" (hostname))))
+      ;; publish main Hop service
+      (hop-zeroconf-publish! :name name
+	 :type "_http._tcp"
+	 :port (hop-port)
+	 (format "version=~a" (hop-version))
+	 (format "path=~a" (hop-service-base)))
+      ;; publish webdav service
+      (when (hop-enable-webdav)
+	 (hop-zeroconf-publish! :name name
+	    :type "_webdav._tcp"
+	    :port (hop-port)))
+      ;; publish hop available services
+      (for-each (lambda (wi)
+		   (apply hop-zeroconf-publish! :name (format "~a" (cadr wi))
+		      (cddr wi)))
+	 (get-weblets-zeroconf))))
+   

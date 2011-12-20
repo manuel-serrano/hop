@@ -125,6 +125,44 @@ function sc_raise(obj) {
     throw obj;
 }
 
+/* with-trace and trace-item JS machinery */
+var __sc_traceHasConsole =
+   (( "console" in window )
+    && ( "log" in window[ "console" ])
+    && ( "groupCollapsed" in window[ "console" ])
+    && ( "groupEnd" in window[ "console" ]));
+
+var __sc_traceLevel = 0;
+var __sc_traceBlockStack = null
+
+var sc_withTrace =
+   __sc_traceHasConsole ?
+   sc_withTraceConsole : function( level, name, thunk ) { return thunk(); };
+
+function sc_withTraceConsole( level, name, thunk ) {
+   var tracep = __sc_traceLevel >= level;
+   var stack = __sc_traceBlockStack;
+
+   __sc_traceBlockStack = sc_cons( tracep, __sc_traceBlockStack );
+   
+   if( tracep ) console.groupCollapsed( name );
+   
+   try {
+      return thunk();
+   } finally {
+      if( tracep ) console.groupEnd();
+      __sc_traceBlockStack = stack;
+   }
+}
+
+/*** META ((export #t) (arity -1)) */
+function sc_traceItem() {
+    if( __sc_traceBlockStack != null && __sc_traceBlockStack.car ) {
+	if( arguments.length > 0 ) {
+	    console.log.apply( console, arguments );
+	}
+    }
+}
 
 /*** META ((export with-handler-lambda) (arity #t)) */
 function sc_withHandlerLambda(handler, body) {

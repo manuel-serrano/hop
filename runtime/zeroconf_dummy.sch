@@ -3,14 +3,16 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:13:46 2011                          */
-;*    Last change :  Thu Dec 15 20:25:16 2011 (serrano)                */
+;*    Last change :  Tue Dec 20 12:24:58 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Dummy (fake) Zeroconf implementation                             */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
-;*    hop-zeroconf-publish ...                                         */
+;*    Register the dummy-backend                                       */
 ;*---------------------------------------------------------------------*/
-(define (hop-zeroconf-publish svc)
-   (warning "hop-zeroconf" "no zeroconf support" #f))
+(hop-zeroconf-register-backend!
+   (instantiate::zeroconf
+      (name "dummy")))
+      

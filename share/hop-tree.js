@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-tree.js                 */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-tree.js                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Tue Mar 15 17:12:10 2011 (serrano)                */
+/*    Last change :  Tue Dec 20 14:34:59 2011 (serrano)                */
 /*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -224,12 +224,6 @@ function hop_push_vlines( par, row, level ) {
       if( par && par.visible ) {
 	 var src = ((par && !par.last) ? par.iconvline : par.iconempty);
 	 node_style_set( td, "background-image", "url('" + src + "')" );
-/* 	 var img = document.createElement( "img" );                    */
-/*                                                                     */
-/* 	 img.src = src;                                                */
-/* 	 img.className = "hop-tree";                                   */
-/*                                                                     */
-/* 	 td.appendChild( img );                                        */
       } else {
 	 node_style_set( td, "display", "none" );
       }

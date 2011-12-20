@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Mon Dec 19 08:46:27 2011 (serrano)                */
+;*    Last change :  Tue Dec 20 16:09:21 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -13,16 +13,100 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_zeroconf
+   
    (cond-expand
       ((and enable-avahi (library pthread) (library avahi))
-       (include "zeroconf_avahi.sch"))
-      (else
-       (include "zeroconf_dummy.sch")))
-   (export (hop-zeroconf ::pair-nil)))
+       (include "zeroconf_avahi.sch")))
+   
+   (include "service.sch")
+   
+   (import __hop_configure
+	   __hop_service
+	   __hop_types
+	   __hop_hop
+	   __hop_param
+	   __hop_misc
+	   __hop_read
+	   __hop_event
+	   __hop_user)
+   
+   (export (class zeroconf
+	      (hop-zeroconf-init!)
+	      (name::bstring read-only))
+
+	   (abstract-class zeroconf-discoverer)
+	   (class zeroconf-service-discoverer::zeroconf-discoverer)
+
+	   (class zeroconf-service-event::server-event
+	      (interface::int read-only)
+	      (protocol::bstring read-only)
+	      (type::bstring read-only)
+	      (domain::bstring read-only)
+	      (hostname::bstring read-only)
+	      (address::bstring read-only)
+	      (options::pair-nil read-only (default '())))
+	   
+	   (generic hop-zeroconf-init! ::zeroconf)
+	   (generic hop-zeroconf-start! ::zeroconf)
+	   (generic hop-zeroconf-close! ::zeroconf)
+	   (generic hop-zeroconf-publish-service! ::zeroconf
+	      ::bstring ::int ::bstring ::pair-nil)
+	   (generic hop-zeroconf-add-service-event-listener! ::zeroconf
+	      ::zeroconf-discoverer ::obj ::procedure)
+
+	   (hop-zeroconf-publish! #!key name port type #!rest opts)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-zeroconf ...                                                 */
+;*    hop-zeroconf-init! ::zeroconf ...                                */
 ;*---------------------------------------------------------------------*/
-(define (hop-zeroconf svc)
-   (hop-zeroconf-publish svc))
-   
+(define-generic (hop-zeroconf-init! o::zeroconf)
+   o)
+
+;*---------------------------------------------------------------------*/
+;*    hop-zeroconf-start! ::zeroconf ...                               */
+;*---------------------------------------------------------------------*/
+(define-generic (hop-zeroconf-start! o::zeroconf)
+   o)
+
+;*---------------------------------------------------------------------*/
+;*    *hop-zeroconf-backend* ...                                       */
+;*---------------------------------------------------------------------*/
+(define *hop-zeroconf-backend* *hop-zeroconf-backend*)
+
+;*---------------------------------------------------------------------*/
+;*    hop-zeroconf-register-backend! ...                               */
+;*---------------------------------------------------------------------*/
+(define (hop-zeroconf-register-backend! zc)
+   (when (isa? *hop-zeroconf-backend* zeroconf)
+      (hop-zeroconf-close! *hop-zeroconf-backend*))
+   (set! *hop-zeroconf-backend* zc))
+
+;*---------------------------------------------------------------------*/
+;*    hop-zeroconf-close! ::zeroconf ...                               */
+;*---------------------------------------------------------------------*/
+(define-generic (hop-zeroconf-close! o::zeroconf)
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-zeroconf-publish-service! ::zeroconf ...                     */
+;*---------------------------------------------------------------------*/
+(define-generic (hop-zeroconf-publish-service! o::zeroconf name port type opts)
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-zeroconf-publish! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (hop-zeroconf-publish! #!key name port type #!rest opts)
+   (hop-zeroconf-publish-service! *hop-zeroconf-backend* name port type opts))
+
+;*---------------------------------------------------------------------*/
+;*    hop-zeroconf-add-service-event-listener! ::zeroconf ...          */
+;*---------------------------------------------------------------------*/
+(define-generic (hop-zeroconf-add-service-event-listener! o::zeroconf zd evt proc)
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    add-event-listener! ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (add-event-listener! zd::zeroconf-service-discoverer evt proc . capture)
+   (hop-zeroconf-add-service-event-listener! *hop-zeroconf-backend* zd evt proc))
