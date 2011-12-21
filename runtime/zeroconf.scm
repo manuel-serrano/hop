@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Tue Dec 20 16:09:21 2011 (serrano)                */
+;*    Last change :  Wed Dec 21 09:14:36 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -43,6 +43,7 @@
 	      (type::bstring read-only)
 	      (domain::bstring read-only)
 	      (hostname::bstring read-only)
+	      (port::int read-only)
 	      (address::bstring read-only)
 	      (options::pair-nil read-only (default '())))
 	   

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Tue Dec 20 17:54:15 2011 (serrano)                */
+;*    Last change :  Wed Dec 21 14:35:18 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -157,6 +157,7 @@
 						(type type)
 						(domain domain)
 						(hostname host)
+						(port port)
 						(address addr)
 						(options txtlst))))
 				    (proc evt)))))))))))
@@ -165,58 +166,27 @@
 ;*    hop-zeroconf-publish-service! ::avahi ...                        */
 ;*---------------------------------------------------------------------*/
 (define-method (hop-zeroconf-add-service-event-listener! o::avahi zd event proc)
-      (cond
-	 ((string? event)
-	  (service-browser o zd event proc))
-;* 	 ((not event)                                                  */
-;* 	  (instantiate::avahi-service-type-browser                     */
-;* 		     (client client)                                   */
-;* 		     (proc (lambda (b intf proto even type domain flags) */
-;* 			      (start-service-browser client type proc))))) */
-;* 	  (instantiate::avahi-service-browser                          */
-;* 	     (client client)                                           */
-;* 	     (type event)                                              */
-;* 	     (proc (lambda (b intf proto event name type domain flags) */
-;* 		      (when (or (eq? event 'avahi-browser-new)         */
-;* 				(eq? event 'avahi-browser-remove))     */
-;* 			 (instantiate::avahi-service-resolver          */
-;* 			    (client client)                            */
-;* 			    (interface intf)                           */
-;* 			    (protocol proto)                           */
-;* 			    (name name)                                */
-;* 			    (type type)                                */
-;* 			    (domain domain)                            */
-;* 			    (proc (lambda (r intf proto event svc type domain */
-;* 					     host addr port txtlst flags) */
-;* 				     (let* ((name (if (eq? event 'avahi-resolver-found) */
-;* 						      "add" "remove")) */
-;* 					    (proto (case proto         */
-;* 						      ((avahi-proto-inet) */
-;* 						       "ipv4")         */
-;* 						      ((avahi-proto-inet6) */
-;* 						       "ipv6")         */
-;* 						      (else            */
-;* 						       "unknown")))    */
-;* 					    (evt (instantiate::zeroconf-service-event */
-;* 						    (name name)        */
-;* 						    (target zd)        */
-;* 						    (interface intf)   */
-;* 						    (protocol proto)   */
-;* 						    (value svc)        */
-;* 						    (type type)        */
-;* 						    (domain domain)    */
-;* 						    (hostname host)    */
-;* 						    (address addr)     */
-;* 						    (options txtlst)))) */
-;* 					(proc evt))))))))))            */
-	 (else
-	  (error "add-event-listener! ::zeroconf-service-discoverer"
-	     "Illegal event (should be string or #f)"
-	     event))))
+   (cond
+      ((not (string? event))
+       (error "add-event-listener! ::zeroconf-service-discoverer"
+	  "Illegal event (should be string or #f)"
+	  event))
+      ((string=? event "")
+       (with-access::avahi o (client)
+	  (instantiate::avahi-service-type-browser
+	     (client client)
+	     (proc (lambda (b intf proto event type domain flags)
+		      (when (eq? event 'avahi-browser-new)
+			 (service-browser o zd type proc)))))))
+      (else
+       (service-browser o zd event proc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    Register the avahi-backend                                       */
 ;*---------------------------------------------------------------------*/
-(hop-zeroconf-register-backend!
-   (instantiate::avahi
-      (name "avahi")))
+(with-handler
+   (lambda (e)
+      (exception-notify e))
+   (hop-zeroconf-register-backend!
+      (instantiate::avahi
+	 (name "avahi"))))
