@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Wed Dec 21 14:35:18 2011 (serrano)                */
+;*    Last change :  Wed Dec 21 15:08:35 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -33,14 +33,14 @@
       (set! client (instantiate::avahi-client
 		      (proc (lambda (c s) (client-callback c s)))
 		      (poll poll)))
-
+      (avahi-start! o)
       (with-access::avahi-client client (version)
 	 (hop-verb 1 (format "Zeroconf (avahi ~a) setup...\n" version)))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-zeroconf-start! ...                                          */
+;*    avahi-start! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (hop-zeroconf-start! o::avahi)
+(define (avahi-start! o::avahi)
    (with-access::avahi o (poll client thread)
       (unless thread
 	 (set! thread (instantiate::pthread
@@ -93,7 +93,6 @@
 ;*    hop-zeroconf-publish-service! ::avahi ...                        */
 ;*---------------------------------------------------------------------*/
 (define-method (hop-zeroconf-publish-service! o::avahi name port type opts)
-   (hop-zeroconf-start! o)
    (with-access::avahi o (client poll)
       (avahi-simple-poll-timeout poll
 	 1
@@ -184,9 +183,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    Register the avahi-backend                                       */
 ;*---------------------------------------------------------------------*/
-(with-handler
-   (lambda (e)
-      (exception-notify e))
-   (hop-zeroconf-register-backend!
+(hop-zeroconf-register-backend!
+   (lambda ()
       (instantiate::avahi
 	 (name "avahi"))))

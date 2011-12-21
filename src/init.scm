@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Wed Dec 21 09:57:00 2011 (serrano)                */
+;*    Last change :  Wed Dec 21 15:03:38 2011 (serrano)                */
 ;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -519,6 +519,7 @@
 ;*    init-zeroconf! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (init-zeroconf!)
+   (hop-zeroconf-start!)
    (let ((name "Hop"))
       ;; publish main Hop service
       (hop-zeroconf-publish! :name name

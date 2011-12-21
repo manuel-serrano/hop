@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Wed Dec 21 09:14:36 2011 (serrano)                */
+;*    Last change :  Wed Dec 21 15:11:47 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -46,9 +46,10 @@
 	      (port::int read-only)
 	      (address::bstring read-only)
 	      (options::pair-nil read-only (default '())))
+
+	   (hop-zeroconf-start!)
 	   
 	   (generic hop-zeroconf-init! ::zeroconf)
-	   (generic hop-zeroconf-start! ::zeroconf)
 	   (generic hop-zeroconf-close! ::zeroconf)
 	   (generic hop-zeroconf-publish-service! ::zeroconf
 	      ::bstring ::int ::bstring ::pair-nil)
@@ -58,29 +59,28 @@
 	   (hop-zeroconf-publish! #!key name port type #!rest opts)))
 
 ;*---------------------------------------------------------------------*/
+;*    *hop-zeroconf-backend* ...                                       */
+;*---------------------------------------------------------------------*/
+(define *hop-zeroconf-backend* *hop-zeroconf-backend*)
+(define *hop-zeroconf-start-thunk* *hop-zeroconf-start-thunk*)
+
+;*---------------------------------------------------------------------*/
+;*    hop-zeroconf-start! ...                                          */
+;*---------------------------------------------------------------------*/
+(define (hop-zeroconf-start!)
+   (set! *hop-zeroconf-backend* (*hop-zeroconf-start-thunk*)))
+   
+;*---------------------------------------------------------------------*/
 ;*    hop-zeroconf-init! ::zeroconf ...                                */
 ;*---------------------------------------------------------------------*/
 (define-generic (hop-zeroconf-init! o::zeroconf)
    o)
 
 ;*---------------------------------------------------------------------*/
-;*    hop-zeroconf-start! ::zeroconf ...                               */
-;*---------------------------------------------------------------------*/
-(define-generic (hop-zeroconf-start! o::zeroconf)
-   o)
-
-;*---------------------------------------------------------------------*/
-;*    *hop-zeroconf-backend* ...                                       */
-;*---------------------------------------------------------------------*/
-(define *hop-zeroconf-backend* *hop-zeroconf-backend*)
-
-;*---------------------------------------------------------------------*/
 ;*    hop-zeroconf-register-backend! ...                               */
 ;*---------------------------------------------------------------------*/
-(define (hop-zeroconf-register-backend! zc)
-   (when (isa? *hop-zeroconf-backend* zeroconf)
-      (hop-zeroconf-close! *hop-zeroconf-backend*))
-   (set! *hop-zeroconf-backend* zc))
+(define (hop-zeroconf-register-backend! thunk::procedure)
+   (set! *hop-zeroconf-start-thunk* thunk))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-zeroconf-close! ::zeroconf ...                               */
