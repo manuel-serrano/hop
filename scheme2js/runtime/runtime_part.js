@@ -132,7 +132,7 @@ var __sc_traceHasConsole =
     && ( "groupCollapsed" in window[ "console" ])
     && ( "groupEnd" in window[ "console" ]));
 
-var __sc_traceLevel = 0;
+var __sc_traceLevel = ( "hop_debug" in window ) ? window[ "hop_debug" ]() : 0;
 var __sc_traceBlockStack = null
 
 var sc_withTrace =
@@ -140,12 +140,14 @@ var sc_withTrace =
    sc_withTraceConsole : function( level, name, thunk ) { return thunk(); };
 
 function sc_withTraceConsole( level, name, thunk ) {
+   // full console api described at
+   // http://getfirebug.com/wiki/index.php/Console_API
    var tracep = __sc_traceLevel >= level;
    var stack = __sc_traceBlockStack;
 
    __sc_traceBlockStack = sc_cons( tracep, __sc_traceBlockStack );
    
-   if( tracep ) console.groupCollapsed( name );
+   if( tracep ) console.group( name );
    
    try {
       return thunk();
