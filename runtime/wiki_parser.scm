@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Dec 19 10:06:02 2011 (serrano)                */
+;*    Last change :  Thu Dec 22 08:25:55 2011 (serrano)                */
 ;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -757,7 +757,7 @@
 	      (ignore))
 	     (else
 	      (multiple-value-bind (ident class)
-		 (wiki-parse-ident (the-substring 3 (the-length)))
+		 (wiki-parse-ident (the-substring 3 -1))
 		 (enter-expr! '** (wiki-syntax-b syn) #f
 			      :class class :id ident)
 		 (ignore))))))
@@ -772,7 +772,7 @@
 	      (ignore))
 	     (else
 	      (multiple-value-bind (ident class)
-		 (wiki-parse-ident (the-substring 3 (the-length)))
+		 (wiki-parse-ident (the-substring 3 -1))
 		 (enter-expr! '// (wiki-syntax-em syn) #f
 			      :class class :id ident)
 		 (ignore))))))
@@ -787,7 +787,7 @@
 	      (ignore))
 	     (else
 	      (multiple-value-bind (ident class)
-		 (wiki-parse-ident (the-substring 3 (the-length)))
+		 (wiki-parse-ident (the-substring 3 -1))
 		 (enter-expr! '__ (wiki-syntax-u syn) #f
 			      :class class :id ident)
 		 (ignore))))))
@@ -904,7 +904,7 @@
 	  (ignore)))
 
       ;; math
-      ((: "$$" (? (: #\: (+ (or (out " \t\n$") (: "$" (out "$")))) " \t\n")))
+      ((: "$$" (+ (or (out #\$) (: #\$ (out #\$)))) "$$")
        (add-expr! ((wiki-syntax-math syn) (the-substring 2 -2)))
        (ignore))
       
@@ -920,7 +920,7 @@
 	      (ignore))
 	     (else
 	      (multiple-value-bind (ident class)
-		 (wiki-parse-ident (the-substring 3 (the-length)))
+		 (wiki-parse-ident (the-substring 3 -1))
 		 (enter-expr! 'tt (wiki-syntax-tt syn) #f
 			      :class class :id ident)
 		 (ignore))))))
@@ -936,7 +936,7 @@
 	      (ignore))
 	     (else
 	      (multiple-value-bind (ident class)
-		 (wiki-parse-ident (the-substring 3 (the-length)))
+		 (wiki-parse-ident (the-substring 3 -1))
 		 (enter-expr! 'code (wiki-syntax-code syn) #f
 			      :class class :id ident)
 		 (ignore))))))
@@ -953,7 +953,7 @@
 	      (ignore))
 	     (else
 	      (multiple-value-bind (ident class)
-		 (wiki-parse-ident (the-substring 3 (the-length)))
+		 (wiki-parse-ident (the-substring 3 -1))
 		 (enter-expr! 'strike (wiki-syntax-strike syn) #f
 			      :class class :id ident)
 		 (ignore))))))

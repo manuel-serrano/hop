@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Wed Dec 21 15:11:47 2011 (serrano)                */
+;*    Last change :  Wed Dec 21 17:50:42 2011 (serrano)                */
 ;*    Copyright   :  2011 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -16,8 +16,10 @@
    
    (cond-expand
       ((and enable-avahi (library pthread) (library avahi))
-       (include "zeroconf_avahi.sch")))
-   
+       (include "zeroconf_avahi.sch"))
+      (else
+       (include "zeroconf_dummy.sch")))
+
    (include "service.sch")
    
    (import __hop_configure
@@ -98,7 +100,8 @@
 ;*    hop-zeroconf-publish! ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (hop-zeroconf-publish! #!key name port type #!rest opts)
-   (hop-zeroconf-publish-service! *hop-zeroconf-backend* name port type opts))
+   (when (isa? *hop-zeroconf-backend* zeroconf)
+      (hop-zeroconf-publish-service! *hop-zeroconf-backend* name port type opts)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-zeroconf-add-service-event-listener! ::zeroconf ...          */
@@ -110,4 +113,5 @@
 ;*    add-event-listener! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (add-event-listener! zd::zeroconf-service-discoverer evt proc . capture)
-   (hop-zeroconf-add-service-event-listener! *hop-zeroconf-backend* zd evt proc))
+   (when (isa? *hop-zeroconf-backend* zeroconf)
+      (hop-zeroconf-add-service-event-listener! *hop-zeroconf-backend* zd evt proc)))
