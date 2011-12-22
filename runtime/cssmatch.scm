@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/cssmatch.scm              */
+;*    serrano/prgm/project/hop/2.3.x/runtime/cssmatch.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 19 14:53:16 2010                          */
-;*    Last change :  Wed Nov 16 11:47:18 2011 (serrano)                */
+;*    Last change :  Thu Dec 22 10:33:22 2011 (serrano)                */
 ;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Parsing and dealing with CSS.                                    */
@@ -472,6 +472,7 @@
 (define-method (css-selector-match? selector::css-selector-attr el)
    (with-access::css-selector-attr selector (ident op arg)
       (cond
+	 ((not op) (dom-get-attribute el ident))
 	 ((string=? op "=") (equal? arg (dom-get-attribute el ident)))
 	 ((string=? op "~=") #f)
 	 ((string=? op "|=") #f)
