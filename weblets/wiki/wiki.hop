@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Dec 19 09:44:17 2011 (serrano)                */
-;*    Copyright   :  2005-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:24:38 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
 ;*=====================================================================*/
@@ -44,7 +44,7 @@
 		    (let ((res (wiki-view req path #t #f)))
 		       (if (isa? res %http-response)
 			   res
-			   (instantiate::http-response-hop
+			   (instantiate::http-response-xml
 			      (backend be)
 			      (content-type mime-type)
 			      (xml res))))))
@@ -60,7 +60,7 @@
 	  (if (authorized-path? req path)
 	      (let ((be (hop-get-xml-backend (string->symbol xml))))
 		 (with-access::xml-backend be (mime-type) 
-		    (instantiate::http-response-hop
+		    (instantiate::http-response-xml
 		       (backend be)
 		       (content-type mime-type)
 		       (xml (wiki-view req path #f #t)))))

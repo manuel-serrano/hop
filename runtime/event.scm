@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Dec 19 11:50:51 2011 (serrano)                */
-;*    Copyright   :  2005-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:42:38 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -713,7 +713,7 @@
 				   (when padding
 				      (when debug-ajax
 					 (tprint "   ajax padding=" padding))
-				      (with-access::http-response-js val ((p padding))
+				      (with-access::http-response-hop val ((p padding))
 					 (set! p padding)))
 				   val)
 				(with-access::ajax-connection conn ((p padding))
@@ -867,7 +867,7 @@
    (define (unregister-websocket-event! event key)
       (let ((c (assq (string->symbol key) *websocket-response-list*)))
 	 (when (pair? c)
-	    (let ((resp (cadr c)))
+	    (let ((resp (cdr c)))
 	       (hashtable-update! *websocket-socket-table*
 				  event
 				  (lambda (l) (delete! resp l))
@@ -1235,7 +1235,7 @@
 				      (begin
 					 (set! req #f)
 					 (mutex-unlock! mutex)))))
-			  (with-access::http-response-js val ((p padding))
+			  (with-access::http-response-hop val ((p padding))
 			     (set! p padding))
 			  (or (ajax-signal-value r val)
 			      (loop (cdr l))))
@@ -1339,7 +1339,7 @@
 			    (if (isa? req http-request)
 				(let ((val (scheme->response
 					    (list (list name value)) req)))
-				   (with-access::http-response-js val ((p padding))
+				   (with-access::http-response-hop val ((p padding))
 				      (set! p padding))
 				   (ajax-signal-value req val)
 				   (set! req #f))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Dec  5 07:59:38 2011 (serrano)                */
-;*    Copyright   :  2004-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:36:43 2012 (serrano)                */
+;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -162,17 +162,10 @@
 
 	    (hop-mime-types::pair-nil)
 	    (hop-mime-types-set! ::pair-nil)
+
+	    (hop-mime-type::bstring)
+	    (hop-mime-type-set! ::bstring)
 	    
-	    (hop-default-mime-type::bstring)
-	    (hop-default-mime-type-set! ::bstring)
-
-	    (hop-json-mime-type::bstring)
-	    (hop-json-mime-type-symbol::symbol)
-	    (hop-bigloo-mime-type::bstring)
-
-	    (hop-serialize-method::symbol)
-	    (hop-serialize-method-set! ::symbol)
-
 	    (hop-authorize-service-hook::procedure)
 	    (hop-authorize-service-hook-set! ::procedure)
 	    
@@ -826,6 +819,7 @@
      ("application/xhtml+xml" "xhtml")
      ("application/x-javascript" "js")
      ("application/xml" "xml" "rss")
+     ("application/x-hop" "hop" "scm")
      ;; audio
      ("audio/audible" "aa")
      ("audio/aac" "aac")
@@ -851,38 +845,10 @@
       v))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-default-mime-type ...                                        */
+;*    hop-mime-type ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-default-mime-type
-   "text/plain")
-
-;*---------------------------------------------------------------------*/
-;*    hop-json-mime-type ...                                           */
-;*    -------------------------------------------------------------    */
-;*    Opera8 only accepts application/x-javascript. It encodes all     */
-;*    the other mimetypes that are then unusable with with-hop.        */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-json-mime-type
-   ;;"application/json"
-   "application/x-javascript"
-   (lambda (v)
-      (hop-json-mime-type-symbol-set! (string->symbol v))
-      v))
-
-(define-parameter hop-json-mime-type-symbol
-   'application/x-javascript)
-
-;*---------------------------------------------------------------------*/
-;*    hop-serialize-method ...                                         */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-serialize-method
-   'javascript)
-
-;*---------------------------------------------------------------------*/
-;*    hop-bigloo-mime-type ...                                         */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-bigloo-mime-type
-   "application/bigloo")
+(define-parameter hop-mime-type
+   "application/x-hop")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-icons-directory ...                                          */

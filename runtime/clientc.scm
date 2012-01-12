@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Sat Dec 10 20:03:08 2011 (serrano)                */
-;*    Copyright   :  2009-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:11:10 2012 (serrano)                */
+;*    Copyright   :  2009-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
 ;*=====================================================================*/
@@ -29,7 +29,8 @@
 	    __hop_mime
 	    __hop_types
 	    __hop_hop
-	    __hop_http-lib)
+	    __hop_http-lib
+	    __hop_configure)
    
    (export  (class clientc
 	       (filec::procedure read-only)
@@ -133,7 +134,7 @@
 (define (clientc-response req path)
    (with-access::http-request req (method header)
       (let ((ce (cache-get clientc-cache path))
-	    (mime (hop-javascript-mime-type)))
+	    (mime (hop-configure-javascript-mime-type)))
 	 (if (isa? ce cache-entry)
 	     ;; since we are serving a cached answer, we also have
 	     ;; to check that the client is allowed to the requested

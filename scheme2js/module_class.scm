@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 23 11:24:26 2011                          */
-;*    Last change :  Wed Dec 21 15:28:21 2011 (serrano)                */
-;*    Copyright   :  2011 Manuel Serrano                               */
+;*    Last change :  Sat Jan  7 06:36:32 2012 (serrano)                */
+;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2JS class compiler                                         */
 ;*=====================================================================*/

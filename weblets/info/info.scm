@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/info/info.scm             */
+;*    serrano/prgm/project/hop/2.3.x/weblets/info/info.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 25 18:43:56 2010                          */
-;*    Last change :  Tue Dec 28 14:46:57 2010 (serrano)                */
-;*    Copyright   :  2010 Manuel Serrano                               */
+;*    Last change :  Fri Dec 30 19:43:52 2011 (serrano)                */
+;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client side of the INFO weblet                                   */
 ;*=====================================================================*/
@@ -279,7 +279,7 @@
    (let loop ((i 0))
       (when (<fx i n)
 	 ;; create a html tree from a string
-	 (innerHTML-set! "perfs-div" (get-html-string))
+	 (innerHTML-set! "perfs-div" (<SPAN> (get-html-string)))
 	 (node-benchmark)
 	 ;; create a html tree from an expression
 	 (innerHTML-set! "perfs-div" "")

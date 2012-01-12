@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Tue Dec 20 15:35:54 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:42:56 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
 ;*=====================================================================*/
@@ -77,14 +77,14 @@
 	   (class http-response-remote)
 	   (class http-response-autoload)
 	   (class http-response-filter)
-	   (class http-response-hop)
+	   (class http-response-xml)
 	   (class http-response-procedure)
 	   (class http-response-file)
 	   (class http-response-shoutcast)
 	   (class http-response-string)
 	   (class http-response-error)
 	   (class http-response-raw)
-	   (class http-response-js)
+	   (class http-response-hop)
 	   (class http-response-authentication)
 	   (class http-response-cgi)
 	   (class http-response-persistent)
@@ -127,6 +127,6 @@
 	   (class zeroconf)
 	   (class zeroconf-discoverer)
 	   (class zeroconf-service-discoverer)
-	   
+
 	   (class zeroconf-service-event)))
 

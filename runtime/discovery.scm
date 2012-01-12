@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Tue Dec  6 07:35:59 2011 (serrano)                */
-;*    Copyright   :  2011 Manuel Serrano                               */
+;*    Last change :  Wed Jan 11 11:54:52 2012 (serrano)                */
+;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
 ;*    running Hops).                                                   */
@@ -133,7 +133,7 @@
 ;*    hop-discovery-reply ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hop-discovery-reply clienthost clientport service id)
-   (hop-verb 2 (hop-color id id " DISCOVERY ") clienthost ":" clientport "\n")
+   (hop-verb 2 (hop-color id id " DISCOVERY.reply ") clienthost ":" clientport "\n")
    (when (=fx discovery-key 0)
       (set! discovery-key
 	 (bit-rsh (absfx (elong->fixnum (current-seconds))) 2)))

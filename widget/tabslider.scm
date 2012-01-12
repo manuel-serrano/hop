@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/widget/tabslider.scm              */
+;*    serrano/prgm/project/hop/2.3.x/widget/tabslider.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Nov 16 16:05:22 2011 (serrano)                */
+;*    Last change :  Wed Jan 11 15:29:59 2012 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -77,7 +77,7 @@
       (display "</div>" p)
       (fprintf p
 	       "<script type='~a'>hop_tabslider_init('~a', ~a, ~a, ~a)</script>"
-	       (hop-javascript-mime-type)
+	       (hop-configure-javascript-mime-type)
 	       id index
 	       (if history "true" "false")
 	       (hop->js-callback onchange))))

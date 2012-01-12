@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/xml.scm                   */
+;*    serrano/prgm/project/hop/2.3.x/runtime/xml.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Nov 16 11:45:02 2011 (serrano)                */
-;*    Copyright   :  2004-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:19:20 2012 (serrano)                */
+;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -44,9 +44,6 @@
 	    
 	    (hop-get-xml-backend::xml-backend ::symbol)
 
-	    (hop-javascript-mime-type::bstring)
-	    (hop-javascript-mime-type-set! ::bstring)
-	    
 	    (hop-xhtml-xmlns::pair-nil)
 	    (hop-xhtml-xmlns-set! ::pair-nil)
 
@@ -75,12 +72,6 @@
 	    (<DELAY> . ::obj)
 	    (<PRAGMA> . ::obj)))
 
-;*---------------------------------------------------------------------*/
-;*    hop-javascript-mime-type ...                                     */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-javascript-mime-type
-   (hop-configure-javascript-mime-type))
-   
 ;*---------------------------------------------------------------------*/
 ;*    hop-xhtml-xmlns ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -413,7 +404,7 @@
 	  (xml-write (xml-tilde->statement obj) p backend)
 	  (with-access::xml-backend backend (cdata-start cdata-stop)
 	     (display "<script type='" p)
-	     (display (hop-javascript-mime-type) p)
+	     (display (hop-configure-javascript-mime-type) p)
 	     (display "'>" p)
 	     (when cdata-start (display cdata-start p))
 	     (display (xml-tilde->statement obj) p)
@@ -443,7 +434,7 @@
 	     (when (isa? security security-manager)
 		(for-each (lambda (r)
 			     (display "<script type='" p)
-			     (display (hop-javascript-mime-type) p)
+			     (display (hop-configure-javascript-mime-type) p)
 			     (fprintf p "' src='~a'>" r)
 			     (display "</script>\n" p))
 		   (with-access::security-manager security (runtime) runtime)))
@@ -574,7 +565,7 @@
 					"Unbound variables"))
 				    "Unbound variables"))
 			     (r (http-internal-error e m)))
-			 (with-access::http-response-hop r (xml)
+			 (with-access::http-response-xml r (xml)
 			    (xml-write-html xml p backend))))
 		   (error/source '<HTML>
 				 (format "Unbound client-side variable: ~a"
@@ -709,7 +700,7 @@
 		       (loop (cddr attrs) var))
 		    (let ((var (gensym)))
 		       (display "<script type='" p)
-		       (display (hop-javascript-mime-type) p)
+		       (display (hop-configure-javascript-mime-type) p)
 		       (display "'>" p)
 		       (when cdata-start (display cdata-start p))
 		       (display "hop_add_event_listener( \"" p)

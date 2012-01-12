@@ -3,7 +3,7 @@
    (<IFRAME>
       :style "border: 0; width: 400px; height: 400px; overflow: hidden;"
       :src ((service ()
-	       (instantiate::http-response-hop
+	       (instantiate::http-response-xml
 		  (backend (hop-get-xml-backend 'xhtml))
 		  (xml (<HTML>
 			  (<SVG> :width 400 :height 400

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/json.scm                  */
+;*    serrano/prgm/project/hop/2.3.x/runtime/json.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Fri Nov 11 07:18:10 2011 (serrano)                */
-;*    Copyright   :  2010-11 Manuel Serrano                            */
+;*    Last change :  Fri Jan  6 14:37:45 2012 (serrano)                */
+;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
 ;*=====================================================================*/
@@ -23,7 +23,8 @@
 	    __hop_charset
 	    __hop_clientc)
    
-   (export  (generic hop->json ::obj ::output-port)))
+   (export  (generic hop->json ::obj ::output-port)
+            (byte-array->json ::bstring ::output-port)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ...                                                    */
@@ -45,6 +46,29 @@
       (else
        (with-access::clientc (hop-clientc) (valuec)
 	  (valuec obj op hop->json #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    byte-array->json ...                                             */
+;*---------------------------------------------------------------------*/
+(define (byte-array->json str::bstring op::output-port)
+   (let ((len (string-length str)))
+      (case len
+	 ((0)
+	  (display "[]" op))
+	 ((1)
+	  (display "[" op)
+	  (display-fixnum (char->integer (string-ref-ur str 0)) op)
+	  (display "]" op))
+	 (else
+	  (display "[" op)
+	  (display-fixnum (char->integer (string-ref-ur str 0)) op)
+	  (let loop ((i 1))
+	     (if (=fx i len)
+		 (display "]" op)
+		 (begin
+		    (display "," op)
+		    (display-fixnum (char->integer (string-ref-ur str i)) op)
+		    (loop (+fx i 1)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    vector->json ...                                                 */

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-request.js              */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-request.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Jun  6 14:14:19 2011 (serrano)                */
-/*    Copyright   :  2004-11 Manuel Serrano                            */
+/*    Last change :  Thu Jan 12 09:05:34 2012 (serrano)                */
+/*    Copyright   :  2004-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
 /*=====================================================================*/
@@ -223,9 +223,11 @@ function hop_stop_anim( xhr ) {
 	 xhr.hop_anim_interval = false;
       }
 
-      xhr.hop_anim.count--;
-      if( xhr.hop_anim.count == 1 )
-	 node_style_set( xhr.hop_anim, "display", "none" );
+      if( xhr.hop_anim != true ) {
+	 xhr.hop_anim.count--;
+	 if( xhr.hop_anim.count == 1 )
+	    node_style_set( xhr.hop_anim, "display", "none" );
+      }
    }
 }
    
@@ -260,49 +262,66 @@ function hop_default_success( h, xhr ) {
 /*    Unserialize the object contained in the XHR response. The        */
 /*    unserialization method depends on the mime type of the response. */
 /*---------------------------------------------------------------------*/
-function hop_request_unserialize( svc, xhr ) {
-   var ctype =
-      ("content_type" in xhr) ? xhr.content_type : hop_header_content_type( xhr );
+function hop_request_unserialize( svc ) {
+   var xhr = this;
+   var ctype = ("content_type" in xhr) ?
+      xhr[ "content_type" ] : hop_header_content_type( xhr );
 
-   if( ctype === "application/x-javascript" ) {
-      var serialize = ("hop_serialize" in xhr) ?
-	 xhr.hop_serialize : hop_header_hop_serialize( xhr );
-      
-      /* ctype must match the value hop-json-mime-type */
-      /* which is defined in runtime/param.scm.        */
-      if( serialize === "javascript" ) {
-	 return eval( xhr.responseText );
-      } else if( serialize === "hop" ) {
-	 return hop_string_to_obj( decodeURIComponent( xhr.responseText ) );
-      } else if( serialize === "json" ) {
-	 return hop_unjson( hop_json_parse( xhr.responseText ) );
-      } else {
-	 sc_error( svc, "Unknown serialization format", serialize );
-      }
-   }
-
-   if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
+   if( ctype === "application/x-hop" ) {
+      return hop_string_to_obj( hop_json_parse( xhr.responseText ) );
+   } if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
       return hop_create_element( xhr.responseText );
-   }
-
-   if( ctype === "application/json" ) {
+   } else if( ctype === "application/x-javascript" ) {
+      return eval( xhr.responseText );
+   } else if( ctype === "application/json" ) {
       return hop_json_parse( xhr.responseText );
+   } else {
+      return xhr.responseText;
    }
+}
 
-   return xhr.responseText;
+/*---------------------------------------------------------------------*/
+/*    hop_request_unserialize_arraybuffer ...                          */
+/*    -------------------------------------------------------------    */
+/*    Unserialize the object contained in the XHR response. The        */
+/*    unserialization method depends on the mime type of the response. */
+/*---------------------------------------------------------------------*/
+function hop_request_unserialize_arraybuffer( svc ) {
+   var xhr = this;
+   var ctype = ("content_type" in xhr) ?
+      xhr[ "content_type" ] : hop_header_content_type( xhr );
+   /* MS, 11jan2012, In Chrome, got confused with empty responses */
+   var a = (xhr.response instanceof ArrayBuffer) ?
+      new Uint8Array( xhr.response ) : new Uint8Array();
+
+   if( ctype === "application/x-hop" ) {
+      return hop_string_to_obj( a );
+   } if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
+      return hop_create_element( hop_uint8array_to_string( a ) );
+   } else if( ctype === "application/x-javascript" ) {
+      return eval( hop_uint8array_to_string( a ) );
+   } else if( ctype === "application/json" ) {
+      return hop_json_parse( hop_uint8array_to_string( a ) );
+   } else {
+      return hop_uint8array_to_string( a );
+   }
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_duplicate_error ...                                          */
 /*---------------------------------------------------------------------*/
 function hop_duplicate_error( exc ) {
-   var nexc = new exc.constructor( exc.message );
+   try {
+      var nexc = new exc.constructor( exc.message );
 
-   for( p in exc ) {
-      nexc[ p ] = exc[ p ];
+      for( p in exc ) {
+	 nexc[ p ] = exc[ p ];
+      }
+
+      return nexc;
+   } catch( _ ) {
+      return exc;
    }
-
-   return nexc;
 }
 
 /*---------------------------------------------------------------------*/
@@ -313,12 +332,12 @@ function hop_request_onready( xhr, svc, succ, fail, err ) {
       switch( xhr.status ) {
       case 200:
 	 try {
-	    return succ( hop_request_unserialize( svc, xhr ), xhr );
+	    return succ( xhr.unserialize( svc ), xhr );
 	  } catch( exc ) {
 	     // Exception are read-only in Firefox, duplicate then
 	     var frame = sc_cons( succ, sc_cons( xhr, null ) );
 	     var nexc = err( exc );
-	     
+
 	     nexc.hopLocation = exc.hopLocation;
 	     nexc.scObject = exc.scObject;
 	     nexc.hopStack = sc_cons( frame, xhr.hopStack );
@@ -333,21 +352,12 @@ function hop_request_onready( xhr, svc, succ, fail, err ) {
       case 204:
 	 return false;
 	 
-      case 257:
-	 return hop_js_eval( xhr );
-	 
-      case 258:
-	 if( xhr.responseText != null )
-	    return eval( xhr.responseText );
-	 else
-	    return false;
-	 
       case 259:
 	 hop_set_cookie( xhr );
 	 return false;
 	 
       case 400:
-	 fail( hop_request_unserialize( svc, xhr ), xhr );
+	 fail( xhr.unserialize( svc ), xhr );
 	 return false;
 	 
       case 407:
@@ -355,7 +365,7 @@ function hop_request_onready( xhr, svc, succ, fail, err ) {
 	 return false;
 	 
       default:
-	 if( (typeof xhr.status == "number") &&
+	 if( (typeof xhr.status === "number") &&
 	     (xhr.status > 200) && (xhr.status < 300) ) {
 	    return succ( xhr.responseText, xhr );
 	 } else {
@@ -402,18 +412,33 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
    xhr.hopStack = hop_debug() > 0 ? hop_get_stack( 1 ) : null;
 
    function onreadystatechange() {
-      if( xhr.readyState == 4 ) {
-	 hop_request_onready( xhr, svc, succ, fail, duperror );
+      if( this.readyState == 4 ) {
+	 hop_request_onready( this, svc, succ, fail, duperror );
       }
 
       return false;
    }
 
    if( !sync ) {
+      xhr.open( "PUT", svc, true );
+      
+      if( hop_config.uint8array ) {
+	 xhr.responseType = "arraybuffer";
+	 xhr.unserialize = hop_request_unserialize_arraybuffer;
+	 xhr.onload = onreadystatechange;
+	 xhr.setRequestHeader( "Hop-Serialize", "arraybuffer" );
+      } else {
+	 xhr.unserialize = hop_request_unserialize;
+	 xhr.onreadystatechange = onreadystatechange;
+	 xhr.setRequestHeader( "Hop-Serialize", "text" );
+      }
+   } else {
+      xhr.open( "PUT", svc, false );
+      
+      xhr.unserialize = hop_request_unserialize;
       xhr.onreadystatechange = onreadystatechange;
+      xhr.setRequestHeader( "Hop-Serialize", "text" );
    }
-
-   xhr.open( "PUT", svc, (sync != true) );
 
    if( t ) {
       if( "setTimeouts" in xhr ) {

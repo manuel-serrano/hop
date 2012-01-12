@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Mon Dec  5 07:43:09 2011 (serrano)                */
-/*    Copyright   :  2007-11 Manuel Serrano                            */
+/*    Last change :  Fri Jan  6 14:33:32 2012 (serrano)                */
+/*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
 /*=====================================================================*/
@@ -224,7 +224,6 @@ function hop_remove_active_hashchange_listener( obj, proc ) {
 /*---------------------------------------------------------------------*/
 function hop_hashchange_set( obj, href ) {
    window.location.href = href;
-/*    obj.hop_hashchange_href = window.location.href;                  */
 }
 
 /*---------------------------------------------------------------------*/
@@ -344,8 +343,6 @@ function start_servevt_websocket_proxy( key, host, port ) {
       }
 
       var unregister = function( id ) {
-	 hop_servevt_proxy.httpreq.abort();
-
 	 var svc = hop_service_base() +
 	 "/public/server-event/unregister?event=" + id +
 	 "&key=" + key;
@@ -411,23 +408,24 @@ function start_servevt_xhr_multipart_proxy( key ) {
 	 var req = hop_make_xml_http_request();
 	 req.multipart = true;
 
-	 hop_servevt_proxy.httpreq = hop_send_request( svc,
-						       // asynchronous call
-						       false,
-						       // success callback
-						       success,
-						       // failure callback
-						       failure,
-						       // no anim
-						       false,
-						       // no environment
-						       [],
-						       // no authentication
-						       false,
-						       // no timeout
-						       false,
-						       // xhr request
-	                                               req );
+	 hop_servevt_proxy.httpreq =
+	    hop_send_request( svc,
+			      // asynchronous call
+			      false,
+			      // success callback
+			      success,
+			      // failure callback
+			      failure,
+			      // no anim
+			      false,
+			      // no environment
+			      [],
+			      // no authentication
+			      false,
+			      // no timeout
+			      false,
+			      // xhr request
+	                      req );
 
       }
 

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Nov 29 09:17:41 2011 (serrano)                */
-;*    Copyright   :  2005-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan  4 08:18:24 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -845,7 +845,7 @@
       (if (or (string=? f "") (char=? (string-ref f 0) #\/))
 	  f
 	  (make-file-name dir f)))
-   
+
    (mutex-lock! *afile-mutex*)
    (if (memq dir *afile-dirs*)
        (mutex-unlock! *afile-mutex*)

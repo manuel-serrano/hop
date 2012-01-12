@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/widget/slider.scm                 */
+;*    serrano/prgm/project/hop/2.3.x/widget/slider.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Nov 12 07:14:24 2011 (serrano)                */
-;*    Copyright   :  2005-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:29:14 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
 ;*=====================================================================*/
@@ -77,7 +77,7 @@
 		    onchange)
 		   (else
 		    ""))))
-	 (fprintf p "<script id='~a' type='~a'>" gid (hop-javascript-mime-type))
+	 (fprintf p "<script id='~a' type='~a'>" gid (hop-configure-javascript-mime-type))
 	 (fprint p
 		 "hop_add_event_listener( '" gid "', 'ready', function( e ) { hop_slider_onchange_set( "
 		 "hop_make_slider( "

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/hopscheme/hopscheme.scm           */
+;*    serrano/prgm/project/hop/2.3.x/hopscheme/hopscheme.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:39:39 2010                          */
-;*    Last change :  Fri Feb 19 07:45:49 2010 (serrano)                */
-;*    Copyright   :  2010 Florian Loitsch and Manuel Serrano           */
+;*    Last change :  Wed Jan  4 08:13:43 2012 (serrano)                */
+;*    Copyright   :  2010-12 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Hopscheme                                                        */
 ;*=====================================================================*/
@@ -41,20 +41,23 @@
 ;*    hopscheme-compile-file ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme-compile-file file env)
-   (set-abase! file)
-   (with-output-to-string
-      (lambda ()
-	 (scheme2js-compile-file file              ;; input-files
-				 "-"               ;; output-file
-				 `(                ;; headers-overrides
-				   (merge-first (import ,@(hop-runtime-modules)))
-				   ,@env)
-				 (extend-config (get-cached-config)
-						'module-resolver
-						(lambda (mod)
-						   ((bigloo-module-resolver)
-						    mod (module-abase))))
-				 :reader *hop-reader*))))
+   (let ((abase (module-abase)))
+      (unwind-protect
+	 (with-output-to-string
+	    (lambda ()
+	       (set-abase! file)
+	       (scheme2js-compile-file file              ;; input-files
+		  "-"               ;; output-file
+		  `(                ;; headers-overrides
+		    (merge-first (import ,@(hop-runtime-modules)))
+		    ,@env)
+		  (extend-config (get-cached-config)
+		     'module-resolver
+		     (lambda (mod)
+			((bigloo-module-resolver)
+			 mod (module-abase))))
+		  :reader *hop-reader*)))
+	 (module-abase-set! abase))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *cached-config* ...                                              */

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon Dec  5 18:10:12 2011 (serrano)                */
-;*    Copyright   :  2004-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 16:08:58 2012 (serrano)                */
+;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
 ;*=====================================================================*/
@@ -227,15 +227,15 @@
 	 ((200)
 	  ;; see hop-json-mime-type and hop-bigloo-mime-type
 	  (let ((ctype (header-content-type header)))
-	     (case ctype
-		((text/html)
-		 (success (read-string p)))
-		((application/bigloo)
-		 (success (string->obj (read p))))
+	     (cond
+		((eq? ctype 'application/x-hop)
+		 (success (string->obj (read-chars clength p))))
+		((eq? ctype 'application/json)
+		 (success (json->hop p)))
+		((eq? ctype 'application/x-javascript)
+		 (error "with-hop" "Unsupported mime-type" ctype))
 		(else
-		 (if (eq? ctype (hop-json-mime-type-symbol))
-		     (success (json->hop p))
-		     (success (read-string p)))))))
+		 (success (read-string p))))))
 	 ((201 204 304)
 	  ;; no message body
 	  (success (instantiate::xml-http-request
@@ -256,10 +256,10 @@
 		       (header header)
 		       (input-port p)))
 	      (raise
-	       (instantiate::&error
-		  (proc proc)
-		  (msg (format "Illegal status `~a'" status))
-		  (obj (if (input-port? p) (read-string p) #f)))))))))
+		 (instantiate::&error
+		    (proc proc)
+		    (msg (format "Illegal status `~a'" status))
+		    (obj (when (input-port? p) (read-string p))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-to-hop-id ...                                                */
@@ -375,6 +375,7 @@
 			 (host host)
 			 (port port)
 			 (connection 'close)
+			 (header '((hop-serialize: . "arraybuffer")))
 			 (authorization authorization)
 			 (path (or abspath path))))
 		 (suc (or success (lambda (x) x)))
@@ -461,19 +462,19 @@
 	 (success body))))
 
 ;*---------------------------------------------------------------------*/
-;*    with-hop-local ::http-response-js ...                            */
-;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-js success fail auth)
-   (when (procedure? success)
-      (with-access::http-response-js obj (value)
-	 (success value))))
-
-;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-hop ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-hop success fail auth)
    (when (procedure? success)
-      (with-access::http-response-hop obj (xml)
+      (with-access::http-response-hop obj (value)
+	 (success value))))
+
+;*---------------------------------------------------------------------*/
+;*    with-hop-local ::http-response-xml ...                           */
+;*---------------------------------------------------------------------*/
+(define-method (with-hop-local obj::http-response-xml success fail auth)
+   (when (procedure? success)
+      (with-access::http-response-xml obj (xml)
 	 (success xml))))
 
 ;*---------------------------------------------------------------------*/

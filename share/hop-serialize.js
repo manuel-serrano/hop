@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Thu Dec  1 10:12:06 2011 (serrano)                */
-/*    Copyright   :  2007-11 Manuel Serrano                            */
+/*    Last change :  Wed Jan 11 21:02:59 2012 (serrano)                */
+/*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
@@ -73,7 +73,8 @@ function hop_bigloo_serialize_context( item ) {
    if( item === null )
       return ".";
 
-   if( item.hop_serialize_context_key === hop_serialize_context.key ) {
+   if( "hop_serialize_context_key" in item &&
+       item[ "hop_serialize_context_key" ] === hop_serialize_context.key ) {
       hop_serialize_context.ref++;
       return "%23" + hop_serialize_word( item.hop_serialize_context_def );
    }
@@ -490,13 +491,56 @@ function hop_string_to_obj( s ) {
    var definitions = [];
    var defining = -1;
 
+   function substring( s, beg, end ) {
+      if( s instanceof Array ) {
+	 return String.fromCharCode.apply( null, s.slice( beg, end ) );
+      } else {
+	 return hop_uint8array_to_string( s.subarray( beg, end ) );
+      }
+   }
+
+   function utf8substring( s, beg, end ) {
+      var codes = new Array();
+      var j = 0;
+
+      while( beg < end ) {
+	 var code = s[ beg++ ];
+	 
+	 if( code < 128 ) {
+	    codes[ j++ ] = code;
+	 } else {
+	    var code2 = s[ beg++ ];
+	    
+	    if( code < 224 ) {
+	       codes[ j++ ] = ((code - 192) << 6) + (code2 - 128);
+	    } else {
+	       var code3 = s[ beg++ ];
+
+	       if( code < 240 ) {
+		  codes[ j++ ] = ((code - 224) << 12)
+		     + ((code2 - 128) << 6) + (code3 - 128);
+	       } else {
+		  code4 = s[ beg++ ];
+
+		  codes[ j++ ] = ((code - 240) << 18)
+		     + ((code2 - 128) << 12)
+		     + ((code3 - 128) << 6)
+		     + (code4 - 128);
+	       }
+	    }
+	 }
+      }
+      
+      return String.fromCharCode.apply( null, codes );
+   }
+   
    function read_integer( s ) {
       return read_size( s );
    }
 
    function read_float( s ) {
       var szf = read_size( s );
-      var res = s.substring( pointer, pointer + szf );
+      var res = substring( s, pointer, pointer + szf );
       
       pointer += szf;
 
@@ -504,14 +548,14 @@ function hop_string_to_obj( s ) {
    }
    
    function read_char( s ) {
-      new sc_Char(String.fromCharCode(n));
+      new sc_Char( String.fromCharCode( read_integer( s ) ) );
    }
 
    function read_word( s, sz ) {
       var acc = 0;
 
       for( var iw = 0; iw < sz; iw++ ) {
-	 acc = (256 * acc) + s.charCodeAt( pointer++ );
+	 acc = (256 * acc) + s[ pointer++ ];
       }
 
       return acc;
@@ -523,21 +567,14 @@ function hop_string_to_obj( s ) {
 
 
    function read_size( s ) {
-      var szs = s.charCodeAt( pointer++ );
+      var szs = s[ pointer++ ];
       return read_word( s, szs );
    }
    
    function read_string( s ) {
       var ulen = read_size( s );
       var sz = ((ulen + pointer) > s.length) ? s.length - pointer : ulen;
-      var res = s.substring( pointer, pointer + sz );
-
-      // see the comment of function hop_serialize_string to understand
-      // that loop
-      while( utf_length( res ) > ulen ) {
-	 sz--;
-	 res = s.substring( pointer, pointer + sz );
-      }
+      var res = utf8substring( s, pointer, pointer + sz );
       
       if( defining >= 0 ) {
 	 definitions[ defining ] = res;
@@ -630,8 +667,119 @@ function hop_string_to_obj( s ) {
       return res;
    }
 
+   function read_structure() {
+      var old_defining = defining;
+      var key, sz, res;
+      
+      defining = -1;
+      
+      key = read_item();
+      sz = read_item();
+      res = sc_makeStruct( key );
+
+      if( old_defining >= 0 )
+	 definitions[ old_defining ] = res;
+
+      for( var i = 0; i < sz; i++ ) {
+	 sc_setStructFieldBang( res, key, i, read_item() );
+      }
+
+      return res;
+   }
+
+   function read_object() {
+      var old_defining = defining;
+      var key, sz, clazz, fields;
+      var res;
+      
+      defining = -1;
+      
+      key = read_item();
+      sz = read_item();
+      clazz = sc_class_exists( key );
+      cinfo = read_item();
+      sz--;
+
+      if( clazz ) {
+	 res = sc_class_allocator( clazz )();
+	 fields = sc_class_all_fields( clazz );
+      
+	 if( old_defining >= 0 )
+	    definitions[ old_defining ] = res;
+
+	 for( var i = 0; i < sz; i++ ) {
+	    fields[ i ].sc_setter( res, read_item() );
+	 }
+
+	 if( read_item() === clazz.sc_hash ) {
+	    return res;
+	 } else {
+	    sc_error( "string->obj", "corrupted class", key );
+	 }
+      } else {
+	 res = new Object();
+
+	 for( var i = 0; i < sz; i++ ) {
+	    res[ cinfo[ i ] ] = read_item();
+	 }
+	 
+	 return res;
+      }
+   }
+
+   function read_custom_object() {
+      var old_defining = defining;
+      var obj, hash, unserializer;
+      var res;
+      
+      defining = -1;
+      
+      obj = read_item();
+      hash = read_item();
+      unserializer = hop_find_class_unserializer( hash );
+
+      res = unserializer( obj );
+      
+      if( old_defining >= 0 ) {
+	 definitions[ old_defining ] = res;
+      }
+      
+      clazz = sc_object_class( res );
+
+      if( !(res instanceof sc_Object) || (hash === clazz.sc_hash) ) {
+	 return res;
+      } else {
+	 sc_error( "string->obj", "corrupted custom class", hash );
+      }
+   }
+   
+   function read_elong( sz ) {
+      return read_word( s, sz );
+   }
+      
+   function read_llong( sz ) {
+      return read_word( s, sz );
+   }
+
+   function read_unsupported( type ) {
+      return sc_error( "hop_js_to_object", 
+		       type + " unsupported on client-side",
+		       s );
+   }
+
+   function read_date() {
+      return seconds_date( parseInt( read_string( s ), 10 ) );
+   }
+
+   function read_class() {
+      var cname = read_symbol();
+      var cinfo = read_item();
+     
+      return sc_class_exists( cname ) || cinfo;
+   }
+   
    function read_item() {
-      switch( s.charCodeAt( pointer++ ) ) {
+      switch( s[ pointer++ ] ) {
 	 case 0x3d /* = */: return read_definition();
 	 case 0x23 /* # */: return read_reference();
 	 case 0x27 /* ' */: return read_symbol();
@@ -642,17 +790,37 @@ function hop_string_to_obj( s ) {
 	 case 0x3b /* ; */: return undefined;
 	 case 0x2e /* . */: return null;
 	 case 0x3c /* < */: return read_cnst();
-	 case 0x22 /* " */: return read_string( s )
-	 case 0x28 /* ( */: return read_list( read_size( s ) );
-	 case 0x53 /* ^ */: return read_extended_list( read_size( s ) );
+         case 0x22 /* " */: return read_string( s );
+         case 0x55 /* U */: return read_string( s );
 	 case 0x5b /* [ */: return read_vector( read_size( s ) );
+	 case 0x28 /* ( */: return read_list( read_size( s ) );
+	 case 0x5e /* ^ */: return read_extended_list( read_size( s ) );
+         case 0x7b /* { */: return read_structure();
+         case 0x7c /* | */: return read_object();
+         case 0x4f /* O */: return read_custom_object();
 	 case 0x66 /* f */: return read_float( s );
 	 case 0x2d /* - */: return -read_integer( s );
+         case 0x45 /* E */: return read_elong( read_size( s ) );
+         case 0x4c /* L */: return read_llong( read_size( s ) );
+         case 0x64 /* d */: return read_date();
+         case 0x6b /* k */: return read_class();
+         case 0x72 /* r */: return sc_pregexp( read_string( s ) );
+         case 0x68 /* h */: return read_unsupported( "homogeneous-vector" );
+	 case 0x56 /* V */: return read_unsupported( "typed-vector" );
+	 case 0x21 /* ! */: return read_unsupported( "cell" );
+         case 0x75 /* u */: return read_unsupported( "ucs2" );
+	 case 0x7a /* z */: return read_unsupported( "bignum" );
+         case 0x2b /* + */: return read_unsupported( "custom" );
+	 case 0x77 /* w */: return read_unsupported( "weak-ptr" );
+         case 0x74 /* t */: return read_unsupported( "tagged vectors" );
+         case 0x70 /* p */: return read_unsupported( "process" );
+         case 0x65 /* e */: return read_unsupported( "process" );
+         case 0x6f /* o */: return read_unsupported( "opaque" );
 	 default: pointer--; return read_integer( s );
       }
    }
 
-   if( s.charAt( pointer ) == 'c' ) {
+   if( s[ pointer ] === 0x63 /* c */ ) {
       pointer++;
       definitions = new Array( read_size( s ) );
    }
@@ -661,39 +829,28 @@ function hop_string_to_obj( s ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    unjson ...                                                       */
+/*    hop_custom_object_regexp ...                                     */
 /*---------------------------------------------------------------------*/
-var unjson = {
-   "pair": function( o ) {
-      return sc_cons( hop_unjson( o.car ), hop_unjson( o.cdr ) );
-   }
-}
- 
+var hop_custom_object_regexp =
+   new RegExp( "hop_create_encoded_element[(][ ]*\"([^\"]*)\"[ ]*[)]" );
+	       
 /*---------------------------------------------------------------------*/
-/*    hop_unjson ...                                                   */
+/*    hop_find_class_unserializer ...                                  */
 /*---------------------------------------------------------------------*/
-function hop_unjson( o ) {
-   var tname = typeof o;
+function hop_find_class_unserializer( hash ) {
+   return function( o ) {
+      if( typeof( o ) === "string" ) {
+	 var m = o.match( hop_custom_object_regexp );
 
-   if( ((o instanceof String) || (tname == "string")) ||
-       ((typeof o) == "number") ||
-       (o instanceof Boolean) || (tname == "boolean") ||
-       (o === null) ) {
-      return o;
-   }
-
-   if( o instanceof Array ) {
-      for( var i = 0; i < o.length; i++ ) {
-	 o[ i ] = hop_unjson( o [ i ] );
+	 if( m ) {
+	    return hop_create_element( decodeURIComponent( m [ 1 ] ) );
+	 } else {
+	    return sc_error( "string->obj", "Cannot find custom class unserializer", o );
+	 }
+      } else {
+	 return sc_error( "string->obj", "Cannot find custom class unserializer", hash );
       }
-
-      return o;
    }
-   
-   if( "__uuid" in o )
-      return unjson[ o.__uuid ]( o );
-   else
-      return o;
 }
 
 /*---------------------------------------------------------------------*/

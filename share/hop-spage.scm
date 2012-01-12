@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Fri Dec  2 06:48:49 2011 (serrano)                */
-;*    Copyright   :  2010-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 16:31:53 2012 (serrano)                */
+;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
 ;*=====================================================================*/

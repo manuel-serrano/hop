@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Dec 19 09:44:04 2011 (serrano)                */
-;*    Copyright   :  2004-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:27:38 2012 (serrano)                */
+;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
 ;*=====================================================================*/
@@ -86,7 +86,7 @@
 (define-method (http-error e::&io-unknown-host-error)
    (let ((req (or (current-request) (anonymous-request))))
       (with-access::xml-backend (hop-xml-backend) (mime-type)
-	 (instantiate::http-response-hop
+	 (instantiate::http-response-xml
 	    (start-line (http-start-line req "404 Not Found"))
 	    (request req)
 	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
@@ -130,7 +130,7 @@
    (let ((s (with-error-to-string (lambda () (exception-notify e))))
 	 (req (current-request)))
       (with-access::xml-backend (hop-xml-backend) (mime-type)
-	 (instantiate::http-response-hop
+	 (instantiate::http-response-xml
 	    (request req)
 	    (start-line (http-start-line req "200 ok"))
 	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
@@ -155,7 +155,7 @@
 			 (exception-notify e))))))
 	 (req (current-request)))
       (with-access::xml-backend (hop-xml-backend) (mime-type)
-	 (instantiate::http-response-hop
+	 (instantiate::http-response-xml
 	    (request req)
 	    (start-line (http-start-line req "200 ok"))
 	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
@@ -199,7 +199,7 @@
 ;*---------------------------------------------------------------------*/
 (define (http-file-not-found file)
    (let ((req (or (current-request) (anonymous-request))))
-      (instantiate::http-response-hop
+      (instantiate::http-response-xml
 	 (request req)
 	 (start-line (http-start-line req "404 Not Found"))
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
@@ -217,7 +217,7 @@
    (define (illegal-service key msg)
       (let ((req (or (current-request) (anonymous-request))))
 	 (with-access::xml-backend (hop-xml-backend) (mime-type)
-	    (instantiate::http-response-hop
+	    (instantiate::http-response-xml
 	       (request req)
 	       (start-line (http-start-line req "404 Not Found"))
 	       (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
@@ -306,7 +306,7 @@ a timeout which has now expired. The service is then no longer available."))
 		(with-output-to-string (lambda () (display e))))))
 	 (req (or (current-request) (anonymous-request))))
       (with-access::xml-backend (hop-xml-backend) (mime-type)
-	 (instantiate::http-response-hop
+	 (instantiate::http-response-xml
 	    (request req)
 	    (start-line (http-start-line req "500 Internal Server Error"))
 	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
@@ -327,7 +327,7 @@ a timeout which has now expired. The service is then no longer available."))
 ;*---------------------------------------------------------------------*/
 (define (http-service-error req service m)
    (with-access::xml-backend (hop-xml-backend) (mime-type)
-      (instantiate::http-response-hop
+      (instantiate::http-response-xml
 	 (request req)
 	 (start-line (http-start-line req "400 Bad Request"))
 	 (backend (hop-xml-backend))
@@ -349,7 +349,7 @@ a timeout which has now expired. The service is then no longer available."))
 ;*---------------------------------------------------------------------*/
 (define (http-invalidated-service-error req)
    (with-access::xml-backend (hop-xml-backend) (mime-type)
-      (instantiate::http-response-hop
+      (instantiate::http-response-xml
 	 (request req)
 	 (start-line "HTTP/1.0 404 Not Found")
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
@@ -371,7 +371,7 @@ Reloading the page is the only way to fix this problem."))))))
 ;*---------------------------------------------------------------------*/
 (define (http-corrupted-service-error req)
    (with-access::xml-backend (hop-xml-backend) (mime-type)
-      (instantiate::http-response-hop
+      (instantiate::http-response-xml
 	 (request req)
 	 (start-line "HTTP/1.0 404 Not Found")
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
@@ -400,7 +400,7 @@ Reloading the page is the only way to fix this problem."))))))
 (define (http-warning msg #!optional dump)
    (let ((req (or (current-request) (anonymous-request))))
       (with-access::xml-backend (hop-xml-backend) (mime-type)
-	 (instantiate::http-response-hop
+	 (instantiate::http-response-xml
 	    (request req)
 	    (start-line (http-start-line req "200 ok"))
 	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
@@ -421,7 +421,7 @@ Reloading the page is the only way to fix this problem."))))))
 		   e
 		   (or (current-request) (anonymous-request)))))
       (with-access::xml-backend (hop-xml-backend) (mime-type)
-	 (instantiate::http-response-hop
+	 (instantiate::http-response-xml
 	    (request req)
 	    (start-line (http-start-line req "503 Service Unavailable"))
 	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
@@ -442,7 +442,7 @@ Reloading the page is the only way to fix this problem."))))))
    (let ((s (with-error-to-string (lambda () (exception-notify e))))
 	 (req (current-request)))
       (with-access::xml-backend (hop-xml-backend) (mime-type)
-	 (instantiate::http-response-hop
+	 (instantiate::http-response-xml
 	    (request req)
 	    (start-line (http-start-line req "503 Service Unavailable"))
 	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
@@ -464,7 +464,7 @@ Reloading the page is the only way to fix this problem."))))))
    (let ((s (with-error-to-string (lambda () (exception-notify e))))
 	 (req (current-request)))
       (with-access::xml-backend (hop-xml-backend) (mime-type)
-	 (instantiate::http-response-hop
+	 (instantiate::http-response-xml
 	    (request req)
 	    (start-line (http-start-line req "404 Not Found"))
 	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))

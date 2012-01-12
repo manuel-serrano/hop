@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -38,6 +38,8 @@ function initRuntime() {
     SC_ERROR_OUT = SC_DEFAULT_OUT;
 }
 */
+
+var sc_tmp;
 
 function sc_print_debug() {
     sc_print.apply(null, arguments);
@@ -2444,6 +2446,27 @@ sc_Class.prototype.toString = function() {
    return "#<class:" + sc_symbol2jsstring( sc_class_name( this ) ) + ">";
 }
 sc_Class.prototype.sc_toWriteOrDisplayString = sc_Class.prototype.toString;
+
+sc_Object.prototype.toString = function() {
+   var clazz = sc_object_class( this );
+   var res = "#|" + sc_symbol2jsstring( clazz.sc_name );
+
+   if( sc_isNil( this ) ) {
+      return res + " nil|"
+   } else {
+      var fields = sc_class_all_fields( clazz );
+
+      for( var i = 0; i < fields.length; i++ ) {
+	 res += " ["
+	    + sc_symbol2jsstring( fields[ i ].sc_name )
+	    + ": "
+	    + fields[ i ].sc_getter( this )
+	    + "]";
+      }
+      
+      return res + "|";
+   }
+}
 
 function sc_register_class( clazz, name, zuper, hash, allocator, constructor, fields ) {
    var ftable = {};

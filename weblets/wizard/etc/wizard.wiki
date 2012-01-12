@@ -11,7 +11,7 @@
         (<TH> (string-capitalize "") " version") (<TD> "1.0.0"))
   (<TR> (<TH> "Hop min version") (<TD> "2.3.0 "))
   (<TR> (<TH> "Hop max version") (<TD> ""))
-  (<TR> (<TH> "Date") (<TD> "05 December 2011"))
+  (<TR> (<TH> "Date") (<TD> "22 December 2011"))
   (<TR> (<TH> "Category") (<TD> "hop")))
 
 

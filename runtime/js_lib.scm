@@ -3,10 +3,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Tue Dec 13 16:19:37 2011 (serrano)                */
-;*    Copyright   :  2005-11 Manuel Serrano                            */
+;*    Last change :  Thu Jan 12 09:25:23 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Simple JS lib                                                    */
+;*    JS tools lib                                                     */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -24,11 +24,23 @@
 	    __hop_service
 	    __hop_charset
 	    __hop_clientc
-	    __hop_read-js)
+	    __hop_read-js
+	    __hop_json)
 
    (export  (generic obj->javascript ::obj ::output-port ::obj)
 	    (json->hop ::obj)
 	    (hop->js-callback ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::xml-markup ...                               */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! xml-markup
+   (lambda (o)
+      (let ((p (open-output-string)))
+	 (obj->javascript o p #t)
+	 (close-output-port p)))
+   (lambda (o)
+      #unspecified))
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript ...                                              */
@@ -49,17 +61,66 @@
 		  obj)))
       ((date? obj)
        (fprintf op "new Date( ~a000 )" (date->seconds obj)))
+      ((or (string? obj) (number? obj) (symbol? obj))
+       (clientc-compile obj op isrep))
       (else
-       (clientc-compile obj op isrep))))
+       (composite->javascript obj op isrep))))
 
+;*---------------------------------------------------------------------*/
+;*    composite->javascript ...                                        */
+;*---------------------------------------------------------------------*/
+(define (composite->javascript obj op::output-port isrep)
+   
+   (define (serialize obj)
+      (display "hop_string_to_obj(" op)
+      (byte-array->json (obj->string obj) op)
+      (display ")" op)
+      #t)
+
+   (define (vector-atomic? vec)
+      (let loop ((i (-fx (vector-length vec) 1)))
+	 (cond
+	    ((=fx i -1)
+	     #t)
+	    ((atomic? (vector-ref vec i))
+	     (loop (-fx i 1)))
+	    (else
+	     #f))))
+
+   (define (pair-atomic? p)
+      (and (atomic? (car p)) (atomic? (cdr p))))
+   
+   (define (atomic? x)
+      (cond
+	 ((vector? x) (vector-atomic? x))
+	 ((pair? x) (pair-atomic? x))
+	 ((null? x) #t)
+	 (else (or (number? x) (string? x) (symbol? x) (keyword? x) (char? x)))))
+   
+   (cond
+      ((vector? obj)
+       (cond
+	  ((=fx (vector-length obj) 0)
+	   (display "[]" op)
+	   #t)
+	  ((vector-atomic? obj)
+	   #f)
+	  (else
+	   (serialize obj))))
+      ((null? obj)
+       (display "null" op))
+      ((pair? obj)
+       (unless (pair-atomic? obj)
+	  (serialize obj)))
+      (else
+       (serialize obj))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    clientc-compile ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (clientc-compile obj op isrep)
    (let ((comp (hop-clientc))
-	 (foreign-out (lambda (obj2 op)
-			 (unless (eq? obj obj2)
-			    (obj->javascript obj2 op isrep)))))
+	 (foreign-out (lambda (obj2 op) (composite->javascript obj2 op isrep))))
       (with-access::clientc comp (valuec)
 	 (valuec obj op foreign-out #f))))
 
@@ -120,12 +181,13 @@
    
    (define (display-fields fields op)
       (display "{ " op)
-      (display-seq fields op (lambda (f op)
-				(display "'" op)
-				(display (class-field-name f) op)
-				(display "': " op)
-				(obj->javascript
-				   ((class-field-accessor f) obj) op isrep)))
+      (display-seq fields op
+	 (lambda (f op)
+	    (display "'" op)
+	    (display (class-field-name f) op)
+	    (display "': " op)
+	    (obj->javascript
+	       ((class-field-accessor f) obj) op isrep)))
       (display "}" op))
    
    (let ((klass (object-class obj)))
@@ -142,65 +204,6 @@
 	     (display ", " op)
 	     (display-fields fields op)
 	     (display ")" op)))))
-
-;* (define-method (obj->javascript-old-25nov2011 obj::object op isrep) */
-;*                                                                     */
-;*    (define (display-seq vec op proc)                                */
-;*       (let ((len (vector-length vec)))                              */
-;* 	 (when (>fx len 0)                                             */
-;* 	    (proc (vector-ref vec 0) op)                               */
-;* 	    (let loop ((i 1))                                          */
-;* 	       (when (<fx i len)                                       */
-;* 		  (display "," op)                                     */
-;* 		  (proc (vector-ref vec i) op)                         */
-;* 		  (loop (+fx i 1)))))))                                */
-;*                                                                     */
-;*    (define (display-vect vec op proc)                               */
-;*       (display "(" op)                                              */
-;*       (display-seq vec op proc)                                     */
-;*       (display ")" op))                                             */
-;*                                                                     */
-;*    (define (vector-for-each proc v)                                 */
-;*       (let ((len (vector-length v)))                                */
-;* 	 (let loop ((i 0))                                             */
-;* 	    (when (<fx i len)                                          */
-;* 	       (proc (vector-ref v i))                                 */
-;* 	       (loop (+fx i 1))))))                                    */
-;* 		                                                       */
-;*    (define (display-field-init fields op)                           */
-;*       (display "{" op)                                              */
-;*       (vector-for-each                                              */
-;* 	 (lambda (f)                                                   */
-;* 	    (let ((n (class-field-name f)))                            */
-;* 	       (fprintf op "this.~a = ~a;" n n)))                      */
-;* 	 fields)                                                       */
-;*       (display "}" op))                                             */
-;*                                                                     */
-;*    (let* ((klass (object-class obj))                                */
-;* 	  (kname (symbol->string! (class-name klass)))                 */
-;* 	  (name (if (bigloo-need-mangling? kname)                      */
-;* 		    (bigloo-mangle kname)                              */
-;* 		    kname))                                            */
-;* 	  (hash (class-hash klass))                                    */
-;* 	  (fields (class-all-fields klass)))                           */
-;*       (fprintf op "(function() {var ~a=function" name)              */
-;*       (display-vect fields op (lambda (o op) (display (class-field-name o) op))) */
-;*       (display-field-init fields op)                                */
-;*       (fprintf op ";~a.prototype.hop_bigloo_serialize = hop_bigloo_serialize_object; " name) */
-;*       (fprintf op "~a.prototype.hop_classname = '~a'; " name name)  */
-;*       (fprintf op "~a.prototype.hop_classhash = ~a;" name hash)     */
-;*       (fprintf op "~a.prototype.hop_classfields = [" name)          */
-;*       (display-seq fields op (lambda (f op)                         */
-;* 				(display "'" op)                       */
-;* 				(display (class-field-name f) op)      */
-;* 				(display "'" op)))                     */
-;*       (display "]; " op)                                            */
-;*       (fprintf op "return new ~a" name)                             */
-;*       (display-vect fields op (lambda (f op)                        */
-;* 				 (obj->javascript                      */
-;* 				  ((class-field-accessor f) obj) op isrep))) */
-;*       (display ";})()" op))                                         */
-;*    #t)                                                              */
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript ::xml ...                                        */

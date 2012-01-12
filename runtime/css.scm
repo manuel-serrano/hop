@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sat Dec 10 19:55:56 2011 (serrano)                */
-;*    Copyright   :  2005-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan  4 08:52:25 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
 ;*=====================================================================*/
@@ -400,7 +400,7 @@
 		    (bodyp (eq? method 'GET))
 		    (file hss)))
 		(hss
-                   (instantiate::http-response-procedure
+                 (instantiate::http-response-procedure
                       (request req)
                       (charset (hop-locale))
                       (content-type mime)

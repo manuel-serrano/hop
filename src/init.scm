@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Wed Dec 21 15:03:38 2011 (serrano)                */
-;*    Copyright   :  2005-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:30:32 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
 ;*=====================================================================*/
@@ -166,11 +166,11 @@
 	    ((isa? rep %http-response)
 	     rep)
 	    ((isa? rep xml)
-	     (instantiate::http-response-hop
+	     (instantiate::http-response-xml
 		(backend (hop-xml-backend))
 		(request req)
 		(timeout timeout)
-		(content-type (mime-type abspath (hop-default-mime-type)))
+		(content-type (mime-type abspath "text/plain"))
 		(charset (hop-charset))
 		(bodyp bodyp)
 		(header '((Cache-Control: . "no-cache")))
@@ -537,4 +537,4 @@
 		   (apply hop-zeroconf-publish! :name (format "~a" (cadr wi))
 		      (cddr wi)))
 	 (get-weblets-zeroconf))))
-   
+

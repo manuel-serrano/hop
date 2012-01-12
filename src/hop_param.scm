@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Dec 15 18:09:15 2011 (serrano)                */
+;*    Last change :  Thu Dec 22 11:36:21 2011 (serrano)                */
 ;*    Copyright   :  2004-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */

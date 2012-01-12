@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Dec  6 05:27:49 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:22:51 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
 ;*=====================================================================*/
@@ -313,7 +313,7 @@
    (let ((s (call-with-output-string
 	     (lambda (op)
 		(obj->javascript (procedure->service (lambda (res) (cont res))) op #f)))))
-      (instantiate::http-response-hop
+      (instantiate::http-response-xml
 	 (backend (hop-xml-backend))
 	 (content-type (with-access::xml-backend (hop-xml-backend) (mime-type)
 			  mime-type))
@@ -468,7 +468,7 @@
 	 (when (hashtable-get *service-table* path)
 	    (cond
 	       ((not (hop-allow-redefine-service))
-		(mutex-lock! *service-mutex*)
+		(mutex-unlock! *service-mutex*)
 		(error id
 		       "Service re-definition not permitted"
 		       "use `--devel' or `-s0' options to enable re-definitions"))

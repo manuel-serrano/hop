@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/widget/paned.scm                  */
+;*    serrano/prgm/project/hop/2.3.x/widget/paned.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Nov 12 07:14:02 2011 (serrano)                */
-;*    Copyright   :  2005-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:29:02 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
 ;*=====================================================================*/
@@ -96,7 +96,7 @@
       (fprint p "</div>")
       (fprint p "</div>")
       (display " <script type='" p)
-      (display (hop-javascript-mime-type) p)
+      (display (hop-configure-javascript-mime-type) p)
       (display "'>" p)
       (fprintf p
 	       "hop_add_event_listener( ~s, 'ready', function(e ) {

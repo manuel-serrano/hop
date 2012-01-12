@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Dec  5 18:07:21 2011 (serrano)                */
-;*    Copyright   :  2004-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:39:31 2012 (serrano)                */
+;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
 ;*=====================================================================*/
@@ -76,7 +76,7 @@
 	      (input-port read-only))
 	   
 	   (abstract-class %http-response::%http-message
-	      (content-type (default #f))
+	      (content-type::obj read-only (default #f))
 	      (request::http-request (default (class-nil http-request)))
 	      (bodyp::bool read-only (default #t)))
 
@@ -108,13 +108,12 @@
 
 	   (class http-response-autoload::%http-response-local)
 
-	   (class http-response-hop::%http-response-local
+	   (class http-response-xml::%http-response-local
 	      (backend read-only)
 	      (xml read-only))
 	   
-	   (class http-response-js::%http-response-local
+	   (class http-response-hop::%http-response-local
 	      (backend read-only)
-	      (serializer::symbol read-only (default (hop-serialize-method)))
 	      (padding::obj (default #f))
 	      (value::obj read-only))
 	   

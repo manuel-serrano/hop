@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Sat Dec 10 19:13:39 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan  4 08:51:29 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
 ;*=====================================================================*/
@@ -120,7 +120,7 @@
 ;*    cache-signature ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (cache-signature path)
-   (file-modification-time path))
+   (bit-xorelong (file-modification-time path) (fixnum->elong (hop-session))))
 
 ;*---------------------------------------------------------------------*/
 ;*    for-each-cache ...                                               */
@@ -223,7 +223,8 @@
       (mutex-lock! %mutex)
       (let ((ce (hashtable-get %table path)))
 	 (cond
-	    ((and (validity ce path)
+	    ((and ce
+		  (validity ce path)
 		  (with-access::cache-entry ce (value) (file-exists? value)))
 	     (with-access::cache-entry ce (%prev %next)
 		(when %prev

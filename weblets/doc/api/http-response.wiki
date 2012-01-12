@@ -20,14 +20,14 @@ in the documentation for the ++with-hop++ form.
   (class http-response-filter::%http-response ...)
   (class http-response-authentication::%http-response ...)
   (abstract-class %http-response-local::%http-response ...)
-  (class http-response-hop::%http-response-local ...)
+  (class http-response-xml::%http-response-local ...)
   (class http-response-procedure::%http-response-local ...)
   (class http-response-raw::%http-response-local ...)
   (class http-response-file::%http-response-local ...)
   (class http-response-shoutcast::http-response-file ...)
   (class http-response-string::%http-response-local ...)
   (class http-response-error::%http-response-string ...)
-  (class http-response-js::%http-response-local ...)
+  (class http-response-hop::%http-response-local ...)
   (class http-response-cgi::%http-response-local ...)
   (class http-response-persistent::%http-response ...)
   (class http-response-put::%http-response-local ...)
@@ -163,8 +163,8 @@ the current server.
 
 </class>
 
-=== ++(class http-response-hop::%http-response-local ...)++ ===
-<class> http-response-hop
+=== ++(class http-response-xml::%http-response-local ...)++ ===
+<class> http-response-xml
 
 <fields>
 ^  fields              ^   access  ^       type        ^  default value          ^  short description                   ^
@@ -173,7 +173,7 @@ the current server.
 | xml                  |    r      |      obj          |      _                  | the value of the answer.             |
 </fields>
 
-The class ::http-response-hop is used to return compound objects
+The class ::http-response-xml is used to return compound XML objects
 to clients. In particular, it is used to return HTML trees. The
 value ++xml++ might be any object built by any markup. It can also
 be a string or an number.
@@ -271,8 +271,8 @@ client according to the [[http://www.shoutcast.com/|shoutcast]] protocol.
 
 </class>
 
-=== ++(class http-response-js::%http-response-local ...)++ ===
-<class> http-response-js
+=== ++(class http-response-hop::%http-response-local ...)++ ===
+<class> http-response-hop
 
 <fields>
 ^  fields              ^   access  ^       type        ^  default value        ^  short description                          ^
@@ -281,7 +281,7 @@ client according to the [[http://www.shoutcast.com/|shoutcast]] protocol.
 | value                |    r      |       obj         |      _                | the object to be returned.                  |
 </fields>
 
-The class ::http-response-js is used to transmit values to
+The class ::http-response-hop is used to transmit values to
 client using the client ++with-hop++ service invocation.
 
 The field ++backend++ controls the XML backend used to compile

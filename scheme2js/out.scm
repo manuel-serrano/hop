@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -314,6 +314,20 @@
 	     (unless (>= i (ucs2-string-length val))
 		(display-ucs2-char p (ucs2-string-ref val i))
 		(loop (+fx i 1))))))
+      ((eq? val #unspecified)
+       (template-display p "undefined"))
+      ((keyword? val)
+       (if (use-mutable-strings?)
+	   (template-display p
+	      "(new sc_Keyword(\"~a\"))"
+	      (my-string-for-read (keyword->string! val)))
+	   (template-display p
+	      "\"~a~a\"" *keyword-prefix*
+	      (my-string-for-read (keyword->string! val)))))
+      ((date? val)
+       (fprintf p "new Date( ~a000 )" (date->seconds val)))
+      ((and foreign-out (foreign-out val p))
+       #unspecified)
       ((vector? val)
        (if (class? val)
 	   (scheme2js-error "scheme2js:val-out"
@@ -339,18 +353,6 @@
 	      (separated ", " 
 			 (lambda (e) "~e" (compile-value e p foreign-out loc))
 			 val))))
-      ((eq? val #unspecified)
-       (template-display p "undefined"))
-      ((keyword? val)
-       (if (use-mutable-strings?)
-	   (template-display p
-	      "(new sc_Keyword(\"~a\"))"
-	      (my-string-for-read (keyword->string! val)))
-	   (template-display p
-	      "\"~a~a\"" *keyword-prefix*
-	      (my-string-for-read (keyword->string! val)))))
-      (foreign-out
-       (foreign-out val p))
       (else
        (scheme2js-error "scheme2js:val-out"
 			"Internal Error: forgot Val-type"

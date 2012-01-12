@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/xdomain.scm               */
+;*    serrano/prgm/project/hop/2.3.x/runtime/xdomain.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri May  6 11:54:10 2011                          */
-;*    Last change :  Wed Nov 16 12:00:53 2011 (serrano)                */
-;*    Copyright   :  2011 Manuel Serrano                               */
+;*    Last change :  Wed Jan 11 15:28:30 2012 (serrano)                */
+;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop xdomain requests                                             */
 ;*=====================================================================*/
@@ -46,7 +46,7 @@
 (define (init-hop-xdomain-service!)
    (set! *xdomain-svc*
       (service :name "admin/xdomain" (#!key origin)
-	 (instantiate::http-response-hop
+	 (instantiate::http-response-xml
 	    (backend (hop-xml-backend))
 	    (request (current-request))
 	    (charset (hop-locale))

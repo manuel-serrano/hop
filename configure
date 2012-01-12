@@ -4,8 +4,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Dec 18 06:12:24 2011 (serrano)                */
-#*    Copyright   :  2004-11 Manuel Serrano                            */
+#*    Last change :  Wed Jan 11 13:39:26 2012 (serrano)                */
+#*    Copyright   :  2004-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -50,7 +50,7 @@ bscm2jsflags="-unsafe"
 blflags="-copt \$(CPICFLAGS) -L \$(BUILDLIBDIR)"
 
 mimetypes=/etc/mime.types
-jsmimetype="text/javascript"
+jsmimetype="application/x-javascript"
 cssmimetype="text/css"
 
 libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite"
@@ -103,7 +103,7 @@ fi
 ssl=""
 locevent="true"
 threads=""
-zeroconfig=""
+zeroconf=""
 avahi=""
 
 hopsrfis=""
@@ -254,9 +254,9 @@ while : ; do
     --disable-ssl)
       ssl=no;;
 
-    --disable-avahi)
-      avahi=no;;
-
+#*     --disable-avahi)                                                */
+#*       avahi=no;;                                                    */
+#*                                                                     */
     --gzip=*)
       gzip="`echo $1 | sed 's/^[^=]*=//'`";;
 
@@ -945,7 +945,7 @@ echo
 echo "Optional features:"
 echo "  multi-threading....................... $threads"
 echo "  https support......................... $ssl"
-echo "  zerconf............................... $zeroconf"
+echo "  zeroconf.............................. $zeroconf"
 echo
 echo "Directories where Hop will be installed:"
 echo "  etc directory......................... $etcdir"

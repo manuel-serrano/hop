@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/xml_types.scm             */
+;*    serrano/prgm/project/hop/2.3.x/runtime/xml_types.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Wed Jun 29 10:34:50 2011 (serrano)                */
-;*    Copyright   :  2010-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:08:27 2012 (serrano)                */
+;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
 ;*=====================================================================*/

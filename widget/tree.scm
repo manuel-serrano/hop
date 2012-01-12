@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/widget/tree.scm                   */
+;*    serrano/prgm/project/hop/2.3.x/widget/tree.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Nov 16 12:01:27 2011 (serrano)                */
-;*    Copyright   :  2005-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:39:16 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
 ;*=====================================================================*/
@@ -138,7 +138,7 @@
       (with-access::html-tree obj (klass)
 	 (fprintf p "<div id='~a' class='hop-tree-container ~a'>" parent klass))
       (display " <script type='" p)
-      (display (hop-javascript-mime-type) p)
+      (display (hop-configure-javascript-mime-type) p)
       (display "'>" p)
       (html-write-tree 0 obj parent p backend)
       (display " </script>" p)
@@ -336,10 +336,10 @@
 			     (return b))
 			    ((isa? b xml-tilde)
 			     (return
-			      (instantiate::http-response-js
+			      (instantiate::http-response-hop
 				 (backend (hop-xml-backend))
 				 (start-line "HTTP/1.0 501 Internal Server Error")
-				 (content-type (hop-json-mime-type))
+				 (content-type (hop-mime-type))
 				 (value b))))
 			    (else
 			     (error "<TREE>" "Illegal tree body" b)))))

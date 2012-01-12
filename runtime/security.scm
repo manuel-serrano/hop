@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/security.scm              */
+;*    serrano/prgm/project/hop/2.3.x/runtime/security.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Sat Nov 12 06:21:52 2011 (serrano)                */
-;*    Copyright   :  2009-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:28:21 2012 (serrano)                */
+;*    Copyright   :  2009-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
 ;*=====================================================================*/
@@ -142,10 +142,10 @@
 	 (with-handler
 	    (lambda (e)
 	       (let ((rep (http-error e)))
-		  (if (isa? rep http-response-hop)
+		  (if (isa? rep http-response-xml)
 		      (begin
 			 (exception-notify e)
-			 (with-access::http-response-hop rep (xml) xml))
+			 (with-access::http-response-xml rep (xml) xml))
 		      (raise e))))
 	    (begin
 	       (xml-compare (normalize-ast xml) (normalize-ast ast))

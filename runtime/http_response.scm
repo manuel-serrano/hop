@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Dec 19 11:45:56 2011 (serrano)                */
-;*    Copyright   :  2004-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 20:49:20 2012 (serrano)                */
+;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -51,7 +51,7 @@
 ;*    http-write-content-type ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (http-write-content-type p content-type charset)
-   (let ((ctype (or content-type (hop-default-mime-type))))
+   (let ((ctype (or content-type "text/plain")))
       (if charset
 	  (http-write-line p "Content-type: " ctype "; charset=" charset)
 	  (http-write-line p "Content-type: " ctype))))
@@ -92,14 +92,13 @@
 		(body body)
 		(connection (with-access::http-request request (connection)
 			       connection))
-		(l (string-length body))
 		(clen (if (=elong content-length #e-1)
-			  l
+			  (string-length body)
 			  content-length)))
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	    (http-write-line-string p start-line)
 	    (http-write-header p header)
-	    (if (> clen 0)
+	    (if (>= clen 0)
 		(http-write-line p "Content-Length: " clen)
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
@@ -129,7 +128,6 @@
 					       protocol
 					       sec
 					       accept)
-	 (tprint "LOCATION=" location)
 	 (let ((p (socket-output socket)))
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	    (http-write-line-string p start-line)
@@ -158,54 +156,75 @@
 	    'persistent))))
 
 ;*---------------------------------------------------------------------*/
-;*    http-response ::http-response-js ...                             */
+;*    http-response ::http-response-hop ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-js socket)
-   (with-trace 3 "http-response::http-response-js"
-      (with-access::http-response-js r (start-line
-					header
-					content-type charset
-					server content-length value
-					bodyp timeout request serializer
-					padding)
-	 (let ((p (socket-output socket))
-	       (connection (with-access::http-request request (connection)
-			      connection)))
-	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
-	    (http-write-line-string p start-line)
-	    (http-write-header p header)
-	    (if (>elong content-length #e0)
-		(http-write-line p "Content-Length: " content-length)
-		(set! connection 'close))
-	    (http-write-line p "Connection: " connection)
-	    (http-write-line p "Cache-Control: no-cache")
-	    (http-write-content-type p (or content-type (hop-json-mime-type)) charset)
-	    (http-write-line-string p "Server: " server)
-	    
-	    (http-write-line-string p "Hop-Serialize: "
-				    (symbol->string! serializer))
-	    (http-write-line p)
-	    ;; the body
-	    (with-trace 4 "http-response-js"
-	       (when bodyp
-		  (when padding
-		     (display padding p)
-		     (display "(" p))
-		  (case serializer
-		     ((javascript)
-		      (obj->javascript value p #t))
-		     ((hop)
-		      (display (url-path-encode (obj->string value)) p))
-		     ((json)
-		      (hop->json value p))
-		     (else
-		      (error "http-response"
-			     "Unspported serialization method"
-			     (hop-serialize-method))))
-		  (when padding
-		     (display ")" p))))
-	    (flush-output-port p)
-	    connection))))
+(define-method (http-response r::http-response-hop socket)
+   (with-trace 3 "http-response::http-response-hop"
+      (with-access::http-response-hop r (start-line
+					   header
+					   content-type charset
+					   server content-length value
+					   bodyp timeout request
+					   padding)
+	 (with-access::http-request request (connection hop-serialize)
+	    (let ((p (socket-output socket))
+		  (conn connection))
+	       (when (>=fx timeout 0) (output-timeout-set! p timeout))
+	       (http-write-line-string p start-line)
+	       (http-write-header p header)
+	       (http-write-line p "Cache-Control: no-cache")
+	       (http-write-content-type p content-type charset)
+	       (http-write-line-string p "Server: " server)
+	       ;; the body
+	       (with-trace 4 "http-response-js"
+		  (when bodyp
+		     ;; the content-type tells Hop how to serialize the value
+		     (cond
+			((string=? content-type "application/x-hop")
+			 (with-access::http-request request (header)
+			    ;; check what the client can do
+			    (let ((c (assq hop-serialize: header)))
+			       (cond
+				  ((not (pair? c))
+				   ;; hop backward compatibility
+				   (set! conn 'close)
+				   (http-write-line p "Connection: " conn)
+				   (http-write-line p)
+				   (obj->javascript value p #t))
+				  ((string=? (cdr c) "arraybuffer")
+				   ;; fast path
+				   (let ((s (obj->string value)))
+				      (http-write-line p "Content-Length: " (string-length s))
+				      (http-write-line p "Connection: " conn)
+				      (http-write-line p)
+				      (display s p)))
+				  (else
+				   ;; slow explicity javascript serialization 
+				   (set! conn 'close)
+				   (http-write-line p "Connection: " conn)
+				   (http-write-line p)
+				   (byte-array->json (obj->string value) p))))))
+			((string=? content-type "application/x-javascript")
+			 (set! conn 'close)
+			 (http-write-line p "Connection: " conn)
+			 (http-write-line p)
+			 (obj->javascript value p #t))
+			((string=? content-type "application/json")
+			 (set! conn 'close)
+			 (http-write-line p "Connection: " conn)
+			 (http-write-line p)
+			 (when padding
+			    (display padding p)
+			    (display "(" p))
+			 (hop->json value p)
+			 (when padding
+			    (display ")" p)))
+			(else
+			 (error "http-response"
+			    "Unspported serialization method"
+			    content-type)))))
+	       (flush-output-port p)
+	       conn)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    chunked-flush-hook ...                                           */
@@ -239,15 +258,15 @@
 	     (string-append "\r\n" (integer->string size 16) "\r\n")))))
    
 ;*---------------------------------------------------------------------*/
-;*    http-response ::http-response-hop ...                            */
+;*    http-response ::http-response-xml ...                            */
 ;*    -------------------------------------------------------------    */
 ;*    Since Bigloo3.1c hop responses are transmitted as chunked        */
 ;*    responses which allows Hop to use keep-alive connections for     */
 ;*    dynamic responses.                                               */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-hop socket)
+(define-method (http-response r::http-response-xml socket)
    (with-trace 3 "http-response-hop"
-      (with-access::http-response-hop r (request
+      (with-access::http-response-xml r (request
 					 start-line header
 					 content-type charset server
 					 xml bodyp timeout
@@ -457,7 +476,7 @@
 ;*---------------------------------------------------------------------*/
 (define (directory->response rep dir)
    (with-access::%http-response rep (request bodyp)
-      (instantiate::http-response-hop
+      (instantiate::http-response-xml
 	 (backend (hop-xml-backend))
 	 (content-type (with-access::xml-backend (hop-xml-backend) (mime-type) mime-type))
 	 (charset (hop-charset))
@@ -684,9 +703,9 @@
 	     (bodyp (not (eq? method 'HEAD)))
 	     (body obj)))
 	 (else
-	  (instantiate::http-response-js
+	  (instantiate::http-response-hop
 	     (backend (hop-xml-backend-secure))
-	     (content-type (hop-json-mime-type))
+	     (content-type (hop-mime-type))
 	     (charset (hop-charset))
 	     (request req)
 	     (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
@@ -706,7 +725,7 @@
    (with-access::http-request req (method)
       (let ((be (hop-xml-backend-secure)))
 	 (with-access::xml-backend be (mime-type)
-	    (instantiate::http-response-hop
+	    (instantiate::http-response-xml
 	       (request req)
 	       (backend be)
 	       (content-type mime-type)
@@ -721,7 +740,7 @@
 (define-method (scheme->response obj::xml-tilde req)
    (with-access::http-request req (method)
       (instantiate::http-response-string
-	 (content-type (hop-json-mime-type))
+	 (content-type (hop-mime-type))
 	 (charset (hop-charset))
 	 (request req)
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))

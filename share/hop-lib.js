@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Wed Nov 23 14:10:04 2011 (serrano)                */
-/*    Copyright   :  2007-11 Manuel Serrano                            */
+/*    Last change :  Wed Jan 11 09:54:39 2012 (serrano)                */
+/*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
 /*=====================================================================*/
@@ -83,10 +83,21 @@ function hop_trace() {
 /*---------------------------------------------------------------------*/
 /*    hop_tprint ...                                                   */
 /*---------------------------------------------------------------------*/
-function hop_tprint( file, pos, rest ) {
-   var svc = hop_apply_url( hop_service_base() + "/trace/tprint",
-			    [ file, pos, rest ] );
-   hop_send_request( svc, true, function() {}, function() {}, false, [] );
+function hop_tprint( file, pos, args ) {
+   // see scheme2js/runtime/runtime_part.js
+   if( __sc_traceHasConsole ) {
+      console.log( file + ", " + pos + ": " );
+      console.log.apply( console, sc_list2vector( args ) );
+   } else {
+      var str = file + ", " + pos + ": ";
+
+      while( sc_isPair( args ) ) {
+	 str += args.car;
+	 args = args.cdr;
+      }
+      
+      alert( str );
+   }
 }
 
 /*---------------------------------------------------------------------*/

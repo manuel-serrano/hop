@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Sun Dec  4 20:38:59 2011 (serrano)                */
-;*    Copyright   :  2007-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:27:08 2012 (serrano)                */
+;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
 ;*    This module implements a WebDAV server as specified              */
@@ -228,7 +228,7 @@
 	     (user-access-denied req))
 	    (else
 	     (with-access::xml-backend *webdav-backend* (mime-type)
-		(instantiate::http-response-hop
+		(instantiate::http-response-xml
 		   (request req)
 		   (start-line "HTTP/1.1 207 Multi-Status")
 		   (backend *webdav-backend*)
@@ -454,7 +454,7 @@
       (if (null? cp-res)
 	  (resp "HTTP/1.1 201 Created")
 	  (with-access::xml-backend *webdav-backend* (mime-type)
-	     (instantiate::http-response-hop
+	     (instantiate::http-response-xml
 		(request req)
 		(start-line "HTTP/1.1 207 Multi-Status")
 		(backend *webdav-backend*)
