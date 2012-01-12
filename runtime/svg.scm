@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Sat Dec 10 09:25:47 2011 (serrano)                */
-;*    Copyright   :  2007-11 Manuel Serrano                            */
+;*    Last change :  Thu Jan 12 09:32:03 2012 (serrano)                */
+;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
 ;*=====================================================================*/
@@ -25,7 +25,7 @@
 	    __hop_html-base
 	    __hop_misc
 	    __hop_charset
-	    __hop_js-lib
+	    __hop_js-comp
 	    __hop_service
 	    __hop_cache
 	    __hop_priv)

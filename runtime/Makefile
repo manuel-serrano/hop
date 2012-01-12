@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Dec 15 09:13:23 2011 (serrano)                */
+#*    Last change :  Thu Jan 12 09:29:52 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -37,7 +37,7 @@ _OBJECTS = param misc priv types read module \
            xml xml_types charset dom \
            html_base html_head html_img \
            svg mathml \
-           read_js clientc js_lib json cgi \
+           read_js clientc js_comp json cgi \
            css cssmatch hop_rss \
            hop service \
            job mime user password cache \

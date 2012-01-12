@@ -1,18 +1,18 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/js_lib.scm                */
+;*    serrano/prgm/project/hop/2.3.x/runtime/js_comp.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Thu Jan 12 09:25:23 2012 (serrano)                */
+;*    Last change :  Thu Jan 12 09:29:47 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    JS tools lib                                                     */
+;*    JS compilation tools                                             */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hop_js-lib
+(module __hop_js-comp
 
    (library web)
 	    

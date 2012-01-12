@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Jan 11 15:19:20 2012 (serrano)                */
+;*    Last change :  Thu Jan 12 09:32:15 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -31,7 +31,7 @@
 	    __hop_http-error
 	    __hop_css)
 
-   (use     __hop_js-lib)
+   (use     __hop_js-comp)
 
    (export  (xml-constructor-add! ::symbol ::procedure)
 	    (%make-xml-element ::symbol ::pair-nil)

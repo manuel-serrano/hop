@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Jan 11 20:49:20 2012 (serrano)                */
+;*    Last change :  Thu Jan 12 09:31:11 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -30,7 +30,7 @@
 	    __hop_http-lib
 	    __hop_http-error
 	    __hop_http-filter
-	    __hop_js-lib
+	    __hop_js-comp
 	    __hop_json
 	    __hop_user
 	    __hop_cache

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Wed Jan 11 15:42:56 2012 (serrano)                */
+;*    Last change :  Thu Jan 12 09:31:34 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -36,7 +36,7 @@
 	   __hop_cgi
 	   __hop_user
 	   __hop_password
-	   __hop_js-lib
+	   __hop_js-comp
 	   __hop_job
 	   __hop_hop
 	   __hop_service
