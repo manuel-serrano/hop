@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Jan 11 15:36:43 2012 (serrano)                */
+;*    Last change :  Thu Jan 12 15:23:25 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -848,7 +848,7 @@
 ;*    hop-mime-type ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-mime-type
-   "application/x-hop")
+   "application/x-javascript")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-icons-directory ...                                          */

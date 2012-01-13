@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Jan 12 09:05:34 2012 (serrano)                */
+/*    Last change :  Thu Jan 12 09:53:22 2012 (serrano)                */
 /*    Copyright   :  2004-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -267,6 +267,10 @@ function hop_request_unserialize( svc ) {
    var ctype = ("content_type" in xhr) ?
       xhr[ "content_type" ] : hop_header_content_type( xhr );
 
+   console.group( "unserialize" );
+   try {
+   console.log( "unserialize...");
+      console.log( ctype + "[" + xhr.responseText + "]" );
    if( ctype === "application/x-hop" ) {
       return hop_string_to_obj( hop_json_parse( xhr.responseText ) );
    } if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
@@ -277,6 +281,9 @@ function hop_request_unserialize( svc ) {
       return hop_json_parse( xhr.responseText );
    } else {
       return xhr.responseText;
+   }
+   } finally {
+      console.groupEnd();
    }
 }
 

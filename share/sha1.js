@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Chris Veness                                      */
 /*    Creation    :  Wed Jun  4 15:07:23 2008                          */
-/*    Last change :  Sat Dec 31 06:30:12 2011 (serrano)                */
-/*    Copyright   :  2002-11 Chris Veness                              */
+/*    Last change :  Fri Jan 13 08:19:17 2012 (serrano)                */
+/*    Copyright   :  2002-12 Chris Veness                              */
 /*    -------------------------------------------------------------    */
 /*    sha1 hashing                                                     */
 /*    -------------------------------------------------------------    */
@@ -15,7 +15,7 @@
 /*---------------------------------------------------------------------*/
 /*    sha1Hash ...                                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export sha1sum-string)) */
+/*** META ((export sha1sum-string sha1sum)) */
 function sha1sum( msg ) {
    // constants [§4.2.1]
    var K = [0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6];
@@ -36,6 +36,8 @@ function sha1sum( msg ) {
 	    (msg.charCodeAt(i*64+j*4+2)<<8) | (msg.charCodeAt(i*64+j*4+3));
       }
    }
+
+   alert( "len=" + msg.length + " l/4=" + msg.length/4 + " l=" + l + " N=" + N);
    // add length (in bits) into final pair of 32-bit integers (big-endian) [5.1.1]
    // note: most significant word would be ((len-1)*8 >>> 32, but since JS converts
    // bitwise-op args to 32 bits, we need to simulate this by arithmetic operators

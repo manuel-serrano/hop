@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Thu Jan 12 09:29:47 2012 (serrano)                */
+;*    Last change :  Fri Jan 13 18:30:27 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -24,11 +24,12 @@
 	    __hop_service
 	    __hop_charset
 	    __hop_clientc
-	    __hop_read-js
-	    __hop_json)
+	    __hop_read-js)
 
-   (export  (generic obj->javascript ::obj ::output-port ::obj)
-	    (json->hop ::obj)
+   (export  (obj->javascript-attr ::obj ::output-port)
+	    (obj->javascript-expr ::obj ::output-port)
+	    (generic obj->javascript ::obj ::output-port ::bool)
+	    (javascript->obj ::obj)
 	    (hop->js-callback ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -37,91 +38,50 @@
 (register-class-serialization! xml-markup
    (lambda (o)
       (let ((p (open-output-string)))
-	 (obj->javascript o p #t)
+	 (obj->javascript-expr o p)
 	 (close-output-port p)))
    (lambda (o)
       #unspecified))
 
 ;*---------------------------------------------------------------------*/
+;*    obj->javascript-attr ...                                         */
+;*---------------------------------------------------------------------*/
+(define (obj->javascript-attr obj op)
+   (obj->javascript obj op #f))
+
+;*---------------------------------------------------------------------*/
+;*    obj->javascript-expr ...                                         */
+;*---------------------------------------------------------------------*/
+(define (obj->javascript-expr obj op)
+   (obj->javascript obj op #t))
+
+;*---------------------------------------------------------------------*/
 ;*    obj->javascript ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-generic (obj->javascript obj op::output-port isrep)
+(define-generic (obj->javascript obj op::output-port isexpr)
    (cond
       ((eq? obj #t)
-       (display (clientc-true) op))
+       (display (cached-clientc-true) op))
       ((eq? obj #f)
-       (display (clientc-false) op))
+       (display (cached-clientc-false) op))
       ((eq? obj #unspecified)
-       (display (clientc-unspecified) op))
+       (display (cached-clientc-unspecified) op))
       ((procedure? obj)
        (if (service? obj)
-	   (obj->javascript (procedure-attr obj) op isrep)
+	   (obj->javascript (procedure-attr obj) op isexpr)
 	   (error "obj->javascript"
-		  "Illegal procedure in JavaScript conversion"
-		  obj)))
-      ((date? obj)
-       (fprintf op "new Date( ~a000 )" (date->seconds obj)))
-      ((or (string? obj) (number? obj) (symbol? obj))
-       (clientc-compile obj op isrep))
+	      "Illegal procedure in JavaScript conversion"
+	      obj)))
       (else
-       (composite->javascript obj op isrep))))
+       (clientc-compile obj op isexpr))))
 
-;*---------------------------------------------------------------------*/
-;*    composite->javascript ...                                        */
-;*---------------------------------------------------------------------*/
-(define (composite->javascript obj op::output-port isrep)
-   
-   (define (serialize obj)
-      (display "hop_string_to_obj(" op)
-      (byte-array->json (obj->string obj) op)
-      (display ")" op)
-      #t)
-
-   (define (vector-atomic? vec)
-      (let loop ((i (-fx (vector-length vec) 1)))
-	 (cond
-	    ((=fx i -1)
-	     #t)
-	    ((atomic? (vector-ref vec i))
-	     (loop (-fx i 1)))
-	    (else
-	     #f))))
-
-   (define (pair-atomic? p)
-      (and (atomic? (car p)) (atomic? (cdr p))))
-   
-   (define (atomic? x)
-      (cond
-	 ((vector? x) (vector-atomic? x))
-	 ((pair? x) (pair-atomic? x))
-	 ((null? x) #t)
-	 (else (or (number? x) (string? x) (symbol? x) (keyword? x) (char? x)))))
-   
-   (cond
-      ((vector? obj)
-       (cond
-	  ((=fx (vector-length obj) 0)
-	   (display "[]" op)
-	   #t)
-	  ((vector-atomic? obj)
-	   #f)
-	  (else
-	   (serialize obj))))
-      ((null? obj)
-       (display "null" op))
-      ((pair? obj)
-       (unless (pair-atomic? obj)
-	  (serialize obj)))
-      (else
-       (serialize obj))))
-      
 ;*---------------------------------------------------------------------*/
 ;*    clientc-compile ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (clientc-compile obj op isrep)
-   (let ((comp (hop-clientc))
-	 (foreign-out (lambda (obj2 op) (composite->javascript obj2 op isrep))))
-      (with-access::clientc comp (valuec)
+(define (clientc-compile obj op isexpr)
+   (let ((foreign-out (lambda (obj2 op)
+			 (obj->javascript obj2 op isexpr))))
+      (with-access::clientc (hop-clientc) (valuec)
 	 (valuec obj op foreign-out #f))))
 
 ;*---------------------------------------------------------------------*/
@@ -132,9 +92,9 @@
 (define *clientc-unspecified* #f)
 
 ;*---------------------------------------------------------------------*/
-;*    clientc-true ...                                                 */
+;*    cached-clientc-true ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (clientc-true)
+(define (cached-clientc-true)
    (if *clientc-true*
        *clientc-true*
        (let ((op (open-output-string)))
@@ -143,9 +103,9 @@
 	  *clientc-true*)))
        
 ;*---------------------------------------------------------------------*/
-;*    clientc-false ...                                                */
+;*    cached-clientc-false ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (clientc-false)
+(define (cached-clientc-false)
    (if *clientc-false*
        *clientc-false*
        (let ((op (open-output-string)))
@@ -154,9 +114,9 @@
 	  *clientc-false*)))
        
 ;*---------------------------------------------------------------------*/
-;*    clientc-unspecified ...                                          */
+;*    cached-clientc-unspecified ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (clientc-unspecified)
+(define (cached-clientc-unspecified)
    (if *clientc-unspecified*
        *clientc-unspecified*
        (let ((op (open-output-string)))
@@ -167,7 +127,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript ::object ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (obj->javascript obj::object op isrep)
+(define-method (obj->javascript obj::object op isexpr)
    
    (define (display-seq vec op proc)
       (let ((len (vector-length vec)))
@@ -187,7 +147,7 @@
 	    (display (class-field-name f) op)
 	    (display "': " op)
 	    (obj->javascript
-	       ((class-field-accessor f) obj) op isrep)))
+	       ((class-field-accessor f) obj) op isexpr)))
       (display "}" op))
    
    (let ((klass (object-class obj)))
@@ -208,45 +168,41 @@
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript ::xml ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (obj->javascript obj::xml op isrep)
+(define-method (obj->javascript obj::xml op isexpr)
    (error "obj->javascript" "Cannot translate xml element" xml))
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript ::xml-markup ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (obj->javascript obj::xml-markup op isrep)
+(define-method (obj->javascript obj::xml-markup op isexpr)
    (display "hop_create_encoded_element(\"" op)
    (let ((s (url-path-encode
 	     (call-with-output-string
 	      (lambda (op) (xml-write obj op (hop-xml-backend)))))))
       (display s op))
-   (display "\")" op)
-   #t)
+   (display "\")" op))
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript ::xml-element ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (obj->javascript obj::xml-element op isrep)
-   (if isrep
+(define-method (obj->javascript obj::xml-element op isexpr)
+   (if isexpr
        (call-next-method)
        (with-access::xml-element obj (id)
-	  (fprintf op "document.getElementById( '~a' )" id)))
-   #t)
+	  (fprintf op "document.getElementById( '~a' )" id))))
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript ::xml-tilde ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (obj->javascript obj::xml-tilde op isrep)
-   (display (xml-tilde->expression obj) op)
-   #t)
+(define-method (obj->javascript obj::xml-tilde op isexpr)
+   (display (xml-tilde->expression obj) op))
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript ::hop-service ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (obj->javascript obj::hop-service op isrep)
+(define-method (obj->javascript obj::hop-service op isexpr)
    (with-access::hop-service obj (javascript)
-      (display javascript op))
-   #t)
+      (display javascript op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    return ...                                                       */
@@ -258,9 +214,9 @@
 	  (input-port-position (the-port))))
 
 ;*---------------------------------------------------------------------*/
-;*    *json-lexer* ...                                                 */
+;*    *javascript-lexer* ...                                           */
 ;*---------------------------------------------------------------------*/
-(define *json-lexer*
+(define *javascript-lexer*
    
    (regular-grammar ()
       
@@ -398,9 +354,9 @@
 	     (loop (+fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    *json-parser* ...                                                */
+;*    *javascript-parser* ...                                          */
 ;*---------------------------------------------------------------------*/
-(define *json-parser*
+(define *javascript-parser*
    
    (lalr-grammar
       
@@ -429,8 +385,8 @@
 	   ((sc_list) expressions*)
 	   ((sc_jsstring2symbol) (string->symbol (car expressions*)))
 	   ((sc_jsstring2keyword) (string->keyword (car expressions*)))
-	   ((hop_js_to_object) (json->object expressions*))
-	   (else (error "json->hop" "Unknown function" (car IDENTIFIER)))))
+	   ((hop_js_to_object) (javascript->object expressions*))
+	   (else (error "javascript->obj" "Unknown function" (car IDENTIFIER)))))
        ((ANGLE-OPEN ANGLE-CLO)
 	'#())
        ((ANGLE-OPEN array-elements ANGLE-CLO)
@@ -438,7 +394,12 @@
        ((BRA-OPEN BRA-CLO)
 	'())
        ((BRA-OPEN hash-elements BRA-CLO)
-	hash-elements)
+	;; see json compilation
+	(if (and (=fx (length hash-elements) 3)
+		 (eq? (car (car hash-elements)) __uuid:)
+		 (equal? (cadr (car hash-elements)) "pair"))
+	    (cons (cadr (cadr hash-elements)) (cadr (caddr hash-elements)))
+	    hash-elements))
 ;*        ((object)                                                    */
 ;* 	object)                                                        */
        ((get-element-by-id)
@@ -475,22 +436,22 @@
 	       ((?a ?d)
 		(cons a d))
 	       (else
-		(error "json->hop" "Illegal `cons' construction" expressions*))))
+		(error "javascript->obj" "Illegal `cons' construction" expressions*))))
 	   ((Date)
 	    (match-case expressions*
 	       ((and ?sec (? integer?))
 		(seconds->date (/fx sec 1000)))
 	       (else
-		(error "json->hop" "Illegal `date' construction" expressions*))))
+		(error "javascript->obj" "Illegal `date' construction" expressions*))))
 	   (else
-	    (error "json->hop" "Illegal `new' form" expressions*)))))
+	    (error "javascript->obj" "Illegal `new' form" expressions*)))))
 ;* 	    (let* ((mangle (symbol->string (car IDENTIFIER)))          */
 ;* 		   (name (if (bigloo-mangled? mangle)                  */
 ;* 			     (bigloo-demangle mangle)                  */
 ;* 			     mangle))                                  */
 ;* 		   (clazz (find-class (string->symbol name))))         */
 ;* 	       (if (not (class? clazz))                                */
-;* 		   (error "json->hop" "Can't find class" clazz)        */
+;* 		   (error "javascript->obj" "Can't find class" clazz)        */
 ;* 		   (let* ((constr (class-constructor clazz))           */
 ;* 			  (create (class-creator clazz))               */
 ;* 			  (ins (apply create expressions*)))           */
@@ -528,7 +489,7 @@
 ;* 		  NEW IDENTIFIER@klass PAR-OPEN expressions* PAR-CLO)  */
 ;* 	(let ((c (find-class klass)))                                  */
 ;* 	   (if (not (class? c))                                        */
-;* 	       (error "json->hop" "Can't find class" c)                */
+;* 	       (error "javascript->obj" "Can't find class" c)                */
 ;* 	       (let* ((constr (class-constructor c))                   */
 ;* 		      (create (class-creator c))                       */
 ;* 		      (ins (apply constr expressions*)))               */
@@ -581,7 +542,7 @@
       (service
        ((FUNCTION PAR-OPEN PAR-CLO BRA-OPEN RETURN IDENTIFIER
 		  PAR-OPEN argument* PAR-CLO BRA-CLO)
-	(error "json->hop" "Service cannot be transmitted" IDENTIFIER)))
+	(error "javascript->obj" "Service cannot be transmitted" IDENTIFIER)))
 
       ;; constructor
       (constructor
@@ -589,9 +550,9 @@
 	#unspecified))))
 
 ;*---------------------------------------------------------------------*/
-;*    json->object ...                                                 */
+;*    javascript->object ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (json->object expressions*)
+(define (javascript->object expressions*)
    (let* ((mangle (car expressions*))
 	  (hash (cadr expressions*))
 	  (fields (caddr expressions*))
@@ -603,14 +564,14 @@
 		 (o (apply create (map cadr fields))))
 	     (when (procedure? constr) (constr o))
 	     o)
-	  (error "json->hop" "corrupted class" name))))
+	  (error "javascript->obj" "corrupted class" name))))
 
 ;*---------------------------------------------------------------------*/
-;*    json->hop ...                                                    */
+;*    javascript->obj ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (json->hop o)
+(define (javascript->obj o)
    
-   (define (parse-json ip)
+   (define (parse-javascript ip)
       (with-handler
 	 (lambda (e)
 	    (if (not (isa? e &io-parse-error))
@@ -624,12 +585,12 @@
 				 (location pos))))
 		      (else
 		       (raise e))))))
-	 (read/lalrp *json-parser* *json-lexer* ip)))
+	 (read/lalrp *javascript-parser* *javascript-lexer* ip)))
 
    (cond
-      ((input-port? o) (parse-json o))
-      ((string? o) (call-with-input-string o parse-json))
-      (else (error "json->hop" "Illegal argument" o))))
+      ((input-port? o) (parse-javascript o))
+      ((string? o) (call-with-input-string o parse-javascript))
+      (else (error "javascript->obj" "Illegal argument" o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->js-callback ...                                             */

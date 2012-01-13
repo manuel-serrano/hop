@@ -262,6 +262,9 @@
 		   (loop (+fx i 1)))))))))
 
 
+;*---------------------------------------------------------------------*/
+;*    compile-value ...                                                */
+;*---------------------------------------------------------------------*/
 (define (compile-value val p foreign-out loc)
    
    (define (display-ucs2-char p c) ;; without the quotes
@@ -281,9 +284,9 @@
 	     (template-display p "\\u~x" i)))))
    (cond
       ((null? val)
-       (template-display p "null"))
+       (display-string "null" p))
       ((boolean? val)
-       (template-display p "~a" (if val "true" "false")))
+       (display-string (if val "true" "false") p))
       ((symbol? val)
        (template-display p
 	  "\"~?~a\""
@@ -315,7 +318,7 @@
 		(display-ucs2-char p (ucs2-string-ref val i))
 		(loop (+fx i 1))))))
       ((eq? val #unspecified)
-       (template-display p "undefined"))
+       (display-string "undefined" p))
       ((keyword? val)
        (if (use-mutable-strings?)
 	   (template-display p
@@ -326,8 +329,6 @@
 	      (my-string-for-read (keyword->string! val)))))
       ((date? val)
        (fprintf p "new Date( ~a000 )" (date->seconds val)))
-      ((and foreign-out (foreign-out val p))
-       #unspecified)
       ((vector? val)
        (if (class? val)
 	   (scheme2js-error "scheme2js:val-out"
@@ -353,6 +354,8 @@
 	      (separated ", " 
 			 (lambda (e) "~e" (compile-value e p foreign-out loc))
 			 val))))
+      (foreign-out
+       (foreign-out val p))
       (else
        (scheme2js-error "scheme2js:val-out"
 			"Internal Error: forgot Val-type"

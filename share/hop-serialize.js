@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Wed Jan 11 21:02:59 2012 (serrano)                */
+/*    Last change :  Thu Jan 12 15:20:07 2012 (serrano)                */
 /*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -530,7 +530,7 @@ function hop_string_to_obj( s ) {
 	    }
 	 }
       }
-      
+
       return String.fromCharCode.apply( null, codes );
    }
    

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Jan 11 15:39:16 2012 (serrano)                */
+;*    Last change :  Fri Jan 13 17:16:14 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -217,7 +217,9 @@
 		      (with-access::xml-element head (body)
 			 (xml-write-body body ps be))
 		      (close-output-port ps))))
-	 (obj->javascript title p #t))
+	 (display "\"" p)
+	 (display (url-path-encode title) p)
+	 (display "\"" p))
       (display ", " p)
       ;; is the tree open
       (if (isa? open xml-tilde)
@@ -365,7 +367,9 @@
 		      (with-access::xml-element obj (body)
 			 (xml-write-body body ps be))
 		      (close-output-port ps))))
-	 (obj->javascript sbody p #t))
+	 (display "\"" p)
+	 (display (url-path-encode sbody) p)
+	 (display "\"" p))
       (display ", " p)
       ;; the value
       (if (string? value)

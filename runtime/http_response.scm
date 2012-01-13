@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Jan 12 09:31:11 2012 (serrano)                */
+;*    Last change :  Fri Jan 13 17:57:33 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -190,7 +190,7 @@
 				   (set! conn 'close)
 				   (http-write-line p "Connection: " conn)
 				   (http-write-line p)
-				   (obj->javascript value p #t))
+				   (obj->javascript-expr value p))
 				  ((string=? (cdr c) "arraybuffer")
 				   ;; fast path
 				   (let ((s (obj->string value)))
@@ -208,7 +208,7 @@
 			 (set! conn 'close)
 			 (http-write-line p "Connection: " conn)
 			 (http-write-line p)
-			 (obj->javascript value p #t))
+			 (obj->javascript-expr value p))
 			((string=? content-type "application/json")
 			 (set! conn 'close)
 			 (http-write-line p "Connection: " conn)
@@ -216,7 +216,7 @@
 			 (when padding
 			    (display padding p)
 			    (display "(" p))
-			 (hop->json value p)
+			 (obj->json value p)
 			 (when padding
 			    (display ")" p)))
 			(else
@@ -265,7 +265,7 @@
 ;*    dynamic responses.                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-xml socket)
-   (with-trace 3 "http-response-hop"
+   (with-trace 3 "http-response-xml"
       (with-access::http-response-xml r (request
 					 start-line header
 					 content-type charset server
@@ -298,7 +298,7 @@
 		   (output-port-flush-hook-set! p chunked-flush-hook))
 		(http-write-line p))
 	    ;; the body
-	    (with-trace 4 "http-response-hop"
+	    (with-trace 4 "http-response-xml"
 	       (when bodyp
 		  (with-access::xml-backend backend (security)
 		     (if (isa? security security-manager)

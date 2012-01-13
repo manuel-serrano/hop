@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/runtime/read-js.scm               */
+;*    serrano/prgm/project/hop/2.3.x/runtime/read_js.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:45:35 2005                          */
-;*    Last change :  Tue Apr 20 07:49:35 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Fri Jan 13 17:59:35 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP javascript parser                                        */
 ;*=====================================================================*/
@@ -88,7 +88,7 @@
 			(begin
 			   (set! acc (cons `(call-with-output-string
 					     (lambda (op)
-						(obj->javascript ,exp op #f)))
+						(obj->javascript-attr ,exp op)))
 					   acc))
 			   (ignore)))))
 		(else

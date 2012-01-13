@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu Jan 12 09:30:39 2012 (serrano)                */
+;*    Last change :  Fri Jan 13 17:56:50 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -23,6 +23,7 @@
 	    __hop_service
 	    __hop_http-response
 	    __hop_js-comp
+	    __hop_json
 	    __hop_xml-types
 	    __hop_http-error
 	    __hop_http-lib
@@ -231,9 +232,9 @@
 		((eq? ctype 'application/x-hop)
 		 (success (string->obj (read-chars clength p))))
 		((eq? ctype 'application/json)
-		 (success (json->hop p)))
+		 (success (json->obj p)))
 		((eq? ctype 'application/x-javascript)
-		 (error "with-hop" "Unsupported mime-type" ctype))
+		 (success (javascript->obj p)))
 		(else
 		 (success (read-string p))))))
 	 ((201 204 304)

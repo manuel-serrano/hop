@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Jan 12 09:31:57 2012 (serrano)                */
+;*    Last change :  Fri Jan 13 18:01:11 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -46,7 +46,6 @@
 	    (service-funcall-url::bstring ::hop-service . o)
 	    (hop-request-service-name::bstring ::http-request)
 	    (procedure->service::procedure ::procedure)
-            (%eval::%http-response ::obj ::http-request ::procedure)
 	    (service-filter ::http-request)
 	    (register-service!::hop-service ::hop-service)
 	    (expired-service-path?::bool ::bstring)
@@ -305,27 +304,6 @@
 	     (else
 	      (loop (cdr exp)
 		    (cons* "," (exp->eval-string (car exp)) res)))))))
-
-;*---------------------------------------------------------------------*/
-;*    %eval ...                                                        */
-;*---------------------------------------------------------------------*/
-(define (%eval exp req cont)
-   (let ((s (call-with-output-string
-	     (lambda (op)
-		(obj->javascript (procedure->service (lambda (res) (cont res))) op #f)))))
-      (instantiate::http-response-xml
-	 (backend (hop-xml-backend))
-	 (content-type (with-access::xml-backend (hop-xml-backend) (mime-type)
-			  mime-type))
-	 (request req)
-	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-	 (xml (<HTML>
-		 (<HEAD>)
-		 (<BODY>
-		    (<SCRIPT>
-		       (format "hop( ~a( eval( '~a' ) ), true )"
-			       s
-			       (exp-list->eval-string exp)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    equal-path? ...                                                  */

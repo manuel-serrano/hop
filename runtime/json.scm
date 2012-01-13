@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Fri Jan  6 14:37:45 2012 (serrano)                */
+;*    Last change :  Fri Jan 13 18:28:40 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -21,15 +21,17 @@
 	    __hop_xml-types
 	    __hop_service
 	    __hop_charset
-	    __hop_clientc)
+	    __hop_clientc
+	    __hop_js-comp)
    
-   (export  (generic hop->json ::obj ::output-port)
-            (byte-array->json ::bstring ::output-port)))
+   (export  (generic obj->json ::obj ::output-port)
+            (byte-array->json ::bstring ::output-port)
+	    (json->obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop->json ...                                                    */
+;*    obj->json ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-generic (hop->json obj op::output-port)
+(define-generic (obj->json obj op::output-port)
    (cond
       ((vector? obj)
        (vector->json obj op))
@@ -37,15 +39,13 @@
        (pair->json obj op))
       ((procedure? obj)
        (if (service? obj)
-	   (hop->json (procedure-attr obj) op)
-	   (error "hop->json"
+	   (obj->json (procedure-attr obj) op)
+	   (error "obj->json"
 	      "Illegal procedure in JSON conversion"
 	      obj)))
-      ((date? obj)
-       (format "new Date( ~a000 )" (date->seconds obj)))
       (else
        (with-access::clientc (hop-clientc) (valuec)
-	  (valuec obj op hop->json #f)))))
+	  (valuec obj op obj->json #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    byte-array->json ...                                             */
@@ -80,17 +80,17 @@
 	  (display "[]" op))
 	 ((1)
 	  (display "[" op)
-	  (hop->json (vector-ref vec 0) op)
+	  (obj->json (vector-ref vec 0) op)
 	  (display "]" op))
 	 (else
 	  (display "[" op)
-	  (hop->json (vector-ref vec 0) op)
+	  (obj->json (vector-ref vec 0) op)
 	  (let loop ((i 1))
 	     (if (=fx i len)
 		 (display "]" op)
 		 (begin
 		    (display "," op)
-		    (hop->json (vector-ref vec i) op)
+		    (obj->json (vector-ref vec i) op)
 		    (loop (+fx i 1)))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -99,9 +99,12 @@
 (define (pair->json pair op::output-port)
    (display "{" op)
    (display "\"__uuid\":" op) (display "\"pair\"," op)
-   (display "\"car\":" op) (hop->json (car pair) op)
-   (display ",\"cdr\":" op) (hop->json (cdr pair) op)
+   (display "\"car\":" op) (obj->json (car pair) op)
+   (display ",\"cdr\":" op) (obj->json (cdr pair) op)
    (display "}" op))
    
-
-
+;*---------------------------------------------------------------------*/
+;*    json->obj ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (json->obj obj)
+   (javascript->obj obj))

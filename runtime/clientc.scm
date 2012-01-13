@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Wed Jan 11 15:11:10 2012 (serrano)                */
+;*    Last change :  Fri Jan 13 17:43:03 2012 (serrano)                */
 ;*    Copyright   :  2009-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -198,4 +198,4 @@
 	     body))
 	 (else
 	  (error "get-clientc-compiled-file" "Illegal clientc response" rep)))))
-
+   

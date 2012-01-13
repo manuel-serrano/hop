@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Jan  6 14:33:32 2012 (serrano)                */
+/*    Last change :  Fri Jan 13 17:25:05 2012 (serrano)                */
 /*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -962,9 +962,9 @@ function hop_start_servevt_proxy() {
 /*    -------------------------------------------------------------    */
 /*    This function is invoked by Flash and Ajax upon event reception  */
 /*---------------------------------------------------------------------*/
-function hop_trigger_servevt( id, text, value, json ) {
+function hop_trigger_servevt( id, text, value, js ) {
    try {
-      var v = (json ? eval( value ) : value);
+      var v = (js ? eval( value ) : value);
       var evt = new HopServerEvent( id, text, v );
       var p2 = hop_servevt_table[ id ];
 

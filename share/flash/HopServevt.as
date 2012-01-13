@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Sep  7 15:31:58 2007                          */
-/*    Last change :  Mon Dec  5 07:46:05 2011 (serrano)                */
-/*    Copyright   :  2007-11 Manuel Serrano                            */
+/*    Last change :  Fri Jan 13 17:30:14 2012 (serrano)                */
+/*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    ActionScript server events runtime system.                       */
 /*    To be compiled with:                                             */
@@ -95,7 +95,7 @@ class HopServevt {
 	    var c = e.firstChild;
 	    var n = e.attributes.name;
 
-	    if( c.nodeName == "json" ) {
+	    if( c.nodeName == "javascript" ) {
 	       var s = encodeString( c.firstChild.nodeValue );
 
 	       return ExternalInterface.call( onevent, n, "evt", s, true );

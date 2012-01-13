@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Jan 12 09:30:24 2012 (serrano)                */
+;*    Last change :  Fri Jan 13 18:14:44 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -1166,7 +1166,7 @@
       (else
        (let ((op (open-output-string)))
 	  (fprintf op "<j name='~a'><![CDATA[" name)
-	  (obj->javascript value op #f)
+	  (obj->javascript-attr value op)
 	  (display "]]></j>" op)
 	  (close-output-port op)))))
 
@@ -1183,9 +1183,9 @@
    (enveloppe-value name value))
    
 ;*---------------------------------------------------------------------*/
-;*    json-make-signal-value ...                                       */
+;*    js-make-signal-value ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (json-make-signal-value value)
+(define (js-make-signal-value value)
    (cond
       ((isa? value xml)
        (xml->string value (hop-xml-backend)))
@@ -1193,9 +1193,9 @@
        value)
       (else
        (let ((op (open-output-string)))
-	  (display "<json><![CDATA[" op)
-	  (obj->javascript value op #f)
-	  (display "]]></json>" op)
+	  (display "<javascript>[CDATA[" op)
+	  (obj->javascript-attr value op)
+	  (display "]]></javascript>" op)
 	  (close-output-port op)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1260,7 +1260,7 @@
        name
        (lambda (l)
 	  (when (pair? l)
-	     (let ((val (json-make-signal-value value)))
+	     (let ((val (js-make-signal-value value)))
 		(flash-signal-value (car l) name val)
 		#t)))))
 
@@ -1347,7 +1347,7 @@
 		(ajax-find-connections-by-name name)))
    
    (define (flash-event-broadcast! name value)
-      (let ((val (json-make-signal-value value)))
+      (let ((val (js-make-signal-value value)))
 	 (for-each-socket
 	    *flash-socket-table*
 	    name
@@ -1521,7 +1521,7 @@
 		       (js (substring buf
 			      (+fx (string-length name) 20)
 			      (-fx  len 7))))
-		   (values name (call-with-input-string js json->hop)))))
+		   (values name (call-with-input-string js javascript->obj)))))
 	 (else
 	  (error "hopsocket" "Illegal websocket enveloppe" buf))))
 
