@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Jan  4 08:18:24 2012 (serrano)                */
+;*    Last change :  Sun Jan 15 19:50:14 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -458,7 +458,7 @@
 	      (: (or float (+ digit)) (in "eE") (? (in "+-")) (+ digit))))
        (the-flonum))
       
-      ;; doted pairs
+      ;; dotted pairs
       ("."
        (if (<=fx par-open 0)
 	   (read-error/location 

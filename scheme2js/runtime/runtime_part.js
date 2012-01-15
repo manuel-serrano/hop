@@ -184,28 +184,30 @@ function sc_withHandlerLambda(handler, body) {
  * Unserialization
  */
 var sc_circle_cache = new Array;
+
+function sc_circle( len, proc ) {
+   for( var i = 0; i < len; i++ ) {
+      sc_circle_cache[ i ] = false;
+   }
+   return sc_circle_force( sc_circle_cache, proc( sc_circle_cache ) );
+}
+
 function sc_circle_delay( i ) {
    this.index = i;
 }
 
-function sc_circle_init( len ) {
-   for( var i = 0; i < len; i++ ) {
-      sc_circle_cache[ i ] = false;
-   }
-}
-
-function sc_circle_force( obj ) {
+function sc_circle_force( cache, obj ) {
    if( !obj instanceof Object ) {
       return obj;
    } else if( obj instanceof sc_circle_delay ) {
-      return sc_circle_cache[ obj.index ];
+      return cache[ obj.index ];
    } if( sc_isPair( obj ) ) {
-      obj.car = sc_circle_force( obj.car );
-      obj.cdr = sc_circle_force( obj.cdr );
+      obj.car = sc_circle_force( cache, obj.car );
+      obj.cdr = sc_circle_force( cache, obj.cdr );
       return obj;
    } else if( sc_isVector( obj ) ) {
       for( var i = 0; i < obj.length; i++ ) {
-	 obj[ i ] = sc_circle_force( obj[ i ] );
+	 obj[ i ] = sc_circle_force( cache, obj[ i ] );
       }
       return obj;
    } else if( obj instanceof sc_Object ) {
@@ -213,8 +215,8 @@ function sc_circle_force( obj ) {
       var f = sc_class_all_fields( clazz );
 
       for( i = 0; i < f.length; i++ ) {
-	 o[ sc_symbol2jsstring( f[ i ].sc_name ) ] =
-	    sc_circle_force[ o[ sc_symbol2jsstring( f[ i ].sc_name ) ] ];
+	 var n = sc_symbol2jsstring( f[ i ].sc_name );
+	 obj[ n ] = sc_circle_force( cache, obj[ n ] );
       }
       return obj;
    } else {
@@ -222,16 +224,16 @@ function sc_circle_force( obj ) {
    }
 }
       
-function sc_circle_ref( i ) {
-   if( sc_circle_cache[ i ] ) {
-      return sc_circle_cache[ i ];
+function sc_circle_ref( cache, i ) {
+   if( cache[ i ] ) {
+      return cache[ i ];
    } else {
       return new sc_circle_delay( i );
    }
 }
 
-function sc_circle_def( i, v ) {
-   sc_circle_cache[ i ] = v;
+function sc_circle_def( cache, i, v ) {
+   cache[ i ] = v;
    return v;
 }
    
