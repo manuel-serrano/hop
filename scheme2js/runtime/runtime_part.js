@@ -180,6 +180,61 @@ function sc_withHandlerLambda(handler, body) {
     }
 }
 
+/*
+ * Unserialization
+ */
+var sc_circle_cache = new Array;
+function sc_circle_delay( i ) {
+   this.index = i;
+}
+
+function sc_circle_init( len ) {
+   for( var i = 0; i < len; i++ ) {
+      sc_circle_cache[ i ] = false;
+   }
+}
+
+function sc_circle_force( obj ) {
+   if( !obj instanceof Object ) {
+      return obj;
+   } else if( obj instanceof sc_circle_delay ) {
+      return sc_circle_cache[ obj.index ];
+   } if( sc_isPair( obj ) ) {
+      obj.car = sc_circle_force( obj.car );
+      obj.cdr = sc_circle_force( obj.cdr );
+      return obj;
+   } else if( sc_isVector( obj ) ) {
+      for( var i = 0; i < obj.length; i++ ) {
+	 obj[ i ] = sc_circle_force( obj[ i ] );
+      }
+      return obj;
+   } else if( obj instanceof sc_Object ) {
+      var clazz = sc_object_class( obj );
+      var f = sc_class_all_fields( clazz );
+
+      for( i = 0; i < f.length; i++ ) {
+	 o[ sc_symbol2jsstring( f[ i ].sc_name ) ] =
+	    sc_circle_force[ o[ sc_symbol2jsstring( f[ i ].sc_name ) ] ];
+      }
+      return obj;
+   } else {
+      return obj;
+   }
+}
+      
+function sc_circle_ref( i ) {
+   if( sc_circle_cache[ i ] ) {
+      return sc_circle_cache[ i ];
+   } else {
+      return new sc_circle_delay( i );
+   }
+}
+
+function sc_circle_def( i, v ) {
+   sc_circle_cache[ i ] = v;
+   return v;
+}
+   
 var sc_properties = new Object();
 
 /*** META ((export #t) (arity #t)) */

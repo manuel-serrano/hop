@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Dec 22 11:36:31 2011 (serrano)                */
-;*    Copyright   :  2004-11 Manuel Serrano                            */
+;*    Last change :  Sun Jan 15 09:23:55 2012 (serrano)                */
+;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -274,10 +274,10 @@
 	 :eval (lambda (e)
 		  (let* ((ev (eval e))
 			 (op (open-output-string)))
-		     (obj->javascript ev op #f)
+		     (obj->javascript-attr ev op)
 		     (close-output-port op)))
-	 :hop-compile (lambda (e p)
-			 (obj->javascript e p #f))
+	 :hop-compile obj->javascript-attr
+	 :hop-register hop-register-value
 	 :features `(hop
 		       hop-client
 		       ,(string->symbol (format "hop-~a" (hop-branch)))

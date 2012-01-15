@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sun Dec  4 19:47:44 2011 (serrano)                */
-;*    Copyright   :  2007-11 Manuel Serrano                            */
+;*    Last change :  Sat Jan 14 07:58:23 2012 (serrano)                */
+;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
 ;*=====================================================================*/
@@ -278,7 +278,7 @@
 	  (call-with-output-string
 	   (lambda (op)
 	      (display "audio.serverbackend = new HopAudioServerBackend( audio, " op)
-	      (obj->javascript server op #f)
+	      (obj->javascript-attr server op)
 	      (display "); hop_audio_server_init( audio.serverbackend );" op)
 	      (display "audio.backend = audio.serverbackend;" op)))
 	  "audio.serverbackend = false; audio.backend = audio.browserbackend;")
@@ -287,7 +287,7 @@
       (call-with-output-string
        (lambda (op)
 	  (display "audio.src = " op)
-	  (obj->javascript src op #f)
+	  (obj->javascript-attr src op)
 	  (display ";" op)))
       "audio.initialized = true;"
       (format "audio.start = ~a;" start)
@@ -307,7 +307,7 @@
 	 (call-with-output-string
 	  (lambda (op)
 	     (display "hop_audio_playlist_set( audio, " op)
-	     (obj->javascript (list playlist) op #f)
+	     (obj->javascript-attr (list playlist) op)
 	     (display " );" op))))
       (when autoplay
 	 "hop_audio_playlist_play( audio, 0 );")
@@ -848,9 +848,9 @@
 	 (audio-event-broadcast! event (list 'volume vol)))))
 
 ;*---------------------------------------------------------------------*/
-;*    obj->javascript ::%audio-server ...                              */
+;*    hop->javascript ::%audio-server ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (obj->javascript as::audio-server op isrep)
+(define-method (hop->javascript as::audio-server op compile isrep)
    (with-access::audio-server as (%path)
       (fprintf op "\"~a/~a\"" (hop-service-base) %path))
    #t)

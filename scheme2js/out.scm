@@ -44,7 +44,8 @@
        optimize-calls?::bool
        debug?::bool
 
-       foreign-out
+       host-compiler::procedure
+       host-register::procedure
 
        pp?::bool
        pragmas       ;; ::Pragmas or #f
@@ -53,7 +54,7 @@
        last-file)
     (wide-class Out-Lambda::Lambda
        lvalue))
-   (export (compile-value const p::output-port foreign-out loc)
+   (export (compile-value ::obj ::output-port ::procedure ::procedure ::obj)
 	   (out tree::Module p)))
 
 (define (out tree p)
@@ -105,7 +106,8 @@
 		 (optimize-calls? (and (config 'optimize-calls) #t))
 		 (debug? (and (config 'debug) #t))
 
-		 (foreign-out (config 'foreign-out))
+		 (host-compiler (config 'host-compiler))
+		 (host-register (config 'host-register))
 
 		 (pp? (and (config 'pp) #t))
 		 (pragmas pragmas)
@@ -143,14 +145,14 @@
    (error #f "Internal Error: forgot node-type" this))
 
 ;; return true, if we should use nested new sc_Pairs instead of sc_list(...).
-(define (small-list/pair? l)
+(define (small-list/pair? l )
+   
    (define (smaller? l n)
       (cond
-	 ((< n 0) #f)
+	 ((<fx n 0) #f)
 	 ((null? l) #t)
 	 ((not (pair? l)) #t)
-	 (else
-	  (smaller? (cdr l) (- n 1)))))
+	 (else (smaller? (cdr l) (- n 1)))))
 
    (smaller? l 5))
 
@@ -261,11 +263,61 @@
 		   (write-char c op)
 		   (loop (+fx i 1)))))))))
 
-
 ;*---------------------------------------------------------------------*/
 ;*    compile-value ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (compile-value val p foreign-out loc)
+(define (compile-value obj p host-compiler host-register loc)
+   (let ((cache (register-value obj host-register)))
+      (when (pair? cache)
+	 (let ((len (length cache)))
+	    (display "(sc_circle_init(" p)
+	    (display len p)
+	    (display "), sc_circle_force(" p)))
+      (compile-value-circle obj p host-compiler loc cache)
+      (when (pair? cache)
+	 (display "))" p))))
+
+;*---------------------------------------------------------------------*/
+;*    register-value ...                                               */
+;*    -------------------------------------------------------------    */
+;*    This function is used to build a cache a cylic references.       */
+;*---------------------------------------------------------------------*/
+(define (register-value obj host-register)
+   
+   (define (uncircular? obj)
+      (or (number? obj)
+	  (symbol? obj) (string? obj) (ucs2-string? obj)
+	  (cnst? obj) (class? obj) (procedure? obj) (keyword? obj)
+	  (date? obj)))
+   
+   (let ((cache '()))
+      (let register ((obj obj))
+	 (unless (uncircular? obj)
+	    (let ((match (assq obj cache)))
+	       (if match
+		   (set-cdr! match #t)
+		   (begin
+		      (set! cache (cons (cons obj #f) cache))
+		      (cond
+			 ((pair? obj)
+			  (register (car obj))
+			  (register (cdr obj)))
+			 ((vector? obj)
+			  (for i 0 (vector-length obj)
+			     (register (vector-ref obj i))))
+			 ((struct? obj)
+			  (for i 0 (struct-length obj)
+			     (register (struct-ref obj i))))
+			 ((cell? obj)
+			  (register (cell-ref obj)))
+			 (else
+			  (host-register obj register))))))))
+      (filter (lambda (x) (cdr x)) cache)))
+
+;*---------------------------------------------------------------------*/
+;*    compile-value-circle ...                                         */
+;*---------------------------------------------------------------------*/
+(define (compile-value-circle val p host-compiler loc cache)
    
    (define (display-ucs2-char p c) ;; without the quotes
       (let ((i (ucs2->integer c)))
@@ -282,92 +334,117 @@
 	     (template-display p "\\u0~x" i))
 	    (else
 	     (template-display p "\\u~x" i)))))
-   (cond
-      ((null? val)
-       (display-string "null" p))
-      ((boolean? val)
-       (display-string (if val "true" "false") p))
-      ((symbol? val)
-       (template-display p
-	  "\"~?~a\""
-	  (and (not (use-mutable-strings?)) *symbol-prefix*)
-	  (my-string-for-read (symbol->string! val))))
-      ((char? val)
-       (template-display p
-	  "(new sc_Char(\"~a\"))" (my-string-for-read (string val))))
-      ((ucs2? val)
-       (template-display p
-	  "(new sc_Char(\"~e\"))" (display-ucs2-char p val)))
-      ((number? val)
-       ;; CARE: initially I had "($val)" here. and I suppose there was a
-       ;; reason I put the parenthesis around. this will probably come back and
-       ;; bite me...
-       (template-display p
-	  (?@ (< val 0) "(~@)")
-	  "$val"))
-      ((string? val)
-       (template-display p
-	  (?@ (use-mutable-strings?) "(new sc_String(~@))")
-	  "\"~a\"" (my-string-for-read val)))
-      ((ucs2-string? val)
-       (template-display p
-	  (?@ (use-mutable-strings?) "(new sc_String(~@))")
-	  "\"~e\""
-	  (let loop ((i 0))
-	     (unless (>= i (ucs2-string-length val))
-		(display-ucs2-char p (ucs2-string-ref val i))
-		(loop (+fx i 1))))))
-      ((eq? val #unspecified)
-       (display-string "undefined" p))
-      ((keyword? val)
-       (if (use-mutable-strings?)
-	   (template-display p
-	      "(new sc_Keyword(\"~a\"))"
-	      (my-string-for-read (keyword->string! val)))
-	   (template-display p
-	      "\"~a~a\"" *keyword-prefix*
-	      (my-string-for-read (keyword->string! val)))))
-      ((date? val)
-       (fprintf p "new Date( ~a000 )" (date->seconds val)))
-      ((vector? val)
-       (if (class? val)
-	   (scheme2js-error "scheme2js:val-out"
-	      "Cannot compile Bigloo class"
-	      (class-name val)
-	      loc)
-	   (template-display p
-	      "[~e]"
-	      (let loop ((i 0))
-		 (unless (>= i (vector-length val))
-		    (if (not (= i 0))
-			(template-display p ", "))
-		    (compile-value (vector-ref val i) p foreign-out loc)
-		    (loop (+ i 1)))))))
-      ((pair? val)
-       (if (small-list/pair? val)
-	   (template-display p
-	      "(new sc_Pair(~e,~e))"
-	      (compile-value (car val) p foreign-out loc)
-	      (compile-value (cdr val) p foreign-out loc))
-	   (template-display p
-	      "sc_list(~e)"
-	      (separated ", " 
-			 (lambda (e) "~e" (compile-value e p foreign-out loc))
-			 val))))
-      (foreign-out
-       (foreign-out val p))
-      (else
-       (scheme2js-error "scheme2js:val-out"
-			"Internal Error: forgot Val-type"
-			val
-			loc))))
+
+   (define index -1)
+   
+   (define (next-index)
+      (set! index (+fx 1 index))
+      index)
+
+   (define (compile-cyclic val p)
+      (cond
+	 ((vector? val)
+	  (if (class? val)
+	      (template-display p
+		 "sc_find_class(~e)"
+		 (compile (class-name val) p))
+	      (template-display p
+		 "[~e]"
+		 (let loop ((i 0))
+		    (unless (>= i (vector-length val))
+		       (if (not (= i 0))
+			   (template-display p ", "))
+		       (compile (vector-ref val i) p)
+		       (loop (+ i 1)))))))
+	 ((pair? val)
+	  (if (or (small-list/pair? val) (assq val cache))
+	      (template-display p
+		 "(new sc_Pair(~e,~e))"
+		 (compile (car val) p)
+		 (compile (cdr val) p))
+	      (template-display p
+		 "sc_list(~e)"
+		 (separated ", " 
+		    (lambda (e) "~e" (compile e p))
+		    val))))
+	 (else
+	  (host-compiler val p compile))))
+
+   (define (compile val p)
+      (cond
+	 ((null? val)
+	  (display-string "null" p))
+	 ((boolean? val)
+	  (display-string (if val "true" "false") p))
+	 ((symbol? val)
+	  (template-display p
+	     "\"~?~a\""
+	     (and (not (use-mutable-strings?)) *symbol-prefix*)
+	     (my-string-for-read (symbol->string! val))))
+	 ((char? val)
+	  (template-display p
+	     "(new sc_Char(\"~a\"))" (my-string-for-read (string val))))
+	 ((ucs2? val)
+	  (template-display p
+	     "(new sc_Char(\"~e\"))" (display-ucs2-char p val)))
+	 ((number? val)
+	  ;; CARE: initially I had "($val)" here. and I suppose there was a
+	  ;; reason I put the parenthesis around. this will probably
+	  ;; come back and bite me...
+	  (template-display p
+	     (?@ (< val 0) "(~@)")
+	     "$val"))
+	 ((string? val)
+	  (template-display p
+	     (?@ (use-mutable-strings?) "(new sc_String(~@))")
+	     "\"~a\"" (my-string-for-read val)))
+	 ((ucs2-string? val)
+	  (template-display p
+	     (?@ (use-mutable-strings?) "(new sc_String(~@))")
+	     "\"~e\""
+	     (let loop ((i 0))
+		(unless (>= i (ucs2-string-length val))
+		   (display-ucs2-char p (ucs2-string-ref val i))
+		   (loop (+fx i 1))))))
+	 ((eq? val #unspecified)
+	  (display-string "undefined" p))
+	 ((keyword? val)
+	  (if (use-mutable-strings?)
+	      (template-display p
+		 "(new sc_Keyword(\"~a\"))"
+		 (my-string-for-read (keyword->string! val)))
+	      (template-display p
+		 "\"~a~a\"" *keyword-prefix*
+		 (my-string-for-read (keyword->string! val)))))
+	 ((date? val)
+	  (fprintf p "new Date( ~a000 )" (date->seconds val)))
+	 ((assq val cache)
+	  =>
+	  (lambda (match)
+	     (let ((ref (cdr match)))
+		(if (fixnum? ref)
+		    (begin
+		       (display "sc_circle_ref(" p)
+		       (display-fixnum ref p)
+		       (display ")" p))
+		    (let ((i (next-index)))
+		       (set-cdr! match i)
+		       (display "sc_circle_def(" p)
+		       (display i p)
+		       (display ", " p)
+		       (compile-cyclic val p)
+		       (display ")" p))))))
+	 (else
+	  (compile-cyclic val p))))
+
+   (compile val p))
    
 (define-nmethod (Const.compile p stmt?)
    (with-access::Const this (value)
-      (with-access::Out-Env env (foreign-out)
+      (with-access::Out-Env env (host-compiler host-register)
 	 (template-display p
 	    (?@ stmt? "~@;\n")
-	    "~e" (compile-value value p foreign-out this)))))
+	    "~e" (compile-value value p host-compiler host-register this)))))
 
 (define-nmethod (Ref.compile p stmt?)
    (with-access::Ref this (var)

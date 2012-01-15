@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/widget/spinbutton.hop             */
+;*    serrano/prgm/project/hop/2.3.x/widget/spinbutton.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun 11 18:49:09 2009                          */
-;*    Last change :  Sat Nov 12 07:37:09 2011 (serrano)                */
-;*    Copyright   :  2009-11 Manuel Serrano                            */
+;*    Last change :  Sat Jan 14 07:58:55 2012 (serrano)                */
+;*    Copyright   :  2009-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spin Buttons server side implementation                          */
 ;*=====================================================================*/

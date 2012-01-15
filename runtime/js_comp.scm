@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Fri Jan 13 18:30:27 2012 (serrano)                */
+;*    Last change :  Sun Jan 15 09:33:33 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -28,7 +28,8 @@
 
    (export  (obj->javascript-attr ::obj ::output-port)
 	    (obj->javascript-expr ::obj ::output-port)
-	    (generic obj->javascript ::obj ::output-port ::bool)
+	    (generic hop-register-value ::obj ::procedure)
+	    (generic hop->javascript ::obj ::output-port ::procedure ::bool)
 	    (javascript->obj ::obj)
 	    (hop->js-callback ::obj)))
 
@@ -44,90 +45,81 @@
       #unspecified))
 
 ;*---------------------------------------------------------------------*/
+;*    for ...                                                          */
+;*---------------------------------------------------------------------*/
+(define-macro (for i from to . Lbody)
+   (let ((loop (gensym 'loop))
+	 (to-tmp (gensym 'to)))
+      `(let ((,to-tmp ,to))
+	  (let ,loop ((,i ,from))
+	       (when (<fx ,i ,to-tmp)
+		  ,@Lbody
+		  (,loop (+fx ,i 1)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-register-value ...                                           */
+;*    -------------------------------------------------------------    */
+;*    A call back invoked by scheme2js when it compiles Hop values.    */
+;*---------------------------------------------------------------------*/
+(define-generic (hop-register-value o::obj register::procedure)
+   '())
+
+;*---------------------------------------------------------------------*/
+;*    hop-register-value ::object ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (hop-register-value o::object register::procedure)
+   (let ((fields (class-all-fields (object-class o))))
+      (for i 0 (vector-length fields)
+	 (let* ((f (vector-ref fields i))
+		(gv (class-field-accessor f)))
+	    (register (gv o))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-register-value ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (hop-register-value o::xml register::procedure)
+   '())
+
+;*---------------------------------------------------------------------*/
 ;*    obj->javascript-attr ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (obj->javascript-attr obj op)
-   (obj->javascript obj op #f))
+(define (obj->javascript-attr obj op::output-port)
+   
+   (define (host-compiler obj op compile)
+      (hop->javascript obj op compile #f))
+
+   (with-access::clientc (hop-clientc) (valuec)
+      (valuec obj op host-compiler hop-register-value #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript-expr ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (obj->javascript-expr obj op)
-   (obj->javascript obj op #t))
+   
+   (define (host-compiler obj op compile)
+      (hop->javascript obj op compile #t))
+
+   (with-access::clientc (hop-clientc) (valuec)
+      (valuec obj op host-compiler hop-register-value #f)))
 
 ;*---------------------------------------------------------------------*/
-;*    obj->javascript ...                                              */
+;*    hop->javascript ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-generic (obj->javascript obj op::output-port isexpr)
+(define-generic (hop->javascript obj op::output-port compile isexpr)
    (cond
-      ((eq? obj #t)
-       (display (cached-clientc-true) op))
-      ((eq? obj #f)
-       (display (cached-clientc-false) op))
-      ((eq? obj #unspecified)
-       (display (cached-clientc-unspecified) op))
       ((procedure? obj)
        (if (service? obj)
-	   (obj->javascript (procedure-attr obj) op isexpr)
-	   (error "obj->javascript"
+	   (compile (procedure-attr obj) op)
+	   (error "hop->javascript"
 	      "Illegal procedure in JavaScript conversion"
 	      obj)))
       (else
-       (clientc-compile obj op isexpr))))
+       (error "hop->javascript" "Cannot compile value" obj))))
 
 ;*---------------------------------------------------------------------*/
-;*    clientc-compile ...                                              */
+;*    hop->javascript ::object ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (clientc-compile obj op isexpr)
-   (let ((foreign-out (lambda (obj2 op)
-			 (obj->javascript obj2 op isexpr))))
-      (with-access::clientc (hop-clientc) (valuec)
-	 (valuec obj op foreign-out #f))))
-
-;*---------------------------------------------------------------------*/
-;*    *clientc-true* ...                                               */
-;*---------------------------------------------------------------------*/
-(define *clientc-true* #f)
-(define *clientc-false* #f)
-(define *clientc-unspecified* #f)
-
-;*---------------------------------------------------------------------*/
-;*    cached-clientc-true ...                                          */
-;*---------------------------------------------------------------------*/
-(define (cached-clientc-true)
-   (if *clientc-true*
-       *clientc-true*
-       (let ((op (open-output-string)))
-	  (clientc-compile #t op #f)
-	  (set! *clientc-true* (close-output-port op))
-	  *clientc-true*)))
-       
-;*---------------------------------------------------------------------*/
-;*    cached-clientc-false ...                                         */
-;*---------------------------------------------------------------------*/
-(define (cached-clientc-false)
-   (if *clientc-false*
-       *clientc-false*
-       (let ((op (open-output-string)))
-	  (clientc-compile #f op #f)
-	  (set! *clientc-false* (close-output-port op))
-	  *clientc-false*)))
-       
-;*---------------------------------------------------------------------*/
-;*    cached-clientc-unspecified ...                                   */
-;*---------------------------------------------------------------------*/
-(define (cached-clientc-unspecified)
-   (if *clientc-unspecified*
-       *clientc-unspecified*
-       (let ((op (open-output-string)))
-	  (clientc-compile #unspecified op #f)
-	  (set! *clientc-unspecified* (close-output-port op))
-	  *clientc-unspecified*)))
-       
-;*---------------------------------------------------------------------*/
-;*    obj->javascript ::object ...                                     */
-;*---------------------------------------------------------------------*/
-(define-method (obj->javascript obj::object op isexpr)
+(define-method (hop->javascript obj::object op compile isexpr)
    
    (define (display-seq vec op proc)
       (let ((len (vector-length vec)))
@@ -146,8 +138,7 @@
 	    (display "'" op)
 	    (display (class-field-name f) op)
 	    (display "': " op)
-	    (obj->javascript
-	       ((class-field-accessor f) obj) op isexpr)))
+	    (compile ((class-field-accessor f) obj) op)))
       (display "}" op))
    
    (let ((klass (object-class obj)))
@@ -166,15 +157,15 @@
 	     (display ")" op)))))
 
 ;*---------------------------------------------------------------------*/
-;*    obj->javascript ::xml ...                                        */
+;*    hop->javascript ::xml ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (obj->javascript obj::xml op isexpr)
-   (error "obj->javascript" "Cannot translate xml element" xml))
+(define-method (hop->javascript obj::xml op compile isexpr)
+   (error "hop->javascript" "Cannot translate xml element" xml))
 
 ;*---------------------------------------------------------------------*/
-;*    obj->javascript ::xml-markup ...                                 */
+;*    hop->javascript ::xml-markup ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (obj->javascript obj::xml-markup op isexpr)
+(define-method (hop->javascript obj::xml-markup op compile isexpr)
    (display "hop_create_encoded_element(\"" op)
    (let ((s (url-path-encode
 	     (call-with-output-string
@@ -183,24 +174,24 @@
    (display "\")" op))
 
 ;*---------------------------------------------------------------------*/
-;*    obj->javascript ::xml-element ...                                */
+;*    hop->javascript ::xml-element ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (obj->javascript obj::xml-element op isexpr)
+(define-method (hop->javascript obj::xml-element op compile isexpr)
    (if isexpr
        (call-next-method)
        (with-access::xml-element obj (id)
 	  (fprintf op "document.getElementById( '~a' )" id))))
 
 ;*---------------------------------------------------------------------*/
-;*    obj->javascript ::xml-tilde ...                                  */
+;*    hop->javascript ::xml-tilde ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (obj->javascript obj::xml-tilde op isexpr)
+(define-method (hop->javascript obj::xml-tilde op compile isexpr)
    (display (xml-tilde->expression obj) op))
 
 ;*---------------------------------------------------------------------*/
-;*    obj->javascript ::hop-service ...                                */
+;*    hop->javascript ::hop-service ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (obj->javascript obj::hop-service op isexpr)
+(define-method (hop->javascript obj::hop-service op compile isexpr)
    (with-access::hop-service obj (javascript)
       (display javascript op)))
 

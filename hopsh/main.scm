@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/hopsh/main.scm                    */
+;*    serrano/prgm/project/hop/2.3.x/hopsh/main.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon May 30 14:45:05 2011 (serrano)                */
-;*    Copyright   :  2004-11 Manuel Serrano                            */
+;*    Last change :  Sun Jan 15 09:23:15 2012 (serrano)                */
+;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPSH entry point                                            */
 ;*=====================================================================*/
@@ -76,9 +76,10 @@
    (init-hopscheme! :reader (lambda (p v) (hop-read p))
       :verbose (hop-verbose)
       :eval (lambda (e) (let ((op (open-output-string)))
-			   (obj->javascript (eval e) op #f)
+			   (obj->javascript-expr (eval e) op)
 			   (close-output-port op)))
-      :hop-compile (lambda (e p) (obj->javascript e p #f))
+      :hop-compile obj->javascript-expr
+      :hop-register hop-register-value
       :features `(hop
 		  ,(string->symbol (format "hop-~a" (hop-branch)))
 		  ,(string->symbol (format "hop-~a" (hop-version))))

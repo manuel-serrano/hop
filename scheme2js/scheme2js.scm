@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -52,7 +52,8 @@
 				   configuration)
 	   (scheme2js-compile-value expr::obj
 				    out-p::output-port
-				    foreign-out
+				    extension-compiler::procedure
+				    value-register::procedure
 				    loc)
 	   (scheme2js-compile-file in-file::bstring
 				   out-file::bstring
@@ -137,8 +138,8 @@
 	       (scheme2js module out-p)))
 	 (configs-restore! old-configs))))
 
-(define (scheme2js-compile-value value out-p foreign-out loc)
-   (compile-value value out-p foreign-out loc))
+(define (scheme2js-compile-value value out-p extension-compiler value-register loc)
+   (compile-value value out-p extension-compiler value-register loc))
 
 (define (scheme2js-compile-file in-file out-file
 				module-headers ;; list (module-clause . kind)

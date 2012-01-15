@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -55,7 +55,7 @@
 	 (to-tmp (gensym 'to)))
       `(let ((,to-tmp ,to))
 	  (let ,loop ((,i ,from))
-	       (when (< ,i ,to-tmp)
+	       (when (<fx ,i ,to-tmp)
 		  ,@Lbody
 		  (,loop (+fx ,i 1)))))))
 

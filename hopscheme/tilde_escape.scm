@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/hopscheme/tilde_escape.scm        */
+;*    serrano/prgm/project/hop/2.3.x/hopscheme/tilde_escape.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:09:56 2010                          */
-;*    Last change :  Thu Nov 10 15:30:40 2011 (serrano)                */
-;*    Copyright   :  2010-11 Florian Loitsch and Manuel Serrano        */
+;*    Last change :  Sun Jan 15 09:00:11 2012 (serrano)                */
+;*    Copyright   :  2010-12 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Interface between Scheme2JS and Hop.                             */
 ;*=====================================================================*/
@@ -18,7 +18,7 @@
    
    (export (hopscheme-create-empty-macro-environment)
 	   (hopscheme-compile-expression e ::obj ::obj ::procedure)
-	   (hopscheme-compile-value ::obj ::output-port ::procedure ::obj)
+	   (hopscheme-compile-value ::obj ::output-port ::procedure ::procedure ::obj)
 	   (hopscheme-compile-hop-client e #!optional (env '()) (menv #f))
 	   (hopscheme->JS-expression::bstring ::vector) 
 	   (hopscheme->JS-statement::bstring ::vector)
@@ -76,8 +76,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-compile-value ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (hopscheme-compile-value v p foreign-out loc)
-   (scheme2js-compile-value v p foreign-out loc))
+(define (hopscheme-compile-value v p host-compiler host-register loc)
+   (scheme2js-compile-value v p host-compiler host-register loc))
    
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme->JS-expression ...                                     */

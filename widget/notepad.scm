@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/widget/notepad.scm                */
+;*    serrano/prgm/project/hop/2.3.x/widget/notepad.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Nov 12 06:36:06 2011 (serrano)                */
-;*    Copyright   :  2005-11 Manuel Serrano                            */
+;*    Last change :  Sat Jan 14 07:56:12 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
 ;*=====================================================================*/
@@ -82,12 +82,11 @@
    (define svc
       (call-with-output-string
        (lambda (op)
-	  (obj->javascript
+	  (obj->javascript-attr
 	   (procedure->service
 	    (lambda (i)
 	       (nptab-get-body (list-ref tabs i))))
-	   op
-	   #f))))
+	   op))))
    
    (define (make-tab-div tab i)
       (with-access::xml-nptab-element tab (attributes (idt id) idtag body klass)

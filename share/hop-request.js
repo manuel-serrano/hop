@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Jan 12 09:53:22 2012 (serrano)                */
+/*    Last change :  Sat Jan 14 10:47:30 2012 (serrano)                */
 /*    Copyright   :  2004-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -267,10 +267,6 @@ function hop_request_unserialize( svc ) {
    var ctype = ("content_type" in xhr) ?
       xhr[ "content_type" ] : hop_header_content_type( xhr );
 
-   console.group( "unserialize" );
-   try {
-   console.log( "unserialize...");
-      console.log( ctype + "[" + xhr.responseText + "]" );
    if( ctype === "application/x-hop" ) {
       return hop_string_to_obj( hop_json_parse( xhr.responseText ) );
    } if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
@@ -282,13 +278,16 @@ function hop_request_unserialize( svc ) {
    } else {
       return xhr.responseText;
    }
-   } finally {
-      console.groupEnd();
-   }
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_request_unserialize_arraybuffer ...                          */
+/*    -------------------------------------------------------------    */
+/*    This is an alternate protocol for exanching values between the   */
+/*    server and the client. This is currently not in used because     */
+/*    as of Jan 2012 I (MS) have not found an efficient way to         */
+/*    unserialize strings. This protocol could replace hop_request_    */
+/*    unserialize if this problem get solved.                          */
 /*    -------------------------------------------------------------    */
 /*    Unserialize the object contained in the XHR response. The        */
 /*    unserialization method depends on the mime type of the response. */
