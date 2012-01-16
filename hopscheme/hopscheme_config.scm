@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jan 15 07:17:18 2012                          */
-;*    Last change :  Sun Jan 15 09:00:56 2012 (serrano)                */
+;*    Last change :  Mon Jan 16 09:03:47 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Default scheme2js configuration for Hop                          */
@@ -82,8 +82,9 @@
 		  (host-compiler . ,*hop-compile*)
 		  ;; register values
 		  (host-register . ,*hop-register*)
-		  )))
-	  *cached-config*)))
+		  ;; pp in debug mode
+		  (pp . ,(>fx (bigloo-debug) 1))))))
+	  *cached-config*))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-config ...                                             */

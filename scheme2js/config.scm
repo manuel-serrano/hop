@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -173,7 +173,7 @@
 	     (indent . 2)
 	     (statics-suffix . #f)
 	     (bigloo-modules . #t)
-	     (pp . #t)
+	     (pp . #f)
 	     (compress . #f)
 	     (call-check . #t)
 	     (debug . #f))
