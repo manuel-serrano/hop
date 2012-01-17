@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Jan 15 09:23:55 2012 (serrano)                */
+;*    Last change :  Mon Jan 16 18:36:31 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -276,7 +276,8 @@
 			 (op (open-output-string)))
 		     (obj->javascript-attr ev op)
 		     (close-output-port op)))
-	 :hop-compile obj->javascript-attr
+	 :hop-compile (lambda (obj op compile)
+			 (hop->javascript obj op compile #f))
 	 :hop-register hop-register-value
 	 :features `(hop
 		       hop-client

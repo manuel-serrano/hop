@@ -47,7 +47,7 @@ interpreting the result of the HTTP transaction. It checks the status
 code of the HTTP response in order to build the value sent to ++success++:
   * 200 - the result is converted into a string.
   * 201 - the result is converted into a compound object using the JSON 
- protocol (that is, using the ++json->hop++ function).
+ protocol (that is, using the ++json->obj++ function).
   * 202 - the result is converted into a compound object using ad-hoc 
  unmarshalling technics.
   * 401, 407 - access denial.

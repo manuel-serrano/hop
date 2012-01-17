@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Fri Jan 13 18:28:40 2012 (serrano)                */
+;*    Last change :  Mon Jan 16 18:22:07 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -44,6 +44,7 @@
 	      "Illegal procedure in JSON conversion"
 	      obj)))
       (else
+       (error "obj->json" "unknown how to deal with" (typeof obj))
        (with-access::clientc (hop-clientc) (valuec)
 	  (valuec obj op obj->json #f)))))
 

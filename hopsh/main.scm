@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Jan 15 09:23:15 2012 (serrano)                */
+;*    Last change :  Mon Jan 16 18:36:37 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPSH entry point                                            */
@@ -78,7 +78,8 @@
       :eval (lambda (e) (let ((op (open-output-string)))
 			   (obj->javascript-expr (eval e) op)
 			   (close-output-port op)))
-      :hop-compile obj->javascript-expr
+      :hop-compile (lambda (obj op compile)
+		      (hop->javascript obj op compile #f))
       :hop-register hop-register-value
       :features `(hop
 		  ,(string->symbol (format "hop-~a" (hop-branch)))
