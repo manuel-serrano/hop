@@ -216,14 +216,14 @@ manages to send the characters of the proxy request body to **all** the
 ports returned by previous sniffers.
 
   (hop-proxy-sniffer-add! 
-     (lambda (req)
-        (when (string=? (http-request-host req) "foo.org")
+     (lambda (req::http-request)
+        (when (string=? req.host "foo.org")
            (open-output-file "/tmp/FOO"))))
 
   (hop-proxy-sniffer-add!
-     (lambda (req)
-        (when (string-suffix? ".mp3" (http-request-path req))
-           (open-output-file (format "/tmp/MP3/~a" (basename (http-request-path req)))))))
+     (lambda (req::http-request)
+        (when (string-suffix? ".mp3" req.path)
+           (open-output-file (format "/tmp/MP3/~a" (basename req.path))))))
 
 
 ~~ See ,(<TUTORIALREF> "Proxy hacking" "03-proxy.wiki") for a full example

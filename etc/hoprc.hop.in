@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/etc/hoprc.hop.in                  */
+;*    serrano/prgm/project/hop/2.3.x/etc/hoprc.hop.in                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 26 08:20:34 2006                          */
-;*    Last change :  Fri Mar  4 10:15:04 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Tue Jan 17 19:26:53 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP runtime command file.                                        */
 ;*    -------------------------------------------------------------    */
@@ -119,35 +119,35 @@
 ;; only install the welcome message is the configuration file does not exist
 (unless (file-exists? (make-file-name (hop-rc-directory) (hop-rc-file)))
    (hop-filter-add!
-    (lambda (req)
-       (if (and (or (string=? (http-request-path req) "/")
-                    (string=? (http-request-path req) "/hop")
-                    (substring-at? (http-request-path req) "/hop/" 0))
+    (lambda (req::http-request)
+       (if (and (or (string=? req.path "/")
+                    (string=? req.path "/hop")
+                    (substring-at? req.path "/hop/" 0))
 		(not (file-exists?
 		      (make-file-name (hop-rc-directory) (hop-rc-file)))))
 	   (http-warning [You have reached this page because you
 have started Hop without any configuration file and without any user
 account. At that stage, the only services that you are allowed to run are:
 the Hop
-,(<A> :href (format "http://~a:~a/hop/wizard" (http-request-host req) (http-request-port req))
+,(<A> :href (format "http://~a:~a/hop/wizard" req.host req.port)
    "wizard"),
 the Hop
-,(<A> :href (format "http://~a:~a/hop/doc" (http-request-host req) (http-request-port req))
+,(<A> :href (format "http://~a:~a/hop/doc" req.host req.port)
    "documentation")
 application, and the Hop passwords
-,(<A> :href (format "http://~a:~a/hop/epassword" (http-request-host req) (http-request-port req))
+,(<A> :href (format "http://~a:~a/hop/epassword" req.host req.port)
    "encryption")
 weblet.
 
 ,(<P>)
 You must fix that in order to be able to use Hop. New comers are
 encouraged to use the Hop
-,(<A> :href (format "http://~a:~a/hop/wizard" (http-request-host req) (http-request-port req))
+,(<A> :href (format "http://~a:~a/hop/wizard" req.host req.port)
     "wizard") for creating a simple Hop configuration file.
 		      
 Alternatively, for those that feel more confident, you can generate
 the configuration file by hand. The Hop
-,(<A> :href (format "http://~a:~a/hop/doc" (http-request-host req) (http-request-port req))
+,(<A> :href (format "http://~a:~a/hop/doc" req.host req.port)
 "documentation") teaches how to proceed.
 ,(<P>)
 A good starting point is probably to copy the file

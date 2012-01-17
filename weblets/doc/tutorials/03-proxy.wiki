@@ -139,15 +139,15 @@ class.
 
 
 <example>
-  (define (jpeg-sniffer req)
-     (when (string=? (suffix (http-request-path req)) "jpeg")
+  (define (jpeg-sniffer req::http-request)
+     (when (string=? (suffix req.path) "jpeg")
         (let* ((path (make-file-name "/tmp" (symbol->string (gensym))))
                (op (open-output-file path)))
            (when (output-port? op)
               (output-port-close-hook-set!
                op
                (lambda (op)
-                  (unless (exif? (jpeg-exif path))
+                  (unless (isa? (jpeg-exif path) exif)
                      (delete-file path))))
               op))))
 

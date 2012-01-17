@@ -1,5 +1,5 @@
 ;; an example of login implemented with cookies
-(define (login req name pass local)
+(define (login req::http-request name pass local)
    ~(let ((svc ($hz/setcookie $(begin name).value
 			      $(begin pass).value
 			      (if $(begin local).checked "local" "share")))
@@ -8,10 +8,10 @@
 		       (date.setMinutes (+ (date.getMinutes) 60))
 		       (cookie-set! "hop_hz"
 				    http
-				    $(http-request-path req)
+				    $req.path
 				    #f
 				    date)
-		       (set! location $(http-request-path req))))))
+		       (set! location $req.path)))))
        (with-hop svc cback)))
 
 (define-service (hz/setcookie name passwd mode)

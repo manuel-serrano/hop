@@ -330,22 +330,22 @@ the XHTML backend object.
 Here is an example of function that constructs an answer
 for HTTP ++PUT++ and ++POST++ requests.
 
-  (lambda (req)
-     (let ((c (http-header-field (http-request-header req) content-type:)))
+  (lambda (req::http-request)
+     (let ((c (http-header-field req.header content-type:)))
 	(if (and (string? c)
 		 (string=? c "application/x-www-form-urlencoded")
                  (http-server-request? req))
-	    (case (http-request-method req)
+	    (case req.method
 	       ((PUT)
 		(instantiate::http-response-put
 		   (request req)
-		   (content-length (http-request-content-length req))
-		   (uri (http-request-path req))))
+		   (content-length req.content-length)
+		   (uri req.path)))
 	       ((POST)
 		(instantiate::http-response-cgi
 		   (request req)
-		   (content-length (http-request-content-length req))
-		   (cgibin (http-request-path req))))
+		   (content-length req.content-length)
+		   (cgibin req.path)))
 	       (else
 		(instantiate::http-response-string
 		   (start-line "HTTP/1.0 501 Not Implemented"))))
