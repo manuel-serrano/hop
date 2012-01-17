@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Chris Veness                                      */
 /*    Creation    :  Wed Jun  4 15:07:23 2008                          */
-/*    Last change :  Fri Jan 13 08:19:17 2012 (serrano)                */
+/*    Last change :  Tue Jan 17 10:14:19 2012 (serrano)                */
 /*    Copyright   :  2002-12 Chris Veness                              */
 /*    -------------------------------------------------------------    */
 /*    sha1 hashing                                                     */
@@ -37,7 +37,6 @@ function sha1sum( msg ) {
       }
    }
 
-   alert( "len=" + msg.length + " l/4=" + msg.length/4 + " l=" + l + " N=" + N);
    // add length (in bits) into final pair of 32-bit integers (big-endian) [5.1.1]
    // note: most significant word would be ((len-1)*8 >>> 32, but since JS converts
    // bitwise-op args to 32 bits, we need to simulate this by arithmetic operators

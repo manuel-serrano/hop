@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Thu Dec 22 11:42:31 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Tue Jan 17 10:43:34 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOPDROID heap file.                 */
 ;*=====================================================================*/
@@ -21,7 +21,7 @@
 	   __hopdroid-multimedia
 	   __hopdroid-tts
 	   __hopdroid-mpd
-	   __hopdroid-zerconf)
+	   __hopdroid-zeroconf)
 
    (eval   (export-all)
 	   (class androidphone)
