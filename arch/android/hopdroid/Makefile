@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Sat Dec 17 07:08:27 2011 (serrano)                */
-#*    Copyright   :  2006-11 Manuel Serrano                            */
+#*    Last change :  Tue Jan 17 10:45:51 2012 (serrano)                */
+#*    Copyright   :  2006-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopdroid library.                      */
 #*=====================================================================*/
@@ -36,7 +36,7 @@ HOPCLOSELIBS_EU = -lhopdroid_u-$(HOPRELEASE)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_BGL_OBJECTS = phone music mpd multimedia tts wifi
+_BGL_OBJECTS = phone music mpd multimedia tts wifi zeroconf
 
 _OBJECTS = $(_BGL_OBJECTS)
 
