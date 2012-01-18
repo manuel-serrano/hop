@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Jan 17 09:00:06 2012 (serrano)                */
+#*    Last change :  Wed Jan 18 11:49:39 2012 (serrano)                */
 #*    Copyright   :  2004-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -282,6 +282,7 @@ while : ; do
       libraries="$libraries `echo $1 | sed 's/^[^=]*=//'`";;
 
     --macosx-bundle|--macosx)
+      bcflags="$bcflags -I../arch/macosx";
       arch=macosx;;
 
     --android)
