@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-notepad.js              */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-notepad.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Fri Mar 11 19:52:14 2011 (serrano)                */
-/*    Copyright   :  2005-11 Manuel Serrano                            */
+/*    Last change :  Wed Jan 18 16:12:36 2012 (serrano)                */
+/*    Copyright   :  2005-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
 /*=====================================================================*/
@@ -61,7 +61,7 @@ function hop_notepad_inner_select( np, to, callback ) {
 		   } );
       } else {
 	 hop_notepad_inner_toggle( np, to, tabs, bodies );
-	 
+
 	 if( callback ) callback();
 	 /* the tab onselect handler */
 	 if( tabs.childNodes[ to ].onselect ) tabs.childNodes[ to ].onselect();

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/hz/xml.hop                */
+;*    serrano/prgm/project/hop/2.3.x/weblets/hz/xml.hop                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Wed Nov 16 16:17:53 2011 (serrano)                */
-;*    Copyright   :  2007-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 18 15:46:19 2012 (serrano)                */
+;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ xml extensions                                                */
 ;*=====================================================================*/

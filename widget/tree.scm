@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Jan 14 07:56:45 2012 (serrano)                */
+;*    Last change :  Wed Jan 18 16:12:07 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -140,7 +140,11 @@
       (display " <script type='" p)
       (display (hop-configure-javascript-mime-type) p)
       (display "'>" p)
+      (display "hop_add_event_listener('" p)
+      (display (string-escape parent #\') p)
+      (display "', \"ready\", function() {" p)
       (html-write-tree 0 obj parent p backend)
+      (display "}, true )" p)
       (display " </script>" p)
       (display "</div>" p)))
 
