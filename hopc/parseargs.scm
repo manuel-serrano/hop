@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jan 18 13:50:05 2012 (serrano)                */
+;*    Last change :  Wed Jan 18 15:32:03 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -104,19 +104,7 @@
 		(if (file-exists? path)
 		    (%hopc-load-rc path)
 		    (%hopc-load-rc (make-file-name (hop-etc-directory) (hopc-rc-file)))))))
-      (for-each (lambda (expr)
-		   (with-input-from-string expr
-		      (lambda ()
-			 (let ((sexp (hop-read (current-input-port))))
-			    (with-handler
-			       (lambda (e)
-				  (if (isa? e &eval-warning)
-				      (begin
-					 (warning-notify e)
-					 #unspecified)
-				      (raise e)))
-			       (eval sexp))))))
-	 exprs)))
+      exprs))
 
 ;*---------------------------------------------------------------------*/
 ;*    %hopc-load-rc ...                                                */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Jan 18 13:50:45 2012 (serrano)                */
+;*    Last change :  Wed Jan 18 15:32:13 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -48,26 +48,40 @@
    ;; set the library load path
    (bigloo-library-path-set! (hop-library-path))
    ;; parse the command line
-   (parse-args args)
-   ;; access file
-   (cond
-      ((string? (hopc-access-file))
-       (module-load-access-file (hopc-access-file)))
-      ((file-exists? ".afile")
-       (module-load-access-file ".afile")))
-   ;; preload the hop library
-   (eval `(library-load 'hop))
-   ;; setup the client-side compiler
-   (setup-client-compiler!)
-   ;; setup the hop module resolvers
-   (bigloo-module-extension-handler-set! (hop-module-extension-handler exp))
-   (bigloo-module-resolver-set! (make-hop-module-resolver (bigloo-module-resolver)))
-   ;; start the compilation stage
-   (if (hopc-jsheap)
-       ;; generate a js heap file from the source
-       (jsheap)
-       ;; compile the source file
-       (compile-sources)))
+   (let ((exprs (parse-args args)))
+      ;; access file
+      (cond
+	 ((string? (hopc-access-file))
+	  (module-load-access-file (hopc-access-file)))
+	 ((file-exists? ".afile")
+	  (module-load-access-file ".afile")))
+      ;; preload the hop library
+      (eval `(library-load 'hop))
+      ;; setup the client-side compiler
+      (setup-client-compiler!)
+      ;; setup the hop module resolvers
+      (bigloo-module-extension-handler-set! (hop-module-extension-handler exp))
+      (bigloo-module-resolver-set! (make-hop-module-resolver (bigloo-module-resolver)))
+      ;; evaluate the command line expressions
+      (for-each (lambda (expr)
+		   (with-input-from-string expr
+		      (lambda ()
+			 (let ((sexp (hop-read (current-input-port))))
+			    (with-handler
+			       (lambda (e)
+				  (if (isa? e &eval-warning)
+				      (begin
+					 (warning-notify e)
+					 #unspecified)
+				      (raise e)))
+			       (eval sexp))))))
+	 exprs)
+      ;; start the compilation stage
+      (if (hopc-jsheap)
+	  ;; generate a js heap file from the source
+	  (jsheap)
+	  ;; compile the source file
+	  (compile-sources))))
 
 ;*---------------------------------------------------------------------*/
 ;*    setup-client-compiler! ...                                       */
