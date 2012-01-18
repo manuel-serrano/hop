@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jan 16 18:36:39 2012 (serrano)                */
+;*    Last change :  Wed Jan 18 13:50:45 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -62,8 +62,6 @@
    ;; setup the hop module resolvers
    (bigloo-module-extension-handler-set! (hop-module-extension-handler exp))
    (bigloo-module-resolver-set! (make-hop-module-resolver (bigloo-module-resolver)))
-   ;; turn on debug to get line information
-   (bigloo-debug-set! 1)
    ;; start the compilation stage
    (if (hopc-jsheap)
        ;; generate a js heap file from the source

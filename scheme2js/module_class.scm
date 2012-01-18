@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 23 11:24:26 2011                          */
-;*    Last change :  Sat Jan  7 06:36:32 2012 (serrano)                */
+;*    Last change :  Wed Jan 18 13:52:43 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2JS class compiler                                         */
@@ -618,7 +618,7 @@
 				   (append
 				      class-expr
 				      (list
-					 `(define (,cid) (pragma ""))
+					 `(define (,cid) (pragma "0"))
 					 `((@ sc_register_class js)
 					      ;;; class
 					      ,cid

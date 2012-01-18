@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Dec  8 15:07:04 2011 (serrano)                */
+#*    Last change :  Wed Jan 18 13:30:12 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -189,8 +189,8 @@ uninstall:
 	$(MAKE) -C widget uninstall
 	$(MAKE) -C scheme2js uninstall
 	$(MAKE) -C hopscheme uninstall
-	if[ "$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)" != "/" ]; then
-	  /bin/rm -rf $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \
+	if [ "$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)" != "/" ]; then \
+	  /bin/rm -rf $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR); \
         fi
 
 #*---------------------------------------------------------------------*/

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Dec  6 08:02:29 2011 (serrano)                */
-;*    Copyright   :  2004-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 18 13:50:05 2012 (serrano)                */
+;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -76,7 +76,7 @@
 	    (("-c" (help "Stop after code object generation"))
 	     (hopc-pass-set! 'object)
 	     (hopc-bigloo-options-set!
-	      (append (hopc-bigloo-options) (list "-c"))))
+		(append (hopc-bigloo-options) (list "-c"))))
 	    (("--bigloo=?bigloo" (help "Set the Bigloo binary file path"))
 	     (hopc-bigloo-set! bigloo))
 	    ((("-j" "--client-js") (help "Generate a client-side JavaScript file"))
@@ -89,12 +89,12 @@
 	     (if (string=? else "--")
 		 (begin
 		    (hopc-bigloo-options-set!
-		     (append (hopc-bigloo-options)
-			     (map (lambda (s)
-				     (if (string-index s #\space)
-					 (string-append "\"" s "\"")
-					 s))
-				  (cdr rest))))
+		       (append (hopc-bigloo-options)
+			  (map (lambda (s)
+				  (if (string-index s #\space)
+				      (string-append "\"" s "\"")
+				      s))
+			     (cdr rest))))
 		    (stop #t))
 		 (hopc-sources-set! (append (hopc-sources) (list else)))))))
       (when loadp
@@ -103,7 +103,20 @@
 	     (let ((path (make-file-name (hop-rc-directory) (hopc-rc-file))))
 		(if (file-exists? path)
 		    (%hopc-load-rc path)
-		    (%hopc-load-rc (make-file-name (hop-etc-directory) (hopc-rc-file)))))))))
+		    (%hopc-load-rc (make-file-name (hop-etc-directory) (hopc-rc-file)))))))
+      (for-each (lambda (expr)
+		   (with-input-from-string expr
+		      (lambda ()
+			 (let ((sexp (hop-read (current-input-port))))
+			    (with-handler
+			       (lambda (e)
+				  (if (isa? e &eval-warning)
+				      (begin
+					 (warning-notify e)
+					 #unspecified)
+				      (raise e)))
+			       (eval sexp))))))
+	 exprs)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %hopc-load-rc ...                                                */
