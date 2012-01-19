@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/http_remote.scm           */
+;*    serrano/prgm/project/hop/2.3.x/runtime/http_remote.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Wed Nov 16 11:52:05 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Thu Jan 19 10:41:56 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
 ;*=====================================================================*/
@@ -401,9 +401,7 @@
 				key
 				(lambda (l) (cons conn l))
 				(list conn)))
-	  (begin
-;* 	     (tprint "connection close/timeout " (connection-id conn)) */
-	     (close-connection! conn))))
+	  (close-connection! conn)))
    
    [assert () (not (symbol? (mutex-state *remote-lock*)))]
    
@@ -434,7 +432,6 @@
    (define (make-new-connection key id)
       (with-trace 4 "make-new-connection"
 	 (let ((s (make-client-socket/timeout host port timeout request ssl)))
-;* 	    (tprint "make-new-connection id=" id)                      */
 	    (instantiate::connection
 	       (id id)
 	       (socket s)
@@ -495,7 +492,6 @@
 	  (connection-close-sans-lock! conn))
        ;; store the connection only if room is available on the table
        (with-access::connection conn (locked keep-alive intable)
-;* 	  (tprint "keep-alive connection : " (connection-id conn))     */
 	  (set! locked #f)
 	  (set! keep-alive #t)
 	  (unless intable

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Wed Jan 11 11:54:52 2012 (serrano)                */
+;*    Last change :  Thu Jan 19 10:41:39 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -86,8 +86,9 @@
 	       "Discovery ports must be greater than 1023"
 	       port))
 	 (let ((serv (make-datagram-server-socket port)))
-	    (thread-start-joinable!
+	    (thread-start!
 	       (instantiate::pthread
+		  (name "hop-discovery")
 		  (body (lambda () (discovery-loop serv)))))))
       (else
        (error "hop-discovery" "discovery requires thread support" #f))))
@@ -96,24 +97,6 @@
 ;*    discovery-loop ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (discovery-loop serv::datagram-socket)
-   
-   (define (service-exists? svc)
-      (let ((creq (current-request)))
-	 (unwind-protect
-	    (let ((req (instantiate::http-server-request
-			  (user (anonymous-user))
-			  (localclientp #t)
-			  (lanclientp #t)
-			  (abspath (string-append (hop-service-base) "/" svc))
-			  (method 'GET))))
-	       (current-request-set! #f req)
-	       (let ((rep (service-filter req)))
-		  (when (isa? rep %http-response-local)
-		     (with-access::%http-response-local rep (start-line)
-			(or (substring-at? start-line "200" 9 3)
-			    (substring-at? start-line "401" 9 3))))))
-	    (current-request-set! #f creq))))
-   
    (let loop ((id -1))
       (multiple-value-bind (msg clienthost)
 	 (datagram-socket-receive serv 1024)

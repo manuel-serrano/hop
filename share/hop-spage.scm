@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Wed Jan 11 16:31:53 2012 (serrano)                */
+;*    Last change :  Thu Jan 19 07:45:01 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -130,10 +130,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    spage-invoke-onchange-listener! ...                              */
 ;*---------------------------------------------------------------------*/
-(define (spage-invoke-onchange-listener! spage tbody)
+(define (spage-invoke-onchange-listener! spage tbody action)
    (when (procedure? spage.onchange)
       (let ((evt (new HopEvent "change" spage)))
 	 (set! evt.target tbody)
+	 (set! evt.action action)
 	 (spage.onchange evt))))
 
 ;*---------------------------------------------------------------------*/
@@ -299,7 +300,7 @@
 	  (spage-push-slide spage spviewport tbody otab))
 	 (else
 	  (spage-push-none spage spviewport tbody otab))))
-   
+
    (let* ((spage (if (string? spage) (dom-get-element-by-id spage) spage))
 	  (tab (if (string? tab) (dom-get-element-by-id tab) tab))
 	  (spviewport spage.spviewport)
@@ -326,7 +327,7 @@
       ;; add the new tab
       (dom-append-child! spviewport tbody)
       ;; the event listeners
-      (spage-invoke-onchange-listener! spage tbody)
+      (spage-invoke-onchange-listener! spage tbody "push")
       (when tbody.tab
 	 (sptab-invoke-onselect-listener! tbody.tab tbody "push"))
       ;; show the new tbody
@@ -351,7 +352,7 @@
 	 :width (format "~apx" spage.spscrollwidth)))
 
    (define (invoke-listeners spage tbody)
-      (spage-invoke-onchange-listener! spage tbody)
+      (spage-invoke-onchange-listener! spage tbody "pop")
       (when (and tbody.tab (not (eq? tbody.tab #unspecified)))
 	 (sptab-invoke-onselect-listener! tbody.tab tbody "pop")))
    
@@ -550,7 +551,7 @@
                   (dom-append-child! spviewport body)
 		  (set! spage.tabs (cons body (cdr spage.tabs)))
 		  (set! body.tab tab)
-		  (spage-invoke-onchange-listener! spage body)
+		  (spage-invoke-onchange-listener! spage body "push")
 		  (sptab-invoke-onselect-listener! body.tab body "push")))))))
 
 ;*---------------------------------------------------------------------*/

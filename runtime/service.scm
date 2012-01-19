@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Jan 13 18:01:11 2012 (serrano)                */
+;*    Last change :  Thu Jan 19 10:29:52 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -34,10 +34,12 @@
 	    __hop_xdomain
 	    __hop_js-comp
 	    __hop_user
-	    __hop_weblets)
+	    __hop_weblets
+	    __hop_hop)
    
    (export  (init-hop-services!)
 	    (inline service?::bool ::obj)
+	    (service-exists? ::bstring)
 	    (get-all-services ::http-request)
 	    (gen-service-url::bstring #!key (prefix "") (public #f))
 	    (hop-service-path? ::bstring)
@@ -339,6 +341,27 @@
 		    (loop (+fx i 1)
 			  (+fx r (+fx (bit-lsh r 3) (char->integer c))))))))))
 
+;*---------------------------------------------------------------------*/
+;*    service-exists? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (service-exists? svc)
+   (with-lock *service-mutex*
+      (lambda ()
+	 (let ((abspath (string-append (hop-service-base) "/" svc)))
+	    (or (hashtable-get *service-table* abspath)
+		(let ((creq (current-request))
+		      (th (current-thread)))
+		   (unwind-protect
+		      (let ((req (instantiate::http-server-request
+				    (user (anonymous-user))
+				    (localclientp #t)
+				    (lanclientp #t)
+				    (abspath abspath)
+				    (method 'GET))))
+			 (current-request-set! th req)
+			 (autoload-filter req))
+		      (current-request-set! th creq))))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    service-filter ...                                               */
 ;*---------------------------------------------------------------------*/
