@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-dom.js                  */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-dom.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Sep  7 07:06:34 2011 (serrano)                */
-/*    Copyright   :  2006-11 Manuel Serrano                            */
+/*    Last change :  Thu Jan 19 11:01:11 2012 (serrano)                */
+/*    Copyright   :  2006-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
 /*    -------------------------------------------------------------    */
@@ -1047,13 +1047,7 @@ function hop_node_eval( node, text ) {
 
       if( scripts && scripts.length > 0 ) {
 	 for ( var j = 0; j < scripts.length; j++ ) {
-	    if( false && scripts[ j ].childNodes.length > 0 ) {
-	       res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
-	    } else {
-	       /* this is a buggy browser (Opera 8?) that does not */
-	       /* correctly implement script nodes                 */
-	       res = eval( scripts[ j ].innerHTML );
-	    }
+	    res = eval( scripts[ j ].innerHTML );
 	 }
       } else {
 	 return hop_node_eval_from_text( text );

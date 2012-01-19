@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-history.js              */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-history.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:59:42 2007                          */
-/*    Last change :  Tue Mar 15 17:12:26 2011 (serrano)                */
-/*    Copyright   :  2007-11 Manuel Serrano                            */
+/*    Last change :  Thu Jan 19 11:02:42 2012 (serrano)                */
+/*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP history manager.                                             */
 /*=====================================================================*/
@@ -197,7 +197,7 @@ function hop_state_history_update( olds, news ) {
 
    if( olds === undefined ) {
       /* set the new values */
-      for( p in news ) {
+      for( var p in news ) {
 	 var state = news[ p ];
 	 if( state instanceof _hop_state_entry ) {
 	    var op = state.op;

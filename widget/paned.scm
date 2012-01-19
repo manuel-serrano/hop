@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Jan 11 15:29:02 2012 (serrano)                */
+;*    Last change :  Thu Jan 19 12:03:56 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -99,7 +99,7 @@
       (display (hop-configure-javascript-mime-type) p)
       (display "'>" p)
       (fprintf p
-	       "hop_add_event_listener( ~s, 'ready', function(e ) {
+	       "hop_add_event_listener( ~s, 'ready', function(e) {
 	       hop_init_paned_~a( ~s, ~a, function(event) { ~a } )} )"
 	       id
 	       orientation

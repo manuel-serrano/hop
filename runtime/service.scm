@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Jan 19 10:29:52 2012 (serrano)                */
+;*    Last change :  Thu Jan 19 13:04:36 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -345,22 +345,23 @@
 ;*    service-exists? ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (service-exists? svc)
-   (with-lock *service-mutex*
-      (lambda ()
-	 (let ((abspath (string-append (hop-service-base) "/" svc)))
-	    (or (hashtable-get *service-table* abspath)
-		(let ((creq (current-request))
-		      (th (current-thread)))
-		   (unwind-protect
-		      (let ((req (instantiate::http-server-request
-				    (user (anonymous-user))
-				    (localclientp #t)
-				    (lanclientp #t)
-				    (abspath abspath)
-				    (method 'GET))))
-			 (current-request-set! th req)
-			 (autoload-filter req))
-		      (current-request-set! th creq))))))))
+   (mutex-lock! *service-mutex*)
+   (let* ((abspath (string-append (hop-service-base) "/" svc))
+	  (loaded (hashtable-get *service-table* abspath)))
+      (mutex-unlock! *service-mutex*)
+      (or loaded
+	  (let ((creq (current-request))
+		(th (current-thread)))
+	     (unwind-protect
+		(let ((req (instantiate::http-server-request
+			      (user (anonymous-user))
+			      (localclientp #t)
+			      (lanclientp #t)
+			      (abspath abspath)
+			      (method 'GET))))
+		   (current-request-set! th req)
+		   (autoload-filter req))
+		(current-request-set! th creq))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    service-filter ...                                               */
