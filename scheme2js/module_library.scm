@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 23 11:24:26 2011                          */
-;*    Last change :  Tue Dec  6 08:39:52 2011 (serrano)                */
-;*    Copyright   :  2011 Manuel Serrano                               */
+;*    Last change :  Fri Jan 20 15:14:50 2012 (serrano)                */
+;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2JS module library                                         */
 ;*=====================================================================*/
@@ -17,6 +17,7 @@
    (import module-system
 	   export-desc
 	   error
+	   config
 	   tools)
 
    (static (class Lib-Unit
@@ -83,7 +84,7 @@
 (define (scheme2js-load-library m lib)
    (let ((path (let ((venv (getenv "BIGLOOLIB")))
 		  (if (not venv)
-		      (bigloo-library-path)
+		      (config 'library-path)
 		      (cons "." (unix-path->list venv))))))
       (let ((init (find-file/path (library-init-file lib) path)))
 	 (if (string? init)

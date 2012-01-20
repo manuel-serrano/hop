@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.2.x/share/Makefile                    */
+#*    serrano/prgm/project/hop/2.3.x/share/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Tue Oct 25 17:16:20 2011 (serrano)                */
-#*    Copyright   :  2004-11 Manuel Serrano                            */
+#*    Last change :  Fri Jan 20 10:07:41 2012 (serrano)                */
+#*    Copyright   :  2004-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -263,7 +263,7 @@ EXPORTER = $(SCHEME2JS_RUNTIME)/exporter
 EXPORTER_FLAGS = --module "__hop" --constant
 
 hop-runtime.sch: $(EXPORTER) $(EXPORTED_RT_JS)
-	@ $(EXPORTER) $(EXPORTER_FLAGS) -o $@ $(EXPORTED_RT_JS)
+	$(EXPORTER) $(EXPORTER_FLAGS) -o $@ $(EXPORTED_RT_JS)
 
 #*---------------------------------------------------------------------*/
 #*    .afile ...                                                       */

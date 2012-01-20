@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jan 15 07:17:18 2012                          */
-;*    Last change :  Mon Jan 16 09:03:47 2012 (serrano)                */
+;*    Last change :  Fri Jan 20 15:18:07 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Default scheme2js configuration for Hop                          */
@@ -20,7 +20,7 @@
 	   __dollar_scheme2js_module)
    
    (export (hopscheme-config compile-file?)
-	   (init-hopscheme! #!key reader share path verbose eval hop-compile hop-register features expanders)
+	   (init-hopscheme! #!key reader share path verbose eval hop-compile hop-register features expanders hop-library-path)
 	   *hop-reader*
 	   *hop-share-directory*
 	   *hop-eval*))
@@ -49,6 +49,8 @@
    (lambda (v p) (error "hop-compile" "not initialized yet" v)))
 (define *hop-register*
    (lambda (v) (error "hop-register" "not initialized yet" v)))
+(define *hop-library-path*
+   '())
 
 ;*---------------------------------------------------------------------*/
 ;*    get-cached-config ...                                            */
@@ -82,6 +84,8 @@
 		  (host-compiler . ,*hop-compile*)
 		  ;; register values
 		  (host-register . ,*hop-register*)
+		  ;; library path
+		  (library-path . ,*hop-library-path*)
 		  ;; pp in debug mode
 		  (pp . ,(>fx (bigloo-debug) 1))))))
 	  *cached-config*))
@@ -129,13 +133,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    init-hopscheme! ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (init-hopscheme! #!key reader share path verbose eval hop-compile hop-register features expanders)
+(define (init-hopscheme! #!key reader share path verbose eval hop-compile hop-register features expanders hop-library-path)
    (set! *hop-reader* reader)
    (set! *hop-share-directory* share)
    (set! *hop-verbose* verbose)
    (set! *hop-eval* eval)
    (set! *hop-compile* hop-compile)
    (set! *hop-register* hop-register)
+   (set! *hop-library-path* hop-library-path)
    (for-each srfi0-declare! features)
    (for-each (lambda (expd)
 		(if (pair? expd)

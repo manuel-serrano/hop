@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jan 16 18:36:37 2012 (serrano)                */
+;*    Last change :  Fri Jan 20 15:12:53 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPSH entry point                                            */
@@ -81,6 +81,7 @@
       :hop-compile (lambda (obj op compile)
 		      (hop->javascript obj op compile #f))
       :hop-register hop-register-value
+      :hop-library-path (hop-library-path)
       :features `(hop
 		  ,(string->symbol (format "hop-~a" (hop-branch)))
 		  ,(string->symbol (format "hop-~a" (hop-version))))

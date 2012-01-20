@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Thu Jan 19 11:01:11 2012 (serrano)                */
+/*    Last change :  Fri Jan 20 10:08:46 2012 (serrano)                */
 /*    Copyright   :  2006-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -16,6 +16,7 @@
 /*** META ((export hop_create_lframe) (JS hop_create_lframe)) */
 /*** META ((export hop_create_lflabel) (JS hop_create_lflabel)) */
 /*** META ((export Image) (JS Image)) */
+/*** META ((export getElementById) (JS getElementById)) */
 
 /*---------------------------------------------------------------------*/
 /*    dom_add_child ...                                                */

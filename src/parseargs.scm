@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Jan 16 18:36:31 2012 (serrano)                */
+;*    Last change :  Fri Jan 20 15:10:23 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -279,6 +279,7 @@
 	 :hop-compile (lambda (obj op compile)
 			 (hop->javascript obj op compile #f))
 	 :hop-register hop-register-value
+	 :hop-library-path (hop-library-path)
 	 :features `(hop
 		       hop-client
 		       ,(string->symbol (format "hop-~a" (hop-branch)))
