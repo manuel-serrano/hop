@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Jan 26 09:31:35 2012 (serrano)                */
+;*    Last change :  Thu Jan 26 09:39:53 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
@@ -35,7 +35,7 @@
 (define-service (shutdown/kill #!key key exitval)
    (when (and (equal? key (hop-process-key)) (hop-accept-kill))
       (hop-verb 1 "shutdown/kill...\n")
-      (exit (if (integer? exitval) exitval 0))))
+      (exit (if (string? exitval) (string->integer exitval) 0))))
        
 ;*---------------------------------------------------------------------*/
 ;*    <SHUTDOWN> ...                                                   */
