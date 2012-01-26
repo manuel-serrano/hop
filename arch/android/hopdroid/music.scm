@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Thu Jan 26 11:00:13 2012 (serrano)                */
+;*    Last change :  Thu Jan 26 11:10:22 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -19,7 +19,7 @@
    (import __hopdroid-phone)
    
    (export (class androidmusic::music
-	      (android::androidphone read-only)
+	      (phone::androidphone read-only)
 
 	      (%open::bool (default #t))
 	      (%playlist::pair-nil (default '()))
@@ -41,21 +41,22 @@
 ;*    androidmusic-onstate ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (androidmusic-onstate e)
-   (for-each (lambda (o)
-		(with-access::androidmusic o (onstate %status)
-		   (with-access::musicstatus %status (state)
-		      (set! state e)
-		      (onstate o %status))))
-      musics))
+   (with-access::androidevent e (value)
+      (for-each (lambda (o)
+		   (with-access::androidmusic o (onstate %status)
+		      (with-access::musicstatus %status (state)
+			 (set! state value)
+			 (onstate o %status))))
+	 musics)))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-init ::androidmusic ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (music-init o::androidmusic)
-   (with-access::androidmusic o (android onstate %status)
+   (with-access::androidmusic o (phone onstate %status)
       (unless music-plugin
-	 (set! music-plugin (android-load-plugin android "musicplayer"))
-	 (add-event-listener! android "androidmusic-state"
+	 (set! music-plugin (android-load-plugin phone "musicplayer"))
+	 (add-event-listener! phone "androidmusic-state"
 	    androidmusic-onstate)))
    (set! musics (cons o musics))
    (call-next-method))
@@ -65,7 +66,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (music-close o::androidmusic)
    (set! musics (delete! o musics))
-   (with-access::androidmusic o (android %mutex %open %playlist %playlistlength %meta %tag)
+   (with-access::androidmusic o (phone %mutex %open %playlist %playlistlength %meta %tag)
       (with-lock %mutex
 	 (lambda ()
 	    (when %open
@@ -74,7 +75,7 @@
 	       (set! %tag #unspecified)
 	       (set! %playlist '())
 	       (set! %playlistlength 0)
-	       (android-send-command android music-plugin #\x)
+	       (android-send-command phone music-plugin #\x)
 	       (call-next-method))))))
 
 ;*---------------------------------------------------------------------*/
@@ -178,7 +179,7 @@
 ;*    music-play ::androidmusic ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (music-play o::androidmusic . song)
-   (with-access::androidmusic o (%mutex %open %status android %playlist)
+   (with-access::androidmusic o (%mutex %open %status phone %playlist)
       (with-lock %mutex
 	 (lambda ()
 	    (unless %open
@@ -200,7 +201,7 @@
 		  (when (string? url)
 		     (let ((uri (charset-convert url)))
 			(tprint "MUSIC-PLAY URI=[" uri "]")
-			(android-send-command android music-plugin #\u uri)
+			(android-send-command phone music-plugin #\u uri)
 			(with-access::musicstatus %status (state)
 			   (set! state 'play))))))))))
 
@@ -208,7 +209,7 @@
 ;*    music-seek ::androidmusic ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (music-seek o::androidmusic pos . song)
-   (with-access::androidmusic o (%mutex android)
+   (with-access::androidmusic o (%mutex phone)
       (with-lock %mutex
 	 (lambda ()
 	    (when (pair? song)
@@ -216,14 +217,14 @@
 		   (bigloo-type-error "|music-seek ::androidmusic"
 				      'int (car song))
 		   (set-song! o (car song))))
-	    (android-send-command android music-plugin #\k pos)))))
+	    (android-send-command phone music-plugin #\k pos)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-stop ::androidmusic ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (music-stop o::androidmusic)
-   (with-access::androidmusic o (android %status)
-      (android-send-command android music-plugin #\e)
+   (with-access::androidmusic o (phone %status)
+      (android-send-command phone music-plugin #\e)
       (with-access::musicstatus %status (state)
 	 (set! state 'stop))))
 
@@ -231,17 +232,17 @@
 ;*    music-pause ::androidmusic ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (music-pause o::androidmusic)
-   (with-access::androidmusic o (%mutex %status android)
+   (with-access::androidmusic o (%mutex %status phone)
       (with-lock %mutex
 	 (lambda ()
 	    (with-access::musicstatus %status (state)
 	       (if (eq? state 'pause)
 		   (begin
 		      (set! state 'play)
-		      (android-send-command android music-plugin #\b))
+		      (android-send-command phone music-plugin #\b))
 		   (begin
 		      (set! state 'pause)
-		      (android-send-command android music-plugin #\p))))))))
+		      (android-send-command phone music-plugin #\p))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-song ::androidmusic ...                                    */
@@ -282,7 +283,7 @@
 ;*    music-volume-set! ::androidmusic ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (music-volume-set! o::androidmusic vol)
-   (with-access::androidmusic o (%status android)
+   (with-access::androidmusic o (%status phone)
       (with-access::musicstatus %status (volume)
 	 (set! volume vol))
-      (android-send-command android music-plugin #\v vol vol)))
+      (android-send-command phone music-plugin #\v vol vol)))
