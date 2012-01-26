@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Jan 11 15:27:38 2012 (serrano)                */
+;*    Last change :  Thu Jan 26 14:51:48 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -336,7 +336,7 @@ a timeout which has now expired. The service is then no longer available."))
 	 (xml (<HTML-ERROR>
 		 :title "Hop Service Error"
 		 :msg (with-access::http-request req (host port)
-			 (list "An error occured while responding to "
+			 (list "An error occurred while responding to "
 			    (<TT> "http://" host
 				  ":" port
 				  (hop-service-base) service)
@@ -452,7 +452,7 @@ Reloading the page is the only way to fix this problem."))))))
 	    (xml (<HTML-ERROR>
 		    :class (if (isa? e &io-timeout-error) "timeout" "remote")
 		    :title "Remote Error"
-		    :msg (list "An error occured while talking to a remote host: "
+		    :msg (list "An error occurred while talking to a remote host: "
 			    (<TT> host))
 		    (<PRE> :hssclass "hop-error-notification"
 		       (html-string-encode s))))))))

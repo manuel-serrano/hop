@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Sat Dec 17 19:39:17 2011 (serrano)                */
-/*    Copyright   :  2010-11 Manuel Serrano                            */
+/*    Last change :  Thu Jan 26 11:42:48 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
 /*=====================================================================*/
@@ -322,6 +322,7 @@ public class HopDroid extends Thread {
 	       Socket sock = (Socket)s.nextElement();
 	       try {
 		  OutputStream op = sock.getOutputStream();
+		  
 		  op.write( "\"".getBytes() );
 		  op.write( event.getBytes() );
 		  op.write( "\" ".getBytes() );

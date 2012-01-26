@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/arch/android/hopdroid/tts.scm     */
+;*    serrano/prgm/project/hop/2.3.x/arch/android/hopdroid/tts.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 29 16:36:58 2010                          */
-;*    Last change :  Thu Jan  6 13:42:40 2011 (serrano)                */
-;*    Copyright   :  2010-11 Manuel Serrano                            */
+;*    Last change :  Thu Jan 26 11:35:45 2012 (serrano)                */
+;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Text-to-speech                                                   */
 ;*=====================================================================*/

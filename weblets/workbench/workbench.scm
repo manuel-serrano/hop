@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.2.x/weblets/workbench/workbench.scm       */
+;*    .../prgm/project/hop/2.3.x/weblets/workbench/workbench.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Nov 21 06:00:36 2010                          */
-;*    Last change :  Sat Dec 25 18:37:50 2010 (serrano)                */
-;*    Copyright   :  2010 Manuel Serrano                               */
+;*    Last change :  Thu Jan 26 19:22:13 2012 (serrano)                */
+;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client side for the workbench                                    */
 ;*=====================================================================*/
@@ -61,7 +61,7 @@
       (lambda (h)
 	 (innerHTML-set!
 	  "msg"
-	  (<SPAN> :class (if h "succeeded" "failed")
+	  (<SPAN> :class (if h "success" "failure")
 	     (format "Loading file ~s" file))))))
 
 ;*---------------------------------------------------------------------*/

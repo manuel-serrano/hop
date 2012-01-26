@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Thu Jan 26 09:24:19 2012 (serrano)                */
+#*    Last change :  Thu Jan 26 14:18:22 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -270,7 +270,7 @@ done
 $ANDROIDNDK/ndk-build -C $android V=1 || exit 1
 
 # cleanup old apk
-for p in android=$tmp/hop-$HOPVERSION/android/bin/*.apk; do
+for p in $tmp/hop-$HOPVERSION/android/bin/*.apk; do
     /bin/rm -f $p
 done
 

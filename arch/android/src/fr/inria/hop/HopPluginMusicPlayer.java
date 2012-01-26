@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:29:16 2010                          */
-/*    Last change :  Thu Jan 26 10:55:08 2012 (serrano)                */
+/*    Last change :  Thu Jan 26 15:34:23 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Music Player                                             */
@@ -57,6 +57,13 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    public void onPrepared( MediaPlayer mp ) {
 	       Log.v( "HopDroidMusicPlayer", "mediaplayer prepared." );
 	       mp.start();
+	       handroid.pushEvent( "androidmusic-event", 
+				   "(position "
+				   + Integer.toString( mp.getCurrentPosition() )
+				   + " "
+				   + Integer.toString( mp.getDuration() )
+				   + ")" );
+	       handroid.pushEvent( "androidmusic-state", "play" );
 	    }
 	 } );
 
@@ -64,6 +71,8 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    public boolean onError( MediaPlayer mp, int what, int extra ) {
 	       Log.v( "HopDroidMusicPlayer", "mediaplayer error: " +
 		      what + " " + extra );
+	       handroid.pushEvent( "androidmusic-error",
+				   "(" + what + " " + extra + ")" );
 	       return false;
 	    }
 	 } );
@@ -83,6 +92,13 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    public void onCompletion( MediaPlayer mp ) {
 	       Log.v( "HopDroidMusicPlayer", "mediaplayer completion" );
 	       handroid.pushEvent( "androidmusic-state", "ended" );
+	       ended = true;
+	    }
+	 } );
+
+      mplayer.setOnSeekCompleteListener( new MediaPlayer.OnSeekCompleteListener() {
+	    public void onSeekComplete( MediaPlayer mp ) {
+	       Log.v( "HopDroidMusicPlayer", "mediaplayer seek complete" );
 	       ended = true;
 	    }
 	 } );
@@ -108,6 +124,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    Log.v( "HopDroidMusicPlayer", "mediaplayer start" );
 	    if( mplayer != null ) {
 	       mplayerstate = MPLAYER_STATE_PLAY;	       
+	       handroid.pushEvent( "androidmusic-state", "play" );
 	       mplayer.start();
 	    }
 	    return;
@@ -123,10 +140,11 @@ public class HopPluginMusicPlayer extends HopPlugin {
 
 	 case (byte)'e':
 	    // stop
-	    Log.v( "HopDroidMusicPlayer", "mediaplayer set stop" );
 	    if( mplayer != null ) {
-	       mplayerstate = MPLAYER_STATE_STOP;	       
+	       Log.v( "HopDroidMusicPlayer", "mediaplayer set stop" );
 	       mplayer.stop();
+	       mplayerstate = MPLAYER_STATE_STOP;	       
+	       handroid.pushEvent( "androidmusic-state", "stop" );
 	    }
 	    return;
 	       
@@ -135,7 +153,8 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    Log.v( "HopDroidMusicPlayer", "mediaplayer set pause" );
 	    if( mplayer != null ) {
 	       mplayer.pause();
-	       mplayerstate = MPLAYER_STATE_PAUSE;	       
+	       mplayerstate = MPLAYER_STATE_PAUSE;
+	       handroid.pushEvent( "androidmusic-state", "pause" );
 	    }
 	    return;
 
@@ -155,12 +174,11 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	       mplayer.setDataSource( activity, Uri.fromFile( file ) );
 	       mplayer.prepare();
 	       mplayer.start();
-	       mplayerstate = MPLAYER_STATE_PLAY;	       
 	    } else {
 	       mplayer.setDataSource( uri );
 	       mplayer.prepareAsync();
-	       mplayerstate = MPLAYER_STATE_PLAY;	       
 	    }
+	    mplayerstate = MPLAYER_STATE_PLAY;	       
 	    return;
 
 	 case (byte)'v':

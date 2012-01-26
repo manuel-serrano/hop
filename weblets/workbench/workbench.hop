@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.2.x/weblets/workbench/workbench.hop       */
+;*    .../prgm/project/hop/2.3.x/weblets/workbench/workbench.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 20 07:04:35 2010                          */
-;*    Last change :  Sat Dec 25 18:39:06 2010 (serrano)                */
-;*    Copyright   :  2010 Manuel Serrano                               */
+;*    Last change :  Thu Jan 26 19:21:28 2012 (serrano)                */
+;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop workbench                                                */
 ;*=====================================================================*/
@@ -116,13 +116,14 @@
 		(lambda (s)
 		   (hop-event-broadcast! key s)))))
       (unwind-protect
-	 (with-handler
-	    (lambda (e)
-	       (exception-notify e))
-	    (with-output-to-port port
-	       (lambda ()
-		  (with-error-to-port port
-		     thunk))))
+	 (with-output-to-port port
+	    (lambda ()
+	       (with-error-to-port port
+		  (lambda ()
+		     (with-handler
+			(lambda (e)
+			   (exception-notify e))
+			(thunk))))))
 	 (close-output-port port))))
 
 ;*---------------------------------------------------------------------*/

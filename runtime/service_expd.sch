@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Mon Dec  5 18:34:21 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Thu Jan 26 16:15:43 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
 ;*    at compile-time and runtime-time.                                */
@@ -149,7 +149,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-define-service-expander x e)
    (match-case x
-      ((?- (?id . ?args) . ?body)
+      ((?- ((and (? symbol?) ?id) . ?args) . ?body)
        (let* ((url (symbol->string id))
 	      (wid (string->symbol (car (file-name->list url))))
 	      (svc (expand-service id wid `(make-hop-url-name ,url) -1 -1 args body)))
