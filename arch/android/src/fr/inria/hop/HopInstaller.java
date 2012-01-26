@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.2.x/arch/android/src/fr/inria/hop/HopInstaller.java        */
+/*    .../2.3.x/arch/android/src/fr/inria/hop/HopInstaller.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Mon Jan 10 09:18:08 2011 (serrano)                */
-/*    Copyright   :  2010-11 Marcos Dione & Manuel Serrano             */
+/*    Last change :  Thu Jan 26 09:18:35 2012 (serrano)                */
+/*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
 /*=====================================================================*/
@@ -206,8 +206,9 @@ public class HopInstaller extends Thread {
 
    public void run() {
       try {
-	 Log.i( "HopInstaller", "unpacking" );
+	 Log.i( "HopInstaller", ">>> unpacking" );
 	 unpack();
+	 Log.i( "HopInstaller", "<<< unpacking" );
 	 externalstorage();
       } catch( Exception e ) {
 	 String msg = e.getMessage();

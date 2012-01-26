@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/shutdown/shutdown.hop     */
+;*    serrano/prgm/project/hop/2.3.x/weblets/shutdown/shutdown.hop     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Nov 16 17:05:44 2011 (serrano)                */
-;*    Copyright   :  2005-11 Manuel Serrano                            */
+;*    Last change :  Thu Jan 26 09:31:35 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
 ;*=====================================================================*/
@@ -35,7 +35,7 @@
 (define-service (shutdown/kill #!key key exitval)
    (when (and (equal? key (hop-process-key)) (hop-accept-kill))
       (hop-verb 1 "shutdown/kill...\n")
-      (exit exitval)))
+      (exit (if (integer? exitval) exitval 0))))
        
 ;*---------------------------------------------------------------------*/
 ;*    <SHUTDOWN> ...                                                   */
@@ -86,16 +86,7 @@
 					    (begin
 					       (innerHTML-set! $msg "System down...")
 					       (innerHTML-set! but "0s")
-					       (with-hop ($(service ()
-							      (let ((v (cond
-									  ((integer? exitval)
-									   exitval)
-									  ((string? exitval)
-									   (string->integer exitval))
-									  (else
-									   0))))
-								 (hop-verb 1 "Hop shutdown, exit value: " v "\n")
-								 (exit v))))
+					       (with-hop ($shutdown/kill :key $(hop-process-key) :exitval $exitval)
 						  (lambda (_) #f)
 						  (lambda (e)
 						     (when $restart

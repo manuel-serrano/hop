@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.2.x/arch/android/hopdroid/music.scm       */
+;*    .../prgm/project/hop/2.3.x/arch/android/hopdroid/music.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Fri Nov 18 21:22:06 2011 (serrano)                */
-;*    Copyright   :  2010-11 Manuel Serrano                            */
+;*    Last change :  Thu Jan 26 09:09:41 2012 (serrano)                */
+;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
 ;*=====================================================================*/
@@ -224,29 +224,6 @@
 		      (android-send-command phone music-plugin #\p))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    music-update-status! ::androidmusic ...                          */
-;*---------------------------------------------------------------------*/
-(define-method (music-update-status! o::androidmusic status::musicstatus)
-   (with-access::androidmusic o (%mutex phone %status %playlistlength)
-      (let ((s (android-send-command/result phone music-plugin #\S)))
-	 (when (pair? s)
-	    (with-access::musicstatus status (state songlength songpos)
-	       (set! state (car s))
-	       (set! songlength (cadr s))
-	       (set! songpos (caddr s)))))
-      (with-access::musicstatus status (playlistlength)
-	 (set! playlistlength %playlistlength))
-      status))
-
-;*---------------------------------------------------------------------*/
-;*    music-status ...                                                 */
-;*---------------------------------------------------------------------*/
-(define-method (music-status o::androidmusic)
-   (with-access::music o (%status)
-      (music-update-status! o %status)
-      %status))
-
-;*---------------------------------------------------------------------*/
 ;*    music-song ::androidmusic ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (music-song o::androidmusic)
@@ -263,7 +240,6 @@
    ;; this function assumes that %pipeline is still valid (i.e., the
    ;; gstmm music player has not been closed yet)
    (with-access::androidmusic o (%status)
-      (music-update-status! o %status)
       (with-access::musicstatus %status (songpos)
 	 songpos)))
 
