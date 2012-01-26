@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/http_shoutcast.scm        */
+;*    serrano/prgm/project/hop/2.3.x/runtime/http_shoutcast.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Nov 16 11:51:45 2011 (serrano)                */
-;*    Copyright   :  2004-11 Manuel Serrano                            */
+;*    Last change :  Wed Jan 25 17:17:59 2012 (serrano)                */
+;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -113,28 +113,31 @@
 ;*---------------------------------------------------------------------*/
 ;*    icy-name ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (icy-name id3 file)
+(define (icy-name i file)
+   
    (define (id3-icy-name id3)
       (with-access::id3 id3 (artist album)
 	 (format "~a -- ~a" artist album)))
+   
    (define (file-icy-name file)
       (let ((dir (dirname file)))
 	 (if (string=? dir "/")
 	     file
 	     dir)))
-   (if (isa? id3 id3)
-       (with-access::id3 id3 (artist album)
+   
+   (if (isa? i id3)
+       (with-access::id3 i (artist album)
 	  (if (not (string=? artist "unknown"))
-	      (id3-icy-name id3)
+	      (id3-icy-name i)
 	      (file-icy-name file)))
        (file-icy-name file)))
 
 ;*---------------------------------------------------------------------*/
 ;*    icy-title ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (icy-title id3 file)
-   (if (isa? id3 id3)
-       (with-access::id3 id3 (title track)
+(define (icy-title i file)
+   (if (isa? i id3)
+       (with-access::id3 i (title track)
 	  (if (not (string=? title "unknown"))
 	      (format "~a [~a]" title track)
 	      (basename file)))

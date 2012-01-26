@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sat Jan 14 07:58:23 2012 (serrano)                */
+;*    Last change :  Thu Jan 26 08:14:37 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -31,7 +31,6 @@
 		      (default #f))
 	       (%music (default #f))
 	       (%hmutex read-only (default (make-mutex)))
-	       (%thread (default #f))
 	       (%path (default #unspecified))
 	       (%service (default #unspecified))
 	       (%event (default #unspecified))
@@ -56,25 +55,46 @@
 ;*    %audio-server-music-set! ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (%audio-server-music-set! o::audio-server v)
-   (with-access::audio-server o (%hmutex %music %thread %state)
+   (with-access::audio-server o (%hmutex %music %state)
       (with-lock %hmutex
 	 (lambda ()
 	    (when (isa? %music music)
 	       (music-close %music))
-	    (when (isa? %thread thread)
-	       (thread-terminate! %thread))
 	    (set! %music v)
-	    (when (isa? v music)
-	       (if (isa? v webmusic)
-		   ;; register the mapping audioserver/webserver
-		   (begin
-		      (set! %state 'ready)
-		      (with-access::webmusic v (audioserver)
-			 (set! audioserver o))
-		      ;; start a thread for the player
-		      (let ((th (make-audio-server-thread o v)))
-			 (set! %thread th)))))))))
+	    (when (isa? v webmusic)
+	       ;; register the mapping audioserver/webserver
+	       (set! %state 'ready)
+	       (with-access::webmusic v (audioserver)
+		  (set! audioserver o)))))))
 
+;*---------------------------------------------------------------------*/
+;*    music-init ::webmusic ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (music-init o::webmusic)
+   (with-access::webmusic o (onstate onevent onplaylist onerror onvolume
+			       audioserver)
+      (with-access::audio-server audioserver (%event)
+	 (let ((old onstate))
+	    (set! onstate
+	       (lambda (m s)
+		  ((audio-onstate %event o audioserver) s)
+		  (old m s))))
+	 (let ((old onevent))
+	    (set! onevent
+	       (lambda (m id v)
+		  ((audio-onmeta %event o audioserver) v)
+		  (old m id v))))
+	 (let ((old onvolume))
+	    (set! onvolume
+	       (lambda (m v)
+		  ((audio-onvolume %event o) v)
+		  (old m v))))
+	 (let ((old onerror))
+	    (set! onerror
+	       (lambda (m e)
+		  ((audio-onerror %event o) e)
+		  (old m e)))))))
+	 
 ;*---------------------------------------------------------------------*/
 ;*    *audio-mutex* ...                                                */
 ;*---------------------------------------------------------------------*/
@@ -86,43 +106,43 @@
 ;*    -------------------------------------------------------------    */
 ;*    See __hop_css for HSS types.                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <AUDIO> ((id #unspecified string)
-			      (src #f)
-			      (autoplay #f boolean)
-			      (start 0)
-			      (loopstart 0)
-			      (loopend 0)
-			      (end -1)
-			      (loopcount 0)
-			      (controls #f)
-			      (onload #f)
-			      (onprogress #f)
-			      (onerror (secure-javascript-attr "hop_report_audio_exception( event )"))
-			      (onended #f)
-			      (onloadedmetadata #f)
-			      (onplay #f)
-			      (onstop #f)
-			      (onpause #f)
-			      (onnext #f)
-			      (onprev #f)
-			      (onclose #f)
-			      (onbackend #f)
-			      (onprevclick #unspecified)
-			      (onplayclick #unspecified)
-			      (onpauseclick #unspecified)
-			      (onnextclick #unspecified)
-			      (onstopclick #unspecified)
-			      (onloadclick (secure-javascript-attr "alert('load: not implemented')"))
-			      (onpodcastclick (secure-javascript-attr "alert('podcast: not implemented')"))
-			      (onprefsclick (secure-javascript-attr "alert('prefs: not implemented')"))
-			      (onmuteclick #unspecified)
-			      (onvolumechange #unspecified)
-			      (onpanchange #unspecified)
-			      (browser 'auto)
-			      (server #f)
-			      (native #f)
-			      (attr)
-			      body)
+(define-tag <AUDIO> ((id #unspecified string)
+		     (src #f)
+		     (autoplay #f boolean)
+		     (start 0)
+		     (loopstart 0)
+		     (loopend 0)
+		     (end -1)
+		     (loopcount 0)
+		     (controls #f)
+		     (onload #f)
+		     (onprogress #f)
+		     (onerror (secure-javascript-attr "hop_report_audio_exception( event )"))
+		     (onended #f)
+		     (onloadedmetadata #f)
+		     (onplay #f)
+		     (onstop #f)
+		     (onpause #f)
+		     (onnext #f)
+		     (onprev #f)
+		     (onclose #f)
+		     (onbackend #f)
+		     (onprevclick #unspecified)
+		     (onplayclick #unspecified)
+		     (onpauseclick #unspecified)
+		     (onnextclick #unspecified)
+		     (onstopclick #unspecified)
+		     (onloadclick (secure-javascript-attr "alert('load: not implemented')"))
+		     (onpodcastclick (secure-javascript-attr "alert('podcast: not implemented')"))
+		     (onprefsclick (secure-javascript-attr "alert('prefs: not implemented')"))
+		     (onmuteclick #unspecified)
+		     (onvolumechange #unspecified)
+		     (onpanchange #unspecified)
+		     (browser 'auto)
+		     (server #f)
+		     (native #f)
+		     (attr)
+		     body)
    
    (set! id (xml-make-id id 'hopaudio))
    (define hid (xml-make-id 'html5))
@@ -537,8 +557,8 @@
 				   #t)
 				  ((status)
 				   (audio-status-event-value
-				    (music-status %music)
-				    (music-playlist-get %music)))
+				      (music-status %music)
+				      (music-playlist-get %music)))
 				  ((metadata)
 				   (audio-update-metadata as)
 				   #t)
@@ -565,25 +585,18 @@
 				  (else
 				   (tprint "unknown msg..." a0)
 				   #f))))))))))
-      (cond-expand
-	 (enable-threads
-	  (with-access::audio-server as (%service %path %event)
-	     (set! %path p)
-	     (set! %event (string-append (hop-service-base) "/" %path))
-	     (set! %service s)))
-	 (else
-	  (error "audio-server"
-	     "Backend cannot be started in single-thread setting"
-	     "Re-configure HOP with multi-threading enabled")))))
+      (with-access::audio-server as (%service %path %event)
+	 (set! %path p)
+	 (set! %event (string-append (hop-service-base) "/" %path))
+	 (set! %service s))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-server-close-sans-lock ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (audio-server-close-sans-lock as)
-   (with-access::audio-server as (%hmutex %state %thread %music)
+   (with-access::audio-server as (%hmutex %state %music)
       (set! %state 'close)
       (when (isa? %music music) (music-close %music))
-      (when (isa? %thread thread) (thread-terminate! %thread))
       #f))
    
 ;*---------------------------------------------------------------------*/
@@ -621,56 +634,6 @@
 		      (let ((f (charset-convert s (hop-charset) 'UTF-8)))
 			 (music-playlist-add! music f)))))
 	     a1))
-
-;*---------------------------------------------------------------------*/
-;*    make-audio-server-thread ...                                     */
-;*---------------------------------------------------------------------*/
-(define (make-audio-server-thread as mu)
-   
-   (define (thread-body)
-      (with-access::audio-server as (%music %event %errcount %state)
-	 (let ((onstate (audio-onstate %event %music as))
-	       (onerror (audio-onerror %event %music))
-	       (onvolume (audio-onvolume %event %music))
-	       (onmeta (audio-onmeta %event %music as)))
-	    (with-handler
-	       (lambda (e)
-		  (exception-notify e)
-		  (let ((msg (with-error-to-string
-				(lambda ()
-				   (exception-notify e)))))
-		     (set! %state 'error)
-		     (onerror msg)))
-	       (set! %state 'ready)
-	       (music-event-loop %music
-		  :onstate onstate
-		  :onerror onerror
-		  :onvolume onvolume
-		  :onmeta onmeta)))))
-   
-   (define (thread-cleanup th)
-      (with-access::audio-server as (%event %state %thread %music)
-	 (with-access::musicstatus (music-status %music) (err)
-	    (if (and err (eq? %music mu) (not (music-closed? mu)))
-	       (audio-event-broadcast! %event (list 'abort err))
-	       (begin
-		  (set! %state 'close)
-		  (audio-event-broadcast! %event (list 'close)))))
-	 (set! %thread #f)))
-   
-   (cond-expand
-      (enable-threads
-	 (with-access::audio-server as (%state)
-	    (set! %state 'init))
-	 (let ((th (instantiate::pthread
-		      (body thread-body)
-		      (cleanup thread-cleanup))))
-	    (thread-start! th)
-	    th))
-      (else
-       (error "make-audio-server-thread"
-	  "Backend cannot be started in single-thread setting"
-	  "Re-configure HOP with multi-threading enabled"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-status-event-value ...                                     */
@@ -960,25 +923,6 @@
    (with-access::webmusic o (audioserver)
       (with-access::audio-server audioserver (%event)
 	 (audio-event-broadcast! %event (list 'cmdpause)))))
-
-;*---------------------------------------------------------------------*/
-;*    music-status ::webmusic ...                                      */
-;*---------------------------------------------------------------------*/
-(define-method (music-status o::webmusic)
-   (with-access::webmusic o (%status)
-      (music-update-status! o %status)))
-
-;*---------------------------------------------------------------------*/
-;*    music-update-status! ::webmusic ...                              */
-;*---------------------------------------------------------------------*/
-(define-method (music-update-status! o::webmusic s::musicstatus)
-   (with-access::webmusic o (%mutex playtime)
-      (with-lock %mutex
-	 (lambda ()
-	    (with-access::musicstatus s (songpos)
-	       (let ((pos (-elong (current-seconds) playtime)))
-		  (set! songpos (elong->fixnum pos))))))
-      s))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-song ::webmusic ...                                        */
