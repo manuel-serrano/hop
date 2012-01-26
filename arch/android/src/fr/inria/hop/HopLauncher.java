@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Tue Dec 13 07:52:58 2011 (serrano)                */
-/*    Copyright   :  2010-11 Marcos Dione & Manuel Serrano             */
+/*    Last change :  Thu Jan 26 10:01:41 2012 (serrano)                */
+/*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
 /*=====================================================================*/
@@ -85,7 +85,13 @@ public class HopLauncher extends Activity {
 			progress = null;
 
 			Uri uri = Uri.parse( "http://localhost:" + hop.port + "/hop/wizard" );
-			Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+			Intent intent = new Intent( Intent.ACTION_VIEW, uri );
+			// give time to Hop to be ready
+			try {
+			   Thread.sleep( 2000 );
+			} catch( Exception _ ) {
+			   ;
+			}
 			startActivity( intent );
 			break;
 
@@ -217,7 +223,7 @@ public class HopLauncher extends Activity {
 		     TextView port = (TextView)activity.findViewById( R.id.port );
 		     hop.port = port.getText().toString();
 		     Log.v( "HopLauncher", "starting hop (install)" );
-		     hop.start();
+		     hop.startWithArg( "--accept-kill" );
 		     configure();
 		  }
 	       } );

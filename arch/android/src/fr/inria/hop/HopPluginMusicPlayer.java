@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:29:16 2010                          */
-/*    Last change :  Sun May 15 16:45:22 2011 (serrano)                */
-/*    Copyright   :  2010-11 Manuel Serrano                            */
+/*    Last change :  Thu Jan 26 10:55:08 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Music Player                                             */
 /*    -------------------------------------------------------------    */
@@ -82,6 +82,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
       mplayer.setOnCompletionListener( new MediaPlayer.OnCompletionListener() {
 	    public void onCompletion( MediaPlayer mp ) {
 	       Log.v( "HopDroidMusicPlayer", "mediaplayer completion" );
+	       handroid.pushEvent( "androidmusic-state", "ended" );
 	       ended = true;
 	    }
 	 } );

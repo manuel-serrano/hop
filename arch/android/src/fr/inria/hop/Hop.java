@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../project/hop/2.2.x/arch/android/src/fr/inria/hop/Hop.java     */
+/*    .../project/hop/2.3.x/arch/android/src/fr/inria/hop/Hop.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sat Jan 22 15:32:31 2011 (serrano)                */
-/*    Copyright   :  2010-11 Manuel Serrano                            */
+/*    Last change :  Thu Jan 26 10:25:13 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
 /*=====================================================================*/
@@ -51,6 +51,7 @@ public class Hop extends Thread {
    ArrayBlockingQueue<String> queue;
    final int[] currentpid = new int[ 1 ];
    boolean log = false;
+   String extra = "";
 
    // constructor
    public Hop( Activity a, ArrayBlockingQueue<String>q, Handler h ) {
@@ -73,16 +74,24 @@ public class Hop extends Thread {
       return HOME.exists();
    }
 
+   // startWithArg
+   public void startWithArg( String arg ) {
+      extra = arg;
+      start();
+   }
+   
    // run hop
    public void run() {
       final int[] pid = new int[ 1 ];
       String sh = SHELL;
       String cmd = "export HOME=" + HOME.getAbsolutePath() +
-	 "; exec " + root + HOP + " " + HOPARGS + " -p " + port;
+	 "; exec " + root + HOP + " " + HOPARGS + " -p " + port + " " + extra;
 
       Log.i( "Hop", "executing [" + sh + " -c " + cmd );
       HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
 
+      extra = "";
+      
       synchronized( currentpid ) {
 	 Log.i( "Hop", "new hop process start pid=" + pid[ 0 ] );
 	 currentpid[ 0 ] = pid[ 0 ];
@@ -116,7 +125,7 @@ public class Hop extends Thread {
 	    FileInputStream fin = new FileInputStream( HopFd );
 
 	    public void run() {
-	       byte[] buffer = new byte[ 80 ];
+	       byte[] buffer = new byte[ 255 ];
 	       int l;
 
 	       try {
