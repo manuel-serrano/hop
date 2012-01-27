@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Jan 20 10:08:46 2012 (serrano)                */
+/*    Last change :  Fri Jan 27 15:48:07 2012 (serrano)                */
 /*    Copyright   :  2006-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1200,18 +1200,22 @@ function hop_style_attribute_set( obj, val ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export node-bounding-box-x) (arity 1)) */
 function hop_element_x( obj ) {
-   var res = 0;
+   if( "getBoundingClientRect" in obj ) {
+      return obj.getBoundingClientRect().left + document.body.scrollLeft + "px";
+   } else {
+      var res = 0;
 
-   while( obj != null ) {
-      if( typeof obj.offsetLeft == "number" ) 
-	 res += obj.offsetLeft;
-      else {
-	 break;
+      while( obj != null ) {
+	 if( typeof obj.offsetLeft == "number" )
+	    res += obj.offsetLeft;
+	 else {
+	    break;
+	 }
+	 obj = obj.offsetParent;
       }
-      obj = obj.offsetParent;
-   }
 
-   return res;
+      return res;
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -1219,18 +1223,22 @@ function hop_element_x( obj ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export node-bounding-box-y) (arity 1)) */
 function hop_element_y( obj ) {
-   var res = 0;
+   if( "getBoundingClientRect" in obj ) {
+      return obj.getBoundingClientRect().top + document.body.scrollTop + "px";
+   } else {
+      var res = 0;
 
-   while( obj != null ) {
-      if( typeof obj.offsetTop == "number" ) 
-	 res += obj.offsetTop;
-      else {
-	 break;
+      while( obj != null ) {
+	 if( typeof obj.offsetTop == "number" )
+	    res += obj.offsetTop;
+	 else {
+	    break;
+	 }
+	 obj = obj.offsetParent;
       }
-      obj = obj.offsetParent;
+      
+      return res;
    }
-
-   return res;
 }
 
 /*---------------------------------------------------------------------*/
@@ -1238,19 +1246,25 @@ function hop_element_y( obj ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export node-bounding-box) (arity -2)) */
 function hop_bounding_box( e, m ) {
-   var n;
+   n = (e instanceof String) || (typeof e == "string") ?
+      document.getElementById( e ) : e;
    
-   if( (e instanceof String) || (typeof e == "string") ) {
-      n = document.getElementById( e );
-   } else {
-      n = e;
-   }
-
    if( n == undefined ) sc_error( "bounding-box", "illegal node", e );
    if( !m ) m = 0;
+   
+   if( "getBoundingClientRect" in n ) {
+      var rect = n.getBoundingClientRect();
 
-   return [ hop_element_x( n ) - m, hop_element_y( n ) - m,
-	    n.offsetWidth + (2*m), n.offsetHeight + (2*m) ];
+      return [ rect.left - m + document.body.scrollLeft,
+	       rect.top - m + document.body.scrollTop,
+	       rect.width + (2 * m),
+	       rect.height + (2 * m) ];
+   } else {
+      return [ hop_element_x( n ) - m,
+	       hop_element_y( n ) - m,
+	       n.offsetWidth + (2*m),
+	       n.offsetHeight + (2*m) ];
+   }
 }
 
 /*---------------------------------------------------------------------*/

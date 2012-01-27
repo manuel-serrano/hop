@@ -43,6 +43,10 @@
 	   (<MATH:MROOT> . ::obj)
 	   (<MATH:MSQRT> . ::obj)
 	   (<MATH:MTEXT> . ::obj)
+	   (<MATH:MTABLE> . ::obj)
+	   (<MATH:MTR> . ::obj)
+	   (<MATH:MTD> . ::obj)
+	   (<MATH:MPADDED> . ::obj)
 	   (<MATH:TEX> ::bstring)))
 
 ;*---------------------------------------------------------------------*/
@@ -83,6 +87,10 @@
 (define-xml xml-element #t <MATH:MROOT> :tag mroot)
 (define-xml xml-element #t <MATH:MSQRT> :tag msqrt)
 (define-xml xml-element #t <MATH:MTEXT> :tag mtext)
+(define-xml xml-element #t <MATH:MTABLE> :tag mtable)
+(define-xml xml-element #t <MATH:MTR> :tag mtr)
+(define-xml xml-element #t <MATH:MTD> :tag mtd)
+(define-xml xml-element #t <MATH:MPADDED> :tag mpadded)
 
 ;*---------------------------------------------------------------------*/
 ;*    <MATH:TEX> ...                                                   */
@@ -534,9 +542,11 @@
 		  ("ddots" "&dtdot;")
 		  ("downarrow" ("&darr;" :stretchy "false"))
 		  ("Downarrow" ("&dArr;" :stretchy "false"))
+		  "emptyset"
 		  "equiv"
 		  ("neq" "&#x2260;")
-		  ("exists" "&exists;")
+		  "exists"
+		  "forall"
 		  "ge"
 		  "gt"
 		  ("iff" "&hArr;")
