@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-slider.js               */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-slider.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Thu Apr 21 10:52:15 2011 (serrano)                */
-/*    Copyright   :  2005-11 Manuel Serrano                            */
+/*    Last change :  Fri Jan 27 19:04:21 2012 (serrano)                */
+/*    Copyright   :  2005-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
 /*=====================================================================*/
