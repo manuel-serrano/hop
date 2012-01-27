@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Thu Jan 26 15:56:43 2012 (serrano)                */
+;*    Last change :  Fri Jan 27 10:43:12 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -83,13 +83,23 @@
 				(set! songlength (/fx (caddr value) 1000))
 				(onstate o %status))))))
 	    musics)))
+
+   (define (onvolume e)
+      (with-access::androidevent e (value)
+	 (for-each (lambda (o)
+		      (with-access::androidmusic o (onvolume %status)
+			 (with-access::musicstatus %status (volume)
+			    (set! volume value)
+			    (onvolume o value))))
+	    musics)))
    
    (with-access::androidmusic o (phone %status)
       (unless music-plugin
 	 (set! music-plugin (android-load-plugin phone "musicplayer"))
 	 (add-event-listener! phone "androidmusic-state" onstate)
 	 (add-event-listener! phone "androidmusic-error" onerror)
-	 (add-event-listener! phone "androidmusic-event" onevent)))
+	 (add-event-listener! phone "androidmusic-event" onevent)
+	 (add-event-listener! phone "androidmusic-volume" onvolume)))
 
    (set! musics (cons o musics))
    (call-next-method))

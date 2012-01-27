@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:29:16 2010                          */
-/*    Last change :  Thu Jan 26 15:34:23 2012 (serrano)                */
+/*    Last change :  Fri Jan 27 11:33:06 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Music Player                                             */
@@ -43,7 +43,8 @@ public class HopPluginMusicPlayer extends HopPlugin {
    MediaPlayer mplayer = null;
    int mplayerstate = MPLAYER_STATE_UNSPECIFIED;
    boolean ended = false;
-
+   int mplayervol = 100;
+   
    // constructor
    public HopPluginMusicPlayer( HopDroid h, Activity a, String n ) {
       super( h, a, n );
@@ -55,7 +56,6 @@ public class HopPluginMusicPlayer extends HopPlugin {
       
       mplayer.setOnPreparedListener( new MediaPlayer.OnPreparedListener() {
 	    public void onPrepared( MediaPlayer mp ) {
-	       Log.v( "HopDroidMusicPlayer", "mediaplayer prepared." );
 	       mp.start();
 	       handroid.pushEvent( "androidmusic-event", 
 				   "(position "
@@ -64,6 +64,9 @@ public class HopPluginMusicPlayer extends HopPlugin {
 				   + Integer.toString( mp.getDuration() )
 				   + ")" );
 	       handroid.pushEvent( "androidmusic-state", "play" );
+	       handroid.pushEvent( "androidmusic-volume",
+				   Integer.toString( mplayervol ) );
+
 	    }
 	 } );
 
@@ -90,7 +93,6 @@ public class HopPluginMusicPlayer extends HopPlugin {
 
       mplayer.setOnCompletionListener( new MediaPlayer.OnCompletionListener() {
 	    public void onCompletion( MediaPlayer mp ) {
-	       Log.v( "HopDroidMusicPlayer", "mediaplayer completion" );
 	       handroid.pushEvent( "androidmusic-state", "ended" );
 	       ended = true;
 	    }
@@ -190,7 +192,11 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    int voll = HopDroid.read_int32( ip );
 	    int volr = HopDroid.read_int32( ip );
 
+	    mplayervol = (voll + volr) / 2;
+
 	    mplayer.setVolume( (float)voll/100, (float)volr/100 );
+	    handroid.pushEvent( "androidmusic-volume",
+				Integer.toString( mplayervol ) );
 	    return;
 	    
 	 case (byte)'S':
