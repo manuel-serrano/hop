@@ -25,7 +25,7 @@
       (<HTML>
 	 (<HEAD>)
 	 (<BODY>
-	    ~(add-event-listener! $wikiedit-event "server"
+	    ~(add-event-listener! server $wikiedit-event
 		(lambda (e)
 		   (innerHTML-set! $d (event-value e))))
 	    d))))

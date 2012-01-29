@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Thu Jan 19 07:44:12 2012 (serrano)                */
+/*    Last change :  Sun Jan 29 08:06:19 2012 (serrano)                */
 /*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -16,6 +16,8 @@ var hop_is_ready = false;
 var hop_ready_timeout = 10;
 var hop_elements_ready_counter = 0;
 var hop_window_ready_list = null;
+
+var hop_reconnect_max_wait = 60 * 1000 * 10;
 
 /*---------------------------------------------------------------------*/
 /*    HopEvent ...                                                     */
@@ -43,14 +45,20 @@ function hop_event_stoppedp( e ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export add-event-listener!) (arity -3))) */
 function hop_add_event_listener( obj, event, proc, capture ) {
-   if( event === "server" )
+   if( event === "server" ) {
+      alert( "deprecated (add-event-lister! \"" + obj + "\" \"server\"...)" );
       return hop_add_server_listener( obj, proc, capture );
+   }
 
-   if( event === "serverready" )
+   if( event === "serverready" ) {
+      alert( "deprecated (add-event-lister! document \"serverready\"...)" );
       return hop_add_serverready_listener( obj, proc );
+   }
 
-   if( event === "serverclose" )
+   if( event === "serverclose" ) {
+      alert( "deprecated (add-event-lister! document \"serverclose\"...)" );
       return hop_add_serverclose_listener( obj, proc );
+   }
 
    if( event === "timeout" )
       return hop_add_timeout_listener( obj, proc );
@@ -68,6 +76,8 @@ function hop_add_event_listener( obj, event, proc, capture ) {
 	    hop_window_ready_list = sc_cons( p, hop_window_ready_list );
 	    return proc;
 	 }
+      } else if( obj === hop_server ) {
+	 return hop_add_serverready_listener( obj, p );
       } else if( typeof obj === "string" ) {
 	 return hop_add_ready_listener( obj, p, 20 );
       } else {
@@ -94,23 +104,33 @@ function hop_add_event_listener( obj, event, proc, capture ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export remove-event-listener!) (arity -4)) */
 function hop_remove_event_listener( obj, event, proc, capture ) {
-   if( event === "server" )
+   if( event === "server" ) {
+      alert( "deprecated (remove-event-lister! \"" + obj + "\" \"server\"...)" );
       return hop_remove_server_listener( obj, proc );
+   }
 
-   if( event === "serverready" )
+   if( event === "serverready" ) {
+      alert( "deprecated (remove-event-lister! document \"serverready\"...)" );
       return hop_remove_serverready_listener( obj, proc );
+   }
 
-   if( event === "serverclose" )
+   if( event === "serverclose" ) {
+      alert( "deprecated (remove-event-lister! document \"serverclose\"...)" );
       return hop_remove_serverclose_listener( obj, proc );
+   }
 
    if( event === "timeout" )
       return hop_remove_timeout_listener( proc );
 
    if( event === "ready" ) {
-      if( proc.handler ) {
+      if( obj === hop_server ) {
+	 return hop_add_serverready_listener( obj, proc );
+      } else if( proc.handler ) {
 	 proc.handler.enable = false;
+	 return;
       }
    }
+   
    if( (obj.hop_remove_event_listener != undefined) &&
       (obj.hop_remove_event_listener != hop_remove_event_listener) )
       return obj.hop_remove_event_listener( event, proc, capture );
@@ -354,10 +374,36 @@ function start_servevt_websocket_proxy( key, host, port ) {
 			   false, [] );
       };
 
+      var reconnect = function( wait, max ) {
+	 var ws = new WebSocket( url ); 
+
+	 ws.onerror = function( e ) {
+	    if( !wait ) {
+	       wait = 1000;
+	    }
+
+	    if( max == -1 ) {
+	       return sc_error( "servevt",
+				"Cannot reconnect to server",
+				host + ":" + port );
+	    }
+	    
+	    after( wait, function() {
+	       var nwait = wait < hop_reconnect_max_wait ? wait * 2 : wait;
+	       var nmax = max === undefined ? max : max - 1;
+	       reconnect( nwait, nmax );
+	    } );
+	 }
+      }
+
       ws.onopen = function() {
+	 // after a reconnection, the onerror listener must be removed
+	 ws.onerror = undefined;
+	 
 	 // we are ready to register now
 	 hop_servevt_proxy.register = register;
 	 hop_servevt_proxy.unregister = unregister;
+	 hop_servevt_proxy.reconnect = reconnect;
 
 	 // register the unitialized events
 	 for( var p in hop_servevt_table ) {
@@ -378,8 +424,13 @@ function start_servevt_websocket_proxy( key, host, port ) {
       
       // complete the proxy definition
       hop_servevt_proxy.websocket = ws;
+      hop_servevt_proxy.key = key;
+      hop_servevt_proxy.host = host;
+      hop_servevt_proxy.port = port;
+      hop_servevt_proxy.reconnect = port;
    }
 }
+
 
 /*---------------------------------------------------------------------*/
 /*    start_servevt_xhr_multipart_proxy ...                            */
@@ -404,7 +455,8 @@ function start_servevt_xhr_multipart_proxy( key ) {
 	       }
 	    }
 	    
-	    if( "hop_servevt_onclose" in window ) hop_servevt_onclose();
+	    if( "hop_servevt_onclose" in window )
+	       hop_servevt_onclose();
 	 }
 
 	 var req = hop_make_xml_http_request();
@@ -514,17 +566,18 @@ function start_servevt_ajax_proxy( key ) {
 	    }
 	 }
 
-	 hop_servevt_proxy.httpreq = hop_send_request( svc,
-						       // asynchronous call
-						       false,
-						       // success callback
-						       success,
-						       // failure callback
-						       failure,
-						       // no anim
-						       false,
-						       // no environment
-						       [] );
+	 hop_servevt_proxy.httpreq =
+	    hop_send_request( svc,
+			      // asynchronous call
+			      false,
+			      // success callback
+			      success,
+			      // failure callback
+			      failure,
+			      // no anim
+			      false,
+			      // no environment
+			      [] );
 
       }
 
@@ -535,9 +588,10 @@ function start_servevt_ajax_proxy( key ) {
 	    "/public/server-event/unregister?event=" + id +
    	    "&key=" + hop_servevt_proxy.key;
 	 
-	 hop_servevt_proxy.httpreq = hop_send_request( svc, false,
-						       function() { ; }, false,
-						       false, [] );
+	 hop_servevt_proxy.httpreq =
+	    hop_send_request( svc, false,
+			      function() { ; }, false,
+			      false, [] );
       };
 
       // complete the proxy definition
@@ -671,7 +725,7 @@ function start_servevt_script_proxy( key ) {
 	 }
       }
       
-      // raise server_ready 
+      // trigger server_ready 
       after( 100, function() {
 	 hop_trigger_serverready_event( new HopServerReadyEvent() );
       } );
@@ -833,17 +887,18 @@ function hop_servevt_proxy_flash_init() {
 	 }
       }
 
-      hop_servevt_proxy.httpreq = hop_send_request( svc,
-						    // asynchronous call
-						    false,
-						    // success callback
-						    success,
-						    // failure callback
-						    failure,
-						    // no anim
-						    false,
-						    // no environment
-						    [] );
+      hop_servevt_proxy.httpreq =
+	 hop_send_request( svc,
+			   // asynchronous call
+			   false,
+			   // success callback
+			   success,
+			   // failure callback
+			   failure,
+			   // no anim
+			   false,
+			   // no environment
+			   [] );
    }
 
    hop_servevt_proxy.register = register;
@@ -919,44 +974,51 @@ function hop_start_servevt_proxy() {
    hop_servevt_proxy.script = false;
    hop_servevt_proxy.register = function( x ) {};
 
-   hop_send_request( hop_service_base() + "/public/server-event/info",
-		     // asynchronous call
-		     false,
-		     // success callback
-		     function( v ) {
-			var host = v[ 0 ];
-			var port = v[ 1 ];
-			var key = v[ 2 ];
+   hop_server.reconnect = function( wait, max ) {
+      if( "reconnect"  in hop_servevt_proxy ) {
+	 hop_servevt_proxy.reconnect( wait, max );
+      }
+   }
 
-			if( servevt_websocketp() ) {
-			   // websocket backend
-			   start_servevt_websocket_proxy( key, host, port );
-			} else if( servevt_xhr_multipartp() ) {
-			   // xhr_multipart backend
-			   start_servevt_xhr_multipart_proxy( key );
-			} else if( servevt_flashp( port ) ) {
-			   // flash backend
-			   try {
-			      start_servevt_flash_proxy( key, host, port );
-			   } catch( e ) {
-			      throw( e );
-			   }
-			} else {
-			   start_long_polling_proxy( key, host, port );
-			}
-		     },
-		     // failure callback
-		     function( xhr ) {
-			if( xhr.exception ) {
-			   throw xhr.exception;
-			} else {
-			   throw new Error( "No event server acknowledge" );
-			}
-		     },
-		     // run the anim during the call
-		     true,
-		     // no environment
-		     [] );
+   hop_send_request(
+      hop_service_base() + "/public/server-event/info",
+      // asynchronous call
+      false,
+      // success callback
+      function( v ) {
+	 var host = v[ 0 ];
+	 var port = v[ 1 ];
+	 var key = v[ 2 ];
+	 
+	 if( servevt_websocketp() ) {
+	    // websocket backend
+	    start_servevt_websocket_proxy( key, host, port );
+	 } else if( servevt_xhr_multipartp() ) {
+	    // xhr_multipart backend
+	    start_servevt_xhr_multipart_proxy( key );
+	 } else if( servevt_flashp( port ) ) {
+	    // flash backend
+	    try {
+	       start_servevt_flash_proxy( key, host, port );
+	    } catch( e ) {
+	       throw( e );
+	    }
+	 } else {
+	    start_long_polling_proxy( key, host, port );
+	 }
+      },
+      // failure callback
+      function( xhr ) {
+	 if( xhr.exception ) {
+	    throw xhr.exception;
+	 } else {
+	    throw new Error( "No event server acknowledge" );
+	 }
+      },
+      // run the anim during the call
+      true,
+      // no environment
+      [] );
 }
 
 /*---------------------------------------------------------------------*/
@@ -1001,39 +1063,65 @@ function hop_trigger_servevt( id, text, value, js ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_serverclose_list ...                                         */
+/*    hop_add_server_event_listener ...                                */
 /*---------------------------------------------------------------------*/
-var hop_serverclose_list = null;
-var hop_serverclose_triggered = false;
+function hop_add_server_event_listener( event, proc, capture ) {
+   if( event === "down" ) {
+      return hop_add_serverdown_listener( this, proc );
+   } else if( event === "ready" ) {
+      hop_add_serverready_listener( this, proc );
+   } else {
+      return hop_add_server_listener( event, proc, capture );
+   }
+}
 
 /*---------------------------------------------------------------------*/
-/*    hop_add_serverclose_listener ...                                 */
+/*    hop_remove_server_event_listener ...                             */
 /*---------------------------------------------------------------------*/
-function hop_add_serverclose_listener( obj, proc ) {
-   if( obj === document ) {
-      if( hop_serverclose_triggered ) {
+function hop_remove_server_event_listener( event, proc, capture ) {
+   if( event === "down" ) {
+      return hop_remove_serverdown_listener( this, proc );
+   } else if( event === "ready" ) {
+      hop_add_serverready_listener( this, proc );
+   } else {
+      return hop_add_server_listener( event, proc, capture );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_serverdown_list ...                                          */
+/*---------------------------------------------------------------------*/
+var hop_serverdown_list = null;
+var hop_serverdown_triggered = false;
+
+/*---------------------------------------------------------------------*/
+/*    hop_add_serverdown_listener ...                                  */
+/*---------------------------------------------------------------------*/
+function hop_add_serverdown_listener( obj, proc ) {
+   if( obj === hop_server || obj === document ) {
+      if( hop_serverdown_triggered ) {
 	 // the server is close
-	 var evt = new HopServerEvent( "serverclose", false, false );
+	 var evt = new HopServerEvent( "serverdown", false, false );
 	 proc( evt );
       } else {
-	 // the server is not close yet, we register the callback
-	 hop_serverclose_list = sc_cons( proc, hop_serverclose_list );
+	 // the server is not closed yet, we register the callback
+	 hop_serverdown_list = sc_cons( proc, hop_serverdown_list );
       }
    } else {
-      throw new Error( "add-event-listener!: Illegal `serverclose' recipient"
+      throw new Error( "add-event-listener!: Illegal `serverdown' recipient"
 		       + obj );
    }
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_remove_serverclose_listener ...                              */
+/*    hop_remove_serverdown_listener ...                               */
 /*---------------------------------------------------------------------*/
-function hop_remove_serverclose_listener( obj, proc ) {
-   if( obj === document ) {
-      hop_serverclose_list = sc_remqBang( proc, hop_serverclose_list );
+function hop_remove_serverdown_listener( obj, proc ) {
+   if( obj === hop_server || obj === document ) {
+      hop_serverdown_list = sc_remqBang( proc, hop_serverdown_list );
       return true;
    } else {
-      throw new Error( "remove-event-listener!: Illegal `serverclose' recipient"
+      throw new Error( "remove-event-listener!: Illegal `serverdown' recipient"
 		       + obj );
       return false;
    }
@@ -1047,8 +1135,8 @@ function hop_remove_serverclose_listener( obj, proc ) {
 /*---------------------------------------------------------------------*/
 function hop_servevt_onclose() {
    // allocate a new event in order to hide handler side effects
-   var evt = new HopServerEvent( "serverclose", false, false );
-   var p = hop_serverclose_list;
+   var evt = new HopServerEvent( "serverdown", false, false );
+   var p = hop_serverdown_list;
 
    while( sc_isPair( p ) ) {
       p.car( evt );
@@ -1056,7 +1144,7 @@ function hop_servevt_onclose() {
       p = p.cdr;
    }
 
-   hop_serverclose_triggered = true;
+   hop_serverdown_triggered = true;
 }
 
 /*---------------------------------------------------------------------*/
@@ -1067,7 +1155,7 @@ function hop_add_server_listener( obj, proc, capture ) {
       throw new Error( "Illegal procedure: " + proc );
    }
 
-   if( obj === document ) {
+   if( obj === hop_server || obj === document ) {
       hop_servevt_dlist = sc_cons( proc, hop_servevt_dlist );
    } else {
       if( !document.body ) {
@@ -1101,7 +1189,7 @@ function hop_add_server_listener( obj, proc, capture ) {
 /*    hop_remove_server_listener ...                                   */
 /*---------------------------------------------------------------------*/
 function hop_remove_server_listener( obj, proc ) {
-   if( obj === document ) {
+   if( obj === hop_server || obj === document ) {
       hop_servevt_dlist = sc_remqBang( proc, hop_servevt_dlist );
    } else {
       // unregister the event listener
@@ -1158,7 +1246,7 @@ function hop_trigger_serverready_event( evt ) {
 /*    hop_add_serverready_listener ...                                 */
 /*---------------------------------------------------------------------*/
 function hop_add_serverready_listener( obj, proc ) {
-   if( obj === document ) {
+   if( obj === hop_server || obj === document ) {
       if( hop_serverready_triggered ) {
 	 // the server is ready
 	 proc();
@@ -1176,7 +1264,7 @@ function hop_add_serverready_listener( obj, proc ) {
 /*    hop_remove_serverready_listener ...                              */
 /*---------------------------------------------------------------------*/
 function hop_remove_serverready_listener( obj, proc ) {
-   if( obj === document ) {
+   if( obj === hop_server || obj === document ) {
       hop_serverready_list = sc_remqBang( proc, hop_serverready_list );
       return true;
    } else {

@@ -269,9 +269,9 @@ for requests associated with an authenticated user:
 
 <code>
   (hop-path-access-control-set!
-    (lambda (req path)
+    (lambda (req::http-request path)
        (and (substring-at? path "/tmp" 0)
-            (user? (http-request-user req)))))
+            (user? req.user))))
 </code>
 
 == Enabling proxy requests ==

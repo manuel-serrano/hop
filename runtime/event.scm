@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Jan 27 18:53:54 2012 (serrano)                */
+;*    Last change :  Sat Jan 28 20:01:05 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -509,6 +509,8 @@
 	    ;; register the websocket
 	    (with-lock *event-mutex*
 	       (lambda ()
+		  (when debug-websocket
+		     (tprint "websocket-register-websocket key=" key))
 		  (set! *websocket-response-list*
 		     (cons (cons (string->symbol key) resp)
 			*websocket-response-list*))))
@@ -532,7 +534,7 @@
 		  (service :name "public/server-event/websocket" :id server-event
 		     (#!key key)
 		     (when debug-websocket
-			(tprint "register websocket key=" key))
+			(tprint "!!! start websocket service key=" key))
 		     (websocket-register-new-connection! (current-request) key)))
 	    
 	    (set! *port-service*
@@ -803,7 +805,7 @@
       (with-lock *event-mutex*
 	 (lambda ()
 	    (when (or debug-ajax debug-websocket debug-multipart debug-flash)
-	       (tprint ">>> SERVER-EVENT-REGISTER: event=[" event "] key="
+	       (tprint ">>> server-event-register: event=[" event "] key="
 		  key " mode=" mode " padding=" padding))
 	    (if (<fx *clients-number* (hop-event-max-clients))
 		(let ((req (current-request))

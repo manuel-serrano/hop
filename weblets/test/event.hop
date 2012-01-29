@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/test/event.hop            */
+;*    serrano/prgm/project/hop/2.3.x/weblets/test/event.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Tue Sep 27 10:05:12 2011 (serrano)                */
-;*    Copyright   :  2007-11 Manuel Serrano                            */
+;*    Last change :  Sat Jan 28 18:47:13 2012 (serrano)                */
+;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
 ;*=====================================================================*/
@@ -101,17 +101,17 @@ events succeeded, you should see an acknowledge.")
 		      (innerHTML-set! $b6
 			 (format "~a ~a" $b6.innerHTML
 			    (string-length e.value)))))
-	       ~(add-event-listener! $evt1 "server"
+	       ~(add-event-listener! server $evt1
 		   (lambda (e)
 		      (when e.value
 			 (innerHTML-set! $b3 e.value)))
 		   #t)
-	       ~(add-event-listener! $evt2 "server" add #t)
-	       ~(add-event-listener! $evt3 "server" add #t)
-	       ~(add-event-listener! $evt4 "server" add-text #t)
-	       ~(add-event-listener! $evt5 "server" add-length #t)
-	       ~(add-event-listener! $evt6 "server" add-length #t)
-	       ~(add-event-listener! document "server"
+	       ~(add-event-listener! server $evt2 add #t)
+	       ~(add-event-listener! server $evt3 add #t)
+	       ~(add-event-listener! server $evt4 add-text #t)
+	       ~(add-event-listener! server $evt5 add-length #t)
+	       ~(add-event-listener! server $evt6 add-length #t)
+	       ~(add-event-listener! server document
 		   (lambda (e)
 		      (cond
 			 ((equal? e.value $evt1)
@@ -120,7 +120,7 @@ events succeeded, you should see an acknowledge.")
 			  (set! e.value "A"))
 			 ((equal? e.value $evt3)
 			  (set! e.value "B")))))
-	       ~(add-event-listener! document "serverready"
+	       ~(add-event-listener! server "ready"
 		   (lambda (e)
 		      (let ((imp (if (string? (hop-config :server_event))
 				     (hop-config :server_event)

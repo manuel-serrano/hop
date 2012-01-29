@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Jan 12 09:31:05 2012 (serrano)                */
+;*    Last change :  Sat Jan 28 07:14:17 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -90,17 +90,30 @@
 (define (<HOP-SETUP>)
    (<SCRIPT> :type (hop-configure-javascript-mime-type)
       (string-append "
-function hop_etc_directory() { return \"" (hop-etc-directory) "\"; }
-function hop_bin_directory() { return \"" (hop-bin-directory) "\"; }
-function hop_lib_directory() { return \"" (hop-lib-directory) "\"; }
-function hop_share_directory() { return \"" (hop-share-directory) "\"; }
-function hop_var_directory() { return \"" (hop-var-directory) "\"; }
-function hop_contribs_directory() { return \"" (hop-contribs-directory) "\"; }
-function hop_weblets_directory() { return \"" (hop-weblets-directory) "\"; }
-function hop_debug() { return " (integer->string (bigloo-debug)) "; }
-function hop_session() { return " (integer->string (hop-session)) "; }
-function hop_realm() { return \"" (hop-realm) "\"; }
-")))
+function hop_etc_directory() {return \"" (hop-etc-directory) "\";}
+function hop_bin_directory() {return \"" (hop-bin-directory) "\";}
+function hop_lib_directory() {return \"" (hop-lib-directory) "\";}
+function hop_share_directory() {return \"" (hop-share-directory) "\";}
+function hop_var_directory() {return \"" (hop-var-directory) "\";}
+function hop_contribs_directory() {return \"" (hop-contribs-directory) "\";}
+function hop_weblets_directory() {return \"" (hop-weblets-directory) "\";}
+function hop_debug() {return " (integer->string (bigloo-debug)) ";}
+function hop_session() {return " (integer->string (hop-session)) ";}
+function hop_realm() {return \"" (hop-realm) "\";}")))
+
+;*---------------------------------------------------------------------*/
+;*    <HOP-SERVER> ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (<HOP-SERVER>)
+   
+   (define (hostip)
+      (let ((addr (assq 'addresses (hostinfo (hostname)))))
+	 (if (pair? addr)
+	     (cadr addr)
+	     "127.0.0.1")))
+	      
+   (<SCRIPT> :type (hop-configure-javascript-mime-type)
+      (string-append "var hop_server = new HopServer(\"" (hostname) "\", \""(hostip) "\")")))
 
 ;*---------------------------------------------------------------------*/
 ;*    preload-css ...                                                  */
@@ -142,12 +155,14 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 			 :rel "stylesheet"
 			 :type (hop-configure-css-mime-type) 
 			 :href hopcss)
-		      (map (lambda (f)
-			      (let ((p (make-file-name (hop-share-directory) f)))
-				 (<SCRIPT> :inline #f
-				    :type (hop-configure-javascript-mime-type)
-				    :src p)))
-			   (append (hop-runtime-system) (hop-runtime-extra)))))
+		      (append
+			 (map (lambda (f)
+				 (let ((p (make-file-name (hop-share-directory) f)))
+				    (<SCRIPT> :inline #f
+				       :type (hop-configure-javascript-mime-type)
+				       :src p)))
+			    (append (hop-runtime-system) (hop-runtime-extra)))
+			 (list (<HOP-SERVER>)))))
 	 ;; this is used for non-inlined header for browsers that restrict
 	 ;; size of javascript files (e.g., IE6 on WinCE)
 	 (set! head-runtime-system-unpacked
@@ -156,12 +171,14 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 			 :rel "stylesheet"
 			 :type (hop-configure-css-mime-type) 
 			 :href hopcss)
-		      (map (lambda (f)
-			      (let ((p (make-file-name (hop-share-directory) f)))
-				 (<SCRIPT> :inline #f
-				    :type (hop-configure-javascript-mime-type)
-				    :src p)))
-			   (append (hop-runtime-system-files) (hop-runtime-extra)))))
+		      (append
+			 (map (lambda (f)
+				 (let ((p (make-file-name (hop-share-directory) f)))
+				    (<SCRIPT> :inline #f
+				       :type (hop-configure-javascript-mime-type)
+				       :src p)))
+			    (append (hop-runtime-system-files) (hop-runtime-extra)))
+			 (list (<HOP-SERVER>)))))
 	 ;; this is used for inlined headers
 	 (set! head-runtime-system-inline
 	       (cons* (<HOP-SETUP>)
@@ -169,14 +186,16 @@ function hop_realm() { return \"" (hop-realm) "\"; }
 			 :rel "stylesheet"
 			 :type (hop-configure-css-mime-type) 
 			 :href hopcss)
-		      (map (lambda (f)
-			      (let ((p (make-file-name (hop-share-directory) f)))
-				 (<SCRIPT> :inline #t
-				    :type (hop-configure-javascript-mime-type)
-				    :src p)))
-			   (append (hop-runtime-system)
-				   (hop-runtime-extra)
-				   (list "hop-exception.scm"))))))))
+		      (append
+			 (map (lambda (f)
+				 (let ((p (make-file-name (hop-share-directory) f)))
+				    (<SCRIPT> :inline #t
+				       :type (hop-configure-javascript-mime-type)
+				       :src p)))
+			    (append (hop-runtime-system)
+			       (hop-runtime-extra)
+			       (list "hop-exception.scm")))
+			 (list (<HOP-SERVER>))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    library-path ...                                                 */

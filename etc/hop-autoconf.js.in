@@ -39,6 +39,17 @@ function hop_url() {
    return "@URL@";
 }
 
+function HopServer( host, ip ) {
+   this.name = hop_name();
+   this.version = hop_version();
+   this.backend = hop_backend();
+   this.url = hop_url();
+   this.host = host;
+   this.ip = ip;
+   this.hop_add_event_listener = hop_add_server_event_listener;
+   this.hop_remove_event_listener = hop_remove_server_event_listener;
+}
+
 /*---------------------------------------------------------------------*/
 /*    Hop configuration                                                */
 /*---------------------------------------------------------------------*/

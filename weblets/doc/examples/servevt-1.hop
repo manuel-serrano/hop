@@ -14,16 +14,13 @@
 
 (<HTML>
    (<BODY>
-      ~(add-event-listener! "foo" "server"
+      ~(add-event-listener! server "foo"
 			    (lambda (e)
 			       (alert "FOO=" (event-value e)))
 			    #t)
-      ~(add-event-listener! "bar" "server"
+      ~(add-event-listener! server "bar"
 			    (lambda (e)
 			       (alert "BAR=" (event-value e)))
 			    #t)
-      ~(add-event-listener! document "server"
-			    (lambda (e)
-			       (alert (event-name) " " (event-value e))))
       (<BUTTON> "signal foo" :onclick ~(with-hop ($servevt/signal-foo)))
       (<BUTTON> "signal bar" :onclick ~(with-hop ($servevt/signal-bar)))))

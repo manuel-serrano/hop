@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-audio.js                */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-audio.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Wed Mar  2 17:56:09 2011 (serrano)                */
-/*    Copyright   :  2007-11 Manuel Serrano                            */
+/*    Last change :  Sat Jan 28 18:51:35 2012 (serrano)                */
+/*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
 /*=====================================================================*/
@@ -595,18 +595,18 @@ function hop_audio_server_init( backend ) {
    // install the server listener...
    if( hop_config.websocket || hop_config.xhr_multipart ) {
       // the client supports efficient server push
-      hop_add_event_listener( backend.url, "server", function( evt ) {
+      hop_add_event_listener( hop_server, backend.url, function( evt ) {
 	    if( backend.audio.backend === backend ) 
 	       return hop_audio_server_event_listener( evt, backend );
 	 } );
-      hop_add_event_listener( document, "serverclose", function( evt ) {
+      hop_add_event_listener( hop_server, "down", function( evt ) {
 	    hop_audio_invoke_listeners( backend.audio, "error", "Connection closed by server" );
 	    if( backend.audio.backend === backend && !backend.state === Sclose ) {
 	       backend.state = Sclose;
 	       hop_audio_invoke_listeners( backend.audio, "close", false );
 	    }
 	 } );
-      hop_add_event_listener( document, "serverready", function( evt ) {
+      hop_add_event_listener( hop_server, "ready", function( evt ) {
 	    // we are ready to handle signals, ask for a metadata update
 	    with_hop( hop_apply_url( backend.url, [ Smetadata, false ] ), backend.err );
 	 } );
