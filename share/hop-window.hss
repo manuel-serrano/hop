@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.1.x/share/hop-window.hss              */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-window.hss              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Sat Apr 17 07:31:24 2010 (serrano)                */
-/*    Copyright   :  2006-10 Manuel Serrano                            */
+/*    Last change :  Mon Jan 30 11:15:09 2012 (serrano)                */
+/*    Copyright   :  2006-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP WINDOW CSS                                                   */
 /*=====================================================================*/
@@ -131,8 +131,13 @@ div[hssclass=hop-window] td.hop-window-iconify {
   vertical-align: middle;
   text-align: left;
   width: 13px;
+  opacity: 0.8
 }
 
+div[hssclass=hop-window] td.hop-window-iconify:hover {
+  opacity: 1.0;
+}
+  
 div[hssclass=hop-window] td.hop-window-maximize {
   background-image: $(url "icons/hop-window/maximize.png");
   background-repeat: no-repeat;
@@ -140,6 +145,11 @@ div[hssclass=hop-window] td.hop-window-maximize {
   vertical-align: middle;
   text-align: left;
   width: 13px;
+  opacity: 0.8
+}
+
+div[hssclass=hop-window] td.hop-window-maximize:hover {
+  opacity: 1.0;
 }
 
 div[hssclass=hop-window] td.hop-window-close {
@@ -149,6 +159,11 @@ div[hssclass=hop-window] td.hop-window-close {
   vertical-align: middle;
   text-align: right;
   width: 13px;
+  opacity: 0.8;
+}
+
+div[hssclass=hop-window] td.hop-window-close:hover {
+  opacity: 1.0;
 }
 
 /*--- The title -------------------------------------------------------*/
