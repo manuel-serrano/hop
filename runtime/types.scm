@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Jan 11 15:39:31 2012 (serrano)                */
+;*    Last change :  Fri Feb  3 13:51:43 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -103,9 +103,6 @@
 	      (server::bstring (default (hop-server-name)))
  	      (start-line::bstring read-only (default "HTTP/1.1 200 Ok")))
 
-	   (class http-response-authentication::%http-response-local
-	      (body read-only (default #f)))
-
 	   (class http-response-autoload::%http-response-local)
 
 	   (class http-response-xml::%http-response-local
@@ -131,6 +128,8 @@
 	   
 	   (class http-response-string::%http-response-local
 	      (body::bstring read-only (default "")))
+
+	   (class http-response-authentication::http-response-string)
 
 	   (class http-response-websocket::%http-response-local
 	      (connection::symbol read-only (default 'Upgrade))

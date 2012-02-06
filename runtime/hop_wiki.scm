@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  6 07:37:32 2006                          */
-;*    Last change :  Sat Dec 10 09:24:27 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Sat Feb  4 08:03:07 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The wiki markup                                                  */
 ;*=====================================================================*/
@@ -85,6 +85,6 @@
 	 ((not (string? src))
 	  (error "<WIKI>" "Illegal wiki src" src))
 	 ((file-exists? src)
-	  (if (isa? cache cache)
+	  (if (isa? cache (@ cache __hop_cache))
 	      (wiki-cache->hop cache src syn charset)
 	      (wiki-file->hop src :syntax syn :charset charset))))))

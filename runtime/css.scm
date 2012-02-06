@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Jan  4 08:52:25 2012 (serrano)                */
+;*    Last change :  Fri Feb  3 11:18:03 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -601,7 +601,6 @@
 	  ;;    it uses several selectors
 	  ;;    one of the selector refers to a compiler in the last position
 	  (begin
-	     (print 6666)
 	     (instantiate::css-ruleset-unfold
 		(ruleset+ (map (lambda (s)
 				  (compile-rule

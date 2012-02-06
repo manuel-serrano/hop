@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sat Dec 10 09:27:04 2011 (serrano)                */
-;*    Copyright   :  2005-11 Manuel Serrano                            */
+;*    Last change :  Fri Feb  3 13:49:00 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -597,7 +597,9 @@
       (request req)
       (body (cond
 	       (message
-		message)
+		(with-output-to-string
+		   (lambda ()
+		      (display message (current-output-port)))))
 	       ((isa? req http-request)
 		(with-access::http-request req (host port path)
 		   (format "Protected Area! Authentication required: ~a:~a:~a"

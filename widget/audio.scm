@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Thu Jan 26 08:14:37 2012 (serrano)                */
+;*    Last change :  Mon Feb  6 09:10:18 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -140,7 +140,7 @@
 		     (onpanchange #unspecified)
 		     (browser 'auto)
 		     (server #f)
-		     (native #f)
+		     (native #t)
 		     (attr)
 		     body)
    
@@ -191,7 +191,11 @@
 		  body))
 
    (if native
-       (<AUDIO:HTML5> :id id :controls controls :src src body)
+       (instantiate::xml-element
+	  (id id)
+	  (tag 'audio)
+	  (attributes `(:controls ,controls :autoplay ,autoplay :src ,src))
+	  (body body))
        (<DIV> :id id :class "hop-audio"
 	  (when controls (<controls>))
 	  (case browser
@@ -202,7 +206,7 @@
 	     ((html5)
 	      (list (<audio:init> :backendid hid
 		       :backend (format "document.getElementById( ~s )" hid))
-		    (<AUDIO:HTML5> :id hid)))
+		    (<AUDIO:HTML5> :id hid :autoplay autoplay)))
 	     ((none)
 	      (list (<audio:init> :backendid id :backend "false")
 		    (<AUDIO:SERVER> :id id)))
@@ -213,7 +217,7 @@
 		    (<audio:init> :backendid fid
 		       :backend
 		       (format "document.getElementById( ~s )" fid))
-		    (<AUDIO:HTML5> :id hid)
+		    (<AUDIO:HTML5> :id hid :autoplay autoplay)
 		    (<AUDIO:FLASH> :id fid :guard "!hop_config.html5_audio")))
 	     (else
 	      (error "<AUDIO>" "Illegal backend" browser))))))
@@ -232,11 +236,11 @@
 ;*    The native attribute is a hack to let AUDIO nodes be comparable  */
 ;*    by the tree comparison security manager.                         */
 ;*---------------------------------------------------------------------*/
-(define (<AUDIO:HTML5> #!key id controls src src guard #!rest body)
+(define (<AUDIO:HTML5> #!key id controls src src guard autoplay #!rest body)
    (list (instantiate::xml-element
 	    (id id)
 	    (tag 'audio)
-	    (attributes `(:controls ,controls :autoplay #f :native #t :src ,src))
+	    (attributes `(:controls ,controls :autoplay ,autoplay :native #t :src ,src))
 	    (body body))
 	 (<SCRIPT>
 	    (format "if( ~a && hop_config.html5_audio ) {" (or guard "true"))

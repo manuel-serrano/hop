@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Wed Jan 11 15:30:32 2012 (serrano)                */
+;*    Last change :  Fri Feb  3 18:47:00 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -210,6 +210,7 @@
 	     (instantiate::http-response-string
 		(request req)
 		(start-line "HTTP/1.1 304 Not Modified")
+		(content-type (mime-type (prefix abspath) "text/plain"))
 		(header `((Last-Modified: . ,lm)))
 		(charset (hop-locale))))
 	    ((isa? ce cache-entry)

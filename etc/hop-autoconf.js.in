@@ -237,7 +237,7 @@ function hop_Config() {
       this.flash_markup = "embed";
       this.inline_image = true;
    } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
-      if( navigator.userAgent.match( /[4-9].[0-9][^ ]*$/ ) ) {
+      if( navigator.userAgent.match( /(?:[4-9]|[1-9][0-9]+).[0-9][^ ]*$/ ) ) {
          /* Firefox 4.0 */
          this.js_speed = 100;	    
          this.css = 3;

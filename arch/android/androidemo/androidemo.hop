@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Mon Dec 19 15:39:52 2011 (serrano)                */
-;*    Copyright   :  2010-11 Manuel Serrano                            */
+;*    Last change :  Fri Feb  3 17:05:46 2012 (serrano)                */
+;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
 ;*=====================================================================*/
@@ -191,17 +191,17 @@ Android phone. This demonstration does not use any HTML5 facility.")
 (define (<ANDROIDEMO:TELEPHONY>)
    (list
     (<DIV> :id "sms-send"
-       ~(add-event-listener! "sms-sent" "server"
+       ~(add-event-listener! server "sms-sent"
 	   (lambda (e)
 	      (innerHTML-set! "sms-status" "sent")))
-       ~(add-event-listener! "sms-delivered" "server"
+       ~(add-event-listener! server "sms-delivered"
 	   (lambda (e)
 	      (innerHTML-set! "sms-status" "delivered")))
-       ~(add-event-listener! "sms-received" "server"
+       ~(add-event-listener! server "sms-received"
 	   (lambda (e)
 	      (innerHTML-set! "sms-received-no" (car e.value))
 	      (innerHTML-set! "sms-received-text" (cadr e.value))))
-       ~(add-event-listener! "orientation" "server"
+       ~(add-event-listener! server "orientation"
 	   (lambda (e)
 	      (let ((r (format "rotate(~adeg)" (car e.value))))
 		 (node-style-set! "img-ori"
@@ -305,7 +305,7 @@ missed.")
 ;*---------------------------------------------------------------------*/
 (define (<ANDROIDEMO:BATTERY>)
    (list
-    ~(add-event-listener! "battery" "server"
+    ~(add-event-listener! server "battery"
 	(lambda (e::event)
 	   (let ((val e.value))
 	      (gauge-value-set! "bat-level" (car val))
@@ -402,7 +402,7 @@ missed.")
 ;*---------------------------------------------------------------------*/
 (define (<ANDROIDEMO:CALLINFO>)
    (list
-    ~(add-event-listener! "call" "server"
+    ~(add-event-listener! server "call"
 	(lambda (e)
 	   (let* ((el (dom-get-element-by-id "callinfo-state"))
 		  (s (with-output-to-string
@@ -465,7 +465,7 @@ missed.")
 ;*---------------------------------------------------------------------*/
 (define (<ANDROIDEMO:SPEECH>)
    (list
-    ~(add-event-listener! "tts" "server"
+    ~(add-event-listener! server "tts"
 	(lambda (e::event)
 	   (alert "tts done: " e.value)))
     (<TEXTAREA> :id "speech" "")

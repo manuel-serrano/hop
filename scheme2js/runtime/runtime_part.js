@@ -1577,11 +1577,29 @@ sc_Vector.prototype.sc_toWriteString = function() {
 };
 
 /*** META ((export vector? array?) (arity #t)
-           (type bool)
-           (peephole (postfix " instanceof sc_Vector")))
+           (type bool))
 */
 function sc_isVector(v) {
-    return (v instanceof sc_Vector);
+   if (v instanceof sc_Vector) {
+      if ("Float32Array" in window) {
+	 return !(v instanceof Float32Array);
+      } else {
+	 return true;
+      }
+   } else {
+      return false;
+   }
+}
+
+/*** META ((export f32vector?) (arity #t)
+           (type bool))
+*/
+function sc_isF32Vector(v) {
+   if ("Float32Array" in window) {
+      return (v instanceof Float32Array);
+   } else {
+      return false;
+   }
 }
 
 // only applies to vectors
@@ -1602,7 +1620,18 @@ function sc_makeVector(size, fill) {
     return a;
 }
 
-/*** META ((export vector array)
+/*** META ((export make-f32vector)
+           (arity -2))
+*/
+function sc_makeVector(sz, fill) {
+   var a = ("Float32Array" in window) ? new Float32Array(sz):new sc_Vector(sz);
+      
+    if (fill !== undefined)
+	sc_vectorFillBang(a, fill);
+    return a;
+}
+
+/*** META ((export vector f32vector array)
            (arity -1)
            (peephole (vector)))
 */
@@ -1613,28 +1642,28 @@ function sc_vector() {
     return a;
 }
 
-/*** META ((export vector-length array-length) (arity #t)
+/*** META ((export vector-length f32vector-length array-length) (arity #t)
            (peephole (postfix ".length")))
 */
 function sc_vectorLength(v) {
     return v.length;
 }
 
-/*** META ((export vector-ref array-ref) (arity #t)
+/*** META ((export vector-ref f32vector-ref array-ref) (arity #t)
            (peephole (hole 2 v "[" pos "]")))
 */
 function sc_vectorRef(v, pos) {
     return v[pos];
 }
 
-/*** META ((export vector-set! array-set!) (arity #t)
+/*** META ((export vector-set! f32vector-set! array-set!) (arity #t)
            (peephole (hole 3 v "[" pos "] = " val)))
 */
 function sc_vectorSetBang(v, pos, val) {
     v[pos] = val;
 }
 
-/*** META ((export vector->list array->list) (arity #t)) */
+/*** META ((export vector->list f32vector->list array->list) (arity #t)) */
 function sc_vector2list(a) {
     var res = null;
     for (var i = a.length-1; i >= 0; i--)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Thu Jan 19 10:41:56 2012 (serrano)                */
+;*    Last change :  Mon Jan 30 11:46:06 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -68,14 +68,18 @@
       (let loop ()
 	 (with-access::http-response-remote r (scheme host port header content-length remote-timeout request connection-timeout)
 	    (trace-item "remotehost=" host
-			" remoteport=" port
-			" connection-timeout=" connection-timeout)
+	       " remoteport=" port
+	       " connection-timeout=" connection-timeout)
 	    (let* ((host (or (hop-use-proxy-host) host))
 		   (port (or (hop-use-proxy-port) port))
 		   (ssl (eq? scheme 'https))
 		   (remote #f))
+	       (tprint ">>> HTTP-RESPONSE_REMOTE.1 (" host ":" port ")"
+		  "-> remote=" (typeof remote))
 	       (with-handler
 		  (lambda (e)
+		     (tprint "!!! HTTP-RESPONSE_REMOTE.error (" host ":" port ")"
+			(typeof e))
 		     (unless (isa? e &io-error)
 			(exception-notify e))
 		     (when remote
@@ -98,11 +102,11 @@
 			 ;; to have been closed by the remote server, we
 			 ;; retry with a fresh connection
 			 (hop-verb 3
-				   (hop-color request request " RESET.ka")
-				   " (alive since "
-				   (with-access::connection remote (request-id)
-				      request-id)
-				   ") " host ":" port "\n")
+			    (hop-color request request " RESET.ka")
+			    " (alive since "
+			    (with-access::connection remote (request-id)
+			       request-id)
+			    ") " host ":" port "\n")
 			 (http-response r socket))
 			(else
 			 ;; This is an unrecoverable error
@@ -111,6 +115,9 @@
 		     (set! remote (remote-get-socket host port connection-timeout request ssl))
 		     ;; verb
 		     (with-access::connection remote (keep-alive request-id)
+			(tprint "~~~ HTTP-RESPONSE_REMOTE.2 (" host ":" port ")"
+			   " keep-alive=" keep-alive " request-id="
+			   request-id)
 			(if keep-alive
 			    (hop-verb 3
 			       (hop-color request request " REMOTE.ka")
@@ -130,26 +137,39 @@
 			      (trace-item "start-line: "
 				 (response-remote-start-line r))
 			      (remote-header header rp r)
-			      ;; if a char is ready and is eof, it means that the
+			      (tprint "~~~ HTTP-RESPONSE_REMOTE.3 (" host ":" port ")"
+				 " header written...")
+			      ;; if a char is ready and is eof,
+			      ;; it means that the
 			      ;; connection is closed
 			      (if (connection-down? remote)
 				  (begin
+				     (tprint "### HTTP-RESPONSE_REMOTE.4 (" host ":" port ")"
+					" connection down...")
 				     (with-trace 4 "connection-close@down"
 					(trace-item "remote=" remote)
 					(connection-close! remote))
 				     (loop))
 				  (begin
+				     (tprint "~~~ HTTP-RESPONSE_REMOTE.5 (" host ":" port ")"
+					" sending chars...")
 				     ;; the content of the request
 				     (when (>elong content-length #e0)
 					(trace-item "send-chars.1 cl=" content-length)
 					(send-chars sp rp content-length))
 				     (flush-output-port rp)
+				     
 				     ;; capture dumping
 				     (when (output-port? (hop-capture-port))
 					(log-capture request r))
-				     (if (assq :xhr-multipart header)
-					 (remote-multipart-body r socket remote)
-					 (remote-body r socket remote))))))))))))))
+				     (tprint "~~~ HTTP-RESPONSE_REMOTE.6 (" host ":" port ")"
+					" sending body... multipart" (assq :xhr-multipart header))
+				     (let ((rep (if (assq :xhr-multipart header)
+						    (remote-multipart-body r socket remote)
+						    (remote-body r socket remote))))
+					(tprint "<<< HTTP-RESPONSE_REMOTE.7 (" host ":" port ")"
+					   " complete with: " rep)
+					rep)))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    log-capture ...                                                  */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Jan 13 17:57:33 2012 (serrano)                */
+;*    Last change :  Mon Feb  6 15:45:48 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -55,27 +55,6 @@
       (if charset
 	  (http-write-line p "Content-type: " ctype "; charset=" charset)
 	  (http-write-line p "Content-type: " ctype))))
-
-;*---------------------------------------------------------------------*/
-;*    http-response ::http-response-authentication ...                 */
-;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-authentication socket)
-   (with-trace 3 "http-response::http-response-authentication"
-      (with-access::http-response-authentication r (header content-type body server timeout request start-line)
-	 (with-access::http-request request (connection)
-	    (let ((p (socket-output socket)))
-	       (when (>=fx timeout 0) (output-timeout-set! p timeout))
-	       (http-write-line-string p start-line)
-	       (http-write-header p header)
-	       (http-write-line p "Connection: " connection)
-	       (http-write-content-type p content-type #f)
-	       (http-write-line-string p "Server: " server)
-	       (when (string? body)
-		  (http-write-line p "Content-Length: " (string-length body)))
-	       (http-write-line p)
-	       (when (string? body) (display body p))
-	       (flush-output-port p)
-	       connection)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-string ...                         */
@@ -163,9 +142,9 @@
       (with-access::http-response-hop r (start-line
 					   header
 					   content-type charset
-					   server content-length value
-					   bodyp timeout request
-					   padding)
+					   server content-length
+					   value padding
+					   bodyp timeout request)
 	 (with-access::http-request request (connection hop-serialize)
 	    (let ((p (socket-output socket))
 		  (conn connection))
@@ -213,12 +192,13 @@
 			 (set! conn 'close)
 			 (http-write-line p "Connection: " conn)
 			 (http-write-line p)
-			 (when padding
-			    (display padding p)
-			    (display "(" p))
-			 (obj->json value p)
-			 (when padding
-			    (display ")" p)))
+                         (if padding
+			     (begin
+				(display padding p)
+				(display "(" p)
+				(obj->json value p)
+				(display ")" p))
+			     (obj->json value p)))
 			(else
 			 (error "http-response"
 			    "Unspported serialization method"
@@ -488,14 +468,16 @@
 		     (<BODY>
 			(<H1> dir)
 			(let ((cvt (charset-converter (hop-locale) (hop-charset))))
-			   (<PRE> (map (lambda (f)
-					  (let* ((fe (cvt f))
-						 (path (make-file-name dir fe)))
-					     (<A> :href path
-						(if (directory? path)
-						    (string-append f "/\n")
-						    (string-append f "\n")))))
-				     (sort (directory->list dir) string<?))))))
+			   (<PRE>
+			      (map! (lambda (f)
+				       (let* ((fe (cvt f))
+					      (path (make-file-name dir fe)))
+					  (if (directory? path)
+					      (<A> :href (string-append path "/")
+						 (string-append f "/\n"))
+					      (<A> :href path
+						 (string-append f "\n")))))
+				 (sort (directory->list dir) string<?))))))
 		  '())))))
 
 ;*---------------------------------------------------------------------*/
