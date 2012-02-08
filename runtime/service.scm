@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Jan 19 13:04:36 2012 (serrano)                */
+;*    Last change :  Wed Feb  8 17:20:57 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -230,14 +230,17 @@
 		`(,id ,@vals))))))
    
    (let ((ca (http-request-cgi-args req)))
-      (with-access::hop-service svc (proc)
+      (with-access::hop-service svc (proc id)
 	 (cond
 	    ((null? (cdr ca))
 	     (invoke proc '()))
 	    ((equal? (cgi-arg "hop-encoding" ca) "hop")
 	     (with-access::http-request req (charset)
 		(set! charset 'UTF-8))
-	     (invoke proc (serialized-cgi-arg "vals" ca)))
+	     (let ((vals (serialized-cgi-arg "vals" ca)))
+		(if (or (null? vals) (pair? vals))
+		    (invoke proc vals)
+		    (error id "Illegal arguments" vals))))
 	    (else
 	     (invoke proc
 		(append-map (lambda (p)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Thu Jan 19 13:05:22 2012 (serrano)                */
+;*    Last change :  Wed Feb  8 20:00:22 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -101,6 +101,7 @@
       (multiple-value-bind (msg clienthost)
 	 (datagram-socket-receive serv 1024)
 	 (let ((l (string-split msg)))
+	    (tprint "DISCOVERY-LOOP: " l)
 	    (when (=fx (length l) 2)
 	       (let ((svc (cadr l))
 		     (clientport (string->number (car l))))
@@ -179,6 +180,7 @@
    (let* ((sock (make-datagram-client-socket address port broadcast))
 	  (msg (format "~a ~a" (hop-port)
 		  (if (string? service) service "*"))))
+      (tprint "HOP-DISCOVER addr=" address " port=" port " svc=" service)
       (display msg (datagram-socket-output-port sock))
       (datagram-socket-close sock)
       #t))
