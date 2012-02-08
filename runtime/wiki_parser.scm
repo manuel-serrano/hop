@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Thu Dec 22 08:25:55 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Tue Feb  7 10:20:04 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
 ;*=====================================================================*/
@@ -837,6 +837,31 @@
 							     (html-string-encode
 							      (charset (read-string)))))))))
 	      (ignore))
+	     ((<plugin>)
+	      (let* ((pos (input-port-position (the-port)))
+		     (pid (string->symbol
+			     (string-append "<" (read-line (the-port)) ">")))
+		     (proc (eval (read (the-port)))))
+		 (let loop ((line (read-line (the-port))))
+		    (cond
+		       ((eof-object? line)
+			(raise (instantiate::&io-read-error
+				  (fname (input-port-name (the-port)))
+				  (location pos)
+				  (proc "wiki-parser")
+				  (msg "premature end of file")
+				  (obj "<plugin>"))))
+		       ((string=? line "</plugin>")
+			(with-access::wiki-syntax syn (plugins)
+			   (let ((old plugins))
+			      (set! plugins
+				 (lambda (id)
+				    (if (eq? id pid)
+					proc
+					(old id))))))
+			(ignore))
+		       (else
+			(loop (read-line (the-port))))))))
 	     (else
 	      (let* ((id (the-symbol))
 		     (pproc ((wiki-syntax-plugins syn) id)))

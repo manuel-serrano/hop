@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Mon Jan 30 11:46:06 2012 (serrano)                */
+;*    Last change :  Wed Feb  8 08:10:12 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -60,116 +60,126 @@
 	    (else
 	     (format "~a ~a://~a:~a~a ~a" method scheme host port p http))))))
 
+(define *debug-count* 0)
+(define *debug-open* '())
+(define *debug-mutex* (make-mutex))
+
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-remote ...                         */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-remote socket)
-   (with-trace 3 "http-response::http-response-remote"
-      (let loop ()
-	 (with-access::http-response-remote r (scheme host port header content-length remote-timeout request connection-timeout)
-	    (trace-item "remotehost=" host
-	       " remoteport=" port
-	       " connection-timeout=" connection-timeout)
-	    (let* ((host (or (hop-use-proxy-host) host))
-		   (port (or (hop-use-proxy-port) port))
-		   (ssl (eq? scheme 'https))
-		   (remote #f))
-	       (tprint ">>> HTTP-RESPONSE_REMOTE.1 (" host ":" port ")"
-		  "-> remote=" (typeof remote))
-	       (with-handler
-		  (lambda (e)
-		     (tprint "!!! HTTP-RESPONSE_REMOTE.error (" host ":" port ")"
-			(typeof e))
-		     (unless (isa? e &io-error)
-			(exception-notify e))
-		     (when remote
-			(with-trace 4 "connection-close@handler"
-			   (connection-close! remote)))
-		     (cond
-			((isa? e &io-unknown-host-error)
-			 (http-response (http-error e) socket))
-			((not remote)
-			 (if (isa? e &io-error)
-			     (http-response (http-remote-error host e) socket)
-			     (raise e)))
-			((with-access::connection remote (wstart?) wstart?)
-			 ;; If we have already sent characters to the client
-			 ;; it is no longer possible to repl with "resource
-			 ;; unavailable" so we raise the error.
-			 (raise e))
-			((with-access::connection remote (keep-alive) keep-alive)
-			 ;; This is a keep-alive connection that is likely
-			 ;; to have been closed by the remote server, we
-			 ;; retry with a fresh connection
-			 (hop-verb 3
-			    (hop-color request request " RESET.ka")
-			    " (alive since "
-			    (with-access::connection remote (request-id)
-			       request-id)
-			    ") " host ":" port "\n")
-			 (http-response r socket))
-			(else
-			 ;; This is an unrecoverable error
-			 (http-response (http-remote-error host e) socket))))
-		  (begin
-		     (set! remote (remote-get-socket host port connection-timeout request ssl))
-		     ;; verb
-		     (with-access::connection remote (keep-alive request-id)
-			(tprint "~~~ HTTP-RESPONSE_REMOTE.2 (" host ":" port ")"
-			   " keep-alive=" keep-alive " request-id="
-			   request-id)
-			(if keep-alive
-			    (hop-verb 3
-			       (hop-color request request " REMOTE.ka")
-			       " (alive since "
-			       request-id
-			       ") " host ":" port "\n")
-			    (hop-verb 3
-			       (hop-color request request " REMOTE")
-			       " " host ":" port "\n"))
-			(let ((rp (connection-output remote))
-			      (sp (socket-input socket)))
-			   (when (>fx remote-timeout 0)
-			      (output-timeout-set! rp remote-timeout)
-			      (input-timeout-set! (connection-input remote) remote-timeout))
-			   ;; the header and the request
-			   (with-trace 4 "http-response-header"
-			      (trace-item "start-line: "
-				 (response-remote-start-line r))
-			      (remote-header header rp r)
-			      (tprint "~~~ HTTP-RESPONSE_REMOTE.3 (" host ":" port ")"
-				 " header written...")
-			      ;; if a char is ready and is eof,
-			      ;; it means that the
-			      ;; connection is closed
-			      (if (connection-down? remote)
-				  (begin
-				     (tprint "### HTTP-RESPONSE_REMOTE.4 (" host ":" port ")"
-					" connection down...")
-				     (with-trace 4 "connection-close@down"
-					(trace-item "remote=" remote)
-					(connection-close! remote))
-				     (loop))
-				  (begin
-				     (tprint "~~~ HTTP-RESPONSE_REMOTE.5 (" host ":" port ")"
-					" sending chars...")
-				     ;; the content of the request
-				     (when (>elong content-length #e0)
-					(trace-item "send-chars.1 cl=" content-length)
-					(send-chars sp rp content-length))
-				     (flush-output-port rp)
-				     
-				     ;; capture dumping
-				     (when (output-port? (hop-capture-port))
-					(log-capture request r))
-				     (tprint "~~~ HTTP-RESPONSE_REMOTE.6 (" host ":" port ")"
-					" sending body... multipart" (assq :xhr-multipart header))
-				     (let ((rep (if (assq :xhr-multipart header)
-						    (remote-multipart-body r socket remote)
-						    (remote-body r socket remote))))
-					(tprint "<<< HTTP-RESPONSE_REMOTE.7 (" host ":" port ")"
-					   " complete with: " rep)
-					rep)))))))))))))
+   (let ((count (+ 1 *debug-count*)))
+      (mutex-lock! *debug-mutex*)
+      (set! *debug-open* (cons count *debug-open*))
+      (set! *debug-count* count)
+      (mutex-unlock! *debug-mutex*)
+      (unwind-protect
+	 (with-trace 3 "http-response::http-response-remote"
+	    (let loop ()
+	       (with-access::http-response-remote r (scheme host port header content-length remote-timeout request connection-timeout)
+		  (trace-item "remotehost=" host
+		     " remoteport=" port
+		     " connection-timeout=" connection-timeout)
+		  (let* ((host (or (hop-use-proxy-host) host))
+			 (port (or (hop-use-proxy-port) port))
+			 (ssl (eq? scheme 'https))
+			 (remote #f))
+		     (tprint ">>> HTTP-RESPONSE-REMOTE.1 [" count "] (" host ":" port ")"
+			" remote=" (typeof remote))
+		     (with-handler
+			(lambda (e)
+			   (unless (isa? e &io-error)
+			      (exception-notify e))
+			   (when remote
+			      (with-trace 4 "connection-close@handler"
+				 (connection-close! remote)))
+			   (cond
+			      ((isa? e &io-unknown-host-error)
+			       (http-response (http-error e) socket))
+			      ((not remote)
+			       (if (isa? e &io-error)
+				   (http-response (http-remote-error host e) socket)
+				   (raise e)))
+			      ((with-access::connection remote (wstart?) wstart?)
+			       ;; If we have already sent characters to the client
+			       ;; it is no longer possible to repl with "resource
+			       ;; unavailable" so we raise the error.
+			       (raise e))
+			      ((with-access::connection remote (keep-alive) keep-alive)
+			       ;; This is a keep-alive connection that is likely
+			       ;; to have been closed by the remote server, we
+			       ;; retry with a fresh connection
+			       (hop-verb 3
+				  (hop-color request request " RESET.ka")
+				  " (alive since "
+				  (with-access::connection remote (request-id)
+				     request-id)
+				  ") " host ":" port "\n")
+			       (http-response r socket))
+			      (else
+			       ;; This is an unrecoverable error
+			       (http-response (http-remote-error host e) socket))))
+			(begin
+			   (set! remote (remote-get-socket host port connection-timeout request ssl))
+			   ;; verb
+			   (with-access::connection remote (keep-alive request-id)
+			      (tprint "~~~ HTTP-RESPONSE-REMOTE.2 [" count "] (" host ":" port ")"
+				 " keep-alive=" keep-alive " request-id=" request-id)
+			      (if keep-alive
+				  (hop-verb 3
+				     (hop-color request request " REMOTE.ka")
+				     " (alive since "
+				     request-id
+				     ") " host ":" port "\n")
+				  (hop-verb 3
+				     (hop-color request request " REMOTE")
+				     " " host ":" port "\n"))
+			      (let ((rp (connection-output remote))
+				    (sp (socket-input socket)))
+				 (when (>fx remote-timeout 0)
+				    (output-timeout-set! rp remote-timeout)
+				    (input-timeout-set! (connection-input remote) remote-timeout))
+				 ;; the header and the request
+				 (with-trace 4 "http-response-header"
+				    (trace-item "start-line: "
+				       (response-remote-start-line r))
+				    (remote-header header rp r)
+				    ;; if a char is ready and is eof,
+				    ;; it means that the
+				    ;; connection is closed
+				    (if (connection-down? remote)
+					(begin
+					   (tprint "### HTTP-RESPONSE-REMOTE.3 [" count "] (" host ":" port ")"
+					      " connection down...")
+					   (with-trace 4 "connection-close@down"
+					      (trace-item "remote=" remote)
+					      (connection-close! remote))
+					   (loop))
+					(begin
+					   ;; the content of the request
+					   (when (>elong content-length #e0)
+					      (trace-item "send-chars.1 cl=" content-length)
+					      (tprint "~~~ HTTP-RESPONSE-REMOTE.4 [" count "] (" host ":" port ")"
+						 " sending chars..." content-length)
+					      (send-chars sp rp content-length))
+					   (flush-output-port rp)
+					   ;; capture dumping
+					   (when (output-port? (hop-capture-port))
+					      (log-capture request r))
+					   (tprint "~~~ HTTP-RESPONSE-REMOTE.5 [" count "] (" host ":" port ")"
+					      " sending body" (if (pair? (assq :xhr-multipart header)) " (multipart)" ""))
+					   (let ((rep (if (assq :xhr-multipart header)
+							  (remote-multipart-body r socket remote)
+							  (remote-body r socket remote))))
+					      (tprint "<<< HTTP-RESPONSE-REMOTE.6 [" count "] (" host ":" port ")"
+						 " <- " rep (let ((l (delete count *debug-open*)))
+							       (if (pair? l)
+								   (format " (open: ~a)" l)
+								   "")))
+					      rep))))))))))))
+	 (mutex-lock! *debug-mutex*)
+	 (set! *debug-open* (delete! count *debug-open*))
+	 (mutex-unlock! *debug-mutex*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    log-capture ...                                                  */
