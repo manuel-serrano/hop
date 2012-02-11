@@ -1623,7 +1623,7 @@ function sc_makeVector(size, fill) {
 /*** META ((export make-f32vector)
            (arity -2))
 */
-function sc_makeVector(sz, fill) {
+function sc_makeF32Vector(sz, fill) {
    var a = ("Float32Array" in window) ? new Float32Array(sz):new sc_Vector(sz);
       
     if (fill !== undefined)
