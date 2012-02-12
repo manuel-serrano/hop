@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Wed Feb  8 20:00:22 2012 (serrano)                */
+;*    Last change :  Sun Feb 12 07:24:13 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -134,11 +134,14 @@
    (set! discovery-service
       (service :name "public/discovery" :id public/discovery (#!key port key service session)
 	 (with-access::http-request (current-request) (socket localclientp)
+	    (tprint "public/discovery.1 port=" port " key=" key " service=" service " session=" session " localclientp=" localclientp)
 	    (unless localclientp
 	       (mutex-lock! discovery-mutex)
 	       ;; now we have our own name
 	       (unless discovery-host-ip
 		  (set! discovery-host-ip (socket-local-address socket)))
+	       (tprint "public/discovery.2 discover-host-ip="
+		  discovery-host-ip)
 	       ;; find all the discovers that match that event
 	       (let* ((ip (host (socket-host-address socket)))
 		      (hname (socket-hostname socket))
@@ -147,6 +150,8 @@
 				       (when (pair? %listeners)
 					  (filter hname port key service))))
 			    discovers)))
+		  (tprint "public/discovery.3 ip=" ip
+		     " hname=" hname " d=" (map typeof d))
 		  (mutex-unlock! discovery-mutex)
 		  ;; invoke all the discovers
 		  (for-each (lambda (d)
