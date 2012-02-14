@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Wed Feb  8 08:10:12 2012 (serrano)                */
+;*    Last change :  Tue Feb 14 08:31:21 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -85,7 +85,7 @@
 			 (ssl (eq? scheme 'https))
 			 (remote #f))
 		     (tprint ">>> HTTP-RESPONSE-REMOTE.1 [" count "] (" host ":" port ")"
-			" remote=" (typeof remote))
+			" remote=" remote)
 		     (with-handler
 			(lambda (e)
 			   (unless (isa? e &io-error)
@@ -120,7 +120,7 @@
 			       ;; This is an unrecoverable error
 			       (http-response (http-remote-error host e) socket))))
 			(begin
-			   (set! remote (remote-get-socket host port connection-timeout request ssl))
+			   (set! remote (remote-get-socket host port connection-timeout request ssl count))
 			   ;; verb
 			   (with-access::connection remote (keep-alive request-id)
 			      (tprint "~~~ HTTP-RESPONSE-REMOTE.2 [" count "] (" host ":" port ")"
@@ -457,7 +457,7 @@
 ;*    it first checks if it happens to still have an old connection    */
 ;*    with that host available for re-use.                             */
 ;*---------------------------------------------------------------------*/
-(define (remote-get-socket host port timeout request ssl)
+(define (remote-get-socket host port timeout request ssl count-debug-to-be-removed)
    
    (define (make-new-connection key id)
       (with-trace 4 "make-new-connection"
@@ -475,17 +475,29 @@
 
    (define (get-connection)
       (let ((key (string-append host ":" (integer->string port))))
+	 (tprint ">>> HTTP-RESPONSE-REMOTE.1a > REMOTE-GET-SOCKET [" count-debug-to-be-removed "] (" host ":" port ") key=" key)
 	 (mutex-lock! *remote-lock*)
-	 (let ((old (connection-table-get key)))
-	    (if old
-		(begin
-		   (mutex-unlock! *remote-lock*)
-		   old)
-		(let ((id (+fx 1 *connection-id*)))
-		   (set! *connection-id* id)
-		   (++ *open-connection-number*)
-		   (mutex-unlock! *remote-lock*)
-		   (make-new-connection key id))))))
+	 (with-handler
+	    (lambda (e)
+	       (tprint "\n\n\n=============================================\n *** CRITICAL-ERROR: GET-CONNECTION...")
+	       (exception-notify e)
+	       (mutex-unlock! *remote-lock*)
+	       (raise e))
+	    (let ((old (connection-table-get key)))
+	       (tprint "--- HTTP-RESPONSE-REMOTE.1a > REMOTE-GET-SOCKET [" count-debug-to-be-removed "] (" host ":" port ") old=" (typeof old))
+	       (if old
+		   (begin
+		      (mutex-unlock! *remote-lock*)
+		      (tprint "<<< HTTP-RESPONSE-REMOTE.1a > REMOTE-GET-SOCKET [" count-debug-to-be-removed "] (" host ":" port ") old=" (typeof old))
+		      old)
+		   (let ((id (+fx 1 *connection-id*)))
+		      (set! *connection-id* id)
+		      (++ *open-connection-number*)
+		      (mutex-unlock! *remote-lock*)
+		      (tprint "~~~ HTTP-RESPONSE-REMOTE.1a > REMOTE-GET-SOCKET [" count-debug-to-be-removed "] (" host ":" port ") make-client-socket...")
+		      (let ((s (make-new-connection key id)))
+			 (tprint "<<< HTTP-RESPONSE-REMOTE.1a > REMOTE-GET-SOCKET [" count-debug-to-be-removed "] (" host ":" port ") socket=" s)
+			 s)))))))
 
    (with-trace 4 "remote-get-connection"
       (trace-item "host=" host)
@@ -508,27 +520,34 @@
 ;*---------------------------------------------------------------------*/
 (define (connection-keep-alive! conn)
    (mutex-lock! *remote-lock*)
-   (when (too-many-keep-alive-connection?)
-      ;; we first try to cleanup the timeout connections
-      (let ((now (current-seconds)))
-	 (filter-connection-table!
-	  (lambda (c)
-	     (with-access::connection c (locked)
-		(or locked (not (connection-timeout? c now))))))))
-   (if (too-many-keep-alive-connection?)
-       ;; we have failed, we still have too many keep-alive connections open
-       (begin
-	  (filter-connection-table! (lambda (c) (with-access::connection c (locked) locked)))
-	  (connection-close-sans-lock! conn))
-       ;; store the connection only if room is available on the table
-       (with-access::connection conn (locked keep-alive intable)
-	  (set! locked #f)
-	  (set! keep-alive #t)
-	  (unless intable
-	     ;; this is the first time we see this connection, we add it to
-	     ;; the connection table
-	     (connection-table-add! conn))))
-   (mutex-unlock! *remote-lock*))
+   (with-handler
+      (lambda (e)
+	 (tprint "\n\n\n=============================================\n *** CRITICAL-ERROR: CONNECTION-KEEP-ALIVE...")
+	 (exception-notify e)
+	 (mutex-unlock! *remote-lock*)
+	 (raise e))
+      (begin
+	 (when (too-many-keep-alive-connection?)
+	    ;; we first try to cleanup the timeout connections
+	    (let ((now (current-seconds)))
+	       (filter-connection-table!
+		  (lambda (c)
+		     (with-access::connection c (locked)
+			(or locked (not (connection-timeout? c now))))))))
+	 (if (too-many-keep-alive-connection?)
+	     ;; we have failed, we still have too many keep-alive connections open
+	     (begin
+		(filter-connection-table! (lambda (c) (with-access::connection c (locked) locked)))
+		(connection-close-sans-lock! conn))
+	     ;; store the connection only if room is available on the table
+	     (with-access::connection conn (locked keep-alive intable)
+		(set! locked #f)
+		(set! keep-alive #t)
+		(unless intable
+		   ;; this is the first time we see this connection, we add it to
+		   ;; the connection table
+		   (connection-table-add! conn))))
+	 (mutex-unlock! *remote-lock*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-close-sans-lock! ...                                  */
@@ -546,8 +565,15 @@
 ;*---------------------------------------------------------------------*/
 (define (connection-close! connection::connection)
    (mutex-lock! *remote-lock*)
-   (connection-close-sans-lock! connection)
-   (mutex-unlock! *remote-lock*))
+   (with-handler
+      (lambda (e)
+	 (tprint "\n\n\n=============================================\n *** CRITICAL-ERROR: CONNECTION-CLOSE...")
+	 (exception-notify e)
+	 (mutex-unlock! *remote-lock*)
+	 (raise e))
+      (begin
+	 (connection-close-sans-lock! connection)
+	 (mutex-unlock! *remote-lock*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-down? ...                                             */
