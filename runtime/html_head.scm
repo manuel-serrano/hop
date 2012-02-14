@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sat Jan 28 07:14:17 2012 (serrano)                */
+;*    Last change :  Mon Feb 13 18:57:12 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -548,7 +548,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		    (body '())))
 		(else
 		 (default href))))))
-   
+
    (if (string-suffix? ".hss" href)
        ;; this is a file that need compilation
        (if (and inline (null? body) (file-exists? href))

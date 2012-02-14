@@ -1727,7 +1727,7 @@ function sc_vectorCopyBang(target, tstart, source, sstart, send) {
     return target;
 }
 
-/*** META ((export #t) (arity #t)) */
+/*** META ((export #t) (arity -1)) */
 function sc_vectorAppend() {
    if( arguments.length === 0 ) {
       return new sc_Vector( 0 );
@@ -1744,7 +1744,7 @@ function sc_vectorAppend() {
 	 len += arguments[ i ].length;
       }
 
-      var res = new sc_vector( len );
+      var res = new sc_Vector( len );
 
       for( i = 0; i < arguments.length; i++ ) {
 	 var v = arguments[ i ];

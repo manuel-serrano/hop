@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -353,7 +353,7 @@
 		(unbound-add! id)
 		(ncall resolve! this symbol-table)) ;; try again.
 	       (else
-		(scheme2js-error #f "Unresolved symbol" id this))))))
+		(scheme2js-error "scheme2js" "Unresolved symbol" id this))))))
    this)
 
 ;; runtime-var-ref directly queries the js-var-scope (short-cutting the
