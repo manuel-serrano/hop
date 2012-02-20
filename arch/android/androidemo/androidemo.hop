@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Fri Feb  3 17:05:46 2012 (serrano)                */
+;*    Last change :  Thu Feb 16 09:31:58 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -427,18 +427,20 @@ missed.")
     (<TEXTAREA> :id "call-speech"
        "")
     (<DIV>
-       (<BUTTON> :onclick ~(let ((eln (dom-get-element-by-id "call-number"))
-				 (elt(dom-get-element-by-id "call-speech")))
-			      (with-hop ($(service (number text)
-					     (when (and (string? text) (>fx (string-length text) 0))
-						(letrec ((h (lambda (e::event)
-							       (match-case e.value
-								  ((call-state offhook)
-								   (remove-event-listener! android "call" h)
-								   (tts-speak atts "text"))))))
-						   (add-event-listener! android "call" h)
-						   (phone-call-start android number))))
-					  eln.value elt.value)))
+       (<BUTTON> :onclick
+	  ~(let ((eln (dom-get-element-by-id "call-number"))
+		 (elt(dom-get-element-by-id "call-speech")))
+	      (with-hop ($(service (number text)
+			     (when (and (string? text)
+					(>fx (string-length text) 0))
+				(letrec ((h (lambda (e::event)
+					       (match-case e.value
+						  ((call-state offhook)
+						   (remove-event-listener! android "call" h)
+						   (tts-speak atts "text"))))))
+				   (add-event-listener! android "call" h)
+				   (phone-call-start android number))))
+			   eln.value elt.value)))
 	  "Place call")
        (<BUTTON> :onclick ~(with-hop ($(service ()
 					  (phone-call-stop android))))

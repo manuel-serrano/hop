@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue Feb  7 10:20:04 2012 (serrano)                */
+;*    Last change :  Mon Feb 20 12:21:36 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -236,6 +236,7 @@
    (regular-grammar ((punct (in "+*=/_-$#%!`'"))
 		     (blank (in "<>^|:~;,(){}[] \n"))
 		     (letter (out "<>+^|*=/_-$#%:~;,\"`'(){}[]! \\\n"))
+		     (ident (: #\: (+ letter) (in " \t\n")))
 		     syn state result trcount dbgcount charset env)
 
       ;; eval-wiki
@@ -521,37 +522,82 @@
       ;; continuation lines
       ((: #\\ (? #\Return) #\Newline)
        (ignore))
-      
-      ;; a blank line: end of expr
-      ((bol (: (? #\Return) #\Newline))
-       (let ((st (in-bottom-up-state (lambda (n _) (isa? n expr)))))
-	  (cond
-	     (st
-	      (unwind-state! st))
-	     ((is-state? 'p)
-	      (pop-state!))))
-       (add-expr! (the-html-string))
-       (ignore))
+
       ((bol (: (>= 2 (in " \t")) (? #\Return) #\Newline))
        (let ((st (or (in-bottom-up-state (lambda (n _) (isa? n expr)))
 		     (is-state? 'p))))
 	  (when st (unwind-state! st)))
        (add-expr! (the-html-substring 2 (the-length)))
        (ignore))
-
-      ;; two consecutive blank lines: end of block
-      ((bol (= 2 (: (? #\Return) #\Newline)))
-       (let ((st (in-state (lambda (n _)
-			      (and (isa? n block) (not (block-is-subblock n)))))))
-	  (when st (unwind-state! st)))
+      
+      ;; blank lines
+      ((bol (+ #\Newline))
+       (case (the-length)
+	  ((1)
+	   ;; a blank line: end of expr
+ 	   (let ((st (in-bottom-up-state (lambda (n _) (isa? n expr)))))
+	      (cond
+		 (st
+  	          (unwind-state! st))
+   	         ((is-state? 'p)
+	          (pop-state!)))))
+	  ((2)
+	   ;; two consecutive blank lines: end of block
+	   (let ((st (in-state (lambda (n _)
+				  (and (isa? n block)
+				       (not (block-is-subblock n)))))))
+	      (when st (unwind-state! st))))
+	  (else
+	   (unwind-state! #f)))
        (add-expr! (the-html-string))
        (ignore))
-
-      ;; three consecutive blank lines: end of everything
-      ((bol (= 3 (: (? #\Return) #\Newline)))
-       (unwind-state! #f)
+      
+      ;; blank lines (with CR)
+      ((bol (+ (: #\Return #\Newline)))
+       (case (the-length)
+	  ((2)
+	   ;; a blank line: end of expr
+ 	   (let ((st (in-bottom-up-state (lambda (n _) (isa? n expr)))))
+	      (cond
+		 (st
+  	          (unwind-state! st))
+   	         ((is-state? 'p)
+	          (pop-state!)))))
+	  ((4)
+	   ;; two consecutive blank lines: end of block
+	   (let ((st (in-state (lambda (n _)
+				  (and (isa? n block)
+				       (not (block-is-subblock n)))))))
+	      (when st (unwind-state! st))))
+	  (else
+	   (unwind-state! #f)))
        (add-expr! (the-html-string))
        (ignore))
+      
+;*       ;; a blank line: end of expr                                  */
+;*       ((bol (: (? #\Return) #\Newline))                             */
+;*        (let ((st (in-bottom-up-state (lambda (n _) (isa? n expr))))) */
+;* 	  (cond                                                        */
+;* 	     (st                                                       */
+;* 	      (unwind-state! st))                                      */
+;* 	     ((is-state? 'p)                                           */
+;* 	      (pop-state!))))                                          */
+;*        (add-expr! (the-html-string))                                */
+;*        (ignore))                                                    */
+;*                                                                     */
+;*       ;; two consecutive blank lines: end of block                  */
+;*       ((bol (= 2 (: (? #\Return) #\Newline)))                       */
+;*        (let ((st (in-state (lambda (n _)                            */
+;* 			      (and (isa? n block) (not (block-is-subblock n))))))) */
+;* 	  (when st (unwind-state! st)))                                */
+;*        (add-expr! (the-html-string))                                */
+;*        (ignore))                                                    */
+;*                                                                     */
+;*       ;; three consecutive blank lines: end of everything           */
+;*       ((bol (= 3 (: (? #\Return) #\Newline)))                       */
+;*        (unwind-state! #f)                                           */
+;*        (add-expr! (the-html-string))                                */
+;*        (ignore))                                                    */
 
       ;; simple text
       ((+ (or letter (: punct letter) (: #\space letter)))
@@ -744,53 +790,8 @@
       ((: "  " (+ (in "^|")))
        (table-cell (string-ref (the-html-substring 2 3) 0)
 		   #t #f (-fx (the-length) 2)))
-      
-      ;; font style
-      ((: "**" (? (: #\: (+ (or (out " \t\n*") (: "*" (out "*")))) " \t\n")))
-       (let ((s (in-state '**)))
-	  (cond
-	     (s
-	      (unwind-state! s)
-	      (ignore))
-	     ((=fx (the-length) 2)
-	      (enter-expr! '** (wiki-syntax-b syn) #f)
-	      (ignore))
-	     (else
-	      (multiple-value-bind (ident class)
-		 (wiki-parse-ident (the-substring 3 -1))
-		 (enter-expr! '** (wiki-syntax-b syn) #f
-			      :class class :id ident)
-		 (ignore))))))
-      ((: "//" (? (: #\: (+ (or (out " \t\n/") (: "/" (out "/")))) " \t\n")))
-       (let ((s (in-state '//)))
-	  (cond
-	     (s
-	      (unwind-state! s)
-	      (ignore))
-	     ((=fx (the-length) 2)
-	      (enter-expr! '// (wiki-syntax-em syn) #f)
-	      (ignore))
-	     (else
-	      (multiple-value-bind (ident class)
-		 (wiki-parse-ident (the-substring 3 -1))
-		 (enter-expr! '// (wiki-syntax-em syn) #f
-			      :class class :id ident)
-		 (ignore))))))
-      ((: "__" (? (: #\: (+ (or (out " \t\n_") (: "_" (out "_")))) " \t\n")))
-       (let ((s (in-state '__)))
-	  (cond
-	     (s
-	      (unwind-state! s)
-	      (ignore))
-	     ((=fx (the-length) 2)
-	      (enter-expr! '__ (wiki-syntax-u syn) #f)
-	      (ignore))
-	     (else
-	      (multiple-value-bind (ident class)
-		 (wiki-parse-ident (the-substring 3 -1))
-		 (enter-expr! '__ (wiki-syntax-u syn) #f
-			      :class class :id ident)
-		 (ignore))))))
+
+      ;; markups
       ("<<"
        (enter-expr! '<< (wiki-syntax-note syn) #f)
        (ignore))
@@ -803,7 +804,7 @@
 	      (begin
 		 (add-expr! (the-string))
 		 (ignore)))))
-      
+
       ((: "<" (out #\< #\> #\/) (* (out #\/ #\>)) ">")
        (let ((id (the-symbol)))
 	  (case id
@@ -926,15 +927,66 @@
 	     (if (procedure? proc)
 		 (add-expr! (proc (the-port) #f #f))
 		 (add-expr! (the-html-string)))
-	  (ignore)))
-
+	  (ignore)))      
+      
       ;; math
       ((: "$$" (+ (or (out #\$) (: #\$ (out #\$)))) "$$")
        (add-expr! ((wiki-syntax-math syn) (the-substring 2 -2)))
        (ignore))
       
+      ;; font style
+      ((: "**" (? ident))
+       (let ((s (in-state '**)))
+	  (cond
+	     (s
+	      (unwind-state! s)
+	      (ignore))
+	     ((=fx (the-length) 2)
+	      (enter-expr! '** (wiki-syntax-b syn) #f)
+	      (ignore))
+	     (else
+	      (multiple-value-bind (ident class)
+		 (wiki-parse-ident (the-substring 3 -1))
+		 (enter-expr! '** (wiki-syntax-b syn) #f
+			      :class class :id ident)
+		 (ignore))))))
+
+      ;; emphasize
+      ((: "//" (? ident))
+       (let ((s (in-state '//)))
+	  (cond
+	     (s
+	      (unwind-state! s)
+	      (ignore))
+	     ((=fx (the-length) 2)
+	      (enter-expr! '// (wiki-syntax-em syn) #f)
+	      (ignore))
+	     (else
+	      (multiple-value-bind (ident class)
+		 (wiki-parse-ident (the-substring 3 -1))
+		 (enter-expr! '// (wiki-syntax-em syn) #f
+			      :class class :id ident)
+		 (ignore))))))
+
+      ;; underline
+      ((: "__" (? ident))
+       (let ((s (in-state '__)))
+	  (cond
+	     (s
+	      (unwind-state! s)
+	      (ignore))
+	     ((=fx (the-length) 2)
+	      (enter-expr! '__ (wiki-syntax-u syn) #f)
+	      (ignore))
+	     (else
+	      (multiple-value-bind (ident class)
+		 (wiki-parse-ident (the-substring 3 -1))
+		 (enter-expr! '__ (wiki-syntax-u syn) #f
+			      :class class :id ident)
+		 (ignore))))))
+
       ;; tt
-      ((: "++" (? (: #\: (+ (or (out " \t\n+") (: "+" (out "+")))) " \t\n")))
+      ((: "++" (? ident))
        (let ((s (in-state 'tt)))
 	  (cond
 	     (s
@@ -950,7 +1002,7 @@
 			      :class class :id ident)
 		 (ignore))))))
       ;; code
-      ((: "%%" (? (: #\: (+ (or (out " \t\n%") (: "%" (out "%")))) " \t\n")))
+      ((: "%%" (? ident))
        (let ((s (in-state 'code)))
 	  (cond
 	     (s
@@ -967,7 +1019,7 @@
 		 (ignore))))))
       
       ;; strike
-      ((: "--" (? (: #\: (+ (or (out " \t\n-") (: "-" (out "-")))) " \t\n")))
+      ((: "--" (? ident))
        (let ((s (in-state 'strike)))
 	  (cond
 	     (s
@@ -1051,7 +1103,7 @@
 	  (ignore)))
 
       ;; anchors
-      ((: "##" (+ (or (out #\]) (: #\] (out #\])))) "##")
+      ((: "##" (+ (or (out #\#) (: #\# (out #\#)))) "##")
        (let* ((s (the-substring 2 -2))
 	      (i (string-index s "|"))
 	      (href (wiki-syntax-href syn)))

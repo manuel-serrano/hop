@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Tue Feb 14 08:31:21 2012 (serrano)                */
+;*    Last change :  Wed Feb 15 09:27:35 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -84,8 +84,6 @@
 			 (port (or (hop-use-proxy-port) port))
 			 (ssl (eq? scheme 'https))
 			 (remote #f))
-		     (tprint ">>> HTTP-RESPONSE-REMOTE.1 [" count "] (" host ":" port ")"
-			" remote=" remote)
 		     (with-handler
 			(lambda (e)
 			   (unless (isa? e &io-error)
@@ -120,11 +118,9 @@
 			       ;; This is an unrecoverable error
 			       (http-response (http-remote-error host e) socket))))
 			(begin
-			   (set! remote (remote-get-socket host port connection-timeout request ssl count))
+			   (set! remote (remote-get-socket host port connection-timeout request ssl))
 			   ;; verb
 			   (with-access::connection remote (keep-alive request-id)
-			      (tprint "~~~ HTTP-RESPONSE-REMOTE.2 [" count "] (" host ":" port ")"
-				 " keep-alive=" keep-alive " request-id=" request-id)
 			      (if keep-alive
 				  (hop-verb 3
 				     (hop-color request request " REMOTE.ka")
@@ -149,8 +145,6 @@
 				    ;; connection is closed
 				    (if (connection-down? remote)
 					(begin
-					   (tprint "### HTTP-RESPONSE-REMOTE.3 [" count "] (" host ":" port ")"
-					      " connection down...")
 					   (with-trace 4 "connection-close@down"
 					      (trace-item "remote=" remote)
 					      (connection-close! remote))
@@ -159,23 +153,14 @@
 					   ;; the content of the request
 					   (when (>elong content-length #e0)
 					      (trace-item "send-chars.1 cl=" content-length)
-					      (tprint "~~~ HTTP-RESPONSE-REMOTE.4 [" count "] (" host ":" port ")"
-						 " sending chars..." content-length)
 					      (send-chars sp rp content-length))
 					   (flush-output-port rp)
 					   ;; capture dumping
 					   (when (output-port? (hop-capture-port))
 					      (log-capture request r))
-					   (tprint "~~~ HTTP-RESPONSE-REMOTE.5 [" count "] (" host ":" port ")"
-					      " sending body" (if (pair? (assq :xhr-multipart header)) " (multipart)" ""))
 					   (let ((rep (if (assq :xhr-multipart header)
 							  (remote-multipart-body r socket remote)
 							  (remote-body r socket remote))))
-					      (tprint "<<< HTTP-RESPONSE-REMOTE.6 [" count "] (" host ":" port ")"
-						 " <- " rep (let ((l (delete count *debug-open*)))
-							       (if (pair? l)
-								   (format " (open: ~a)" l)
-								   "")))
 					      rep))))))))))))
 	 (mutex-lock! *debug-mutex*)
 	 (set! *debug-open* (delete! count *debug-open*))
@@ -457,7 +442,7 @@
 ;*    it first checks if it happens to still have an old connection    */
 ;*    with that host available for re-use.                             */
 ;*---------------------------------------------------------------------*/
-(define (remote-get-socket host port timeout request ssl count-debug-to-be-removed)
+(define (remote-get-socket host port timeout request ssl)
    
    (define (make-new-connection key id)
       (with-trace 4 "make-new-connection"
@@ -475,29 +460,22 @@
 
    (define (get-connection)
       (let ((key (string-append host ":" (integer->string port))))
-	 (tprint ">>> HTTP-RESPONSE-REMOTE.1a > REMOTE-GET-SOCKET [" count-debug-to-be-removed "] (" host ":" port ") key=" key)
 	 (mutex-lock! *remote-lock*)
 	 (with-handler
 	    (lambda (e)
-	       (tprint "\n\n\n=============================================\n *** CRITICAL-ERROR: GET-CONNECTION...")
 	       (exception-notify e)
 	       (mutex-unlock! *remote-lock*)
 	       (raise e))
 	    (let ((old (connection-table-get key)))
-	       (tprint "--- HTTP-RESPONSE-REMOTE.1a > REMOTE-GET-SOCKET [" count-debug-to-be-removed "] (" host ":" port ") old=" (typeof old))
 	       (if old
 		   (begin
 		      (mutex-unlock! *remote-lock*)
-		      (tprint "<<< HTTP-RESPONSE-REMOTE.1a > REMOTE-GET-SOCKET [" count-debug-to-be-removed "] (" host ":" port ") old=" (typeof old))
 		      old)
 		   (let ((id (+fx 1 *connection-id*)))
 		      (set! *connection-id* id)
 		      (++ *open-connection-number*)
 		      (mutex-unlock! *remote-lock*)
-		      (tprint "~~~ HTTP-RESPONSE-REMOTE.1a > REMOTE-GET-SOCKET [" count-debug-to-be-removed "] (" host ":" port ") make-client-socket...")
-		      (let ((s (make-new-connection key id)))
-			 (tprint "<<< HTTP-RESPONSE-REMOTE.1a > REMOTE-GET-SOCKET [" count-debug-to-be-removed "] (" host ":" port ") socket=" s)
-			 s)))))))
+		      (make-new-connection key id)))))))
 
    (with-trace 4 "remote-get-connection"
       (trace-item "host=" host)
@@ -522,7 +500,6 @@
    (mutex-lock! *remote-lock*)
    (with-handler
       (lambda (e)
-	 (tprint "\n\n\n=============================================\n *** CRITICAL-ERROR: CONNECTION-KEEP-ALIVE...")
 	 (exception-notify e)
 	 (mutex-unlock! *remote-lock*)
 	 (raise e))
@@ -567,7 +544,6 @@
    (mutex-lock! *remote-lock*)
    (with-handler
       (lambda (e)
-	 (tprint "\n\n\n=============================================\n *** CRITICAL-ERROR: CONNECTION-CLOSE...")
 	 (exception-notify e)
 	 (mutex-unlock! *remote-lock*)
 	 (raise e))

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/hopscheme/precompilation.scm      */
+;*    serrano/prgm/project/hop/2.3.x/hopscheme/precompilation.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Tue Mar  9 05:13:01 2010                          */
-;*    Last change :  Mon May 23 14:01:58 2011 (serrano)                */
-;*    Copyright   :  2010-11 Manuel Serrano                            */
+;*    Last change :  Tue Feb 14 10:20:07 2012 (serrano)                */
+;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Module pre-compilation                                           */
 ;*=====================================================================*/
@@ -66,6 +66,8 @@
 					    "hopscheme")
 			(liip (cons (caar import-names) (cdr import-names))
 			      rev-imports))
+		       ((not (symbol? (car import-names)))
+			(error "hopscheme" "Illegal module clause" header))
 		       (else
 			(liip (cdr import-names)
 			      (cons (precompile-module (car import-names)

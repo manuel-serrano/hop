@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 20 07:04:35 2010                          */
-;*    Last change :  Thu Jan 26 19:21:28 2012 (serrano)                */
+;*    Last change :  Fri Feb 17 15:25:40 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop workbench                                                */
@@ -31,7 +31,7 @@
 	    :path (workbench-dir)
 	    :include "workbench")
 	 ~(event-key-set! $event-key)
-	 ~(add-event-listener! $event-key "server" server-event-handler)
+	 ~(add-event-listener! server $event-key server-event-handler)
 	 (<DIV> :orientation 'horizontal :id "main"
 	    (<DIV> :id "selector"
 	       (<TABLE>

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Tue Dec  6 08:13:05 2011 (serrano)                */
-;*    Copyright   :  2007-11 Florian Loitsch, Manuel Serrano           */
+;*    Last change :  Tue Feb 14 16:42:46 2012 (serrano)                */
+;*    Copyright   :  2007-12 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
