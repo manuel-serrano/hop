@@ -58,6 +58,8 @@
 	   (set-car! (cdr expr) (extract! q (-fx quasi-depth 1) dollar-map))
 	   (set-car! (cdr expr) (extract! q quasi-depth dollar-map)))
        expr)
+      ((@ (? symbol?) (? symbol?))
+       expr)
       (($ ?dollar . ?-)
        (cond
 	  ((>fx quasi-depth 0)
@@ -65,8 +67,8 @@
 	   expr)
 	  ((symbol? dollar)
 	   (set-car! expr
-		     (string->symbol (string-append "$"
-						    (symbol->string dollar))))
+		     (string->symbol
+			(string-append "$" (symbol->string dollar))))
 	   (set-cdr! expr (cddr expr))
 	   (extract! expr quasi-depth dollar-map))
 	  (else
@@ -142,6 +144,8 @@
 	   (set-car! (cdr expr) (replace! q (-fx quasi-depth 1) dollar-map))
 	   (set-car! (cdr expr) (replace! q quasi-depth dollar-map)))
        expr)
+      ((@ (? symbol?) (? symbol?))
+       expr)
       ((? pair?)
        (if (and (starts-with-dollar? (car expr))
 		(contains-dot? (car expr)))
@@ -196,12 +200,9 @@
 	 
 (define (unhop-list! l)
    (cond
-      ((or (null? l)
-	   (not (pair? l)))
+      ((or (null? l) (not (pair? l)))
        l)
-      ((and (eq? (car l) '$)
-	    (pair? (cdr l))
-	    (pair? (cadr l)))
+      ((and (eq? (car l) '$) (pair? (cdr l)) (pair? (cadr l)))
        (if (scheme2js-config 'hop-module-compilation)
 	   (let ((val (dollar-eval (cadr l))))
 	      (if (eq? val #unspecified)
@@ -219,12 +220,10 @@
        l)))
    
 (define (unhop x)
-   (cond
-      ; $var
-      ((and (symbol? x)
-	    (starts-with-dollar? x)
-	    (not (eq? x '$)))
-       ;; split dotted notation...
+   (match-case x
+      ((? (lambda (x)
+	     (and (symbol? x) (starts-with-dollar? x) (not (eq? x '$)))))
+       ;; $var, split dotted notation...
        (let* ((symstr (symbol->string x))
 	      (first-dot (string-index symstr ".")))
 	  (if (or (not first-dot) (<fx first-dot 0))
@@ -234,49 +233,37 @@
 	      `(begin
 		  (pragma ,(if (scheme2js-config 'hop-module-compilation)
 			       (dollar-eval
-				(string->symbol (substring symstr
-							   1 ;; discard $
-							   first-dot)))
+				  (string->symbol (substring symstr
+						     1 ;; discard $
+						     first-dot)))
 			       (substring symstr 0 first-dot)))
 		  ,(string->symbol (substring symstr
-					      first-dot
-					      (string-length
-					       symstr)))))))
-      ; '(...) `(...)
-      ((and (pair? x)
-	    (or (eq? (car x) 'quote)
-		(eq? (car x) 'quasiquote)))
+				      first-dot
+				      (string-length
+					 symstr)))))))
+      (((or (kwote quote) (kwote quasiquote)) . ?-)
+       ;; '(...) `(...)
        ;; should the quasiquote contain unescaped elements, then the expansion
        ;; will reinvoke this expander.
        x)
-      ;(let loop (bindings) ...)
-      ((and (pair? x)
-	    (pair? (cdr x))
-	    (pair? (cddr x))
-	    (eq? (car x) 'let)
-	    (symbol? (cadr x))
-	    (list? (cadr x)))
-       (let ((bindings (caddr x)))
-	  (for-each (lambda (binding)
-		       (when (pair? binding)
-			  (set-cdr! binding (unhop-list! (cdr binding)))))
-		    bindings)
-	  x))
-      ;(let (bindings) ...)
-      ((and (pair? x)
-	    (pair? (cdr x))
-	    (or (eq? (car x) 'let)
-		(eq? (car x) 'let*)
-		(eq? (car x) 'letrec))
-	    (list? (cadr x)))
-       (let ((bindings (cadr x)))
-	  (for-each (lambda (binding)
-		       (when (pair? binding)
-			  (set-cdr! binding (unhop-list! (cdr binding)))))
-		    bindings)
-	  x))
-      ; (... $ (...) ....)
-      ((pair? x)
+      ((@ (? symbol?) (? symbol?))
+       x)
+      ((let (? symbol?) (and ?bindings ((?- ?-) ...)) . ?-)
+       ;; (let loop (bindings) ...)
+       (for-each (lambda (binding)
+		    (when (pair? binding)
+		       (set-cdr! binding (unhop-list! (cdr binding)))))
+	  bindings)
+       x)
+      (((or let let* letrec letrec*) (and ?bindings ??-) . ?-)
+       ;; (let (bindings) ...)
+       (for-each (lambda (binding)
+		    (when (pair? binding)
+		       (set-cdr! binding (unhop-list! (cdr binding)))))
+	  bindings)
+       x)
+      ((?- . ?-)
+       ;;  pair
        (unhop-list! x)
        x)
       (else
@@ -287,3 +274,4 @@
 		    ;;    $ (get-field (servic...) f) 
 		 (lambda (x)
 		    (unhop x)))
+

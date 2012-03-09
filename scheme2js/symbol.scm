@@ -146,10 +146,20 @@
 	 (cond
 	    (v v)
 	    ((not JS?) #f)
-	    ((and (qualified? id)
-		  (memq (id-qualifier id) '(js JS _))) ;; JS
+	    ((and (qualified? id) (memq (id-qualifier id) '(js JS _)))
+	     ;; JS
 	     (let* ((scheme-sym (id-symbol id))
-		    (js-str (symbol->string scheme-sym)) ;; do not mangle.
+		    (js-str (cond
+			       ((eq? scheme-sym '$)
+				"($)")
+			       ((symbol? scheme-sym)
+				;; do not mangle.
+				(symbol->string scheme-sym))
+			       (else
+				(scheme2js-error "symbol-resolution"
+				   "illegal qualified identifier"
+				   (cons '@ id)
+				   id))))
 		    (var (create-js-var scheme-sym #t
 					(instantiate::Export-Desc
 					   (id scheme-sym)

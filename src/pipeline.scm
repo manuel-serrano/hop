@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Fri Dec  2 14:09:17 2011 (serrano)                */
-;*    Copyright   :  2008-11 Manuel Serrano                            */
+;*    Last change :  Mon Mar  5 15:58:59 2012 (serrano)                */
+;*    Copyright   :  2008-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
 ;*=====================================================================*/
@@ -178,30 +178,31 @@
    (if (keep-alive-ellapsed-error? e)
        ;; this is not a true error, just log
        (hop-verb 3 (hop-color id id " SHUTDOWN")
-		 (cond
-		    ((isa? e &io-timeout-error)
-		     " (keep-alive, timeout ellapsed)")
-		    ((and (isa? e &io-parse-error)
-			  (with-access::&io-parse-error e (obj)
-			     (eof-object? obj)))
-		     " (keep-alive, connection reset by peer)")
-		    (else
-		     " (keep-alive, parse error)"))
-		 "\n")
+	  (cond
+	     ((isa? e &io-timeout-error)
+	      " (keep-alive, timeout ellapsed)")
+	     ((and (isa? e &io-parse-error)
+		   (with-access::&io-parse-error e (obj)
+		      (eof-object? obj)))
+	      " (keep-alive, connection reset by peer)")
+	     (else
+	      " (keep-alive, parse error)"))
+	  "\n")
        ;; this one is a true error
        (begin
 	  (when (isa? e &exception)
 	     (hop-verb 1 (hop-color id id " ABORT: ")
-		       " " (trace-color 1 (typeof e))
-		       (if (>=fx (hop-verbose) 4)
-			   (format "~a:~a"
-			      (socket-hostname sock)
-			      (socket-port-number sock))
-			   "")
-		       "\n")
-	     (when (>=fx (hop-verbose) 2)
-		(hop-verb 2 (with-error-to-string
-			       (lambda () (exception-notify e))))))
+		" " (trace-color 1 (typeof e))
+		(if (>=fx (hop-verbose) 4)
+		    (format "~a:~a"
+		       (socket-hostname sock)
+		       (socket-port-number sock))
+		    "")
+		"\n")
+	     (when (>fx (bigloo-debug) 0)
+		(hop-verb 1
+		   (with-error-to-string
+		      (lambda () (exception-notify e))))))
 	  (when (and (isa? e &io-unknown-host-error) (not (socket-down? sock)))
 	     (with-handler
 		(lambda (e)

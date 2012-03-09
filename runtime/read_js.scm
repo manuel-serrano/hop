@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:45:35 2005                          */
-;*    Last change :  Fri Jan 13 17:59:35 2012 (serrano)                */
+;*    Last change :  Tue Feb 21 09:10:10 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP javascript parser                                        */
@@ -68,11 +68,18 @@
 		 (ignore))
 		((: "/*" (* (or (out #\*) (: #\* (out "/")))) "*/")
 		 (ignore))
-		((+ (out "${}\"'/"))
+		((+ (or (out "${}\"'/(") (: "(" (out "${}\"'/("))))
 		 (set! acc (cons (the-string) acc))
 		 (ignore))
 		("/"
 		 (set! acc (cons "/" acc))
+		 (ignore))
+		("("
+		 (set! acc (cons "(" acc))
+		 (ignore))
+		("($)"
+		 ;; explicit use of the javascript $ identifier
+		 (set! acc (cons "($)" acc))
 		 (ignore))
 		("$$"
 		 (set! acc (cons "$" acc))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Thu Jan 12 09:06:45 2012 (serrano)                */
+/*    Last change :  Tue Mar  6 09:35:38 2012 (serrano)                */
 /*    Copyright   :  2006-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -39,6 +39,9 @@ function hop_url() {
    return "@URL@";
 }
 
+/*---------------------------------------------------------------------*/
+/*    HopServer                                                        */
+/*---------------------------------------------------------------------*/
 function HopServer( host, ip ) {
    this.name = hop_name();
    this.version = hop_version();
@@ -46,8 +49,17 @@ function HopServer( host, ip ) {
    this.url = hop_url();
    this.host = host;
    this.ip = ip;
+
    this.hop_add_event_listener = hop_add_server_event_listener;
    this.hop_remove_event_listener = hop_remove_server_event_listener;
+
+   this.reconnect = function( wait, max ) {
+      if( this.state === 3 ) {
+	 if( "reconnect"  in hop_servevt_proxy ) {
+	    hop_servevt_proxy.reconnect( wait, max );
+	 }
+      }
+   }
 }
 
 /*---------------------------------------------------------------------*/

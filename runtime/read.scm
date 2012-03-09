@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Feb 14 16:48:44 2012 (serrano)                */
+;*    Last change :  Tue Feb 21 09:10:19 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -491,7 +491,7 @@
 	  (econs '->
 	     (map! string->symbol (string-split (the-string) "."))
 	     loc)))
-      (id
+      ((or id "$")
        ;; this rule has to be placed after the rule matching the `.' char
        (the-symbol))
       ((: "|" (+ (or (out #a000 #\\ #\|) (: #\\ all))) "|")

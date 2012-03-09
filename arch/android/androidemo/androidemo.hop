@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Thu Feb 16 09:31:58 2012 (serrano)                */
+;*    Last change :  Mon Feb 20 15:19:40 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -153,9 +153,9 @@ Android phone. This demonstration does not use any HTML5 facility.")
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:BODY> ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <ANDROIDEMO:BODY> ((class "androidemo")
-					(header string "")
-					body)
+(define-tag <ANDROIDEMO:BODY> ((class "androidemo")
+			       (header string "")
+			       body)
    (<BODY> :class class
       (<DIV> :align "center"
 	 (<TABLE> :class "main"

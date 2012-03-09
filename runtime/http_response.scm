@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Feb  6 15:45:48 2012 (serrano)                */
+;*    Last change :  Thu Mar  8 10:33:51 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -187,7 +187,13 @@
 			 (set! conn 'close)
 			 (http-write-line p "Connection: " conn)
 			 (http-write-line p)
-			 (obj->javascript-expr value p))
+			 (if padding
+			     (begin
+				(display padding p)
+				(display "(" p)
+				(obj->javascript-expr value p)
+				(display ")" p))
+			     (obj->javascript-expr value p)))
 			((string=? content-type "application/json")
 			 (set! conn 'close)
 			 (http-write-line p "Connection: " conn)
