@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/charset.scm               */
+;*    serrano/prgm/project/hop/2.3.x/runtime/charset.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 10 06:46:43 2007                          */
-;*    Last change :  Sat Sep 17 06:02:45 2011 (serrano)                */
-;*    Copyright   :  2007-11 Manuel Serrano                            */
+;*    Last change :  Tue Mar 13 07:41:27 2012 (serrano)                */
+;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with charset.                              */
 ;*=====================================================================*/
@@ -30,11 +30,13 @@
        'ISO-8859-1)
       ((ISO-8859-15 iso-8859-15)
        'ISO-8859-15)
-      ((WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258
-        windows-1250 windows-1252 windows-1256 windows-1258)
+      ((WINDOWS-1250 WINDOWS-1252 WINDOWS-1256 WINDOWS-1258 CP1252
+        windows-1250 windows-1252 windows-1256 windows-1258 cp1252)
        'CP1252)
       ((UCS-2 ucs-2)
        'UCS-2)
+      ((GB2312 CP936 gb2312 cp936)
+       'GB2312)
       (else
        charset)))
 
@@ -117,7 +119,7 @@
 		  (lambda (str)
 		     (utf8-string->ucs2-string (iso-latin->utf8! str))))
 		 (else
-		  (lambda (x) x))))	  
+		  (lambda (x) x))))
 	     (else
 	      (if (eq? cset2 'UTF-8)
 		  8859->utf8

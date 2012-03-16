@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.2.x/arch/macosx/Makefile              */
+#*    serrano/prgm/project/hop/2.3.x/arch/macosx/Makefile              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar  2 07:14:10 2011                          */
-#*    Last change :  Wed Mar  2 07:15:10 2011 (serrano)                */
-#*    Copyright   :  2011 Manuel Serrano                               */
+#*    Last change :  Fri Mar 16 14:27:26 2012 (serrano)                */
+#*    Copyright   :  2011-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    MacOS X port                                                     */
 #*=====================================================================*/
@@ -19,7 +19,7 @@
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION = Makefile \
-  Makefile.bundle Info.plist hop.icns
+  README Makefile.bundle Info.plist hop.icns
 
 POPDIRS = 
 

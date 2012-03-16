@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Wed Mar  7 21:11:28 2012 (serrano)                */
+/*    Last change :  Mon Mar 12 14:24:32 2012 (serrano)                */
 /*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -779,13 +779,12 @@ function hop_string_to_obj( s ) {
    }
 
    function string_to_array( s ) {
-      for( var i = 0, len = s.length; i < len; ++i ) {
-	 if( s.charCodeAt(i) > 0x7f ) {
-	    s = ucs2_to_utf8( s );
-	    break;
-	 }
-      }
-      
+/*       for( var i = 0, len = s.length; i < len; ++i ) {              */
+/* 	 if( s.charCodeAt(i) > 0x7f ) {                                */
+/* 	    s = ucs2_to_utf8( s );                                     */
+/* 	    break;                                                     */
+/* 	 }                                                             */
+/*       }                                                             */
       var a = hop_config.uint8array ?
 	 new Uint8Array( s.length ) : new Array( s.length );
 

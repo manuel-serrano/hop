@@ -1,0 +1,4 @@
+To build a macosx dmg, in the root directory:
+
+    make -f arch/macosx/Makefile.bundle -j3 all
+
