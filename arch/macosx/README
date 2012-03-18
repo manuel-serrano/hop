@@ -1,4 +1,22 @@
+== Building ==
+
 To build a macosx dmg, in the root directory:
 
-    make -f arch/macosx/Makefile.bundle -j3 all
+    % make -f arch/macosx/Makefile.bundle -j3 all
 
+
+== Testing ==
+
+The dmg can be tested without physical access to a Mac computer. 
+
+   % hdiutil attach ./file.dmg
+
+The command will mount the disk image for you, and then report back
+it's path in the /Volumes directory. When you're done with it, either
+drag it to the trash as usual, or you can type:
+
+   % hdiutil detach /Volumes/SomeVolume
+
+To install the package:
+
+   % installer -pkg ./XcodeTools.mpkg -target /
