@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/job.scm                   */
+;*    serrano/prgm/project/hop/2.3.x/runtime/job.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 14 14:53:17 2005                          */
-;*    Last change :  Wed Nov 16 11:47:56 2011 (serrano)                */
-;*    Copyright   :  2005-11 Manuel Serrano                            */
+;*    Last change :  Sun Mar 18 10:38:09 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop JOB management                                               */
 ;*=====================================================================*/
@@ -257,9 +257,14 @@
 	    (display " ") (write interval) (newline)
 	    (print " )"))))
    
-   (with-output-to-file (make-file-name (hop-var-directory) (hop-job-file))
-      (lambda ()
-	 (for-each job-dump *jobs-queue*))))
+   (when (pair? *jobs-queue*)
+      (unless (directory? (hop-var-directory))
+	 (make-directories (hop-var-directory)))
+      (when (directory? (hop-var-directory))
+	 (let ((path (make-file-name (hop-var-directory) (hop-job-file))))
+	    (with-output-to-file path
+	       (lambda ()
+		  (for-each job-dump *jobs-queue*)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    current-milliseconds ...                                         */
