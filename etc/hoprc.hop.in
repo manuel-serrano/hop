@@ -118,7 +118,7 @@
 ;*---------------------------------------------------------------------*/
 ;; only install the welcome message is the configuration file does not exist
 (unless (file-exists? (make-file-name (hop-rc-directory) (hop-rc-file)))
-   (hop-filter-add!
+   (hop-filter-add-always-first!
     (lambda (req::http-request)
        (if (and (or (string=? req.path "/")
                     (string=? req.path "/hop")

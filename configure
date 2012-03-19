@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Mar 18 09:51:19 2012 (serrano)                */
+#*    Last change :  Mon Mar 19 14:08:23 2012 (serrano)                */
 #*    Copyright   :  2004-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -731,6 +731,7 @@ done
 # etc/hoprc.hop
 hoprc=etc/hoprc.hop
 rm -f $hoprc 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $hoprc
 cat etc/hoprc.hop.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
