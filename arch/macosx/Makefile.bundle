@@ -25,7 +25,7 @@ CONTRIBS_DIR := /Library/Hop/Weblets
 
 HDIUTIL := hdiutil
 
-DMG := $(MACOSX_DIR)/$(TITLE).dmg
+DMG := $(MACOSX_DIR)/$(TITLE)-$(HOPRELEASE).dmg
 
 all: 
 	$(MAKE) -f arch/macosx/Makefile.bundle configure && \
