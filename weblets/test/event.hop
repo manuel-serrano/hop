@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Sat Jan 28 18:47:13 2012 (serrano)                */
+;*    Last change :  Mon Mar 19 15:28:08 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
@@ -157,20 +157,17 @@ events succeeded, you should see an acknowledge.")
 			    (oy 1)
 			    (oz 1)
 			    (PI/2 (* 2 (atan 1))))
-			 (add-event-listener! window "orientationchange"
+			 (add-event-listener! window "deviceorientation"
 			    (lambda (e)
-			       (tprint "orientationchange...")))
-			 (add-event-listener! window "MozOrientation"
-			    (lambda (e)
-			       (when (or (> (abs (- e.x ox)) 0.05)
-					 (> (abs (- e.y oy)) 0.05)
-					 (> (abs (- e.z oz)) 0.05))
-				  (set! ox e.x)
-				  (set! oy e.y)
-				  (set! oy e.z)
+			       (when (or (> (abs (- e.gamma ox)) 0.05)
+					 (> (abs (- e.alpha oy)) 0.05)
+					 (> (abs (- e.beta oz)) 0.05))
+				  (set! ox e.gamma)
+				  (set! oy e.alpha)
+				  (set! oy e.beta)
 				  (node-style-set! "orientation"
 				     :color "red"
-				     :MozTransform (format "rotate(~arad) scale(~a,~a)" (* PI/2 (- e.x)) (+ 1 (* 2 e.y)) (+ 1 (* 2 e.z)))))))))))))))
+				     :MozTransform (format "rotate(~arad) scale(~a,~a)" (* PI/2 (- e.gamma)) (+ 1 (* 2 e.alpha)) (+ 1 (* 2 e.beta)))))))))))))))
 		      
 				    
       
