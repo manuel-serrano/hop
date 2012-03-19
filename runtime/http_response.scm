@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Mar  8 10:33:51 2012 (serrano)                */
+;*    Last change :  Mon Mar 19 13:44:55 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -475,6 +475,8 @@
 			(<H1> dir)
 			(let ((cvt (charset-converter (hop-locale) (hop-charset))))
 			   (<PRE>
+			      (unless (string=? dir "/")
+				 (<A> :href (dirname dir) "..\n"))
 			      (map! (lambda (f)
 				       (let* ((fe (cvt f))
 					      (path (make-file-name dir fe)))
