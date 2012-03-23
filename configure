@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Mar 19 14:08:23 2012 (serrano)                */
+#*    Last change :  Fri Mar 23 08:59:58 2012 (serrano)                */
 #*    Copyright   :  2004-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -60,7 +60,7 @@ bglcloselibs="web multimedia"
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
 version="2.3.0"
-devel=pre
+devel=rc
 
 hopc=$PWD/bin/hopc
 

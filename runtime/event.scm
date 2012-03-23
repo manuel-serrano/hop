@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Mar  8 10:45:24 2012 (serrano)                */
+;*    Last change :  Wed Mar 21 19:01:42 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -1151,7 +1151,8 @@
 		  (when debug-websocket
 		     (tprint "WEBSOCKET EVENT ERROR: " e
 			" thread=" (current-thread)
-			" req=" req " value=" vstr))
+			" req=" req " value=" vstr
+			" len=" (string-length vstr)))
 		  (if (isa? e &io-error)
 		      (begin
 			 (set! *clients-number* (-fx *clients-number* 1))

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hopscheme.js                */
+/*    serrano/prgm/project/hop/2.3.x/share/hopscheme.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Thu Jun 23 16:32:28 2011 (serrano)                */
-/*    Copyright   :  2007-11 Manuel Serrano                            */
+/*    Last change :  Wed Mar 21 13:52:02 2012 (serrano)                */
+/*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
 /*=====================================================================*/
@@ -17,7 +17,7 @@ function hop_bigloo_serialize_pair( l ) {
    var len = 0;
 
    while( sc_isPair( l ) ) {
-      res += hop_bigloo_serialize( l.car );
+      res += hop_bigloo_serialize_context( l.car );
       l = l.cdr;
       len++;
    }
@@ -25,7 +25,7 @@ function hop_bigloo_serialize_pair( l ) {
    if( l == null ) {
       return hop_serialize_word( len + 1 ) + res + ".";
    } else {
-      return hop_serialize_word( len + 1 ) + res + hop_bigloo_serialize( l );
+      return hop_serialize_word( len + 1 ) + res + hop_bigloo_serialize_context( l );
    }
 }
 

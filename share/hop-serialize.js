@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Mon Mar 12 14:24:32 2012 (serrano)                */
+/*    Last change :  Wed Mar 21 19:31:09 2012 (serrano)                */
 /*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -52,12 +52,12 @@ function hop_bigloo_serialize_context( item ) {
    if( (item instanceof String) || (tname == "string") ) {
       if( sc_isSymbol( item ) ) {
 	 return "%27"
-	    + hop_serialize_string( '%22', sc_symbol2jsstring( item ) );
+	    + hop_serialize_string( sc_symbol2jsstring( item ) );
       } else if( sc_isKeyword( item ) ) {
 	 return "%3a"
-	    + hop_serialize_string( '%22', sc_keyword2jsstring( item ) );
+	    + hop_serialize_string( sc_keyword2jsstring( item ) );
       } else {
-	 return hop_serialize_string( '%22', item );
+	 return hop_serialize_string( item );
       }
    }
 
@@ -93,13 +93,13 @@ function hop_bigloo_serialize_context( item ) {
       return hop_serialize_array( item );
       
    if( (HTMLInputElement != undefined) && (item instanceof HTMLInputElement) )
-      return hop_bigloo_serialize( item.value );
+      return hop_bigloo_serialize_context( item.value );
 
    if( (HTMLTextAreaElement != undefined) && (item instanceof HTMLTextAreaElement) )
-      return hop_bigloo_serialize( item.value );
+      return hop_bigloo_serialize_context( item.value );
 
    if( (HTMLSelectElement != undefined) && (item instanceof HTMLSelectElement) )
-      return hop_bigloo_serialize( item.value );
+      return hop_bigloo_serialize_context( item.value );
 
    if( (item.callee != undefined) && (item.length > -1) )
       return hop_serialize_array( item );
@@ -131,7 +131,7 @@ function hop_bigloo_serialize_object() {
    var item = this;
    var classname = hop_demangle( item.hop_classname );
    var classfields = item.hop_classfields;
-   var str = "|" + "%27" + hop_serialize_string( '%22', classname );
+   var str = "|" + "%27" + hop_serialize_string( classname );
    var args = "";
    var len = 1;
 
@@ -145,14 +145,14 @@ function hop_bigloo_serialize_object() {
 	  p !== "hop_serialize_context_def" &&
 	  p !== "hop_classhash" ) {
 	 len++;
-	 args += hop_bigloo_serialize( item[ p ] );
+	 args += hop_bigloo_serialize_context( item[ p ] );
       }
    }
 
    str += hop_serialize_word( len );
    str += hop_serialize_boolean( false );
    str += args;
-   str += hop_bigloo_serialize( item.hop_classhash );
+   str += hop_bigloo_serialize_context( item.hop_classhash );
 
    str = "=" +  hop_serialize_word( item.hop_serialize_context_def ) + str;
 
@@ -166,7 +166,7 @@ function hop_bigloo_serialize_sc_object() {
    var item = this;
    var clazz = sc_object_class( item );
    var classname = sc_symbol2jsstring( sc_class_name( clazz ) );
-   var str = "|" + "%27" + hop_serialize_string( '%22', classname );
+   var str = "|" + "%27" + hop_serialize_string( classname );
    var args = "";
    var fields = sc_class_all_fields( clazz );
    var len = 1 + fields.length;
@@ -175,13 +175,13 @@ function hop_bigloo_serialize_sc_object() {
    item.hop_serialize_context_def = hop_serialize_context.def++;
 
    for( var i = 0; i < fields.length; i++ ) {
-      args += hop_bigloo_serialize( fields[ i ].sc_getter( item ) );
+      args += hop_bigloo_serialize_context( fields[ i ].sc_getter( item ) );
    }
 
    str += hop_serialize_word( len );
    str += hop_serialize_boolean( false );
    str += args;
-   str += hop_bigloo_serialize( sc_class_hash( clazz ) );
+   str += hop_bigloo_serialize_context( sc_class_hash( clazz ) );
 
    str = "=" +  hop_serialize_word( item.hop_serialize_context_def ) + str;
 
@@ -193,7 +193,7 @@ function hop_bigloo_serialize_sc_object() {
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_sc_class( clazz ) {
    var classname = sc_symbol2jsstring( sc_class_name( clazz ) );
-   return "k" + hop_serialize_string( '%22', classname );
+   return "k" + hop_serialize_string( classname );
 }
 
 /*---------------------------------------------------------------------*/
@@ -334,16 +334,29 @@ function utf_length( s ) {
 /*    the expected value. This is implemented by a loop inside         */
 /*    the decoding of the string (see read_string).                    */
 /*---------------------------------------------------------------------*/
-function hop_serialize_string( mark, item ) {
-   return mark +
-      hop_serialize_word( utf_length( item ) ) +
-      encodeURIComponent( item );
+function hop_serialize_string( item ) {
+   var url = encodeURIComponent( item );
+   var len = item.length;
+
+   for( var i = 0; i < len; i++ ) {
+      if( item.charCodeAt( i ) > 127 ) {
+	 /* utf8 encoding */
+	 var enc = encodeURIComponent( url );
+	 return '%25' + hop_serialize_word( url.length ) + enc;
+      }
+   } 
+	 
+   return '%22' + hop_serialize_word( item.length ) + url;
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_serialize_number ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_serialize_number( item ) {
+   function hop_serialize_number_string( mark, sitem ) {
+      return mark + hop_serialize_word( sitem.length ) + sitem;
+   }
+   
    var sitem = item + "";
 
    if( sitem.indexOf( "." ) == -1 ) {
@@ -351,21 +364,21 @@ function hop_serialize_number( item ) {
 	 if( item >= -536870912 ) {
 	    return '-' + hop_serialize_word( -item );
 	 } else if( item >= 2147483648 ) {
-	    return hop_serialize_string( 'E', item + "" );
+	    return hop_serialize_number_string( 'E', sitem );
 	 } else {
-	    return hop_serialize_string( 'L', item + "" );
+	    return hop_serialize_number_string( 'L', sitem );
 	 }
       } else {
 	 if( item <= 536870911 ) {
 	    return hop_serialize_word( item );
 	 } else if( item <= 2147483647 ) {
-	    return hop_serialize_string( 'E', item + "" );
+	    return hop_serialize_number_string( 'E', sitem );
 	 } else {
-	    return hop_serialize_string( 'L', item + "" );
+	    return hop_serialize_number_string( 'L', sitem );
 	 }
       }
    } else {
-      return 'f' + hop_serialize_word( sitem.length ) + sitem;
+      return hop_serialize_number_string( 'f', sitem );
    }
 }
 
@@ -388,7 +401,7 @@ function hop_serialize_array( item ) {
    item.hop_serialize_context_def = hop_serialize_context.def++;
 
    for( i = 0; i < l; i++ ) {
-      ra += hop_bigloo_serialize( item[ i ] );
+      ra += hop_bigloo_serialize_context( item[ i ] );
    }
 
    return "=" + hop_serialize_word( item.hop_serialize_context_def ) + ra;
@@ -414,18 +427,18 @@ function hop_serialize_date( item ) {
 /*---------------------------------------------------------------------*/
 function hop_serialize_html( item ) {
    if( "outerHTML" in item ) {
-      return hop_serialize_string( '%22', item.outHTML );
+      return hop_serialize_string( item.outHTML );
    } else {
       if( item.nodeType == 1 ) {
 	 var str = "<" + item.tagName + " id='" + item.id + "' "
 	    + (item.className ? ("class='" + item.className + "'") : "")
 	    + ">" + item.innerHTML + "</" + item.tagName + ">";
-	 return hop_serialize_string( '%22', str );
+	 return hop_serialize_string( str );
       } else {
 	 if( item.nodeType == 3 ) {
-	    return hop_serialize_string( '%22', item.nodeValue );
+	    return hop_serialize_string( item.nodeValue );
 	 } else {
-	    return hop_bigloo_serialize( "#<" + tname + ">" );
+	    return hop_bigloo_serialize_string( "#<" + tname + ">" );
 	 }
       }
    }
@@ -442,7 +455,7 @@ function hop_bigloo_serialize_alist( item ) {
       alist = sc_cons( sc_cons( k, sc_cons( item[ p ] ) ), alist );
    }
 
-   return hop_bigloo_serialize( alist );
+   return hop_bigloo_serialize_context( alist );
 }
    
 /*---------------------------------------------------------------------*/
@@ -450,7 +463,7 @@ function hop_bigloo_serialize_alist( item ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export obj->string) (arity #t)) */
 function hop_obj_to_string( item ) {
-   var s = hop_bigloo_serialize( item );
+   var s = hop_bigloo_serialize_context( item );
 
    try {
       return decodeURIComponent( s );
@@ -808,6 +821,7 @@ function hop_string_to_obj( s ) {
 	 case 0x2e /* . */: return null;
 	 case 0x3c /* < */: return read_cnst();
          case 0x22 /* " */: return read_string( s );
+         case 0x25 /* " */: return decodeURIComponent( read_string( s ) );
          case 0x55 /* U */: return read_string( s );
 	 case 0x5b /* [ */: return read_vector( read_size( s ) );
 	 case 0x28 /* ( */: return read_list( read_size( s ) );

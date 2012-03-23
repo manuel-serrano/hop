@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Mon Mar 19 15:28:08 2012 (serrano)                */
+;*    Last change :  Tue Mar 20 05:18:51 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
@@ -153,21 +153,11 @@ events succeeded, you should see an acknowledge.")
 		  (<SPAN> :id "orientation" "Move your device"))
 	       ~(add-event-listener! window "load"
 		   (lambda (e)
-		      (let ((ox 1)
-			    (oy 1)
-			    (oz 1)
-			    (PI/2 (* 2 (atan 1))))
-			 (add-event-listener! window "deviceorientation"
-			    (lambda (e)
-			       (when (or (> (abs (- e.gamma ox)) 0.05)
-					 (> (abs (- e.alpha oy)) 0.05)
-					 (> (abs (- e.beta oz)) 0.05))
-				  (set! ox e.gamma)
-				  (set! oy e.alpha)
-				  (set! oy e.beta)
-				  (node-style-set! "orientation"
-				     :color "red"
-				     :MozTransform (format "rotate(~arad) scale(~a,~a)" (* PI/2 (- e.gamma)) (+ 1 (* 2 e.alpha)) (+ 1 (* 2 e.beta)))))))))))))))
+		      (add-event-listener! window "deviceorientation"
+			 (lambda (e)
+			    (node-style-set! "orientation"
+			       :color "red"
+			       :MozTransform (format "rotate(-~adeg)" e.gamma)))))))))))
 		      
 				    
       
