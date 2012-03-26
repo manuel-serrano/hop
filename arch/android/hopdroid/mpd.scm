@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/arch/android/hopdroid/mpd.scm     */
+;*    serrano/prgm/project/hop/2.3.x/arch/android/hopdroid/mpd.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 11 08:16:32 2011                          */
-;*    Last change :  Sun May 15 16:24:33 2011 (serrano)                */
-;*    Copyright   :  2011 Manuel Serrano                               */
+;*    Last change :  Mon Mar 26 14:13:58 2012 (serrano)                */
+;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android MPD implementation                                       */
 ;*=====================================================================*/
@@ -86,7 +86,7 @@
 				      (display ": " op)
 				      (display (cadr v) op)
 				      (newline op))))
-		      '(file: pos: id: artist: title: album:)))
+		      '(file: pos: id: artist: title: album: time: image:)))
 	 (mpd-database-get-album o album))))
 
    

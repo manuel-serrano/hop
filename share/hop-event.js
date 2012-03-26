@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Thu Mar  8 13:32:09 2012 (serrano)                */
+/*    Last change :  Mon Mar 26 10:56:00 2012 (serrano)                */
 /*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -376,9 +376,11 @@ function start_servevt_websocket_proxy( key, host, port ) {
       }
       ws.onclose = function( e ) {
 	 hop_server.state = 3;
-	 alert( "WS CLOSE: "
-		+ (sc_currentSeconds() - hop_servevt_proxy.opentime) + "s "
-		+ ((sc_currentSeconds() - hop_servevt_proxy.opentime) / 60) + "m" );
+	 if( hop_debug() > 1 ) {
+	    alert( "WS CLOSE: "
+		   + (sc_currentSeconds() - hop_servevt_proxy.opentime) + "s "
+		   + ((sc_currentSeconds() - hop_servevt_proxy.opentime) / 60) + "m" );
+	 }
 	 hop_servevt_onclose();
       }
       ws.onmessage = function ( e ) {

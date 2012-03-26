@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Thu Jan 26 15:04:41 2012 (serrano)                */
+/*    Last change :  Mon Mar 26 14:20:45 2012 (serrano)                */
 /*    Copyright   :  2011-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -44,6 +44,7 @@ public class HopPluginMediaAudio extends HopPlugin {
    private static final String[] ALBUM_LOOKUP_PROJECTION = new String[] {
       Albums.ARTIST,
       Albums.ALBUM,
+      Albums.ALBUM_ART,
    };
    private static final String[] MEDIA_LOOKUP_PROJECTION = new String[] {
       Media._ID,
@@ -185,7 +186,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 	    if( cur.moveToFirst() ) {
 	       int ip = cur.getColumnIndex( Media.DATA );
 	       int it = cur.getColumnIndex( Media.TITLE );
-	       int id = cur.getColumnIndex( Media.DURATION );
+	       int ti = cur.getColumnIndex( Media.DURATION );
 	       int in = cur.getColumnIndex( Media.TRACK );
 	       int ia = cur.getColumnIndex( Media.ARTIST );
 	       int iv = cur.getColumnIndex( Media.ALBUM );
@@ -211,8 +212,8 @@ public class HopPluginMediaAudio extends HopPlugin {
 		  op.write( "\" ".getBytes() );
 		  op.write( "album: \"".getBytes() );
 		  op.write( escapeBytes( cur.getString( iv ) ) );
-		  op.write( "\" duration: ".getBytes() );
-		  op.write( cur.getString( id ).getBytes() );
+		  op.write( "\" time: ".getBytes() );
+		  op.write( cur.getString( ti ).getBytes() );
 		  op.write( ") ".getBytes() );
 	       } while( cur.moveToNext() );
 	       
@@ -255,12 +256,13 @@ public class HopPluginMediaAudio extends HopPlugin {
 		  op.write( "()".getBytes() );
 	       } else {
 		  int j = cur.getColumnIndex( Albums.ALBUM );
+		  int a = cur.getColumnIndex( Albums.ALBUM_ART );
 		  
 		  op.write( "(".getBytes() );
 
 		  if( cur.moveToFirst() ) {
 		     do {
-			Log.d( "HopPluginMediaAudio", "ALBUM=" + cur.getString( j ) );
+			Log.d( "HopPluginMediaAudio", "ALBUM=" + cur.getString( j ) + " ART=" + cur.getString( a ) );
 			op.write( "\"".getBytes() );
 			op.write( escapeBytes( cur.getString( j )) );
 			op.write( "\" ".getBytes() );
@@ -292,6 +294,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 
    private void queryGenreArtists( OutputStream op, String genre )
       throws IOException {
+      Log.d( "hopPluginMediaAudio", "queryGenreArists genre=\"" + genre + "\"" );
       if( genre.equals( "<all>" ) ) {
 	 queryArtists( op );
       } else {
