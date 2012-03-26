@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Mon Mar 26 14:20:45 2012 (serrano)                */
+/*    Last change :  Mon Mar 26 17:48:32 2012 (serrano)                */
 /*    Copyright   :  2011-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -191,6 +191,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 	       int ia = cur.getColumnIndex( Media.ARTIST );
 	       int iv = cur.getColumnIndex( Media.ALBUM );
 	       int im = cur.getColumnIndex( Media.MIME_TYPE );
+	       
 	       do {
 		  op.write( "(file: \"".getBytes() );
 		  op.write( escapeBytes( cur.getString( ip ) ) );
@@ -214,6 +215,8 @@ public class HopPluginMediaAudio extends HopPlugin {
 		  op.write( escapeBytes( cur.getString( iv ) ) );
 		  op.write( "\" time: ".getBytes() );
 		  op.write( cur.getString( ti ).getBytes() );
+		  op.write( "\" image: ".getBytes() );
+		  op.write( cur.getString( ac ).getBytes() );
 		  op.write( ") ".getBytes() );
 	       } while( cur.moveToNext() );
 	       
@@ -262,10 +265,12 @@ public class HopPluginMediaAudio extends HopPlugin {
 
 		  if( cur.moveToFirst() ) {
 		     do {
-			Log.d( "HopPluginMediaAudio", "ALBUM=" + cur.getString( j ) + " ART=" + cur.getString( a ) );
-			op.write( "\"".getBytes() );
+			Log.d( "HopPluginMediaAudio", "queryArtistAlbum, ALBUM=" + cur.getString( j ) + " ART=" + cur.getString( a ) );
+			op.write( "(album: \"".getBytes() );
 			op.write( escapeBytes( cur.getString( j )) );
-			op.write( "\" ".getBytes() );
+			op.write( "\" image: \"".getBytes() );
+			op.write( escapeBytes( cur.getString( a )) );
+			op.write( "\")".getBytes() );
 		     } while( cur.moveToNext() );
 		  }
 		     
