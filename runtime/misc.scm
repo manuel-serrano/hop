@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Wed Feb 15 08:42:42 2012 (serrano)                */
+;*    Last change :  Wed Mar 28 12:34:17 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -78,11 +78,10 @@
 	       (else
 		1))))
       (trace-color c
-		   (if (isa? req http-request)
-		       (with-access::http-request req (id)
-			  id)
-		       req)
-		   msg)))
+	 (if (isa? req http-request)
+	     (with-access::http-request req (id) id)
+	     req)
+	 msg)))
 
 ;*---------------------------------------------------------------------*/
 ;*    shortest-prefix ...                                              */

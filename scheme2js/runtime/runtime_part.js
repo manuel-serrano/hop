@@ -2329,6 +2329,12 @@ function sc_currentDate() {
    return new Date();
 }
 
+/*** META ((export date->string) (arity #t))
+*/
+function sc_date2jsstring(d) {
+   return sc_string2jsstring( d.toString() );
+}
+
 /*** META ((export current-seconds) (arity #t)) 
 */
 function sc_currentSeconds() {
