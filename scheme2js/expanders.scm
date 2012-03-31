@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 10:52:12 2011                          */
-;*    Last change :  Tue Dec 20 18:00:11 2011 (serrano)                */
-;*    Copyright   :  2007011-2011 Florian Loitsch, Manuel Serrano      */
+;*    Last change :  Sat Mar 31 07:27:32 2012 (serrano)                */
+;*    Copyright   :  2007011-12 Florian Loitsch, Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -53,11 +53,19 @@
 (install-expander! 'with-trace with-trace-expander)
 
 (define (->expander x e)
-   (if (every? symbol? x)
+   (cond
+      ((every? symbol? x)
        (loc-attach
 	  `(,(car x) ,(e (cadr x) e) ,@(cddr x))
-	  x (cdr x))
-       (scheme2js-error "->" "bad form" x x)))
+	  x (cdr x)))
+      ((match-case x
+	  ((-> (pragma . ?-) . (? (lambda (x) (every? symbol? x)))) #t)
+	  (else #f))
+       (loc-attach
+	  `(,(car x) ,(e (cadr x) e) ,@(cddr x))
+	  x (cdr x)))
+      (else
+       (scheme2js-error "->" "bad form" x x))))
 
 
 (define (lambda-expander x e)

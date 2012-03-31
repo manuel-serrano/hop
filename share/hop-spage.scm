@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Thu Jan 19 07:45:01 2012 (serrano)                */
+;*    Last change :  Sat Mar 31 09:20:52 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -48,7 +48,7 @@
       (set! spage.num 0)
       (set! spage.tabs (list (dom-first-child spage.spviewport)))
       (set! spage.heads '())
-      (set! spage.onchange onchange)
+      (set! spage.onchg onchange)
       (set! spage.transitionstyle 'none)
       (set! spage.hop_add_event_listener spage-add-event-listener!)
       (set! spage.hop_update (lambda () (spage-update this)))
@@ -116,7 +116,7 @@
 ;*---------------------------------------------------------------------*/
 (define (spage-add-event-listener! obj event proc capture)
    (if (string=? event "onchange")
-       (set! obj.onchange proc)
+       (set! obj.onchg proc)
        (hop_add_native_event_listener obj event proc capture)))
 
 ;*---------------------------------------------------------------------*/
@@ -131,11 +131,11 @@
 ;*    spage-invoke-onchange-listener! ...                              */
 ;*---------------------------------------------------------------------*/
 (define (spage-invoke-onchange-listener! spage tbody action)
-   (when (procedure? spage.onchange)
+   (when (procedure? spage.onchg)
       (let ((evt (new HopEvent "change" spage)))
 	 (set! evt.target tbody)
 	 (set! evt.action action)
-	 (spage.onchange evt))))
+	 (spage.onchg evt))))
 
 ;*---------------------------------------------------------------------*/
 ;*    sptab-invoke-onselect-listener! ...                              */

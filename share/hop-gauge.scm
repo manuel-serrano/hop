@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/share/hop-gauge.scm               */
+;*    serrano/prgm/project/hop/2.3.x/share/hop-gauge.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 13 08:24:51 2010                          */
-;*    Last change :  Thu Feb 17 10:29:37 2011 (serrano)                */
-;*    Copyright   :  2010-11 Manuel Serrano                            */
+;*    Last change :  Sat Mar 31 14:59:24 2012 (serrano)                */
+;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Gauge client-side implementation                                 */
 ;*=====================================================================*/

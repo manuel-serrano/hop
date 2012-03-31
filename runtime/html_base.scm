@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Mon Mar 19 16:14:40 2012 (serrano)                */
+;*    Last change :  Fri Mar 30 10:56:18 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -87,6 +87,7 @@
 	    (<P> . ::obj)
 	    (<PARAM> . ::obj)
 	    (<PRE> . ::obj)
+	    (<PROGRESS> . ::obj)
 	    (<Q> . ::obj)
 	    (<S> . ::obj)
 	    (<SAMP> . ::obj)
@@ -179,6 +180,7 @@
 (define-xml-element <P>)
 (define-xml xml-empty-element #t <PARAM>)
 (define-xml-element <PRE>)
+(define-xml-element <PROGRESS>)
 (define-xml-element <Q>)
 (define-xml-element <S>)
 (define-xml-element <SAMP>)
