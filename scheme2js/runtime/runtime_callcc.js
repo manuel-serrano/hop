@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+/*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -561,6 +561,44 @@ function sc_bindExitLambda_callcc(proc) {
 	    e.push(sc_state);
 	}
 	throw e;
+    }
+}
+
+/*** META ((export unwind-protect-lambda)
+           (call/cc? #t)
+           (call/cc-params (0)))
+*/
+function sc_unwindProtect_callcc(proc1, proc2) {
+    var sc_storage = SC_CALLCC_STORAGE;
+    if (sc_storage['doCall/CcDefault?']) {
+	var escape_obj = new sc_BindExitException();
+	var escape = function(res) {
+	    escape_obj.res = res;
+	    throw escape_obj;
+	};
+    } else if (sc_storage['doCall/CcRestore?'])  {
+	var sc_state = sc_storage.pop();
+	escape_obj = sc_state.escape_obj;
+	proc = sc_storage.getCallNextFunction();
+    } else { // root-fun?
+	return sc_callCcRoot(this, arguments);
+    }
+    try {
+	return proc1();
+    } catch(e) {
+	if (e === escape_obj) {
+	    return e.res;
+	}
+	if (e instanceof sc_CallCcException && e.backup) {
+	    var sc_state = new Object();
+	    sc_state.callee = sc_bindExitLambda_callcc;
+	    sc_state.proc = proc;
+	    sc_state.escape_obj = escape_obj;
+	    e.push(sc_state);
+	}
+	throw e;
+    } finally {
+       proc2();
     }
 }
 

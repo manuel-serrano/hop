@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 10:52:12 2011                          */
-;*    Last change :  Sat Mar 31 07:27:32 2012 (serrano)                */
+;*    Last change :  Wed Apr  4 17:06:17 2012 (serrano)                */
 ;*    Copyright   :  2007011-12 Florian Loitsch, Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -43,6 +43,7 @@
 (install-expander! 'define-struct define-struct-expander)
 (install-expander! 'delay delay-expander)
 (install-expander! 'bind-exit bind-exit-expander)
+(install-expander! 'unwind-protect unwind-protect-expander)
 (install-expander! 'with-handler with-handler-expander)
 (install-expander! 'receive receive-expander)
 (install-expander! '@ identity-expander)
@@ -51,6 +52,20 @@
 (install-expander! 'define-method define-method-expander)
 (install-expander! '-> ->expander)
 (install-expander! 'with-trace with-trace-expander)
+
+(define (make-ident-expander ids e)
+   (lambda (x e2)
+      (if (and (symbol? x) (memq x ids))
+	  x
+	  (e x e2))))
+
+(define (pairs->list p)
+   (if (list? p)
+       p
+       (let loop ((p p))
+	  (if (not (pair? p))
+	      (list p)
+	      (cons (car p) (loop (cdr p)))))))
 
 (define (->expander x e)
    (cond
@@ -72,13 +87,12 @@
    (match-case x
        ((?- ?formal ?- . (? list?))
 	;; do not expand formal
-	(loc-attach
-	 `(lambda ,(cadr x) ,@(emap1 (lambda (y) (e y e)) (cddr x)))
-	 x (cdr x)))
+	(let ((e2 (make-ident-expander (pairs->list formal) e)))
+	   (loc-attach
+	      `(lambda ,(cadr x) ,@(emap1 (lambda (y) (e2 y e2)) (cddr x)))
+	      x (cdr x))))
        (else
-	(scheme2js-error "lambda-expand"
-			 "bad 'lambda'-form"
-			 x x))))
+	(scheme2js-error "lambda-expand" "bad 'lambda'-form" x x))))
 
 (define (define-macro-expander x e)
    (match-case x
@@ -184,19 +198,11 @@
 	 (scheme2js-error "let expand"
 			  "Invalid 'let' form"
 			  x x))
-      (for-each (lambda (binding)
-		   (set-car! binding (e (car binding) e))
-		   (set-car! (cdr binding)
-			     (e (cadr binding) e)))
-		bindings)
-
-      `(let ,bindings ,@(emap1 (lambda (y) (e y e)) body))))
-;*       `(let ,(emap1 (lambda (binding)                               */
-;* 		       (loc-attach                                     */
-;* 			`(,(e (car binding) e) ,(e (cadr binding) e))  */
-;* 			binding (cdr binding)))                        */
-;* 		    bindings)                                          */
-;* 	  ,@(emap1 (lambda (y) (e y e)) body))))                       */
+      (let ((e2 (make-ident-expander (map car bindings) e)))
+	 (for-each (lambda (binding)
+		      (set-car! (cdr binding) (e (cadr binding) e)))
+	    bindings)
+	 `(let ,bindings ,@(emap1 (lambda (y) (e2 y e2)) body)))))
 
 (define (let-expander x e)
    (match-case x
@@ -287,6 +293,18 @@
       (else
        (scheme2js-error "bind-exit" "Invalid 'bind-exit' form" x x))))
 
+(define (unwind-protect-expander x e)
+   (match-case x
+      ((?- ?expr . ?Lrest)
+       (e
+	  `(dynamic-wind
+	      (lambda () #t)
+	      (lambda () ,expr)
+	      (lambda () ,@Lrest))
+	e))
+      (else
+       (scheme2js-error "unwind-protect" "Invalid form" x x))))
+
 (define (with-handler-expander x e)
    (match-case x
       ((?- ?handler ?expr . ?Lrest)
@@ -313,9 +331,7 @@
        (e
 	`(,(runtime-ref 'call-with-values)
 	  (lambda () ,producer)
-	  (lambda ,vars
-	     ,expr
-	     ,@Lrest))
+	  (lambda ,vars ,expr ,@Lrest))
 	e))
       (else
        (scheme2js-error "receive"
@@ -328,9 +344,7 @@
        (e
 	`(,(runtime-ref 'call-with-values)
 	  (lambda () ,producer)
-	  (lambda ,vars
-	     ,expr
-	     ,@Lrest))
+	  (lambda ,vars ,expr ,@Lrest))
 	e))
       (else
        (scheme2js-error "multiple-value-bind"

@@ -2516,6 +2516,15 @@ function sc_BindExitException() {
     this._internalException = true;
 }
 
+/*** META ((export unwind-protect-lambda) (arity #t)) */
+function sc_unwindProtectLambda(proc1, proc2) {
+   try {
+      return proc1();
+   } finally {
+      proc2();
+   }
+}
+
 var SC_SCM2JS_GLOBALS = new Object();
 
 var SC_TAIL_OBJECT = new sc_Trampoline();  // (used in runtime_callcc.)
