@@ -2,12 +2,12 @@ Source: hop
 Section: user/programming
 Priority: optional
 Maintainer: Manuel Serrano <Manuel.Serrano@inria.fr>
-Build-Depends: debhelper (>= 4.0.0), bigloo (>= 3.8a)
+Build-Depends: debhelper (>= 4.0.0), bigloo (>= 3.8a), whiptail (>= 0.52.11)
 Standards-Version: 3.6.1
 
 Package: hop
 Architecture: any
-Depends: ${shlibs:Depends}, @EXTRADEPEND@ libbigloo-full
+Depends: ${shlibs:Depends}, libbigloo-full, @EXTRADEPEND@ 
 Description: A SDK for the Web 2.0.
  Hop is a SDK for the Web 2.0. It consists in a new higher-order 
  programming language and runtime environment containing a 
