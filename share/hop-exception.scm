@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Thu Nov 24 07:12:34 2011 (serrano)                */
-;*    Copyright   :  2009-11 Manuel Serrano                            */
+;*    Last change :  Thu Apr  5 11:57:25 2012 (serrano)                */
+;*    Copyright   :  2009-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
 ;*    debug mode).                                                     */
@@ -266,7 +266,7 @@
    (define (exception-message exc)
       (cond
 	 ((not (js-in? "message" exc))
-	  "unknwown error")     
+	  "Unknwown error")     
 	 ((string? exc.message)
 	  (<TT> (map (lambda (s)
 			(string-append (bigloo-demangle s) " "))
@@ -285,7 +285,7 @@
 			 (string-append (bigloo-demangle s) " "))
 		      (string-split exc.description "\n "))))
 	 (else
-	  "unknwown error")))
+	  "Unknwown error")))
 
    (let* ((message (exception-message exc))
 	  (msg (if (and exc (js-in? "scObject" exc))
