@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Jan 20 15:12:53 2012 (serrano)                */
+;*    Last change :  Mon Apr  9 08:47:18 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPSH entry point                                            */
@@ -18,6 +18,9 @@
 
    (cond-expand
       (enable-threads (library pthread)))
+
+   (cond-expand
+      (enable-ssl (library ssl)))
    
    (import  hopsh_parseargs
 	    hopsh_param

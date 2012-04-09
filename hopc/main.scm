@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Jan 20 15:12:39 2012 (serrano)                */
+;*    Last change :  Mon Apr  9 08:46:56 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -18,6 +18,9 @@
 
    (cond-expand
       (enable-threads (library pthread)))
+
+   (cond-expand
+      (enable-ssl (library ssl)))
    
    (import  hopc_parseargs
 	    hopc_param)
