@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Mon Apr  9 10:37:35 2012 (serrano)                */
+#*    Last change :  Mon Apr  9 10:50:43 2012 (serrano)                */
 #*    Copyright   :  2004-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -152,7 +152,7 @@ endif
 done = echo '$(COLOR_DEST)$(1)$(COLOR_STOP)...done.'
 compile = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(2) $(3) $(COLOR_OBJ)$(4)$(COLOR_STOP)'; $(1) $(2) $(3) $(4)
 compile2 = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(2) $(3) $(4) $(COLOR_OBJ)$(5)$(COLOR_STOP)'; $(1) $(2) $(3) $(4) $(5)
-compile3 = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(2) $(3) $(4) $(5) $(COLOR_OBJ)$(6)$(COLOR_STOP)'; $(1) $(2) $(3) $(4) $(5) $(6)
+compile3 = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(5) $(COLOR_OBJ)$(6)$(COLOR_STOP) $(2) $(3) $(4)'; $(1) $(5) $(6) $(2) $(3) $(4)
 
 heap = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(2) $(3) $(4) $(5) $(6) $(COLOR_DEST)$(7)$(COLOR_STOP)'; $(1) $(2) $(3) $(4) $(5) $(6) $(7)
 link = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(2) $(3) $(4) $(5) $(COLOR_DEST)$(6)$(COLOR_STOP)'; $(1) $(2) $(3) $(4) $(5) $(6)
