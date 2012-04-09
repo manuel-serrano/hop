@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 23 11:24:26 2011                          */
-;*    Last change :  Thu Apr  5 11:27:46 2012 (serrano)                */
+;*    Last change :  Sun Apr  8 09:02:28 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2JS module library                                         */
@@ -96,17 +96,17 @@
 			  (macros macros)
 			  (imports (scheme2js-load-library-jsheap jsheap lib)))
 		       (let ((jsheap (find-file/path (string-append (prefix (library-init-file lib)) ".jsheap") path)))
-			  (if (file-exists? jsheap)
+			  (if (and (string? jsheap) (file-exists? jsheap))
 			      (instantiate::Lib-Unit
 				 (name lib)
 				 (macros macros)
 				 (imports (scheme2js-load-library-jsheap jsheap lib)))
 			      (scheme2js-error "schemejs-module"
-				 "cannot find library heap"
-				 jsheap
+				 "Cannot find library heap"
+				 lib
 				 lib))))))
 	     (scheme2js-error "schemejs-module"
-		"cannot find library init"
+		"Cannot find library init"
 		(library-init-file lib)
 		lib)))))
    

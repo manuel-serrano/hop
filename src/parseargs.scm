@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jan 20 15:10:23 2012 (serrano)                */
+;*    Last change :  Mon Apr  9 08:17:18 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -337,9 +337,9 @@
 	     (hop-fast-server-event-port-set! ep)))
       
       (for-each (lambda (expr)
-		   (with-input-from-string expr
-		      (lambda ()
-			 (let ((sexp (hop-read (current-input-port))))
+		   (call-with-input-string expr
+		      (lambda (ip)
+			 (let ((sexp (hop-read ip)))
 			    (with-handler
 			       (lambda (e)
 				  (if (isa? e &eval-warning)

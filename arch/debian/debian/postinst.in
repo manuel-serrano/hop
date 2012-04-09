@@ -1,11 +1,11 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    .../prgm/project/hop/2.2.x/arch/debian/debian/postinst.in        */
+#*    .../prgm/project/hop/2.3.x/arch/debian/debian/postinst.in        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Dec 18 10:55:54 2007                          */
-#*    Last change :  Tue Nov  1 08:48:46 2011 (serrano)                */
-#*    Copyright   :  2007-11 Manuel Serrano                            */
+#*    Last change :  Mon Apr  9 08:19:40 2012 (serrano)                */
+#*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Add the HOP desktop entries from the configuration files         */
 #*=====================================================================*/
@@ -73,7 +73,7 @@ fi
 #*---------------------------------------------------------------------*/
 #*    init script                                                      */
 #*---------------------------------------------------------------------*/
-if whiptail --title "Hop configuration" --yesno "Start Hop automatically?" 8 50; then
+if [ "@DEBIAN@ " = "maemo " -o @HOPPREFIX@/bin/hop --eval '(begin (print "Start Hop automatically?") (exit (let ((c (read))) (if (memq c (map string->symbol (list "y" "Y" "yes"))) 0 1))))' ]; then
   update-rc.d hop defaults
   echo "Hop will now be automatically spawned when the machine boots"
   echo "To run it now, use:"
