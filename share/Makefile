@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Jan 20 10:07:41 2012 (serrano)                */
+#*    Last change :  Mon Apr  9 10:05:13 2012 (serrano)                */
 #*    Copyright   :  2004-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -287,7 +287,7 @@ hop-exception.js: hop-exception.scm
          export DYLD_LIBRARY_PATH; \
          PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
          export PATH; \
-	 $(call compile3b,HOPC,BJFLAGS,HFLAGS,BLFLAGS,$< -o $@ -c))
+	 $(call compile3,$(HOPC),$(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@))
 
 #*---------------------------------------------------------------------*/
 #*    backends                                                         */

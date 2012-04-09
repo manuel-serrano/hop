@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Thu Nov 24 06:39:18 2011 (serrano)                */
-#*    Copyright   :  2006-11 Manuel Serrano                            */
+#*    Last change :  Mon Apr  9 10:28:21 2012 (serrano)                */
+#*    Copyright   :  2006-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
 #*=====================================================================*/
@@ -30,25 +30,25 @@ CLASS_EDIR	= o/class_es/bigloo/$(TARGETNAME)
 #*    The implicit rules                                               */
 #*---------------------------------------------------------------------*/
 o/%.o: %.scm
-	@ $(call compile2,BIGLOO,BCFLAGS,BLFLAGS,$< -o $@ -c)
+	@ $(call compile2,$(BIGLOO),$(BCFLAGS),$(BLFLAGS),-c,$< -o $@)
 
 o/%.o: %.hop
-	@ $(call compile3b,HOPC,HFLAGS,BCFLAGS,BLFLAGS,$< -o $@ -c)
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),-c,$< -o $@)
 
 %.scm: %.hop
-	@ $(call compile3b,HOPC,HFLAGS,BCFLAGS,BLFLAGS,$< -o $@ -s)
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),-s,$< -o $@)
 
 $(CLASS_DIR)/%.class: %.scm
-	@ $(call compile2,BIGLOO,BJVMFLAGS,BLFLAGS,$< -o $@ -c)
+	@ $(call compile2,$(BIGLOO),$(BJVMFLAGS),$(BLFLAGS),-c,$< -o $@)
 
 $(CLASS_EDIR)/%.class: %.scm
-	@ $(call compile2,BIGLOO,BJVMFLAGS,BLJVMFLAGS,$< -o $@ -c)
+	@ $(call compile2,$(BIGLOO),$(BJVMFLAGS),$(BLJVMFLAGS),-c,$< -o $@)
 
 $(CLASS_DIR)/%.class: %.hop
-	@ $(call compile3b,HOPC,HFLAGS,BJVMFLAGS,BLFLAGS,$< -o $@ -c)
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLFLAGS),-c,$< -o $@)
 
 $(CLASS_EDIR)/%.class: %.hop
-	@ $(call compile3b,HOPC,HFLAGS,BJVMFLAGS,BLJVMFLAGS,$< -o $@ -c)
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLJVMFLAGS),-c,$< -o $@)
 
 #*---------------------------------------------------------------------*/
 #*    The heap construction                                            */
@@ -60,13 +60,11 @@ heap-jvm: .afile .jfile $(HEAPJVM_FILE)
 
 $(HEAP_FILE): make_lib.scm .afile
 	@ $(RM) -f $(HEAP_FILE)
-	@ $(call compile2,BIGLOO,BCFLAGS,BHFLAGS,$< -addheap $@ -heap-library $(TARGETNAME))
-	@ $(call done,$(COLOR),"",$@,"...done.")
+	@ $(call heap,$(BIGLOO),$(BCFLAGS),$(BHFLAGS),$<,-heap-library $(TARGETNAME),-addheap, $@)
 
 $(HEAPJVM_FILE): .jfile .afile make_lib.scm
 	@ $(RM) -f $(HEAPJVM_FILE)
 	@ $(BIGLOO) -jvm $(EFLAGS) $(BJVMFLAGS) $(BHFLAGS) make_lib.scm -addheap $(HEAPJVM_FILE) -heap-library $(TARGETNAME)
-	@ $(call done,$(COLOR),"",$@,"...done.")
 
 #*---------------------------------------------------------------------*/
 #*    lib                                                              */
@@ -113,7 +111,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX): \
              LIBDEST=$@ \
              SONAME=lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX) \
              CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS_S)"
-	@ $(call done,$(COLOR),"",$@,"...done.")
+	@ $(call done,$@)
 
 # safe evaltime
 $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX): \
@@ -126,7 +124,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX): \
              LIBDEST=$@ \
              SONAME=lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX) \
              CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS_S) $(HOPCLOSELIBS_ES)"
-	@ $(call done,$(COLOR),"",$@,"...done.")
+	@ $(call done,$@)
 
 # unsafe runtime
 $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX): \
@@ -139,7 +137,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX): \
              LIBSRC=$< \
              SONAME=lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX) \
              CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U)"
-	@ $(call done,$(COLOR),"",$@,"...done.")
+	@ $(call done,$@)
 
 # unsafe evaltime
 $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX): \
@@ -153,33 +151,33 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX): \
              LIBSRC=$< \
              SONAME=lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX) \
              CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U) $(HOPCLOSELIBS_EU)"
-	@ $(call done,$(COLOR),"",$@,"...done.")
+	@ $(call done,$@)
 
 # and the static versions
 $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a: .afile $(OBJECTS)
 	@ $(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
 	@ $(AR) $(ARFLAGS) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a $(OBJECTS)
 	@ $(RANLIB) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
-	@ $(call done,$(COLOR),"",$@,"...done.")
+	@ $(call done,$@)
 
 $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a: \
    $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
 	@ cd $(BUILDLIBDIR) && \
         $(RM) -f lib$(TARGETNAME)_u-$(HOPRELEASE).a && \
         $(LN_S) lib$(TARGETNAME)_s-$(HOPRELEASE).a lib$(TARGETNAME)_u-$(HOPRELEASE).a
-	@ $(call done,$(COLOR),"",$@,"...done.")
+	@ $(call done,$@)
 
 $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a: $(EOBJECTS)
 	@ $(AR) $(ARFLAGS) $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a $(EOBJECTS)
 	@ $(RANLIB) $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a
-	@ $(call done,$(COLOR),"",$@,"...done.")
+	@ $(call done,$@)
 
 $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).a: \
    $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a
 	@ cd $(BUILDLIBDIR) && \
         $(RM) -f lib$(TARGETNAME)_eu-$(HOPRELEASE).a && \
         $(LN_S) lib$(TARGETNAME)_es-$(HOPRELEASE).a lib$(TARGETNAME)_eu-$(HOPRELEASE).a
-	@ $(call done,$(COLOR),"",$@,"...done.")
+	@ $(call done,$@)
 
 #*--- lib-jvm ---------------------------------------------------------*/
 lib-jvm: $(TAGS) $(CLASS_DIR) $(CLASS_EDIR) lib.zip
@@ -197,14 +195,14 @@ $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip: .afile .jfile $(BGL_CLASSES)
 	@ $(RM) -f $@
 	@ (cd o/class_s && \
 	  $(ZIP) -q $(ZFLAGS) $@ $(CLASS_DIR:o/class_s/%=%)/*.class)
-	@ echo "$@ done..."
+	@ $(call done,$@)
 	@ echo "-------------------------------"
 
 $(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).zip: .afile .jfile $(BGL_ECLASSES)
 	@ $(RM) -f $@
 	@ (cd o/class_es && \
 	  $(ZIP) -q $(ZFLAGS) $@ $(CLASS_EDIR:o/class_es/%=%)/*.class)
-	@ echo "$@ done..."
+	@ $(call done,$@)
 	@ echo "-------------------------------"
 
 #*---------------------------------------------------------------------*/

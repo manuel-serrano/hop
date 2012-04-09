@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.2.x/src/Makefile                      */
+#*    serrano/prgm/project/hop/2.3.x/src/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Oct  4 10:39:57 2010 (serrano)                */
+#*    Last change :  Mon Apr  9 10:38:35 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -67,13 +67,12 @@ $(CLASS_DIR):
 
 $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 	$(MAKE) link.$(LINK) DEST=$@
-	@ $(call done,$(COLOR),"Binary \($(LINK)\) ",$@," done.")
 
 link.dynamic:
-	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $(DEST) $(OBJECTS))
+	@ $(call link,$(BIGLOO),$(BCFLAGS),$(BCFLAGSDEV),$(OBJECTS),-o,$(DEST))
 
 link.static:
-	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -static-all-bigloo -o $(DEST) $(OBJECTS))
+	@ $(call link,$(BIGLOO),$(BCFLAGS),$(BCFLAGSDEV),-static-all-bigloo $(OBJECTS),-o,$(DEST))
 
 link.library:
 	echo "***ERROR: link.library not currently supported!"
@@ -81,7 +80,7 @@ link.library:
 
 $(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib META-INF/MANIFEST.MF
 	@ $(MAKE) jar.$(LINK) DEST=$@
-	@ $(call done,$(COLOR),"Jar ",$@," done.")
+	@ $(call done,$@)
 
 jar.dynamic: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib
 	$(JAR) $(DEST) META-INF/MANIFEST.MF -C o/class_s .
@@ -163,13 +162,13 @@ META-INF:
 #*    Implicit rules                                                   */
 #*---------------------------------------------------------------------*/
 o/%.o: %.scm .afile
-	@ $(call compile,BIGLOO,BCFLAGS,$< -o $@ -c)
+	@ $(call compile,$(BIGLOO),$(BCFLAGS),-c,$< -o $@)
 
 $(CLASS_DIR)/%.class: %.scm .afile
-	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
+	@ $(call compile,$(BIGLOO),$(BJVMFLAGS),-c,$< -o $@)
 
 o/main.o: main.scm
-	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV,$< -o $@ -c)
+	@ $(call compile2,$(BIGLOO),$(BCFLAGS),$(BCFLAGSDEV),-c,$< -o $@)
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */

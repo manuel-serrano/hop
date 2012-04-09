@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.2.x/hopreplay/Makefile                */
+#*    serrano/prgm/project/hop/2.3.x/hopreplay/Makefile                */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Sep 27 14:41:06 2010 (serrano)                */
+#*    Last change :  Mon Apr  9 10:41:41 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds HopReplay                               */
 #*=====================================================================*/
@@ -60,12 +60,11 @@ $(CLASS_DIR):
 	mkdir -p $@
 
 $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
-	$(call compile,BIGLOO,BCFLAGS,-o $@ $(OBJECTS))
-	@ $(call done,$(COLOR),"Binary ",$@," done.")
+	@ $(call link,$(BIGLOO),$(BCFLAGS),$(BCFLAGSDEV),$(OBJECTS),-o,$@)
 
 $(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-lib
 	$(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
-	@ $(call done,$(COLOR),"Jar ",$@," done.")
+	@ $(call done,$@)
 
 jvm-stdlibs: o/class_s/lib/hop/$(HOPRELEASE)
 	for p in $(JVMZIPLIBS); do \
@@ -122,10 +121,10 @@ o/class_s/lib/hop/$(HOPRELEASE):
 #*    The implicit `.scm.o' rule                                       */
 #*---------------------------------------------------------------------*/
 o/%.o: %.scm .afile
-	@ $(call compile,BIGLOO,BCFLAGS,$< -o $@ -c)
+	@ $(call compile,$(BIGLOO),$(BCFLAGS),-c,$< -o $@)
 
 $(CLASS_DIR)/%.class: %.scm .afile
-	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
+	@ $(call compile,$(BIGLOO),$(BJVMFLAGS),-c,$< -o $@)
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */
