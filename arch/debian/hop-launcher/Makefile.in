@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    .../prgm/project/hop/linux/maemo/hop-launcher/Makefile.in        */
+#*    .../project/hop/2.3.x/arch/debian/hop-launcher/Makefile.in       */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Dec 14 07:39:27 2007                          */
-#*    Last change :  Wed Sep  1 14:33:35 2010 (serrano)                */
-#*    Copyright   :  2007-10 Manuel Serrano                            */
+#*    Last change :  Mon Apr  9 15:09:09 2012 (serrano)                */
+#*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hop-launcher application               */
 #*=====================================================================*/
@@ -61,8 +61,7 @@ o:
 	mkdir -p $@
 
 $(BUILDBINDIR)/$(EXEC): $(OBJECTS)
-	@ $(call compile,CC,LDFLAGS,-o $@ $(OBJECTS))
-	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
+	@ $(call link,$(CC),$(LDFLAGS),,$(OBJECTS),-o, $@)
 
 #*---------------------------------------------------------------------*/
 #*    Install                                                          */
@@ -84,7 +83,7 @@ $(DESTDIR)$(HOPSHAREDIR)/icons:
 #*    The implicit `.c.o' rule                                         */
 #*---------------------------------------------------------------------*/
 o/%.o: %.c
-	@ $(call compile,CC,CFLAGS,$< -o $@ -c)
+	@ $(call compile,$(CC),$(CFLAGS),-c,$< -o $@)
 
 #*---------------------------------------------------------------------*/
 #*    config.h                                                         */
