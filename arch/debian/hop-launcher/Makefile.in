@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Dec 14 07:39:27 2007                          */
-#*    Last change :  Tue Apr 10 14:33:28 2012 (serrano)                */
+#*    Last change :  Tue Apr 10 15:07:22 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hop-launcher application               */
@@ -61,7 +61,7 @@ o:
 	mkdir -p $@
 
 $(BUILDBINDIR)/$(EXEC): $(OBJECTS)
-	@ $(call link,$(COMP),$(LDFLAGS),,$(OBJECTS),-o, $@)
+	@ $(call link,$(CCOMP),$(LDFLAGS),,$(OBJECTS),-o, $@)
 
 #*---------------------------------------------------------------------*/
 #*    Install                                                          */
@@ -83,7 +83,7 @@ $(DESTDIR)$(HOPSHAREDIR)/icons:
 #*    The implicit `.c.o' rule                                         */
 #*---------------------------------------------------------------------*/
 o/%.o: %.c
-	@ $(call compile,$(CC),$(CFLAGS),-c,$< -o $@)
+	@ $(call compile,$(CCOMP),$(CFLAGS),-c,$< -o $@)
 
 #*---------------------------------------------------------------------*/
 #*    config.h                                                         */
