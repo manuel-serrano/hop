@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Dec 14 07:39:27 2007                          */
-#*    Last change :  Mon Apr  9 15:09:09 2012 (serrano)                */
+#*    Last change :  Tue Apr 10 14:33:28 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hop-launcher application               */
@@ -26,7 +26,7 @@ BUILDDIR = @BUILDDIR@
 #*    Target and Project                                               */
 #*---------------------------------------------------------------------*/
 EXEC = hop-launcher
-CFLAGS = -O2 -Wall `@CHILDONFLAGS@` -I/usr/include/dbus-1.0 -I/usr/lib/dbus-1.0/include
+CFLAGS = -O2 `@CHILDONFLAGS@` -I/usr/include/dbus-1.0 -I/usr/lib/dbus-1.0/include
 LDFLAGS = $(CFLAGS) `@LDHILDONFLAGS@` -ldbus-1 -losso
 
 HOPLEXEC = $(HOPBINDIR)/hop
@@ -61,7 +61,7 @@ o:
 	mkdir -p $@
 
 $(BUILDBINDIR)/$(EXEC): $(OBJECTS)
-	@ $(call link,$(CC),$(LDFLAGS),,$(OBJECTS),-o, $@)
+	@ $(call link,$(COMP),$(LDFLAGS),,$(OBJECTS),-o, $@)
 
 #*---------------------------------------------------------------------*/
 #*    Install                                                          */

@@ -1,11 +1,11 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    .../prgm/project/hop/linux/maemo/hop-launcher/configure.in       */
+#*    .../project/hop/2.3.x/arch/debian/hop-launcher/configure.in      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 15 08:27:19 2007                          */
-#*    Last change :  Sun Nov 29 19:32:32 2009 (serrano)                */
-#*    Copyright   :  2007-09 Manuel Serrano                            */
+#*    Last change :  Tue Apr 10 14:30:58 2012 (serrano)                */
+#*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The local configuration for hop-launcher                         */
 #*=====================================================================*/
@@ -48,7 +48,7 @@ maemo=`pkg-config maemo-version --modversion`
 if [ "$maemo " = "5.0 " ]; then
   echo "Configuring for Maemo 5."
   childonflags="pkg-config gtk+-2.0 hildon-1 --cflags"
-  ldhildonflags="pkg-config gtk+-2.0 hildon-1 --libs"
+  ldhildonflags="pkg-config gtk+-2.0 hildon-1 libosso --libs"
   maemo=MAEMO5
 else
   pkg-config gtk+-2.0 hildon-1 --cflags > /dev/null 2> /dev/null
