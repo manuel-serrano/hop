@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Tue Apr 10 14:44:50 2012 (serrano)                */
+#*    Last change :  Tue Apr 10 16:08:38 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -68,7 +68,6 @@ fi
 #*---------------------------------------------------------------------*/
 if [ "$debian " = "maemo " ]; then
   mkdir -p $TMP/hop-$VERSION/maemo
-  (cd $BASEDIR/hop-launcher && make clean)
   (cp -r $BASEDIR/hop-launcher $TMP/hop-$VERSION/maemo)
   (cd $TMP/hop-$VERSION/maemo/hop-launcher && \
    branch=`echo $VERSION | sed -e "s/[0-9]*$/x/g"` && \
