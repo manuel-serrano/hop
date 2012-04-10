@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Tue Apr 10 11:39:16 2012 (serrano)                */
+#*    Last change :  Tue Apr 10 14:12:17 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -117,7 +117,7 @@ if [ "$debian " = "maemo " ]; then
   if [ "$maemo " = "5.0 " ]; then
     echo "Configuring for Maemo 5."
     childonflags="pkg-config gtk+-2.0 hildon-1 --cflags"
-    ldhildonflags="pkg-config gtk+-2.0 hildon-1 libosso gthread-2.0 --libs"
+    ldhildonflags="pkg-config gtk+-2.0 hildon-1 libosso --libs"
     maemo=MAEMO5
     maemohaslocation=no
   else
