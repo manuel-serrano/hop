@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 15 08:27:19 2007                          */
-#*    Last change :  Tue Apr 10 14:30:58 2012 (serrano)                */
+#*    Last change :  Tue Apr 10 16:00:12 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The local configuration for hop-launcher                         */
@@ -44,21 +44,22 @@ done
 #*    The maemo version                                                */
 #*---------------------------------------------------------------------*/
 maemo=`pkg-config maemo-version --modversion`
+maemoversion=`echo $maemo | sed -e "s/[^0-9.].*$//"`
 
-if [ "$maemo " = "5.0 " ]; then
-  echo "Configuring for Maemo 5."
+if [ "$maemoversion " = "5.0 " ]; then
+  echo "Configuring hop-launcher for Maemo 5."
   childonflags="pkg-config gtk+-2.0 hildon-1 --cflags"
   ldhildonflags="pkg-config gtk+-2.0 hildon-1 libosso --libs"
   maemo=MAEMO5
 else
   pkg-config gtk+-2.0 hildon-1 --cflags > /dev/null 2> /dev/null
   if [ $? = 0 ]; then
-    echo "Configuring for Maemo 4."
+    echo "Configuring hop-launcher for Maemo 4."
     childonflags="pkg-config gtk+-2.0 hildon-1 --cflags"
     ldhildonflags="pkg-config gtk+-2.0 hildon-1 --libs"
     maemo=MAEMO4
   else
-    echo "Configuring for Maemo 3."
+    echo "Configuring hop-launcher for Maemo 3."
     childonflags="pkg-config gtk+-2.0 hildon-libs --cflags"
     ldhildonflags="pkg-config gtk+-2.0 hildon-libs --libs"
     maemo=MAEMO3
