@@ -2,7 +2,7 @@ Source: hop
 Section: user/programming
 Priority: optional
 Maintainer: Manuel Serrano <Manuel.Serrano@inria.fr>
-Build-Depends: debhelper (>= 4.0.0), bigloo (>= 3.8a)
+Build-Depends: debhelper (>= 4.0.0), bigloo (>= 3.8a), adduser
 Standards-Version: 3.6.1
 
 Package: hop

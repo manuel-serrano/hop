@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Dec 18 10:55:54 2007                          */
-#*    Last change :  Wed Apr 11 14:09:49 2012 (serrano)                */
+#*    Last change :  Wed Apr 11 14:54:02 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Add the HOP desktop entries from the configuration files         */
@@ -73,7 +73,15 @@ fi
 #*---------------------------------------------------------------------*/
 #*    init script                                                      */
 #*---------------------------------------------------------------------*/
-if [ "@DEBIAN@ " = "maemo " -o @HOPPREFIX@/bin/hop --eval '(begin (print "Start Hop automatically?") (exit (let ((c (read))) (if (memq c (map string->symbol (list "y" "Y" "yes"))) 0 1))))' ]; then
+if [ "@DEBIAN@ " = "maemo " ]; then
+  init=true;
+elif @HOPPREFIX@/bin/hop --eval '(begin (print "Start Hop automatically?") (exit (let ((c (read))) (if (memq c (map string->symbol (list "y" "Y" "yes"))) 0 1))))'
+  init=true;
+else
+  init=false;
+fi
+
+if [ "$init " = "true " ]; then
   update-rc.d hop defaults
   echo "Hop will now be automatically spawned when the machine boots"
   echo "To run it now, use:"
@@ -81,7 +89,7 @@ if [ "@DEBIAN@ " = "maemo " -o @HOPPREFIX@/bin/hop --eval '(begin (print "Start 
 else
   echo "Note: Hop will not be started automatically on boot."
   echo ""
-  echo "To spawn it in background on behalf of use @HOPUSER@, use:"
+  echo "To spawn it in background on behalf of user @HOPUSER@, issue:"
   echo "   \"/etc/init.d/hop start\""
   echo "Edit \"/etc/default/hop\" to change default configuration."
   echo ""
